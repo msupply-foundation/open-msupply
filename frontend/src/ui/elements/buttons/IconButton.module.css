@@ -1,0 +1,107 @@
+/*
+ * IconButton — a compact icon-only control. Transparent by default with a subtle hover tint;
+ * `data-bordered` adds an outlined box (for controls that must read as buttons, e.g. table row
+ * actions). `data-variant='danger'` tones a destructive action; `data-size` sets the box. All
+ * sizing rem/em; the only px are the 1px border and the focus-ring width (allowed).
+ */
+.iconButton {
+  /* Positioning context for the shortcut hint badge below (unlike Button, there
+     is no ripple that would have made it one already). Overflow is NOT clipped,
+     which is what lets the badge sit outside the box. */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+/* Size — the box + the icon within it. */
+.iconButton[data-size='medium'] {
+  inline-size: 2rem;
+  block-size: 2rem;
+}
+
+.iconButton[data-size='small'] {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+}
+
+.iconButton[data-size='medium'] svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+.iconButton[data-size='small'] svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+/* Bordered variant — an outlined box (input-edge border + white fill). */
+.iconButton[data-bordered] {
+  border-color: var(--color-border-value);
+  background: var(--bg-white);
+}
+
+.iconButton:hover {
+  background: color-mix(in srgb, var(--text-body) 8%, transparent);
+  color: var(--text-body);
+}
+
+.iconButton[data-bordered]:hover {
+  border-color: var(--gray-main);
+}
+
+/* Danger tone — destructive action (delete). Icon reads error-toned; hover deepens the tint. */
+.iconButton[data-variant='danger'] {
+  color: var(--error-main);
+}
+
+.iconButton[data-variant='danger']:hover {
+  background: color-mix(in srgb, var(--error-main) 12%, transparent);
+  color: var(--error-main);
+}
+
+.iconButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-md);
+}
+
+.iconButton[data-variant='danger']:focus-visible {
+  box-shadow: var(--focus-ring-error);
+}
+
+.iconButton:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: not-allowed;
+}
+
+/*
+ * Shortcut hint badge (ShortcutBadge, revealed while Alt or Ctrl is held) —
+ * dropped just below the box, aligned to its inline-end edge. The badge's own
+ * default pins it inside the carrier's block-start inline-end corner, which
+ * works for a labelled Button; on a 2rem square it would cover the icon. Scoped
+ * under .iconButton so the two classes beat ShortcutBadge.module.css's one,
+ * whichever order the sheets land in.
+ */
+.iconButton .shortcutBadge {
+  inset-block-start: calc(100% + 0.125rem);
+  inset-inline-end: 0;
+}
+
+@media (pointer: coarse) {
+  .iconButton {
+    min-inline-size: var(--touch-target);
+    min-block-size: var(--touch-target);
+  }
+}

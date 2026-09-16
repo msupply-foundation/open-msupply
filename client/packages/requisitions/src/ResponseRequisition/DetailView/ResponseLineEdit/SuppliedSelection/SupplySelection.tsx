@@ -123,6 +123,7 @@ export const SupplySelection = ({
                       : theme.palette.background.white,
                 },
               },
+              htmlInput: { 'data-testid': 'supply-quantity-input' },
             }}
             sx={{
               '& .MuiInputBase-input': {

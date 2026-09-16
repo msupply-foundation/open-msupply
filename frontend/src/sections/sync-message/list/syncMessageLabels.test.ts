@@ -1,0 +1,87 @@
+import { describe, expect, it } from 'vitest';
+import {
+  MESSAGE_STATUSES,
+  authorableTypeLabel,
+  fileStatusLabelKey,
+  statusLabelKey,
+  typeLabelKey,
+} from './syncMessageLabels';
+
+// Anchors: spec/sync-message/cases/OMS-REG-MNG-05.
+//   .4  — Status and Type render as RESOLVED names, never raw values
+//   .22 — each attached file shows its own transfer state
+// (ui-surface.md S1 § columns, S3 § files.)
+//
+// Assertions are on the locale KEY each value resolves to: the key is what the
+// screen owns, the string behind it is the catalog's (and t() falls back to the
+// key with no dictionary loaded, as here).
+
+describe('OMS-REG-MNG-05.6 — the Status options are schema-derived', () => {
+  // The register's Status filter builds its options from MESSAGE_STATUSES
+  // rather than a hand-written list, so a status the backend adds reaches the
+  // filter through codegen. Guards against a regression to a literal array,
+  // which would silently omit any newly-added status.
+  it('offers every status the generated enum declares, in display order', () => {
+    expect(MESSAGE_STATUSES).toEqual([
+      'new',
+      'inProgress',
+      'processed',
+      'error',
+    ]);
+  });
+
+  it('names every status it lists — no member without a label', () => {
+    for (const status of MESSAGE_STATUSES) {
+      expect(statusLabelKey(status)).not.toBe('messages.not-applicable');
+    }
+  });
+});
+
+describe('OMS-REG-MNG-05.4 — statuses render as names', () => {
+  it('names all four of the message lifecycle', () => {
+    expect(statusLabelKey('new')).toBe('label.new');
+    expect(statusLabelKey('inProgress')).toBe('status.in-progress');
+    expect(statusLabelKey('processed')).toBe('label.processed');
+    expect(statusLabelKey('error')).toBe('status.error');
+  });
+
+  it('never leaks a raw wire value for a status the enum does not name', () => {
+    expect(statusLabelKey('somethingNew')).toBe('messages.not-applicable');
+  });
+});
+
+describe('OMS-REG-MNG-05.4 — kinds render as names', () => {
+  it('names all three kinds the record carries', () => {
+    expect(typeLabelKey('supportUpload')).toBe('label.support-upload');
+    expect(typeLabelKey('requestFieldChange')).toBe(
+      'label.request-field-change'
+    );
+    expect(typeLabelKey('other')).toBe('label.other');
+  });
+
+  it('never leaks a raw wire value for a kind the enum does not name', () => {
+    expect(typeLabelKey('merge')).toBe('messages.not-applicable');
+  });
+
+  it('labels the ONE authorable kind from the same map, so the create modal and the register cannot disagree', () => {
+    expect(authorableTypeLabel('SUPPORT_UPLOAD')).toBe(
+      typeLabelKey('supportUpload')
+    );
+  });
+});
+
+describe('OMS-REG-MNG-05.22 — a file shows its own transfer state', () => {
+  it('names all five transfer states — a SECOND vocabulary, distinct from the message status', () => {
+    expect(fileStatusLabelKey('NEW')).toBe('label.new');
+    expect(fileStatusLabelKey('IN_PROGRESS')).toBe('label.in-progress');
+    expect(fileStatusLabelKey('DONE')).toBe('label.done');
+    expect(fileStatusLabelKey('ERROR')).toBe('label.error');
+    expect(fileStatusLabelKey('PERMANENT_FAILURE')).toBe(
+      'label.permanent-failure'
+    );
+  });
+
+  it('never leaks a raw transfer state the enum does not name', () => {
+    expect(fileStatusLabelKey('QUEUED')).toBe('messages.not-applicable');
+  });
+});

@@ -1,0 +1,93 @@
+query me {
+  me {
+    ... on UserNode {
+      __typename
+      ...UserInfo
+    }
+  }
+}
+
+query authToken($username: String!, $password: String!) {
+  authToken(username: $username, password: $password) {
+    ... on AuthToken {
+      __typename
+      user {
+        ...UserInfo
+      }
+    }
+    ... on AuthTokenError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+query refreshToken {
+  refreshToken {
+    ... on RefreshToken {
+      __typename
+      token
+    }
+    ... on RefreshTokenError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+query logout {
+  logout {
+    ... on Logout {
+      __typename
+      userId
+    }
+  }
+}
+
+# Spec (Store Login, Guard 1): both the me endpoint and a successful login return the
+# same shape — guaranteed by sharing this fragment.
+fragment UserInfo on UserNode {
+  __typename
+  userId
+  username
+  firstName
+  lastName
+  # Sender identity for the internal-order send auto-comment (AC-S7,
+  # template.requisition-sent). Nullable on UserNode; the builder falls back to
+  # a dash for a missing email / phone.
+  email
+  jobTitle
+  phoneNumber
+  inactivityTimeoutSeconds
+  tokenRefreshIntervalSeconds
+  defaultStore {
+    id
+  }
+  stores {
+    nodes {
+      id
+      code
+      # The store's FACILITY record id (spec/settings § The store editor): the
+      # store editor reads and writes the name row, not the store row, and
+      # `names(filter: { id: { equalTo } })` is the only way to fetch one — so
+      # the id must be known before the editor opens. Rides the me/login
+      # response, like storeMode, rather than costing a query.
+      nameId
+      name
+      # The store's mode (spec/patients § configuration gates › AC-G1):
+      # dispensary mode gates the whole patient surface. UserStoreNode carries
+      # storeMode per store, so the entered store's mode is known from the
+      # me/login response — no extra query.
+      storeMode
+      homeCurrencyCode
+      # Spec (Store Login, SL-8): a disabled store cannot be logged into, and
+      # the front end owns that rule end to end — the server neither filters
+      # `stores` nor rejects a login into one.
+      isDisabled
+    }
+  }
+}

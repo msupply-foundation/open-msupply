@@ -28,6 +28,8 @@ interface ResponseNumInputRowProps {
   overrideDoseDisplay?: boolean;
   roundUp?: boolean;
   decimalLimit?: number;
+  /** data-testid stamped on the underlying <input> */
+  inputTestId?: string;
 }
 
 export const ResponseNumInputRow = ({
@@ -46,6 +48,7 @@ export const ResponseNumInputRow = ({
   sx,
   roundUp,
   decimalLimit,
+  inputTestId,
 }: ResponseNumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -97,6 +100,9 @@ export const ResponseNumInputRow = ({
       caption={dosesCaption}
       roundUp={roundUp}
       decimalLimit={decimalLimit}
+      inputProps={
+        inputTestId ? { 'data-testid': inputTestId } : undefined
+      }
     />
   );
 };

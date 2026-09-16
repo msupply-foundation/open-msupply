@@ -1,11 +1,6 @@
-use super::{
-    form_schema_row::form_schema, ChangelogRepository,
-    RowActionType, StorageConnection,
-};
+use super::{form_schema_row::form_schema, ChangelogRepository, RowActionType, StorageConnection};
 
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use clap::ValueEnum;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -39,6 +34,7 @@ pub enum ContextType {
     CustomerReturn,
     /// OG "replenishment"
     StockMovement,
+    PrescriptionRequest,
 }
 
 table! {

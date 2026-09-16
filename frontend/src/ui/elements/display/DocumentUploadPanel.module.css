@@ -1,0 +1,129 @@
+/*
+ * DocumentUploadPanel — upload zone above a plain file list. Header and rows
+ * share one grid template (--doc-grid) so their columns line up without a
+ * table. Hairlines use --input-border; the name link uses the action tone.
+ * Sizing rem/em; the only px are the 1px row hairlines.
+ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  /* Cap the width so the zone + list don't stretch across a wide desktop tab,
+     and centre it in the tab; the list stays readable and the drop target
+     stays a sensible size. */
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 1rem;
+}
+
+/* Section heading above the upload zone / file list ("Upload documents",
+   "Uploaded documents"). Type style comes from <Text variant="heading">; the
+   panel owns only the spacing below it and its colour. */
+.heading {
+  margin-block-end: 0.75rem;
+  color: var(--text-body);
+}
+
+.list {
+  --doc-grid: 1.75rem minmax(0, 1fr) 9rem 6rem 2rem;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.headerRow,
+.row {
+  display: grid;
+  grid-template-columns: var(--doc-grid);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* The open-failure alert sits between the heading and the header row; it
+   carries its own gap so it doesn't sit flush against the row below. */
+.openError {
+  margin-block-end: 0.75rem;
+}
+
+.headerRow {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-value);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  padding: 0.75rem 0;
+}
+
+/* File-type marker: the file glyph with its extension as a small caption. */
+.fileType {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: var(--text-secondary);
+}
+
+.ext {
+  position: absolute;
+  bottom: 0.05em;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 0.1em;
+  background: var(--bg-white);
+  font-size: 0.28em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.name,
+.nameLink {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.name {
+  color: var(--text-body);
+}
+
+.nameLink {
+  color: var(--secondary-main);
+  text-decoration: none;
+}
+
+.nameLink:hover {
+  text-decoration: underline;
+}
+
+.nameLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+.date,
+.size {
+  color: var(--text-secondary);
+}
+
+.rowAction {
+  display: flex;
+  justify-content: center;
+}
+
+.empty {
+  padding: 1rem 0;
+  margin: 0;
+  color: var(--text-secondary);
+}

@@ -1,0 +1,77 @@
+/* The size + colour switches, wrapping to a column on narrow viewports. */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5) calc(var(--space-6) + var(--space-4));
+}
+
+/* Heavier group headers ("Size" / "Colour") than the library legend default. */
+.controls legend {
+  font-weight: var(--weight-bold);
+}
+
+/* Wraps to as many columns as fit; each card holds its width down to one col. */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-4);
+}
+
+.tile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  box-shadow: var(--shadow-1);
+}
+
+/*
+ * A fixed box so names stay aligned whichever size is picked. Icons are 1em, so
+ * font-size IS the rendered size and `color` sets the glyph colour — both are
+ * switched via the data attributes below, each mapping to a token.
+ */
+.glyph {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.glyph[data-size='small'] {
+  font-size: 1.5rem;
+}
+
+.glyph[data-size='large'] {
+  font-size: 2.5rem;
+}
+
+.glyph[data-colour='primary'] {
+  color: var(--primary-main);
+}
+
+.glyph[data-colour='secondary'] {
+  color: var(--secondary-main);
+}
+
+.glyph[data-colour='body'] {
+  color: var(--text-body);
+}
+
+.glyph[data-colour='disabled'] {
+  color: var(--gray-light);
+}
+
+.name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}

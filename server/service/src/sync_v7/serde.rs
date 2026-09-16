@@ -4,6 +4,7 @@ use repository::{
     syncv7::SyncRecordSerializeError, *,
 };
 use serde::de::DeserializeOwned;
+use util::json_without_nulls;
 
 use crate::sync_v7::{
     translations::{
@@ -90,6 +91,8 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::RnrFormLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::SyncMessage(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Vaccination(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::PrescriptionRequest(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::PrescriptionRequestLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::StockRelocation(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::StockRelocationLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         // Wire type, not the row: carries status/error across sites (row serde skips them)
@@ -151,7 +154,13 @@ pub(crate) fn deserialize(
     sync_context: &SyncContext,
 ) -> DeserializeResult {
     let changelog_insert = create_changelog(table_name.clone(), RowActionType::Upsert, row);
-    let data = &row.data;
+    // Postgres text columns cannot store the NUL character (0x00). Sqlite sites do accept
+    // NULs, so a NUL padded string that came from legacy mSupply can be pushed on to a
+    // Postgres server over v7, where it would fail to integrate with
+    // `invalid byte sequence for encoding "UTF8": 0x00`. Records containing a NUL are very
+    // rare, so the common case here is a read only scan of the record, no clone.
+    let data = json_without_nulls(&row.data);
+    let data = &*data;
     let upsert = match table_name {
         // Special
         ChangelogTableName::Store => return translate_store(connection, changelog_insert, data),
@@ -176,6 +185,10 @@ pub(crate) fn deserialize(
         ChangelogTableName::LocationType => from_value::<LocationTypeRow>(data),
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
+        ChangelogTableName::PrescriptionRequest => from_value::<PrescriptionRequestRow>(data),
+        ChangelogTableName::PrescriptionRequestLine => {
+            from_value::<PrescriptionRequestLineRow>(data)
+        }
         ChangelogTableName::StockRelocation => from_value::<StockRelocationRow>(data),
         ChangelogTableName::StockRelocationLine => from_value::<StockRelocationLineRow>(data),
         ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),

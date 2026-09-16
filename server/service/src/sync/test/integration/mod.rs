@@ -133,8 +133,7 @@ async fn random_delay(min_millisecond: u64, max_millisecond: u64) {
     use rand::RngExt;
     let diff = max_millisecond - min_millisecond;
     // .random::<f64>() generates a float between 0 and 1
-    let delay_millisecond =
-        (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
+    let delay_millisecond = (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
     tokio::time::sleep(std::time::Duration::from_millis(delay_millisecond)).await;
 }
 

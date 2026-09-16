@@ -1,3 +1,4 @@
+use crate::sync::translations::special::merge::MergeSyncMessageBody;
 use chrono::Utc;
 use repository::{
     mock::{MockData, MockDataInserts},
@@ -5,7 +6,6 @@ use repository::{
     NameLinkRow, NameLinkRowRepository, SyncMessageRow, SyncMessageRowRepository,
     SyncMessageRowStatus, SyncMessageRowType,
 };
-use crate::sync::translations::special::merge::MergeSyncMessageBody;
 use util::uuid::uuid;
 
 use crate::{

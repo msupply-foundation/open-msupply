@@ -254,13 +254,20 @@ mod test {
         // Simulate a site initialised before batch size was persisted: only the
         // base sync keys are present, none of the batch size keys.
         let kv = KeyValueStoreRepository::new(&ctx.connection);
-        kv.set_string(KeyType::SettingsSyncUrl, Some("http://localhost:8000".to_string()))
-            .unwrap();
+        kv.set_string(
+            KeyType::SettingsSyncUrl,
+            Some("http://localhost:8000".to_string()),
+        )
+        .unwrap();
         kv.set_string(KeyType::SettingsSyncUsername, Some("test_site".to_string()))
             .unwrap();
-        kv.set_string(KeyType::SettingsSyncPasswordSha256, Some("password_hash".to_string()))
+        kv.set_string(
+            KeyType::SettingsSyncPasswordSha256,
+            Some("password_hash".to_string()),
+        )
+        .unwrap();
+        kv.set_i64(KeyType::SettingsSyncIntervalSeconds, Some(300))
             .unwrap();
-        kv.set_i64(KeyType::SettingsSyncIntervalSeconds, Some(300)).unwrap();
 
         let loaded = ctx
             .service_provider

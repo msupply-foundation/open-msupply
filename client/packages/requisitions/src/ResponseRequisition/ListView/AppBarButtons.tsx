@@ -129,6 +129,7 @@ const AppBarButtonsComponent = ({
         />
         {canCreateInternalOrderFromARequisition && (
           <ButtonWithIcon
+            data-testid="create-order-button"
             Icon={<PlusCircleIcon />}
             label={t('button.create-order')}
             onClick={() => {

@@ -1,0 +1,134 @@
+/*
+ * BareCheckbox — the one drawn checkbox (see BareCheckbox.tsx). Box look
+ * lifted verbatim from the original labelled Checkbox so forms keep their
+ * exact rendering; the labelled Checkbox now composes this control.
+ *
+ * The root is a BLOCK-LEVEL flex box on purpose: inside a table cell an
+ * inline-level root would join the cell's inline formatting context and the
+ * line-height strut (larger than the 18px box) would set the cell's height —
+ * at compact density that pushes rows past their 40px floor
+ * (kdd/solid-reactivity-pitfalls has the reactivity twins; the layout twin
+ * lives in the DataTable ledger entries). As a flex ITEM (its two form/card
+ * hosts are flex rows) outer display doesn't matter.
+ */
+.root {
+  display: flex;
+  position: relative;
+  flex-shrink: 0;
+  /* Block-level boxes stretch to their container; shrink to the 18px box so
+     a host's margin-inline: auto (the table's .selectBox) truly centres it. */
+  inline-size: fit-content;
+}
+
+/* The native input: invisible, positioned OVER the drawn box and larger than
+   it, so it is the real (forgiving) click target — and still Playwright-
+   visible, e2e checks the input by test id; opacity: 0 keeps a bounding box
+   where clip-path hiding would not. Explicit size matters: a checkbox is a
+   REPLACED element, so inset alone won't stretch it — it stays at its ~13px
+   intrinsic size in a corner. It overhangs the drawn box by
+   --checkbox-hit-inset-{inline,block} on each side (default 0.5rem → a ~34px
+   target; WCAG 2.5.8 target-size minimum is 24px), centred on the box.
+   Absolute positioning keeps the enlargement off the layout, so the drawn
+   box, its neighbours and the focus ring never move. A host widens the
+   hitbox by SETTING those vars on an ancestor — split by axis so it can grow
+   across a column without also growing down it (the table's .selectBox fills
+   the 48px cell width but leaves the block overhang at the default, so a
+   compact row's target never bleeds into the row above or below). */
+.input {
+  position: absolute;
+  inset-block-start: calc(-1 * var(--checkbox-hit-inset-block, 0.5rem));
+  inset-inline-start: calc(-1 * var(--checkbox-hit-inset-inline, 0.5rem));
+  inline-size: calc(100% + 2 * var(--checkbox-hit-inset-inline, 0.5rem));
+  block-size: calc(100% + 2 * var(--checkbox-hit-inset-block, 0.5rem));
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.input:disabled {
+  cursor: default;
+}
+
+/* The drawn box: outlined square that fills with the brand tone + reveals
+   the glyph when the input is checked/indeterminate. pointer-events: none —
+   the box is presentation only (aria-hidden), every click belongs to the
+   input. Not optional: the glyphs' opacity: 0 promotes them into the
+   positioned paint layer (spec: opacity < 1 renders like z-index: 0), where
+   DOM order puts them ABOVE the absolutely-positioned input — without this,
+   the glyph area at the box's centre is click-dead. */
+.box {
+  display: grid;
+  place-items: center;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--primary-contrast);
+  pointer-events: none;
+  transition:
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+
+/* Both glyphs are stacked in the grid's single cell; opacity picks one. */
+.check,
+.dash {
+  grid-area: 1 / 1;
+  font-size: 0.875rem;
+  opacity: 0;
+}
+
+/* Checked / indeterminate — fill with the brand tone, show the glyph.
+   :indeterminate wins the glyph choice (native tri-state precedence). */
+.input:checked + .box,
+.input:indeterminate + .box {
+  background: var(--secondary-main);
+  border-color: var(--secondary-main);
+}
+
+.input:checked + .box .check {
+  opacity: 1;
+}
+
+.input:indeterminate + .box .check {
+  opacity: 0;
+}
+
+.input:indeterminate + .box .dash {
+  opacity: 1;
+}
+
+/* Focus-visible ring on the box (the input itself is invisible). */
+.input:focus-visible + .box {
+  outline: none;
+  border-color: var(--secondary-main);
+  box-shadow: var(--focus-ring);
+}
+
+/* Error state — red edge; red glow when also focused. */
+.box[data-error] {
+  border-color: var(--error-main);
+}
+
+/* Keep the red edge when the box is FILLED — the error must survive a checked
+   / indeterminate box (the checked/indeterminate fill rule above sets its own
+   border-color, and this selector is specific enough to win it back). */
+.input:checked + .box[data-error],
+.input:indeterminate + .box[data-error] {
+  border-color: var(--error-main);
+}
+
+.input:focus-visible + .box[data-error] {
+  box-shadow: var(--focus-ring-error);
+}
+
+/* Disabled — the box fades as a unit with --disabled-opacity, the SAME
+   treatment the labelled Checkbox applies to its whole row. Used bare (e.g. a
+   locked table selection cell) there is no label wrapper to fade it, so the
+   box owns the fade; the labelled Checkbox fades only its label text, so the
+   composed field looks identical with no double-fade (see Checkbox.module.css). */
+.input:disabled + .box {
+  opacity: var(--disabled-opacity);
+}

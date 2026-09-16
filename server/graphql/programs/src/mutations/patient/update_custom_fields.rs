@@ -73,7 +73,8 @@ pub fn update_patient_custom_fields(
             let std_err = match error {
                 UpdatePatientCustomFieldsError::PatientDoesNotExist
                 | UpdatePatientCustomFieldsError::NotAPatient
-                | UpdatePatientCustomFieldsError::UnknownCustomFieldKey(_) => {
+                | UpdatePatientCustomFieldsError::UnknownCustomFieldKey(_)
+                | UpdatePatientCustomFieldsError::InvalidCustomFieldValue { .. } => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 UpdatePatientCustomFieldsError::InternalError(_)

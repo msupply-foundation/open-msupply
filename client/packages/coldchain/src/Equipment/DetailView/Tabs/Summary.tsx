@@ -252,6 +252,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               value={draft.serialNumber ?? ''}
               fullWidth
               onChange={e => onChange({ serialNumber: e.target.value })}
+              slotProps={{ htmlInput: { 'data-testid': 'serial-input' } }}
             />
           </Row>
           <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.asset-number')}>
@@ -259,6 +260,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               value={draft.assetNumber ?? ''}
               fullWidth
               onChange={e => onChange({ assetNumber: e.target.value })}
+              slotProps={{ htmlInput: { 'data-testid': 'asset-number-input' } }}
             />
           </Row>
           <Row isExtraSmallScreen={isExtraSmallScreen} label={t('label.installation-date')}>
@@ -396,6 +398,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             <Checkbox
               checked={Boolean(draft.needsReplacement)}
               onChange={e => onChange({ needsReplacement: e.target.checked })}
+              data-testid="needs-replacement-checkbox"
             />
           </Row>
         </Section>
@@ -407,6 +410,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
               multiline
               rows={4}
+              slotProps={{ htmlInput: { 'data-testid': 'notes-input' } }}
             />
           </Row>
         </Section>

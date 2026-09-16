@@ -52,7 +52,11 @@ pub fn delete(
     map_response(
         service_provider
             .invoice_line_service
-            .delete_inbound_shipment_service_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
+            .delete_inbound_shipment_service_line(
+                &service_context,
+                input.to_domain(),
+                Some(r#type.to_domain()),
+            ),
     )
 }
 

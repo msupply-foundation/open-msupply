@@ -158,6 +158,7 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
+            transfer_comment: None,
             id,
             r#type: StockOutType::Prescription,
             invoice_id,

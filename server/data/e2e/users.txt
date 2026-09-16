@@ -3,3 +3,5 @@ single:pass
 nostore:pass
 limited:pass
 nosend:pass
+noreq:pass
+StockViewer:pass

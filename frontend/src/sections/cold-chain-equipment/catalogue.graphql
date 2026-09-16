@@ -1,0 +1,82 @@
+# The asset catalogue reads this vertical CONSUMES (spec/cold-chain-equipment ›
+# contract surface). The catalogue itself — its classes, categories, types,
+# property definitions and log reasons — is owned by Catalogue › Assets, which
+# has no section here yet; these are the reads Equipment needs from it.
+#
+# `assetProperties` takes NO storeId and validates no auth at all: alone among
+# this vertical's reads it builds a basic context (contract ⚠️ wire trap). It
+# also returns ONE ROW PER SCOPE, so the same `key` recurs — a caller MUST
+# de-duplicate by key (assetProperties.applicableProperties does).
+
+query assetCategoriesList($filter: AssetCategoryFilterInput) {
+  assetCategories(filter: $filter) {
+    ... on AssetCategoryConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+        classId
+      }
+    }
+  }
+}
+
+query assetTypesList($filter: AssetTypeFilterInput) {
+  assetTypes(filter: $filter) {
+    ... on AssetTypeConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+        categoryId
+      }
+    }
+  }
+}
+
+# The create modal's catalogue-item picker: server-filtered and paged, because
+# the catalogue runs to hundreds of models.
+query assetCatalogueItemsList(
+  $filter: AssetCatalogueItemFilterInput
+  $page: PaginationInput
+) {
+  assetCatalogueItems(filter: $filter, page: $page) {
+    ... on AssetCatalogueItemConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        manufacturer
+        model
+        assetCategoryId
+        assetTypeId
+        assetType {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+
+query assetPropertiesList($filter: AssetPropertyFilterInput) {
+  assetProperties(filter: $filter) {
+    ... on AssetPropertyConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        key
+        name
+        valueType
+        allowedValues
+        assetClassId
+        assetCategoryId
+        assetTypeId
+      }
+    }
+  }
+}

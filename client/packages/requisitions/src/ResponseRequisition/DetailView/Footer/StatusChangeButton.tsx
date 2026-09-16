@@ -252,6 +252,7 @@ export const StatusChangeButton = ({
 
   return (
     <SplitButton
+      testId="status-change-button"
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
