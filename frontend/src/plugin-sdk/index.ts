@@ -200,6 +200,13 @@ export {
  * component in a module that ships regardless.
  */
 export { ChevronRightIcon } from '../ui/icons';
+/*
+ * The "this is done" mark on the Stocktake Helper's counted rows (#495's
+ * visual tidy) — the same bargain again: Select pulls CheckIcon from this
+ * module eagerly, so exporting it keeps one more already-shipped component
+ * alive rather than adding anything.
+ */
+export { CheckIcon } from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';
