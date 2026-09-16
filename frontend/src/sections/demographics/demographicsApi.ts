@@ -1,3 +1,4 @@
+import { t } from '@/intl';
 import {
   graphqlFetch,
   isForbidden,
@@ -5,8 +6,8 @@ import {
   reportPermissionDenied,
   type GraphqlErrorItem,
   type GraphqlResult,
-} from '../../api/graphql';
-import { rejectionFrom, type Rejection } from '../../api/rejection';
+} from '@/api/graphql';
+import { rejectionFrom, type Rejection } from '@/api/rejection';
 import {
   DemographicIndicators,
   DemographicProjectionByBaseYear,
@@ -125,11 +126,18 @@ const failure = (result: GraphqlResult<unknown>): Failure | undefined => {
  * "Not a central server", which the fallback shows as-is. Only the FIRST
  * failure is reported: the reference client surfaces one reason too, and a
  * batch of parallel rows rarely fails for more than one.
+ *
+ * The generic is translated copy, as every other caller's is. It stands in for
+ * a variant that printed as a MULTI-LINE dump instead of a bare name — none of
+ * this vertical's declared rejections does today, so it is unreachable from
+ * the screen's own flow — and the server's raw text still reaches the
+ * disclosure. Passing the server's own `message` there instead would put an
+ * untranslated "Bad user input", or nothing at all, into the footer's copy.
  */
 const rejection = (errors: GraphqlErrorItem[]): Rejection => {
   const detail = errors[0]?.extensions?.details;
   return {
-    ...rejectionFrom(errors, errors[0]?.message ?? ''),
+    ...rejectionFrom(errors, t('error.cant-save')),
     ...(typeof detail === 'string' && detail.length > 0 ? { detail } : {}),
   };
 };

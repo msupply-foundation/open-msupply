@@ -1,30 +1,31 @@
 import { Show, type Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
-import { formatNumber, t } from '../../intl';
-import { Page } from '../../ui/layout/Page/Page';
-import { Header } from '../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
-import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
-import { HStack } from '../../ui/layout/Stack/HStack';
-import { Button } from '../../ui/elements/buttons/Button';
-import { Alert } from '../../ui/elements/feedback/Alert';
-import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
-import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
-import { NumberField } from '../../ui/elements/inputs/NumberField';
-import { TextField } from '../../ui/elements/inputs/TextField';
-import { DataTable, type Column } from '../../ui/elements/table/DataTable';
-import { remToPx } from '../../ui/utils/rem';
-import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../../ui/icons';
-import { createTableConfig } from '../../api/createTableConfig';
-import { createConfirmOnLeave } from '../../domain/confirmOnLeave';
+import { formatNumber, t } from '@/intl';
+import { Page } from '@/ui/layout/Page/Page';
+import { Header } from '@/ui/layout/Header/Header';
+import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
+import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { Button } from '@/ui/elements/buttons/Button';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
+import { NumberField } from '@/ui/elements/inputs/NumberField';
+import { TextField } from '@/ui/elements/inputs/TextField';
+import { DataTable, type Column } from '@/ui/elements/table/DataTable';
+import { remToPx } from '@/ui/utils/rem';
+import { PlusCircleIcon, SaveIcon, XCircleIcon } from '@/ui/icons';
+import { createTableConfig } from '@/api/createTableConfig';
+import { createConfirmOnLeave } from '@/domain/confirmOnLeave';
 import { createDemographicsEditor } from './demographicsEditor';
 import {
   YEARS,
   currentPopulation,
   isGeneralRow,
   projectYears,
+  projectionShare,
   rateKey,
   type DraftIndicator,
   type Year,
@@ -73,10 +74,10 @@ const DemographicsPage: Component = () => {
   // Every figure a row shows other than its inputs, derived live from the
   // baseline, the row's share and the header rates (rules § the calculation).
   const figures = (row: DraftIndicator) => {
-    const current = currentPopulation(
-      editor.baseline(),
-      row.populationPercentage
-    );
+    // projectionShare, not the row's field: the general population row
+    // projects at 100 % — which is what its cell displays — whatever share is
+    // stored against it (rules § the calculation).
+    const current = currentPopulation(editor.baseline(), projectionShare(row));
     return { current, years: projectYears(current, editor.draft.rates) };
   };
 
@@ -87,10 +88,22 @@ const DemographicsPage: Component = () => {
   // `row.original` — a store proxy — inside the cell render, so a field edit
   // re-renders that cell; TanStack's own accessor cache would hold the value
   // it read when the row object was created.
+  //
+  // EVERY column is structural (meta.hideFromColumnSettings), so none of them
+  // reaches the Columns popover — the exact bite CARD_TABLE_MODEL.md § the
+  // structural opt-out describes. Save writes every row's name, share,
+  // baseline and all five rates whatever is on screen, so hiding a column
+  // would take away the only way to set a value it still sends: hide Year 3
+  // and rate 3 keeps being written with no input for it; hide Current
+  // population and the baseline is uneditable yet written to every row; hide
+  // Name and a new row can never be named, so Save rejects it as _no name_
+  // with nothing on screen to fix. Setting the flag also FORCES the column
+  // visible, which heals a `false` already persisted for one of these ids.
   const columns = (): Column<DraftIndicator, SortKey>[] => [
     {
       c: { id: 'name' },
       header: () => t('label.name'),
+      meta: { hideFromColumnSettings: true },
       size: remToPx(14),
       cell: info => {
         const row = info.row.original;
@@ -118,7 +131,7 @@ const DemographicsPage: Component = () => {
     {
       c: { id: 'percentage' },
       header: () => t('label.percentage'),
-      meta: { align: 'right' },
+      meta: { align: 'right', hideFromColumnSettings: true },
       size: remToPx(8),
       cell: info => {
         const row = info.row.original;
@@ -147,7 +160,7 @@ const DemographicsPage: Component = () => {
     {
       c: { id: 'currentPopulation' },
       header: () => t('label.current-population'),
-      meta: { align: 'right' },
+      meta: { align: 'right', hideFromColumnSettings: true },
       size: remToPx(10),
       cell: info => {
         const row = info.row.original;
@@ -198,8 +211,9 @@ const DemographicsPage: Component = () => {
       ),
       meta: {
         align: 'right',
-        // The Columns popover and a card caption name the column in words;
-        // the grid header itself is the label plus its input.
+        hideFromColumnSettings: true,
+        // A card caption names the column in words; the grid header itself is
+        // the label plus its input.
         textLabel: () => yearLabel(year),
       },
       size: remToPx(11),
@@ -215,10 +229,16 @@ const DemographicsPage: Component = () => {
           <Header>
             <Breadcrumb crumbs={[{ label: t('indicators-demographics') }]} />
             <HeaderButtons>
+              {/* Unavailable after a failed load as well as while saving:
+                  with nothing loaded there is no general population row, so
+                  an added row would save against a baseline of 0 and its
+                  growth-rate write would INSERT a second record for the base
+                  year (demographics.graphql § the projection write), which
+                  the server refuses. */}
               <Button
                 icon={<PlusCircleIcon />}
                 data-testid="new-indicator-button"
-                disabled={editor.saving()}
+                disabled={editor.saving() || editor.loadFailed()}
                 onClick={editor.addIndicator}
               >
                 {t('button.new-indicator')}
@@ -259,7 +279,9 @@ const DemographicsPage: Component = () => {
                 icon={<SaveIcon />}
                 data-testid="save-button"
                 loading={editor.saving()}
-                disabled={!editor.dirty() || editor.saving()}
+                disabled={
+                  !editor.dirty() || editor.saving() || editor.loadFailed()
+                }
                 onClick={() => void editor.save()}
               >
                 {t('button.save')}

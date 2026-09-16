@@ -17,19 +17,19 @@ const state = {
   permissions: new Set<string>(),
 };
 
-vi.mock('../../store/storeContext', () => ({
+vi.mock('@/store/storeContext', () => ({
   isDispensary: () => false,
   hasProgramModule: () => false,
   hasVaccineModule: () => state.vaccineModule,
   hasProcurement: () => false,
   hasPermission: (permission: string) => state.permissions.has(permission),
 }));
-vi.mock('../../api/serverInfo', () => ({
+vi.mock('@/api/serverInfo', () => ({
   isCentralServer: () => state.central,
 }));
 
-const { navConfig } = await import('../../nav/navConfig');
-const { gateNav, routeAccess } = await import('../../nav/navGates');
+const { navConfig } = await import('@/nav/navConfig');
+const { gateNav, routeAccess } = await import('@/nav/navGates');
 
 const PATH = 'manage/indicators-demographics';
 
