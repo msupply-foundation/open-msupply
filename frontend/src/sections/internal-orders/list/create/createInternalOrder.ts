@@ -2,6 +2,7 @@ import { generateUUID } from '../../../../uuid';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, type LocaleKey } from '../../../../intl';
 import { localIsoDaysAgo } from '../../../../ui/elements/inputs/dateTimeConvert';
+import { warningSuppressed } from '@/plugins/warningSuppression';
 import {
   InsertInternalOrder,
   InsertProgramInternalOrder,
@@ -111,4 +112,25 @@ export const recentStocktakeIsInsufficient = async (
   for (const stocktake of result.data.stocktakes.nodes)
     for (const line of stocktake.lines.nodes) items.add(line.itemId);
   return items.size < minItems;
+};
+
+// The whole gate decision, shared by every New-order entry point (the
+// internal-orders list and the dashboard's Order more): the warning shows only
+// when recent stocktakes are insufficient AND no installed plugin's
+// warning-suppression contribution suppresses the store-wide warning with its
+// own item-level measure (rules › creation, OMS-REG-REPL-04.86/.87). The two
+// reads run in parallel, the suppression winning, so a suppressed store never
+// sees the warning however short its stocktakes fall. Called only when the
+// preference is enabled; never rejects (the consult isolates plugin failures
+// and a failed stocktake read answers false).
+export const recentStocktakeGateShows = async (
+  storeId: string,
+  maxAge: number,
+  minItems: number
+): Promise<boolean> => {
+  const [suppressed, insufficient] = await Promise.all([
+    warningSuppressed('internalOrders.recentStocktake'),
+    recentStocktakeIsInsufficient(storeId, maxAge, minItems),
+  ]);
+  return insufficient && !suppressed;
 };

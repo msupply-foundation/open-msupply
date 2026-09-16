@@ -57,8 +57,7 @@ import {
 } from './actions';
 import { CreateInternalOrderModal } from './create/CreateInternalOrderModal';
 import { StocktakeWarningDialog } from './create/StocktakeWarningDialog';
-import { recentStocktakeIsInsufficient } from './create/createInternalOrder';
-import { warningSuppressed } from '@/plugins/warningSuppression';
+import { recentStocktakeGateShows } from './create/createInternalOrder';
 
 // The internal-orders list view (spec/internal-orders S1). An internal order is
 // a REQUEST requisition; `type` is pinned to REQUEST on every read. Mirrors the
@@ -195,15 +194,13 @@ const InternalOrdersList: Component = () => {
     context.latest?.preferences.warnWhenMissingRecentStocktake;
 
   // New order (OMS-REG-REPL-04.42/.45/.86/.87): where the store warns on
-  // missing recent stocktakes, evaluate them first — a shortfall diverts
-  // through the warning gate; otherwise (and when the preference is off) the
-  // create modal opens directly. An installed plugin's warning-suppression
-  // contribution can supersede the store-wide warning with its own item-level
-  // measure (rules › creation); the two reads run in parallel, the
-  // suppression winning, so a suppressed store never sees the warning however
-  // short its stocktakes fall. The New-order button is disabled until the
-  // context read resolves, so the gate is always decided before the modal can
-  // open.
+  // missing recent stocktakes, evaluate the shared gate decision first — a
+  // shortfall diverts through the warning gate unless an installed plugin's
+  // warning-suppression contribution suppresses the store-wide warning with
+  // its own item-level measure (rules › creation); otherwise (and when the
+  // preference is off) the create modal opens directly. The New-order button
+  // is disabled until the context read resolves, so the gate is always decided
+  // before the modal can open.
   const startCreate = async () => {
     const warn = warnStocktake();
     if (!warn?.enabled) {
@@ -211,20 +208,19 @@ const InternalOrdersList: Component = () => {
       return;
     }
     setChecking(true);
-    // Neither read can reject (the suppression consult isolates plugin
-    // failures and graphqlFetch never throws), but this await now spans plugin
+    // The gate decision cannot reject (the suppression consult isolates plugin
+    // failures and graphqlFetch never throws), but this await spans plugin
     // code — the finally guarantees a fault can never leave the button
     // disabled for good.
     try {
-      const [superseded, insufficient] = await Promise.all([
-        warningSuppressed('internalOrders.recentStocktake'),
-        recentStocktakeIsInsufficient(
+      if (
+        await recentStocktakeGateShows(
           params.storeId,
           warn.maxAge,
           warn.minItems
-        ),
-      ]);
-      if (insufficient && !superseded) setGateOpen(true);
+        )
+      )
+        setGateOpen(true);
       else setCreateOpen(true);
     } finally {
       setChecking(false);
