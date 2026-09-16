@@ -30,8 +30,8 @@ half: how the sync runs, and what to do when something was published that should
 - **Nightly** (`mirror-public.yaml`, scheduled) the `filter` job clones the selected refs, runs
   `git filter-repo` through the rules and the commit-message rewrite, re-checks the filtered tree
   against the rules, runs gitleaks over the filtered history, and hands a bundle to the `push` job.
-  The push job re-checks the tree again, mints a GitHub App token scoped to the public repo
-  (`public-mirror` environment), and pushes **without force**. A non-fast-forward push fails —
+  The push job re-checks the tree again, mints a `tmf-ci-bot` App token scoped to the public
+  repo only (`public-mirror` environment), and pushes **without force**. A non-fast-forward push fails —
   that is the alarm.
 - **Release days:** dispatch `mirror-public.yaml` by hand so `main` and the tag go out together.
   Leave `refs` empty (develop, main and all release tags) or name the refs; leave `force` off.
