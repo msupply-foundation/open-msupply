@@ -240,6 +240,7 @@ export type { PluginIntl, SupportedLocale } from './intl';
  */
 export { storeHref, navigateTo } from './navigation';
 export type { NavigateOptions } from './navigation';
+export { usePageSearch } from './pageSearch';
 export {
   DAYS_TILL_EXPIRED,
   expiredStockPath,

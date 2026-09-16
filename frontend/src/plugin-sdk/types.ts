@@ -266,6 +266,17 @@ export interface ColumnDeclaration<Row, Data = unknown> {
    * synchronously from `data`; a contribution hidden by `when` never runs it.
    */
   loadData?: (rows: readonly Row[]) => Promise<Map<string, Data>>;
+  /**
+   * Declares the column sortable (sdk-contract § the column slot,
+   * AC-PLUG-K7): the value the host orders rows by when the user sorts on
+   * it, evaluated over the table's FULL row set — `data` is that row's
+   * `loadData` entry, loaded for the whole set. Numbers compare numerically,
+   * strings by locale; a `null`/`undefined` value sorts last in either
+   * direction, so a contribution that wants a placement for "no value"
+   * returns a sentinel (e.g. `Infinity`) instead. Omitted, no sort is
+   * offered on the column.
+   */
+  sortValue?: (row: Row, data?: Data) => ColumnValue;
 }
 
 /**
