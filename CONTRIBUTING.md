@@ -113,7 +113,8 @@ imported branch.
    and email stay on them as the author. Any conflicts with newer internal work are resolved
    there.
 3. **Review, CI and merge** happen in the private repo, like any other change.
-4. **Sync.** The merged change reaches this mirror with the next sync, nightly or sooner. Your
+4. **Sync.** The merged change reaches this mirror with the next sync, at the latest the next
+   release. Your
    pull request is then **closed, not merged**, with a comment naming the commit here that it
    landed as. The commit carries your authorship.
 
