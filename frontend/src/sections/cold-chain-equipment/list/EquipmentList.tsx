@@ -51,6 +51,7 @@ import {
 import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
+  buildExportFilter,
   buildListVariables,
   clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
@@ -356,10 +357,11 @@ const EquipmentList: Component = () => {
               // cold-chain destination of a central server, which would drop
               // the column from a file that should carry it (rules › export).
               isCentral={isCentralServer()}
-              // The screen's own filter, so the file is the list the user is
-              // looking at: this destination's store restriction and every
-              // active chip (rules › export).
-              filter={variables().filter}
+              // The screen's own filters, WITHOUT the destination's store
+              // restriction: the file carries every store's equipment by
+              // decision, narrowed only by the chips the user set
+              // (rules › export).
+              filter={buildExportFilter(query())}
               sort={variables().sort}
             />
           </HeaderButtons>

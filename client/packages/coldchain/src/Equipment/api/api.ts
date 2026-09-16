@@ -89,10 +89,10 @@ const assetParsers = {
 };
 
 // What this register is reading, in one place: the class pinning that makes it
-// the cold chain register, the store restriction the Cold chain destination
-// carries (the server scopes neither), and the screen's own filters. The list
-// and the export MUST build it identically or the file stops matching the
-// screen that produced it.
+// the cold chain register, the screen's own filters, and — for the LIST only —
+// the store restriction the Cold chain destination carries (the server scopes
+// neither). The export calls this without the two store arguments on purpose:
+// its filters must match the screen, its scope is the whole register.
 const assetListFilter = (
   storeId: string,
   filterBy?: FilterBy | null,
@@ -149,19 +149,15 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
-    // The export. Same filter as the list, unpaginated — so the file is the
-    // list the user is looking at, and in particular a cold chain export
-    // carries this store's equipment rather than every store's.
-    listAll: async (
-      { sortBy, filterBy }: ListParams<AssetFragment>,
-      storeCode?: string,
-      isColdChain?: boolean
-    ) => {
+    // The export. The list's own filters, unpaginated — but the store
+    // restrictions are deliberately NOT applied: an export is a register-wide
+    // extract, so it covers every store's equipment from either destination.
+    listAll: async ({ sortBy, filterBy }: ListParams<AssetFragment>) => {
       const result = await sdk.assets({
         key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: assetListFilter(storeId, filterBy, storeCode, isColdChain),
+        filter: assetListFilter(storeId, filterBy),
       });
 
       const items = result?.assets;
