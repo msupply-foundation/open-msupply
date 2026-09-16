@@ -50,8 +50,8 @@ Installers and Android packages for each release are on the
 - **The history from before the monorepo** is preserved unchanged on the `pre-monorepo` branch.
   Anything that referenced an old SHA still resolves there.
 - **`develop` and `main` are bot-owned.** Nothing is merged into them here. They are updated
-  from the private repo at each release, and on demand, so `develop` here is a snapshot rather
-  than a live branch.
+  from the private repo at each release and otherwise on demand, so `develop` here is a snapshot
+  rather than a live branch.
 - **Release tags** of the form `vX.Y.Z` are published. Release-candidate and nightly tags are not.
 
 ### Reporting a bug or requesting a feature
