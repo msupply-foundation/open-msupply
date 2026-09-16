@@ -120,6 +120,19 @@ export type { InfoTooltipProps } from '../ui/elements/feedback/InfoTooltip';
 // audited country plugins' FORM surfaces use
 // (kdd/plugin-loading/evidence/interface-audits/).
 export { CurrencyField } from '../ui/elements/inputs/CurrencyField';
+// The expiry field on the Stocktake Helper's count screen (#495), which was
+// hand-rolling a native <input type="date"> for want of this — per-browser
+// chrome and a forced yyyy-MM-dd, where the host's field is a corvu calendar
+// that renders the same everywhere and follows the display `format`.
+// kdd/bundling files date pickers under the lazy() wrappers, but that rule is
+// for components the startup path does not already carry. This one it does:
+// FilterBar statically imports DateRangeField/DateTimeField, so DatePickerPanel
+// (with @corvu/calendar) is modulepreloaded from index.html already, and
+// DateField with it. Measured: the SDK-only startup delta moves 4.7 -> 4.8 KB
+// gz and no new stylesheet is linked. Revisit if the eager path ever sheds the
+// calendar — then this becomes the first lazy() wrapper.
+export { DateField } from '../ui/elements/inputs/DateField';
+export type { DateFieldProps } from '../ui/elements/inputs/DateField';
 export { FieldRow } from '../ui/elements/inputs/FieldRow';
 export { Select } from '../ui/elements/selectors/Select';
 export type { SelectOption } from '../ui/elements/selectors/Select';
@@ -188,6 +201,19 @@ export {
 // RTL-flipping, and already alive in this graph (the date picker's month
 // navigation uses it), so re-exporting costs nothing.
 export { ChevronLeftIcon } from '../ui/icons';
+/*
+ * The standing "this opens something" chevron on a whole-row/whole-card
+ * target — the Stocktake Helper's worklist rows (#495), which are cards whose
+ * only affordance is the card itself. WidgetCard carries its own ArrowRightIcon
+ * for exactly this job, but a worklist row is not a widget card, and a chevron
+ * hand-drawn in the plugin would miss `data-flip-rtl` and so point the wrong
+ * way in Arabic.
+ *
+ * Same "already in the graph" bargain as the five above — Select pulls
+ * ChevronDownIcon from this module eagerly, so this is one more small
+ * component in a module that ships regardless.
+ */
+export { ChevronRightIcon } from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';

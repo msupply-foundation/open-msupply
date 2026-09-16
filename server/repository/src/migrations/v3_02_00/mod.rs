@@ -5,6 +5,7 @@ mod add_clinician_to_prescription_request;
 mod add_custom_field_scope_deleted_datetime;
 mod add_prescription_request_activity_log_types;
 mod add_prescription_request_id_to_invoice;
+mod add_prescription_request_report_context;
 mod add_prescription_request_status_processor_cursor_pg_enum;
 mod add_prescription_request_tables;
 mod add_transfer_comment_to_invoice_line;
@@ -35,6 +36,7 @@ impl Migration for V3_02_00 {
             Box::new(remove_program_from_prescription_request::Migrate),
             Box::new(add_transfer_comment_to_invoice_line::Migrate),
             Box::new(restore_stocktake_line_indexes::Migrate),
+            Box::new(add_prescription_request_report_context::Migrate),
         ]
     }
 }

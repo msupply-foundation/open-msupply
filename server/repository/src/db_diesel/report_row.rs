@@ -34,6 +34,7 @@ pub enum ContextType {
     CustomerReturn,
     /// OG "replenishment"
     StockMovement,
+    PrescriptionRequest,
 }
 
 table! {

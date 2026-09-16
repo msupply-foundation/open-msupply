@@ -2,15 +2,10 @@
 # NoPermissionRequired at both ends — any signed-in user reads and writes
 # (OMS-REG-SET-05.20). The USB preference is client-only and never part of the input
 # (OMS-REG-SET-05.22).
-query labelPrinterSettings {
-  labelPrinterSettings {
-    address
-    port
-    labelHeight
-    labelWidth
-  }
-}
-
+#
+# The matching READ lives in @/domain/labelPrinter, because printing screens
+# need it too (the network route's not-configured gate) and one operation has
+# one home. This file keeps the write, which only this screen performs.
 mutation updateLabelPrinterSettings($input: LabelPrinterSettingsInput!) {
   updateLabelPrinterSettings(input: $input) {
     ... on LabelPrinterUpdateResult {
