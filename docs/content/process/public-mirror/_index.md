@@ -27,14 +27,17 @@ half: how the sync runs, and what to do when something was published that should
   PR's new paths with their verdicts, what a rules edit flips across the whole history, and whether
   the next sync would be a force-push. A PR that publishes anything new fails the required check
   until a reviewer adds the `mirror-reviewed` label.
-- **Nightly** (`mirror-public.yaml`, scheduled) the `filter` job clones the selected refs, runs
-  `git filter-repo` through the rules and the commit-message rewrite, re-checks the filtered tree
-  against the rules, runs gitleaks over the filtered history, and hands a bundle to the `push` job.
-  The push job re-checks the tree again, mints a `tmf-ci-bot` App token scoped to the public
-  repo only (`public-mirror` environment), and pushes **without force**. A non-fast-forward push fails —
-  that is the alarm.
-- **Release days:** dispatch `mirror-public.yaml` by hand so `main` and the tag go out together.
-  Leave `refs` empty (develop, main and all release tags) or name the refs; leave `force` off.
+- **On each release tag** (`mirror-public.yaml`, triggered by a `vX.Y.Z` tag push) the `filter`
+  job clones the selected refs, runs `git filter-repo` through the rules and the commit-message
+  rewrite, re-checks the filtered tree against the rules, runs gitleaks over the filtered history,
+  and hands a bundle to the `push` job. The push job waits for the `public-mirror` environment's
+  **wait timer** (the retraction window: reject the pending deployment in the run's UI and
+  nothing is published), re-checks the tree again, mints a `tmf-ci-bot` App token scoped to the
+  public repo only, and pushes **without force**. A non-fast-forward push fails — that is the
+  alarm. Every run publishes develop, main and all release tags, so the public develop is a
+  snapshot refreshed at each release.
+- **On demand:** dispatch `mirror-public.yaml` by hand. Leave `refs` empty (develop, main and all
+  release tags) or name the refs; leave `force` off.
 
 ## Runbook: something private was published
 
