@@ -144,7 +144,7 @@ export { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 export type { ContentContainerProps } from '../ui/layout/ContentContainer/ContentContainer';
 // The settings-form set — what the Stocktake Helper's Settings screen needs
 // (plugins/cook_islands, #489): save/discard actions, the numeric thresholds,
-// the item search box, and the per-item Essential toggle.
+// the item search box, and the per-item Priority toggle.
 // NumberField and TextField are already in this barrel's graph (CurrencyField
 // wraps NumberField, which renders through TextField), so exporting them keeps
 // two modules alive that ship regardless; Button and ToggleSwitch are new
