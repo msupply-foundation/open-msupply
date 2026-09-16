@@ -25,6 +25,31 @@ import styles from './ColumnSettings.module.css';
 //
 // Writes go through setConfig (the same controlled path DataTable uses), so
 // persistence + layering still apply.
+/**
+ * The columns the panel LISTS, in effective display order: leaf columns minus
+ * the structural ones (meta.hideFromColumnSettings) minus the ones this view
+ * doesn't show (meta.hideOnCard / hideOnTable).
+ *
+ * Exported because the toolbar needs the same answer to decide whether to
+ * offer the Columns control at all — a table whose every column is structural
+ * (the demographics grid: each column carries an input Save still writes, so
+ * none may be hidden) would otherwise open a panel with nothing in it but
+ * Show all / Hide all.
+ */
+export const listedColumnIds = <T,>(
+  table: Table<T>,
+  viewMode: ViewMode
+): string[] =>
+  table
+    .getAllLeafColumns()
+    .filter(c => !c.columnDef.meta?.hideFromColumnSettings)
+    .filter(c =>
+      viewMode === 'card'
+        ? !c.columnDef.meta?.hideOnCard
+        : !c.columnDef.meta?.hideOnTable
+    )
+    .map(c => c.id);
+
 export function ColumnSettings<T>(props: {
   table: Table<T>;
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
@@ -37,20 +62,10 @@ export function ColumnSettings<T>(props: {
   viewMode: ViewMode;
 }): JSX.Element {
   // Leaf column ids in effective display order (columnOrder if set, else def
-  // order). Card-only / table-only columns are excluded for the current view
-  // (see the viewMode prop) so the panel matches what's on screen.
-  const listedIds = () =>
-    props.table
-      .getAllLeafColumns()
-      // Structural columns opt out of the popover entirely (stay in the view,
-      // not user-configurable).
-      .filter(c => !c.columnDef.meta?.hideFromColumnSettings)
-      .filter(c =>
-        props.viewMode === 'card'
-          ? !c.columnDef.meta?.hideOnCard
-          : !c.columnDef.meta?.hideOnTable
-      )
-      .map(c => c.id);
+  // order). Structural columns opt out entirely (they stay in the view, just
+  // not user-configurable), and card-only / table-only columns are excluded
+  // for the current view, so the panel matches what's on screen.
+  const listedIds = () => listedColumnIds(props.table, props.viewMode);
 
   // Reorder by swapping two LISTED neighbours — but splice within the FULL
   // column order, so columns hidden in this view keep their slots (columnOrder
