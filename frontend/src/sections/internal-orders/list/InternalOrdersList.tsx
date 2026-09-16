@@ -58,7 +58,7 @@ import {
 import { CreateInternalOrderModal } from './create/CreateInternalOrderModal';
 import { StocktakeWarningDialog } from './create/StocktakeWarningDialog';
 import { recentStocktakeIsInsufficient } from './create/createInternalOrder';
-import { newOrderWarningSuperseded } from '@/plugins/newOrderGate';
+import { warningSuppressed } from '@/plugins/warningSuppression';
 
 // The internal-orders list view (spec/internal-orders S1). An internal order is
 // a REQUEST requisition; `type` is pinned to REQUEST on every read. Mirrors the
@@ -197,12 +197,13 @@ const InternalOrdersList: Component = () => {
   // New order (OMS-REG-REPL-04.42/.45/.86/.87): where the store warns on
   // missing recent stocktakes, evaluate them first — a shortfall diverts
   // through the warning gate; otherwise (and when the preference is off) the
-  // create modal opens directly. An installed plugin's new-order gate can
-  // supersede the store-wide warning with its own item-level measure
-  // (rules › creation); the two reads run in parallel, the supersession
-  // winning, so a superseded store never sees the warning however short its
-  // stocktakes fall. The New-order button is disabled until the context read
-  // resolves, so the gate is always decided before the modal can open.
+  // create modal opens directly. An installed plugin's warning-suppression
+  // contribution can supersede the store-wide warning with its own item-level
+  // measure (rules › creation); the two reads run in parallel, the
+  // suppression winning, so a suppressed store never sees the warning however
+  // short its stocktakes fall. The New-order button is disabled until the
+  // context read resolves, so the gate is always decided before the modal can
+  // open.
   const startCreate = async () => {
     const warn = warnStocktake();
     if (!warn?.enabled) {
@@ -210,12 +211,13 @@ const InternalOrdersList: Component = () => {
       return;
     }
     setChecking(true);
-    // Neither read can reject (the gate consult isolates plugin failures and
-    // graphqlFetch never throws), but this await now spans plugin code — the
-    // finally guarantees a fault can never leave the button disabled for good.
+    // Neither read can reject (the suppression consult isolates plugin
+    // failures and graphqlFetch never throws), but this await now spans plugin
+    // code — the finally guarantees a fault can never leave the button
+    // disabled for good.
     try {
       const [superseded, insufficient] = await Promise.all([
-        newOrderWarningSuperseded(),
+        warningSuppressed('internalOrders.recentStocktake'),
         recentStocktakeIsInsufficient(
           params.storeId,
           warn.maxAge,

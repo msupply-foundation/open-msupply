@@ -370,28 +370,47 @@ export type InternalOrderSidePanelSectionProps = {
   readonly lines: readonly InternalOrderLineView[];
 };
 
-// ── The internal-orders new-order gate ──────────────────────────────────────
+// ── Warning suppression ─────────────────────────────────────────────────────
 // The one CONSULTED slot: it renders nothing, ever. The host asks it a
 // question at a defined moment instead of giving it a region to draw in
-// (sdk-contract § the new-order gate slot).
+// (sdk-contract § the warning-suppression slot). Generic over host warnings:
+// the contribution names its target as data (a published warning id), so a
+// new suppressible warning is a new id here, never a new slot or SDK shape.
 
 /**
- * How a plugin supersedes the host's store-wide recent-stocktake warning at
- * New order (internal-orders rules § creation). The host consults every
- * visible gate contribution when New order is invoked with the warn
- * preference on; a gate answering `true` declares that its plugin carries an
- * item-level count-freshness measure for the entered store, so the store-wide
- * warning stands down and the create flow proceeds directly.
+ * The host warnings a plugin may suppress, as published ids — additive-only
+ * within a `PLUGIN_API_VERSION` major, like the slot catalogue itself. A
+ * contribution naming any other id is refused whole, by name (the same
+ * judgement as an unknown slot id): it was built against a host that
+ * publishes the warning, and this one does not.
+ *
+ * - `internalOrders.recentStocktake` — the store-wide recent-stocktake
+ *   warning at the internal-orders New-order action (internal-orders rules §
+ *   creation); consulted when New order is invoked with the warn preference
+ *   on.
+ */
+export const HOST_WARNING_IDS = ['internalOrders.recentStocktake'] as const;
+
+/** A published suppressible host warning id — a suppression target. */
+export type HostWarningId = (typeof HOST_WARNING_IDS)[number];
+
+/**
+ * How a plugin answers whether the host warning its contribution names is
+ * suppressed — replaced by a measure of the plugin's own (the Cook Islands
+ * item-level count freshness replacing the store-wide recent-stocktake
+ * warning). The host consults every visible contribution naming the warning
+ * at the moment the warning would otherwise show; any `true` suppresses it
+ * for that invocation, and the create-or-whatever flow proceeds directly.
  *
  * `false` — and equally a thrown error or a rejected promise — leaves the
- * host's warning to its own preference-driven behaviour: a failing plugin can
- * never strip a store of the one measure it has (rules § error isolation).
- * The answer is per-store and MAY be asynchronous, because whether the
- * measure applies is typically the plugin's own data (the Cook Islands
- * counting schedule); the host awaits it inside the same in-flight state that
- * already covers its stocktake check.
+ * warning to the host's own behaviour: a failing plugin can never strip a
+ * store of the one measure it has (rules § error isolation). The answer is
+ * per-store and MAY be asynchronous, because whether the replacement applies
+ * is typically the plugin's own data (the Cook Islands counting schedule);
+ * the host awaits it inside the in-flight state of the action that would
+ * show the warning.
  */
-export type NewOrderGateResolver = (
+export type WarningSuppressionResolver = (
   ctx: SlotContext
 ) => boolean | Promise<boolean>;
 
@@ -487,11 +506,11 @@ export interface SlotPropsMap {
   'internalOrderLine.column': ColumnCellProps<InternalOrderLineView>;
   'internalOrderLine.infoPanel': InternalOrderLineInfoPanelProps;
   'internalOrder.sidePanelSection': InternalOrderSidePanelSectionProps;
-  // The gate has no props: nothing renders, so there is nothing to receive.
-  // The empty entry only keeps the slot in the catalogue's uniform shape
-  // (`SlotId = keyof SlotPropsMap`) — deliberately not a named, exported type,
-  // which would publish a props DTO no plugin can ever be handed.
-  'internalOrders.newOrderGate': Record<string, never>;
+  // The consulted slot has no props: nothing renders, so there is nothing to
+  // receive. The empty entry only keeps the slot in the catalogue's uniform
+  // shape (`SlotId = keyof SlotPropsMap`) — deliberately not a named, exported
+  // type, which would publish a props DTO no plugin can ever be handed.
+  'host.warningSuppression': Record<string, never>;
   'prescription.paymentForm': PrescriptionPaymentFormProps;
 }
 
@@ -537,9 +556,11 @@ export interface SlotPlacement {
   // The side panel's region is one fixed place too — after the panel's own
   // sections, before its actions — so there is no anchor to name.
   'internalOrder.sidePanelSection': NoPlacement;
-  // The gate is consulted, not placed: nothing renders, so there is nowhere
-  // to anchor. `when(ctx)` and the resolver's own answer are its placement.
-  'internalOrders.newOrderGate': NoPlacement;
+  // Consulted, not placed: nothing renders, so there is nowhere to anchor.
+  // The one declaration is the TARGET — which published host warning the
+  // contribution suppresses; `when(ctx)` and the resolver's own answer do the
+  // rest.
+  'host.warningSuppression': { warning: HostWarningId };
   'prescription.paymentForm': NoPlacement;
 }
 
@@ -562,9 +583,9 @@ export interface SlotRender {
     Component: Component<InternalOrderSidePanelSectionProps>;
   };
   // The second departure from the uniform `Component` shape (the column
-  // slot's `value` is the first): the gate renders nothing, so its whole
-  // "render" is the answer it gives when consulted.
-  'internalOrders.newOrderGate': { supersedes: NewOrderGateResolver };
+  // slot's `value` is the first): the consulted slot renders nothing, so its
+  // whole "render" is the answer it gives when consulted.
+  'host.warningSuppression': { suppresses: WarningSuppressionResolver };
   'prescription.paymentForm': {
     Component: Component<PrescriptionPaymentFormProps>;
   };
