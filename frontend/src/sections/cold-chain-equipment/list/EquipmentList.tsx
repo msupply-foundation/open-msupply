@@ -356,6 +356,10 @@ const EquipmentList: Component = () => {
               // cold-chain destination of a central server, which would drop
               // the column from a file that should carry it (rules › export).
               isCentral={isCentralServer()}
+              // The screen's own filter, so the file is the list the user is
+              // looking at: this destination's store restriction and every
+              // active chip (rules › export).
+              filter={variables().filter}
               sort={variables().sort}
             />
           </HeaderButtons>

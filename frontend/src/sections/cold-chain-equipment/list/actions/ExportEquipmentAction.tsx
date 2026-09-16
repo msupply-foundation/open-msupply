@@ -3,7 +3,6 @@ import { t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { ListExportAction } from '@/domain/reportFiles/ListExportAction';
-import { CCE_CLASS_ID } from '../../equipment';
 import {
   AssetsExport,
   type AssetsExportVariables,
@@ -16,15 +15,19 @@ import { equipmentToCsv } from '../equipmentToCsv';
 // state and the outcome report all live in ListExportAction — this file owns
 // only the query.
 //
-// ⚠️ The export covers the WHOLE REGISTER, not the filtered list and not the
-// active store's assets: its filter is `classId` alone (rules › export, OMS-REG-CCE-07.13,
-// contract ⚠️ wire trap). Captured as-is from the reference app, and the one
-// place this screen departs from the list-view standard — see BUILD_REPORT,
-// which carries it as the vertical's first candidate spec refinement.
+// The file is the list the user is looking at, unpaginated: the SAME filter the
+// screen is reading through, so the destination's store restriction and every
+// active filter chip both reach the file (rules › export, OMS-REG-CCE-07.13).
 
 export const ExportEquipmentAction: Component<{
   storeId: string;
   isCentral: boolean;
+  /**
+   * The list's own filter, class pinning and store restriction included — not
+   * a filter built here, which is how the export came to cover every store's
+   * equipment (contract › export).
+   */
+  filter: AssetsExportVariables['filter'];
   /** The list's active sort — the export carries it (contract › export). */
   sort: AssetsExportVariables['sort'];
 }> = props => {
@@ -41,10 +44,9 @@ export const ExportEquipmentAction: Component<{
   const buildCsv = async (): Promise<string | null> => {
     const result = await graphqlFetch(AssetsExport, {
       storeId: props.storeId,
-      filter: { classId: { equalTo: CCE_CLASS_ID } },
-      // The list's own sort, not a fixed one: the export drops the screen's
-      // filters (the wire trap above) but it does carry its ORDER, so the file
-      // reads in the order the user arranged the register (contract › export).
+      filter: props.filter,
+      // The list's own sort too, so the file reads in the order the user
+      // arranged the register (contract › export).
       sort: props.sort,
     });
     if (result.kind !== 'success') return null;
