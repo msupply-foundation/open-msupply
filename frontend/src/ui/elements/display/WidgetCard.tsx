@@ -70,6 +70,14 @@ export interface WidgetCardProps {
  * interactive element. */
 const INTERACTIVE = 'a, button, input, select, textarea, [tabindex]';
 
+const clickOnSpace = (
+  event: KeyboardEvent & { currentTarget: HTMLElement }
+) => {
+  if (event.key !== ' ') return;
+  event.preventDefault();
+  event.currentTarget.click();
+};
+
 /*
  * WidgetCard — a clickable titled card for dashboard grids. The WHOLE card is a
  * single interactive element: an <a> when given `href` (router navigation) or a
@@ -133,6 +141,7 @@ export const WidgetCard = (props: WidgetCardProps) => {
       href={isLink() ? props.href : undefined}
       type={isLink() ? undefined : 'button'}
       onClick={isLink() ? undefined : () => props.onClick?.()}
+      onKeyDown={isLink() ? clickOnSpace : undefined}
       aria-describedby={hasContent() ? contentId : undefined}
       data-content-placement={props.contentPlacement ?? 'spread'}
       data-size={props.size ?? 'md'}
