@@ -1,0 +1,96 @@
+<style>
+  {% include "style.css" %}
+</style>
+
+{# A STORED INSTANT renders at the VIEWER's timezone, never UTC: the client
+sends its IANA zone as arguments.timezone on every generation, and a
+prescription date that disagrees with the one on screen is a date the reader
+cannot trust. #}
+{% macro formatDay(datetime) %} {% if datetime %}{{ datetime |
+date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% endif %} {% endmacro
+input %}
+
+{# A calendar date (date of birth) — no instant, so no zone to convert from;
+shifting it by one would change the date of birth. #}
+{% macro formatPlainDay(date) %} {% if date %}{{ date |
+date(format="%d/%m/%Y") }}{% endif %} {% endmacro input %}
+
+{# The printed-at stamp. Tera's now() is already the SERVER's local time, not
+UTC, so converting it again would double-shift it. #}
+{% macro formatPrintedAt(datetime) %} {% if datetime %}{{ datetime |
+date(format="%d/%m/%Y %H:%M:%S") }}{% endif %} {% endmacro input %}
+
+<div class="header">
+  <h3>{{t(k="label.store", f="Store")}}: {{ data.store.storeName }}</h3>
+  <h5>
+    {{t(k="label.patient-name", f="Patient name")}}:
+    {{data.prescriptionRequest.patient.firstName | default(value='')}}
+    {{data.prescriptionRequest.patient.lastName | default(value='')}}
+  </h5>
+  <p>
+    {{t(k="label.date-of-birth", f="Date of birth")}}:
+    {{self::formatPlainDay(date=data.prescriptionRequest.patient.dateOfBirth)}}
+  </p>
+  <p>
+    {{t(k="label.clinician", f="Clinician")}}:
+    {{data.prescriptionRequest.clinician.firstName | default(value='')}}
+    {{data.prescriptionRequest.clinician.lastName | default(value='')}}
+  </p>
+  <p>
+    {{t(k="label.number", f="Number")}}:
+    {{data.prescriptionRequest.prescriptionRequestNumber}}
+  </p>
+  <p>
+    {{t(k="label.prescription-date", f="Prescription date")}}:
+    {{self::formatDay(datetime=data.prescriptionRequest.prescriptionDatetime)}}
+  </p>
+  {% if data.prescriptionRequest.diagnosis %}
+  <p>
+    {{t(k="heading.diagnosis", f="Diagnosis")}}:
+    {{data.prescriptionRequest.diagnosis.description}}
+  </p>
+  {% endif %}
+  <p>
+    {{t(k="label.entered-by", f="Entered by")}}:
+    {{data.prescriptionRequest.user.firstName | default(value='')}}
+    {{data.prescriptionRequest.user.lastName | default(value='')}}
+  </p>
+</div>
+
+<div class="container">
+  <table>
+    <thead>
+      <tr class="heading">
+        <td>{{t(k="label.code", f="Code")}}</td>
+        <td>{{t(k="report.item-name", f="Item Name")}}</td>
+        <td>{{t(k="label.quantity", f="Quantity")}}</td>
+        <td>{{t(k="label.unit-name", f="Unit")}}</td>
+        <td>{{t(k="label.directions", f="Directions")}}</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in data.prescriptionRequest.lines.nodes %}
+      <tr>
+        <td>{{line.item.code | default(value='')}}</td>
+        <td>{{line.item.name | default(value='')}}</td>
+        <td>{{line.numberOfUnits | default(value=0) | round(precision=2)}}</td>
+        <td>{{line.item.unitName | default(value='')}}</td>
+        <td>{{line.note | default(value='')}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if data.prescriptionRequest.comment %}
+<div class="container">
+  <p>
+    {{t(k="label.comment", f="Comment")}}:
+    {{data.prescriptionRequest.comment}}
+  </p>
+</div>
+{% endif %}
+
+<div class="footer">
+  <p>{{self::formatPrintedAt(datetime=now())}}</p>
+</div>

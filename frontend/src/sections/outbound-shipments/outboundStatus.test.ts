@@ -1,0 +1,80 @@
+import { describe, expect, it } from 'vitest';
+import {
+  CLIENT_SETTABLE,
+  STATUS_FLOW,
+  canReturnLines,
+  isDeletable,
+  isEditable,
+  statusColour,
+  statusLabel,
+  statusIndex,
+} from './outboundStatus';
+
+// The status lifecycle helpers (spec/outbound-shipments rules.md § status
+// lifecycle / editability / deletion). Criteria cited from
+// spec/outbound-shipments/acceptance.md.
+
+describe('outboundStatus', () => {
+  it('orders the full lifecycle NEW → VERIFIED', () => {
+    expect([...STATUS_FLOW]).toEqual([
+      'NEW',
+      'ALLOCATED',
+      'PICKED',
+      'SHIPPED',
+      'DELIVERED',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
+    expect(statusIndex('NEW')).toBe(0);
+    expect(statusIndex('VERIFIED')).toBe(6);
+    expect(statusIndex('CANCELLED')).toBe(-1);
+  });
+
+  // OMS-REG-DIST-04.8 — SHIPPED is read-only: every edit affordance keys off
+  // this gate.
+  it('OMS-REG-DIST-04.8: editable while NEW/ALLOCATED/PICKED, read-only from SHIPPED', () => {
+    expect(isEditable('NEW')).toBe(true);
+    expect(isEditable('ALLOCATED')).toBe(true);
+    expect(isEditable('PICKED')).toBe(true);
+    expect(isEditable('SHIPPED')).toBe(false);
+    expect(isEditable('DELIVERED')).toBe(false);
+    expect(isEditable('RECEIVED')).toBe(false);
+    expect(isEditable('VERIFIED')).toBe(false);
+  });
+
+  // OMS-REG-DIST-01.7/OMS-REG-DIST-01.8 — deletable exactly while editable;
+  // never once shipped.
+  it('OMS-REG-DIST-01.7/OMS-REG-DIST-01.8: deletable mirrors editable', () => {
+    expect(isDeletable('PICKED')).toBe(true);
+    expect(isDeletable('SHIPPED')).toBe(false);
+  });
+
+  // Contract § status lifecycle: only ALLOCATED/PICKED/SHIPPED are client-
+  // settable — NEW is unreachable by update, DELIVERED+ transfer-mirrored.
+  it('client-settable statuses exclude NEW and the transfer-mirrored tail', () => {
+    expect([...CLIENT_SETTABLE]).toEqual(['ALLOCATED', 'PICKED', 'SHIPPED']);
+  });
+
+  // OMS-REG-DIST-04.21 — the customer-return entry point opens only from
+  // SHIPPED / DELIVERED / VERIFIED; every earlier status, and RECEIVED, gets
+  // the notice.
+  it('OMS-REG-DIST-04.21: canReturnLines only from SHIPPED/DELIVERED/VERIFIED', () => {
+    expect(canReturnLines('SHIPPED')).toBe(true);
+    expect(canReturnLines('DELIVERED')).toBe(true);
+    expect(canReturnLines('VERIFIED')).toBe(true);
+    expect(canReturnLines('NEW')).toBe(false);
+    expect(canReturnLines('ALLOCATED')).toBe(false);
+    expect(canReturnLines('PICKED')).toBe(false);
+    expect(canReturnLines('RECEIVED')).toBe(false);
+  });
+
+  // statusLabel/statusColour resolve via the map, else fall back: the raw
+  // status string for the label, the default token for the colour.
+  it('statusLabel/statusColour fall back for an unknown status', () => {
+    // Unknown status → the ?? fallback fires (not in either map).
+    expect(statusLabel('BOGUS')).toBe('BOGUS');
+    expect(statusColour('BOGUS')).toBe('var(--status-new)');
+    // CANCELLED sits outside the flow but has its own mapped chip token.
+    expect(statusColour('CANCELLED')).toBe('var(--status-cancelled)');
+  });
+});

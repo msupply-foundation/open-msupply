@@ -31,6 +31,7 @@ export const SupplyRequestedQuantityButtonComponent = () => {
 
   return (
     <ButtonWithIcon
+      data-testid="supply-to-requested-button"
       disabled={isDisabled}
       Icon={<ZapIcon />}
       label={label}

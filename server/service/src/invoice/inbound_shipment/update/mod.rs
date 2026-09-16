@@ -1,11 +1,14 @@
 use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
-use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
+use crate::{
+    custom_field::CustomFieldPatchProblem, invoice::query::get_invoice,
+    service_provider::ServiceContext, WithDBError,
+};
 use chrono::{DateTime, FixedOffset};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
 use repository::{
-    ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
-    RepositoryError, StockLineRowRepository,
+    ActivityLogType, CustomFieldValueType, InvoiceLineRowRepository, InvoiceRowRepository,
+    InvoiceStatus, RepositoryError, StockLineRowRepository,
 };
 use repository::{Invoice, LocationMovementRowRepository};
 
@@ -235,6 +238,12 @@ pub enum UpdateInboundShipmentError {
     CurrencyRateMustBePositive,
     /// A customFields patch key is not a visible inbound shipment property.
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -243,6 +252,19 @@ pub enum UpdateInboundShipmentError {
     PreferenceError(String),
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,
+}
+
+impl From<CustomFieldPatchProblem> for UpdateInboundShipmentError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateInboundShipmentError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateInboundShipmentError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentError {
@@ -2592,13 +2614,16 @@ mod test {
     #[actix_rt::test]
     async fn update_inbound_shipment_custom_fields() {
         use repository::{
-            CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository,
-            CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType,
+            CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+            CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType,
         };
         use serde_json::json;
 
-        let (_, connection, connection_manager, _) =
-            setup_all("update_inbound_shipment_custom_fields", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_inbound_shipment_custom_fields",
+            MockDataInserts::all(),
+        )
+        .await;
 
         // Seed one visible inbound shipment property so key validation passes.
         CustomFieldRowRepository::new(&connection)
@@ -2646,7 +2671,9 @@ mod test {
                 patch(&[("not_a_property", json!("x"))]),
                 InboundShipmentType::InboundShipment,
             ),
-            Err(ServiceError::UnknownPropertyKey("not_a_property".to_string()))
+            Err(ServiceError::UnknownPropertyKey(
+                "not_a_property".to_string()
+            ))
         );
 
         // Pre-seed a key the client doesn't own (as if hidden/legacy) directly

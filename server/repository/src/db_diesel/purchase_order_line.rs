@@ -6,8 +6,7 @@ use super::{
 use crate::{
     diesel_extensions::double_coalesce,
     diesel_macros::{
-        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
-        apply_string_filter,
+        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
     purchase_order_line_stats,
     purchase_order_row::purchase_order::{self},
@@ -16,10 +15,7 @@ use crate::{
     Sort, StringFilter,
 };
 
-use diesel::{
-    dsl::IntoBoxed,
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 type PurchaseOrderLineJoin = (
     PurchaseOrderLineRow,
@@ -124,6 +120,9 @@ impl<'a> PurchaseOrderLineRepository<'a> {
         }
 
         let final_query = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(purchase_order_line::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 

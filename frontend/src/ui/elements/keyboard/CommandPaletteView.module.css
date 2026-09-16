@@ -1,0 +1,93 @@
+/*
+ * The command palette's panel (spec/keyboard ui-surface S1 § Layout): "Centred
+ * overlay above a dimmed page. Vertical order: search field, then the results
+ * list directly beneath it, the two reading as one panel. The list scrolls
+ * within a fixed height; the panel does not grow to the page."
+ *
+ * The centring, the dimmed page and the top layer all come from <Dialog> (the
+ * native <dialog> + showModal()); this file owns only the two-region stack.
+ *
+ * The Dialog is `chromeless` — no card sits behind these two regions. They read
+ * as one panel by ADJACENCY (a tight even gap, a shared width, matching radii)
+ * rather than by sharing a background, so each carries its own surface: the
+ * field its input surface, the list the same floating-option-list vocabulary as
+ * a Select/Combobox popup (raised surface, value border, shadow-4, and
+ * --bg-group-main for the highlighted row).
+ */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/*
+ * A FIXED height, not a max-height: the list keeps one size whatever the term
+ * matches, so the panel does not resize under the user's hands as they type —
+ * the same reasoning as the Dialog's own minBodyHeightRem.
+ *
+ * The surface must be OPAQUE: the rows float over dimmed page content, and both
+ * the row text and the highlight tint need a known background behind them.
+ */
+.results {
+  height: 18rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-4);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  color: var(--text-body);
+  font-size: var(--text-md);
+  line-height: var(--line-body);
+}
+
+/*
+ * The highlighted row (KB-P5). Driven by aria-selected so the visual state and
+ * the state assistive technology reads cannot diverge — there is no second
+ * "highlighted" flag to keep in step. The tint is the one every other option
+ * list in the library uses on a raised surface (Select/Combobox
+ * .item[data-highlighted]); the drawer's tint is white in light theme and would
+ * vanish here.
+ */
+.option[aria-selected='true'] {
+  background: var(--bg-group-main);
+}
+
+.option:hover {
+  background: var(--drawer-hover-bg);
+}
+
+/* The platform-spelled keys following the action's name (KB-P4). */
+.keys {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+/*
+ * The no-match region stands in for the list, so it takes the SAME box — same
+ * fixed height, same surface — and the palette keeps one shape whether or not
+ * the term matched. Without the card behind it, an unsurfaced empty state would
+ * leave the message floating on the bare scrim.
+ */
+.empty {
+  height: 18rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-4);
+}

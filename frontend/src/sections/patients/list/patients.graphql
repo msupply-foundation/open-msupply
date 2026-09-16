@@ -1,0 +1,46 @@
+# The patient list (spec/patients S1): site-wide, server-paginated, filtered and
+# sorted. `patients` is NOT store-scoped despite taking storeId (spec/patients
+# contract › visibility wire trap) — storeId is an auth/context argument, not a
+# visibility filter. programEnrolments backs the (program-module-gated) chip
+# column; ProgramEnrolmentResponse is a single-member union = connector.
+query patients(
+  $storeId: String!
+  $filter: PatientFilterInput
+  $sort: [PatientSortInput!]
+  $page: PaginationInput
+) {
+  patients(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on PatientConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        code2
+        name
+        firstName
+        lastName
+        gender
+        dateOfBirth
+        nextOfKinName
+        isDeceased
+        createdDatetime
+        # Custom-field VALUES (JSON object), server-filtered to the "patient"
+        # scope's visible keys — backs the configured custom-field columns.
+        customFields
+        programEnrolments {
+          ... on ProgramEnrolmentConnector {
+            __typename
+            nodes {
+              # `type` is the registry name shown on the chip (AC-G2 column). The
+              # document `name` carries a `p/{patientId}/` prefix, so it is NOT
+              # used for display; `type` is the clean program/registry name.
+              type
+              programEnrolmentId
+            }
+          }
+        }
+      }
+    }
+  }
+}

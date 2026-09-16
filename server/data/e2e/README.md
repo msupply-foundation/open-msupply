@@ -1,8 +1,8 @@
 # e2e reference datafile
 
-Seed data for the deterministic Playwright suites (defined in
-[open-msupply-frontend](https://github.com/msupply-foundation/open-msupply-frontend)
-under `e2e/`; run against this repo with `yarn e2e:local`).
+Seed data for the deterministic Playwright suites (defined under
+`frontend/e2e/`; run against the legacy client with `yarn e2e:local` in
+`client/`).
 Restore it into a fresh database with:
 
 ```bash
@@ -26,8 +26,58 @@ users, stores, periods, programs. Plus injected login wiring
 Admin on GRY + FEAT and the three auth-profile users above.
 
 Deliberately **no stock, no documents** — store-local state is created through
-the GraphQL API by `e2e/specs/data.setup.ts` (in open-msupply-frontend) at suite start
+the GraphQL API by `frontend/e2e/specs/data.setup.ts` at suite start
 ("seed nouns, create verbs"). Don't add stock here; extend the arrange step.
+
+### Fixtures a suite cannot arrange for itself
+
+Some behaviours are only observable against a _gate_ — a permission the user
+lacks, or a preference in its other state. Neither can be arranged through the
+remote API mid-run: `MutatePreferences` is not granted here, and the suites run
+`fullyParallel`, so flipping a global preference would change the UI under
+every other suite. They therefore live here.
+
+| Fixture                                            | What it is for                                                       |
+| -------------------------------------------------- | -------------------------------------------------------------------- |
+| `StockViewer` / `pass` on GRY                      | the reduced-permission user — see below                              |
+| 3 active VVM statuses (`Stage1`–`Stage3`)          | so the VVM status picker has something to offer                      |
+| `allow_tracking_of_stock_by_donor`, on             | the donor field's on-state (global)                                  |
+| `backdating`, shipments + adjustments on, `maxDays` 30 | backdated shipments and adjustments, and the window's bound (global) |
+| `E2E Facility Customer`, joined to GRY             | a NON-STORE customer — the outbound received-count / difference columns only appear for one |
+| `E2E On-Hold Customer`, joined to GRY              | an on-hold customer, listed but not selectable in the customer picker |
+| `manage_vvm_status_for_stock` on GRY               | the outbound line table's VVM-status column                          |
+| `manage_vaccines_in_doses` on GRY                  | the outbound line table's doses-per-unit column                      |
+| `vaccine_module` on GRY                            | the Cold chain destinations (Monitoring, Sensors, Equipment) and the app-wide cold-chain notification band; the cold-chain monitoring suite seeds sensors, readings and breaches into GRY through the `/coldchain/v1` REST API, which writes to the login user's DEFAULT store, so the store Admin defaults to has to be the vaccine store |
+| `E2E needs written observations` asset log reason   | the reference migration seeds nine asset log reasons and **none** of them demands observations, so the equipment status dialog's observations-required rejection has no subject without it |
+| `AssetQuery` for `limited` on GRY                   | the equipment register's three change-permission gates (create, import, delete, update-status) are only observable to a user who can **read** it but not change it; `limited` holds no asset permission at all, so the destination is hidden from it |
+
+**`limited` gained `AssetQuery`.** It is the query-only profile, so a read
+permission is in character — and it is the only user here that can reach the
+cold-chain equipment register without being able to write to it. Grant it
+`AssetMutate` and the equipment suite's permission-gate tests stop being
+observable.
+
+**`StockViewer`** holds `StoreAccess`, `StockLineQuery`, `StockLineMutate` and
+`LogQuery`. What it _lacks_ is the point: no `InventoryAdjustmentMutate`, no
+`CreateRepack`, no `ViewAndEditVvmStatus`. Grant it more and the gated
+behaviours it exists for stop being observable.
+
+**`backdating` now has `shipmentsEnabled` true as well as
+`inventoryAdjustmentsEnabled`.** It started adjustments-only, deliberately, so
+that no shipment-dated suite changed behaviour; the outbound suite's
+picked-date (backdating) anchor then needed the shipment half, and because the
+preference is `PreferenceType::Global` there is exactly one value to have — a
+second store cannot carry a different one, so the two needs share one row.
+
+Both preferences are `PreferenceType::Global` and so apply to every store. One
+consequence, now for shipments as well as adjustments: with backdating enabled,
+"rejected because backdating is disabled" is no longer observable here.
+
+**The two extra customers are non-store `FACILITY` names** joined to GRY, which
+is what makes them usable as outbound customers. `E2E Facility Customer` exists
+because the received-count and Difference columns are only editable on a
+non-store customer's shipment; `E2E On-Hold Customer` carries `on_hold: true`,
+so the picker must offer it disabled rather than omit it.
 
 ## Format
 
@@ -35,6 +85,22 @@ A v7 `initialise-from-export` file: `sync_buffer_rows` in v7 wire shape
 (`data` = translated OMS row JSON), `site_id: 900`, `central_site_id: 6`.
 The `central_site_id` field routes integration through the v7 path — see
 `InitialisationData` in `server/cli/src/cli.rs`.
+
+**`data` must be a JSON object, never a JSON string of one.** Import
+deserializes the field straight into the target row struct, so a quoted string
+fails with `invalid type: string "..." expected struct <Row>` — and it fails
+QUIETLY: the row is skipped, and a skipped preference simply reads as its
+default, so the fixture looks present in this file while having no effect. Eight
+hand-added rows were wrong this way and inert for weeks. After editing by hand,
+check that nothing was dropped:
+
+```bash
+sqlite3 <db>.sqlite \
+  "select table_name, record_id, integration_error
+     from sync_buffer where integration_result = 'ERROR';"
+```
+
+An empty result is the pass condition.
 
 ## Regenerating
 

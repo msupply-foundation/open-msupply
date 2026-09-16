@@ -1,0 +1,251 @@
+# Internal-order DETAIL screen (spec/internal-orders S3).
+#
+# The header read is `requisition(storeId, id)` → RecordNotFound | RequisitionNode.
+# ⚠️ Interim divergence: the lines come from the NESTED `lines` connection
+# (client-side sort/filter/pagination), NOT a server-paginated root
+# `requisitionLines` query — that query does not exist in the pinned schema or
+# the live server (backend gap, open-msupply PR #12526). The spec's
+# "server-paginated line table (non-negotiable)" moves server-side once the PR
+# lands and the schema is re-pinned. Documented as a backend gap in
+# spec/internal-orders/contract.md § "Backend gaps" — a server gap, not a
+# frontend divergence.
+
+fragment InternalOrderLine on RequisitionLineNode {
+  id
+  itemId
+  itemName
+  comment
+  item {
+    code
+    unitName
+    defaultPackSize
+    doses
+    isVaccine
+  }
+  requestedQuantity
+  suggestedQuantity
+  approvedQuantity
+  approvalComment
+  availableStockOnHand
+  averageMonthlyConsumption
+  initialStockOnHandUnits
+  incomingUnits
+  outgoingUnits
+  lossInUnits
+  additionInUnits
+  expiringUnits
+  daysOutOfStock
+  pricePerUnit
+  # Population forecast (captured at line creation under
+  # displayPopulationBasedForecasting; null on a forecast-less line). The totals
+  # back the Target stock (population) surfaces; vaccineCourses is the per-course
+  # breakdown JSON the line editor parses for its calculation display (AC-PF7).
+  forecastTotalUnits
+  forecastTotalDoses
+  vaccineCourses
+  optionId
+  reason {
+    reason
+  }
+  # The items this line's item is configured as an ancillary of — backs the
+  # "Ancillary of" flag on the Name column (AC-A8); empty when none.
+  ancillaryParents {
+    id
+    name
+  }
+}
+
+fragment InternalOrderInfo on RequisitionNode {
+  id
+  requisitionNumber
+  status
+  colour
+  theirReference
+  comment
+  otherPartyId
+  otherPartyName
+  otherParty(storeId: $storeId) {
+    store {
+      isDisabled
+    }
+  }
+  destinationCustomer(storeId: $storeId) {
+    id
+    name
+  }
+  minMonthsOfStock
+  maxMonthsOfStock
+  program {
+    id
+    name
+  }
+  orderType
+  period {
+    id
+    name
+  }
+  approvalStatus
+  isEmergency
+  createdDatetime
+  sentDatetime
+  finalisedDatetime
+  # Side panel (S5): the creating user (entered-by, with their email for the
+  # info tooltip), the fulfilling inbound shipments (AC-RD1), and the source
+  # customer requisition this order was created from (AC-RD2, display gated on
+  # a preference). Documents (AC-F1) come from the same node so the Documents
+  # tab lists them and Copy carries them.
+  user {
+    username
+    email
+  }
+  shipments {
+    nodes {
+      id
+      invoiceNumber
+      createdDatetime
+      purchaseOrderId
+      user {
+        username
+      }
+    }
+  }
+  createdFromRequisition {
+    id
+    requisitionNumber
+    createdDatetime
+    user {
+      username
+    }
+  }
+  documents {
+    nodes {
+      id
+      fileName
+      createdDatetime
+      totalBytes
+    }
+  }
+  # The ancillary plan (AC-A1/A2), computed server-side on every read: the state
+  # drives the toolbar banner + send warning, the deltas back the plan popover.
+  # Both lists are always populated regardless of state.
+  ancillaryState {
+    state
+    count
+    toAdd {
+      itemId
+      requiredQuantity
+      item {
+        code
+        name
+        unitName
+      }
+    }
+    toUpdate {
+      itemId
+      requiredQuantity
+      currentQuantity
+      item {
+        code
+        name
+        unitName
+      }
+    }
+  }
+  lines {
+    totalCount
+    nodes {
+      ...InternalOrderLine
+    }
+  }
+}
+
+query internalOrderDetail($storeId: String!, $id: String!) {
+  requisition(storeId: $storeId, id: $id) {
+    __typename
+    ... on RequisitionNode {
+      ...InternalOrderInfo
+    }
+    ... on RecordNotFound {
+      __typename
+    }
+  }
+}
+
+# Header-level saves AND the send (status = SENT) both go through
+# updateRequestRequisition; the response carries the refreshed node so callers
+# splice it back with no refetch. A typed error surfaces its description.
+mutation updateInternalOrder(
+  $storeId: String!
+  $input: UpdateRequestRequisitionInput!
+) {
+  updateRequestRequisition(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionNode {
+      ...InternalOrderInfo
+    }
+    ... on UpdateRequestRequisitionError {
+      error {
+        __typename
+        description
+        # The emergency cap carries the maximum it enforced, so the send path
+        # can name it in the rejection copy (AC-EM1); other errors ignore it.
+        ... on OrderingTooManyItems {
+          maxItemsInEmergencyOrder
+        }
+        # The reasons backstop names every offending line, so the send path can
+        # flag their Reason cells in the table (AC-R3).
+        ... on RequisitionReasonsNotProvided {
+          errors {
+            requisitionLine {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Ancillary refresh (spec S3 § ancillary items, AC-A3/A4): ADD inserts the
+# missing ancillary lines, UPDATE overwrites stale quantities. The client
+# re-queries the order after, so only the outcome __typename is needed; a typed
+# error surfaces inline.
+mutation refreshAncillaryItems(
+  $storeId: String!
+  $input: RefreshAncillaryItemsInput!
+) {
+  refreshAncillaryItems(storeId: $storeId, input: $input) {
+    __typename
+    ... on RefreshAncillaryItemsSuccess {
+      __typename
+    }
+    ... on RefreshAncillaryItemsError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Use-suggested (spec S3 § page actions → S6, AC-Q1): fills every zero-requested
+# line with its suggested quantity in one call. The full line set comes back on
+# success, but the client refetches the table regardless — so only the outcome
+# __typename (and a typed error's description) is read here.
+mutation useSuggestedQuantities($storeId: String!, $requisitionId: String!) {
+  useSuggestedQuantity(
+    storeId: $storeId
+    input: { requestRequisitionId: $requisitionId }
+  ) {
+    __typename
+    ... on RequisitionLineConnector {
+      __typename
+    }
+    ... on UseSuggestedQuantityError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

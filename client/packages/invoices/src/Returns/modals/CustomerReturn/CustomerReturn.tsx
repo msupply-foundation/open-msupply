@@ -183,6 +183,11 @@ export const CustomerReturnEditModal = ({
 
   return (
     <Modal
+      // Two flows share this component, and the suite addresses them
+      // separately: the from-shipment create modal (born-Verified path) vs the
+      // per-item line editor. Matches the rewrite, which ships them as two
+      // components (e2e/TESTIDS.md).
+      testId={isNewReturn ? 'return-from-shipment-modal' : 'add-item-modal'}
       title={t('heading.return-items')}
       cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
       // zeroQuantityAlert === warning implies all lines are 0 and user has

@@ -78,7 +78,7 @@ The `latest*` floating tags always point at **amd64** images, and the bare tags 
 
 ### Auto-updating demo/test servers (Watchtower)
 
-The floating tags make it easy to run a demo or test server that always tracks the latest develop build. Example `docker-compose.yml` using [Watchtower](https://containrrr.dev/watchtower/) to poll Docker Hub and restart the container when `latest-develop` moves:
+The floating tags make it easy to run a demo or test server that always tracks the latest develop build. Example `docker-compose.yml` using [Watchtower](https://watchtower.nickfedor.com/) to poll Docker Hub and restart the container when `latest-develop` moves:
 
 ```yaml
 services:
@@ -93,7 +93,9 @@ services:
       - ./database:/database
 
   watchtower:
-    image: containrrr/watchtower
+    # Maintained fork. The original containrrr/watchtower is unmaintained
+    # and will not start on a modern Docker Engine — see note below.
+    image: nickfedor/watchtower
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -101,6 +103,10 @@ services:
       - WATCHTOWER_CLEANUP=true # delete superseded images after updating
       - WATCHTOWER_POLL_INTERVAL=3600 # check for a new image every hour (seconds)
 ```
+
+<div class="alert alert-warning">
+<strong>Do not use <code>containrrr/watchtower</code>.</strong> It has had no release since v1.7.1 (2023) and its bundled Docker client requests API version 1.25, which current Docker Engines reject. The container crash-loops with <code>Error response from daemon: client version 1.25 is too old. Minimum supported API version is 1.40</code> (or 1.44). The fix is the actively maintained fork <code>nickfedor/watchtower</code>, which negotiates the API version and keeps the same <code>WATCHTOWER_*</code> settings. As a stopgap on an existing deployment you can instead add <code>DOCKER_API_VERSION=1.40</code> to the old image's <code>environment:</code>, but that only works while the engine's minimum stays at or below what its vendored client supports.
+</div>
 
 Floating tags are amd64-only. Nightly develop builds may include schema migrations that cannot be rolled back — treat the `/database` volume as disposable on servers tracking `latest-develop`.
 
@@ -124,7 +130,7 @@ Run `bash .github/scripts/cleanup-docker-tags.sh --help` for all options.
 ### Requirements
 
 - Docker Hub credentials must be configured as repository secrets: `DOCKER_USERNAME` and `DOCKER_TOKEN`
-- The `ORG_WORKFLOW_TOKEN` secret is needed for triggering downstream plugin tests
+- The tmf-ci-bot GitHub App credentials (`TMF_CI_BOT_APP_ID` variable and `TMF_CI_BOT_PRIVATE_KEY` secret) are needed for triggering downstream plugin tests
 
 ### Testing the workflow
 

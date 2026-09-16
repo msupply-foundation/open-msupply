@@ -1,8 +1,10 @@
+pub mod builtin;
+
 use std::collections::HashSet;
 
 use repository::{
     CustomField, CustomFieldDisplayMode, CustomFieldFilter, CustomFieldRepository,
-    CustomFieldScopeRowRepository, RepositoryError, StorageConnection,
+    CustomFieldScopeRowRepository, CustomFieldValueType, RepositoryError, StorageConnection,
 };
 
 use crate::{service_provider::ServiceContext, usize_to_u32, ListError, ListResult};
@@ -121,21 +123,80 @@ fn get_custom_fields(
     })
 }
 
+/// Why a `custom_fields` patch is rejected. Both are bad requests: the write
+/// names something the scope doesn't define, or gives a defined key a value of
+/// the wrong shape. Callers map each onto their own error enum.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CustomFieldPatchProblem {
+    /// Not a defined-and-visible custom_field for the scope — rejected rather
+    /// than written, since the read path would silently filter it out. A field
+    /// whose value type this build doesn't recognise reads as unknown here too
+    /// (`value_types_for_scope` drops it), so an unvalidatable write is refused
+    /// rather than stored on trust.
+    UnknownKey(String),
+    /// A defined key given a value of the wrong JSON shape.
+    WrongValueType {
+        key: String,
+        expected: CustomFieldValueType,
+    },
+}
+
+/// Whether a JSON value may be stored under a custom_field of this type.
+///
+/// The check is the JSON KIND and nothing more — no date parsing, no
+/// integrality test, no option-membership lookup. It exists to protect the
+/// readers, every one of which assumes the shape its type implies (an OPTION
+/// resolved as an id, a MULTI_OPTION iterated as a list of them); it is not an
+/// attempt to make the blob a schema. `null` never reaches here: in a patch it
+/// means "clear this key".
+pub(crate) fn value_matches_type(
+    value: &serde_json::Value,
+    value_type: &CustomFieldValueType,
+) -> bool {
+    match value_type {
+        // Option ids and ISO dates are stored as text, like TEXT itself.
+        CustomFieldValueType::Text | CustomFieldValueType::Date | CustomFieldValueType::Option => {
+            value.is_string()
+        }
+        CustomFieldValueType::Integer | CustomFieldValueType::Real => value.is_number(),
+        CustomFieldValueType::Boolean => value.is_boolean(),
+        // An array OF STRINGS: every reader resolves each entry as an option
+        // id, so an array of anything else is as unusable as a scalar.
+        CustomFieldValueType::MultiOption => value
+            .as_array()
+            .is_some_and(|entries| entries.iter().all(|entry| entry.is_string())),
+        // Unreachable — such a key is rejected as unknown above.
+        CustomFieldValueType::Other(_) => false,
+    }
+}
+
 /// Validate a `custom_fields` patch against a table scope: returns the first
-/// key that is not a defined-and-visible custom_field for `scope` (callers
-/// map it to their `UnknownCustomFieldKey` error — rejected rather than written,
-/// since the read path would silently filter it out). Shared by the
-/// custom_fields-v2 write paths (patient, invoice).
-pub(crate) fn check_unknown_custom_field_key(
+/// problem found, or `None` when every entry may be written. Shared by the
+/// custom_fields-v2 write paths (patient, invoice, prescription request).
+///
+/// API writes only. Sync translators write the blob directly and are not
+/// checked: a rejected row would stall the sync buffer, and the readers are
+/// tolerant of a shape that doesn't match by design.
+pub(crate) fn check_custom_fields_patch(
     connection: &StorageConnection,
     scope: &str,
     patch: &serde_json::Map<String, serde_json::Value>,
-) -> Result<Option<String>, RepositoryError> {
-    let allowed = CustomFieldRepository::new(connection).allowed_keys_for_scope(scope)?;
-    Ok(patch
-        .keys()
-        .find(|key| !allowed.contains(*key))
-        .cloned())
+) -> Result<Option<CustomFieldPatchProblem>, RepositoryError> {
+    let allowed = CustomFieldRepository::new(connection).value_types_for_scope(scope)?;
+    for (key, value) in patch {
+        let Some(value_type) = allowed.get(key) else {
+            return Ok(Some(CustomFieldPatchProblem::UnknownKey(key.clone())));
+        };
+        // A null clears the key, so it is valid whatever the type.
+        if value.is_null() || value_matches_type(value, value_type) {
+            continue;
+        }
+        return Ok(Some(CustomFieldPatchProblem::WrongValueType {
+            key: key.clone(),
+            expected: value_type.clone(),
+        }));
+    }
+    Ok(None)
 }
 
 /// Apply an optional `custom_fields` patch during a record update: `None`
@@ -183,12 +244,15 @@ pub(crate) fn merge_patch(
 mod tests {
     use repository::{
         mock::MockDataInserts, test_db::setup_all, CustomFieldDisplayMode, CustomFieldKind,
-        CustomFieldRow, CustomFieldRowRepository, CustomFieldScopeRow, CustomFieldScopeRowRepository,
-        CustomFieldValueType,
+        CustomFieldRow, CustomFieldRowRepository, CustomFieldScopeRow,
+        CustomFieldScopeRowRepository, CustomFieldValueType,
     };
+
+    use serde_json::json;
 
     use crate::{
         custom_field::{
+            check_custom_fields_patch, value_matches_type, CustomFieldPatchProblem,
             CustomFieldScopeUpdate, UpdateCustomFieldScopes, UpdateCustomFieldScopesError,
         },
         service_provider::ServiceProvider,
@@ -241,9 +305,7 @@ mod tests {
         let service = &service_provider.custom_field_service;
 
         // Config read includes the hidden field.
-        let config = service
-            .get_custom_field_scope_config(&ctx, "item")
-            .unwrap();
+        let config = service.get_custom_field_scope_config(&ctx, "item").unwrap();
         assert_eq!(config.count, 2);
 
         // Flip f_a Hidden -> Prominent, f_b Visible -> Hidden.
@@ -302,6 +364,111 @@ mod tests {
         assert_eq!(
             err,
             UpdateCustomFieldScopesError::ScopeRowDoesNotExist("f_a".to_string())
+        );
+    }
+
+    #[test]
+    fn value_matches_type_checks_the_json_kind_and_no_more() {
+        use CustomFieldValueType::*;
+
+        // Option ids and dates are text, like TEXT itself.
+        assert!(value_matches_type(&json!("anything"), &Text));
+        assert!(value_matches_type(&json!("option_id"), &Option));
+        assert!(value_matches_type(&json!("not-a-date"), &Date));
+        assert!(!value_matches_type(&json!(42), &Text));
+
+        // A number is a number: nothing here asks whether an INTEGER's value is
+        // integral, because the encoder — not the author — decides that.
+        assert!(value_matches_type(&json!(5.0), &Integer));
+        assert!(value_matches_type(&json!(5), &Real));
+        assert!(!value_matches_type(&json!("5"), &Integer));
+
+        assert!(value_matches_type(&json!(true), &Boolean));
+        assert!(!value_matches_type(&json!("true"), &Boolean));
+
+        // MULTI_OPTION is an array OF STRINGS — every reader resolves each
+        // entry as an option id.
+        assert!(value_matches_type(&json!(["a", "b"]), &MultiOption));
+        assert!(value_matches_type(&json!([]), &MultiOption));
+        assert!(!value_matches_type(&json!("a"), &MultiOption));
+        assert!(!value_matches_type(&json!(["a", 2]), &MultiOption));
+        assert!(!value_matches_type(&json!(["a"]), &Option));
+    }
+
+    #[actix_rt::test]
+    async fn check_custom_fields_patch_rejects_unknown_keys_and_wrong_shapes() {
+        let (_, connection, _, _) = setup_all(
+            "check_custom_fields_patch_rejects_unknown_keys_and_wrong_shapes",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let field_repo = CustomFieldRowRepository::new(&connection);
+        let scope_repo = CustomFieldScopeRowRepository::new(&connection);
+        let mut categories = field("categories");
+        categories.value_type = CustomFieldValueType::MultiOption;
+        field_repo.upsert_one(&field("note")).unwrap();
+        field_repo.upsert_one(&categories).unwrap();
+        // A field whose value type this build doesn't recognise — a newer
+        // central's. It is not displayable, so it is not writable either.
+        let mut future = field("future");
+        future.value_type = CustomFieldValueType::Other("GEOJSON".to_string());
+        field_repo.upsert_one(&future).unwrap();
+        for key in ["note", "categories", "future"] {
+            scope_repo
+                .upsert_one(&scope_row(key, "patient", CustomFieldDisplayMode::Visible))
+                .unwrap();
+        }
+
+        let patch = |pairs: &[(&str, serde_json::Value)]| {
+            pairs
+                .iter()
+                .map(|(key, value)| (key.to_string(), value.clone()))
+                .collect::<serde_json::Map<String, serde_json::Value>>()
+        };
+        let check = |pairs: &[(&str, serde_json::Value)]| {
+            check_custom_fields_patch(&connection, "patient", &patch(pairs)).unwrap()
+        };
+
+        // Well-shaped values pass, and a null clears whatever the type.
+        assert_eq!(
+            check(&[
+                ("note", json!("seen in clinic")),
+                ("categories", json!(["pregnant"])),
+            ]),
+            None
+        );
+        assert_eq!(check(&[("categories", serde_json::Value::Null)]), None);
+
+        // An undefined key is refused rather than written for the read path to
+        // filter out later.
+        assert_eq!(
+            check(&[("stray", json!("x"))]),
+            Some(CustomFieldPatchProblem::UnknownKey("stray".to_string()))
+        );
+
+        // A defined key given the wrong shape is refused too: every reader of
+        // this field would have to cope with a scalar it can't resolve.
+        assert_eq!(
+            check(&[("categories", json!("pregnant"))]),
+            Some(CustomFieldPatchProblem::WrongValueType {
+                key: "categories".to_string(),
+                expected: CustomFieldValueType::MultiOption,
+            })
+        );
+        assert_eq!(
+            check(&[("note", json!(3))]),
+            Some(CustomFieldPatchProblem::WrongValueType {
+                key: "note".to_string(),
+                expected: CustomFieldValueType::Text,
+            })
+        );
+
+        // A field this build can't validate can't be written: unknown, not
+        // trusted.
+        assert_eq!(
+            check(&[("future", json!("anything"))]),
+            Some(CustomFieldPatchProblem::UnknownKey("future".to_string()))
         );
     }
 }

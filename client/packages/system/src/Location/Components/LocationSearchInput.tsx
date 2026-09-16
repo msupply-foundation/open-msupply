@@ -31,6 +31,8 @@ interface LocationSearchInputProps {
   includeRemoveOption?: boolean;
   placeholder?: string;
   getDisabledReason?: (location: LocationRowFragment) => string | undefined;
+  /** `data-testid` for the text input (locale-stable test hook). */
+  inputTestId?: string;
 }
 
 interface LocationOption {
@@ -95,6 +97,7 @@ export const LocationSearchInput = ({
   includeRemoveOption = !clearable,
   placeholder,
   getDisabledReason,
+  inputTestId,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -198,6 +201,7 @@ export const LocationSearchInput = ({
       width={`${width}px`}
       popperMinWidth={Number(width)}
       clearable={clearable}
+      inputTestId={inputTestId}
       value={selectedLocationOption}
       loading={isLoading}
       onChange={(_, option) => {
@@ -270,6 +274,7 @@ const StickyRemoveButton = ({
 
   return (
     <MenuItem
+      data-testid="location-remove-option"
       onMouseDown={e => {
         e.stopPropagation();
         e.preventDefault();

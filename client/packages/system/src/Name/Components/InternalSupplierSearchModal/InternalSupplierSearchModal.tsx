@@ -37,7 +37,12 @@ export const InternalSupplierSearchModal: FC<NameSearchProps> = props => {
   const { open, onClose } = props;
 
   return (
-    <BasicModal open={open} onClose={onClose} height={modalHeight}>
+    <BasicModal
+      data-testid="supplier-search-modal"
+      open={open}
+      onClose={onClose}
+      height={modalHeight}
+    >
       <ModalTitle title={t('suppliers')} />
       <Box padding={2}>{input}</Box>
     </BasicModal>

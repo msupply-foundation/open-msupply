@@ -41,8 +41,8 @@ date(format="%d/%m/%Y %H:%M:%S") }}{% endif %} {% endmacro input %}
       <tr>
         <td>{{invoiceLine.itemName | default(value='')}}</td>
         <td>
-          {{invoiceLine.sellPricePerPack / invoiceLine.packSize |
-          default(value=0.00) | round(precision=2)}}
+          {% if invoiceLine.packSize > 0 %}{{invoiceLine.sellPricePerPack /
+          invoiceLine.packSize | round(precision=2)}}{% else %}0{% endif %}
         </td>
         <td>
           {{invoiceLine.numberOfPacks * invoiceLine.packSize |
@@ -52,8 +52,8 @@ date(format="%d/%m/%Y %H:%M:%S") }}{% endif %} {% endmacro input %}
           {{invoiceLine.totalBeforeTax | default(value=0.00 |
           round(precision=2))}}
         </td>
-        {% endfor %}
       </tr>
+      {% endfor %}
       <tr>
         <td></td>
         <td></td>

@@ -4,17 +4,10 @@
 extern crate machine_uid;
 
 use crate::{
-    central::config_central,
-    certs::Certificates,
-    cold_chain::config_cold_chain,
-    cors::cors_policy,
-    custom_translations::config_custom_translations,
-    middleware::central_server_only,
-    print::config_print,
-    serve_frontend::config_serve_frontend,
-    static_files::config_static_files,
-    support::config_support,
-    upload_fridge_tag::config_upload_fridge_tag,
+    central::config_central, certs::Certificates, cold_chain::config_cold_chain, cors::cors_policy,
+    custom_translations::config_custom_translations, middleware::central_server_only,
+    print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
+    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -41,15 +34,16 @@ use service::{
     },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
+    custom_field::builtin::seed_builtin_custom_fields,
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
+    session_store::SessionStore,
     settings::{is_develop, ServerSettings, Settings},
     standalone_central::InitialiseAsCentralServerInput,
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
-    session_store::SessionStore,
     sync::{
         file_sync_driver::FileSyncDriver,
         sync_status::status::InitialisationStatus,
@@ -171,7 +165,9 @@ pub async fn start_server(
         .map(|s| s.relax_hardware_id_token_checks)
         .unwrap_or(false);
     if relax_hardware_id_token_checks {
-        log::warn!("relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED");
+        log::warn!(
+            "relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED"
+        );
     }
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
@@ -439,6 +435,20 @@ pub async fn start_server(
         }
     }
 
+    // Builtin custom fields (`service/src/custom_field/builtin.rs`) are central
+    // data, so only a central server seeds them. This is the **standalone**
+    // central's only chance: it never runs the sync loop
+    // (`SynchroniserDriver::run` parks it forever), so the seed call in the sync
+    // cycle — which covers a synced central, the one that only learns it is
+    // central after its first sync — never fires here. Runs after the YAML
+    // bootstrap above so a just-initialised standalone central is seeded on the
+    // same boot. Idempotent and change-aware, so repeating it costs nothing.
+    if CentralServerConfig::is_standalone_central() {
+        if let Err(e) = seed_builtin_custom_fields(&connection) {
+            log::error!("Failed to seed builtin custom fields: {}", format_error(&e));
+        }
+    }
+
     StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // Log the server starting message with the startup timestamp
@@ -467,10 +477,7 @@ pub async fn start_server(
     // CHECK SYNC STATUS
     info!("Checking sync status..");
     // A flags-only `sync:` block (no credentials) counts as "no sync settings" here.
-    let yaml_sync_settings = settings
-        .sync
-        .clone()
-        .filter(|s| s.has_core_sync_settings());
+    let yaml_sync_settings = settings.sync.clone().filter(|s| s.has_core_sync_settings());
     let database_sync_settings = service_provider
         .settings
         .sync_settings(&service_context)

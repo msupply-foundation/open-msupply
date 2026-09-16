@@ -1,0 +1,457 @@
+# A single stocktake (info only) for the detail view. The stocktake-level fields feed the page
+# header (number / status / description / comment), the status footer and the side panel. The
+# LINES are NOT selected here — they come from the separate, server-paginated `stocktakeLines`
+# query below (kdd/stocktake-line-editing: the detail table is server sorted / filtered / paged,
+# not client-side over a whole-connection fetch). StocktakeResponse is StocktakeNode | NodeError;
+# the view promotes NodeError to the global error modal.
+#
+# The stocktake-level fields the detail view reads AND edits: the header (number/status/
+# description), the status footer (status/isLocked/finalisedDatetime), and the Additional-info
+# side panel (comment/countedBy/verifiedBy/stocktakeDate). The SAME fragment is what
+# updateStocktake returns, so a stocktake-level save reflects in place with no refetch
+# (kdd/state-management) — the one exception being `lines`, fetched only by the detail query.
+fragment StocktakeInfo on StocktakeNode {
+  id
+  stocktakeNumber
+  status
+  description
+  comment
+  isLocked
+  countedBy
+  verifiedBy
+  stocktakeDate
+  finalisedDatetime
+  # Read-only "Entered by" / "Created" in the Additional-info side panel —
+  # the email rides the entered-by info tooltip.
+  createdDatetime
+  user {
+    username
+    email
+  }
+  # Files attached to this stocktake — the detail view's Documents tab (S3 § tabs).
+  # The list is read here on the info fragment; upload/delete go through the REST
+  # sync-file store (domain/syncFiles, tableName "stocktake") and re-read the node.
+  documents {
+    nodes {
+      id
+      fileName
+      createdDatetime
+      totalBytes
+    }
+  }
+}
+
+# ONE fragment, both directions (kdd/state-management): the same StocktakeLine fragment is the
+# detail row AND what the batch mutation returns on insert/update, so a saved node splices back
+# into the rows with no remapping and no refetch.
+fragment StocktakeLine on StocktakeLineNode {
+  id
+  itemName
+  item {
+    id
+    code
+    # unitName drives the read-only Unit column in the detail line table
+    # (spec/stocktakes S3 line table, matching OMS's columns.tsx itemUnit).
+    unitName
+    # isVaccine gates the vaccine-only doses + VVM display; doses is the item's
+    # configured doses-per-unit, the client-side multiplier for the doses columns
+    # (spec/stocktakes › store-preference gates: doses is never a stored per-line
+    # fact — computed as counted × packSize × item.doses).
+    isVaccine
+    doses
+    # Seeds an editable batch's pack size in the line editor (spec/stocktakes
+    # OMS-REG-INV-03.79/.80): a new batch starts at it, and a zero-stock item's
+    # generated line (packSize null, no stock line) is prefilled with it.
+    defaultPackSize
+  }
+  # The stock line this stocktake line counts (if any). The editor passes these ids as
+  # excludeStockLineIds to stockLinesByItem, so a batch already on the stocktake isn't offered
+  # for opt-in twice.
+  stockLine {
+    id
+  }
+  batch
+  expiryDate
+  # manufactureDate lets the editor set/clear a manufacture date (OMS parity).
+  manufactureDate
+  snapshotNumberOfPacks
+  countedNumberOfPacks
+  packSize
+  sellPricePerPack
+  costPricePerPack
+  comment
+  note
+  # Volume one pack occupies (m³). Editable in the line editor's Other tab; a
+  # location's volumeUsed is the sum of volumePerPack × packs over its stock, so
+  # this feeds the volume-aware picker's required volume (volumePerPack × counted).
+  volumePerPack
+  # The line's location (a store-scoped lookup drives the picker; we show its code/name).
+  location {
+    id
+    code
+    name
+  }
+  # The inventory-adjustment reason (why counted differs from snapshot). reasonOption is the
+  # current field; inventoryAdjustmentReason is deprecated. Selected via reasonOptionId on save.
+  reasonOption {
+    id
+    type
+    reason
+  }
+  # Preference-gated display/edit fields (spec/stocktakes › store-preference gates). Selected
+  # unconditionally in the fragment; the UI decides whether to SHOW them from the store
+  # preferences (manageVvmStatusForStock / allowTrackingOfStockByDonor). A gated column is absent
+  # entirely when its preference is off — the data just goes unread.
+  #
+  # VVM status (vaccine items) — gated by manageVvmStatusForStock. Set via vvmStatusId on save.
+  vvmStatus {
+    id
+    code
+    description
+  }
+  # Donor — gated by allowTrackingOfStockByDonor. donorId/donorName are plain scalars on the line
+  # (no storeId arg, unlike the stock line's donor(storeId)); the picker sets donorId on save.
+  donorId
+  donorName
+  # Manufacturer name (ungated column). Arg-bearing field — pass the same storeId the lines query
+  # already carries; NameNode.name is the display string.
+  manufacturer(storeId: $storeId) {
+    id
+    name
+  }
+  # Campaign / program (ungated field, spec/stocktakes S4 — like manufacturer, no
+  # store-preference gate). The line-editor's Other tab pairs them in ONE picker:
+  # campaigns (store-wide) plus the item's programs, mutually exclusive. Both are
+  # read as nodes for the picker's current label; written via campaignId/programId
+  # on save. Selecting a campaign clears the program and vice versa.
+  campaign {
+    id
+    name
+  }
+  program {
+    id
+    name
+  }
+}
+
+query stocktakeDetail($storeId: String!, $stocktakeId: String!) {
+  stocktake(storeId: $storeId, id: $stocktakeId) {
+    __typename
+    ... on StocktakeNode {
+      ...StocktakeInfo
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The detail table's rows: one server-paginated / filtered / sorted page of a stocktake's lines.
+# A DIFFERENT query from `stocktakeDetail` (which is info-only) so the two refetch independently —
+# a stocktake-level save (description/hold/finalise) never re-pulls the lines, and a line save
+# refetches only the current page (kdd/stocktake-line-editing). Same `StocktakeLine` fragment the
+# batch mutation returns, so nothing is remapped. filter/sort/page conform to the generated input
+# types (kdd/type-safety) — the URL query state carries them verbatim.
+#
+# The line-edit modal also uses this query with `filter: { itemId }` to load one item's existing
+# lines (it self-queries rather than being fed lines as props).
+query stocktakeLines(
+  $storeId: String!
+  $stocktakeId: String!
+  $page: PaginationInput
+  $filter: StocktakeLineFilterInput
+  $sort: [StocktakeLineSortInput!]
+) {
+  stocktakeLines(
+    storeId: $storeId
+    stocktakeId: $stocktakeId
+    page: $page
+    filter: $filter
+    sort: $sort
+  ) {
+    ... on StocktakeLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StocktakeLine
+      }
+    }
+  }
+}
+
+# The one save call for the line editor: insert (new batches), update (edited existing lines),
+# delete (removed lines) in a single batchStocktake mutation. Insert/update success returns the
+# SAME StocktakeLine fragment as a detail row (spliced back with no refetch); delete returns the
+# id. Errors are per-line (each array element carries its own response union).
+#
+# continueOnError is a PER-CALL choice, so both semantics are available from the one mutation:
+#   - unset (the line editor): the server wraps the whole batch in one transaction and rolls it
+#     ALL back if any member fails — the editor's insert+update+delete is one intended-atomic
+#     save, so a half-applied edit is worse than none.
+#   - true (a bulk selection action over independent lines): every line that validates commits
+#     and the rest report their own error. Without it a single rejected line silently discards
+#     the whole selection's work — and worse, the response still lists the rolled-back lines as
+#     succeeded, so nothing downstream can tell what actually persisted (issue #1150).
+mutation batchStocktakeLines(
+  $storeId: String!
+  $insert: [InsertStocktakeLineInput!]
+  $update: [UpdateStocktakeLineInput!]
+  $delete: [DeleteStocktakeLineInput!]
+  $continueOnError: Boolean
+) {
+  batchStocktake(
+    storeId: $storeId
+    input: {
+      insertStocktakeLines: $insert
+      updateStocktakeLines: $update
+      deleteStocktakeLines: $delete
+      continueOnError: $continueOnError
+    }
+  ) {
+    insertStocktakeLines {
+      id
+      response {
+        __typename
+        ... on StocktakeLineNode {
+          ...StocktakeLine
+        }
+        ... on InsertStocktakeLineError {
+          # Inline fragments on each concrete error type so codegen narrows error.__typename to a
+          # discriminated union (not a bare string). These are the InsertStocktakeLineErrorInterface
+          # implementers; `description` stays as the fallback for any we don't map.
+          error {
+            __typename
+            description
+            ... on StockLineReducedBelowZero {
+              __typename
+            }
+            ... on AdjustmentReasonNotProvided {
+              __typename
+            }
+            ... on AdjustmentReasonNotValid {
+              __typename
+            }
+            ... on CannotEditStocktake {
+              __typename
+            }
+          }
+        }
+      }
+    }
+    updateStocktakeLines {
+      id
+      response {
+        __typename
+        ... on StocktakeLineNode {
+          ...StocktakeLine
+        }
+        ... on UpdateStocktakeLineError {
+          # UpdateStocktakeLineErrorInterface implementers (adds the snapshot mismatch that only
+          # update/finalise raise). See the insert selection for why the inline fragments are here.
+          error {
+            __typename
+            description
+            ... on StockLineReducedBelowZero {
+              __typename
+            }
+            ... on AdjustmentReasonNotProvided {
+              __typename
+            }
+            ... on AdjustmentReasonNotValid {
+              __typename
+            }
+            ... on SnapshotCountCurrentCountMismatchLine {
+              __typename
+            }
+            ... on CannotEditStocktake {
+              __typename
+            }
+          }
+        }
+      }
+    }
+    deleteStocktakeLines {
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeleteStocktakeLineError {
+          # DeleteStocktakeLineErrorInterface has one implementer. See the insert selection above.
+          error {
+            __typename
+            description
+            ... on CannotEditStocktake {
+              __typename
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Stocktake-level edits: the debounced field saves (description / comment / countedBy /
+# verifiedBy / stocktakeDate), the on-hold toggle (isLocked), and Finalise (status: FINALISED).
+# One mutation for all of them — success returns the StocktakeInfo fragment, spliced back with no
+# refetch. The FINALISE path can fail with line-level validation: SnapshotCountCurrentCountMismatch
+# carries the mismatched stocktakeLine ids (so the error-summary dialog can offer "filter to the
+# error lines"); StockLinesReducedBelowZero / StocktakeIsLocked / CannotEditStocktake are
+# stocktake-wide messages (the dialog shows the message with no line filter).
+mutation updateStocktake($storeId: String!, $input: UpdateStocktakeInput!) {
+  updateStocktake(storeId: $storeId, input: $input) {
+    __typename
+    ... on StocktakeNode {
+      ...StocktakeInfo
+    }
+    ... on UpdateStocktakeError {
+      error {
+        __typename
+        description
+        ... on SnapshotCountCurrentCountMismatch {
+          lines {
+            description
+            stocktakeLine {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# The WHOLE stocktake — its info fields AND every line in one call (the nested `lines` connector,
+# NOT paginated) — for the side-panel "Copy to clipboard" action. Unlike the detail table (which is
+# server-paged via `stocktakeLines`), copy wants the complete record in a single result to serialise
+# to the clipboard, so it reads `StocktakeNode.lines` directly. Reuses the same StocktakeInfo /
+# StocktakeLine fragments the detail view already uses, so the copied JSON mirrors the app's own
+# shape (kdd/type-safety). NodeError is promoted to the global error modal by the caller.
+query fullStocktake($storeId: String!, $stocktakeId: String!) {
+  stocktake(storeId: $storeId, id: $stocktakeId) {
+    __typename
+    ... on StocktakeNode {
+      ...StocktakeInfo
+      lines {
+        totalCount
+        nodes {
+          ...StocktakeLine
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Delete ONE stocktake by id (the side-panel "Delete" action). The same atomic batchStocktake
+# delete the list uses, but for a single id: the backend is the source of truth for what can be
+# deleted (a finalised/on-hold stocktake can't) and reports the outcome per item; the caller shows
+# a translated message on a DeleteStocktakeError and navigates back to the list on success. Mirrors
+# the list's `deleteStocktakes` selection so codegen narrows the response union the same way.
+mutation deleteStocktake($storeId: String!, $id: String!) {
+  batchStocktake(
+    storeId: $storeId
+    input: { deleteStocktakes: [{ id: $id }] }
+  ) {
+    ... on BatchStocktakeResponse {
+      __typename
+      deleteStocktakes {
+        id
+        response {
+          __typename
+          ... on DeleteResponse {
+            id
+          }
+          ... on DeleteStocktakeError {
+            error {
+              __typename
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# The item's stock lines in the store NOT already on the stocktake (its "available batches" to
+# opt into the count), for the line-edit modal: the modal offers EVERY other batch of the item —
+# including ones in other locations that a location-filtered stocktake didn't auto-include —
+# matching OMS. `excludeStockLineIds` are the stock lines the stocktake already counts, filtered
+# out server-side (id notEqualAll) so they aren't offered twice. hasPacksInStore drops empty
+# stock lines. The fields mirror what seeds a draft line (snapshot = totalNumberOfPacks);
+# location is the full node so the picker shows code/name.
+query stockLinesByItem(
+  $storeId: String!
+  $itemId: String!
+  $excludeStockLineIds: [String!]
+) {
+  stockLines(
+    storeId: $storeId
+    filter: {
+      itemId: { equalTo: $itemId }
+      hasPacksInStore: true
+      id: { notEqualAll: $excludeStockLineIds }
+    }
+  ) {
+    ... on StockLineConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        batch
+        expiryDate
+        manufactureDate
+        packSize
+        costPricePerPack
+        sellPricePerPack
+        totalNumberOfPacks
+        note
+        # Seeds a new-batch draft's volume per pack (m³), matching OMS.
+        volumePerPack
+        location {
+          id
+          code
+          name
+        }
+        # Seed a new-batch draft's VVM/donor/manufacturer from the stock line it
+        # opts in. vvmStatus (vaccine items) and donor(storeId) are preference-
+        # gated in the editor UI (read regardless; only SHOWN when the gate is
+        # on); manufacturer(storeId) is UNGATED (always editable on the Other
+        # tab, spec S4), so it carries over too.
+        vvmStatus {
+          id
+          code
+          description
+        }
+        donor(storeId: $storeId) {
+          id
+          name
+        }
+        manufacturer(storeId: $storeId) {
+          id
+          name
+        }
+        # Seed a new-batch draft's campaign/program from the stock line it opts in
+        # (ungated, like manufacturer — spec S4). Nodes so the picker can label the
+        # seeded value; the editor writes campaignId/programId on save.
+        campaign {
+          id
+          name
+        }
+        program {
+          id
+          name
+        }
+      }
+    }
+  }
+}
