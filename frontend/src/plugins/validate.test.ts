@@ -192,10 +192,10 @@ describe('validateLoadedModule', () => {
       'dashboard.panel',
       'dashboard.stat',
       'dashboard.widget',
+      'host.warningSuppression',
       'internalOrder.sidePanelSection',
       'internalOrderLine.column',
       'internalOrderLine.infoPanel',
-      'internalOrders.newOrderGate',
       'prescription.paymentForm',
     ]);
   });
@@ -266,40 +266,42 @@ describe('validateLoadedModule', () => {
     );
   });
 
-  it('accepts a new-order gate contribution — a resolver, no Component', () => {
+  it('accepts a warning-suppression contribution — a resolver and a published warning, no Component', () => {
     const module = definePlugin({
       manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
       contributions: [
         {
-          slot: 'internalOrders.newOrderGate',
+          slot: 'host.warningSuppression',
           id: 'freshness',
-          supersedes: () => true,
+          warning: 'internalOrders.recentStocktake',
+          suppresses: () => true,
         },
       ],
     });
     expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
   });
 
-  it('refuses a new-order gate with no supersedes resolver — a Component cannot stand in', () => {
-    // The gate is consulted, never rendered (sdk-contract § the new-order gate
-    // slot): a bundle offering a Component there was built against a surface
-    // this host does not have.
+  it('refuses a warning suppression with no suppresses resolver — a Component cannot stand in', () => {
+    // The slot is consulted, never rendered (sdk-contract § the
+    // warning-suppression slot): a bundle offering a Component there was built
+    // against a surface this host does not have.
     const module = definePlugin({
       manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
       contributions: [
         {
-          slot: 'internalOrders.newOrderGate',
+          slot: 'host.warningSuppression',
           id: 'freshness',
+          warning: 'internalOrders.recentStocktake',
           Component,
         } as unknown as never,
       ],
     });
     expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
-      'has no supersedes function'
+      'has no suppresses function'
     );
   });
 
-  it('refuses a new-order gate that ALSO carries a Component — a consulted slot never renders', () => {
+  it('refuses a warning suppression that ALSO carries a Component — a consulted slot never renders', () => {
     // Silently dropping the render half would hide from the author that the
     // surface they built against does not exist here; the wrong form refuses
     // whole, as everywhere (sdk-contract § contributions).
@@ -307,15 +309,36 @@ describe('validateLoadedModule', () => {
       manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
       contributions: [
         {
-          slot: 'internalOrders.newOrderGate',
+          slot: 'host.warningSuppression',
           id: 'freshness',
-          supersedes: () => true,
+          warning: 'internalOrders.recentStocktake',
+          suppresses: () => true,
           Component,
         } as unknown as never,
       ],
     });
     expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
       'consulted, never rendered'
+    );
+  });
+
+  it('refuses a warning suppression naming an unpublished warning id, by name', () => {
+    // An unknown warning means the bundle was built against a host that
+    // publishes it — the same judgement as an unknown slot id, so the refusal
+    // names the published set instead of silently never consulting it.
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          warning: 'internalOrders.someFutureWarning',
+          suppresses: () => true,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'suppresses unknown warning "internalOrders.someFutureWarning"'
     );
   });
 
