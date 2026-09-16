@@ -98,7 +98,7 @@ export const createProgramOrder = async (
 // stocktakes within maxAge days cover fewer than minItems DISTINCT items — so
 // New order must confirm before opening the modal. Called only when the
 // preference is enabled. A failed read never blocks creation (returns false).
-export const recentStocktakeIsInsufficient = async (
+const recentStocktakeIsInsufficient = async (
   storeId: string,
   maxAge: number,
   minItems: number

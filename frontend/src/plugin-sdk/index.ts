@@ -85,6 +85,11 @@ export type {
 } from './types';
 
 // ── Slot API — warning suppression ──────────────────────────────────────────
+// The catalogue const is exported alongside its type: the spec commits
+// "HOST_WARNING_IDS in the SDK is the committed set" (sdk-contract § the
+// warning-suppression slot), and it is a handful of string literals — no
+// eager weight.
+export { HOST_WARNING_IDS } from './types';
 export type { HostWarningId, WarningSuppressionResolver } from './types';
 
 // ── Slot API — the prescription payment-form slot ───────────────────────────

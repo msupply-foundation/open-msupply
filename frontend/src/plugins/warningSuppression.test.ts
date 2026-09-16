@@ -34,7 +34,7 @@ const suppressionPlugin = (
     contributions: [
       {
         slot: 'host.warningSuppression',
-        id: 'gate',
+        id: 'suppression',
         warning,
         when,
         suppresses,
@@ -45,26 +45,24 @@ const suppressionPlugin = (
 
 beforeEach(clearPlugins);
 
+// Every consult in this suite targets the one published warning; the helper
+// keeps each assertion on one line.
+const consult = () => warningSuppressed('internalOrders.recentStocktake');
+
 describe('warningSuppressed', () => {
   it('answers false with no plugin loaded — the warning is core’s alone', async () => {
-    expect(await warningSuppressed('internalOrders.recentStocktake')).toBe(
-      false
-    );
+    expect(await consult()).toBe(false);
   });
 
   it('answers false when every contribution answers false', async () => {
     registerPlugin(suppressionPlugin('alpha', () => false));
-    expect(await warningSuppressed('internalOrders.recentStocktake')).toBe(
-      false
-    );
+    expect(await consult()).toBe(false);
   });
 
   it('answers true when a contribution answers true, however the others answer', async () => {
     registerPlugin(suppressionPlugin('alpha', () => false));
     registerPlugin(suppressionPlugin('beta', () => Promise.resolve(true)));
-    expect(await warningSuppressed('internalOrders.recentStocktake')).toBe(
-      true
-    );
+    expect(await consult()).toBe(true);
   });
 
   it('never asks a contribution naming a different warning', async () => {
@@ -84,9 +82,7 @@ describe('warningSuppressed', () => {
         'some.futureWarning' as HostWarningId
       )
     );
-    expect(await warningSuppressed('internalOrders.recentStocktake')).toBe(
-      false
-    );
+    expect(await consult()).toBe(false);
     expect(asked).toBe(false);
   });
 
@@ -105,9 +101,7 @@ describe('warningSuppressed', () => {
         ctx => ctx.storeMode === 'dispensary'
       )
     );
-    expect(await warningSuppressed('internalOrders.recentStocktake')).toBe(
-      false
-    );
+    expect(await consult()).toBe(false);
     expect(asked).toBe(false);
   });
 
@@ -118,23 +112,19 @@ describe('warningSuppressed', () => {
       })
     );
     registerPlugin(suppressionPlugin('beta', () => true));
-    expect(await warningSuppressed('internalOrders.recentStocktake')).toBe(
-      true
-    );
+    expect(await consult()).toBe(true);
     const recorded = pluginDiagnostics().find(
       diagnostic => diagnostic.pluginCode === 'alpha'
     );
     expect(recorded?.level).toBe('error');
-    expect(recorded?.message).toContain('alpha.gate');
+    expect(recorded?.message).toContain('alpha.suppression');
   });
 
   it('treats a rejecting contribution as false — a failing plugin never stands the warning down', async () => {
     registerPlugin(
       suppressionPlugin('alpha', () => Promise.reject(new Error('offline')))
     );
-    expect(await warningSuppressed('internalOrders.recentStocktake')).toBe(
-      false
-    );
+    expect(await consult()).toBe(false);
   });
 
   it('treats a throwing `when` as hidden for that contribution only — recorded, another still answers', async () => {
@@ -152,14 +142,12 @@ describe('warningSuppressed', () => {
       )
     );
     registerPlugin(suppressionPlugin('delta', () => true));
-    await expect(
-      warningSuppressed('internalOrders.recentStocktake')
-    ).resolves.toBe(true);
+    await expect(consult()).resolves.toBe(true);
     const recorded = pluginDiagnostics().find(
       diagnostic => diagnostic.pluginCode === 'gamma'
     );
     expect(recorded?.level).toBe('error');
-    expect(recorded?.message).toContain('gamma.gate');
+    expect(recorded?.message).toContain('gamma.suppression');
   });
 
   it('answers false when the only contribution has a throwing `when` — the consult never rejects', async () => {
@@ -172,8 +160,6 @@ describe('warningSuppressed', () => {
         }
       )
     );
-    await expect(
-      warningSuppressed('internalOrders.recentStocktake')
-    ).resolves.toBe(false);
+    await expect(consult()).resolves.toBe(false);
   });
 });

@@ -73,6 +73,11 @@ export type ValidationVerdict =
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+// A refusal against a published id set names the whole set, formatted one way
+// everywhere (the nav-section and warning checks below share it).
+const publishedSet = (ids: readonly string[]): string =>
+  ids.map(known => `"${known}"`).join(', ');
+
 // A page or section path: URL segments of letters, digits, `-` and `_`, each
 // starting with a letter or digit (the spec states the same leading-character
 // rule — sdk-contract § Paths). No leading/trailing/double slashes, no params,
@@ -230,7 +235,7 @@ const validatePage = (
     !navSectionIds.has(inId) &&
     !(HOST_NAV_SECTION_IDS as readonly string[]).includes(inId)
   ) {
-    return `page "${id}" nav places it in "${inId}", which is neither one of this plugin's nav sections nor a host section this app's plugin API provides (host sections: ${HOST_NAV_SECTION_IDS.map(known => `"${known}"`).join(', ')})`;
+    return `page "${id}" nav places it in "${inId}", which is neither one of this plugin's nav sections nor a host section this app's plugin API provides (host sections: ${publishedSet(HOST_NAV_SECTION_IDS)})`;
   }
   return undefined;
 };
@@ -359,22 +364,33 @@ export const validateLoadedModule = (
             message: `contribution "${slot}/${id}" carries a rendering form — the slot is consulted, never rendered`,
           };
         }
-        // The one resolver slot names its TARGET — a published host warning
-        // id. Any other id means the bundle was built against a host that
-        // publishes the warning (the same judgement as an unknown slot id),
-        // refused by name so an old host names the gap instead of silently
-        // never consulting the contribution.
+      }
+      // The suppression slot names its TARGET — a published host warning id.
+      // Keyed on the SLOT, not the resolver branch: a future consulted slot
+      // would have a resolver but no warning to name, and must not be forced
+      // through this check. Any other id means the bundle was built against a
+      // host that publishes the warning (the same judgement as an unknown slot
+      // id), refused by name so an old host names the gap instead of silently
+      // never consulting the contribution.
+      if (slot === 'host.warningSuppression') {
         const warning = entry['warning'];
+        if (warning === undefined) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" names no warning to suppress — this app's plugin API publishes: ${publishedSet(HOST_WARNING_IDS)}`,
+          };
+        }
         if (
           typeof warning !== 'string' ||
           !(HOST_WARNING_IDS as readonly string[]).includes(warning)
         ) {
           return {
             kind: 'refused',
-            message: `contribution "${slot}/${id}" suppresses unknown warning ${JSON.stringify(warning)} — this app's plugin API publishes: ${HOST_WARNING_IDS.map(known => `"${known}"`).join(', ')}`,
+            message: `contribution "${slot}/${id}" suppresses unknown warning ${JSON.stringify(warning)} — this app's plugin API publishes: ${publishedSet(HOST_WARNING_IDS)}`,
           };
         }
-      } else {
+      }
+      if (resolverField === undefined) {
         const hasComponent = typeof entry['Component'] === 'function';
         const hasValue =
           VALUE_RENDERING_SLOTS.includes(slot) &&
