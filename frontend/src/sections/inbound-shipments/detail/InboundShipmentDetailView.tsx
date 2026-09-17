@@ -820,7 +820,7 @@ const InboundShipmentDetailView: Component = () => {
       // SHIPMENT's internal-order link so that within a table every row has
       // both or no row has either.
       //
-      // Requested (col 15) — the units requested for this line's ITEM,
+      // Units requested (col 15) — the units requested for this line's ITEM,
       // so every batch of one item shows the same figure. Never summed: a
       // per-item figure repeated down an item's batches would total to a
       // multiple of itself.
@@ -846,14 +846,18 @@ const InboundShipmentDetailView: Component = () => {
               // has no order line has no figure and sorts last ascending — the
               // dash is a rendering, and never reaches the sort.
               sortKey: 'requestedQuantity',
-              header: () => t('label.requested-quantity'),
+              // The generic word stands in for {{unit}}, as in "Units
+              // received" above.
+              header: () =>
+                t('label.units-requested', { unit: t('label.units') }),
               ...getCellDefinition('requestedQuantity'),
             } satisfies Column<Line, SortKey>,
             // Supplier comment (spec S3 col 16) — the supplying store's own
             // explanation of a difference, read-only at every status: nothing
             // on an inbound shipment writes it, the supplying side authors it.
             // It rides on the LINE, so every batch of an item repeats the one
-            // text written for that item. Inside the SAME gate as Requested —
+            // text written for that item. Inside the SAME gate as Units
+            // requested —
             // the two that read the discrepancy arrive and leave together. Not
             // sortable (rules § requested quantity and supplier comment).
             {
@@ -1348,7 +1352,7 @@ const InboundShipmentDetailView: Component = () => {
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
                 // Gates the editor's internal-order banner, on the same rule as
-                // the Requested column so the two can't disagree.
+                // the Units requested column so the two can't disagree.
                 requisitionId={
                   showsOrderContext() ? node().requisition?.id : undefined
                 }
