@@ -249,6 +249,7 @@ export {
   expiringSoonStockPath,
   inboundShipmentListPath,
   internalOrderListPath,
+  internalOrderPath,
   lowStockItemsPath,
   outboundShipmentListPath,
   outOfStockItemsPath,
