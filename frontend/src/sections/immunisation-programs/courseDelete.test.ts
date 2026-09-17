@@ -9,12 +9,12 @@ import {
 
 // Anchors: spec/immunisation-programs/acceptance.md — deleting courses and
 // the in-use guard.
-//   OMS-REG-IMM-01.61  a course with a vaccination recorded is refused as _course in use_
-//   OMS-REG-IMM-01.17  one unused course deletes
-//   OMS-REG-IMM-01.67  a run stops at the first refusal: the courses before it are gone,
-//          the refused and later ones remain
-// The run and the outcome mapping are pure, so both are pinned here; the
-// dialog lifecycle around them is exercised in the UI.
+// OMS-REG-IMM-01.61  a course with a vaccination recorded is refused as
+// _course in use_ OMS-REG-IMM-01.17  one unused course deletes
+// OMS-REG-IMM-01.67  a run stops at the first refusal: the courses before it
+// are gone, the refused and later ones remain The run and the outcome mapping
+// are pure, so both are pinned here; the dialog lifecycle around them is
+// exercised in the UI.
 
 const deleted = (id: string): GraphqlResult<DeleteVaccineCourseResult> => ({
   kind: 'success',

@@ -50,7 +50,8 @@ export interface StoreRatesPanelProps {
 
 export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
   // The panel's own copy, seeded once on mount (the owner mounts this only
-  // while open): OK hands it back, Back drops it (OMS-REG-IMM-01.48, OMS-REG-IMM-01.49).
+  // while open): OK hands it back, Back drops it (OMS-REG-IMM-01.48,
+  // OMS-REG-IMM-01.49).
   // eslint-disable-next-line solid/reactivity
   const initial = [...props.configs];
   const [configs, setConfigs] = createSignal<StoreConfigNode[]>(initial);

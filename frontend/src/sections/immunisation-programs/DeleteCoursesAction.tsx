@@ -30,6 +30,8 @@ import {
 //               notice is dismissed, not before — clearing earlier would
 //               unmount the selection bar this dialog lives in, taking the
 //               notice with it.
+//   Cancel (or Escape) BEFORE a run → nothing ran, so the selection stands
+//               (OMS-REG-IMM-01.66): only a finished run clears it.
 //
 // The server's own no-permission refusal owes the permission-denied modal and
 // nothing else; a transport failure has already been surfaced globally and
@@ -46,7 +48,9 @@ export interface DeleteCoursesActionProps {
   /** A run finished — every course, or stopped at a refusal: re-read the
    * list. */
   onRun: () => void;
-  /** The dialog closed by any path: the owner clears the selection. */
+  /** The dialog closed AFTER a run — every course deleted, or the refusal
+   * dismissed: the owner clears the selection. Not fired for a Cancel before
+   * the run (the selection is left standing). */
   onClosed: () => void;
 }
 
@@ -93,7 +97,10 @@ const Body = (props: DeleteCoursesActionProps & { onClose: () => void }) => {
   const ids = props.orderedIds();
   const count = ids.length;
 
-  const close = () => {
+  // Backing out before anything ran: the courses AND the selection stay.
+  const dismiss = () => props.onClose();
+  // After a run (complete, or its refusal read): closure clears the selection.
+  const finish = () => {
     props.onClose();
     props.onClosed();
   };
@@ -121,14 +128,14 @@ const Body = (props: DeleteCoursesActionProps & { onClose: () => void }) => {
       // Every course deleted: close first (closure is the confirmation), then
       // the owner clears the selection, which unmounts the bar this dialog
       // lives in.
-      close();
+      finish();
       return;
     }
     const { outcome } = result.stoppedAt;
     if (outcome.kind === 'forbidden') {
       // The server's own refusal: the permission-denied modal, nothing else.
       reportPermissionDenied(outcome.permissions);
-      close();
+      finish();
       return;
     }
     if (outcome.kind === 'failed') {
@@ -157,7 +164,7 @@ const Body = (props: DeleteCoursesActionProps & { onClose: () => void }) => {
       open
       // Blocking while the deletes are in flight.
       dismissable={phase().kind !== 'deleting'}
-      onClose={close}
+      onClose={() => (phase().kind === 'refused' ? finish() : dismiss())}
       icon={<TrashIcon />}
       testId="confirmation-modal"
       // The title tracks the phase — a refusal is not a question.
@@ -188,7 +195,10 @@ const Body = (props: DeleteCoursesActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <Show when={phase().kind === 'confirm'}>
-                <CancelButton onClick={close} />
+                <CancelButton
+                  data-testid="dialog-button-cancel"
+                  onClick={dismiss}
+                />
               </Show>
               {/* OK, not Save — the confirming action genuinely isn't a save —
                   carrying the destructive emphasis (S4). */}
@@ -206,7 +216,7 @@ const Body = (props: DeleteCoursesActionProps & { onClose: () => void }) => {
         >
           {/* Nothing to submit or cancel — the refused run already resolved;
               dismissing is what clears the selection. */}
-          <Button variant="secondary" confirms="plain" onClick={close}>
+          <Button variant="secondary" confirms="plain" onClick={finish}>
             {t('button.close')}
           </Button>
         </Show>

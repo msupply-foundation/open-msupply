@@ -48,10 +48,10 @@ export type CourseDraft = Omit<
 };
 
 /**
- * A blank editor for a new course of `programId` (rules § the course; OMS-REG-IMM-01.31):
- * coverage 100, wastage 0, Include in GAPS calculations on, Can skip dose off,
- * no demographic, no item, no dose, no store override. The id is
- * client-supplied — a fresh uuid, minted by the caller.
+ * A blank editor for a new course of `programId` (rules § the course;
+ * OMS-REG-IMM-01.31): coverage 100, wastage 0, Include in GAPS calculations
+ * on, Can skip dose off, no demographic, no item, no dose, no store override.
+ * The id is client-supplied — a fresh uuid, minted by the caller.
  */
 export const newCourseDraft = (id: string, programId: string): CourseDraft => ({
   id,
@@ -99,8 +99,9 @@ export const joinMonths = (years: number, months: number): number =>
   years * 12 + months;
 
 /**
- * A new dose is born from the last one (rules § doses; OMS-REG-IMM-01.50, OMS-REG-IMM-01.51): its
- * label is the course name followed by its number; its from age is the
+ * A new dose is born from the last one (rules § doses; OMS-REG-IMM-01.50,
+ * OMS-REG-IMM-01.51): its label is the course name followed by its number; its
+ * from age is the
  * previous dose's to age (0 for the first); its to age is that plus the
  * previous dose's span (one month when there is no previous dose or its span
  * is zero); its minimum interval is the previous dose's (30 days for the
@@ -198,8 +199,9 @@ export type Validation =
   | { ok: false; items: ValidationItem[] };
 
 /**
- * The editor's completeness checks, run on Save (rules § the editor; OMS-REG-IMM-01.34,
- * OMS-REG-IMM-01.35, OMS-REG-IMM-01.52, OMS-REG-IMM-01.53, OMS-REG-IMM-01.54, OMS-REG-IMM-01.64): the name, coverage rate and wastage
+ * The editor's completeness checks, run on Save (rules § the editor;
+ * OMS-REG-IMM-01.34, OMS-REG-IMM-01.35, OMS-REG-IMM-01.52, OMS-REG-IMM-01.53,
+ * OMS-REG-IMM-01.54, OMS-REG-IMM-01.64): the name, coverage rate and wastage
  * rate are required; the wastage rate is at most 100; at least one vaccine
  * item; at least one dose; each dose's label; each dose's from age strictly
  * greater than the previous dose's; each dose's to age at least its from age.
@@ -282,8 +284,9 @@ export const validateDraft = (draft: CourseDraft): Validation => {
 
 /**
  * Whether the draft differs from the course it opened on — what offers Save
- * on an edit (rules § the editor; OMS-REG-IMM-01.42). A structural compare of the fields
- * the save would send, so an edit undone by hand reads as clean again.
+ * on an edit (rules § the editor; OMS-REG-IMM-01.42). A structural compare of
+ * the fields the save would send, so an edit undone by hand reads as clean
+ * again.
  */
 export const isDirty = (draft: CourseDraft, original: CourseDraft): boolean =>
   JSON.stringify(comparable(draft)) !== JSON.stringify(comparable(original));

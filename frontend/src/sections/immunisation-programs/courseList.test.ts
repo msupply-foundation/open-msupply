@@ -8,13 +8,12 @@ import {
 } from './courseList';
 
 // Anchors: spec/immunisation-programs/acceptance.md — the program detail.
-//   OMS-REG-IMM-01.5  each row shows the name, the demographic's name and the live
-//          dose count
-//   OMS-REG-IMM-01.26  a course with no demographic shows a blank Target demographic
-//   OMS-REG-IMM-01.27  name ascending, case-insensitive, is the default order
-//   OMS-REG-IMM-01.28  the name sort reverses
-//   OMS-REG-IMM-01.30  the list holds this program's courses only
-//   OMS-REG-IMM-01.67  a bulk delete runs in list order
+// OMS-REG-IMM-01.5  each row shows the name, the demographic's name and the
+// live dose count OMS-REG-IMM-01.26  a course with no demographic shows a blank
+// Target demographic OMS-REG-IMM-01.27  name ascending, case-insensitive, is
+// the default order OMS-REG-IMM-01.28  the name sort reverses OMS-REG-IMM-01.30
+//  the list holds this program's courses only OMS-REG-IMM-01.67  a bulk delete
+// runs in list order
 
 describe("OMS-REG-IMM-01.30 — the program's courses only", () => {
   it('filters the read by the program id', () => {
