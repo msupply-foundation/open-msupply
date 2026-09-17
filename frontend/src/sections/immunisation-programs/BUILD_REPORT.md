@@ -119,6 +119,8 @@ The criteria this build was written against were folded into the behaviour-ancho
 3. **`MultiSelect` semantics** (S3 § vaccine items): picked items stay listed, check-marked — align the sentence with the registry.
 4. **Escape vs. scrim** (OMS-REG-IMM-01.40 / AC-C11): the two criteria pull the shared `Dialog` in opposite directions; the spec should pick the library's contract (Escape and scrim both dismiss) or ask the library for a scrim-only opt-out.
 
+5. **Fractional years** — resolved after the exploratory run (IMM-20260917-F2) and Aneesh's manual test: the years half of a dose's age is whole; months keep a fraction (week-based schedules; the server's due date is months × 30.44 days). Rules § input bounds and the README's captured-as-is carry it; the reference keeps decimals in both halves.
+
 **Resolved at the reconcile step (2026-09), each as a one-line spec edit awaiting QA/Product review with the PR:** 1 → the standard page size (rules § the program list / detail); 2 → the delete dialog's refused phase (ui-surface S5); 3 → a chosen item is shown as chosen and cannot be added twice (rules § vaccine items, `.33`); 4 → the library's contract — the scrim dismisses like Escape (rules § the editor; AC-C11 not folded, the reference's behaviour recorded as captured-as-is).
 
 ## Follow-ups

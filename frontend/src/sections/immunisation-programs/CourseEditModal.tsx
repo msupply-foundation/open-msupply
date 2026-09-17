@@ -311,11 +311,13 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     label: string
   ) => {
     // The pair holds what was TYPED into each half and stores their sum; the
-    // halves are re-derived — 1.75 y 0 m → 1 y 9 m — only when focus leaves
-    // the pair, or when the stored figure changes from outside it (the course
-    // reloaded). Deriving on every keystroke fed a half-typed year back into
-    // the months field and those months back into the year
-    // (IMM-20260917-F2; courseEditor.ts § AgeEntry).
+    // halves are re-derived into whole years and the remaining months only
+    // when focus leaves the pair, or when the stored figure changes from
+    // outside it (the course reloaded). Deriving on every keystroke fed a
+    // half-typed year back into the months field and those months back into
+    // the year (IMM-20260917-F2; courseEditor.ts § AgeEntry) — the years half
+    // is whole now, which removes the case, and the pair-as-typed keeps the
+    // halves stable regardless.
     //
     // The store is read UNTRACKED here: this function body runs inside the
     // table cell's render effect, so a tracked read would re-run the whole
@@ -362,7 +364,9 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
           width="compact"
           endAdornment={t('label.years-abbreviation')}
           min={0}
-          decimalLimit={2}
+          // Whole years only (rules § input bounds): a fraction of a year is
+          // months the other half already holds.
+          decimalLimit={0}
           disabled={saving()}
           value={entry().years}
           onChange={years => type({ years: years ?? 0 })}

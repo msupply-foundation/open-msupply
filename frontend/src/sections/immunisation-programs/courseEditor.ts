@@ -103,10 +103,13 @@ export const joinMonths = (years: number, months: number): number =>
  * being edited, and the stored figure is their sum (OMS-REG-IMM-01.64,
  * OMS-REG-IMM-01.56). Deriving each half from the stored total on every
  * keystroke fed a half-typed year back into the months field and those
- * months back into the year: typing 1.75 years over 0 months went 12 → 20.4
+ * months back into the year: a typed 1.75 years over 0 months went 12 → 20.4
  * (months now 8.4) → 29.4, and settled at 15 years 8.4 months
- * (IMM-20260917-F2). With the pair as truth the same keystrokes store 12 →
- * 20.4 → 21, and settling re-derives 1 year 9 months.
+ * (IMM-20260917-F2). The years half is WHOLE now (rules § input bounds),
+ * which removes that case at the source; the pair-as-typed model stays so
+ * the halves never feed each other mid-entry, and settling re-derives whole
+ * years plus the remaining months (the months may carry a fraction — a
+ * six-week dose is 1.5 months).
  */
 export interface AgeEntry {
   years: number;
@@ -123,8 +126,8 @@ export const ageEntryTotal = (entry: AgeEntry): number =>
 
 /**
  * On leaving the pair, the typed halves re-derive into whole years and the
- * remaining months — 1.75 y 0 m reads back as 1 y 9 m, 2.5 y 7 m as 3 y 1 m;
- * a fraction of a month stays in the months half (0 y 6.5 m).
+ * remaining months — 1 y 13 m would read back as 2 y 1 m; a fraction of a
+ * month stays in the months half (0 y 6.5 m); a settled pair is a fixed point.
  */
 export const settleAgeEntry = (entry: AgeEntry): AgeEntry =>
   splitMonths(ageEntryTotal(entry));
