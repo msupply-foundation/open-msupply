@@ -7,11 +7,12 @@
  * page's own: the host routes on the path and hands the whole query over,
  * interpreting none of it.
  *
- * Router-free, through the same one-writer binding as `navigateTo`
- * (src/nav/hostSearch.ts): the router stays internal and swappable, and the
- * SDK entry stays free of its module-scope side effects.
+ * Router-free, through the query-string binding the list state also reads
+ * (src/nav/hostSearchParams.ts — hostNavigate's one-writer contract): the
+ * router stays internal and swappable, and the SDK entry stays free of its
+ * module-scope side effects.
  */
-import { hostSearch } from '../nav/hostSearch';
+import { hostSearch } from '../nav/hostSearchParams';
 
 /**
  * The current query, reactive: reading the returned accessor inside a
