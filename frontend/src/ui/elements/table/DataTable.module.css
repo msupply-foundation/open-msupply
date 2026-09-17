@@ -589,6 +589,15 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   transition: background-color var(--motion-base);
 }
 
+/* The LAST body row draws no bottom hairline: whatever follows it supplies
+   the seam — the frame's own edge, the footer band's top hairline
+   (ContentFooter) or a <tfoot>'s (.tf) — and a row hairline pressed against
+   any of them made a doubled seam (the frame note above: single seams). A
+   scroll box taller than its rows simply runs on white below the last row. */
+tbody > tr:last-child > :is(.td, .selectCell) {
+  border-block-end: 0;
+}
+
 /* Placement of the BareCheckbox in a selection cell: centred by margin.
    The control's root is block-level (BareCheckbox.module.css) so the cell
    never gets an inline formatting context — an inline-level box there
