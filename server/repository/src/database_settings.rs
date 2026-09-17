@@ -201,7 +201,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         ))
         .build(connection_manager)
         .expect("Failed to connect to database");
-    StorageConnectionManager::new(pool)
+    StorageConnectionManager::new(pool, settings.connection_string())
 }
 
 // feature sqlite
@@ -209,7 +209,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     info!("Connecting to database '{}'", settings.database_path());
     let db_path = settings.database_path();
-    let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path);
+    let connection_manager = ConnectionManager::<DBBackendConnection>::new(db_path.clone());
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
@@ -228,7 +228,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         .build(connection_manager)
         .expect("Failed to connect to database");
 
-    StorageConnectionManager::new(pool)
+    StorageConnectionManager::new(pool, db_path)
 }
 
 #[cfg(test)]
