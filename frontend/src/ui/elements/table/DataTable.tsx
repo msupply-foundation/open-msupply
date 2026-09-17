@@ -1198,13 +1198,25 @@ export function DataTable<T, K extends string, G extends string = never>(
   // FUNCTION, not a stored element: it renders either in the table's own
   // toolbar or (controlsMount) portalled into the host's chrome row, and a
   // shared element node can only live in one place. Exactly one call renders.
-  // Whether the toolbar ROW renders at all. With the controls lifted into a
-  // host's chrome (controlsMount) and no filters to show, it doesn't — and the
-  // table then loses the hairline that row carried along its bottom edge, which
-  // is what separated the header from whatever sits above it. The seam moves to
-  // the table area instead (see .root[data-no-toolbar] in the CSS).
+  // Whether the control cluster has anything to show: the card-view sort
+  // control, or a control the host wired — Settings (and with it the view
+  // toggle and Columns, which both need setConfig) or full screen. The inline
+  // loading spinner is deliberately not counted: it comes and goes, and a row
+  // that appeared only while a refetch ran would jump the table about.
+  const hasControls = () =>
+    showSortControl() || !!props.setConfig || props.showFullScreen !== false;
+  // Whether the toolbar ROW renders at all. Not when the controls are lifted
+  // into a host's chrome (controlsMount) and there are no filters or count to
+  // show — and not when the cluster would be EMPTY here anyway (a modal's
+  // structural line table: every column fixed, no config, no full screen). An
+  // empty bar spends a row and draws its bottom hairline under nothing, which
+  // reads as a double line above the header. Without the row the table loses
+  // that hairline; the seam moves to the table area instead (see
+  // .root[data-no-toolbar] in the CSS).
   const hasToolbar = () =>
-    !!filters() || !!props.pagination || !props.controlsMount;
+    !!filters() ||
+    !!props.pagination ||
+    (!props.controlsMount && hasControls());
 
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
