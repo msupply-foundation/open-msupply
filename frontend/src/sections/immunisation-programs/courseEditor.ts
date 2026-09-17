@@ -99,6 +99,37 @@ export const joinMonths = (years: number, months: number): number =>
   years * 12 + months;
 
 /**
+ * The two age fields AS TYPED — the pair is the source of truth while it is
+ * being edited, and the stored figure is their sum (OMS-REG-IMM-01.64,
+ * OMS-REG-IMM-01.56). Deriving each half from the stored total on every
+ * keystroke fed a half-typed year back into the months field and those
+ * months back into the year: typing 1.75 years over 0 months went 12 → 20.4
+ * (months now 8.4) → 29.4, and settled at 15 years 8.4 months
+ * (IMM-20260917-F2). With the pair as truth the same keystrokes store 12 →
+ * 20.4 → 21, and settling re-derives 1 year 9 months.
+ */
+export interface AgeEntry {
+  years: number;
+  months: number;
+}
+
+/** The pair a stored figure opens as — whole years and the remaining months. */
+export const ageEntryFromTotal = (totalMonths: number): AgeEntry =>
+  splitMonths(totalMonths);
+
+/** What the pair stores: the sum of its two halves as typed. */
+export const ageEntryTotal = (entry: AgeEntry): number =>
+  joinMonths(entry.years, entry.months);
+
+/**
+ * On leaving the pair, the typed halves re-derive into whole years and the
+ * remaining months — 1.75 y 0 m reads back as 1 y 9 m, 2.5 y 7 m as 3 y 1 m;
+ * a fraction of a month stays in the months half (0 y 6.5 m).
+ */
+export const settleAgeEntry = (entry: AgeEntry): AgeEntry =>
+  splitMonths(ageEntryTotal(entry));
+
+/**
  * A new dose is born from the last one (rules § doses; OMS-REG-IMM-01.50,
  * OMS-REG-IMM-01.51): its label is the course name followed by its number; its
  * from age is the

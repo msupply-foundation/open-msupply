@@ -9,7 +9,10 @@ import {
   insertInput,
   insertOutcome,
   isDirty,
+  ageEntryFromTotal,
+  ageEntryTotal,
   joinMonths,
+  settleAgeEntry,
   newCourseDraft,
   nextDose,
   setStoreRate,
@@ -617,5 +620,51 @@ describe('the other shapes (contract § rejections)', () => {
       kind: 'failed',
     });
     expect(updateOutcome({ kind: 'aborted' })).toEqual({ kind: 'failed' });
+  });
+});
+
+describe('OMS-REG-IMM-01.64 / OMS-REG-IMM-01.56 — the age pair as typed (IMM-20260917-F2)', () => {
+  it('stores the sum of the two halves as typed, keystroke by keystroke', () => {
+    // Typing 1.75 into the years half over 0 months: each keystroke stores
+    // years × 12 + the months AS TYPED (still 0), never a re-derived months.
+    const typed = [1, 1.7, 1.75].map(years =>
+      ageEntryTotal({ years, months: 0 })
+    );
+    expect(typed).toEqual([12, 20.4, 21]);
+  });
+
+  it('settles the typed pair into whole years and the remaining months', () => {
+    expect(settleAgeEntry({ years: 1.75, months: 0 })).toEqual({
+      years: 1,
+      months: 9,
+    });
+    expect(settleAgeEntry({ years: 2.5, months: 7 })).toEqual({
+      years: 3,
+      months: 1,
+    });
+    // A fraction of a month stays in the months half.
+    expect(settleAgeEntry({ years: 0, months: 6.5 })).toEqual({
+      years: 0,
+      months: 6.5,
+    });
+    // A settled pair is a fixed point.
+    expect(settleAgeEntry({ years: 1, months: 9 })).toEqual({
+      years: 1,
+      months: 9,
+    });
+  });
+
+  it('opens a stored figure as whole years and the remaining months', () => {
+    expect(ageEntryFromTotal(21)).toEqual({ years: 1, months: 9 });
+    expect(ageEntryTotal(ageEntryFromTotal(29.4))).toBeCloseTo(29.4);
+  });
+
+  it('documents the coupling it replaces: re-deriving mid-entry drifted the value', () => {
+    // The old cells re-derived BOTH halves from the stored total on every
+    // keystroke: after "1.7" the months half read 8.4, so "1.75" joined with
+    // 8.4 and stored 29.4 — not 21.
+    const afterOnePointSeven = splitMonths(joinMonths(1.7, 0));
+    expect(afterOnePointSeven.months).toBeCloseTo(8.4);
+    expect(joinMonths(1.75, afterOnePointSeven.months)).toBeCloseTo(29.4);
   });
 });
