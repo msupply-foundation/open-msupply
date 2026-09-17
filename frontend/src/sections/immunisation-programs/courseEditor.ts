@@ -232,6 +232,9 @@ export type Validation =
   | { ok: true; draft: ValidCourseDraft }
   | { ok: false; items: ValidationItem[] };
 
+/** The header fields a check can name. */
+export type ValidationField = Extract<ValidationItem, { kind: 'field' }>['field'];
+
 /**
  * The editor's completeness checks, run on Save (rules § the editor;
  * OMS-REG-IMM-01.34, OMS-REG-IMM-01.35, OMS-REG-IMM-01.52, OMS-REG-IMM-01.53,
@@ -315,6 +318,67 @@ export const validateDraft = (draft: CourseDraft): Validation => {
     },
   };
 };
+
+// ─── When each check reports (controls › form submits validate on click) ──
+
+/**
+ * The checks that wait for a Save press: the required family. A form opens
+ * quiet, so an empty field is not shouted at before the user has tried to
+ * save — the default `createFormValidation` gives a rule with no message of
+ * its own. The rules about what was TYPED — a dose out of order, a to age
+ * below its from age, a rate too large — report the moment they trip.
+ */
+const REPORTED_ONCE_ARMED: ReadonlySet<LocaleKey> = new Set<LocaleKey>([
+  'messages.required-field',
+  'messages.at-least-one-vaccine-item-required',
+  'messages.at-least-one-dose-required',
+]);
+
+export const reportsOnlyOnceArmed = (key: LocaleKey): boolean =>
+  REPORTED_ONCE_ARMED.has(key);
+
+/**
+ * The failures the editor shows now: every one once Save has been pressed
+ * (the form is armed); before that only the typed-value rules — a dose keeps
+ * just those of its messages, and drops out when none is left.
+ */
+export const visibleProblems = (
+  items: ValidationItem[],
+  armed: boolean
+): ValidationItem[] =>
+  armed
+    ? items
+    : items.flatMap((item): ValidationItem[] => {
+        if (item.kind === 'field')
+          return reportsOnlyOnceArmed(item.messageKey) ? [] : [item];
+        const messageKeys = item.messageKeys.filter(
+          key => !reportsOnlyOnceArmed(key)
+        );
+        return messageKeys.length > 0 ? [{ ...item, messageKeys }] : [];
+      });
+
+/** The message a header field shows beneath itself, if `items` names it. */
+export const fieldProblem = (
+  items: ValidationItem[],
+  field: ValidationField
+): LocaleKey | undefined => {
+  for (const item of items)
+    if (item.kind === 'field' && item.field === field) return item.messageKey;
+  return undefined;
+};
+
+/** Whether `items` gives the dose this message. */
+export const doseProblem = (
+  items: ValidationItem[],
+  doseId: string,
+  key: LocaleKey
+): boolean =>
+  items.some(
+    item =>
+      item.kind === 'dose' &&
+      item.doseId === doseId &&
+      item.messageKeys.includes(key)
+  );
 
 /**
  * Whether the draft differs from the course it opened on — what offers Save
