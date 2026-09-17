@@ -6,6 +6,7 @@ import {
   For,
   on,
   Show,
+  untrack,
 } from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, unwrap } from 'solid-js/store';
@@ -45,17 +46,19 @@ import {
   type VaccineItemsResult,
 } from './immunisationPrograms.generated';
 import {
+  ageEntryFromTotal,
+  ageEntryTotal,
   draftFromCourse,
   insertInput,
   insertOutcome,
   isDirty,
-  joinMonths,
   newCourseDraft,
   nextDose,
-  splitMonths,
+  settleAgeEntry,
   updateInput,
   updateOutcome,
   validateDraft,
+  type AgeEntry,
   type CourseDraft,
   type DoseNode,
   type ItemNode,
@@ -307,9 +310,51 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     field: 'minAgeMonths' | 'maxAgeMonths',
     label: string
   ) => {
-    const parts = () => splitMonths(dose[field]);
+    // The pair holds what was TYPED into each half and stores their sum; the
+    // halves are re-derived — 1.75 y 0 m → 1 y 9 m — only when focus leaves
+    // the pair, or when the stored figure changes from outside it (the course
+    // reloaded). Deriving on every keystroke fed a half-typed year back into
+    // the months field and those months back into the year
+    // (IMM-20260917-F2; courseEditor.ts § AgeEntry).
+    //
+    // The store is read UNTRACKED here: this function body runs inside the
+    // table cell's render effect, so a tracked read would re-run the whole
+    // template — remounting both inputs and dropping focus — on every store
+    // write the pair itself makes (kdd/solid-reactivity-pitfalls). The
+    // effect below owns the only tracked read.
+    const [entry, setEntry] = createSignal<AgeEntry>(
+      untrack(() => ageEntryFromTotal(dose[field]))
+    );
+    createEffect(
+      on(
+        () => dose[field],
+        total => {
+          // Our own write echoes back as the same float; anything else is an
+          // external change worth re-deriving from.
+          if (Math.abs(total - ageEntryTotal(entry())) > 1e-9)
+            setEntry(ageEntryFromTotal(total));
+        },
+        { defer: true }
+      )
+    );
+    const type = (patch: Partial<AgeEntry>) => {
+      const next = { ...entry(), ...patch };
+      setEntry(next);
+      updateDose(dose.id, { [field]: ageEntryTotal(next) });
+    };
+    // Focus moving between the two halves is still "inside the pair".
+    const settle = (event: FocusEvent) => {
+      const { currentTarget, relatedTarget } = event;
+      if (
+        currentTarget instanceof Node &&
+        relatedTarget instanceof Node &&
+        currentTarget.contains(relatedTarget)
+      )
+        return;
+      setEntry(settleAgeEntry(entry()));
+    };
     return (
-      <HStack gap="sm">
+      <HStack gap="sm" onFocusOut={settle}>
         <NumberField
           label={`${label} ${t('label.years-abbreviation')}`}
           hideLabel
@@ -319,12 +364,8 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
           min={0}
           decimalLimit={2}
           disabled={saving()}
-          value={parts().years}
-          onChange={years =>
-            updateDose(dose.id, {
-              [field]: joinMonths(years ?? 0, parts().months),
-            })
-          }
+          value={entry().years}
+          onChange={years => type({ years: years ?? 0 })}
         />
         <NumberField
           label={`${label} ${t('label.months-abbreviation')}`}
@@ -336,12 +377,8 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
           max={11}
           decimalLimit={2}
           disabled={saving()}
-          value={parts().months}
-          onChange={months =>
-            updateDose(dose.id, {
-              [field]: joinMonths(parts().years, months ?? 0),
-            })
-          }
+          value={entry().months}
+          onChange={months => type({ months: months ?? 0 })}
         />
       </HStack>
     );
