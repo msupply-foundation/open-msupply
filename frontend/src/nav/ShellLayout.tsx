@@ -32,6 +32,7 @@ import {
 } from '../plugins/pluginPages';
 import { createRegionDiagnostics } from '../plugins/diagnostics';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
+import { bindHostSearch } from './hostSearchParams';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
@@ -85,6 +86,13 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // shell is where navigation lives and it mounts once for the whole in-store
   // app, which every plugin contribution renders inside.
   bindHostNavigate(routerHostNavigate(navigate));
+
+  // The other half of that bridge: the address bar's query string, so a plugin
+  // list screen can keep its filter/sort/page there the way a host one does
+  // (src/nav/hostSearchParams.ts). Read only — the write side is built from
+  // the navigator bound above. Reactive: `location.search` is the router's own
+  // signal, so a Back button re-renders the screen reading it.
+  bindHostSearch(() => location.search);
 
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
   // → 'inventory/stocktakes'. The empty (store root) path is Home's own.
