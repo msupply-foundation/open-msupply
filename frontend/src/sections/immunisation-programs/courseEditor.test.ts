@@ -11,6 +11,8 @@ import {
   isDirty,
   ageEntryFromTotal,
   ageEntryTotal,
+  doseProblem,
+  fieldProblem,
   joinMonths,
   settleAgeEntry,
   newCourseDraft,
@@ -21,9 +23,11 @@ import {
   updateInput,
   updateOutcome,
   validateDraft,
+  visibleProblems,
   type CourseDraft,
   type CourseNode,
   type ValidCourseDraft,
+  type ValidationItem,
 } from './courseEditor';
 
 // Anchors: spec/immunisation-programs/acceptance.md — the editor.
@@ -298,6 +302,88 @@ describe('OMS-REG-IMM-01.52 / OMS-REG-IMM-01.53 / OMS-REG-IMM-01.54 — the dose
         ],
       },
     ]);
+  });
+});
+
+describe("when each check reports — the typed-value rules at once, the required family on Save (ui-standards › form submits validate on click; OMS-REG-IMM-01.53 / .54 / .64)", () => {
+  // A blank new course (name, item required) with a too-large wastage rate
+  // and one dose that is both unlabelled and ends before it starts.
+  const failing = (): ValidationItem[] => {
+    const draft = newCourseDraft('id', 'prog-1');
+    draft.wastageRate = 150;
+    draft.vaccineCourseDoses = [
+      {
+        id: 'd-1',
+        label: '',
+        minAgeMonths: 20,
+        maxAgeMonths: 19,
+        customAgeLabel: null,
+        minIntervalDays: 0,
+      },
+    ];
+    const v = validateDraft(draft);
+    if (v.ok) throw new Error('the draft should fail');
+    return v.items;
+  };
+
+  it('before a Save press shows the too-large rate and the age order alone — the required checks wait', () => {
+    expect(visibleProblems(failing(), false)).toEqual([
+      {
+        kind: 'field',
+        field: 'wastageRate',
+        labelKey: 'label.wastage-rate',
+        messageKey: 'error.numeric-input-error-too-big',
+      },
+      {
+        kind: 'dose',
+        doseId: 'd-1',
+        number: 1,
+        messageKeys: ['error.dose-max-less-than-min'],
+      },
+    ]);
+  });
+
+  it('once armed shows everything, the dose keeping both its messages', () => {
+    const items = failing();
+    expect(visibleProblems(items, true)).toEqual(items);
+    expect(
+      items.map(item =>
+        item.kind === 'field' ? item.messageKey : item.messageKeys
+      )
+    ).toEqual([
+      'messages.required-field',
+      'error.numeric-input-error-too-big',
+      'messages.at-least-one-vaccine-item-required',
+      ['messages.required-field', 'error.dose-max-less-than-min'],
+    ]);
+  });
+
+  it('a dose failing only a required check has no line before Save', () => {
+    const draft = draftFromCourse(course);
+    draft.vaccineCourseDoses = draft.vaccineCourseDoses.map((d, i) =>
+      i === 0 ? { ...d, label: '' } : d
+    );
+    const v = validateDraft(draft);
+    expect(v.ok).toBe(false);
+    if (v.ok) return;
+    expect(visibleProblems(v.items, false)).toEqual([]);
+    expect(visibleProblems(v.items, true)).toEqual(v.items);
+  });
+
+  it('gives each field and dose its own error state from the same visible list', () => {
+    const items = failing();
+    const quiet = visibleProblems(items, false);
+    expect(fieldProblem(quiet, 'wastageRate')).toBe(
+      'error.numeric-input-error-too-big'
+    );
+    expect(fieldProblem(quiet, 'name')).toBeUndefined();
+    expect(fieldProblem(items, 'name')).toBe('messages.required-field');
+    expect(doseProblem(quiet, 'd-1', 'error.dose-max-less-than-min')).toBe(
+      true
+    );
+    expect(doseProblem(quiet, 'd-1', 'messages.required-field')).toBe(false);
+    expect(doseProblem(items, 'd-1', 'messages.required-field')).toBe(true);
+    expect(doseProblem(items, 'd-2', 'messages.required-field')).toBe(false);
   });
 });
 

@@ -3,6 +3,7 @@ import {
   createMemo,
   createResource,
   createSignal,
+  createUniqueId,
   For,
   on,
   Show,
@@ -12,7 +13,7 @@ import type { Component } from 'solid-js';
 import { createStore, unwrap } from 'solid-js/store';
 import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
 import { gated } from '@/api/gated';
-import { t } from '@/intl';
+import { t, type LocaleKey } from '@/intl';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -23,6 +24,7 @@ import { HStack } from '@/ui/layout/Stack/HStack';
 import { FormRow } from '@/ui/layout/Form/FormRow';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { TextField } from '@/ui/elements/inputs/TextField';
+import { FieldShell } from '@/ui/elements/inputs/FieldShell';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { Checkbox } from '@/ui/elements/inputs/Checkbox';
 import { Combobox } from '@/ui/elements/selectors/Combobox';
@@ -48,7 +50,9 @@ import {
 import {
   ageEntryFromTotal,
   ageEntryTotal,
+  doseProblem,
   draftFromCourse,
+  fieldProblem,
   insertInput,
   insertOutcome,
   isDirty,
@@ -58,10 +62,12 @@ import {
   updateInput,
   updateOutcome,
   validateDraft,
+  visibleProblems,
   type AgeEntry,
   type CourseDraft,
   type DoseNode,
   type ItemNode,
+  type ValidationField,
   type ValidationItem,
 } from './courseEditor';
 import { StoreRatesPanel } from './StoreRatesPanel';
@@ -215,15 +221,25 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
 
   // ─── Save (rules § the editor) ────────────────────────────────────────
   const [saving, setSaving] = createSignal(false);
-  // The completeness checks run on the FIRST Save press and stay live after
-  // it, so the summary tracks the corrections (ui-surface S3 § validation
+  // The completeness checks run from the start; which failures the editor
+  // SHOWS follows the house timing (ui-standards › form submits validate on
+  // click; courseEditor.ts § visibleProblems): the rules about what was typed
+  // report the moment they trip, the required checks only once a Save press
+  // has armed the form, and everything stays live after that so the summary
+  // and the field states track the corrections (ui-surface S3 § validation
   // summary).
-  const [attempted, setAttempted] = createSignal(false);
+  const [armed, setArmed] = createSignal(false);
   const validation = createMemo(() => validateDraft(draft));
-  const problems = (): ValidationItem[] => {
+  const problems = createMemo((): ValidationItem[] => {
     const v = validation();
-    return attempted() && !v.ok ? v.items : [];
+    return v.ok ? [] : visibleProblems(v.items, armed());
+  });
+  const fieldError = (field: ValidationField): string | undefined => {
+    const key = fieldProblem(problems(), field);
+    return key === undefined ? undefined : t(key);
   };
+  const doseError = (doseId: string, key: LocaleKey): string | undefined =>
+    doseProblem(problems(), doseId, key) ? t(key) : undefined;
   // The server's refusal, until the next Save.
   const [serverError, setServerError] = createSignal<
     { message: string; detail?: string } | undefined
@@ -244,7 +260,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     // § access; OMS-REG-IMM-01.71) — before the checks, so nothing is reported
     // for a save that could never be sent.
     if (!props.guardEdit()) return;
-    setAttempted(true);
+    setArmed(true);
     const v = validateDraft(unwrap(draft));
     if (!v.ok) return;
     setSaving(true);
@@ -355,36 +371,57 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
         return;
       setEntry(settleAgeEntry(entry()));
     };
+    // The pair is ONE field with one message (ui-surface S3 — each failing
+    // field shows its own error state): the FieldShell carries the dose-order
+    // message once beneath the two halves, the halves take the error state
+    // alone (TextField `invalid`). Both read the live check here rather than
+    // the shell's render-once arguments.
+    const id = createUniqueId();
+    const messageKey: LocaleKey =
+      field === 'minAgeMonths'
+        ? 'error.dose-min-out-of-order'
+        : 'error.dose-max-less-than-min';
+    const error = () => doseError(dose.id, messageKey);
+    const describedBy = () => (error() ? `${id}-message` : undefined);
     return (
-      <HStack gap="sm" onFocusOut={settle}>
-        <NumberField
-          label={`${label} ${t('label.years-abbreviation')}`}
-          hideLabel
-          size="small"
-          width="compact"
-          endAdornment={t('label.years-abbreviation')}
-          min={0}
-          // Whole years only (rules § input bounds): a fraction of a year is
-          // months the other half already holds.
-          decimalLimit={0}
-          disabled={saving()}
-          value={entry().years}
-          onChange={years => type({ years: years ?? 0 })}
-        />
-        <NumberField
-          label={`${label} ${t('label.months-abbreviation')}`}
-          hideLabel
-          size="small"
-          width="compact"
-          endAdornment={t('label.months-abbreviation')}
-          min={0}
-          max={11}
-          decimalLimit={2}
-          disabled={saving()}
-          value={entry().months}
-          onChange={months => type({ months: months ?? 0 })}
-        />
-      </HStack>
+      <FieldShell label={label} hideLabel error={error()} controlId={id}>
+        {() => (
+          <HStack gap="sm" onFocusOut={settle}>
+            <NumberField
+              id={id}
+              label={`${label} ${t('label.years-abbreviation')}`}
+              hideLabel
+              size="small"
+              width="compact"
+              endAdornment={t('label.years-abbreviation')}
+              min={0}
+              // Whole years only (rules § input bounds): a fraction of a year
+              // is months the other half already holds.
+              decimalLimit={0}
+              disabled={saving()}
+              invalid={Boolean(error())}
+              aria-describedby={describedBy()}
+              value={entry().years}
+              onChange={years => type({ years: years ?? 0 })}
+            />
+            <NumberField
+              label={`${label} ${t('label.months-abbreviation')}`}
+              hideLabel
+              size="small"
+              width="compact"
+              endAdornment={t('label.months-abbreviation')}
+              min={0}
+              max={11}
+              decimalLimit={2}
+              disabled={saving()}
+              invalid={Boolean(error())}
+              aria-describedby={describedBy()}
+              value={entry().months}
+              onChange={months => type({ months: months ?? 0 })}
+            />
+          </HStack>
+        )}
+      </FieldShell>
     );
   };
 
@@ -411,6 +448,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
             required
             size="small"
             disabled={saving()}
+            error={doseError(dose.id, 'messages.required-field')}
             value={dose.label}
             onInput={event =>
               updateDose(dose.id, { label: event.currentTarget.value })
@@ -568,6 +606,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                 width="full"
                 data-testid="vaccine-course-name-input"
                 disabled={saving()}
+                error={fieldError('name')}
                 value={draft.name}
                 onInput={event => setDraft('name', event.currentTarget.value)}
               />
@@ -599,6 +638,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                   decimalLimit={1}
                   data-testid="vaccine-course-coverage-input"
                   disabled={saving()}
+                  error={fieldError('coverageRate')}
                   value={draft.coverageRate}
                   onChange={value => setDraft('coverageRate', value)}
                 />
@@ -618,6 +658,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                   decimalLimit={1}
                   data-testid="vaccine-course-wastage-input"
                   disabled={saving()}
+                  error={fieldError('wastageRate')}
                   value={draft.wastageRate}
                   onChange={value => setDraft('wastageRate', value)}
                 />
@@ -673,8 +714,9 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                 {t('label.dose')}
               </Button>
             </HStack>
-            {/* The validation summary — shown once a Save press found failures,
-                live after that (S3 § validation summary). */}
+            {/* The validation summary — the typed-value rules as they trip,
+                the required checks once a Save press found them, live after
+                that (S3 § validation summary). */}
             <Show when={problems().length > 0}>
               <Alert severity="error" testId="vaccine-course-validation">
                 <div>{t('messages.alert-problem-with-form-input')}</div>
