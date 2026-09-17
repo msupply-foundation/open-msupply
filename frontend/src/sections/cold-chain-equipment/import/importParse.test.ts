@@ -315,6 +315,67 @@ describe('the CURRENT app’s export imports here', () => {
   });
 });
 
+describe('the reporter’s two templates (issue #663, second round)', () => {
+  /*
+   * Both were filled in and saved by the reporter, one from each app's
+   * template, and both work in the current app but failed here. Their only
+   * fault is the SEPARATOR — no banner row, dates already `DD/MM/YYYY`, real
+   * catalogue codes — which is the regression: the current app auto-detects the
+   * delimiter and this one used to assume a comma.
+   *
+   * The old app's template carries a leading Store column and the new app's
+   * does not (both write it on a central server only). Either must read.
+   */
+  const base = (withStore: boolean) =>
+    [
+      ...(withStore ? ['label.store'] : []),
+      'label.asset-number',
+      'label.catalogue-item-code',
+      'label.installation-date',
+      'label.replacement-date',
+      'label.warranty-start-date',
+      'label.warranty-end-date',
+      'label.serial',
+      'label.functional-status',
+      'label.needs-replacement',
+      'label.asset-notes',
+    ].join(';');
+
+  const file = (withStore: boolean) =>
+    [
+      base(withStore),
+      `${withStore ? ';' : ''}C1;E004/027;17/09/2026;17/09/2036;16/09/2026;16/09/2028;;status.functioning;;`,
+      `${withStore ? ';' : ''}C2;E004/027;17/09/2026;17/09/2036;16/09/2026;16/09/2028;;status.functioning;;`,
+    ].join('\r\n');
+
+  const lookupWith = (isCentral: boolean) =>
+    lookup({ catalogueItems: [{ id: 'item-1', code: 'E004/027' }], isCentral });
+
+  for (const withStore of [true, false]) {
+    const label = withStore ? 'the old app’s template' : 'this app’s template';
+    for (const isCentral of [true, false]) {
+      it(`${label} imports on a ${isCentral ? 'central' : 'store'} server`, () => {
+        const rows = parseImportFile(file(withStore), lookupWith(isCentral));
+        expect(rows).toHaveLength(2);
+        expect(hasErrors(rows)).toBe(false);
+        expect(hasWarnings(rows)).toBe(false);
+        expect(rows[0]?.assetNumber).toBe('C1');
+        expect(rows[0]?.catalogueItemId).toBe('item-1');
+        expect(rows[0]?.installationDate).toBe('2026-09-17');
+        expect(rows[0]?.warrantyEnd).toBe('2028-09-16');
+      });
+    }
+  }
+
+  it('reads a Store column the file carries but this server has no use for', () => {
+    // On a store server the column is not one the import knows, so it is simply
+    // never looked up — it must not derail the columns beside it.
+    const rows = parseImportFile(file(true), lookupWith(false));
+    expect(rows[0]?.assetNumber).toBe('C1');
+    expect(rows[0]?.storeId).toBeNull();
+  });
+});
+
 describe('a returned template carrying all three shapes at once', () => {
   /*
    * The banner row, semicolons for separators, and dashes in the dates —
