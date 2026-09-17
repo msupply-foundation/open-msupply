@@ -392,8 +392,7 @@ async fn fetch_data(
         // The report's SQL queries are synchronous, so run them on the blocking pool rather than
         // the actix worker's runtime thread (#12710) - see the note on `generate_html_report`.
         // The executor runs them sequentially on one connection; see `ReportQueryExecutor::run`.
-        let executor =
-            ReportQueryExecutor::new(&ctx.get_settings().database, ctx.get_connection_manager());
+        let executor = ReportQueryExecutor::new(ctx.get_connection_manager());
         let results =
             tokio::task::spawn_blocking(move || executor.run(sql_queries, &variables)).await??;
         for (name, rows) in results {

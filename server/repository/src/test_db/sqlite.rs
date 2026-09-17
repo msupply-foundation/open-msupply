@@ -162,7 +162,7 @@ fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManage
         }))
         .build(connection_manager)
         .expect("Failed to connect to database");
-    StorageConnectionManager::new(pool)
+    StorageConnectionManager::new(pool, db_settings.connection_string())
 }
 
 fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> StorageConnectionManager {
