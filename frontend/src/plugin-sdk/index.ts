@@ -208,6 +208,11 @@ export {
  * component in a module that ships regardless.
  */
 export { ChevronRightIcon } from '../ui/icons';
+// The disclosure chevron, as the host's own accordions draw it (down,
+// rotating 180° open) — the Cook Islands order-freshness statement's
+// disclosure mirrors that look. Same bargain again: Select already pulls it
+// eagerly, so re-exporting costs nothing new.
+export { ChevronDownIcon } from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';
