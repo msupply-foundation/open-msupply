@@ -429,7 +429,13 @@ const EquipmentList: Component = () => {
       <Show when={importOpen()}>
         <EquipmentImportModal
           storeId={params.storeId}
-          isCentral={showStore()}
+          // The SERVER's mode, not the destination's — `showStore()` also
+          // demands the all-stores destination, which would drop the store
+          // column from the template and the review on a central server's Cold
+          // chain screen while the export beside it still wrote one. The spec
+          // says central-only of both (rules § bulk import, ui-surface S1/S4),
+          // and the current app reads its own central flag the same way.
+          isCentral={isCentralServer()}
           onClose={() => setImportOpen(false)}
           onImported={afterWrite}
         />
