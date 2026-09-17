@@ -25,28 +25,25 @@ import {
 
 // Anchors: spec/immunisation-programs/acceptance.md — the editor.
 //   OMS-REG-IMM-01.31  a new course opens blank with its defaults
-//   OMS-REG-IMM-01.34  a blank Save lists name / item / dose as required, sends nothing
-//   OMS-REG-IMM-01.36  a duplicate name is refused as such, the draft kept
-//   OMS-REG-IMM-01.9  a demographic can be chosen and cleared
-//   OMS-REG-IMM-01.39  store overrides travel and come back per store
-//   OMS-REG-IMM-01.35 cleared rates are required
-//   OMS-REG-IMM-01.16  an edit opens the course whole
-//   OMS-REG-IMM-01.42  Save is not offered until the draft differs
-//   OMS-REG-IMM-01.45  clearing the demographic sends none
-//   OMS-REG-IMM-01.46  clearing a store override sends a null rate on the kept row
-//   OMS-REG-IMM-01.47  a rename to a sibling's name is refused
-//   OMS-REG-IMM-01.50  the first dose's defaults
-//   OMS-REG-IMM-01.51  the second dose's defaults
-//   OMS-REG-IMM-01.52  a blank dose label is required
-//   OMS-REG-IMM-01.53  a from age not greater than the previous dose's is refused
-//   OMS-REG-IMM-01.54  a to age below the from age is refused
-//   OMS-REG-IMM-01.56  ages are months on the wire, years + months on screen
-//   OMS-REG-IMM-01.58  removing an in-use dose is refused as such
-//   OMS-REG-IMM-01.64  a wastage rate above 100 is too large
-// The editor's rules live in pure functions, so each is pinned at the cheapest
-// layer: the draft, its defaults and checks, the draft → input mapping (what
-// the whole-course write actually sends) and the mapping of the writes'
-// rejection SHAPES onto what the dialog shows.
+// OMS-REG-IMM-01.34  a blank Save lists name / item / dose as required, sends
+// nothing OMS-REG-IMM-01.36  a duplicate name is refused as such, the draft
+// kept OMS-REG-IMM-01.9  a demographic can be chosen and cleared
+// OMS-REG-IMM-01.39  store overrides travel and come back per store
+// OMS-REG-IMM-01.35 cleared rates are required OMS-REG-IMM-01.16  an edit opens
+// the course whole OMS-REG-IMM-01.42  Save is not offered until the draft
+// differs OMS-REG-IMM-01.45  clearing the demographic sends none
+// OMS-REG-IMM-01.46  clearing a store override sends a null rate on the kept
+// row OMS-REG-IMM-01.47  a rename to a sibling's name is refused
+// OMS-REG-IMM-01.50  the first dose's defaults OMS-REG-IMM-01.51  the second
+// dose's defaults OMS-REG-IMM-01.52  a blank dose label is required
+// OMS-REG-IMM-01.53  a from age not greater than the previous dose's is refused
+// OMS-REG-IMM-01.54  a to age below the from age is refused OMS-REG-IMM-01.56
+// ages are months on the wire, years + months on screen OMS-REG-IMM-01.58
+// removing an in-use dose is refused as such OMS-REG-IMM-01.64  a wastage rate
+// above 100 is too large The editor's rules live in pure functions, so each is
+// pinned at the cheapest layer: the draft, its defaults and checks, the draft →
+// input mapping (what the whole-course write actually sends) and the mapping of
+// the writes' rejection SHAPES onto what the dialog shows.
 
 const course: CourseNode = {
   id: 'course-1',

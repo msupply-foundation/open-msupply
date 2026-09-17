@@ -45,7 +45,6 @@ import {
   type VaccineItemsResult,
 } from './immunisationPrograms.generated';
 import {
-  MAX_WASTAGE_RATE,
   draftFromCourse,
   insertInput,
   insertOutcome,
@@ -119,9 +118,9 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     isEdit ? undefined : structuredClone(unwrap(draft))
   );
 
-  // An edit loads the course whole (OMS-REG-IMM-01.16). Read NON-SUSPENDING: this dialog
-  // sits on an open screen, and the read through the authenticated list
-  // operation answers no node for a deleted course.
+  // An edit loads the course whole (OMS-REG-IMM-01.16). Read NON-SUSPENDING:
+  // this dialog sits on an open screen, and the read through the
+  // authenticated list operation answers no node for a deleted course.
   const [course] = createResource(
     () => courseId,
     async id => {
@@ -232,14 +231,15 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     return base !== undefined && isDirty(draft, base);
   });
   // On create Save is always offered — pressing it is how the checks report
-  // (OMS-REG-IMM-01.34); on edit only once the draft differs (OMS-REG-IMM-01.42).
+  // (OMS-REG-IMM-01.34); on edit only once the draft differs
+  // (OMS-REG-IMM-01.42).
   const canSave = () => !isEdit || dirty();
 
   const save = async () => {
     if (saving()) return; // re-entry guard
-    // Refused up front for a user without the central-data permission (rules §
-    // access; OMS-REG-IMM-01.71) — before the checks, so nothing is reported for a save
-    // that could never be sent.
+    // Refused up front for a user without the central-data permission (rules
+    // § access; OMS-REG-IMM-01.71) — before the checks, so nothing is reported
+    // for a save that could never be sent.
     if (!props.guardEdit()) return;
     setAttempted(true);
     const v = validateDraft(unwrap(draft));
@@ -570,7 +570,10 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                   width="full"
                   endAdornment="%"
                   min={0}
-                  max={MAX_WASTAGE_RATE}
+                  // No `max`: the cap is a SAVE-time check (rules § input
+                  // bounds — "above 100 the save is refused as too large"),
+                  // reported by the validation summary; a `max` here would
+                  // clamp the entry silently on blur instead.
                   decimalLimit={1}
                   data-testid="vaccine-course-wastage-input"
                   disabled={saving()}

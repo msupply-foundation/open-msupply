@@ -116,7 +116,12 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     isDirty,
     resetDraft,
   } = useVaccineCourse(vaccineCourseId ?? undefined);
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
+  const { Modal } = useDialog({
+    isOpen,
+    onClose,
+    disableBackdrop: true,
+    testId: 'vaccine-course-edit-modal',
+  });
   const doses = useMemo(
     () => draft.vaccineCourseDoses ?? [],
     [draft.vaccineCourseDoses]
@@ -241,6 +246,9 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             onChange={e => updatePatch({ name: e.target.value })}
             autoFocus
             required
+            slotProps={{
+              htmlInput: { 'data-testid': 'vaccine-course-name-input' },
+            }}
             formError={{
               formId: FORM_ID,
               fieldId: 'name',
@@ -258,6 +266,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             }
             defaultValue={defaultValue}
             options={options}
+            inputTestId="vaccine-course-demographic-input"
           />
         </Row>
         <Box display="flex" alignItems="center" gap={2}>
@@ -271,6 +280,9 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
                 decimalLimit={1}
                 min={0}
                 required
+                slotProps={{
+                  htmlInput: { 'data-testid': 'vaccine-course-coverage-input' },
+                }}
                 formError={{
                   formId: FORM_ID,
                   fieldId: 'coverageRate',
@@ -290,6 +302,9 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
                 min={0}
                 max={100}
                 required
+                slotProps={{
+                  htmlInput: { 'data-testid': 'vaccine-course-wastage-input' },
+                }}
                 formError={{
                   formId: FORM_ID,
                   fieldId: 'wastageRate',
@@ -346,12 +361,16 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
               onChange={e =>
                 updatePatch({ useInGapsCalculations: e.target.checked })
               }
+              inputProps={{ 'data-testid': 'vaccine-course-gaps-checkbox' } as never}
             />
           </Row>
           <Row label={t('label.can-skip-dose')}>
             <Checkbox
               checked={draft?.canSkipDose ?? false}
               onChange={e => updatePatch({ canSkipDose: e.target.checked })}
+              inputProps={
+                { 'data-testid': 'vaccine-course-skip-dose-checkbox' } as never
+              }
             />
           </Row>
           <Box flex={1} display="flex" justifyContent="flex-end" paddingTop={1.5}>
@@ -359,6 +378,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
               Icon={<PlusCircleIcon />}
               label={t('label.dose')}
               onClick={addDose}
+              data-testid="add-dose-button"
             />
           </Box>
         </Box>
@@ -369,6 +389,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         <ErrorDisplay
           items={summaryItems}
           sx={{ marginBottom: '1em' }}
+          testId="vaccine-course-validation"
         />
         <VaccineCourseDoseTable doses={doses} updatePatch={updatePatch} />
       </Container>
