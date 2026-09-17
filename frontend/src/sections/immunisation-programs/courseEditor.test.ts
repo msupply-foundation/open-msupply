@@ -624,28 +624,24 @@ describe('the other shapes (contract § rejections)', () => {
 });
 
 describe('OMS-REG-IMM-01.64 / OMS-REG-IMM-01.56 — the age pair as typed (IMM-20260917-F2)', () => {
-  it('stores the sum of the two halves as typed, keystroke by keystroke', () => {
-    // Typing 1.75 into the years half over 0 months: each keystroke stores
-    // years × 12 + the months AS TYPED (still 0), never a re-derived months.
-    const typed = [1, 1.7, 1.75].map(years =>
-      ageEntryTotal({ years, months: 0 })
+  it('stores the sum of the two halves as typed — the months may carry a fraction', () => {
+    expect(ageEntryTotal({ years: 1, months: 6.5 })).toBe(18.5);
+    expect(ageEntryTotal({ years: 0, months: 1.5 })).toBe(1.5);
+    // Keystroke by keystroke into the months half over 1 year: each commit
+    // stores 12 + the months AS TYPED, never a re-derived value.
+    expect([6, 6.5].map(months => ageEntryTotal({ years: 1, months }))).toEqual(
+      [18, 18.5]
     );
-    expect(typed).toEqual([12, 20.4, 21]);
   });
 
   it('settles the typed pair into whole years and the remaining months', () => {
-    expect(settleAgeEntry({ years: 1.75, months: 0 })).toEqual({
+    expect(settleAgeEntry({ years: 1, months: 6.5 })).toEqual({
       years: 1,
-      months: 9,
-    });
-    expect(settleAgeEntry({ years: 2.5, months: 7 })).toEqual({
-      years: 3,
-      months: 1,
-    });
-    // A fraction of a month stays in the months half.
-    expect(settleAgeEntry({ years: 0, months: 6.5 })).toEqual({
-      years: 0,
       months: 6.5,
+    });
+    expect(settleAgeEntry({ years: 1, months: 13 })).toEqual({
+      years: 2,
+      months: 1,
     });
     // A settled pair is a fixed point.
     expect(settleAgeEntry({ years: 1, months: 9 })).toEqual({
@@ -656,15 +652,21 @@ describe('OMS-REG-IMM-01.64 / OMS-REG-IMM-01.56 — the age pair as typed (IMM-2
 
   it('opens a stored figure as whole years and the remaining months', () => {
     expect(ageEntryFromTotal(21)).toEqual({ years: 1, months: 9 });
+    expect(ageEntryFromTotal(1.5)).toEqual({ years: 0, months: 1.5 });
     expect(ageEntryTotal(ageEntryFromTotal(29.4))).toBeCloseTo(29.4);
   });
 
-  it('documents the coupling it replaces: re-deriving mid-entry drifted the value', () => {
+  it('documents the drift it replaces: a fractional year re-derived mid-entry', () => {
     // The old cells re-derived BOTH halves from the stored total on every
-    // keystroke: after "1.7" the months half read 8.4, so "1.75" joined with
-    // 8.4 and stored 29.4 — not 21.
+    // keystroke, and the years half took a fraction: after "1.7" the months
+    // half read 8.4, so "1.75" joined with 8.4 and stored 29.4 — not 21. The
+    // years half is whole now, and the pair is held as typed.
     const afterOnePointSeven = splitMonths(joinMonths(1.7, 0));
     expect(afterOnePointSeven.months).toBeCloseTo(8.4);
     expect(joinMonths(1.75, afterOnePointSeven.months)).toBeCloseTo(29.4);
+    expect(settleAgeEntry({ years: 1, months: 9 })).toEqual({
+      years: 1,
+      months: 9,
+    });
   });
 });
