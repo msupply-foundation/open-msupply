@@ -144,7 +144,7 @@ export { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 export type { ContentContainerProps } from '../ui/layout/ContentContainer/ContentContainer';
 // The settings-form set — what the Stocktake Helper's Settings screen needs
 // (plugins/cook_islands, #489): save/discard actions, the numeric thresholds,
-// the item search box, and the per-item Essential toggle.
+// the item search box, and the per-item Priority toggle.
 // NumberField and TextField are already in this barrel's graph (CurrencyField
 // wraps NumberField, which renders through TextField), so exporting them keeps
 // two modules alive that ship regardless; Button and ToggleSwitch are new
@@ -158,7 +158,10 @@ export { TextField } from '../ui/elements/inputs/TextField';
 export type { TextFieldProps } from '../ui/elements/inputs/TextField';
 export { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
-export { matchesSearch } from '../ui/utils/searchText';
+// foldForSearch rides along free: it is matchesSearch's own module, already
+// eager — exported so a plugin filtering thousands of rows can fold its query
+// once per pass instead of paying matchesSearch's per-call query fold.
+export { foldForSearch, matchesSearch } from '../ui/utils/searchText';
 export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
 export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
 // The date-range filter — what the Stocktake Helper's past-reports list needs
@@ -171,6 +174,63 @@ export type {
   DateRangeFieldProps,
   IsoDateRange,
 } from '../ui/elements/inputs/DateRangeField';
+
+// ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
+/*
+ * Heavy components load as their own host chunk on first render, never as
+ * eager SDK weight (sdk-contract § code splitting; see ./lazyComponents.ts).
+ * Added for the Stocktake Helper's Count log (#491) — a screen's own
+ * sortable/resizable/paged row set is a DataTable, and its filtering is the
+ * FilterBar chip model (spec/ui-standards/components.md § tables, § filter
+ * bar). The type re-exports are erased at build, so they add nothing eager.
+ */
+export {
+  DataTable,
+  FilterBar,
+  FilterDateRange,
+  FilterSelect,
+  FilterTextInput,
+} from './lazyComponents';
+export type { DataTableProps } from '../ui/elements/table/DataTable';
+export type {
+  Filter,
+  FilterBarProps,
+  FilterDateRangeProps,
+  FilterDef,
+  FilterSelectProps,
+  FilterTextInputProps,
+  RangeBounds,
+} from '../ui/elements/selectors/FilterBar';
+export type {
+  Column,
+  ColumnIdentity,
+  SortState,
+} from '../ui/elements/table/columnTypes';
+export type {
+  TableConfig,
+  TableConfigKey,
+} from '../ui/elements/table/tableConfig';
+export type { PaginationProps } from '../ui/elements/table/Pagination';
+
+// ── List & table state — the URL and the stored column layout ───────────────
+/*
+ * Where a plugin list screen's state lives, so it remembers what a host one
+ * remembers: filter/sort/page in the URL, column layout in storage (see
+ * ./tableState.ts, which also records why these two are eager where a heavy
+ * component is lazy — ~1.3 kB gzipped between them, and both must be ready
+ * before first paint).
+ */
+export {
+  createPluginTableConfig,
+  createPluginUrlQueryState,
+  pluginTableId,
+} from './tableState';
+export type { UrlQueryState } from '../list/urlQueryStateCore';
+export type { TableConfigController } from '../api/createTableConfig';
+export type {
+  Band,
+  LayeredConfig,
+} from '../ui/elements/table/tableConfig';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
@@ -261,6 +321,7 @@ export {
   prescriptionListPath,
   stockListPath,
   stocktakeListPath,
+  stocktakeDetailPath,
 } from './deepLinks';
 
 // ── Data access — the core schema ───────────────────────────────────────────
