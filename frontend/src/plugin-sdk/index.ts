@@ -84,6 +84,14 @@ export type {
   ColumnContribution,
 } from './types';
 
+// ── Slot API — warning suppression ──────────────────────────────────────────
+// The catalogue const is exported alongside its type: the spec commits
+// "HOST_WARNING_IDS in the SDK is the committed set" (sdk-contract § the
+// warning-suppression slot), and it is a handful of string literals — no
+// eager weight.
+export { HOST_WARNING_IDS } from './types';
+export type { HostWarningId, WarningSuppressionResolver } from './types';
+
 // ── Slot API — the prescription payment-form slot ───────────────────────────
 export type {
   FieldValidity,
@@ -120,6 +128,19 @@ export type { InfoTooltipProps } from '../ui/elements/feedback/InfoTooltip';
 // audited country plugins' FORM surfaces use
 // (kdd/plugin-loading/evidence/interface-audits/).
 export { CurrencyField } from '../ui/elements/inputs/CurrencyField';
+// The expiry field on the Stocktake Helper's count screen (#495), which was
+// hand-rolling a native <input type="date"> for want of this — per-browser
+// chrome and a forced yyyy-MM-dd, where the host's field is a corvu calendar
+// that renders the same everywhere and follows the display `format`.
+// kdd/bundling files date pickers under the lazy() wrappers, but that rule is
+// for components the startup path does not already carry. This one it does:
+// FilterBar statically imports DateRangeField/DateTimeField, so DatePickerPanel
+// (with @corvu/calendar) is modulepreloaded from index.html already, and
+// DateField with it. Measured: the SDK-only startup delta moves 4.7 -> 4.8 KB
+// gz and no new stylesheet is linked. Revisit if the eager path ever sheds the
+// calendar — then this becomes the first lazy() wrapper.
+export { DateField } from '../ui/elements/inputs/DateField';
+export type { DateFieldProps } from '../ui/elements/inputs/DateField';
 export { FieldRow } from '../ui/elements/inputs/FieldRow';
 export { Select } from '../ui/elements/selectors/Select';
 export type { SelectOption } from '../ui/elements/selectors/Select';
@@ -131,7 +152,7 @@ export { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer
 export type { ContentContainerProps } from '../ui/layout/ContentContainer/ContentContainer';
 // The settings-form set — what the Stocktake Helper's Settings screen needs
 // (plugins/cook_islands, #489): save/discard actions, the numeric thresholds,
-// the item search box, and the per-item Essential toggle.
+// the item search box, and the per-item Priority toggle.
 // NumberField and TextField are already in this barrel's graph (CurrencyField
 // wraps NumberField, which renders through TextField), so exporting them keeps
 // two modules alive that ship regardless; Button and ToggleSwitch are new
@@ -145,9 +166,69 @@ export { TextField } from '../ui/elements/inputs/TextField';
 export type { TextFieldProps } from '../ui/elements/inputs/TextField';
 export { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
-export { matchesSearch } from '../ui/utils/searchText';
+// foldForSearch rides along free: it is matchesSearch's own module, already
+// eager — exported so a plugin filtering thousands of rows can fold its query
+// once per pass instead of paying matchesSearch's per-call query fold.
+export { foldForSearch, matchesSearch } from '../ui/utils/searchText';
 export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
 export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
+
+// ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
+/*
+ * Heavy components load as their own host chunk on first render, never as
+ * eager SDK weight (sdk-contract § code splitting; see ./lazyComponents.ts).
+ * Added for the Stocktake Helper's Count log (#491) — a screen's own
+ * sortable/resizable/paged row set is a DataTable, and its filtering is the
+ * FilterBar chip model (spec/ui-standards/components.md § tables, § filter
+ * bar). The type re-exports are erased at build, so they add nothing eager.
+ */
+export {
+  DataTable,
+  FilterBar,
+  FilterDateRange,
+  FilterSelect,
+  FilterTextInput,
+} from './lazyComponents';
+export type { DataTableProps } from '../ui/elements/table/DataTable';
+export type {
+  Filter,
+  FilterBarProps,
+  FilterDateRangeProps,
+  FilterDef,
+  FilterSelectProps,
+  FilterTextInputProps,
+  RangeBounds,
+} from '../ui/elements/selectors/FilterBar';
+export type {
+  Column,
+  ColumnIdentity,
+  SortState,
+} from '../ui/elements/table/columnTypes';
+export type {
+  TableConfig,
+  TableConfigKey,
+} from '../ui/elements/table/tableConfig';
+export type { PaginationProps } from '../ui/elements/table/Pagination';
+
+// ── List & table state — the URL and the stored column layout ───────────────
+/*
+ * Where a plugin list screen's state lives, so it remembers what a host one
+ * remembers: filter/sort/page in the URL, column layout in storage (see
+ * ./tableState.ts, which also records why these two are eager where a heavy
+ * component is lazy — ~1.3 kB gzipped between them, and both must be ready
+ * before first paint).
+ */
+export {
+  createPluginTableConfig,
+  createPluginUrlQueryState,
+  pluginTableId,
+} from './tableState';
+export type { UrlQueryState } from '../list/urlQueryStateCore';
+export type { TableConfigController } from '../api/createTableConfig';
+export type {
+  Band,
+  LayeredConfig,
+} from '../ui/elements/table/tableConfig';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
@@ -174,6 +255,19 @@ export {
   FileIcon,
   StockIcon,
 } from '../ui/icons';
+/*
+ * The standing "this opens something" chevron on a whole-row/whole-card
+ * target — the Stocktake Helper's worklist rows (#495), which are cards whose
+ * only affordance is the card itself. WidgetCard carries its own ArrowRightIcon
+ * for exactly this job, but a worklist row is not a widget card, and a chevron
+ * hand-drawn in the plugin would miss `data-flip-rtl` and so point the wrong
+ * way in Arabic.
+ *
+ * Same "already in the graph" bargain as the five above — Select pulls
+ * ChevronDownIcon from this module eagerly, so this is one more small
+ * component in a module that ships regardless.
+ */
+export { ChevronRightIcon } from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';
@@ -221,6 +315,7 @@ export {
   prescriptionListPath,
   stockListPath,
   stocktakeListPath,
+  stocktakeDetailPath,
 } from './deepLinks';
 
 // ── Data access — the core schema ───────────────────────────────────────────
