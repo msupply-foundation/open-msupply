@@ -121,14 +121,14 @@ export const fetchNameById = async (
 /**
  * Which side of the system a picker offers, where its role alone is too wide:
  *
- *   storeBacked  only parties that are themselves stores in this system. The
- *                internal-order create picker needs it — the create resolver
- *                rejects a non-store supplier, so offering only store-backed
- *                ones keeps that rejection unreachable from the UI
- *                (spec/internal-orders AC-C3).
- *   external     only parties outside the system. The purchase-order create
- *                picker needs it — an order goes to an external supplier
- *                (spec/purchase-orders § S2).
+ *   internal  only parties that are themselves stores in this system. The
+ *             internal-order create picker needs it — the create resolver
+ *             rejects a non-store supplier, so offering only internal ones
+ *             keeps that rejection unreachable from the UI
+ *             (spec/internal-orders AC-C3).
+ *   external  only parties outside the system. The purchase-order create
+ *             picker needs it — an order goes to an external supplier
+ *             (spec/purchase-orders § S2).
  *
  * ONE value rather than a boolean each, so "both" cannot be asked for.
  *
@@ -138,7 +138,7 @@ export const fetchNameById = async (
  * admits the INVAD and REPACK system names — commonly flagged as suppliers —
  * where FACILITY excludes them.
  */
-export type PartyKind = 'storeBacked' | 'external';
+export type PartyKind = 'internal' | 'external';
 
 /**
  * The narrowings a picker can lay over its role, each an AND on the same
@@ -171,7 +171,7 @@ export const namePageFetcher =
       filter: {
         ...roleFilter(role),
         isVisible: true,
-        ...(narrowing.parties === 'storeBacked' ? { isStore: true } : {}),
+        ...(narrowing.parties === 'internal' ? { isStore: true } : {}),
         ...(narrowing.parties === 'external' ? FACILITY_ONLY : {}),
         ...(narrowing.excludeId
           ? { id: { notEqualTo: narrowing.excludeId } }
