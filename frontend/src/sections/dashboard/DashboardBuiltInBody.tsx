@@ -333,10 +333,12 @@ export const DashboardBuiltInBody: Component = () => {
     setPrescriptionCreateOpen(true);
   };
   // Order more hands off to the internal-orders vertical's create flow —
-  // including its recent-stocktake warning gate (spec/internal-orders
-  // AC-C1/C5), so the dashboard entry behaves exactly like the list's
-  // New-order button. The warn preference rides the guard-3 store context;
-  // the insufficiency check (and its module) load only on click.
+  // including its recent-stocktake warning gate and the plugin
+  // warning-suppression consult, both inside the shared gate decision
+  // (spec/internal-orders AC-C1/C5, OMS-REG-REPL-04.86/.87), so the dashboard
+  // entry behaves exactly like the list's New-order button. The warn
+  // preference rides the guard-3 store context; the gate decision (and its
+  // module) load only on click.
   const [internalOrderCreateOpen, setInternalOrderCreateOpen] =
     createSignal(false);
   const [stocktakeGateOpen, setStocktakeGateOpen] = createSignal(false);
@@ -355,16 +357,21 @@ export const DashboardBuiltInBody: Component = () => {
       return;
     }
     setOrderMoreChecking(true);
-    const { recentStocktakeIsInsufficient } =
-      await import('@/sections/internal-orders/list/create/createInternalOrder');
-    const insufficient = await recentStocktakeIsInsufficient(
-      params.storeId,
-      warn.maxAge,
-      warn.minItems
-    );
-    setOrderMoreChecking(false);
-    if (insufficient) setStocktakeGateOpen(true);
-    else setInternalOrderCreateOpen(true);
+    // The gate decision cannot reject, but the await spans plugin code — the
+    // finally guarantees a fault can never leave Order more checking for good.
+    try {
+      const { recentStocktakeGateShows } =
+        await import('@/sections/internal-orders/list/create/createInternalOrder');
+      const shows = await recentStocktakeGateShows(
+        params.storeId,
+        warn.maxAge,
+        warn.minItems
+      );
+      if (shows) setStocktakeGateOpen(true);
+      else setInternalOrderCreateOpen(true);
+    } finally {
+      setOrderMoreChecking(false);
+    }
   };
 
   const num = (n: number | undefined) => formatNumber(n ?? 0);

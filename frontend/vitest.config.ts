@@ -37,10 +37,13 @@ export default defineConfig({
       'src/**/*.test.ts',
       'vite/**/*.test.ts',
       'plugins/*/src/**/*.test.ts',
-      // cook_islands' backend half, named rather than globbed: civ's backend
-      // tests are jest-style and import `@common/*`, so they would fail the
-      // run on sight.
+      // cook_islands' backend half and shared domain core, named rather than
+      // globbed: civ's backend tests are jest-style and import `@common/*`,
+      // so they would fail the run on sight. `shared/` sits OUTSIDE the
+      // `plugins/*/src` glob — leaving it out silently skips the whole
+      // domain-core suite, which is exactly what happened when it moved.
       'plugins/cook_islands/backend/src/**/*.test.ts',
+      'plugins/cook_islands/shared/**/*.test.ts',
     ],
     environment: 'node',
   },

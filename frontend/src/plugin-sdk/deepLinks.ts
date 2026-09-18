@@ -114,6 +114,10 @@ export const outboundShipmentListPath = (): string =>
 export const internalOrderListPath = (): string =>
   'replenishment/internal-order';
 
+/** One internal order's detail screen, by the order's id. */
+export const internalOrderPath = (orderId: string): string =>
+  `${internalOrderListPath()}/${orderId}`;
+
 // Named for the record it reaches, which the UI calls a dispensing record
 // (issue #551). The export keeps its original name so plugins built against it
 // keep compiling; it is the returned path that moved.
