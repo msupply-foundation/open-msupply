@@ -3,13 +3,13 @@ use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
     InvoiceRepository, ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository,
-    RequisitionRow, RequisitionRowDelete, StorageConnection, SyncBufferRow,
+    RequisitionRow, RequisitionRowDelete, Row, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
 use util::constants::{APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, MISSING_PROGRAM};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
     store::StoreTranslation,
@@ -241,9 +241,10 @@ impl SyncTranslation for RequisitionTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         conn: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let json_data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let json_data = sync_record.deserialize::<serde_json::Value>()?;
         let sanitised_data = sanitize_legacy_record(json_data);
         let data = serde_json::from_value::<LegacyRequisitionRow>(sanitised_data)?;
         let r#type = match from_legacy_type(&data.r#type) {
@@ -299,12 +300,15 @@ impl SyncTranslation for RequisitionTranslation {
             None
         };
 
+        let fk_check = fk_checker.with_table(conn, "requisition", &data.ID);
+        let check_fk = fk_checker.with_table_required(conn, "requisition", &data.ID);
+
         let result = RequisitionRow {
             id: data.ID.to_string(),
             user_id: data.user_id,
             requisition_number: data.serial_number,
-            name_id: data.name_ID,
-            store_id: data.store_ID,
+            name_id: check_fk(data.name_ID, "name_link_id", FkField::NameLink)?,
+            store_id: check_fk(data.store_ID, "store_id", FkField::Store)?,
             r#type,
             status,
             created_datetime,
@@ -319,14 +323,19 @@ impl SyncTranslation for RequisitionTranslation {
             expected_delivery_date: data.expected_delivery_date,
             approval_status: data.approval_status.map(|s| s.to()),
             program_id,
-            period_id: data.periodID,
+            period_id: fk_check(data.periodID, "period_id", FkField::Period)?,
             order_type: data.orderType,
             is_emergency: data.is_emergency,
             created_from_requisition_id: data
                 .oms_fields
                 .clone()
                 .and_then(|f| f.created_from_requisition_id),
-            destination_customer_id: data.oms_fields.and_then(|f| f.destination_customer_id),
+            destination_customer_id: fk_check(
+                data.oms_fields.and_then(|f| f.destination_customer_id),
+                "destination_customer_link_id",
+                FkField::NameLink,
+            )?,
+            ..Default::default()
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -347,7 +356,12 @@ impl SyncTranslation for RequisitionTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Requisition(requisition_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Requisition {
             requisition_row:
                 RequisitionRow {
@@ -375,12 +389,13 @@ impl SyncTranslation for RequisitionTranslation {
                     is_emergency,
                     created_from_requisition_id,
                     destination_customer_id,
+                    name_store_id: _,
                 },
             name_row,
             ..
         } = RequisitionRepository::new(connection)
             .query_by_filter(
-                RequisitionFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                RequisitionFilter::new().id(EqualFilter::equal_to(requisition_row.id.clone())),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
@@ -413,7 +428,7 @@ impl SyncTranslation for RequisitionTranslation {
                 None => {
                     return Ok(PushTranslateResult::Ignored(format!(
                         "Unsupported requisition status: {:?} (type: {:?}) row id: {}",
-                        status, r#type, changelog.record_id
+                        status, r#type, requisition_row.id
                     )))
                 }
             },
@@ -632,8 +647,11 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-        SyncAction, SyncBufferRow,
+        mock::{mock_period, mock_store_a, MockDataInserts},
+        test_db::setup_all,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, NameLinkRow,
+        NameLinkRowRepository, PeriodRow, PeriodRowRepository, RowOrDelete, StoreRow,
+        StoreRowRepository, SyncAction, SyncBufferRow, SyncRecordData,
     };
     use serde_json::json;
     use util::assert_variant;
@@ -644,12 +662,33 @@ mod tests {
         let translator = RequisitionTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_requisition_translation", MockDataInserts::none()).await;
+            setup_all("test_requisition_translation", MockDataInserts::all()).await;
+
+        // Seed the periods the requisition records' optional period_id points at, so they aren't cleared.
+        for (i, period_id) in [
+            "641A3560C84A44BC9E6DDC01F3D75923",
+            "772B3984DBA14A5F941ED0EF857FDB31",
+        ]
+        .iter()
+        .enumerate()
+        {
+            PeriodRowRepository::new(&connection)
+                .upsert_one(&PeriodRow {
+                    id: period_id.to_string(),
+                    name: format!("test_period_{i}"),
+                    ..mock_period()
+                })
+                .unwrap();
+        }
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -709,19 +748,23 @@ mod tests {
           "om_status": "",
           "om_colour": "",
           "oms_fields": {}
+        
         }"#;
 
         let sync_buffer_row = SyncBufferRow {
             table_name: "requisition".to_string(),
             record_id: "WP_TEST_RECORD_ID".to_string(),
-            data: wp_imprest_json.to_string(),
+            data: SyncRecordData(serde_json::from_str(wp_imprest_json).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };
 
         assert!(translator.should_translate_from_sync_record(&sync_buffer_row));
-        let result =
-            translator.try_translate_from_upsert_sync_record(&connection, &sync_buffer_row);
+        let result = translator.try_translate_from_upsert_sync_record(
+            &connection,
+            &crate::sync::translations::FkChecker::new(),
+            &sync_buffer_row,
+        );
         assert!(
             result.is_err(),
             "Expected error for unsupported 'wp' status on imprest requisition, got: {:?}",
@@ -739,23 +782,27 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to())),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = RequisitionTranslation {};
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
@@ -772,11 +819,26 @@ mod tests {
     async fn test_sanitise() {
         let translator = RequisitionTranslation {};
 
-        let (_, connection, _, _) = setup_all("test_sanitise", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all("test_sanitise", MockDataInserts::all()).await;
+
+        // Seed the required name_link + store the requisition points at.
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "947274E3A24D4900996CA516379A1FFD".to_string(),
+                name_id: "name_a".to_string(),
+            })
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                id: "8659A64D2CF245A1B1BCC7C8F7CDC577".to_string(),
+                name_id: "name_a".to_string(),
+                code: "sanitise_test".to_string(),
+                ..mock_store_a()
+            })
+            .unwrap();
 
         let sync_record = SyncBufferRow {
-            data: r#"
-            {
+            data: SyncRecordData(json!({
                 "//": "Status is set to sent, should be changed to draft",
                 "om_status": "SENT",
 
@@ -810,13 +872,12 @@ mod tests {
                 "thresholdMOS": 0,
                 "type": "response",
                 "user_ID": ""
-            }
-            "#.to_string(),
+            })),
             ..Default::default()
         };
 
         let mut op = assert_variant!(
-            translator.try_translate_from_upsert_sync_record(&connection, &sync_record),
+            translator.try_translate_from_upsert_sync_record(&connection, &crate::sync::translations::FkChecker::new(), &sync_record),
             Ok( PullTranslateResult::IntegrationOperations(out)) => out
         );
 

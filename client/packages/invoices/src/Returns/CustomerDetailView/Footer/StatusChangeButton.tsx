@@ -129,6 +129,7 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
+      testId="status-change-button"
       label={noLines ? t('messages.no-lines') : ''}
       isDisabled={noLines}
       options={options}

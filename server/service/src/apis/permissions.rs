@@ -1,4 +1,6 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+
+use repository::PermissionType;
 
 #[derive(Clone)]
 pub enum Permissions {
@@ -200,6 +202,9 @@ pub enum Permissions {
     ConfirmInternalOrderSent,
     ColdChainApi,
     EditCentralData,
+    /// Legacy 205, "Restrict to prescriptions" (msupply 655443ac, #18622).
+    /// A RESTRICTION, not a grant — see the mapping below.
+    RestrictToPrescriptions,
 }
 
 pub fn permission_mapping() -> HashMap<i16, Permissions> {
@@ -390,6 +395,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (201, Permissions::ColdChainApi),
         (202, Permissions::EditCentralData),
         (203, Permissions::AddAssetsViaDataMatrix),
+        (205, Permissions::RestrictToPrescriptions),
         (501, Permissions::HISAddPatients),
         (502, Permissions::HISEditPatientsInfo),
         (503, Permissions::HISCreateEncounters),
@@ -420,4 +426,263 @@ pub fn map_api_permissions(permissions: Vec<bool>) -> Vec<Permissions> {
         }
     }
     output
+}
+
+pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionType> {
+    let mut output = HashSet::new();
+    for per in permissions {
+        match per {
+            // admin
+            Permissions::AccessServerAdministration => {
+                output.insert(PermissionType::ServerAdmin);
+            }
+            // location
+            Permissions::ManageLocations => {
+                output.insert(PermissionType::LocationMutate);
+            }
+            // sensor
+            Permissions::EditSensorLocation => {
+                output.insert(PermissionType::SensorMutate);
+            }
+            Permissions::ViewSensorDetails => {
+                output.insert(PermissionType::SensorQuery);
+            }
+            // stock line
+            // stock line & stocktake lines
+            Permissions::ViewStock => {
+                output.insert(PermissionType::StockLineQuery);
+                output.insert(PermissionType::StocktakeQuery);
+            }
+            Permissions::EditStock => {
+                output.insert(PermissionType::StockLineMutate);
+            }
+            Permissions::CreateRepacksOrSplitStock => {
+                output.insert(PermissionType::CreateRepack);
+            }
+            // stocktake
+            Permissions::CreateStocktake => {
+                output.insert(PermissionType::StocktakeMutate);
+            }
+            Permissions::DeleteStocktake => {
+                output.insert(PermissionType::StocktakeMutate);
+            }
+            Permissions::AddStocktakeLines => {
+                output.insert(PermissionType::StocktakeMutate);
+            }
+            Permissions::EditStocktakeLines => {
+                output.insert(PermissionType::StocktakeMutate);
+            }
+            Permissions::DeleteStocktakeLines => {
+                output.insert(PermissionType::StocktakeMutate);
+            }
+            // inventory adjustments
+            Permissions::EnterInventoryAdjustments => {
+                output.insert(PermissionType::InventoryAdjustmentMutate);
+            }
+            // customer invoices
+            Permissions::ViewCustomerInvoices => {
+                output.insert(PermissionType::OutboundShipmentQuery);
+                output.insert(PermissionType::CustomerReturnQuery);
+                output.insert(PermissionType::PrescriptionQuery);
+            }
+            Permissions::CreateCustomerInvoices => {
+                output.insert(PermissionType::OutboundShipmentMutate);
+                output.insert(PermissionType::PrescriptionMutate);
+            }
+            Permissions::EditCustomerInvoices => {
+                output.insert(PermissionType::OutboundShipmentMutate);
+                output.insert(PermissionType::PrescriptionMutate);
+            }
+            // supplier invoices
+            Permissions::ViewSupplierInvoices => {
+                output.insert(PermissionType::InboundShipmentQuery);
+                output.insert(PermissionType::SupplierReturnQuery);
+            }
+            Permissions::EditSupplierInvoices => {
+                output.insert(PermissionType::InboundShipmentMutate);
+            }
+            Permissions::CreateSupplierInvoices => {
+                output.insert(PermissionType::InboundShipmentMutate);
+            }
+            // returns
+            Permissions::ReturnStockFromSupplierInvoices => {
+                output.insert(PermissionType::SupplierReturnMutate);
+            }
+            Permissions::ReturnStockFromCustomerInvoices => {
+                output.insert(PermissionType::CustomerReturnMutate);
+            }
+            // requisitions
+            Permissions::ViewRequisitions => {
+                output.insert(PermissionType::RequisitionQuery);
+                output.insert(PermissionType::RnrFormQuery);
+            }
+            Permissions::CreateAndEditRequisitions => {
+                output.insert(PermissionType::RequisitionMutate);
+                output.insert(PermissionType::RnrFormMutate);
+            }
+            Permissions::ConfirmInternalOrderSent => {
+                output.insert(PermissionType::RequisitionSend);
+            }
+            Permissions::CreateCustomerInvoicesFromRequisitions => {
+                output.insert(PermissionType::RequisitionCreateOutboundShipment);
+            }
+            // purchase orders
+            Permissions::ViewPurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderQuery);
+            }
+            Permissions::EditPurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderMutate);
+            }
+            Permissions::AuthorisePurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderAuthorise);
+            }
+            Permissions::FinalisePurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderFinalise);
+            }
+            // goods received
+            Permissions::ViewGoodsReceived => {
+                output.insert(PermissionType::InboundShipmentExternalQuery);
+            }
+            Permissions::AddEditGoodsReceived => {
+                output.insert(PermissionType::InboundShipmentExternalMutate);
+            }
+            Permissions::FinaliseGoodsReceived => {
+                output.insert(PermissionType::InboundShipmentExternalVerify);
+            }
+            Permissions::AuthoriseGoodsReceived => {
+                output.insert(PermissionType::InboundShipmentExternalAuthorise);
+            }
+            // reports
+            Permissions::ViewReports => {
+                output.insert(PermissionType::Report);
+            }
+            // log
+            Permissions::ViewLog => {
+                output.insert(PermissionType::LogQuery);
+            }
+            // patient
+            Permissions::AddPatients => {
+                output.insert(PermissionType::PatientMutate);
+            }
+            Permissions::EditPatientDetails => {
+                output.insert(PermissionType::PatientMutate);
+            }
+            Permissions::ViewPatients => {
+                output.insert(PermissionType::PatientQuery);
+            }
+            // items
+            Permissions::EditItems => {
+                output.insert(PermissionType::ItemMutate);
+            }
+            Permissions::EditItemNamesCodesAndUnits => {
+                output.insert(PermissionType::ItemNamesCodesAndUnitsMutate);
+            }
+            // cold chain
+            Permissions::ColdChainApi => {
+                output.insert(PermissionType::ColdChainApi);
+            }
+            // assets
+            Permissions::ViewAssets => {
+                output.insert(PermissionType::AssetQuery);
+            }
+            Permissions::AddEditAssets => {
+                output.insert(PermissionType::AssetMutate);
+            }
+            Permissions::AddAssetsViaDataMatrix => {
+                output.insert(PermissionType::AssetMutateViaDataMatrix);
+            }
+            Permissions::SetupAssets => {
+                output.insert(PermissionType::AssetCatalogueItemMutate);
+            }
+            Permissions::ChangeAssetStatus => {
+                output.insert(PermissionType::AssetStatusMutate);
+            }
+            Permissions::EditCustomerSupplierManufacturerNames => {
+                output.insert(PermissionType::NamePropertiesMutate);
+            }
+            Permissions::EditCentralData => {
+                output.insert(PermissionType::EditCentralData);
+            }
+            Permissions::ViewAndEditVaccineVialMonitorStatus => {
+                output.insert(PermissionType::ViewAndEditVvmStatus);
+            }
+            Permissions::AddEditPrescribers => {
+                output.insert(PermissionType::MutateClinician);
+            }
+            Permissions::CancelFinalisedInvoices => {
+                output.insert(PermissionType::CancelFinalisedInvoices);
+            }
+            Permissions::FinaliseSupplierInvoices => {
+                output.insert(PermissionType::InboundShipmentVerify);
+            }
+            // Slot 205, "Restrict to prescriptions" — the prescriber's
+            // vertical (spec/prescription-requests). Legacy phrased it as a
+            // restriction because it had no way to say "may prescribe"; here it
+            // is read as the grant it always meant, and a prescriber's cut-down
+            // navigation follows from the permissions they are NOT given rather
+            // than from one that takes capability away.
+            //
+            // It keeps its own slot rather than borrowing 13
+            // (`LogOnInDispensaryMode`), which is ticked for ordinary dispensary
+            // staff: prescribing and dispensing are separate jobs, and a site
+            // may grant either without the other.
+            Permissions::RestrictToPrescriptions => {
+                output.insert(PermissionType::PrescriptionRequestQuery);
+                output.insert(PermissionType::PrescriptionRequestMutate);
+            }
+            //
+            // Remaining `Permissions` variants are legacy mSupply permissions
+            // with no equivalent in open mSupply's `PermissionType` — e.g. they
+            // gate features that don't exist here (builds, tenders, drug
+            // interaction groups, currencies, etc.), are UI-only toggles, or
+            // are marked deprecated. Anything unmapped is intentionally
+            // ignored rather than granted.
+            _ => continue,
+        }
+    }
+    output
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    /// spec/prescription-requests § permissions.
+    ///
+    /// Legacy slot 205 ("Restrict to prescriptions", msupply 655443ac) is the
+    /// only way the prescription-request permissions can reach a site from
+    /// central, and it grants BOTH halves: legacy has one tick for the whole
+    /// job, so a prescriber who can open the list can also write to it.
+    ///
+    /// The "nothing else does" half matters as much: a slot quietly standing in
+    /// for 205 would hand the prescriber's vertical to ordinary dispensary
+    /// staff on upgrade.
+    #[test]
+    fn legacy_205_grants_the_prescription_request_pair_and_nothing_else_does() {
+        // The wire is a bool per slot, 1-indexed, so 205 sits at index 204
+        let mut payload = vec![false; 205];
+        payload[204] = true;
+        let granted = permissions_to_domain(map_api_permissions(payload));
+
+        assert!(
+            granted.contains(&PermissionType::PrescriptionRequestQuery)
+                && granted.contains(&PermissionType::PrescriptionRequestMutate),
+            "legacy 205 must grant both prescription-request permissions"
+        );
+
+        for slot in 1..=600usize {
+            if slot == 205 {
+                continue;
+            }
+            let mut payload = vec![false; slot];
+            payload[slot - 1] = true;
+            let granted = permissions_to_domain(map_api_permissions(payload));
+            assert!(
+                !granted.contains(&PermissionType::PrescriptionRequestQuery)
+                    && !granted.contains(&PermissionType::PrescriptionRequestMutate),
+                "legacy {} must not grant the prescription-request permissions",
+                slot
+            );
+        }
+    }
 }

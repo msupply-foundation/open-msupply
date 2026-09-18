@@ -36,7 +36,7 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
 
     let steps_data = tester.test_step_data(&site_config.config.new_site_properties);
     // First sync is required to get central server URL (before graphql queries are called)
-    site_config.synchroniser.sync(None).await.unwrap();
+    site_config.synchroniser.sync().await.unwrap();
 
     let CentralServerConfig::CentralServerUrl(central_server_url) = CentralServerConfig::get()
     else {
@@ -62,7 +62,7 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
             graphql(&central_server_url, graphql_operation).await;
         }
 
-        site_config.synchroniser.sync(None).await.unwrap();
+        site_config.synchroniser.sync().await.unwrap();
         check_integrated(
             &site_config.context.connection,
             &step_data.integration_records,
@@ -85,7 +85,7 @@ async fn test_omsupply_central_remote_records(identifier: &str, tester: &dyn Syn
 
     let steps_data = tester.test_step_data(&site_config.config.new_site_properties);
     // First sync is required to get central server URL (before graphql queries are called)
-    site_config.synchroniser.sync(None).await.unwrap();
+    site_config.synchroniser.sync().await.unwrap();
 
     let central_server_url = assert_variant!(CentralServerConfig::get(), CentralServerConfig::CentralServerUrl(url) => url);
 
@@ -108,19 +108,19 @@ async fn test_omsupply_central_remote_records(identifier: &str, tester: &dyn Syn
             graphql(&central_server_url, graphql_operation).await;
         }
 
-        previous_synchroniser.sync(None).await.unwrap();
+        previous_synchroniser.sync().await.unwrap();
 
         let integration_records = step_data.integration_records;
 
         // Integrate
         let integration_records =
             integrate_with_is_sync_reset(&previous_connection, integration_records); // Push integrated changes
-        previous_synchroniser.sync(None).await.unwrap();
+        previous_synchroniser.sync().await.unwrap();
         // Re initialise
         site_config = init_test_context(site_config.config, &inner_identifier).await;
         previous_connection = site_config.context.connection;
         previous_synchroniser = site_config.synchroniser;
-        previous_synchroniser.sync(None).await.unwrap();
+        previous_synchroniser.sync().await.unwrap();
 
         // Confirm records have synced back correctly
         check_integrated(&previous_connection, &integration_records)

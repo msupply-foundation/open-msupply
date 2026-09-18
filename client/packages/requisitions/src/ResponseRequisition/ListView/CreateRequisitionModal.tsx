@@ -97,6 +97,7 @@ export const CreateRequisitionModalComponent: FC<
 
   return (
     <Modal
+      testId="create-requisition-modal"
       height={700}
       width={700}
       slideAnimation={false}

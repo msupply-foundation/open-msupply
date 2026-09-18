@@ -42,16 +42,15 @@ impl RemoteDrivers {
         let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(settings);
         let (sync_trigger, sync_driver) = SynchroniserDriver::init(file_sync_trigger.clone());
 
-        // Start lifecycle event — without it the FileSyncDriver sits on the
-        // `recv().await` branch in its "not initialised" arm. `is_initialised`
-        // returns true after the caller's `synchroniser.sync(None)` populated
-        // settings, so the driver will reach the main `select!` once Start is
-        // received.
+        // Start lifecycle event, so the driver reaches its main `select!` on the first
+        // iteration rather than after a FILE_SYNC_NOT_INITIALISED_DELAY poll. Callers
+        // have already run `synchroniser.sync()`, so `is_initialised` returns true —
+        // this is only about not paying the poll delay in a timing-sensitive test.
         file_sync_trigger.start();
 
         let file_sync_task = tokio::spawn(file_sync_driver.run(provider.clone()));
         // force_run=false: don't kick a sync at spawn time. The test calls
-        // `sync_trigger.trigger(None)` itself when it wants pause/unpause to
+        // `sync_trigger.trigger()` itself when it wants pause/unpause to
         // fire — keeps timing assertions deterministic.
         let sync_task = tokio::spawn(sync_driver.run(provider, false));
 
@@ -75,8 +74,7 @@ impl RemoteDrivers {
         // Construct a SyncTrigger but never spawn the driver — its sender is
         // kept alive only so callers that store it (e.g. for symmetry with
         // `spawn`) don't get `SendError` when calling trigger().
-        let (sync_trigger, _unused_driver) =
-            SynchroniserDriver::init(file_sync_trigger.clone());
+        let (sync_trigger, _unused_driver) = SynchroniserDriver::init(file_sync_trigger.clone());
 
         file_sync_trigger.start();
         let file_sync_task = tokio::spawn(file_sync_driver.run(provider));
@@ -140,7 +138,10 @@ impl UploadTrace {
                 .find_one_by_id(file_id)
                 .expect("DB read failed during UploadTrace::record")
                 .unwrap_or_else(|| {
-                    panic!("{}", format!("sync_file_reference {} disappeared mid-trace", file_id))
+                    panic!(
+                        "{}",
+                        format!("sync_file_reference {} disappeared mid-trace", file_id)
+                    )
                 });
 
             let sample = UploadSample {
@@ -150,9 +151,7 @@ impl UploadTrace {
             };
             let terminal = matches!(
                 sample.status,
-                SyncFileStatus::Done
-                    | SyncFileStatus::PermanentFailure
-                    | SyncFileStatus::Error
+                SyncFileStatus::Done | SyncFileStatus::PermanentFailure | SyncFileStatus::Error
             );
             samples.push(sample);
 
@@ -237,9 +236,7 @@ pub(super) async fn wait_until_uploading(
         let row = repo
             .find_one_by_id(file_id)
             .expect("DB read failed in wait_until_uploading")
-            .unwrap_or_else(|| {
-                panic!("{}", format!("sync_file_reference {} not found", file_id))
-            });
+            .unwrap_or_else(|| panic!("{}", format!("sync_file_reference {} not found", file_id)));
         if row.uploaded_bytes > 0 || row.status != SyncFileStatus::New {
             return row;
         }

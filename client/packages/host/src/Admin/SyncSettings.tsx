@@ -48,7 +48,7 @@ const SyncSettingsForm = ({
     value: number | string
   ) => setSyncSettings({ ...settings, [property]: value });
 
-  const { url, username, password, intervalSeconds } = settings;
+  const { url, username, password, intervalSeconds, batchSize } = settings;
   const onChangeSyncInterval = (seconds: number | undefined): void => {
     if (seconds === undefined) return;
 
@@ -56,6 +56,13 @@ const SyncSettingsForm = ({
       'intervalSeconds',
       NumUtils.constrain(Math.round(seconds), 1, Number.MAX_SAFE_INTEGER)
     );
+  };
+
+  const onChangeBatchSize = (value: number | undefined): void => {
+    setSyncSettings({
+      ...settings,
+      batchSize: value === undefined || value <= 0 ? null : Math.round(value),
+    });
   };
 
   return (
@@ -74,6 +81,7 @@ const SyncSettingsForm = ({
             value={url}
             onChange={e => setSettings('url', e.target.value)}
             disabled={isDisabled}
+            slotProps={{ htmlInput: { 'data-testid': 'sync-settings-url' } }}
           />
         }
       />
@@ -84,6 +92,9 @@ const SyncSettingsForm = ({
             value={username}
             onChange={e => setSettings('username', e.target.value)}
             disabled={isDisabled}
+            slotProps={{
+              htmlInput: { 'data-testid': 'sync-settings-username' },
+            }}
           />
         }
       />
@@ -93,7 +104,11 @@ const SyncSettingsForm = ({
           <PasswordTextInput
             value={password}
             onChange={e => setSettings('password', e.target.value)}
-            slotProps={{ input: { autoComplete: 'sync-password' } }}
+            slotProps={{
+              input: { autoComplete: 'sync-password' },
+              htmlInput: { 'data-testid': 'sync-settings-password' },
+            }}
+            visibilityToggleTestId="sync-settings-password-visibility"
             disabled={isDisabled}
             sx={{ width: 'calc(100% - 24px)' }}
           />
@@ -106,6 +121,20 @@ const SyncSettingsForm = ({
             value={intervalSeconds}
             onChange={onChangeSyncInterval}
             disabled={isDisabled}
+            slotProps={{
+              htmlInput: { 'data-testid': 'sync-settings-interval' },
+            }}
+          />
+        }
+      />
+      <Setting
+        title={t('label.sync-batch-size')}
+        component={
+          <NumericTextInput
+            value={batchSize ?? undefined}
+            onChange={onChangeBatchSize}
+            disabled={isDisabled}
+            min={1}
           />
         }
       />
@@ -119,6 +148,7 @@ const SyncSettingsForm = ({
           disabled={!isValid}
           onClick={onSave}
           label={t('button.save')}
+          data-testid="sync-settings-save"
         />
       </Grid>
     </form>
@@ -176,7 +206,10 @@ export const SyncSettings = ({}) => {
     try {
       const response = await update(syncSettings);
       // Map structured error
-      if (response.__typename === 'SyncErrorNode') {
+      if (
+        response.__typename === 'SyncErrorNode' ||
+        response.__typename === 'SyncErrorV7Node'
+      ) {
         setError(mapSyncError(t, response, 'error.unable-to-save-settings'));
         return setIsSaving(false);
       }

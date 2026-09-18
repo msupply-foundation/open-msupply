@@ -43,9 +43,10 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<PartialLegacyNameRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<PartialLegacyNameRow>()?;
 
         let name_store_joins = NameStoreJoinRepository::new(connection).query_by_filter(
             NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(data.ID.to_owned())),
@@ -85,7 +86,11 @@ mod tests {
 
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

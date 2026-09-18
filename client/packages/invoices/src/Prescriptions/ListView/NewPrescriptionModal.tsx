@@ -94,6 +94,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
       title={t('label.create-prescription')}
       height={800}
       width={1180}
+      testId="create-prescription-modal"
       okButton={
         <LoadingButton
           color="secondary"
@@ -103,6 +104,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
           isLoading={isCreating}
           onClick={handleSave}
           disabled={!canSave}
+          data-testid="dialog-button-ok"
         />
       }
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
@@ -141,6 +143,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                 if (newDate) setDate(newDate);
               }}
               width={350}
+              textFieldTestId="date-field"
             />
           }
         />
@@ -152,6 +155,9 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
               sx={{ width: 350 }}
               value={theirReference ?? null}
               onChange={event => setTheirReference(event.target.value)}
+              slotProps={{
+                htmlInput: { 'data-testid': 'customer-reference-field' },
+              }}
             />
           }
         />

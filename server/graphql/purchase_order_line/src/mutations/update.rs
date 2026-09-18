@@ -123,6 +123,7 @@ pub fn update_purchase_order_line(
         &ResourceAccessRequest {
             resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -136,6 +137,7 @@ pub fn update_purchase_order_line(
             &ResourceAccessRequest {
                 resource: Resource::AuthorisePurchaseOrder,
                 store_id: Some(store_id.to_string()),
+                require_central_standalone: false,
             },
         )
         .is_ok();

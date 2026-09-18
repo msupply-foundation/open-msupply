@@ -6,7 +6,7 @@ use crate::{
     },
     invoice_line::StockOutType,
     pricing::{
-        calculate_sell_price::calculate_sell_price,
+        calculate_sell_price::{calculate_sell_price, issue_at_cost_price},
         item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup},
     },
     service_provider::ServiceContext,
@@ -49,6 +49,10 @@ pub fn generate(
     )?
     .remove(&item_row.id)
     .unwrap_or_default();
+
+    // Internal transfers may be issued at the supplying store's cost price
+    let issue_at_cost_price = issue_at_cost_price(&ctx.connection, &invoice)?;
+
     let new_line = generate_line(
         &ctx.connection,
         input.clone(),
@@ -56,6 +60,7 @@ pub fn generate(
         update_batch.clone(),
         invoice.clone(),
         pricing,
+        issue_at_cost_price,
     )?;
 
     let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
@@ -112,6 +117,7 @@ fn generate_batch_update(
         tax_percentage: _,
         received_number_of_packs: _,
         reason_option_id: _,
+        transfer_comment: _,
     }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
@@ -181,6 +187,7 @@ fn generate_line(
         vvm_status_id: _,
         received_number_of_packs,
         reason_option_id,
+        transfer_comment,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -213,11 +220,17 @@ fn generate_line(
         ..
     }: InvoiceRow,
     default_pricing: ItemPrice,
+    issue_at_cost_price: bool,
 ) -> Result<InvoiceLineRow, RepositoryError> {
     let cost_price_per_pack = stock_line_cost_price_per_pack; // For now, we just get the cost price from the stock line
 
-    let sell_price_per_pack =
-        calculate_sell_price(stock_line_sell_price_per_pack, pack_size, default_pricing);
+    let sell_price_per_pack = calculate_sell_price(
+        stock_line_sell_price_per_pack,
+        stock_line_cost_price_per_pack,
+        pack_size,
+        &default_pricing,
+        issue_at_cost_price,
+    );
 
     let total_before_tax = total_before_tax.unwrap_or(sell_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
@@ -266,6 +279,8 @@ fn generate_line(
         status: None,
         received_number_of_packs,
         linked_invoice_line_id: None,
+        legacy_goods_received_line_id: None,
+        transfer_comment,
     })
 }
 

@@ -24,9 +24,12 @@ fi
 rustup target add $TARGET
 
 # Buid (on Mac)
+# This repo's frontend is the OLD UI, served under /old-ui/, so it must be built
+# with that public path (asset URLs + router base). The NEW FE served at / is
+# fetched as a pinned dist zip below, not built here.
 cd client
 yarn install
-yarn build
+PUBLIC_PATH=/old-ui/ yarn build
 
 cd ../server
 cargo build --release --bin remote_server --bin remote_server_cli --target $TARGET
@@ -39,11 +42,22 @@ mkdir $DESTINATION/bin
 cp "server/target/${TARGET}/release/remote_server" $DESTINATION/bin 
 cp "server/target/${TARGET}/release/remote_server_cli" $DESTINATION/bin 
 
+# New FE at / : built in-tree (`corepack pnpm` — version pinned by
+# frontend/package.json) and copied into frontend/ (served from frontend_dir,
+# relative to the launch script's working directory) — same commit as the
+# server binaries above. See server/README.md ('Serving front-end').
+(cd frontend && corepack pnpm install --frozen-lockfile && corepack pnpm build)
+cp -R frontend/dist "$DESTINATION/frontend"
+
+# Old UI at /old-ui/ : the client build above (PUBLIC_PATH=/old-ui/) goes here.
+cp -R client/packages/host/dist "$DESTINATION/frontend/old-ui"
+
 # Copy configurations
 mkdir $DESTINATION/configuration
 cp -R server/configuration/base.yaml $DESTINATION/configuration/
 mkdir $DESTINATION/app_data
-# Local file should be present
+# Local file must be present for the server to start. The old UI nested at
+# frontend/old-ui above is served at /old-ui/ by convention — no config needed.
 touch $DESTINATION/configuration/local.yaml
 
 # Initialise demo data

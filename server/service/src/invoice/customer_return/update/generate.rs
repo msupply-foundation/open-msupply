@@ -37,6 +37,10 @@ pub(crate) fn generate(
         .their_reference
         .clone()
         .or(updated_return.their_reference);
+    updated_return.custom_fields = crate::invoice::custom_fields::apply_custom_fields_patch(
+        updated_return.custom_fields,
+        patch.custom_fields.clone(),
+    );
 
     set_new_status_datetime(&mut updated_return, &patch);
 
@@ -52,11 +56,8 @@ pub(crate) fn generate(
     let should_create_batches = match &patch.status {
         Some(new_status) => {
             let to = new_status.as_invoice_row_status();
-            stock_effects(
-                &InvoiceType::CustomerReturn,
-                &existing_return.status,
-                &to,
-            ) == StockEffect::CreateStock
+            stock_effects(&InvoiceType::CustomerReturn, &existing_return.status, &to)
+                == StockEffect::CreateStock
         }
         None => false,
     };

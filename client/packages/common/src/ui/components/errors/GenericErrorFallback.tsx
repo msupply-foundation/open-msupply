@@ -4,11 +4,16 @@ import { ErrorBoundaryFallbackProps } from './types';
 import { UnhappyMan } from '@common/icons';
 import { BaseButton } from '../buttons';
 import { useTranslation } from '@openmsupply-client/common';
+import { Environment } from '@openmsupply-client/config';
 
 export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
   onClearError,
 }) => {
   const t = useTranslation();
+  // Return to the app root, respecting the build-time base path so the sub-path
+  // build ('/old-ui/') doesn't jump out to the root-served app. Default '/' is
+  // unchanged.
+  const dashboardUrl = `${window.location.origin}${Environment.PUBLIC_PATH}`;
   return (
     <Box
       display="flex"
@@ -26,12 +31,12 @@ export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
         <BaseButton onClick={onClearError} color="secondary">
           {t('button.try-again')}
         </BaseButton>
-        <Tooltip title={window.location.origin}>
+        <Tooltip title={dashboardUrl}>
           <BaseButton
             color="secondary"
             onClick={() => {
               onClearError;
-              window.location.href = window.location.origin;
+              window.location.href = dashboardUrl;
             }}
           >
             {t('button.dashboard')}

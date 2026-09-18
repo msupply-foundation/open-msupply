@@ -30,6 +30,7 @@ pub fn generate_create_prescription(
         their_reference: None,
         clinician_id: None,
         prescription_date: None,
+        prescription_request_id: None,
     };
 
     let number_of_packs =
@@ -61,6 +62,7 @@ pub fn generate_create_prescription(
         manufacturer_id: None,
         received_number_of_packs: None,
         reason_option_id: None,
+        transfer_comment: None,
     };
 
     let finalise_prescription = UpdatePrescription {
@@ -81,6 +83,7 @@ pub fn generate_create_prescription(
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
+        custom_fields: None,
     };
 
     CreatePrescription {

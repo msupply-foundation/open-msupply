@@ -323,7 +323,10 @@ mod query {
         assert_eq!(asset_log.id, "past_log");
         // log_datetime should be the provided value, not now
         assert!(
-            (asset_log.log_datetime - past_datetime.naive_utc()).num_seconds().abs() < 2,
+            (asset_log.log_datetime - past_datetime.naive_utc())
+                .num_seconds()
+                .abs()
+                < 2,
             "log_datetime should match the provided past datetime"
         );
         // created_datetime should be close to now, not the backdated log_datetime

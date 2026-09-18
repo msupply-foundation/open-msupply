@@ -14,13 +14,13 @@ import {
   IntlProvider,
   RandomLoader,
   ConfirmationModalProvider,
-  AuthProvider,
   AlertModalProvider,
   EnvUtils,
   LocalStorage,
   AuthError,
   createBrowserRouter,
   createRoutesFromElements,
+  Navigate,
   RouterProvider,
   initialiseI18n,
   KBarProvider,
@@ -28,7 +28,7 @@ import {
   useIsCentralServerApi,
   useInitialisationStatus,
   InitialisationStatusType,
-  useAuthContext,
+  clearAuthState,
 } from '@openmsupply-client/common';
 // import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
@@ -63,19 +63,47 @@ const skipRequest = () =>
   LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { logout } = useAuthContext();
   const data = useInitialisationStatus(false);
 
   // Query still loading — don't render children yet, but don't logout either
   if (!data?.data) return null;
 
-  if (data.data.status == InitialisationStatusType.Initialised)
-    return children;
+  if (data.data.status == InitialisationStatusType.Initialised) return children;
 
-  // Server is not initialised — clear token
-  logout();
+  // Server is not initialised — wipe locally cached auth so the route guard sends the user to
+  // /login. Skip the server-side logout: PreInit renders outside the Router (so useNavigate is
+  // unavailable) and the server isn't initialised anyway, so the request would just error.
+  clearAuthState();
 
   return null;
+};
+
+/**
+ * Guards the /login route while the server is still uninitialised.
+ *
+ * Until initialisation completes the server only serves the reduced
+ * `InitialisationQueries` schema — there is no `me` field and no `UserStoreNode` type — so
+ * Login's mount-time `logout()` fails schema validation and arms the ServerError alert.
+ *
+ * Redirecting *before* Login can mount matters as much as the redirect itself. Letting it
+ * mount and bounce itself away via useLoginForm raced `useLogout`'s post-await navigate back
+ * to /login, and the two redirects chased each other indefinitely. Each lap remounted the
+ * Initialise form, whose username field re-fired its `autoFocus`, so the Android soft keyboard
+ * flapped open/closed several times a second on the initialisation screen.
+ */
+const RequireInitialised: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
+  const { data } = useInitialisationStatus();
+
+  // Status unknown — render nothing rather than guessing; a wrong guess either flashes the
+  // login form or bounces a legitimate login attempt.
+  if (!data) return null;
+
+  if (data.status !== InitialisationStatusType.Initialised)
+    return <Navigate to={`/${AppRoute.Initialise}`} replace />;
+
+  return children;
 };
 
 /**
@@ -119,6 +147,14 @@ EnvUtils.deviceInfo.then(info => {
   }
 });
 
+// Router base path derived from the build-time publicPath ('/' by default, so
+// no basename in the default build). React Router expects it without a trailing
+// slash, so strip it for anything other than the root.
+const basename =
+  Environment.PUBLIC_PATH === '/'
+    ? undefined
+    : Environment.PUBLIC_PATH.replace(/\/$/, '');
+
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route
@@ -137,7 +173,11 @@ const router = createBrowserRouter(
                 />
                 <Route
                   path={RouteBuilder.create(AppRoute.Login).build()}
-                  element={<Login />}
+                  element={
+                    <RequireInitialised>
+                      <Login />
+                    </RequireInitialised>
+                  }
                 />
                 <Route
                   path={RouteBuilder.create(AppRoute.Discovery).build()}
@@ -154,7 +194,8 @@ const router = createBrowserRouter(
         </ErrorBoundary>
       }
     />
-  )
+  ),
+  { basename }
 );
 
 initialiseI18n();
@@ -172,16 +213,14 @@ const Host = () => (
                   skipRequest={skipRequest}
                 >
                   <MigrationInfoProvider>
-                    <AuthProvider>
-                      <PreInit>
-                        <Init />
-                      </PreInit>
-                      <ConfirmationModalProvider>
-                        <AlertModalProvider>
-                          <RouterProvider router={router} />
-                        </AlertModalProvider>
-                      </ConfirmationModalProvider>
-                    </AuthProvider>
+                    <PreInit>
+                      <Init />
+                    </PreInit>
+                    <ConfirmationModalProvider>
+                      <AlertModalProvider>
+                        <RouterProvider router={router} />
+                      </AlertModalProvider>
+                    </ConfirmationModalProvider>
                   </MigrationInfoProvider>
                   {/* <ReactQueryDevtools initialIsOpen={false} /> */}
                 </GqlProvider>

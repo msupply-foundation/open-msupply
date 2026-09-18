@@ -1,8 +1,8 @@
 use crate::sync::translations::{invoice::InvoiceTranslation, store::StoreTranslation};
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StocktakeRow, StocktakeStatus, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -10,7 +10,7 @@ use util::sync_serde::{
     empty_str_as_option_string, naive_time, zero_date_as_option,
 };
 
-use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum LegacyStocktakeStatus {
@@ -110,10 +110,11 @@ impl SyncTranslation for StocktakeTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyStocktakeRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyStocktakeRow>()?;
         let (created_datetime, finalised_datetime) = match data.created_datetime {
             Some(created_datetime) => {
                 // use new om_* fields
@@ -135,21 +136,32 @@ impl SyncTranslation for StocktakeTranslation {
             }
         };
 
+        let fk_check = fk_checker.with_table(connection, "stocktake", &data.ID);
+        let check_fk = fk_checker.with_table_required(connection, "stocktake", &data.ID);
+
         let result = StocktakeRow {
             id: data.ID,
             user_id: data.user_id,
-            store_id: data.store_ID,
+            store_id: check_fk(data.store_ID, "store_id", FkField::Store)?,
             stocktake_number: data.serial_number,
             comment: data.comment,
             description: data.Description,
             status,
             created_datetime,
             finalised_datetime,
-            inventory_addition_id: data.inventory_addition_id,
-            inventory_reduction_id: data.inventory_reduction_id,
+            inventory_addition_id: fk_check(
+                data.inventory_addition_id,
+                "inventory_addition_id",
+                FkField::Invoice,
+            )?,
+            inventory_reduction_id: fk_check(
+                data.inventory_reduction_id,
+                "inventory_reduction_id",
+                FkField::Invoice,
+            )?,
             stocktake_date: data.stocktake_date,
             is_locked: data.is_locked,
-            program_id: data.program_id,
+            program_id: fk_check(data.program_id, "program_id", FkField::Program)?,
             counted_by: data.counted_by,
             verified_by: data.verified_by,
             is_initial_stocktake: data.is_initial_stocktake,
@@ -160,9 +172,13 @@ impl SyncTranslation for StocktakeTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Stocktake(stocktake) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
         let StocktakeRow {
             id,
             user_id,
@@ -181,9 +197,7 @@ impl SyncTranslation for StocktakeTranslation {
             counted_by,
             verified_by,
             is_initial_stocktake,
-        } = StocktakeRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
+        } = stocktake;
 
         let legacy_row = LegacyStocktakeRow {
             ID: id.clone(),
@@ -250,12 +264,16 @@ mod tests {
         let translator = StocktakeTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_stocktake_translation", MockDataInserts::none()).await;
+            setup_all("test_stocktake_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

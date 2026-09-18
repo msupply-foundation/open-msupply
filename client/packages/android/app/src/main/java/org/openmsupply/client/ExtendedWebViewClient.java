@@ -89,7 +89,17 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
         // see what plugins to add
 
         // This function needs to run after plugins are registered, so can't be part of the constructor as order doesn't appear to be consistent.
-        List<String> pluginNames =  Arrays.asList("NativeApi","Keyboard", "WebView","BarcodeScanner","HoneywellScanner","Preferences", "KeepAwake", "App", "Printer", "Camera", "Geolocation", "Filesystem", "FileOpener", "Device", "ScreenOrientation");
+        // A name in this list with no registered plugin aborts the whole
+        // injection (return null below), leaving the served UI with no bridge
+        // at all - so keep it in step with the registrations in MainActivity
+        // and with the npm plugins in assets/capacitor.plugins.json.
+        // Share, and our own FileTransfer / Print / ReadLog, are used only by
+        // the new front end. DiscoveryHost is how the new front end's
+        // discovery page reaches this shell (compiled from the new shell's
+        // frontend/android/app/src/shared) - without it in this list the
+        // plugin is registered but unreachable from the served page, and the
+        // page states that it has no host.
+        List<String> pluginNames =  Arrays.asList("NativeApi","Keyboard", "WebView","BarcodeScanner","HoneywellScanner","Preferences", "KeepAwake", "App", "Printer", "Camera", "Geolocation", "Filesystem", "FileOpener", "Device", "ScreenOrientation", "Share", "FileTransfer", "Print", "ReadLog", "DiscoveryHost");
         List<PluginHandle> pluginList = new ArrayList<>();
         for (String pluginName : pluginNames) {
             PluginHandle plugin = bridge.getPlugin(pluginName);

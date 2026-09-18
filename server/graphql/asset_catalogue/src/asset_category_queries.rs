@@ -59,6 +59,7 @@ pub fn asset_categories(
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
@@ -82,6 +83,7 @@ pub fn asset_category(ctx: &Context<'_>, id: String) -> Result<AssetCategoryResp
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;

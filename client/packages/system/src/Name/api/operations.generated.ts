@@ -11,6 +11,7 @@ export type NameRowFragment = {
   isSupplier: boolean;
   isOnHold: boolean;
   name: string;
+  customFields?: any | null;
   store?: {
     __typename: 'StoreNode';
     id: string;
@@ -58,6 +59,7 @@ export type NameFragment = {
   phone?: string | null;
   website?: string | null;
   properties: string;
+  customFields?: any | null;
   hshCode?: string | null;
   hshName?: string | null;
   margin?: number | null;
@@ -78,6 +80,23 @@ export type PropertyFragment = {
   name: string;
   allowedValues?: string | null;
   valueType: Types.PropertyNodeValueType;
+};
+
+export type CustomFieldFragment = {
+  __typename: 'CustomFieldNode';
+  id: string;
+  key: string;
+  name: string;
+  valueType: Types.CustomFieldNodeValueType;
+  kind: Types.CustomFieldNodeKind;
+  options: Array<{
+    __typename: 'CustomFieldOptionNode';
+    id: string;
+    key: string;
+    name: string;
+    parentOptionId?: string | null;
+    deletedDatetime?: string | null;
+  }>;
 };
 
 export type NamesQueryVariables = Types.Exact<{
@@ -102,6 +121,7 @@ export type NamesQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
+      customFields?: any | null;
       store?: {
         __typename: 'StoreNode';
         id: string;
@@ -177,6 +197,7 @@ export type NameByIdQuery = {
       phone?: string | null;
       website?: string | null;
       properties: string;
+      customFields?: any | null;
       hshCode?: string | null;
       hshName?: string | null;
       margin?: number | null;
@@ -220,6 +241,34 @@ export type NamePropertiesQuery = {
   };
 };
 
+export type NameCustomFieldsQueryVariables = Types.Exact<{
+  scope: Types.Scalars['String']['input'];
+}>;
+
+export type NameCustomFieldsQuery = {
+  __typename: 'Queries';
+  customFields: {
+    __typename: 'CustomFieldConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'CustomFieldNode';
+      id: string;
+      key: string;
+      name: string;
+      valueType: Types.CustomFieldNodeValueType;
+      kind: Types.CustomFieldNodeKind;
+      options: Array<{
+        __typename: 'CustomFieldOptionNode';
+        id: string;
+        key: string;
+        name: string;
+        parentOptionId?: string | null;
+        deletedDatetime?: string | null;
+      }>;
+    }>;
+  };
+};
+
 export type UpdateNamePropertiesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateNamePropertiesInput;
@@ -249,6 +298,7 @@ export type UpdateNamePropertiesMutation = {
         phone?: string | null;
         website?: string | null;
         properties: string;
+        customFields?: any | null;
         hshCode?: string | null;
         hshName?: string | null;
         margin?: number | null;
@@ -279,6 +329,7 @@ export const NameRowFragmentDoc = gql`
     isSupplier
     isOnHold
     name
+    customFields
     store {
       id
       code
@@ -329,6 +380,7 @@ export const NameFragmentDoc = gql`
       isDisabled
     }
     properties
+    customFields
     hshCode
     hshName
     margin
@@ -346,6 +398,22 @@ export const PropertyFragmentDoc = gql`
     name
     allowedValues
     valueType
+  }
+`;
+export const CustomFieldFragmentDoc = gql`
+  fragment CustomField on CustomFieldNode {
+    id
+    key
+    name
+    valueType
+    kind
+    options {
+      id
+      key
+      name
+      parentOptionId
+      deletedDatetime
+    }
   }
 `;
 export const NamesDocument = gql`
@@ -431,6 +499,20 @@ export const NamePropertiesDocument = gql`
     }
   }
   ${PropertyFragmentDoc}
+`;
+export const NameCustomFieldsDocument = gql`
+  query nameCustomFields($scope: String!) {
+    customFields(filter: { scope: { equalTo: $scope } }) {
+      ... on CustomFieldConnector {
+        __typename
+        totalCount
+        nodes {
+          ...CustomField
+        }
+      }
+    }
+  }
+  ${CustomFieldFragmentDoc}
 `;
 export const UpdateNamePropertiesDocument = gql`
   mutation updateNameProperties(
@@ -540,6 +622,24 @@ export function getSdk(
             signal,
           }),
         'nameProperties',
+        'query',
+        variables
+      );
+    },
+    nameCustomFields(
+      variables: NameCustomFieldsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<NameCustomFieldsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<NameCustomFieldsQuery>({
+            document: NameCustomFieldsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'nameCustomFields',
         'query',
         variables
       );

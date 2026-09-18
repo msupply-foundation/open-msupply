@@ -1,0 +1,38 @@
+# Shared invoice-modal reads (the service-charges and change-currency editors
+# hosted by BOTH shipment verticals — outbound S5, inbound S6). Each vertical
+# supplies its own writes; only these lookups are shared.
+
+# The store's SERVICE items — the Name column's lookup options. The default
+# (item code "service", else the first) seeds a new charge; Add charge is
+# disabled when none exists (rules § service lines). isVisible/isActive match
+# the old client's items hook, which always folds store visibility in.
+query serviceItems($storeId: String!) {
+  items(
+    storeId: $storeId
+    filter: { type: { equalTo: SERVICE }, isActive: true, isVisible: true }
+    page: { first: 100 }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+      }
+    }
+  }
+}
+
+# Active currencies for the change-currency modal. No storeId arg.
+query activeCurrencies {
+  currencies(filter: { isActive: true }) {
+    ... on CurrencyConnector {
+      __typename
+      nodes {
+        id
+        code
+        isHomeCurrency
+      }
+    }
+  }
+}

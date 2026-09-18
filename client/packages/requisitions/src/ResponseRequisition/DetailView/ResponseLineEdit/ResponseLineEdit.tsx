@@ -195,6 +195,7 @@ export const ResponseLineEdit = ({
                   })
                 : update({ requestedQuantity: value });
             }}
+            inputTestId="requested-quantity-input"
             {...commonProps}
           />
           <ResponseNumInputRow
@@ -231,6 +232,7 @@ export const ResponseLineEdit = ({
                 }}
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
+                inputTestId="variance-reason-input"
                 inputProps={{
                   error: isReasonsError,
                 }}
@@ -252,7 +254,11 @@ export const ResponseLineEdit = ({
           )}
         </ModalPanelArea>
         {showExcessRequestWarning && (
-          <Alert sx={{ mt: 1 }} severity="warning">
+          <Alert
+            sx={{ mt: 1 }}
+            severity="warning"
+            data-testid="excess-request-warning"
+          >
             {t('messages.requested-exceeds-suggested')}
           </Alert>
         )}
@@ -367,6 +373,7 @@ export const ResponseLineEdit = ({
           value={draft?.comment ?? ''}
           onChange={(value?: string) => update({ comment: value })}
           disabled={disabled}
+          testId="line-comment-field"
         />
       </>
     );
@@ -399,7 +406,11 @@ export const ResponseLineEdit = ({
             />
           )}
           {!!volumeFull && (
-            <Alert sx={{ mt: 1 }} severity="warning">
+            <Alert
+              sx={{ mt: 1 }}
+              severity="warning"
+              data-testid="volume-full-warning"
+            >
               {t('label.location-type-full-warning', {
                 locationType:
                   draft?.availableVolumeAtLocationType?.locationType.name,

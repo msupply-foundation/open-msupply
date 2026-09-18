@@ -85,6 +85,9 @@ impl<'a> StockRelocationRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(stock_relocation::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<StockRelocationRow>(self.connection.lock().connection())?;
@@ -159,8 +162,8 @@ mod test {
 
     use crate::{
         mock::MockDataInserts, test_db::setup_all, EqualFilter, StockRelocationFilter,
-        StockRelocationRepository, StockRelocationRow, StockRelocationSort,
-        StockRelocationSortField, StockRelocationStatus, Upsert,
+        StockRelocationRepository, StockRelocationRow, StockRelocationRowRepository,
+        StockRelocationSort, StockRelocationSortField, StockRelocationStatus,
     };
 
     fn relocation(id: &str) -> StockRelocationRow {
@@ -184,7 +187,9 @@ mod test {
             setup_all("stock_relocation_query_repository", MockDataInserts::all()).await;
 
         let row = relocation("stock_relocation_1");
-        row.upsert(&connection).unwrap();
+        StockRelocationRowRepository::new(&connection)
+            .upsert_one(&row)
+            .unwrap();
 
         let repo = StockRelocationRepository::new(&connection);
 

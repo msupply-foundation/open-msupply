@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.webkit.CookieManager;
 import android.webkit.WebView;
 
 import androidx.core.graphics.Insets;
@@ -16,8 +17,19 @@ import java.io.File;
 
 
 
-public class MainActivity extends BridgeActivity {
+public class MainActivity extends BridgeActivity implements DiscoveryHostActivity {
     RemoteServer server = new RemoteServer();
+
+    // Set by DiscoveryHostPlugin.navigate (host duty AC-DT16): once the page
+    // whose URL starts with this has loaded, drop the WebView history beneath
+    // it, so hardware back cannot re-enter discovery without its flags and
+    // bounce straight back to the server just left. Read in the page-loaded
+    // listener installed in onCreate; UI thread only.
+    private String pendingHistoryClearPrefix;
+
+    // Whether the page has connected this WebView to a server. Only then does
+    // the failed-load duty apply, and only then is there a session to end.
+    private boolean connectedToChosenServer;
     DiscoveryConstants discoveryConstants;
     private FileManager fileManager;
     private String js = "";
@@ -26,6 +38,20 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(NativeApi.class);
         registerPlugin(HoneywellScannerPlugin.class);
+        // Used by the new front end (open-msupply-frontend, src/platform/).
+        // Registering here is only half the job: the UI is served by the
+        // embedded server, so each plugin's name must ALSO be listed in
+        // ExtendedWebViewClient.generatePluginScript() or the JS proxy has no
+        // header to dispatch through.
+        registerPlugin(FileTransferPlugin.class);
+        registerPlugin(PrintPlugin.class);
+        registerPlugin(ReadLogPlugin.class);
+        // The discovery page's host, compiled straight out of the new shell
+        // (frontend/android/app/src/shared) rather than copied here, so the
+        // two shells cannot drift. Registering is only half the job here — the
+        // UI is served by the embedded server, so the name must ALSO be in
+        // ExtendedWebViewClient.generatePluginScript().
+        registerPlugin(DiscoveryHostPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Replace Capacitor's auto-loaded https://localhost:<PORT>/ with an inline
@@ -65,6 +91,16 @@ public class MainActivity extends BridgeActivity {
                 if (!js.isEmpty()) {
                     view.evaluateJavascript(js, null);
                 }
+                // Host duty (AC-DT16): clearHistory only drops entries that
+                // have committed, so it has to run once the target page has
+                // loaded. Prefix-matched because the final URL can carry a
+                // query or a same-origin redirect.
+                String prefix = MainActivity.this.pendingHistoryClearPrefix;
+                if (prefix != null && view.getUrl() != null
+                        && view.getUrl().startsWith(prefix)) {
+                    view.clearHistory();
+                    MainActivity.this.pendingHistoryClearPrefix = null;
+                }
             }
         });
 
@@ -97,6 +133,10 @@ public class MainActivity extends BridgeActivity {
                     }
                 });
 
+        // The server serves the web UI from <filesDir>/frontend; ship the
+        // APK-bundled assets there before it starts
+        FrontendAssets.sync(this);
+
         String path = getFilesDir().getAbsolutePath();
         String cache = getCacheDir().getAbsolutePath();
         server.start(discoveryConstants.PORT, path, cache, discoveryConstants.hardwareId);
@@ -104,8 +144,37 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onDestroy() {
+        // Host duty (frontend/src/discovery/hostContract.ts, AC-DT18): the
+        // session ends with the app. Once the page has connected this WebView
+        // to a chosen server the session belongs to that server and lives in
+        // the cookie jar, which otherwise survives to the next launch — so
+        // signing in would not be required after the auto-reconnect AC-DT1
+        // performs. Only when a server was chosen: an install that never left
+        // its own server keeps the device's own session, as it always has.
+        //
+        // Not guaranteed on a process kill; the server's token expiry is the
+        // backstop, as it is on desktop.
+        if (this.connectedToChosenServer) {
+            CookieManager.getInstance().removeAllCookies(null);
+            CookieManager.getInstance().flush();
+        }
         super.onDestroy();
         server.stop();
+    }
+
+    @Override
+    public void clearHistoryWhenLoaded(String urlPrefix) {
+        this.pendingHistoryClearPrefix = urlPrefix;
+    }
+
+    @Override
+    public void onServerChosen(String url, String origin, String hardwareId, int port, boolean isLocal) {
+        // Certificate trust is the shell's job and cannot be done blind, so
+        // the page says whose server this is (hostContract.ts §
+        // ConnectedServer). NativeApi keeps it because that is where
+        // CertWebViewClient already looks.
+        this.connectedToChosenServer = true;
+        NativeApi.chosenServer(url, origin, hardwareId, port, isLocal);
     }
 
     // ActivityResult needs to be overridden in the main, not UI thread

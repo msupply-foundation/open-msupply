@@ -79,6 +79,8 @@ This is the implemented flow. A ROMS that has been upgraded to a V7-capable vers
 
 **Re-initialising a V7 site.** When a site that was previously on V5/V6 re-initialises against COMS, COMS itself checks with COGS whether the site is marked V7; if it isn't, COMS moves it back to V5/V6 so the two stay consistent.
 
+**Initialising a site COMS doesn't yet show as V7** (e.g. a site freshly created in legacy mSupply). Authentication (`get_token`) gates on the site being V7 on COMS. When it isn't, COMS asks COGS to transition it (the same `v7_url_and_upgrade` request as step 4); on success it answers `WaitingForCentralV7Upgrade` **and triggers its own sync with COGS**, so the flipped `site` row typically arrives and integrates within seconds. The initialising remote retries and gets through on the next attempt — without the trigger it would wait out COMS's whole sync interval ([open-msupply-frontend#504](https://github.com/msupply-foundation/open-msupply-frontend/issues/504)).
+
 **Hardware id.** During the transition the hardware id sometimes has to be reset on OG — but only once, before the V7 transition (for example when the site was previously running a legacy app such as legacy mSupply mobile). After transition, V7 site authentication is handled by COMS.
 
 ![migration_to_v7](./images/migrating_to_v7.drawio.svg)
@@ -136,6 +138,16 @@ V6 server API would remain, it should not need any changes, transfers will still
 ## Patients
 
 Remote patient lookup is now served by COMS over the V7 sync API (search, then a synchronous `patient_data_for_site` call whose batch is integrated in memory on the remote) rather than proxying the lookup to OG. See the [Patient Lookup](../v7/#patient-lookup) section of the V7 spec for the implemented mechanism.
+
+### Prescriptions for patients with no visibility
+
+OG allows a configuration where a patient has prescriptions in a store but no `name_store_join` for that store (OG compensates by also syncing patients that have invoices in the store, see issue #12365). In OMS the `name_store_join` is the only patient visibility mechanism, so without one the patient would not sync to the site holding the prescriptions and integration there would fail on FK constraints.
+
+To support this, when COMS translates a prescription over V5/V6 and the patient has no `name_store_join` for the prescription's store, it synthesizes one as part of the same integration:
+
+- The synthesized join is an ordinary `name_store_join` (fresh id), created in the same integration as the prescription it came from. Because that integration inherits the incoming record's `source_site_id` (OG's), the synthesized join is tagged as OG-sourced and is therefore **not pushed back to OG** — the V5 push filter excludes rows whose source site is OG. (It still creates a changelog row and syncs to the OMS site holding the prescription, which is the point of synthesizing it.) Records integrate one at a time, so a later prescription for the same patient & store sees the join and doesn't synthesize another.
+- When OG sends a join for a **patient**, any other existing join for the same name & store is deleted and the incoming one kept (de-duplication in the `name_store_join` translator) — this replaces synthesized joins with OG's, and converges OG duplicates to the most recently received one. Non-patient joins are not deduped (out of scope, and it avoids the duplicate lookup for the far more common facility joins).
+- On COMS a `name_store_join` (synthesized or OG's) is **not deleted** while the name still has prescriptions in the store — an incoming V5/V6 delete or `inactive` soft-delete is ignored in that case, since deleting it would re-create the broken FK state. In the future this should instead mark the join `inactive` (respected by visibility filtering) rather than keeping it fully active.
 
 ## Users, passwords and permissions
 

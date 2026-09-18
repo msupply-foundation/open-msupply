@@ -5,6 +5,17 @@ use crate::types::{
 use async_graphql::*;
 use repository::{PurchaseOrderLine, RequisitionLine, StockLine, StocktakeLine};
 
+/// The dispensing record was generated from a prescription request, and is
+/// that request's only way of being dispensed — deleting it would strand the
+/// request on Ready to dispense.
+pub struct CannotDeleteGeneratedDispensation;
+#[Object]
+impl CannotDeleteGeneratedDispensation {
+    pub async fn description(&self) -> &str {
+        "Cannot delete a dispensing record generated from a prescription request"
+    }
+}
+
 pub struct CannotDeleteInvoiceWithLines(pub InvoiceLineConnector);
 #[Object]
 impl CannotDeleteInvoiceWithLines {

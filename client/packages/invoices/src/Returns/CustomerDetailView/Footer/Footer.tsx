@@ -15,10 +15,7 @@ import {
 } from '@openmsupply-client/common';
 import { getStatusTranslator } from '../../../utils';
 import { createStatusLog, getStatusSequence } from '../../../statuses';
-import {
-  CustomerReturnLineFragment,
-  useReturns,
-} from '../../api';
+import { CustomerReturnLineFragment, useReturns } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
@@ -96,6 +93,7 @@ export const FooterComponent = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
+      testId: 'delete-lines-button',
     },
   ];
 

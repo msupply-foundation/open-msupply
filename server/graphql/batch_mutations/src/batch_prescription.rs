@@ -92,6 +92,7 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
         &ResourceAccessRequest {
             resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -546,6 +547,7 @@ mod test {
                         their_reference: None,
                         clinician_id: None,
                         prescription_date: None,
+                        prescription_request_id: None,
                     },
                     result: Err(InsertPrescriptionError::PatientDoesNotExist),
                 }],

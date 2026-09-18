@@ -6,15 +6,20 @@ import {
   FilterMenu,
   usePreferences,
   InvoiceNodeType,
+  buildCustomFieldFilterDefinitions,
 } from '@openmsupply-client/common';
 import { getStatusSequence } from '../../statuses';
 import { getStatusTranslator } from '../../utils';
+import { useInvoiceCustomFields } from '../../common';
 
 export const Toolbar = () => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
   const statuses = getStatusSequence(InvoiceNodeType.CustomerReturn).filter(
     status => invoiceStatusOptions?.includes(status)
+  );
+  const { data: properties } = useInvoiceCustomFields(
+    InvoiceNodeType.CustomerReturn
   );
 
   return (
@@ -44,6 +49,12 @@ export const Toolbar = () => {
                 label: getStatusTranslator(t)(status),
               })),
             },
+            ...buildCustomFieldFilterDefinitions(properties ?? [], {
+              min: t('label.min'),
+              max: t('label.max'),
+              fromDate: t('label.from-date'),
+              toDate: t('label.to-date'),
+            }),
           ]}
         />
       </Box>

@@ -17,24 +17,35 @@ import {
   TextWithTooltipCell,
   usePaginatedMaterialTable,
   MaterialTable,
+  InvoiceNodeType,
+  buildPropertyColumns,
+  buildPropertyUrlFilterConfigs,
+  mapPropertyFilters,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';
+import { useInvoiceCustomFields } from '../../common';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const SupplierReturnListView = () => {
   const t = useTranslation();
+  const { localisedDate } = useFormatDateTime();
+  const { data: properties } = useInvoiceCustomFields(
+    InvoiceNodeType.SupplierReturn
+  );
   const {
     filter,
-    queryParams: { sortBy, first, offset },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
       { key: 'createdDatetime', condition: 'between' },
+      ...buildPropertyUrlFilterConfigs(properties ?? []),
     ],
   });
   const navigate = useNavigate();
@@ -42,7 +53,14 @@ export const SupplierReturnListView = () => {
   const { info } = useNotification();
   const { disableManualReturns } = usePreferences();
 
-  const queryParams = { ...filter, sortBy, first, offset };
+  const queryParams = {
+    ...filter,
+    // Property filters travel to the API as the `dynamicFilter` condition AST
+    filterBy: mapPropertyFilters(filterBy, properties ?? []),
+    sortBy,
+    first,
+    offset,
+  };
 
   const { data, isError, isFetching } =
     useReturns.document.listSupplier(queryParams);
@@ -130,8 +148,12 @@ export const SupplierReturnListView = () => {
         header: t('label.reference'),
         Cell: TextWithTooltipCell,
       },
+      ...buildPropertyColumns<SupplierReturnRowFragment>(
+        properties ?? [],
+        localisedDate
+      ),
     ],
-    []
+    [properties, localisedDate]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable({

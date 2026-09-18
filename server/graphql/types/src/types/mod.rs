@@ -58,6 +58,9 @@ pub use self::activity_log::*;
 pub mod period;
 pub use self::period::*;
 
+pub mod period_schedule;
+pub use self::period_schedule::*;
+
 pub mod permissions;
 pub use self::permissions::*;
 
@@ -90,6 +93,9 @@ pub use self::repack::*;
 
 pub mod property;
 pub use self::property::*;
+
+pub mod custom_field;
+pub use self::custom_field::*;
 
 pub mod program;
 pub use self::program::*;

@@ -10,14 +10,17 @@ const Loading = () => (
 interface WidgetProps {
   height?: number | string;
   title: string;
+  testId?: string;
 }
 
 export const Widget: React.FC<PropsWithChildren<WidgetProps>> = ({
   children,
   height = '100%',
   title,
+  testId,
 }) => (
   <Card
+    data-testid={testId}
     sx={{
       borderRadius: '16px',
       height,

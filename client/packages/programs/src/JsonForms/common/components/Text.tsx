@@ -101,6 +101,9 @@ const UIComponent = (props: ControlProps) => {
         label={t(label as LocaleKey)}
         inputProps={{
           value: text ?? '',
+          // Locale-stable e2e hook, keyed by the control's data path (e.g.
+          // `input-firstName`) — see open-msupply-frontend e2e/TESTIDS.md.
+          inputProps: { 'data-testid': `input-${path}` },
           sx: { width },
           style: { flexBasis },
           onChange: e =>

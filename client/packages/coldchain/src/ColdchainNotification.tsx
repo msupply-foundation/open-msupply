@@ -73,12 +73,13 @@ const DetailButton = ({
   notification,
   queryParameters,
   tab,
+  testId,
 }: {
   notification:
-    | TemperatureNotificationBreachFragment
-    | TemperatureExcursionFragment;
+    TemperatureNotificationBreachFragment | TemperatureExcursionFragment;
   queryParameters: any;
   tab: string;
+  testId: string;
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -94,6 +95,7 @@ const DetailButton = ({
     <BaseButton
       variant="contained"
       style={{ height: 32 }}
+      data-testid={testId}
       onClick={() =>
         navigate(
           RouteBuilder.create(AppRoute.Coldchain)
@@ -113,8 +115,7 @@ const Location = ({
   notification,
 }: {
   notification:
-    | TemperatureNotificationBreachFragment
-    | TemperatureExcursionFragment;
+    TemperatureNotificationBreachFragment | TemperatureExcursionFragment;
 }) => {
   const t = useTranslation();
 
@@ -137,9 +138,11 @@ type NotificationProps = {
   totalCount: number;
   totalCountMessage: LocaleKey;
   notification?:
-    | TemperatureNotificationBreachFragment
-    | TemperatureExcursionFragment;
+    TemperatureNotificationBreachFragment | TemperatureExcursionFragment;
   detailButton: ReactNode;
+  /** e2e contract id for the row (frontend/e2e/TESTIDS.md § Cold chain ›
+   *  Monitoring): `coldchain-notification-breach` / `-excursion`. */
+  testId: string;
 };
 
 const Notification = ({
@@ -148,6 +151,7 @@ const Notification = ({
   totalCount,
   totalCountMessage,
   notification,
+  testId,
 }: NotificationProps) => {
   const theme = useTheme();
   const t = useTranslation();
@@ -157,6 +161,7 @@ const Notification = ({
 
   return (
     <Box
+      data-testid={testId}
       sx={{
         borderBottom: '1px solid',
         borderBottomColor: 'primary.main',
@@ -244,6 +249,7 @@ export const ColdchainNotification = () => {
     <DetailButton
       notification={breach}
       tab={t('label.breaches')}
+      testId="coldchain-notification-breach-details"
       queryParameters={{
         sort: TemperatureLogSortFieldInput.Datetime,
         unacknowledged: true,
@@ -254,6 +260,7 @@ export const ColdchainNotification = () => {
     <DetailButton
       notification={excursion}
       tab={t('label.log')}
+      testId="coldchain-notification-excursion-details"
       queryParameters={{
         sort: TemperatureLogSortFieldInput.Datetime,
         datetime: '_',
@@ -275,6 +282,7 @@ export const ColdchainNotification = () => {
         notification={notifications?.breaches?.nodes?.[0]}
         totalCount={notifications?.breaches?.totalCount ?? 0}
         detailButton={breachButton}
+        testId="coldchain-notification-breach"
       />
       <Notification
         message="messages.notification-excursion-detected"
@@ -282,6 +290,7 @@ export const ColdchainNotification = () => {
         notification={notifications?.excursions?.nodes?.[0]}
         totalCount={notifications?.excursions?.totalCount ?? 0}
         detailButton={excursionButton}
+        testId="coldchain-notification-excursion"
       />
     </Box>
   );

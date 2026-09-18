@@ -12,6 +12,8 @@ export type Option = {
   label: string;
   value: string | number;
   disabled?: boolean;
+  /** Optional test id stamped on the rendered option (e.g. e2e filter ids). */
+  testId?: string;
 };
 export interface SelectProps extends StandardTextFieldProps {
   options: Option[];
@@ -20,7 +22,12 @@ export interface SelectProps extends StandardTextFieldProps {
 }
 
 const defaultRenderOption = (option: Option) => (
-  <MenuItem key={option.value} value={option.value} disabled={option.disabled}>
+  <MenuItem
+    key={option.value}
+    value={option.value}
+    disabled={option.disabled}
+    data-testid={option.testId}
+  >
     {option.label}
   </MenuItem>
 );

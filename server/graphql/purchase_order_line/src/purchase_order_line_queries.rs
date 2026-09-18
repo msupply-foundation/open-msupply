@@ -1,6 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DateFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput},
+    generic_filters::{
+        DateFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput,
+    },
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
@@ -75,6 +77,7 @@ pub fn get_purchase_order_line(
         &ResourceAccessRequest {
             resource: Resource::QueryPurchaseOrder,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -110,6 +113,7 @@ pub fn get_purchase_order_lines(
         &ResourceAccessRequest {
             resource: Resource::QueryPurchaseOrder,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -143,6 +147,7 @@ pub fn get_units_ordered_in_other_purchase_orders(
         &ResourceAccessRequest {
             resource: Resource::QueryPurchaseOrder,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

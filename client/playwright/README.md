@@ -3,6 +3,15 @@
 - **Docs site**: https://dev-docs.msupply.foundation/client/playwright/
 - **Source**: [docs/content/client/playwright/_index.md](../../docs/content/client/playwright/_index.md)
 
+> **The deterministic regression suites (stocktake, distribution) are defined
+> in [open-msupply-frontend](https://github.com/msupply-foundation/open-msupply-frontend)
+> under `e2e/`** — one suite definition, anchored to the `data-testid` contract
+> (`e2e/TESTIDS.md` there), verifies both this front end and the rewrite.
+> `yarn e2e:local` below still boots this repo's stack and runs them, but it
+> needs a checkout of that repo alongside this one (`FE_SUITES_DIR` overrides
+> the `../open-msupply-frontend` default). The specs that remain in this
+> directory are the smoke and custom-translations tests.
+
 ## About Playwright
 
 [Playwright](https://playwright.dev) is an open-source end-to-end testing framework by Microsoft. It supports testing across Chromium, Firefox, and WebKit browsers, and can run tests headlessly or with a visible browser. Key capabilities include:
@@ -19,7 +28,8 @@ For full documentation, see [playwright.dev](https://playwright.dev).
 
 - Node.js >= 18
 - Yarn
-- A running Open mSupply instance (defaults to `http://localhost:3003`)
+- A running Open mSupply instance (defaults to `http://localhost:3003`) — **or
+  nothing at all** if you use the hermetic runner below, which boots its own.
 
 ## Setup
 
@@ -30,13 +40,52 @@ cd client
 npx playwright install chromium
 ```
 
-## Running Tests
+## Hermetic run (recommended) — no setup, deterministic data
+
+One command builds the (sqlite) server, restores a throwaway database from the
+committed reference datafile ([server/data/e2e](../../server/data/e2e/README.md)),
+boots server + front end on dedicated ports, runs the tests, and tears
+everything down. No postgres, no central server, no datafile of your own:
+
+```bash
+cd client
+yarn e2e:local stocktake-regression            # one suite
+yarn e2e:local                                 # everything
+yarn e2e:local stocktake-regression --headed   # watch it
+KEEP_SERVER=1 yarn e2e:local stocktake-regression   # leave the stack up to poke at
+```
+
+First run compiles the Rust server (slow); after that the whole cycle is a few
+minutes. Every run starts from identical data — this is the same shape CI uses,
+so "passes locally" means something.
+
+Two rules keep it deterministic:
+
+- **Suites must not assume datafile state.** Store-local data (stock, documents)
+  is arranged through the GraphQL API in `e2e/specs/data.setup.ts` (in the
+  suites repo) — extend that, don't add rows to the reference datafile.
+- **Reference data (items, reasons, master lists) lives in the datafile.** The
+  remote API can't create it; see the
+  [regeneration recipe](../../server/data/e2e/README.md) when it needs to change.
+
+## Running Tests (against your own instance)
 
 All commands run from the `client/` directory.
+
+> **Run the regression suites with `--workers 1`.** The stocktake and
+> distribution suites mutate the same store's stock, so parallel workers
+> interleaving them against one database produce false failures. (The hermetic
+> runner enforces this for you; the smoke suite is read-only and parallelises
+> safely.)
 
 ```bash
 # Run all tests (headless)
 yarn e2e
+
+# Regression suites — run from an open-msupply-frontend checkout (see note
+# at the top); always single-worker (see note above)
+(cd ../../open-msupply-frontend && BASE_URL=http://localhost:3003 \
+  pnpm e2e stocktake-regression distribution-regression --workers 1)
 
 # Run only the smoke tests
 yarn e2e smoke
@@ -57,9 +106,35 @@ BASE_URL=http://localhost:9000 yarn e2e --headed smoke
 npx playwright show-report playwright/playwright-report
 ```
 
+## Configuration (environment variables)
+
+All optional — sensible defaults are baked in, so `yarn e2e` works out of the box against a stock local instance. Override them for a different port, login, or run mode.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BASE_URL` | `http://localhost:3003` | URL of the running Open mSupply front end |
+| `PW_USERNAME` | `admin` | Login user (used by `auth.setup.ts` and the "Entered by" check in the distribution suite) |
+| `PW_PASSWORD` | `pass` | Login password |
+| `PW_MODE` | `serial` | Describe-block mode for `distribution-regression.spec.ts`: `serial`, `parallel`, or `default`. **Serial is recommended** — parallel currently produces false failures because these tests share the shipment list. |
+
+Three ways to pass them (nothing auto-loads a file — the config just reads `process.env`):
+
+```bash
+# 1. Inline, for a single run (from client/)
+PW_USERNAME=check BASE_URL=http://localhost:3006 yarn e2e distribution-regression
+
+# 2. export once per shell session
+export PW_USERNAME=check PW_PASSWORD=pass BASE_URL=http://localhost:3006
+yarn e2e distribution-regression
+
+# 3. Keep your values in a gitignored playwright/.env and source it (from client/)
+set -a && source playwright/.env && set +a
+yarn e2e distribution-regression
+```
+
 ## Auth
 
-Tests log in once at the start of each run using `admin` / `pass` and share the session across all workers via a stored auth state file (`.auth/state.json`, gitignored). Individual tests don't need to log in.
+Tests log in once at the start of each run (default `admin` / `pass`, override with `PW_USERNAME` / `PW_PASSWORD`) and share the session across all workers via a stored auth state file (`.auth/state.json`, gitignored). Individual tests don't need to log in.
 
 ## Smoke Tests
 

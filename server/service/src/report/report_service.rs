@@ -224,13 +224,14 @@ pub trait ReportServiceTrait: Sync + Send {
 
         // default overwrite as true
         // TODO add user input to customise overwrite
-        let reports =
-            StandardReports::upsert_reports(report_json, &ctx.connection, true).map_err(|_error| {
+        let reports = StandardReports::upsert_reports(report_json, &ctx.connection, true).map_err(
+            |_error| {
                 InstallReportError::RepositoryError(RepositoryError::DBError {
                     msg: String::from("Failed to upsert report"),
                     extra: String::new(),
                 })
-            })?;
+            },
+        )?;
 
         Ok(reports.iter().map(|r| r.id.clone()).collect())
     }
@@ -275,7 +276,10 @@ mod prefix_store_code_test {
 
     #[test]
     fn prefixes_store_code_when_present() {
-        assert_eq!(prefix_store_code(Some("GEN"), "Stock Report"), "GEN_Stock Report");
+        assert_eq!(
+            prefix_store_code(Some("GEN"), "Stock Report"),
+            "GEN_Stock Report"
+        );
     }
 
     #[test]
@@ -1124,13 +1128,11 @@ mod report_generation_test {
 
 #[cfg(test)]
 mod report_filter_test {
-
+    use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
     use repository::{
         migrations::Version, mock::MockDataInserts, test_db::setup_all, ReportFilter,
         ReportRepository, StringFilter,
     };
-
-    use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
 
     // adding tests to generate reports
 
@@ -1214,8 +1216,7 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter =
-            ReportFilter::new().code(StringFilter::equal_to("report_with_custom_option"));
+        let filter = ReportFilter::new().code(StringFilter::equal_to("report_with_custom_option"));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();

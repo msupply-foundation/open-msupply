@@ -30,6 +30,7 @@ pub fn uploaded_plugin_info(
         &ResourceAccessRequest {
             resource: Resource::ConfigurePlugin,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

@@ -55,13 +55,13 @@ pub enum InsertStocktakeLineError {
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
     ManufacturerDoesNotExist,
-    ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     VvmStatusDoesNotExist,
     CampaignDoesNotExist,
     ProgramDoesNotExist,
     StockLineReducedBelowZero(StockLine),
     IncorrectLocationType,
+    CannotSetManufactureDateInFuture,
 }
 
 pub fn insert_stocktake_line(
@@ -118,6 +118,7 @@ impl From<RepositoryError> for InsertStocktakeLineError {
 mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
+        campaign::campaign_row::CampaignRow,
         mock::{
             mock_donor_a, mock_item_a, mock_item_a_lines,
             mock_location_with_restricted_location_type_a, mock_locked_stocktake,
@@ -126,10 +127,9 @@ mod stocktake_line_test {
             mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
             program_master_list_store, MockData, MockDataInserts,
         },
-        campaign::campaign_row::CampaignRow,
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, ReasonOptionRow, ReasonOptionType, StockLineFilter, StockLineRepository,
-        StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
+        EqualFilter, NameRow, ReasonOptionRow, ReasonOptionType, StockLineFilter,
+        StockLineRepository, StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
     };
     use util::uuid::uuid;
 
@@ -314,6 +314,25 @@ mod stocktake_line_test {
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::StocktakeIsLocked);
 
+        // error CannotSetManufactureDateInFuture
+        let stocktake_a = mock_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    item_id: Some(mock_item_a().id),
+                    manufacture_date: NaiveDate::from_ymd_opt(9999, 1, 1),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(
+            error,
+            InsertStocktakeLineError::CannotSetManufactureDateInFuture
+        );
+
         // check CannotEditFinalised
         let stocktake_finalised = mock_stocktake_finalised();
         let stock_line = mock_new_stock_line_for_stocktake_a();
@@ -451,6 +470,99 @@ mod stocktake_line_test {
             .unwrap()
             .unwrap();
         assert_eq!(stock_line_row.donor_id, Some(donor_id));
+    }
+
+    #[actix_rt::test]
+    async fn insert_stocktake_line_with_invisible_manufacturer() {
+        // A manufacturer can be configured centrally (e.g. on an item variant) or inherited
+        // from stock without being visible in this store - this is valid data (see #12672)
+        fn invisible_manufacturer() -> NameRow {
+            NameRow {
+                id: String::from("invisible_manufacturer"),
+                name: String::from("Invisible manufacturer"),
+                code: String::from("invisible_manufacturer"),
+                is_manufacturer: true,
+                ..Default::default()
+            }
+        }
+
+        fn invisible_non_manufacturer() -> NameRow {
+            NameRow {
+                id: String::from("invisible_non_manufacturer"),
+                name: String::from("Invisible non-manufacturer"),
+                code: String::from("invisible_non_manufacturer"),
+                is_manufacturer: false,
+                ..Default::default()
+            }
+        }
+
+        fn mock_stock_line_for_manufacturer_test() -> StockLineRow {
+            StockLineRow {
+                id: String::from("mock_stock_line_for_manufacturer_test"),
+                item_id: String::from("item_a"),
+                store_id: String::from("store_a"),
+                available_number_of_packs: 20.0,
+                pack_size: 1.0,
+                total_number_of_packs: 30.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_stocktake_line_with_invisible_manufacturer",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![invisible_manufacturer(), invisible_non_manufacturer()],
+                stock_lines: vec![mock_stock_line_for_manufacturer_test()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.stocktake_line_service;
+
+        // error: skipping the visibility check must not skip the type check - an invisible
+        // name that is not a manufacturer is still rejected
+        let stocktake_a = mock_stocktake_a();
+        let stock_line = mock_stock_line_for_manufacturer_test();
+        let result = service.insert_stocktake_line(
+            &context,
+            InsertStocktakeLine {
+                id: uuid(),
+                stocktake_id: stocktake_a.id.clone(),
+                stock_line_id: Some(stock_line.id.clone()),
+                manufacturer_id: Some(invisible_non_manufacturer().id),
+                counted_number_of_packs: Some(17.0),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            result.unwrap_err(),
+            InsertStocktakeLineError::ManufacturerIsNotAManufacturer
+        );
+
+        // success: manufacturer exists but has no name_store_join for this store
+        let result = service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line.id.clone()),
+                    manufacturer_id: Some(invisible_manufacturer().id),
+                    counted_number_of_packs: Some(17.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            result.line.manufacturer_id,
+            Some(invisible_manufacturer().id)
+        );
     }
 
     #[actix_rt::test]

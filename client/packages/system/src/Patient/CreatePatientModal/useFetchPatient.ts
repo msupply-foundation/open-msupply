@@ -4,7 +4,7 @@ import {
   useQueryClient,
   useTranslation,
 } from '@openmsupply-client/common';
-import { mapSyncError, useSync } from '../../Sync';
+import { isSyncStatusV7, mapSyncError, useSync } from '../../Sync';
 import { useCallback, useRef, useState } from 'react';
 import { usePatientApi } from '../api/hooks/utils/usePatientApi';
 
@@ -22,10 +22,8 @@ export const useFetchPatient = () => {
   const [error, setError] = useState<string | undefined>(undefined);
 
   const { mutateAsync: linkPatientToStore } = useMutation({
-    mutationFn: (nameId: string) =>
-      api.linkPatientToStore(nameId)
-  }
-  );
+    mutationFn: (nameId: string) => api.linkPatientToStore(nameId),
+  });
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { mutateAsync: getSyncStatus } = useSync.utils.mutateSyncStatus();
 
@@ -66,15 +64,27 @@ export const useFetchPatient = () => {
         return;
       }
 
-      setStep('Syncing');
-      await manualSync(patientId);
-      await pollTillSynced();
+      const currentStatus = await getSyncStatus();
+      if (!isSyncStatusV7(currentStatus)) {
+        setStep('Syncing');
+        await manualSync(patientId);
+        await pollTillSynced();
+      }
+
       await queryClient.invalidateQueries({
-        queryKey: api.keys.list()
+        queryKey: api.keys.list(),
       });
       if (!hasErroredDuringSync.current) setStep('Synced');
     },
-    [api.keys, linkPatientToStore, manualSync, queryClient, pollTillSynced, t]
+    [
+      api.keys,
+      linkPatientToStore,
+      manualSync,
+      queryClient,
+      pollTillSynced,
+      getSyncStatus,
+      t,
+    ]
   );
 
   return { mutateAsync, error, step };

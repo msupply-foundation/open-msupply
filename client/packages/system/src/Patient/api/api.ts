@@ -12,6 +12,7 @@ import {
   CentralPatientSearchInput,
   InsertProgramPatientInput,
   UpdateProgramPatientInput,
+  UpdatePatientCustomFieldsInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -20,6 +21,7 @@ import {
   LinkPatientToStoreMutation,
   ProgramPatientRowFragment,
   LatestPatientEncounterQuery,
+  CustomFieldFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -134,6 +136,14 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.centralPatientSearch;
     },
+    // Patient-scoped customField definitions (what custom fields a patient has).
+    customFields: async (): Promise<CustomFieldFragment[]> => {
+      const result = await sdk.patientCustomFields();
+      if (result?.customFields?.__typename === 'CustomFieldConnector') {
+        return result.customFields.nodes;
+      }
+      return [];
+    },
   },
   insertPatient: async (
     input: InsertPatientInput
@@ -163,6 +173,18 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not update patient');
+  },
+
+  updateCustomFields: async (
+    input: UpdatePatientCustomFieldsInput
+  ): Promise<ProgramPatientRowFragment> => {
+    const result = await sdk.updatePatientCustomFields({ storeId, input });
+
+    if (result.updatePatientCustomFields.__typename === 'PatientNode') {
+      return result.updatePatientCustomFields;
+    }
+
+    throw new Error('Could not update patient properties');
   },
 
   insertProgramPatient: async (

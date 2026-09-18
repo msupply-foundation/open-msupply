@@ -28,6 +28,7 @@ pub fn programs(
         &ResourceAccessRequest {
             resource: Resource::QueryMasterList,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -60,6 +61,7 @@ pub fn periods(
         &ResourceAccessRequest {
             resource: Resource::QueryMasterList,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

@@ -1,0 +1,55 @@
+# Service charges (spec/outbound-shipments S5): non-stock money lines. The
+# editor defers all edits to OK, then lands them in ONE batch — inserts,
+# updates, and deletes together.
+mutation saveOutboundServiceLines(
+  $storeId: String!
+  $inserts: [InsertOutboundShipmentServiceLineInput!]
+  $updates: [UpdateOutboundShipmentServiceLineInput!]
+  $deletes: [DeleteOutboundShipmentServiceLineInput!]
+) {
+  batchOutboundShipment(
+    storeId: $storeId
+    input: {
+      insertOutboundShipmentServiceLines: $inserts
+      updateOutboundShipmentServiceLines: $updates
+      deleteOutboundShipmentServiceLines: $deletes
+    }
+  ) {
+    insertOutboundShipmentServiceLines {
+      id
+      response {
+        __typename
+        ... on InsertOutboundShipmentServiceLineError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+    updateOutboundShipmentServiceLines {
+      id
+      response {
+        __typename
+        ... on UpdateOutboundShipmentServiceLineError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+    deleteOutboundShipmentServiceLines {
+      id
+      response {
+        __typename
+        ... on DeleteOutboundShipmentServiceLineError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}

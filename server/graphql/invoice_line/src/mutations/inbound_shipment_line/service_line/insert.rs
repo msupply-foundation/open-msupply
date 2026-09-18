@@ -51,6 +51,7 @@ pub fn insert(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -60,7 +61,11 @@ pub fn insert(
     map_response(
         service_provider
             .invoice_line_service
-            .insert_inbound_shipment_service_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
+            .insert_inbound_shipment_service_line(
+                &service_context,
+                input.to_domain(),
+                Some(r#type.to_domain()),
+            ),
     )
 }
 

@@ -1,0 +1,37 @@
+# Stocktake creation. The insert mutation plus the two counts the create form uses to
+# estimate how many lines the new stocktake will have. Input/response are the generated
+# GraphQL shapes (kdd/type-safety) — the form builds an InsertStocktakeInput directly, no
+# remapping. The id is client-generated (crypto.randomUUID) so the create can navigate to
+# the new stocktake immediately. InsertStocktakeResponse is only StocktakeNode (no error
+# union on this schema), so we select just id.
+mutation insertStocktake($storeId: String!, $input: InsertStocktakeInput!) {
+  insertStocktake(storeId: $storeId, input: $input) {
+    ... on StocktakeNode {
+      __typename
+      id
+    }
+  }
+}
+
+# Line-count estimate: how many stock lines match the chosen filters. The whole
+# StockLineFilterInput is passed straight from the form (kdd/type-safety).
+query stockLineCount($storeId: String!, $filter: StockLineFilterInput) {
+  stockLines(storeId: $storeId, filter: $filter) {
+    ... on StockLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}
+
+# Line-count estimate, part two: items with no stock on hand, added to the stock-line
+# count when "include all items" is chosen for a full / master-list stocktake (a stocktake
+# still creates a zero line for them).
+query noStockItemCount($storeId: String!, $filter: ItemFilterInput) {
+  items(storeId: $storeId, filter: $filter) {
+    ... on ItemConnector {
+      __typename
+      totalCount
+    }
+  }
+}

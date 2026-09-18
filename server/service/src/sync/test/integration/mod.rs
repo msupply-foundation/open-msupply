@@ -12,13 +12,13 @@ mod transfer;
 use self::central_server_configurations::NewSiteProperties;
 use crate::{
     sync::{
-        synchroniser::Synchroniser, translation_and_integration::integrate,
+        synchroniser_runner::Synchroniser, translation_and_integration::integrate,
         translations::IntegrationOperation,
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
 use central_server_configurations::{ConfigureCentralServer, SiteConfiguration};
-use repository::{mock::MockDataInserts, ChangelogRepository, StorageConnection};
+use repository::{mock::MockDataInserts, StorageConnection};
 use serde::Serialize;
 use std::{error::Error, future::Future};
 
@@ -47,8 +47,8 @@ pub(super) async fn init_test_context(
     let SiteConfiguration { sync_settings, .. } = &config;
 
     service_provider
-        .site_info_service
-        .request_and_set_site_info(service_provider, sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(service_provider, sync_settings)
         .await
         .unwrap();
     service_provider
@@ -133,8 +133,7 @@ async fn random_delay(min_millisecond: u64, max_millisecond: u64) {
     use rand::RngExt;
     let diff = max_millisecond - min_millisecond;
     // .random::<f64>() generates a float between 0 and 1
-    let delay_millisecond =
-        (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
+    let delay_millisecond = (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
     tokio::time::sleep(std::time::Duration::from_millis(delay_millisecond)).await;
 }
 
@@ -142,14 +141,10 @@ pub(crate) fn integrate_with_is_sync_reset(
     connection: &StorageConnection,
     integrations: Vec<IntegrationOperation>,
 ) -> Vec<IntegrationOperation> {
-    let changelog_repo = ChangelogRepository::new(&connection);
-    let cursor = changelog_repo.absolute_latest_cursor().unwrap();
-    // Need to reset is_sync_update since we've inserted test data with sync methods
-    // they need to sync to central (if is_sync_update is set to true they will not sync to central)
+    // source_site_id = None so records are treated as locally originated and push to central
     let integrations: Vec<(Option<_>, IntegrationOperation)> =
         integrations.into_iter().map(|i| (None, i)).collect();
     integrate(&connection, &integrations).unwrap();
-    changelog_repo.reset_is_sync_update(cursor).unwrap();
 
     integrations.into_iter().map(|(_, i)| i).collect()
 }

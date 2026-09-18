@@ -22,6 +22,7 @@ export const NothingHere: React.FC<NothingHereProps> = ({
 
   const CreateButton = !!onCreate ? (
     <Button
+      data-testid="nothing-here-create-button"
       sx={{
         textTransform: 'none',
         color: 'secondary.main',
@@ -40,6 +41,7 @@ export const NothingHere: React.FC<NothingHereProps> = ({
 
   return (
     <Stack
+      data-testid="nothing-here"
       flex={1}
       justifyContent="center"
       alignItems="center"

@@ -1,0 +1,58 @@
+/*
+ * Sync modal body layout (spec/sync-modal/ui-surface.md § Layout). The library
+ * components (Dialog / ProgressList / Alert / Button) own their look; this
+ * module only arranges the blocks — the recessed status band, the centred
+ * action row — with theme tokens (no colour/size literals; rem sizing; logical
+ * properties for RTL).
+ */
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Status line above the phase list, grouped as one block on a recessed panel. */
+.band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--bg-drawer);
+  border-radius: var(--radius-md);
+}
+
+.statusLine {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--text-body);
+  text-align: center;
+}
+
+/* "Special syncs" disclosure below the phase list — the run's backfill
+   descriptions, using the same expandable pattern as the ui ErrorDetails. */
+.specialSyncs {
+  align-self: stretch;
+  margin-block-start: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.specialSyncs summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+}
+
+.specialSyncsList {
+  margin-block: var(--space-2) 0;
+  padding-inline-start: var(--space-4);
+  color: var(--text-body);
+}
+
+/* The last-successful message text carries the success tint; the banner itself
+   stays neutral (spec § Layout). */
+.successText {
+  color: var(--success-main);
+}

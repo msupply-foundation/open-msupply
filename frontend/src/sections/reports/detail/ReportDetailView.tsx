@@ -1,0 +1,462 @@
+import {
+  createEffect,
+  createMemo,
+  createResource,
+  createSignal,
+  Match,
+  on,
+  onCleanup,
+  Show,
+  Switch,
+} from 'solid-js';
+import type { Component } from 'solid-js';
+import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
+import { gated } from '../../../api/gated';
+import { graphqlFetch } from '../../../api/graphql';
+import { locale, t } from '../../../intl';
+import { FILES_URL } from '../../../config';
+import { Page } from '../../../ui/layout/Page/Page';
+import { Header } from '../../../ui/layout/Header/Header';
+import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
+import { IconButton } from '../../../ui/elements/buttons/IconButton';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
+import { Spinner } from '../../../ui/elements/feedback/Spinner';
+import { DocumentFrame } from '../../../ui/elements/display/DocumentFrame';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../../../ui/elements/accordion/Accordion';
+import type { LocaleKey } from '../../../intl';
+import { DownloadIcon, PrinterIcon, SlidersIcon } from '../../../ui/icons';
+import { Report as ReportDocument } from '../api/reports.generated';
+import type { ReportResult, ReportVariables } from '../api/reports.generated';
+// Generation and the label helper are the cross-vertical ones owned by
+// domain/reports (shared with the S4 record-screen selector); dataId is
+// omitted — S2's standalone reports render against the store, not a record.
+import { generateReport, reportLabel } from '../../../domain/reports';
+import { fetchReportFile } from '../../../domain/reportFiles';
+import { printBlob, saveBlob } from '../../../platform/openDocument';
+import { ArgumentsModal } from '../../../domain/json-forms/ArgumentsModal';
+import { timezoneArgument } from '../../../domain/json-forms/schema';
+import styles from './ReportDetailView.module.css';
+
+// S2 — the single-report detail (spec/reports S2, AC-U1–U3, AC-R1, AC-G1/G4).
+// Fetches the report (name + argument schema), then generates its HTML and
+// embeds it. The chosen arguments round-trip through the URL query (AC-U2), so
+// opening/reloading the route re-generates. With a schema and no URL arguments
+// it opens the arguments modal (S3) first; otherwise it generates immediately.
+
+type ReportNode = Extract<ReportResult['report'], { __typename: 'ReportNode' }>;
+
+// The screen's one error presentation (spec S5): a headline the user can read,
+// the raw fault one click away. Both places that show one — the action banner
+// above the document and the document region itself — render this, so a
+// generation failure and a print failure look the same.
+const GenerationAlert: Component<{
+  message: string;
+  detail?: string;
+}> = props => (
+  <Alert severity="error">
+    <Stack gap="sm">
+      <span>{props.message}</span>
+      <Show when={props.detail}>
+        {detail => (
+          <ErrorDetails
+            detail={detail()}
+            summaryLabel={t('label.click-to-view')}
+          />
+        )}
+      </Show>
+    </Stack>
+  </Alert>
+);
+
+const ReportDetailView: Component = () => {
+  const params = useParams<{ storeId: string; reportId: string }>();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams<{
+    reportArgs?: string;
+  }>();
+
+  // The chosen arguments, carried in the route's query string (AC-U2). Parsed
+  // defensively: an absent or garbled param reads as "no arguments"
+  // (undefined).
+  const reportArgs = (): Record<string, unknown> | undefined => {
+    const raw = searchParams.reportArgs;
+    if (!raw) return undefined;
+    try {
+      return JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return undefined;
+    }
+  };
+
+  // Fetch the report version by id (name + schema). Read via `.latest` so the
+  // fetch never suspends the router boundary (kdd/solid-reactivity-pitfalls).
+  const [reportRes] = createResource(
+    () =>
+      JSON.stringify({
+        storeId: params.storeId,
+        id: params.reportId,
+        userLanguage: locale(),
+      }),
+    async serialised => {
+      const result = await graphqlFetch(
+        ReportDocument,
+        JSON.parse(serialised) as ReportVariables
+      );
+      if (result.kind !== 'success') return undefined;
+      return result.data.report.__typename === 'ReportNode'
+        ? result.data.report
+        : undefined;
+    }
+  );
+  const report = (): ReportNode | undefined => reportRes.latest;
+  const displayName = (): string => {
+    const r = report();
+    return r ? reportLabel(r) : '';
+  };
+  // The per-report explanation, keyed by report code in the message catalog
+  // (AC-U9). Only some codes have copy — t() echoes the key back when no
+  // catalog holds it, so a key-echo reads as "no disclosure" (the
+  // translateServerError probe).
+  const howToRead = (): string | undefined => {
+    const code = report()?.code;
+    if (!code) return undefined;
+    const key = `messages.how-to-read-${code}` as LocaleKey;
+    const copy = t(key);
+    return copy === key ? undefined : copy;
+  };
+
+  // The report node when it declares an argument schema (drives whether the
+  // arguments modal + Filters button exist).
+  const schemaReport = (): ReportNode | undefined =>
+    report()?.argumentSchema ? report() : undefined;
+
+  const [argsModalOpen, setArgsModalOpen] = createSignal(false);
+
+  // Auto-open S3 exactly when a schema'd report loads with no URL arguments
+  // (spec S2 / AC-R1). Tracks only report + URL args, so Cancel — which changes
+  // neither — leaves the modal closed instead of reopening it; Submit writes
+  // the URL args, so the condition is false thereafter.
+  createEffect(
+    on([report, reportArgs], ([r, args]) => {
+      if (r?.argumentSchema && args === undefined) setArgsModalOpen(true);
+    })
+  );
+
+  // The generation request. Undefined while there is no report yet, or while a
+  // schema'd report is still waiting for its arguments — a falsy resource
+  // source simply doesn't fetch, so generation waits for the modal (AC-R1).
+  // Carries `language` even though the domain wrapper reads locale() itself:
+  // the serialised object is the resource key, and a language switch must
+  // re-generate (AC-U3).
+  const generateVars = createMemo<
+    | { reportId: string; args?: Record<string, unknown>; language: string }
+    | undefined
+  >(() => {
+    const r = report();
+    if (!r) return undefined;
+    const args = reportArgs();
+    if (r.argumentSchema && args === undefined) return undefined;
+    // A schema-less report generates immediately, but still with the user's
+    // timezone — shipped templates read `arguments.timezone` unconditionally,
+    // and the timezone alone travels on this path (AC-R11).
+    return {
+      reportId: r.id,
+      args: args ?? timezoneArgument(),
+      language: locale(),
+    };
+  });
+
+  // The in-flight generation, so a new one can cancel the one it replaces.
+  // Generation is the longest request the app makes, and re-keying the resource
+  // below does NOT cancel the previous fetch — so without this, changing a
+  // filter twice leaves two (or three) generations running, each holding a
+  // server worker to completion (msupply-foundation/open-msupply#12710). The
+  // superseded document could never be shown anyway: only the newest key's
+  // result is rendered.
+  let inFlight: AbortController | undefined;
+  const supersede = (): AbortSignal => {
+    inFlight?.abort();
+    inFlight = new AbortController();
+    return inFlight.signal;
+  };
+  // Leaving the screen abandons the generation too — nothing is left to show it
+  // to.
+  onCleanup(() => inFlight?.abort());
+
+  // Regenerates whenever the serialised request changes (new report, new
+  // arguments, or language). Read via `gated` so the current document stays on
+  // screen during a regenerate rather than tearing the frame down, and so the
+  // first pending read doesn't suspend an already-open screen
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction).
+  const [generated] = createResource(
+    () => {
+      const vars = generateVars();
+      return vars ? JSON.stringify(vars) : undefined;
+    },
+    async serialised => {
+      const vars = JSON.parse(serialised) as {
+        reportId: string;
+        args?: Record<string, unknown>;
+      };
+      return generateReport({
+        reportId: vars.reportId,
+        format: 'HTML',
+        args: vars.args,
+        signal: supersede(),
+      });
+    }
+  );
+  // An aborted generation is reported as nothing at all: it was superseded, so
+  // the resource is already fetching its replacement, and showing either an
+  // error or the stale document would misrepresent that.
+  const result = () => {
+    const r = gated(generated);
+    return r?.kind === 'aborted' ? undefined : r;
+  };
+
+  const fileSrc = (): string | undefined => {
+    const r = result();
+    return r?.kind === 'fileId'
+      ? `${FILES_URL}?id=${encodeURIComponent(r.fileId)}`
+      : undefined;
+  };
+  // The generation fault behind the document region, as the banner shows it:
+  // the typed data-fetch failure's raw query errors, or an untyped fault's
+  // description (a broken definition, a failed transform, a PDF render with no
+  // Chrome binary — spec/reports/contract § Generation). The wrapper takes both
+  // (AC-G6), so the region says what happened rather than going blank behind a
+  // global modal.
+  const generationDetail = (): string | undefined => {
+    const r = result();
+    if (r?.kind === 'dataError') return JSON.stringify(r.errors, null, 2);
+    return r?.kind === 'error' ? r.message : undefined;
+  };
+
+  // Initial loading: no report yet, or a request is in flight with no prior
+  // result. A regenerate keeps the previous document (result stays defined) and
+  // the DocumentFrame shows its own overlay when its src changes.
+  const isLoading = (): boolean =>
+    !report() || (generateVars() !== undefined && result() === undefined);
+
+  const openFilters = () => setArgsModalOpen(true);
+
+  // Print/export failures surface inline in the document region (no toasts —
+  // spec S5), each with the underlying message behind a disclosure
+  // (ui-standards/controls § action feedback). Cleared when a new action starts
+  // or new arguments regenerate.
+  const [actionError, setActionError] = createSignal<
+    { key: LocaleKey; detail?: string } | undefined
+  >();
+  const failAction = (key: LocaleKey, detail?: string): void => {
+    setActionError({ key, detail });
+  };
+
+  // Submit from S3: S2 owns navigation — write the arguments into the URL
+  // query, which re-keys the generation resource (AC-U2 / AC-R1).
+  const onArgsSubmit = (args: Record<string, unknown>) => {
+    setArgsModalOpen(false);
+    setActionError(undefined);
+    setSearchParams({ reportArgs: JSON.stringify(args) });
+  };
+
+  // Cancel from S3: with no URL arguments nothing has been generated (the
+  // modal auto-opened on entry), so closing would strand the user on an empty
+  // detail screen — return to the Reports page instead (spec S3). With
+  // arguments present (a re-filter from the Filters button) just close; the
+  // current document stays.
+  const onArgsClose = () => {
+    setArgsModalOpen(false);
+    if (reportArgs() === undefined) navigate(`/${params.storeId}/reports`);
+  };
+
+  // Generate the same report as a workbook and fetch the result; null with
+  // the error already surfaced on failure.
+  const generateFile = async (format: 'EXCEL') => {
+    const r = report();
+    if (!r) return null;
+    setActionError(undefined);
+    const gen = await generateReport({
+      reportId: r.id,
+      format,
+      args: reportArgs() ?? timezoneArgument(),
+    });
+    // `failed` alone is silent — the request never completed, and the global
+    // modal owns that. `aborted` is silent for the opposite reason: nobody
+    // asked to see it. (This export passes no signal, so it can only arrive if
+    // one is added later — handled here so that stays a safe change.) Every
+    // other non-file outcome is described to the user.
+    if (gen.kind === 'failed' || gen.kind === 'aborted') return null;
+    if (gen.kind !== 'fileId') {
+      failAction(
+        'error.failed-to-generate-report',
+        gen.kind === 'dataError'
+          ? JSON.stringify(gen.errors, null, 2)
+          : gen.message
+      );
+      return null;
+    }
+    const file = await fetchReportFile(gen.fileId);
+    if (file.kind !== 'success') {
+      failAction('error.failed-to-generate-report', file.message);
+      return null;
+    }
+    return file;
+  };
+
+  // Print — fetch the HTML document already on screen and print it
+  // (spec/reports "Printing and exporting"). printBlob owns the platform
+  // difference: the system print dialog on the web, the OS print service on
+  // Android.
+  const onPrint = async () => {
+    const r = result();
+    if (r?.kind !== 'fileId') return;
+    setActionError(undefined);
+    const file = await fetchReportFile(r.fileId);
+    if (file.kind !== 'success') {
+      failAction('error.failed-to-generate-report', file.message);
+      return;
+    }
+    const printed = await printBlob(file.blob, file.filename);
+    if (!printed.ok)
+      failAction('messages.error-printing-report', printed.message);
+  };
+
+  // Export — a KEEP intent: the same report as an Excel workbook, delivered
+  // as a download (web) / the OS save picker (Android).
+  const onExport = async () => {
+    const file = await generateFile('EXCEL');
+    if (!file) return;
+    const delivered = await saveBlob(file.blob, file.filename);
+    if (!delivered.ok)
+      failAction('messages.cannot-save-file', delivered.message);
+  };
+
+  // Crumbs are an accessor so t() + the report name re-resolve on locale change
+  // (AC-U3). The leaf is the report's translated name.
+  const crumbs = () => [
+    {
+      label: t('reports'),
+      onClick: () => navigate(`/${params.storeId}/reports`),
+    },
+    { label: displayName() },
+  ];
+
+  return (
+    <Page
+      fillBody
+      header={
+        <Header>
+          <Breadcrumb crumbs={crumbs()} />
+          <HeaderButtons>
+            <Show when={schemaReport()}>
+              <IconButton
+                label={t('label.filters')}
+                icon={<SlidersIcon />}
+                onClick={openFilters}
+              />
+            </Show>
+            <IconButton
+              label={t('button.print')}
+              icon={<PrinterIcon />}
+              disabled={result()?.kind !== 'fileId'}
+              onClick={() => void onPrint()}
+            />
+            <IconButton
+              label={t('button.export')}
+              icon={<DownloadIcon />}
+              disabled={!report()}
+              onClick={() => void onExport()}
+            />
+          </HeaderButtons>
+        </Header>
+      }
+    >
+      <Show when={howToRead()}>
+        {copy => (
+          <div
+            style={{
+              padding: '0 var(--space-5)',
+              'max-inline-size': '50rem',
+            }}
+          >
+            <Accordion collapsible>
+              <AccordionItem value="how-to-read">
+                <AccordionTrigger class={styles.howToReadTrigger}>
+                  {t('messages.how-to-read-report')}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <span style={{ 'white-space': 'pre-line' }}>{copy()}</span>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        )}
+      </Show>
+      <Show when={actionError()}>
+        {shown => (
+          <div style={{ padding: 'var(--space-5) var(--space-5) 0' }}>
+            <GenerationAlert message={t(shown().key)} detail={shown().detail} />
+          </div>
+        )}
+      </Show>
+      <Switch fallback={<></>}>
+        <Match when={isLoading()}>
+          <Spinner center />
+        </Match>
+        <Match when={result()?.kind === 'fileId'}>
+          {/* A report document runs its own scripts (AC-U10) — a template may
+              chart, paginate, or lay itself out in script, and a blocked one
+              takes the console with it (issue #1112). So the frame takes
+              `allow-scripts` INSTEAD of the default `allow-same-origin`, never
+              both: the document lands on an opaque origin where its scripts
+              execute but reach no cookie, no storage, and no part of the app.
+              Dropping same-origin costs nothing, because a generated report is
+              self-contained — its images arrive as data URLs, which is what
+              lets the server render the same HTML to PDF with no session at
+              all. */}
+          <DocumentFrame
+            title={displayName()}
+            src={fileSrc()}
+            sandbox="allow-scripts"
+          />
+        </Match>
+        <Match
+          when={result()?.kind === 'dataError' || result()?.kind === 'error'}
+        >
+          {/* Generation failure (AC-G4/G6): the headline in the banner, the
+              underlying fault tucked into a details affordance (spec S5) —
+              the typed failure's raw query errors, or an untyped fault's
+              description. Either way the region says what happened, and the
+              breadcrumb stays live so leaving is one ordinary click. */}
+          <div style={{ padding: 'var(--space-5)' }}>
+            <GenerationAlert
+              message={t('error.failed-to-generate-report')}
+              detail={generationDetail()}
+            />
+          </div>
+        </Match>
+      </Switch>
+      <Show when={schemaReport()}>
+        {r => (
+          <ArgumentsModal
+            report={r()}
+            open={argsModalOpen()}
+            initialValues={reportArgs()}
+            onClose={onArgsClose}
+            onSubmit={onArgsSubmit}
+          />
+        )}
+      </Show>
+    </Page>
+  );
+};
+
+export default ReportDetailView;

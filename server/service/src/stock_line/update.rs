@@ -5,7 +5,9 @@ use crate::{
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     common::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_date_is_not_in_future, check_other_party, CheckOtherPartyType, OtherPartyErrors,
+    },
     NullableUpdate, SingleRecordError,
 };
 use chrono::{NaiveDate, Utc};
@@ -48,12 +50,12 @@ pub enum UpdateStockLineError {
     DonorNotVisible,
     DonorIsNotADonor,
     ManufacturerDoesNotExist,
-    ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     UpdatedStockNotFound,
     StockMovementNotFound,
     VVMStatusDoesNotExist,
     IncorrectLocationType,
+    CannotSetManufactureDateInFuture,
 }
 
 pub fn update_stock_line(
@@ -110,6 +112,15 @@ fn validate(
         })?;
 
     if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
+    }
+
+    if let Some(NullableUpdate {
         value: Some(ref location),
     }) = &input.location
     {
@@ -154,18 +165,24 @@ fn validate(
         value: Some(manufacturer_id),
     }) = &input.manufacturer_id
     {
-        check_other_party(
+        match check_other_party(
             connection,
             store_id,
             manufacturer_id,
             CheckOtherPartyType::Manufacturer,
-        )
-        .map_err(|e| match e {
-            OtherPartyErrors::OtherPartyDoesNotExist => ManufacturerDoesNotExist,
-            OtherPartyErrors::OtherPartyNotVisible => ManufacturerNotVisible,
-            OtherPartyErrors::TypeMismatched => ManufacturerIsNotAManufacturer,
-            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
-        })?;
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
     };
 
     Ok(stock_line)

@@ -32,10 +32,13 @@ pub struct UpsertPreferences {
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
+    pub transfer_stock_to_internal_customers_at_cost_price: Option<bool>,
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
     pub backdating: Option<BackdatingData>,
+    pub receive_payments_from_prescriptions: Option<bool>,
+    pub global_logo: Option<String>,
 
     // Store preferences
     pub blind_stocktake: Option<Vec<StorePrefUpdate<bool>>>,
@@ -64,6 +67,7 @@ pub struct UpsertPreferences {
     pub store_custom_colour: Option<Vec<StorePrefUpdate<String>>>,
     pub invoice_status_options: Option<Vec<StorePrefUpdate<Vec<InvoiceStatus>>>>,
     pub show_indicative_price_in_requisitions: Option<Vec<StorePrefUpdate<bool>>>,
+    pub do_not_print_placeholder_line_labels: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -84,10 +88,14 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
+        transfer_stock_to_internal_customers_at_cost_price:
+            transfer_stock_to_internal_customers_at_cost_price_input,
         is_gaps: is_gaps_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
         global_table_configs: global_table_configs_input,
         backdating: backdating_input,
+        receive_payments_from_prescriptions: receive_payments_from_prescriptions_input,
+        global_logo: global_logo_input,
 
         // Store preferences
         blind_stocktake: blind_stocktake_input,
@@ -105,7 +113,8 @@ pub fn upsert_preferences(
             can_create_internal_order_from_a_requisition_input,
         select_destination_store_for_an_internal_order:
             select_destination_store_for_an_internal_order_input,
-        external_inbound_shipment_lines_must_be_authorised: external_inbound_shipment_lines_must_be_authorised_input,
+        external_inbound_shipment_lines_must_be_authorised:
+            external_inbound_shipment_lines_must_be_authorised_input,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -118,6 +127,7 @@ pub fn upsert_preferences(
         store_custom_colour: store_custom_colour_input,
         invoice_status_options: invoice_status_options_input,
         show_indicative_price_in_requisitions: show_indicative_price_in_requisitions_input,
+        do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -135,10 +145,13 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
         item_margin_overrides_supplier_margin,
+        transfer_stock_to_internal_customers_at_cost_price,
         is_gaps,
         display_population_based_forecasting,
         global_table_configs,
         backdating,
+        receive_payments_from_prescriptions,
+        global_logo,
 
         // Store preferences
         blind_stocktake,
@@ -164,6 +177,7 @@ pub fn upsert_preferences(
         invoice_status_options,
         external_inbound_shipment_lines_must_be_authorised,
         show_indicative_price_in_requisitions,
+        do_not_print_placeholder_line_labels,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -218,29 +232,41 @@ pub fn upsert_preferences(
             if let Some(input) = expired_stock_prevent_issue_input {
                 expired_stock_prevent_issue.upsert(connection, input, None)?;
             }
-            
+
             if let Some(input) = expired_stock_issue_threshold_input {
                 expired_stock_issue_threshold.upsert(connection, input, None)?;
             }
 
-            if let Some(input) = is_gaps_input { 
+            if let Some(input) = is_gaps_input {
                 is_gaps.upsert(connection, input, None)?;
             }
-            
+
             if let Some(input) = item_margin_overrides_supplier_margin_input {
                 item_margin_overrides_supplier_margin.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = transfer_stock_to_internal_customers_at_cost_price_input {
+                transfer_stock_to_internal_customers_at_cost_price.upsert(connection, input, None)?;
             }
 
             if let Some(input) = display_population_based_forecasting_input {
                 display_population_based_forecasting.upsert(connection, input, None)?;
             }
-            
+
             if let Some(input) = global_table_configs_input {
                 global_table_configs.upsert(connection, input, None)?;
             }
 
             if let Some(input) = backdating_input {
                 backdating.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = receive_payments_from_prescriptions_input {
+                receive_payments_from_prescriptions.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = global_logo_input {
+                global_logo.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
@@ -278,7 +304,7 @@ pub fn upsert_preferences(
             if let Some(inputs) = requisition_auto_finalise_input {
                 upsert_store_input(connection, requisition_auto_finalise, inputs)?;
             }
-      
+
             if let Some(inputs) = inbound_shipment_auto_verify_input {
                 upsert_store_input(connection, inbound_shipment_auto_verify, inputs)?;
             }
@@ -327,7 +353,7 @@ pub fn upsert_preferences(
                     input,
                 )?;
             }
-            
+
             if let Some(input) = first_threshold_for_expiring_items_input {
                 upsert_store_input(
                     connection,
@@ -362,6 +388,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = show_indicative_price_in_requisitions_input {
                 upsert_store_input(connection, show_indicative_price_in_requisitions, input)?;
+            }
+
+            if let Some(input) = do_not_print_placeholder_line_labels_input {
+                upsert_store_input(connection, do_not_print_placeholder_line_labels, input)?;
             }
 
             Ok(())
@@ -401,8 +431,7 @@ mod tests {
         test_util_set_is_central_server(true);
 
         // Seed an existing v1 (legacy) map.
-        let v1 =
-            BTreeMap::from([("button.close".to_string(), "Legacy Close".to_string())]);
+        let v1 = BTreeMap::from([("button.close".to_string(), "Legacy Close".to_string())]);
         CustomTranslations
             .upsert(&ctx.connection, v1.clone(), None)
             .unwrap();
@@ -421,13 +450,15 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(CustomTranslationsV2.load(&ctx.connection, None).unwrap(), v2);
+        assert_eq!(
+            CustomTranslationsV2.load(&ctx.connection, None).unwrap(),
+            v2
+        );
         // v1 is untouched
         assert_eq!(CustomTranslations.load(&ctx.connection, None).unwrap(), v1);
 
         // The legacy v1 map is edited directly via the custom_translations input.
-        let new_v1 =
-            BTreeMap::from([("button.save".to_string(), "Legacy Save".to_string())]);
+        let new_v1 = BTreeMap::from([("button.save".to_string(), "Legacy Save".to_string())]);
         upsert_preferences(
             &ctx,
             UpsertPreferences {

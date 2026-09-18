@@ -42,6 +42,10 @@ pub struct SaveStockOutInvoiceLine {
     pub vvm_status_id: Option<String>,
     pub received_number_of_packs: Option<f64>,
     pub reason_option_id: Option<String>,
+    /// One value per item, so the caller sends the same one on every line of
+    /// it — and, as with `received_number_of_packs`, the set-save OVERWRITES
+    /// it, so an omitted value clears the stored one.
+    pub transfer_comment: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -334,6 +338,7 @@ mod test {
                             vvm_status_id: None,
                             received_number_of_packs: None,
                             reason_option_id: None,
+                            transfer_comment: None,
                         }],
                         ..Default::default()
                     }
@@ -518,5 +523,111 @@ mod test {
             line.reason_option_id,
             Some(mock_shipment_variance_reason_option().id)
         );
+    }
+
+    /// OMS-REG-DIST-03.41/.43 — the item's one comment reaches every line of
+    /// it, and an omitted value clears the stored one (contract.md wire trap).
+    #[actix_rt::test]
+    async fn test_save_outbound_item_lines_writes_transfer_comment_to_every_line() {
+        fn outbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "outbound_transfer_comment".to_string(),
+                store_id: mock_store_b().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "test_save_outbound_item_lines_writes_transfer_comment_to_every_line",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        let save = |lines: Vec<SaveStockOutInvoiceLine>| SaveStockOutItemLines {
+            invoice_id: outbound().id,
+            item_id: mock_item_a().id,
+            lines,
+            ..Default::default()
+        };
+        let comment_of = |id: &str| {
+            InvoiceLineRowRepository::new(&connection)
+                .find_one_by_id(id)
+                .unwrap()
+                .unwrap()
+                .transfer_comment
+        };
+
+        // Two batches of the same item, both carrying the item's one comment.
+        service_provider
+            .invoice_line_service
+            .save_stock_out_item_lines(
+                &context,
+                save(vec![
+                    SaveStockOutInvoiceLine {
+                        id: "sc_line_a".to_string(),
+                        number_of_packs: 1.0,
+                        stock_line_id: mock_stock_line_a().id,
+                        transfer_comment: Some("Short supply".to_string()),
+                        ..Default::default()
+                    },
+                    SaveStockOutInvoiceLine {
+                        id: "sc_line_b".to_string(),
+                        number_of_packs: 1.0,
+                        stock_line_id: mock_stock_line_b().id,
+                        transfer_comment: Some("Short supply".to_string()),
+                        ..Default::default()
+                    },
+                ]),
+            )
+            .unwrap();
+
+        assert_eq!(comment_of("sc_line_a"), Some("Short supply".to_string()));
+        assert_eq!(comment_of("sc_line_b"), Some("Short supply".to_string()));
+
+        // Echoed back on a later save: unchanged.
+        service_provider
+            .invoice_line_service
+            .save_stock_out_item_lines(
+                &context,
+                save(vec![SaveStockOutInvoiceLine {
+                    id: "sc_line_a".to_string(),
+                    number_of_packs: 4.0,
+                    stock_line_id: mock_stock_line_a().id,
+                    transfer_comment: Some("Short supply".to_string()),
+                    ..Default::default()
+                }]),
+            )
+            .unwrap();
+
+        assert_eq!(comment_of("sc_line_a"), Some("Short supply".to_string()));
+
+        // Omitted: the set-save overwrites, so the stored value is CLEARED —
+        // the wire trap the client guards against by echoing.
+        service_provider
+            .invoice_line_service
+            .save_stock_out_item_lines(
+                &context,
+                save(vec![SaveStockOutInvoiceLine {
+                    id: "sc_line_a".to_string(),
+                    number_of_packs: 5.0,
+                    stock_line_id: mock_stock_line_a().id,
+                    ..Default::default()
+                }]),
+            )
+            .unwrap();
+
+        assert_eq!(comment_of("sc_line_a"), None);
     }
 }

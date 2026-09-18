@@ -6,12 +6,12 @@ use util::sync_serde::{
 };
 
 use repository::{
-    get_sensor_type, ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, SensorType,
+    get_sensor_type, ChangelogRow, ChangelogTableName, Row, SensorRow, SensorType,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacySensorRow {
@@ -68,10 +68,11 @@ impl SyncTranslation for SensorTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacySensorRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacySensorRow>()?;
 
         let LegacySensorRow {
             id,
@@ -90,12 +91,15 @@ impl SyncTranslation for SensorTranslation {
         let serial = serial.split(" |").nth(0).unwrap_or_default().to_string();
         let r#type = get_sensor_type(&serial);
 
+        let fk_check = fk_checker.with_table(connection, "sensor", &id);
+        let check_fk = fk_checker.with_table_required(connection, "sensor", &id);
+
         let result = SensorRow {
             id,
             name,
             serial,
-            location_id,
-            store_id,
+            location_id: fk_check(location_id, "location_id", FkField::Location)?,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
             battery_level,
             log_interval,
             is_active,
@@ -111,9 +115,14 @@ impl SyncTranslation for SensorTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Sensor(sensor_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let SensorRow {
             id,
             name,
@@ -125,12 +134,7 @@ impl SyncTranslation for SensorTranslation {
             is_active,
             last_connection_datetime,
             r#type,
-        } = SensorRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Sensor row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = sensor_row;
 
         let last_connection_date = last_connection_datetime.map(|t| t.date());
 
@@ -181,12 +185,16 @@ mod tests {
         let translator = SensorTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_sensor_translation", MockDataInserts::none()).await;
+            setup_all("test_sensor_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

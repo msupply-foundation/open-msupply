@@ -1,88 +1,74 @@
-use chrono::Utc;
+use chrono::NaiveDateTime;
 use repository::{
-    DatetimeFilter, EqualFilter, RepositoryError, StorageConnection, SyncAction, SyncBufferFilter,
-    SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository,
+    CursorDirection, IntegrationResult, PendingQuery, RepositoryError, StorageConnection,
+    SyncAction, SyncBufferRepository, SyncBufferRow, SyncVersion,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SyncBufferSource {
-    Central(i32), // Central site ID (Includes all records with no source site ID)
-    Remote(i32),  // Remote site ID
+pub(crate) fn write_sync_buffer_success(
+    connection: &StorageConnection,
+    cursor: i32,
+    started_datetime: NaiveDateTime,
+) -> Result<(), RepositoryError> {
+    SyncBufferRepository::new(connection).set_integration_result(
+        cursor,
+        started_datetime,
+        IntegrationResult::Success,
+        None,
+    )
 }
 
-pub(crate) struct SyncBuffer<'a> {
-    query_repository: SyncBufferRepository<'a>,
-    row_repository: SyncBufferRowRepository<'a>,
+pub(crate) fn write_sync_buffer_error(
+    connection: &StorageConnection,
+    cursor: i32,
+    started_datetime: NaiveDateTime,
+    error: &str,
+) -> Result<(), RepositoryError> {
+    SyncBufferRepository::new(connection).set_integration_result(
+        cursor,
+        started_datetime,
+        IntegrationResult::Error,
+        Some(error),
+    )
 }
 
-impl<'a> SyncBuffer<'a> {
-    pub(crate) fn new(connection: &'a StorageConnection) -> SyncBuffer<'a> {
-        SyncBuffer {
-            query_repository: SyncBufferRepository::new(connection),
-            row_repository: SyncBufferRowRepository::new(connection),
-        }
-    }
+pub(crate) fn write_sync_buffer_ignored(
+    connection: &StorageConnection,
+    cursor: i32,
+    started_datetime: NaiveDateTime,
+    message: &str,
+) -> Result<(), RepositoryError> {
+    SyncBufferRepository::new(connection).set_integration_result(
+        cursor,
+        started_datetime,
+        IntegrationResult::Ignored,
+        Some(message),
+    )
+}
 
-    pub(crate) fn record_successful_integration(
-        &self,
-        row: &SyncBufferRow,
-    ) -> Result<(), RepositoryError> {
-        self.row_repository.upsert_one(&SyncBufferRow {
-            integration_datetime: Some(Utc::now().naive_utc()),
-            integration_error: None,
-            ..row.clone()
-        })
-    }
+pub(crate) fn get_sync_buffer_for_table(
+    connection: &StorageConnection,
+    action: SyncAction,
+    table_name: &str,
+    source_site_id: i32,
+    limit: i64,
+) -> Result<Vec<SyncBufferRow>, RepositoryError> {
+    let direction = match action {
+        SyncAction::Delete => CursorDirection::Desc,
+        _ => CursorDirection::Asc,
+    };
 
-    pub(crate) fn record_integration_error(
-        &self,
-        row: &SyncBufferRow,
-        error: &anyhow::Error,
-    ) -> Result<(), RepositoryError> {
-        self.row_repository.upsert_one(&SyncBufferRow {
-            integration_datetime: Some(Utc::now().naive_utc()),
-            integration_error: Some(format!("{:?}", &error)),
-            ..row.clone()
-        })
-    }
+    let repo = SyncBufferRepository::new(connection);
+    let rows = repo.pending_ordered_by_cursor(PendingQuery {
+        source_site_id,
+        sync_version: SyncVersion::V5V6,
+        reference_id: None,
+        table_name,
+        action: action.clone(),
+        direction,
+        limit,
+    })?;
 
-    pub(crate) fn get_ordered_sync_buffer_records(
-        &self,
-        action: SyncAction,
-        ordered_table_names: &[&str],
-        record_type: SyncBufferSource,
-    ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        let ordered_table_names = ordered_table_names.iter().copied();
-        // Get ordered table names, for  upsert we sort in referential constraint order
-        // and for delete in reverse of referential constraint order
-        let order: Vec<&str> = match action {
-            SyncAction::Upsert => ordered_table_names.collect(),
-            SyncAction::Delete => ordered_table_names.rev().collect(),
-            SyncAction::Merge => ordered_table_names.collect(),
-        };
-
-        let mut result = Vec::new();
-
-        for legacy_table_name in order {
-            let mut rows = self.query_repository.query_by_filter(
-                SyncBufferFilter::new()
-                    .table_name(EqualFilter::equal_to(legacy_table_name.to_owned()))
-                    .action(action.equal_to())
-                    .integration_datetime(DatetimeFilter::is_null(true))
-                    .source_site_id(match record_type {
-                        SyncBufferSource::Central(source_site_id) => {
-                            EqualFilter::equal_any_or_null(vec![source_site_id])
-                        } // Includes all records with no source site ID (OMS Cetntral) + the site passed in
-                        SyncBufferSource::Remote(source_site_id) => {
-                            EqualFilter::equal_to(source_site_id)
-                        }
-                    }),
-            )?;
-            result.append(&mut rows);
-        }
-
-        Ok(result)
-    }
+    Ok(rows)
 }
 
 #[cfg(test)]
@@ -90,206 +76,141 @@ mod test {
     use repository::{
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        SyncAction, SyncBufferRow, SyncBufferRowRepository,
+        IntegrationResult, SyncAction, SyncBufferRepository, SyncBufferRow,
     };
 
-    use crate::sync::{
-        sync_buffer::SyncBufferSource,
-        translations::{all_translators, pull_integration_order},
-    };
+    use util::datetime_now;
 
-    use super::SyncBuffer;
+    use super::*;
 
-    fn row_1() -> SyncBufferRow {
+    fn row(record_id: &str, table_name: &str) -> SyncBufferRow {
         SyncBufferRow {
-            record_id: "1".to_string(),
-            table_name: "transact".to_string(),
+            record_id: record_id.to_string(),
+            table_name: table_name.to_string(),
             received_datetime: Default::default(),
+            source_site_id: 0,
             ..Default::default()
         }
     }
 
-    fn row_2() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "2".to_string(),
-            table_name: "trans_line".to_string(),
-            received_datetime: Default::default(),
-            ..Default::default()
-        }
-    }
-
-    fn row_3() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "3".to_string(),
-            table_name: "store".to_string(),
-            received_datetime: Default::default(),
-            ..Default::default()
-        }
-    }
-
-    fn row_4() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "4".to_string(),
-            table_name: "name".to_string(),
-            received_datetime: Default::default(),
-            ..Default::default()
-        }
-    }
-
-    fn row_5() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "5".to_string(),
-            table_name: "list_master".to_string(),
-            received_datetime: Default::default(),
-            action: SyncAction::Delete,
-            ..Default::default()
-        }
-    }
-
-    fn row_6() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "6".to_string(),
-            table_name: "list_master_line".to_string(),
-            received_datetime: Default::default(),
-            action: SyncAction::Delete,
-            ..Default::default()
-        }
-    }
-    fn site_1_row_1() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "1-1".to_string(),
-            table_name: "list_master".to_string(),
-            received_datetime: Default::default(),
-            action: SyncAction::Delete,
-            source_site_id: Some(1),
-            ..Default::default()
-        }
-    }
-
-    fn site_1_row_2() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "1-2".to_string(),
-            table_name: "list_master_line".to_string(),
-            received_datetime: Default::default(),
-            action: SyncAction::Delete,
-            source_site_id: Some(1),
-            ..Default::default()
-        }
+    fn ids(rows: &[SyncBufferRow]) -> Vec<&str> {
+        rows.iter().map(|r| r.record_id.as_str()).collect()
     }
 
     #[actix_rt::test]
     async fn test_sync_buffer_service() {
-        let translations = all_translators();
-        let table_order = pull_integration_order(&translations);
+        let row_1 = row("1", "transact");
+        let row_2 = row("2", "trans_line");
+        let row_3 = row("3", "store");
+        let row_4 = row("4", "name");
+        let row_5 = SyncBufferRow {
+            action: SyncAction::Delete,
+            ..row("5", "list_master")
+        };
+        let row_6 = SyncBufferRow {
+            action: SyncAction::Delete,
+            ..row("6", "list_master_line")
+        };
+        let site_1_row_1 = SyncBufferRow {
+            action: SyncAction::Delete,
+            source_site_id: 1,
+            ..row("1-1", "list_master")
+        };
+        let site_1_row_2 = SyncBufferRow {
+            action: SyncAction::Delete,
+            source_site_id: 1,
+            ..row("1-2", "list_master_line")
+        };
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_sync_buffer_service",
             MockDataInserts::none(),
             MockData {
                 sync_buffer_rows: vec![
-                    row_1(),
-                    row_2(),
-                    row_3(),
-                    row_4(),
-                    row_5(),
-                    row_6(),
-                    site_1_row_1(),
-                    site_1_row_2(),
+                    row_1.clone(),
+                    row_2.clone(),
+                    row_3.clone(),
+                    row_4.clone(),
+                    row_5.clone(),
+                    row_6.clone(),
+                    site_1_row_1.clone(),
+                    site_1_row_2.clone(),
                 ],
                 ..Default::default()
             },
         )
         .await;
 
-        let buffer = SyncBuffer::new(&connection);
+        // Upserts for OMS-Central (source_site_id 0): one pending row per table.
+        let names =
+            get_sync_buffer_for_table(&connection, SyncAction::Upsert, "name", 0, 100).unwrap();
+        assert_eq!(ids(&names), vec!["4"]);
+        let stores =
+            get_sync_buffer_for_table(&connection, SyncAction::Upsert, "store", 0, 100).unwrap();
+        assert_eq!(ids(&stores), vec!["3"]);
+        let transacts =
+            get_sync_buffer_for_table(&connection, SyncAction::Upsert, "transact", 0, 100).unwrap();
+        assert_eq!(ids(&transacts), vec!["1"]);
+        let trans_lines =
+            get_sync_buffer_for_table(&connection, SyncAction::Upsert, "trans_line", 0, 100)
+                .unwrap();
+        assert_eq!(ids(&trans_lines), vec!["2"]);
 
-        // ORDER/ACTION
-        let in_referential_order = buffer
-            .get_ordered_sync_buffer_records(
-                repository::SyncAction::Upsert,
-                &table_order,
-                SyncBufferSource::Central(0),
-            )
-            .unwrap();
+        // Deletes for OMS-Central. Foreign source_site_id rows must not leak in.
+        let list_master_deletes =
+            get_sync_buffer_for_table(&connection, SyncAction::Delete, "list_master", 0, 100)
+                .unwrap();
+        assert_eq!(ids(&list_master_deletes), vec!["5"]);
+        let list_master_line_deletes =
+            get_sync_buffer_for_table(&connection, SyncAction::Delete, "list_master_line", 0, 100)
+                .unwrap();
+        assert_eq!(ids(&list_master_line_deletes), vec!["6"]);
 
-        assert_eq!(
-            in_referential_order,
-            vec![row_4(), row_3(), row_1(), row_2()]
+        // Recording results moves rows out of the pending set.
+        let started = datetime_now();
+        write_sync_buffer_error(&connection, transacts[0].cursor, started, "Error 1").unwrap();
+        write_sync_buffer_error(&connection, trans_lines[0].cursor, started, "Error 2").unwrap();
+
+        assert!(
+            get_sync_buffer_for_table(&connection, SyncAction::Upsert, "transact", 0, 100)
+                .unwrap()
+                .is_empty()
+        );
+        assert!(
+            get_sync_buffer_for_table(&connection, SyncAction::Upsert, "trans_line", 0, 100)
+                .unwrap()
+                .is_empty()
         );
 
-        let in_reverse_referential_order = buffer
-            .get_ordered_sync_buffer_records(
-                repository::SyncAction::Delete,
-                &table_order,
-                SyncBufferSource::Central(0),
-            )
-            .unwrap();
-
-        assert_eq!(in_reverse_referential_order, vec![row_6(), row_5()]);
-
-        // ERROR
-        buffer
-            .record_integration_error(&row_1(), &anyhow::anyhow!("Error 1"))
-            .unwrap();
-        buffer
-            .record_integration_error(&row_2(), &anyhow::anyhow!("Error 2"))
-            .unwrap();
-
-        let result = buffer
-            .get_ordered_sync_buffer_records(
-                repository::SyncAction::Upsert,
-                &table_order,
-                SyncBufferSource::Central(0),
-            )
-            .unwrap();
-
-        assert_eq!(result, vec![row_4(), row_3()]);
-
-        let row_1 = SyncBufferRowRepository::new(&connection)
-            .find_one_by_record_id(&row_1().record_id)
+        let r1 = SyncBufferRepository::new(&connection)
+            .find_latest_by_record_id_slow_unindexed("1")
             .unwrap()
             .unwrap();
+        assert_eq!(r1.integration_result, Some(IntegrationResult::Error));
+        assert_eq!(r1.integration_error.as_deref(), Some("Error 1"));
 
-        assert_eq!(row_1.integration_error, Some("Error 1".to_string()));
+        write_sync_buffer_success(&connection, names[0].cursor, started).unwrap();
+        write_sync_buffer_success(&connection, stores[0].cursor, started).unwrap();
 
-        // INTEGRATED
-        buffer.record_successful_integration(&row_3()).unwrap();
-
-        let result = buffer
-            .get_ordered_sync_buffer_records(
-                repository::SyncAction::Upsert,
-                &table_order,
-                SyncBufferSource::Central(0),
-            )
-            .unwrap();
-
-        assert_eq!(result, vec![row_4()]);
-
-        buffer.record_successful_integration(&row_4()).unwrap();
-
-        let result = buffer
-            .get_ordered_sync_buffer_records(
-                repository::SyncAction::Upsert,
-                &table_order,
-                SyncBufferSource::Central(0),
-            )
-            .unwrap();
-
-        assert_eq!(result, vec![]);
-
-        // GETS BUFFER ROWS FOR REMOTE SITE
-        let remote_site_id = 1;
-        let in_reverse_referential_order = buffer
-            .get_ordered_sync_buffer_records(
-                repository::SyncAction::Delete,
-                &table_order,
-                SyncBufferSource::Remote(remote_site_id),
-            )
-            .unwrap();
-
-        assert_eq!(
-            in_reverse_referential_order,
-            vec![site_1_row_2(), site_1_row_1()]
+        assert!(
+            get_sync_buffer_for_table(&connection, SyncAction::Upsert, "name", 0, 100)
+                .unwrap()
+                .is_empty()
         );
+        assert!(
+            get_sync_buffer_for_table(&connection, SyncAction::Upsert, "store", 0, 100)
+                .unwrap()
+                .is_empty()
+        );
+
+        // Remote source_site_id 1: only the site_1 rows are returned, isolated from site 0.
+        let remote_list_master =
+            get_sync_buffer_for_table(&connection, SyncAction::Delete, "list_master", 1, 100)
+                .unwrap();
+        assert_eq!(ids(&remote_list_master), vec!["1-1"]);
+        let remote_list_master_line =
+            get_sync_buffer_for_table(&connection, SyncAction::Delete, "list_master_line", 1, 100)
+                .unwrap();
+        assert_eq!(ids(&remote_list_master_line), vec!["1-2"]);
     }
 }

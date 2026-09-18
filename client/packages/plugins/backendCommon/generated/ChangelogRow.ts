@@ -7,8 +7,9 @@ export type ChangelogRow = {
   table_name: ChangelogTableName;
   record_id: string;
   row_action: RowActionType;
-  name_id: string | null;
   store_id: string | null;
   is_sync_update: boolean;
   source_site_id: number | null;
+  transfer_store_id: string | null;
+  patient_id: string | null;
 };

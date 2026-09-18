@@ -6,25 +6,20 @@ export const useGetUserDetails = () => {
   return useMutation({ mutationFn: api.get.me });
 };
 
-export const useUserDetails = (token: string) => {
+/**
+ * Fetch the current user's details. With session-based auth the server reads the user from the
+ * HttpOnly cookie, so there's nothing to pass in. The hook is always enabled — components that
+ * don't want it to run should gate on `isAuthenticated` themselves.
+ */
+export const useUserDetails = () => {
   const api = useAuthApi();
   return useQuery({
-    queryKey: api.keys.me(token),
-    queryFn: () => api.get.me(token),
-    enabled: !!token,
+    queryKey: api.keys.me(),
+    queryFn: () => api.get.me(),
   });
 };
 
 export const useUserPermissions = () => {
   const api = useAuthApi();
   return useMutation({ mutationFn: api.get.permissions });
-};
-
-export const useLastSuccessfulUserSync = () => {
-  const api = useAuthApi();
-  return useQuery({
-    queryKey: api.keys.userSync(),
-    queryFn: api.get.lastSuccessfulUserSync,
-    gcTime: 0,
-  });
 };

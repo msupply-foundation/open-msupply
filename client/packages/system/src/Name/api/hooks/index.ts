@@ -21,6 +21,7 @@ export const useName = {
     donors: Document.useDonors,
     donorsInfinite: Document.useDonorsInfinite,
     properties: Document.useNameProperties,
+    customFields: Document.useNameCustomFields,
   },
   utils: {
     nextStoreId: Utils.useNextStoreId,

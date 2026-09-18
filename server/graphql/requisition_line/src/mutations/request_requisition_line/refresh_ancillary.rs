@@ -71,6 +71,7 @@ pub fn refresh_ancillary_items(
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -126,9 +127,11 @@ fn map_error(error: ServiceError) -> Result<RefreshAncillaryItemsErrorInterface>
     let formatted_error = format!("{error:#?}");
     let graphql_error = match error {
         ServiceError::RequisitionDoesNotExist => {
-            return Ok(RefreshAncillaryItemsErrorInterface::RequisitionDoesNotExist(
-                ForeignKeyError(ForeignKey::RequisitionId),
-            ))
+            return Ok(
+                RefreshAncillaryItemsErrorInterface::RequisitionDoesNotExist(ForeignKeyError(
+                    ForeignKey::RequisitionId,
+                )),
+            )
         }
         ServiceError::CannotEditRequisition => {
             return Ok(RefreshAncillaryItemsErrorInterface::CannotEditRequisition(

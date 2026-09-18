@@ -40,6 +40,7 @@ pub fn insert_purchase_order(
         &ResourceAccessRequest {
             resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

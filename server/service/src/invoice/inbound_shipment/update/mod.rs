@@ -1,11 +1,14 @@
 use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
-use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
+use crate::{
+    custom_field::CustomFieldPatchProblem, invoice::query::get_invoice,
+    service_provider::ServiceContext, WithDBError,
+};
 use chrono::{DateTime, FixedOffset};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
 use repository::{
-    ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
-    RepositoryError, StockLineRowRepository,
+    ActivityLogType, CustomFieldValueType, InvoiceLineRowRepository, InvoiceRowRepository,
+    InvoiceStatus, RepositoryError, StockLineRowRepository,
 };
 use repository::{Invoice, LocationMovementRowRepository};
 
@@ -57,6 +60,10 @@ pub struct UpdateInboundShipment {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
     pub received_datetime: Option<DateTime<FixedOffset>>,
+    /// Patch of customFields key -> value merged into `invoice.custom_fields`
+    /// (a JSON `null` deletes that key; keys absent from the patch are left
+    /// as-is). Keys must be visible for the "inbound_shipment" scope.
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -226,8 +233,17 @@ pub enum UpdateInboundShipmentError {
     CannotMoveReceivedDateForward,
     ExceedsMaximumBackdatingDays,
     CannotReceiveWithPendingLines,
+    CannotReceiveWithNoLines,
     CannotSetShippedStatusOnManualInboundShipment,
     CurrencyRateMustBePositive,
+    /// A customFields patch key is not a visible inbound shipment property.
+    UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -236,6 +252,19 @@ pub enum UpdateInboundShipmentError {
     PreferenceError(String),
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,
+}
+
+impl From<CustomFieldPatchProblem> for UpdateInboundShipmentError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateInboundShipmentError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateInboundShipmentError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentError {
@@ -292,7 +321,7 @@ mod test {
             mock_store_linked_to_name, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a,
             MockData, MockDataInserts,
         },
-        test_db::setup_all_with_data,
+        test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
         InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow,
@@ -1409,6 +1438,205 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn update_inbound_shipment_cannot_receive_with_no_lines() {
+        fn empty_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_with_no_lines".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Delivered,
+                ..Default::default()
+            }
+        }
+
+        fn placeholder_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_with_placeholders".to_string(),
+                ..empty_invoice()
+            }
+        }
+
+        /// Nothing received and nothing shipped, this line receives no stock
+        fn placeholder_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "placeholder_line".to_string(),
+                invoice_id: placeholder_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: None,
+                ..Default::default()
+            }
+        }
+
+        fn nothing_received_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_nothing_received".to_string(),
+                ..empty_invoice()
+            }
+        }
+
+        /// The supplier said they sent 5 packs but none arrived, this is a real record of a
+        /// discrepancy and must still be receivable
+        fn nothing_received_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "nothing_received_line".to_string(),
+                invoice_id: nothing_received_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: Some(5.0),
+                ..Default::default()
+            }
+        }
+
+        fn service_line_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_invoice_service_line".to_string(),
+                ..empty_invoice()
+            }
+        }
+
+        fn transferred_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_transferred_invoice".to_string(),
+                linked_invoice_id: Some(mock_outbound_shipment_e().id),
+                ..empty_invoice()
+            }
+        }
+
+        /// A line that came over from the sending store's outbound shipment. Even with nothing
+        /// shipped and nothing received it exempts the invoice from the empty check, mirroring
+        /// `validateEmptyInvoice` on the client — the store still needs to close out the transfer.
+        fn transferred_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "transferred_line".to_string(),
+                invoice_id: transferred_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: None,
+                linked_invoice_id: Some(mock_outbound_shipment_e().id),
+                ..Default::default()
+            }
+        }
+
+        fn service_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "freight_charge_line".to_string(),
+                invoice_id: service_line_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::Service,
+                total_before_tax: 10.0,
+                total_after_tax: 10.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_inbound_cannot_receive_no_lines",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![
+                    empty_invoice(),
+                    placeholder_invoice(),
+                    nothing_received_invoice(),
+                    service_line_invoice(),
+                    transferred_invoice(),
+                ],
+                invoice_lines: vec![
+                    placeholder_line(),
+                    nothing_received_line(),
+                    service_line(),
+                    transferred_line(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = &service_provider.invoice_service;
+
+        fn receive(id: String) -> UpdateInboundShipment {
+            UpdateInboundShipment {
+                id,
+                status: Some(UpdateInboundShipmentStatus::Received),
+                ..Default::default()
+            }
+        }
+
+        // An invoice with no lines at all can't be received
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                receive(empty_invoice().id),
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveWithNoLines)
+        );
+
+        // Nor can it be verified
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: empty_invoice().id,
+                    status: Some(UpdateInboundShipmentStatus::Verified),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveWithNoLines)
+        );
+
+        // An invoice whose only lines are placeholders receives no stock, so it's empty too
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                receive(placeholder_invoice().id),
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveWithNoLines)
+        );
+
+        // Recording that nothing arrived of what was shipped is a valid receipt
+        assert!(service
+            .update_inbound_shipment(
+                &context,
+                receive(nothing_received_invoice().id),
+                InboundShipmentType::InboundShipment,
+            )
+            .is_ok());
+
+        // A shipment of only service lines (freight and the like) is valid
+        assert!(service
+            .update_inbound_shipment(
+                &context,
+                receive(service_line_invoice().id),
+                InboundShipmentType::InboundShipment,
+            )
+            .is_ok());
+
+        // A transfer can be received even when every line is zero, receiving nothing is how the
+        // store closes out a transfer where nothing arrived
+        assert!(service
+            .update_inbound_shipment(
+                &context,
+                receive(transferred_invoice().id),
+                InboundShipmentType::InboundShipment,
+            )
+            .is_ok());
+    }
+
+    #[actix_rt::test]
     async fn update_inbound_shipment_rejected_lines_no_stock() {
         fn delivered_invoice() -> InvoiceRow {
             InvoiceRow {
@@ -2377,6 +2605,107 @@ mod test {
         );
         assert!(logs[0].activity_log_row.changed_from.is_some());
         assert!(logs[0].activity_log_row.changed_to.is_some());
+    }
+
+    /// customFields patch through the regular update: unknown keys rejected,
+    /// known keys patch-merged over the existing blob (null deletes; keys
+    /// absent from the patch — e.g. hidden properties — are preserved). Status
+    /// gating is shared with every other field (see CannotEditFinalised above).
+    #[actix_rt::test]
+    async fn update_inbound_shipment_custom_fields() {
+        use repository::{
+            CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+            CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType,
+        };
+        use serde_json::json;
+
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_inbound_shipment_custom_fields",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        // Seed one visible inbound shipment property so key validation passes.
+        CustomFieldRowRepository::new(&connection)
+            .upsert_one(&CustomFieldRow {
+                id: "inbound_shipment_category".to_string(),
+                key: "inbound_shipment_category".to_string(),
+                name: "Category".to_string(),
+                value_type: CustomFieldValueType::Option,
+                kind: CustomFieldKind::Legacy,
+                deleted_datetime: None,
+            })
+            .unwrap();
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&CustomFieldScopeRow {
+                id: "inbound_shipment_category__inbound_shipment".to_string(),
+                custom_field_id: "inbound_shipment_category".to_string(),
+                scope: "inbound_shipment".to_string(),
+                display_mode: CustomFieldDisplayMode::Visible,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let invoice_id = mock_inbound_shipment_a().id;
+        let patch = |pairs: &[(&str, serde_json::Value)]| UpdateInboundShipment {
+            id: invoice_id.clone(),
+            custom_fields: Some(
+                pairs
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.clone()))
+                    .collect(),
+            ),
+            ..Default::default()
+        };
+
+        // UnknownPropertyKey
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                patch(&[("not_a_property", json!("x"))]),
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::UnknownPropertyKey(
+                "not_a_property".to_string()
+            ))
+        );
+
+        // Pre-seed a key the client doesn't own (as if hidden/legacy) directly
+        // on the row, then patch the visible key — the other key must survive.
+        let row_repo = InvoiceRowRepository::new(&connection);
+        let mut row = row_repo.find_one_by_id(&invoice_id).unwrap().unwrap();
+        row.custom_fields = Some(json!({ "hidden": "keep" }));
+        row_repo.upsert_one(&row).unwrap();
+
+        service
+            .update_inbound_shipment(
+                &context,
+                patch(&[("inbound_shipment_category", json!("CAT_1"))]),
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+        let stored = row_repo.find_one_by_id(&invoice_id).unwrap().unwrap();
+        assert_eq!(
+            stored.custom_fields,
+            Some(json!({ "inbound_shipment_category": "CAT_1", "hidden": "keep" }))
+        );
+
+        // A null value deletes the key.
+        service
+            .update_inbound_shipment(
+                &context,
+                patch(&[("inbound_shipment_category", json!(null))]),
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+        let stored = row_repo.find_one_by_id(&invoice_id).unwrap().unwrap();
+        assert_eq!(stored.custom_fields, Some(json!({ "hidden": "keep" })));
     }
 
     #[actix_rt::test]

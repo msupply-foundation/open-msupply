@@ -48,6 +48,7 @@ pub fn duplicate(ctx: &Context<'_>, store_id: &str, id: String) -> Result<Duplic
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

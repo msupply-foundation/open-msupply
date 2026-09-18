@@ -43,6 +43,7 @@ pub fn delete_help_document(
         &ResourceAccessRequest {
             resource: Resource::MutateHelpDocuments,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

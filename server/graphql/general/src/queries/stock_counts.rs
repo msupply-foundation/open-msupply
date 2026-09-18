@@ -97,6 +97,7 @@ pub fn stock_counts(
         &ResourceAccessRequest {
             resource: Resource::StockCount,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

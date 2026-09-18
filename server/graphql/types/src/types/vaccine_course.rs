@@ -4,8 +4,7 @@ use dataloader::DataLoader;
 use graphql_core::{
     loader::{
         DemographicLoader, VaccineCourseDoseByVaccineCourseIdLoader,
-        VaccineCourseStoreConfigByVaccineCourseIdLoader,
-        VaccineCourseItemByVaccineCourseIdLoader,
+        VaccineCourseItemByVaccineCourseIdLoader, VaccineCourseStoreConfigByVaccineCourseIdLoader,
     },
     ContextExt,
 };
@@ -13,8 +12,7 @@ use graphql_core::{
 use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 
 use super::{
-    DemographicNode, VaccineCourseDoseNode, VaccineCourseStoreConfigNode,
-    VaccineCourseItemNode,
+    DemographicNode, VaccineCourseDoseNode, VaccineCourseItemNode, VaccineCourseStoreConfigNode,
 };
 
 #[derive(PartialEq, Debug)]

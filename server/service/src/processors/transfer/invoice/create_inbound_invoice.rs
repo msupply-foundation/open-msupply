@@ -1,9 +1,8 @@
 use chrono::{Duration, Months, NaiveDateTime, Utc};
 use repository::{
-    ActivityLogType, DatetimeFilter, EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow,
-    InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType, Pagination, RepositoryError,
-    Requisition, Sort, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
-    SyncLogFilter, SyncLogRepository, SyncLogSortField,
+    ActivityLogType, EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, Requisition,
+    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
 };
 use util::uuid::uuid;
 
@@ -16,6 +15,7 @@ use crate::{
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
+    sync::sync_status::status::get_first_initialisation_finished_datetime,
 };
 
 use super::{
@@ -118,28 +118,14 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                         msg: e.to_string(),
                         extra: "".to_string(),
                     })?;
-                if pref_months > 0 {
-                    let sort = Sort {
-                        key: SyncLogSortField::DoneDatetime,
-                        desc: None,
-                    };
-
-                    let filter = SyncLogFilter::new()
-                        .integration_finished_datetime(DatetimeFilter::is_null(false));
-
-                    let first_initialisation_log = SyncLogRepository::new(&ctx.connection)
-                        .query(Pagination::one(), Some(filter), Some(sort))?
-                        .pop();
-
-                    if first_initialisation_log
-                        .and_then(|log| log.sync_log_row.integration_finished_datetime)
+                if pref_months > 0
+                    && get_first_initialisation_finished_datetime(&ctx.connection)?
                         .and_then(|initialisation_date| {
                             initialisation_date.checked_sub_months(Months::new(pref_months as u32))
                         })
                         .is_some_and(|cutoff_date| picked_date < cutoff_date)
-                    {
-                        return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
-                    }
+                {
+                    return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
                 }
             }
         }
@@ -306,6 +292,7 @@ fn generate_inbound_invoice(
         is_cancellation: false,
         default_donor_id: None,
         purchase_order_id: None,
+        ..Default::default()
     };
 
     Ok(result)
@@ -317,14 +304,18 @@ mod test {
     use crate::{preference::PrefKey, service_provider::ServiceProvider};
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData,
+            MockDataInserts,
+        },
         test_db::setup_all_with_data,
-        InvoiceFilter, InvoiceRepository, PreferenceRow, SyncLogRow,
+        InvoiceFilter, InvoiceLineRow, InvoiceLineType, InvoiceRepository, PreferenceRow,
+        SyncLogV5V6Row,
     };
 
     #[actix_rt::test]
     async fn test_create_inbound_invoice_picked_cutoff() {
-        let log_1 = SyncLogRow {
+        let log_1 = SyncLogV5V6Row {
             id: "sync_log_1".to_string(),
             integration_finished_datetime: Some(
                 NaiveDate::from_ymd_opt(2025, 1, 1)
@@ -335,7 +326,7 @@ mod test {
             ..Default::default()
         };
 
-        let log_2 = SyncLogRow {
+        let log_2 = SyncLogV5V6Row {
             id: "sync_log_2".to_string(),
             integration_finished_datetime: Some(
                 NaiveDate::from_ymd_opt(2024, 1, 1)
@@ -346,7 +337,7 @@ mod test {
             ..Default::default()
         };
 
-        let log_3 = SyncLogRow {
+        let log_3 = SyncLogV5V6Row {
             id: "sync_log_3".to_string(),
             integration_finished_datetime: None,
             ..Default::default()
@@ -494,10 +485,36 @@ mod test {
             InvoiceType::SupplierReturn,
         );
 
+        // Shipments need lines, an empty shipment can't be received or verified
+        fn outbound_line(invoice_id: &str) -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: format!("{invoice_id}_line"),
+                invoice_id: invoice_id.to_string(),
+                item_id: mock_item_a().id,
+                item_name: mock_item_a().name,
+                item_code: mock_item_a().code,
+                r#type: InvoiceLineType::StockOut,
+                pack_size: 1.0,
+                number_of_packs: 10.0,
+                ..Default::default()
+            }
+        }
+        let lines_with_supplier_return = vec![
+            outbound_line(&new_invoice_row.id),
+            outbound_line(&picked_invoice_row.id),
+            outbound_line(&shipped_invoice_row.id),
+            outbound_line(&supplier_return_row.id),
+        ];
+        let lines_without_supplier_return = vec![
+            outbound_line(&new_invoice_row.id),
+            outbound_line(&picked_invoice_row.id),
+            outbound_line(&shipped_invoice_row.id),
+        ];
+
         // First test without preference
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_create_inbound_invoice_auto_finalise_off",
-            MockDataInserts::none().stores(),
+            MockDataInserts::none().names().stores().units().items(),
             MockData {
                 invoices: vec![
                     new_invoice_row.clone(),
@@ -505,6 +522,7 @@ mod test {
                     shipped_invoice_row.clone(),
                     supplier_return_row.clone(),
                 ],
+                invoice_lines: lines_with_supplier_return,
                 ..Default::default()
             },
         )
@@ -566,13 +584,14 @@ mod test {
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_create_inbound_invoice_auto_finalise_on",
-            MockDataInserts::none().stores(),
+            MockDataInserts::none().names().stores().units().items(),
             MockData {
                 invoices: vec![
                     new_invoice_row.clone(),
                     picked_invoice_row.clone(),
                     shipped_invoice_row.clone(),
                 ],
+                invoice_lines: lines_without_supplier_return,
                 preferences: vec![preference],
                 ..Default::default()
             },

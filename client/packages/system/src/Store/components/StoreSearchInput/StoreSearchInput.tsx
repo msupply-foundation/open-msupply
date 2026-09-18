@@ -14,6 +14,7 @@ type StoreSearchInputProps = {
   clearable?: boolean;
   fullWidth?: boolean;
   isDisabled?: boolean;
+  excludeStoreIds?: string[];
   value?: StoreRowFragment;
   onPageChange?: (page: number) => void;
   onChange: (newStore: StoreRowFragment) => void;
@@ -28,6 +29,7 @@ export const StoreSearchInput = ({
   clearable = false,
   fullWidth = false,
   isDisabled = false,
+  excludeStoreIds,
   value,
   onChange,
   onInputChange,
@@ -38,7 +40,12 @@ export const StoreSearchInput = ({
   const debouncedInput = useDebouncedValue(input, DEBOUNCE_TIMEOUT);
   const { data, isFetching, fetchNextPage } = usePaginatedStores({
     rowsPerPage: RECORDS_PER_PAGE,
-    filter: debouncedInput ? { codeOrName: { like: debouncedInput } } : null,
+    filter: {
+      ...(debouncedInput ? { codeOrName: { like: debouncedInput } } : {}),
+      ...(excludeStoreIds?.length
+        ? { id: { notEqualAll: excludeStoreIds } }
+        : {}),
+    },
   });
 
   const pageNumber = data?.pages?.length

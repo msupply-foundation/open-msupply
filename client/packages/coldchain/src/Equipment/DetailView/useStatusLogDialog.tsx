@@ -32,7 +32,10 @@ export const useStatusLogDialog = (assetId: string | undefined) => {
   }, [assetId]);
 
   const onClose = () => setDraft(getEmptyAssetLog(assetId ?? ''));
-  const { Modal, hideDialog, showDialog } = useDialog({ onClose });
+  const { Modal, hideDialog, showDialog } = useDialog({
+    onClose,
+    testId: 'update-status-modal',
+  });
 
   const { data: reasonsData } = useAssetLogReasonList(
     draft.status
@@ -57,7 +60,6 @@ export const useStatusLogDialog = (assetId: string | undefined) => {
   const onOk = async () => {
     await insertLog(draft)
       .then(({ id }) => {
-        invalidateQueries();
         if (!draft.files?.length)
           return new Promise(resolve => resolve('no files'));
         const url = `${Environment.SYNC_FILES_URL}/asset_log/${id}`;
@@ -71,6 +73,7 @@ export const useStatusLogDialog = (assetId: string | undefined) => {
         });
       })
       .then(() => {
+        invalidateQueries();
         success(t('messages.log-saved-successfully'))();
         hideDialog();
         onClose();

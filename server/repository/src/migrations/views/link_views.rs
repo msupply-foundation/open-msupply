@@ -14,6 +14,8 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS name_tag_join_view;
                 DROP VIEW IF EXISTS master_list_name_join_view;
                 DROP VIEW IF EXISTS invoice_view;
+                DROP VIEW IF EXISTS prescription_request_view;
+                DROP VIEW IF EXISTS prescription_request_line_view;
                 DROP VIEW IF EXISTS requisition_view;
                 DROP VIEW IF EXISTS rnr_form_view;
                 DROP VIEW IF EXISTS name_insurance_join_view;
@@ -41,6 +43,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS item_store_join_view;
                 DROP VIEW IF EXISTS vaccine_course_item_view;
                 DROP VIEW IF EXISTS ancillary_item_view;
+                DROP VIEW IF EXISTS changelog_view;
             "#
         )?;
 
@@ -104,6 +107,24 @@ impl ViewMigrationFragment for ViewMigration {
                     name_link ON invoice.name_link_id = name_link.id
                 LEFT JOIN
                     name_link AS default_donor_link ON invoice.default_donor_link_id = default_donor_link.id;
+
+                CREATE VIEW prescription_request_view AS
+                SELECT
+                    prescription_request.*,
+                    patient_link.name_id as patient_id
+                FROM
+                    prescription_request
+                JOIN
+                    name_link AS patient_link ON prescription_request.patient_link_id = patient_link.id;
+
+                CREATE VIEW prescription_request_line_view AS
+                SELECT
+                    prescription_request_line.*,
+                    line_item_link.item_id as item_id
+                FROM
+                    prescription_request_line
+                JOIN
+                    item_link AS line_item_link ON prescription_request_line.item_link_id = line_item_link.id;
 
                 CREATE VIEW requisition_view AS
                 SELECT
@@ -371,6 +392,15 @@ impl ViewMigrationFragment for ViewMigration {
                     item_link AS principal_link ON ancillary_item.item_link_id = principal_link.id
                 JOIN
                     item_link AS ancillary_link ON ancillary_item.ancillary_item_link_id = ancillary_link.id;
+
+                CREATE VIEW changelog_view AS
+                SELECT
+                    changelog.*,
+                    patient_link.name_id AS patient_id
+                FROM
+                    changelog
+                LEFT JOIN
+                    name_link AS patient_link ON changelog.patient_link_id = patient_link.id;
             "#
         )?;
 

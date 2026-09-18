@@ -27,6 +27,11 @@ pub mod contact_trace_row;
 mod context_row;
 pub mod currency;
 mod currency_row;
+pub mod custom_field;
+pub mod custom_field_option_row;
+pub mod custom_field_row;
+pub mod custom_field_scope_row;
+pub mod custom_fields_json;
 pub mod days_out_of_stock;
 pub mod days_out_of_stock_query;
 pub mod demographic;
@@ -75,6 +80,7 @@ pub mod item_store_join;
 pub mod item_variant;
 pub mod item_warning_join;
 pub mod item_warning_join_row;
+pub mod json_custom_field_filter;
 pub mod key_value_store;
 pub mod location;
 pub mod location_movement;
@@ -105,6 +111,9 @@ pub mod plugin_data;
 pub mod plugin_data_row;
 pub mod preference;
 mod preference_row;
+pub mod prescription_request;
+pub mod prescription_request_line_row;
+pub mod prescription_request_row;
 pub mod printer;
 pub mod printer_row;
 pub mod program_enrolment;
@@ -136,6 +145,8 @@ pub mod sensor;
 pub mod sensor_row;
 pub mod shipping_method;
 pub mod shipping_method_row;
+pub mod site;
+pub mod site_row;
 pub mod stock_line;
 pub mod stock_line_ledger;
 pub mod stock_line_ledger_discrepancy;
@@ -158,8 +169,10 @@ pub mod sync_file_reference;
 pub mod sync_file_reference_row;
 pub mod sync_log;
 mod sync_log_row;
+pub mod sync_log_v7;
 pub mod sync_message;
 pub mod sync_message_row;
+pub mod sync_request;
 pub mod system_log_row;
 pub mod temperature_breach;
 pub mod temperature_breach_config;
@@ -192,16 +205,23 @@ pub use assets::*;
 pub use backend_plugin_row::*;
 pub use barcode_row::*;
 pub use campaign::*;
+pub use category_row::*;
 pub use changelog::*;
 pub use clinician::*;
 pub use clinician_link_row::*;
 pub use clinician_row::*;
 pub use clinician_store_join_row::*;
 pub use consumption::*;
+pub use contact_form_row::*;
 pub use contact_row::*;
 pub use context_row::*;
 pub use currency::*;
 pub use currency_row::*;
+pub use custom_field::*;
+pub use custom_field_option_row::*;
+pub use custom_field_row::*;
+pub use custom_field_scope_row::*;
+pub use custom_fields_json::*;
 pub use days_out_of_stock::*;
 pub use days_out_of_stock_query::*;
 pub use demographic_indicator::*;
@@ -235,8 +255,10 @@ pub use item_ledger::*;
 pub use item_link_row::*;
 pub use item_row::*;
 pub use item_store_join::*;
+pub use item_variant::*;
 pub use item_warning_join::*;
 pub use item_warning_join_row::*;
+pub use json_custom_field_filter::*;
 pub use key_value_store::*;
 pub use location_movement_row::*;
 pub use location_row::*;
@@ -249,6 +271,7 @@ pub use master_list_name_join::*;
 pub use master_list_row::*;
 pub(crate) use migration_fragment_log::*;
 pub use name::*;
+pub use name_insurance_join_row::*;
 pub use name_link_row::*;
 pub use name_property::*;
 pub use name_property_row::*;
@@ -264,6 +287,9 @@ pub use plugin_data::*;
 pub use plugin_data_row::*;
 pub use preference::*;
 pub use preference_row::*;
+pub use prescription_request::*;
+pub use prescription_request_line_row::*;
+pub use prescription_request_row::*;
 pub use printer_row::*;
 pub use program_enrolment::*;
 pub use program_enrolment_row::*;
@@ -293,6 +319,8 @@ pub use sensor::*;
 pub use sensor_row::*;
 pub use shipping_method::*;
 pub use shipping_method_row::*;
+pub use site::*;
+pub use site_row::*;
 pub use stock_line::*;
 pub use stock_line_row::*;
 pub use stock_movement::*;
@@ -313,8 +341,11 @@ pub use sync_file_reference::*;
 pub use sync_file_reference_row::*;
 pub use sync_log::*;
 pub use sync_log_row::*;
+pub use sync_log_v7::*;
 pub use sync_message::*;
 pub use sync_message_row::*;
+pub use sync_request::*;
+pub use system_log_row::*;
 pub use temperature_breach::*;
 pub use temperature_breach_config::*;
 pub use temperature_breach_config_row::*;
@@ -332,6 +363,8 @@ pub use vaccination::*;
 pub use vaccination_card::*;
 pub use vaccination_course::*;
 pub use vaccination_row::*;
+pub use vaccine_course::*;
+pub use vvm_status::*;
 pub use warning::*;
 pub use warning_row::*;
 
@@ -466,10 +499,221 @@ pub struct JsonRawRow {
     #[diesel(sql_type = Text)]
     pub json_row: String,
 }
+/// Runs an arbitrary statement with nothing standing between it and the database.
+///
+/// `pub(crate)` on purpose: `raw_query_read_only` is the only entry point that should be
+/// reachable from outside this crate, and the two sit next to each other. Making this one
+/// public again would put the guard one `use` away from being bypassed by the next
+/// binding that wants raw SQL.
 // TODO should accept parameters
-pub fn raw_query(
+pub(crate) fn raw_query(
     connection: &StorageConnection,
     query: String,
 ) -> Result<Vec<JsonRawRow>, RepositoryError> {
     Ok(sql_query(&query).get_results::<JsonRawRow>(connection.lock().connection())?)
+}
+
+/// `raw_query` with writes refused by the database itself.
+///
+/// Used for statements from backend plugins, which are arbitrary strings from a bundle
+/// (see `service::boajs::methods::sql`). The database enforces this rather than a SQL
+/// parser: a parser has to be kept correct against two dialects, and on postgres a
+/// statement that looks like a read can still write —
+/// `WITH x AS (INSERT … RETURNING *) SELECT …` begins with `WITH`.
+///
+/// Only the statement is read-only, not the connection. Plugins have a narrow,
+/// deliberate write path through `use_repository` (plugin_data, sync_message) that must
+/// keep working, and the connection here is often lent by the caller
+/// (`service::boajs::context::with_shared_connection`), so any state this sets has to be
+/// undone before returning.
+///
+/// # The connection must not already be in a transaction
+///
+/// Enforced below, because on postgres it is what keeps the read-only setting from
+/// escaping. `transaction_sync_etc(_, false)` opens a `SAVEPOINT` rather than a fresh
+/// transaction when one is already open, and `SET TRANSACTION READ ONLY` applies to the
+/// whole enclosing transaction and outlives the `RELEASE` — so the caller's transaction
+/// would be left read-only for the rest of its life.
+///
+/// The plugin path never arrives in a transaction: `with_shared_connection` refuses to
+/// lend an in-transaction connection and the fallback checks out a fresh one.
+pub fn raw_query_read_only(
+    connection: &StorageConnection,
+    query: String,
+) -> Result<Vec<JsonRawRow>, RepositoryError> {
+    let transaction_level = connection
+        .lock()
+        .transaction_level::<RepositoryError>()
+        .map_err(TransactionError::to_inner_error)?;
+    if transaction_level > 0 {
+        return Err(RepositoryError::DBError {
+            msg: "Refusing to run a read-only query on a connection that is already in a \
+                  transaction"
+                .to_string(),
+            extra: format!("transaction level {transaction_level}"),
+        });
+    }
+
+    if cfg!(feature = "postgres") {
+        // `SET TRANSACTION READ ONLY` applies to the transaction it opens and ends with it,
+        // so nothing leaks back to a lent connection. It must be the first statement in the
+        // transaction, which is why this opens its own rather than reusing an outer one —
+        // and why the check above insists there is no outer one to reuse.
+        connection
+            .transaction_sync_etc(
+                |connection| -> Result<Vec<JsonRawRow>, RepositoryError> {
+                    sql_query("SET TRANSACTION READ ONLY")
+                        .execute(connection.lock().connection())?;
+                    raw_query(connection, query)
+                },
+                false,
+            )
+            .map_err(|error| error.to_inner_error())
+    } else {
+        // sqlite has no read-only transaction, but `query_only` is a connection flag that
+        // makes the engine refuse every write for as long as it is set.
+        struct QueryOnlyGuard<'a>(&'a StorageConnection);
+        impl Drop for QueryOnlyGuard<'_> {
+            fn drop(&mut self) {
+                if let Err(error) =
+                    sql_query("PRAGMA query_only = 0").execute(self.0.lock().connection())
+                {
+                    // A connection stuck in query_only would fail every later write on it, so
+                    // this is worth shouting about even though there is no way to recover here.
+                    log::error!("Failed to clear query_only after a plugin query: {error}");
+                }
+            }
+        }
+
+        sql_query("PRAGMA query_only = 1").execute(connection.lock().connection())?;
+        // Cleared even if the query panics or returns early.
+        let _guard = QueryOnlyGuard(connection);
+
+        raw_query(connection, query)
+    }
+}
+
+#[cfg(test)]
+mod raw_query_test {
+    use super::*;
+    use crate::{
+        mock::MockDataInserts, test_db, StoreRowRepository, UserAccountRow,
+        UserAccountRowRepository,
+    };
+
+    /// Security audit DS-3: `sql()` runs plugin-supplied statements, so writes must be
+    /// refused by the database rather than by trying to recognise them.
+    #[actix_rt::test]
+    async fn raw_query_read_only_refuses_writes() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "raw_query_read_only_refuses_writes",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        UserAccountRowRepository::new(&connection)
+            .insert_one(&UserAccountRow {
+                id: "user-1".to_string(),
+                username: "user-1".to_string(),
+                hashed_password: "ORIGINAL-HASH".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+
+        let writes = [
+            "UPDATE user_account SET hashed_password = 'OWNED'",
+            "DELETE FROM user_account",
+            "INSERT INTO user_account (id, username, hashed_password) VALUES ('x', 'x', 'x')",
+            "CREATE TABLE plugin_owned (id TEXT)",
+            "DROP TABLE user_account",
+        ];
+
+        for write in writes {
+            assert!(
+                raw_query_read_only(&connection, write.to_string()).is_err(),
+                "plugin sql() accepted a write: {}",
+                write
+            );
+        }
+
+        // Nothing landed
+        let user = UserAccountRowRepository::new(&connection)
+            .find_one_by_id("user-1")
+            .unwrap()
+            .unwrap();
+        assert_eq!(user.hashed_password, "ORIGINAL-HASH");
+    }
+
+    /// The read-only setting is transaction-scoped on postgres, and `transaction_sync_etc`
+    /// gives an already-in-transaction connection a `SAVEPOINT` whose `RELEASE` would not
+    /// undo it - so a connection with a transaction open is refused outright rather than
+    /// left read-only for the rest of the caller's transaction.
+    #[actix_rt::test]
+    async fn raw_query_read_only_refuses_a_connection_already_in_a_transaction() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "raw_query_read_only_refuses_in_transaction",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        connection
+            .transaction_sync(|transaction_connection| {
+                assert!(
+                    raw_query_read_only(transaction_connection, "SELECT 1".to_string()).is_err(),
+                    "read-only query accepted a connection already in a transaction"
+                );
+                Ok(()) as Result<(), RepositoryError>
+            })
+            .unwrap();
+
+        // The caller's transaction was not left read-only by the refusal
+        let store = StoreRowRepository::new(&connection)
+            .find_one_by_id("store_a")
+            .unwrap()
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .upsert_one(&store)
+            .unwrap();
+    }
+
+    /// The reads plugins actually make must still work, and the connection must be usable
+    /// for writes afterwards — plugins keep a deliberate write path via `use_repository`,
+    /// and this connection is often lent by the caller.
+    #[actix_rt::test]
+    async fn raw_query_read_only_allows_reads_and_leaves_the_connection_writable() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "raw_query_read_only_allows_reads",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        // The shape every plugin uses: the sqlQuery helper wraps statements as
+        // SELECT json_object(...) FROM (...)
+        let json_object = if cfg!(feature = "postgres") {
+            "json_build_object"
+        } else {
+            "json_object"
+        };
+        let rows = raw_query_read_only(
+            &connection,
+            format!(
+                "SELECT {json_object}('id', inner_statement.id) AS json_row
+                 FROM (SELECT id FROM store) AS inner_statement"
+            ),
+        )
+        .unwrap();
+        assert!(!rows.is_empty(), "read returned nothing");
+
+        // A read-only statement that failed must not leave the connection read-only either
+        assert!(raw_query_read_only(&connection, "SELECT * FROM nope".to_string()).is_err());
+
+        // The caller's connection still writes
+        let store = StoreRowRepository::new(&connection)
+            .find_one_by_id("store_a")
+            .unwrap()
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .upsert_one(&store)
+            .unwrap();
+    }
 }

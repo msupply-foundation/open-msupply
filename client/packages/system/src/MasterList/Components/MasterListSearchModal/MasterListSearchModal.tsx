@@ -11,6 +11,7 @@ interface MasterListSearchProps {
   open: boolean;
   onClose: () => void;
   onChange: (name: MasterListRowFragment) => void;
+  testId?: string;
 }
 
 export const MasterListSearchModal = ({
@@ -18,6 +19,7 @@ export const MasterListSearchModal = ({
   open,
   onClose,
   onChange,
+  testId,
 }: MasterListSearchProps) => {
   const t = useTranslation();
   const { data, isLoading } = useMasterLists({
@@ -35,6 +37,8 @@ export const MasterListSearchModal = ({
       onClose={onClose}
       title={t('master-lists')}
       optionKey="name"
+      testId={testId}
+      getOptionTestId={masterList => `master-list-row-${masterList.id}`}
       onChange={(
         _,
         masterList: MasterListRowFragment | MasterListRowFragment[] | null

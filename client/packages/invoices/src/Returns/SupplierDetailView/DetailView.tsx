@@ -10,6 +10,7 @@ import {
   useBreadcrumbs,
   useUrlQuery,
   AppFooterStatusPortal,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -20,10 +21,13 @@ import { useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { DetailsTab } from './Tabs/Details';
 import { SupplierReturnDetailTabs } from './types';
+import { InvoiceCustomFieldsTab } from '../../common';
 
 export const SupplierReturnsDetailView = () => {
   const lineEditModal = useEditModal<string>();
   const { data, isLoading } = useReturns.document.supplierReturn();
+  const { mutateAsync: update } = useReturns.document.updateSupplierReturn();
+  const isDisabled = useReturns.utils.supplierIsDisabled();
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -47,6 +51,20 @@ export const SupplierReturnsDetailView = () => {
     {
       Component: <DetailsTab lineEdit={lineEditModal} />,
       value: SupplierReturnDetailTabs.Details,
+    },
+    {
+      Component: (
+        <InvoiceCustomFieldsTab
+          invoiceType={InvoiceNodeType.SupplierReturn}
+          customFields={data?.customFields}
+          onSave={async patch => {
+            if (!data?.id) return;
+            return update({ id: data.id, customFields: patch });
+          }}
+          disabled={isDisabled}
+        />
+      ),
+      value: 'custom-fields',
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,

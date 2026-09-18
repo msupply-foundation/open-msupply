@@ -21,7 +21,9 @@ pub fn generate(
         .ok_or(OutError::ProblemGettingOtherParty)?;
 
     let destination_customer = match &requisition.requisition_row.destination_customer_id {
-        Some(destination_customer_id) => get_other_party(connection, store_id, destination_customer_id)?,
+        Some(destination_customer_id) => {
+            get_other_party(connection, store_id, destination_customer_id)?
+        }
         None => None,
     };
 
@@ -83,6 +85,7 @@ pub fn generate(
         shipping_method_id: None,
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,
+        ..Default::default()
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
@@ -130,6 +133,8 @@ pub fn generate_invoice_lines(
             linked_invoice_id: None,
             donor_id: None,
             manufacturer_id: None,
+            legacy_goods_received_line_id: None,
+            transfer_comment: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,

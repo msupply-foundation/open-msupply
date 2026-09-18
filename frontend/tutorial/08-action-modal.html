@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>8 · Action modals</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="tutorial.js"></script>
+  </head>
+  <body>
+    <button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand"><span class="dot"></span> FE Patterns</div>
+        <nav>
+          <a href="index.html"><span class="num">·</span>Overview</a>
+          <a href="01-graphql-codegen.html"
+            ><span class="num">1</span>Codegen &amp; graphqlFetch</a
+          >
+          <a href="02-init-auth-error.html"
+            ><span class="num">2</span>Init, auth &amp; errors</a
+          >
+          <a href="03-store-login-state.html"
+            ><span class="num">3</span>Store &amp; global state</a
+          >
+          <a href="04-list-table-url.html"
+            ><span class="num">4</span>Lists: table &amp; URL</a
+          >
+          <a href="05-createresource.html"
+            ><span class="num">5</span>createResource</a
+          >
+          <a href="06-store-scoped.html"
+            ><span class="num">6</span>Store-scoped caches</a
+          >
+          <a href="07-domain-modules.html"
+            ><span class="num">7</span>Domain modules</a
+          >
+          <a class="current" href="08-action-modal.html"
+            ><span class="num">8</span>Action modals</a
+          >
+          <a href="09-datatable-cards.html"
+            ><span class="num">9</span>Table: cards &amp; groups</a
+          >
+          <a href="datatable-reference.html"
+            ><span class="num">★</span>DataTable reference</a
+          >
+        </nav>
+      </aside>
+
+      <main class="content">
+        <div class="content-inner">
+          <p class="eyebrow">Chapter 8</p>
+          <h1>
+            Action modals — a confirm → working → success | error phase machine
+          </h1>
+          <p class="lede">
+            A destructive or bulk action isn't a fire-and-forget click. It's a
+            small story: <em>ask</em>, <em>work</em> (with visible feedback and
+            no way to double-submit), then <em>confirm success</em> or
+            <em>show the failure in context</em>. Each such action here is a
+            self-contained component that owns one <code>&lt;Dialog&gt;</code>
+            driven through four phases —
+            <code>confirm → working → success | error</code> — and hands its
+            result back to the view to apply <em>in place</em>, no refetch.
+          </p>
+
+          <div class="diagram">
+            <svg
+              viewBox="0 0 720 190"
+              role="img"
+              aria-label="Four-phase state machine: confirm to working, then working to success or error"
+            >
+              <defs>
+                <marker
+                  id="ah8"
+                  markerWidth="9"
+                  markerHeight="9"
+                  refX="7"
+                  refY="3"
+                  orient="auto"
+                >
+                  <path d="M0,0 L7,3 L0,6 Z" fill="#8f90a6" />
+                </marker>
+                <style>
+                  .p {
+                    fill: var(--surface);
+                    stroke: var(--border);
+                    stroke-width: 1.5;
+                  }
+                  .pt {
+                    fill: var(--text);
+                    font: 600 13px system-ui;
+                    text-anchor: middle;
+                  }
+                  .pl {
+                    stroke: #8f90a6;
+                    stroke-width: 1.5;
+                    fill: none;
+                  }
+                  .plt {
+                    fill: var(--text-3);
+                    font:
+                      11px ui-monospace,
+                      monospace;
+                    text-anchor: middle;
+                  }
+                  .ok {
+                    fill: color-mix(in srgb, var(--ok) 12%, var(--surface));
+                    stroke: var(--ok);
+                  }
+                  .err {
+                    fill: color-mix(in srgb, var(--warn) 12%, var(--surface));
+                    stroke: var(--warn);
+                  }
+                </style>
+              </defs>
+              <rect class="p" x="16" y="71" width="140" height="48" rx="8" />
+              <text class="pt" x="86" y="100">confirm</text>
+
+              <rect class="p" x="238" y="71" width="140" height="48" rx="8" />
+              <text class="pt" x="308" y="100">working</text>
+
+              <rect
+                class="p ok"
+                x="460"
+                y="14"
+                width="140"
+                height="48"
+                rx="8"
+              />
+              <text class="pt" x="530" y="43">success</text>
+
+              <rect
+                class="p err"
+                x="460"
+                y="128"
+                width="140"
+                height="48"
+                rx="8"
+              />
+              <text class="pt" x="530" y="157">error</text>
+
+              <path class="pl" d="M156,95 L233,95" marker-end="url(#ah8)" />
+              <text class="plt" x="194" y="86">run()</text>
+
+              <path
+                class="pl"
+                d="M378,88 C420,64 428,42 455,40"
+                marker-end="url(#ah8)"
+              />
+              <text class="plt" x="424" y="58">ok</text>
+
+              <path
+                class="pl"
+                d="M378,102 C420,126 428,148 455,150"
+                marker-end="url(#ah8)"
+              />
+              <text class="plt" x="418" y="142">domain error</text>
+            </svg>
+          </div>
+
+          <h2>Why one dialog owns the whole lifecycle</h2>
+          <p>
+            The alternative — a modal that emits
+            <code>onConfirm(value)</code> and closes immediately, with the view
+            running the mutation fire-and-forget and a <em>separate</em> error
+            dialog surfacing failures afterwards — was the shape these actions
+            started in. It gave no in-flight feedback, no success confirmation,
+            and split one logical action across two dialogs. The decision was to
+            fold it all into one:
+          </p>
+          <ul>
+            <li>
+              <strong>In-flight feedback + success confirmation</strong> is the
+              expected UX for a bulk/destructive action; splitting confirm and
+              error across two dialogs reads as unfinished.
+            </li>
+            <li>
+              <strong>Blocking while working</strong> — the dialog goes
+              non-dismissable (no scrim / Escape exit) and the confirm button
+              goes <code>loading</code> — prevents a double-submit or an
+              ambiguous half-closed state.
+            </li>
+          </ul>
+
+          <div class="box warn">
+            <p class="box-title">There is no shared <code>ActionModal</code></p>
+            <p style="margin-bottom: 0">
+              An earlier draft of the KDD describes a shared
+              <code>SelectionActionModal</code> in
+              <code>src/domain/selection/</code>. That was
+              <strong>superseded</strong> — a later commit <em>inlined</em> the
+              phase machine into each action, and there is no
+              <code>src/domain/selection</code> or
+              <code>src/domain/action</code> in the tree today. The phase
+              machine is repeated (a few lines) in each action rather than
+              abstracted, on purpose: the whole flow — mutation, transitions,
+              what each phase renders — reads in one place (<a
+                href="../kdd/explicit-composition/draft-kdd.md"
+                >explicit composition</a
+              >). Don't reach for a shared import that doesn't exist.
+            </p>
+          </div>
+
+          <h2>The four phases</h2>
+          <p>
+            Every action names its phase the same way and mounts the machine
+            only while the dialog is open:
+          </p>
+          <span class="filename"
+            >src/sections/stocktakes/detail/actions/DeleteLinesAction.tsx</span
+          >
+          <pre><code><span class="kw">type</span> <span class="ty">Phase</span> = <span class="st">'confirm'</span> | <span class="st">'working'</span> | <span class="st">'success'</span> | <span class="st">'error'</span>;
+
+<span class="kw">export const</span> <span class="fn">DeleteLinesAction</span>: <span class="ty">Component</span>&lt;<span class="ty">DeleteLinesActionProps</span>&gt; = props =&gt; {
+  <span class="kw">const</span> [open, setOpen] = <span class="fn">createSignal</span>(<span class="kw">false</span>);
+  <span class="kw">return</span> (
+    &lt;&gt;
+      &lt;<span class="ty">Button</span> icon={&lt;<span class="ty">TrashIcon</span> /&gt;} disabled={props.disabled} onClick={() =&gt; <span class="fn">setOpen</span>(<span class="kw">true</span>)}&gt;
+        {<span class="fn">t</span>(<span class="st">'common.delete'</span>)}
+      &lt;/<span class="ty">Button</span>&gt;
+      <span class="cm">{/* Body mounts only while open → the phase is FRESH per open. */}</span>
+      &lt;<span class="ty">Show</span> when={<span class="fn">open</span>()}&gt;
+        &lt;<span class="ty">Body</span> {...props} onClose={() =&gt; <span class="fn">setOpen</span>(<span class="kw">false</span>)} /&gt;
+      &lt;/<span class="ty">Show</span>&gt;
+    &lt;/&gt;
+  );
+};</code></pre>
+          <div class="box">
+            <p class="box-title">
+              Why the phase lives in a mounted-while-open child
+            </p>
+            <p style="margin-bottom: 0">
+              The button is the always-mounted outer component; the phase
+              (<code>createSignal&lt;Phase&gt;('confirm')</code>) and any inputs
+              live in an inner <code>&lt;Body&gt;</code> that only exists while
+              <code>open()</code>. So the machine is
+              <strong>fresh on every open</strong> — no manual reset — and a
+              late-resolving <code>run()</code> from a prior open lands on a
+              <em>disposed</em> scope rather than mutating a reused signal. The
+              selected count is snapshotted once on open, so the confirm/success
+              message can't shift if the selection changes behind the dialog.
+            </p>
+          </div>
+
+          <h2>run() → a discriminated result; who owns what</h2>
+          <p>
+            The split of ownership is the crux:
+            <strong
+              >the modal owns the phase and its presentation; the view owns the
+              data mutation</strong
+            >, applied in place. <code>run()</code> calls the mutation layer,
+            which returns a discriminated outcome, and drives the phase from it
+            — while handing the successful part back to the view via callbacks.
+          </p>
+          <span class="filename"
+            >…/actions/DeleteLinesAction.tsx — the <code>Body</code>'s
+            run()</span
+          >
+          <pre><code><span class="kw">const</span> <span class="fn">run</span> = <span class="kw">async</span> () =&gt; {
+  <span class="kw">if</span> (<span class="fn">phase</span>() !== <span class="st">'confirm'</span>) <span class="kw">return</span>;        <span class="cm">// re-entry guard</span>
+  <span class="fn">setPhase</span>(<span class="st">'working'</span>);                        <span class="cm">// button → loading, dialog → non-dismissable</span>
+
+  <span class="kw">const</span> outcome = <span class="kw">await</span> <span class="fn">runBatchStocktakeLines</span>(props.storeId, {
+    delete: props.<span class="fn">selectedIds</span>().<span class="fn">map</span>(id =&gt; ({ id })),
+  });
+
+  <span class="cm">// undefined = transport / NodeError → the GLOBAL modal already showed it.</span>
+  <span class="cm">// Nothing per-line to reflect; just close (never stuck in 'working').</span>
+  <span class="kw">if</span> (!outcome) <span class="kw">return</span> props.<span class="fn">onClose</span>();
+
+  props.<span class="fn">onCommit</span>(outcome.commit);              <span class="cm">// VIEW splices what saved (no refetch)</span>
+  <span class="kw">if</span> (outcome.errors.size === <span class="ty">0</span>) <span class="kw">return</span> <span class="fn">setPhase</span>(<span class="st">'success'</span>);
+
+  props.<span class="fn">onError</span>(outcome.errors);              <span class="cm">// stamp per-line errors so the rows show them</span>
+  <span class="fn">setErrorCount</span>(outcome.errors.size);
+  <span class="fn">setPhase</span>(<span class="st">'error'</span>);                          <span class="cm">// → Cancel + "Show error lines"</span>
+};</code></pre>
+          <p>
+            The mutation layer is where the discriminated result is minted. For
+            the line actions it is <code>runBatchStocktakeLines</code>, which
+            returns <code>BatchStocktakeLinesOutcome | undefined</code>:
+          </p>
+          <span class="filename"
+            >src/sections/stocktakes/detail/lines/stocktakeLineUpdate.ts</span
+          >
+          <pre><code><span class="kw">export type</span> <span class="ty">BatchStocktakeLinesOutcome</span> = {
+  commit: <span class="ty">LineEditCommit</span>;   <span class="cm">// inserted / updated nodes + deletedIds — apply in place</span>
+  errors: <span class="ty">LineErrors</span>;      <span class="cm">// Map&lt;lineId, error __typename&gt; — partial failure is normal</span>
+};
+
+<span class="cm">// undefined ⇒ the whole call failed at transport / NodeError level (already</span>
+<span class="cm">// surfaced by the global modal), so there is nothing per-line to reflect.</span>
+<span class="kw">const</span> outcome: <span class="ty">BatchStocktakeLinesOutcome</span> | <span class="kw">undefined</span> = <span class="kw">await</span> <span class="fn">runBatchStocktakeLines</span>(…);</code></pre>
+          <div class="box">
+            <p class="box-title">
+              The modal owns phase; the caller owns the data
+            </p>
+            <p style="margin-bottom: 0">
+              <code>run()</code> never mutates rows itself. It calls
+              <code>props.onCommit(commit)</code> /
+              <code>props.onError(errors)</code> and the view applies them — the
+              same success-reflected-in-place, no-refetch model as everywhere
+              else. This is chapter 5's idea: the view's
+              <code>createResource</code> is written back with
+              <code>mutate()</code>, so the screen updates without remounting.
+              Note the actions <em>don't</em> clear the selection on success:
+              they host their modal inside the selection footer, so clearing
+              would unmount the modal mid-success-phase. Selection clears when
+              the modal closes, by which point the success/error phase has been
+              seen.
+            </p>
+          </div>
+
+          <h2>The view side — mutate() applies the commit in place</h2>
+          <p>
+            The detail view wires each action's callbacks to a single
+            <code>applyCommit</code> that reduces every path (full line-edit
+            commit, or a delete-only / update-only partial from an action) to
+            one splice via the resource's <code>mutate</code>:
+          </p>
+          <span class="filename"
+            >src/sections/stocktakes/detail/StocktakeDetailView.tsx</span
+          >
+          <pre><code><span class="kw">const</span> <span class="fn">applyCommit</span> = (commit: <span class="ty">Partial</span>&lt;<span class="ty">LineEditCommit</span>&gt;) =&gt; {
+  <span class="fn">mutate</span>((node) =&gt; {                          <span class="cm">// no refetch — patch the resource in place</span>
+    <span class="kw">if</span> (!node) <span class="kw">return</span> node;
+    <span class="kw">const</span> deleted = <span class="kw">new</span> <span class="fn">Set</span>(commit.deletedIds);
+    <span class="kw">const</span> updatedById = <span class="kw">new</span> <span class="fn">Map</span>((commit.updated ?? []).<span class="fn">map</span>(l =&gt; [l.id, l]));
+    <span class="kw">const</span> nodes = node.lines.nodes
+      .<span class="fn">filter</span>(l =&gt; !deleted.<span class="fn">has</span>(l.id))
+      .<span class="fn">map</span>(l =&gt; updatedById.<span class="fn">get</span>(l.id) ?? l)
+      .<span class="fn">concat</span>(commit.inserted ?? []);
+    <span class="kw">return</span> { ...node, lines: { ...node.lines, nodes } };
+  });
+  <span class="cm">// … also clears any stale per-line error on ids that just committed.</span>
+};
+
+<span class="cm">// wired straight into each action:</span>
+&lt;<span class="ty">DeleteLinesAction</span>
+  selectedIds={selectedIds} disabled={locked()}
+  onCommit={applyCommit} onError={stampErrors} onShowErrors={showErrors} /&gt;</code></pre>
+
+          <h2>Global transport errors vs local domain errors</h2>
+          <p>
+            This is the standing split (chapter 2's global error modal). Only
+            one of the two kinds of failure becomes the
+            <code>error</code> phase:
+          </p>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Failure</th>
+                <th>Where it surfaces</th>
+                <th>What the modal does</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong>Transport / unexpected</strong> — the request itself
+                  failed (network, a <code>NodeError</code>)
+                </td>
+                <td>
+                  The <strong>global</strong> reload-me modal, already, via
+                  <code>graphqlFetch</code>
+                </td>
+                <td>
+                  <code>outcome</code> is <code>undefined</code> → the modal
+                  just <strong>closes</strong>; it never sits stuck in
+                  <code>working</code>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>Domain</strong> — the server rejected specific lines
+                  (a per-line batch error, a validation rejection)
+                </td>
+                <td>
+                  <strong>Locally</strong>, in this action's own lifecycle
+                </td>
+                <td>
+                  Becomes the <code>error</code> phase, in context, with the
+                  mapped message
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            "the reload-me modal for <em>the request itself failed</em>; an
+            in-context phase for <em>the server rejected these lines</em>." The
+            <code>if (!outcome) return props.onClose()</code> line in every
+            action <em>is</em> the transport branch.
+          </p>
+
+          <h2>The error phase's "Show error lines"</h2>
+          <p>
+            When domain errors carry line ids, the <code>error</code> phase does
+            more than report — it routes forward. It shows the server-mapped
+            summary and offers <strong>Cancel</strong> +
+            <strong>Show error lines</strong>, which calls
+            <code>onShowErrors()</code> (the view wipes every other filter and
+            keeps only the stamped error rows) and closes. This folds what used
+            to be a separate error dialog into the action's own lifecycle.
+          </p>
+          <span class="filename"
+            >…/actions/DeleteLinesAction.tsx — the error-phase actions</span
+          >
+          <pre><code>&lt;<span class="ty">Match</span> when={<span class="fn">phase</span>() === <span class="st">'error'</span>}&gt;
+  &lt;<span class="ty">Button</span> variant=<span class="st">"secondary"</span> icon={&lt;<span class="ty">XCircleIcon</span> /&gt;} onClick={props.onClose}&gt;
+    {<span class="fn">t</span>(<span class="st">'common.cancel'</span>)}
+  &lt;/<span class="ty">Button</span>&gt;
+  &lt;<span class="ty">Button</span> variant=<span class="st">"primary"</span> icon={&lt;<span class="ty">SearchIcon</span> /&gt;}
+    onClick={() =&gt; { props.<span class="fn">onShowErrors</span>(); props.<span class="fn">onClose</span>(); }}&gt;
+    {<span class="fn">t</span>(<span class="st">'stocktake.errors.show'</span>)}
+  &lt;/<span class="ty">Match</span>&gt;</code></pre>
+          <p>
+            The whole dialog is one <code>&lt;Dialog&gt;</code> whose
+            <code>description</code> and <code>actions</code> are each a
+            <code>&lt;Switch&gt;</code> on <code>phase()</code>:
+            <code>dismissable={phase() !== 'working'}</code> is the entire
+            blocking rule; <code>loading={phase() === 'working'}</code> on the
+            confirm button is the entire in-flight feedback;
+            <code>&lt;Show when={phase() === 'confirm'}&gt;</code> around Cancel
+            hides it while working.
+          </p>
+
+          <h2>Finalise is an action too</h2>
+          <p>
+            <code>FinaliseAction</code> runs the <em>same</em> four-phase
+            machine, with two differences that make it a good second example
+            rather than a copy:
+          </p>
+          <ul>
+            <li>
+              Its trigger is the status stepper's <code>SplitButton</code> in
+              the footer, not a plain selection button — so it's a
+              <strong>footer action</strong>, not a selection action, but the
+              confirm → working → success | error dialog is identical in shape.
+            </li>
+            <li>
+              It carries a second,
+              <strong>"nothing counted yet" guard dialog</strong>: pressing
+              finalise with no countable lines opens an info-only dialog (single
+              OK) explaining why it can't run, rather than a silent no-op or a
+              dead confirm.
+            </li>
+          </ul>
+          <span class="filename"
+            >src/sections/stocktakes/detail/actions/FinaliseAction.tsx</span
+          >
+          <pre><code><span class="kw">const</span> <span class="fn">openConfirm</span> = (status: <span class="ty">string</span>) =&gt; {
+  <span class="kw">if</span> (props.disabled) <span class="kw">return</span>;               <span class="cm">// locked/finalised — split button hidden anyway</span>
+  <span class="kw">if</span> (!props.canFinalise) <span class="kw">return</span> <span class="fn">setNoLinesOpen</span>(<span class="kw">true</span>);   <span class="cm">// the "nothing counted" guard dialog</span>
+  <span class="fn">setPhase</span>(<span class="st">'confirm'</span>);
+  <span class="fn">setPendingStatus</span>(status);                <span class="cm">// != null opens the finalise confirm dialog</span>
+};
+
+<span class="kw">const</span> <span class="fn">run</span> = <span class="kw">async</span> () =&gt; {
+  <span class="kw">if</span> (<span class="fn">phase</span>() !== <span class="st">'confirm'</span>) <span class="kw">return</span>;
+  <span class="fn">setPhase</span>(<span class="st">'working'</span>);
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">finaliseStocktake</span>(props.storeId, props.node.id);
+  <span class="kw">if</span> (result.kind === <span class="st">'failed'</span>) <span class="kw">return</span> <span class="fn">close</span>();        <span class="cm">// transport → global modal; just close</span>
+  <span class="kw">if</span> (result.kind === <span class="st">'saved'</span>) {
+    props.<span class="fn">onApplied</span>(result.node);                    <span class="cm">// view merges the FINALISED node in place</span>
+    <span class="kw">return</span> <span class="fn">setPhase</span>(<span class="st">'success'</span>);
+  }
+  props.<span class="fn">onError</span>(result.lineIds);                     <span class="cm">// SnapshotCountCurrentCountMismatch → stamp rows</span>
+  <span class="fn">setPhase</span>(<span class="st">'error'</span>);
+};</code></pre>
+          <p>
+            Its result type <code>StocktakeFinaliseResult</code> is a three-way
+            discriminant —
+            <code
+              >{ kind: 'saved'; node } | { kind: 'error'; message; lineIds } | {
+              kind: 'failed' }</code
+            >
+            — the same three destinations (success / local error /
+            global-and-close) spelled as one union rather than
+            "outcome-or-undefined". Same three branches, different shape at the
+            seam.
+          </p>
+
+          <div class="box build">
+            <p class="box-title">Build step · widgets</p>
+            <p style="margin-bottom: 0">
+              Give the fictional <code>widgets/</code> vertical a bulk
+              <strong>"archive selected"</strong> action with the same
+              <code>confirm → working → success | error</code> shape. Model it
+              on <code>DeleteLinesAction</code>: an
+              <code>ArchiveWidgetsAction</code> component owning its button + a
+              <code>&lt;Show when={open()}&gt;</code> inner
+              <code>&lt;Body&gt;</code> that holds
+              <code>createSignal&lt;Phase&gt;('confirm')</code>. Its
+              <code>run()</code> calls a
+              <code>runArchiveWidgets(storeId, ids)</code> layer that returns
+              <code>{ commit, errors } | undefined</code>;
+              <code>undefined</code> → close (transport handled globally),
+              <code>errors.size === 0</code> → <code>onCommit</code> + success,
+              otherwise <code>onError</code> + the error phase with a "Show
+              error widgets" button (<code>onShowErrors</code>). Keep the dialog
+              <code>dismissable={phase() !== 'working'}</code> and the confirm
+              button <code>loading={phase() === 'working'}</code>. The widgets
+              list view applies the commit with its resource's
+              <code>mutate()</code> — no refetch.
+            </p>
+          </div>
+
+          <h2>Recap</h2>
+          <ul>
+            <li>
+              Each action is a self-contained component: its own button, its own
+              phase state, and its own <em>inlined</em>
+              <code>&lt;Dialog&gt;</code> — no shared modal import.
+            </li>
+            <li>
+              Four phases in one dialog:
+              <code>confirm → working → success | error</code>. Working blocks
+              (non-dismissable + loading button) so there's no double-submit.
+            </li>
+            <li>
+              <code>run()</code> reads a discriminated result from the mutation
+              layer, owns the phase, and hands the successful part to the view
+              via callbacks; the view applies it in place with
+              <code>mutate()</code> — no refetch (chapter 5).
+            </li>
+            <li>
+              Transport failures stay global (the modal just closes); only
+              domain failures become the <code>error</code> phase, which can
+              route forward to "Show error lines".
+            </li>
+            <li>
+              Finalise uses the same machine as a footer action, plus a "nothing
+              counted yet" guard dialog.
+            </li>
+          </ul>
+
+          <div class="box real">
+            <p class="box-title">Real code</p>
+            <p style="margin-bottom: 0">
+              <a
+                href="../src/sections/stocktakes/detail/actions/DeleteLinesAction.tsx"
+                >DeleteLinesAction.tsx</a
+              >
+              ·
+              <a
+                href="../src/sections/stocktakes/detail/actions/ChangeLocationAction.tsx"
+                >ChangeLocationAction.tsx</a
+              >
+              ·
+              <a
+                href="../src/sections/stocktakes/detail/actions/ReduceToZeroAction.tsx"
+                >ReduceToZeroAction.tsx</a
+              >
+              ·
+              <a
+                href="../src/sections/stocktakes/detail/actions/FinaliseAction.tsx"
+                >FinaliseAction.tsx</a
+              >
+              ·
+              <a
+                href="../src/sections/stocktakes/list/actions/DeleteStocktakesAction.tsx"
+                >DeleteStocktakesAction.tsx</a
+              >. The mutation layers:
+              <a
+                href="../src/sections/stocktakes/detail/lines/stocktakeLineUpdate.ts"
+                >stocktakeLineUpdate.ts</a
+              >,
+              <a href="../src/sections/stocktakes/detail/stocktakeUpdate.ts"
+                >stocktakeUpdate.ts</a
+              >. Wired in
+              <a
+                href="../src/sections/stocktakes/detail/StocktakeDetailView.tsx"
+                >StocktakeDetailView.tsx</a
+              >. Why:
+              <a href="../kdd/action-modal/draft-kdd.md">action-modal</a> (note:
+              its shared-<code>SelectionActionModal</code> prose is stale — the
+              machine was inlined),
+              <a href="../kdd/explicit-composition/draft-kdd.md"
+                >explicit-composition</a
+              >,
+              <a href="../kdd/state-management/draft-kdd.md">state-management</a
+              >.
+            </p>
+          </div>
+
+          <div class="pager">
+            <a class="prev" href="07-domain-modules.html">
+              <span class="dir">← Prev</span
+              ><span class="ttl">Domain modules</span>
+            </a>
+            <a class="next" href="09-datatable-cards.html">
+              <span class="dir">Next →</span
+              ><span class="ttl">Table: cards &amp; groups</span>
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

@@ -154,7 +154,7 @@ export const ScanInputModal = ({
         numberOfPacks: (existingLine?.numberOfPacks || 0) + draftState.quantity,
         item: {
           id: draftState.itemId || '',
-        } as ItemStockOnHandFragment,
+        } as InboundLineFragment['item'],
       };
 
       if (existingLine) {
@@ -469,6 +469,7 @@ export const ScanInputModal = ({
             <DatePicker
               value={draftState.manufactureDate}
               disabled={isLoading}
+              disableFuture
               onChange={value =>
                 setDraftState(current => ({
                   ...current,

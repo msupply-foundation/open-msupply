@@ -43,11 +43,13 @@ import {
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
+  useItemPrice,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
 import { isInboundPlaceholderRow } from '../../../../utils';
+import { getDefaultSellPricePerPack } from '../utils';
 import { useInvoiceLineStatusMap } from '../../..';
 
 interface CardProps {
@@ -104,6 +106,7 @@ export const InboundLineEditCards = ({
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
     externalInboundShipmentLinesMustBeAuthorised,
+    itemMarginOverridesSupplierMargin,
   } = usePreferences();
 
   const {
@@ -114,6 +117,25 @@ export const InboundLineEditCards = ({
   } = useInboundShipment();
   const isManualShipment =
     !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
+
+  const supplierMargin = inboundData?.otherParty?.margin ?? 0;
+  const { data: itemPrice } = useItemPrice(item?.id);
+  const defaultPricePerUnit = itemPrice?.defaultPricePerUnit ?? 0;
+  const getLineDefaultSellPrice = useCallback(
+    (line: DraftInboundLine, costPricePerPack: number, packSize: number) =>
+      getDefaultSellPricePerPack({
+        costPricePerPack,
+        packSize,
+        defaultPackSize: line.item?.defaultPackSize ?? 0,
+        defaultSellPricePerPack:
+          line.item?.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+        itemMargin: line.item?.itemStoreProperties?.margin ?? 0,
+        supplierMargin,
+        itemMarginOverridesSupplierMargin: !!itemMarginOverridesSupplierMargin,
+        defaultPricePerUnit,
+      }),
+    [supplierMargin, itemMarginOverridesSupplierMargin, defaultPricePerUnit]
+  );
 
   const showLineStatus =
     lines.some(line => line.status != null) ||
@@ -203,10 +225,16 @@ export const InboundLineEditCards = ({
                   if (packSize !== undefined) {
                     const packToUnits = packSize * value;
                     setPackRoundingMessage?.('');
+
+                    const shipped =
+                      isManualShipment &&
+                      (line.shippedNumberOfPacks == null ||
+                        line.shippedNumberOfPacks === line.numberOfPacks);
                     updateDraftLine({
                       receivedNumberOfUnits: packToUnits,
                       id: row.original.id,
                       numberOfPacks: value,
+                      ...(shipped ? { shippedNumberOfPacks: value } : {}),
                     });
                   }
                 }}
@@ -253,10 +281,13 @@ export const InboundLineEditCards = ({
                 cell={cell}
                 updateFn={(value: number) => {
                   const item = row.original.item;
-                  const shouldClearSellPrice =
-                    item?.defaultPackSize !== value &&
-                    item?.itemStoreProperties?.defaultSellPricePerPack ===
-                      line.sellPricePerPack;
+                  const isDefaultSellPrice =
+                    line.sellPricePerPack ===
+                    getLineDefaultSellPrice(
+                      line,
+                      line.costPricePerPack,
+                      value
+                    );
                   const shouldClearCostPrice =
                     item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
@@ -268,8 +299,12 @@ export const InboundLineEditCards = ({
                         itemVariant: line.itemVariant,
                         packSize: value,
                       }) ?? 0,
-                    sellPricePerPack: shouldClearSellPrice
-                      ? 0
+                    sellPricePerPack: isDefaultSellPrice
+                      ? getLineDefaultSellPrice(
+                        line,
+                        line.costPricePerPack,
+                        value
+                      )
                       : line.sellPricePerPack,
                     costPricePerPack: shouldClearCostPrice
                       ? 0
@@ -444,10 +479,16 @@ export const InboundLineEditCards = ({
                     })
                   );
                 }
+                const line = row.original;
+                const shipped =
+                  isManualShipment &&
+                  (line.shippedNumberOfPacks == null ||
+                    line.shippedNumberOfPacks === line.numberOfPacks);
                 updateDraftLine({
                   receivedNumberOfUnits: actualUnits,
                   numberOfPacks: roundedPacks,
                   id: row.original.id,
+                  ...(shipped ? { shippedNumberOfPacks: roundedPacks } : {}),
                 });
                 return actualUnits;
               }
@@ -685,6 +726,7 @@ export const InboundLineEditCards = ({
             <DateTimePickerInput
               value={value}
               disabled={isDisabled}
+              disableFuture
               onChange={date =>
                 updateDraftLine({
                   id: row.original.id,
@@ -818,6 +860,7 @@ export const InboundLineEditCards = ({
     isAddOrDeleteLinesDisabled,
     isExternalSupplier,
     isManualShipment,
+    getLineDefaultSellPrice,
     item?.isVaccine,
     pluralisedUnitName,
     removeDraftLine,

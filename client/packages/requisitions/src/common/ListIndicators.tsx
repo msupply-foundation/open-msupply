@@ -25,6 +25,7 @@ export const ListIndicatorLines = ({
         lines?.map(({ id, name, code }) => ({
           id,
           value: `${code} - ${name}`,
+          testId: `indicator-line-${code}`,
         })) ?? []
       }
       scrollRef={scrollRef}

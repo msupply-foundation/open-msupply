@@ -122,7 +122,9 @@ async fn delay(service_provider: Arc<ServiceProvider>, duration: Duration) -> bo
         Ok(value) => value,
         Err(error) => {
             // Don't panic the main loop on a transient DB error - skip and retry next interval.
-            log::error!("Ledger fix: skipping run, could not read last run (DB unavailable?): {error:?}");
+            log::error!(
+                "Ledger fix: skipping run, could not read last run (DB unavailable?): {error:?}"
+            );
             return false;
         }
     };
@@ -167,9 +169,7 @@ fn set_last_ledger_fix_run(service_provider: &ServiceProvider) {
     let ctx = match service_provider.basic_context() {
         Ok(ctx) => ctx,
         Err(error) => {
-            log::error!(
-                "Ledger fix: could not record last run, DB context unavailable: {error:?}"
-            );
+            log::error!("Ledger fix: could not record last run, DB context unavailable: {error:?}");
             return;
         }
     };

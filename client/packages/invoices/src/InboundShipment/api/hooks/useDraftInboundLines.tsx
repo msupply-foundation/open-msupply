@@ -4,7 +4,7 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useItem } from '@openmsupply-client/system';
+import { useItem, useItemPrice } from '@openmsupply-client/system';
 import { DraftInboundLine } from '../../../types';
 import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
@@ -48,6 +48,9 @@ export const useDraftInboundLines = (
   const {
     byId: { data: item },
   } = useItem(itemId ?? '');
+  const { data: itemPrice, isLoading: itemPriceIsLoading } =
+    useItemPrice(itemId);
+  const defaultPricePerUnit = itemPrice?.defaultPricePerUnit ?? 0;
 
   useEffect(() => {
     // Don't overwrite the user's in-progress edits with a background refetch
@@ -55,6 +58,7 @@ export const useDraftInboundLines = (
     // saveLines before the modal closes, so the effect still runs correctly
     // after a successful save.
     if (isDirty) return;
+    if (itemPriceIsLoading) return;
 
     if (lines && item) {
       const drafts = lines.map(line =>
@@ -75,6 +79,7 @@ export const useDraftInboundLines = (
             // From scanned barcode:
             batch: scannedBatchData?.batch,
             expiryDate: scannedBatchData?.expiryDate,
+            defaultPricePerUnit,
           })
         );
       }
@@ -82,13 +87,14 @@ export const useDraftInboundLines = (
     } else {
       setDraftLines([]);
     }
-  }, [lines, item, id, isDirty]);
+  }, [lines, item, id, isDirty, itemPriceIsLoading, defaultPricePerUnit]);
 
   const addDraftLine = (initialPatch?: Partial<DraftInboundLine>) => {
     if (item) {
       const newLine = CreateDraft.stockInLine({
         item,
         invoiceId: id,
+        defaultPricePerUnit,
       });
       const line = { ...newLine, ...initialPatch };
       setIsDirty(true);
@@ -146,7 +152,13 @@ export const useDraftInboundLines = (
         if (batch.isCreated) {
           const newLines = draftLines.filter(line => line.id !== lineId);
           if (newLines.length === 0 && item) {
-            return [CreateDraft.stockInLine({ item, invoiceId: id })];
+            return [
+              CreateDraft.stockInLine({
+                item,
+                invoiceId: id,
+                defaultPricePerUnit,
+              }),
+            ];
           }
           return newLines;
         } else {
@@ -157,7 +169,7 @@ export const useDraftInboundLines = (
         }
       });
     },
-    [item, id, setIsDirty]
+    [item, id, setIsDirty, defaultPricePerUnit]
   );
 
   const saveLines = async () => {

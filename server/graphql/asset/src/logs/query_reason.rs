@@ -25,6 +25,7 @@ pub fn asset_log_reasons(
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

@@ -1,0 +1,14 @@
+/*
+ * FormColumn — a vertical stack of FormSections (see FormColumn.tsx). The
+ * flex-basis (`--form-column-min`, default 22rem) governs the shared width and
+ * the single-stack wrap point; min-inline-size: 0 lets a column shrink below
+ * its content's intrinsic width so long field labels/values don't force
+ * overflow.
+ */
+.column {
+  flex: 1 1 var(--form-column-min, 22rem);
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}

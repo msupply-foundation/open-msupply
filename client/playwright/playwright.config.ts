@@ -20,7 +20,10 @@ export default defineConfig({
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
     },
-    // Main tests - run after setup, reuse auth state
+    // Main tests - run after setup, reuse auth state. (The deterministic
+    // regression suites — and their data.setup arrange step — live in
+    // open-msupply-frontend/e2e now; this config only runs the specs left
+    // here: smoke + custom translations.)
     {
       name: 'chromium',
       use: {

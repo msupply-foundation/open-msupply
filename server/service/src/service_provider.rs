@@ -10,6 +10,7 @@ use crate::{
     contact::{ContactService, ContactServiceTrait},
     contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
+    custom_field::{CustomFieldService, CustomFieldServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
@@ -41,6 +42,10 @@ use crate::{
     plugin::{FrontendPluginCache, PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     preference::{PreferenceService, PreferenceServiceTrait},
+    prescription_request::{PrescriptionRequestService, PrescriptionRequestServiceTrait},
+    prescription_request_line::{
+        PrescriptionRequestLineService, PrescriptionRequestLineServiceTrait,
+    },
     pricing::{PricingService, PricingServiceTrait},
     printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
@@ -67,14 +72,17 @@ use crate::{
     settings::{MailSettings, Settings},
     settings_service::{SettingsService, SettingsServiceTrait},
     shipping_method::{ShippingMethodService, ShippingMethodServiceTrait},
+    site::{SiteService, SiteServiceTrait},
+    standalone_central::{StandaloneCentralService, StandaloneCentralServiceTrait},
     standard_reports::StandardReports,
-    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
+    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
     sync::{
-        site_info::{SiteInfoService, SiteInfoTrait},
+        settings::BatchSize,
+        site_auth::{SiteAuthService, SiteAuthTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
@@ -98,6 +106,7 @@ pub struct ServiceProvider {
     pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+    pub site_service: Box<dyn SiteServiceTrait>,
 
     // Cold chain
     pub sensor_service: Box<dyn SensorServiceTrait>,
@@ -147,8 +156,9 @@ pub struct ServiceProvider {
     // App Data Service
     pub app_data_service: Box<dyn AppDataServiceTrait>,
     // Sync
-    pub site_info_service: Box<dyn SiteInfoTrait>,
+    pub site_auth_service: Box<dyn SiteAuthTrait>,
     pub sync_status_service: Box<dyn SyncStatusTrait>,
+    pub standalone_central_service: Box<dyn StandaloneCentralServiceTrait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
@@ -201,8 +211,13 @@ pub struct ServiceProvider {
     // Purchase Orders
     pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
+    // Prescription Requests (prescriber-authored prescriptions)
+    pub prescription_request_service: Box<dyn PrescriptionRequestServiceTrait>,
+    pub prescription_request_line_service: Box<dyn PrescriptionRequestLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
+    // Properties v2
+    pub custom_field_service: Box<dyn CustomFieldServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
     // Stock Relocation (Replenishments)
@@ -214,6 +229,10 @@ pub struct ServiceProvider {
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
     // to send events to the shared subscription worker.
     pub subscription_trigger: SubscriptionTriggerHandle,
+    // Yaml only fields ----- Not stored in KV store
+    pub(crate) batch_size: BatchSize,
+    pub(crate) disable_integration_transaction: bool,
+    pub(crate) relax_hardware_id_token_checks: bool,
 }
 
 pub struct ServiceContext {
@@ -222,6 +241,9 @@ pub struct ServiceContext {
     pub(crate) frontend_plugins_cache: FrontendPluginCache,
     pub user_id: String,
     pub store_id: String,
+    pub batch_size: BatchSize,
+    pub disable_integration_transaction: bool,
+    pub relax_hardware_id_token_checks: bool,
 }
 
 impl ServiceProvider {
@@ -240,6 +262,9 @@ impl ServiceProvider {
             None, // Mail not required for test/CLI setups
             None,
             SubscriptionTriggerHandle::new_void(),
+            BatchSize::default(),
+            false,
+            false,
         )
     }
 
@@ -252,11 +277,15 @@ impl ServiceProvider {
         mail_settings: Option<MailSettings>,
         settings: Option<Settings>,
         subscription_trigger: SubscriptionTriggerHandle,
+        batch_size: BatchSize,
+        disable_integration_transaction: bool,
+        relax_hardware_id_token_checks: bool,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
+            site_service: Box::new(SiteService {}),
             sensor_service: Box::new(SensorService {}),
             cold_chain_service: Box::new(ColdChainService {}),
             master_list_service: Box::new(MasterListService {}),
@@ -275,6 +304,7 @@ impl ServiceProvider {
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService::new(settings.clone())),
+            batch_size,
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),
@@ -286,8 +316,9 @@ impl ServiceProvider {
             encounter_service: Box::new(EncounterService {}),
             contact_trace_service: Box::new(ContactTraceService {}),
             app_data_service: Box::new(AppDataService {}),
-            site_info_service: Box::new(SiteInfoService),
+            site_auth_service: Box::new(SiteAuthService),
             sync_status_service: Box::new(SyncStatusService),
+            standalone_central_service: Box::new(StandaloneCentralService),
             processors_trigger,
             sync_trigger,
             site_is_initialised_trigger,
@@ -326,13 +357,18 @@ impl ServiceProvider {
             campaign_service: Box::new(CampaignService),
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
+            prescription_request_service: Box::new(PrescriptionRequestService),
+            prescription_request_line_service: Box::new(PrescriptionRequestLineService),
             contact_service: Box::new(ContactService {}),
+            custom_field_service: Box::new(CustomFieldService {}),
             sync_message_service: Box::new(SyncMessageService),
             help_document_service: Box::new(HelpDocumentService),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
             stock_relocation_service: Box::new(StockRelocationService),
             subscription_trigger,
+            disable_integration_transaction,
+            relax_hardware_id_token_checks,
         }
     }
 
@@ -344,6 +380,9 @@ impl ServiceProvider {
             user_id: "".to_string(),
             store_id: "".to_string(),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
+            disable_integration_transaction: self.disable_integration_transaction,
+            relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
 
@@ -357,6 +396,9 @@ impl ServiceProvider {
             user_id: SYSTEM_USER_ID.to_string(),
             store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
+            disable_integration_transaction: self.disable_integration_transaction,
+            relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
 
@@ -371,6 +413,9 @@ impl ServiceProvider {
             user_id,
             store_id,
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
+            disable_integration_transaction: self.disable_integration_transaction,
+            relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
 
@@ -389,6 +434,9 @@ impl ServiceContext {
             user_id: "".to_string(),
             store_id: "".to_string(),
             frontend_plugins_cache: FrontendPluginCache::new(),
+            batch_size: BatchSize::default(),
+            disable_integration_transaction: false,
+            relax_hardware_id_token_checks: false,
         }
     }
 }

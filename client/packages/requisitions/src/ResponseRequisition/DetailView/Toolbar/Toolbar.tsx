@@ -69,6 +69,7 @@ export const Toolbar = () => {
                       onChange={newOtherParty => {
                         update({ otherParty: newOtherParty ?? undefined });
                       }}
+                      width={250}
                     />
                   }
                 />
@@ -84,6 +85,9 @@ export const Toolbar = () => {
                         sx={{ width: 250 }}
                         value={theirReference}
                         onChange={e => update({ theirReference: e.target.value })}
+                        inputProps={{
+                          'data-testid': 'customer-reference-field',
+                        }}
                       />
                     </Box>
                   </Tooltip>
@@ -98,6 +102,7 @@ export const Toolbar = () => {
                       value={destinationCustomer ?? null}
                       onChange={() => {}}
                       clearable
+                      width={250}
                     />
                   }
                 />
@@ -129,6 +134,7 @@ export const Toolbar = () => {
             setItemFilter(newValue);
           }}
           debounceTime={0}
+          inputTestId="filter-input-itemCodeOrName"
         />
       </Grid>
     </AppBarContentPortal>
