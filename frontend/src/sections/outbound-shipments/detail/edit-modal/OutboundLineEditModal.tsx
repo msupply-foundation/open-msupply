@@ -1732,8 +1732,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </span>
               </LabelledValue>
             </div>
-            {/* Supplier comment (spec S4) — this store's reason for sending a
-                different quantity than the customer asked for. It follows
+            {/* The supplier comment (spec S4) — this store's reason for
+                sending a different quantity than the customer asked for.
+                Labelled plain "Comment" here: this store IS the supplier, so
+                "Supplier comment" reads ambiguously on this side (issue #629);
+                the receiving store sees it as "Supplier comment". It follows
                 Available because it explains the gap between that figure and
                 what was requested. ONE field for the ITEM, not per batch: the
                 save writes it onto every line of the item, so its batches can
@@ -1743,7 +1746,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <Show when={props.fromCustomerRequisition}>
               <div class={styles.supplierCommentField}>
                 <TextField
-                  label={t('label.supplier-comment')}
+                  label={t('label.comment')}
                   data-testid="supplier-comment-input"
                   value={transferComment()}
                   disabled={!props.editable || saving()}
