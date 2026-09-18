@@ -9,7 +9,7 @@ use crate::{
     diesel_extensions::double_coalesce,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
-        apply_sort_no_case, apply_string_filter,
+        apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
     purchase_order_line_stats,
     purchase_order_row::purchase_order::{self},
@@ -48,12 +48,19 @@ pub struct PurchaseOrderLineFilter {
     pub supplier_name: Option<StringFilter>,
     pub purchase_order_number: Option<EqualFilter<i64>>,
     pub item_name: Option<StringFilter>,
+    pub item_code_or_name: Option<StringFilter>,
     pub expected_delivery_date: Option<DateFilter>,
 }
 
 pub enum PurchaseOrderLineSortField {
     ItemName,
+    ItemCode,
     LineNumber,
+    Status,
+    Unit,
+    RequestedPackSize,
+    RequestedNumberOfUnits,
+    ShippedNumberOfUnits,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
     PurchaseOrderNumber,
@@ -109,6 +116,28 @@ impl<'a> PurchaseOrderLineRepository<'a> {
             match sort.key {
                 PurchaseOrderLineSortField::ItemName => {
                     apply_sort_no_case!(query, sort, item::name);
+                }
+                PurchaseOrderLineSortField::ItemCode => {
+                    apply_sort_no_case!(query, sort, item::code);
+                }
+                PurchaseOrderLineSortField::Status => {
+                    apply_sort!(query, sort, purchase_order_line::status);
+                }
+                PurchaseOrderLineSortField::Unit => {
+                    apply_sort_asc_nulls_first!(query, sort, purchase_order_line::unit);
+                }
+                PurchaseOrderLineSortField::RequestedPackSize => {
+                    apply_sort!(query, sort, purchase_order_line::requested_pack_size);
+                }
+                PurchaseOrderLineSortField::RequestedNumberOfUnits => {
+                    apply_sort!(query, sort, purchase_order_line::requested_number_of_units);
+                }
+                PurchaseOrderLineSortField::ShippedNumberOfUnits => {
+                    apply_sort!(
+                        query,
+                        sort,
+                        purchase_order_line_stats::shipped_number_of_units
+                    );
                 }
                 PurchaseOrderLineSortField::LineNumber => {
                     apply_sort!(query, sort, purchase_order_line::line_number);
@@ -219,6 +248,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             supplier_name,
             purchase_order_number,
             item_name,
+            item_code_or_name,
             expected_delivery_date,
         } = f;
 
@@ -262,6 +292,12 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             purchase_order_number,
             purchase_order::purchase_order_number
         );
+        // or filter need to be applied before and filters
+        if item_code_or_name.is_some() {
+            apply_string_filter!(query, item_code_or_name.clone(), item::code);
+            apply_string_or_filter!(query, item_code_or_name, item::name);
+        }
+
         apply_string_filter!(query, item_name, item::name);
         apply_date_filter!(
             query,
@@ -326,6 +362,10 @@ impl PurchaseOrderLineFilter {
         self
     }
 
+    pub fn item_code_or_name(mut self, filter: StringFilter) -> Self {
+        self.item_code_or_name = Some(filter);
+        self
+    }
     pub fn purchase_order(mut self, filter: PurchaseOrderFilter) -> Self {
         self.purchase_order = Some(filter);
         self
