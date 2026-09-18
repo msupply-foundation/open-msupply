@@ -1,68 +1,108 @@
 # The single definition of a deployed omSupply server.
 #
-# One file, several targets. `docker-deploy.yaml` supplies the values; the
-# topology - one service, three mount points - is identical for every one of
-# them, so the difference between the develop environment and a per-PR preview
-# is entirely interpolation. OMS_PROJECT is what separates them: compose
-# namespaces named volumes by project, so two projects on one daemon share
-# nothing.
+# One file, every target. `docker-deploy.yaml` supplies the values; the topology
+# - one service, four mount points, one network - is identical for all of them,
+# so the difference between the develop deployment, a release candidate, a QA
+# deployment and a per-PR preview is entirely interpolation.
 #
-# Defaults to a dev/demo shape: the postgres-flavoured image bundling its own
-# postgres inside the container. That is convenient - one container, no
-# orchestration - but it couples the app's lifecycle to the database's, which is
-# the wrong shape for anything holding data you would miss.
+# OMS_PROJECT is what separates them, and it is the ONLY key. It is at once the
+# compose project (so volumes are namespaced by it), the container name, and the
+# first label of the hostname the proxy routes by. They cannot disagree, because
+# they are one string:
 #
-# Pointing it at an external postgres instead needs no second file and no
-# override layer: set OMS_ENTRYPOINT and the PG_* variables below.
+#   OMS_PROJECT=pr-470  ->  container pr-470, volumes pr-470_*,
+#                           reachable at pr-470.<DEPLOY_DOMAIN>
 #
-# Every default below reproduces the develop environment exactly, so a bare
-# `docker compose -f docker/compose.deploy.yaml ...` with only OMS_IMAGE set
-# behaves as it always has.
+# Every deployment runs the postgres-flavoured image, which bundles its own
+# postgres. That couples the app's lifecycle to the database process - but NOT
+# to the data, which lives in the named volume below and survives every redeploy
+# and image change. Only `down -v` removes it.
+#
+# TWO PREREQUISITES, both on the box rather than in this file:
+#
+#   docker network create oms-edge     # the proxy and every deployment share it
+#   OMS_MACHINE_ID_FILE=<a file>       # see the machine-id mount below
+#
+# So a bare `docker compose -f docker/compose.deploy.yaml up` needs OMS_IMAGE,
+# OMS_PROJECT and OMS_MACHINE_ID_FILE, and the network to exist.
 
-name: ${OMS_PROJECT:-omsupply-develop}
+name: ${OMS_PROJECT:?OMS_PROJECT must be set - it is the project, the container name and the hostname}
 
 services:
   server:
     image: ${OMS_IMAGE:?OMS_IMAGE must be set}
-    # Pinned rather than left to compose's `<project>-server-1`, because it is
-    # the stable handle everything else addresses this container by: the deploy
-    # job's health inspection, the teardown, and - once previews move behind a
-    # reverse proxy - the hostname-to-upstream mapping, which is what lets that
-    # proxy hold one static route instead of a generated one per PR.
-    container_name: ${OMS_PROJECT:-omsupply-develop}
+    # Pinned rather than left to compose's `<project>-server-1`, because this is
+    # the routing key: the proxy's Caddyfile maps the first label of the hostname
+    # straight to a container name, which is what lets it hold ONE static route
+    # for every deployment, with no generated config and no reload. Unpin this
+    # and nothing routes.
+    container_name: ${OMS_PROJECT}
     restart: unless-stopped
-    ports:
-      - "${OMS_PORT:-8000}:8000"
 
-    # The postgres-flavoured image's default entrypoint runs
-    # initdb/pg_ctl/createdb against a cluster *inside* the container, so an
-    # external database needs this set to the image's plain entrypoint,
-    # /usr/src/omsupply/server/entry.sh - hardware id, optional reference-data
-    # load, exec the server - or a second, unused postgres boots alongside the
-    # real one. Either way the image must stay postgres-flavoured: the binary
-    # has to be compiled against the postgres backend.
-    entrypoint: ${OMS_ENTRYPOINT:-/usr/src/omsupply/server/entry-postgres.sh}
+    # No published ports, deliberately. The proxy reaches port 8000 over the
+    # oms-edge network below, which is what replaced allocating a host port per
+    # deployment from a range. Nothing here is reachable from off the box except
+    # through the proxy.
+
+    labels:
+      # When this deployment should be destroyed, ISO 8601, or the literal
+      # `never`. docker-expire.yaml reads it off the container and tears down
+      # anything past due.
+      #
+      # On the container rather than in a state file anywhere, so the record
+      # lives on the thing it describes and cannot be orphaned or lost. A
+      # redeploy recreates the container with a fresh label, which is what makes
+      # "extend the expiry" just "deploy it again with a bigger number".
+      oms.expires: ${OMS_EXPIRES:-never}
+
+      # The BRANCH this deployment follows, so a push to it updates this
+      # deployment. Empty means pinned: deployed from a tag or a commit, and no
+      # push will ever touch it.
+      #
+      # This has to be RECORDED rather than derived. The name and the branch are
+      # independent - `vaccine-flow` can follow `feature/foo` - so there is no
+      # rule that gets from one to the other. An earlier version of this design
+      # assumed a deployment was always named after its branch, which quietly
+      # meant anything with a name of its own never auto-updated at all.
+      #
+      # Specifically the branch, and not "the ref as given", which was the first
+      # attempt: a deployment pinned to the TAG `v2.8.0` then matched a push to
+      # a BRANCH called `v2.8.0`, because both are the string `v2.8.0` once
+      # written to a label. The caller resolves what kind of ref it has and only
+      # fills this in for a branch, so a pinned deployment simply has nothing to
+      # match on.
+      #
+      # On the container for the same reason as the expiry: the record lives on
+      # the thing it describes, so it cannot be orphaned, and a deployment that
+      # has been torn down stops matching by not existing.
+      oms.branch: ${OMS_BRANCH:-}
+
+      # The cargo profile this deployment was built with, so an auto-update
+      # reuses whatever was chosen for it rather than guessing. Recorded for the
+      # same reason as the branch: a push carries no inputs, so the only place
+      # the answer can come from is the deployment itself.
+      #
+      # This replaced a DEPLOY_PROFILE repository variable, which was
+      # all-or-nothing - it applied to every deployment that followed a branch,
+      # so making develop quick to build also made every release candidate a
+      # debug build, which is a poor thing to hand QA.
+      oms.profile: ${OMS_PROFILE:-release}
+
+    # The image's own entrypoint, which runs initdb/pg_ctl/createdb against the
+    # cluster inside the container and then execs entry.sh. Not a variable: with
+    # external postgres support removed there is exactly one correct value, and
+    # when it WAS a variable the wrong value booted a second postgres alongside
+    # the real one.
+    entrypoint: /usr/src/omsupply/server/entry-postgres.sh
 
     environment:
-      # The defaults restate what local.postgres.yaml already bakes into the
-      # image, so the bundled shape behaves exactly as before - but they put the
-      # database settings somewhere visible rather than hidden in the image, and
-      # they are what the PG_* variables replace for an external server. An
-      # unset GitHub variable arrives as the empty string, which `:-` treats as
-      # absent, so these apply as written.
-      APP__DATABASE__HOST: ${PG_HOST:-localhost}
-      APP__DATABASE__PORT: ${PG_PORT:-5432}
-      APP__DATABASE__USERNAME: ${PG_USER:-postgres}
-      APP__DATABASE__PASSWORD: ${PG_PASSWORD:-password}
-      APP__DATABASE__DATABASE_NAME: ${PG_DATABASE:-omsupply-database}
-
-      # Seeding, and the reason it is passed per deploy rather than baked in:
+      # Seeding, and why it is passed per deploy rather than baked in:
       # `initialise-from-export` starts by DROPPING AND RECREATING the database
       # (server/cli/src/cli.rs, Action::InitialiseFromExport). Left set, it would
       # wipe the deployment on every redeploy. The caller therefore passes it
-      # only when it knows the database does not exist yet - see the `allocate`
-      # job in docker-pr-preview.yaml - and passes nothing on every deploy after
-      # that, so the server migrates the existing data instead.
+      # only when it knows the database does not exist yet - it checks whether
+      # this project's volume is there - and passes nothing on every deploy
+      # after that, so the server migrates the existing data instead.
       #
       # It also disables sync unconditionally, so a seeded deployment cannot
       # reach a central server.
@@ -71,32 +111,88 @@ services:
       # runs `refresh-dates` whenever this is true, reference file or not, so
       # left on it would shift a live deployment's dates forward on every
       # redeploy. It exists because a dataset is a snapshot of whenever it was
-      # exported, and stale dates make a preview misleading.
+      # exported, and stale dates make a deployment misleading.
       SHOULD_REFRESH_DATES: ${OMS_REFRESH_DATES:-}
 
-      # mDNS discovery is pointless on a server reached over a published port,
-      # and is noise on a box running many stacks at once. `Auto` is the enum's
-      # own #[default] (server/service/src/settings.rs), so the fallback is a
-      # no-op rather than a new opinion - it is spelled out because an empty
-      # string here would fail to deserialise as a DiscoveryMode.
-      APP__SERVER__DISCOVERY: ${OMS_DISCOVERY:-Auto}
+      # mDNS discovery, off for every deployment. Not a per-caller choice: with
+      # no published ports, nothing on a LAN can reach any of these servers by
+      # any route other than the proxy, so there is nothing for discovery to be
+      # useful for - and a box running many stacks at once does not need each of
+      # them shouting. Spelled out rather than left unset because an empty
+      # string here fails to deserialise as a DiscoveryMode.
+      APP__SERVER__DISCOVERY: Disabled
+
+      # Makes this deployment a central server. Its own comment in
+      # server/service/src/settings.rs says "should only be used in testing,
+      # demo and development", which is exactly what every deployment here is.
+      #
+      # Deliberately an explicit value rather than inferred from a `-central`
+      # suffix in OMS_PROJECT: the name driving ROUTING is mechanical and fails
+      # visibly as a 502, whereas the name driving what KIND of server this is
+      # would fail silently and semantically. Different classes, so they do not
+      # share a mechanism.
+      APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER: ${OMS_CENTRAL:-false}
 
     volumes:
-      # A bare name is a named volume; a host path is a bind mount. That is the
-      # whole difference between the demo shape and a real deployment, so both
-      # are this one file with different values.
-      #
       # entry-postgres.sh puts PG_DATA at /database/postgres/data, and the image
       # declares no VOLUME - so without this line every deploy silently destroys
       # the database. At several merges a day that is not a subtle failure.
-      # (With an external database nothing writes here, and the mount is inert.)
-      - ${OMS_DATABASE_DIR:-omsupply-data}:/database
+      #
+      # A named volume, namespaced by project, and that is the whole persistence
+      # story: it lives outside the container, survives every redeploy and image
+      # change, and is removed only by `down -v` or an explicit `docker volume
+      # rm`. A host bind mount would additionally survive `down -v`, and was
+      # rejected for it - bundled postgres on a host path is a reliable source of
+      # `initdb: could not change permissions`, which a named volume avoids by
+      # copying ownership on first use.
+      - omsupply-data:/database
       # server.base_dir (static and sync files, the validated plugin bucket) and
       # logging.directory from base.yaml, resolved against the image's workdir -
-      # so neither is under /database, and until now every deploy silently
-      # discarded both, bundled postgres or not.
-      - ${OMS_APP_DATA_DIR:-omsupply-app-data}:/usr/src/omsupply/server/app_data
-      - ${OMS_LOG_DIR:-omsupply-log}:/usr/src/omsupply/server/log
+      # so neither is under /database, and without these both are discarded.
+      - omsupply-app-data:/usr/src/omsupply/server/app_data
+      - omsupply-log:/usr/src/omsupply/server/log
+      # A stable hardware id for this deployment, and the one host path left.
+      #
+      # machine_uid::get() reads /etc/machine-id on Linux, and the
+      # server.machine_uid config override is Android-only (#[cfg] in
+      # server/server/src/lib.rs), so APP__SERVER__MACHINE_UID does nothing in
+      # this image. entry.sh generates a fresh UUID whenever the file is empty -
+      # which is every new container - so without this a redeploy changes the
+      # site's hardware id and v7 pairing rejects it. entry.sh's own comment
+      # anticipates exactly this mount.
+      #
+      # Required rather than defaulted, for two reasons. A default of the HOST's
+      # /etc/machine-id would work but give every deployment on the box the same
+      # id, which collides the moment two of them pair to one central server -
+      # and a central/remote pair is the obvious thing to deploy. And if the path
+      # does not exist, docker creates a DIRECTORY there, after which the obvious
+      # repair (`touch machine-id`) silently no-ops on a directory and the whole
+      # thing looks unfixable. docker-deploy.yaml creates the file, per
+      # deployment, before it brings anything up.
+      #
+      # Read-only: the container has no business rewriting its own identity, and
+      # the file must already be non-empty because entry.sh tests -s, not -e.
+      - ${OMS_MACHINE_ID_FILE:?OMS_MACHINE_ID_FILE must be set - see the comment here}:/etc/machine-id:ro
+
+    networks:
+      # One shared network, and no per-project network. Two reasons, and the
+      # second is the load-bearing one:
+      #
+      # The proxy resolves `<project>:8000` through docker's embedded DNS, which
+      # only resolves container names within a shared user-defined network.
+      #
+      # And docker's default address pool subnets into ~31 bridge networks. A
+      # network per deployment plus the shared one would hit that ceiling on a
+      # busy box and fail with `all predefined address pools have been fully
+      # subnetted`, which reads as having nothing to do with deployments.
+      #
+      # Consequence worth knowing: because every stack shares one network,
+      # compose's automatic `server` service alias is claimed by all of them at
+      # once, so resolving `server` here returns an arbitrary deployment.
+      # Nothing does - the container_name above is the only handle anything
+      # uses - but do not add something that relies on the service name.
+      - edge
+
     healthcheck:
       # The server runs migrations on boot and exits if they fail, so "process
       # alive and answering" is already a meaningful signal. __typename needs no
@@ -113,9 +209,20 @@ services:
       # First boot runs initdb and the full migration set; later boots are quick.
       start_period: 180s
 
-# Used by the default shape. When the OMS_*_DIR variables point at host paths
-# instead, these declarations go unreferenced and compose prunes them.
 volumes:
   omsupply-data:
   omsupply-app-data:
   omsupply-log:
+
+networks:
+  edge:
+    name: oms-edge
+    # External, so that a deployment's teardown - `down -v --remove-orphans` -
+    # leaves it alone. Declared any other way, the last teardown on the box
+    # would delete the network out from under the proxy and every deployment
+    # still running on it.
+    #
+    # A literal name, not a variable: it has to agree with the proxy that was
+    # stood up by hand on the box, and a knob that must match something outside
+    # this repo is worse than no knob.
+    external: true
