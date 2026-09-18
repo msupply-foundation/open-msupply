@@ -45,6 +45,7 @@ import { supplierReturnsRoutes } from './sections/supplier-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { purchaseOrdersRoutes } from './sections/purchase-orders';
 import { internalOrdersRoutes } from './sections/internal-orders';
 import { requisitionsRoutes } from './sections/requisitions';
 import { rnrFormsRoutes } from './sections/rnr-forms';
@@ -110,6 +111,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'replenishment/internal-order': internalOrdersRoutes,
   'replenishment/r-and-r-forms': rnrFormsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
+  'replenishment/purchase-order': purchaseOrdersRoutes,
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
   'dispensary/patients': patientsRoutes,

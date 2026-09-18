@@ -16,7 +16,10 @@ import { remToPx } from '../../../ui/utils/rem';
 import { SupplierPurchaseOrders } from '../names.generated';
 import type { SupplierPurchaseOrdersResult } from '../names.generated';
 import { purchaseOrderAreaPath } from '../list/namesListLogic';
-import { poStatusLabel } from './purchaseOrderStatus';
+// The status label mapping is the purchase-order vertical's, not this
+// screen's: this tab only lists another vertical's records (spec/names
+// ui-surface S4 — named, not owned).
+import { poStatusLabel } from '@/sections/purchase-orders/purchaseOrderStatus';
 
 // S4 Purchase orders tab — a read-only reference list of the supplier's
 // purchase orders (AC-N26). The DATA is owned by the purchase-order vertical
