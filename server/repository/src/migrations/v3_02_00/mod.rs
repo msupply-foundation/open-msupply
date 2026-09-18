@@ -3,7 +3,6 @@ use crate::StorageConnection;
 
 mod add_clinician_to_prescription_request;
 mod add_custom_field_scope_deleted_datetime;
-mod add_database_error_to_system_log_type_enum;
 mod add_prescription_request_activity_log_types;
 mod add_prescription_request_id_to_invoice;
 mod add_prescription_request_report_context;
@@ -38,7 +37,6 @@ impl Migration for V3_02_00 {
             Box::new(add_transfer_comment_to_invoice_line::Migrate),
             Box::new(restore_stocktake_line_indexes::Migrate),
             Box::new(add_prescription_request_report_context::Migrate),
-            Box::new(add_database_error_to_system_log_type_enum::Migrate),
         ]
     }
 }
