@@ -202,9 +202,19 @@ Repository variables that configure this:
 | variable | default | what it does |
 |---|---|---|
 | `DEPLOY_DOMAIN` | *none — required* | the base every deployment's hostname hangs off, e.g. `preview.example.com` |
-| `PROXY_PORT` | `8080` | the host port the proxy listens on, for the edge to forward to |
 | `DEPLOY_STATE_DIR` | `/opt/omsupply/deployments` | where each deployment's `machine-id` file is kept |
 | `DEPLOY_REFERENCE_FILE` | `e2e` | which dataset a new deployment is seeded from |
+
+There is deliberately no variable for the proxy's host port. It used to be `PROXY_PORT`, and it was a second copy of something the proxy already knows: a proxy brought up on port 80 against a variable still saying `8080` makes every route check fail with a refused connection, reported as an unroutable deployment. The route check now reads the published port from `docker port oms-proxy 80/tcp` instead, so the two cannot disagree. If the variable is still set on the repository it is inert and can be deleted.
+
+`DEPLOY_STATE_DIR` has to exist and be writable by the runner user before the first deploy. The runner does not run as root, so it cannot create a directory under `/opt` itself, and the default lands there. Once per box:
+
+```bash
+sudo mkdir -p /opt/omsupply/deployments
+sudo chown "$(id -un)":"$(id -gn)" /opt/omsupply/deployments   # as the runner user
+```
+
+Or point `DEPLOY_STATE_DIR` at somewhere the runner already owns. Not inside the runner's `_work` tree, which is cleaned between jobs.
 
 **Do not wipe `DEPLOY_STATE_DIR`.** It holds one `machine-id` file per
 deployment, bind-mounted read only at `/etc/machine-id`. `machine_uid::get()`
@@ -276,14 +286,15 @@ describe it.
 
 | file, in `proxy/` beside this page | |
 |---|---|
-| `compose.proxy.yaml` | the Caddy container, its published port and the shared network |
+| `compose.proxy.yaml` | the Caddy container, its published ports, its CA volume and the shared network |
 | `proxy.Caddyfile` | the one route, for every deployment |
 
 1. **A wildcard DNS record** for `*.<DEPLOY_DOMAIN>`, pointing at whatever
    terminates TLS.
 2. **One vhost on the edge proxy** for `*.<DEPLOY_DOMAIN>`, forwarding to this
-   box on `PROXY_PORT`. TLS stops there, so nothing on the deploy box does ACME
-   and no DNS credentials live on it.
+   box on `PROXY_PORT` (default `80`). TLS stops there, so nothing on the deploy
+   box does ACME and no DNS credentials live on it. Skip this if the deploy box
+   is reached directly — the local HTTPS below then covers it.
 3. **The shared network and the proxy.** Copy both files into a directory of
    their own — they must stay together, because the compose file mounts
    `./proxy.Caddyfile` relative to itself:
@@ -294,6 +305,11 @@ describe it.
    echo "DEPLOY_DOMAIN=preview.example.com" > .env
    docker compose -f compose.proxy.yaml up -d
    ```
+
+   It takes 80 and 443 by default, which is what you want on a box that only
+   hosts deployments. Set `PROXY_PORT` and `PROXY_TLS_PORT` in the same `.env` if
+   something already holds them — an edge proxy sharing this machine rather than
+   sitting in front of it. CI does not need to be told either value.
 
 `docker-deploy.yaml` creates `oms-edge` if it is missing, so a deployment never
 fails for want of it — but it does **not** create the proxy. A deployment onto a
@@ -314,6 +330,25 @@ mounted at start:
 ```bash
 docker compose -f compose.proxy.yaml up -d --force-recreate
 ```
+
+#### Local HTTPS
+
+The proxy also serves every deployment over TLS on `PROXY_TLS_PORT` (default `443`), using a certificate Caddy issues from its own internal CA. Nothing external touches this: the edge proxy terminates real TLS and forwards to the HTTP port, so this exists for reaching a deployment directly from this network, and for the browser features that refuse to work outside a secure context.
+
+The certificate is a wildcard for `*.<DEPLOY_DOMAIN>` signed by a CA that nothing trusts until you say so. Pull the root out and trust it on the machine you are browsing from:
+
+```bash
+docker cp oms-proxy:/data/caddy/pki/authorities/local/root.crt ./caddy-root.crt
+
+# macOS
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain caddy-root.crt
+# Debian/Ubuntu
+sudo cp caddy-root.crt /usr/local/share/ca-certificates/caddy-root.crt && sudo update-ca-certificates
+```
+
+Firefox keeps its own trust store and will not pick that up; either add the root under Settings → Privacy & Security → Certificates, or set `security.enterprise_roots.enabled` to true.
+
+The CA lives in the `caddy-data` volume specifically so it survives the `--force-recreate` above. A `docker compose down -v` destroys it, and every machine that trusted the old root then has to trust the new one — so use plain `down`.
 
 #### How the routing works, and why it never needs touching
 

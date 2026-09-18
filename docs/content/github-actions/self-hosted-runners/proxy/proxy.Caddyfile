@@ -33,9 +33,17 @@
 # that was torn down 502s, which is the correct answer.
 {
 	# TLS is terminated by the edge proxy in front of this, which forwards
-	# *.<domain> here over plain HTTP. Without this, Caddy would try to obtain
-	# certificates for a wildcard it cannot validate and has no need for.
-	auto_https off
+	# *.<domain> here over plain HTTP. Public certificates remain something this
+	# proxy neither obtains nor needs - it could not validate a wildcard for this
+	# domain anyway.
+	#
+	# Not `off`, though, which would also disable the INTERNAL issuer that the
+	# https:// site below uses for local work. `disable_redirects` keeps issuance
+	# while removing the one part of automatic HTTPS that would break the edge
+	# path: a redirect on :80 sending already-de-TLSed traffic back out to a port
+	# the edge does not speak to. Anything arriving on :80 is either the edge or
+	# someone local who asked for HTTP, and both mean it.
+	auto_https disable_redirects
 	# Nothing here is reconfigured at runtime - the whole point is that this
 	# file is static - so the admin API is surface with no purpose.
 	admin off
@@ -45,6 +53,16 @@
 # there are three such cases and they must not drift apart; the status code is
 # the one thing that differs, so it is the argument.
 (nothing_here) {
+	# `respond` sets no Content-Type of its own, and without one the page is
+	# served as plain text - the markup below rendered as visible source rather
+	# than as a page. Set explicitly rather than left to sniffing, which is what
+	# was being relied on unknowingly.
+	#
+	# Safe in all three call sites despite `header` and `respond` being written
+	# in this order only here: inside `route` the written order is the executed
+	# order, and in the other two Caddy's standard directive order already puts
+	# `header` ahead of `respond`.
+	header Content-Type "text/html; charset=utf-8"
 	respond <<HTML
 		<!doctype html>
 		<meta charset="utf-8">
@@ -65,7 +83,10 @@
 		HTML {args[0]}
 }
 
-http://*.{$DEPLOY_DOMAIN} {
+# The routing itself, as a snippet, for the same reason `nothing_here` is one:
+# it is imported by both the HTTP and the HTTPS site and the two must not drift.
+# They are the same route reached two ways, not two policies.
+(deployment_routing) {
 	# Deliberately a regex capture on Host rather than Caddy's `{labels.N}`.
 	# `{labels.N}` indexes the hostname's labels from the RIGHT, so the index
 	# of the first label is a function of how deep DEPLOY_DOMAIN is:
@@ -116,10 +137,39 @@ http://*.{$DEPLOY_DOMAIN} {
 	}
 }
 
+# The edge path, and the only one anything outside this box uses. TLS was
+# terminated upstream; this is plain HTTP and stays that way.
+http://*.{$DEPLOY_DOMAIN} {
+	import deployment_routing
+}
+
+# The local path. Same route, reached over TLS, for working against a deployment
+# from a machine on this network without the edge proxy in between - and for the
+# cases that need a secure context to behave at all (service workers, clipboard,
+# anything gated on `isSecureContext`), which plain HTTP on a non-localhost
+# hostname does not give you.
+#
+# `internal` means Caddy's own CA, which signs this wildcard itself. No ACME, no
+# DNS challenge, no credentials on this box - the reasons the public certificate
+# was never obtainable here do not apply to a certificate Caddy issues to itself.
+# The cost is that the CA is not trusted anywhere until you say so; see the
+# runbook for pulling the root out and trusting it.
+#
+# Nothing external reaches this: the edge proxy forwards to the HTTP port only,
+# so exposing this one on the LAN is a deliberate, separate act.
+https://*.{$DEPLOY_DOMAIN} {
+	tls internal
+	import deployment_routing
+}
+
 # Everything else reaching this proxy: the bare domain with no deployment
 # label, or a host that is not in DEPLOY_DOMAIN at all. Without this block
 # Caddy matches no site and answers an empty 200, which reads as "up but
 # broken" rather than "you are in the wrong place".
+#
+# HTTP only. The equivalent on :443 would need a certificate for names not known
+# ahead of time, and the honest answer to an unknown SNI is a failed handshake
+# rather than a page served under a name Caddy had to invent a certificate for.
 :80 {
 	import nothing_here 404
 }
