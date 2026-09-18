@@ -1701,7 +1701,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                           size="small"
                           data-testid="requested-quantity-value"
                         >
-                          {formatNumber(context().requested)}
+                          {/* Unit name after the figure, inflected with the
+                              count (getPlural, as unitsHint) — so the banner
+                              reads like the requisition editors' quantities. */}
+                          {(() => {
+                            const unit = item()?.unitName;
+                            const requested = context().requested;
+                            return unit
+                              ? `${formatNumber(requested)} ${getPlural(unit, requested)}`
+                              : formatNumber(requested);
+                          })()}
                         </LabelledValue>
                       )}
                     </Show>

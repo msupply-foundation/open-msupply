@@ -2105,6 +2105,7 @@
   "label.units-plural_one": "unit",
   "label.units-plural_other": "units",
   "label.units-received": "{{unit}} received",
+  "label.units-requested": "{{unit}} requested",
   "label.universal-code": "Universal code",
   "label.universal-name": "Universal name",
   "label.unusable-vvm-status": "Unusable VVM status",

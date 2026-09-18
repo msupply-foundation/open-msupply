@@ -62,6 +62,7 @@ import {
 import {
   INTERNAL_ORDER_LINE_COLUMNS as COL,
   mergeLineColumns,
+  sortLinesByContribution,
   type LineColumnBatch,
 } from './lineColumns';
 import {
@@ -206,7 +207,9 @@ const InternalOrderDetailView: Component = () => {
   const [reasonFlaggedIds, setReasonFlaggedIds] = createSignal<Set<string>>(
     new Set()
   );
-  const [sort, setSort] = createSignal<SortState<SortKey>>({
+  // Keyed as `string`, not the host `SortKey` union: a contributed sortable
+  // column's key is its namespaced id (lineColumns § the contributed sort).
+  const [sort, setSort] = createSignal<SortState<string>>({
     key: 'name',
     desc: false,
   });
@@ -509,7 +512,7 @@ const InternalOrderDetailView: Component = () => {
   const isExcess = (line: Line) =>
     showExcess() && line.requestedQuantity - line.suggestedQuantity >= 1;
 
-  const sortValue = (line: Line, key: SortKey): number | string => {
+  const sortValue = (line: Line, key: string): number | string => {
     switch (key) {
       case 'code':
         return line.item.code.toLowerCase();
@@ -529,10 +532,19 @@ const InternalOrderDetailView: Component = () => {
         return line.suggestedQuantity;
       case 'requested':
         return line.requestedQuantity;
+      // A key that is neither a host key nor a resolvable contributed sort —
+      // a plugin uninstalled under a remembered sort — leaves the set as it
+      // arrived rather than guessing an order.
+      default:
+        return 0;
     }
   };
 
-  const rows = (): Line[] => {
+  // Membership only — `rows()` below is the sorted view. Split because the
+  // loaders' batch is keyed on membership: a sort must never refetch it, and
+  // the CONTRIBUTED sort reads the batch, so keying the resource on sorted
+  // order would cycle (sort → key → refetch → data → resort).
+  const filteredLines = (): Line[] => {
     const node = info();
     if (!node) return [];
     let lines = node.lines.nodes;
@@ -549,6 +561,37 @@ const InternalOrderDetailView: Component = () => {
         l =>
           l.availableStockOnHand < l.averageMonthlyConsumption * months ||
           (l.availableStockOnHand === 0 && l.averageMonthlyConsumption === 0)
+      );
+    }
+    return lines;
+  };
+
+  // The active sort's contribution, where the key names a contributed column
+  // that declares one (AC-PLUG-K7) — the merge put its namespaced id in
+  // `sortKey`, so the table hands the same id back through `onSort`.
+  const sortContribution = () =>
+    lineColumnContributions().find(
+      contribution =>
+        contributionId(contribution) === sort().key &&
+        contribution.sortValue !== undefined
+    );
+
+  const rows = (): Line[] => {
+    const lines = filteredLines();
+    const contribution = sortContribution();
+    if (contribution !== undefined) {
+      // Non-suspending read, like the cells' own (the editor may be open
+      // above this table); until the batch resolves every value reads
+      // undefined and the set keeps its arrival order.
+      const entries = (gated(lineColumnData) ?? EMPTY_BATCH_DATA).get(
+        contributionId(contribution)
+      );
+      return sortLinesByContribution(
+        lines,
+        toLineView,
+        contribution,
+        entries,
+        sort().desc
       );
     }
     return sortRows(lines, sort(), sortValue);
@@ -898,21 +941,24 @@ const InternalOrderDetailView: Component = () => {
     }))
   );
 
-  // The lines a contributed column sees, as the SDK's published DTO.
-  const lineViews = createMemo(() => rows().map(toLineView));
+  // The lines a contributed column sees, as the SDK's published DTO — in
+  // arrival order, not display order: loaders MUST tolerate any order, and
+  // the contributed sort reads what they load, so the batch cannot follow it.
+  const lineViews = createMemo(() => filteredLines().map(toLineView));
 
   // The batched per-page column data (AC-PLUG-K4): one loader call per
-  // contribution per rendered set of rows, never per cell. The resource key is
-  // the SERIALISED row-id list plus the contributing ids, so re-reading
-  // the same lines (a header save splicing the node back, a locale switch)
-  // does not refetch, while a filter/sort/refetch that changes it does.
+  // contribution per rendered set of rows, never per cell. The resource key
+  // is the MEMBERSHIP — the unsorted row-id list plus the contributing ids —
+  // so re-reading the same lines (a header save splicing the node back, a
+  // locale switch) or re-ordering them (a sort, contributed ones included)
+  // does not refetch, while a filter/refetch that changes the set does.
   const batchKey = () => {
     const loaders = lineColumnContributions().filter(
       contribution => contribution.loadData !== undefined
     );
     if (loaders.length === 0) return false;
     return JSON.stringify({
-      rows: rows().map(line => line.id),
+      rows: filteredLines().map(line => line.id),
       contributions: loaders.map(contributionId),
     });
   };

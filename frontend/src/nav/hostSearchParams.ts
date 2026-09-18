@@ -65,6 +65,14 @@ export const hostSearchParam = (name: string): string | undefined =>
   new URLSearchParams(bound?.() ?? '').get(name) ?? undefined;
 
 /**
+ * The whole current query string (`?a=b` form, or ``) — for the SDK's
+ * page-level reader (plugin-sdk/pageSearch.ts), which hands a page its own
+ * `URLSearchParams` rather than one named value. Same binding, same
+ * reactivity, same unbound-reads-empty rule as `hostSearchParam`.
+ */
+export const hostSearch = (): string => bound?.() ?? '';
+
+/**
  * Set or clear search parameters — `null`/`undefined` removes one — in ONE
  * navigation, leaving the path and every other parameter alone.
  *
