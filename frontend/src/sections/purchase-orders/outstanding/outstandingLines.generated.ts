@@ -65,6 +65,10 @@ export type OutstandingLinesVariables = {
     equalTo?: string | null;
     like?: string | null;
   } | null;
+    itemCodeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
     expectedDeliveryDate?: {
     equalTo?: string | null;
     beforeOrEqualTo?: string | null;
@@ -72,7 +76,7 @@ export type OutstandingLinesVariables = {
   } | null;
   } | null;
   sort?: Array<{
-    key: "itemName" | "lineNumber" | "requestedDeliveryDate" | "expectedDeliveryDate" | "purchaseOrderNumber" | "supplierName" | "purchaseOrderConfirmedDatetime" | "adjustedNumberOfUnits" | "receivedNumberOfUnits" | "outstandingNumberOfUnits";
+    key: "itemName" | "itemCode" | "lineNumber" | "status" | "unit" | "requestedPackSize" | "requestedNumberOfUnits" | "shippedNumberOfUnits" | "requestedDeliveryDate" | "expectedDeliveryDate" | "purchaseOrderNumber" | "supplierName" | "purchaseOrderConfirmedDatetime" | "adjustedNumberOfUnits" | "receivedNumberOfUnits" | "outstandingNumberOfUnits";
     desc?: boolean | null;
   }> | null;
   page?: {
