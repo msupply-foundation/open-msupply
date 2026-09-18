@@ -113,7 +113,7 @@ Run the **Docker named deployment** workflow to get a server of your own. Nothin
 | `days` | How many days to keep it, up to 30. `0` gives a permanent server. Ignored by `teardown`. |
 | `action` | `deploy` creates it, or updates an existing one and keeps its data. `reseed` wipes its data and starts again from the sample dataset. `teardown` deletes it and its data. |
 | `central` | Makes it a central server rather than a remote site. Leave unticked unless you have been told otherwise. |
-| `profile` | `release` is what ships, and the default. `debug` compiles in a fraction of the time but runs slower — good for trying a feature out, no use for judging performance. Whatever you pick sticks: every later push to the branch it follows rebuilds it the same way. |
+| `profile` | `keep` (the default) reuses whatever this deployment was built with last time, so extending an expiry does not quietly change it — `release` for a brand new one. `release` is what ships. `debug` compiles in a fraction of the time but runs slower: good for trying a feature out, no use for judging performance. Whatever you pick sticks, for pushes and for later dispatches alike. |
 
 The workflow reports the address in its summary, and the server is usually ready in about twenty minutes — or about one if the commit has been built before, or if you gave it a release tag.
 
@@ -141,9 +141,11 @@ The branch a deployment follows is **recorded on it**, so its name and its branc
 
 One branch, one deployment. Two deployments following the same branch would each need their own image and their own deploy, so it says so and stops rather than updating one and leaving the other behind — point the extras at a tag to freeze them. Two *different* RC branches are fine and get a server each.
 
-**A push only ever updates.** Pushing to a branch nobody has deployed does nothing, and a deployment removed while a build was running is not resurrected by it.
+A deployment's whole record is three labels on its container — the branch it follows, when it expires, and how it was built — so there is nothing to configure per deployment and nothing to keep in step. One caveat: those labels are written by `docker/compose.deploy.yaml` **as of the ref being deployed**, so a deployment following a branch that predates this change will not carry them until that branch has it.
 
-An auto-update changes the image and **not** the expiry — a push has no `days`, so the deployment keeps the clock it already had. And a push only ever *updates*: pushing to a branch nobody has deployed does nothing.
+**An auto-update changes the image and nothing else.** A push has no form to read, so the deployment keeps the expiry it already had and rebuilds with the profile it was already built with — the clock does not move and `debug` does not silently become `release`.
+
+**A push only ever updates.** Pushing to a branch nobody has deployed does nothing, and a deployment removed while a build was running is not resurrected by it.
 
 **Anything can be torn down or reseeded, `develop` included.** Both destroy the database, and nothing stops you — these are testing servers seeded from a sample dataset, any of them comes back by deploying it again, and the ones following a branch come back on the next push.
 

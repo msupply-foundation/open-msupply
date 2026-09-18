@@ -244,6 +244,11 @@ why its planning job runs on this box rather than a GitHub-hosted runner. A push
 carries no inputs, so the deployment itself is the only place those answers can
 come from.
 
+They are written by `docker/compose.deploy.yaml` **as of the ref being
+deployed**, not by whatever is on the default branch — so a deployment following
+a branch that predates a label will not carry it, and will keep taking the
+default until that branch has the change.
+
 **`docker-expire.yaml` sweeps expired deployments daily**, reading the
 `oms.expires` label off each container. Its job summary lists everything
 currently deployed and when each expires — the quickest answer to "what is
