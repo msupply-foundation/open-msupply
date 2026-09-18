@@ -47,7 +47,7 @@ const FACILITY_OR_STORE: NameFilter = {
 };
 
 /** The external half of that pair — a facility, never one of the system's own
- *  stores (see `NameNarrowing.external`). */
+ *  stores (see {@link PartyKind}). */
 const FACILITY_ONLY: NameFilter = { type: { equalAny: ['FACILITY'] } };
 
 export const roleFilter = (role: NameRole): NameFilter => {
@@ -119,27 +119,35 @@ export const fetchNameById = async (
 };
 
 /**
+ * Which side of the system a picker offers, where its role alone is too wide:
+ *
+ *   storeBacked  only parties that are themselves stores in this system. The
+ *                internal-order create picker needs it — the create resolver
+ *                rejects a non-store supplier, so offering only store-backed
+ *                ones keeps that rejection unreachable from the UI
+ *                (spec/internal-orders AC-C3).
+ *   external     only parties outside the system. The purchase-order create
+ *                picker needs it — an order goes to an external supplier
+ *                (spec/purchase-orders § S2).
+ *
+ * ONE value rather than a boolean each, so "both" cannot be asked for.
+ *
+ * `external` narrows by `type` (a FACILITY), matching the reference app's own
+ * supplier search, NOT by `isStore: false`. The two are nearly the same and
+ * not quite: `isStore: false` is every party with no store behind it, which
+ * admits the INVAD and REPACK system names — commonly flagged as suppliers —
+ * where FACILITY excludes them.
+ */
+export type PartyKind = 'storeBacked' | 'external';
+
+/**
  * The narrowings a picker can lay over its role, each an AND on the same
- * `names` query. Named rather than positional, because two of them are
- * booleans that mean opposite things.
+ * `names` query. Named rather than positional.
  */
 export type NameNarrowing = {
-  /**
-   * Store-backed parties only (isStore) — a supplier/customer that is itself
-   * another store in the system. The internal-order create picker needs it:
-   * the create resolver rejects a non-store supplier, so offering only
-   * store-backed ones keeps that rejection unreachable from the UI
-   * (spec/internal-orders AC-C3).
-   */
-  storeBacked?: boolean;
-  /**
-   * External parties only — a FACILITY, never a STORE. The purchase-order
-   * create picker needs it: an order goes to an external supplier, and the
-   * other stores in the system are not offered (spec/purchase-orders § S2).
-   * Narrows by `type` rather than `isStore: false`, matching the reference
-   * app's own supplier search.
-   */
-  external?: boolean;
+  /** Which side of the system to offer; omit for every visible party of the
+   *  role. */
+  parties?: PartyKind;
   /**
    * Withhold one party — the internal-order destination-customer picker
    * excludes the chosen supplier (spec/internal-orders › header fields).
@@ -163,8 +171,8 @@ export const namePageFetcher =
       filter: {
         ...roleFilter(role),
         isVisible: true,
-        ...(narrowing.storeBacked ? { isStore: true } : {}),
-        ...(narrowing.external ? FACILITY_ONLY : {}),
+        ...(narrowing.parties === 'storeBacked' ? { isStore: true } : {}),
+        ...(narrowing.parties === 'external' ? FACILITY_ONLY : {}),
         ...(narrowing.excludeId
           ? { id: { notEqualTo: narrowing.excludeId } }
           : {}),
