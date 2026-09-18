@@ -1,0 +1,125 @@
+# REFERENCE COPY - not deployed from here.
+#
+# The live file is server-side on the deploy box, beside its compose file, and
+# is authoritative; no workflow copies this over it. Use this as the starting
+# point when standing a box up, then edit the box's copy directly.
+#
+# It lives beside the runbook (`../_index.md`) rather than in `docker/` on
+# purpose: `docker/compose.deploy.yaml` is driven by a workflow, whereas this is
+# driven by a person following that runbook. See compose.proxy.yaml's header for
+# why the proxy's lifecycle is deliberately outside CI.
+#
+# WHAT THIS IS
+#
+# One route, for every deployment on the box, forever. The first label of the
+# hostname IS the container name:
+#
+#   develop.<domain>          -> develop:8000
+#   pr-470.<domain>           -> pr-470:8000
+#   v3-01-00-rc.<domain>      -> v3-01-00-rc:8000
+#   vaccine-flow.<domain>     -> vaccine-flow:8000
+#
+# That is a pure function, so this file never changes as deployments come and
+# go: no generated per-deployment config, no reload, and nothing for two
+# concurrent deploys to race over. It is why compose.deploy.yaml pins
+# `container_name` rather than letting compose derive `<project>-server-1`.
+#
+# Caddy resolves the upstream at DIAL TIME through docker's embedded DNS
+# (127.0.0.11), which is the whole reason this runs as a container rather than
+# as a process on the box: 127.0.0.11 only exists inside containers attached to
+# a user-defined network. A host-side Caddy could not resolve `pr-470` at all
+# and would be back to chasing container IPs, which change on every recreate.
+# A container that came up ten seconds ago is routable with no action here; one
+# that was torn down 502s, which is the correct answer.
+{
+	# TLS is terminated by the edge proxy in front of this, which forwards
+	# *.<domain> here over plain HTTP. Without this, Caddy would try to obtain
+	# certificates for a wildcard it cannot validate and has no need for.
+	auto_https off
+	# Nothing here is reconfigured at runtime - the whole point is that this
+	# file is static - so the admin API is surface with no purpose.
+	admin off
+}
+
+# The page for every "there is nothing at this address" case. A snippet because
+# there are three such cases and they must not drift apart; the status code is
+# the one thing that differs, so it is the argument.
+(nothing_here) {
+	respond <<HTML
+		<!doctype html>
+		<meta charset="utf-8">
+		<title>Nothing deployed here</title>
+		<style>
+		  body { font: 16px/1.6 system-ui, sans-serif; margin: 15vh auto; max-width: 32rem; padding: 0 1rem; color: #18181b; }
+		  code { background: #f4f4f5; padding: .1em .35em; border-radius: .25em; }
+		  @media (prefers-color-scheme: dark) {
+		    body { background: #18181b; color: #e4e4e7; }
+		    code { background: #27272a; }
+		  }
+		</style>
+		<h1>Nothing deployed here</h1>
+		<p>No server is running at <code>{host}</code>.</p>
+		<p>A pull request preview is removed when its <code>deploy</code> label is
+		taken off or the pull request closes. A named deployment is removed when it
+		expires. Either can be brought back by deploying it again.</p>
+		HTML {args[0]}
+}
+
+http://*.{$DEPLOY_DOMAIN} {
+	# Deliberately a regex capture on Host rather than Caddy's `{labels.N}`.
+	# `{labels.N}` indexes the hostname's labels from the RIGHT, so the index
+	# of the first label is a function of how deep DEPLOY_DOMAIN is:
+	# `{labels.3}` is `pr-470` under preview.example.com, but `example` under
+	# preview.example.co.nz and empty under preview.local - a mis-route or a
+	# 502 triggered by a setting someone may reasonably change, with nothing in
+	# the failure pointing at domain depth as the cause.
+	#
+	# Anchoring on the LEFT takes the first label whatever the domain's depth.
+	# The character class keeps dots, slashes and colons out of the upstream
+	# address; what a Host can actually REACH is bounded by the oms-edge
+	# network, since docker's DNS resolves nothing that is not attached to it,
+	# and only the proxy and deployment containers ever are.
+	#
+	# Lower case only, deliberately: container names are lower case, and the URL
+	# spec has browsers lower-case the host while parsing, so a person typing
+	# `PR-470.<domain>` still sends `pr-470`. Only a hand-written client can get
+	# here in mixed case, and the page below is a better answer for it than
+	# guessing at a container name.
+	@deployment header_regexp target Host ^([a-z0-9][a-z0-9-]{0,38})\.
+
+	# `route` because Caddy orders directives by its own standard order, not by
+	# the order written - and here the order is the whole point: anything that
+	# did not match @deployment must fall through to the page rather than past
+	# it. Without this the two are reordered and a non-matching host gets an
+	# empty 200, which is what an earlier version of this file did. Measured,
+	# not assumed: `handle_errors` does NOT cover it, because "no handler
+	# matched" is a 200 and not an error.
+	route {
+		reverse_proxy @deployment {re.target.1}:8000
+
+		# A host in this domain whose first label is not a legal container name.
+		import nothing_here 404
+	}
+
+	# Nothing else is needed for the proxying itself, and it is worth knowing
+	# why, because the equivalent nginx needs three settings that are each a
+	# silent failure if missed. Caddy's defaults already cover them: HTTP/1.1
+	# upgrades pass through (graphql subscriptions), there is no request body
+	# size cap (the server's own gate is 100MB), and responses stream rather
+	# than buffering to disk (/support/database serves a whole pg_dump).
+
+	# The dial failed: the first label is a legal name, but nothing by that
+	# name is attached to the network. A deployment that has been torn down, one
+	# that never existed, or a stale link.
+	handle_errors {
+		import nothing_here 502
+	}
+}
+
+# Everything else reaching this proxy: the bare domain with no deployment
+# label, or a host that is not in DEPLOY_DOMAIN at all. Without this block
+# Caddy matches no site and answers an empty 200, which reads as "up but
+# broken" rather than "you are in the wrong place".
+:80 {
+	import nothing_here 404
+}

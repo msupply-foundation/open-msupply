@@ -1,0 +1,89 @@
+# REFERENCE COPY - not deployed from here.
+#
+# The live file is server-side on the deploy box and is authoritative; no
+# workflow copies this over it. Use this as the starting point when standing a
+# box up, then edit the box's copy directly. Expect drift: check the box before
+# assuming this file describes it.
+#
+# It sits beside the runbook (`../_index.md`) rather than in `docker/` because
+# that is what it is: a step in a runbook a person follows, not an input to a
+# workflow. Everything in `docker/` is driven by CI; nothing here is.
+#
+# WHY THE LIFECYCLE IS OUTSIDE CI
+#
+# This proxy fronts EVERY deployment on the box, so a broken config here takes
+# all of them down at once. docker-deploy.yaml checks out `inputs.ref`, which
+# for a pull request preview is that PR's head - so a CI-owned proxy would let
+# one pull request's edit break every other deployment. Guarding that needs a
+# second checkout of the default branch, or a separate workflow triggered only
+# from it. Keeping the lifecycle out removes the hazard instead of fencing it,
+# and it removes a second problem for free: two deployments landing at once
+# would both have run `compose up` on this shared project.
+#
+# The cost is drift, and it is the right trade for shared infrastructure that
+# changes about once a year.
+#
+# STANDING IT UP
+#
+#   docker network create oms-edge
+#   DEPLOY_DOMAIN=preview.example.com docker compose -f compose.proxy.yaml up -d
+#
+# DEPLOY_DOMAIN must match the repository variable of the same name, which is
+# what builds the URLs CI reports and checks. A mismatch means deployments come
+# up healthy and unroutable; docker-deploy.yaml's route check is what catches
+# it. See `../_index.md` - "Setting up the deploy box's reverse proxy" - for the
+# full runbook, including the wildcard DNS record and the edge vhost in front.
+
+name: oms-proxy
+
+services:
+  proxy:
+    image: caddy:alpine
+    container_name: oms-proxy
+    # Not `no` and not `always`: the box reboots and every deployment's
+    # `restart: unless-stopped` brings it back, so the thing routing to them
+    # has to come back too or they are all unreachable with nothing obviously
+    # wrong. `unless-stopped` also respects a deliberate `docker stop`.
+    restart: unless-stopped
+    environment:
+      # No default. An empty DEPLOY_DOMAIN would make the site address
+      # `http://*.` and match nothing, so every deployment would 404 with a
+      # valid-looking config - worse than refusing to start.
+      DEPLOY_DOMAIN: ${DEPLOY_DOMAIN:?DEPLOY_DOMAIN must be set, and must match the repository variable}
+    ports:
+      # Plain HTTP. TLS is terminated by the edge proxy in front of this, which
+      # is what holds the certificate for *.$DEPLOY_DOMAIN and forwards here.
+      # Nothing in this stack does ACME, so no DNS credentials live on this box.
+      - "${PROXY_PORT:-8080}:80"
+    volumes:
+      # A single-FILE bind mount, and docker binds a file by INODE - so any
+      # editor or rsync that writes-then-renames replaces the inode and this
+      # container carries on serving the file it mounted at start. An edit
+      # therefore needs `docker compose up -d --force-recreate`, NOT
+      # `caddy reload` and not `docker compose restart`.
+      - ./proxy.Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - edge
+    healthcheck:
+      # Any host outside DEPLOY_DOMAIN hits the catch-all site and gets a 404,
+      # which is a deliberate, configured response - so a 404 here proves Caddy
+      # parsed its config and is routing. `--fail` is wrong for that reason: it
+      # treats the expected 404 as failure. wget is what alpine ships.
+      test: ["CMD-SHELL", "wget -q -O /dev/null -T 3 http://127.0.0.1/ 2>&1 | grep -q '404' || wget -q -O /dev/null -T 3 http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  edge:
+    # The one network every deployment attaches to, and the reason routing
+    # works at all: docker's embedded DNS resolves a container by name only
+    # within a shared user-defined network. It is also the security boundary -
+    # a crafted Host can only reach what is attached here.
+    #
+    # External, and created by hand or by docker-deploy.yaml, so that no
+    # `down -v` on this project or any deployment can remove it from under
+    # everything else.
+    name: oms-edge
+    external: true
