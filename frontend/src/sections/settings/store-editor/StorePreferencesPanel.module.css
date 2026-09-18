@@ -1,0 +1,64 @@
+/*
+ * The Preferences panel's row rhythm (spec/settings/ui-surface.md § S5 ›
+ * Preferences panel): one labelled row per preference — label inline-start,
+ * control inline-end — separated by the app-wide hairline, so 23 mixed-kind
+ * rows read as one list rather than a wall of stacked fields. Tokens only.
+ */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+/* One preference row: the label takes the free space, the control hugs the
+   inline-end. Wraps on very narrow widths so a long label never crushes its
+   control. */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--color-divider);
+}
+
+/* The control keeps the inline-end even when a long label wraps the row —
+   an auto start margin pushes it right on its own line too. */
+.row > :last-child {
+  margin-inline-start: auto;
+}
+
+/* A full-width block row (the recent-stocktake group, the invoice-status
+   choice): same rhythm and divider, content on its own lines. */
+.block {
+  padding-block: var(--space-3);
+  border-block-end: 1px solid var(--color-divider);
+  /* The containment context the status grid's container query resolves
+     against. */
+  container-type: inline-size;
+}
+
+.rows > :last-child {
+  border-block-end: none;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* The invoice-status checkboxes: two columns per group (each group of four
+   reads as a 2×2 block, as the reference), collapsing to one on very narrow
+   widths. */
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1) var(--space-3);
+}
+
+@container (max-width: 24rem) {
+  .statusGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

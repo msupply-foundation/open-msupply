@@ -1,0 +1,129 @@
+/*
+ * AppShell layout — the app-level container. Flex row (menu bar + main), main
+ * is a flex column of the content slot (where the current page's <Page>
+ * frame renders and does its own scrolling) and the slim orange app footer.
+ * All dims/colours from tokens; RTL via logical properties. Intrinsic layout
+ * — the only breakpoint lives in JS (useIsNavOverlay), never here.
+ */
+
+.shell {
+  display: flex;
+  block-size: 100%;
+  background: var(--bg-white);
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+  overflow: hidden;
+}
+
+/* --- Content slot (the current page) ------------------------------------ */
+/* A flex column so the page's <Page> frame stretches to fill it; the frame
+   owns its own scrolling — the shell never scrolls. */
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow: hidden;
+  background: var(--bg-white);
+}
+
+/* --- Footer (the orange app status bar) -------------------------------- */
+.footer {
+  display: flex;
+  flex-wrap: wrap; /* cells wrap onto new rows when narrow — no breakpoint */
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-4);
+  row-gap: var(--space-1);
+  min-block-size: 2.25rem;
+  padding-block: var(--space-1);
+  padding-inline: var(--space-4);
+  /* Matches Open mSupply's AppFooter: on a remote site the bar is the menu
+     surface (--bg-drawer = OMS background.menu) with muted grey text/icons
+     (--gray-main = OMS gray.main); on a central server it flips to brand
+     orange with white content (below). The store name is text, so bar colour
+     is never the sole active-store cue.
+
+     The bar's colours route through two custom properties so the store's
+     custom colour (spec/chrome § bottom bar — a DATA colour AppShell sets
+     inline when the preference parses as hex, as ColourTag's --tag-colour)
+     overrides every variant in this one declared place. */
+  --footer-bg: var(--bg-drawer);
+  --footer-fg: var(--gray-main);
+
+  background: var(--footer-bg);
+  color: var(--footer-fg);
+  font-size: var(--text-xs);
+  line-height: 1.2; /* the 1.71 body line-height makes this dense bar too tall */
+  /* One knob the sub-rules (divider, hover, focus) read — following the bar's
+     text colour, whichever rule (variant or inline custom colour) set it. */
+  --footer-accent: var(--footer-fg);
+}
+
+/* Central server: the bar is brand orange (Open mSupply's central-server cue).
+   Set from the isCentralServer global (queried at startup) via AppShell. */
+.footer[data-central] {
+  --footer-bg: var(--primary-main);
+  --footer-fg: var(--primary-contrast);
+}
+
+/* Spacer between the store selector and the user/language/central cluster
+   (spec bottom bar). Grows to consume free space, pushing the cluster to the
+   inline-end edge. */
+.footerSpacer {
+  flex: 1 1 auto;
+  min-inline-size: var(--space-4);
+}
+
+.footerCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+}
+
+button.footerCell {
+  cursor: pointer;
+}
+
+button.footerCell:hover {
+  background: color-mix(in srgb, var(--footer-accent) 15%, transparent);
+}
+
+button.footerCell:focus-visible {
+  outline: 2px solid var(--footer-accent);
+  outline-offset: -0.125rem;
+}
+
+.footerIcon {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  block-size: 1rem;
+  font-size: 1rem;
+  color: inherit;
+}
+
+.footerCellText {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.footerDivider {
+  flex-shrink: 0;
+  inline-size: 1px;
+  block-size: 1.5rem;
+  background: color-mix(in srgb, var(--footer-accent) 45%, transparent);
+}

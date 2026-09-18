@@ -1,10 +1,10 @@
-use repository::ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository};
-use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow};
+use repository::ancillary_item_row::AncillaryItemRow;
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow};
 
 use crate::sync::translations::item::ItemTranslation;
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translators()
@@ -26,12 +26,35 @@ impl SyncTranslation for AncillaryItemTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            AncillaryItemRow,
-        >(&sync_record.data)?))
+        let AncillaryItemRow {
+            id,
+            item_quantity,
+            ancillary_quantity,
+            deleted_datetime,
+            item_id,
+            ancillary_item_id,
+        } = serde_json::from_value::<AncillaryItemRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "ancillary_item", &id);
+
+        let result = AncillaryItemRow {
+            id,
+            item_quantity,
+            ancillary_quantity,
+            deleted_datetime,
+            item_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
+            ancillary_item_id: check_fk(
+                ancillary_item_id,
+                "ancillary_item_link_id",
+                FkField::ItemLink,
+            )?,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -54,20 +77,18 @@ impl SyncTranslation for AncillaryItemTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AncillaryItemRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "AncillaryItem row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::AncillaryItem(ancillary_item_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(row)?,
+            serde_json::to_value(ancillary_item_row)?,
         ))
     }
 }

@@ -5,7 +5,9 @@ use repository::{
 use util::uuid::uuid;
 
 use crate::{
-    requisition::{common::check_requisition_row_exists, request_requisition::generate_requisition_lines},
+    requisition::{
+        common::check_requisition_row_exists, request_requisition::generate_requisition_lines,
+    },
     service_provider::ServiceContext,
     PluginOrRepositoryError,
 };
@@ -71,8 +73,8 @@ pub fn refresh_ancillary_items(
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, &ctx.store_id, &input.requisition_id)?;
 
-            let plan = get_ancillary_plan(connection, &input.requisition_id)
-                .map_err(|e| match e {
+            let plan =
+                get_ancillary_plan(connection, &input.requisition_id).map_err(|e| match e {
                     super::query::GetAncillaryPlanError::DatabaseError(db) => {
                         RefreshAncillaryItemsError::DatabaseError(db)
                     }
@@ -86,8 +88,12 @@ pub fn refresh_ancillary_items(
                     if plan.to_add.is_empty() {
                         return Ok(changed);
                     }
-                    let new_lines =
-                        generate_ancillary_lines(ctx, &ctx.store_id, &requisition_row, &plan.to_add)?;
+                    let new_lines = generate_ancillary_lines(
+                        ctx,
+                        &ctx.store_id,
+                        &requisition_row,
+                        &plan.to_add,
+                    )?;
                     for row in new_lines {
                         repo.upsert_one(&row)?;
                         changed.push(row);
@@ -148,8 +154,7 @@ fn generate_ancillary_lines(
     // each item. Some items might not resolve (e.g. item made invisible for
     // the store) — those are silently dropped by the generator, so we check
     // the output length matches and report any missing ones explicitly.
-    let mut generated =
-        generate_requisition_lines(ctx, store_id, requisition_row, item_ids, None)?;
+    let mut generated = generate_requisition_lines(ctx, store_id, requisition_row, item_ids, None)?;
 
     // Overlay the computed ancillary quantity onto each generated line,
     // matching by item_id. If a generator missed an item, surface it as a

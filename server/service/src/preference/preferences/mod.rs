@@ -66,6 +66,8 @@ pub mod invoice_status_options;
 pub use invoice_status_options::*;
 pub mod item_margin_overrides_supplier_margin;
 pub use item_margin_overrides_supplier_margin::*;
+pub mod transfer_stock_to_internal_customers_at_cost_price;
+pub use transfer_stock_to_internal_customers_at_cost_price::*;
 pub mod is_gaps;
 pub use is_gaps::*;
 pub mod display_population_based_forecasting;
@@ -74,8 +76,14 @@ pub mod global_table_configs;
 pub use global_table_configs::*;
 pub mod backdating;
 pub use backdating::*;
+pub mod receive_payments_from_prescriptions;
+pub use receive_payments_from_prescriptions::*;
+pub mod do_not_print_placeholder_line_labels;
+pub use do_not_print_placeholder_line_labels::*;
 pub mod blind_stocktake;
 pub use blind_stocktake::*;
+pub mod global_logo;
+pub use global_logo::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -93,10 +101,14 @@ pub struct PreferenceProvider {
     pub expired_stock_prevent_issue: ExpiredStockPreventIssue,
     pub expired_stock_issue_threshold: ExpiredStockIssueThreshold,
     pub item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
+    pub transfer_stock_to_internal_customers_at_cost_price:
+        TransferStockToInternalCustomersAtCostPrice,
     pub is_gaps: IsGaps,
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub global_table_configs: GlobalTableConfigs,
     pub backdating: Backdating,
+    pub receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
+    pub global_logo: GlobalLogo,
 
     // Store preferences
     pub blind_stocktake: BlindStocktake,
@@ -125,6 +137,7 @@ pub struct PreferenceProvider {
     pub store_custom_colour: StoreCustomColour,
     pub invoice_status_options: InvoiceStatusOptions,
     pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
+    pub do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -144,10 +157,14 @@ pub fn get_preference_provider() -> PreferenceProvider {
         expired_stock_prevent_issue: ExpiredStockPreventIssue,
         expired_stock_issue_threshold: ExpiredStockIssueThreshold,
         item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
+        transfer_stock_to_internal_customers_at_cost_price:
+            TransferStockToInternalCustomersAtCostPrice,
         is_gaps: IsGaps,
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         global_table_configs: GlobalTableConfigs,
         backdating: Backdating,
+        receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
+        global_logo: GlobalLogo,
 
         // Store preferences
         blind_stocktake: BlindStocktake,
@@ -176,5 +193,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
         invoice_status_options: InvoiceStatusOptions,
         show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
+        do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
     }
 }

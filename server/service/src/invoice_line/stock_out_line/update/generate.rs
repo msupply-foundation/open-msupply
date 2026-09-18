@@ -142,6 +142,7 @@ fn generate_line(
         manufacturer_id,
         reason_option_id: existing_reason_option_id,
         received_number_of_packs: existing_received_number_of_packs,
+        transfer_comment: existing_transfer_comment,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -213,6 +214,12 @@ fn generate_line(
             .map(|u| u.value)
             .unwrap_or(existing_received_number_of_packs),
         linked_invoice_line_id: None,
+        legacy_goods_received_line_id: None,
+        transfer_comment: input
+            .transfer_comment
+            .as_ref()
+            .map(|u| u.value.clone())
+            .unwrap_or(existing_transfer_comment),
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

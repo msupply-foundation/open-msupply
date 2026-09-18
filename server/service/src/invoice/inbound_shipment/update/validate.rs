@@ -1,6 +1,7 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
+    custom_fields::check_invoice_custom_fields_patch,
     inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
 use crate::preference::{preferences::Backdating, Preference};
@@ -9,8 +10,8 @@ use crate::validate::{
 };
 use chrono::{Duration, Utc};
 use repository::{
-    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceStatus, InvoiceType, Name,
-    StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow,
+    InvoiceStatus, InvoiceType, Name, StorageConnection,
 };
 
 use super::{super::InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError};
@@ -41,6 +42,14 @@ pub fn validate(
         return Err(WrongInboundShipmentType);
     }
 
+    if let Some(properties) = &patch.custom_fields {
+        if let Some(problem) =
+            check_invoice_custom_fields_patch(connection, &invoice.r#type, properties)?
+        {
+            return Err(problem.into());
+        }
+    }
+
     // Status check
     let status_changed = check_status_change(&invoice, patch.full_status());
     if status_changed {
@@ -61,12 +70,9 @@ pub fn validate(
             return Err(CannotSetShippedStatusOnManualInboundShipment);
         }
 
-        // All pending lines must be resolved (accepted or rejected) before the invoice can be
-        // received or verified, otherwise stock would be created for lines that haven't been
-        // reviewed yet.
         use UpdateInboundShipmentStatus::*;
         if matches!(patch.status, Some(Received | Verified)) {
-            check_no_pending_lines(&invoice.id, connection)?;
+            check_lines_can_be_received(&invoice.id, connection)?;
         }
     }
 
@@ -140,18 +146,48 @@ pub fn validate(
     Ok((invoice, Some(other_party), status_changed))
 }
 
-fn check_no_pending_lines(
+/// Checks that the lines of an invoice are in a fit state to be received or verified:
+///
+/// * All pending lines must be resolved (accepted or rejected), otherwise stock would be created
+///   for lines that haven't been reviewed yet.
+/// * The invoice must not be empty. An invoice with no lines at all, or one whose only lines are
+///   manually added placeholders (nothing received and nothing shipped), receives no stock, so
+///   confirming it would produce a finalised but empty shipment. Lines that came from another
+///   store's transfer (`linked_invoice_id` is set) are exempt: receiving zero of everything is a
+///   valid receipt, the store still needs to close out the transfer.
+///
+/// This deliberately mirrors `validateEmptyInvoice` on the client.
+fn check_lines_can_be_received(
     invoice_id: &str,
     connection: &StorageConnection,
 ) -> Result<(), UpdateInboundShipmentError> {
     let invoice_lines =
         InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(invoice_id)?;
 
-    for invoice_line in invoice_lines {
+    for invoice_line in &invoice_lines {
         if invoice_line.status == Some(InvoiceLineStatus::Pending) {
             return Err(UpdateInboundShipmentError::CannotReceiveWithPendingLines);
         }
     }
 
+    if invoice_lines
+        .iter()
+        .all(|line| line.linked_invoice_id.is_none() && is_placeholder_line(line))
+    {
+        return Err(UpdateInboundShipmentError::CannotReceiveWithNoLines);
+    }
+
     Ok(())
+}
+
+/// A stock in line with nothing received and nothing shipped. It's valid to record "the supplier
+/// said they sent 5 packs but I received 0", which is why shipped packs are checked too. These
+/// are the same lines that `empty_lines_to_trim` deletes when the invoice leaves New status.
+///
+/// Mirrors `isInboundPlaceholderRow` on the client. Note service lines (freight charges and the
+/// like) are not placeholders, so an invoice of only service lines can still be received.
+fn is_placeholder_line(line: &InvoiceLineRow) -> bool {
+    line.r#type == InvoiceLineType::StockIn
+        && line.number_of_packs == 0.0
+        && line.shipped_number_of_packs.unwrap_or(0.0) == 0.0
 }

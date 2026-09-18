@@ -29,40 +29,36 @@ pub fn generate(
     let current_datetime = Utc::now().naive_utc();
 
     // If linked to a PO, use the PO's currency; otherwise fall back to home currency
-    let (currency_id, currency_rate) =
-        if let Some(ref po_id) = purchase_order_id {
-            let po = PurchaseOrderRowRepository::new(connection)
-                .find_one_by_id(po_id)?
+    let (currency_id, currency_rate) = if let Some(ref po_id) = purchase_order_id {
+        let po = PurchaseOrderRowRepository::new(connection)
+            .find_one_by_id(po_id)?
+            .ok_or(RepositoryError::NotFound)?;
+
+        if let Some(po_currency_id) = &po.currency_id {
+            // Look up the latest rate from the currency table for the PO's currency
+            let po_currency = CurrencyRepository::new(connection)
+                .query_by_filter(
+                    CurrencyFilter::new().id(EqualFilter::equal_to(po_currency_id.clone())),
+                )?
+                .pop()
                 .ok_or(RepositoryError::NotFound)?;
 
-            if let Some(po_currency_id) = &po.currency_id {
-                // Look up the latest rate from the currency table for the PO's currency
-                let po_currency = CurrencyRepository::new(connection)
-                    .query_by_filter(
-                        CurrencyFilter::new().id(EqualFilter::equal_to(po_currency_id.clone())),
-                    )?
-                    .pop()
-                    .ok_or(RepositoryError::NotFound)?;
-
-                (
-                    po_currency.currency_row.id,
-                    po_currency.currency_row.rate,
-                )
-            } else {
-                // PO has no currency set, fall back to home currency
-                let home = CurrencyRepository::new(connection)
-                    .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
-                    .pop()
-                    .ok_or(RepositoryError::NotFound)?;
-                (home.currency_row.id, 1.0)
-            }
+            (po_currency.currency_row.id, po_currency.currency_row.rate)
         } else {
+            // PO has no currency set, fall back to home currency
             let home = CurrencyRepository::new(connection)
                 .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
                 .pop()
                 .ok_or(RepositoryError::NotFound)?;
             (home.currency_row.id, 1.0)
-        };
+        }
+    } else {
+        let home = CurrencyRepository::new(connection)
+            .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+            .pop()
+            .ok_or(RepositoryError::NotFound)?;
+        (home.currency_row.id, 1.0)
+    };
 
     let result = InvoiceRow {
         id,
@@ -106,6 +102,7 @@ pub fn generate(
         shipping_method_id: None,
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,
+        ..Default::default()
     };
 
     Ok(result)

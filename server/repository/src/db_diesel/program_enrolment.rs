@@ -1,14 +1,13 @@
 use super::{
-    name_row::name, program_enrolment_row::program_enrolment,
-    program_row::program, StorageConnection,
+    name_row::name, program_enrolment_row::program_enrolment, program_row::program,
+    StorageConnection,
 };
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     document_registry_row::document_registry,
     DBType, DatetimeFilter, DocumentRegistryFilter, DocumentRegistryRepository, EqualFilter,
-    NameRow, Pagination, ProgramEnrolmentRow, ProgramRow, RepositoryError, Sort,
-    StringFilter,
+    NameRow, Pagination, ProgramEnrolmentRow, ProgramRow, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -172,6 +171,9 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(program_enrolment::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<ProgramEnrolmentJoin>(self.connection.lock().connection())?;

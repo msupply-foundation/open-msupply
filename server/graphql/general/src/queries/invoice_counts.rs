@@ -24,27 +24,25 @@ fn do_invoice_count(
     let service_ctx = service_provider.context(store_id.to_string(), "".to_string())?;
     let service = &service_provider.invoice_count_service;
     let count = match is_external {
-        None => service
-            .invoices_count(
-                &service_ctx,
-                store_id,
-                invoice_type,
-                invoice_status,
-                range,
-                &Utc::now(),
-                timezone_offset,
-            ),
-        Some(is_external) => service
-            .invoices_count_by_external(
-                &service_ctx,
-                store_id,
-                invoice_type,
-                invoice_status,
-                range,
-                &Utc::now(),
-                timezone_offset,
-                is_external,
-            ),
+        None => service.invoices_count(
+            &service_ctx,
+            store_id,
+            invoice_type,
+            invoice_status,
+            range,
+            &Utc::now(),
+            timezone_offset,
+        ),
+        Some(is_external) => service.invoices_count_by_external(
+            &service_ctx,
+            store_id,
+            invoice_type,
+            invoice_status,
+            range,
+            &Utc::now(),
+            timezone_offset,
+            is_external,
+        ),
     }
     .map_err(|err| match err {
         InvoiceCountError::RepositoryError(err) => StandardGraphqlError::from(err),
@@ -172,9 +170,8 @@ impl InboundInvoiceCounts {
 }
 
 fn parse_timezone(timezone_offset: &Option<i32>) -> Result<FixedOffset> {
-    offset_to_timezone(timezone_offset).ok_or(
-        StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string()).extend(),
-    )
+    offset_to_timezone(timezone_offset)
+        .ok_or(StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string()).extend())
 }
 
 pub fn outbound_shipment_counts(
@@ -187,6 +184,7 @@ pub fn outbound_shipment_counts(
         &ResourceAccessRequest {
             resource: Resource::QueryOutboundShipment,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -207,6 +205,7 @@ pub fn inbound_shipment_counts(
         &ResourceAccessRequest {
             resource: Resource::QueryInboundShipment,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -228,6 +227,7 @@ pub fn inbound_shipment_external_counts(
         &ResourceAccessRequest {
             resource: Resource::QueryInboundShipmentExternal,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -274,7 +274,9 @@ impl InvoiceCounts {
     }
 }
 
-#[deprecated(note = "Use outbound_shipment_counts, inbound_shipment_counts, or inbound_shipment_external_counts instead")]
+#[deprecated(
+    note = "Use outbound_shipment_counts, inbound_shipment_counts, or inbound_shipment_external_counts instead"
+)]
 pub fn invoice_counts(
     ctx: &Context<'_>,
     store_id: String,
@@ -285,6 +287,7 @@ pub fn invoice_counts(
         &ResourceAccessRequest {
             resource: Resource::InvoiceCount,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

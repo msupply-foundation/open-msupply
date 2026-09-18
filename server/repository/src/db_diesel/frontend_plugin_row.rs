@@ -1,8 +1,6 @@
-use super::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, StorageConnection,
-};
+use super::{ChangelogRepository, RowActionType, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -52,6 +50,46 @@ pub enum FrontendPluginVariantType {
     BoaJs,
 }
 
+/// The plugin host runtime a bundle targets — which component runtime its
+/// contributions are written against (`react`, `solid`, ...).
+///
+/// The server never interprets the value: discovery compares it for exact
+/// equality against the runtime the asking client declares
+/// (`get_frontend_plugins_metadata`). That is deliberate — a new host can be
+/// introduced, and its bundles served, without a server release teaching the
+/// server its name.
+///
+/// It is a name and not a version, and the distinction is the point. A bundle
+/// exporting SolidJS components cannot be rendered by a React host whichever of
+/// the two is newer, and both hosts are served by one binary at one version for
+/// the whole of the rollout — so nothing on the version line can separate them.
+/// Whether a host is new *enough* is the version's job, and stays there
+/// ([`Version::is_compatible_by_major_and_minor`]).
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct HostRuntime(pub String);
+
+/// The runtime of every bundle that predates the column: the React
+/// module-federation UI served at `/old-ui/`.
+pub const LEGACY_HOST_RUNTIME: &str = "react";
+
+impl Default for HostRuntime {
+    fn default() -> Self {
+        Self(LEGACY_HOST_RUNTIME.to_string())
+    }
+}
+
+impl From<String> for HostRuntime {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+impl From<HostRuntime> for String {
+    fn from(value: HostRuntime) -> Self {
+        value.0
+    }
+}
+
 table! {
   frontend_plugin (id) {
       id -> Text,
@@ -60,6 +98,7 @@ table! {
       entry_point -> Text,
       types -> Text,
       files -> Text,
+      host_runtime -> Text,
   }
 }
 
@@ -78,8 +117,17 @@ pub struct FrontendPluginRow {
     #[diesel(serialize_as = String)]
     #[diesel(deserialize_as = String)]
     pub files: FrontendPluginFiles,
+    /// Which front end can load this bundle. See [`HostRuntime`].
+    ///
+    /// The serde default is what keeps sync backwards compatible: a row pushed
+    /// by a central that predates the field arrives without it, and every such
+    /// row is by construction a React bundle — the field is introduced before
+    /// any bundle for another runtime can exist.
+    #[diesel(serialize_as = String)]
+    #[diesel(deserialize_as = String)]
+    #[serde(default)]
+    pub host_runtime: HostRuntime,
 }
-
 pub struct FrontendPluginRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -105,48 +153,69 @@ impl<'a> FrontendPluginRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: FrontendPluginRow) -> Result<i64, RepositoryError> {
-        let id = row.id.clone();
+    pub fn _upsert_one(&self, row: &FrontendPluginRow) -> Result<(), RepositoryError> {
         diesel::insert_into(frontend_plugin::table)
             .values(row.clone())
             .on_conflict(frontend_plugin::id)
             .do_update()
-            .set(row)
+            .set(row.clone())
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&id, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::FrontendPlugin,
-            record_id: uid.to_string(),
-            row_action: action,
-            store_id: None,
-            name_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: FrontendPluginRow) -> Result<(), RepositoryError> {
+        self._upsert_one(&row)?;
+        let changelog = FrontendPluginRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(id)?;
-        let change_log_id = match old_row {
-            Some(_) => self.insert_changelog(id, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
-        };
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        let changelog = FrontendPluginRow::generate_changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(frontend_plugin::table.filter(frontend_plugin::id.eq(id)))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
+    }
+
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<FrontendPluginRow>, RepositoryError> {
+        Ok(frontend_plugin::table
+            .filter(frontend_plugin::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for FrontendPluginRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log = FrontendPluginRowRepository::new(con).upsert_one(self.clone())?;
-        Ok(Some(change_log))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        FrontendPluginRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -163,9 +232,27 @@ impl Upsert for FrontendPluginRow {
 // frontend_plugins don't have referencial relations to any other tables so it's ok to delete as an example
 pub struct FrontendPluginRowDelete(pub String);
 impl Delete for FrontendPluginRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = FrontendPluginRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                FrontendPluginRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(frontend_plugin::table.filter(frontend_plugin::id.eq(&self.0)))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

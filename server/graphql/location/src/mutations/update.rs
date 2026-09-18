@@ -24,6 +24,7 @@ pub fn update_location(
         &ResourceAccessRequest {
             resource: Resource::MutateLocation,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -113,11 +114,9 @@ fn map_error(error: ServiceError) -> Result<UpdateLocationErrorInterface> {
             ))
         }
         ServiceError::LocationDoesNotBelongToCurrentStore => {
-            return Ok(
-                UpdateLocationErrorInterface::RecordBelongsToAnotherStore(
-                    RecordBelongsToAnotherStore,
-                ),
-            )
+            return Ok(UpdateLocationErrorInterface::RecordBelongsToAnotherStore(
+                RecordBelongsToAnotherStore,
+            ))
         }
         // Standard Graphql Errors
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),

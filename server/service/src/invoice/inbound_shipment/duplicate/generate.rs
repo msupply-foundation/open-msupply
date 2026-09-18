@@ -41,10 +41,12 @@ pub fn generate(
         colour: source_invoice.colour.clone(),
         comment: Some(comment),
         default_donor_id: source_invoice.default_donor_id.clone(),
+        custom_fields: source_invoice.custom_fields.clone(),
         // Hold unchecked, linked requisition & purchase order not copied
         on_hold: false,
         requisition_id: None,
         purchase_order_id: None,
+        prescription_request_id: None,
 
         // --- Transport details ---
         transport_reference: source_invoice.transport_reference.clone(),
@@ -79,6 +81,7 @@ pub fn generate(
         linked_invoice_id: None,
         original_shipment_id: None,
         is_cancellation: false,
+        legacy_goods_received_id: None,
     };
 
     let source_lines =
@@ -151,6 +154,9 @@ pub fn generate(
             linked_invoice_line_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: None,
+            legacy_goods_received_line_id: None,
+            // No requisition link on the copy, so no request to explain.
+            transfer_comment: None,
         });
     }
 

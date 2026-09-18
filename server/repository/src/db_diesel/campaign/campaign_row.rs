@@ -4,7 +4,7 @@ use crate::db_diesel::{
     vvm_status::vvm_status_row::vvm_status,
 };
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
 use chrono::NaiveDate;
@@ -41,7 +41,6 @@ pub struct CampaignRow {
     pub end_date: Option<NaiveDate>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
-
 pub struct CampaignRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -51,30 +50,25 @@ impl<'a> CampaignRowRepository<'a> {
         CampaignRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &CampaignRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &CampaignRow) -> Result<(), RepositoryError> {
         diesel::insert_into(campaign::table)
             .values(row)
             .on_conflict(campaign::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Campaign,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &CampaignRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = CampaignRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -89,12 +83,11 @@ impl<'a> CampaignRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, campaign_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = campaign::table
-            .filter(campaign::id.eq(campaign_id))
-            .select(campaign::id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            campaign::table.filter(campaign::id.eq(campaign_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CampaignRow>, RepositoryError> {
@@ -104,20 +97,40 @@ impl<'a> CampaignRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, campaign_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, campaign_id: &str) -> Result<(), RepositoryError> {
         diesel::update(campaign::table.filter(campaign::id.eq(campaign_id)))
             .set(campaign::deleted_datetime.eq(chrono::Utc::now().naive_utc()))
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(campaign_id.to_string(), RowActionType::Upsert)
+        let changelog = CampaignRow::generate_changelog(
+            campaign_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 impl Upsert for CampaignRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = CampaignRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        CampaignRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

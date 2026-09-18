@@ -54,6 +54,8 @@ export const AppBarButtonsComponent = ({
           Icon={<PlusCircleIcon />}
           onClick={handleClick}
           label={t('button.new-indicator')}
+          // Cross-FE e2e contract (frontend/e2e/TESTIDS.md § Demographics)
+          data-testid="new-indicator-button"
         />
       </Grid>
     </AppBarButtonsPortal>

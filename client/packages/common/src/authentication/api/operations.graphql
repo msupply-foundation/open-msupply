@@ -92,43 +92,15 @@ query isCentralServer {
   isCentralServer
 }
 
-query refreshToken {
-  refreshToken {
-    ... on RefreshToken {
+query isCentralStandalone {
+  isCentralStandalone
+}
+
+query logout {
+  logout {
+    ... on Logout {
       __typename
-      token
-    }
-    ... on RefreshTokenError {
-      __typename
-      error {
-        description
-        ... on DatabaseError {
-          __typename
-          description
-          fullError
-        }
-        ... on TokenExpired {
-          __typename
-          description
-        }
-        ... on NotARefreshToken {
-          __typename
-          description
-        }
-        ... on NoRefreshTokenProvided {
-          __typename
-          description
-        }
-        ... on InvalidToken {
-          __typename
-          description
-        }
-        ... on InternalError {
-          __typename
-          description
-          fullError
-        }
-      }
+      userId
     }
   }
 }
@@ -146,43 +118,6 @@ query permissions($storeId: String!) {
         totalCount
       }
     }
-  }
-}
-
-fragment UpdateUser on UpdateUserNode {
-  lastSuccessfulSync
-}
-
-mutation updateUser {
-  updateUser {
-    __typename
-    ... on UpdateUserNode {
-      ...UpdateUser
-    }
-    ... on UpdateUserError {
-      __typename
-      error {
-        ... on InvalidCredentials {
-          __typename
-          description
-        }
-        ... on ConnectionError {
-          __typename
-          description
-        }
-        ... on MissingCredentials {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
-query lastSuccessfulUserSync {
-  lastSuccessfulUserSync {
-    __typename
-    ...UpdateUser
   }
 }
 

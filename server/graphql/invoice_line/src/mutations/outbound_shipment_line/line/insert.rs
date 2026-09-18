@@ -46,6 +46,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -95,6 +96,7 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
+            transfer_comment: None,
             id,
             r#type: StockOutType::OutboundShipment,
             invoice_id,

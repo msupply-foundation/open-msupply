@@ -65,6 +65,7 @@ pub fn upsert_item_variant(
         &ResourceAccessRequest {
             resource: Resource::MutateItemNamesCodesAndUnits,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -157,7 +158,6 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
         | ServiceError::CantChangeItem
         | ServiceError::LocationTypeDoesNotExist
         | ServiceError::OtherPartyDoesNotExist
-        | ServiceError::OtherPartyNotVisible
         | ServiceError::OtherPartyNotAManufacturer => BadUserInput(formatted_error),
 
         ServiceError::PackagingVariantError(upsert_packaging_variant_error) => {

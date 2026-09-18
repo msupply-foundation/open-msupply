@@ -1,5 +1,4 @@
 use std::io::ErrorKind;
-use std::sync::Arc;
 
 use actix_files as fs;
 use actix_multipart::form::tempfile::TempFile;
@@ -14,11 +13,10 @@ use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse}
 use fs::NamedFile;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
-use repository::{
-    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus,
-    RepositoryError,
-};
 use repository::SyncFileDirection;
+use repository::{
+    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
+};
 use serde::Deserialize;
 
 use repository::sync_file_reference_row::SyncFileReferenceRow;
@@ -27,12 +25,12 @@ use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::StaticFile;
-use service::static_files::{StaticFileCategory, StaticFileService};
-use service::sync::file_sync_driver::get_sync_settings;
-use service::sync::file_synchroniser;
-use service::sync::file_synchroniser::FileSynchroniser;
+use service::static_files::{InvalidFilePath, StaticFileCategory, StaticFileService};
+use service::sync::file_sync_driver::{file_sync_central_url, get_sync_settings};
+use service::sync::file_synchroniser::{self, FileSynchroniser};
 use service::sync::CentralServerConfig;
 use service::usize_to_i32;
+use std::sync::Arc;
 use thiserror::Error;
 use util::format_error;
 
@@ -101,9 +99,9 @@ fn check_purchase_order_document_editable(
         return Ok(());
     }
 
-    let connection = service_provider.connection().map_err(|err| {
-        InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR)
-    })?;
+    let connection = service_provider
+        .connection()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
     let purchase_order = PurchaseOrderRepository::new(&connection)
         .query_by_filter(
@@ -137,7 +135,17 @@ async fn files(
     req: HttpRequest,
     query: web::Query<FileRequestQuery>,
     settings: Data<Settings>,
+    auth_data: Data<AuthData>,
 ) -> Result<HttpResponse, Error> {
+    // Temporary files are where generated report output lands, so the file id must not
+    // be the only thing standing between a request and someone's report data.
+    validate_cookie_auth(req.clone(), &auth_data).map_err(|_err| {
+        InternalError::new(
+            "You must be logged in to download files",
+            StatusCode::UNAUTHORIZED,
+        )
+    })?;
+
     let service = StaticFileService::new(&settings.server.base_dir)
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
@@ -302,9 +310,9 @@ async fn upload_sync_file_inner(
 async fn download_sync_file(
     req: HttpRequest,
     settings: Data<Settings>,
-    service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String, String)>,
     auth_data: Data<AuthData>,
+    service_provider: Data<ServiceProvider>,
 ) -> Result<HttpResponse, Error> {
     // For now, we just check that the user is authenticated
     // In future we might want to check that the user has access to the record
@@ -331,15 +339,37 @@ async fn download_sync_file(
         Err(error) => error,
     };
 
+    // The table name, record id and file id are all URL path segments, so one that can't
+    // be a path component is a malformed request rather than a fault on this server
+    if let DownloadFileError::Other(ref err) = error {
+        if InvalidFilePath::is_in(err) {
+            log::warn!("Rejected sync file download: {}", format_error(&error));
+            return Err(InternalError::new(err.to_string(), StatusCode::BAD_REQUEST).into());
+        }
+    }
+
     let error = match error {
-        DownloadFileError::NotFoundLocallyAndThisIsCentralServer => InternalError::new(
-            "File not found, it may not have been synced from the remote site yet...",
-            StatusCode::NOT_FOUND,
-        ),
-        _ => InternalError::new(
-            "Error downloading file, please see server logs",
-            StatusCode::INTERNAL_SERVER_ERROR,
-        ),
+        DownloadFileError::NotFoundLocallyAndThisIsCentralServer
+        | DownloadFileError::ErrorDownloadingFile(
+            file_synchroniser::DownloadFileError::FileDoesNotExist(_)
+            | file_synchroniser::DownloadFileError::SyncApiV7Error(
+                repository::syncv7::SyncError::SyncFileNotFound(_),
+            ),
+        ) => {
+            // Expected while the origin site hasn't uploaded/synced yet — not an error state.
+            log::info!("Sync file not available yet: {}", format_error(&error));
+            InternalError::new(
+                "File not found, it may not have been synced from the remote site yet...",
+                StatusCode::NOT_FOUND,
+            )
+        }
+        _ => {
+            log::error!("Error downloading sync file: {}", format_error(&error));
+            InternalError::new(
+                "Error downloading file, please see server logs",
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )
+        }
     };
 
     Err(error.into())
@@ -351,7 +381,7 @@ enum DownloadFileError {
     DatabaseError(#[from] RepositoryError),
     #[error("File IO error")]
     FileIOError(#[from] std::io::Error),
-    #[error("File not found locally and it's central server")]
+    #[error("File not found locally and this is the central server")]
     NotFoundLocallyAndThisIsCentralServer,
     #[error("Error downloading file from central")]
     ErrorDownloadingFile(#[from] file_synchroniser::DownloadFileError),
@@ -371,12 +401,22 @@ async fn download_sync_file_inner(
         return Ok((NamedFile::open(file.path)?, file.name));
     }
 
-    let CentralServerConfig::CentralServerUrl(url) = CentralServerConfig::get() else {
-        // Not found locally and is central server
+    // Not on disk. Central *is* the source of file bytes — nothing to fall back to
+    // (the origin site hasn't uploaded the file yet).
+    if CentralServerConfig::is_central_server() {
         return Err(DownloadFileError::NotFoundLocallyAndThisIsCentralServer);
+    }
+
+    // On a remote, fetch the bytes from central on demand and cache them locally, so a
+    // synced file reference is openable as soon as central holds the bytes.
+    let Some(url) = file_sync_central_url(&service_provider) else {
+        return Err(DownloadFileError::Other(anyhow::anyhow!(
+            "File not found locally and no central server URL is available to download it from"
+        )));
     };
 
-    // File not found locally, download from central
+    log::info!("Sync file {file_id} not found locally, downloading from central");
+
     let file_synchroniser = FileSynchroniser::new(
         &url,
         get_sync_settings(&service_provider),
@@ -396,6 +436,28 @@ mod test {
     use super::*;
     use actix_web::body::to_bytes;
 
+    /// Minimal Settings for route tests; only `server.base_dir` is read by these
+    /// handlers. Built through the shared helper rather than deserialised from a JSON
+    /// literal, so a field added to `Settings` is a compile error here instead of a
+    /// panic at the first `unwrap`.
+    fn test_settings() -> Settings {
+        service::settings::test_settings(
+            repository::database_settings::DatabaseSettings {
+                username: String::new(),
+                password: String::new(),
+                port: 0,
+                host: String::new(),
+                database_name: "test".to_string(),
+                database_path: None,
+                connection_pool_max_connections: None,
+                connection_pool_min_idle: None,
+                connection_pool_timeout_seconds: None,
+                init_sql: None,
+            },
+            None,
+        )
+    }
+
     fn temp_file(name: &str, size: usize) -> TempFile {
         TempFile {
             file: tempfile::NamedTempFile::new().unwrap(),
@@ -403,6 +465,40 @@ mod test {
             file_name: Some(name.to_string()),
             size,
         }
+    }
+
+    /// Security audit DS-5: `/files` serves generated report output, so an unauthenticated
+    /// request must be refused rather than treating the file id as the access control.
+    #[actix_rt::test]
+    async fn files_requires_authentication() {
+        use actix_web::{test, web::Data, App};
+        use service::auth_data::AuthData;
+        use std::sync::{Arc, RwLock};
+
+        let auth_data = Data::new(AuthData {
+            session_store: Arc::new(RwLock::new(Default::default())),
+            cookie_suffix: "8000".to_string(),
+            no_ssl: true,
+            debug_no_access_control: false,
+        });
+
+        let app = test::init_service(
+            App::new()
+                .app_data(auth_data)
+                .app_data(Data::new(test_settings()))
+                .configure(|cfg| {
+                    cfg.service(web::resource("/files").guard(guard::Get()).to(files));
+                }),
+        )
+        .await;
+
+        // No session cookie
+        let request = test::TestRequest::get()
+            .uri("/files?id=some-report-file-id")
+            .to_request();
+        let response = test::call_service(&app, request).await;
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     }
 
     #[actix_rt::test]

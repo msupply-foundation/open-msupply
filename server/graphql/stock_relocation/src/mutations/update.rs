@@ -66,6 +66,7 @@ pub fn update_stock_relocation(
         &ResourceAccessRequest {
             resource: Resource::MutateStockLine,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -116,7 +117,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | E::CannotReverseStatus
         | E::MovementHasNoLines
         | E::LineValidation { .. } => BadUserInput(formatted_error),
-        E::UpdateStockLine(_) | E::Repack(_) | E::DatabaseError(_) => InternalError(formatted_error),
+        E::UpdateStockLine(_) | E::Repack(_) | E::DatabaseError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

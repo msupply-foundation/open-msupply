@@ -15,6 +15,7 @@ use crate::{
     subscription::SubscriptionTriggerHandle,
     sync::{
         file_sync_driver::FileSyncDriver,
+        settings::BatchSize,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
     },
 };
@@ -48,7 +49,13 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             base_dir: "test_output".to_string(),
             machine_uid: None,
             override_is_central_server: false,
+            standalone_store_name: None,
+            standalone_admin_username: None,
+            standalone_admin_password: None,
             workers: None,
+            inactivity_timeout_seconds: crate::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+            token_refresh_interval_seconds: crate::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+            frontend_dir: "frontend".to_string(),
         },
         database: db_settings,
         sync: None,
@@ -64,6 +71,8 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             interval: 1,
         }),
         features: None,
+        changelog_partition: None,
+        changelog_dedup: None,
     };
     let (file_sync_trigger, _) = FileSyncDriver::init(&settings);
     let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);
@@ -79,6 +88,9 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         settings.mail.clone(),
         Some(settings.clone()),
         SubscriptionTriggerHandle::new_void(),
+        BatchSize::default(),
+        false,
+        false,
     ));
 
     let processors_task = processors.spawn(service_provider.clone());

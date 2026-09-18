@@ -22,6 +22,7 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
 }) => {
   return (
     <Autocomplete
+      inputTestId="program-select"
       value={
         selectedProgram
           ? {

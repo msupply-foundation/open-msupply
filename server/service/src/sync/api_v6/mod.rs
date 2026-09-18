@@ -5,9 +5,7 @@ use repository::RepositoryError;
 use reqwest::{Response, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
-use util::format_error;
-
-use crate::i64_to_u64;
+use util::{format_error, log_body_read};
 
 pub use self::core::*;
 
@@ -18,6 +16,7 @@ use super::{
     },
     translations::PushSyncRecord,
 };
+use crate::i64_to_u64;
 use crate::sync::api::ParsingSyncRecordError;
 
 #[derive(Deserialize, Debug, Error, Serialize)]
@@ -41,6 +40,12 @@ pub enum SyncParsedErrorV6 {
     SyncFileNotFound(String),
     #[error("Sync V6 API version not compatible, minVersion: {0}, maxVersion: {1}, received: {2}")]
     SyncVersionMismatch(u32, u32, u32),
+    /// New in this version, and this enum is externally tagged, so a remote built before
+    /// it cannot deserialise the body and reports a generic parse error rather than this
+    /// message. Only a site pushing a table it may not author ever sees it, but that is
+    /// worth knowing when one does.
+    #[error("Site is not allowed to author records for table: {0}")]
+    TableNotAuthoredBySite(String),
 }
 
 impl From<anyhow::Error> for SyncParsedErrorV6 {
@@ -132,6 +137,15 @@ pub(crate) struct SyncRecordV6 {
     pub(crate) cursor: u64,
     pub(crate) record: CommonSyncRecord,
 }
+impl From<PushSyncRecord> for SyncRecordV6 {
+    fn from(PushSyncRecord { cursor, record }: PushSyncRecord) -> Self {
+        SyncRecordV6 {
+            cursor: i64_to_u64(cursor),
+            record,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Default, Serialize)]
 pub struct SyncBatchV6 {
     // Latest changelog cursor in the 'records'
@@ -142,15 +156,6 @@ pub struct SyncBatchV6 {
     pub(crate) total_records: u64,
     pub(crate) records: Vec<SyncRecordV6>,
     pub(crate) is_last_batch: bool,
-}
-
-impl From<PushSyncRecord> for SyncRecordV6 {
-    fn from(PushSyncRecord { cursor, record }: PushSyncRecord) -> Self {
-        SyncRecordV6 {
-            cursor: i64_to_u64(cursor),
-            record,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -263,16 +268,7 @@ async fn response_or_err<T: DeserializeOwned>(
         .text()
         .await
         .map_err(ParsingResponseError::CannotGetTextResponse)?;
-    let elapsed = started.elapsed();
-    let bytes = response_text.len();
-    let kb_per_sec = (bytes as f64 / 1024.0) / elapsed.as_secs_f64().max(0.001);
-    log::info!(
-        "API body read: url '{}', {} bytes in {:.1}s ({:.1} KB/s)",
-        url,
-        bytes,
-        elapsed.as_secs_f64(),
-        kb_per_sec,
-    );
+    log_body_read(&url, response_text.len(), started.elapsed());
 
     let result = serde_json::from_str(&response_text).map_err(|source| {
         ParsingResponseError::ParseError {

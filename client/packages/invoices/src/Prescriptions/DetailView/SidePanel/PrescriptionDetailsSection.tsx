@@ -53,6 +53,7 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
                   backgroundColor: theme => theme.palette.background.white,
                 },
               },
+              htmlInput: { 'data-testid': 'customer-reference-field' },
             }}
             value={theirReferenceInput ?? ''}
             onChange={event => {

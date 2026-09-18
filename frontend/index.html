@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open mSupply</title>
+    <script>
+      // Apply the persisted theme before first paint so a dark-theme user
+      // never sees a flash of light (key shared with ThemeToggle).
+      try {
+        var theme = localStorage.getItem('oms-theme');
+        if (theme) document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+      // Same for a site's custom theme: inject the CSS compiled on the last
+      // successful boot so a branded site never flashes the stock palette.
+      // This only ever injects a cached string — compiling happens in the app
+      // (src/ui/branding), never here (keys shared with applyBranding.ts).
+      try {
+        var custom = localStorage.getItem('oms-custom-theme-css');
+        if (custom) {
+          var style = document.createElement('style');
+          style.id = 'oms-custom-theme';
+          style.textContent = custom;
+          document.head.appendChild(style);
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Unsupported-browser warning (spec/startup/rules.md § Minimum
+      // browser). Runs ahead of the module bundle in conservative ES5 with
+      // inline styles only — an engine below the floor may be unable to run
+      // the bundle, so this can depend on nothing the app provides. The
+      // minimum must match browserslist (scripts/check-min-browser.mjs).
+      (function () {
+        var MIN_CHROMIUM = 132;
+        try {
+          var ua = navigator.userAgent;
+          // Only Chromium is versioned against the floor — a browser
+          // without the token (Firefox, Safari) is never warned.
+          var chrome = ua.match(/Chrome\/(\d+)/);
+          if (!chrome) return;
+          var major = parseInt(chrome[1], 10);
+          if (major >= MIN_CHROMIUM) return;
+
+          var signature = String(major);
+          var KEY = 'oms-browser-warning-dismissed';
+          var dismissed = null;
+          try {
+            dismissed = localStorage.getItem(KEY);
+          } catch (e) {}
+          if (dismissed === signature) return;
+
+          var dark = document.documentElement.dataset.theme === 'dark';
+          var android = ua.match(/Android (\d+)/);
+          // On Android ≤9 Chrome provides the WebView; 10+ has a standalone
+          // WebView package, which only applies inside the app (wv marker).
+          var isWebView = / wv\)|; wv/.test(ua);
+          var storePackage =
+            android && parseInt(android[1], 10) >= 10 && isWebView
+              ? 'com.google.android.webview'
+              : 'com.android.chrome';
+
+          var overlay = document.createElement('div');
+          overlay.setAttribute('data-testid', 'browser-warning');
+          overlay.style.cssText =
+            'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;' +
+            'display:flex;align-items:center;justify-content:center;' +
+            'padding:24px;box-sizing:border-box;' +
+            'font-family:system-ui,Roboto,Helvetica,Arial,sans-serif;' +
+            (dark
+              ? 'background:#1c1c1e;color:#eee;'
+              : 'background:#fff;color:#222;');
+
+          var panel = document.createElement('div');
+          panel.style.cssText = 'max-width:26rem;line-height:1.5;';
+
+          var title = document.createElement('h1');
+          title.style.cssText = 'font-size:1.3rem;margin:0 0 0.75rem;';
+          title.appendChild(document.createTextNode('Unsupported browser'));
+          panel.appendChild(title);
+
+          var message = document.createElement('p');
+          message.style.cssText = 'margin:0 0 1.25rem;';
+          message.appendChild(
+            document.createTextNode(
+              'This browser is running Chromium ' +
+                major +
+                ', which is older than the version Open mSupply supports' +
+                ' (Chromium ' +
+                MIN_CHROMIUM +
+                ' or newer). The app may not work correctly.' +
+                ' Please update your browser.'
+            )
+          );
+          panel.appendChild(message);
+
+          if (android) {
+            var update = document.createElement('a');
+            update.setAttribute('data-testid', 'browser-warning-update');
+            update.href =
+              'https://play.google.com/store/apps/details?id=' + storePackage;
+            update.style.cssText =
+              'display:inline-block;margin:0 1rem 1rem 0;padding:10px 18px;' +
+              'border-radius:6px;background:#0b6e99;color:#fff;' +
+              'text-decoration:none;font-weight:600;';
+            update.appendChild(
+              document.createTextNode(
+                storePackage === 'com.android.chrome'
+                  ? 'Update Chrome'
+                  : 'Update Android System WebView'
+              )
+            );
+            panel.appendChild(update);
+          } else {
+            var hint = document.createElement('p');
+            hint.style.cssText =
+              'margin:0 0 1.25rem;font-size:0.9rem;opacity:0.8;';
+            hint.appendChild(
+              document.createTextNode(
+                'To update: open your browser menu → Help → About, which checks for updates.'
+              )
+            );
+            panel.appendChild(hint);
+          }
+
+          var proceed = document.createElement('button');
+          proceed.setAttribute('data-testid', 'browser-warning-continue');
+          proceed.style.cssText =
+            'padding:10px 18px;border-radius:6px;border:1px solid ' +
+            (dark
+              ? '#555;background:none;color:#eee;'
+              : '#bbb;background:none;color:#222;') +
+            'font:inherit;cursor:pointer;';
+          proceed.appendChild(document.createTextNode('Continue anyway'));
+          proceed.onclick = function () {
+            try {
+              localStorage.setItem(KEY, signature);
+            } catch (e) {}
+            overlay.parentNode.removeChild(overlay);
+          };
+          panel.appendChild(proceed);
+
+          overlay.appendChild(panel);
+          document.body.appendChild(overlay);
+        } catch (e) {}
+      })();
+    </script>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>

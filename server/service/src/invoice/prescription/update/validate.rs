@@ -1,11 +1,12 @@
 use crate::invoice::{
     can_cancel_invoice, check_invoice_exists, check_invoice_is_editable, check_invoice_type,
-    check_status_change, check_store, UpdatePrescriptionStatus,
+    check_status_change, check_store, custom_fields::check_invoice_custom_fields_patch,
+    is_generated_dispensation, UpdatePrescriptionStatus,
 };
 use crate::validate::check_patient_exists;
 use repository::{
-    ClinicianRowRepository, ClinicianRowRepositoryTrait, EqualFilter, InvoiceLineFilter,
-    InvoiceLineRepository, RepositoryError,
+    ClinicianLinkRowRepository, ClinicianRowRepository, ClinicianRowRepositoryTrait, EqualFilter,
+    InvoiceLineFilter, InvoiceLineRepository, RepositoryError,
 };
 use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
@@ -38,10 +39,23 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceType::Prescription) {
         return Err(NotAPrescriptionInvoice);
     }
+
+    if let Some(properties) = &patch.custom_fields {
+        if let Some(problem) =
+            check_invoice_custom_fields_patch(connection, &invoice.r#type, properties)?
+        {
+            return Err(problem.into());
+        }
+    }
+
     if let Some(clinician_id) = &patch.clinician_id {
         if !check_clinician_exists(connection, &clinician_id.value)? {
             return Err(ClinicianDoesNotExist);
         }
+    }
+
+    if let Some(field) = changed_prescriber_field(connection, &invoice, patch)? {
+        return Err(CannotChangePrescriberField(field));
     }
     // Status check
     let status_changed = check_status_change(&invoice, patch.full_status());
@@ -63,6 +77,53 @@ pub fn validate(
     }
 
     Ok((invoice, status_changed))
+}
+
+/// The first field the prescriber owns that this patch would CHANGE — `None`
+/// when there is nothing to refuse (see `is_generated_dispensation`).
+///
+/// Re-sending a value the invoice already holds is not a change and passes. The
+/// rule is that these cannot be CHANGED, not that they cannot be mentioned — so
+/// a client that echoes unchanged fields alongside a real edit, or retries a
+/// save, is not refused for fields it never touched. Both front ends do exactly
+/// that: the legacy client builds its patch by spreading whatever the caller
+/// passed.
+fn changed_prescriber_field(
+    connection: &StorageConnection,
+    invoice: &InvoiceRow,
+    patch: &UpdatePrescription,
+) -> Result<Option<&'static str>, RepositoryError> {
+    if !is_generated_dispensation(invoice) {
+        return Ok(None);
+    }
+
+    if matches!(&patch.patient_id, Some(patient_id) if *patient_id != invoice.name_id) {
+        return Ok(Some("patient"));
+    }
+
+    if let Some(diagnosis_id) = &patch.diagnosis_id {
+        if diagnosis_id.value != invoice.diagnosis_id {
+            return Ok(Some("diagnosis"));
+        }
+    }
+
+    if let Some(clinician_id) = &patch.clinician_id {
+        // The invoice holds the LINK id; the patch carries a clinician id, and
+        // the two only coincide until someone merges two clinicians. Resolve
+        // before comparing, so a merged clinician echoed back reads as
+        // unchanged rather than as an edit.
+        let current = match &invoice.clinician_link_id {
+            None => None,
+            Some(link_id) => ClinicianLinkRowRepository::new(connection)
+                .find_one_by_id(link_id)?
+                .map(|link| link.clinician_id),
+        };
+        if clinician_id.value != current {
+            return Ok(Some("clinician"));
+        }
+    }
+
+    Ok(None)
 }
 
 fn check_clinician_exists(

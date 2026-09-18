@@ -4,9 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{
-    HelpDocumentConnector, HelpDocumentFilterInput, HelpDocumentsResponse,
-};
+use graphql_types::types::{HelpDocumentConnector, HelpDocumentFilterInput, HelpDocumentsResponse};
 use repository::{HelpDocumentFilter, PaginationOption};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -23,6 +21,7 @@ pub async fn get_help_documents(
         &ResourceAccessRequest {
             resource: Resource::QueryHelpDocuments,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

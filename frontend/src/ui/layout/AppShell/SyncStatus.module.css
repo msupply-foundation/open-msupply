@@ -1,0 +1,154 @@
+/*
+ * The bottom bar's sync cell (spec/chrome § sync status). Two controls in one
+ * visual group: the status line itself, which starts a sync, and a small
+ * details button that raises the sync modal.
+ *
+ * NO TONE COLOUR here, deliberately. The bar's ground is store DATA — brand
+ * orange on a central server, menu-grey elsewhere, an arbitrary hex wherever a
+ * store sets one — so nothing drawn onto it can be held to a contrast ratio
+ * (--error-main measures 1.23:1 on the orange), and worse, a hue that lands
+ * near the store's own simply disappears: on a green bar a green mark is a
+ * mark you cannot see. Escalation is carried by the GLYPH instead
+ * (SyncStatus.tsx `toneIcon`), while text and glyph keep the bar's own
+ * contrast-checked content colour at every tone. The state is then never
+ * signalled by colour at all, so colour independence holds by construction
+ * rather than resting on the label.
+ *
+ * The one level below the tones is DIM (issue #1087): sync is not running and
+ * cannot. Dimming is not a hue, so it survives an unknown ground — it reads as
+ * "switched off" against a bar of any colour.
+ */
+
+.group {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit; /* a <button> resets colour; take the bar's */
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cell:hover {
+  background: color-mix(in srgb, currentcolor 15%, transparent);
+}
+
+.cell:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: -0.125rem;
+}
+
+/* In flight the line is aria-disabled, never disabled — a disabled control
+   would drop keyboard focus and leave the tab order mid-run (the component
+   guards the click instead). */
+.cell[aria-disabled='true'] {
+  cursor: default;
+}
+
+.cell[aria-disabled='true']:hover {
+  background: transparent;
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 1rem; /* the icon set sizes from font-size (1em) */
+  line-height: 0;
+  color: inherit;
+}
+
+/* The state itself, which is what the eye should land on — set a step heavier
+   than the timing behind it. */
+.label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: var(--weight-medium);
+}
+
+/*
+ * The timing behind the state. Quieter by WEIGHT ALONE — not by dimming the
+ * colour, which is the obvious way to do this and the wrong one here: the bar's
+ * own content sits at 3.48:1 on the central-server orange and 2.80:1 on the
+ * remote grey (the current app's footer palette, inherited), so there is no
+ * contrast to spend. A 70%-alpha tail measured 2.42:1 and 1.97:1 — a second
+ * half of the line that some users simply could not read. Weight costs nothing
+ * and says the same thing.
+ *
+ * First to be given up when the bar runs out of room: the state is the message,
+ * the age only qualifies it.
+ */
+.detail {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: var(--weight-regular);
+}
+
+/* The action the status line performs, for the accessible name — the visible
+   text alone says what the STATE is, never that clicking starts a sync. */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The details button carries no text, so it keeps a square footprint. */
+.details {
+  padding: var(--space-1);
+}
+
+/*
+ * Dimmed: sync is not running and cannot (issue #1087). Carried by WEIGHT, for
+ * the reason measured on .detail above — the bar's own content starts at 3.48:1
+ * and 2.80:1, so there is no contrast to spend, and every alpha deep enough to
+ * READ as dimmed lands in the range that measurement already rejected (a 70%
+ * tail fell to 2.42:1 and 1.97:1). Fading the whole group would have spent it
+ * on the one state carrying the most to say: "No connection" plus the age that
+ * qualifies it.
+ *
+ * So the state recedes by giving up the label's emphasis rather than its
+ * contrast, and it is not carrying itself alone — the cell also takes the
+ * struck-through connection mark and says the words. Three carriers, none of
+ * them a hue and none of them contrast, which is what "survives an unknown
+ * ground" has to mean on a bar whose colour is store data.
+ */
+.group[data-dimmed] .label {
+  font-weight: var(--weight-regular);
+}
+
+/*
+ * A run in flight spins the sync glyph (issue #1087) — the reload ring's own
+ * idiom, where the former broadcast mark needed a bespoke arc fade its shape
+ * never motivated.
+ *
+ * --motion-spin is the shared indeterminate-progress token the Spinner uses,
+ * and it is deliberately NOT one of the decorative tiers zeroed under reduced
+ * motion: it slows to a crawl instead of stopping, because a frozen indicator
+ * reads as a hung app (tokens.css). So there is no reduce block here — the
+ * token carries the preference, which is also what the motion check enforces.
+ */
+@keyframes sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.icon[data-syncing] svg {
+  animation: sync-spin var(--motion-spin) linear infinite;
+}

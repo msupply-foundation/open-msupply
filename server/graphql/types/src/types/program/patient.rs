@@ -2,7 +2,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Local, NaiveDate, Utc};
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::{DocumentLoader, PatientLoader};
+use graphql_core::loader::{AllowedCustomFieldKeysByScopeLoader, DocumentLoader, PatientLoader};
 use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
@@ -46,6 +46,11 @@ pub struct PatientFilterInput {
     pub date_of_death: Option<DateFilterInput>,
     pub program_enrolment_name: Option<StringFilterInput>,
     pub next_of_kin_name: Option<StringFilterInput>,
+
+    /// Dynamic filter condition AST, currently supporting property conditions
+    /// on keys visible for the "patient" table scope, e.g.
+    /// `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+    pub dynamic_filter: Option<serde_json::Value>,
 }
 
 impl From<PatientFilterInput> for PatientFilter {
@@ -68,6 +73,10 @@ impl From<PatientFilterInput> for PatientFilter {
             date_of_death: f.date_of_death.map(DateFilter::from),
             program_enrolment_name: f.program_enrolment_name.map(StringFilter::from),
             next_of_kin_name: f.next_of_kin_name.map(StringFilter::from),
+            // Parsed from the JSON `dynamicFilter` input in the resolver (a
+            // serde error there must surface as BadUserInput, so the infallible
+            // From can't do it)
+            dynamic_filter: None,
         }
     }
 }
@@ -173,6 +182,23 @@ impl PatientNode {
 
     pub async fn date_of_death(&self) -> Option<NaiveDate> {
         self.patient.date_of_death
+    }
+
+    /// Patient custom property values (`name.custom_fields`), filtered to keys
+    /// defined and visible for the `patient` table scope. Mirrors
+    /// `NameNode.custom_fields` but always uses the `"patient"` scope.
+    pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.patient.custom_fields.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
+        let allowed_keys = loader
+            .load_one("patient".to_string())
+            .await?
+            .unwrap_or_default();
+
+        Ok(Some(crate::types::filter_custom_fields(raw, &allowed_keys)))
     }
 
     pub async fn next_of_kin_id(&self) -> &Option<String> {

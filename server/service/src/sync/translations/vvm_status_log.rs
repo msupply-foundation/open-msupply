@@ -5,13 +5,13 @@ use crate::sync::translations::{
 use anyhow::Error;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, ChangelogRow, ChangelogTableName, Row,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -63,7 +63,8 @@ impl SyncTranslation for VVMStatusLogTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, Error> {
         let LegacyVVMStatusLogRow {
@@ -76,19 +77,23 @@ impl SyncTranslation for VVMStatusLogTranslation {
             created_by,
             invoice_line_id,
             store_id,
-        } = serde_json::from_str::<LegacyVVMStatusLogRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let created_datetime = NaiveDateTime::new(date, time);
+
+        let fk_check = fk_checker.with_table(connection, "vaccine_vial_monitor_status_log", &id);
+        let check_fk =
+            fk_checker.with_table_required(connection, "vaccine_vial_monitor_status_log", &id);
 
         let result = VVMStatusLogRow {
             id,
             status_id,
             created_datetime,
-            stock_line_id,
+            stock_line_id: check_fk(stock_line_id, "stock_line_id", FkField::StockLine)?,
             comment,
             created_by,
-            invoice_line_id,
-            store_id,
+            invoice_line_id: fk_check(invoice_line_id, "invoice_line_id", FkField::InvoiceLine)?,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -96,9 +101,14 @@ impl SyncTranslation for VVMStatusLogTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, Error> {
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::VVMStatusLog(vvm_status_log_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let VVMStatusLogRow {
             id,
             status_id,
@@ -108,12 +118,7 @@ impl SyncTranslation for VVMStatusLogTranslation {
             created_by,
             invoice_line_id,
             store_id,
-        } = VVMStatusLogRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "VVM Status Log row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = vvm_status_log_row;
 
         let legacy_row = LegacyVVMStatusLogRow {
             id,
@@ -146,7 +151,11 @@ impl SyncTranslation for VVMStatusLogTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_outbound_shipment_line_a, mock_stock_line_a, MockDataInserts},
+        test_db::setup_all,
+        InvoiceLineRow, InvoiceLineRowRepository, StockLineRow, StockLineRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_vvm_status_log_translation() {
@@ -154,12 +163,31 @@ mod tests {
         let translator = VVMStatusLogTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_vvm_status_log_translation", MockDataInserts::none()).await;
+            setup_all("test_vvm_status_log_translation", MockDataInserts::all()).await;
+
+        // Seed the stock_line parent the vvm status log's required FK points at.
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&StockLineRow {
+                id: "0a3b02d0f0d211eb8dddb54df6d741bc".to_string(),
+                ..mock_stock_line_a()
+            })
+            .unwrap();
+        // Seed the invoice_line the (optional) invoice_line_id points at, so it isn't cleared.
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&InvoiceLineRow {
+                id: "12ee2f10f0d211eb8dddb54df6d741bc".to_string(),
+                ..mock_outbound_shipment_line_a()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

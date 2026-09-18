@@ -1,0 +1,35 @@
+# One patient by id (spec/patients S3 detail). `name` is the derived
+# "{last}, {first}" display name; `age` is server-derived from dateOfBirth.
+# address2/country/email/website are read here but are NOT writable via the
+# plain path (spec/patients contract › editing wire trap) — only the document
+# path projects them. customFields is re-filtered server-side to the "patient"
+# scope's visible keys.
+query patient($storeId: String!, $patientId: String!) {
+  patient(storeId: $storeId, patientId: $patientId) {
+    id
+    name
+    code
+    code2
+    firstName
+    lastName
+    gender
+    dateOfBirth
+    age
+    phone
+    address1
+    address2
+    country
+    email
+    website
+    isDeceased
+    dateOfDeath
+    nextOfKinId
+    nextOfKinName
+    createdDatetime
+    customFields
+    nextOfKin {
+      id
+      name
+    }
+  }
+}

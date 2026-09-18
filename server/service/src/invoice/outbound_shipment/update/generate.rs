@@ -58,6 +58,7 @@ pub(crate) fn generate(
         expected_delivery_date: input_expected_delivery_date,
         shipping_method_id,
         backdated_datetime: input_backdated_datetime,
+        custom_fields: input_custom_fields,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
@@ -92,6 +93,10 @@ pub(crate) fn generate(
     update_invoice.shipping_method_id = shipping_method_id
         .map(|s| s.value)
         .unwrap_or(update_invoice.shipping_method_id);
+    update_invoice.custom_fields = crate::invoice::custom_fields::apply_custom_fields_patch(
+        update_invoice.custom_fields,
+        input_custom_fields,
+    );
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()
@@ -137,17 +142,18 @@ pub(crate) fn generate(
         None
     };
 
-    let mut update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
-        Some(generate_update_for_lines(
-            connection,
-            &update_invoice.id,
-            update_invoice.tax_percentage,
-            update_invoice.currency_id.clone(),
-            &update_invoice.currency_rate,
-        )?)
-    } else {
-        None
-    };
+    let mut update_lines =
+        if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
+            Some(generate_update_for_lines(
+                connection,
+                &update_invoice.id,
+                update_invoice.tax_percentage,
+                update_invoice.currency_id.clone(),
+                &update_invoice.currency_rate,
+            )?)
+        } else {
+            None
+        };
 
     let mut lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
 

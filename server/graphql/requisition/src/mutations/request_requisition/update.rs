@@ -81,6 +81,7 @@ pub async fn update(
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -90,6 +91,7 @@ pub async fn update(
             &ResourceAccessRequest {
                 resource: Resource::RequisitionSend,
                 store_id: Some(store_id.to_string()),
+                require_central_standalone: false,
             },
         )?;
     }
@@ -100,16 +102,15 @@ pub async fn update(
 
     // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
     // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
-    let result = tokio::task::spawn_blocking(
-        move || -> Result<Result<Requisition, ServiceError>> {
+    let result =
+        tokio::task::spawn_blocking(move || -> Result<Result<Requisition, ServiceError>> {
             let service_context = service_provider.context(store_id, user.user_id)?;
             Ok(service_provider
                 .requisition_service
                 .update_request_requisition(&service_context, input))
-        },
-    )
-    .await
-    .map_err(StandardGraphqlError::from_join_error)??;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }

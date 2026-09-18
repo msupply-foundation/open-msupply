@@ -107,6 +107,7 @@ pub fn insert_purchase_order_line(
         &ResourceAccessRequest {
             resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -169,8 +170,7 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::IncorrectStoreId
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::OtherPartyNotAManufacturer
-        | ServiceError::ItemCannotBeOrdered
-        | ServiceError::OtherPartyNotVisible => BadUserInput(formatted_error),
+        | ServiceError::ItemCannotBeOrdered => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

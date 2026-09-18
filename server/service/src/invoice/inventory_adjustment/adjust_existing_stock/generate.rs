@@ -100,6 +100,7 @@ pub fn generate(
         shipping_method_id: None,
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,
+        ..Default::default()
     };
 
     let StockLineRow {
@@ -184,6 +185,7 @@ pub fn generate(
             manufacturer_id: None,
             received_number_of_packs: None,
             reason_option_id: None,
+            transfer_comment: None,
         }),
     };
 

@@ -22,7 +22,8 @@ const GR_NON_FINALISED: (&str, &str) = (
     }"#,
 );
 
-// Finalized GR — should update existing invoice with purchase_order_id
+// Finalised GR — should update the existing invoice (linked via
+// `legacy_goods_received_id`) with the purchase_order_id.
 const GR_FINALISED: (&str, &str) = (
     "gr_finalised_test",
     r#"{
@@ -77,6 +78,7 @@ fn gr_finalised_pull_record() -> TestSyncIncomingRecord {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap(),
+        legacy_goods_received_id: Some("gr_finalised_test".to_string()),
         ..Default::default()
     };
 
@@ -87,22 +89,6 @@ fn gr_finalised_pull_record() -> TestSyncIncomingRecord {
         TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, GR_FINALISED, expected_invoice);
     record.extra_data = Some(MockData {
         invoices: vec![existing_invoice],
-        // Transact sync_buffer record with goods_received_ID pointing to this GR.
-        // Set integration_datetime so the invoice translator doesn't try to re-parse
-        // this minimal record during the integration test.
-        sync_buffer_rows: vec![SyncBufferRow {
-            record_id: "gr_existing_si".to_string(),
-            table_name: "transact".to_string(),
-            data: r#"{"goods_received_ID": "gr_finalised_test"}"#.to_string(),
-            action: SyncAction::Upsert,
-            integration_datetime: Some(
-                chrono::NaiveDate::from_ymd_opt(2024, 1, 1)
-                    .unwrap()
-                    .and_hms_opt(0, 0, 0)
-                    .unwrap(),
-            ),
-            ..Default::default()
-        }],
         ..Default::default()
     });
     record

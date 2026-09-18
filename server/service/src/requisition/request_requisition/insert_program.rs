@@ -24,8 +24,8 @@ use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
-    IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter,
-    NameRepository, NumberRowType, Pagination, PeriodRowRepository, PluginDataRowRepository,
+    IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
+    NumberRowType, Pagination, PeriodRowRepository, PluginDataRowRepository,
     ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
     Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
     StorageConnection, StoreFilter, StoreRepository,
@@ -198,6 +198,9 @@ fn generate(
 ) -> Result<GenerateResult, PluginOrRepositoryError> {
     let connection = &ctx.connection;
 
+    let other_party_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())))?;
+
     let requisition = RequisitionRow {
         id,
         user_id: Some(ctx.user_id.clone()),
@@ -207,6 +210,7 @@ fn generate(
             &ctx.store_id,
         )?,
         name_id: other_party_id.clone(),
+        name_store_id: other_party_store.map(|store| store.store_row.id),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -228,6 +232,7 @@ fn generate(
         linked_requisition_id: None,
         created_from_requisition_id: None,
         destination_customer_id: None,
+        ..Default::default()
     };
 
     let master_list_id = program.master_list_id.clone().unwrap_or_default();

@@ -1,0 +1,103 @@
+/*
+ * The current app's MUI Alert (standard variant + its 10px-radius override),
+ * re-derived from the severity tokens instead of MUI's lighten()/darken():
+ * panel = a pale tint of the severity over the surface, text = the severity
+ * mixed into the body text colour, icon = the severity itself. Because both
+ * mixes lean on themed tokens (--bg-white flips dark, --text-body flips
+ * light), the dark theme gets MUI's dark-alert behaviour — dark tinted panel,
+ * pale tinted text — with no dark-specific rules here. Mix ratios chosen to
+ * sit close to MUI's output while holding AA in both themes (worst case,
+ * warning on light: ≈7:1).
+ */
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.375rem 1rem;
+  border-radius: 10px; /* the app's Alert override (MUI default is 4px) */
+  background: color-mix(in srgb, var(--alert-colour) 10%, var(--bg-white));
+  color: color-mix(in srgb, var(--alert-colour) 40%, var(--text-body));
+  font-size: var(--text-sm);
+  line-height: 1.43;
+}
+
+.alert[data-severity='error'] {
+  --alert-colour: var(--error-main);
+}
+
+.alert[data-severity='warning'] {
+  --alert-colour: var(--warning-main);
+}
+
+.alert[data-severity='info'] {
+  --alert-colour: var(--info-main);
+}
+
+.alert[data-severity='success'] {
+  --alert-colour: var(--success-main);
+}
+
+/* Neutral: no severity tint — the current app's drawer-grey notice (its
+   last-successful-sync banner): drawer surface, body text, grey icon. */
+.alert[data-severity='neutral'] {
+  --alert-colour: var(--gray-dark);
+
+  background: var(--bg-drawer);
+  color: var(--text-body);
+}
+
+/* The icon centres vertically against the message — align-items: center on
+   the panel puts it in the middle whether the message is one line or wraps to
+   several (Carl 2026-07-27; previously top-aligned beside the first line to
+   match MUI's geometry). The block padding here and on the message is kept: it
+   holds the panel height and stays symmetric, so centring is unaffected. */
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  padding-block: 0.4375rem;
+  font-size: 1.25rem; /* the app passes fontSize="small" (20px) */
+  color: var(--alert-colour);
+}
+
+.message {
+  padding-block: 0.5rem;
+}
+
+/*
+ * Compact footprint — the ui-standards `.fb-banner--compact`: the same alert
+ * (tint, colour, icon), shrunk to an inline chip so it can tuck into a
+ * page-header meta strip instead of costing a content row. Same colour
+ * language, smaller footprint: shrinks to its content (inline-flex + fit
+ * width) so it's one centred line whenever there's room, and takes the spec's
+ * tighter type/gap/padding + medium weight. Deliberate deviation from the
+ * spec's `white-space: nowrap` (Carl): we let the text WRAP once the chip hits
+ * the available width, rather than overflow off a narrow screen — `fit-content`
+ * keeps it single-line while it fits and caps it at the container after that.
+ */
+.alert.compact {
+  display: inline-flex;
+  align-items: center;
+  inline-size: fit-content;
+  /* Never stretch. inline-size: fit-content only holds while the alert is a
+     block/inline box; a flex parent that sets flex-grow on its children (e.g.
+     FormRow's `flex: 1 1 13rem`) overrides that and stretches the chip. This
+     flex reset — grow 0, but shrink 1 + basis auto so it still WRAPS at narrow
+     widths — pins the chip to its content in any flex container. `.alert.compact`
+     is (0,2,0), so it outweighs FormRow's `.row > *` (0,1,0). */
+  flex: 0 1 auto;
+  gap: 0.4375rem;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.8125rem; /* 13px (spec compact) */
+  font-weight: var(--weight-medium);
+  line-height: 1.3;
+}
+
+.compact .icon {
+  padding-block: 0;
+  font-size: 0.9375rem; /* 15px (spec's compact glyph) */
+}
+
+.compact .message {
+  padding-block: 0;
+}

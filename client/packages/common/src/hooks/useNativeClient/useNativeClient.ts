@@ -44,7 +44,7 @@ export const useNativeClient = ({
   standalone,
 }: { discovery?: boolean; autoconnect?: boolean; standalone?: boolean } = {}) => {
   const nativeAPI = getNativeAPI();
-  const { token } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
 
   const setMode = (mode: NativeMode) =>
     setPreference('mode', mode).then(() =>
@@ -166,8 +166,8 @@ export const useNativeClient = ({
     advertiseService();
     // on first load, the login status is not checked correctly in the native app
     // and users are shown the dashboard even if they are not logged in
-    // here we check the token and if invalid redirect to login
-    const path = !token ? 'login' : '';
+    // here we check the auth state and if not logged in redirect to login
+    const path = !isAuthenticated ? 'login' : '';
     connectToServer({ ...DEFAULT_LOCAL_SERVER, path })
       .then(handleConnectionResult)
       .catch(e => handleConnectionResult({ success: false, error: e.message }));

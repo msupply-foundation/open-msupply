@@ -8,6 +8,10 @@ mkdir "omSupply\Desktop"
 xcopy "server\configuration" "omSupply\Server\configuration" /e /h /c /i
 xcopy "server\app_data" "omSupply\Server\app_data" /e /h /c /i
 
+@REM No local.yaml needed for the old UI: the server serves the frontend dir's
+@REM old-ui/ subdirectory at /old-ui/ by convention (the old_ui_frontend_dir
+@REM setting was dropped - see serve_frontend.rs).
+
 copy "server\server\omSupply.ico" "build\omSupply.ico"
 xcopy "build\*.*" "omSupply" /c
 xcopy "build\windows\*.*" "omSupply" /c
@@ -20,7 +24,14 @@ start /b /wait build\windows\omsupply-prepare.bat
     exit /b %errorlevel%
 )
 
+@ECHO ##### update cargo binary version #####
+@FOR /F "delims=*" %%i in ('more omSupply\version.txt') do SET versionTag=%%i
+@FOR /F "delims=*" %%i in ('node build\windows\getVersion.js') do set version=%%i
+
 @cd server 
+
+cargo install cargo-edit
+cargo set-version %version%
 
 @ECHO ##### Building all sqlite binaries #####
 cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection
@@ -40,6 +51,28 @@ copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-pos
 copy "target\release\test_connection.exe"  "..\omSupply\Server\test-connection-postgres.exe"
 
 @cd..
+
+@ECHO ##### Building new frontend (served at / from frontend_dir) #####
+@REM The NEW FE is built in-tree (corepack pnpm; the pnpm version is pinned by
+@REM frontend\package.json — the repo root workspace is yarn, so corepack must
+@REM run from frontend\) and copied into Server\frontend — same commit as the
+@REM server binaries above. See server/README.md, 'Serving front-end'.
+cd frontend
+call corepack pnpm install --frozen-lockfile
+@if %errorlevel% neq 0 ( exit /b %errorlevel% )
+call corepack pnpm build
+@if %errorlevel% neq 0 ( exit /b %errorlevel% )
+@cd..
+xcopy "frontend\dist" "omSupply\Server\frontend" /e /h /c /i
+@if %errorlevel% neq 0 ( exit /b %errorlevel% )
+
+@ECHO ##### Copying old UI (served at /old-ui/) #####
+@REM This repo's client build (PUBLIC_PATH=/old-ui/, see omsupply-prepare.bat) is
+@REM the OLD UI. Nest it inside the fetched frontend dir - the fetch above wipes and
+@REM replaces Server\frontend, so this xcopy must run AFTER it. The .suf's recursive
+@REM Server\frontend Source packages this subdir too, so no .suf change is needed.
+xcopy "client\packages\host\dist" "omSupply\Server\frontend\old-ui" /e /h /c /i
+@if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
 @REM start /b /wait build\windows\omsupply-android.bat
 @REM @if %errorlevel% neq 0 exit /b %errorlevel%

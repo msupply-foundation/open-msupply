@@ -629,6 +629,7 @@ impl InvoiceTransferTester {
         let outbound_shipment = InvoiceRow {
             id: uuid(),
             name_id: inbound_name.map_or(inbound_store.name_id.clone(), |n| n.id.clone()),
+            name_store_id: Some(inbound_store.id.clone()),
             store_id: outbound_store.id.clone(),
             invoice_number: 20,
             r#type: InvoiceType::OutboundShipment,
@@ -677,6 +678,8 @@ impl InvoiceTransferTester {
             stock_line_id: Some(stock_line1.id.clone()),
             location_id: Some(location.id.clone()),
             tax_percentage: Some(0.0),
+            // Must reach the receiving store's line.
+            transfer_comment: Some("Only 2 packs left in stock".to_string()),
             ..Default::default()
         };
 
@@ -772,6 +775,7 @@ impl InvoiceTransferTester {
         let supplier_return = InvoiceRow {
             id: uuid(),
             name_id: outbound_name.map_or(outbound_store.name_id.clone(), |n| n.id.clone()),
+            name_store_id: Some(outbound_store.id.clone()),
             store_id: inbound_store.id.clone(),
             invoice_number: 5,
             r#type: InvoiceType::SupplierReturn,
@@ -1544,6 +1548,11 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
     assert_eq!(inbound_line.stock_line_id, None);
     assert_eq!(inbound_line.location_id, None);
     assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
+    // OMS-REG-ISH-01.15, OMS-REG-DIST-03.44.
+    assert_eq!(
+        inbound_line.transfer_comment,
+        outbound_line.transfer_comment
+    );
 }
 
 // Check pricing is calculated correctly for each line

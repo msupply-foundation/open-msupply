@@ -14,7 +14,8 @@ use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
 use async_graphql::{
-    EmptyMutation, EmptySubscription, MergedSubscription, Object, Schema, Subscription,
+    EmptyMutation, EmptySubscription, MergedSubscription, Object, ObjectType, Schema,
+    SchemaBuilder, Subscription, SubscriptionType,
 };
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
@@ -38,6 +39,7 @@ use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, Se
 use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
+use graphql_general::custom_field::{CustomFieldConfigQueries, CustomFieldMutations};
 use graphql_general::help_document::{HelpDocumentMutations, HelpDocumentQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
@@ -54,6 +56,7 @@ use graphql_plugin::{
     CentralPluginMutations, CentralPluginQueries, PluginMutations, PluginQueries,
 };
 use graphql_preference::{PreferenceMutations, PreferenceQueries};
+use graphql_prescription_request::{PrescriptionRequestMutations, PrescriptionRequestQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
@@ -62,6 +65,7 @@ use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
+use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stock_relocation::{StockRelocationMutations, StockRelocationQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
@@ -138,8 +142,16 @@ impl CentralServerMutationNode {
         HelpDocumentMutations
     }
 
+    async fn custom_field(&self) -> CustomFieldMutations {
+        CustomFieldMutations
+    }
+
     async fn reports(&self) -> CentralReportMutations {
         CentralReportMutations
+    }
+
+    async fn site(&self) -> CentralSiteMutations {
+        CentralSiteMutations
     }
 }
 
@@ -153,6 +165,14 @@ impl CentralServerQueryNode {
 
     async fn sync_message(&self) -> SyncMessageQueries {
         SyncMessageQueries
+    }
+
+    async fn site(&self) -> CentralSiteQueries {
+        CentralSiteQueries
+    }
+
+    async fn custom_field(&self) -> CustomFieldConfigQueries {
+        CustomFieldConfigQueries
     }
 }
 
@@ -194,6 +214,7 @@ pub struct Queries(
     pub RequisitionQueries,
     pub ReportQueries,
     pub StockLineQueries,
+    pub PrescriptionRequestQueries,
     pub StockRelocationQueries,
     pub RepackQueries,
     pub PrinterQueries,
@@ -232,6 +253,7 @@ impl Queries {
             RequisitionQueries,
             ReportQueries,
             StockLineQueries,
+            PrescriptionRequestQueries,
             StockRelocationQueries,
             RepackQueries,
             PrinterQueries,
@@ -269,6 +291,7 @@ pub struct Mutations(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub StockLineMutations,
+    pub PrescriptionRequestMutations,
     pub StockRelocationMutations,
     pub RepackMutations,
     pub PrinterMutations,
@@ -301,6 +324,7 @@ impl Mutations {
             RequisitionMutations,
             RequisitionLineMutations,
             StockLineMutations,
+            PrescriptionRequestMutations,
             StockRelocationMutations,
             RepackMutations,
             PrinterMutations,
@@ -337,6 +361,48 @@ impl BaseSubscriptions {
 #[derive(MergedSubscription, Default, Clone)]
 pub struct Subscriptions(pub BaseSubscriptions, pub SyncStatusSubscriptions);
 
+/// Upper bound on GraphQL query complexity — async-graphql's field-count
+/// metric: every selected field costs `1 + child_complexity`, fragment spreads
+/// and inline fragments are expanded in place, `__typename` is free, and the
+/// cost of *all* operations in one document is summed. There is no custom
+/// `#[graphql(complexity)]` anywhere in this tree, so the default applies
+/// everywhere (finding F-2, issue #362).
+///
+/// 800 is ~3.4x the most expensive operation measured anywhere — `itemById` in
+/// `client/packages/system/src/Item/api/operations.graphql` at 232. Next widest:
+/// `frontend/` 149, the built-in `Invoice` default report query 105, the 82
+/// customer reports in `msupply-foundation/open-msupply-reports` 82,
+/// `standard_forms/` 80, `standard_reports/` 57. Report printing runs through
+/// the self-requester schema (`server/graphql/reports/src/print.rs`), so
+/// implementer-authored reports share this ceiling — hence measuring the
+/// out-of-tree reports repo too.
+///
+/// **What this does and does not bound.** It bounds the shape of the *document*:
+/// absurdly wide selections, and packing many operations into one request. It
+/// does **not** bound the work the server actually does, because the metric is
+/// blind to list sizes — `items(page: { first: 10000000 }) { nodes { id } }`
+/// scores about 4. Resolved-row cost is bounded only by per-query page caps, and
+/// `DEFAULT_PAGINATION_MAX_LIMIT` is `u32::MAX` with only a handful of queries
+/// setting their own `MAX_LIMIT`. Do not read this limit as a cost ceiling.
+///
+/// Query *depth* is deliberately not limited here: async-graphql already rejects
+/// anything nested deeper than 32 via its own `recursive_depth` default, checked
+/// before these rules run, so a `limit_depth` above 32 could never fire. Pinned
+/// by `depth_is_bounded_by_async_graphql_default`.
+///
+/// If a legitimate query is ever rejected, raise this constant — do not remove
+/// the limit.
+const MAX_QUERY_COMPLEXITY: usize = 800;
+
+fn with_cost_limits<Q, M, S>(builder: SchemaBuilder<Q, M, S>) -> SchemaBuilder<Q, M, S>
+where
+    Q: ObjectType + 'static,
+    M: ObjectType + 'static,
+    S: SubscriptionType + 'static,
+{
+    builder.limit_complexity(MAX_QUERY_COMPLEXITY)
+}
+
 /// We need to swap schema between initialisation and operational modes
 /// this is done to avoid validations check in operational mode where
 /// data for validation is not available, this struct helps achieve this
@@ -346,6 +412,9 @@ pub struct GraphqlSchema {
     migration: MigrationSchema,
     /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
     operational_status: Data<RwLock<OperationalStatus>>,
+    /// Copy of [`service::auth_data::AuthData::cookie_suffix`] so `auth_data_from_request` can
+    /// look up the right cookie name without reaching into the schema's data map.
+    cookie_suffix: String,
 }
 
 pub struct GraphSchemaData {
@@ -369,63 +438,74 @@ impl GraphqlSchema {
             validated_plugins,
             subscription_broadcast,
         } = data;
+        let cookie_suffix = auth.cookie_suffix.clone();
         let subscription_broadcast = Data::new(subscription_broadcast);
 
         // Self requester schema is a copy of operational schema, used for reports
         // needs to be available as data in operational schema
-        let self_requester_schema =
-            OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
-                .data(connection_manager.clone())
-                .data(loader_registry.clone())
-                .data(service_provider.clone())
-                .data(auth.clone())
-                .data(settings.clone())
-                .data(validated_plugins.clone())
-                .extension(GraphQLRequestLogger)
-                .finish();
+        let self_requester_schema = with_cost_limits(OperationalSchema::build(
+            Queries::new(),
+            Mutations::new(),
+            Subscriptions::default(),
+        ))
+        .data(connection_manager.clone())
+        .data(loader_registry.clone())
+        .data(service_provider.clone())
+        .data(auth.clone())
+        .data(settings.clone())
+        .data(validated_plugins.clone())
+        .extension(GraphQLRequestLogger)
+        .finish();
         // Self requester does not need loggers
 
         // Shared operational status across all schemas
         let operational_status_ref = Data::new(RwLock::new(operational_status.clone()));
 
         // Operational schema
-        let operational_builder =
-            OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
-                .data(connection_manager.clone())
-                .data(loader_registry.clone())
-                .data(service_provider.clone())
-                .data(auth.clone())
-                .data(settings.clone())
-                .data(validated_plugins.clone())
-                .data(subscription_broadcast.clone())
-                // Add self requester to operational
-                .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
-                .data(operational_status_ref.clone())
-                .extension(GraphQLRequestLogger);
+        let operational_builder = with_cost_limits(OperationalSchema::build(
+            Queries::new(),
+            Mutations::new(),
+            Subscriptions::default(),
+        ))
+        .data(connection_manager.clone())
+        .data(loader_registry.clone())
+        .data(service_provider.clone())
+        .data(auth.clone())
+        .data(settings.clone())
+        .data(validated_plugins.clone())
+        .data(subscription_broadcast.clone())
+        // Add self requester to operational
+        .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
+        .data(operational_status_ref.clone())
+        .extension(GraphQLRequestLogger);
 
         // Initialisation schema should ony need service_provider
-        let initialisation_builder = InitialisationSchema::build(
+        let initialisation_builder = with_cost_limits(InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
             InitialisationSubscriptions::default(),
-        )
+        ))
         .data(service_provider.clone())
         .data(subscription_broadcast.clone())
         .data(operational_status_ref.clone())
         .data(subscription_broadcast.clone())
         .extension(GraphQLRequestLogger);
 
-        let migration_builder =
-            MigrationSchema::build(MigrationQueries, EmptyMutation, EmptySubscription)
-                .data(service_provider.clone())
-                .data(operational_status_ref.clone())
-                .extension(GraphQLRequestLogger);
+        let migration_builder = with_cost_limits(MigrationSchema::build(
+            MigrationQueries,
+            EmptyMutation,
+            EmptySubscription,
+        ))
+        .data(service_provider.clone())
+        .data(operational_status_ref.clone())
+        .extension(GraphQLRequestLogger);
 
         GraphqlSchema {
             operational: operational_builder.finish(),
             initialisation: initialisation_builder.finish(),
             migration: migration_builder.finish(),
             operational_status: operational_status_ref.clone(),
+            cookie_suffix,
         }
     }
 
@@ -444,7 +524,7 @@ impl GraphqlSchema {
         match &*self.operational_status.read().await {
             OperationalStatus::Operational => {
                 // auth_data is only available in schema in operational mode
-                let user_data = auth_data_from_request(&http_req);
+                let user_data = auth_data_from_request(&http_req, &self.cookie_suffix);
                 self.operational.execute(req.data(user_data)).await
             }
             OperationalStatus::MigratingDatabase => self.migration.execute(req).await,
@@ -484,18 +564,30 @@ async fn graphql_ws(
     req: HttpRequest,
     payload: web::Payload,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let on_connection_init = |value: serde_json::Value| async move {
-        let mut data = async_graphql::Data::default();
-        // Client sends { "Authorization": "Bearer <token>" } in connectionParams
-        if let Some(token) = value.get("Authorization").and_then(|v| v.as_str()) {
-            let token = token.strip_prefix("Bearer ").unwrap_or(token);
-            data.insert(RequestUserData {
-                auth_token: Some(token.to_string()),
-                refresh_token: None,
-                override_user_id: None,
-            });
+    // Pull the session token out of the WS upgrade request once. The browser sends the HttpOnly
+    // session cookie on the upgrade (same as any HTTP request) but `on_connection_init` only
+    // sees the client-supplied connectionParams JSON — it has no access to the request. We
+    // capture the cookie value here so the closure can use it as the auth fallback.
+    let cookie_token = auth_data_from_request(&req, &schema.cookie_suffix).auth_token;
+    let on_connection_init = move |value: serde_json::Value| {
+        let cookie_token = cookie_token.clone();
+        async move {
+            let mut data = async_graphql::Data::default();
+            // Prefer the explicit Authorization in connectionParams (used by API integrations
+            // that aren't cookie-based); fall back to the cookie captured from the upgrade.
+            let auth_token = value
+                .get("Authorization")
+                .and_then(|v| v.as_str())
+                .map(|t| t.strip_prefix("Bearer ").unwrap_or(t).to_string())
+                .or(cookie_token);
+            if auth_token.is_some() {
+                data.insert(RequestUserData {
+                    auth_token,
+                    override_user_id: None,
+                });
+            }
+            Ok(data)
         }
-        Ok(data)
     };
 
     match &*schema.operational_status.read().await {
@@ -596,7 +688,6 @@ impl ExecuteGraphql for PluginExecuteGraphql {
             .data(RequestUserData {
                 override_user_id: Some(override_user_id.to_string()),
                 auth_token: None,
-                refresh_token: None,
             });
         let response = self.0.operational.execute(request).await;
         // Response is either success with data field populated or error with errors field populated
@@ -607,5 +698,362 @@ impl ExecuteGraphql for PluginExecuteGraphql {
         }
 
         Ok(serde_json::to_value(response.data)?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MAX_QUERY_COMPLEXITY;
+    use async_graphql::parser::parse_query;
+    use async_graphql::parser::types::{FragmentDefinition, Selection, SelectionSet};
+    use async_graphql::{EmptyMutation, EmptySubscription, Name, Object, Positioned, Schema};
+    use std::collections::HashMap;
+    use std::path::{Path, PathBuf};
+
+    struct DepthQuery;
+
+    #[Object]
+    impl DepthQuery {
+        async fn value(&self) -> i32 {
+            0
+        }
+
+        // Self-nesting object field, so an over-deep query is *type-valid* and
+        // the depth guard is the only thing that can reject it. Selecting
+        // sub-fields on the scalar `value` would also error, which would let a
+        // depth test pass for the wrong reason.
+        async fn nested(&self) -> DepthQuery {
+            DepthQuery
+        }
+    }
+
+    fn build_limited_schema() -> Schema<DepthQuery, EmptyMutation, EmptySubscription> {
+        super::with_cost_limits(Schema::build(DepthQuery, EmptyMutation, EmptySubscription))
+            .finish()
+    }
+
+    // Regression test for security finding F-2 (issue #362): the schema builders
+    // carried no complexity limit, so a degenerate wide document was planned and
+    // (partially) executed before erroring. Pins the `with_cost_limits` helper at
+    // the async-graphql validation layer; the four real builders in
+    // `GraphqlSchema::new` are covered because they call the same helper (grep
+    // for `with_cost_limits` to verify).
+    #[actix_web::test]
+    async fn query_complexity_is_bounded() {
+        let schema = build_limited_schema();
+        let response = schema.execute(wide_query(MAX_QUERY_COMPLEXITY + 1)).await;
+        assert!(
+            response.is_err(),
+            "expected a complexity validation error, got: {:?}",
+            response
+        );
+        let message = format!("{:?}", response.errors);
+        assert!(
+            message.contains("Query is too complex"),
+            "expected complexity-limit error, got: {}",
+            message
+        );
+    }
+
+    // Why there is no `limit_depth`: async-graphql applies its own
+    // `recursive_depth` guard (default 32) in `check_recursive_depth`, *before*
+    // the validation rules that `limit_depth` belongs to. So any `limit_depth`
+    // above 32 can never fire, and raising `limit_recursive_depth` to make one
+    // fire would weaken the stack-overflow guard that default exists for.
+    //
+    // Depth is therefore bounded, just not by us — and it was already bounded
+    // before this PR. This test pins that so the guard cannot disappear
+    // unnoticed, and records the two distinct error messages, which are easy to
+    // confuse: the built-in guard says "recursion depth", `limit_depth` says
+    // "nested too deep".
+    #[actix_web::test]
+    async fn depth_is_bounded_by_async_graphql_default() {
+        let schema = build_limited_schema();
+
+        let allowed = schema.execute(nested_query(30)).await;
+        assert!(
+            allowed.is_ok(),
+            "30 levels should be inside async-graphql's default guard, got: {:?}",
+            allowed
+        );
+
+        let rejected = schema.execute(nested_query(33)).await;
+        let message = format!("{:?}", rejected.errors);
+        assert!(
+            message.contains("recursion depth"),
+            "33 levels should trip async-graphql's built-in recursion guard, got: {}",
+            message
+        );
+    }
+
+    // Sanity pin: a trivial legitimate query still passes validation, so the
+    // limit does not break normal clients.
+    #[actix_web::test]
+    async fn shallow_query_still_passes() {
+        let schema = build_limited_schema();
+        let response = schema.execute("{ value }").await;
+        assert!(response.is_ok(), "expected success, got: {:?}", response);
+    }
+
+    // A query nesting `levels` object selections, ending in a scalar.
+    fn nested_query(levels: usize) -> String {
+        let mut query = String::from("query {");
+        for _ in 0..levels {
+            query.push_str("nested {");
+        }
+        query.push_str("value");
+        for _ in 0..levels {
+            query.push('}');
+        }
+        query.push('}');
+        query
+    }
+
+    // A shallow query selecting the same scalar `fields` times under aliases.
+    fn wide_query(fields: usize) -> String {
+        let mut query = String::from("query {");
+        for index in 0..fields {
+            query.push_str(&format!("f{}: value ", index));
+        }
+        query.push('}');
+        query
+    }
+
+    /// Complexity of one selection set under async-graphql's own accounting.
+    ///
+    /// Mirrors `ComplexityCalculate` in async-graphql 7.2.1: every field costs
+    /// `1 + child_complexity`; the visitor runs in `VisitMode::Inline`, so
+    /// fragment spreads and inline fragments are expanded in place (and fragment
+    /// *definitions* are not visited separately, so they are not double-counted);
+    /// and `__typename` is skipped outright.
+    ///
+    /// `cost_walker_matches_async_graphql` pins this against the real validator,
+    /// so a change in async-graphql's accounting fails there rather than
+    /// silently skewing the report measurements below.
+    fn selection_set_complexity(
+        set: &SelectionSet,
+        fragments: &HashMap<Name, Positioned<FragmentDefinition>>,
+        spread_path: &mut Vec<Name>,
+    ) -> usize {
+        let mut complexity = 0;
+
+        for item in &set.items {
+            match &item.node {
+                // `__typename` is free: async-graphql's validation visitor skips
+                // it (`validation/visitor.rs`, `if field.node.name.node !=
+                // "__typename"`), so the complexity calculator never sees it.
+                // Counting it here over-stated every document that asks for it —
+                // which is what the first pass at these figures got wrong.
+                Selection::Field(field) if field.node.name.node == "__typename" => {}
+                Selection::Field(field) => {
+                    complexity += 1 + selection_set_complexity(
+                        &field.node.selection_set.node,
+                        fragments,
+                        spread_path,
+                    );
+                }
+                Selection::InlineFragment(inline) => {
+                    complexity += selection_set_complexity(
+                        &inline.node.selection_set.node,
+                        fragments,
+                        spread_path,
+                    );
+                }
+                Selection::FragmentSpread(spread) => {
+                    let name = &spread.node.fragment_name.node;
+                    // A fragment cycle is illegal GraphQL and validation rejects
+                    // it, but guard anyway so a malformed document fails the
+                    // assertion rather than recursing forever.
+                    if spread_path.contains(name) {
+                        continue;
+                    }
+                    if let Some(fragment) = fragments.get(name) {
+                        spread_path.push(name.clone());
+                        complexity += selection_set_complexity(
+                            &fragment.node.selection_set.node,
+                            fragments,
+                            spread_path,
+                        );
+                        spread_path.pop();
+                    }
+                }
+            }
+        }
+
+        complexity
+    }
+
+    /// Highest complexity of any single operation in a document.
+    ///
+    /// async-graphql sums every operation in a document into one figure, but a
+    /// generated client or report document carries exactly one operation plus the
+    /// fragments it needs, so the per-operation maximum is what real traffic
+    /// costs. Summing matters only for a hand-written document that packs several
+    /// operations together — which is one of the things the limit exists to catch.
+    fn max_operation_complexity(source: &str) -> usize {
+        let document = parse_query(source).expect("query should parse");
+        document
+            .operations
+            .iter()
+            .map(|(_, operation)| {
+                selection_set_complexity(
+                    &operation.node.selection_set.node,
+                    &document.fragments,
+                    &mut Vec::new(),
+                )
+            })
+            .max()
+            .unwrap_or(0)
+    }
+
+    // Pins `selection_set_complexity` against async-graphql's real validator: for
+    // a query the walker scores at N, a schema limited to N must accept it and
+    // one limited to N-1 must reject it. If async-graphql ever changes how it
+    // counts, this fails instead of the figures below quietly drifting.
+    //
+    // The `__typename` case is here deliberately: the first version of this
+    // walker counted it, the real validator does not, and a test that only
+    // exercised plain scalar selections did not notice.
+    #[actix_web::test]
+    async fn cost_walker_matches_async_graphql() {
+        for (name, query) in [
+            ("aliased scalars", wide_query(12)),
+            (
+                "nested objects",
+                "{ nested { nested { value } value } value }".to_string(),
+            ),
+            (
+                "with __typename, which the validator skips",
+                "{ __typename nested { __typename value } }".to_string(),
+            ),
+        ] {
+            let walked = max_operation_complexity(&query);
+            assert!(walked > 1, "{} should be non-trivial", name);
+
+            let at_limit = Schema::build(DepthQuery, EmptyMutation, EmptySubscription)
+                .limit_complexity(walked)
+                .finish();
+            assert!(
+                at_limit.execute(query.clone()).await.is_ok(),
+                "{}: limit_complexity({}) must accept a query the walker scores at {}",
+                name,
+                walked,
+                walked
+            );
+
+            let below_limit = Schema::build(DepthQuery, EmptyMutation, EmptySubscription)
+                .limit_complexity(walked - 1)
+                .finish();
+            assert!(
+                below_limit.execute(query).await.is_err(),
+                "{}: limit_complexity({}) must reject it",
+                name,
+                walked - 1
+            );
+        }
+    }
+
+    fn repo_root() -> PathBuf {
+        // CARGO_MANIFEST_DIR is <repo>/server/graphql.
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .ancestors()
+            .nth(2)
+            .expect("graphql crate should sit two levels below the repo root")
+            .to_path_buf()
+    }
+
+    fn graphql_files_under(dir: &Path, found: &mut Vec<PathBuf>) {
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                graphql_files_under(&path, found);
+            } else if path.extension().is_some_and(|ext| ext == "graphql") {
+                found.push(path);
+            }
+        }
+    }
+
+    // Reports are the query source most likely to be surprised by a cost
+    // ceiling: they are authored outside the client, they are wide by nature, and
+    // they run through the *self-requester* schema
+    // (`server/graphql/reports/src/print.rs`), which carries the same limit as
+    // client traffic. This walks every report and form query shipped in this
+    // repo, all versions, plus the three built-in default queries, and asserts
+    // each is inside the ceiling with the measured margin reported.
+    //
+    // Raised by review on #362 ("did you look at graphql used in the reports
+    // repo?"). The 82 customer report queries in the separate
+    // `msupply-foundation/open-msupply-reports` repo were measured the same way
+    // out of band — worst case there is 82 — and every one of them was pinned
+    // against the real validator at the time (82/82 exact, including the 29 that
+    // select `__typename`). They are not checked in here, so this test covers
+    // what this repo ships.
+    #[actix_web::test]
+    async fn shipped_report_queries_are_within_cost_limits() {
+        let root = repo_root();
+        let mut files = Vec::new();
+        graphql_files_under(&root.join("standard_reports"), &mut files);
+        graphql_files_under(&root.join("standard_forms"), &mut files);
+        files.sort();
+
+        assert!(
+            files.len() > 20,
+            "expected to find the shipped report/form queries under {}, found {} — has the layout moved?",
+            root.display(),
+            files.len()
+        );
+
+        let mut documents: Vec<(String, String)> = files
+            .iter()
+            .map(|path| {
+                let label = path
+                    .strip_prefix(&root)
+                    .unwrap_or(path)
+                    .display()
+                    .to_string();
+                let source = std::fs::read_to_string(path)
+                    .unwrap_or_else(|error| panic!("failed to read {}: {}", label, error));
+                (label, source)
+            })
+            .collect();
+
+        for query in [
+            service::report::definition::DefaultQuery::Invoice,
+            service::report::definition::DefaultQuery::Stocktake,
+            service::report::definition::DefaultQuery::Requisition,
+        ] {
+            let label = format!("built-in default query {:?}", query);
+            documents.push((
+                label,
+                service::report::default_queries::get_default_gql_query(query).query,
+            ));
+        }
+
+        let mut worst = (0usize, String::new());
+
+        for (label, source) in &documents {
+            let complexity = max_operation_complexity(source);
+            assert!(
+                complexity <= MAX_QUERY_COMPLEXITY,
+                "report query {} has complexity {}, over MAX_QUERY_COMPLEXITY ({})",
+                label,
+                complexity,
+                MAX_QUERY_COMPLEXITY
+            );
+            if complexity > worst.0 {
+                worst = (complexity, label.clone());
+            }
+        }
+
+        println!(
+            "checked {} shipped report queries; worst complexity {} of {} — {}",
+            documents.len(),
+            worst.0,
+            MAX_QUERY_COMPLEXITY,
+            worst.1,
+        );
     }
 }

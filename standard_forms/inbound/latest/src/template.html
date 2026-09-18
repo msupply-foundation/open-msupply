@@ -41,6 +41,8 @@
             </tr>
         </thead>
         {% for line in data.invoiceLines.nodes -%}
+        {% set cost = line.costPricePerPack | default(value=0.0) %}
+        {% set pack = line.packSize | default(value=1.0) %}
         <tr class="body_value">
             {% if line.location.code %}
             <td class="location_code" style="width: 80px;">{{ line.location.code }}</td>
@@ -54,12 +56,12 @@
             <td class="pack" style="width: 50px;">{{ line.packSize * line.numberOfPacks }}</td>
             <td class="batch batch-wrap" style="width: 50px;">{{ line.batch }}</td>
             <td class="expiry" style="width: 80px;">{{ self::dateOrNA(datetime=line.expiryDate) }}</td>
-            <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack | default(value=0.0) |
+            <td class="cost_price" style="width: 80px;">{{ cost | round(precision=2) }}</td>
+            {# service lines have a pack size of 0, so there is no cost per unit to show #}
+            <td class="cost_price" style="width: 80px;">{% if pack > 0 %}{{ cost / pack | round(precision=2) }}{% endif
+                %}</td>
+            <td class="total_extension" style="width: 50px;">{{ line.totalBeforeTax | default(value=0.0) |
                 round(precision=2) }}</td>
-            {% set cost = line.costPricePerPack | default(value=0.0) %}
-            {% set pack = line.packSize | default(value=1.0) %}
-            <td class="cost_price" style="width: 80px;">{{ cost / pack | round(precision=2) }}</td>
-            <td class="total_extension" style="width: 50px;">{{ line.numberOfPacks * cost | round(precision=2) }}</td>
         </tr>
         {%- endfor %}
     </table>

@@ -42,6 +42,7 @@ export const AppBarButtons = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          data-testid="new-stocktake-button"
           Icon={<PlusCircleIcon />}
           label={t('label.new-stocktake')}
           onClick={modalController.toggleOn}

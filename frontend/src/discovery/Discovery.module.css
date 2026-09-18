@@ -1,0 +1,159 @@
+/*
+ * Server discovery (spec/desktop) — the desktop shell's bundled pre-server
+ * screen. The page frame (gradient hero + panel) is the shared boot-screen
+ * shell (ui/styles/LoginInitLayout.module.css); this module only styles what
+ * is unique here: the server list and its states. Tokens only; rem only;
+ * logical properties (the page renders in every app language, RTL included).
+ */
+
+/* The discovery column: the boot screens' form column, widened — a server
+   address row ("https://192.168.1.10:8000" plus its markers) needs more line
+   than a login field. Same rhythm as .form (gap binds each section head to
+   its content). */
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  inline-size: min(24rem, 85vw);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.sectionHeading {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text-label);
+}
+
+.serverList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  /* The list accumulates (spec § server discovery); past a screenful it
+     scrolls inside its own box rather than pushing the manual entry away. */
+  max-block-size: 16rem;
+  overflow-y: auto;
+}
+
+/* One discovered server — the whole row is the choose action (AC-DT12). */
+.serverRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-align: start;
+  cursor: pointer;
+  transition: border-color var(--motion-fast);
+}
+
+.serverRow:focus-visible {
+  outline: 3px solid var(--secondary-main);
+  outline-offset: 0.125rem;
+}
+
+.serverRow:disabled {
+  cursor: default;
+  opacity: 0.62; /* the library's disabled dim (ui-standards #btn-states) */
+}
+
+.serverRow:hover:not(:disabled) {
+  border-color: var(--outline-main);
+}
+
+.serverAddress {
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: break-word;
+}
+
+/* "This machine" marker (AC-DT5) — icon + text, never colour or icon alone. */
+.thisMachine {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+}
+
+/* The searching state: spinner + label on one quiet line. */
+.searching {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* A stated outcome or an error, with its follow-up action beneath
+   (AC-DT9: "offers to search again"). */
+.outcome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+/* Manual entry: URL field with the connect action beside it, wrapping on
+   narrow viewports (intrinsic-first, principle #7). */
+.manualRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.manualField {
+  flex: 1;
+  min-inline-size: 12rem;
+}
+
+/* Align the button with the field's input box (the label sits above it). */
+.manualConnect {
+  /* Clears the field's label so the two line up. */
+  margin-block-start: 1.4rem;
+}
+
+/* The install-mode chooser (AC-AN21): two equal choices, so they read as a
+   pair rather than as two buttons that happen to sit together. Stretched
+   because the labels differ in length and a ragged pair reads as accidental. */
+.modeChoices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: stretch;
+  align-self: stretch;
+}
+
+/* With the hero out of the way (LoginInitLayout § data-compact-at) the panel is
+   the whole page, and THIS page's content has real use for the width: server
+   addresses are long, and the URL field shares its row with a button. The
+   24rem above is a form column's measure — on its own, collapsing the hero
+   just traded a cramped column for the same column in a field of whitespace.
+   On a phone the 90vw arm governs, as 85vw did, so that layout is unchanged
+   in kind.
+   Attribute + class, so this does not depend on which stylesheet the bundler
+   emits last. */
+@media (max-width: 1023px) {
+  [data-compact-at='tablet'] .column {
+    inline-size: min(34rem, 90vw);
+  }
+}

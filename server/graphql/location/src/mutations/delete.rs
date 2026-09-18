@@ -21,6 +21,7 @@ pub fn delete_location(
         &ResourceAccessRequest {
             resource: Resource::MutateLocation,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -78,6 +79,16 @@ fn map_error(error: ServiceError) -> Result<DeleteLocationErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LocationInUse(location_in_use) => {
+            // `location_in_use.sensors` is deliberately not on the wire: a
+            // SensorConnector lives in the cold-chain GraphQL crate, and having
+            // this inventory mutation depend on that one to list them would be
+            // the wrong way round. What matters to a client is that the refusal
+            // is TYPED — before the sensor check existed it arrived as an
+            // internal error naming a foreign key.
+            //
+            // TODO: surface which sensors. Wants SensorNode moved into
+            // graphql_types first, so this crate can name one without
+            // depending on the cold-chain GraphQL crate.
             return Ok(DeleteLocationErrorInterface::LocationInUse(LocationInUse {
                 stock_lines: StockLineConnector::from_vec(location_in_use.stock_lines),
                 invoice_lines: InvoiceLineConnector::from_vec(location_in_use.invoice_lines),
@@ -268,6 +279,7 @@ mod test {
                     campaign_row: None,
                 }],
                 invoice_lines: vec![successful_invoice_line()],
+                sensors: vec![],
             }))
         }));
 

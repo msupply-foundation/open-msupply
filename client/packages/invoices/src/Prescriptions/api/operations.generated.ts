@@ -32,6 +32,7 @@ export type PrescriptionFragment = {
   type: Types.InvoiceNodeType;
   status: Types.InvoiceNodeStatus;
   colour?: string | null;
+  customFields?: any | null;
   nameInsuranceJoinId?: string | null;
   insuranceDiscountAmount?: number | null;
   insuranceDiscountPercentage?: number | null;
@@ -465,6 +466,7 @@ export type PrescriptionByNumberQuery = {
         type: Types.InvoiceNodeType;
         status: Types.InvoiceNodeStatus;
         colour?: string | null;
+        customFields?: any | null;
         nameInsuranceJoinId?: string | null;
         insuranceDiscountAmount?: number | null;
         insuranceDiscountPercentage?: number | null;
@@ -658,6 +660,7 @@ export type PrescriptionByIdQuery = {
         type: Types.InvoiceNodeType;
         status: Types.InvoiceNodeStatus;
         colour?: string | null;
+        customFields?: any | null;
         nameInsuranceJoinId?: string | null;
         insuranceDiscountAmount?: number | null;
         insuranceDiscountPercentage?: number | null;
@@ -876,6 +879,10 @@ export type UpsertPrescriptionMutation = {
             __typename: 'DeletePrescriptionError';
             error:
               | {
+                  __typename: 'CannotDeleteGeneratedDispensation';
+                  description: string;
+                }
+              | {
                   __typename: 'CannotDeleteInvoiceWithLines';
                   description: string;
                 }
@@ -1016,6 +1023,10 @@ export type DeletePrescriptionsMutation = {
         | {
             __typename: 'DeletePrescriptionError';
             error:
+              | {
+                  __typename: 'CannotDeleteGeneratedDispensation';
+                  description: string;
+                }
               | {
                   __typename: 'CannotDeleteInvoiceWithLines';
                   description: string;
@@ -1279,6 +1290,7 @@ export const PrescriptionFragmentDoc = gql`
     type
     status
     colour
+    customFields
     nameInsuranceJoinId
     insuranceDiscountAmount
     insuranceDiscountPercentage

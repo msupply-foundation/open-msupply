@@ -15,8 +15,10 @@ impl Migration for V2_16_01 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_sync_translation_fk_error_to_system_log_type_enums::Migrate),
-            Box::new(invoice_datetime_indexes::Migrate)]
+        vec![
+            Box::new(add_sync_translation_fk_error_to_system_log_type_enums::Migrate),
+            Box::new(invoice_datetime_indexes::Migrate),
+        ]
     }
 }
 
@@ -40,7 +42,12 @@ mod test {
         .await;
 
         // Run this migration
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(get_database_version(&connection), version);
     }
 }

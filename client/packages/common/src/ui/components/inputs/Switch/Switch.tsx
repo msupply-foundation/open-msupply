@@ -30,6 +30,8 @@ interface SwitchProps {
   value?: unknown;
   switchSx?: SxProps;
   labelSx?: SxProps;
+  /** Placed on the underlying checkbox input, for deterministic e2e hooks. */
+  testId?: string;
 }
 
 const getLabelStyle = (
@@ -70,6 +72,7 @@ export const Switch = ({
   value,
   switchSx,
   labelSx,
+  testId,
 }: SwitchProps) => {
   const isSmall = size === 'small';
   const switchStyle = {
@@ -114,6 +117,7 @@ export const Switch = ({
       size={size}
       sx={{ ...switchStyle, ...switchSx }}
       focusVisibleClassName=".Mui-focusVisibles"
+      slotProps={{ input: { ...(testId ? { 'data-testid': testId } : {}) } }}
     />
   );
   return (

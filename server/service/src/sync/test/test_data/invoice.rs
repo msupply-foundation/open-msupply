@@ -1,8 +1,8 @@
 use crate::sync::{
     test::TestSyncIncomingRecord,
     translations::invoice::{
-        LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType,
-        TransactMode, TransactRowOmsFields,
+        LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
+        TransactRowOmsFields,
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
@@ -159,9 +159,12 @@ fn transact_1_pull_row() -> InvoiceRow {
         expected_delivery_date: None,
         default_donor_id: Some("donor_a".to_string()),
         purchase_order_id: Some("test_purchase_order_a".to_string()),
+        prescription_request_id: None,
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
         charges_local_currency: 15.5,
         charges_foreign_currency: 20.0,
+        legacy_goods_received_id: Some("some goods id".to_string()),
+        ..Default::default()
     }
 }
 
@@ -234,6 +237,8 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         expected_delivery_date: None,
         default_donor_id: Some("donor_a".to_string()),
         goods_received_ID: None,
+        category_ID: None,
+        category2_ID: None,
         purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
         oms_fields: Some(TransactRowOmsFields {
@@ -380,9 +385,11 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -443,6 +450,8 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -621,9 +630,11 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -713,6 +724,8 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -866,9 +879,11 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -935,6 +950,8 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -1088,9 +1105,11 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -1156,6 +1175,8 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -1306,9 +1327,11 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -1374,6 +1397,8 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -1530,9 +1555,11 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
             default_donor_id: None,
             purchase_order_id: None,
+            prescription_request_id: None,
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -1603,6 +1630,8 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {

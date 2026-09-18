@@ -1,0 +1,31 @@
+# The reports SECTION's own wire surface (spec/reports S2): fetch one report
+# version by id — no selection, no compatibility / active check
+# (spec/reports/rules). Unknown id surfaces as a plain GraphQL error, not
+# QueryReportError (a wire trap; see contract), so that branch is rarely hit.
+#
+# The cross-vertical operations live in domain/reports (the S4 selector's
+# `reports` list and `generateReport`) — this section reuses those documents
+# rather than restating them. `__typename` is selected on every union branch so
+# call sites discriminate on it (kdd/state-management).
+query report($storeId: String!, $userLanguage: String!, $id: String!) {
+  report(storeId: $storeId, userLanguage: $userLanguage, id: $id) {
+    ... on ReportNode {
+      __typename
+      id
+      name
+      code
+      argumentSchema {
+        id
+        jsonSchema
+        uiSchema
+      }
+    }
+    ... on QueryReportError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

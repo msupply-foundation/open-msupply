@@ -62,6 +62,7 @@ export const StatusFooter = (): ReactElement | null => {
 
       <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
         <ButtonWithIcon
+          data-testid="close-button"
           shrinkThreshold="lg"
           Icon={<XCircleIcon />}
           label={t('button.close')}
@@ -126,6 +127,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
+      testId: 'delete-lines-button',
     },
     {
       label: t('button.allocate-lines'),
@@ -138,6 +140,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       icon: <ArrowLeftIcon />,
       onClick: () => onReturnLines(selectedRows),
       shouldShrink: false,
+      testId: 'return-lines-button',
     },
   ];
 

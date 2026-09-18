@@ -259,6 +259,7 @@ fn generate_stock_in_out_or_update(
             prescribed_quantity: None,
             received_number_of_packs: None,
             reason_option_id: None,
+            transfer_comment: None,
         })
     };
 
@@ -685,6 +686,7 @@ pub fn generate(
         shipping_method_id: None,
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,
+        ..Default::default()
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

@@ -45,6 +45,7 @@ pub fn insert_help_document(
         &ResourceAccessRequest {
             resource: Resource::MutateHelpDocuments,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 
@@ -67,9 +68,7 @@ impl InsertHelpDocumentInput {
     }
 }
 
-fn map_response(
-    from: Result<HelpDocument, ServiceError>,
-) -> Result<InsertHelpDocumentResponse> {
+fn map_response(from: Result<HelpDocument, ServiceError>) -> Result<InsertHelpDocumentResponse> {
     let result = match from {
         Ok(help_document) => {
             InsertHelpDocumentResponse::Response(HelpDocumentNode::from_domain(help_document))

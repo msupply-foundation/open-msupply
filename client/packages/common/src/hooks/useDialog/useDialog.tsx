@@ -50,6 +50,7 @@ export interface ModalProps {
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
   disableEnforceFocus?: boolean;
+  testId?: string;
 }
 
 export interface DialogProps {
@@ -60,6 +61,12 @@ export interface DialogProps {
   disableEscapeKey?: boolean;
   disableMobileFullScreen?: boolean;
   isSidePanelModal?: boolean;
+  /**
+   * Default `data-testid` for the dialog's Paper. Set it here so callers that
+   * only use the hook (not `<Modal testId=…>`) still stamp the dialog; a
+   * `testId` passed to the returned `<Modal>` overrides this.
+   */
+  testId?: string;
 }
 
 interface DialogState {
@@ -122,6 +129,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     disableBackdrop = true,
     disableEscapeKey = false,
     disableMobileFullScreen = false,
+    testId: defaultTestId,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = useCallback(() => setOpen(true), []);
@@ -165,6 +173,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     deleteButton,
     headerActions,
     disableEnforceFocus = false,
+    testId = defaultTestId,
   }: ModalProps) => {
     const t = useTranslation();
     // The slide animation is triggered by cloning the next button and wrapping the passed
@@ -309,6 +318,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         disableEscapeKeyDown={false}
         fullScreen={defaultFullscreen}
         disableEnforceFocus={disableEnforceFocus}
+        {...(testId ? { 'data-testid': testId } : {})}
       >
         {defaultFullscreen && (
           <IconButton

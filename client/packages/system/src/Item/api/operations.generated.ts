@@ -241,13 +241,13 @@ export type ItemVariantFragment = {
   } | null;
   manufacturer?: {
     __typename: 'NameNode';
-    isVisible: boolean;
     code: string;
     id: string;
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    customFields?: any | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -332,6 +332,7 @@ export type ItemFragment = {
   weight: number;
   restrictedLocationTypeId?: string | null;
   availableStockOnHand: number;
+  customFields?: any | null;
   restrictedLocationType?: {
     __typename: 'LocationTypeNode';
     id: string;
@@ -438,13 +439,13 @@ export type ItemFragment = {
     } | null;
     manufacturer?: {
       __typename: 'NameNode';
-      isVisible: boolean;
       code: string;
       id: string;
       isCustomer: boolean;
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
+      customFields?: any | null;
       store?: {
         __typename: 'StoreNode';
         id: string;
@@ -539,6 +540,7 @@ export type ItemFragment = {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
     ignoreForOrders: boolean;
+    margin: number;
   } | null;
 };
 
@@ -613,6 +615,7 @@ export type ItemsWithStatsFragment = {
   defaultPackSize: number;
   isVaccine: boolean;
   doses: number;
+  customFields?: any | null;
   availableStockOnHand: number;
   masterLists?: Array<{
     __typename: 'MasterListNode';
@@ -653,6 +656,7 @@ export type ItemsWithStatsQuery = {
       defaultPackSize: number;
       isVaccine: boolean;
       doses: number;
+      customFields?: any | null;
       availableStockOnHand: number;
       masterLists?: Array<{
         __typename: 'MasterListNode';
@@ -705,6 +709,7 @@ export type ItemByIdQuery = {
       weight: number;
       restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
+      customFields?: any | null;
       stats: {
         __typename: 'ItemStatsNode';
         averageMonthlyConsumption: number;
@@ -815,13 +820,13 @@ export type ItemByIdQuery = {
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
-          isVisible: boolean;
           code: string;
           id: string;
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
+          customFields?: any | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -916,8 +921,23 @@ export type ItemByIdQuery = {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
+        margin: number;
       } | null;
     }>;
+  };
+};
+
+export type ItemPriceQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+}>;
+
+export type ItemPriceQuery = {
+  __typename: 'Queries';
+  itemPrice: {
+    __typename: 'ItemPriceNode';
+    itemId: string;
+    defaultPricePerUnit?: number | null;
   };
 };
 
@@ -960,13 +980,13 @@ export type ItemVariantsQuery = {
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
-          isVisible: boolean;
           code: string;
           id: string;
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
+          customFields?: any | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -1143,13 +1163,13 @@ export type UpsertItemVariantMutation = {
             } | null;
             manufacturer?: {
               __typename: 'NameNode';
-              isVisible: boolean;
               code: string;
               id: string;
               isCustomer: boolean;
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -1440,6 +1460,51 @@ export type ItemLedgerQuery = {
   };
 };
 
+export type CustomFieldFragment = {
+  __typename: 'CustomFieldNode';
+  id: string;
+  key: string;
+  name: string;
+  valueType: Types.CustomFieldNodeValueType;
+  kind: Types.CustomFieldNodeKind;
+  options: Array<{
+    __typename: 'CustomFieldOptionNode';
+    id: string;
+    key: string;
+    name: string;
+    parentOptionId?: string | null;
+    deletedDatetime?: string | null;
+  }>;
+};
+
+export type ItemCustomFieldsQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type ItemCustomFieldsQuery = {
+  __typename: 'Queries';
+  customFields: {
+    __typename: 'CustomFieldConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'CustomFieldNode';
+      id: string;
+      key: string;
+      name: string;
+      valueType: Types.CustomFieldNodeValueType;
+      kind: Types.CustomFieldNodeKind;
+      options: Array<{
+        __typename: 'CustomFieldOptionNode';
+        id: string;
+        key: string;
+        name: string;
+        parentOptionId?: string | null;
+        deletedDatetime?: string | null;
+      }>;
+    }>;
+  };
+};
+
 export const ItemRowFragmentDoc = gql`
   fragment ItemRow on ItemNode {
     __typename
@@ -1620,7 +1685,6 @@ export const ItemVariantFragmentDoc = gql`
     manufacturerId
     manufacturer(storeId: $storeId) {
       ...NameRow
-      isVisible
     }
     locationTypeId
     locationType {
@@ -1723,7 +1787,9 @@ export const ItemFragmentDoc = gql`
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
       ignoreForOrders
+      margin
     }
+    customFields
   }
   ${LocationTypeFragmentDoc}
   ${StockLineFragmentDoc}
@@ -1741,6 +1807,7 @@ export const ItemsWithStatsFragmentDoc = gql`
     defaultPackSize
     isVaccine
     doses
+    customFields
     availableStockOnHand(storeId: $storeId)
     masterLists(storeId: $storeId) {
       id
@@ -1779,6 +1846,22 @@ export const ItemLedgerFragmentDoc = gql`
     numberOfPacks
     user {
       username
+    }
+  }
+`;
+export const CustomFieldFragmentDoc = gql`
+  fragment CustomField on CustomFieldNode {
+    id
+    key
+    name
+    valueType
+    kind
+    options {
+      id
+      key
+      name
+      parentOptionId
+      deletedDatetime
     }
   }
 `;
@@ -1891,6 +1974,17 @@ export const ItemByIdDocument = gql`
   }
   ${ItemFragmentDoc}
   ${StockLineFragmentDoc}
+`;
+export const ItemPriceDocument = gql`
+  query itemPrice($storeId: String!, $itemId: String!) {
+    itemPrice(storeId: $storeId, input: { itemId: $itemId }) {
+      ... on ItemPriceNode {
+        __typename
+        itemId
+        defaultPricePerUnit
+      }
+    }
+  }
 `;
 export const ItemVariantsConfiguredDocument = gql`
   query itemVariantsConfigured($storeId: String!) {
@@ -2106,6 +2200,20 @@ export const ItemLedgerDocument = gql`
   }
   ${ItemLedgerFragmentDoc}
 `;
+export const ItemCustomFieldsDocument = gql`
+  query itemCustomFields {
+    customFields(filter: { scope: { equalTo: "item" } }) {
+      ... on CustomFieldConnector {
+        __typename
+        totalCount
+        nodes {
+          ...CustomField
+        }
+      }
+    }
+  }
+  ${CustomFieldFragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2194,6 +2302,24 @@ export function getSdk(
             signal,
           }),
         'itemById',
+        'query',
+        variables
+      );
+    },
+    itemPrice(
+      variables: ItemPriceQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ItemPriceQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ItemPriceQuery>({
+            document: ItemPriceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'itemPrice',
         'query',
         variables
       );
@@ -2392,6 +2518,24 @@ export function getSdk(
             signal,
           }),
         'itemLedger',
+        'query',
+        variables
+      );
+    },
+    itemCustomFields(
+      variables?: ItemCustomFieldsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ItemCustomFieldsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ItemCustomFieldsQuery>({
+            document: ItemCustomFieldsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'itemCustomFields',
         'query',
         variables
       );

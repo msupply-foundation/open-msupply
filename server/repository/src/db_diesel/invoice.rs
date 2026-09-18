@@ -11,6 +11,7 @@ use crate::{
         apply_date_time_filter, apply_equal_filter, apply_equal_or_filter, apply_sort,
         apply_sort_no_case, apply_string_filter,
     },
+    dynamic_query_filter::create_condition,
     ClinicianLinkRow,
 };
 
@@ -57,9 +58,11 @@ pub struct InvoiceFilter {
     pub is_program_invoice: Option<bool>,
     pub is_cancellation: Option<bool>,
     pub purchase_order_id: Option<EqualFilter<String>>,
+    pub prescription_request_id: Option<EqualFilter<String>>,
     pub purchase_order_number: Option<EqualFilter<i64>>,
     pub linked_order_number: Option<EqualFilter<i64>>,
     pub program_id: Option<EqualFilter<String>>,
+    pub dynamic_filter: Option<InvoiceCondition::Inner>,
 }
 
 pub enum InvoiceSortField {
@@ -221,6 +224,15 @@ fn query() -> _ {
 
 type BoxedInvoiceQuery = IntoBoxed<'static, query, DBType>;
 
+// Dynamic query filter for the invoice table (customFields list filters).
+// Compiles against the bare invoice table, applied to the joined query via a
+// `invoice::id.eq_any(subquery)` sub-select — same pattern as `NameCondition`.
+create_condition!(
+    InvoiceCondition,
+    invoice::table,
+    (CustomField, custom_fields, invoice::custom_fields),
+);
+
 fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
     let mut query = query().into_boxed();
 
@@ -254,9 +266,11 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             is_program_invoice,
             is_cancellation,
             purchase_order_id,
+            prescription_request_id,
             purchase_order_number,
             linked_order_number,
             program_id,
+            dynamic_filter,
         } = f;
 
         // OR filters must be applied before AND filters to work correctly.
@@ -293,6 +307,11 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_string_filter!(query, their_reference, invoice::their_reference);
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
         apply_equal_filter!(query, purchase_order_id, invoice::purchase_order_id);
+        apply_equal_filter!(
+            query,
+            prescription_request_id,
+            invoice::prescription_request_id
+        );
 
         if let Some(purchase_order_number) = purchase_order_number {
             let mut po_subquery = purchase_order::table
@@ -369,6 +388,16 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         }
 
         apply_equal_filter!(query, program_id, invoice::program_id);
+
+        // The condition compiles against the bare invoice table, so apply it
+        // to this joined query through a sub-select
+        if let Some(condition) = dynamic_filter {
+            let invoice_ids = invoice::table
+                .filter(condition.to_boxed())
+                .select(invoice::id)
+                .into_boxed();
+            query = query.filter(invoice::id.eq_any(invoice_ids));
+        }
     }
     query
 }
@@ -426,6 +455,11 @@ impl InvoiceFilter {
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn dynamic_filter(mut self, condition: InvoiceCondition::Inner) -> Self {
+        self.dynamic_filter = Some(condition);
         self
     }
 
@@ -553,6 +587,11 @@ impl InvoiceFilter {
 
     pub fn purchase_order_id(mut self, filter: EqualFilter<String>) -> Self {
         self.purchase_order_id = Some(filter);
+        self
+    }
+
+    pub fn prescription_request_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.prescription_request_id = Some(filter);
         self
     }
 

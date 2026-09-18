@@ -15,7 +15,7 @@ interface CustomerSearchInputExtraProps {
 
 export const CustomerSearchInput = ({
   onChange,
-  width = 250,
+  width,
   value,
   disabled = false,
   clearable = false,
@@ -46,6 +46,7 @@ export const CustomerSearchInput = ({
       autoFocus={autoFocus}
       openOnFocus={openOnFocus}
       width={width}
+      inputTestId="customer-search-input"
       noOptionsText={t('label.no-options')}
     />
   );

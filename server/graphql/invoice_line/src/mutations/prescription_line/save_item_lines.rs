@@ -36,6 +36,7 @@ pub fn save_prescription_item_lines(
         &ResourceAccessRequest {
             resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -77,6 +78,7 @@ impl SavePrescriptionLinesInput {
             lines: lines
                 .into_iter()
                 .map(|line| SaveStockOutInvoiceLine {
+                    transfer_comment: None,
                     id: line.id,
                     number_of_packs: line.number_of_packs,
                     stock_line_id: line.stock_line_id,

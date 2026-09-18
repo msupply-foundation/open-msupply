@@ -1,0 +1,483 @@
+/*
+ * MenuBar — plain CSS Modules, all colours/dims from design tokens. Adapted
+ * from the RnD prototype's Sidebar component (itself a port of the current AppDrawer):
+ *  - 16.25rem open, 5rem closed (icons only)
+ *  - flat nav rows: softened rectangles, no shadow in any state; selected =
+ *    brand tint + bold; active parent = orange
+ *  - children indented, no tree line
+ * RTL via logical properties (no JS flipping).
+ */
+
+.menuBar {
+  position: relative;
+  /* Above the page content, so nothing (the DataTable's sticky header at z 3)
+     paints into the rail's edge; below the overlay drawer (z 40) and popovers. */
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  inline-size: var(--drawer-width);
+  block-size: 100%;
+  /* NOT clipped: the toggle straddles the inline-end border, so half of it sits
+     outside this box. The clipping that matters — labels spilling while the rail
+     narrows — moves to .scroll's overflow-x. */
+  overflow: visible;
+  /* L1 chrome (tokens.css § "Warm stone"): the rail is the persistent frame, so
+     it reads as the frame — white, with the canvas the page sits on stepping
+     down from it, rather than a grey panel beside a white page. (Not the old
+     cool --bg-drawer, whose #f2f2f5 landed at the canvas's own lightness in a
+     different hue; not a darker rail either — tried and reverted.)
+
+     Square corners, full bleed, and NO drop shadow — the boundary is the fill
+     step against the canvas plus this hairline, which is what L1 chrome is
+     specified to carry. The radius and the shadow came together from the RnD
+     drawer, which was a raised CARD over the page; chrome is not a card. A
+     shadow claims elevation, and the ladder puts chrome and content on the same
+     plane — only L3 (modal, flyout, popover) floats. With the rail lifting too,
+     the flyout's own shadow stopped reading as "above everything".
+
+     NB the hairline carries this edge alone wherever a filling table runs
+     alongside it: the shell's canvas gutter and the table's own inline-start
+     border have both since gone, so there is no fill step there — only above and
+     below the table, where the canvas shows. */
+  background: var(--surface-chrome);
+  border-inline-end: 1px solid var(--surface-edge);
+  transition: inline-size var(--motion-slow) ease;
+}
+
+.menuBar[data-open='false'] {
+  inline-size: var(--drawer-closed-width);
+}
+
+/* --- Logo ---------------------------------------------------------------- */
+/* The mark has the head to itself here — the toggle lives on the rail's edge,
+   so nothing competes with it and it KEEPS ITS PLACE when the rail narrows,
+   which the head-mounted alternative cannot do at 5rem. */
+.logoArea {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  block-size: var(--logo-area-height);
+}
+
+/* The mark as a link home (the app's chrome convention), when the host wires
+   one. Bare: the mark is already the affordance, so the button adds no box of
+   its own — only a focus ring and a pointer. */
+.logoButton {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  /* The mark's jar paints with currentColor, and a <button> does NOT inherit
+     colour — the UA gives it `buttontext`. Without this the jar would take the
+     browser's own button colour rather than the app's text colour. */
+  color: inherit;
+  cursor: pointer;
+}
+
+.logoButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.logo {
+  inline-size: auto;
+  block-size: 3.5rem;
+}
+
+/* --- Rail edge (a second, pointer-only toggle) -------------------------- */
+/* Click the rail's own edge to collapse or expand it. Off by default: on a
+   coarse pointer this strip sits between the nav and a scrolling table, where
+   it would be caught by accident far more often than on purpose, and the button
+   at the foot already serves. */
+.railEdge {
+  display: none;
+}
+
+@media (pointer: fine) {
+  .railEdge {
+    position: absolute;
+    z-index: 1;
+    inset-block: 0;
+    inset-inline-end: 0;
+    display: block;
+    inline-size: 0.3125rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    /* Not col-resize: this snaps between two states, and a resize cursor would
+       promise a width the rail does not have. */
+    cursor: pointer;
+    transition: background var(--motion-fast) ease;
+  }
+
+  /* Hover LIGHTS the strip; it does not act. That distinction is the whole of
+     D3 — the current app peeks the drawer open on hover, and this advertises an
+     affordance instead. */
+  .railEdge:hover {
+    background: color-mix(in srgb, var(--primary-main) 35%, transparent);
+  }
+}
+
+/* --- Nav lists --------------------------------------------------------- */
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+  margin: 0;
+  padding-inline: var(--space-2);
+  list-style: none;
+}
+
+/* Single scroll region over BOTH nav groups. The scroll lives here — not on
+   .upper — so the top and bottom lists can never scroll independently and
+   overlap (#421). Column layout lets .lower's auto top-margin push it to the
+   block-end while the whole region scrolls as one when the lists overflow. */
+.scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0; /* allow the flex child to shrink below content height so it scrolls */
+  /* x clips (the rail itself cannot, with the toggle on its edge); y scrolls
+     when the two lists outgrow the rail. */
+  overflow: hidden auto;
+  scrollbar-width: none;
+}
+
+.scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.upper {
+  flex-shrink: 0;
+}
+
+.lower {
+  flex-shrink: 0;
+  /* Rests at the block-end on a tall screen (as before); collapses away only
+     when the combined lists are tall enough to scroll. */
+  margin-block-start: auto;
+  padding-block: var(--space-2) var(--space-3);
+  /* Hairline separating the pinned lower group from the scrolling upper one —
+     the house --color-divider convention (SidePanel/Accordion). Runs the
+     padded width of the list, aligned with the item pills above it. */
+  border-block-start: 1px solid var(--color-divider);
+}
+
+.item {
+  display: block;
+}
+
+/* --- Nav button (leaves + section triggers share this) ----------------- */
+.navButton {
+  /* Anchor for the selected-parent accent bar. */
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  inline-size: 100%;
+  block-size: var(--nav-item-height);
+  padding-inline: var(--space-3);
+  border: none;
+  /* A rectangle with softened corners, not a pill, and flat — the row is a
+     region of the rail, not an object floating above it, so it carries no
+     shadow in any state. --radius-sm is the system's ITEM radius (Button, and
+     the .item row in UserMenu / LanguageSelector / Combobox); --radius-md is for
+     SURFACES — panels, cards, the flyout this rail opens. A row is an item. */
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* A well inside the chrome (L2− sunken), not the old near-white --drawer-hover-bg
+   — that was a step LIGHTER than the grey rail it used to sit on, and would be
+   invisible now the rail is white. */
+.navButton:hover {
+  background: var(--surface-sunken);
+}
+
+.navButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* "You are here", in the brand tint. The label stays --text-body: brand-
+   coloured text on this tint reaches only ~2.9:1, short of the AA floor every
+   component holds to — so the highlight is carried by the tint, the bold weight
+   and the orange icon, none of which is text. The bold weight is also what
+   satisfies colour independence on its own, which is why the selected row needs
+   no end chevron. */
+.navButton[data-selected='true'] {
+  background: color-mix(in srgb, var(--primary-main) 16%, transparent);
+  color: var(--text-body);
+  font-weight: var(--weight-bold);
+}
+
+.navButton[data-active='true'] {
+  color: var(--primary-main);
+  font-weight: var(--weight-bold);
+}
+
+/* --- Icon + chevron slots ---------------------------------------------- */
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.25rem;
+  font-size: 1.25rem;
+  color: var(--primary-main);
+}
+
+/* Empty slot on leaf items keeps their labels aligned with section labels. */
+.chevronSlot {
+  flex-shrink: 0;
+  inline-size: 1rem;
+}
+
+.label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Collapse chevron on parent sections — grey, sits between icon and label. */
+.sectionChevron {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  font-size: 1rem;
+  color: var(--gray-main);
+  transition: transform var(--motion-base) ease;
+}
+
+.sectionChevron[data-open='false'] {
+  transform: rotate(-90deg);
+}
+
+:dir(rtl) .sectionChevron[data-open='false'] {
+  transform: rotate(90deg);
+}
+
+/* The collapse toggle: a disc centred ON the rail's inline-end border, up in the
+   head — inside the app bar's band, so it reads as part of the top chrome
+   rather than floating halfway down an edge.
+   Its line is the MARK's optical centre (y 40; the figure's weight is head, hat
+   and raised arm, so the box centre at 45 reads low), which is rail-owned — the
+   page header's own height is not a fixture to align to, running 65px on a list
+   screen and 159px on a detail one.
+   The trade, measured: it sits ~13px from the page title, because the page
+   region begins flush at the rail and the disc's overhang has no margin to hang
+   in. Halfway down the rail its neighbours were quieter, but it was then the
+   only thing in the rail not at the top, and people look for chrome controls
+   there. */
+.railToggle {
+  position: absolute;
+  inset-inline-end: -0.75rem;
+  inset-block-start: 2.5rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding: 0;
+  /* A faint ring — the edge token thinned toward the chrome behind it. With no
+     ring the disc's white bleeds into the rail on one side and bulges into the
+     canvas on the other, reading as a smear rather than a control; at full
+     --surface-edge it is a second edge, as dark as the hairline it interrupts.
+     The FILL has to stay either way: it is what breaks that hairline. Drop it
+     and the 1px line runs straight through the glyph (rendered and checked). */
+  border: 1px solid
+    color-mix(in srgb, var(--surface-edge) 55%, var(--surface-chrome));
+  border-radius: 50%;
+  background: var(--surface-chrome);
+  /* --gray-main is the floor, not a preference: 3.1:1 on white, just past WCAG
+     2.2 SC 1.4.11's 3:1 for a control that has to be findable. */
+  color: var(--gray-main);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    background var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+.railToggle:hover {
+  border-color: var(--surface-edge);
+  background: var(--surface-sunken);
+  color: var(--text-body);
+}
+
+.railToggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* The hit area, grown past what the disc draws — 1.5rem is EXACTLY SC 2.5.8's
+   24x24 floor. Asymmetric: it grows into the RAIL, not into the page, where a
+   uniform ring reached within 5px of the page title and would swallow clicks
+   aimed just short of it. 34x40, still well past the floor. */
+.railToggle::before {
+  content: '';
+  position: absolute;
+  inset-block: -0.5rem;
+  inset-inline: -0.5rem -0.125rem;
+}
+
+.navButton[data-active='true'] .icon {
+  color: var(--primary-main);
+}
+
+/* --- Section children (indented) --------------------------------------- */
+/* Indent alone, NO tree line. The line was disambiguating something that can
+   no longer be ambiguous: one section is open at a time, so the only children
+   on screen are this parent's, directly under it and inside its own <li>. A
+   grey hairline is also a different grouping language from the flat rectangles
+   the rows now use. */
+.childList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem; /* the app's ListItem inter-row margin */
+  margin-block-start: 0.3125rem;
+  /* The UA's own list indent (40px), which the rows must not inherit — the
+     indent is the child button's padding, below. */
+  padding-inline: 0;
+  list-style: none;
+}
+
+/* The child ROW is full width, like every other row — it is the child's TEXT
+   that indents, not the list. Indenting the list instead would inset the whole
+   rectangle, so a child's hover and selected tint would start further in than
+   its parent's and the rail would have two left edges. */
+.childList .navButton {
+  /* Lands the label exactly under the parent labels: the parent's button inset,
+     icon, chevron (or the empty slot leaves keep for this reason), and the gap
+     either side of it. Written out rather than as 4rem so it stays true if any
+     of those change. */
+  padding-inline-start: calc(
+    var(--space-3) + 1.25rem + var(--space-2) + 1rem + var(--space-2)
+  );
+  /* Child rows are denser than section rows — --nav-child-height against
+     --nav-item-height, the app's nested-drawer spec (AppNavSection; the child
+     token was ported from theme.ts for exactly this but never applied). */
+  block-size: var(--nav-child-height);
+}
+
+/* --- Collapsed (icon-only) rail ---------------------------------------- */
+/* The mark stands down and the toggle takes the head. Nothing here is a loss:
+   the Dashboard entry below goes where the mark went, and a 5rem rail cannot
+   hold a centred mark and a button both — which is what defeated every earlier
+   attempt to put the toggle up here. */
+/* The mark STAYS on the collapsed rail — the whole point of putting the toggle
+   on the edge. It comes down to 2.75rem to sit comfortably in 5rem. */
+.menuBar[data-open='false'] .logo {
+  block-size: 2.75rem;
+}
+
+.menuBar[data-open='false'] .label,
+.menuBar[data-open='false'] .sectionChevron,
+.menuBar[data-open='false'] .chevronSlot {
+  display: none;
+}
+
+.menuBar[data-open='false'] .navButton {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.menuBar[data-open='false'] .childList {
+  display: none;
+}
+
+/* The section divider is a full-width hairline; on the narrow icon-only rail it
+   reads as a stray line, so drop it there (the two groups already read as
+   separate by the gap alone). */
+.menuBar[data-open='false'] .lower {
+  border-block-start: none;
+}
+
+/* The "where am I" marker. Collapsed, the active destination is a child hidden
+   inside the flyout, so its section carries the cue instead: the same brand
+   tint the selected row gets, plus an accent bar at the rail's edge. The bar is
+   what makes it legible without colour — one section out of ten is marked, and
+   the mark has a shape. */
+.menuBar[data-open='false'] .navButton[data-active='true'] {
+  background: color-mix(in srgb, var(--primary-main) 16%, transparent);
+}
+
+.menuBar[data-open='false'] .navButton[data-active='true']::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  /* The row's own midpoint, paired with the -50% below — NOT a copy of
+     --nav-item-height, which is what put the bar a full row too low. Written as
+     a percentage so it stays centred if the row height token ever moves. */
+  inset-block-start: 50%;
+  inline-size: 0.1875rem;
+  block-size: 1.375rem;
+  border-radius: var(--radius-sm);
+  background: var(--primary-main);
+  transform: translateY(-50%);
+}
+
+/* --- Overlay mode (< navOverlay breakpoint) ---------------------------- */
+.overlayPanel {
+  --hide-x: -100%; /* slides in from the inline-start; flipped for RTL below */
+
+  position: fixed;
+  z-index: 40;
+  inset-block: 0;
+  inset-inline-start: 0;
+  display: flex;
+  flex-direction: column;
+  inline-size: var(--drawer-width);
+  max-inline-size: 85vw;
+  overflow: hidden;
+  /* Same chrome as the docked rail — it IS the rail, in its other layout mode
+     — floating over the scrim, where the shadow does the separating. */
+  background: var(--surface-chrome);
+  transform: translateX(var(--hide-x));
+  transition: transform var(--motion-slow) ease;
+}
+
+:dir(rtl) .overlayPanel {
+  --hide-x: 100%;
+}
+
+/* Shadow only while open: when closed the panel slides fully off-screen
+   (translateX -100%), but its right-edge drop shadow would otherwise bleed
+   back into the viewport as a stray shadow along the left edge. */
+.overlayPanel[data-open='true'] {
+  box-shadow: var(--shadow-4);
+  transform: none;
+}
+
+.scrim {
+  position: fixed;
+  z-index: 39;
+  inset: 0;
+  background: var(--overlay-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-slow) ease;
+}
+
+.scrim[data-open='true'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* NB: no pointer:coarse min-height bump on nav rows (matching the Button/Tabs
+   calls). --touch-target (48px) inflated every row in touch / device-emulation
+   mode — worst on the dense 1.875rem child rows — defeating the nested-drawer
+   density, and it fired at ANY width once the pointer read coarse (not just
+   narrow viewports). The natural 2.5rem section / 1.875rem child heights already
+   clear WCAG 2.5.8 (24px min), so we keep them. */
+

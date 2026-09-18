@@ -81,6 +81,7 @@ export const useIndicatorsDemographicsColumns = ({
           accessorFn: row => row[yearOffset],
           header: `${t('label.year')} ${yearOffset}`,
           columnType: ColumnType.Number,
+          size: 150,
           Header: ({ column }) => <Box display="flex" flexDirection="row" alignItems="center" gap={2}>
             {column.columnDef.header}
             <NumericTextInput
@@ -89,6 +90,11 @@ export const useIndicatorsDemographicsColumns = ({
               max={100}
               decimalLimit={2}
               endAdornment="%"
+              // Cross-FE e2e contract (frontend/e2e/TESTIDS.md § Demographics):
+              // the id sits on the <input>, as every input id does.
+              slotProps={{
+                htmlInput: { 'data-testid': `growth-rate-year-${yearOffset}` },
+              }}
               onChange={value => {
                 if (!headerDraft) return;
                 handleGrowthChange({

@@ -61,7 +61,7 @@ export const ServerSettings = () => {
         component={
           <>
             <Switch
-              label={t('label.client')}
+              label={t('label.connect')}
               onChange={toggleNativeMode}
               checked={nativeMode === NativeMode.Server}
             />
@@ -74,7 +74,7 @@ export const ServerSettings = () => {
                 paddingLeft: 1,
               }}
             >
-              {t('label.server')}
+              {t('label.local')}
             </Typography>
           </>
         }
@@ -83,7 +83,9 @@ export const ServerSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            {isLogShown && <LogFileModal onClose={hideLog} isOpen={isLogShown} />}
+            {isLogShown && (
+              <LogFileModal onClose={hideLog} isOpen={isLogShown} />
+            )}
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
         }
@@ -106,13 +108,19 @@ export const ServerSettings = () => {
                 startIcon={<DownloadIcon />}
                 onClick={async () => {
                   setIsDownloading(true);
-                  if (
-                    databaseSettings?.databaseType === DatabaseType.SqLite
-                  ) {
+                  if (databaseSettings?.databaseType === DatabaseType.SqLite) {
                     const vacuum = await fetch(
                       `${Environment.API_HOST}/support/vacuum`,
                       {
                         method: 'POST',
+                        // POST /support/vacuum requires the ServerAdmin session
+                        // cookie. In a packaged build API_HOST is derived from
+                        // window.location so this is same-origin and fetch's
+                        // default ('same-origin') would send the cookie anyway,
+                        // but against a dev server the front end and the API sit
+                        // on different ports — cross-origin, so the default sends
+                        // nothing and the vacuum 401s silently. Be explicit.
+                        credentials: 'include',
                       }
                     );
                     if (vacuum.ok) {
@@ -136,8 +144,12 @@ export const ServerSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            {isLogShown && <LogFileModal onClose={hideLog} isOpen={isLogShown} />}
-            <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
+            {isLogShown && (
+              <LogFileModal onClose={hideLog} isOpen={isLogShown} />
+            )}
+            <BaseButton onClick={showLog} data-testid="server-log-view">
+              {t('button.view')}
+            </BaseButton>
           </>
         }
       />
@@ -148,6 +160,7 @@ export const ServerSettings = () => {
             <span>
               <BaseButton
                 startIcon={<DownloadIcon />}
+                data-testid="download-database"
                 onClick={() => {
                   window.location.href = `${Environment.API_HOST}/support/database`;
                 }}

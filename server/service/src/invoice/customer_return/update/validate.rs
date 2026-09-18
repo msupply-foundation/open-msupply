@@ -1,7 +1,8 @@
 use crate::{
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-        check_status_change, check_store, InvoiceRowStatusError,
+        check_status_change, check_store, custom_fields::check_invoice_custom_fields_patch,
+        InvoiceRowStatusError,
     },
     validate::{
         check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
@@ -34,6 +35,14 @@ pub fn validate(
         return Err(NotACustomerReturn);
     }
 
+    if let Some(properties) = &patch.custom_fields {
+        if let Some(problem) =
+            check_invoice_custom_fields_patch(connection, &return_row.r#type, properties)?
+        {
+            return Err(problem.into());
+        }
+    }
+
     // Status check
     let status_changed = check_status_change(&return_row, patch.invoice_row_status_option());
     if status_changed {
@@ -49,8 +58,7 @@ pub fn validate(
             InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         })?;
 
-        let lines =
-            InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&patch.id)?;
+        let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&patch.id)?;
         if lines.is_empty() {
             return Err(CannotIssueCustomerReturnWithNoLines);
         }

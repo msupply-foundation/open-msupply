@@ -21,6 +21,7 @@ pub fn generate(
         their_reference,
         clinician_id,
         prescription_date,
+        prescription_request_id,
     }: InsertPrescription,
 ) -> Result<InvoiceRow, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
@@ -72,6 +73,8 @@ pub fn generate(
         shipping_method_id: None,
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,
+        prescription_request_id,
+        ..Default::default()
     };
 
     if let Some(date) = prescription_date {

@@ -143,6 +143,13 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
+    let prescription_request_lines_loader = DataLoader::new(
+        PrescriptionRequestLinesByRequestIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    );
+
     let requisitions_by_id_loader = DataLoader::new(
         RequisitionsByIdLoader {
             service_provider: service_provider.clone(),
@@ -185,12 +192,30 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
+    // Item stats can be plugin-backed and very expensive per batch: a report resolves stats on
+    // every item node (the Item Usage report asks for three AMC lookbacks across ~1500 items,
+    // so ~4500 keys), and each batch is a separate plugin run holding a pool connection.
+    //
+    // Two defaults have to be overridden to keep that as one batch (#12689):
+    //
+    // - `max_batch_size` (default 1000) dispatches immediately once that many keys are pending,
+    //   ignoring the delay entirely — so the default alone forces at least ceil(4500/1000) = 5
+    //   concurrent batches no matter how wide the window is. The cap here only exists to bound
+    //   the `eq_any` bind count in a single `get_item_stats` call: the batch is split by
+    //   (store, lookback) before querying, but worst case that is one group, and SQLite allows
+    //   32766 bind parameters — so stay well under it rather than at it.
+    // - The default 1ms delay fires while the keys are still being enqueued (async-graphql
+    //   resolves list items concurrently, so they arrive in one burst that takes a few ms),
+    //   stealing partial batches. 50ms comfortably covers the burst and is imperceptible on
+    //   interactive queries.
     let item_stats_for_item_loader = DataLoader::new(
         ItemsStatsForItemLoader {
             service_provider: service_provider.clone(),
         },
         tokio::spawn,
-    );
+    )
+    .delay(std::time::Duration::from_millis(50))
+    .max_batch_size(20_000);
 
     let requisition_line_supply_status_loader = DataLoader::new(
         RequisitionLineSupplyStatusLoader {
@@ -299,6 +324,7 @@ pub async fn get_loaders(
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
     loaders.insert(stock_relocation_lines_loader);
+    loaders.insert(prescription_request_lines_loader);
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);
@@ -616,6 +642,20 @@ pub async fn get_loaders(
     loaders.insert(DataLoader::new(
         AvailableVolumeOnRequisitionLoader {
             service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        AllowedCustomFieldKeysByScopeLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        CustomFieldOptionsByCustomFieldIdLoader {
+            connection_manager: connection_manager.clone(),
         },
         tokio::spawn,
     ));

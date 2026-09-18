@@ -155,6 +155,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           ? t('label.create-location')
           : t('label.edit-location')
       }
+      testId="location-edit-modal"
     >
       {!isLoading ? (
         <Grid flexDirection="column" display="flex" gap={2}>
@@ -164,14 +165,20 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             value={draft.name}
             onChange={e => onUpdate({ name: e.target.value })}
             label={t('label.name')}
-            slotProps={{ inputLabel: { shrink: true } }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              htmlInput: { 'data-testid': 'location-name-input' },
+            }}
           />
           <BasicTextInput
             fullWidth
             value={draft.code}
             onChange={e => onUpdate({ code: e.target.value })}
             label={t('label.code')}
-            slotProps={{ inputLabel: { shrink: true } }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              htmlInput: { 'data-testid': 'location-code-input' },
+            }}
           />
           <LocationTypeInput
             value={draft.locationType ?? null}
@@ -187,6 +194,9 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
               label={t('label.volume')}
               fullWidth
               decimalLimit={10}
+              slotProps={{
+                htmlInput: { 'data-testid': 'location-volume-input' },
+              }}
             />
             <NumericTextInput
               value={draft.volumeUsed}

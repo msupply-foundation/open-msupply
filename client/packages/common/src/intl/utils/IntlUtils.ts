@@ -50,6 +50,7 @@ export const getLocale = (language: SupportedLocales) => {
     case 'en':
       return navigator.language === 'en-US' ? enUS : enGB;
     case 'tet':
+    case 'lo':
       return enGB;
     case 'fr-DJ':
       return fr;
@@ -87,6 +88,7 @@ const getDateLocalisations = (language: SupportedLocales) => {
     case 'en':
     case 'ar':
     case 'tet':
+    case 'lo':
       return getLocalisations(muiEnUS);
     case 'prs':
     case 'ps':
@@ -123,6 +125,7 @@ const getTableLocalisations = (language: SupportedLocales) => {
     // https://www.material-react-table.com/docs/guides/localization#localization-(i18n)-guide
     case 'en':
     case 'tet':
+    case 'lo':
       return undefined;
     default:
       noOtherVariants(language);
@@ -138,6 +141,7 @@ const languageOptions = [
   { label: 'Español', value: 'es' },
   { label: 'Français', value: 'fr' },
   { label: 'Français (Djibouti)', value: 'fr-DJ' },
+  { label: 'ລາວ', value: 'lo' },
   { label: 'پښتو', value: 'ps' },
   { label: 'Português', value: 'pt' },
   { label: 'Русский', value: 'ru' },
@@ -150,6 +154,7 @@ const locales = [
   'es' as const,
   'fr' as const,
   'fr-DJ' as const,
+  'lo' as const,
   'ru' as const,
   'tet' as const,
   'ps' as const,
@@ -287,7 +292,7 @@ const parseLanguage = (language?: string) => {
     case LanguageTypeNode.Khmer:
       return 'kh';
     case LanguageTypeNode.Laos:
-      return 'la';
+      return 'lo';
     case LanguageTypeNode.Portuguese:
       return 'pt';
     case LanguageTypeNode.Russian:

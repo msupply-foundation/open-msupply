@@ -1,5 +1,5 @@
 import React from 'react';
-import { PaginationItem } from '@mui/material';
+import { PaginationItem, SelectProps } from '@mui/material';
 import {
   Box,
   Typography,
@@ -80,6 +80,9 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     enablePagination: true,
     paginationDisplayMode: 'pages',
     muiBottomToolbarProps: {
+      // data-* attrs aren't in BoxProps — spread a widened object to get the
+      // testid onto the toolbar without an unsafe cast of the whole object.
+      ...({ 'data-testid': 'table-pagination' } as Record<string, unknown>),
       sx: {
         '& .MuiInputLabel-root': {
           fontSize: '0.9em',
@@ -93,16 +96,21 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     muiPaginationProps: {
       rowsPerPageOptions: [10, 20, 50, 100], // TO-DO: Make this customisable?
       SelectProps: {
+        // data-* attributes are forwarded by MUI but absent from SelectProps.
+        'data-testid': 'rows-per-page-select',
         sx: {
           minWidth: '40px',
           fontSize: '0.9em',
         },
-      },
+      } as Partial<SelectProps>,
       // Localise the page-number digits (e.g. Eastern Arabic numerals for RTL
       // languages). Overrides MRT's default renderItem, which renders raw digits
       renderItem: item => (
         <PaginationItem
           {...item}
+          data-testid={`pagination-${item.type}${
+            item.type === 'page' ? `-${item.page}` : ''
+          }`}
           page={
             typeof item.page === 'number' ? formatInt(item.page) : item.page
           }

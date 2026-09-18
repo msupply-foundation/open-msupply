@@ -1,0 +1,12 @@
+/* Only what Text doesn't own: colour, measure, code chips. */
+.intro {
+  max-inline-size: 44rem;
+  color: var(--text-secondary);
+}
+
+.intro code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+}

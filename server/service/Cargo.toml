@@ -22,7 +22,6 @@ actix-web = { workspace = true }
 actix-files = { workspace = true }
 actix-multipart = { workspace = true }
 jsonschema = "0.45.0"
-jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
 log = { workspace = true }
 reqwest = { workspace = true }
 url = "2.5.8"
