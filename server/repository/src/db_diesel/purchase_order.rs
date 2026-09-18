@@ -2,8 +2,8 @@ use super::{DBType, RepositoryError, StorageConnection};
 use crate::db_diesel::currency_row::{currency, CurrencyRow};
 use crate::db_diesel::name_row::{name, NameRow};
 use crate::diesel_macros::{
-    apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
-    apply_string_filter,
+    apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
+    apply_sort_asc_nulls_first, apply_sort_no_case, apply_string_filter,
 };
 use crate::purchase_order_row::{
     purchase_order::{self},
@@ -106,16 +106,20 @@ impl<'a> PurchaseOrderRepository<'a> {
                     apply_sort_no_case!(query, sort, name::name_)
                 }
                 PurchaseOrderSortField::ConfirmedDatetime => {
-                    apply_sort!(query, sort, purchase_order::confirmed_datetime)
+                    apply_sort_asc_nulls_first!(query, sort, purchase_order::confirmed_datetime)
                 }
                 PurchaseOrderSortField::SentDatetime => {
-                    apply_sort!(query, sort, purchase_order::sent_datetime)
+                    apply_sort_asc_nulls_first!(query, sort, purchase_order::sent_datetime)
                 }
                 PurchaseOrderSortField::RequestedDeliveryDate => {
-                    apply_sort!(query, sort, purchase_order::requested_delivery_date)
+                    apply_sort_asc_nulls_first!(
+                        query,
+                        sort,
+                        purchase_order::requested_delivery_date
+                    )
                 }
                 PurchaseOrderSortField::OrderTotalAfterDiscount => {
-                    apply_sort!(
+                    apply_sort_asc_nulls_first!(
                         query,
                         sort,
                         purchase_order_stats::order_total_after_discount

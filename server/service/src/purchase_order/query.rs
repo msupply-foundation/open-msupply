@@ -205,6 +205,17 @@ mod test {
             ids(
                 None,
                 Some(PurchaseOrderSort {
+                    key: PurchaseOrderSortField::SentDatetime,
+                    desc: Some(false),
+                })
+            ),
+            vec![second.id.clone(), first.id.clone()]
+        );
+
+        assert_eq!(
+            ids(
+                None,
+                Some(PurchaseOrderSort {
                     key: PurchaseOrderSortField::OrderTotalAfterDiscount,
                     desc: Some(false),
                 })
