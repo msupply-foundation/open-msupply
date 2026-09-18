@@ -29,6 +29,7 @@ pub enum SystemLogType {
     Migration,
     ServerStatus,
     SyncTranslationFkError,
+    DatabaseError,
 }
 
 impl SystemLogType {
@@ -40,6 +41,7 @@ impl SystemLogType {
             SystemLogType::Migration => false,
             SystemLogType::ServerStatus => false,
             SystemLogType::SyncTranslationFkError => true,
+            SystemLogType::DatabaseError => true,
         }
     }
 }

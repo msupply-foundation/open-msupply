@@ -19,7 +19,7 @@ mod generate_changelog;
 pub(crate) use self::generate_changelog::Changelogs;
 
 pub mod partition;
-pub use self::partition::ensure_partition_lookahead;
+pub use self::partition::{ensure_partition_lookahead, PartitionTopUp};
 
 #[cfg(test)]
 mod test;
