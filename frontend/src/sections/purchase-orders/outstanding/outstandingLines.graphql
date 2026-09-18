@@ -1,0 +1,67 @@
+# Purchase-orders OUTSTANDING LINES screen (spec/purchase-orders S5) — one row
+# per line the store is still waiting for, across all its orders. The same
+# query serves an order's own line table, so this list is a FILTER over it, not
+# an operation of its own (contract § listing outstanding lines).
+#
+# Filter / sort / pagination are carried as the GraphQL input types
+# (PurchaseOrderLineFilterInput, PurchaseOrderLineSortInput, PaginationInput)
+# so the URL state maps straight onto them with no remapping (kdd/type-safety).
+
+fragment OutstandingLineRow on PurchaseOrderLineNode {
+  id
+  # The row's columns 1-5 and 7 are the ORDER's, not the line's — and a row
+  # click opens the order, so its id travels too (spec S5 § layout).
+  purchaseOrder {
+    id
+    number
+    reference
+    confirmedDatetime
+    user {
+      username
+    }
+    supplier {
+      code
+      name
+    }
+  }
+  item {
+    name
+  }
+  expectedDeliveryDate
+  # The last three columns read across as arithmetic: what the order expects of
+  # the line, what has ARRIVED against it, and the difference. The outstanding
+  # figure is the server's own — the same expression that decides which lines
+  # are listed and the `outstandingNumberOfUnits` ordering, so the three cannot
+  # disagree (contract § listing outstanding lines).
+  #
+  # shippedNumberOfUnits is deliberately NOT read: stock that has shipped but
+  # not landed is not received, and the reference app's screen shows it in the
+  # received column and derives its outstanding figure from it — a defect on
+  # its side (contract ⚠️ the reference client computes the outstanding figure
+  # from the wrong two fields).
+  adjustedNumberOfUnits
+  receivedNumberOfUnits
+  outstandingNumberOfUnits
+}
+
+query outstandingLines(
+  $storeId: String!
+  $filter: PurchaseOrderLineFilterInput
+  $sort: [PurchaseOrderLineSortInput!]
+  $page: PaginationInput
+) {
+  purchaseOrderLines(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    ... on PurchaseOrderLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...OutstandingLineRow
+      }
+    }
+  }
+}

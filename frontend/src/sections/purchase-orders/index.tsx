@@ -7,15 +7,21 @@ import { Route } from '@solidjs/router';
 // (spec/purchase-orders rules § availability), so the route itself redirects
 // when the store has the preference off.
 //
-// Only the LIST screen (spec S1, with its create S2 and delete S3) is built so
-// far. The order's own screen (S6) and the outstanding-lines list (S5) are the
-// vertical's remaining screens: until they are registered here, the addresses
-// the list points at — a row click and the Outstanding lines button — fall to
-// the shell's not-found page. Lazy, so the section is its own bundle.
+// The LIST screen (spec S1, with its create S2 and delete S3) and the
+// outstanding-lines list (S5) are built. An order's own screen (S6) is the
+// vertical's remaining screen: until it is registered here, the address a row
+// click points at falls to the shell's not-found page. Lazy, so each screen is
+// its own bundle.
 const PurchaseOrdersList = lazy(() => import('./list/PurchaseOrdersList'));
+const OutstandingLinesList = lazy(
+  () => import('./outstanding/OutstandingLinesList')
+);
 
+// `outstanding` before an order's own `:id` route, so the word is this screen's
+// address and never read as an order id.
 export const purchaseOrdersRoutes = () => (
   <>
     <Route path="/" component={PurchaseOrdersList} />
+    <Route path="/outstanding" component={OutstandingLinesList} />
   </>
 );
