@@ -23,7 +23,7 @@ import {
 import { ResponseFragment, ResponseLineFragment } from '../../api';
 import { DraftResponseLine } from './hooks';
 import { SupplySelection } from './SuppliedSelection';
-import { isReasonDisabled, useStockCalculations } from './utils';
+import { useStockCalculations } from './utils';
 import { ResponseNumInputRow } from './ResponseNumInputRow';
 
 interface ResponseLineEditProps {
@@ -71,22 +71,15 @@ export const ResponseLineEdit = ({
     store?.preferences?.extraFieldsInRequisition && !!requisition.program;
   const isDisabled = disabled || !!requisition.linkedRequisition;
   const disableItemSelection = disabled || isUpdateMode;
+  const disableReasons =
+    draft?.requestedQuantity === draft?.suggestedQuantity || isDisabled;
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
-  // The line as last saved, before any edits in this modal
-  const savedLine = useMemo(
-    () => lines?.find(({ item }) => item.id === currentItem?.id),
+  const originalItemName = useMemo(
+    () => lines?.find(({ item }) => item.id === currentItem?.id)?.itemName,
     [lines, currentItem?.id]
   );
-  const originalItemName = savedLine?.itemName;
-  const disableReasons = isReasonDisabled({
-    disabled,
-    isLinked: !!requisition.linkedRequisition,
-    requestedQuantity: draft?.requestedQuantity,
-    suggestedQuantity: draft?.suggestedQuantity,
-    savedReasonId: savedLine?.reason?.id,
-  });
 
   const { available, mos } = useStockCalculations(draft);
   const itemVolume =
