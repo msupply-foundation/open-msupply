@@ -274,10 +274,22 @@ mod test {
             adjusted_number_of_units: None,
             ..Default::default()
         };
+        let line_d = PurchaseOrderLineRow {
+            id: "po_line_d".to_string(),
+            purchase_order_id: confirmed.id.clone(),
+            store_id: mock_store_a().id,
+            line_number: 2,
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            requested_number_of_units: 2.0,
+            adjusted_number_of_units: Some(4.0),
+            ..Default::default()
+        };
         let line_repo = PurchaseOrderLineRowRepository::new(&connection);
         line_repo.upsert_one(&line_a).unwrap();
         line_repo.upsert_one(&line_b).unwrap();
         line_repo.upsert_one(&line_c).unwrap();
+        line_repo.upsert_one(&line_d).unwrap();
 
         let invoice = InvoiceRow {
             id: "invoice_received".to_string(),
@@ -313,6 +325,17 @@ mod test {
                 ..Default::default()
             })
             .unwrap();
+        invoice_line_repo
+            .upsert_one(&InvoiceLineRow {
+                id: "invoice_line_d".to_string(),
+                invoice_id: invoice.id.clone(),
+                item_id: mock_item_a().id,
+                number_of_packs: 4.0,
+                pack_size: 1.0,
+                purchase_order_line_id: Some(line_d.id.clone()),
+                ..Default::default()
+            })
+            .unwrap();
 
         let ids = |key, desc| {
             service
@@ -332,7 +355,12 @@ mod test {
 
         assert_eq!(
             ids(PurchaseOrderLineSortField::SupplierName, Some(false)),
-            vec![line_b.id.clone(), line_c.id.clone(), line_a.id.clone()]
+            vec![
+                line_b.id.clone(),
+                line_c.id.clone(),
+                line_a.id.clone(),
+                line_d.id.clone()
+            ]
         );
 
         assert_eq!(
@@ -340,7 +368,12 @@ mod test {
                 PurchaseOrderLineSortField::PurchaseOrderConfirmedDatetime,
                 Some(true)
             ),
-            vec![line_a.id.clone(), line_b.id.clone(), line_c.id.clone()]
+            vec![
+                line_a.id.clone(),
+                line_d.id.clone(),
+                line_b.id.clone(),
+                line_c.id.clone()
+            ]
         );
 
         assert_eq!(
@@ -348,7 +381,12 @@ mod test {
                 PurchaseOrderLineSortField::AdjustedNumberOfUnits,
                 Some(true)
             ),
-            vec![line_a.id.clone(), line_b.id.clone(), line_c.id.clone()]
+            vec![
+                line_a.id.clone(),
+                line_b.id.clone(),
+                line_d.id.clone(),
+                line_c.id.clone()
+            ]
         );
 
         assert_eq!(
@@ -356,7 +394,12 @@ mod test {
                 PurchaseOrderLineSortField::ReceivedNumberOfUnits,
                 Some(false)
             ),
-            vec![line_c.id.clone(), line_b.id.clone(), line_a.id.clone()]
+            vec![
+                line_c.id.clone(),
+                line_d.id.clone(),
+                line_b.id.clone(),
+                line_a.id.clone()
+            ]
         );
 
         let outstanding = |id: &str| {
@@ -377,6 +420,30 @@ mod test {
         assert_eq!(outstanding(&line_a.id), 5.0);
         assert_eq!(outstanding(&line_b.id), 20.0);
         assert_eq!(outstanding(&line_c.id), 7.0);
+        assert_eq!(outstanding(&line_d.id), 0.0);
+
+        let filtered = |value| {
+            let mut rows = service
+                .get_purchase_order_lines(
+                    &context,
+                    Some(&mock_store_a().id),
+                    None,
+                    Some(PurchaseOrderLineFilter::new().received_less_than_adjusted(value)),
+                    None,
+                )
+                .unwrap()
+                .rows
+                .into_iter()
+                .map(|line| line.purchase_order_line_row.id)
+                .collect::<Vec<String>>();
+            rows.sort();
+            rows
+        };
+        assert_eq!(
+            filtered(true),
+            vec![line_a.id.clone(), line_b.id.clone(), line_c.id.clone()]
+        );
+        assert_eq!(filtered(false), vec![line_d.id.clone()]);
 
         // The order of no stored column.
         assert_eq!(
@@ -384,7 +451,12 @@ mod test {
                 PurchaseOrderLineSortField::OutstandingNumberOfUnits,
                 Some(false)
             ),
-            vec![line_a.id.clone(), line_c.id.clone(), line_b.id.clone()]
+            vec![
+                line_d.id.clone(),
+                line_a.id.clone(),
+                line_c.id.clone(),
+                line_b.id.clone()
+            ]
         );
     }
 }
