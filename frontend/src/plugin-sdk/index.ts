@@ -158,6 +158,15 @@ export { TextField } from '../ui/elements/inputs/TextField';
 export type { TextFieldProps } from '../ui/elements/inputs/TextField';
 export { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
+/*
+ * The registry's notice-inside-content panel (UI_ELEMENTS § Alert), for the
+ * Stocktake Helper's save refusals and save failure (#495's review round:
+ * plain red text at the card's corner was read past). The "already in the
+ * eager graph" bargain again — App.tsx renders the startup failure through
+ * Alert, statically, so the module and its CSS ship regardless.
+ */
+export { Alert } from '../ui/elements/feedback/Alert';
+export type { AlertProps, AlertSeverity } from '../ui/elements/feedback/Alert';
 // foldForSearch rides along free: it is matchesSearch's own module, already
 // eager — exported so a plugin filtering thousands of rows can fold its query
 // once per pass instead of paying matchesSearch's per-call query fold.
