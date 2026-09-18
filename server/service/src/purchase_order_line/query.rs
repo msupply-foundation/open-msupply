@@ -85,11 +85,7 @@ pub fn calculate_units_in_other_purchase_orders(
     // TODO: Reduce any other units received in GRs
     let total: f64 = lines
         .iter()
-        .map(|l| {
-            l.purchase_order_line_row
-                .adjusted_number_of_units
-                .unwrap_or(l.purchase_order_line_row.requested_number_of_units)
-        })
+        .map(|l| l.purchase_order_line_row.expected_number_of_units())
         .sum();
 
     // Prevent -0.0 from being returned
@@ -363,8 +359,26 @@ mod test {
             vec![line_c.id.clone(), line_b.id.clone(), line_a.id.clone()]
         );
 
-        // 5 owed on a (30 less 25), 7 on c (requested, nothing received), 20
-        // on b (30 less 10) — the order of no stored column.
+        let outstanding = |id: &str| {
+            service
+                .get_purchase_order_lines(
+                    &context,
+                    Some(&mock_store_a().id),
+                    None,
+                    Some(PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(id.to_string()))),
+                    None,
+                )
+                .unwrap()
+                .rows
+                .pop()
+                .unwrap()
+                .outstanding_number_of_units()
+        };
+        assert_eq!(outstanding(&line_a.id), 5.0);
+        assert_eq!(outstanding(&line_b.id), 20.0);
+        assert_eq!(outstanding(&line_c.id), 7.0);
+
+        // The order of no stored column.
         assert_eq!(
             ids(
                 PurchaseOrderLineSortField::OutstandingNumberOfUnits,
