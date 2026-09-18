@@ -92,6 +92,9 @@ impl PurchaseOrderLineNode {
     pub async fn received_number_of_units(&self) -> f64 {
         self.stats().received_number_of_units
     }
+    pub async fn outstanding_number_of_units(&self) -> f64 {
+        self.purchase_order_line.outstanding_number_of_units()
+    }
     pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().requested_delivery_date
     }

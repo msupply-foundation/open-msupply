@@ -259,6 +259,20 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
     query
 }
 
+impl PurchaseOrderLineRow {
+    pub fn expected_number_of_units(&self) -> f64 {
+        self.adjusted_number_of_units
+            .unwrap_or(self.requested_number_of_units)
+    }
+}
+
+impl PurchaseOrderLine {
+    pub fn outstanding_number_of_units(&self) -> f64 {
+        self.purchase_order_line_row.expected_number_of_units()
+            - self.purchase_order_line_stats_row.received_number_of_units
+    }
+}
+
 impl PurchaseOrderLineFilter {
     pub fn new() -> PurchaseOrderLineFilter {
         Self::default()
