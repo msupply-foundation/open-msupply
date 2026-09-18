@@ -55,6 +55,13 @@ export interface NameSearchProps {
    */
   storeBacked?: boolean;
   /**
+   * Narrow to EXTERNAL parties only — a facility, never one of the system's own
+   * stores. The opposite narrowing to `storeBacked`; used by the purchase-order
+   * create picker, which offers only external suppliers (spec/purchase-orders
+   * § S2). Default false.
+   */
+  external?: boolean;
+  /**
    * Withhold one party by id — the internal-order destination-customer picker
    * excludes the chosen supplier (spec/internal-orders › header fields).
    */
@@ -123,8 +130,11 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
       props.storeId,
       props.role ?? 'supplier',
       PAGE_SIZE,
-      props.storeBacked,
-      props.excludeId
+      {
+        storeBacked: props.storeBacked,
+        external: props.external,
+        excludeId: props.excludeId,
+      }
     )}
     // The selected value's input text is just the name; the dropdown row still
     // shows code + name. Server mode disables the client filter, so this isn't
