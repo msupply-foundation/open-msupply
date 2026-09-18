@@ -138,7 +138,11 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                     apply_sort_asc_nulls_first!(query, sort, purchase_order::confirmed_datetime);
                 }
                 PurchaseOrderLineSortField::AdjustedNumberOfUnits => {
-                    apply_sort!(query, sort, purchase_order_line::adjusted_number_of_units);
+                    apply_sort_asc_nulls_first!(
+                        query,
+                        sort,
+                        purchase_order_line::adjusted_number_of_units
+                    );
                 }
                 PurchaseOrderLineSortField::ReceivedNumberOfUnits => {
                     apply_sort!(
@@ -228,12 +232,22 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
         );
         apply_equal_filter!(query, item_id, purchase_order_line::item_id);
         apply_equal_filter!(query, status, purchase_order_line::status);
-        if let Some(true) = received_less_than_adjusted {
-            query = query.filter(
-                purchase_order_line_stats::received_number_of_units
-                    .nullable()
-                    .lt(expected_number_of_units().nullable()),
-            );
+        match received_less_than_adjusted {
+            Some(true) => {
+                query = query.filter(
+                    purchase_order_line_stats::received_number_of_units
+                        .nullable()
+                        .lt(expected_number_of_units().nullable()),
+                )
+            }
+            Some(false) => {
+                query = query.filter(
+                    purchase_order_line_stats::received_number_of_units
+                        .nullable()
+                        .ge(expected_number_of_units().nullable()),
+                )
+            }
+            None => {}
         }
 
         if let Some(po_filter) = purchase_order {
