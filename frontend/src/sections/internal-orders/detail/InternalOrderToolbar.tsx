@@ -198,7 +198,7 @@ export const InternalOrderToolbar: Component<
           role="supplier"
           label={t('label.supplier-name')}
           size="small"
-          parties="storeBacked"
+          parties="internal"
           selected={supplierSeed()}
           disabled={fieldsLocked()}
           error={props.supplierError}
@@ -233,7 +233,7 @@ export const InternalOrderToolbar: Component<
             label={t('label.destination-customer')}
             size="small"
             inputTestId="customer-search-input"
-            parties="storeBacked"
+            parties="internal"
             excludeId={props.node.otherPartyId}
             selected={destinationSeed()}
             disabled={!props.editable}
