@@ -1,6 +1,7 @@
 import { t } from '@/intl';
 import {
   FilterDateRange,
+  FilterNumberInput,
   FilterSelect,
   FilterTextInput,
   constructFilters,
@@ -18,13 +19,13 @@ export type PurchaseOrderFilter = NonNullable<
 
 /*
  * Type-driven, EXHAUSTIVE filter definitions for the purchase-orders list
- * (spec/purchase-orders S1 § filters — five filters: Supplier, Status, and
- * three date ranges). The map passed to `constructFilters` is keyed by EVERY
- * key of the generated PurchaseOrderFilterInput: a key maps to a definition to
- * expose it, or `null` to dismiss it. Being a Record over all of it, it can't
- * compile with a key missing — when the schema gains a filter, codegen adds
- * the key and this map stops compiling until we decide expose-or-dismiss. The
- * map's key order IS the toolbar's display order.
+ * (spec/purchase-orders S1 § filters — six filters: Supplier, Number, Status,
+ * and three date ranges). The map passed to `constructFilters` is keyed by
+ * EVERY key of the generated PurchaseOrderFilterInput: a key maps to a
+ * definition to expose it, or `null` to dismiss it. Being a Record over all of
+ * it, it can't compile with a key missing — when the schema gains a filter,
+ * codegen adds the key and this map stops compiling until we decide
+ * expose-or-dismiss. The map's key order IS the toolbar's display order.
  *
  * Built once at module load (a stable const) so FilterBar's <For> never
  * remounts a chip on a filter edit. Safe despite the t()-driven labels because
@@ -51,6 +52,22 @@ const FILTERS: Filter<PurchaseOrderFilter>[] =
           value={props.filter().supplier?.like ?? ''}
           onInput={value =>
             props.setPartialFilter({ supplier: value ? { like: value } : null })
+          }
+        />
+      ),
+    },
+    number: {
+      label: () => t('label.number'),
+      render: props => (
+        <FilterNumberInput
+          label={t('label.number')}
+          testId={props.testId}
+          placeholder={t('placeholder.search')}
+          value={props.filter().number?.equalTo ?? undefined}
+          onChange={value =>
+            props.setPartialFilter({
+              number: value === undefined ? null : { equalTo: value },
+            })
           }
         />
       ),

@@ -68,13 +68,9 @@ import {
 
 type Row = PurchaseOrderRowFragment;
 
-// Sortable columns are typed to the generated sort-field union, so a column can
-// only ever name a real sort key (kdd/type-safety). The server offers FOUR —
-// number, created, status, target months — and no more, so the eight other
-// columns cannot be sortable in a front end that sorts server-side: the
-// reference list marks some of them sortable anyway and re-sorts the fetched
-// page in the browser, which orders the page rather than the list
-// (contract § listing orders, backend gaps).
+// Typed to the generated sort-field union, so a column can only ever name a
+// real sort key (kdd/type-safety). Every column has one except the line count
+// (contract § backend gaps).
 type SortKey = NonNullable<PurchaseOrdersVariables['sort']>[number]['key'];
 
 type ListState = {
@@ -219,9 +215,8 @@ const PurchaseOrdersList: Component = () => {
   // switch.
   const columns = (): Column<Row, SortKey>[] => [
     {
-      // Supplier — the order's supplier name; absent when the row resolves no
-      // supplier. No server sort key exists for it.
       c: { accessor: row => row.supplier?.name ?? '', id: 'supplier' },
+      sortKey: 'supplier',
       header: () => t('label.supplier'),
       ...getCellDefinition('supplierName', {
         headerPosition: 'primary',
@@ -241,24 +236,22 @@ const PurchaseOrdersList: Component = () => {
       ...getCellDefinition('createdDatetime'),
     },
     {
-      // Confirmed — the moment Ready for sending was reached (the state's own
-      // label is "Ready for sending"; only this TIMESTAMP reads "Confirmed" —
-      // ui-surface § status labels). Empty until then, as an absent value.
       c: { key: 'confirmedDatetime' },
+      sortKey: 'confirmedDatetime',
       header: () => t('label.confirmed'),
       ...getCellDefinition('confirmedDatetime'),
     },
     {
       c: { key: 'sentDatetime' },
+      sortKey: 'sentDatetime',
       header: () => t('label.sent'),
       ...getDateCell(),
       size: remToPx(7),
     },
     {
       c: { key: 'requestedDeliveryDate' },
+      sortKey: 'requestedDeliveryDate',
       header: () => t('label.requested-delivery-date'),
-      // No CELL_DEF key: the binding constraint is the long header, not the
-      // date, so it is sized here (one-off to this table).
       ...getDateCell(),
       size: remToPx(11),
     },
@@ -275,15 +268,11 @@ const PurchaseOrdersList: Component = () => {
           />
         );
       },
-      // Status has no cell-type preset (it is page-rendered), so the width
-      // lives here — wide enough for "Ready for approval".
       meta: { headerPosition: 'badge' },
       size: remToPx(10),
       maxSize: remToPx(12),
     },
     {
-      // Target months — synchronised data only; nothing in the app writes it
-      // (contract ⚠️). Sortable because the server offers the key.
       c: { key: 'targetMonths' },
       sortKey: 'targetMonths',
       header: () => t('label.target-months'),
@@ -291,25 +280,21 @@ const PurchaseOrdersList: Component = () => {
       size: remToPx(8),
     },
     {
-      // Total cost — the DISCOUNTED total, which EXCLUDES the order's
-      // additional charges, so it is not the final cost an order's own screen
-      // presents; the two figures legitimately differ (rules § listing
-      // orders).
       c: { key: 'orderTotalAfterDiscount' },
+      sortKey: 'orderTotalAfterDiscount',
       header: () => t('label.total-cost'),
       ...getCurrencyCell(),
       size: remToPx(8),
     },
     {
-      // Currency — the order's own currency code, inherited from its supplier.
       c: { accessor: row => row.currency?.code ?? '', id: 'currency' },
+      sortKey: 'currencyCode',
       header: () => t('label.currency'),
       ...getTextCell(),
       size: remToPx(6),
     },
     {
-      // Lines — how many lines the order has. The list never reads the lines
-      // themselves.
+      // Lines — how many lines the order has
       c: { accessor: row => row.lines.totalCount, id: 'lines' },
       header: () => t('label.lines'),
       ...getNumberCell(),
@@ -317,6 +302,7 @@ const PurchaseOrdersList: Component = () => {
     },
     {
       c: { key: 'comment' },
+      sortKey: 'comment',
       header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
