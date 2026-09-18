@@ -172,6 +172,16 @@ export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
 export { foldForSearch, matchesSearch } from '../ui/utils/searchText';
 export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
 export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
+// The date-range filter — what the Stocktake Helper's past-reports list needs
+// (plugins/cook_islands, #490): a pick-only range whose `max` refuses future
+// dates and whose pick flow cannot produce an inverted range. New CSS-bearing
+// modules in the SDK chunk — the field, its DatePickerPanel and their shared
+// styles (measured: kdd/bundle-size-by-pr).
+export { DateRangeField } from '../ui/elements/inputs/DateRangeField';
+export type {
+  DateRangeFieldProps,
+  IsoDateRange,
+} from '../ui/elements/inputs/DateRangeField';
 
 // ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
 /*
@@ -255,6 +265,10 @@ export {
   FileIcon,
   StockIcon,
 } from '../ui/icons';
+// The back affordance on the Stocktake Helper's drill-in views (#490) —
+// RTL-flipping, and already alive in this graph (the date picker's month
+// navigation uses it), so re-exporting costs nothing.
+export { ChevronLeftIcon } from '../ui/icons';
 /*
  * The standing "this opens something" chevron on a whole-row/whole-card
  * target — the Stocktake Helper's worklist rows (#495), which are cards whose
@@ -303,7 +317,7 @@ export type { PluginIntl, SupportedLocale } from './intl';
  * NOT here: a raw (path, filter) pair is the hand-encoding the named builders
  * exist to prevent.
  */
-export { storeHref, navigateTo } from './navigation';
+export { storeHref, navigateTo, currentStorePath } from './navigation';
 export type { NavigateOptions } from './navigation';
 export { usePageSearch } from './pageSearch';
 export {

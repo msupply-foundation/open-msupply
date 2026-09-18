@@ -32,6 +32,7 @@ import {
 } from '../plugins/pluginPages';
 import { createRegionDiagnostics } from '../plugins/diagnostics';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
+import { bindHostPathname } from './hostLocation';
 import { bindHostSearch } from './hostSearchParams';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
@@ -87,9 +88,15 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // app, which every plugin contribution renders inside.
   bindHostNavigate(routerHostNavigate(navigate));
 
-  // The other half of that bridge: the address bar's query string, so a plugin
-  // list screen can keep its filter/sort/page there the way a host one does,
-  // and a page can read its own query (the SDK's usePageSearch)
+  // The read half of the same surface: the SDK's `currentStorePath` derives a
+  // store-relative path from this reactive pathname, so a plugin page can
+  // interpret the paths below its own (src/nav/hostLocation.ts owns the
+  // binding contract).
+  bindHostPathname(() => location.pathname);
+
+  // And the address bar's query string, so a plugin list screen can keep its
+  // filter/sort/page there the way a host one does, and a page can read its
+  // own query (the SDK's usePageSearch)
   // (src/nav/hostSearchParams.ts). Read only — the write side is built from
   // the navigator bound above. Reactive: `location.search` is the router's own
   // signal, so a Back button re-renders the screen reading it.
