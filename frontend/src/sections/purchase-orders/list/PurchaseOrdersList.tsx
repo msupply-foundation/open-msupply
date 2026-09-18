@@ -329,7 +329,6 @@ const PurchaseOrdersList: Component = () => {
                 screen — a separate slice; this is the way in the spec gives
                 it. */}
             <Button
-              variant="secondary"
               icon={<MenuLinesIcon />}
               data-testid="outstanding-lines-button"
               onClick={() =>
