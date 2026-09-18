@@ -224,7 +224,7 @@ export const CreateInternalOrderModal: Component<
           <NameSearch
             storeId={props.storeId}
             role="supplier"
-            storeBacked
+            parties="storeBacked"
             label={t('label.supplier-name')}
             hideLabel
             clearable={false}

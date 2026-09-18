@@ -116,7 +116,7 @@ const Body: Component<{ onClose: () => void }> = props => {
           label={t('label.supplier-name')}
           storeId={params.storeId}
           role="supplier"
-          external
+          parties="external"
           focusTarget={supplierSearch}
           onSelect={supplier => void create(supplier)}
         />
