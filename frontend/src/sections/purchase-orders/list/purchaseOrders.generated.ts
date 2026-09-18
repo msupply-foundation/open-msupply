@@ -50,6 +50,13 @@ export type PurchaseOrdersVariables = {
     equalTo?: string | null;
     like?: string | null;
   } | null;
+    number?: {
+    equalTo?: number | null;
+    equalAny?: Array<number> | null;
+    notEqualTo?: number | null;
+    equalAnyOrNull?: Array<number> | null;
+    notEqualAll?: Array<number> | null;
+  } | null;
     storeId?: {
     equalTo?: string | null;
     equalAny?: Array<string> | null;
@@ -74,7 +81,7 @@ export type PurchaseOrdersVariables = {
   } | null;
   } | null;
   sort?: Array<{
-    key: "number" | "createdDatetime" | "status" | "targetMonths";
+    key: "number" | "createdDatetime" | "status" | "targetMonths" | "supplier" | "confirmedDatetime" | "sentDatetime" | "requestedDeliveryDate" | "orderTotalAfterDiscount" | "currencyCode" | "comment";
     desc?: boolean | null;
   }> | null;
   page?: {
