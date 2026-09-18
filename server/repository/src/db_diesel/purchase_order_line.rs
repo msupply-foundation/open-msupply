@@ -1,12 +1,15 @@
 use super::{
-    item_row::item, name_row::name, purchase_order_line_row::purchase_order_line, DBType, ItemRow,
-    RepositoryError, StorageConnection,
+    item_row::item,
+    name_row::{name, NameRow},
+    purchase_order_line_row::purchase_order_line,
+    DBType, ItemRow, RepositoryError, StorageConnection,
 };
 
 use crate::{
     diesel_extensions::double_coalesce,
     diesel_macros::{
-        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
+        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
+        apply_sort_no_case, apply_string_filter,
     },
     purchase_order_line_stats,
     purchase_order_row::purchase_order::{self},
@@ -22,6 +25,7 @@ type PurchaseOrderLineJoin = (
     ItemRow,
     PurchaseOrderRow,
     PurchaseOrderLineStatsRow,
+    Option<NameRow>,
 );
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -53,6 +57,11 @@ pub enum PurchaseOrderLineSortField {
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
     PurchaseOrderNumber,
+    SupplierName,
+    PurchaseOrderConfirmedDatetime,
+    AdjustedNumberOfUnits,
+    ReceivedNumberOfUnits,
+    OutstandingNumberOfUnits,
 }
 
 pub type PurchaseOrderLineSort = Sort<PurchaseOrderLineSortField>;
@@ -106,13 +115,40 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                 }
 
                 PurchaseOrderLineSortField::RequestedDeliveryDate => {
-                    apply_sort!(query, sort, purchase_order_line::requested_delivery_date);
+                    apply_sort_asc_nulls_first!(
+                        query,
+                        sort,
+                        purchase_order_line::requested_delivery_date
+                    );
                 }
                 PurchaseOrderLineSortField::ExpectedDeliveryDate => {
-                    apply_sort!(query, sort, purchase_order_line::expected_delivery_date);
+                    apply_sort_asc_nulls_first!(
+                        query,
+                        sort,
+                        purchase_order_line::expected_delivery_date
+                    );
                 }
                 PurchaseOrderLineSortField::PurchaseOrderNumber => {
                     apply_sort!(query, sort, purchase_order::purchase_order_number);
+                }
+                PurchaseOrderLineSortField::SupplierName => {
+                    apply_sort_no_case!(query, sort, name::name_);
+                }
+                PurchaseOrderLineSortField::PurchaseOrderConfirmedDatetime => {
+                    apply_sort_asc_nulls_first!(query, sort, purchase_order::confirmed_datetime);
+                }
+                PurchaseOrderLineSortField::AdjustedNumberOfUnits => {
+                    apply_sort!(query, sort, purchase_order_line::adjusted_number_of_units);
+                }
+                PurchaseOrderLineSortField::ReceivedNumberOfUnits => {
+                    apply_sort!(
+                        query,
+                        sort,
+                        purchase_order_line_stats::received_number_of_units
+                    );
+                }
+                PurchaseOrderLineSortField::OutstandingNumberOfUnits => {
+                    apply_sort!(query, sort, outstanding_number_of_units());
                 }
             }
         } else {
@@ -145,6 +181,20 @@ fn query() -> _ {
         .inner_join(item::table)
         .inner_join(purchase_order::table)
         .inner_join(purchase_order_line_stats::table)
+        .left_join(name::table.on(name::id.eq(purchase_order::supplier_name_id)))
+}
+
+#[diesel::dsl::auto_type]
+fn expected_number_of_units() -> _ {
+    double_coalesce::coalesce(
+        purchase_order_line::adjusted_number_of_units,
+        purchase_order_line::requested_number_of_units,
+    )
+}
+
+#[diesel::dsl::auto_type]
+fn outstanding_number_of_units() -> _ {
+    expected_number_of_units() - purchase_order_line_stats::received_number_of_units
 }
 
 type BoxedPurchaseOrderLineQuery = IntoBoxed<'static, query, DBType>;
@@ -182,11 +232,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             query = query.filter(
                 purchase_order_line_stats::received_number_of_units
                     .nullable()
-                    .lt(double_coalesce::coalesce(
-                        purchase_order_line::adjusted_number_of_units,
-                        purchase_order_line::requested_number_of_units,
-                    )
-                    .nullable()),
+                    .lt(expected_number_of_units().nullable()),
             );
         }
 
@@ -196,12 +242,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             query = query.filter(purchase_order_line::purchase_order_id.eq_any(po_ids));
         }
 
-        if let Some(supplier_name_filter) = supplier_name {
-            let mut sub_query = name::table.select(name::id).into_boxed();
-            apply_string_filter!(sub_query, Some(supplier_name_filter), name::name_);
-            query = query.filter(purchase_order::supplier_name_id.eq_any(sub_query));
-        }
-
+        apply_string_filter!(query, supplier_name, name::name_);
         apply_equal_filter!(
             query,
             purchase_order_number,
@@ -264,7 +305,7 @@ impl PurchaseOrderLineFilter {
 }
 
 fn to_domain(
-    (purchase_order_line_row, item_row, _, purchase_order_line_stats_row): PurchaseOrderLineJoin,
+    (purchase_order_line_row, item_row, _, purchase_order_line_stats_row, _supplier): PurchaseOrderLineJoin,
 ) -> PurchaseOrderLine {
     PurchaseOrderLine {
         purchase_order_line_row,
