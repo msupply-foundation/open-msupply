@@ -188,10 +188,7 @@ real resources:
 - **RAM**: each deployment is one container running the server *and* its own
   bundled postgres. Budget as you would for a small server per deployment, not
   per lane.
-- **Disk**: a per-commit image per push, plus a database per deployment. The
-  teardown prunes that deployment's images when it goes, and
-  `docker-expire.yaml` sweeps anything past its expiry — but a box with many
-  labelled PRs and no-expiry deployments still grows.
+- **Disk**: one database per deployment, plus one image at a time. Images are tagged per commit, so a redeploy adds one rather than replacing one — the deploy removes that deployment's *superseded* tags once the new one is up and routable, so a deployment costs one image however often it redeploys. The teardown takes the last one with the rest of the stack, and `docker-expire.yaml` sweeps anything past its expiry. What still grows is the count: a box with many labelled PRs and no-expiry deployments holds a database and an image for each.
 
 Every deployment is reached at `https://<name>.<DEPLOY_DOMAIN>`, where `<name>`
 is the deployment's name and *also* its container name. Nothing publishes a host

@@ -88,6 +88,22 @@ services:
       # debug build, which is a poor thing to hand QA.
       oms.profile: ${OMS_PROFILE:-release}
 
+      # Whether this deployment is a central server, recorded for exactly the
+      # same reason as the profile above - and it is the one that was missed.
+      #
+      # `central` is a form field with a default, so without this label every
+      # redeploy that did not re-tick it silently demoted a central server to a
+      # remote site: extending an expiry, changing the profile, or - once the
+      # push trigger is on - any merge to the branch it follows. Nothing in the
+      # run said so, because a deploy that sets the flag to `false` succeeds
+      # exactly as loudly as one that sets it to `true`.
+      #
+      # The failure is worse than the profile's: a profile that flips is slow,
+      # whereas a central server that comes back as a remote is a different KIND
+      # of server, and anything paired to it is talking to something that is no
+      # longer answering as central.
+      oms.central: ${OMS_CENTRAL:-false}
+
     # The image's own entrypoint, which runs initdb/pg_ctl/createdb against the
     # cluster inside the container and then execs entry.sh. Not a variable: with
     # external postgres support removed there is exactly one correct value, and
