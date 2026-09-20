@@ -17,12 +17,12 @@ pub enum PartitionTopUp {
 }
 
 /// Create `changelog_p_<lower>` covering `[lower, upper)` and attach it to
-/// `changelog`. Used by both the migration and the runtime top-up.
+/// `changelog`.
 ///
 /// Two statements on purpose: `CREATE TABLE … PARTITION OF` takes `ACCESS
 /// EXCLUSIVE` on `changelog` and blocks inserts. `INCLUDING ALL` copies the PK
 /// index for Postgres to adopt on attach; do not trim it.
-pub fn create_partition(
+fn create_partition(
     connection: &StorageConnection,
     lower: i64,
     upper: i64,
