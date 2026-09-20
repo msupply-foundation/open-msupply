@@ -15,7 +15,9 @@ impl Migration for V3_02_01 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_database_error_to_system_log_type_enum::Migrate)]
+        vec![Box::new(
+            add_database_error_to_system_log_type_enum::Migrate,
+        )]
     }
 }
 
@@ -39,7 +41,12 @@ mod test {
         .await;
 
         // Run this migration
-        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(get_database_version(&connection), version);
     }
 }

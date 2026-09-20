@@ -1,5 +1,4 @@
 use crate::{
-    db_diesel::changelog::partition::create_partition,
     migrations::{helpers::max_sequence, sql, MigrationConfig, MigrationFragment},
     StorageConnection,
 };
@@ -118,9 +117,21 @@ fn create_future_partitions(
         let to = start + (i + 1) * size;
         // Partition names use the cursor lower bound as the suffix so naming is
         // stable across migration + runtime top-up — no counter to keep in sync.
-        // Same create-and-attach helper as the runtime top-up (see its docs for
-        // why not `CREATE TABLE … PARTITION OF`).
-        create_partition(connection, from, to)?;
+        // Create then attach: `CREATE TABLE … PARTITION OF` would take ACCESS
+        // EXCLUSIVE on changelog. `INCLUDING ALL` copies the PK index for
+        // Postgres to adopt on attach.
+        sql!(
+            connection,
+            "CREATE TABLE changelog_p_{} (LIKE changelog INCLUDING ALL);",
+            from
+        )?;
+        sql!(
+            connection,
+            "ALTER TABLE changelog ATTACH PARTITION changelog_p_{} FOR VALUES FROM ({}) TO ({});",
+            from,
+            from,
+            to
+        )?;
     }
     Ok(())
 }
