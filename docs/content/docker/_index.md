@@ -128,13 +128,9 @@ The workflow reports the address in its summary, and the server is usually ready
 
 `docker-expire.yaml` sweeps expired deployments daily. Its job summary lists everything currently deployed and when each expires, which is the quickest answer to "what is running right now" — the Environments page shows what *was* deployed, not what is still up.
 
-A deployment records the ref you gave it. Deploy from a branch and it is *marked* as following that branch; deploy from a tag or a commit and it is frozen.
+A deployment tracks the ref you gave it. Deploy from a branch and every push to that branch updates it; deploy from a tag or a commit and it is frozen. That is how `develop` works — it is simply the deployment named after the develop branch, with no expiry — and it is equally how a server following `feature/foo` works.
 
-**Auto-updating on push is not switched on yet.** The recording half works today — a deployment carries the branch it follows, and the workflow's push path is written — but the trigger that fires it is not enabled: the `push:` block in `docker-named-deployment.yaml` is commented out behind a TODO until the image build is proven on the runner.
-
-So **nothing updates itself on a merge right now**, `develop` included. To move a deployment onto newer code, run the workflow again with the same `name` — that keeps its database, and costs about a minute when the commit has been built before. The table below is what happens once that block is uncommented; until then every row reads "nothing".
-
-| deployed from | what happens on a push, once enabled |
+| deployed from | what happens on a push |
 |---|---|
 | `develop` | updated on every merge to develop |
 | `v3.01.00-RC` | updated on every push to that branch |
