@@ -201,6 +201,20 @@ Repository variables that configure this:
 | `DEPLOY_DOMAIN` | *none — required* | the base every deployment's hostname hangs off, e.g. `preview.example.com` |
 | `DEPLOY_STATE_DIR` | `/opt/omsupply/deployments` | where each deployment's `machine-id` file is kept |
 | `DEPLOY_REFERENCE_FILE` | `e2e` | which dataset a new deployment is seeded from |
+| `DEPLOY_SHARED_DAEMON` | unset (= push) | set to `true` **only while the build and deploy lanes are on the same machine**, to skip the Docker Hub round trip |
+
+### `DEPLOY_SHARED_DAEMON`
+
+The build already leaves its image in the local daemon (`docker buildx build --load`), so when the deploy runs on that same daemon, pushing the image and pulling it straight back is a multi-GB round trip to Docker Hub that ends where it started. Set this and previews and named deployments stop pushing.
+
+What it does **not** change: release tags and nightlies always push, because `latest-*` feeds external demo servers through Watchtower and a release image has to be fetchable from anywhere. Deploying a release tag still pulls, because that image was never built on this box.
+
+Two things follow from it, both deliberate:
+
+- **The image then exists in one place — that box's disk.** A prune or a rebuilt box means a redeploy has to compile again rather than pull. It costs time, not data: the database is a named volume and is not part of the image, so as long as the ref is still in git the deployment comes back intact.
+- **`skip_if_exists` switches to probing the daemon** instead of the registry. Without that it would miss every time and "redeploy the same name at the same ref" would quietly go back to nineteen minutes.
+
+**Unset it the moment the boxes are split**, or every preview and named deploy fails at the pull: the image would be on the build box and nowhere the deploy box can reach. Unset is the safe default, and the only correct value for a split setup. The pull side needs no variable at all — it checks whether the image is already on the daemon and skips the pull if so, which is right in both topologies.
 
 There is deliberately no variable for the proxy's host port. It used to be `PROXY_PORT`, and it was a second copy of something the proxy already knows: a proxy brought up on port 80 against a variable still saying `8080` makes every route check fail with a refused connection, reported as an unroutable deployment. The route check now reads the published port from `docker port oms-proxy 80/tcp` instead, so the two cannot disagree. If the variable is still set on the repository it is inert and can be deleted.
 
@@ -388,6 +402,25 @@ weighed and rejected:
 **This runbook sets up a build box.** Every lane on it is a `build` lane, and
 that is all the rest of this page configures.
 
+**Today the `build` and `deploy` lanes are on one machine.** Everything below
+describes them as two boxes because that is what the design provisions for and
+what it will be — nothing in the workflows assumes otherwise, and splitting them
+is a matter of moving the deploy lane, not of changing any workflow. But read
+this section as the target state, not as what is currently racked.
+
+Two things follow from them sharing a daemon right now:
+
+- **`DEPLOY_SHARED_DAEMON=true` is worth setting**, which skips the Docker Hub
+  round trip for previews and named deployments. See the deploy variables above,
+  and unset it when the boxes are split.
+- **Never `docker image prune -a` on that box.** An unreferenced image there is
+  not necessarily rubbish: it may be one that has been built and not yet pushed
+  (`docker-image.yaml` builds and pushes as separate steps, minutes apart), or a
+  base image the next compile needs. The teardown and expire paths delete images
+  by exact reference for that reason. Once the boxes are split, a deploy-only
+  box holds nothing but deployment images and the proxy's, and `prune -af`
+  becomes the simpler and correct thing there.
+
 **The deploy lane is a one-off, done by hand on the deploy box.** One lane is
 usually enough — the job is a one-minute `docker compose up` — so the
 lane-scaling machinery below is not worth carrying there. Unpack a runner as in
@@ -403,9 +436,11 @@ be allocated a host port from whatever was free, so two lanes could pick the
 same one and the second `compose up` would fail on the binding. Nothing
 publishes a port now, so there is nothing to allocate and nothing to serialise.
 
-That box needs `docker`, `docker-compose-v2` and `git` from the package list
-above, and nothing else — no buildx, no binfmt, no `/cache`. It never compiles.
-It does need its reverse proxy stood up once, as above.
+A deploy-only box needs `docker`, `docker-compose-v2` and `git` from the package
+list above, and nothing else — no buildx, no binfmt, no `/cache`, because it
+never compiles. It does need its reverse proxy stood up once, as above. While
+the two roles share a machine that box is of course a build box as well, and
+needs everything in the list.
 
 The only rule either way: a lane somewhere must carry each label, or the
 matching jobs queue for ever with no error.
