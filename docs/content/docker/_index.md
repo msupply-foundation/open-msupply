@@ -59,7 +59,7 @@ The *deploy* is defined once in the same way, in `docker-deploy.yaml`: pull an i
 2. **Image** (1, 2 or 4 parallel jobs) — one `docker buildx build` per (db, arch). Everything is compiled inside the Dockerfile: the server, the old UI, and the new frontend. Release tags additionally build the `-dev` images.
    - **amd64** builds run natively on the runner
    - **arm64** builds cross-compile — the Dockerfile pins its compile stages to `$BUILDPLATFORM`, so `rustc` never runs emulated (release tags only)
-3. **Deploy** (`docker-named-deployment.yaml`) — brings that deployment up on the new image. Never runs for tags.
+3. **Deploy** (`docker-named-deployment.yaml`, `docker-pr-preview.yaml`) — brings that deployment up on the new image, by calling `docker-deploy.yaml`. No part of a tag build ever deploys: pushing `v2.8.0` publishes images and stops. Standing a server up *on* a release tag is a separate, deliberate act — a named deployment with `ref: v2.8.0`, which finds the images already built.
 4. **Trigger plugin tests** (`docker-release.yaml`) — runs the downstream plugin test suite against the new dev images (release tags only)
 
 Both callers share the build cache. BuildKit keys on the build's content, not on the workflow that invoked it, so a develop merge warms what the nightly tag needs.
@@ -112,7 +112,8 @@ Run the **Docker named deployment** workflow to get a server of your own. Nothin
 | `ref` | What to put on it, and what it then tracks: a **branch** keeps updating as people push to it; a **release tag** or a **commit** freezes it. Leave blank if you are removing a server. |
 | `days` | How many days to keep it, up to 30. `0` gives a permanent server. Ignored by `teardown`. |
 | `action` | `deploy` creates it, or updates an existing one and keeps its data. `reseed` wipes its data and starts again from the sample dataset. `teardown` deletes it and its data. |
-| `central` | Makes it a central server rather than a remote site. Leave unticked unless you have been told otherwise. |
+| `central` | `keep` (the default) leaves it as whatever it already is. `central` makes it a central server, `remote` makes it an ordinary site. A choice rather than a tick-box on purpose: a box that defaults to off is read on every redeploy, so extending an expiry would have quietly demoted a central server. |
+| `dataset` | What goes in its database, **on a first deploy or a `reseed` only** — after that the database has its own history and this is not consulted. `default` uses whatever the repository is set to, `e2e` and `reference1` are the sample datasets, and `none` leaves it empty. |
 | `profile` | `keep` (the default) reuses whatever this deployment was built with last time, so extending an expiry does not quietly change it — `release` for a brand new one. `release` is what ships. `debug` compiles in a fraction of the time but runs slower: good for trying a feature out, no use for judging performance. Whatever you pick sticks, for pushes and for later dispatches alike. |
 
 The workflow reports the address in its summary, and the server is usually ready in about twenty minutes — or about one if the commit has been built before, or if you gave it a release tag.
@@ -127,9 +128,13 @@ The workflow reports the address in its summary, and the server is usually ready
 
 `docker-expire.yaml` sweeps expired deployments daily. Its job summary lists everything currently deployed and when each expires, which is the quickest answer to "what is running right now" — the Environments page shows what *was* deployed, not what is still up.
 
-A deployment tracks the ref you gave it. Deploy from a branch and every push to that branch updates it; deploy from a tag or a commit and it is frozen. That is how `develop` works — it is simply the deployment named after the develop branch, with no expiry — and it is equally how a server following `feature/foo` works.
+A deployment records the ref you gave it. Deploy from a branch and it is *marked* as following that branch; deploy from a tag or a commit and it is frozen.
 
-| deployed from | what happens on a push |
+**Auto-updating on push is not switched on yet.** The recording half works today — a deployment carries the branch it follows, and the workflow's push path is written — but the trigger that fires it is not enabled: the `push:` block in `docker-named-deployment.yaml` is commented out behind a TODO until the image build is proven on the runner.
+
+So **nothing updates itself on a merge right now**, `develop` included. To move a deployment onto newer code, run the workflow again with the same `name` — that keeps its database, and costs about a minute when the commit has been built before. The table below is what happens once that block is uncommented; until then every row reads "nothing".
+
+| deployed from | what happens on a push, once enabled |
 |---|---|
 | `develop` | updated on every merge to develop |
 | `v3.01.00-RC` | updated on every push to that branch |
@@ -141,7 +146,14 @@ The branch a deployment follows is **recorded on it**, so its name and its branc
 
 One branch, one deployment. Two deployments following the same branch would each need their own image and their own deploy, so it says so and stops rather than updating one and leaving the other behind — point the extras at a tag to freeze them. Two *different* RC branches are fine and get a server each.
 
-A deployment's whole record is three labels on its container — the branch it follows, when it expires, and how it was built — so there is nothing to configure per deployment and nothing to keep in step. One caveat: those labels are written by `docker/compose.deploy.yaml` **as of the ref being deployed**, so a deployment following a branch that predates this change will not carry them until that branch has it.
+A deployment's whole record is four labels on its container — the branch it follows, when it expires, how it was built, and whether it is a central server — so there is nothing to configure per deployment and nothing to keep in step. Each one exists because a push carries no form to read, so a redeploy that had to guess would guess wrong in a way nothing announced.
+
+**One caveat, and it is a sharp one: the deploy uses `docker/compose.deploy.yaml` as of the ref being deployed, not as of the workflow.** That file supplies the compose project name, the container name and the labels, so deploying a ref that predates it does not merely lose the labels — it ignores the name you asked for and comes up under whatever that older file hardcoded. The deployment then has a container name the proxy is not looking for, and the run fails its routing check with a 502 while the server itself is perfectly healthy.
+
+Two consequences worth knowing:
+
+- **A ref has to contain this deployment machinery for a deployment of it to work.** Until it is on every branch you care about, deploy a ref that has it.
+- **An older ref can collide with an existing deployment.** If the hardcoded name in that older compose file belongs to a deployment that is already up, the deploy lands on *that* project — its container and its volumes — regardless of the name on the form.
 
 **An auto-update changes the image and nothing else.** A push has no form to read, so the deployment keeps the expiry it already had and rebuilds with the profile it was already built with — the clock does not move and `debug` does not silently become `release`.
 
@@ -170,15 +182,15 @@ Preview images are swept from Docker Hub after 7 days rather than the usual 30 �
 
 - **Its own bundled postgres, in a named volume.** The container is disposable; the data is not. The volume survives every redeploy and image change, and is removed only by tearing the deployment down. Nothing here can be pointed at an external database.
 - **A stable hardware id.** Each deployment gets its own `machine-id` file, bind-mounted read only, so a redeploy does not change the site's identity. Without it `entry.sh` generates a fresh UUID per container and v7 pairing would reject the site after every deploy.
-- **A seeded deployment cannot sync.** Initialising from a reference dataset disables sync unconditionally, so a freshly seeded deployment can never reach a central server.
+- **A seeded deployment cannot sync.** Initialising from a reference dataset disables sync unconditionally, so a deployment seeded from `e2e` or `reference1` can never reach a central server. `dataset: none` is the way round it: an empty database, no sample data and no users to log in as, but sync left alone.
 - **mDNS discovery off.** Nothing is reachable except through the proxy, so there is nothing for discovery to do.
 
 ### Known gap: a paired central and remote
 
 A pair like `develop-central` and `develop-remote` deploys today and needs nothing special — two names are two names, and because each deployment gets its *own* hardware id they are distinguishable to a central server. Two things are missing:
 
-- Tracking maps one branch to one deployment (the one named after it), so a central/remote pair from a single branch needs something more — the two cannot both be named after `develop`.
-- **Seeding and sync are mutually exclusive.** `initialise-from-export` disables sync unconditionally, so a `develop-remote` seeded from `e2e` cannot sync to its central at all. A remote in a pair has to skip seeding and initialise *through* sync instead, which needs sync credentials, and the central may need `standalone_store_name`/`standalone_admin_*` to bootstrap with no upstream.
+- **One branch auto-updates one deployment.** Names are free — a pair can be called anything — but both halves of a pair built from `develop` would carry `oms.branch=develop`, and the push path stops rather than guess between two matches. So a pair from a single branch needs one half pinned to a commit, or redeployed by hand, until this fans out per deployment.
+- **Seeding and sync are mutually exclusive**, so the remote half has to be deployed with `dataset: none` and initialise *through* sync instead. That is now reachable from the form, but it is only half the answer: initialising through sync needs sync credentials, which nothing here supplies, and the central may need `standalone_store_name`/`standalone_admin_*` to bootstrap with no upstream of its own.
 
 That is a different first-deploy path from every other deployment here and has not been established against a real image yet. It blocks nothing: the pair works now as two independent seeded servers.
 
@@ -218,25 +230,33 @@ Floating tags are amd64-only. Nightly develop builds may include schema migratio
 
 ### Docker Hub cleanup
 
-A separate `cleanup-docker-tags.yaml` workflow runs nightly to remove old non-release images from Docker Hub. Release images and the floating `latest*` tags are always kept. Non-release images older than 30 days (configurable) are deleted.
+A separate `cleanup-docker-tags.yaml` workflow runs nightly to remove old non-release images from Docker Hub. Release images and the floating `latest*` tags are always kept. Everything else is swept on one of two clocks:
+
+| tags | swept after | why |
+|---|---|---|
+| per-PR previews, `pr-<number>-<sha>` | 7 days | one tag per push, and a tag is dead as soon as the next push supersedes it |
+| every other non-release tag, including named deployments | 30 days | also the reason `days` is capped at 30 — a deployment cannot outlive its own image tag |
+
+Both are configurable. A variant marker (`-dev`, `-debug`) is stripped before the release check and before the preview match, so a debug build stays in the same retention class as its release equivalent.
 
 The cleanup script can also be run locally:
 
 ```bash
 export DOCKER_USERNAME=myuser
-export DOCKER_TOKEN=mytoken
+export DOCKER_PAT=mytoken   # scope: Read, Write & Delete
 # Preview what would be deleted (no actual deletions)
-bash .github/scripts/cleanup-docker-tags.sh --dry-run
-# Delete non-release tags older than 14 days
-bash .github/scripts/cleanup-docker-tags.sh --max-age-days 14
+node .github/scripts/cleanup-docker-tags.mjs --dry-run
+# Delete non-release tags older than 14 days, previews after 3
+node .github/scripts/cleanup-docker-tags.mjs --max-age-days 14 --preview-max-age-days 3
 ```
 
-Run `bash .github/scripts/cleanup-docker-tags.sh --help` for all options.
+Run `node .github/scripts/cleanup-docker-tags.mjs --help` for all options.
 
 ### Requirements
 
-- Docker Hub credentials must be configured as repository secrets: `DOCKER_USERNAME` and `DOCKER_TOKEN`
+- Docker Hub credentials must be configured as repository secrets: `DOCKER_USERNAME` and `DOCKER_PAT`. The PAT needs the **Read, Write & Delete** scope — the nightly cleanup deletes tags.
 - The tmf-ci-bot GitHub App credentials (`TMF_CI_BOT_APP_ID` variable and `TMF_CI_BOT_PRIVATE_KEY` secret) are needed for triggering downstream plugin tests
+- Deployments additionally need the `DEPLOY_*` repository variables and a deploy box with its reverse proxy — see the [self-hosted runners](../github-actions/self-hosted-runners/) page.
 
 ### Testing the workflow
 
@@ -541,7 +561,7 @@ Edit files in `clientdev/client` and the web app should pick them up. Hot reload
 
 ### Configuration overrides
 
-All configuration values can be overridden via environment variables using the `APP_` prefix with `__` for nesting. See [example.yaml](../server/configuration/example.yaml) for all available options.
+All configuration values can be overridden via environment variables using the `APP_` prefix with `__` for nesting. See `server/configuration/example.yaml` in the repo for all available options.
 
 ```bash
 docker run -p 9000:8000 \
