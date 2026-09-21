@@ -1,7 +1,7 @@
 # `hello_world` — writing a frontend plugin
 
 The reference plugin. Copy this directory to start a new one; the contract it
-satisfies is [`spec/plugins/sdk-contract.md`](../../spec/plugins/sdk-contract.md).
+satisfies is [`spec/plugins/sdk-contract.md`](../../../spec/plugins/sdk-contract.md).
 
 ## The four files
 
@@ -110,7 +110,7 @@ Two rules the slot enforces, worth knowing before you claim it:
 
 This plugin also contributes three columns to the internal-order line table
 (`internalOrderLine.column`), one per thing that slot has to prove — run
-`OMS_PLUGIN_DIRS=examples/hello_world pnpm dev` ([the dev loop](#the-dev-loop))
+`OMS_PLUGIN_DIRS=plugins/examples/hello_world pnpm dev` ([the dev loop](#the-dev-loop))
 and open any internal order's detail screen to see them:
 
 | Contribution | What it shows                                                                                                                                                                                                                                                            |
@@ -120,7 +120,7 @@ and open any internal order's detail screen to see them:
 | `orphan`     | the **degradation**, behind `?pluginBadAnchor`: an anchor naming a column that does not exist puts the column at the table's end and says so in diagnostics                                                                                                              |
 
 Anchor by a **published column id** — the frozen set is
-[`spec/internal-orders/ui-surface.md` § S8](../../spec/internal-orders/ui-surface.md#s8--plugin-slot-regions).
+[`spec/internal-orders/ui-surface.md` § S8](../../../spec/internal-orders/ui-surface.md#s8--plugin-slot-regions).
 A column's stored identity is `<pluginCode>.<contributionId>`, so two plugins can
 both contribute a `total` and each keeps its own persisted show/hide state.
 
@@ -164,7 +164,7 @@ Two rules a real panel must follow, both visible here:
 placement: inside a menu group of the plugin's own (declared under
 `navSections`), inside a host section, at the root of the upper list, or none
 at all (routed, no menu entry)
-([`sdk-contract` § the page contribution](../../spec/plugins/sdk-contract.md#the-page-contribution-specified-in-full)).
+([`sdk-contract` § the page contribution](../../../spec/plugins/sdk-contract.md#the-page-contribution-specified-in-full)).
 A placement the host does not provide is refused, naming it (AC-PLUG-P5). Turn
 this plugin's section on with **`?pluginPages`**:
 
@@ -252,7 +252,7 @@ In this repo:
 pnpm build:plugins
 ```
 
-builds every `examples/*` and `plugins/*` (plus anything in `OMS_PLUGIN_DIRS`),
+builds every `plugins/examples/*` and `plugins/*` (plus anything in `OMS_PLUGIN_DIRS`),
 packs each into its **own** `dist/bundles/<code>.json` — the artifact
 `remote_server_cli install-plugin-bundle` uploads, one per plugin so a server
 only ever gets the plugin you meant — and writes
@@ -290,7 +290,7 @@ Colon- or comma-separated, each entry absolute or relative to the repo root. You
 plugin's **source** is imported into the app's own module graph, so you get one
 Solid runtime, the live in-tree SDK (no rebuild after an SDK edit), and **HMR on
 your own files**. Loading is opt-in — nothing loads unless named, the in-repo
-plugins included: `OMS_PLUGIN_DIRS=examples/hello_world pnpm dev` runs this one.
+plugins included: `OMS_PLUGIN_DIRS=plugins/examples/hello_world pnpm dev` runs this one.
 
 - The entry module is the first of `plugin.tsx`, `plugin.ts`, `src/plugin.tsx`,
   `src/plugin.ts` that exists in the directory — the same rule
@@ -346,4 +346,4 @@ host does not provide, so keep it green.
 
 `manifest.pluginApiVersion` is the SDK API you built against. The host refuses a
 plugin declaring a **newer** version than it provides, names it in diagnostics,
-and loads its siblings anyway — see `examples/api_too_new`.
+and loads its siblings anyway — see `plugins/examples/api_too_new`.

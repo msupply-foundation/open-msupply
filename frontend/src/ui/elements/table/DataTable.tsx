@@ -69,7 +69,7 @@ import { Spinner } from '../feedback/Spinner';
 import { Button } from '../buttons/Button';
 import { ContentFooter } from '../../layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../layout/ContentFooter/ContentFooterActions';
-import { ColumnSettings } from './ColumnSettings';
+import { ColumnSettings, listedColumnIds } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
@@ -1297,8 +1297,15 @@ export function DataTable<T, K extends string, G extends string = never>(
       {/* Columns — the per-column panel (show / move / pin;
             ui-standards § tables → column management: one predictable place,
             headers stay clean). Only when the page wired config controls
-            (setConfig present); otherwise there's nothing to configure. */}
-      <Show when={props.setConfig}>
+            (setConfig present); otherwise there's nothing to configure — and
+            only when the panel would have a row to show. A table whose every
+            column is STRUCTURAL (meta.hideFromColumnSettings) lists none, and
+            an empty panel offering Show all / Hide all over nothing is a dead
+            control; the Settings popover beside it still carries density,
+            full-screen and Reset table to default. */}
+      <Show
+        when={props.setConfig && listedColumnIds(table, viewMode()).length > 0}
+      >
         <Popover
           placement="bottom-end"
           trigger={<Columns3CogIcon />}

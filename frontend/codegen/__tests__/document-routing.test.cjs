@@ -37,9 +37,9 @@ test("a document under plugins/ is a plugin document", () => {
   );
 });
 
-test("a document under examples/ is a plugin document — reference plugins build through the same preset", () => {
+test("a document under plugins/examples/ is a plugin document — reference plugins build through the same preset", () => {
   assert.equal(
-    isPluginDocument(at("examples", "hello_world", "src", "q.graphql")),
+    isPluginDocument(at("plugins", "examples", "hello_world", "src", "q.graphql")),
     true
   );
 });

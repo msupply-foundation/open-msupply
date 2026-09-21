@@ -310,6 +310,14 @@ enum Action {
         /// Diagnostic use only — scoping can skip rows the chosen tables depend on.
         #[clap(long, value_delimiter = ',')]
         tables: Vec<String>,
+        /// Translate and integrate as the central server. Many translators branch on
+        /// `CentralServerConfig::is_central_server()` (custom fields, categories, merges,
+        /// patient name_store_joins, site, ...), so a buffer dumped from a central server must be
+        /// replayed as central to reproduce what central produced. Also enabled by
+        /// `server.override_is_central_server: true` in the config file, matching the server.
+        /// Defaults to remote-site behaviour, which is what the CLI has always done.
+        #[clap(long)]
+        as_central: bool,
     },
 }
 
@@ -505,6 +513,7 @@ async fn main() -> anyhow::Result<()> {
             skip_buffer_reset,
             errors_only,
             tables,
+            as_central,
         } => {
             reintegrate_buffer(
                 &settings,
@@ -515,6 +524,7 @@ async fn main() -> anyhow::Result<()> {
                 errors_only,
                 // empty `--tables` means no scoping (integrate everything)
                 (!tables.is_empty()).then_some(tables),
+                as_central,
             )?;
         }
         Action::InitialiseFromCentral { users } => {
