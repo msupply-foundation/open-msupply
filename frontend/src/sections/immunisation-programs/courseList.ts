@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
 import type {
   VaccineCourseRowsResult,
   VaccineCourseRowsVariables,
@@ -27,14 +28,15 @@ export type CourseListState = {
 };
 
 /**
- * Name ascending, case-insensitive, twenty to a page (rules § the program
- * detail). The sort is always SENT: with none the server orders by id
- * (contract wire trap).
+ * Name ascending, case-insensitive, at the standard list page size (rules §
+ * the program detail) — the screen seeds the user's remembered rows-per-page
+ * over it (`@/list/pageSize`). The sort is always SENT: with none the server
+ * orders by id (contract wire trap).
  */
 export const DEFAULT_COURSE_LIST_STATE: CourseListState = {
   sort: [{ key: 'name', desc: false }],
   offset: 0,
-  first: 20,
+  first: DEFAULT_PAGE_SIZE,
 };
 
 /**

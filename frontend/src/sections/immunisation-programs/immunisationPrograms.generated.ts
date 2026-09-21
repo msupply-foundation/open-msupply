@@ -236,25 +236,6 @@ export const VaccineItems = {
   query: "query vaccineItems($storeId: String!) {\n  items(\n    storeId: $storeId\n    filter: {isVaccine: true, isActive: true, isVisible: true}\n    sort: [{key: name, desc: false}]\n    page: {first: 1000}\n  ) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<VaccineItemsResult, VaccineItemsVariables>;
 
-export type StoresForRatesVariables = Record<string, never>;
-
-export type StoresForRatesResult = {
-  stores: ({
-  __typename: "StoreConnector";
-} & {
-  totalCount: number;
-  nodes: Array<{
-  id: string;
-  code: string;
-  storeName: string;
-}>;
-});
-};
-
-export const StoresForRates = {
-  query: "query storesForRates {\n  stores(sort: [{key: name, desc: false}], page: {first: 1000}) {\n    ... on StoreConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        storeName\n      }\n    }\n  }\n}",
-} as TypedDocument<StoresForRatesResult, StoresForRatesVariables>;
-
 export type InsertVaccineCourseVariables = {
   storeId: string;
   input: {

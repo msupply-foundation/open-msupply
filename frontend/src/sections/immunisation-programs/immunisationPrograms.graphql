@@ -172,20 +172,9 @@ query vaccineItems($storeId: String!) {
   }
 }
 
-# Every store on the SERVER (not the session's), for the per-store rates panel.
-query storesForRates {
-  stores(sort: [{ key: name, desc: false }], page: { first: 1000 }) {
-    ... on StoreConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        code
-        storeName
-      }
-    }
-  }
-}
+# The per-store rates panel reads the stores through the SHARED store lookup
+# (src/domain/store) — server-side code-or-name search, name order, a page at
+# a time on scroll — so this vertical declares no store query of its own.
 
 # ─── The three writes, under the central namespace (contract § access). Each
 # authorises against EDIT_CENTRAL_DATA; the `centralServer` root itself refuses

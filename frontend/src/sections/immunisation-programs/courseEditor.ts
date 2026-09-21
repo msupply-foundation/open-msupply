@@ -86,18 +86,6 @@ export const draftFromCourse = (course: CourseNode): CourseDraft => ({
 
 // ─── Doses ────────────────────────────────────────────────────────────────
 
-/** Age in months → the years + months the two age fields show. */
-export const splitMonths = (
-  totalMonths: number
-): { years: number; months: number } => {
-  const years = Math.floor(totalMonths / 12);
-  return { years, months: totalMonths - years * 12 };
-};
-
-/** The two age fields → the single months figure the wire carries. */
-export const joinMonths = (years: number, months: number): number =>
-  years * 12 + months;
-
 /**
  * The two age fields AS TYPED — the pair is the source of truth while it is
  * being edited, and the stored figure is their sum (OMS-REG-IMM-01.64,
@@ -105,11 +93,13 @@ export const joinMonths = (years: number, months: number): number =>
  * keystroke fed a half-typed year back into the months field and those
  * months back into the year: a typed 1.75 years over 0 months went 12 → 20.4
  * (months now 8.4) → 29.4, and settled at 15 years 8.4 months
- * (IMM-20260917-F2). The years half is WHOLE now (rules § input bounds),
- * which removes that case at the source; the pair-as-typed model stays so
- * the halves never feed each other mid-entry, and settling re-derives whole
- * years plus the remaining months (the months may carry a fraction — a
- * six-week dose is 1.5 months).
+ * (IMM-20260917-F2).
+ *
+ * The halves are bounded so the two functions below are exact inverses on
+ * every state the fields can hold: years is WHOLE (rules § input bounds) and
+ * months is capped at 11 — a fraction of a month is kept (a six-week dose is
+ * 1.5 months). So a typed pair never needs re-deriving, and only a figure
+ * arriving from OUTSIDE the pair (the course reloaded) is split again.
  */
 export interface AgeEntry {
   years: number;
@@ -117,20 +107,14 @@ export interface AgeEntry {
 }
 
 /** The pair a stored figure opens as — whole years and the remaining months. */
-export const ageEntryFromTotal = (totalMonths: number): AgeEntry =>
-  splitMonths(totalMonths);
+export const ageEntryFromTotal = (totalMonths: number): AgeEntry => {
+  const years = Math.floor(totalMonths / 12);
+  return { years, months: totalMonths - years * 12 };
+};
 
 /** What the pair stores: the sum of its two halves as typed. */
 export const ageEntryTotal = (entry: AgeEntry): number =>
-  joinMonths(entry.years, entry.months);
-
-/**
- * On leaving the pair, the typed halves re-derive into whole years and the
- * remaining months — 1 y 13 m would read back as 2 y 1 m; a fraction of a
- * month stays in the months half (0 y 6.5 m); a settled pair is a fixed point.
- */
-export const settleAgeEntry = (entry: AgeEntry): AgeEntry =>
-  splitMonths(ageEntryTotal(entry));
+  entry.years * 12 + entry.months;
 
 /**
  * A new dose is born from the last one (rules § doses; OMS-REG-IMM-01.50,
@@ -233,7 +217,10 @@ export type Validation =
   | { ok: false; items: ValidationItem[] };
 
 /** The header fields a check can name. */
-export type ValidationField = Extract<ValidationItem, { kind: 'field' }>['field'];
+export type ValidationField = Extract<
+  ValidationItem,
+  { kind: 'field' }
+>['field'];
 
 /**
  * The editor's completeness checks, run on Save (rules § the editor;

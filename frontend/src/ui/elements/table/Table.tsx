@@ -1,4 +1,5 @@
 import type { JSX } from 'solid-js';
+import { isNearScrollEnd } from '../../utils/createPaginatedSearch';
 import styles from './Table.module.css';
 
 export interface TableProps {
@@ -8,6 +9,21 @@ export interface TableProps {
   label: string;
   /** The <thead>/<tbody>, composed by the page. */
   children: JSX.Element;
+  /**
+   * Bound the shell's height (rem) so it scrolls vertically instead of growing
+   * — for the one case where the row set is not short after all: a sub-table
+   * fed by a PAGED read, where what is loaded grows as the user scrolls. The
+   * surface around it (a dialog's search box, its footer) then stays put
+   * instead of being pushed off. Unset, the shell grows with its rows.
+   */
+  maxHeightRem?: number;
+  /**
+   * Called when the (bounded) shell is scrolled near its bottom — fetch the
+   * next page and append rows. Same contract as the combobox listbox's
+   * `onReachEnd`, on the same shared threshold: a no-op when there are no
+   * more pages or a fetch is in flight, so firing per scroll event is safe.
+   */
+  onReachEnd?: () => void;
 }
 
 /*
@@ -41,7 +57,19 @@ export interface TableProps {
  *                            click-only row wouldn't be
  */
 export const Table = (props: TableProps) => (
-  <div class={styles.wrap}>
+  <div
+    class={styles.wrap}
+    data-scrolls={props.maxHeightRem === undefined ? undefined : ''}
+    style={
+      props.maxHeightRem === undefined
+        ? undefined
+        : { 'max-block-size': `${props.maxHeightRem}rem` }
+    }
+    onScroll={event => {
+      if (props.onReachEnd && isNearScrollEnd(event.currentTarget))
+        props.onReachEnd();
+    }}
+  >
     <table class={styles.table} aria-label={props.label}>
       {props.children}
     </table>

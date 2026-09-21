@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_COURSE_LIST_STATE,
@@ -24,10 +25,10 @@ describe("OMS-REG-IMM-01.30 — the program's courses only", () => {
 });
 
 describe('OMS-REG-IMM-01.27 / OMS-REG-IMM-01.28 — the name sort, always sent, exactly one entry', () => {
-  it('defaults to name ascending and pages by 20', () => {
+  it('defaults to name ascending at the standard page size', () => {
     const variables = courseListVariables('prog-1', DEFAULT_COURSE_LIST_STATE);
     expect(variables.sort).toEqual([{ key: 'name', desc: false }]);
-    expect(variables.page).toEqual({ first: 20, offset: 0 });
+    expect(variables.page).toEqual({ first: DEFAULT_PAGE_SIZE, offset: 0 });
   });
 
   it('reverses, and truncates a multi-entry list to its FIRST entry (the resolver applies the last — wire trap)', () => {

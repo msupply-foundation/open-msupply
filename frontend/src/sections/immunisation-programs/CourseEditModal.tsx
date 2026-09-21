@@ -58,7 +58,6 @@ import {
   isDirty,
   newCourseDraft,
   nextDose,
-  settleAgeEntry,
   updateInput,
   updateOutcome,
   validateDraft,
@@ -326,14 +325,13 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     field: 'minAgeMonths' | 'maxAgeMonths',
     label: string
   ) => {
-    // The pair holds what was TYPED into each half and stores their sum; the
-    // halves are re-derived into whole years and the remaining months only
-    // when focus leaves the pair, or when the stored figure changes from
-    // outside it (the course reloaded). Deriving on every keystroke fed a
-    // half-typed year back into the months field and those months back into
-    // the year (IMM-20260917-F2; courseEditor.ts § AgeEntry) — the years half
-    // is whole now, which removes the case, and the pair-as-typed keeps the
-    // halves stable regardless.
+    // The pair holds what was TYPED into each half and stores their sum; it
+    // is re-derived only when the stored figure changes from OUTSIDE it (the
+    // course reloaded). Deriving on every keystroke fed a half-typed year
+    // back into the months field and those months back into the year
+    // (IMM-20260917-F2; courseEditor.ts § AgeEntry). Whole years and months
+    // capped at 11 make the sum and the split exact inverses, so a typed pair
+    // needs no settling on the way out.
     //
     // The store is read UNTRACKED here: this function body runs inside the
     // table cell's render effect, so a tracked read would re-run the whole
@@ -360,17 +358,6 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
       setEntry(next);
       updateDose(dose.id, { [field]: ageEntryTotal(next) });
     };
-    // Focus moving between the two halves is still "inside the pair".
-    const settle = (event: FocusEvent) => {
-      const { currentTarget, relatedTarget } = event;
-      if (
-        currentTarget instanceof Node &&
-        relatedTarget instanceof Node &&
-        currentTarget.contains(relatedTarget)
-      )
-        return;
-      setEntry(settleAgeEntry(entry()));
-    };
     // The pair is ONE field with one message (ui-surface S3 — each failing
     // field shows its own error state): the FieldShell carries the dose-order
     // message once beneath the two halves, the halves take the error state
@@ -386,7 +373,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     return (
       <FieldShell label={label} hideLabel error={error()} controlId={id}>
         {() => (
-          <HStack gap="sm" onFocusOut={settle}>
+          <HStack gap="sm">
             <NumberField
               id={id}
               label={`${label} ${t('label.years-abbreviation')}`}
@@ -623,7 +610,6 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                 onChange={setGroup}
                 inputTestId="vaccine-course-demographic-input"
                 disabled={saving()}
-                maxVisibleOptions={Infinity}
               />
             </FieldRow>
             <FormRow>
@@ -684,6 +670,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                 onChange={setItems}
                 inputTestId="vaccine-course-items-input"
                 disabled={saving()}
+                error={fieldError('vaccineItems')}
               />
             </FieldRow>
             <HStack justify="between" wrap>

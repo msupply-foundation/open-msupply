@@ -1,7 +1,5 @@
-import { createMemo, createResource, createSignal, For, Show } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { graphqlFetch } from '@/api/graphql';
-import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
@@ -12,10 +10,8 @@ import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { Table } from '@/ui/elements/table/Table';
 import { Button } from '@/ui/elements/buttons/Button';
 import { OkButton } from '@/ui/elements/buttons/StandardButtons';
-import {
-  StoresForRates,
-  type StoresForRatesResult,
-} from './immunisationPrograms.generated';
+import { storePageFetcher, type StoreOption } from '@/domain/store';
+import { createPaginatedSearch } from '@/ui/utils/createPaginatedSearch';
 import {
   MAX_WASTAGE_RATE,
   setStoreRate,
@@ -31,13 +27,12 @@ import {
 // the course draft; Back discards them. Neither writes — the course's Save
 // does.
 
-type StoreRow = StoresForRatesResult['stores']['nodes'][number];
-
-const loadStores = async () => {
-  const result = await graphqlFetch(StoresForRates, {});
-  if (result.kind !== 'success') return undefined;
-  return result.data.stores;
-};
+/**
+ * How tall the store list gets before it scrolls instead of growing — enough
+ * rows to scroll through, few enough that the search box above and the
+ * footer below stay on screen.
+ */
+const LIST_HEIGHT_REM = 24;
 
 export interface StoreRatesPanelProps {
   /** The course draft's overrides as the panel opens. */
@@ -55,25 +50,24 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
   // eslint-disable-next-line solid/reactivity
   const initial = [...props.configs];
   const [configs, setConfigs] = createSignal<StoreConfigNode[]>(initial);
-  const [search, setSearch] = createSignal('');
+  const [searchText, setSearchText] = createSignal('');
 
-  // Every store on the server, one generous page in name order (contract §
-  // per-store rates). Read NON-SUSPENDING: this panel sits inside an open
-  // dialog on an open screen.
-  const [stores] = createResource(loadStores);
-  const rows = (): StoreRow[] => gated(stores)?.nodes ?? [];
-
-  // The search matches store code or name, case-insensitively, on the loaded
-  // set.
-  const shown = createMemo(() => {
-    const needle = search().trim().toLocaleLowerCase();
-    if (!needle) return rows();
-    return rows().filter(
-      store =>
-        store.storeName.toLocaleLowerCase().includes(needle) ||
-        store.code.toLocaleLowerCase().includes(needle)
-    );
+  // Every store on the SERVER (not the session's), through the shared store
+  // lookup (domain/store): searched on code-or-name BY THE SERVER, debounced,
+  // in name order, a page at a time as the list scrolls. A single big read
+  // filtered in memory would put every store past its page beyond reach —
+  // both invisible and unfindable (PR #749 review, F1) — which is exactly
+  // what tables › pagination & scale forbids over an open-ended set.
+  const stores = createPaginatedSearch<StoreOption>({
+    fetchPage: storePageFetcher(),
   });
+
+  // Nothing to show yet: the first page is still coming. Later searches keep
+  // the rows they have until the new page lands, so the list never blanks
+  // under the user's own typing.
+  const firstLoad = () => stores.loading() && stores.items().length === 0;
+  // A settled empty answer — not the gap between a keystroke and its fetch.
+  const noMatches = () => !stores.pending() && stores.items().length === 0;
 
   const setRate = (
     storeId: string,
@@ -116,11 +110,18 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
           placeholder={t('placeholder.filter-by-store-name')}
           width="full"
           data-testid="store-rates-search"
-          value={search()}
-          onInput={event => setSearch(event.currentTarget.value)}
+          value={searchText()}
+          onInput={event => {
+            setSearchText(event.currentTarget.value);
+            stores.setSearch(event.currentTarget.value);
+          }}
         />
-        <Show when={!stores.loading} fallback={<Spinner />}>
-          <Table label={t('heading.configure-rates-per-store')}>
+        <Show when={!firstLoad()} fallback={<Spinner />}>
+          <Table
+            label={t('heading.configure-rates-per-store')}
+            maxHeightRem={LIST_HEIGHT_REM}
+            onReachEnd={stores.loadMore}
+          >
             <thead>
               <tr>
                 <th>{t('label.store')}</th>
@@ -129,7 +130,7 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
               </tr>
             </thead>
             <tbody>
-              <For each={shown()}>
+              <For each={stores.items()}>
                 {store => (
                   <tr data-testid="store-rate-row">
                     <td>{store.storeName}</td>
@@ -169,6 +170,22 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
                   </tr>
                 )}
               </For>
+              {/* A settled empty answer, and the next page on its way — both
+                  as rows, so the table keeps its header and its height. */}
+              <Show when={noMatches()}>
+                <tr>
+                  <td colSpan={3} data-muted data-testid="store-rates-empty">
+                    {t('store.no-results')}
+                  </td>
+                </tr>
+              </Show>
+              <Show when={stores.loadingMore()}>
+                <tr>
+                  <td colSpan={3}>
+                    <Spinner sizeRem={1.1} />
+                  </td>
+                </tr>
+              </Show>
             </tbody>
           </Table>
         </Show>
