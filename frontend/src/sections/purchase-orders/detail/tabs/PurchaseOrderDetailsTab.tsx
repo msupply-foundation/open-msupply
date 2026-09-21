@@ -10,6 +10,7 @@ import type { PurchaseOrderInfoFragment } from '../purchaseOrderDetail.generated
 import type {
   PurchaseOrderFieldEdit,
   PurchaseOrderPatch,
+  SaveFieldResult,
 } from '../purchaseOrderEdit';
 
 export interface PurchaseOrderDetailsTabProps {
@@ -19,7 +20,7 @@ export interface PurchaseOrderDetailsTabProps {
    */
   disabled: boolean;
   edit: PurchaseOrderFieldEdit;
-  onSaveField: (patch: PurchaseOrderPatch) => void;
+  onSaveField: (patch: PurchaseOrderPatch) => Promise<SaveFieldResult>;
 }
 
 /*
@@ -47,7 +48,7 @@ export const PurchaseOrderDetailsTab: Component<
       | 'insuranceCharge'
       | 'freightCharge',
     value: number | undefined
-  ) => props.onSaveField({ [field]: value ?? 0 });
+  ) => void props.onSaveField({ [field]: value ?? 0 });
 
   const currency = () => props.node.currency?.code;
 
@@ -68,7 +69,6 @@ export const PurchaseOrderDetailsTab: Component<
             onInput={e =>
               props.edit.setField('authorisingOfficer1', e.currentTarget.value)
             }
-            onBlur={() => props.edit.flush()}
           />
           <TextField
             label={t('label.authorising-officer-2')}
@@ -77,7 +77,6 @@ export const PurchaseOrderDetailsTab: Component<
             onInput={e =>
               props.edit.setField('authorisingOfficer2', e.currentTarget.value)
             }
-            onBlur={() => props.edit.flush()}
           />
           <TextArea
             label={t('label.additional-instructions')}
@@ -89,7 +88,6 @@ export const PurchaseOrderDetailsTab: Component<
                 e.currentTarget.value
               )
             }
-            onBlur={() => props.edit.flush()}
           />
         </FormColumn>
 
@@ -101,7 +99,6 @@ export const PurchaseOrderDetailsTab: Component<
             onInput={e =>
               props.edit.setField('supplierAgent', e.currentTarget.value)
             }
-            onBlur={() => props.edit.flush()}
           />
           <TextField
             label={t('label.heading-message')}
@@ -110,7 +107,6 @@ export const PurchaseOrderDetailsTab: Component<
             onInput={e =>
               props.edit.setField('headingMessage', e.currentTarget.value)
             }
-            onBlur={() => props.edit.flush()}
           />
           <TextArea
             label={t('label.freight-condition')}
@@ -119,7 +115,6 @@ export const PurchaseOrderDetailsTab: Component<
             onInput={e =>
               props.edit.setField('freightConditions', e.currentTarget.value)
             }
-            onBlur={() => props.edit.flush()}
           />
         </FormColumn>
 

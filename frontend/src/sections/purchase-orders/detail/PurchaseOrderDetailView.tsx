@@ -8,7 +8,6 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -93,7 +92,7 @@ import {
   canCloseLines,
   isOpenToChange,
 } from './purchaseOrderLadder';
-import { linePacks, lineCost } from './purchaseOrderPricing';
+import { formatMoney, linePacks, lineCost } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
 
 // An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
@@ -145,11 +144,14 @@ const DEFAULT_URL_STATE: DetailUrlState = {
   first: DEFAULT_PAGE_SIZE,
 };
 
-// Columns spec S7 marks hidden by default on a narrow viewport — pack size and
-// SOH — keyed by column id.
-const NARROW_HIDDEN: Record<string, boolean> = {
+// Hidden by default, keyed by column id: the two spec S7 names (pack size and
+// SOH), and on a narrow viewport four more that a card cannot carry.
+const DEFAULT_HIDDEN: Record<string, boolean> = {
   packSize: false,
   stockOnHand: false,
+};
+const NARROW_HIDDEN: Record<string, boolean> = {
+  ...DEFAULT_HIDDEN,
   unitName: false,
   onOrder: false,
   requestedDeliveryDate: false,
@@ -183,7 +185,7 @@ const PurchaseOrderDetailView: Component = () => {
       },
       base: {
         columnPinning: { left: ['itemCode'] },
-        columnVisibility: { packSize: false, stockOnHand: false },
+        columnVisibility: DEFAULT_HIDDEN,
       },
     },
   });
@@ -530,12 +532,7 @@ const PurchaseOrderDetailView: Component = () => {
     },
   ];
 
-  const money = (value: number): string =>
-    formatNumber(value, {
-      style: 'currency',
-      currency: info()?.currency?.code,
-      currencyDisplay: 'narrowSymbol',
-    });
+  const money = (value: number) => formatMoney(value, info()?.currency?.code);
 
   return (
     // info()/rows() are read non-suspending, so the initial-load spinner is
@@ -608,7 +605,7 @@ const PurchaseOrderDetailView: Component = () => {
                       edit={edit}
                       latestExpectedDate={latestExpectedDate()}
                       lineCount={lineCount()}
-                      onSaveField={patch => void saveField(patch)}
+                      onSaveField={saveField}
                       onCascadeDate={cascadeDate}
                     />
                   </HeaderToolbar>
@@ -728,7 +725,7 @@ const PurchaseOrderDetailView: Component = () => {
                   node={node()}
                   disabled={isDisabled()}
                   edit={edit}
-                  onSaveField={patch => void saveField(patch)}
+                  onSaveField={saveField}
                 />
               </TabPanel>
               <TabPanel value="documents">

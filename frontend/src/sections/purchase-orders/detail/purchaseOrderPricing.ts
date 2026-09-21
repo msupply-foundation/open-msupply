@@ -1,3 +1,6 @@
+import { locale } from '@/intl';
+import { formatNumber } from '@/intl/formatNumber';
+import { getCurrencyInfo, homeCurrency } from '@/intl/currency';
 import type {
   PurchaseOrderDetailLineFragment,
   PurchaseOrderInfoFragment,
@@ -99,3 +102,23 @@ export const discountPercentageOf = (
   subtotal: number
 ): number | undefined =>
   subtotal === 0 ? undefined : (amount / subtotal) * 100;
+
+/**
+ * A figure in the order's currency, at that currency's precision. An order
+ * reporting no currency reads in the store's home currency rather than
+ * failing to format at all.
+ */
+export const formatMoney = (
+  value: number,
+  currencyCode?: string | null
+): string => {
+  const currency = currencyCode ?? homeCurrency();
+  const { decimals } = getCurrencyInfo(currency, locale());
+  return formatNumber(value, {
+    style: 'currency',
+    currency,
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+};
