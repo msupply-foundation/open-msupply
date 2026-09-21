@@ -520,8 +520,8 @@
       "excel_template_buffer": null
     },
     {
-      "id": "prescription-receipt_2_6_1_false",
-      "name": "Prescription Receipt",
+      "id": "prescription-receipt_2_6_2_false",
+      "name": "Dispensing Receipt",
       "description": null,
       "template": {
         "index": {
@@ -550,7 +550,7 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |\ndate(format=\"%d/%m/%Y %H:%M:%S\") }}{% endif %} {% endmacro input %}\n\n<div class=\"header\">\n  <h3>{{t(k=\"label.store\", f=\"Store\")}}: {{ data.store.storeName }}</h3>\n  <h5>\n    {{t(k=\"label.prescriber\", f=\"Prescriber\")}}:\n    {{data.invoice.clinician.firstName | default(value='')}}\n    {{data.invoice.clinician.lastName | default(value='')}}\n  </h5>\n  <h5>\n    {{t(k=\"label.patient-name\", f=\"Patient name\")}}:\n    {{data.invoice.patient.firstName}} {{ data.invoice.patient.lastName }}\n  </h5>\n  <p>\n    {{t(k=\"label.invoice-number\", f=\"Invoice Number\")}}:\n    {{data.invoice.invoiceNumber}}\n  </p>\n  <p>\n    {{t(k=\"label.entered-by\", f=\"Entered by\")}}: {{data.invoice.user.firstName |\n    default(value='')}} {{data.invoice.user.lastName | default(value='')}}\n  </p>\n</div>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"report.item-name\", f=\"Item Name\")}}</td>\n        <td>{{t(k=\"label.price\", f=\"Price\")}}</td>\n        <td>{{t(k=\"label.quantity\", f=\"Quantity\")}}</td>\n        <td>{{t(k=\"label.line-total\", f=\"Line Total\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for invoiceLine in data.invoice.lines.nodes %}\n      <tr>\n        <td>{{invoiceLine.itemName | default(value='')}}</td>\n        <td>\n          {{invoiceLine.sellPricePerPack / invoiceLine.packSize |\n          default(value=0.00) | round(precision=2)}}\n        </td>\n        <td>\n          {{invoiceLine.numberOfPacks * invoiceLine.packSize |\n          default(value=0.00) | round(precision=2)}}\n        </td>\n        <td>\n          {{invoiceLine.totalBeforeTax | default(value=0.00 |\n          round(precision=2))}}\n        </td>\n        {% endfor %}\n      </tr>\n      <tr>\n        <td></td>\n        <td></td>\n        <td><strong>{{t(k=\"label.total\", f=\"Total\")}}</strong></td>\n        <td>\n          <strong\n            >{{data.invoice.pricing.totalAfterTax | default(value=0.00) |\n            round(precision=2)}}</strong\n          >\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n\n<div class=\"footer\">\n  <h1>{{t(k=\"label.copy\", f=\"Copy\")}}</h1>\n  <p>{{self::formatDate(datetime=now())}}</p>\n</div>\n"
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n{% macro formatDate(datetime) %} {% if datetime %}{{ datetime |\ndate(format=\"%d/%m/%Y %H:%M:%S\") }}{% endif %} {% endmacro input %}\n\n<div class=\"header\">\n  <h3>{{t(k=\"label.store\", f=\"Store\")}}: {{ data.store.storeName }}</h3>\n  <h5>\n    {{t(k=\"label.prescriber\", f=\"Prescriber\")}}:\n    {{data.invoice.clinician.firstName | default(value='')}}\n    {{data.invoice.clinician.lastName | default(value='')}}\n  </h5>\n  <h5>\n    {{t(k=\"label.patient-name\", f=\"Patient name\")}}:\n    {{data.invoice.patient.firstName}} {{ data.invoice.patient.lastName }}\n  </h5>\n  <p>\n    {{t(k=\"label.invoice-number\", f=\"Invoice Number\")}}:\n    {{data.invoice.invoiceNumber}}\n  </p>\n  <p>\n    {{t(k=\"label.entered-by\", f=\"Entered by\")}}: {{data.invoice.user.firstName |\n    default(value='')}} {{data.invoice.user.lastName | default(value='')}}\n  </p>\n</div>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"report.item-name\", f=\"Item Name\")}}</td>\n        <td>{{t(k=\"label.price\", f=\"Price\")}}</td>\n        <td>{{t(k=\"label.quantity\", f=\"Quantity\")}}</td>\n        <td>{{t(k=\"label.line-total\", f=\"Line Total\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for invoiceLine in data.invoice.lines.nodes %}\n      <tr>\n        <td>{{invoiceLine.itemName | default(value='')}}</td>\n        <td>\n          {# A line with nothing allocated yet (a placeholder written when the\n          dispensing record is created from a prescription) has a pack size of\n          0, and 0 / 0 is NaN, which `round` rejects outright - guard the\n          division rather than let it fail the whole render. #}\n          {% if invoiceLine.packSize > 0 %}{{invoiceLine.sellPricePerPack /\n          invoiceLine.packSize | round(precision=2)}}{% else %}0{% endif %}\n        </td>\n        <td>\n          {{invoiceLine.numberOfPacks * invoiceLine.packSize |\n          default(value=0.00) | round(precision=2)}}\n        </td>\n        <td>\n          {{invoiceLine.totalBeforeTax | default(value=0.00 |\n          round(precision=2))}}\n        </td>\n      </tr>\n      {% endfor %}\n      <tr>\n        <td></td>\n        <td></td>\n        <td><strong>{{t(k=\"label.total\", f=\"Total\")}}</strong></td>\n        <td>\n          <strong\n            >{{data.invoice.pricing.totalAfterTax | default(value=0.00) |\n            round(precision=2)}}</strong\n          >\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n\n<div class=\"footer\">\n  <h1>{{t(k=\"label.copy\", f=\"Copy\")}}</h1>\n  <p>{{self::formatDate(datetime=now())}}</p>\n</div>\n"
             }
           }
         }
@@ -560,8 +560,54 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "2.6.1",
+      "version": "2.6.2",
       "code": "prescription-receipt",
+      "form_schema": null,
+      "excel_template_buffer": null
+    },
+    {
+      "id": "prescription-request_3_2_0_false",
+      "name": "Prescription Request",
+      "description": null,
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "query.graphql"
+          ],
+          "convert_data": null,
+          "convert_data_type": "Extism"
+        },
+        "entries": {
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query PrescriptionRequestQuery($dataId: String!, $storeId: String!) {\n  prescriptionRequest(storeId: $storeId, id: $dataId) {\n    ... on PrescriptionRequestNode {\n      id\n      prescriptionRequestNumber\n      prescriptionDatetime\n      comment\n      patient {\n        firstName\n        lastName\n        code\n        dateOfBirth\n      }\n      clinician {\n        firstName\n        lastName\n      }\n      diagnosis {\n        description\n      }\n      user {\n        firstName\n        lastName\n      }\n      lines {\n        nodes {\n          numberOfUnits\n          note\n          item {\n            code\n            name\n            unitName\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      id\n      storeName\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n    margin: 0;\n    size: A5 portrait;\n}\n\n.paging {\n    width: 100%;\n}\n\n.header {\n    text-align: center;\n    margin-bottom: 20px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n}\n\n.header p {\n    font-size: 14px;\n}\n\n.container {\n    margin: auto;\n    padding: 10px;\n    font-size: 14px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n    color: #555;\n}\n\n.container table {\n    width: 100%;\n    font-size: inherit;\n    font-family: inherit;\n    text-align: start;\n    margin-top: 10;\n    margin-bottom: 15;\n    border-collapse: separate;\n}\n\n.container table td {\n    padding: 10px;\n    vertical-align: top;\n    border-top: 1px solid rgb(164, 163, 163);\n}\n\n.container table tr:last-child td {\n    border-bottom: none;\n}\n\n.container>table>thead {\n    position: -webkit-sticky;\n    position: sticky;\n    top: 0;\n    background-color: #f1f1f1;\n}\n\n.container,\nbody,\n.container>table {\n    margin-top: 0px;\n    padding-top: 0px;\n}\n\n.container table tr.heading td {\n    font-weight: bold;\n    margin-bottom: 15px;\n}\n\n.container table td.status span {\n    padding: 2px;\n    border-radius: 10px;\n}\n\n.footer {\n    text-align: center;\n    margin-top: 20px;\n    font-size: 12px;\n    font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n}\n\n.footer p {\n    margin: 0;\n}"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n{# A STORED INSTANT renders at the VIEWER's timezone, never UTC: the client\nsends its IANA zone as arguments.timezone on every generation, and a\nprescription date that disagrees with the one on screen is a date the reader\ncannot trust. #}\n{% macro formatDay(datetime) %} {% if datetime %}{{ datetime |\ndate(format=\"%d/%m/%Y\", timezone=arguments.timezone) }}{% endif %} {% endmacro\ninput %}\n\n{# A calendar date (date of birth) — no instant, so no zone to convert from;\nshifting it by one would change the date of birth. #}\n{% macro formatPlainDay(date) %} {% if date %}{{ date |\ndate(format=\"%d/%m/%Y\") }}{% endif %} {% endmacro input %}\n\n{# The printed-at stamp. Tera's now() is already the SERVER's local time, not\nUTC, so converting it again would double-shift it. #}\n{% macro formatPrintedAt(datetime) %} {% if datetime %}{{ datetime |\ndate(format=\"%d/%m/%Y %H:%M:%S\") }}{% endif %} {% endmacro input %}\n\n<div class=\"header\">\n  <h3>{{t(k=\"label.store\", f=\"Store\")}}: {{ data.store.storeName }}</h3>\n  <h5>\n    {{t(k=\"label.patient-name\", f=\"Patient name\")}}:\n    {{data.prescriptionRequest.patient.firstName | default(value='')}}\n    {{data.prescriptionRequest.patient.lastName | default(value='')}}\n  </h5>\n  <p>\n    {{t(k=\"label.date-of-birth\", f=\"Date of birth\")}}:\n    {{self::formatPlainDay(date=data.prescriptionRequest.patient.dateOfBirth)}}\n  </p>\n  <p>\n    {{t(k=\"label.clinician\", f=\"Clinician\")}}:\n    {{data.prescriptionRequest.clinician.firstName | default(value='')}}\n    {{data.prescriptionRequest.clinician.lastName | default(value='')}}\n  </p>\n  <p>\n    {{t(k=\"label.number\", f=\"Number\")}}:\n    {{data.prescriptionRequest.prescriptionRequestNumber}}\n  </p>\n  <p>\n    {{t(k=\"label.prescription-date\", f=\"Prescription date\")}}:\n    {{self::formatDay(datetime=data.prescriptionRequest.prescriptionDatetime)}}\n  </p>\n  {% if data.prescriptionRequest.diagnosis %}\n  <p>\n    {{t(k=\"heading.diagnosis\", f=\"Diagnosis\")}}:\n    {{data.prescriptionRequest.diagnosis.description}}\n  </p>\n  {% endif %}\n  <p>\n    {{t(k=\"label.entered-by\", f=\"Entered by\")}}:\n    {{data.prescriptionRequest.user.firstName | default(value='')}}\n    {{data.prescriptionRequest.user.lastName | default(value='')}}\n  </p>\n</div>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"report.item-name\", f=\"Item Name\")}}</td>\n        <td>{{t(k=\"label.quantity\", f=\"Quantity\")}}</td>\n        <td>{{t(k=\"label.unit-name\", f=\"Unit\")}}</td>\n        <td>{{t(k=\"label.directions\", f=\"Directions\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.prescriptionRequest.lines.nodes %}\n      <tr>\n        <td>{{line.item.code | default(value='')}}</td>\n        <td>{{line.item.name | default(value='')}}</td>\n        <td>{{line.numberOfUnits | default(value=0) | round(precision=2)}}</td>\n        <td>{{line.item.unitName | default(value='')}}</td>\n        <td>{{line.note | default(value='')}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n\n{% if data.prescriptionRequest.comment %}\n<div class=\"container\">\n  <p>\n    {{t(k=\"label.comment\", f=\"Comment\")}}:\n    {{data.prescriptionRequest.comment}}\n  </p>\n</div>\n{% endif %}\n\n<div class=\"footer\">\n  <p>{{self::formatPrintedAt(datetime=now())}}</p>\n</div>\n"
+            }
+          }
+        }
+      },
+      "context": "PRESCRIPTION_REQUEST",
+      "sub_context": null,
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "3.2.0",
+      "code": "prescription-request",
       "form_schema": null,
       "excel_template_buffer": null
     },

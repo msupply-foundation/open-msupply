@@ -1,9 +1,11 @@
 use crate::{
     db_diesel::{
-        changelog::changelog::RowOrId, item_link_row::item_link, item_row::item,
+        changelog::changelog::RowOrId, currency_row::currency, item_link_row::item_link,
+        item_row::item, name_row::name,
     },
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, Delete,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    diesel_macros::define_linked_tables,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -73,10 +75,16 @@ define_linked_tables! {
 }
 
 joinable!(purchase_order -> purchase_order_stats (id));
+joinable!(purchase_order -> name (supplier_name_id));
+joinable!(purchase_order -> currency (currency_id));
 
 allow_tables_to_appear_in_same_query!(purchase_order_stats, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order, item);
+allow_tables_to_appear_in_same_query!(purchase_order, name);
+allow_tables_to_appear_in_same_query!(purchase_order, currency);
+allow_tables_to_appear_in_same_query!(purchase_order_stats, name);
+allow_tables_to_appear_in_same_query!(purchase_order_stats, currency);
 
 #[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order)]
@@ -139,10 +147,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         PurchaseOrderRowRepository { connection }
     }
 
-    pub fn upsert_one(
-        &self,
-        purchase_order_row: &PurchaseOrderRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, purchase_order_row: &PurchaseOrderRow) -> Result<(), RepositoryError> {
         self._upsert(purchase_order_row)?;
         let changelog = PurchaseOrderRow::generate_changelog(
             RowOrId::Row(purchase_order_row),
@@ -203,7 +208,10 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
         Ok(purchase_order::table
             .filter(purchase_order::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

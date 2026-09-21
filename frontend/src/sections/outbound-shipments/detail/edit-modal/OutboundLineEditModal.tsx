@@ -25,6 +25,7 @@ import {
   SaveAndNextButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
+import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import styles from './OutboundLineEditModal.module.css';
 import { Stack } from '../../../../ui/layout/Stack/Stack';
@@ -259,6 +260,19 @@ interface OutboundLineEditModalProps {
    */
   currencyCode?: string | null;
   currencyRate: number;
+  /**
+   * Whether the shipment was raised from a customer requisition. Gates the
+   * supplier-comment field: with no requisition there is no requested quantity
+   * for a comment to explain, so the field is absent altogether
+   * (OMS-REG-DIST-03.42, rules.md § supplier comment).
+   */
+  fromCustomerRequisition: boolean;
+  /**
+   * Whether the shipment is still editable (rules.md § editability). The
+   * detail view only opens this editor while it is, but the supplier-comment
+   * field mirrors the gate rather than assuming it (OMS-REG-DIST-03.42).
+   */
+  editable: boolean;
   /** A save committed — the view refetches the lines page. */
   onCommitted: () => void;
 }
@@ -347,6 +361,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // row), so the parent's next-item walk never offers one twice — across page
   // advances too. Seeded with each item as it loads; not reactive.
   const coveredItemIds = new Set<string>();
+  // The ITEM's supplier comment: one value for the whole batch set, written
+  // onto every line of the item on save. Seeded from the draft and echoed back
+  // untouched — the set-save OVERWRITES the column like every other line field
+  // (contract § supplier comment wire trap, OMS-REG-DIST-03.43).
+  const [transferComment, setTransferComment] = createSignal('');
   // Each batch row's packs-issued field, bound per row and addressed by draft
   // row id — where a row-click open or an advance lands focus. The handle waits
   // for the row to attach, so no load gate is needed here.
@@ -465,6 +484,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ...sorted.filter(line => nonAllocatableIds.has(line.id)),
     ];
     setDraft(reconcile(ordered, { key: 'id' }));
+    // Per ITEM, so any row backed by an existing line answers for all of them.
+    setTransferComment(
+      sorted.find(line => line.transferComment)?.transferComment ?? ''
+    );
     const placeholder = data.placeholderQuantity ?? 0;
     setPlaceholderUnits(placeholder);
     // Seed the Issue field with the item's CURRENT requested quantity —
@@ -862,7 +885,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           // explicit placeholder quantity creates/updates/deletes the
           // placeholder to match (OMS-REG-DIST-03.20). Received counts and
           // variance reasons are echoed through (see ./saveLineInputs).
-          lines: toSaveLineInputs(draft),
+          lines: toSaveLineInputs(draft, transferComment()),
           placeholderQuantity: placeholderUnits(),
         },
       },
@@ -1709,6 +1732,31 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </span>
               </LabelledValue>
             </div>
+            {/* The supplier comment (spec S4) — this store's reason for
+                sending a different quantity than the customer asked for.
+                Labelled plain "Comment" here: this store IS the supplier, so
+                "Supplier comment" reads ambiguously on this side (issue #629);
+                the receiving store sees it as "Supplier comment". It follows
+                Available because it explains the gap between that figure and
+                what was requested. ONE field for the ITEM, not per batch: the
+                save writes it onto every line of the item, so its batches can
+                never disagree about the reason (OMS-REG-DIST-03.41). Absent
+                without a customer requisition — there is no requested quantity
+                for it to explain (OMS-REG-DIST-03.42). */}
+            <Show when={props.fromCustomerRequisition}>
+              <div class={styles.supplierCommentField}>
+                <TextField
+                  label={t('label.comment')}
+                  data-testid="supplier-comment-input"
+                  value={transferComment()}
+                  disabled={!props.editable || saving()}
+                  onInput={e => {
+                    setTransferComment(e.currentTarget.value);
+                    setDirty(true);
+                  }}
+                />
+              </div>
+            </Show>
           </Show>
           {/* The table's own controls (card/table view · Columns · Settings),
               lifted onto this row by DataTable's controlsMount — they sat in a

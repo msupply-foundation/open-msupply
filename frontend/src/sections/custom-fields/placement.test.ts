@@ -37,7 +37,7 @@ const row = (
 ): ConfigRow => ({ id, key: id, name: `Field ${id}`, valueType, displayMode });
 
 describe('scope tabs and their controls (OMS-REG-CF-02.2)', () => {
-  it('offers exactly the nine scopes, in the fixed order, first selected', () => {
+  it('offers exactly the ten scopes, in the fixed order, first selected', () => {
     expect(CUSTOM_FIELD_SCOPES.map(s => s.value)).toEqual([
       'item',
       'customer',
@@ -46,13 +46,14 @@ describe('scope tabs and their controls (OMS-REG-CF-02.2)', () => {
       'inbound_shipment',
       'outbound_shipment',
       'prescription',
+      'prescription_request',
       'supplier_return',
       'customer_return',
     ]);
     expect(DEFAULT_SCOPE).toBe('item');
   });
 
-  it('shows Prominent only on the five invoice scopes', () => {
+  it('shows Prominent only on the scopes with a primary surface', () => {
     // Items / Customers / Suppliers / Patients have no primary surface to
     // promote onto, so they offer Visible only.
     expect(
@@ -63,10 +64,11 @@ describe('scope tabs and their controls (OMS-REG-CF-02.2)', () => {
         'inbound_shipment',
         'outbound_shipment',
         'prescription',
+        'prescription_request',
         'supplier_return',
         'customer_return',
       ].map(scopeOffersProminent)
-    ).toEqual([true, true, true, true, true]);
+    ).toEqual([true, true, true, true, true, true]);
   });
 
   it('offers no promotion for a scope string it does not know', () => {
@@ -80,7 +82,7 @@ describe('scope tabs and their controls (OMS-REG-CF-02.2)', () => {
     const keys = CUSTOM_FIELD_SCOPES.map(s => s.labelKey);
     expect(new Set(keys).size).toBe(keys.length);
     expect(keys[0]).toBe('label.custom-field-scope-item');
-    expect(keys[8]).toBe('label.custom-field-scope-customer-return');
+    expect(keys[9]).toBe('label.custom-field-scope-customer-return');
   });
 });
 

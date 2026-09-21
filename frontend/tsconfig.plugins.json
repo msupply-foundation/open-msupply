@@ -1,6 +1,6 @@
 {
   /*
-   * The in-repo plugins — the reference plugins (examples/*) and the country
+   * The in-repo plugins — the reference plugins (plugins/examples/*) and the country
    * plugins (plugins/*) — typechecked exactly as an out-of-tree plugin would
    * be: the SDK resolved from source through the `@openmsupply/plugin-sdk`
    * path mapping (what civ-plugins does with a submodule/sibling checkout),
@@ -21,6 +21,11 @@
     "moduleResolution": "bundler",
     "paths": { "@openmsupply/plugin-sdk": ["./src/plugin-sdk/index.ts"] },
     "allowImportingTsExtensions": true,
+    // One divergence from tsconfig.app.json: a plugin imports its identity
+    // (name, version) from its own package.json — the same file the pack step
+    // and the server's install gate read — instead of restating it as
+    // literals that can drift.
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -41,10 +46,16 @@
    * through the file list.
    */
   "include": [
-    "examples/**/*.ts",
-    "examples/**/*.tsx",
+    "plugins/examples/**/*.ts",
+    "plugins/examples/**/*.tsx",
     "plugins/*/src/**/*.ts",
     "plugins/*/src/**/*.tsx",
+    // cook_islands' BACKEND half, plus the `shared/` wire contract both
+    // halves import. Named rather than globbed as `plugins/*/backend`,
+    // because civ's half compiles only against its own toolchain's
+    // `@common/*` and so must stay out.
+    "plugins/cook_islands/backend/src/**/*.ts",
+    "plugins/cook_islands/shared/**/*.ts",
     "src/globals.d.ts",
     "src/intl/globals.d.ts"
   ]

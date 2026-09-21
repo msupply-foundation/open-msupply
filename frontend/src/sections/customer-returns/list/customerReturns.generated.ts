@@ -152,6 +152,13 @@ export type CustomerReturnsVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    prescriptionRequestId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     purchaseOrderNumber?: {
     equalTo?: number | null;
     equalAny?: Array<number> | null;
@@ -247,7 +254,7 @@ export type InsertCustomerReturnResult = {
   __typename: "InsertCustomerReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotACustomer" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -273,7 +280,7 @@ export type UpdateCustomerReturnColourResult = {
   __typename: "UpdateCustomerReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotACustomer" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -297,7 +304,7 @@ export type DeleteCustomerReturnResult = {
   __typename: "DeleteCustomerReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });

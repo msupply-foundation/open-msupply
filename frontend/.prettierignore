@@ -18,10 +18,9 @@ spec/schema.graphql
 # compare byte-for-byte against the (non-Prettier) generator output.
 codegen
 
-# Backend plugin halves — built and formatted by the open-msupply client
-# toolchain (webpack/BoaJS), not this repo's; prebuilt/ carries the shipped
-# artifact byte-for-byte (see plugins/civ/backend/README.md)
-plugins/*/backend
+# A prebuilt bundle is a build artifact wherever it appears — a committed
+# build is packed verbatim, so reformatting it would change what ships.
+plugins/*/backend/prebuilt
 
 # Lockfile
 pnpm-lock.yaml

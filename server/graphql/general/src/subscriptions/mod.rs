@@ -56,7 +56,9 @@ impl SyncStatusSubscriptions {
         ctx: &Context<'_>,
     ) -> Result<impl Stream<Item = InitialisationStatusNode>> {
         validate_sync_auth(ctx)?;
-        Ok(initialisation_status_stream(get_subscription_broadcast(ctx)?))
+        Ok(initialisation_status_stream(get_subscription_broadcast(
+            ctx,
+        )?))
     }
 }
 
@@ -78,6 +80,8 @@ impl InitialisationSubscriptions {
         &self,
         ctx: &Context<'_>,
     ) -> Result<impl Stream<Item = InitialisationStatusNode>> {
-        Ok(initialisation_status_stream(get_subscription_broadcast(ctx)?))
+        Ok(initialisation_status_stream(get_subscription_broadcast(
+            ctx,
+        )?))
     }
 }

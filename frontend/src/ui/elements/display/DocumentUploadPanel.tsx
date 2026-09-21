@@ -1,8 +1,10 @@
 import { createSignal, For, Show, splitProps, type JSX } from 'solid-js';
 import { t, localisedDate, formatFileSize } from '../../../intl';
+import { isAndroid } from '../../../platform';
 import { openDocument } from '../../../platform/openDocument';
 import { FileIcon, TrashIcon } from '../../icons';
 import { Alert } from '../feedback/Alert';
+import { ConfirmDialog } from '../feedback/ConfirmDialog';
 import { Spinner } from '../feedback/Spinner';
 import { IconButton } from '../buttons/IconButton';
 import { Text } from '../typography/Text';
@@ -37,6 +39,13 @@ export interface DocumentUploadPanelProps {
   /** Accept list + per-file size limit, forwarded to the upload zone. */
   accept?: string;
   maxSize?: number;
+  /**
+   * Heading over the file list, already translated. Defaults to "Uploaded
+   * documents". Name it when the list is NOT the record's own uploads — the
+   * equipment detail shows the model's catalogue documents in a second panel
+   * beside them.
+   */
+  listHeading?: string;
 }
 
 const extensionOf = (name: string): string => {
@@ -60,11 +69,18 @@ const FileTypeIcon = (props: { fileName: string }): JSX.Element => (
  * upload zone above a plain file list (file-type icon, name link, date
  * uploaded, size, per-row delete). Not a DataTable — a semantic <ul> laid out
  * on a shared grid so headers and rows align. The caller owns the
- * upload/delete transport and refresh (they're record-specific); opening is
- * fully determined by the row's url + fileName, so the panel owns it —
- * routed through the openDocument platform capability (browser tab on web,
- * OS viewer on Android — kdd/capacitor-plugins). Modified clicks (new tab,
- * copy link) keep native anchor behaviour.
+ * upload/delete transport and refresh (they're record-specific), but NOT the
+ * "are you sure?" that precedes a delete: removing a file is the same question
+ * whatever record holds it, so the panel asks it and hands `onDelete` only the
+ * confirmed removals. A consumer cannot forget the guard on a destructive
+ * action. Opening is fully determined by the row's url + fileName, so the panel
+ * owns that too.
+ *
+ * The name is a real anchor and stays one: every browser opens it, and so does
+ * a host shell watching for a sync-file address. Only Android is intercepted,
+ * through the openDocument platform capability, because there the WebView
+ * would render the file inline with no way back (kdd/capacitor-plugins).
+ * Modified clicks (new tab, copy link) keep anchor behaviour everywhere.
  */
 export const DocumentUploadPanel = (
   props: DocumentUploadPanelProps
@@ -77,6 +93,7 @@ export const DocumentUploadPanel = (
     'canUpload',
     'accept',
     'maxSize',
+    'listHeading',
   ]);
 
   const showUpload = () => local.canUpload !== false && !!local.onUpload;
@@ -86,6 +103,9 @@ export const DocumentUploadPanel = (
   // and further opens are ignored until it lands. Cleared unconditionally so
   // no failure can leave it stuck.
   const [openingId, setOpeningId] = createSignal<string>();
+  // The row awaiting its removal confirmation — set by the delete button,
+  // cleared by either dialog answer.
+  const [pendingDelete, setPendingDelete] = createSignal<DocumentFile>();
 
   const onOpen = async (doc: DocumentFile, url: string) => {
     if (openingId()) return;
@@ -119,27 +139,30 @@ export const DocumentUploadPanel = (
 
       <div class={styles.list}>
         <Text variant="heading" level={3} class={styles.heading}>
-          {t('heading.uploaded-documents')}
+          {local.listHeading ?? t('heading.uploaded-documents')}
         </Text>
         <Show when={openError()}>
           <Alert severity="error" class={styles.openError}>
             {openError()}
           </Alert>
         </Show>
-        <div class={styles.headerRow}>
-          <span />
-          <span>{t('label.file-name')}</span>
-          <span>{t('label.date-uploaded')}</span>
-          <span>{t('label.size')}</span>
-          <span />
-        </div>
-
         <Show
           when={local.documents.length > 0}
           fallback={
             <p class={styles.empty}>{t('messages.no-documents-uploaded')}</p>
           }
         >
+          {/* The header row belongs to the POPULATED list, not the empty one:
+              column names over nothing describe a table that isn't there, and
+              read as a list that failed to load rather than one with no files
+              in it. */}
+          <div class={styles.headerRow}>
+            <span />
+            <span>{t('label.file-name')}</span>
+            <span>{t('label.date-uploaded')}</span>
+            <span>{t('label.size')}</span>
+            <span />
+          </div>
           <ul class={styles.rows}>
             <For each={local.documents}>
               {document => (
@@ -165,6 +188,13 @@ export const DocumentUploadPanel = (
                             event.shiftKey ||
                             event.altKey;
                           if (event.button !== 0 || modified) return;
+                          // Only Android needs the file taken out of the
+                          // WebView by hand. Every browser already opens an
+                          // anchor correctly, and so does a host shell that
+                          // watches for a sync-file address — so off Android
+                          // the anchor is left alone rather than replaced with
+                          // a scripted open that the shell cannot see (#692).
+                          if (!isAndroid()) return;
                           event.preventDefault();
                           void onOpen(document, url());
                         }}
@@ -196,7 +226,7 @@ export const DocumentUploadPanel = (
                         variant="danger"
                         size="small"
                         data-testid="document-remove-button"
-                        onClick={() => local.onDelete?.(document)}
+                        onClick={() => setPendingDelete(document)}
                       />
                     </Show>
                   </span>
@@ -206,6 +236,18 @@ export const DocumentUploadPanel = (
           </ul>
         </Show>
       </div>
+      <ConfirmDialog
+        open={!!pendingDelete()}
+        message={t('messages.confirm-delete-document')}
+        // Destructive, so the confirm carries the danger tone; its LABEL stays
+        // the standard OK — only the tone is this action's own.
+        confirmVariant="danger"
+        onClose={() => setPendingDelete(undefined)}
+        onConfirm={() => {
+          const document = pendingDelete();
+          if (document) local.onDelete?.(document);
+        }}
+      />
     </div>
   );
 };

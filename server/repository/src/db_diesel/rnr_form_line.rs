@@ -80,6 +80,9 @@ impl<'a> RnRFormLineRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(rnr_form_line::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<RnRFormLineJoin>(self.connection.lock().connection())?;
@@ -88,9 +91,7 @@ impl<'a> RnRFormLineRepository<'a> {
     }
 }
 
-fn to_domain(
-    (rnr_form_line_row, item_row, requisition_line_row): RnRFormLineJoin,
-) -> RnRFormLine {
+fn to_domain((rnr_form_line_row, item_row, requisition_line_row): RnRFormLineJoin) -> RnRFormLine {
     RnRFormLine {
         rnr_form_line_row,
         requisition_line_row,

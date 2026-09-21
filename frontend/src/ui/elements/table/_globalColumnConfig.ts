@@ -246,6 +246,7 @@ export const CELL_DEF = {
   stockMovementNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   stocktakeNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   requisitionNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
+  purchaseOrderNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   // Percentage.
   taxPercentage: { kind: 'percentage' },
   // Currency — "Pack sell price" / "Pack cost price" headers need the room.

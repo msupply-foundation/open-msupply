@@ -1,10 +1,6 @@
 import { graphqlFetch } from '../../api/graphql';
 import type { Page } from '../../ui/utils/createPaginatedSearch';
-import {
-  SearchNames,
-  type SearchNamesResult,
-  type SearchNamesVariables,
-} from './name.generated';
+import { SearchNames, type SearchNamesVariables } from './name.generated';
 
 // The generated filter shape, used verbatim (kdd/type-safety: no remapping).
 type NameFilter = NonNullable<SearchNamesVariables['filter']>;
@@ -23,11 +19,6 @@ export type NameOption = {
   isOnHold: boolean;
   isStore: boolean;
 };
-
-type NameNode = Extract<
-  SearchNamesResult['names'],
-  { __typename: 'NameConnector' }
->['nodes'][number];
 
 // Which role the picker narrows to — a customer / supplier / donor /
 // manufacturer are all just `names` filtered by the corresponding
@@ -55,6 +46,10 @@ const FACILITY_OR_STORE: NameFilter = {
   type: { equalAny: ['FACILITY', 'STORE'] },
 };
 
+/** The external half of that pair — a facility, never one of the system's own
+ *  stores (see {@link PartyKind}). */
+const FACILITY_ONLY: NameFilter = { type: { equalAny: ['FACILITY'] } };
+
 export const roleFilter = (role: NameRole): NameFilter => {
   switch (role) {
     case 'customer':
@@ -78,8 +73,22 @@ export const roleFilter = (role: NameRole): NameFilter => {
  * createPaginatedSearch a plain (search, offset) => Page fetcher — the same
  * shape ItemSearch uses (reusing the item module's paginated-search primitive).
  */
-// One name node → the option shape (shared by the pager and the by-id fetch).
-const toOption = (node: NameNode): NameOption => ({
+/**
+ * One name node → the option shape, shared by the pager, the by-id fetch, and
+ * any caller that already HOLDS the name because its own record fetched it —
+ * a picker seeded from a record's stored party shouldn't need a second query
+ * to learn its label. Structurally typed rather than tied to this query's
+ * generated node, so any selection carrying these fields can use it.
+ */
+export const toNameOption = (node: {
+  id: string;
+  name: string;
+  code: string;
+  isSupplier: boolean;
+  isDonor: boolean;
+  isOnHold: boolean;
+  store?: { id: string } | null;
+}): NameOption => ({
   id: node.id,
   name: node.name,
   code: node.code,
@@ -106,7 +115,44 @@ export const fetchNameById = async (
   });
   if (result.kind !== 'success') return undefined;
   const node = result.data.names.nodes[0];
-  return node ? toOption(node) : undefined;
+  return node ? toNameOption(node) : undefined;
+};
+
+/**
+ * Which side of the system a picker offers, where its role alone is too wide:
+ *
+ *   internal  only parties that are themselves stores in this system. The
+ *             internal-order create picker needs it — the create resolver
+ *             rejects a non-store supplier, so offering only internal ones
+ *             keeps that rejection unreachable from the UI
+ *             (spec/internal-orders AC-C3).
+ *   external  only parties outside the system. The purchase-order create
+ *             picker needs it — an order goes to an external supplier
+ *             (spec/purchase-orders § S2).
+ *
+ * ONE value rather than a boolean each, so "both" cannot be asked for.
+ *
+ * `external` narrows by `type` (a FACILITY), matching the reference app's own
+ * supplier search, NOT by `isStore: false`. The two are nearly the same and
+ * not quite: `isStore: false` is every party with no store behind it, which
+ * admits the INVAD and REPACK system names — commonly flagged as suppliers —
+ * where FACILITY excludes them.
+ */
+export type PartyKind = 'internal' | 'external';
+
+/**
+ * The narrowings a picker can lay over its role, each an AND on the same
+ * `names` query. Named rather than positional.
+ */
+export type NameNarrowing = {
+  /** Which side of the system to offer; omit for every visible party of the
+   *  role. */
+  parties?: PartyKind;
+  /**
+   * Withhold one party — the internal-order destination-customer picker
+   * excludes the chosen supplier (spec/internal-orders › header fields).
+   */
+  excludeId?: string;
 };
 
 export const namePageFetcher =
@@ -114,8 +160,7 @@ export const namePageFetcher =
     storeId: string,
     role: NameRole,
     pageSize: number,
-    storeBacked = false,
-    excludeId?: string
+    narrowing: NameNarrowing = {}
   ) =>
   async (
     search: string,
@@ -126,15 +171,11 @@ export const namePageFetcher =
       filter: {
         ...roleFilter(role),
         isVisible: true,
-        // A store-backed narrowing (isStore) — a supplier that is itself
-        // another store in the system. The internal-order create picker needs
-        // it: the create resolver rejects a non-store supplier, so offering
-        // only store-backed ones keeps that rejection unreachable from the UI
-        // (spec/internal-orders AC-C3).
-        ...(storeBacked ? { isStore: true } : {}),
-        // Withhold one party — the internal-order destination-customer picker
-        // excludes the chosen supplier (spec/internal-orders › header fields).
-        ...(excludeId ? { id: { notEqualTo: excludeId } } : {}),
+        ...(narrowing.parties === 'internal' ? { isStore: true } : {}),
+        ...(narrowing.parties === 'external' ? FACILITY_ONLY : {}),
+        ...(narrowing.excludeId
+          ? { id: { notEqualTo: narrowing.excludeId } }
+          : {}),
         ...(search ? { codeOrName: { like: search } } : {}),
       },
       // Sort by name ascending — stable across pages so infinite scroll doesn't
@@ -146,7 +187,7 @@ export const namePageFetcher =
 
     const { names } = result.data;
     return {
-      nodes: names.nodes.map(toOption),
+      nodes: names.nodes.map(toNameOption),
       totalCount: names.totalCount,
     };
   };

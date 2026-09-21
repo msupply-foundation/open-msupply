@@ -1,6 +1,9 @@
 use crate::{
     invoice::query::get_invoice,
-    pricing::item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup},
+    pricing::{
+        calculate_sell_price::{calculate_sell_price, issue_at_cost_price},
+        item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup},
+    },
     service_provider::ServiceContext,
     stock_line::{
         historical_stock::{
@@ -42,6 +45,8 @@ pub struct DraftStockOutLine {
     pub volume_per_pack: f64,
     pub received_number_of_packs: Option<f64>,
     pub reason_option_id: Option<String>,
+    /// From the existing invoice line; a batch with no line yet carries none.
+    pub transfer_comment: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -57,12 +62,12 @@ pub fn get_draft_stock_out_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
-    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(ListError::DatabaseError(
-        RepositoryError::DBError {
+    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(
+        ListError::DatabaseError(RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
-        },
-    ))?;
+        }),
+    )?;
 
     let historical_stock_lines = get_historical_available_stock_lines(
         ctx,
@@ -82,6 +87,7 @@ pub fn get_draft_stock_out_lines(
         ctx,
         item_id,
         invoice.name_row.id,
+        &invoice.invoice_row,
         existing_stock_line_ids,
         historical_stock_lines,
     )?;
@@ -219,6 +225,7 @@ fn generate_new_draft_lines(
     ctx: &ServiceContext,
     item_id: &str,
     other_party_id: String,
+    invoice: &InvoiceRow,
     existing_stock_line_ids: Vec<String>,
     historical_stock_lines: Vec<StockLine>,
 ) -> Result<Vec<DraftStockOutLine>, ListError> {
@@ -239,9 +246,15 @@ fn generate_new_draft_lines(
     .remove(item_id)
     .unwrap_or_default();
 
+    // Internal transfers may be issued at the supplying store's cost price
+    let issue_at_cost_price =
+        issue_at_cost_price(&ctx.connection, invoice).map_err(ListError::DatabaseError)?;
+
     let new_lines: Vec<DraftStockOutLine> = available_stock_lines
         .into_iter()
-        .map(|stock_line| DraftStockOutLine::from_stock_line(stock_line, &item_pricing))
+        .map(|stock_line| {
+            DraftStockOutLine::from_stock_line(stock_line, &item_pricing, issue_at_cost_price)
+        })
         .collect();
 
     Ok(new_lines)
@@ -266,8 +279,13 @@ fn find_stock_line_by_id(
 }
 
 impl DraftStockOutLine {
-    fn from_stock_line(line: StockLine, item_pricing: &ItemPrice) -> Self {
-        let sell_price_per_pack = get_sell_price(&line.stock_line_row, item_pricing);
+    fn from_stock_line(
+        line: StockLine,
+        item_pricing: &ItemPrice,
+        issue_at_cost_price: bool,
+    ) -> Self {
+        let sell_price_per_pack =
+            get_sell_price(&line.stock_line_row, item_pricing, issue_at_cost_price);
 
         let StockLineRow {
             id,
@@ -308,6 +326,7 @@ impl DraftStockOutLine {
             volume_per_pack,
             received_number_of_packs: None,
             reason_option_id: None,
+            transfer_comment: None,
         }
     }
 
@@ -329,6 +348,7 @@ impl DraftStockOutLine {
             program_id,
             received_number_of_packs,
             reason_option_id,
+            transfer_comment,
             ..
         } = line.invoice_line_row;
 
@@ -378,22 +398,25 @@ impl DraftStockOutLine {
             volume_per_pack,
             received_number_of_packs,
             reason_option_id,
+            transfer_comment,
         })
     }
 }
 
-fn get_sell_price(stock_line: &StockLineRow, item_pricing: &ItemPrice) -> f64 {
-    // if there's a default price, it overrides the stock line price
-    let base_price = match item_pricing.default_price_per_unit {
-        Some(price_per_unit) => price_per_unit * stock_line.pack_size,
-        None => stock_line.sell_price_per_pack,
-    };
-
-    match item_pricing.discount_percentage {
-        // if there's a discount, apply it to the base price
-        Some(discount_percentage) => base_price * (1.0 - discount_percentage / 100.0),
-        None => base_price,
-    }
+fn get_sell_price(
+    stock_line: &StockLineRow,
+    item_pricing: &ItemPrice,
+    issue_at_cost_price: bool,
+) -> f64 {
+    // Shares the calculation with the line insert, so the price previewed in the
+    // line edit modal is the price that gets saved
+    calculate_sell_price(
+        stock_line.sell_price_per_pack,
+        stock_line.cost_price_per_pack,
+        stock_line.pack_size,
+        item_pricing,
+        issue_at_cost_price,
+    )
 }
 
 #[cfg(test)]
@@ -415,12 +438,13 @@ mod test {
     fn test_get_sell_price() {
         let stock_line = StockLineRow {
             sell_price_per_pack: 100.0,
+            cost_price_per_pack: 75.0,
             pack_size: 10.0,
             ..Default::default()
         };
 
         // Just stock line sell price when no item pricing
-        let result = get_sell_price(&stock_line, &ItemPrice::default());
+        let result = get_sell_price(&stock_line, &ItemPrice::default(), false);
         assert_eq!(result, 100.0);
 
         // Applies discount from item pricing
@@ -430,6 +454,7 @@ mod test {
                 discount_percentage: Some(10.0),
                 ..Default::default()
             },
+            false,
         );
         assert_eq!(result, 90.0); // 10% discount on 100
 
@@ -440,8 +465,21 @@ mod test {
                 default_price_per_unit: Some(20.0),
                 ..Default::default()
             },
+            false,
         );
         assert_eq!(result, 200.0); // 20 * 10
+
+        // An internal transfer issued at cost ignores default price and discount
+        let result = get_sell_price(
+            &stock_line,
+            &ItemPrice {
+                default_price_per_unit: Some(20.0),
+                discount_percentage: Some(10.0),
+                ..Default::default()
+            },
+            true,
+        );
+        assert_eq!(result, 75.0);
     }
 
     #[actix_rt::test]

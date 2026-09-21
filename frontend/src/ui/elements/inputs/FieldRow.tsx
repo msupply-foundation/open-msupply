@@ -22,6 +22,14 @@ export interface FieldRowProps {
    * gating stays with the form's own confirm rule.
    */
   required?: boolean;
+  /**
+   * How the label sits against the control. `center` (default) is right for a
+   * single-line control, where the box IS one line. `first-line` aligns the
+   * label to the control's FIRST LINE of text — for a multi-line control (a
+   * TextArea), against which a centred label floats in the middle of an empty
+   * box and reads as unattached to it.
+   */
+  align?: 'center' | 'first-line';
   class?: string;
 }
 
@@ -40,6 +48,7 @@ export const FieldRow = (props: FieldRowProps): JSX.Element => (
   <div
     class={props.class ? `${styles.row} ${props.class}` : styles.row}
     data-label-width={props.labelWidth ?? 'fixed'}
+    data-align={props.align ?? 'center'}
   >
     <span class={styles.label}>
       {props.label}

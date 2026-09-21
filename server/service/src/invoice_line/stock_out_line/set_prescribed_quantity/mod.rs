@@ -6,7 +6,7 @@ use util::uuid::uuid;
 
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext};
 
-mod generate;
+pub mod generate;
 use generate::generate;
 mod validate;
 use validate::validate;
@@ -25,6 +25,9 @@ pub enum SetPrescribedQuantityError {
     NotAStockItem,
     NotAPrescription,
     NotThisStoreInvoice,
+    /// The figure is the prescriber's, on a dispensation generated from a
+    /// prescription request, and this input would change it.
+    CannotChangePrescribedQuantity,
     NewlyCreatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }

@@ -113,7 +113,7 @@ const PrescriptionsList: Component = () => {
   // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
   // for its badge, neither owns the action.
   createAddAction({
-    name: 'button.new-prescription',
+    name: 'button.new-dispensing-record',
     run: () => setCreateOpen(true),
   });
 
@@ -148,7 +148,7 @@ const PrescriptionsList: Component = () => {
     filter: {
       ...stripEmpty(query().filter),
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
-      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf, cfDefs()),
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
@@ -200,7 +200,7 @@ const PrescriptionsList: Component = () => {
   };
 
   const openRow = (row: PrescriptionRow) =>
-    navigate(`/${params.storeId}/dispensary/prescription/${row.id}`);
+    navigate(`/${params.storeId}/dispensary/dispensing/${row.id}`);
 
   const rowStatus = (row: Pick<PrescriptionRow, 'status'>) =>
     asPrescriptionStatus(row.status);
@@ -265,7 +265,7 @@ const PrescriptionsList: Component = () => {
       // server sort key is the same coalescence.
       c: { accessor: prescriptionDateOf, id: 'prescriptionDatetime' },
       sortKey: 'invoiceDatetime',
-      header: () => t('label.prescription-date'),
+      header: () => t('label.dispensed-date'),
       ...getDateCell(),
     },
     {
@@ -286,7 +286,7 @@ const PrescriptionsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [{ label: t('prescriptions') }];
+  const crumbs = () => [{ label: t('dispensing') }];
 
   return (
     <Page
@@ -301,7 +301,7 @@ const PrescriptionsList: Component = () => {
               data-testid="new-prescription-button"
               onClick={() => setCreateOpen(true)}
             >
-              {t('button.new-prescription')}
+              {t('button.new-dispensing-record')}
             </Button>
             <ExportPrescriptionsAction
               storeId={params.storeId}
@@ -360,7 +360,7 @@ const PrescriptionsList: Component = () => {
         // Read-only rows take the disabled state — de-emphasised but legible
         // and clickable (AC-L3); matches the outbound list post table-styling.
         rowState={row => (isReadOnly(rowStatus(row)) ? 'disabled' : undefined)}
-        emptyMessage={t('error.no-prescriptions')}
+        emptyMessage={t('error.no-dispensing-records')}
         empty={
           <Button
             variant="ghost"

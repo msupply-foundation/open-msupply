@@ -79,7 +79,7 @@ export type InsertRequisitionLineResult = {
   __typename: "InsertResponseRequisitionLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditRequisition" | "ForeignKeyError" | "RequisitionLineWithItemIdExists";
   description: string;
 };
 });
@@ -118,7 +118,7 @@ export type UpdateRequisitionLineResult = {
   __typename: "UpdateResponseRequisitionLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditRequisition" | "ForeignKeyError" | "RecordNotFound" | "RequisitionReasonNotProvided";
   description: string;
 };
 });
@@ -147,7 +147,7 @@ export type DeleteRequisitionLinesResult = {
   __typename: "DeleteResponseRequisitionLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteLineLinkedToShipment" | "CannotEditRequisition" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });

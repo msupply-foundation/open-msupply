@@ -2,6 +2,7 @@ package org.openmsupply.client;
 
 import static android.content.Context.NSD_SERVICE;
 
+import android.app.Activity;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Handler;
@@ -56,9 +57,86 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
     FrontEndHost connectedServer;
+
+    // The server the DISCOVERY PAGE chose (hostContract.ts § ConnectedServer,
+    // delivered via MainActivity.onServerChosen). The page drives connections
+    // as probe → record → navigate, so the fused connectToServer below — and
+    // the `connectedServer` it populated — never runs on that path, and
+    // certificate trust would have nothing to key on. Static because the
+    // choice belongs to the app's session, not to a plugin instance.
+    //
+    // Kept ALONGSIDE connectedServer rather than replacing it: the old front
+    // end at /old-ui/ still connects through connectToServer, and both paths
+    // must keep working while both front ends ship.
+    private static String chosenUrl;
+    private static String chosenOrigin;
+    private static String chosenHardwareId = "";
+    private static int chosenPort;
+    private static boolean chosenIsLocal;
+    // The same choice in the shape connectedServer() has always answered with
+    // — see there for why.
+    private static JSObject chosenServerData;
+
+    static void chosenServer(String url, String origin, String hardwareId, int port, boolean isLocal) {
+        chosenUrl = url;
+        chosenOrigin = origin;
+        chosenHardwareId = hardwareId;
+        chosenPort = port;
+        chosenIsLocal = isLocal;
+        chosenServerData = serverData(origin, hardwareId, port, isLocal);
+    }
+
+    /** The chosen server as a FrontEndHost's data, built from what the page
+     * stated. Only the fields the answer is used for: the old front end
+     * displays the address (frontEndHostUrl) and keys nothing else off it. */
+    private static JSObject serverData(String origin, String hardwareId, int port, boolean isLocal) {
+        JSObject data = new JSObject();
+        try {
+            URL parsed = new URL(origin);
+            data.put("protocol", parsed.getProtocol());
+            data.put("ip", parsed.getHost());
+        } catch (Exception e) {
+            return null;
+        }
+        data.put("port", port);
+        data.put("clientVersion", "");
+        data.put("hardwareId", hardwareId);
+        data.put("isLocal", isLocal);
+        return data;
+    }
+
+    /** The exact URL the discovery page navigated to, or null if it has not.
+     * The hand-off itself — used by the failed-load duty (AC-DT4), which is
+     * about THIS load failing, not a later navigation on a server the user is
+     * already signed in to. Certificate trust wants getChosenOrigin(). */
+    public static String getChosenUrl() {
+        return chosenUrl;
+    }
+
+    /** scheme://host[:port] of that URL, or null. What certificate trust
+     * matches on: the SSL error is raised per REQUEST — the document, then
+     * every script, style and GraphQL call — so matching the full URL would
+     * answer only the first and leave the rest of the page to the default
+     * refusal. Origin-scoped is also what the old front end's path has always
+     * been (FrontEndHost.getUrl()). */
+    public static String getChosenOrigin() {
+        return chosenOrigin;
+    }
+
+    /** Fingerprint-store key for the chosen server, matching the identifier
+     * CertWebViewClient.nonLocalFingerprintKey has always spelled, so a
+     * server already trusted on this device is still recognised. */
+    public static String getChosenFingerprintKey() {
+        return chosenHardwareId + "-" + chosenPort;
+    }
+
+    public static boolean getChosenIsLocal() {
+        return chosenIsLocal;
+    }
     NsdManager discoveryManager;
     boolean isDebug;
     boolean isAdvertising;
+    static final String DISCOVERY_PATH = "/discovery.html";
     String localUrl;
     String serverUrl;
     boolean isDiscovering;
@@ -214,10 +292,30 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
                 // .post to run on UI thread in the two calls below
                 if (isServerRunning) {
-                    final String targetUrl = localUrl + "/android";
+                    // The discovery page decides what happens next: the mode
+                    // chooser on a first run, this device's own server, or the
+                    // LAN list (frontend/src/discovery/DiscoveryPage.tsx).
+                    final String targetUrl = discoveryUrl(true, false);
                     Log.i(OM_SUPPLY, "Loading WebView url=" + targetUrl);
                     frontendLoaded = true;
-                    webView.post(() -> webView.loadUrl(targetUrl));
+                    webView.post(() -> {
+                        // Host duty (AC-DT16, AC-AN20): the boot lands on
+                        // discovery from the static loading page, so without
+                        // pinning history here hardware back resurrects that
+                        // page — which only ever spins, since the readiness
+                        // poll that drives it has already finished. Same clear
+                        // the new frontend's shell does on its client-mode
+                        // boot; every host-initiated navigation is a fresh
+                        // start.
+                        // NativeApi.this, not this: the lambda sits inside
+                        // the readiness poll's Runnable.
+                        Activity bootActivity = NativeApi.this.getActivity();
+                        if (bootActivity instanceof DiscoveryHostActivity) {
+                            ((DiscoveryHostActivity) bootActivity)
+                                .clearHistoryWhenLoaded(localUrl + DISCOVERY_PATH);
+                        }
+                        webView.loadUrl(targetUrl);
+                    });
                 } else {
                     Log.e(OM_SUPPLY, "Server not running, displaying error page");
                     final ErrorPage errorPage = new ErrorPage(getContext(), localUrl);
@@ -235,12 +333,53 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         stopServerDiscovery();
     }
 
+    /** The bundled discovery page, served by the local server as a second page
+     * of the new front end's build (frontend/src/discovery). Replaces the old
+     * front end's /discovery and /android routes, which the new front end does
+     * not have.
+     *
+     * `canhost=true` says this machine could run the server everyone uses OR
+     * connect to someone else's — this app always ships the server library, so
+     * it always could be either, and that is what lets the page ask once and
+     * remember the answer (AC-AN21) instead of the retired /android chooser. */
+    String discoveryUrl(boolean autoconnect, boolean timedout) {
+        String url = localUrl + DISCOVERY_PATH + "?canhost=true";
+        if (!autoconnect) url += "&autoconnect=false";
+        if (timedout) url += "&timedout=true";
+        return url;
+    }
+
+    /** Send the WebView back to discovery, never bouncing straight back to the
+     * server just left (AC-DT16). `timedout` seeds the could-not-connect
+     * notice (AC-DT2/AC-DT4). */
+    void returnToDiscovery(boolean timedout) {
+        WebView webView = this.getBridge().getWebView();
+        String url = discoveryUrl(false, timedout);
+        webView.post(() -> {
+            Activity activity = this.getActivity();
+            if (activity instanceof DiscoveryHostActivity) {
+                ((DiscoveryHostActivity) activity).clearHistoryWhenLoaded(localUrl + DISCOVERY_PATH);
+            }
+            webView.loadUrl(url);
+        });
+    }
+
+    /** The old front end's own chooser, the boot target this shell used before
+     * the page existed. Reached only when the web bundle in THIS build has no
+     * discovery.html — a debug build stages the old UI alone
+     * (capacitor.config.ts § webDir) — so that a debug build still boots to a
+     * server chooser rather than to the server's 404
+     * (CertWebViewClient.onReceivedHttpError). A release bundle always carries
+     * the page and never comes here. */
+    void loadLegacyDiscovery() {
+        WebView webView = this.getBridge().getWebView();
+        String url = localUrl + "/android";
+        webView.post(() -> webView.loadUrl(url));
+    }
+
     @PluginMethod()
     public void goBackToDiscovery(PluginCall call) {
-        Bridge bridge = this.getBridge();
-        WebView webView = bridge.getWebView();
-        // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(localUrl + "/discovery?autoconnect=false"));
+        this.returnToDiscovery(false);
     }
 
     // Advertise local remote server on network
@@ -322,14 +461,40 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         call.resolve(result);
     }
 
+    /**
+     * Which server this WebView is on, for whichever front end is asking.
+     *
+     * The old front end asks so it can show the address and offer "change
+     * server" beside it (host/src/components/SiteInfo.tsx renders that row
+     * only when this answers). It used to be populated only by the fused
+     * connectToServer below — which the discovery page never calls, since it
+     * drives probe -> record -> navigate itself. So an old front end reached
+     * THROUGH the page had no way back to discovery at all: no row, and
+     * nothing else on its login screen offers one. Answer from the page's
+     * choice when the fused path has not run.
+     *
+     * Whichever path navigated LAST wins, because the question is "where is
+     * this WebView now". Preferring either outright answers with a stale
+     * server: boot connects to A through the fused path, the user changes
+     * server to B through the page, and the address shown beside the
+     * change-server button is still A's. So onConnectToServer clears the
+     * page's choice and it takes precedence here when it has not run.
+     */
     @PluginMethod()
     public void connectedServer(PluginCall call) {
+        if (chosenServerData != null) {
+            call.resolve(chosenServerData);
+            return;
+        }
         call.resolve(connectedServer == null ? null : connectedServer.data);
     }
 
     private void onConnectToServer(FrontEndHost server) {
         stopServerDiscovery();
         connectedServer = server;
+        // This WebView is on THIS server now, so the page's earlier choice is
+        // no longer where we are (§ connectedServer above).
+        chosenServerData = null;
 
         String url = isDebug ? localUrl
                 : server.getUrl();

@@ -47,6 +47,15 @@ every other suite. They therefore live here.
 | `E2E On-Hold Customer`, joined to GRY              | an on-hold customer, listed but not selectable in the customer picker |
 | `manage_vvm_status_for_stock` on GRY               | the outbound line table's VVM-status column                          |
 | `manage_vaccines_in_doses` on GRY                  | the outbound line table's doses-per-unit column                      |
+| `vaccine_module` on GRY                            | the Cold chain destinations (Monitoring, Sensors, Equipment) and the app-wide cold-chain notification band; the cold-chain monitoring suite seeds sensors, readings and breaches into GRY through the `/coldchain/v1` REST API, which writes to the login user's DEFAULT store, so the store Admin defaults to has to be the vaccine store |
+| `E2E needs written observations` asset log reason   | the reference migration seeds nine asset log reasons and **none** of them demands observations, so the equipment status dialog's observations-required rejection has no subject without it |
+| `AssetQuery` for `limited` on GRY                   | the equipment register's three change-permission gates (create, import, delete, update-status) are only observable to a user who can **read** it but not change it; `limited` holds no asset permission at all, so the destination is hidden from it |
+
+**`limited` gained `AssetQuery`.** It is the query-only profile, so a read
+permission is in character — and it is the only user here that can reach the
+cold-chain equipment register without being able to write to it. Grant it
+`AssetMutate` and the equipment suite's permission-gate tests stop being
+observable.
 
 **`StockViewer`** holds `StoreAccess`, `StockLineQuery`, `StockLineMutate` and
 `LogQuery`. What it _lacks_ is the point: no `InventoryAdjustmentMutate`, no

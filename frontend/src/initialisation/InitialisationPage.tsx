@@ -51,6 +51,7 @@ import {
   type FieldError,
 } from '../ui/layout/Form/formValidation';
 import { SaveServerLogLink } from '../platform/SaveServerLogLink';
+import { ChangeServerAction } from '../ui/layout/ChangeServerAction';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 import pageStyles from './Initialisation.module.css';
 
@@ -771,6 +772,12 @@ export const InitialisationPage: Component<{
                   iconClass={styles.secondaryActionIcon}
                   noticeClass={styles.actionNotice}
                 />
+                {/* Arriving from the desktop discovery page (spec/desktop §
+                    server selection, AC-DT16): a not-yet-initialised server
+                    may simply be the wrong one — the hand-off's return URL is
+                    the way back to choose another. Same affordance as the
+                    login page's; renders nothing without the parameter. */}
+                <ChangeServerAction testId="initialisation-change-server" />
                 <div class={styles.languageAction}>
                   <LanguageSelector
                     language={locale()}

@@ -103,7 +103,7 @@ Also withdrawn: **L4** (the `DetailCard` showcase demo) — per J3, there was no
 
 ### Skill changes applied as a result
 
-In [`.claude/skills/migrate-ui/SKILL.md`](../../../.claude/skills/migrate-ui/SKILL.md) and [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md):
+In [`.claude/skills/migrate-ui/SKILL.md`](../../../../.claude/skills/migrate-ui/SKILL.md) and [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md):
 
 - **Sibling verticals are now a mandatory reference** (with the reasoning: the reference vertical is silent on every role it lacks, and that silence is where bespoke compositions survive), plus the reference app for reverse-spec verticals — scoped to content/behaviour, never composition. New audit detector: cross-vertical consistency, with the grep.
 - **Triage rule:** a REAL finding may not be downgraded to a decision unless there is _no_ sanctioned precedent **and** it isn't a binding rule; the pure-UI tie-breaker bites at triage, not just when writing the spec-edit list.
