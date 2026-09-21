@@ -110,3 +110,15 @@ describe('OMS-FUN-PO-10.2 — purchase-orders list CSV export', () => {
     expect(purchaseOrdersToCsv([]).split('\r\n')).toHaveLength(1);
   });
 });
+
+describe('an order with no lines has no total', () => {
+  it('leaves the total-cost cell blank rather than exporting the fabricated 0', () => {
+    const [, line] = purchaseOrdersToCsv([
+      row({ orderTotalAfterDiscount: 0, lines: { totalCount: 0 } }),
+    ]).split('\r\n');
+    const cells = line.split(',');
+    // Total cost is the ninth column (after target months, before currency).
+    expect(cells[8]).toBe('');
+    expect(cells[9]).toBe('NZD');
+  });
+});

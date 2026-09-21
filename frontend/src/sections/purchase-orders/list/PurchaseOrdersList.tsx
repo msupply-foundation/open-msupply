@@ -22,6 +22,7 @@ import {
   getDateCell,
   getNumberCell,
   getTextCell,
+  formatCurrencyCell,
 } from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -284,6 +285,10 @@ const PurchaseOrdersList: Component = () => {
       sortKey: 'orderTotalAfterDiscount',
       header: () => t('label.total-cost'),
       ...getCurrencyCell(),
+      cell: info =>
+        info.row.original.lines.totalCount === 0
+          ? '-'
+          : formatCurrencyCell(info.getValue<number>()),
       size: remToPx(8),
     },
     {

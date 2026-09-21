@@ -29,6 +29,8 @@ import type { PurchaseOrderStatus } from '../purchaseOrderStatus';
 export interface PurchaseOrderSidePanelProps {
   storeId: string;
   node: PurchaseOrderInfoFragment;
+  /** How many lines the order has — with none, it has no totals to show. */
+  lineCount: number;
   /** True once the order is Sent or Finalised (the comment stays open). */
   disabled: boolean;
   edit: PurchaseOrderFieldEdit;
@@ -110,6 +112,11 @@ export const PurchaseOrderSidePanel: Component<
   // subtotal rather than taking an edit the server will silently drop; the
   // percentage input stays open, since it is the figure actually stored.
   const subtotal = () => props.node.orderTotalBeforeDiscount;
+  // An order with no lines has NO totals — the server fabricates 0.0 for both
+  // (contract ⚠️), so the line count decides whether a figure exists at all
+  // (rules § pricing and totals). The charges are real whatever the lines.
+  const total = (value: number): string =>
+    props.lineCount === 0 ? '-' : money(value);
 
   return (
     <>
@@ -118,7 +125,7 @@ export const PurchaseOrderSidePanel: Component<
             discount only: it already nets off every line's own discount
             (contract ⚠️ the field called "before discount"). */}
         <FieldRow label={t('label.cost-subtotal')}>
-          <span data-testid="cost-subtotal-value">{money(subtotal())}</span>
+          <span data-testid="cost-subtotal-value">{total(subtotal())}</span>
         </FieldRow>
 
         {/* The five charges summed. They reach NEITHER stored total, which is
@@ -172,7 +179,7 @@ export const PurchaseOrderSidePanel: Component<
             server). */}
         <FieldRow label={t('label.cost-final')}>
           <strong data-testid="cost-final-value">
-            {money(finalCost(props.node))}
+            {total(finalCost(props.node))}
           </strong>
         </FieldRow>
       </SidePanelSection>

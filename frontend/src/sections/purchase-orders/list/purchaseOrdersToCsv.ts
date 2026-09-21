@@ -38,7 +38,9 @@ export const purchaseOrdersToCsv = (
     row.requestedDeliveryDate ? exportDate(row.requestedDeliveryDate) : '',
     poStatusLabel(row.status),
     row.targetMonths ?? '',
-    row.orderTotalAfterDiscount,
+    // No lines, no total (rules § pricing and totals): blank, as every other
+    // absent value here is, never the server's fabricated 0.
+    row.lines.totalCount === 0 ? '' : row.orderTotalAfterDiscount,
     row.currency?.code ?? '',
     row.lines.totalCount,
     row.comment ?? '',
