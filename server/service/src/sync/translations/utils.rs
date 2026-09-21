@@ -24,21 +24,6 @@ use repository::{
 };
 use util::uuid::uuid;
 
-/// Custom fields is a v7-era feature: the OG→OMS legacy import runs on the
-/// central server only. A V5V6 remote (which still syncs v5 directly to OG
-/// during transition) must not derive custom fields locally — it would surface
-/// custom fields without the v7 infrastructure. Remotes receive `custom_fields`
-/// from central via v7 instead. `build` is only invoked on the central server.
-pub(crate) fn legacy_custom_fields_if_central(
-    build: impl FnOnce() -> Option<serde_json::Value>,
-) -> Option<serde_json::Value> {
-    if crate::sync::CentralServerConfig::is_central_server() {
-        build()
-    } else {
-        None
-    }
-}
-
 /// On central, decides whether a `name`/`name_store_join` changelog row should be
 /// skipped (`true`, reason logged) rather than relayed to legacy (OG) central,
 /// based on which site the row was edited on (#9430, #12106).
@@ -205,6 +190,14 @@ impl LegacyCustomFieldsBuilder {
 ///  - overlay `legacy_derived` (the fresh owned-key values; absent ones stay dropped),
 ///  - return `None` when the result is empty so an untouched row's `custom_fields`
 ///    stays NULL rather than carrying an empty `{}`.
+///
+/// **Central only.** Custom fields is a v7-era feature: the OG→OMS legacy import
+/// runs on the central server only. A V5V6 remote (which still syncs v5 directly to
+/// OG during transition) must not derive custom fields locally — it would surface
+/// custom fields without the v7 infrastructure. Remotes receive `custom_fields` from
+/// central via v7 instead. So every caller gates this on
+/// `CentralServerConfig::is_central_server()` and keeps the existing blob untouched
+/// off central — never blanking it, since v7 is what put it there.
 pub(crate) fn merge_legacy_custom_fields(
     existing: Option<serde_json::Value>,
     legacy_derived: Option<serde_json::Value>,
