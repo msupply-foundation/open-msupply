@@ -1,10 +1,15 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t, tPlural } from '@/intl';
-import { Button } from '@/ui/elements/buttons/Button';
-import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { LockIcon } from '@/ui/icons';
-import { closePurchaseOrderLines } from '../purchaseOrderUpdate';
+import {
+  closePurchaseOrderLines,
+  type LinesOutcome,
+} from '../purchaseOrderUpdate';
 
 export interface CloseLinesActionProps {
   storeId: string;
@@ -14,52 +19,18 @@ export interface CloseLinesActionProps {
   onChanged: () => void;
 }
 
-/*
- * Close the selected lines for receipt (spec/purchase-orders S7 §
- * line-selection actions) — the ONLY surface in the app that changes a line's
- * status (rules § line status: the line editor presents the control for it
- * disabled in every state).
- *
- * Confirmed first, and the confirmation says plainly that no more stock can be
- * received against those lines. Closing is not final — the line-status rules
- * allow a closed line back to sent — but nothing offers that, so the wording
- * stays the spec's "permanently close".
- *
- * There is no bulk line update on the wire, so this is one call per line; a
- * line that refuses (re-closing an already-closed one) leaves the rest to run.
- */
+// Close the selected lines for receipt (spec/purchase-orders S7 §
+// line-selection actions) — the only surface that changes a line's status
+// (rules § line status). Same phase machine as DeleteLinesAction: a clean
+// sweep closes, a refusal keeps the dialog up naming how many did close. One
+// call per line on the wire, so a refusal never stops the rest.
+type Phase =
+  | { kind: 'confirm' }
+  | { kind: 'working' }
+  | { kind: 'error'; outcome: LinesOutcome };
+
 export const CloseLinesAction: Component<CloseLinesActionProps> = props => {
-  const [confirming, setConfirming] = createSignal(false);
-  const [busy, setBusy] = createSignal(false);
-  const [message, setMessage] = createSignal<string>();
-  const [tone, setTone] = createSignal<'success' | 'error'>('success');
-
-  const count = () => props.selectedIds().length;
-
-  const close = async () => {
-    if (busy()) return;
-    setBusy(true);
-    setMessage(undefined);
-    const outcome = await closePurchaseOrderLines(
-      props.storeId,
-      props.selectedIds()
-    );
-    setBusy(false);
-    setConfirming(false);
-    if (outcome.message) {
-      setTone('error');
-      setMessage(outcome.message);
-    } else {
-      setTone('success');
-      setMessage(
-        tPlural('messages.closed-purchase-order-lines', outcome.applied, {
-          count: outcome.applied,
-        })
-      );
-    }
-    if (outcome.applied > 0) props.onChanged();
-  };
-
+  const [open, setOpen] = createSignal(false);
   return (
     <>
       <Button
@@ -67,29 +38,122 @@ export const CloseLinesAction: Component<CloseLinesActionProps> = props => {
         icon={<LockIcon />}
         disabled={props.disabled}
         data-testid="close-lines-button"
-        onClick={() => setConfirming(true)}
+        onClick={() => setOpen(true)}
       >
         {t('button.close-purchase-order-lines')}
       </Button>
-      <Show when={message()}>
-        {text => (
-          <Alert severity={tone()} testId="close-lines-result">
-            {text()}
-          </Alert>
-        )}
+      <Show when={open()}>
+        <Body {...props} onClose={() => setOpen(false)} />
       </Show>
-      <ConfirmDialog
-        open={confirming()}
-        onClose={() => setConfirming(false)}
-        title={t('heading.are-you-sure')}
-        message={tPlural(
-          'messages.confirm-close-purchase-order-lines',
-          count(),
-          { count: count() }
-        )}
-        confirmVariant="danger"
-        onConfirm={() => void close()}
-      />
     </>
+  );
+};
+
+const Body = (props: CloseLinesActionProps & { onClose: () => void }) => {
+  const [phase, setPhase] = createSignal<Phase>({ kind: 'confirm' });
+  const count = props.selectedIds().length;
+
+  const failure = () => {
+    const p = phase();
+    return p.kind === 'error' ? p.outcome : undefined;
+  };
+
+  const finish = (outcome: LinesOutcome) => {
+    props.onClose();
+    if (outcome.applied > 0) props.onChanged();
+  };
+
+  const run = async () => {
+    if (phase().kind !== 'confirm') return;
+    setPhase({ kind: 'working' });
+    const outcome = await closePurchaseOrderLines(
+      props.storeId,
+      props.selectedIds()
+    );
+    if (outcome.message) {
+      setPhase({ kind: 'error', outcome });
+      return;
+    }
+    finish(outcome);
+  };
+
+  return (
+    <Dialog
+      open
+      dismissable={phase().kind === 'confirm'}
+      onClose={props.onClose}
+      icon={<LockIcon />}
+      testId="confirmation-modal"
+      title={
+        failure() === undefined
+          ? t('heading.are-you-sure')
+          : (failure()?.applied ?? 0) > 0
+            ? t('heading.some-not-closed')
+            : t('heading.cannot-do-that')
+      }
+      description={
+        <Switch
+          fallback={tPlural(
+            'messages.confirm-close-purchase-order-lines',
+            count,
+            { count }
+          )}
+        >
+          <Match when={failure()}>
+            {outcome => (
+              <Stack gap="sm">
+                <Show when={outcome().applied > 0}>
+                  <p>
+                    {tPlural(
+                      'messages.closed-purchase-order-lines',
+                      outcome().applied,
+                      { count: outcome().applied }
+                    )}
+                  </p>
+                </Show>
+                <Alert severity="error" testId="close-lines-result">
+                  {outcome().message}
+                </Alert>
+              </Stack>
+            )}
+          </Match>
+        </Switch>
+      }
+      actions={
+        <Show
+          when={failure()}
+          fallback={
+            <>
+              <Show when={phase().kind === 'confirm'}>
+                <CancelButton
+                  data-testid="dialog-button-cancel"
+                  onClick={props.onClose}
+                />
+              </Show>
+              <Button
+                variant="danger"
+                confirms="plain"
+                data-testid="confirmation-modal-ok"
+                loading={phase().kind === 'working'}
+                onClick={() => void run()}
+              >
+                {t('button.close-purchase-order-lines')}
+              </Button>
+            </>
+          }
+        >
+          {outcome => (
+            <Button
+              variant="secondary"
+              confirms="plain"
+              data-testid="dialog-button-ok"
+              onClick={() => finish(outcome())}
+            >
+              {t('button.close')}
+            </Button>
+          )}
+        </Show>
+      }
+    />
   );
 };
