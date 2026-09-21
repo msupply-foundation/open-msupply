@@ -27,7 +27,7 @@ export const ASSET_LIST_FILTERS = [
 
 export const useAssets = () => {
   // Which destination is mounted, and whose equipment it therefore shows. The
-  // LIST's concern only — the export covers every store (useAssetsAll).
+  // export reads the same thing (useAssetsAll), so the file matches the screen.
   const isColdChain = usePathnameIncludes('cold-chain');
   const { store } = useAuthContext();
   // ⚠️ Always truthy: this hook returns an OBJECT of callbacks
