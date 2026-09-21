@@ -1,8 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::changelog::ChangelogRepository,
-    repository_error::RepositoryError,
+    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
     ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
 };
 
@@ -18,7 +17,15 @@ table! {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize,
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 #[diesel(table_name = location_type)]
 pub struct LocationTypeRow {
@@ -83,10 +90,7 @@ impl<'a> LocationTypeRowRepository<'a> {
         Ok(exists)
     }
 
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationTypeRow>, RepositoryError> {
         let result = location_type::table
             .filter(location_type::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
@@ -95,7 +99,11 @@ impl<'a> LocationTypeRowRepository<'a> {
 }
 
 impl Upsert for LocationTypeRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         LocationTypeRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {

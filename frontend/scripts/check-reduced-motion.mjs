@@ -31,7 +31,11 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SRC_DIR = 'src';
+/* Host source PLUS the in-repo plugins (the reference ones under
+   plugins/examples/ included): a plugin ships self-contained CSS styled by the
+   host's tokens (spec/plugins/sdk-contract § styling), so a literal duration
+   there escapes the token reduce block exactly as one in src/ would. */
+const CSS_DIRS = ['src', 'plugins'];
 const TOKENS_FILE = 'src/ui/styles/tokens.css';
 const REDUCE_QUERY = 'prefers-reduced-motion';
 
@@ -108,12 +112,14 @@ if (unknown.length) {
 const cssFiles = [];
 const walk = dir => {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    // Only authored CSS: a plugin dir may hold installed deps or built output.
+    if (entry.name === 'node_modules' || entry.name === 'dist') continue;
     const path = join(dir, entry.name);
     if (entry.isDirectory()) walk(path);
     else if (entry.name.endsWith('.css')) cssFiles.push(path);
   }
 };
-walk(SRC_DIR);
+CSS_DIRS.forEach(walk);
 
 /*
  * Ranges covered by a `prefers-reduced-motion` media query — brace-matched from

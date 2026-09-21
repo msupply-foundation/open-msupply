@@ -108,7 +108,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
         | ServiceError::CannotIssueCustomerReturnWithNoLines
         | ServiceError::OtherPartyDoesNotExist
-        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
+        | ServiceError::UnknownPropertyKey(_)
+        | ServiceError::InvalidPropertyValue { .. } => BadUserInput(formatted_error),
 
         ServiceError::UpdatedInvoiceDoesNotExist | ServiceError::DatabaseError(_) => {
             InternalError(formatted_error)

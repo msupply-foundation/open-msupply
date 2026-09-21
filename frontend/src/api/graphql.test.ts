@@ -363,3 +363,110 @@ describe('graphqlFetch structural sharing', () => {
     expect(mapped).toEqual({ kind: 'unexpectedError' });
   });
 });
+
+describe('graphqlFetch cancellation', () => {
+  // A cancelled request is the caller's own decision, so it must not reach the
+  // global unexpected-error modal — that modal offers Reload and Go to
+  // dashboard, which are the wrong answers for work nobody is waiting for.
+  it('resolves to aborted, leaving the global error modal untouched', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+        // Reject the way a real fetch does once its signal is aborted.
+        return new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () =>
+            reject(new DOMException('The user aborted a request.', 'AbortError'))
+          );
+        });
+      })
+    );
+
+    const pending = graphqlFetch(document, {}, { signal: controller.signal });
+    controller.abort();
+
+    expect(await pending).toEqual({ kind: 'aborted' });
+    expect(unexpectedError()).toBeUndefined();
+  });
+
+  it('passes the signal through to fetch', async () => {
+    const controller = new AbortController();
+    const fetchMock = mockFetch({ data: { thing: { id: '1' } } });
+
+    await graphqlFetch(document, {}, { signal: controller.signal });
+
+    expect(fetchMock.mock.calls[0][1].signal).toBe(controller.signal);
+  });
+
+  // `fetch` resolves the moment the response HEADERS arrive; the body is read
+  // separately. An abort landing in that window rejects `response.text()`, not
+  // the fetch — and that window is widest for exactly this PR's use case, a
+  // long generation with a large document. Verified against real fetch
+  // semantics (node:http serving 200 + half a body, then stalling): `text()`
+  // rejects AbortError rather than resolving with the partial body.
+  it('resolves to aborted when the abort lands while the body is streaming', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async (_url: string, init: RequestInit) => ({
+        ok: true,
+        status: 200,
+        // Headers are in; the body never finishes arriving.
+        text: () =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () =>
+              reject(
+                new DOMException('This operation was aborted', 'AbortError')
+              )
+            );
+          }),
+      }))
+    );
+
+    const pending = graphqlFetch(document, {}, { signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+
+    expect(await pending).toEqual({ kind: 'aborted' });
+    expect(unexpectedError()).toBeUndefined();
+  });
+
+  // The other post-headers path: an abort racing a non-OK status. Nobody is
+  // waiting for the answer, so the 500 is not a fault we should raise.
+  it('resolves to aborted when the abort races a non-OK status', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async () => {
+        controller.abort();
+        return { ok: false, status: 500, text: async () => '' };
+      })
+    );
+
+    const result = await graphqlFetch(
+      document,
+      {},
+      { signal: controller.signal }
+    );
+
+    expect(result).toEqual({ kind: 'aborted' });
+    expect(unexpectedError()).toBeUndefined();
+  });
+
+  // Only an ABORTED signal excuses a rejection. A genuine transport failure
+  // that happens to occur while a signal is attached is still a fault, and
+  // must still reach the modal.
+  it('still reports a real transport failure when the signal is unused', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    const result = await graphqlFetch(
+      document,
+      {},
+      { signal: controller.signal }
+    );
+
+    expect(result).toEqual({ kind: 'unexpectedError' });
+    expect(unexpectedError()?.cause).toBe('offline');
+  });
+});

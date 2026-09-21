@@ -43,6 +43,8 @@ export const FooterComponent = ({
             label={t('button.cancel')}
             disabled={!isDirty}
             color="secondary"
+            // Cross-FE e2e contract (frontend/e2e/TESTIDS.md § Demographics)
+            data-testid="cancel-button"
           />
           <LoadingButton
             onClick={onClick}
@@ -51,6 +53,7 @@ export const FooterComponent = ({
             color="secondary"
             label={t('button.save')}
             startIcon={<SaveIcon />}
+            data-testid="save-button"
           />
         </Box>
       }

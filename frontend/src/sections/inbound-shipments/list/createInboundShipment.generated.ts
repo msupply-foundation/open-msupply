@@ -40,7 +40,7 @@ export type InsertInboundShipmentResult = {
   __typename: "InsertInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotASupplier" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -75,7 +75,7 @@ export type InsertInboundShipmentExternalResult = {
   __typename: "InsertInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotASupplier" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -103,7 +103,7 @@ export type DuplicateInboundShipmentResult = {
   __typename: "DuplicateInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "SupplierIsInactive";
   description: string;
 };
 });
@@ -137,6 +137,13 @@ export type SentPurchaseOrdersVariables = {
     supplier?: {
     equalTo?: string | null;
     like?: string | null;
+  } | null;
+    number?: {
+    equalTo?: number | null;
+    equalAny?: Array<number> | null;
+    notEqualTo?: number | null;
+    equalAnyOrNull?: Array<number> | null;
+    notEqualAll?: Array<number> | null;
   } | null;
     storeId?: {
     equalTo?: string | null;

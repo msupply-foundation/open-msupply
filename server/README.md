@@ -22,10 +22,12 @@ The old UI must be built with its `publicPath`/router base set to `/old-ui/`
 router base at build time, so a bundle built for `/` cannot be relocated by
 copying it.
 
-For local development, `yarn build:old-ui` in `client/` does that build and puts
-the result in `server/frontend/old-ui`, where a server run from `server/` serves
-it. Packaging does the same two steps itself, since each pipeline copies to its
-own destination.
+For local development, `yarn build:old-ui` in `client/` does that build; the
+result lands in `client/packages/host/dist`, which a debug server picks up
+directly (see below). It does NOT copy anything into `server/frontend` — and
+staging a copy there by hand is counterproductive, since the configured
+directory then takes priority over the fallback and shadows BOTH UIs.
+Packaging does its own copy step, since each pipeline has its own destination.
 
 ### Getting both UIs in place locally
 

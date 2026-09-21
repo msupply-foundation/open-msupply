@@ -1,4 +1,5 @@
 use super::custom_field_scope_row::custom_field_scope::dsl::*;
+use chrono::NaiveDateTime;
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -47,6 +48,7 @@ table! {
         scope -> Text,
         display_mode -> diesel::sql_types::Text,
         sort_order -> Text,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -65,6 +67,10 @@ pub struct CustomFieldScopeRow {
     pub scope: String,
     pub display_mode: CustomFieldDisplayMode,
     pub sort_order: String,
+    /// Set when the definition stopped naming this scope. Soft, like the
+    /// sibling tables: these rows are Central-authored and travel over v7, so a
+    /// removal has to reach remotes as an ordinary upsert.
+    pub deleted_datetime: Option<NaiveDateTime>,
 }
 
 pub struct CustomFieldScopeRowRepository<'a> {
@@ -126,6 +132,18 @@ impl<'a> CustomFieldScopeRowRepository<'a> {
     ) -> Result<Vec<CustomFieldScopeRow>, RepositoryError> {
         Ok(custom_field_scope::table
             .filter(custom_field_scope::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    /// Every scope row belonging to any of these fields, deleted ones included
+    /// — the builtin sweep needs to see what it has already soft-deleted so it
+    /// does not rewrite the row (and a changelog entry) on every run.
+    pub fn find_many_by_custom_field_ids(
+        &self,
+        custom_field_ids: &[String],
+    ) -> Result<Vec<CustomFieldScopeRow>, RepositoryError> {
+        Ok(custom_field_scope::table
+            .filter(custom_field_scope::custom_field_id.eq_any(custom_field_ids))
             .load(self.connection.lock().connection())?)
     }
 

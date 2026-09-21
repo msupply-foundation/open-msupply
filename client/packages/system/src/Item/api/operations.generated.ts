@@ -1473,6 +1473,7 @@ export type CustomFieldFragment = {
     key: string;
     name: string;
     parentOptionId?: string | null;
+    deletedDatetime?: string | null;
   }>;
 };
 
@@ -1498,6 +1499,7 @@ export type ItemCustomFieldsQuery = {
         key: string;
         name: string;
         parentOptionId?: string | null;
+        deletedDatetime?: string | null;
       }>;
     }>;
   };
@@ -1859,6 +1861,7 @@ export const CustomFieldFragmentDoc = gql`
       key
       name
       parentOptionId
+      deletedDatetime
     }
   }
 `;

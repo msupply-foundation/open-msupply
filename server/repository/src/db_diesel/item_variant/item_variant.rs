@@ -3,8 +3,8 @@ use crate::{
     db_diesel::{item_row::item, location_type_row::location_type, name_row::name},
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    DBType, EqualFilter, ItemRow, LocationTypeRow, NameRow, Pagination, Sort,
-    StorageConnection, StringFilter,
+    DBType, EqualFilter, ItemRow, LocationTypeRow, NameRow, Pagination, Sort, StorageConnection,
+    StringFilter,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -117,6 +117,9 @@ impl<'a> ItemVariantRepository<'a> {
         }
 
         let final_query = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(item_variant::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
@@ -143,9 +146,7 @@ fn to_domain(
     }
 }
 
-fn create_filtered_query(
-    filter: Option<ItemVariantFilter>,
-) -> BoxedItemVariantQuery {
+fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQuery {
     let mut query = query().into_boxed();
     // Exclude any deleted items
     query = query.filter(item_variant::deleted_datetime.is_null());

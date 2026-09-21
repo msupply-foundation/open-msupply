@@ -16,7 +16,7 @@ import { searchForWorkspaceRoot, type Plugin } from 'vite';
  * generated source is a code → lazy-import map:
  *
  *   export const devPlugins = {
- *     "hello_world": () => import("/abs/path/examples/hello_world/plugin.tsx"),
+ *     "hello_world": () => import("/abs/path/plugins/examples/hello_world/plugin.tsx"),
  *   };
  *
  * Dynamic imports (not static), so a plugin that fails to evaluate is that
@@ -30,8 +30,8 @@ import { searchForWorkspaceRoot, type Plugin } from 'vite';
  * deployment's contributions at once. Each named directory is identified by a
  * package.json declaring `omSupplyPlugin.target === 'frontend'`, with the
  * entry module the first of ENTRY_CANDIDATES that exists — the same rule
- * `scripts/build-plugins.mjs` uses (that one DOES walk `examples/*` and
- * `plugins/*`: building everything is packaging, not a dev session).
+ * `scripts/build-plugins.mjs` uses (that one DOES walk `plugins/examples/*`
+ * and `plugins/*`: building everything is packaging, not a dev session).
  *
  * The discovery/codegen half is pure and injected-fs, so it is unit-testable
  * (devPlugins.test.ts); only `devPluginsPlugin` touches the disk.

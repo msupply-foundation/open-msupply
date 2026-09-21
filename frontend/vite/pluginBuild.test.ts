@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { pluginPackageIdentity, pluginViteConfig } from './pluginBuild.ts';
 
 const exampleDir = (name: string): string =>
-  fileURLToPath(new URL(`../examples/${name}`, import.meta.url));
+  fileURLToPath(new URL(`../plugins/examples/${name}`, import.meta.url));
 
 describe('pluginPackageIdentity', () => {
   it('reads code and version from the plugin package.json', () => {

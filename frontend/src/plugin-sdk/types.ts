@@ -2,8 +2,10 @@
  * The plugin module contract, as types (spec/plugins/sdk-contract.md).
  *
  * Everything here is public API for out-of-tree plugins: additive-only within
- * a PLUGIN_API_VERSION major, and a rename is a version bump. Type-only
- * module — it must stay free of runtime code so importing it costs nothing.
+ * a PLUGIN_API_VERSION major, and a rename is a version bump. Types first:
+ * the only runtime values are the published id catalogues
+ * (HOST_NAV_SECTION_IDS, HOST_WARNING_IDS) — string literals, so importing
+ * this module still costs next to nothing; keep any other runtime code out.
  */
 import type { Component } from 'solid-js';
 import type { SupportedLocale } from '../intl';
@@ -30,6 +32,18 @@ export interface PluginManifest {
 export interface SlotStorePreferences {
   /** Gates the CIV aggregate-AMC surfaces on internal-order lines. */
   useConsumptionAndStockFromCustomersForInternalOrders: boolean;
+  /**
+   * The store's understock threshold, in months — the low-stock boundary.
+   *
+   * `undefined` until the store context resolves. There is no safe default
+   * here: unlike the booleans above, whose safe default is OFF, a threshold
+   * guessed wrong yields a figure that is confidently wrong, and a consumer
+   * states the store's own value in its label. So a consumer waits for it
+   * rather than substituting one — the same rule the dashboard holds itself
+   * to, where an unresolved threshold pauses the fetch instead of sending
+   * threshold-less variables (OMS-REG-DB-01.54).
+   */
+  monthsUnderstock: number | undefined;
 }
 
 /**
@@ -51,8 +65,10 @@ export interface SlotContext {
    */
   storeId: string | undefined;
   /**
-   * The user's permissions in the entered store, as the server's PascalCase
-   * `UserPermission` names (e.g. 'RequisitionMutate').
+   * The user's permissions in the entered store, as the wire's SCREAMING_SNAKE
+   * `UserPermission` enum values (e.g. 'REQUISITION_MUTATE') — NOT the
+   * PascalCase resource names the server's auth ERRORS carry
+   * ('RequisitionMutate').
    */
   permissions: readonly string[];
   /**
@@ -250,6 +266,17 @@ export interface ColumnDeclaration<Row, Data = unknown> {
    * synchronously from `data`; a contribution hidden by `when` never runs it.
    */
   loadData?: (rows: readonly Row[]) => Promise<Map<string, Data>>;
+  /**
+   * Declares the column sortable (sdk-contract § the column slot,
+   * AC-PLUG-K7): the value the host orders rows by when the user sorts on
+   * it, evaluated over the table's FULL row set — `data` is that row's
+   * `loadData` entry, loaded for the whole set. Numbers compare numerically,
+   * strings by locale; a `null`/`undefined` value sorts last in either
+   * direction, so a contribution that wants a placement for "no value"
+   * returns a sentinel (e.g. `Infinity`) instead. Omitted, no sort is
+   * offered on the column.
+   */
+  sortValue?: (row: Row, data?: Data) => ColumnValue;
 }
 
 /**
@@ -329,6 +356,76 @@ export type InternalOrderLineInfoPanelProps = {
   readonly line: InternalOrderLineView;
   readonly order: InternalOrderView;
 };
+
+// ── The internal-order side-panel section ───────────────────────────────────
+// The order DETAIL screen's side panel (internal-orders ui-surface § S8 ›
+// side-panel section region) — the record-level surface of the info-panel
+// kind: read-only decoration between the panel's own sections and its actions.
+
+/**
+ * The props an `internalOrder.sidePanelSection` contribution receives: the
+ * order the side panel describes and its full line set, as published view
+ * DTOs — the same views the line slots receive, so every internal-order
+ * surface shows one order one way.
+ *
+ * Both update IN PLACE as the order changes under an open panel (a saved
+ * line, a header save, a status change), so a contribution MUST read them
+ * through `props` on every render rather than destructuring them once — the
+ * host never remounts the section for a prop change (the info-panel props
+ * carry the same rule).
+ *
+ * A `type`, not an interface, so it carries an implicit index signature and is
+ * usable as the `P` of the uniform `Contribution<P>`.
+ */
+export type InternalOrderSidePanelSectionProps = {
+  readonly order: InternalOrderView;
+  /** Every line of the order — the detail screen's unpaginated set. */
+  readonly lines: readonly InternalOrderLineView[];
+};
+
+// ── Warning suppression ─────────────────────────────────────────────────────
+// The one CONSULTED slot: it renders nothing, ever. The host asks it a
+// question at a defined moment instead of giving it a region to draw in
+// (sdk-contract § the warning-suppression slot). Generic over host warnings:
+// the contribution names its target as data (a published warning id), so a
+// new suppressible warning is a new id here, never a new slot or SDK shape.
+
+/**
+ * The host warnings a plugin may suppress, as published ids — additive-only
+ * within a `PLUGIN_API_VERSION` major, like the slot catalogue itself. A
+ * contribution naming any other id is refused whole, by name (the same
+ * judgement as an unknown slot id): it was built against a host that
+ * publishes the warning, and this one does not.
+ *
+ * - `internalOrders.recentStocktake` — the store-wide recent-stocktake
+ *   warning at the internal-orders New-order action (internal-orders rules §
+ *   creation); consulted when New order is invoked with the warn preference
+ *   on.
+ */
+export const HOST_WARNING_IDS = ['internalOrders.recentStocktake'] as const;
+
+/** A published suppressible host warning id — a suppression target. */
+export type HostWarningId = (typeof HOST_WARNING_IDS)[number];
+
+/**
+ * How a plugin answers whether the host warning its contribution names is
+ * suppressed — replaced by a measure of the plugin's own (the Cook Islands
+ * item-level count freshness replacing the store-wide recent-stocktake
+ * warning). The host consults every visible contribution naming the warning
+ * at the moment the warning would otherwise show; any `true` suppresses it
+ * for that invocation, and the host's flow proceeds directly.
+ *
+ * `false` — and equally a thrown error or a rejected promise — leaves the
+ * warning to the host's own behaviour: a failing plugin can never strip a
+ * store of the one measure it has (rules § error isolation). The answer is
+ * per-store and MAY be asynchronous, because whether the replacement applies
+ * is typically the plugin's own data (the Cook Islands counting schedule);
+ * the host awaits it inside the in-flight state of the action that would
+ * show the warning.
+ */
+export type WarningSuppressionResolver = (
+  ctx: SlotContext
+) => boolean | Promise<boolean>;
 
 // ── Form participation ──────────────────────────────────────────────────────
 // The dirty/validity/veto/after-save handshake between a contribution and the
@@ -421,6 +518,12 @@ export interface SlotPropsMap {
   'dashboard.body': DashboardSlotProps;
   'internalOrderLine.column': ColumnCellProps<InternalOrderLineView>;
   'internalOrderLine.infoPanel': InternalOrderLineInfoPanelProps;
+  'internalOrder.sidePanelSection': InternalOrderSidePanelSectionProps;
+  // The consulted slot has no props: nothing renders, so there is nothing to
+  // receive. The empty entry only keeps the slot in the catalogue's uniform
+  // shape (`SlotId = keyof SlotPropsMap`) — deliberately not a named, exported
+  // type, which would publish a props DTO no plugin can ever be handed.
+  'host.warningSuppression': Record<string, never>;
   'prescription.paymentForm': PrescriptionPaymentFormProps;
 }
 
@@ -463,6 +566,14 @@ export interface SlotPlacement {
   'dashboard.body': NoPlacement;
   'internalOrderLine.column': ColumnDeclaration<InternalOrderLineView>;
   'internalOrderLine.infoPanel': NoPlacement;
+  // The side panel's region is one fixed place too — after the panel's own
+  // sections, before its actions — so there is no anchor to name.
+  'internalOrder.sidePanelSection': NoPlacement;
+  // Consulted, not placed: nothing renders, so there is nowhere to anchor.
+  // The one declaration is the TARGET — which published host warning the
+  // contribution suppresses; `when(ctx)` and the resolver's own answer do the
+  // rest.
+  'host.warningSuppression': { warning: HostWarningId };
   'prescription.paymentForm': NoPlacement;
 }
 
@@ -481,6 +592,13 @@ export interface SlotRender {
   'internalOrderLine.infoPanel': {
     Component: Component<InternalOrderLineInfoPanelProps>;
   };
+  'internalOrder.sidePanelSection': {
+    Component: Component<InternalOrderSidePanelSectionProps>;
+  };
+  // The second departure from the uniform `Component` shape (the column
+  // slot's `value` is the first): the consulted slot renders nothing, so its
+  // whole "render" is the answer it gives when consulted.
+  'host.warningSuppression': { suppresses: WarningSuppressionResolver };
   'prescription.paymentForm': {
     Component: Component<PrescriptionPaymentFormProps>;
   };
@@ -498,19 +616,168 @@ export type AnyContribution = {
     SlotRender[S];
 }[SlotId];
 
+// ── Pages & navigation ──────────────────────────────────────────────────────
+// The page contribution — NOT a slot (sdk-contract § the page contribution):
+// whole routed screens, each carrying its own routing, gating and (optional)
+// menu placement, joined to the host's one navigation registry so the menu,
+// the command palette, and the router can never disagree about them
+// (rules § pages & navigation). A menu group is a menu object, not a page —
+// it declares itself (`navSections`) and pages place themselves into it.
+
+/**
+ * The host's upper menu sections, as published placement targets — a plugin
+ * page or nav section MAY place itself against (or, for a page, inside) one of
+ * these ids (a section's id is its root path; Home's, whose path is empty, is
+ * `'home'`). The pinned lower cluster (Catalogue, Manage, Settings, Help) is
+ * not a target: plugin entries live in the upper list. A host-side test keeps
+ * this list identical to the real menu, so it can never drift.
+ */
+export const HOST_NAV_SECTION_IDS = [
+  'home',
+  'replenishment',
+  'inventory',
+  'distribution',
+  'dispensary',
+  'cold-chain',
+  'programs',
+  'reports',
+] as const;
+
+/** A published host upper-section id — a nav placement target. */
+export type HostNavSectionId = (typeof HOST_NAV_SECTION_IDS)[number];
+
+/**
+ * Where a page's navigation entry goes — one shape that covers every
+ * placement, so a new placement is never a new registration key:
+ *
+ * - `{ in }` — inside a menu section: one of the plugin's own
+ *   ({@link PluginNavSection} ids) or a published host section
+ *   ({@link HOST_NAV_SECTION_IDS}). An id that is neither refuses the plugin
+ *   at validation, by name. Inside a HOST section, `anchor` places the entry
+ *   against the section's own entry ids (an entry's id is its store-relative
+ *   path, e.g. `'inventory/stock'`); inside the plugin's own section, entries
+ *   keep `pages` declaration order and `anchor` is not read.
+ * - `{ root: true }` — a top-level entry in the menu's upper list, anchored
+ *   against the published host section ids.
+ *
+ * Absent `nav` means routed with no menu entry (and no palette row) — a
+ * detail-ish screen reached from the plugin's own UI, exactly like a host
+ * record screen.
+ *
+ * An anchor naming an entry the store's gates currently hide degrades to the
+ * container's end, named in plugin diagnostics — placement is a preference,
+ * never a gate.
+ */
+export type PluginNavPlacement =
+  | { in: HostNavSectionId | string; anchor?: Anchor<string>; root?: never }
+  | { root: true; anchor?: Anchor<HostNavSectionId>; in?: never };
+
+/** One routed screen a plugin contributes — a body, gates, and its address. */
+export interface PluginPage {
+  /** Unique within the plugin. */
+  id: string;
+  /**
+   * The page's full store-relative path — URL segments (letters, digits, `-`,
+   * `_`; each segment starts with a letter or digit). The SDK's own navigation
+   * primitives take exactly this path; the page owns everything below it
+   * (`stock-count/count/{something}` is the page's own to interpret). A path a
+   * host destination already holds refuses the whole plugin at validation; one
+   * an earlier plugin's page holds skips this page, visibly in diagnostics.
+   */
+  path: string;
+  /**
+   * The page's name — its breadcrumb, its browser-tab title, and its menu and
+   * palette label when placed — as a key in the plugin's catalogue, never a
+   * literal.
+   */
+  labelKey: PluginLocaleKey;
+  /**
+   * Loads the page's BODY component: called on first navigation to the page,
+   * never at startup (AC-PLUG-P2), behind the host's route-level pending
+   * boundary — `load: () => import('./CountPage')`. The host supplies the app
+   * frame and page frame (header, breadcrumb, the menu); the component owns
+   * only the body, receives no props, and fetches its own data through the
+   * SDK, like a dashboard body contribution does.
+   */
+  load: () => Promise<{ default: Component }>;
+  /**
+   * Store-context withhold — the capability-class gate: while it fails, the
+   * page is absent from the menu and the palette, and its URLs redirect to
+   * the landing screen, exactly as a function the store does not have. Gate
+   * POSITIVELY (`ctx.storeMode === 'dispensary'`) — see
+   * {@link SlotContext.storeMode}. Composed with the gate of the plugin nav
+   * section the page is placed in, where it is placed in one.
+   */
+  when?: (ctx: SlotContext) => boolean;
+  /**
+   * The permissions this page requires — ALL of them, as
+   * {@link SlotContext.permissions}' own server names. The permission-class
+   * gate, and the one condition behind both doors (AC-PLUG-P1): without them
+   * the entries are absent, and the page's URL shows the host's no-permission
+   * notice in place of the screen. Composed with its plugin nav section's,
+   * where the page is placed in one.
+   */
+  permissions?: readonly string[];
+  /** The menu placement; absent = routed, no menu entry. */
+  nav?: PluginNavPlacement;
+}
+
+/**
+ * A labelled menu group of the plugin's own — what the `navSections` key of a
+ * plugin definition declares. Purely a menu object: it has no path and no
+ * route of its own; pages join it by naming its id in their `nav.in`, and a
+ * section no offered page is placed in simply does not render.
+ */
+export interface PluginNavSection {
+  /** Unique within the plugin — the id pages name in `nav.in`. */
+  id: string;
+  /** The section's menu label — a key in the plugin's catalogue. */
+  labelKey: PluginLocaleKey;
+  /**
+   * Where the section sits in the menu's upper list, against the published
+   * host section ids ({@link HOST_NAV_SECTION_IDS}) — the one placement shape
+   * every anchored surface uses. Absent (or `{ end: true }`) means the end of
+   * the upper list, above the pinned lower cluster. An anchor naming a section
+   * the store's gates currently hide degrades to the end, named in plugin
+   * diagnostics — placement is a preference, never a gate.
+   */
+  anchor?: Anchor<HostNavSectionId>;
+  /**
+   * The group's capability-class gate, composed with each placed page's own:
+   * while it fails, every page placed in the section is withheld everywhere —
+   * menu, palette, and URL (redirect) — exactly as if each page's own `when`
+   * failed.
+   */
+  when?: (ctx: SlotContext) => boolean;
+  /**
+   * The group's permission-class gate, composed with each placed page's own:
+   * every named permission is required for every page placed in the section.
+   */
+  permissions?: readonly string[];
+}
+
 // ── The plugin module ───────────────────────────────────────────────────────
 
 /** A flat message catalogue — `key` → template, `{{ token }}` interpolated. */
 export type PluginMessages = Readonly<Record<string, string>>;
 
 /**
- * What the author passes to `definePlugin`. `pages` and `register` (the
- * imperative escape hatch) are not in v1 — they join here when a host surface
- * needs them.
+ * What the author passes to `definePlugin`. `register` (the imperative escape
+ * hatch) is not in v1 — it joins here when a host surface needs it.
  */
 export interface PluginDefinition {
   manifest: PluginManifest;
   contributions?: readonly AnyContribution[];
+  /**
+   * Whole routed screens — a flat list of {@link PluginPage}s, each carrying
+   * its own path, gates, and (optional) menu placement.
+   */
+  pages?: readonly PluginPage[];
+  /**
+   * The plugin's own labelled menu groups — the sections a page's
+   * `nav: { in }` places it into.
+   */
+  navSections?: readonly PluginNavSection[];
   /**
    * Registered under namespace = the plugin's code, layered under server
    * overrides.

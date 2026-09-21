@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createMemo,
   createSignal,
   lazy,
@@ -12,6 +11,7 @@ import { Navigate, useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+import { EmptyState } from '../ui/elements/feedback/EmptyState';
 import { t } from '../intl';
 import {
   findLeafByPath,
@@ -24,9 +24,17 @@ import { ShellSectionContext } from '../ui/layout/AppShell/shellContext';
 import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
-import { reportPermissionDenied } from '../api/graphql';
-import { deniedPermission, gateNav, routeAccess } from './navGates';
-import { storeRelativePath } from './storeRelativePath';
+import { gateNav, routeAccess } from './navGates';
+import {
+  mergeUpperNav,
+  pluginLeafByPath,
+  pluginSectionIconForPath,
+} from '../plugins/pluginPages';
+import { createRegionDiagnostics } from '../plugins/diagnostics';
+import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
+import { bindHostPathname } from './hostLocation';
+import { bindHostSearch } from './hostSearchParams';
+import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
@@ -40,6 +48,18 @@ const SyncModal = lazy(() =>
   import('../sections/sync-modal/SyncModal').then(m => ({
     default: m.SyncModal,
   }))
+);
+
+// The cold-chain notification band (spec/cold-chain-monitoring § S5) stands
+// above EVERY screen while the store runs the vaccine module and a breach or
+// excursion is outstanding, so it is mounted here — once, above the page —
+// rather than by the monitoring screen. Its own gate decides whether anything
+// renders or is even fetched; a store without the module costs nothing. Lazy,
+// so the band's chunk loads with the shell only once a session exists.
+const ColdChainNotification = lazy(() =>
+  import('../sections/cold-chain-monitoring/notification/ColdChainNotification').then(
+    m => ({ default: m.ColdChainNotification })
+  )
 );
 
 // The store editor is the settings vertical's chunk (spec/settings § S5) —
@@ -61,6 +81,27 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Programmatic navigation for host-adjacent code with no router context —
+  // today the plugin SDK's `navigateTo` (src/nav/hostNavigate.ts, which owns
+  // the adapter and why it resolves the way it does). Bound here because this
+  // shell is where navigation lives and it mounts once for the whole in-store
+  // app, which every plugin contribution renders inside.
+  bindHostNavigate(routerHostNavigate(navigate));
+
+  // The read half of the same surface: the SDK's `currentStorePath` derives a
+  // store-relative path from this reactive pathname, so a plugin page can
+  // interpret the paths below its own (src/nav/hostLocation.ts owns the
+  // binding contract).
+  bindHostPathname(() => location.pathname);
+
+  // And the address bar's query string, so a plugin list screen can keep its
+  // filter/sort/page there the way a host one does, and a page can read its
+  // own query (the SDK's usePageSearch)
+  // (src/nav/hostSearchParams.ts). Read only — the write side is built from
+  // the navigator bound above. Reactive: `location.search` is the router's own
+  // signal, so a Back button re-renders the screen reading it.
+  bindHostSearch(() => location.search);
+
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
   // → 'inventory/stocktakes'. The empty (store root) path is Home's own.
   // Four things below read it — the menu highlight, the tab title, the
@@ -74,8 +115,15 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // menu highlights by id, and '' matches nothing). labelKey is never rendered
   // for it, so any valid key satisfies the type.
   const NO_SELECTION: NavLeaf = { id: '', labelKey: 'label.home', to: '' };
+
+  // Plugin-contributed pages are the registry's other half (spec/navigation §
+  // plugin destinations): the highlight, the breadcrumb glyph and the menu all
+  // consult them after the host's own registry, so a contributed page behaves
+  // like a host destination on every surface (src/plugins/pluginPages.tsx).
   const selected = (): NavLeaf =>
-    findLeafByPath(relativePath()) ?? NO_SELECTION;
+    findLeafByPath(relativePath()) ??
+    pluginLeafByPath(relativePath()) ??
+    NO_SELECTION;
 
   // The browser tab names the screen the URL points at (spec/chrome § document
   // title) — the registry's label for the destination, the list entry for a
@@ -89,57 +137,59 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // page regions; shellContext › ShellSection). Record screens inherit their
   // list's section, the store root is Home's own registry entry, and an
   // off-registry path (the not-found catch-all) simply has none.
-  const sectionIcon = () => sectionIconForPath(relativePath());
+  const sectionIcon = () =>
+    sectionIconForPath(relativePath()) ??
+    pluginSectionIconForPath(relativePath());
 
   /*
-   * A destination's absolute URL. Every affordance that reaches one goes
-   * through here, so Home cannot end up with two spellings of a single
-   * address: its store-relative path is empty (navConfig), and the naive
-   * `/{store}/{to}` would give the menu entry a trailing slash the brand mark
-   * does not have — the same screen at two URLs, which is precisely what
-   * moving Home to the root removed (OMS-REG-NAV-01.22).
+   * A destination's URL, via the ONE join rule for store addresses
+   * (storeRelativePath § storePath) — so Home's empty path (navConfig) cannot
+   * give the menu entry a trailing slash the brand mark does not have: the
+   * same screen at two URLs, which is precisely what moving Home to the root
+   * removed (OMS-REG-NAV-01.22).
    */
-  const storeHref = (to: string) =>
-    to === '' ? `/${params.storeId}` : `/${params.storeId}/${to}`;
+  const storeHref = (to: string) => storePath(params.storeId, to);
 
-  // A permission-gated destination stays in the menu, but activating it
-  // refuses instead of navigating: the permission-denied dialog opens, naming
-  // the missing permission, and the user stays where they were
-  // (spec/navigation § permission gates, D94; OMS-REG-NAV-01.19).
-  const onNavigate = (leaf: NavLeaf) => {
-    const denied = deniedPermission(leaf);
-    if (denied !== undefined) {
-      reportPermissionDenied([denied]);
-      return;
-    }
-    navigate(storeHref(leaf.to));
-  };
+  const onNavigate = (leaf: NavLeaf) => navigate(storeHref(leaf.to));
 
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
-  // can go (spec/keyboard AC-KB4). The menu offers the same gated destinations
-  // at every viewport width, phone included (spec/navigation § mobile-friendly).
-  // Memoised so the gated arrays — and the section objects rebuilt when a
-  // child is dropped — keep stable references; otherwise MenuBar's <For> would
-  // remount nav sections on every shell re-render
+  // can go (spec/keyboard AC-KB4). The menu offers only what this user, in this
+  // store, can open — permission-withheld destinations are absent, not refused
+  // (spec/navigation § permission gates, D94; OMS-REG-NAV-01.18) — and the same
+  // gated set at every viewport width, phone included (spec/navigation §
+  // mobile-friendly). Memoised so the gated arrays — and the section objects
+  // rebuilt when a child is dropped — keep stable references; otherwise
+  // MenuBar's <For> would remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  const menuUpper = createMemo(() => gateNav(upperNav));
+  // Plugin sections join the UPPER list, each placed by its declared anchor
+  // against the host's published section ids — default the end of the list,
+  // above the pinned Catalogue/Manage/Settings/Help cluster (sdk-contract §
+  // the page contribution). Already gated by their own two gate classes; item
+  // identities are cached against the frozen declarations, so this memo hands
+  // MenuBar stable objects exactly as gateNav does
+  // (kdd/solid-reactivity-pitfalls). The merge is pure and REPORTS an anchor
+  // that names no rendered section (absent, or gate-hidden right now);
+  // recording is a write, so it happens in the region-diagnostics effect, the
+  // same split every anchored surface uses.
+  const menuMerge = createMemo(() => mergeUpperNav(gateNav(upperNav)));
+  createRegionDiagnostics(
+    () => menuMerge().diagnostics,
+    () => 'menu'
+  );
+  const menuUpper = () => menuMerge().items;
   const menuLower = createMemo(() => gateNav(lowerNav));
 
   // The router is the registry's third surface (spec/navigation § one
-  // registry): a capability-gated destination's URL is unreachable — it lands
-  // on Home (D70 generalised; OMS-REG-NAV-01.16) — and a
-  // permission-gated one lands there WITH the permission-denied dialog
-  // (OMS-REG-NAV-01.20). Sections with their own layout guards (patients,
+  // registry): a gated destination's URL never opens the screen. A
+  // capability-gated one lands on the landing screen silently (D70
+  // generalised; OMS-REG-NAV-01.16); a permission-withheld one stays put and
+  // shows a no-permission notice in the page body — no dialog, no redirect
+  // (D94; OMS-REG-NAV-01.19). Sections with their own layout guards (patients,
   // prescriptions, clinicians) keep them; this covers every destination
   // uniformly, placeholder pages included. Renders under StoreGuardLayout, so
   // the gates read a settled store context (no flash of a blocked screen).
   const access = createMemo(() => routeAccess(relativePath()));
-  createEffect(() => {
-    const verdict = access();
-    if (verdict.kind === 'forbidden')
-      reportPermissionDenied([verdict.permission]);
-  });
 
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
@@ -252,9 +302,31 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
           onSyncOpen={openSync}
           onLogoutRequest={() => setLogoutConfirmOpen(true)}
         />
+        {/* The cold-chain notification band, above the page's own app bar
+            (spec/cold-chain-monitoring ui-surface S5 § layout). Renders
+            nothing on a store without the vaccine module or with nothing
+            outstanding. */}
+        <ColdChainNotification />
         <Show
           when={access().kind === 'ok'}
-          fallback={<Navigate href={`/${params.storeId}`} />}
+          fallback={
+            /* A permission-withheld destination refuses in place: the URL
+               stays as typed under a no-permission notice, no dialog, no
+               redirect (spec/navigation § permission gates, D94;
+               OMS-REG-NAV-01.19). A capability-blocked route still redirects —
+               that function does not exist here, so there is nothing to
+               explain in place, and Home is always reachable. */
+            <Show
+              when={access().kind === 'denied'}
+              fallback={<Navigate href={storeHref('')} />}
+            >
+              <EmptyState
+                title={t('heading.cannot-do-that')}
+                message={t('messages.no-permission-for-screen')}
+                data-testid="no-permission-screen"
+              />
+            </Show>
+          }
         >
           {/* Wraps the PAGE, not the shell chrome: the only consumer is the
               page header's breadcrumb. */}

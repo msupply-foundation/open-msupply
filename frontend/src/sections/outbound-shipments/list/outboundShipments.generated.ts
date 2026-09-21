@@ -152,6 +152,13 @@ export type OutboundShipmentsVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    prescriptionRequestId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     purchaseOrderNumber?: {
     equalTo?: number | null;
     equalAny?: Array<number> | null;
@@ -232,7 +239,7 @@ export type InsertOutboundShipmentResult = {
   __typename: "InsertOutboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotACustomer" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -259,7 +266,7 @@ export type DeleteOutboundShipmentsResult = {
   __typename: "DeleteOutboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -288,7 +295,7 @@ export type DuplicateOutboundShipmentResult = {
   __typename: "DuplicateOutboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CustomerIsInactive";
   description: string;
 };
 });

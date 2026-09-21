@@ -51,7 +51,10 @@ impl<'a> SyncLogV5V6Repository<'a> {
         Ok(self.query(Pagination::one(), Some(filter), None)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: SyncLogV5V6Filter) -> Result<Vec<SyncLog>, RepositoryError> {
+    pub fn query_by_filter(
+        &self,
+        filter: SyncLogV5V6Filter,
+    ) -> Result<Vec<SyncLog>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
@@ -79,6 +82,9 @@ impl<'a> SyncLogV5V6Repository<'a> {
         }
 
         let final_query = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(sync_log::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
