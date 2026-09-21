@@ -374,22 +374,3 @@ export type PurchaseOrderShipmentsResult = {
 export const PurchaseOrderShipments = {
   query: "query purchaseOrderShipments($storeId: String!, $orderId: String!) {\n  invoices(\n    storeId: $storeId\n    filter: {purchaseOrderId: {equalTo: $orderId}, type: {equalTo: INBOUND_SHIPMENT}}\n    sort: {key: createdDatetime, desc: true}\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        theirReference\n        createdDatetime\n        receivedDatetime\n        otherPartyName\n      }\n    }\n  }\n}",
 } as TypedDocument<PurchaseOrderShipmentsResult, PurchaseOrderShipmentsVariables>;
-
-export type PurchaseOrderCurrenciesVariables = Record<string, never>;
-
-export type PurchaseOrderCurrenciesResult = {
-  currencies: ({
-  __typename: "CurrencyConnector";
-} & {
-  nodes: Array<{
-  id: string;
-  code: string;
-  rate: number;
-  isHomeCurrency: boolean;
-}>;
-});
-};
-
-export const PurchaseOrderCurrencies = {
-  query: "query purchaseOrderCurrencies {\n  currencies(filter: {isActive: true}, sort: {key: currencyCode}) {\n    ... on CurrencyConnector {\n      __typename\n      nodes {\n        id\n        code\n        rate\n        isHomeCurrency\n      }\n    }\n  }\n}",
-} as TypedDocument<PurchaseOrderCurrenciesResult, PurchaseOrderCurrenciesVariables>;

@@ -22,17 +22,3 @@ query serviceItems($storeId: String!) {
     }
   }
 }
-
-# Active currencies for the change-currency modal. No storeId arg.
-query activeCurrencies {
-  currencies(filter: { isActive: true }) {
-    ... on CurrencyConnector {
-      __typename
-      nodes {
-        id
-        code
-        isHomeCurrency
-      }
-    }
-  }
-}
