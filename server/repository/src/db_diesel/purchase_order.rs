@@ -119,7 +119,7 @@ impl<'a> PurchaseOrderRepository<'a> {
                     )
                 }
                 PurchaseOrderSortField::OrderTotalAfterDiscount => {
-                    apply_sort_asc_nulls_first!(
+                    apply_sort!(
                         query,
                         sort,
                         purchase_order_stats::order_total_after_discount
