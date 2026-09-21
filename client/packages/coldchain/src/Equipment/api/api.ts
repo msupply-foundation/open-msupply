@@ -163,9 +163,8 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
-    // The export. The list's own filters, unpaginated — but the store
-    // restrictions are deliberately NOT applied: an export is a register-wide
-    // extract, so it covers every store's equipment from either destination.
+    // The export. The list's own filters and the list's own store scope,
+    // unpaginated — so the file is what the screen shows (issue #693).
     listAll: async (
       { sortBy, filterBy }: ListParams<AssetFragment>,
       isColdChain?: boolean

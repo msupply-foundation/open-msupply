@@ -9,9 +9,9 @@ import type { AssetRowFragment } from '../equipment.generated';
 // replacement flag, the notes, the timestamps, and one column per specification
 // key. On a central server a store column leads.
 //
-// The rows this is handed are NOT the filtered list: the export covers the
-// whole register (rules › export). That is the export's own doing, not this
-// formatter's — see ExportEquipmentAction.
+// The rows this is handed are the screen's own — the active filters and the
+// destination's store scope, unpaginated (rules › export). Which rows those are
+// is the export's doing, not this formatter's — see ExportEquipmentAction.
 
 /**
  * The row shape the export needs. A superset of the list row: the export also
