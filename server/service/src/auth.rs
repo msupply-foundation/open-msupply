@@ -115,6 +115,7 @@ pub enum Resource {
     // patient
     QueryPatient,
     MutatePatient,
+    AllocatePatientNumber,
     // patient program
     QueryProgram,
     QueryEncounter,
@@ -648,6 +649,18 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(PermissionType::PatientMutate),
             // permission to read the related doc types when reading the mutated patient
             PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+        ]),
+    );
+    // The patient-code counter. A patient-side action despite the counter being
+    // a NumberRowType::Program one: the user is creating a patient, not a
+    // program enrolment, so it must not drag in the program/document
+    // permissions (#268). Deliberately NOT Resource::MutatePatient — that also
+    // requires DocumentQuery, and allocating a number reads no document.
+    map.insert(
+        Resource::AllocatePatientNumber,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PatientMutate),
         ]),
     );
     map.insert(
@@ -1473,6 +1486,71 @@ mod validate_resource_permissions_test {
             &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
+    }
+}
+
+#[cfg(test)]
+mod allocate_patient_number_test {
+    use repository::{PermissionType, UserPermissionRow};
+
+    use super::{all_permissions, validate_resource_permissions, Resource, ResourceAccessRequest};
+
+    fn permission(permission: PermissionType) -> UserPermissionRow {
+        UserPermissionRow {
+            id: format!("{permission:?}"),
+            user_id: "test_user_id".to_string(),
+            store_id: Some("test_store_id".to_string()),
+            permission,
+            context_id: None,
+        }
+    }
+
+    /// The patient-code counter must cost PatientMutate and nothing else
+    /// (#268). It used to be gated on Resource::MutateProgram, whose
+    /// DocumentMutate is granted only by a program context from central — so
+    /// on a datafile without programs configured, no combination of store
+    /// permissions could reach it and the Generate button never appeared.
+    #[actix_rt::test]
+    async fn allocate_patient_number_needs_only_patient_mutate() {
+        let user_id = "test_user_id";
+        let resource_request = ResourceAccessRequest {
+            resource: Resource::AllocatePatientNumber,
+            store_id: Some("test_store_id".to_string()),
+            require_central_standalone: false,
+        };
+        let required_permissions = all_permissions()
+            .get(&Resource::AllocatePatientNumber)
+            .expect("AllocatePatientNumber must be mapped")
+            .clone();
+
+        let validate = |user_permissions: &[UserPermissionRow]| {
+            validate_resource_permissions(
+                user_id,
+                user_permissions,
+                &resource_request,
+                &required_permissions,
+                &mut Vec::new(),
+            )
+        };
+
+        // Store access plus patient-mutate is enough — no document/program
+        // permission of any kind.
+        assert!(validate(&[
+            permission(PermissionType::StoreAccess),
+            permission(PermissionType::PatientMutate),
+        ])
+        .is_ok());
+
+        // ... and patient-mutate is genuinely required: the document-mutate
+        // that used to gate this does not stand in for it.
+        assert!(validate(&[
+            permission(PermissionType::StoreAccess),
+            permission(PermissionType::DocumentMutate),
+        ])
+        .is_err());
+
+        // Store access is still required, as for every other store resource.
+        assert!(validate(&[permission(PermissionType::PatientMutate)]).is_err());
     }
 }
 
