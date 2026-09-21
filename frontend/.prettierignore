@@ -18,15 +18,8 @@ spec/schema.graphql
 # compare byte-for-byte against the (non-Prettier) generator output.
 codegen
 
-# CIV's backend half. It builds and type-checks here, but the source arrived
-# from msupply-foundation/civ-plugins formatted to that repo's conventions;
-# #417 carries reformatting it (see plugins/civ/backend/README.md). Named
-# rather than globbed as plugins/*/backend, to match eslint.config.js: the
-# backend halves written HERE — the reference plugin (examples/*/backend) and
-# plugins/cook_islands/backend — are ours outright and ARE formatted.
-plugins/civ/backend
-
-# A prebuilt bundle is a build artifact wherever it appears.
+# A prebuilt bundle is a build artifact wherever it appears — a committed
+# build is packed verbatim, so reformatting it would change what ships.
 plugins/*/backend/prebuilt
 
 # Lockfile

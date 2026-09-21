@@ -1,0 +1,79 @@
+# Purchase-orders LIST screen (spec/purchase-orders S1) + the list's delete.
+# Filter / sort / pagination are carried as the GraphQL input types
+# (PurchaseOrderFilterInput, PurchaseOrderSortInput, PaginationInput) so the
+# URL state maps straight onto them with no remapping (kdd/type-safety).
+
+fragment PurchaseOrderRow on PurchaseOrderNode {
+  id
+  number
+  # Nullable on the wire: the supplier is a resolved NameNode, so a row can
+  # report no supplier at all (spec S1 column 1 renders it as absent).
+  supplier {
+    id
+    name
+  }
+  createdDatetime
+  confirmedDatetime
+  sentDatetime
+  requestedDeliveryDate
+  status
+  # Synchronised data only — nothing in this vertical writes it (contract ⚠️
+  # targetMonths is readable and sortable but writable by nothing).
+  targetMonths
+  # The list's "Total cost": the DISCOUNTED total, which EXCLUDES the order's
+  # additional charges, so it is not the final cost an order's own screen
+  # presents (rules § listing orders). Fabricated as 0.0 for a line-less order
+  # (contract ⚠️) — which is every order this list's create action makes.
+  orderTotalAfterDiscount
+  currency {
+    code
+  }
+  # Line count only: the list reports how many lines an order has, never the
+  # lines themselves (README § glossary). Batched server-side, so it costs one
+  # query for the page.
+  lines {
+    totalCount
+  }
+  comment
+}
+
+query purchaseOrders(
+  $storeId: String!
+  $filter: PurchaseOrderFilterInput
+  $sort: [PurchaseOrderSortInput!]
+  $page: PaginationInput
+) {
+  purchaseOrders(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on PurchaseOrderConnector {
+      __typename
+      totalCount
+      nodes {
+        ...PurchaseOrderRow
+      }
+    }
+  }
+}
+
+# Delete one order. There is NO batch mutation, so a multi-select delete is N
+# independent calls, each succeeding or failing on its own (contract § deleting
+# an order from the list) — see deletePurchaseOrders.ts for the fold.
+#
+# Two of the three ways a delete can fail are NOT members of this union:
+# an order a shipment points at fails as a top-level `Internal error` (the
+# guard exists only as a database foreign key), and the status gate is
+# bypassable in two calls. Both are contract wire traps; the typed members are
+# the state refusal (CannotDeletePurchaseOrder) and a missing record.
+mutation deletePurchaseOrder($storeId: String!, $id: String!) {
+  deletePurchaseOrder(storeId: $storeId, id: $id) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeletePurchaseOrderError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

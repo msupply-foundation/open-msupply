@@ -137,8 +137,6 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
       header: () => t('label.program'),
     },
     {
-      // A transferred requisition's generated "From internal order N" text
-      // (rules › origin) reads here.
       c: { accessor: row => row.theirReference ?? '', id: 'theirReference' },
       header: () => t('label.reference'),
       ...getCellDefinition('theirReference'),
@@ -191,7 +189,7 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
             <NameSearch
               storeId={props.storeId}
               role="supplier"
-              storeBacked
+              parties="internal"
               label={t('label.supplier-name')}
               hideLabel
               clearable={false}
