@@ -11,6 +11,7 @@ import {
   canImport,
   compareReviewRows,
   failedRowsToCsv,
+  parseImportBoolean,
   parseImportNumber,
   parsePropertyCell,
   reviewRowText,
@@ -494,6 +495,48 @@ describe('OMS-REG-CCE-07.8 — an unreadable status falls back to Functioning', 
   it('falls back for a blank or unmatched value', () => {
     expect(parseImportStatus('')).toBe('FUNCTIONING');
     expect(parseImportStatus('broken-ish')).toBe('FUNCTIONING');
+  });
+});
+
+describe('one boolean vocabulary, whatever column it is in', () => {
+  /*
+   * A file carries its yes/no in one vocabulary; the app used to read it in
+   * two. A Russian user's `Да` set the replacement flag and was dropped from a
+   * boolean specification column one cell over, and a `1` did the reverse.
+   */
+  it('reads the raw booleans the current app exports', () => {
+    expect(parseImportBoolean('true')).toBe(true);
+    expect(parseImportBoolean('FALSE')).toBe(false);
+  });
+
+  it('reads the words a user types, and 1/0', () => {
+    for (const yes of ['yes', 'Y', '1'])
+      expect(parseImportBoolean(yes)).toBe(true);
+    for (const no of ['no', 'N', '0'])
+      expect(parseImportBoolean(no)).toBe(false);
+  });
+
+  it('reads the Yes/No this app’s own export writes, in the reader’s language', () => {
+    expect(parseImportBoolean(t('messages.yes'))).toBe(true);
+    expect(parseImportBoolean(t('messages.no'))).toBe(false);
+  });
+
+  it('answers undefined when the cell answers nothing', () => {
+    expect(parseImportBoolean('')).toBeUndefined();
+    expect(parseImportBoolean('maybe')).toBeUndefined();
+  });
+
+  it('is the SAME vocabulary the specification column reads', () => {
+    const boolean = { valueType: 'BOOLEAN', allowedValues: null } as never;
+    for (const cell of ['1', t('messages.yes'), 'y', 'true']) {
+      expect(
+        parsePropertyCell(cell, boolean),
+        `"${cell}" in a property column`
+      ).toBe(true);
+      expect(parseNeedsReplacement(cell), `"${cell}" in the flag column`).toBe(
+        true
+      );
+    }
   });
 });
 
