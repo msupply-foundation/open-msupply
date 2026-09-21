@@ -83,9 +83,9 @@ type ListState = {
 
 // Default sort: newest created first (rules § listing orders), declared in ONE
 // place — the reference app declares it twice, in its URL hook and its table,
-// and the two disagree (contract ⚠️ two different default sorts). Supplier is
-// the list's one default filter, so its key is seeded present-but-empty (null,
-// FilterBar's "added but empty" marker) and stripEmpty drops it from the query.
+// and the two disagree (README defect 20). Supplier is the list's one default
+// filter, so its key is seeded present-but-empty (null, FilterBar's "added but
+// empty" marker) and stripEmpty drops it from the query.
 const DEFAULT_STATE: ListState = {
   filter: { supplier: null },
   sort: [{ key: 'createdDatetime', desc: true }],
