@@ -90,9 +90,23 @@ const assetParsers = {
 
 // What this register is reading, in one place: the class pinning that makes it
 // the cold chain register, the screen's own filters, and — for the LIST only —
-// the store restriction the Cold chain destination carries (the server scopes
-// neither). The export calls this without the two store arguments on purpose:
-// its filters must match the screen, its scope is the whole register.
+// the store restriction the Cold chain destination MEANS to carry (the server
+// scopes neither). The export calls this without the two store arguments on
+// purpose: its filters must match the screen, its scope is the whole register.
+//
+// ⚠️ `storeCode` never arrives. Its caller derives the flag from
+// `useCentralServerCallback()`, which returns an OBJECT of callbacks and is
+// therefore always truthy, so the ternary in useAssets.ts always picks
+// `undefined` and the `store` clause below is never built — on any site. The
+// register is unscoped everywhere, and on a non-central site it is unscoped
+// without even the Store column that would name the owner.
+//
+// Left as-is here deliberately. It is captured as current behaviour in the new
+// front end's spec (frontend/spec/cold-chain-equipment/contract.md § the two
+// destinations, "wire trap — the non-central store-code restriction is dead
+// code", confirmed live), and that front end was built to match it. Making the
+// restriction fire would re-scope the list on every non-central site and put
+// the two apps out of step — a product decision, not a comment fix.
 const assetListFilter = (
   storeId: string,
   filterBy?: FilterBy | null,

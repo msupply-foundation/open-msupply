@@ -30,6 +30,12 @@ export const useAssets = () => {
   // LIST's concern only — the export covers every store (useAssetsAll).
   const isColdChain = usePathnameIncludes('cold-chain');
   const { store } = useAuthContext();
+  // ⚠️ Always truthy: this hook returns an OBJECT of callbacks
+  // ({ executeIfCentralOrShowWarning }), not a boolean — so `storeCode` is
+  // always undefined and the store restriction below is never sent, on any
+  // site. `useIsCentralServerApi()` is the boolean one. Captured as current
+  // behaviour in the new front end's spec (api.ts § assetListFilter explains
+  // why it is left standing); making it fire is a product decision.
   const isCentralServer = useCentralServerCallback();
   const storeCode = isCentralServer ? undefined : store?.code;
 
