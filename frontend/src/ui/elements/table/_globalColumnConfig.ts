@@ -180,6 +180,11 @@ export const CELL_DEF = {
   // box 4.5rem left. At 4.5rem all three broke mid-word AND clipped past the
   // 2-line clamp; 5rem fits each on two lines whole.
   numberOfPacks: { kind: 'number', size: 5 },
+  // The supplier's declared count, headed "Packs shipped". Deliberately the
+  // same 5 as numberOfPacks above: the inbound line table reads the two side
+  // by side with Difference between them, and "shipped" measures as "received"
+  // does, so a mismatched pair would read as a mistake rather than a pair.
+  shippedNumberOfPacks: { kind: 'number', size: 5 },
   countedNumberOfPacks: { kind: 'number', size: 8 },
   // Same 8 as its counted twin, and for the same reason: the figure is narrow
   // but "Packs snapshot" is not, and a stocktake reads the two side by side, so

@@ -146,6 +146,7 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   location: false,
   unitName: false,
   dosesPerUnit: false,
+  shippedNumberOfPacks: false,
   difference: false,
   unitQuantity: false,
   doses: false,
@@ -788,6 +789,17 @@ const InboundShipmentDetailView: Component = () => {
         c: { key: 'numberOfPacks' },
         header: () => t('label.packs-received'),
         ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
+      },
+      // Packs shipped — what the supplier declared they sent. Sits between
+      // Packs received and Difference so the subtraction reads left to right
+      // in the order it is performed, and so the Difference is never shown
+      // without the figure it is measured against (issue #562). Ungated and
+      // hidden-by-default on a narrow table, exactly like Difference: the two
+      // are a pair and must appear and disappear together.
+      {
+        c: { key: 'shippedNumberOfPacks' },
+        header: () => t('label.shipped-number-of-packs'),
+        ...getCellDefinition('shippedNumberOfPacks'),
       },
       // Difference (H6) — received packs minus supplier-shipped packs, so the
       // figure reads against Packs received beside it: POSITIVE means more
