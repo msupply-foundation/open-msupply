@@ -158,6 +158,32 @@ export const parseImportStatus = (value: string): AssetStatus => {
 };
 
 /**
+ * A cell that answers yes or no → the answer, or `undefined` where it does not
+ * answer at all.
+ *
+ * ONE vocabulary for every boolean a file can carry, because a file carries
+ * them in one column and the app read them in two: the raw `true`/`false` the
+ * current app exports, the plain words a user types, and the `Yes`/`No` this
+ * app's own export writes IN THE READER'S LANGUAGE. Split, a Russian user's
+ * `Да` set the replacement flag and was dropped from a boolean specification
+ * column one cell over, and a `1` did the reverse — the same silent mismatch
+ * this vertical keeps turning up.
+ */
+const AFFIRMATIVE = /^(true|yes|y|1)$/i;
+const NEGATIVE = /^(false|no|n|0)$/i;
+
+export const parseImportBoolean = (raw: string): boolean | undefined => {
+  const value = raw.trim();
+  if (!value) return undefined;
+  if (AFFIRMATIVE.test(value)) return true;
+  if (NEGATIVE.test(value)) return false;
+  const lower = value.toLowerCase();
+  if (lower === t('messages.yes').trim().toLowerCase()) return true;
+  if (lower === t('messages.no').trim().toLowerCase()) return false;
+  return undefined;
+};
+
+/**
  * A numeric cell → a number, or `undefined` where it does not read as one.
  *
  * A dot is always the decimal mark. A comma is the decimal mark too — `12,5`
@@ -234,11 +260,7 @@ export const parsePropertyCell = (
   const value = raw.trim();
   if (!value) return undefined;
 
-  if (definition.valueType === 'BOOLEAN') {
-    if (/^(true|yes|y|1)$/i.test(value)) return true;
-    if (/^(false|no|n|0)$/i.test(value)) return false;
-    return undefined;
-  }
+  if (definition.valueType === 'BOOLEAN') return parseImportBoolean(value);
 
   if (definition.valueType === 'INTEGER' || definition.valueType === 'FLOAT') {
     const parsed = parseImportNumber(value, decimalComma);
@@ -270,16 +292,11 @@ export const parsePropertyCell = (
  *
  * Purely additive: every value that set the flag before still sets it.
  */
-export const parseNeedsReplacement = (value: string): boolean => {
-  // Unchanged: anything containing "true", which is what the import's own
-  // failed-rows file writes.
-  if (/true/i.test(value)) return true;
-  const normalised = value.trim().toLowerCase();
-  if (!normalised) return false;
-  // Added: the affirmative the EXPORT writes, in the reader's own language.
-  if (normalised === t('messages.yes').trim().toLowerCase()) return true;
-  return /^(yes|y)$/.test(normalised);
-};
+// The flag is a boolean, never absent: a cell that answers nothing means the
+// asset is not flagged. The substring match stays because the import's own
+// failed-rows file has always written a bare `true`.
+export const parseNeedsReplacement = (value: string): boolean =>
+  /true/i.test(value) || parseImportBoolean(value) === true;
 
 type Lookup = {
   catalogueItems: readonly { id: string; code: string }[];
