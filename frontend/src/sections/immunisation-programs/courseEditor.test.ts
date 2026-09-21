@@ -13,12 +13,9 @@ import {
   ageEntryTotal,
   doseProblem,
   fieldProblem,
-  joinMonths,
-  settleAgeEntry,
   newCourseDraft,
   nextDose,
   setStoreRate,
-  splitMonths,
   storeRate,
   updateInput,
   updateOutcome,
@@ -305,7 +302,7 @@ describe('OMS-REG-IMM-01.52 / OMS-REG-IMM-01.53 / OMS-REG-IMM-01.54 — the dose
   });
 });
 
-describe("when each check reports — the typed-value rules at once, the required family on Save (ui-standards › form submits validate on click; OMS-REG-IMM-01.53 / .54 / .64)", () => {
+describe('when each check reports — the typed-value rules at once, the required family on Save (ui-standards › form submits validate on click; OMS-REG-IMM-01.53 / .54 / .64)', () => {
   // A blank new course (name, item required) with a too-large wastage rate
   // and one dose that is both unlabelled and ends before it starts.
   const failing = (): ValidationItem[] => {
@@ -389,14 +386,14 @@ describe("when each check reports — the typed-value rules at once, the require
 
 describe('OMS-REG-IMM-01.56 — ages are months on the wire, years + months on screen', () => {
   it('splits 15 months into 1 year 3 months and 9.5 into 0 years 9.5 months', () => {
-    expect(splitMonths(15)).toEqual({ years: 1, months: 3 });
-    expect(splitMonths(9.5)).toEqual({ years: 0, months: 9.5 });
-    expect(splitMonths(0)).toEqual({ years: 0, months: 0 });
+    expect(ageEntryFromTotal(15)).toEqual({ years: 1, months: 3 });
+    expect(ageEntryFromTotal(9.5)).toEqual({ years: 0, months: 9.5 });
+    expect(ageEntryFromTotal(0)).toEqual({ years: 0, months: 0 });
   });
 
   it('joins back to the single months figure', () => {
-    expect(joinMonths(1, 3)).toBe(15);
-    expect(joinMonths(0, 9.5)).toBe(9.5);
+    expect(ageEntryTotal({ years: 1, months: 3 })).toBe(15);
+    expect(ageEntryTotal({ years: 0, months: 9.5 })).toBe(9.5);
   });
 });
 
@@ -720,20 +717,19 @@ describe('OMS-REG-IMM-01.64 / OMS-REG-IMM-01.56 — the age pair as typed (IMM-2
     );
   });
 
-  it('settles the typed pair into whole years and the remaining months', () => {
-    expect(settleAgeEntry({ years: 1, months: 6.5 })).toEqual({
-      years: 1,
-      months: 6.5,
-    });
-    expect(settleAgeEntry({ years: 1, months: 13 })).toEqual({
-      years: 2,
-      months: 1,
-    });
-    // A settled pair is a fixed point.
-    expect(settleAgeEntry({ years: 1, months: 9 })).toEqual({
-      years: 1,
-      months: 9,
-    });
+  it('is its own inverse on every pair the two fields can hold', () => {
+    // Why the cells need no settling on the way out (PR #749 review, F4): the
+    // years half is whole and the months half is capped at 11, so summing the
+    // pair and splitting it again always returns the pair as typed. Pin it —
+    // lifting either bound would put the round trip back in play.
+    for (const years of [0, 1, 2, 7]) {
+      for (const months of [0, 1.5, 6, 9.5, 11]) {
+        expect(ageEntryFromTotal(ageEntryTotal({ years, months }))).toEqual({
+          years,
+          months,
+        });
+      }
+    }
   });
 
   it('opens a stored figure as whole years and the remaining months', () => {
@@ -747,12 +743,15 @@ describe('OMS-REG-IMM-01.64 / OMS-REG-IMM-01.56 — the age pair as typed (IMM-2
     // keystroke, and the years half took a fraction: after "1.7" the months
     // half read 8.4, so "1.75" joined with 8.4 and stored 29.4 — not 21. The
     // years half is whole now, and the pair is held as typed.
-    const afterOnePointSeven = splitMonths(joinMonths(1.7, 0));
+    const afterOnePointSeven = ageEntryFromTotal(
+      ageEntryTotal({ years: 1.7, months: 0 })
+    );
     expect(afterOnePointSeven.months).toBeCloseTo(8.4);
-    expect(joinMonths(1.75, afterOnePointSeven.months)).toBeCloseTo(29.4);
-    expect(settleAgeEntry({ years: 1, months: 9 })).toEqual({
-      years: 1,
-      months: 9,
-    });
+    expect(
+      ageEntryTotal({ years: 1.75, months: afterOnePointSeven.months })
+    ).toBeCloseTo(29.4);
+    // What the pair does instead: 1 y 9 m is stored, and reads back as typed.
+    expect(ageEntryTotal({ years: 1, months: 9 })).toBe(21);
+    expect(ageEntryFromTotal(21)).toEqual({ years: 1, months: 9 });
   });
 });

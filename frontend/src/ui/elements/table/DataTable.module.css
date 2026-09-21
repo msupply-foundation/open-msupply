@@ -66,6 +66,21 @@
   flex: 1;
   flex-direction: column;
   min-block-size: 0;
+  /* Anchors the floating refetch spinner below. */
+  position: relative;
+}
+
+/* The refetch indicator when there is no toolbar row to hold it (see
+   DataTable's refetchSpinner): the table area's top inline-end corner, over
+   the sticky header band. */
+.floatingLoading {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  inset-block-start: var(--space-1);
+  inset-inline-end: var(--space-2);
+  color: var(--text-secondary);
 }
 
 /* The scroll box is borderless — the frame on .root encloses it, the

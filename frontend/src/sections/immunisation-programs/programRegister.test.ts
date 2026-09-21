@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_REGISTER_STATE,
@@ -12,7 +13,7 @@ import {
 //   OMS-REG-IMM-01.21  the name filter is a contains match
 //   OMS-REG-IMM-01.22  the courses column names the live courses only
 //   OMS-REG-IMM-01.23  a program with no course shows a blank cell
-//   OMS-REG-IMM-01.25 twenty to a page
+//   OMS-REG-IMM-01.25 the pager reaches past the first page
 // The list's rules live in pure functions, so each is pinned at the wire
 // mapping the screen sends (contract.md § the program list).
 
@@ -93,10 +94,10 @@ describe('OMS-REG-IMM-01.22 / OMS-REG-IMM-01.23 — the Vaccine courses cell', (
   });
 });
 
-describe('OMS-REG-IMM-01.25 — twenty to a page', () => {
-  it('defaults to a page of 20 from offset 0, and carries the page it is given', () => {
+describe('OMS-REG-IMM-01.25 — the pager reaches past the first page', () => {
+  it('defaults to the standard page size from offset 0, and carries the page it is given', () => {
     expect(programVariables(STORE, DEFAULT_REGISTER_STATE).page).toEqual({
-      first: 20,
+      first: DEFAULT_PAGE_SIZE,
       offset: 0,
     });
     expect(

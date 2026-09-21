@@ -1,5 +1,5 @@
 import { createMemo, createRoot, createSignal, type Accessor } from 'solid-js';
-import { graphqlFetch } from '../api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '../api/graphql';
 import {
   StoreContext,
   type StoreContextResult,
@@ -341,6 +341,28 @@ const hasPermission = (permission: UserPermission): boolean => {
   );
 };
 
+// The wire's PascalCase spelling of the same permission — the form an actual
+// Forbidden carries as `HasPermission(EditCentralData)`, and the form the
+// permission-denied modal humanises. The SCREAMING_CASE name above is the
+// store context's; the two must stay in step, which is why they sit together.
+const EDIT_CENTRAL_DATA = 'EditCentralData';
+
+/**
+ * The central-administration write guard: the standing-capability mirror the
+ * central screens share (ui-standards › validation § permission gating).
+ * Returns true when the user may write central data; otherwise raises the
+ * global permission-denied modal — the same one a server Forbidden routes to
+ * — and returns false, so the caller sends nothing.
+ *
+ * Used by Manage › Demographics and Programs › Immunizations, which had a
+ * verbatim copy each (PR #749 review, F11). The server stays the real guard.
+ */
+const guardCentralDataEdit = (): boolean => {
+  if (hasPermission('EDIT_CENTRAL_DATA')) return true;
+  reportPermissionDenied([EDIT_CENTRAL_DATA]);
+  return false;
+};
+
 export {
   storeContext,
   refetch as refetchStoreContext,
@@ -359,5 +381,6 @@ export {
   hasProgramModule,
   hasProcurement,
   hasPermission,
+  guardCentralDataEdit,
 };
 export type { UserPermission, StoreMode };

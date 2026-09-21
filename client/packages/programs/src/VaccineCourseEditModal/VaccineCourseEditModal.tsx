@@ -361,16 +361,14 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
               onChange={e =>
                 updatePatch({ useInGapsCalculations: e.target.checked })
               }
-              inputProps={{ 'data-testid': 'vaccine-course-gaps-checkbox' } as never}
+              testId="vaccine-course-gaps-checkbox"
             />
           </Row>
           <Row label={t('label.can-skip-dose')}>
             <Checkbox
               checked={draft?.canSkipDose ?? false}
               onChange={e => updatePatch({ canSkipDose: e.target.checked })}
-              inputProps={
-                { 'data-testid': 'vaccine-course-skip-dose-checkbox' } as never
-              }
+              testId="vaccine-course-skip-dose-checkbox"
             />
           </Row>
           <Box flex={1} display="flex" justifyContent="flex-end" paddingTop={1.5}>

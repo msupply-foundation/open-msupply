@@ -1232,18 +1232,27 @@ export function DataTable<T, K extends string, G extends string = never>(
     !!props.pagination ||
     (!props.controlsMount && hasControls());
 
+  // Loading indicator — a small inline spinner shown while a fetch runs AND
+  // rows are already showing (a refetch on filter/sort/page — keepPreviousData
+  // keeps the rows put). Signals "updating" without blanking or remounting the
+  // table (#160/#196). Initial load (no rows yet) uses the centred spinner
+  // below instead, so the two never show together.
+  //
+  // Its home is the toolbar, just left of the icon controls. A table with no
+  // toolbar row at all (see hasToolbar) would otherwise lose the indicator
+  // entirely — a search-driven modal list refetching with no sign of it — so
+  // there it floats in the table area's corner instead. Exactly one of the
+  // two renders.
+  const refetching = () =>
+    !!props.loading && table.getRowModel().rows.length > 0;
+  const refetchSpinner = (): JSX.Element => (
+    <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
+  );
+
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
-      {/* Loading indicator — a small inline spinner just to the LEFT of the
-            icon controls while a fetch runs AND rows are already showing (a
-            refetch on filter/sort/page — keepPreviousData keeps the rows
-            put). Signals "updating" without blanking or remounting the table
-            (#160/#196). Initial load (no rows yet) uses the centred spinner
-            below instead, so the two never show together. */}
-      <Show when={props.loading && table.getRowModel().rows.length > 0}>
-        <span class={styles.toolbarLoading}>
-          <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
-        </span>
+      <Show when={refetching()}>
+        <span class={styles.toolbarLoading}>{refetchSpinner()}</span>
       </Show>
       {/* Sort control — card view only (no clickable headers there): a
             labelled popover showing the active sort field + direction, listing
@@ -1468,6 +1477,10 @@ export function DataTable<T, K extends string, G extends string = never>(
           footer bar, so the scroll box inside it is full-height even for a
           short list. */}
       <div class={styles.tableArea}>
+        {/* The refetch indicator for a table with no toolbar to hold it. */}
+        <Show when={!hasToolbar() && refetching()}>
+          <span class={styles.floatingLoading}>{refetchSpinner()}</span>
+        </Show>
         <div
           class={styles.tableScroll}
           ref={scrollBox}

@@ -1,7 +1,7 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
-import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
+import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
@@ -19,7 +19,7 @@ import {
 import { getNumberCell } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
 import { PlusCircleIcon } from '@/ui/icons';
-import { hasPermission } from '@/store/storeContext';
+import { guardCentralDataEdit } from '@/store/storeContext';
 import { useUrlQueryState } from '@/list/urlQueryState';
 import { initialPageSize, rememberPageSize } from '@/list/pageSize';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
@@ -51,8 +51,6 @@ import { DeleteCoursesAction } from './DeleteCoursesAction';
 // (S4). No action footer of its own: the screen is left by the breadcrumb
 // (controls › footer button identity).
 
-const EDIT_CENTRAL_DATA = 'EditCentralData';
-
 const ProgramDetail: Component = () => {
   const params = useParams<{ storeId: string; programId: string }>();
   const { query, setQuery } = useUrlQueryState<CourseListState>({
@@ -72,11 +70,7 @@ const ProgramDetail: Component = () => {
   // central-data permission, with the same modal the server's own refusal
   // raises, and nothing is sent. Opening a course from its row is a read and
   // is not gated. The server stays the real guard.
-  const guardEdit = (): boolean => {
-    if (hasPermission('EDIT_CENTRAL_DATA')) return true;
-    reportPermissionDenied([EDIT_CENTRAL_DATA]);
-    return false;
-  };
+  const guardEdit = guardCentralDataEdit;
 
   const openCreate = () => {
     if (guardEdit()) setEditing(null);

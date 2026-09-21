@@ -1,4 +1,5 @@
 import { stripEmpty } from '@/typeHelpers';
+import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
 import type {
   ImmunisationProgramsResult,
   ImmunisationProgramsVariables,
@@ -44,15 +45,15 @@ export type ProgramRegisterState = {
  * list has (rules § the program list). It has to be SENT: with no `sort` the
  * server falls back to `id` ascending (contract wire trap).
  *
- * `first` is the list's own page size, 20 (rules § the program list) —
- * spec-owned and deliberately not the app-wide default. The screen seeds the
- * user's remembered rows-per-page over it per visit (`@/list/pageSize`).
+ * `first` is the app-wide default page size (rules § the program list says
+ * "the standard list page size"); the screen seeds the user's remembered
+ * rows-per-page over it per visit, and a URL beats both (`@/list/pageSize`).
  */
 export const DEFAULT_REGISTER_STATE: ProgramRegisterState = {
   filter: {},
   sort: { key: 'name', desc: false },
   offset: 0,
-  first: 20,
+  first: DEFAULT_PAGE_SIZE,
 };
 
 /**
