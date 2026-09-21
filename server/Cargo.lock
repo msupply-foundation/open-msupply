@@ -8809,6 +8809,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rlimit"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f35ee2729c56bb610f6dba436bf78135f728b7373bdffae2ec815b2d3eb98cc3"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "ron"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11306,6 +11315,7 @@ dependencies = [
  "fs-lock",
  "log",
  "reqwest",
+ "rlimit",
  "rustls 0.23.37",
  "sanitize-filename",
  "serde",
