@@ -28,7 +28,7 @@ export interface PurchaseOrderDetailToolbarProps {
   latestExpectedDate?: string;
   /** How many lines the order has — both dates reach every one of them. */
   lineCount: number;
-  onSaveField: (patch: PurchaseOrderPatch) => void;
+  onSaveField: (patch: PurchaseOrderPatch) => Promise<SaveFieldResult>;
   /**
    * Write one date onto every line (the screen owns the cascade). Resolves
    * once the whole cascade and its re-read are done, which is when the picked
@@ -52,25 +52,26 @@ export interface PurchaseOrderDetailToolbarProps {
 export const PurchaseOrderDetailToolbar: Component<
   PurchaseOrderDetailToolbarProps
 > = props => {
-  // The date awaiting confirmation. BOTH dates are confirmed before they are
-  // made, because both reach every line (rules § the two delivery dates are
-  // not the order's alone).
-  const [pendingDate, setPendingDate] = createSignal<{
+  // The picked day for either delivery date, until the re-read carries it:
+  // awaiting confirmation first, then saving. Both dates are confirmed before
+  // they are made, because both reach every line (rules § the two delivery
+  // dates are not the order's alone).
+  const [draft, setDraft] = createSignal<{
     field: DeliveryDateField;
     date: string;
+    saving: boolean;
   }>();
+  const draftFor = (field: DeliveryDateField) => {
+    const pending = draft();
+    return pending?.field === field ? pending.date : undefined;
+  };
+  const confirming = () => {
+    const pending = draft();
+    return pending && !pending.saving ? pending : undefined;
+  };
   const [dateErrors, setDateErrors] = createStore<
     Partial<Record<DeliveryDateField, string>>
   >({});
-  // The picked-but-unconfirmed day, so cancelling reverts the input — the node
-  // has not changed, so the controlled value alone would not.
-  const [draftRequested, setDraftRequested] = createSignal<string>();
-  const [draftExpected, setDraftExpected] = createSignal<string>();
-  // A CONFIRMED date is saving, so the dialog's onClose — which the confirm
-  // path always runs after onConfirm — must not revert the draft underneath
-  // it. The draft stands until the re-read replaces it, which for the expected
-  // date means after the whole line cascade, not one round trip.
-  let confirmInFlight = false;
 
   const selectedSupplier = (): NameSeed | undefined => {
     const supplier = props.node.supplier;
@@ -84,32 +85,29 @@ export const PurchaseOrderDetailToolbar: Component<
   };
 
   const confirmMessage = () =>
-    pendingDate()?.field === 'expectedDeliveryDate'
+    draft()?.field === 'expectedDeliveryDate'
       ? t('label.update-purchase-order-expected-delivery-date-for-all-lines')
       : t('label.update-purchase-order-requested-delivery-date-for-all-lines');
 
   const commitDate = () => {
-    const pending = pendingDate();
+    const pending = confirming();
     if (!pending) return;
-    confirmInFlight = true;
+    setDraft({ ...pending, saving: true });
     // The requested date is the ORDER's own field as well as every line's; the
     // expected date has no order-level field at all, so it is lines only.
     if (pending.field === 'requestedDeliveryDate')
-      props.onSaveField({
+      void props.onSaveField({
         requestedDeliveryDate: { value: pending.date },
       });
     setDateErrors(pending.field, undefined);
     void props.onCascadeDate(pending.field, pending.date).then(result => {
-      // The re-read now carries the new date, so the draft steps aside.
-      setDraftRequested(undefined);
-      setDraftExpected(undefined);
+      setDraft(undefined);
       if (!result.ok)
         setDateErrors(
           pending.field,
           result.message ?? t('messages.error-saving-purchase-order')
         );
     });
-    setPendingDate(undefined);
   };
 
   return (
@@ -127,7 +125,9 @@ export const PurchaseOrderDetailToolbar: Component<
         // Replace-only: an order's supplier is never cleared from here, and
         // `onSelect` discards a null anyway.
         clearable={false}
-        onSelect={name => name && props.onSaveField({ supplierId: name.id })}
+        onSelect={name =>
+          name && void props.onSaveField({ supplierId: name.id })
+        }
       />
 
       <TextField
@@ -150,7 +150,7 @@ export const PurchaseOrderDetailToolbar: Component<
         disabled={!canChangeCurrency(props.node)}
         onChange={currency =>
           currency &&
-          props.onSaveField({
+          void props.onSaveField({
             currencyId: currency.id,
             // The rate follows the currency and is offered nowhere; it travels
             // only alongside a currency change (contract § an order's own
@@ -179,15 +179,20 @@ export const PurchaseOrderDetailToolbar: Component<
         label={t('label.requested-delivery-date')}
         size="small"
         value={
-          draftRequested() ?? props.node.requestedDeliveryDate ?? undefined
+          draftFor('requestedDeliveryDate') ??
+          props.node.requestedDeliveryDate ??
+          undefined
         }
         error={dateErrors.requestedDeliveryDate}
         disabled={props.disabled}
-        onChange={value => {
-          if (!value) return;
-          setDraftRequested(value);
-          setPendingDate({ field: 'requestedDeliveryDate', date: value });
-        }}
+        onChange={value =>
+          value &&
+          setDraft({
+            field: 'requestedDeliveryDate',
+            date: value,
+            saving: false,
+          })
+        }
       />
 
       {/* No order-level field behind this one: it shows the LATEST expected
@@ -198,27 +203,26 @@ export const PurchaseOrderDetailToolbar: Component<
       <DateField
         label={t('label.expected-delivery-date')}
         size="small"
-        value={draftExpected() ?? props.latestExpectedDate}
+        value={draftFor('expectedDeliveryDate') ?? props.latestExpectedDate}
         error={dateErrors.expectedDeliveryDate}
         disabled={props.disabled || props.lineCount === 0}
-        onChange={value => {
-          if (!value) return;
-          setDraftExpected(value);
-          setPendingDate({ field: 'expectedDeliveryDate', date: value });
-        }}
+        onChange={value =>
+          value &&
+          setDraft({
+            field: 'expectedDeliveryDate',
+            date: value,
+            saving: false,
+          })
+        }
       />
 
-      <Show when={pendingDate()}>
+      <Show when={confirming()}>
         <ConfirmDialog
           open
+          // Cancel reverts the picked day. A confirm has already moved the
+          // draft to saving, where it stands until the re-read replaces it.
           onClose={() => {
-            setPendingDate(undefined);
-            // Cancel reverts the picked day; a confirm leaves it standing.
-            if (!confirmInFlight) {
-              setDraftRequested(undefined);
-              setDraftExpected(undefined);
-            }
-            confirmInFlight = false;
+            if (!draft()?.saving) setDraft(undefined);
           }}
           title={t('heading.are-you-sure')}
           message={confirmMessage()}

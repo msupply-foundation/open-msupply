@@ -7,6 +7,7 @@ import {
   finalCost,
   lineCost,
   linePacks,
+  formatMoney,
 } from './purchaseOrderPricing';
 
 // spec/purchase-orders rules § pricing and totals. The figures in the first
@@ -112,5 +113,17 @@ describe('the supplier discount’s two views', () => {
   // refuse the edit rather than save a figure that will be dropped.
   it('has no percentage for an amount against a zero subtotal', () => {
     expect(discountPercentageOf(15, 0)).toBeUndefined();
+  });
+});
+
+describe('formatMoney', () => {
+  it("formats at the order currency's precision with its narrow symbol", () => {
+    expect(formatMoney(1234.5, 'EUR')).toBe('€1,234.50');
+    expect(formatMoney(1234.5, 'JPY')).toBe('¥1,235');
+  });
+
+  it('falls back to the home currency when the order reports none', () => {
+    expect(formatMoney(2, null)).toBe(formatMoney(2, 'USD'));
+    expect(formatMoney(2, undefined)).toBe('$2.00');
   });
 });

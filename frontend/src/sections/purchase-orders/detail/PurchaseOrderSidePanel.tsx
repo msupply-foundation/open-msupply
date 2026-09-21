@@ -1,7 +1,6 @@
 import { type Component } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { t, localisedDate } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -22,7 +21,7 @@ import {
   type PurchaseOrderPatch,
   type SaveFieldResult,
 } from './purchaseOrderEdit';
-import { chargesTotal, finalCost } from './purchaseOrderPricing';
+import { chargesTotal, finalCost, formatMoney } from './purchaseOrderPricing';
 import { canDelete } from './purchaseOrderLadder';
 import type { PurchaseOrderStatus } from '../purchaseOrderStatus';
 
@@ -74,12 +73,7 @@ export const PurchaseOrderSidePanel: Component<
     );
   };
 
-  const money = (value: number): string =>
-    formatNumber(value, {
-      style: 'currency',
-      currency: currency(),
-      currencyDisplay: 'narrowSymbol',
-    });
+  const money = (value: number) => formatMoney(value, currency());
 
   const status = () => props.node.status as PurchaseOrderStatus;
 
