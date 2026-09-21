@@ -249,16 +249,16 @@ export type { Band, LayeredConfig } from '../ui/elements/table/tableConfig';
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
  * The five the Cook Islands navigator names for its tiles (plugins/cook_islands
- * ui-surface.md § S2/S3): patient, open package, truck, document, stock — in
- * that order below. That file describes the PICTURE and never names an
- * export, so this list is the mapping; keep the two in step.
+ * ui-surface.md § S2/S3): patient, inbox tray, truck, box with an arrow out,
+ * stock — in that order below. That file describes the PICTURE and never names
+ * an export, so this list is the mapping; keep the two in step.
  * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
  * flip or an a11y attribute on the host icon reaches the contributed surface
  * too — a copied SVG would fork on the first such change.
  *
  * Cheap because '../ui/icons' is ALREADY in this barrel's graph: InfoTooltip
  * pulls InfoIcon and Select pulls CheckIcon/ChevronDownIcon/CloseIcon, both
- * eager. So this keeps six more small components alive in a module that ships
+ * eager. So this keeps five more small components alive in a module that ships
  * regardless — path data only, no new module (measured: kdd/bundle-size-by-pr).
  *
  * Not an open door to the whole barrel: it grows one icon at a time, for an
@@ -266,9 +266,9 @@ export type { Band, LayeredConfig } from '../ui/elements/table/tableConfig';
  */
 export {
   CustomersIcon,
-  ReplenishmentIcon,
+  InboxIcon,
   TruckIcon,
-  FileIcon,
+  UploadIcon,
   StockIcon,
 } from '../ui/icons';
 // The back affordance on the Stocktake Helper's drill-in views (#490) —
