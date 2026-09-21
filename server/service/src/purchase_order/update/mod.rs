@@ -68,8 +68,12 @@ impl UpdatePurchaseOrderInput {
         let Self {
             id: _,
             status: _,
-            // Comment is editable on sent POs, only disabled when finalised
+            // Editable in every state, Sent and Finalised included: the comment,
+            // and the three dates that record what happens after sending.
             comment: _,
+            sent_datetime: _,
+            contract_signed_date: _,
+            advance_paid_date: _,
             // All other fields must be None
             supplier_id,
             confirmed_datetime,
@@ -80,9 +84,6 @@ impl UpdatePurchaseOrderInput {
             currency_id,
             foreign_exchange_rate,
             shipping_method,
-            sent_datetime,
-            contract_signed_date,
-            advance_paid_date,
             received_at_port_date,
             requested_delivery_date,
             supplier_agent,
@@ -106,9 +107,6 @@ impl UpdatePurchaseOrderInput {
             && currency_id.is_none()
             && foreign_exchange_rate.is_none()
             && shipping_method.is_none()
-            && sent_datetime.is_none()
-            && contract_signed_date.is_none()
-            && advance_paid_date.is_none()
             && received_at_port_date.is_none()
             && requested_delivery_date.is_none()
             && supplier_agent.is_none()

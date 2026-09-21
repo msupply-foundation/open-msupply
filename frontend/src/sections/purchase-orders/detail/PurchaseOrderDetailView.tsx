@@ -593,7 +593,7 @@ const PurchaseOrderDetailView: Component = () => {
                   node={node()}
                   disabled={isDisabled()}
                   edit={edit}
-                  onSaveField={patch => void saveField(patch)}
+                  onSaveField={saveField}
                   onDeleted={toList}
                 />
               }

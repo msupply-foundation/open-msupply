@@ -1,4 +1,5 @@
 import { type Component } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { t, localisedDate } from '@/intl';
 import { formatNumber } from '@/intl/formatNumber';
 import {
@@ -14,9 +15,12 @@ import { NameSearch, type NameOption } from '@/domain/name';
 import { ShippingMethodSelect } from '@/domain/shippingMethod';
 import { DeletePurchaseOrderAction } from './actions';
 import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated';
-import type {
-  PurchaseOrderFieldEdit,
-  PurchaseOrderPatch,
+import {
+  sentDayToWire,
+  sentWireToDay,
+  type PurchaseOrderFieldEdit,
+  type PurchaseOrderPatch,
+  type SaveFieldResult,
 } from './purchaseOrderEdit';
 import { chargesTotal, finalCost } from './purchaseOrderPricing';
 import { canDelete } from './purchaseOrderLadder';
@@ -28,9 +32,16 @@ export interface PurchaseOrderSidePanelProps {
   /** True once the order is Sent or Finalised (the comment stays open). */
   disabled: boolean;
   edit: PurchaseOrderFieldEdit;
-  onSaveField: (patch: PurchaseOrderPatch) => void;
+  /** Resolves with the verdict, so a refusal can be reported at the field. */
+  onSaveField: (patch: PurchaseOrderPatch) => Promise<SaveFieldResult>;
   onDeleted: () => void;
 }
+
+// The fields whose control can carry an inline error (ui-standards/inputs.md §
+// server-bound input: a failed save is surfaced at the field, and the entered
+// value kept).
+type ReportingField =
+  'sentDatetime' | 'contractSignedDate' | 'advancePaidDate' | 'donorId';
 
 /*
  * The detail side panel (spec/purchase-orders S9): three sections — Pricing,
@@ -51,6 +62,23 @@ export const PurchaseOrderSidePanel: Component<
   PurchaseOrderSidePanelProps
 > = props => {
   const currency = () => props.node.currency?.code;
+
+  // A save's refusal, keyed to the field it was made from; cleared by the next
+  // save of that field that lands. Nothing else reports it — the domain's
+  // rejection names no cause (contract ⚠️), so without this a refused date
+  // would simply fail to stick.
+  const [saveErrors, setSaveErrors] = createStore<
+    Partial<Record<ReportingField, string>>
+  >({});
+  const save = async (field: ReportingField, patch: PurchaseOrderPatch) => {
+    const result = await props.onSaveField(patch);
+    setSaveErrors(
+      field,
+      result.ok
+        ? undefined
+        : (result.message ?? t('messages.error-saving-purchase-order'))
+    );
+  };
 
   const money = (value: number): string =>
     formatNumber(value, {
@@ -117,7 +145,7 @@ export const PurchaseOrderSidePanel: Component<
             value={props.node.supplierDiscountPercentage ?? undefined}
             disabled={props.disabled}
             onChange={value =>
-              props.onSaveField({ supplierDiscountPercentage: value ?? 0 })
+              void props.onSaveField({ supplierDiscountPercentage: value ?? 0 })
             }
           />
         </FieldRow>
@@ -133,7 +161,7 @@ export const PurchaseOrderSidePanel: Component<
             value={props.node.supplierDiscountAmount}
             disabled={props.disabled || subtotal() === 0}
             onChange={value =>
-              props.onSaveField({ supplierDiscountAmount: value ?? 0 })
+              void props.onSaveField({ supplierDiscountAmount: value ?? 0 })
             }
           />
         </FieldRow>
@@ -162,8 +190,9 @@ export const PurchaseOrderSidePanel: Component<
             // Clearable, and clearing is a real edit: the field is nullable and
             // is cleared through the wrapper, never by omission (contract § an
             // order's own screen).
+            error={saveErrors.donorId}
             onSelect={name =>
-              props.onSaveField({ donorId: { value: name?.id ?? null } })
+              void save('donorId', { donorId: { value: name?.id ?? null } })
             }
           />
         </FieldRow>
@@ -178,7 +207,7 @@ export const PurchaseOrderSidePanel: Component<
             value={props.node.shippingMethod ?? undefined}
             disabled={props.disabled}
             onChange={method =>
-              props.onSaveField({ shippingMethod: method?.method ?? '' })
+              void props.onSaveField({ shippingMethod: method?.method ?? '' })
             }
           />
         </FieldRow>
@@ -210,19 +239,26 @@ export const PurchaseOrderSidePanel: Component<
           </span>
         </FieldRow>
 
-        {/* An order may carry a sent moment in ANY state — this is where it is
-            edited directly, which is why the ladder shows it only once the
-            order is actually Sent (rules § the state ladder). */}
+        {/* These three dates record what happens AFTER sending, so they stay
+            editable in every state, Sent and Finalised included (rules § what
+            may be changed, and when) — none takes `props.disabled`. The sent
+            moment is edited here directly, which is why the ladder shows it
+            only once the order is actually Sent (rules § the state ladder). */}
         <FieldRow label={t('label.po-sent')}>
+          {/* A DateTime on the wire, a DAY here: written as UTC midnight and
+              read back as its UTC day (purchaseOrderEdit.ts). */}
           <DateField
             label={t('label.po-sent')}
             hideLabel
             size="small"
             width="compact"
-            value={props.node.sentDatetime ?? undefined}
-            disabled={props.disabled}
+            testId="po-sent-field"
+            value={sentWireToDay(props.node.sentDatetime)}
+            error={saveErrors.sentDatetime}
             onChange={value =>
-              props.onSaveField({ sentDatetime: { value: value ?? null } })
+              void save('sentDatetime', {
+                sentDatetime: { value: value ? sentDayToWire(value) : null },
+              })
             }
           />
         </FieldRow>
@@ -233,10 +269,13 @@ export const PurchaseOrderSidePanel: Component<
             hideLabel
             size="small"
             width="compact"
+            testId="contract-signed-field"
             value={props.node.contractSignedDate ?? undefined}
-            disabled={props.disabled}
+            error={saveErrors.contractSignedDate}
             onChange={value =>
-              props.onSaveField({ contractSignedDate: { value: value ?? null } })
+              void save('contractSignedDate', {
+                contractSignedDate: { value: value ?? null },
+              })
             }
           />
         </FieldRow>
@@ -247,10 +286,13 @@ export const PurchaseOrderSidePanel: Component<
             hideLabel
             size="small"
             width="compact"
+            testId="advance-paid-field"
             value={props.node.advancePaidDate ?? undefined}
-            disabled={props.disabled}
+            error={saveErrors.advancePaidDate}
             onChange={value =>
-              props.onSaveField({ advancePaidDate: { value: value ?? null } })
+              void save('advancePaidDate', {
+                advancePaidDate: { value: value ?? null },
+              })
             }
           />
         </FieldRow>
