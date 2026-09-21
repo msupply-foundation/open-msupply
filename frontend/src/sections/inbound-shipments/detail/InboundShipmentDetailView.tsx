@@ -97,6 +97,7 @@ import {
   sourceLinkOf,
   supplierIsStore,
 } from './inboundShipmentStatus';
+import { packDifference } from './inboundShipmentLine';
 import { SupplierKindIcon } from '../SupplierKindIcon';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
@@ -396,6 +397,19 @@ const InboundShipmentDetailView: Component = () => {
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
   const isExternal = () => isExternalScope(scope());
+  // Whether the shipment carries a SOURCE LINK — a purchase order, or a
+  // sending shipment (a transfer). Those are the two links through which
+  // something outside this store supplies the shipment's figures, so both the
+  // cost price and the supplier-declared shipped quantities are read-only
+  // whenever one is present (spec rules → source link). NOT the same as
+  // "not manual": a shipment linked only to an internal order has no source
+  // link and stays fully editable.
+  //
+  // The purchase-order half is read from the SCOPE, not through sourceLinkOf's
+  // inboundType test: the scope is what the detail was fetched with, so it
+  // cannot disagree with the record in hand, and it is the predicate cost
+  // price has always used.
+  const hasSourceLink = () => isExternal() || !!current()?.linkedShipment;
 
   const refetchAll = () => {
     void refetchInfo();
@@ -775,14 +789,16 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.packs-received'),
         ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
       },
-      // Difference (H6) — supplier-shipped packs minus received packs; blank
-      // when nothing was recorded as shipped.
+      // Difference (H6) — received packs minus supplier-shipped packs, so the
+      // figure reads against Packs received beside it: POSITIVE means more
+      // arrived than the supplier declared, negative means the delivery fell
+      // short. Blank when nothing was recorded as shipped. The subtraction
+      // itself lives in packDifference, shared with the line editor's cell so
+      // the two surfaces cannot drift apart in sign.
       {
         c: {
           accessor: line =>
-            line.shippedNumberOfPacks != null
-              ? line.shippedNumberOfPacks - line.numberOfPacks
-              : '',
+            packDifference(line.numberOfPacks, line.shippedNumberOfPacks) ?? '',
           id: 'difference',
         },
         header: () => t('label.difference'),
@@ -1258,11 +1274,17 @@ const InboundShipmentDetailView: Component = () => {
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
                 // Cost price is read-only only when the shipment carries a
-                // source link — a purchase order or a linked shipment (a
-                // transfer) — NOT merely because the supplier is another store
-                // (spec rules → header fields / AC-H1). A manual internal-
-                // supplier shipment keeps cost editable.
-                costLocked={isExternal() || !!node().linkedShipment}
+                // source link — NOT merely because the supplier is another
+                // store (spec rules → header fields / AC-H1). A manual
+                // internal-supplier shipment keeps cost editable.
+                costLocked={hasSourceLink()}
+                // Packs shipped / Shipped pack size are the SENDING side's
+                // record of what left its shelf, so the receiver may read them
+                // but not retype them. Passed separately from costLocked even
+                // though the two resolve alike: they are separate rules that
+                // merely coincide, and reading one as the other is how this
+                // field came to be editable on transfers.
+                shippedLocked={hasSourceLink()}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,

@@ -36,6 +36,7 @@ import {
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
+import { packDifference } from '../inboundShipmentLine';
 import { CopyIcon, PlusCircleIcon, TrashIcon } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
 import {
@@ -108,6 +109,20 @@ export interface InboundShipmentLineEditModalProps {
   purchaseOrderId?: string;
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
+  /**
+   * The supplier-declared figures (Packs shipped / Shipped pack size) are
+   * read-only, because something outside this store declared them: the
+   * shipment carries a source link (spec rules → source link) — a purchase
+   * order, or a sending shipment (a transfer). Only a shipment with NO source
+   * link records them by hand.
+   *
+   * Deliberately its own prop rather than a second reading of `costLocked`,
+   * even though the two resolve the same way today: they are different rules
+   * that happen to coincide, and collapsing one into the other is exactly how
+   * this field came to be editable on transfers (spec rules → source link
+   * warns against leaning on "manual" alone to carry a gate).
+   */
+  shippedLocked: boolean;
   locations: LocationWithVolume[];
   prefs: LineEditPrefs;
   onSaved: () => void;
@@ -786,6 +801,23 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           (b.shippedPackSize !== undefined && b.shippedPackSize !== b.packSize))
     );
 
+  // A figure declared by whoever supplied the shipment — shown to the receiver
+  // but never typed by them. Rendered as a plain value, not a disabled box:
+  // the absence of a box is what says read-only (kdd/form-layout), where
+  // `disabled` means "an input you can't use right now", which is what a
+  // locked Cost price is. Sized by the column's own cell definition, so it
+  // still lines up with the inputs beside it. An em dash where nothing was
+  // declared, matching the Difference cell. Takes a GETTER, not a value, so
+  // the figure stays tracked as the draft store changes
+  // (kdd/solid-reactivity-pitfalls).
+  const declaredValue = (value: () => number | undefined) => (
+    <span class={styles.statValue}>
+      {value() === undefined
+        ? '—'
+        : formatNumber(value()!, { maximumFractionDigits: 2 })}
+    </span>
+  );
+
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
     {
@@ -856,8 +888,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     // Packs shipped, and the Difference it implies, sit immediately beside
     // Packs received — the comparison the receiver is actually making
-    // (reference design). Supplier-declared quantities are manual-shipment only
-    // (spec S4); they also feed the received-vs-shipped mismatch warning.
+    // (reference design). They also feed the received-vs-shipped mismatch
+    // warning. Absent on a PO-linked shipment, which declares nothing to
+    // compare against; present but READ-ONLY once the shipment carries a
+    // source link (a transfer), because the figure is the sending store's
+    // record of what left its shelf and the receiver must not retype it.
     ...(!props.purchaseOrderId
       ? [
           {
@@ -868,22 +903,32 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             cell: info => {
               const b = info.row.original;
               return (
-                <NumberField
-                  label={t('label.shipped-number-of-packs')}
-                  hideLabel
-                  size="small"
-                  value={b.shippedNumberOfPacks}
-                  min={0}
-                  decimalLimit={2}
-                  onChange={v => updateBatch(b.id, 'shippedNumberOfPacks', v)}
-                />
+                <Show
+                  when={props.shippedLocked}
+                  fallback={
+                    <NumberField
+                      label={t('label.shipped-number-of-packs')}
+                      hideLabel
+                      size="small"
+                      value={b.shippedNumberOfPacks}
+                      min={0}
+                      decimalLimit={2}
+                      onChange={v =>
+                        updateBatch(b.id, 'shippedNumberOfPacks', v)
+                      }
+                    />
+                  }
+                >
+                  {declaredValue(() => b.shippedNumberOfPacks)}
+                </Show>
               );
             },
           } satisfies Column<DraftBatch, never, GroupKey>,
-          // Difference (computed) — shipped minus received, the SAME direction
+          // Difference (computed) — received minus shipped, the SAME direction
           // the detail table's Difference column reports (H6), so the two never
-          // disagree in sign. Blank until the supplier's shipped figure is
-          // entered; there is nothing to compare against before that.
+          // disagree in sign: POSITIVE means more arrived than the supplier
+          // declared. Blank until the supplier's shipped figure is entered;
+          // there is nothing to compare against before that.
           {
             c: { id: 'difference' },
             header: () => t('label.difference'),
@@ -902,9 +947,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               // tracked, so the figure and its tone follow the draft store as
               // the receiver types (kdd/solid-reactivity-pitfalls).
               const diff = () =>
-                b.shippedNumberOfPacks === undefined
-                  ? undefined
-                  : b.shippedNumberOfPacks - b.numberOfPacks;
+                packDifference(b.numberOfPacks, b.shippedNumberOfPacks);
               return (
                 <span
                   class={styles.statValue}
@@ -962,7 +1005,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       },
     },
     // Shipped pack size follows the received one so the two pack sizes read as
-    // a pair (manual shipments only, like Packs shipped above).
+    // a pair, and is gated and locked exactly like Packs shipped above.
     ...(!props.purchaseOrderId
       ? [
           {
@@ -975,15 +1018,22 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             cell: info => {
               const b = info.row.original;
               return (
-                <NumberField
-                  label={t('label.shipped-pack-size')}
-                  hideLabel
-                  size="small"
-                  value={b.shippedPackSize}
-                  min={0}
-                  decimalLimit={2}
-                  onChange={v => updateBatch(b.id, 'shippedPackSize', v)}
-                />
+                <Show
+                  when={props.shippedLocked}
+                  fallback={
+                    <NumberField
+                      label={t('label.shipped-pack-size')}
+                      hideLabel
+                      size="small"
+                      value={b.shippedPackSize}
+                      min={0}
+                      decimalLimit={2}
+                      onChange={v => updateBatch(b.id, 'shippedPackSize', v)}
+                    />
+                  }
+                >
+                  {declaredValue(() => b.shippedPackSize)}
+                </Show>
               );
             },
           } satisfies Column<DraftBatch, never, GroupKey>,

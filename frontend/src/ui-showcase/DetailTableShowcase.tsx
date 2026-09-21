@@ -464,11 +464,11 @@ export const DetailTableShowcase = () => {
       }),
     },
     {
-      // Difference — shipped minus received; blank when nothing shipped.
+      // Difference — received minus shipped; blank when nothing shipped.
       c: {
         accessor: line =>
           line.shippedNumberOfPacks != null
-            ? line.shippedNumberOfPacks - line.numberOfPacks
+            ? line.numberOfPacks - line.shippedNumberOfPacks
             : '',
         id: 'difference',
       },
