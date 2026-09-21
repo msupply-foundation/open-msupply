@@ -1818,6 +1818,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               emptyMessage={t('messages.no-stock-available')}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
+              configIsDefault={tableConfig.isConfigDefault()}
+              onSaveGlobalDefault={
+                tableConfig.canSaveGlobalDefault()
+                  ? tableConfig.saveGlobalTableConfig
+                  : undefined
+              }
             />
           </div>
 

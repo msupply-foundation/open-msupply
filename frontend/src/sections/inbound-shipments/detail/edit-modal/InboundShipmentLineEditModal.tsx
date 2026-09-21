@@ -1744,6 +1744,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 showFullScreen={false}
                 config={tableConfig.config()}
                 setConfig={tableConfig.setConfig}
+                configIsDefault={tableConfig.isConfigDefault()}
+                onSaveGlobalDefault={
+                  tableConfig.canSaveGlobalDefault()
+                    ? tableConfig.saveGlobalTableConfig
+                    : undefined
+                }
                 controlsMount={tableControls()}
                 emptyMessage={t('label.add-batch')}
               />
