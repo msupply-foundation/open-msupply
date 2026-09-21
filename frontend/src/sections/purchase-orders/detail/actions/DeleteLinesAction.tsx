@@ -1,89 +1,155 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t, tPlural } from '@/intl';
-import { Button } from '@/ui/elements/buttons/Button';
-import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { TrashIcon } from '@/ui/icons';
-import { deletePurchaseOrderLines } from '../purchaseOrderUpdate';
+import {
+  deletePurchaseOrderLines,
+  type LinesOutcome,
+} from '../purchaseOrderUpdate';
 
 export interface DeleteLinesActionProps {
   storeId: string;
   selectedIds: () => string[];
   /** True unless the order is New or Ready for approval. */
   disabled: boolean;
-  /** Lines went — re-read the page and the whole-set gates. */
+  /** Lines went — clear the selection and re-read the page and the gates. */
   onChanged: () => void;
 }
 
-/*
- * Remove the selected lines (spec/purchase-orders S7 § line-selection
- * actions). Confirmed first, naming how many, and reported by count when it
- * lands.
- *
- * The mutation is plural and answers per id, so one call can PARTLY succeed:
- * the report says how many went and carries the first refusal. Its one typed
- * rejection is a missing line — the state gate that makes deletion
- * drafting-only arrives as an undifferentiated bad-input error (contract ⚠️),
- * which is why the action is offered only while the order is drafting.
- */
+// Remove the selected lines (spec/purchase-orders S7 § line-selection
+// actions): confirm → working → error over one dialog (kdd/action-modal). A
+// clean sweep closes — the rows leaving is the confirmation — and a refusal
+// keeps the dialog up, since the mutation answers per id and can partly
+// succeed. onChanged clears the selection this footer is gated on, so it runs
+// only once the dialog is closing.
+type Phase =
+  | { kind: 'confirm' }
+  | { kind: 'working' }
+  | { kind: 'error'; outcome: LinesOutcome };
+
 export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
-  const [confirming, setConfirming] = createSignal(false);
-  const [busy, setBusy] = createSignal(false);
-  const [message, setMessage] = createSignal<string>();
-  const [tone, setTone] = createSignal<'success' | 'error'>('success');
+  const [open, setOpen] = createSignal(false);
+  return (
+    <>
+      <Button
+        variant="danger"
+        icon={<TrashIcon />}
+        disabled={props.disabled}
+        data-testid="delete-lines-button"
+        onClick={() => setOpen(true)}
+      >
+        {t('button.delete-lines')}
+      </Button>
+      <Show when={open()}>
+        <Body {...props} onClose={() => setOpen(false)} />
+      </Show>
+    </>
+  );
+};
 
-  const count = () => props.selectedIds().length;
+const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
+  const [phase, setPhase] = createSignal<Phase>({ kind: 'confirm' });
+  const count = props.selectedIds().length;
 
-  const remove = async () => {
-    if (busy()) return;
-    setBusy(true);
-    setMessage(undefined);
+  const failure = () => {
+    const p = phase();
+    return p.kind === 'error' ? p.outcome : undefined;
+  };
+
+  const finish = (outcome: LinesOutcome) => {
+    props.onClose();
+    if (outcome.applied > 0) props.onChanged();
+  };
+
+  const run = async () => {
+    if (phase().kind !== 'confirm') return;
+    setPhase({ kind: 'working' });
     const outcome = await deletePurchaseOrderLines(
       props.storeId,
       props.selectedIds()
     );
-    setBusy(false);
-    setConfirming(false);
     if (outcome.message) {
-      setTone('error');
-      setMessage(outcome.message);
-    } else {
-      setTone('success');
-      setMessage(tPlural('messages.deleted-lines', outcome.applied));
+      setPhase({ kind: 'error', outcome });
+      return;
     }
-    if (outcome.applied > 0) props.onChanged();
+    finish(outcome);
   };
 
   return (
-    <>
-      <Button
-        variant="secondary"
-        icon={<TrashIcon />}
-        disabled={props.disabled}
-        data-testid="delete-lines-button"
-        onClick={() => setConfirming(true)}
-      >
-        {t('button.delete-lines')}
-      </Button>
-      <Show when={message()}>
-        {text => (
-          <Alert severity={tone()} testId="delete-lines-result">
-            {text()}
-          </Alert>
-        )}
-      </Show>
-      <ConfirmDialog
-        open={confirming()}
-        onClose={() => setConfirming(false)}
-        title={t('heading.are-you-sure')}
-        message={tPlural(
-          'messages.confirm-delete-lines-purchase-order',
-          count(),
-          { count: count() }
-        )}
-        confirmVariant="danger"
-        onConfirm={() => void remove()}
-      />
-    </>
+    <Dialog
+      open
+      dismissable={phase().kind === 'confirm'}
+      onClose={props.onClose}
+      icon={<TrashIcon />}
+      testId="confirmation-modal"
+      title={
+        failure() === undefined
+          ? t('heading.are-you-sure')
+          : (failure()?.applied ?? 0) > 0
+            ? t('heading.some-not-deleted')
+            : t('heading.cannot-do-that')
+      }
+      description={
+        <Switch
+          fallback={tPlural(
+            'messages.confirm-delete-lines-purchase-order',
+            count,
+            { count }
+          )}
+        >
+          <Match when={failure()}>
+            {outcome => (
+              <Stack gap="sm">
+                <Show when={outcome().applied > 0}>
+                  <p>{tPlural('messages.deleted-lines', outcome().applied)}</p>
+                </Show>
+                <Alert severity="error" testId="delete-lines-result">
+                  {outcome().message}
+                </Alert>
+              </Stack>
+            )}
+          </Match>
+        </Switch>
+      }
+      actions={
+        <Show
+          when={failure()}
+          fallback={
+            <>
+              <Show when={phase().kind === 'confirm'}>
+                <CancelButton
+                  data-testid="dialog-button-cancel"
+                  onClick={props.onClose}
+                />
+              </Show>
+              <Button
+                variant="danger"
+                confirms="plain"
+                data-testid="confirmation-modal-ok"
+                loading={phase().kind === 'working'}
+                onClick={() => void run()}
+              >
+                {t('button.delete-lines')}
+              </Button>
+            </>
+          }
+        >
+          {outcome => (
+            <Button
+              variant="secondary"
+              confirms="plain"
+              data-testid="dialog-button-ok"
+              onClick={() => finish(outcome())}
+            >
+              {t('button.close')}
+            </Button>
+          )}
+        </Show>
+      }
+    />
   );
 };

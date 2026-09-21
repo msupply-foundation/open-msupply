@@ -74,14 +74,39 @@ export const DeletePurchaseOrdersAction: Component<
         {t('button.delete-lines')}
       </Button>
       <Show when={open()}>
-        <Body {...props} onClose={() => setOpen(false)} />
+        <DeletePurchaseOrdersDialog
+          storeId={props.storeId}
+          selection={props.selection}
+          onClose={() => setOpen(false)}
+          onSettled={props.refetchList}
+          onFinished={props.clearSelection}
+        />
       </Show>
     </>
   );
 };
 
-const Body = (
-  props: DeletePurchaseOrdersActionProps & { onClose: () => void }
+export interface DeletePurchaseOrdersDialogProps {
+  storeId: string;
+  /** The orders to delete — id to delete, number to name it by. */
+  selection: () => PurchaseOrderSelection[];
+  onClose: () => void;
+  /**
+   * The deletes have returned and the deleted orders are gone, whether or not
+   * the dialog stays up to report the rest. Safe mid-flow.
+   */
+  onSettled?: (summary: DeleteSummary) => void;
+  /**
+   * The interaction has ended — a clean sweep closed the dialog, or the
+   * report was dismissed. Whatever unmounts this dialog's host belongs here.
+   */
+  onFinished: (summary: DeleteSummary) => void;
+}
+
+// The confirm → deleting → report dialog, shared by the list's bulk delete and
+// the side panel's single-order Delete, which passes a selection of one.
+export const DeletePurchaseOrdersDialog = (
+  props: DeletePurchaseOrdersDialogProps
 ) => {
   const [phase, setPhase] = createSignal<Phase>({ kind: 'confirm' });
   // Snapshotted on open (Body mounts once per open) so the confirm count and
@@ -110,24 +135,24 @@ const Body = (
     }
     const summary = summariseOutcomes(outcomes);
     if (summary.notDeletable.length === 0 && summary.failedCount === 0) {
-      // Close first — clearing the selection unmounts the selection-gated
-      // footer this dialog lives in.
+      // Close first — the host's onFinished may unmount what this dialog
+      // lives in (the list clears its selection-gated footer).
       props.onClose();
-      props.clearSelection();
-      props.refetchList();
+      props.onFinished(summary);
+      props.onSettled?.(summary);
       return;
     }
     // Some members were refused or failed: the deleted ones are gone
-    // regardless, so re-query behind the dialog — but KEEP the selection, or
-    // the footer (and this dialog) would unmount before the report renders
-    // (issue #374). It clears on dismissal instead.
-    props.refetchList();
+    // regardless, so the host may re-query behind the dialog — but nothing
+    // that unmounts it runs until the report is dismissed (issue #374).
+    props.onSettled?.(summary);
     setPhase({ kind: 'report', summary });
   };
 
   const dismissReport = () => {
+    const summary = report();
     props.onClose();
-    props.clearSelection();
+    if (summary) props.onFinished(summary);
   };
 
   const report = () => {

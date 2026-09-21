@@ -890,6 +890,7 @@
   "heading.settings-sync": "Synchronisation",
   "heading.shipments": "Outbound Shipments",
   "heading.shipments-to-be-picked": "Shipments to be picked",
+  "heading.some-not-closed": "Some couldn't be closed",
   "heading.some-not-deleted": "Some couldn't be deleted",
   "heading.stock-adjustment": "Stock adjustment",
   "heading.stock-and-items": "Stock & Items",
