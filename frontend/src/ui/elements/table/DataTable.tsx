@@ -269,6 +269,20 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   showFullScreen?: boolean;
   /**
+   * Where body-cell content sits in the row's block axis. Default `center`,
+   * which is right for a table of values: a cell that wraps to two lines
+   * centres as a block against its single-line neighbours.
+   *
+   * `start` is for a table of IN-PLACE EDITORS whose cells can grow a
+   * validation message beneath the control. Centred, that growth pushes the
+   * cell's own input UP while its neighbours stay put, so a row of controls
+   * stops lining up at the moment one of them is wrong — the state where
+   * alignment matters most. Top-aligned, the controls hold their place and the
+   * message hangs below them. A row with nothing to report looks the same
+   * either way, every cell holding one control of the same height.
+   */
+  cellAlign?: 'center' | 'start';
+  /**
    * Render the toolbar's CONTROL CLUSTER (view toggle · Columns · Settings ·
    * full screen) into this element instead of the table's own toolbar row — for
    * a host that already has a chrome row of its own and shouldn't pay a second
@@ -1404,6 +1418,9 @@ export function DataTable<T, K extends string, G extends string = never>(
           : undefined
       }
       data-no-toolbar={hasToolbar() ? undefined : ''}
+      // Body-cell block alignment (see `cellAlign`). Only the opt-in is
+      // stamped; the default stays the UA's `middle` on .td.
+      data-cell-align={props.cellAlign === 'start' ? 'start' : undefined}
       // Content height, for a host that scrolls the table together with what
       // sits below it (see `fitContent`). Card view only — a row view's
       // horizontal scrolling needs the box.

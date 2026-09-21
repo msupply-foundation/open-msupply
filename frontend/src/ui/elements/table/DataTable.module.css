@@ -1961,3 +1961,24 @@ tr[data-accent='error'] > :first-child::before {
 .root > .tableFooter {
   padding-block: var(--space-2);
 }
+
+/* ── In-place-editor tables: cell content at the TOP ───────────────────────
+   The one exception to the vertical centring of body cells (see `.td[data-wrap]`
+   for why centring is the default). A table of IN-PLACE EDITORS opts in with
+   `cellAlign="start"` (DataTable): such a cell grows a validation message
+   BENEATH its control, and centred growth lifts that cell's control above its
+   neighbours' — the row of inputs stops lining up exactly when one of them is
+   wrong, the state where alignment matters most. Top-aligned they hold their
+   place and the message hangs below.
+
+   This does not reopen the `vertical-align: top` reverted for wrapping columns:
+   that broke because a SINGLE-LINE cell in a wrapping column sat above its
+   centred neighbours. Here every cell in the table holds a control of the same
+   height, so the clean row is unchanged and only the error state moves.
+
+   Last in the file, and qualified past the row tint / state rules above, which
+   also target `.td`: this sheet is ordered by ascending specificity. */
+.root[data-cell-align='start'] .table tbody tr > .td,
+.root[data-cell-align='start'] .table tbody tr > .selectCell {
+  vertical-align: top;
+}

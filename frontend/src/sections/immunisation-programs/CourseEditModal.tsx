@@ -730,6 +730,11 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
               rows={draft.vaccineCourseDoses}
               rowKey={dose => dose.id}
               showFullScreen={false}
+              // Every cell is an in-place editor, and the age cells grow a
+              // validation message beneath their inputs. Centred, that growth
+              // would lift the offending cell's inputs above the rest of the
+              // row — the inputs stop lining up exactly when one is wrong.
+              cellAlign="start"
               emptyMessage={t('message.add-a-dose')}
             />
           </Stack>
