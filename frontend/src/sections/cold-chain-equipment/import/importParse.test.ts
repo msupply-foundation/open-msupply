@@ -11,7 +11,6 @@ import {
   canImport,
   compareReviewRows,
   failedRowsToCsv,
-  importFileFailure,
   parseImportNumber,
   parsePropertyCell,
   reviewRowText,
@@ -53,6 +52,19 @@ const property = (key: string, name: string): PropertyDefinition =>
     assetTypeId: null,
   }) as PropertyDefinition;
 
+/**
+ * The rows, insisting the file produced some. `parseImportFile` answers either
+ * rows or the reason there are none, and all but the handful of tests below
+ * are about the rows — so those assert they got them, instead of indexing into
+ * whatever came back.
+ */
+const rowsOf = (...args: Parameters<typeof parseImportFile>): ImportRow[] => {
+  const result = parseImportFile(...args);
+  if (!Array.isArray(result))
+    throw new Error(`expected rows, the file yielded: ${result}`);
+  return result;
+};
+
 const lookup = (over: Partial<Parameters<typeof parseImportFile>[1]> = {}) => ({
   catalogueItems: [{ id: 'item-1', code: 'E003/059' }],
   stores: [{ id: 'store-b', code: 'PS' }],
@@ -76,7 +88,7 @@ describe('OMS-REG-CCE-07.1 — only a CSV is accepted', () => {
 
 describe('OMS-REG-CCE-07.2 — a clean file parses every row', () => {
   it('reads each body row with its values', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${H}\nCCE-1,E003/059,01/02/2024,,,,SN-1,,,a note\n`,
       lookup()
     );
@@ -93,7 +105,7 @@ describe('OMS-REG-CCE-07.2 — a clean file parses every row', () => {
   });
 
   it('numbers rows as the file’s own lines — the header is line 1', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${H}\nCCE-1,E003/059,,,,,,,,\nCCE-2,E003/059,,,,,,,,\n`,
       lookup()
     );
@@ -101,19 +113,19 @@ describe('OMS-REG-CCE-07.2 — a clean file parses every row', () => {
   });
 
   it('reads a header-only file as no rows at all', () => {
-    expect(parseImportFile(`${H}\n`, lookup())).toEqual([]);
-    expect(parseImportFile('', lookup())).toEqual([]);
+    expect(parseImportFile(`${H}\n`, lookup())).toBe('no-rows');
+    expect(parseImportFile('', lookup())).toBe('no-header');
   });
 
   it('lets the import proceed', () => {
-    const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     expect(canImport(rows)).toBe(true);
   });
 });
 
 describe('OMS-REG-CCE-07.3 — the asset number is required', () => {
   it('fails a row with none', () => {
-    const rows = parseImportFile(`${H}\n,E003/059,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\n,E003/059,,,,,,,,\n`, lookup());
     expect(rows[0]?.errors).toContain('error.field-must-be-specified');
     expect(canImport(rows)).toBe(false);
   });
@@ -121,7 +133,7 @@ describe('OMS-REG-CCE-07.3 — the asset number is required', () => {
 
 describe('OMS-REG-CCE-07.4 — asset numbers are unique within the file', () => {
   it('fails BOTH sides of a duplicate', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${H}\nCCE-1,E003/059,,,,,,,,\nCCE-1,E003/059,,,,,,,,\n`,
       lookup()
     );
@@ -130,7 +142,7 @@ describe('OMS-REG-CCE-07.4 — asset numbers are unique within the file', () => 
   });
 
   it('compares case-insensitively', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${H}\ncce-1,E003/059,,,,,,,,\nCCE-1,E003/059,,,,,,,,\n`,
       lookup()
     );
@@ -138,7 +150,7 @@ describe('OMS-REG-CCE-07.4 — asset numbers are unique within the file', () => 
   });
 
   it('does not flag distinct numbers', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${H}\nCCE-1,E003/059,,,,,,,,\nCCE-2,E003/059,,,,,,,,\n`,
       lookup()
     );
@@ -148,18 +160,18 @@ describe('OMS-REG-CCE-07.4 — asset numbers are unique within the file', () => 
 
 describe('OMS-REG-CCE-07.5 — the catalogue item code must match', () => {
   it('fails a row whose code matches nothing', () => {
-    const rows = parseImportFile(`${H}\nCCE-1,NOPE,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\nCCE-1,NOPE,,,,,,,,\n`, lookup());
     expect(rows[0]?.errors).toContain('error.code-no-match');
     expect(rows[0]?.catalogueItemId).toBeNull();
   });
 
   it('fails a row with no code at all', () => {
-    const rows = parseImportFile(`${H}\nCCE-1,,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\nCCE-1,,,,,,,,,\n`, lookup());
     expect(rows[0]?.errors).toContain('error.field-must-be-specified');
   });
 
   it('resolves a matching code to its catalogue item', () => {
-    const rows = parseImportFile(`${H}\nCCE-1,e003/059,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\nCCE-1,e003/059,,,,,,,,\n`, lookup());
     expect(rows[0]?.catalogueItemId).toBe('item-1');
   });
 });
@@ -172,7 +184,7 @@ describe('OMS-REG-CCE-07.6 / .7 — the four dates are soft', () => {
    * warning every user learns to dismiss takes the real ones down with it.
    */
   it('says nothing about a blank date, and still imports', () => {
-    const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     expect(rows[0]?.errors).toEqual([]);
     expect(rows[0]?.warnings).toEqual([]);
     expect(rows[0]?.installationDate).toBeNull();
@@ -181,19 +193,13 @@ describe('OMS-REG-CCE-07.6 / .7 — the four dates are soft', () => {
   });
 
   it('still warns when a date is present but unreadable', () => {
-    const rows = parseImportFile(
-      `${H}\nCCE-1,E003/059,tuesday,,,,,,,\n`,
-      lookup()
-    );
+    const rows = rowsOf(`${H}\nCCE-1,E003/059,tuesday,,,,,,,\n`, lookup());
     expect(rows[0]?.warnings).toContain('warning.field-not-parsed');
     expect(hasWarnings(rows)).toBe(true);
   });
 
   it('warns on an unreadable date and drops that value only', () => {
-    const rows = parseImportFile(
-      `${H}\nCCE-1,E003/059,not-a-date,,,,,,,\n`,
-      lookup()
-    );
+    const rows = rowsOf(`${H}\nCCE-1,E003/059,not-a-date,,,,,,,\n`, lookup());
     expect(rows[0]?.installationDate).toBeNull();
     expect(rows[0]?.errors).toEqual([]);
   });
@@ -293,7 +299,7 @@ describe('the CURRENT app’s export imports here', () => {
   ].join('\r\n');
 
   it('reads every value, with no errors and no warnings', () => {
-    const rows = parseImportFile(CURRENT_APP_EXPORT, lookup());
+    const rows = rowsOf(CURRENT_APP_EXPORT, lookup());
     expect(rows).toHaveLength(2);
     expect(hasErrors(rows)).toBe(false);
     expect(hasWarnings(rows)).toBe(false);
@@ -303,14 +309,14 @@ describe('the CURRENT app’s export imports here', () => {
   });
 
   it('reads its raw-boolean replacement flag, both ways', () => {
-    const rows = parseImportFile(CURRENT_APP_EXPORT, lookup());
+    const rows = rowsOf(CURRENT_APP_EXPORT, lookup());
     expect(rows.map(row => row.needsReplacement)).toEqual([true, false]);
   });
 
   it('ignores the columns it carries that the import has no use for', () => {
     // `id` and the two UTC timestamps are looked up by name, so a column the
     // import does not know simply never gets read.
-    const [first] = parseImportFile(CURRENT_APP_EXPORT, lookup());
+    const [first] = rowsOf(CURRENT_APP_EXPORT, lookup());
     expect(first?.errors).toEqual([]);
   });
 });
@@ -355,7 +361,7 @@ describe('the reporter’s two templates (issue #663, second round)', () => {
     const label = withStore ? 'the old app’s template' : 'this app’s template';
     for (const isCentral of [true, false]) {
       it(`${label} imports on a ${isCentral ? 'central' : 'store'} server`, () => {
-        const rows = parseImportFile(file(withStore), lookupWith(isCentral));
+        const rows = rowsOf(file(withStore), lookupWith(isCentral));
         expect(rows).toHaveLength(2);
         expect(hasErrors(rows)).toBe(false);
         expect(hasWarnings(rows)).toBe(false);
@@ -370,7 +376,7 @@ describe('the reporter’s two templates (issue #663, second round)', () => {
   it('reads a Store column the file carries but this server has no use for', () => {
     // On a store server the column is not one the import knows, so it is simply
     // never looked up — it must not derail the columns beside it.
-    const rows = parseImportFile(file(true), lookupWith(false));
+    const rows = rowsOf(file(true), lookupWith(false));
     expect(rows[0]?.assetNumber).toBe('C1');
     expect(rows[0]?.storeId).toBeNull();
   });
@@ -395,14 +401,14 @@ describe('a returned template carrying all three shapes at once', () => {
   ].join('\r\n');
 
   it('imports, where any one of the three defects failed every row', () => {
-    const rows = parseImportFile(RETURNED, lookup());
+    const rows = rowsOf(RETURNED, lookup());
     expect(rows).toHaveLength(2);
     expect(hasErrors(rows)).toBe(false);
     expect(canImport(rows)).toBe(true);
   });
 
   it('reads the values, not just the shape', () => {
-    const [first] = parseImportFile(RETURNED, lookup());
+    const [first] = rowsOf(RETURNED, lookup());
     expect(first?.assetNumber).toBe('CCE-1');
     expect(first?.catalogueItemId).toBe('item-1');
     expect(first?.serialNumber).toBe('ADF123568');
@@ -412,7 +418,7 @@ describe('a returned template carrying all three shapes at once', () => {
   });
 
   it('numbers its lines as the spreadsheet shows them', () => {
-    const rows = parseImportFile(RETURNED, lookup());
+    const rows = rowsOf(RETURNED, lookup());
     expect(rows.map(row => row.lineNumber)).toEqual([3, 4]);
   });
 });
@@ -429,32 +435,28 @@ describe('the heading row is found, not assumed to be first', () => {
     'Column1,Column2,Column3,Column4,Column5,Column6,Column7,Column8,Column9,Column10';
 
   it('reads past a spreadsheet banner row to the real heading', () => {
-    const rows = parseImportFile(
-      `${BANNER}\n${H}\nCCE-1,E003/059,,,,,,,,\n`,
-      lookup()
-    );
+    const rows = rowsOf(`${BANNER}\n${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     expect(rows).toHaveLength(1);
     expect(rows[0]?.assetNumber).toBe('CCE-1');
     expect(rows[0]?.errors).toEqual([]);
   });
 
   it('numbers the line as the spreadsheet does, counting the banner', () => {
-    const rows = parseImportFile(
-      `${BANNER}\n${H}\nCCE-1,E003/059,,,,,,,,\n`,
-      lookup()
-    );
+    const rows = rowsOf(`${BANNER}\n${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     // banner = 1, heading = 2, first body row = 3.
     expect(rows[0]?.lineNumber).toBe(3);
   });
 
   it('still numbers from 2 when the heading is where it belongs', () => {
-    const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     expect(rows[0]?.lineNumber).toBe(2);
   });
 
   it('refuses a file whose rows name no column it knows', () => {
     // Loudly — not as a hundred rows each "missing" a value they carry.
-    expect(parseImportFile(`${BANNER}\nC1,C1,,,,,,,,\n`, lookup())).toEqual([]);
+    expect(parseImportFile(`${BANNER}\nC1,C1,,,,,,,,\n`, lookup())).toBe(
+      'no-header'
+    );
   });
 
   /*
@@ -462,24 +464,24 @@ describe('the heading row is found, not assumed to be first', () => {
    * tell the second user to compare a heading that already matches.
    */
   it('says WHY a file yields nothing: unknown heading, or a known one with no rows', () => {
-    expect(importFileFailure(`${BANNER}\nC1,C1,,,,,,,,\n`, false)).toBe(
+    expect(parseImportFile(`${BANNER}\nC1,C1,,,,,,,,\n`, lookup())).toBe(
       'no-header'
     );
     // The template with its example row deleted, or an empty register's export.
-    expect(importFileFailure(`${H}\n`, false)).toBe('no-rows');
-    expect(importFileFailure(`${BANNER}\n${H}\n`, false)).toBe('no-rows');
-    expect(importFileFailure('', false)).toBe('no-header');
-    // And nothing to say about a file that yields rows.
-    expect(importFileFailure(`${H}\nCCE-1,E003/059,,,,,,,,\n`, false)).toBe(
-      null
-    );
+    expect(parseImportFile(`${H}\n`, lookup())).toBe('no-rows');
+    expect(parseImportFile(`${BANNER}\n${H}\n`, lookup())).toBe('no-rows');
+    expect(parseImportFile('', lookup())).toBe('no-header');
+    // And a file that yields rows answers with them, not with a reason.
+    expect(
+      parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup())
+    ).toHaveLength(1);
   });
 
   it('does not go hunting past the first few rows for a heading', () => {
     const padding = Array(8).fill(BANNER).join('\n');
     expect(
       parseImportFile(`${padding}\n${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup())
-    ).toEqual([]);
+    ).toBe('no-header');
   });
 });
 
@@ -525,7 +527,7 @@ describe('the replacement flag', () => {
 
 describe('specification columns', () => {
   it('reads a column headed by the property’s own display name', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${H},Climate zone\nCCE-1,E003/059,,,,,,,,,Hot\n`,
       lookup({ properties: [property('climate_zone', 'Climate zone')] })
     );
@@ -533,7 +535,7 @@ describe('specification columns', () => {
   });
 
   it('leaves an empty specification cell out entirely', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${H},Climate zone\nCCE-1,E003/059,,,,,,,,,\n`,
       lookup({ properties: [property('climate_zone', 'Climate zone')] })
     );
@@ -603,10 +605,36 @@ describe('numbers: a comma is the decimal mark unless it is plainly grouping', (
     expect(parseImportNumber('12kg')).toBeUndefined();
   });
 
+  /*
+   * Only a SEMICOLON is evidence of a decimal comma. The argument is that a
+   * spreadsheet reaches for `;` because its locale took the comma — a tab is
+   * chosen for reasons of its own and says nothing, so reading it as evidence
+   * turned a grouped thousand from an en-locale sheet into one-and-a-bit.
+   */
+  it('groups a tab-separated file as a comma file does', () => {
+    const header = [
+      'label.asset-number',
+      'label.catalogue-item-code',
+      'Capacity',
+    ].join('\t');
+    const [row] = rowsOf(
+      `${header}\nCCE-1\tE003/059\t1,234\n`,
+      lookup({
+        properties: [
+          {
+            ...property('cap', 'Capacity'),
+            valueType: 'FLOAT',
+          } as PropertyDefinition,
+        ],
+      })
+    );
+    expect(row?.properties.cap).toBe(1234);
+  });
+
   it('carries the file’s convention into a semicolon-separated import', () => {
     const header = `${H.split(',').join(';')};Capacity`;
     const row = 'CCE-1;E003/059;;;;;;;;;12,5';
-    const [parsed] = parseImportFile(
+    const [parsed] = rowsOf(
       `${header}\n${row}\n`,
       lookup({
         properties: [
@@ -660,7 +688,7 @@ describe('a property cell is read as the type its definition declares', () => {
   it('warns and drops an unreadable cell rather than failing the row', () => {
     const body = ['A-1', 'E003/059', '', '', '', '', '', '', '', '', 'nowhere'];
     const source = `${H},Climate zone\n${body.join(',')}\n`;
-    const [row] = parseImportFile(
+    const [row] = rowsOf(
       source,
       lookup({
         properties: [
@@ -681,7 +709,7 @@ describe('the store column', () => {
   const centralHeader = ['label.store', H].join(',');
 
   it('is read only where the destination offers it', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${H}\nCCE-1,E003/059,,,,,,,,\n`,
       lookup({ isCentral: false })
     );
@@ -690,7 +718,7 @@ describe('the store column', () => {
   });
 
   it('resolves a matching store code', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${centralHeader}\nPS,CCE-1,E003/059,,,,,,,,\n`,
       lookup({ isCentral: true })
     );
@@ -698,7 +726,7 @@ describe('the store column', () => {
   });
 
   it('fails a code matching no store', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${centralHeader}\nNOPE,CCE-1,E003/059,,,,,,,,\n`,
       lookup({ isCentral: true })
     );
@@ -706,7 +734,7 @@ describe('the store column', () => {
   });
 
   it('accepts an omitted store — the asset stays on the acting store', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${centralHeader}\n,CCE-1,E003/059,,,,,,,,\n`,
       lookup({ isCentral: true })
     );
@@ -717,12 +745,12 @@ describe('the store column', () => {
 
 describe('OMS-REG-CCE-07.9 — a parsed row becomes an insert', () => {
   it('always names the cold-chain class', () => {
-    const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     expect(rowToInsertInput(rows[0]!, CCE_CLASS_ID).classId).toBe(CCE_CLASS_ID);
   });
 
   it('carries the catalogue item, the dates and the specification', () => {
-    const rows = parseImportFile(
+    const rows = rowsOf(
       `${H},Climate zone\nCCE-1,E003/059,01/02/2024,,,,SN-1,,TRUE,a note,Hot\n`,
       lookup({ properties: [property('climate_zone', 'Climate zone')] })
     );
@@ -738,14 +766,14 @@ describe('OMS-REG-CCE-07.9 — a parsed row becomes an insert', () => {
   });
 
   it('sends null rather than an empty serial or note', () => {
-    const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     const input = rowToInsertInput(rows[0]!, CCE_CLASS_ID);
     expect(input.serialNumber).toBeNull();
     expect(input.notes).toBeNull();
   });
 
   it('omits the store where the row named none', () => {
-    const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     expect(rowToInsertInput(rows[0]!, CCE_CLASS_ID)).not.toHaveProperty(
       'storeId'
     );
@@ -754,7 +782,7 @@ describe('OMS-REG-CCE-07.9 — a parsed row becomes an insert', () => {
 
 describe('OMS-REG-CCE-07.10 — the failed rows export', () => {
   it('appends the line number and the reason', () => {
-    const rows = parseImportFile(`${H}\n,NOPE,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\n,NOPE,,,,,,,,\n`, lookup());
     const csv = failedRowsToCsv(rows, [], false);
     const header = csv.split('\r\n')[0] ?? '';
     expect(header).toContain('label.line-number');
@@ -763,7 +791,7 @@ describe('OMS-REG-CCE-07.10 — the failed rows export', () => {
   });
 
   it('carries the line number a user reads in their spreadsheet', () => {
-    const rows = parseImportFile(`${H}\n,NOPE,,,,,,,,\n`, lookup());
+    const rows = rowsOf(`${H}\n,NOPE,,,,,,,,\n`, lookup());
     expect(failedRowsToCsv(rows, [], false)).toContain('2');
   });
 
@@ -775,12 +803,12 @@ describe('OMS-REG-CCE-07.10 — the failed rows export', () => {
    */
   it('round-trips through the import: the dates and the flag survive', () => {
     const source = `${H}\nA-1,E003/059,05/10/2024,,,,SER-1,label.status-functioning,true,\n`;
-    const [first] = parseImportFile(source, lookup());
+    const [first] = rowsOf(source, lookup());
     expect(first?.installationDate).toBe('2024-10-05');
     expect(first?.needsReplacement).toBe(true);
 
     // Straight back out and in again — no hand-editing in between.
-    const [round] = parseImportFile(
+    const [round] = rowsOf(
       failedRowsToCsv([first as ImportRow], [], false),
       lookup()
     );
@@ -816,13 +844,13 @@ describe('OMS-REG-CCE-07.12 — the template', () => {
   });
 
   it('round-trips: its own header parses back to one example row', () => {
-    const rows = parseImportFile(buildTemplateCsv([], false), lookup());
+    const rows = rowsOf(buildTemplateCsv([], false), lookup());
     expect(rows).toHaveLength(1);
   });
 });
 
 describe('the review table sorts and filters in place', () => {
-  const parse = (body: string) => parseImportFile(`${H}\n${body}`, lookup());
+  const parse = (body: string) => rowsOf(`${H}\n${body}`, lookup());
 
   it('orders rows by a column, both ways', () => {
     const rows = parse('B-2,E003/059,,,,,,,,\nA-1,E003/059,,,,,,,,\n');
