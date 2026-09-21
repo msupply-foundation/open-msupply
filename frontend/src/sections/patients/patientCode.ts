@@ -17,12 +17,9 @@ import {
 // The counter is server-side, per store, and CONSUMED by the allocate call: a
 // generated code the user then discards leaves a gap in the sequence. That is
 // why generate is a deliberate click and a re-generate is confirmed first, not
-// something an effect may do on the user's behalf.
-
-// The server-side counter's name. A NumberRowType::Program counter — the same
-// mechanism program enrolment ids use, which is why the mutation and its
-// permission are program-flavoured (see the contract's wire trap).
-const COUNTER_NAME = 'PatientCode';
+// something an effect may do on the user's behalf. Which counter it is stays
+// server-side (allocatePatientNumber takes no name), so the client cannot ask
+// for the wrong one.
 
 const PREFIX_LENGTH = 3;
 const NUMBER_PAD = '0000';
@@ -61,18 +58,15 @@ export const isPatientCodeTaken = async (
 
 /**
  * Allocate the next counter value for the store. Undefined when the call fails
- * — including the DOCUMENT_MUTATE Forbidden case (handled globally, since the
- * affordance is permission-gated and a user who sees it should hold the
- * permission).
+ * — a transport or server failure, already surfaced globally. The endpoint
+ * costs PATIENT_MUTATE, the same permission that gates the form, so a user who
+ * can reach an enabled Generate button can always allocate.
  */
 const allocateNumber = async (storeId: string): Promise<number | undefined> => {
-  const variables: AllocatePatientCodeNumberVariables = {
-    storeId,
-    numberName: COUNTER_NAME,
-  };
+  const variables: AllocatePatientCodeNumberVariables = { storeId };
   const result = await graphqlFetch(AllocatePatientCodeNumber, variables);
   if (result.kind !== 'success') return undefined;
-  return result.data.allocateProgramNumber.number;
+  return result.data.allocatePatientNumber.number;
 };
 
 // How many times to re-roll a generated code that turns out to be taken. The

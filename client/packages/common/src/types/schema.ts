@@ -6213,6 +6213,11 @@ export type Mutations = {
   addToOutboundShipmentFromMasterList: AddToOutboundShipmentFromMasterListResponse;
   addToPurchaseOrderFromMasterList: AddToPurchaseOrderFromMasterListResponse;
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
+  /**
+   * Allocate the next patient code number for the store. Requires only the
+   * patient-mutate permission — see allocate_patient_number (#268).
+   */
+  allocatePatientNumber: NumberNode;
   allocateProgramNumber: AllocateProgramNumberResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchInboundShipmentExternal: BatchInboundShipmentResponse;
@@ -6423,6 +6428,10 @@ export type MutationsAddToPurchaseOrderFromMasterListArgs = {
 
 export type MutationsAllocateOutboundShipmentUnallocatedLineArgs = {
   lineId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsAllocatePatientNumberArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -7768,6 +7777,8 @@ export type PeriodConnector = {
 
 export type PeriodFilterInput = {
   endDate?: InputMaybe<DateFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  periodScheduleId?: InputMaybe<EqualFilterStringInput>;
   startDate?: InputMaybe<DateFilterInput>;
 };
 
@@ -7779,12 +7790,31 @@ export type PeriodNode = {
   startDate: Scalars['NaiveDate']['output'];
 };
 
+export type PeriodScheduleFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type PeriodScheduleNode = {
   __typename: 'PeriodScheduleNode';
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   periods: Array<SchedulePeriodNode>;
 };
+
+export type PeriodScheduleRowConnector = {
+  __typename: 'PeriodScheduleRowConnector';
+  nodes: Array<PeriodScheduleRowNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PeriodScheduleRowNode = {
+  __typename: 'PeriodScheduleRowNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type PeriodScheduleRowResponse = PeriodScheduleRowConnector;
 
 export type PeriodSchedulesConnector = {
   __typename: 'PeriodSchedulesConnector';
@@ -8003,6 +8033,13 @@ export type PrescriptionRequestConnector = {
 
 export type PrescriptionRequestFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  /**
+   * When the request was dispensed — set by the hand-over's status flip, so
+   * it is null on everything not yet dispensed. Window a "dispensed in
+   * period" count on THIS, never on `status`: a status advances, so a
+   * status-windowed figure falls as records progress.
+   */
+  dispensedDatetime?: InputMaybe<DatetimeFilterInput>;
   /**
    * Dynamic filter condition AST, currently supporting custom field
    * conditions on keys visible for the "prescription_request" scope, e.g.
@@ -8766,6 +8803,7 @@ export type Queries = {
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
+  periodSchedules: PeriodScheduleRowResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
@@ -9298,6 +9336,11 @@ export type QueriesPatientsArgs = {
   filter?: InputMaybe<PatientFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<PatientSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPeriodSchedulesArgs = {
+  filter?: InputMaybe<PeriodScheduleFilterInput>;
   storeId: Scalars['String']['input'];
 };
 

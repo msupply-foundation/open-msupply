@@ -1,14 +1,13 @@
-# The patient-code counter (spec/patients contract › generating a code). Named
-# "PatientCode" — a NumberRowType::Program counter, allocated per STORE, and
-# CONSUMED by the call whether or not the client keeps the result. The response
-# is a single-member union whose only member is NumberNode; there is no error
-# node. Gated on DOCUMENT_MUTATE (Resource::MutateProgram), NOT the
-# PATIENT_MUTATE that gates the form itself — see the contract's wire trap.
-mutation allocatePatientCodeNumber($storeId: String!, $numberName: String!) {
-  allocateProgramNumber(storeId: $storeId, input: { numberName: $numberName }) {
-    ... on NumberNode {
-      __typename
-      number
-    }
+# The patient-code counter (spec/patients contract › generating a code). The
+# counter is per STORE and is CONSUMED by the call whether or not the client
+# keeps the result.
+#
+# Gated on PATIENT_MUTATE — the same permission that gates the form itself, so
+# anyone who can save a patient can generate its code (#268). The older
+# allocateProgramNumber, which this used to call, cost DOCUMENT_MUTATE: a
+# program permission no amount of store-permission ticking can grant.
+mutation allocatePatientCodeNumber($storeId: String!) {
+  allocatePatientNumber(storeId: $storeId) {
+    number
   }
 }
