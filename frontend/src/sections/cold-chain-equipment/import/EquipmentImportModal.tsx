@@ -3,6 +3,7 @@ import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
 import { generateUUID } from '@/uuid';
 import { saveBlob } from '@/platform/openDocument';
+import { readCsvFile } from '@/domain/reportFiles';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { Button } from '@/ui/elements/buttons/Button';
@@ -28,7 +29,10 @@ import {
 } from '../catalogue.generated';
 import { storePageFetcher } from '@/domain/store';
 import { buildCreatedLogInput } from '../list/createAsset';
-import { applicableProperties, type PropertyDefinition } from '../detail/assetProperties';
+import {
+  applicableProperties,
+  type PropertyDefinition,
+} from '../detail/assetProperties';
 import {
   CSV_ACCEPT,
   IMPORT_BATCH_SIZE,
@@ -109,7 +113,9 @@ export const EquipmentImportModal: Component<
         // paginated fetcher's first page is enough for the codes a file names
         // in practice; a code beyond it reads as no match, which is the same
         // outcome as a typo (OMS-REG-CCE-07.5 sibling).
-        props.isCentral ? storePageFetcher()('', 0) : Promise.resolve(undefined),
+        props.isCentral
+          ? storePageFetcher()('', 0)
+          : Promise.resolve(undefined),
       ]);
       return {
         catalogueItems:
@@ -147,7 +153,9 @@ export const EquipmentImportModal: Component<
       return setUploadError(t('messages.invalid-file'));
     try {
       const [text, catalogue] = await Promise.all([
-        file.text(),
+        // NOT file.text(), which always decodes UTF-8: Excel on Windows saves
+        // the machine's legacy code page (domain/reportFiles § readCsvFile).
+        readCsvFile(file),
         loadCatalogue(),
       ]);
       const parsed = parseImportFile(text, {
@@ -155,7 +163,17 @@ export const EquipmentImportModal: Component<
         isCentral: props.isCentral,
         newId: () => generateUUID(),
       });
-      if (parsed.length === 0) return setUploadError(t('messages.invalid-file'));
+      // A readable CSV that yields no rows is a DIFFERENT failure from "not a
+      // CSV", and there are two of them with two remedies: a heading the import
+      // does not know (a spreadsheet's `Column1 … ColumnN` banner is the usual
+      // cause) wants the template compared; a heading it DOES know with nothing
+      // beneath wants rows. The parse says which.
+      if (!Array.isArray(parsed))
+        return setUploadError(
+          parsed === 'no-rows'
+            ? t('error.import-no-rows')
+            : t('error.import-columns-not-recognised')
+        );
       setRows(parsed);
       // Review is reachable only NOW — once a file has parsed (OMS-REG-CCE-07.2).
       setStep('review');
@@ -242,6 +260,19 @@ export const EquipmentImportModal: Component<
     setStep('review');
   };
 
+  /*
+   * The rows the user has to correct, written back out with the reason beside
+   * each — and named for what the file actually holds, which is two different
+   * things at the two points this action is reachable from.
+   *
+   * BEFORE an import runs, `rows()` is the whole file and nothing has been
+   * created, so the user must fix and re-upload ALL of it; the clean rows
+   * belong in the file and "failed to upload" would be a lie about them.
+   * AFTER a run that partly failed, `rows()` is only the refusals — the rest
+   * were created — and that name is exactly right.
+   *
+   * `importError()` is set only by a failed run, so it is the discriminator.
+   */
   const exportFailed = async () => {
     const { properties } = await loadCatalogue();
     const csv = failedRowsToCsv(
@@ -249,16 +280,23 @@ export const EquipmentImportModal: Component<
       properties.map(property => property.key),
       props.isCentral
     );
+    const name = importError()
+      ? t('filename.cce-failed-uploads')
+      : t('filename.cce-rows-to-fix');
     await saveBlob(
       new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-      `${t('filename.cce-failed-uploads')}.csv`
+      `${name}.csv`
     );
   };
 
   const steps = () => {
     const current = step();
     return [
-      { label: t('label.upload'), started: true, finished: current !== 'upload' },
+      {
+        label: t('label.upload'),
+        started: true,
+        finished: current !== 'upload',
+      },
       {
         label: t('label.review'),
         started: current !== 'upload',
@@ -332,7 +370,10 @@ export const EquipmentImportModal: Component<
       size: remToPx(10),
     },
     {
-      c: { accessor: row => row.installationDate ?? '', id: 'installationDate' },
+      c: {
+        accessor: row => row.installationDate ?? '',
+        id: 'installationDate',
+      },
       sortKey: 'installationDate',
       header: () => t('label.installation-date'),
       ...getTextCell(),
@@ -388,22 +429,23 @@ export const EquipmentImportModal: Component<
       size: remToPx(10),
     },
     // One column per specification key the file carries, headed by the key.
-    ...propertyKeys().map(
-      (key): Column<ImportRow, ReviewSortKey> => ({
-        c: {
-          accessor: row => String(row.properties[key] ?? ''),
-          id: `property-${key}`,
-        },
-        header: () => key,
-        ...getTextCell(),
-        size: remToPx(9),
-      })
-    ),
+    ...propertyKeys().map((key): Column<ImportRow, ReviewSortKey> => ({
+      c: {
+        accessor: row => String(row.properties[key] ?? ''),
+        id: `property-${key}`,
+      },
+      header: () => key,
+      ...getTextCell(),
+      size: remToPx(9),
+    })),
     // Shown only when some row warned / failed (ui-surface S4 § review).
     ...(hasWarnings(rows())
       ? [
           {
-            c: { accessor: row => row.warnings.join(' '), id: 'warningMessage' },
+            c: {
+              accessor: row => row.warnings.join(' '),
+              id: 'warningMessage',
+            },
             header: () => t('label.warning-message'),
             ...getTextCell<ImportRow>(),
             size: remToPx(14),
@@ -489,7 +531,9 @@ export const EquipmentImportModal: Component<
         </Show>
         <Show
           when={
-            !importError() && rows().length > 0 && !hasErrors(rows()) &&
+            !importError() &&
+            rows().length > 0 &&
+            !hasErrors(rows()) &&
             hasWarnings(rows())
           }
         >

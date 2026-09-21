@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { equipmentToCsv, type ExportRow } from './equipmentToCsv';
+import { format } from 'date-fns';
+import { parseImportDate, parseNeedsReplacement } from '../import/importParse';
+import { DATE_FNS_LOADERS, t } from '@/intl';
 
 const row = (over: Partial<ExportRow> = {}): ExportRow =>
   ({
@@ -97,5 +100,39 @@ describe('the fixed columns', () => {
   it('leaves an absent date blank rather than printing a placeholder', () => {
     const csv = equipmentToCsv([row({ replacementDate: null })], [], false);
     expect(firstRow(csv)).not.toContain('Invalid');
+  });
+});
+
+/*
+ * The export and the import are two halves of one round trip, and they drifted:
+ * the export writes dates in the READER's locale and the flag as a word, while
+ * the import read one date notation and one spelling of the flag. A user who
+ * exported a register and fed it back got dates dropped as warnings and the
+ * replacement flag silently cleared.
+ *
+ * `exportDate` is date-fns `P` under the app's own locale map, so these are the
+ * shapes it actually produces — every one of them, from the map itself rather
+ * than a hand-picked few, so a language added later cannot drift out of the
+ * pairing unnoticed. Pinned here rather than in the import's own tests, because
+ * it is the PAIRING that has to hold, and only this file knows what the export
+ * writes. (Today that is `14/09/2026` for most, `14.09.2026` for ru and
+ * `2026/09/14` for the Persian stand-in the Dari and Pashto catalogs use.)
+ */
+describe('what the export writes, the import reads back', () => {
+  const day = new Date(2026, 8, 14); // 14 September 2026
+
+  it('every language’s short date', async () => {
+    for (const [language, load] of Object.entries(DATE_FNS_LOADERS)) {
+      const written = format(day, 'P', { locale: await load() });
+      expect(
+        parseImportDate(written),
+        `the import must read "${written}" (${language})`
+      ).toBe('2026-09-14');
+    }
+  });
+
+  it('the replacement flag, as the word the export writes', () => {
+    expect(parseNeedsReplacement(t('messages.yes'))).toBe(true);
+    expect(parseNeedsReplacement(t('messages.no'))).toBe(false);
   });
 });
