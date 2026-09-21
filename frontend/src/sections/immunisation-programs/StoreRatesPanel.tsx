@@ -4,7 +4,6 @@ import { t } from '@/intl';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
-import { Stack } from '@/ui/layout/Stack/Stack';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { Table } from '@/ui/elements/table/Table';
@@ -26,13 +25,6 @@ import {
 // layered over the editor. Its edits are local until OK hands them back into
 // the course draft; Back discards them. Neither writes — the course's Save
 // does.
-
-/**
- * How tall the store list gets before it scrolls instead of growing — enough
- * rows to scroll through, few enough that the search box above and the
- * footer below stay on screen.
- */
-const LIST_HEIGHT_REM = 24;
 
 export interface StoreRatesPanelProps {
   /** The course draft's overrides as the panel opens. */
@@ -103,7 +95,7 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
         </>
       }
     >
-      <Stack>
+      <>
         <TextField
           label={t('placeholder.filter-by-store-name')}
           hideLabel
@@ -119,7 +111,7 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
         <Show when={!firstLoad()} fallback={<Spinner />}>
           <Table
             label={t('heading.configure-rates-per-store')}
-            maxHeightRem={LIST_HEIGHT_REM}
+            fill
             onReachEnd={stores.loadMore}
           >
             <thead>
@@ -189,7 +181,7 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
             </tbody>
           </Table>
         </Show>
-      </Stack>
+      </>
     </Dialog>
   );
 };

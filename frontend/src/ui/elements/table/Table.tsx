@@ -10,13 +10,16 @@ export interface TableProps {
   /** The <thead>/<tbody>, composed by the page. */
   children: JSX.Element;
   /**
-   * Bound the shell's height (rem) so it scrolls vertically instead of growing
-   * — for the one case where the row set is not short after all: a sub-table
-   * fed by a PAGED read, where what is loaded grows as the user scrolls. The
-   * surface around it (a dialog's search box, its footer) then stays put
-   * instead of being pushed off. Unset, the shell grows with its rows.
+   * Take the height the flex parent has to give and scroll the rows inside it,
+   * instead of growing with them — for the one case where the row set is not
+   * short after all: a sub-table fed by a PAGED read, where what is loaded
+   * grows as the user scrolls. The surface around it (a dialog's search box,
+   * its footer) then stays put instead of being pushed off, and no gap opens
+   * under the rows when the surface is taller than they are (a dialog goes
+   * full-screen on a phone). Needs a flex-column parent with a bounded height
+   * — a dialog's scroll region is one. Unset, the shell grows with its rows.
    */
-  maxHeightRem?: number;
+  fill?: boolean;
   /**
    * Called when the (bounded) shell is scrolled near its bottom — fetch the
    * next page and append rows. Same contract as the combobox listbox's
@@ -59,12 +62,7 @@ export interface TableProps {
 export const Table = (props: TableProps) => (
   <div
     class={styles.wrap}
-    data-scrolls={props.maxHeightRem === undefined ? undefined : ''}
-    style={
-      props.maxHeightRem === undefined
-        ? undefined
-        : { 'max-block-size': `${props.maxHeightRem}rem` }
-    }
+    data-fill={props.fill ? '' : undefined}
     onScroll={event => {
       if (props.onReachEnd && isNearScrollEnd(event.currentTarget))
         props.onReachEnd();

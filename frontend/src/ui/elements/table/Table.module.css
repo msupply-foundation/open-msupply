@@ -11,9 +11,14 @@
   background: var(--bg-white);
 }
 
-/* Bounded (Table maxHeightRem): the shell scrolls its rows instead of growing,
-   for a sub-table fed by a paged read. */
-.wrap[data-scrolls] {
+/* Filling (Table `fill`): the shell takes the block space its flex parent has
+   to give and scrolls the rows inside it, rather than growing with them. The
+   basis is `auto` and the floor 0, so it shrinks on a short viewport and
+   stretches on a tall one — no gap under the last row when a dialog goes
+   full-screen. For a sub-table fed by a paged read. */
+.wrap[data-fill] {
+  flex: 1 1 auto;
+  min-block-size: 0;
   overflow-y: auto;
 }
 
