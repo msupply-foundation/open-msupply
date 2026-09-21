@@ -92,7 +92,8 @@ import {
   canCloseLines,
   isOpenToChange,
 } from './purchaseOrderLadder';
-import { formatMoney, linePacks, lineCost } from './purchaseOrderPricing';
+import { formatCurrency } from '@/intl/currency';
+import { linePacks, lineCost } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
 
 // An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
@@ -545,7 +546,8 @@ const PurchaseOrderDetailView: Component = () => {
     },
   ];
 
-  const money = (value: number) => formatMoney(value, info()?.currency?.code);
+  const money = (value: number) =>
+    formatCurrency(value, info()?.currency?.code);
 
   return (
     // info()/rows() are read non-suspending, so the initial-load spinner is

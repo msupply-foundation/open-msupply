@@ -13,6 +13,7 @@ import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { getPlural, t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
+import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
@@ -1223,16 +1224,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             meta: { align: 'right' },
             cell: info =>
               props.currencyCode
-                ? formatNumber(info.getValue<number>(), {
-                    style: 'currency',
-                    currency: props.currencyCode,
-                    currencyDisplay: 'narrowSymbol',
-                    // formatNumber's max-digits default (10) beats Intl's own
-                    // currency default of 2 — state both, as
-                    // formatCurrencyCell does.
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })
+                ? formatCurrency(info.getValue<number>(), props.currencyCode)
                 : '',
             size: remToPx(9),
           } satisfies Column<DraftLine, never, GroupKey>,

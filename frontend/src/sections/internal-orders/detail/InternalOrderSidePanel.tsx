@@ -1,7 +1,6 @@
 import { createMemo, For, Show, type Component } from 'solid-js';
 import { t, localisedDate } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
-import { homeCurrency } from '../../../intl/currency';
+import { formatCurrency } from '../../../intl/currency';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -61,15 +60,6 @@ export interface InternalOrderSidePanelProps {
   onSaveField: (patch: Record<string, unknown>) => void;
   onDeleted: () => void;
 }
-
-const money = (value: number): string =>
-  formatNumber(value, {
-    style: 'currency',
-    currency: homeCurrency(),
-    currencyDisplay: 'narrowSymbol',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 
 export const InternalOrderSidePanel: Component<
   InternalOrderSidePanelProps
@@ -275,7 +265,7 @@ export const InternalOrderSidePanel: Component<
         >
           <FieldRow label={t('heading.grand-total')}>
             <strong data-testid="grand-total-field">
-              {money(grandTotal())}
+              {formatCurrency(grandTotal())}
             </strong>
           </FieldRow>
         </SidePanelSection>
