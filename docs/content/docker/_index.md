@@ -51,20 +51,19 @@ Non-release tags are typically created automatically by the nightly build proces
 
 ### How it works
 
-The build itself is defined once, in `docker-image.yaml`, which has no triggers of its own — it is called by `docker-release.yaml` (tags) and `docker-cd.yaml` (continuous deployment). Each caller passes a matrix, a version, and whether it wants floating aliases and dev images; the shared build has no idea which one called it.
+The build itself is defined once, in `docker-image.yaml`, which has no triggers of its own. On this release branch `docker-release.yaml` (tags) is its only caller; the deployment callers that share it on develop are not carried here, because a release branch produces images rather than deploying them. The caller passes a matrix, a version, and whether it wants floating aliases and dev images; the shared build has no idea who called it.
 
-1. **Classify** (`docker-release.yaml`) — decides from the tag whether it is a release or a nightly, and produces the variant matrix and floating alias prefix. The CD workflow has an equivalent `plan` job that just names the commit.
+1. **Classify** (`docker-release.yaml`) — decides from the tag whether it is a release or a nightly, and produces the variant matrix and floating alias prefix.
 2. **Image** (1, 2 or 4 parallel jobs) — one `docker buildx build` per (db, arch). Everything is compiled inside the Dockerfile: the server, the old UI, and the new frontend. Release tags additionally build the `-dev` images.
    - **amd64** builds run natively on the runner
    - **arm64** builds cross-compile — the Dockerfile pins its compile stages to `$BUILDPLATFORM`, so `rustc` never runs emulated (release tags only)
-3. **Deploy** (`docker-cd.yaml`) — brings the develop environment up on the new image. Never runs for tags.
-4. **Trigger plugin tests** (`docker-release.yaml`) — runs the downstream plugin test suite against the new dev images (release tags only)
+3. **Trigger plugin tests** (`docker-release.yaml`) — runs the downstream plugin test suite against the new dev images (release tags only)
 
-Both callers share the build cache. BuildKit keys on the build's content, not on the workflow that invoked it, so a develop merge warms what the nightly tag needs.
+Callers share the build cache. BuildKit keys on the build's content, not on the workflow that invoked it, so one build warms what the next needs regardless of which workflow asked for it.
 
 There is no separate client or server build job and no artifact hand-off between jobs. That shape suited GitHub-hosted runners, where each job gets a fresh VM; on a self-hosted box the jobs serialise on a lane and the artifacts move ~100MB between two steps on the same disk. BuildKit runs the frontend build concurrently with the server compile inside one job instead. Use `--progress plain` (already set) rather than splitting it back out for per-step visibility.
 
-Everything publishes to `msupplyfoundation/omsupply`. Continuous-deployment builds (`docker-cd.yaml`) are tagged `develop-<sha>-<db>-amd64` and get **no** floating tag: `latest-develop*` is the nightly pointer that demo servers follow, and repointing it on every merge would push unvetted commits at them several times a day. CD tags are immutable and the nightly cleanup sweeps them after 30 days like any other non-release tag.
+Everything publishes to `msupplyfoundation/omsupply`. Nightly RC tags repoint the `latest-rc*` aliases; `latest-develop*` and `latest*` belong to develop nightlies and releases respectively, and nothing built from this branch touches them.
 
 ### Image tags
 
@@ -196,7 +195,7 @@ docker buildx build --build-arg CARGO_PROFILE=debug --target postgres -t <tag> .
 
 What changes, mechanically: the optimisation pass is skipped, so the compile is faster and the binary slower; the output is not stripped, where release sets `strip = true` in `server/Cargo.toml`; and debug assertions and integer-overflow checks are on. That last one is arguably a feature for a throwaway build - an overflow that would silently wrap in production panics instead.
 
-**Nothing in CI builds `debug`.** Release tags, nightlies and CD to `develop` all build `release`, and the `profile` input on `docker-image.yaml` exists so a future caller can choose otherwise. For now debug is reached by building locally, or by picking it at `dockerise.sh`'s prompt. Never benchmark a debug image or quote its size.
+**Nothing in CI builds `debug`.** Release tags and nightlies all build `release`, and the `profile` input on `docker-image.yaml` exists so a future caller can choose otherwise. For now debug is reached by building locally, or by picking it at `dockerise.sh`'s prompt. Never benchmark a debug image or quote its size.
 
 #### What the deltas actually are
 
