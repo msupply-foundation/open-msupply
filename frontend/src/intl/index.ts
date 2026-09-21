@@ -50,3 +50,4 @@ export {
   getPlural,
   translateServerError,
 } from './intlUtils';
+export { measureWord, type MeasureMode } from './measureWord';
