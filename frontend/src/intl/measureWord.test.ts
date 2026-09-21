@@ -1,8 +1,9 @@
 /*
  * AC-LN19 / AC-LN20 (spec/internal-orders § S4 line editor) — a stock figure
- * is suffixed with the active mode's measure word, INFLECTED for the figure
- * ("1 pack" / "61 packs"; the spec's own example). The item's stored unit name
- * inflects too (English only), as do the generic fallbacks.
+ * is suffixed with the active mode's measure word. The generic fallbacks
+ * inflect for the figure via the catalog ("1 pack" / "61 packs"; the spec's
+ * own example); an item's own unit name is free-text catalogue data and is
+ * rendered verbatim.
  */
 import { describe, expect, it } from 'vitest';
 import { setDictionaries, setLocale } from './intl';
@@ -29,10 +30,11 @@ describe('measureWord', () => {
     expect(measureWord('units', null, 5)).toBe('units');
   });
 
-  it("inflects the item's own unit name for the count", () => {
-    expect(measureWord('units', 'tablet', 1)).toBe('tablet');
-    expect(measureWord('units', 'tablet', 5)).toBe('tablets');
-    expect(measureWord('units', 'box', 3)).toBe('boxes');
+  it("renders the item's own unit name verbatim at every count", () => {
+    expect(measureWord('units', 'tab', 1)).toBe('tab');
+    expect(measureWord('units', 'tab', 20)).toBe('tab');
+    expect(measureWord('units', 'tabs', 20)).toBe('tabs');
+    expect(measureWord('units', 'box', 3)).toBe('box');
   });
 
   it('localises the fallback rather than inflecting an English word', () => {
