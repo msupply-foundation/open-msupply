@@ -100,6 +100,7 @@ import {
 } from './inboundShipmentStatus';
 import { SupplierKindIcon } from '../SupplierKindIcon';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { ExportPrintButton } from '@/domain/reports';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
@@ -114,7 +115,6 @@ import {
   ChangeLocationAction,
   AuthoriseLinesAction,
   ChangeCampaignProgramAction,
-  ExportPrintAction,
 } from './actions';
 // "Return selected lines" → the supplier-return from-shipment create flow. The
 // entry point is owned here (inbound detail); the flow is the returns
@@ -1076,8 +1076,9 @@ const InboundShipmentDetailView: Component = () => {
                         onAction={onAddAction}
                       />
                     </Show>
-                    <ExportPrintAction
-                      invoiceId={node().id}
+                    <ExportPrintButton
+                      context="INBOUND_SHIPMENT"
+                      dataId={node().id}
                       sort={reportSort()}
                     />
                     {/* More — the closed-panel reopen affordance, at the end

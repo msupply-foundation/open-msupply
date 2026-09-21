@@ -1,4 +1,4 @@
-import { SYNC_FILES_URL } from '../config';
+import { SYNC_FILES_URL } from '../../config';
 
 // The sync-file store: per-record document attachments behind a REST endpoint
 // (not GraphQL). Cookie-authenticated (same-origin session cookie), matching
