@@ -63,7 +63,7 @@ not, and nothing here would re-run it — least of all under
 [JIT runners](#scaling-lanes-without-re-registering-jit-runners), which hold no
 setup step of their own.
 
-Only release tags are affected in practice: the develop CD build and every
+Only release tags are affected in practice: every deployment build and every
 non-release tag are amd64-only, so a box without binfmt passes everything you
 are likely to test with, then fails the `arm64` legs of the first real release.
 
@@ -166,28 +166,281 @@ Two roles, and a lane carries exactly one:
 | label | what runs there |
 |---|---|
 | `build` | the image build and its planning job — CPU-bound, ~19 minutes cold |
-| `deploy` | `docker compose up` against the develop environment — about a minute |
+| `deploy` | `docker compose up` for one deployment — about a minute |
 
 They are separate because the deploy job must land on the machine hosting the
-develop environment, and that is a different box. Nothing in the deploy job
-assumes a locally built image: it logs in and pulls by tag, so the two roles
-never need to share a machine.
+deployments, and that is a different box. Nothing in the deploy job assumes a
+locally built image: it logs in and pulls by tag, so the two roles never need to
+share a machine.
+
+### The deploy box hosts more than one thing
+
+A `deploy` lane runs every deployment: the named ones from
+`docker-named-deployment.yaml` (`develop`, a server per active release-candidate
+branch, and any ad-hoc one someone has asked for) and every per-PR preview from
+`docker-pr-preview.yaml`. How to *use* them is on the [Docker
+page](../../docker/); this section is what they cost the box and how it is
+configured.
+
+Each is a compose project of its own — container and volumes — so they cost
+real resources:
+
+- **RAM**: each deployment is one container running the server *and* its own
+  bundled postgres. Budget as you would for a small server per deployment, not
+  per lane.
+- **Disk**: one database per deployment, plus one image at a time. Images are tagged per commit, so a redeploy adds one rather than replacing one — the deploy removes that deployment's *superseded* tags once the new one is up and routable, so a deployment costs one image however often it redeploys. The teardown takes the last one with the rest of the stack, and `docker-expire.yaml` sweeps anything past its expiry. What still grows is the count: a box with many labelled PRs and no-expiry deployments holds a database and an image for each.
+
+Every deployment is reached at `https://<name>.<DEPLOY_DOMAIN>`, where `<name>`
+is the deployment's name and *also* its container name. Nothing publishes a host
+port.
+
+Repository variables that configure this:
+
+| variable | default | what it does |
+|---|---|---|
+| `DEPLOY_DOMAIN` | *none — required* | the base every deployment's hostname hangs off, e.g. `preview.example.com` |
+| `DEPLOY_STATE_DIR` | `/opt/omsupply/deployments` | where each deployment's `machine-id` file is kept |
+| `DEPLOY_REFERENCE_FILE` | `e2e` | which dataset a new deployment is seeded from |
+| `DEPLOY_SHARED_DAEMON` | unset (= push) | set to `true` **only while the build and deploy lanes are on the same machine**, to skip the Docker Hub round trip |
+
+### `DEPLOY_SHARED_DAEMON`
+
+The build already leaves its image in the local daemon (`docker buildx build --load`), so when the deploy runs on that same daemon, pushing the image and pulling it straight back is a multi-GB round trip to Docker Hub that ends where it started. Set this and previews and named deployments stop pushing.
+
+What it does **not** change: release tags and nightlies always push, because `latest-*` feeds external demo servers through Watchtower and a release image has to be fetchable from anywhere. Deploying a release tag still pulls, because that image was never built on this box.
+
+Two things follow from it, both deliberate:
+
+- **The image then exists in one place — that box's disk.** A prune or a rebuilt box means a redeploy has to compile again rather than pull. It costs time, not data: the database is a named volume and is not part of the image, so as long as the ref is still in git the deployment comes back intact.
+- **`skip_if_exists` switches to probing the daemon** instead of the registry. Without that it would miss every time and "redeploy the same name at the same ref" would quietly go back to nineteen minutes.
+
+**Unset it the moment the boxes are split**, or every preview and named deploy fails at the pull: the image would be on the build box and nowhere the deploy box can reach. Unset is the safe default, and the only correct value for a split setup. The pull side needs no variable at all — it checks whether the image is already on the daemon and skips the pull if so, which is right in both topologies.
+
+There is deliberately no variable for the proxy's host port. It used to be `PROXY_PORT`, and it was a second copy of something the proxy already knows: a proxy brought up on port 80 against a variable still saying `8080` makes every route check fail with a refused connection, reported as an unroutable deployment. The route check now reads the published port from `docker port oms-proxy 80/tcp` instead, so the two cannot disagree. If the variable is still set on the repository it is inert and can be deleted.
+
+`DEPLOY_STATE_DIR` has to exist and be writable by the runner user before the first deploy. The runner does not run as root, so it cannot create a directory under `/opt` itself, and the default lands there. Once per box:
+
+```bash
+sudo mkdir -p /opt/omsupply/deployments
+sudo chown "$(id -un)":"$(id -gn)" /opt/omsupply/deployments   # as the runner user
+```
+
+Or point `DEPLOY_STATE_DIR` at somewhere the runner already owns. Not inside the runner's `_work` tree, which is cleaned between jobs.
+
+**Do not wipe `DEPLOY_STATE_DIR`.** It holds one `machine-id` file per
+deployment, bind-mounted read only at `/etc/machine-id`. `machine_uid::get()`
+reads that file, and `entry.sh` generates a fresh UUID whenever it is empty —
+which is every new container — so without a stable file a redeploy changes the
+site's hardware id and v7 pairing rejects it. Nothing about that is visible
+until someone tries to pair. It is *per deployment* rather than the host's own
+`/etc/machine-id` because two deployments sharing one hardware id collide the
+moment both pair to the same central server, and a central/remote pair is an
+obvious thing to want. Removing it is the teardown's job, not a person's.
+
+**`DEPLOY_REFERENCE_FILE` defaults to `e2e`, and `reference1` does not work** —
+measured, not assumed. `reference1` is a 2023 V5/V6 export and
+`SyncBufferRow.source_site_id` is a plain `i32` with no `#[serde(default)]`,
+unlike `sync_version` and `app_version` beside it, so the export fails to
+*deserialise* and never reaches integration:
+
+```
+Error: missing field `source_site_id` at line 11 column 3
+```
+
+`e2e` is a V7 export that the nightly e2e suite exercises, so it cannot rot
+unnoticed. Fixing `reference1` is a one-line `#[serde(default)]` plus a
+re-export, and is a server change rather than a CI one.
+
+**Three labels carry a deployment's whole record**, so there is nothing to keep
+in step with it and no settings page to configure per deployment:
+
+| label | |
+|---|---|
+| `oms.branch` | the branch it follows, so a push to that branch updates it. Empty means pinned to a tag or a commit, and no push will touch it. |
+| `oms.expires` | when `docker-expire.yaml` may reap it, or `never` |
+| `oms.profile` | `release` or `debug`, so an auto-update rebuilds it the same way it was built before |
+
+`docker-named-deployment.yaml` reads all three back off the containers, which is
+why its planning job runs on this box rather than a GitHub-hosted runner. A push
+carries no inputs, so the deployment itself is the only place those answers can
+come from.
+
+They are written by `docker/compose.deploy.yaml` **as of the ref being
+deployed**, not by whatever is on the default branch — so a deployment following
+a branch that predates a label will not carry it, and will keep taking the
+default until that branch has the change.
+
+**`docker-expire.yaml` sweeps expired deployments daily**, reading the
+`oms.expires` label off each container. Its job summary lists everything
+currently deployed and when each expires — the quickest answer to "what is
+running on this box", since the Environments page shows what *was* deployed
+rather than what is still up. Run it with `dry_run` to see what it would reap.
+
+Teardown also deletes the deployment's GitHub environment, which needs
+**Administration: write** — a scope `GITHUB_TOKEN` does not have. It uses the
+same `tmf-ci-bot` App as the JIT runner config above rather than a PAT, so
+nothing new needs provisioning; if the App lacks that permission the teardown
+still succeeds and the empty environment simply lingers in settings.
+
+### Setting up the deploy box's reverse proxy
+
+**One-off, by hand, and deliberately not owned by CI.** The proxy fronts every
+deployment on the box, so a bad config takes all of them down at once — and
+`docker-deploy.yaml` checks out the *pull request's* ref, so a CI-owned proxy
+would let one PR break every other deployment.
+
+Its two files live in **`proxy/`, beside this page**, not in `docker/`:
+everything in `docker/` is an input to a workflow, and these are steps in this
+runbook. They are reference copies — the box's own are authoritative and nothing
+overwrites them, so expect drift and check the box before assuming these
+describe it.
+
+| file, in `proxy/` beside this page | |
+|---|---|
+| `compose.proxy.yaml` | the Caddy container, its published ports, its CA volume and the shared network |
+| `proxy.Caddyfile` | the one route, for every deployment |
+
+1. **A wildcard DNS record** for `*.<DEPLOY_DOMAIN>`, pointing at whatever
+   terminates TLS.
+2. **One vhost on the edge proxy** for `*.<DEPLOY_DOMAIN>`, forwarding to this
+   box on `PROXY_PORT` (default `80`). TLS stops there, so nothing on the deploy
+   box does ACME and no DNS credentials live on it. Skip this if the deploy box
+   is reached directly — the local HTTPS below then covers it.
+3. **The shared network and the proxy.** Copy both files into a directory of
+   their own — they must stay together, because the compose file mounts
+   `./proxy.Caddyfile` relative to itself:
+
+   ```bash
+   docker network create oms-edge
+   mkdir -p ~/docker-compose/proxy && cd ~/docker-compose/proxy   # + the two files
+   echo "DEPLOY_DOMAIN=preview.example.com" > .env
+   docker compose -f compose.proxy.yaml up -d
+   ```
+
+   It takes 80 and 443 by default, which is what you want on a box that only
+   hosts deployments. Set `PROXY_PORT` and `PROXY_TLS_PORT` in the same `.env` if
+   something already holds them — an edge proxy sharing this machine rather than
+   sitting in front of it. CI does not need to be told either value.
+
+`docker-deploy.yaml` creates `oms-edge` if it is missing, so a deployment never
+fails for want of it — but it does **not** create the proxy. A deployment onto a
+box without one comes up healthy and unroutable, which the deploy's own route
+check reports.
+
+**`DEPLOY_DOMAIN` is set twice and the two must match** — the repository
+variable, which builds the URLs CI reports and checks, and the proxy's
+environment here, which builds the vhost it answers for. The box cannot read
+repository variables, hence the duplication. A mismatch means every deployment
+comes up healthy and 404s; the route check is what catches it.
+
+**Editing the live `proxy.Caddyfile` needs `--force-recreate`**, not a reload or
+a restart — it is a single-*file* bind mount, and docker binds a file by inode,
+so any editor that writes-then-renames leaves the container serving what it
+mounted at start:
+
+```bash
+docker compose -f compose.proxy.yaml up -d --force-recreate
+```
+
+#### Local HTTPS
+
+The proxy also serves every deployment over TLS on `PROXY_TLS_PORT` (default `443`), using a certificate Caddy issues from its own internal CA. Nothing external touches this: the edge proxy terminates real TLS and forwards to the HTTP port, so this exists for reaching a deployment directly from this network, and for the browser features that refuse to work outside a secure context.
+
+The certificate is a wildcard for `*.<DEPLOY_DOMAIN>` signed by a CA that nothing trusts until you say so. Pull the root out and trust it on the machine you are browsing from:
+
+```bash
+docker cp oms-proxy:/data/caddy/pki/authorities/local/root.crt ./caddy-root.crt
+
+# macOS
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain caddy-root.crt
+# Debian/Ubuntu
+sudo cp caddy-root.crt /usr/local/share/ca-certificates/caddy-root.crt && sudo update-ca-certificates
+```
+
+Firefox keeps its own trust store and will not pick that up; either add the root under Settings → Privacy & Security → Certificates, or set `security.enterprise_roots.enabled` to true.
+
+The CA lives in the `caddy-data` volume specifically so it survives the `--force-recreate` above. A `docker compose down -v` destroys it, and every machine that trusted the old root then has to trust the new one — so use plain `down`.
+
+#### How the routing works, and why it never needs touching
+
+The first label of the hostname **is** the container name — `develop.<domain>` →
+`develop`, `pr-470.<domain>` → `pr-470`, and so on for every deployment. That is
+a pure function, so the proxy holds one static route for all of them with no
+generated per-deployment config.
+
+Caddy resolves the upstream at *dial* time through docker's embedded DNS, so a
+deployment that came up ten seconds ago is routable and a torn-down one returns
+a 502 — with no reload and nothing to keep in step. That is also why the proxy
+is a **container** and not a process on the box: the embedded resolver at
+`127.0.0.11` exists only inside containers on a user-defined network, so a
+host-side proxy could not resolve `pr-470` at all.
+
+Two things follow:
+
+- **`oms-edge` is the access boundary.** Anything attached to it is reachable by
+  its container name as a subdomain, so do not attach unrelated containers.
+- **The `server` service alias is claimed by every deployment at once**, since
+  they share one network. Nothing resolves it — the pinned `container_name` is
+  the only handle anything uses — but do not add something that relies on it.
+
+**If you are considering replacing Caddy**, the two obvious candidates were
+weighed and rejected:
+
+- **Traefik** is the reflexive choice for routing to containers that come and
+  go, and it works — but it is the right tool when routes must be *discovered*,
+  and here they are computable from the hostname. It charges a Docker socket
+  mounted into the proxy (root-equivalent on this box), or a socket-proxy
+  sidecar, plus per-container labels that would make the compose file know the
+  public hostname rather than only its own name.
+- **nginx** does the same job with `resolver 127.0.0.11` and a variable
+  `proxy_pass`, but needs three things hand-tuned that are Caddy defaults, each
+  a silent failure if missed: a `map` for `Connection: upgrade` (graphql
+  subscriptions), `client_max_body_size 100m` (the server's own gate is 100MB,
+  so nginx's 1MB default becomes the tighter and wrong one), and
+  `proxy_buffering off` (`/support/database` streams a whole `pg_dump`).
 
 **This runbook sets up a build box.** Every lane on it is a `build` lane, and
 that is all the rest of this page configures.
 
+**Today the `build` and `deploy` lanes are on one machine.** Everything below
+describes them as two boxes because that is what the design provisions for and
+what it will be — nothing in the workflows assumes otherwise, and splitting them
+is a matter of moving the deploy lane, not of changing any workflow. But read
+this section as the target state, not as what is currently racked.
+
+Two things follow from them sharing a daemon right now:
+
+- **`DEPLOY_SHARED_DAEMON=true` is worth setting**, which skips the Docker Hub
+  round trip for previews and named deployments. See the deploy variables above,
+  and unset it when the boxes are split.
+- **Never `docker image prune -a` on that box.** An unreferenced image there is
+  not necessarily rubbish: it may be one that has been built and not yet pushed
+  (`docker-image.yaml` builds and pushes as separate steps, minutes apart), or a
+  base image the next compile needs. The teardown and expire paths delete images
+  by exact reference for that reason. Once the boxes are split, a deploy-only
+  box holds nothing but deployment images and the proxy's, and `prune -af`
+  becomes the simpler and correct thing there.
+
 **The deploy lane is a one-off, done by hand on the deploy box.** One lane is
-enough — the job is a one-minute `docker compose up` and there is never more
-than one in flight — so the lane-scaling machinery below is not worth carrying
-there. Unpack a runner as in the next section, register it once with `deploy`
-in place of `build`, and give it the same systemd unit:
+usually enough — the job is a one-minute `docker compose up` — so the
+lane-scaling machinery below is not worth carrying there. Unpack a runner as in
+the next section, register it once with `deploy` in place of `build`, and give
+it the same systemd unit:
 
 ```bash
 --labels self-hosted,Linux,"$(uname -m)",deploy
 ```
 
-That box needs `docker`, `docker-compose-v2` and `git` from the package list
-above, and nothing else — no buildx, no binfmt, no `/cache`. It never compiles.
+**A second deploy lane is safe**, which it was not before. Deployments used to
+be allocated a host port from whatever was free, so two lanes could pick the
+same one and the second `compose up` would fail on the binding. Nothing
+publishes a port now, so there is nothing to allocate and nothing to serialise.
+
+A deploy-only box needs `docker`, `docker-compose-v2` and `git` from the package
+list above, and nothing else — no buildx, no binfmt, no `/cache`, because it
+never compiles. It does need its reverse proxy stood up once, as above. While
+the two roles share a machine that box is of course a build box as well, and
+needs everything in the list.
 
 The only rule either way: a lane somewhere must carry each label, or the
 matching jobs queue for ever with no error.

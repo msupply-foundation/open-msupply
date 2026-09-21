@@ -16,7 +16,7 @@
     "build:prototypes": "pnpm css:types && tsc -b && vite build --config vite.prototypes.config.ts",
     "preview:prototypes": "vite preview --config vite.prototypes.config.ts",
     "css:types": "tcm --pattern '**/*.module.css' src && tcm --pattern '*/src/**/*.module.css' plugins",
-    "check": "pnpm css:types && tsc -b && stylelint \"src/**/*.css\" \"plugins/*/src/**/*.css\" \"examples/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs && node scripts/check-reduced-motion.mjs && node scripts/check-min-browser.mjs",
+    "check": "pnpm css:types && tsc -b && stylelint \"src/**/*.css\" \"plugins/*/src/**/*.css\" \"plugins/examples/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs && node scripts/check-reduced-motion.mjs && node scripts/check-min-browser.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

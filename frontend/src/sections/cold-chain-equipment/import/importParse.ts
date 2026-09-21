@@ -1,5 +1,5 @@
 import { t } from '@/intl';
-import { parseCsv, toCsv } from '@/domain/reportFiles';
+import { parseCsv, sniffSeparator, toCsv } from '@/domain/reportFiles';
 import { ASSET_STATUSES, statusLabelKey } from '../equipment';
 import type { AssetStatus } from '../equipment';
 import type { PropertyDefinition } from '../detail/assetProperties';
@@ -104,12 +104,28 @@ export const buildTemplateCsv = (
 /**
  * A date cell → the ISO day the wire wants, or null.
  *
- * `DD/MM/YYYY`, and the **year must be four digits** — a two-digit year is
+ * Three shapes, because three are what a spreadsheet actually hands back:
+ * `DD/MM/YYYY` (what our template asks for), `DD-MM-YYYY` (the same day with
+ * the separator Excel substitutes under many Windows locales), and
+ * `YYYY-MM-DD` (ISO, which the server itself already accepts for the mapping
+ * dates — see contract § temperature mapping, so refusing it here made the
+ * client stricter than the wire it writes to).
+ *
+ * `MM/DD/YYYY` is deliberately NOT read: `05/10/2026` is a real date under both
+ * readings and nothing in the file says which was meant, so guessing would
+ * silently import the wrong day. It falls to the warning path, where the user
+ * sees the value was dropped.
+ *
+ * Whichever shape, the **year must be four digits** — a two-digit year is
  * exactly what this rule exists to catch, because `05/10/24` would otherwise
  * import as the year 24 (OMS-REG-CCE-07.7).
  */
 export const parseImportDate = (value: string): string | null => {
-  const parts = value.trim().split('/');
+  const trimmed = value.trim();
+  // ISO leads with its four-digit year, which is what tells it apart from a
+  // day-first date using the same separator — no ambiguity to resolve.
+  const iso = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(trimmed);
+  const parts = iso ? [iso[3]!, iso[2]!, iso[1]!] : trimmed.split(/[/\-.]/);
   if (parts.length !== 3) return null;
   const [day, month, year] = parts;
   if (!year || year.length !== 4) return null;
@@ -142,6 +158,87 @@ export const parseImportStatus = (value: string): AssetStatus => {
 };
 
 /**
+ * A cell that answers yes or no → the answer, or `undefined` where it does not
+ * answer at all.
+ *
+ * ONE vocabulary for every boolean a file can carry, because a file carries
+ * them in one column and the app read them in two: the raw `true`/`false` the
+ * current app exports, the plain words a user types, and the `Yes`/`No` this
+ * app's own export writes IN THE READER'S LANGUAGE. Split, a Russian user's
+ * `Да` set the replacement flag and was dropped from a boolean specification
+ * column one cell over, and a `1` did the reverse — the same silent mismatch
+ * this vertical keeps turning up.
+ */
+const AFFIRMATIVE = /^(true|yes|y|1)$/i;
+const NEGATIVE = /^(false|no|n|0)$/i;
+
+export const parseImportBoolean = (raw: string): boolean | undefined => {
+  const value = raw.trim();
+  if (!value) return undefined;
+  if (AFFIRMATIVE.test(value)) return true;
+  if (NEGATIVE.test(value)) return false;
+  const lower = value.toLowerCase();
+  if (lower === t('messages.yes').trim().toLowerCase()) return true;
+  if (lower === t('messages.no').trim().toLowerCase()) return false;
+  return undefined;
+};
+
+/**
+ * A numeric cell → a number, or `undefined` where it does not read as one.
+ *
+ * A dot is always the decimal mark. A comma is the decimal mark too — `12,5`
+ * is twelve and a half — UNLESS it is doing a thousands separator's job, which
+ * only one shape can be: digits grouped in threes (`1,234`, `12,345,678`) in a
+ * file that is itself comma-separated. That last condition matters because the
+ * grouped shape is genuinely ambiguous (`1,234` is also one-and-a-bit in half
+ * of Europe), and the file's own separator is the best evidence there is: a
+ * spreadsheet writing `;` between fields does so BECAUSE its locale took the
+ * comma for the decimal mark. `decimalComma` is that fact about the file, and
+ * ONLY a semicolon carries it — a tab is chosen for reasons of its own and says
+ * nothing about the decimal mark, so a tab file groups like a comma file.
+ *
+ * What the separator is NOT allowed to do is turn an unambiguous decimal into a
+ * thousand: `12,5` cannot be a grouped number in any convention, so it reads as
+ * 12.5 in a comma file too. Google Sheets writes exactly that — it always
+ * downloads comma-separated CSV whatever the sheet's locale, with cells as
+ * displayed — and stripping the comma there would import 125 without a word.
+ *
+ * Where a value carries BOTH marks the question does not arise — the LAST one
+ * is the decimal, whichever file it came from (`1.234,56` and `1,234.56` are
+ * the same number written twice).
+ */
+export const parseImportNumber = (
+  raw: string,
+  decimalComma = false
+): number | undefined => {
+  // `\s` already covers the no-break space a spreadsheet groups with.
+  const value = raw.trim().replace(/\s/g, '');
+  if (!value) return undefined;
+  if (!/^[+-]?[\d.,]+$/.test(value)) return undefined;
+
+  const lastComma = value.lastIndexOf(',');
+  const lastDot = value.lastIndexOf('.');
+  let normalised: string;
+  if (lastComma !== -1 && lastDot !== -1) {
+    // Both present: the rightmost mark is the decimal point, the other groups.
+    normalised =
+      lastComma > lastDot
+        ? value.replace(/\./g, '').replace(',', '.')
+        : value.replace(/,/g, '');
+  } else if (lastComma !== -1) {
+    // The one shape a thousands separator can take, in the one kind of file
+    // where the comma is free to be one.
+    const grouped = !decimalComma && /^[+-]?\d{1,3}(,\d{3})+$/.test(value);
+    normalised = grouped ? value.replace(/,/g, '') : value.replace(',', '.');
+  } else {
+    normalised = value;
+  }
+
+  const parsed = Number(normalised);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+/**
  * A property cell → the value its DEFINITION declares, or `undefined` where the
  * cell does not answer it.
  *
@@ -157,20 +254,17 @@ export const parseImportStatus = (value: string): AssetStatus => {
  */
 export const parsePropertyCell = (
   raw: string,
-  definition: Pick<PropertyDefinition, 'valueType' | 'allowedValues'>
+  definition: Pick<PropertyDefinition, 'valueType' | 'allowedValues'>,
+  decimalComma = false
 ): string | number | boolean | undefined => {
   const value = raw.trim();
   if (!value) return undefined;
 
-  if (definition.valueType === 'BOOLEAN') {
-    if (/^(true|yes|y|1)$/i.test(value)) return true;
-    if (/^(false|no|n|0)$/i.test(value)) return false;
-    return undefined;
-  }
+  if (definition.valueType === 'BOOLEAN') return parseImportBoolean(value);
 
   if (definition.valueType === 'INTEGER' || definition.valueType === 'FLOAT') {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return undefined;
+    const parsed = parseImportNumber(value, decimalComma);
+    if (parsed === undefined) return undefined;
     return definition.valueType === 'INTEGER' ? Math.trunc(parsed) : parsed;
   }
 
@@ -186,9 +280,23 @@ export const parsePropertyCell = (
   return value;
 };
 
-/** The replacement flag reads as set for any value containing "true". */
+/**
+ * The replacement flag.
+ *
+ * Reads the vocabulary a user's file actually carries, not one spelling of it.
+ * `true` is what the import's own failed-rows file writes; **`Yes` is what the
+ * list EXPORT writes**, so without it an asset exported and re-imported came
+ * back with the flag silently cleared — a round trip that loses data is worse
+ * than one that refuses. The translated yes is matched too, so a file exported
+ * in the user's own language re-imports in it.
+ *
+ * Purely additive: every value that set the flag before still sets it.
+ */
+// The flag is a boolean, never absent: a cell that answers nothing means the
+// asset is not flagged. The substring match stays because the import's own
+// failed-rows file has always written a bare `true`.
 export const parseNeedsReplacement = (value: string): boolean =>
-  /true/i.test(value);
+  /true/i.test(value) || parseImportBoolean(value) === true;
 
 type Lookup = {
   catalogueItems: readonly { id: string; code: string }[];
@@ -200,19 +308,106 @@ type Lookup = {
 };
 
 /**
- * Parse the uploaded file into rows, each carrying its own errors and warnings.
+ * Which row of the file names the columns.
+ *
+ * Normally the first — but files arrive with a generic banner row of their own
+ * (`Column1 … ColumnN`) above the real names, written by whatever tool last
+ * handled them; Power Query does it when a header is not promoted, and it is
+ * not a shape a user can see is wrong, because on screen the file still looks
+ * like the one they were given. We have a real file that arrived this way
+ * whose author says they did not put the row there, so this treats the shape
+ * as something to read past rather than a particular tool's signature.
+ *
+ * So the header is the first row naming at least one column the import knows.
+ * That is a decision, not a guess — the names are our own, written by our own
+ * template — and it fails loudly rather than silently: a file where NO row
+ * names a known column returns -1, and the caller refuses the whole file
+ * instead of reporting every row as missing values it plainly has.
+ *
+ * Only the first few rows are considered; a banner is a line or two, and
+ * scanning further would start finding "headers" in data.
+ */
+const HEADER_SCAN_ROWS = 5;
+
+export const findHeaderRow = (
+  table: readonly string[][],
+  knownColumns: readonly string[]
+): number => {
+  const known = new Set(knownColumns.map(name => name.trim().toLowerCase()));
+  const limit = Math.min(table.length, HEADER_SCAN_ROWS);
+  for (let index = 0; index < limit; index++) {
+    const names = table[index] ?? [];
+    if (names.some(name => known.has(name.trim().toLowerCase()))) return index;
+  }
+  return -1;
+};
+
+/**
+ * Why a file yields no rows — or `null` when it would yield some.
+ *
+ * Two faults look the same from the outside (an empty review) and need
+ * different remedies, so the modal asks which before it says anything:
+ * `no-header` is a file in which no row names a column the import knows (a
+ * spreadsheet's `Column1 … ColumnN` banner with nothing real beneath it, or a
+ * file exported under another language); `no-rows` is a heading the import DOES
+ * know with nothing under it — the template with its example row deleted, or
+ * an export of an empty register. Telling the second user their columns are
+ * wrong would send them to compare a heading that already matches.
+ */
+export type ImportFileFailure = 'no-header' | 'no-rows';
+
+type ImportTable = {
+  header: string[];
+  body: string[][];
+  /** Where the heading sits in the file, 0-based. */
+  headerIndex: number;
+  /** The file writes `12,5` for twelve and a half (see parseImportNumber). */
+  decimalComma: boolean;
+};
+
+/*
+ * Read the file into its heading and body, or say why it cannot be. The
+ * separator is sniffed ONCE here and handed to the reader, then kept, because
+ * it also says which numeric convention the file is written in.
+ */
+const readImportTable = (
+  text: string,
+  isCentral: boolean
+): ImportTable | ImportFileFailure => {
+  const separator = sniffSeparator(text);
+  const table = parseCsv(text, separator);
+  const headerIndex = findHeaderRow(table, importColumnKeys(isCentral));
+  if (headerIndex === -1) return 'no-header';
+  const [header = [], ...body] = table.slice(headerIndex);
+  if (body.length === 0) return 'no-rows';
+  // Only `;` is evidence. The argument for reading a comma as a decimal mark is
+  // that a spreadsheet reaches for the semicolon BECAUSE its locale took the
+  // comma — a tab says nothing either way, and treating it as evidence turned a
+  // grouped thousand from an en-locale sheet into one-and-a-bit, silently.
+  return { header, body, headerIndex, decimalComma: separator === ';' };
+};
+
+/**
+ * Parse the uploaded file into rows, each carrying its own errors and warnings
+ * — or say why the file yields none.
  *
  * Header matching is by column NAME, so a column the file does not carry simply
- * reads as blank — which is why the required columns are checked per row rather
+ * reads as blank, which is why the required columns are checked per row rather
  * than up front.
+ *
+ * The two outcomes are returned TOGETHER rather than flattening a failure to an
+ * empty list and making the caller ask again: the read already knows which
+ * fault it hit, and asking a second time meant parsing the whole file twice to
+ * recover an answer that had been thrown away. `Array.isArray` tells them
+ * apart.
  */
 export const parseImportFile = (
   text: string,
   lookup: Lookup
-): ImportRow[] => {
-  const table = parseCsv(text);
-  if (table.length < 2) return [];
-  const [header = [], ...body] = table;
+): ImportRow[] | ImportFileFailure => {
+  const read = readImportTable(text, lookup.isCentral);
+  if (typeof read === 'string') return read;
+  const { header, body, headerIndex, decimalComma } = read;
   const columnAt = new Map(
     header.map((name, index) => [name.trim().toLowerCase(), index])
   );
@@ -282,14 +477,19 @@ export const parseImportFile = (
       } else storeId = store.id;
     }
 
-    // The four dates are SOFT: a blank or unreadable one warns and the row
-    // imports without it (OMS-REG-CCE-07.6/.7).
+    /*
+     * The four dates are SOFT: an unreadable one warns and the row imports
+     * without it (OMS-REG-CCE-07.6/.7).
+     *
+     * An EMPTY one says nothing at all. All four are optional, so a blank is an
+     * answer — "no warranty recorded" — not a value we failed to read, and
+     * warning about it fired the banner on the most ordinary file there is. A
+     * warning every user learns to dismiss is worse than no warning, because it
+     * takes the real ones down with it.
+     */
     const softDate = (label: string): string | null => {
       const raw = cell(cells, label);
-      if (!raw) {
-        warnings.push(t('warning.field-not-parsed', { field: label }));
-        return null;
-      }
+      if (!raw) return null;
       const parsed = parseImportDate(raw);
       if (!parsed) {
         warnings.push(t('warning.field-not-parsed', { field: label }));
@@ -303,7 +503,7 @@ export const parseImportFile = (
       // A property column is headed by the property's own display name.
       const raw = cell(cells, definition.name);
       if (raw) {
-        const value = parsePropertyCell(raw, definition);
+        const value = parsePropertyCell(raw, definition, decimalComma);
         if (value === undefined)
           warnings.push(
             t('warning.field-not-parsed', { field: definition.name })
@@ -314,9 +514,11 @@ export const parseImportFile = (
 
     return {
       id: lookup.newId(index),
-      // +2: the header is line 1 and rows are 1-based, so the first body row
-      // is the file's line 2 — the number a user reads in their spreadsheet.
-      lineNumber: index + 2,
+      // The number a user reads in their spreadsheet: rows are 1-based, the
+      // header sits at `headerIndex`, and the first body row is the line after
+      // it. Counted from the header's real position rather than from 1, so a
+      // banner row above it does not shift every reported line by one.
+      lineNumber: headerIndex + index + 2,
       assetNumber,
       catalogueItemCode,
       catalogueItemId,

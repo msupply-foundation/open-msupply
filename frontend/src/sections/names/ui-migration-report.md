@@ -1,6 +1,6 @@
 # Names (Customers & Suppliers) — UI migration report
 
-**Scope:** the whole `names` vertical — both lists (S1 Customers, S2 Suppliers), the shared list screen and its filters, the S3 customer detail modal, the S4 supplier detail page and all four of its tabs, and the shared detail form. Run under [`migrate-ui`](../../../.claude/skills/migrate-ui/SKILL.md) against the eleven dimensions of [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md).
+**Scope:** the whole `names` vertical — both lists (S1 Customers, S2 Suppliers), the shared list screen and its filters, the S3 customer detail modal, the S4 supplier detail page and all four of its tabs, and the shared detail form. Run under [`migrate-ui`](../../../../.claude/skills/migrate-ui/SKILL.md) against the eleven dimensions of [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md).
 
 **Status: MIGRATED.** Ten findings applied (nine from the audit plus one the reactivity pass caught), three spec edits made, `pnpm check` and `pnpm test` green. **The visual pass is yours to complete** — the list is at the end.
 
