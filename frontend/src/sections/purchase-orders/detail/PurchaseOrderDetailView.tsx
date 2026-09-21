@@ -53,6 +53,7 @@ import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '@/typeHelpers';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import { ActivityLogPanel } from '@/domain/activityLog';
+import { ExportPrintButton } from '@/domain/reports';
 import { purchaseOrderPreferences } from '@/store/storeContext';
 import {
   poLineStatusLabel,
@@ -93,11 +94,7 @@ import {
   isOpenToChange,
 } from './purchaseOrderLadder';
 import { linePacks, lineCost } from './purchaseOrderPricing';
-import {
-  CloseLinesAction,
-  DeleteLinesAction,
-  ExportPrintAction,
-} from './actions';
+import { CloseLinesAction, DeleteLinesAction } from './actions';
 
 // An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
 // Details tab, S9's side panel, S11-S13's remaining tabs and S18's status
@@ -584,8 +581,9 @@ const PurchaseOrderDetailView: Component = () => {
                 <Header>
                   <Breadcrumb crumbs={crumbs(node())} />
                   <HeaderButtons>
-                    <ExportPrintAction
-                      orderId={node().id}
+                    <ExportPrintButton
+                      context="PURCHASE_ORDER"
+                      dataId={node().id}
                       sort={currentSort()}
                     />
                     <Show when={!sidePanelOpen()}>

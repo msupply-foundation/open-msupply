@@ -59,12 +59,12 @@ import { StocktakeLineFilters } from './StocktakeLineFilters';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
 import { ActivityLogPanel } from '@/domain/activityLog';
+import { ExportPrintButton } from '@/domain/reports';
 import { StocktakeDocumentsTab } from './StocktakeDocumentsTab';
 import {
   DeleteLinesAction,
   ChangeLocationAction,
   ReduceToZeroAction,
-  ExportPrintAction,
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
 import type { LineEditCommit } from './lines/stocktakeLineUpdate';
@@ -1032,8 +1032,9 @@ const StocktakeDetailView: Component = () => {
                       does not depend on editability): print/export a report of
                       this stocktake, respecting the line table's current sort
                       (spec/stocktakes S3 → spec/reports S4). */}
-                    <ExportPrintAction
-                      stocktakeId={node().id}
+                    <ExportPrintButton
+                      context="STOCKTAKE"
+                      dataId={node().id}
                       sort={reportSort()}
                     />
                     {/* More — the closed-panel reopen affordance, at the end of

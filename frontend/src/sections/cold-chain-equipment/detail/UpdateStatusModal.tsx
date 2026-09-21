@@ -25,7 +25,7 @@ import {
   describeRejections,
   MAX_BATCH_BYTES,
   MAX_FILE_BYTES,
-} from './documentUploads';
+} from '@/domain/syncFiles';
 import { ASSET_STATUSES, statusLabelKey, type AssetStatus } from '../equipment';
 import { AssetLogReasonsList, InsertAssetLog } from '../equipment.generated';
 import {
