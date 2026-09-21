@@ -170,6 +170,12 @@ const LineEditContent = (
   // request is made from the branches below rather than declared as the
   // Dialog's initialFocus.
   const itemSearch = createFocusTarget();
+  // Requested — focused on every landing on a line, however it was reached:
+  // an edit-mode open, a "Save & next" advance, or an add-mode item pick
+  // (spec S4, AC-LN12). Driven from seedLine, not the Dialog's initialFocus:
+  // that prop fires only as the dialog opens, and the other two landings
+  // happen in a dialog already open.
+  const requestedField = createFocusTarget();
 
   let disposed = false;
   onCleanup(() => (disposed = true));
@@ -208,7 +214,8 @@ const LineEditContent = (
 
   // Land the editor on a line — an existing line (edit) or an add-mode
   // preview. Seeds the entry mode from the store preference (AC-LN18) and the
-  // draft from the line's current values.
+  // draft from the line's current values, and lands the caret on Requested —
+  // a read-only order being the one exception, having nothing to type into.
   const seedLine = (editorLine: EditorLine) => {
     setLine(editorLine);
     covered.add(editorLine.lineId);
@@ -224,6 +231,7 @@ const LineEditContent = (
     setComment(editorLine.comment);
     setReasonId(editorLine.reasonId);
     setErrorMessage(undefined);
+    if (props.editable) requestedField.focus();
   };
 
   const pickItem = async (itemId: string) => {
@@ -681,6 +689,7 @@ const LineEditContent = (
                       min={0}
                       decimalLimit={2}
                       data-testid="requested-quantity-input"
+                      ref={requestedField.ref}
                       disabled={disabled() || saving()}
                       value={requestedDisplay()}
                       onChange={onRequestedChange}
