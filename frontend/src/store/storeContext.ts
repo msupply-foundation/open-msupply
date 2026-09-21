@@ -319,6 +319,18 @@ const currentStoreName = (): string => {
   return authUser()?.stores.nodes.find(s => s.id === storeId)?.name ?? '';
 };
 
+// The purchase-order vertical's gates (spec/purchase-orders rules §
+// availability, § the status lifecycle): the per-store procurement preference
+// that decides whether the destination exists at all, and whether the approval
+// state is part of the ladder. Both live on the global PreferencesNode.
+const purchaseOrderPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  return {
+    useProcurementFunctionality: prefs?.useProcurementFunctionality ?? false,
+    authorisePurchaseOrder: prefs?.authorisePurchaseOrder ?? false,
+  };
+};
+
 // A server UserPermission name as it arrives in the store-context query
 // (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
 // generated so callers can't typo a permission. Reading the union off the
@@ -358,6 +370,7 @@ export {
   hasVaccineModule,
   hasProgramModule,
   hasProcurement,
+  purchaseOrderPreferences,
   hasPermission,
 };
 export type { UserPermission, StoreMode };
