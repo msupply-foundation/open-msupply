@@ -20,8 +20,8 @@ export type PurchaseOrderEditFields = {
   supplierAgent: string;
   headingMessage: string;
   freightConditions: string;
-  // Side panel — the one field editable in every state, closed orders
-  // included (rules § what may be changed, and when).
+  // Side panel — editable in every state, closed orders included, like the
+  // panel's three dates (rules § what may be changed, and when).
   comment: string;
 };
 
@@ -37,3 +37,17 @@ export type PurchaseOrderPatch = Partial<
 
 /** What a save reports back: enough for a caller to show a verdict in place. */
 export type SaveFieldResult = { ok: boolean; message?: string };
+
+/*
+ * The sent moment is a DateTime on the wire but a DAY on the screen (S9: the
+ * panel shows and edits "PO sent" date-only). Its `NullableDatetimeUpdate`
+ * parses a NAIVE `YYYY-MM-DDTHH:MM:SS`, read as UTC, and rejects any zone
+ * suffix — yet the node hands the field back WITH `+00:00` (contract ⚠️ the
+ * sent moment is written naive and read zoned). So a picked day is written as
+ * UTC midnight, and the stored value is read back as its UTC day: the two are
+ * symmetric, and the time component is never surfaced.
+ */
+export const sentDayToWire = (day: string): string => `${day}T00:00:00`;
+export const sentWireToDay = (
+  wire: string | null | undefined
+): string | undefined => (wire ? wire.slice(0, 10) : undefined);
