@@ -8,4 +8,5 @@ export {
   toNameOption,
   type NameOption,
   type NameRole,
+  type PartyKind,
 } from './nameResource';
