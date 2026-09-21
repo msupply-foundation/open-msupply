@@ -30,7 +30,8 @@ export interface PurchaseOrderDetailToolbarProps {
   lineCount: number;
   onSaveField: (patch: PurchaseOrderPatch) => Promise<SaveFieldResult>;
   /**
-   * Write one date onto every line (the screen owns the cascade). Resolves
+   * Write one date onto every line — and, for the requested date,
+   * onto the order itself (the screen owns the cascade). Resolves
    * once the whole cascade and its re-read are done, which is when the picked
    * day can stop standing in for the value — with the first refusal, if any.
    */
@@ -93,12 +94,6 @@ export const PurchaseOrderDetailToolbar: Component<
     const pending = confirming();
     if (!pending) return;
     setDraft({ ...pending, saving: true });
-    // The requested date is the ORDER's own field as well as every line's; the
-    // expected date has no order-level field at all, so it is lines only.
-    if (pending.field === 'requestedDeliveryDate')
-      void props.onSaveField({
-        requestedDeliveryDate: { value: pending.date },
-      });
     setDateErrors(pending.field, undefined);
     void props.onCascadeDate(pending.field, pending.date).then(result => {
       setDraft(undefined);
@@ -178,6 +173,7 @@ export const PurchaseOrderDetailToolbar: Component<
       <DateField
         label={t('label.requested-delivery-date')}
         size="small"
+        testId="requested-delivery-date-field"
         value={
           draftFor('requestedDeliveryDate') ??
           props.node.requestedDeliveryDate ??
@@ -203,6 +199,7 @@ export const PurchaseOrderDetailToolbar: Component<
       <DateField
         label={t('label.expected-delivery-date')}
         size="small"
+        testId="expected-delivery-date-field"
         value={draftFor('expectedDeliveryDate') ?? props.latestExpectedDate}
         error={dateErrors.expectedDeliveryDate}
         disabled={props.disabled || props.lineCount === 0}

@@ -28,7 +28,7 @@ type Line = Pick<
  * The quantity the order expects of a line: its adjusted quantity where it
  * carries one, its requested quantity otherwise.
  */
-export const expectedUnits = (line: Line): number =>
+const expectedUnits = (line: Line): number =>
   line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
 
 /**
@@ -77,31 +77,6 @@ export const chargesTotal = (node: Charges): number =>
 export const finalCost = (
   node: Charges & Pick<PurchaseOrderInfoFragment, 'orderTotalAfterDiscount'>
 ): number => node.orderTotalAfterDiscount + chargesTotal(node);
-
-/**
- * The supplier discount as an AMOUNT, from a percentage against the subtotal —
- * what the panel's amount input shows while the user is typing a percentage.
- * The node resolves the same figure server-side; this mirrors it so the two
- * inputs stay two views of one number without a round-trip per keystroke.
- */
-export const discountAmountOf = (
-  percentage: number,
-  subtotal: number
-): number => (subtotal * percentage) / 100;
-
-/**
- * The reverse: the percentage an entered amount means against the subtotal.
- * Only the percentage is stored, and the service converts an amount back the
- * same way — except that it DISCARDS an amount entered while the subtotal is
- * zero (contract § an order's own screen, confirmed live). Returning undefined
- * there is what lets the panel refuse the edit itself rather than save a figure
- * the server will silently drop.
- */
-export const discountPercentageOf = (
-  amount: number,
-  subtotal: number
-): number | undefined =>
-  subtotal === 0 ? undefined : (amount / subtotal) * 100;
 
 /**
  * A figure in the order's currency, at that currency's precision. An order
