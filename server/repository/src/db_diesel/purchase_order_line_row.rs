@@ -2,6 +2,7 @@ use crate::{
     db_diesel::{
         changelog::{changelog::RowOrId, Changelogs},
         item_row::item,
+        name_row::name,
         purchase_order_row::purchase_order,
     },
     diesel_macros::define_linked_tables,
@@ -71,6 +72,8 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, purchase_order);
+allow_tables_to_appear_in_same_query!(purchase_order_line, name);
+allow_tables_to_appear_in_same_query!(purchase_order_line_stats, name);
 
 #[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order_line)]
