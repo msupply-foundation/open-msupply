@@ -48,6 +48,31 @@ export const poStatusLabelKey = (status: PurchaseOrderStatus): LocaleKey =>
 export const poStatusLabel = (status: PurchaseOrderStatus): string =>
   t(poStatusLabelKey(status));
 
+// A LINE's own three states (rules § line status) — a different vocabulary
+// from the order's five, and one no surface may render raw: the wire values
+// are SCREAMING_CASE. The detail screen's Status column and the restricted-row
+// marking both read this.
+export type PurchaseOrderLineStatus = 'NEW' | 'SENT' | 'CLOSED';
+
+const PO_LINE_STATUS_KEY: Record<PurchaseOrderLineStatus, LocaleKey> = {
+  NEW: 'label.new',
+  SENT: 'label.sent',
+  CLOSED: 'label.closed',
+};
+
+/**
+ * The locale key for a line's status (falling back to New for any unmapped
+ * value, as the order's own mapping does).
+ */
+export const poLineStatusLabelKey = (status: string): LocaleKey =>
+  PO_LINE_STATUS_KEY[status as PurchaseOrderLineStatus] ?? 'label.new';
+
+/**
+ * A line's translated status label, read lazily so a language switch relabels.
+ */
+export const poLineStatusLabel = (status: string): string =>
+  t(poLineStatusLabelKey(status));
+
 // Status → chip colour (tokens.css --status-*). The tokens are named for the
 // SHIPMENT lifecycle, so these are borrowed by hue, not by meaning: a grey
 // start, a ramp through the two waiting states, and the terminal green. No

@@ -3,6 +3,7 @@ import {
   PO_STATUS_KEY,
   PO_STATUSES,
   isRowRestricted,
+  poLineStatusLabelKey,
   poStatusLabelKey,
   type PurchaseOrderStatus,
 } from './purchaseOrderStatus';
@@ -58,5 +59,20 @@ describe('purchase-order status labels', () => {
 describe('OMS-FUN-PO-15.10 — restricted rows', () => {
   it('marks a Sent or Finalised order as restricted, and no other', () => {
     expect(PO_STATUSES.filter(isRowRestricted)).toEqual(['SENT', 'FINALISED']);
+  });
+});
+
+// A LINE's three states are a different vocabulary from the order's five
+// (rules § line status), and an order's own screen renders them in its Status
+// column — so they are subject to the same never-render-the-enum rule.
+describe('line status labels', () => {
+  it('labels each of the three line states', () => {
+    expect(poLineStatusLabelKey('NEW')).toBe('label.new');
+    expect(poLineStatusLabelKey('SENT')).toBe('label.sent');
+    expect(poLineStatusLabelKey('CLOSED')).toBe('label.closed');
+  });
+
+  it('never renders the wire value, even for one it does not know', () => {
+    expect(poLineStatusLabelKey('SOMETHING_NEW')).toBe('label.new');
   });
 });
