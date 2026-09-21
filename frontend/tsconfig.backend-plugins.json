@@ -16,7 +16,7 @@
   // run (the `backend-plugins` vitest project); they are not type-checked.
   //
   // Two backend halves are deliberately NOT here: the reference plugin
-  // (`examples/hello_backend`) and `plugins/cook_islands/backend`. Both
+  // (`plugins/examples/hello_backend`) and `plugins/cook_islands/backend`. Both
   // declare the host globals themselves in a `host.d.ts` rather than importing
   // `@common/types`, and two declarations of `sql` in one program do not
   // compile. Both are type-checked by tsconfig.plugins.json instead — which is
