@@ -7,6 +7,7 @@ import {
   namePageFetcher,
   type NameOption,
   type NameRole,
+  type PartyKind,
 } from './nameResource';
 
 const PAGE_SIZE = 30;
@@ -48,12 +49,13 @@ export interface NameSearchProps {
    */
   focusTarget?: FocusTarget;
   /**
-   * Narrow to store-backed parties only (isStore) — a supplier/customer that is
-   * itself another store in the system. Used by the internal-order create
-   * picker (spec/internal-orders AC-C3). Default false (every visible party of
-   * the role).
+   * Narrow to one side of the system — `internal` for parties that are
+   * themselves stores in it (the internal-order create picker,
+   * spec/internal-orders AC-C3), `external` for parties outside it (the
+   * purchase-order create picker, spec/purchase-orders § S2). Omit for every
+   * visible party of the role. See {@link PartyKind} for what each sends.
    */
-  storeBacked?: boolean;
+  parties?: PartyKind;
   /**
    * Withhold one party by id — the internal-order destination-customer picker
    * excludes the chosen supplier (spec/internal-orders › header fields).
@@ -123,8 +125,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
       props.storeId,
       props.role ?? 'supplier',
       PAGE_SIZE,
-      props.storeBacked,
-      props.excludeId
+      { parties: props.parties, excludeId: props.excludeId }
     )}
     // The selected value's input text is just the name; the dropdown row still
     // shows code + name. Server mode disables the client filter, so this isn't
