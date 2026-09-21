@@ -67,8 +67,9 @@ import {
   type PurchaseOrderDetailLinesVariables,
 } from './purchaseOrderDetail.generated';
 import {
+  cascadeDeliveryDate,
   updatePurchaseOrder,
-  updatePurchaseOrderLine,
+  type DeliveryDateField,
 } from './purchaseOrderUpdate';
 import type {
   PurchaseOrderEditFields,
@@ -325,40 +326,20 @@ const PurchaseOrderDetailView: Component = () => {
     save: patch => void saveField(patch),
   });
 
-  /**
-   * Write one delivery date onto EVERY line. The screen owns this cascade
-   * because the server does not do it: `update_lines` fills a line's requested
-   * date only when the input carries a status, so a bare date change on the
-   * order writes the order row alone
-   * (service/purchase_order/update/generate.rs). The rule is that either date
-   * reaches every line (rules § the two delivery dates are not the order's
-   * alone), so the lines are written here — one call each, the shape the wire
-   * forces, over the ids the line-set read already holds.
-   *
-   * The requested date additionally fills the expected date of every line that
-   * has none, which is the same rule the CONFIRMED cascade applies server-side.
-   */
   const cascadeDate = async (
-    field: 'requestedDeliveryDate' | 'expectedDeliveryDate',
+    field: DeliveryDateField,
     date: string
-  ) => {
-    for (const line of lineSet()) {
-      if (field === 'expectedDeliveryDate') {
-        await updatePurchaseOrderLine(params.storeId, {
-          id: line.id,
-          expectedDeliveryDate: { value: date },
-        });
-        continue;
-      }
-      await updatePurchaseOrderLine(params.storeId, {
-        id: line.id,
-        requestedDeliveryDate: { value: date },
-        ...(line.expectedDeliveryDate
-          ? undefined
-          : { expectedDeliveryDate: { value: date } }),
-      });
-    }
+  ): Promise<SaveFieldResult> => {
+    const outcome = await cascadeDeliveryDate(
+      params.storeId,
+      lineSet(),
+      field,
+      date
+    );
     refetchAll();
+    return outcome.message
+      ? { ok: false, message: outcome.message }
+      : { ok: true };
   };
 
   const onMove = async (target: PurchaseOrderStatus) => {
@@ -382,6 +363,7 @@ const PurchaseOrderDetailView: Component = () => {
 
   const onLinesChanged = () => {
     setSelectedIds([]);
+    setBlockedLines([]);
     refetchAll();
   };
 

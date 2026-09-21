@@ -1,7 +1,4 @@
-import {
-  graphqlFetch,
-  type GraphqlErrorItem,
-} from '../../../api/graphql';
+import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
 import { translateServerError } from '../../../intl/intlUtils';
 import {
   UpdatePurchaseOrder,
@@ -134,24 +131,61 @@ export const deletePurchaseOrderLines = async (
   return { applied, message };
 };
 
-/**
- * Close every line in a selection for receipt, one call each. Stops at nothing
- * — a line that refuses is counted as a refusal and the rest still run, since
- * the server offers no bulk form and a partial close is the honest outcome.
- */
-export const closePurchaseOrderLines = async (
+const foldLineUpdates = async (
   storeId: string,
-  ids: string[]
+  inputs: UpdatePurchaseOrderLineVariables['input'][]
 ): Promise<LinesOutcome> => {
   let applied = 0;
   let message: string | undefined;
-  for (const id of ids) {
-    const result = await updatePurchaseOrderLine(storeId, {
-      id,
-      status: 'CLOSED',
-    });
+  for (const input of inputs) {
+    const result = await updatePurchaseOrderLine(storeId, input);
     if (result.kind === 'saved') applied += 1;
     else if (result.kind === 'error') message ??= result.message;
   }
   return { applied, message };
 };
+
+/**
+ * Close every line in a selection for receipt, one call each. Stops at nothing
+ * — a line that refuses is counted as a refusal and the rest still run, since
+ * the server offers no bulk form and a partial close is the honest outcome.
+ */
+export const closePurchaseOrderLines = (
+  storeId: string,
+  ids: string[]
+): Promise<LinesOutcome> =>
+  foldLineUpdates(
+    storeId,
+    ids.map(id => ({ id, status: 'CLOSED' as const }))
+  );
+
+export type DeliveryDateField =
+  'requestedDeliveryDate' | 'expectedDeliveryDate';
+
+/**
+ * Write one delivery date onto EVERY line. The server does not cascade a bare
+ * date change (`update_lines` fills a line's requested date only alongside a
+ * status), so the screen issues the per-line writes itself. The requested date
+ * also fills the expected date of every line that has none — the same rule the
+ * CONFIRMED cascade applies server-side.
+ */
+export const cascadeDeliveryDate = (
+  storeId: string,
+  lines: { id: string; expectedDeliveryDate?: string | null }[],
+  field: DeliveryDateField,
+  date: string
+): Promise<LinesOutcome> =>
+  foldLineUpdates(
+    storeId,
+    lines.map(line =>
+      field === 'expectedDeliveryDate'
+        ? { id: line.id, expectedDeliveryDate: { value: date } }
+        : {
+            id: line.id,
+            requestedDeliveryDate: { value: date },
+            ...(line.expectedDeliveryDate
+              ? undefined
+              : { expectedDeliveryDate: { value: date } }),
+          }
+    )
+  );
