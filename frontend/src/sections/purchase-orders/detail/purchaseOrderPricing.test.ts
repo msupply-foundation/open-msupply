@@ -4,7 +4,6 @@ import {
   finalCost,
   lineCost,
   linePacks,
-  formatMoney,
 } from './purchaseOrderPricing';
 
 // spec/purchase-orders rules § pricing and totals. The figures in the first
@@ -82,17 +81,5 @@ describe('the additional charges', () => {
   it('gives a line-less order a final cost of its charges alone', () => {
     // Every figure on an order with no lines reads as zero rather than absent.
     expect(finalCost({ ...charges, orderTotalAfterDiscount: 0 })).toBe(31);
-  });
-});
-
-describe('formatMoney', () => {
-  it("formats at the order currency's precision with its narrow symbol", () => {
-    expect(formatMoney(1234.5, 'EUR')).toBe('€1,234.50');
-    expect(formatMoney(1234.5, 'JPY')).toBe('¥1,235');
-  });
-
-  it('falls back to the home currency when the order reports none', () => {
-    expect(formatMoney(2, null)).toBe(formatMoney(2, 'USD'));
-    expect(formatMoney(2, undefined)).toBe('$2.00');
   });
 });

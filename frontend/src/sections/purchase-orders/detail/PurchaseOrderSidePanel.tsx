@@ -21,7 +21,8 @@ import {
   type PurchaseOrderPatch,
   type SaveFieldResult,
 } from './purchaseOrderEdit';
-import { chargesTotal, finalCost, formatMoney } from './purchaseOrderPricing';
+import { formatCurrency } from '@/intl/currency';
+import { chargesTotal, finalCost } from './purchaseOrderPricing';
 import { canDelete } from './purchaseOrderLadder';
 import type { PurchaseOrderStatus } from '../purchaseOrderStatus';
 
@@ -73,7 +74,7 @@ export const PurchaseOrderSidePanel: Component<
     );
   };
 
-  const money = (value: number) => formatMoney(value, currency());
+  const money = (value: number) => formatCurrency(value, currency());
 
   const status = () => props.node.status as PurchaseOrderStatus;
 

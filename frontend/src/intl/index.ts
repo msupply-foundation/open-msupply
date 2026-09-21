@@ -18,7 +18,12 @@ export { registerPluginTranslations } from './pluginTranslations';
 // Detection / switching
 export { detectLocale, getUserLocale } from './detectLocale';
 export { changeLanguage, initialiseLocale } from './changeLanguage';
-export { getCurrencyInfo, homeCurrency, setHomeCurrency } from './currency';
+export {
+  formatCurrency,
+  getCurrencyInfo,
+  homeCurrency,
+  setHomeCurrency,
+} from './currency';
 export type { CurrencyInfo, CurrencyDisplay } from './currency';
 
 // Formatting
