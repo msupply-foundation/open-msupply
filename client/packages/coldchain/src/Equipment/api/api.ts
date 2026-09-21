@@ -90,9 +90,9 @@ const assetParsers = {
 
 // What this register is reading, in one place: the class pinning that makes it
 // the cold chain register, the screen's own filters, and — for the LIST only —
-// the store restriction the Cold chain destination MEANS to carry (the server
-// scopes neither). The export calls this without the two store arguments on
-// purpose: its filters must match the screen, its scope is the whole register.
+// the store restriction the Cold chain destination carries (the server scopes
+// neither). The EXPORT calls this with the same destination scope as the list,
+// so the file is what the screen shows (issue #693).
 //
 // ⚠️ `storeCode` never arrives. Its caller derives the flag from
 // `useCentralServerCallback()`, which returns an OBJECT of callbacks and is
@@ -166,12 +166,17 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     // The export. The list's own filters, unpaginated — but the store
     // restrictions are deliberately NOT applied: an export is a register-wide
     // extract, so it covers every store's equipment from either destination.
-    listAll: async ({ sortBy, filterBy }: ListParams<AssetFragment>) => {
+    listAll: async (
+      { sortBy, filterBy }: ListParams<AssetFragment>,
+      isColdChain?: boolean
+    ) => {
       const result = await sdk.assets({
         key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: assetListFilter(storeId, filterBy),
+        // The export carries the destination's store scope, exactly as the
+        // list does — `storeCode` stays out because it is the dead one above.
+        filter: assetListFilter(storeId, filterBy, undefined, isColdChain),
       });
 
       const items = result?.assets;

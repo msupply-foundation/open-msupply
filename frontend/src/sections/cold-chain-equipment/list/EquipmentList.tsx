@@ -51,7 +51,7 @@ import {
 import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
-  buildExportFilter,
+  buildListFilter,
   buildListVariables,
   clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
@@ -361,7 +361,7 @@ const EquipmentList: Component = () => {
               // restriction: the file carries every store's equipment by
               // decision, narrowed only by the chips the user set
               // (rules › export).
-              filter={buildExportFilter(query())}
+              filter={buildListFilter(query(), params.storeId, destination())}
               sort={variables().sort}
             />
           </HeaderButtons>

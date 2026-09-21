@@ -85,7 +85,7 @@ Two routed screens — the list and one asset's detail — serving **both** dest
 | **AC-I9** the run | `import` (`rowToInsertInput`); the batching is `EquipmentImportModal` |
 | **AC-I10 / AC-I12** the failed rows and their export | `import` (`failedRowsToCsv`) — each row carries the SERVER's own message, and the file round-trips: a test parses it straight back in and asserts the dates and the replacement flag survive |
 | **AC-I11** the template | `import`, incl. that it round-trips through its own parser |
-| **AC-Z1** the export covers the filtered list, every store | `ExportEquipmentAction` sends `buildExportFilter` (the list's filters, no store pin) and the list's sort, unpaginated |
+| **AC-Z1** the export covers what the screen shows | `ExportEquipmentAction` sends `buildListFilter` — the same filter the list reads, store restriction included — and the list's sort, unpaginated |
 | **AC-Z2** a column per specification key | `csv`, incl. the catalogue-wins rule |
 | **AC-B1 – AC-B7** scanning | _not built_ — see [exemptions](#exempt-but-listed) |
 | **AC-B5** locked fields read-only | `assetEdit` (`isLockedField`, incl. the server-admin override); `SummaryTab` renders the standing explanation |
