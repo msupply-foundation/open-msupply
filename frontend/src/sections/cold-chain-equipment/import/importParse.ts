@@ -167,7 +167,9 @@ export const parseImportStatus = (value: string): AssetStatus => {
  * grouped shape is genuinely ambiguous (`1,234` is also one-and-a-bit in half
  * of Europe), and the file's own separator is the best evidence there is: a
  * spreadsheet writing `;` between fields does so BECAUSE its locale took the
- * comma for the decimal mark. `decimalComma` is that fact about the file.
+ * comma for the decimal mark. `decimalComma` is that fact about the file, and
+ * ONLY a semicolon carries it — a tab is chosen for reasons of its own and says
+ * nothing about the decimal mark, so a tab file groups like a comma file.
  *
  * What the separator is NOT allowed to do is turn an unambiguous decimal into a
  * thousand: `12,5` cannot be a grouped number in any convention, so it reads as
@@ -361,28 +363,33 @@ const readImportTable = (
   if (headerIndex === -1) return 'no-header';
   const [header = [], ...body] = table.slice(headerIndex);
   if (body.length === 0) return 'no-rows';
-  return { header, body, headerIndex, decimalComma: separator !== ',' };
-};
-
-export const importFileFailure = (
-  text: string,
-  isCentral: boolean
-): ImportFileFailure | null => {
-  const read = readImportTable(text, isCentral);
-  return typeof read === 'string' ? read : null;
+  // Only `;` is evidence. The argument for reading a comma as a decimal mark is
+  // that a spreadsheet reaches for the semicolon BECAUSE its locale took the
+  // comma — a tab says nothing either way, and treating it as evidence turned a
+  // grouped thousand from an en-locale sheet into one-and-a-bit, silently.
+  return { header, body, headerIndex, decimalComma: separator === ';' };
 };
 
 /**
- * Parse the uploaded file into rows, each carrying its own errors and warnings.
+ * Parse the uploaded file into rows, each carrying its own errors and warnings
+ * — or say why the file yields none.
  *
  * Header matching is by column NAME, so a column the file does not carry simply
- * reads as blank — which is why the required columns are checked per row rather
- * than up front. An empty result means the file itself is unusable; the caller
- * asks {@link importFileFailure} which way, and says so.
+ * reads as blank, which is why the required columns are checked per row rather
+ * than up front.
+ *
+ * The two outcomes are returned TOGETHER rather than flattening a failure to an
+ * empty list and making the caller ask again: the read already knows which
+ * fault it hit, and asking a second time meant parsing the whole file twice to
+ * recover an answer that had been thrown away. `Array.isArray` tells them
+ * apart.
  */
-export const parseImportFile = (text: string, lookup: Lookup): ImportRow[] => {
+export const parseImportFile = (
+  text: string,
+  lookup: Lookup
+): ImportRow[] | ImportFileFailure => {
   const read = readImportTable(text, lookup.isCentral);
-  if (typeof read === 'string') return [];
+  if (typeof read === 'string') return read;
   const { header, body, headerIndex, decimalComma } = read;
   const columnAt = new Map(
     header.map((name, index) => [name.trim().toLowerCase(), index])
