@@ -70,7 +70,7 @@ console.log(mod.plugins.graphql_query({ store_id: 's1', input: { type: 'ping' } 
 
 CIV's backend half is built by the **open-msupply client toolchain** (webpack +
 ts-loader + `backendCommon`) and committed at
-[`plugins/civ/backend/prebuilt/plugin.js`](../../plugins/civ/backend/README.md),
+[`plugins/civ/backend/prebuilt/plugin.js`](../../civ/backend/README.md),
 which the packer ships **verbatim** — byte-identical to the field bundle. A
 committed `prebuilt/plugin.js` always wins; the build here is for a plugin whose
 source this repo owns, which today means this one. The two produce different

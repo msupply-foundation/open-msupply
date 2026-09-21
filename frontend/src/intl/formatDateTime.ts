@@ -20,7 +20,12 @@ import { intlNumberFormat } from './formatNumber';
 // ten of them statically imported would be ~6% of the bundle spent on languages
 // a given user never selects. The date-fns methods themselves tree-shake; the
 // locale objects don't, which is why they need explicit imports.
-const DATE_FNS_LOADERS: Record<SupportedLocale, () => Promise<Locale>> = {
+//
+// Exported so a test can pin what `exportDate` writes under EVERY language the
+// app can be read in — the import that reads those files back has to accept
+// each shape, and only this map knows which shapes there are.
+type DateFnsLoaders = Record<SupportedLocale, () => Promise<Locale>>;
+export const DATE_FNS_LOADERS: DateFnsLoaders = {
   ar: () => import('date-fns/locale/ar').then(m => m.ar),
   // Persian/Farsi, the closest available match for the unsupported Dari and
   // Pashto (as in the current app).

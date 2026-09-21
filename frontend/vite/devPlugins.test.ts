@@ -38,8 +38,8 @@ describe('parsePluginDirs', () => {
     expect(parsePluginDirs('../civ-plugins/frontend/latest', ROOT)).toEqual([
       '/civ-plugins/frontend/latest',
     ]);
-    expect(parsePluginDirs('examples/hello_world', ROOT)).toEqual([
-      '/repo/examples/hello_world',
+    expect(parsePluginDirs('plugins/examples/hello_world', ROOT)).toEqual([
+      '/repo/plugins/examples/hello_world',
     ]);
   });
 
@@ -51,7 +51,9 @@ describe('parsePluginDirs', () => {
 describe('isOutsideRoot', () => {
   it('is false for the root and anything under it', () => {
     expect(isOutsideRoot(ROOT, ROOT)).toBe(false);
-    expect(isOutsideRoot(ROOT, '/repo/examples/hello_world')).toBe(false);
+    expect(isOutsideRoot(ROOT, '/repo/plugins/examples/hello_world')).toBe(
+      false
+    );
   });
 
   it('is true for a sibling or unrelated directory (needs fs.allow)', () => {
@@ -98,10 +100,10 @@ describe('pluginProjectRoot', () => {
 
 describe('discoverDevPlugins', () => {
   const examples = {
-    '/repo/examples/hello_world/package.json': plugin('hello_world'),
-    '/repo/examples/hello_world/plugin.tsx': '',
-    '/repo/examples/api_too_new/package.json': plugin('api_too_new'),
-    '/repo/examples/api_too_new/plugin.tsx': '',
+    '/repo/plugins/examples/hello_world/package.json': plugin('hello_world'),
+    '/repo/plugins/examples/hello_world/plugin.tsx': '',
+    '/repo/plugins/examples/api_too_new/package.json': plugin('api_too_new'),
+    '/repo/plugins/examples/api_too_new/plugin.tsx': '',
   };
 
   it('loads NOTHING when OMS_PLUGIN_DIRS is unset — in-repo plugins are opt-in', () => {
@@ -187,7 +189,7 @@ describe('discoverDevPlugins', () => {
   it('lets a later entry override an earlier one of the same code', () => {
     const { plugins } = discoverDevPlugins(
       ROOT,
-      'examples/hello_world:/work/hello_world',
+      'plugins/examples/hello_world:/work/hello_world',
       fakeFs({
         ...examples,
         '/work/hello_world/package.json': plugin('hello_world'),

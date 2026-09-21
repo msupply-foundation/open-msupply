@@ -114,13 +114,13 @@ export default tseslint.config(
   // APIs unsupported by the minimum browser (browserslist in package.json —
   // Chromium 132, the WebView on the oldest Android 8.1 tablets deployed).
   // The example
-  // plugins (examples/) are the same: ordinary Solid components running in the
+  // plugins (plugins/examples/) are the same: ordinary Solid components running in the
   // host's runtime, so they answer to the same rules.
   {
-    files: ['src/**/*.{ts,tsx}', 'examples/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'plugins/examples/**/*.{ts,tsx}'],
     // The reference BACKEND plugin is not browser code — it has its own block
     // below rather than Solid, DOM globals and browser-compat rules.
-    ignores: ['examples/*/backend/**'],
+    ignores: ['plugins/examples/*/backend/**'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -213,7 +213,7 @@ export default tseslint.config(
   },
 
   /*
-   * Every BACKEND half — the reference plugin (examples/<code>/backend) and
+   * Every BACKEND half — the reference plugin (plugins/examples/<code>/backend) and
    * the country plugins' — which run in the server's BoaJS engine. No Solid,
    * no DOM, and deliberately NO `globals.browser`: the only globals they have
    * are the host functions the engine binds, so an accidental `document` or
@@ -229,7 +229,7 @@ export default tseslint.config(
    */
   {
     files: [
-      'examples/*/backend/**/*.ts',
+      'plugins/examples/*/backend/**/*.ts',
       'plugins/*/backend/**/*.ts',
       // The wire contract both halves import. Type-only, so it needs the TS
       // parser and nothing else — and it sits outside `src/`, the only plugin
@@ -262,7 +262,7 @@ export default tseslint.config(
       'plugins/*/src/**/*.{ts,tsx}',
       'plugins/*/backend/**/*.ts',
       'plugins/*/shared/**/*.ts',
-      'examples/**/*.{ts,tsx}',
+      'plugins/examples/**/*.{ts,tsx}',
       '*.config.{ts,js}',
       'scripts/**/*.mjs',
     ],

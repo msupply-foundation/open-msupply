@@ -1,7 +1,7 @@
 /*
  * Build + pack frontend plugins.
  *
- * For each discovered plugin (in-repo `examples/*` and `plugins/*`, plus
+ * For each discovered plugin (in-repo `plugins/examples/*` and `plugins/*`, plus
  * anything named by OMS_PLUGIN_DIRS) this:
  *   1. builds it to a single-file ES module
  *      `dist/frontend_plugins/{code}/{code}.js`
@@ -156,17 +156,35 @@ const buildBackendPlugin = plugin =>
     })
   );
 
+/*
+ * The in-repo plugin directories. `plugins/*` holds the real country plugins;
+ * `plugins/examples/*` holds the reference plugins that prove the mechanism.
+ * `plugins/examples` itself is a grouping directory, not a plugin, so it is
+ * walked one level deeper rather than read as an entry in its own right. The
+ * dev loop (vite/devPlugins.ts) does NOT walk these: building everything is
+ * packaging, serving everything at once is a broken dev session.
+ */
+const PLUGINS_ROOT = 'plugins';
+const EXAMPLES_DIR = 'examples';
+
+const inRepoPluginDirs = () => {
+  const dirs = [];
+  const walk = root => {
+    if (!existsSync(root)) return;
+    for (const entry of readdirSync(root, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const dir = join(root, entry.name);
+      if (root === PLUGINS_ROOT && entry.name === EXAMPLES_DIR) walk(dir);
+      else dirs.push(dir);
+    }
+  };
+  walk(PLUGINS_ROOT);
+  return dirs;
+};
+
 const discoverBackendPlugins = () => {
   const found = [];
-  // Both roots, like the frontend walk: `examples/*` proves the mechanism,
-  // `plugins/*` holds the real country plugins.
-  for (const [root, entry] of ['examples', 'plugins'].flatMap(root =>
-    existsSync(root)
-      ? readdirSync(root, { withFileTypes: true }).map(e => [root, e])
-      : []
-  )) {
-    if (!entry.isDirectory()) continue;
-    const dir = join(root, entry.name);
+  for (const dir of inRepoPluginDirs()) {
     const manifest = readBackendManifest(join(dir, 'backend'));
     if (!manifest) continue;
     /*
@@ -205,17 +223,10 @@ const packBackendPlugin = plugin => {
 };
 
 const discoverPlugins = () => {
-  const dirs = [];
-  // The reference plugins and the in-repo country plugins — the same pair the
-  // dev loop walks (vite/devPlugins.ts).
-  for (const inRepo of ['examples', 'plugins']) {
-    if (!existsSync(inRepo)) continue;
-    for (const entry of readdirSync(inRepo, { withFileTypes: true })) {
-      if (entry.isDirectory()) dirs.push(join(inRepo, entry.name));
-    }
-  }
-  // Out-of-tree plugin checkouts (the civ-plugins dev loop), comma- or
+  // The reference plugins and the in-repo country plugins, then any
+  // out-of-tree plugin checkouts (the civ-plugins dev loop), comma- or
   // colon-separated.
+  const dirs = inRepoPluginDirs();
   for (const dir of (process.env.OMS_PLUGIN_DIRS ?? '')
     .split(/[,:]/)
     .filter(Boolean)) {
@@ -288,7 +299,7 @@ const packPlugin = plugin => {
      *
      * The plugin-API integer is NOT packed alongside it. That gate is
      * module-side and stays there (spec/plugins/sdk-contract.md § versioning):
-     * `examples/api_too_new` declares 999 in its MODULE and is refused by the
+     * `plugins/examples/api_too_new` declares 999 in its MODULE and is refused by the
      * loader after the bundle evaluates, which is the gate that fixture exists
      * to exercise.
      *

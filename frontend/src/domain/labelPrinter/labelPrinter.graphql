@@ -1,0 +1,15 @@
+# The store's label-printer settings (spec/settings/contract.md § Devices —
+# label printer). Read by the Devices screen to prefill its form, and by the
+# network delivery route as its not-configured gate (null ⇒ nothing stored).
+# NoPermissionRequired — any signed-in user reads it (OMS-REG-SET-05.20).
+#
+# Not read on the USB route: that route never uses the stored address
+# (OMS-REG-SET-05.8).
+query labelPrinterSettings {
+  labelPrinterSettings {
+    address
+    port
+    labelHeight
+    labelWidth
+  }
+}

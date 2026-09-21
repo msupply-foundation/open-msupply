@@ -44,3 +44,10 @@ export const showThemeAndLogoRows = (access: SettingsAccess): boolean =>
 // (OMS-REG-SET-05.23).
 export const showBarcodeScannerRows = (access: SettingsAccess): boolean =>
   access.serverAdmin;
+
+// Also within Devices, and gated on the platform rather than permission: the
+// Print via USB row is absent on Android (OMS-REG-SET-05.41). The USB route
+// needs a local print service on the device, which that platform has no way to
+// run, so offering the choice there could only ever fail.
+export const showPrintViaUsbRow = (isAndroidDevice: boolean): boolean =>
+  !isAndroidDevice;
