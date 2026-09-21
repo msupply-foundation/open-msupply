@@ -10,10 +10,10 @@ pub enum PartitionTopUp {
     /// Every partition needed to restore the lookahead was created
     /// (`Created(0)` means headroom was already sufficient).
     Created(usize),
-    /// The tick hit the 2 s lock timeout and was rolled back. `headroom` is how
-    /// many cursor values remain insertable above `max(cursor)`. Nothing is
-    /// broken — retry on the next tick.
-    LockedOut { headroom: i64 },
+    /// The tick hit the 2 s lock timeout. `created` partitions were committed
+    /// before the one that timed out; `headroom` is how many cursor values
+    /// remain insertable above `max(cursor)`. Retry on the next tick.
+    LockedOut { headroom: i64, created: usize },
 }
 
 /// Create `changelog_p_<lower>` covering `[lower, upper)` and attach it to
@@ -42,10 +42,10 @@ fn create_partition(
 /// Ensure enough future cursor-range partitions exist on `changelog` to keep
 /// `config.lookahead` cursor records of empty headroom above `max(cursor)`.
 ///
-/// The catalog reads and the DDL each run under a 2 s `lock_timeout` (the
-/// reads too: `pg_get_expr` takes a read lock on each partition). A DDL
-/// timeout rolls back this tick's partitions and yields
-/// [`PartitionTopUp::LockedOut`]; a read timeout is an ordinary error.
+/// Each partition is created in its own transaction under a 2 s `lock_timeout`
+/// (the catalog reads too: `pg_get_expr` takes a read lock on each partition).
+/// A DDL timeout yields [`PartitionTopUp::LockedOut`]; a read timeout is an
+/// ordinary error.
 ///
 /// Postgres-only behaviour. Under SQLite the function returns immediately —
 /// SQLite has no partitions to top up.
@@ -77,41 +77,37 @@ pub fn ensure_partition_lookahead(
     let size = config.partition_size;
     let target_headroom = config.lookahead;
 
-    let result = connection.transaction_sync(|connection| {
-        set_lock_timeout(connection)?;
-
-        let mut created = 0;
-        let mut next_lower = max_upper;
-        // Create partitions until we have enough headroom above the current max cursor
-        while next_lower - current_max < target_headroom {
-            let next_upper = next_lower + size;
-            create_partition(connection, next_lower, next_upper)?;
-            log::info!(
-                "changelog partition created changelog_p_{} [{}..{})",
-                next_lower,
-                next_lower,
-                next_upper
-            );
-            next_lower = next_upper;
-            created += 1;
-        }
-
-        Ok(created)
-    });
-
-    match result {
-        Ok(created) => Ok(PartitionTopUp::Created(created)),
-        Err(error) => {
+    let mut created = 0;
+    let mut next_lower = max_upper;
+    // Create partitions until we have enough headroom above the current max cursor
+    while next_lower - current_max < target_headroom {
+        let next_upper = next_lower + size;
+        let result = connection.transaction_sync(|connection| {
+            set_lock_timeout(connection)?;
+            create_partition(connection, next_lower, next_upper)
+        });
+        if let Err(error) = result {
             let error = error.to_inner_error();
-            if is_lock_timeout(&error) {
+            return if is_lock_timeout(&error) {
                 Ok(PartitionTopUp::LockedOut {
-                    headroom: max_upper - current_max,
+                    headroom: next_lower - current_max,
+                    created,
                 })
             } else {
                 Err(error)
-            }
+            };
         }
+        log::info!(
+            "changelog partition created changelog_p_{} [{}..{})",
+            next_lower,
+            next_lower,
+            next_upper
+        );
+        next_lower = next_upper;
+        created += 1;
     }
+
+    Ok(PartitionTopUp::Created(created))
 }
 
 /// `SET LOCAL`: the timeout ends with the current transaction.
@@ -485,7 +481,13 @@ mod tests {
         let waited = started.elapsed();
 
         // headroom = max_upper(5) - max_cursor(4) = 1, nothing created.
-        assert_eq!(outcome, PartitionTopUp::LockedOut { headroom: 1 });
+        assert_eq!(
+            outcome,
+            PartitionTopUp::LockedOut {
+                headroom: 1,
+                created: 0
+            }
+        );
         // Bounded by the 2 s lock_timeout, not by the holder.
         assert!(
             waited < Duration::from_secs(10),

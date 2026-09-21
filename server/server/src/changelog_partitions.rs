@@ -47,10 +47,11 @@ pub fn spawn(
                         log::info!("changelog partition task created {created} new partition(s)");
                     }
                 }
-                Ok((ctx, Ok(PartitionTopUp::LockedOut { headroom }))) => {
+                Ok((ctx, Ok(PartitionTopUp::LockedOut { headroom, created }))) => {
                     log::warn!(
                         "changelog partition task: lock timeout while adding partitions \
-                         ({headroom} cursor values of headroom left); will retry next tick"
+                         ({created} created, {headroom} cursor values of headroom left); \
+                         will retry next tick"
                     );
                     if escalation.record_lock_out(headroom) {
                         escalate(&ctx.connection, headroom);
