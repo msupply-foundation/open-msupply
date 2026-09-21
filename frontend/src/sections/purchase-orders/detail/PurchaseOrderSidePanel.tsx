@@ -11,7 +11,7 @@ import { TextArea } from '@/ui/elements/inputs/TextArea';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { DateField } from '@/ui/elements/inputs/DateField';
-import { NameSearch, type NameOption } from '@/domain/name';
+import { NameSearch, type NameSeed } from '@/domain/name';
 import { ShippingMethodSelect } from '@/domain/shippingMethod';
 import { DeletePurchaseOrderAction } from './actions';
 import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated';
@@ -83,17 +83,12 @@ export const PurchaseOrderSidePanel: Component<
 
   const status = () => props.node.status as PurchaseOrderStatus;
 
-  const selectedDonor = (): NameOption | undefined => {
+  const selectedDonor = (): NameSeed | undefined => {
     const donor = props.node.donor;
     return donor
       ? {
           id: donor.id,
           name: donor.name,
-          code: '',
-          isSupplier: false,
-          isDonor: true,
-          isOnHold: false,
-          isStore: false,
         }
       : undefined;
   };

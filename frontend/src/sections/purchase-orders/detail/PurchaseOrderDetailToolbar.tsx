@@ -6,7 +6,7 @@ import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
-import { NameSearch, type NameOption } from '@/domain/name';
+import { NameSearch, type NameSeed } from '@/domain/name';
 import { CurrencySelect } from '@/domain/currency';
 import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated';
 import type {
@@ -72,17 +72,13 @@ export const PurchaseOrderDetailToolbar: Component<
   // date means after the whole line cascade, not one round trip.
   let confirmInFlight = false;
 
-  const selectedSupplier = (): NameOption | undefined => {
+  const selectedSupplier = (): NameSeed | undefined => {
     const supplier = props.node.supplier;
     return supplier
       ? {
           id: supplier.id,
           name: supplier.name,
           code: supplier.code,
-          isSupplier: true,
-          isDonor: false,
-          isOnHold: false,
-          isStore: false,
         }
       : undefined;
   };
