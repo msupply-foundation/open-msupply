@@ -39,6 +39,7 @@ import {
   Pagination,
   type PaginationProps,
 } from '@/ui/elements/table/Pagination';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { remToPx } from '@/ui/utils/rem';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
 import { ALT_M } from '@/ui/utils/shortcuts';
@@ -49,6 +50,7 @@ import {
   rememberPageSize,
 } from '@/list/pageSize';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
+import { stripEmpty } from '@/typeHelpers';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import { ActivityLogPanel } from '@/domain/activityLog';
 import { purchaseOrderPreferences } from '@/store/storeContext';
@@ -73,6 +75,10 @@ import type {
   PurchaseOrderPatch,
   SaveFieldResult,
 } from './purchaseOrderEdit';
+import {
+  filterFields,
+  type PurchaseOrderLineFilter,
+} from './purchaseOrderDetailFilters';
 import { PurchaseOrderDetailToolbar } from './PurchaseOrderDetailToolbar';
 import { PurchaseOrderSidePanel } from './PurchaseOrderSidePanel';
 import { PurchaseOrderStatusFooter } from './PurchaseOrderStatusFooter';
@@ -126,16 +132,17 @@ type SortKey = NonNullable<
 
 type DetailUrlState = {
   sort: NonNullable<PurchaseOrderDetailLinesVariables['sort']>;
-  /** The toolbar's line search — item code or name, server-side. */
-  search: string;
+  filter: PurchaseOrderLineFilter;
   offset: number;
   first: number;
 };
 
-// Default sort: Line, ascending (spec S7).
+// Default sort: Line, ascending (spec S7). The code-or-name search is the
+// table's one DEFAULT filter, so its key is seeded present-but-empty (null,
+// FilterBar's "added but empty" marker) and stripEmpty drops it from the query.
 const DEFAULT_URL_STATE: DetailUrlState = {
   sort: [{ key: 'lineNumber', desc: false }],
-  search: '',
+  filter: { itemCodeOrName: null },
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
 };
@@ -199,15 +206,12 @@ const PurchaseOrderDetailView: Component = () => {
   // ── One page of lines ─────────────────────────────────────────────────────
   const linesVariables = createMemo<PurchaseOrderDetailLinesVariables>(() => ({
     storeId: params.storeId,
+    // stripEmpty drops the added-but-empty chip (held as a null key) so the
+    // query carries only a live filter. The order scope goes on LAST — it is
+    // not the user's to drop.
     filter: {
+      ...stripEmpty(query().filter),
       purchaseOrderId: { equalTo: params.id },
-      // The toolbar's search, matching item CODE or NAME, case-insensitively
-      // (rules § lines, as the screen presents them) — the filter added to the
-      // wire for exactly this, so the narrowing happens server-side like every
-      // other table's.
-      ...(query().search
-        ? { itemCodeOrName: { like: query().search } }
-        : undefined),
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
@@ -528,7 +532,8 @@ const PurchaseOrderDetailView: Component = () => {
       header: () => t('label.line-cost'),
       ...getCurrencyCell(),
       cell: cell => money(cell.getValue<number>()),
-      footer: () => money(rows().reduce((sum, line) => sum + lineCost(line), 0)),
+      footer: () =>
+        money(rows().reduce((sum, line) => sum + lineCost(line), 0)),
     },
     {
       c: { key: 'requestedDeliveryDate' },
@@ -624,10 +629,6 @@ const PurchaseOrderDetailView: Component = () => {
                       lineCount={lineCount()}
                       onSaveField={patch => void saveField(patch)}
                       onCascadeDate={cascadeDate}
-                      search={query().search}
-                      onSearchChange={search =>
-                        setQuery({ ...query(), search, offset: 0 })
-                      }
                     />
                   </HeaderToolbar>
                   <TabList tabs={tabs()} />
@@ -690,6 +691,17 @@ const PurchaseOrderDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The code-or-name filter lives in the table's own toolbar
+                  // (ui-standards › tables › toolbar), never the page header.
+                  filters={
+                    <FilterBar
+                      filters={filterFields()}
+                      filter={query().filter}
+                      onChange={filter =>
+                        setQuery({ ...query(), filter, offset: 0 })
+                      }
+                    />
+                  }
                   loading={linesData.loading}
                   sort={currentSort()}
                   onSort={onSort}

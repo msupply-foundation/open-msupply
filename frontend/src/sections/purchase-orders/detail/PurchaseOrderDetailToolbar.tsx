@@ -38,14 +38,13 @@ export interface PurchaseOrderDetailToolbarProps {
     field: 'requestedDeliveryDate' | 'expectedDeliveryDate',
     date: string
   ) => Promise<void>;
-  search: string;
-  onSearchChange: (search: string) => void;
 }
 
 /*
  * The detail header's field cluster (spec/purchase-orders S6 § toolbar): six
- * labelled field rows and the line search, as the children of the page's
- * <HeaderToolbar>. Which fields are editable when is
+ * labelled field rows, as the children of the page's <HeaderToolbar>. The line
+ * filter is the table's own (S7 § filters), never the header's. Which fields
+ * are editable when is
  * purchaseOrderLadder.ts's — mirrored here because a refusal from the domain
  * names no cause (contract ⚠️), so a control left enabled on a closed order
  * would fail into a toast saying only that saving failed.
@@ -191,7 +190,9 @@ export const PurchaseOrderDetailToolbar: Component<
       <DateField
         label={t('label.requested-delivery-date')}
         size="small"
-        value={draftRequested() ?? props.node.requestedDeliveryDate ?? undefined}
+        value={
+          draftRequested() ?? props.node.requestedDeliveryDate ?? undefined
+        }
         disabled={props.disabled}
         onChange={value => {
           if (!value) return;
@@ -215,17 +216,6 @@ export const PurchaseOrderDetailToolbar: Component<
           setDraftExpected(value);
           setPendingDate({ field: 'expectedDeliveryDate', date: value });
         }}
-      />
-
-      {/* The line search — the only thing that narrows the General tab's
-          table, matching item CODE or NAME (rules § lines, as the screen
-          presents them). Server-side, on the filter added for it. */}
-      <TextField
-        label={t('placeholder.filter-items')}
-        size="small"
-        data-testid="line-search-field"
-        value={props.search}
-        onInput={e => props.onSearchChange(e.currentTarget.value)}
       />
 
       <Show when={pendingDate()}>
