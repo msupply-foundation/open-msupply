@@ -1,0 +1,336 @@
+# An order's own screen (spec/purchase-orders S6-S9, S11-S13) — the order
+# node, one server-paginated page of its lines, and the one mutation every
+# field on the screen writes through.
+#
+# TWO reads, not one: `purchaseOrder` carries the order itself (toolbar,
+# Details heading, side panel, state ladder), and `purchaseOrderDetailLines`
+# carries the General tab's page of lines. The node's own `lines` field is
+# DELIBERATELY not read for the table: it is unpaginated, unfiltered and
+# unsorted (contract § backend gaps), and holding a whole order's lines in the
+# browser to sort and search them is what ui-standards/tables.md § pagination &
+# scale forbids. The paginated `purchaseOrderLines` query — the outstanding
+# list's own read, filtered here to one order — is the same rows with a page
+# argument, so the table sorts and searches server-side like every other.
+
+fragment PurchaseOrderInfo on PurchaseOrderNode {
+  id
+  number
+  status
+  # The ladder's five moments. `createdDatetime` stamps New (an order's
+  # creation moment); the other four are stamped on entering their state and
+  # are independent of the state the order is in now (rules § the state
+  # ladder).
+  createdDatetime
+  requestApprovalDatetime
+  confirmedDatetime
+  sentDatetime
+  finalisedDatetime
+  # Toolbar. Nullable on the wire: an order can report no supplier at all.
+  supplier {
+    id
+    name
+    code
+  }
+  reference
+  currencyId
+  currency {
+    id
+    code
+  }
+  foreignExchangeRate
+  requestedDeliveryDate
+  # Details heading (S8) — correspondence fields and the five charges.
+  authorisingOfficer1
+  authorisingOfficer2
+  additionalInstructions
+  supplierAgent
+  headingMessage
+  freightConditions
+  agentCommission
+  documentCharge
+  communicationsCharge
+  insuranceCharge
+  freightCharge
+  # Side panel (S9) — pricing, other, dates.
+  #
+  # `orderTotalBeforeDiscount` is the panel's Subtotal and is ALREADY net of
+  # every line discount: the only discount it precedes is the supplier's
+  # (contract ⚠️ the field called "before discount"). Neither total includes
+  # the five charges, and NO field carries the final cost — the panel sums the
+  # charges itself and adds them (contract § pricing and totals).
+  orderTotalBeforeDiscount
+  orderTotalAfterDiscount
+  # Two views of ONE stored figure: the percentage is stored, the amount is
+  # resolved against the subtotal. An amount saved while the subtotal is zero
+  # is discarded silently (contract § an order's own screen).
+  supplierDiscountPercentage
+  supplierDiscountAmount
+  donor {
+    id
+    name
+  }
+  shippingMethod
+  comment
+  contractSignedDate
+  advancePaidDate
+  # Documents tab (S12) — the shared sync-file list over the order.
+  documents {
+    nodes {
+      id
+      fileName
+      createdDatetime
+      totalBytes
+    }
+  }
+  # targetMonths is deliberately NOT read: it arrives only by synchronisation,
+  # nothing on this screen writes it, and `UpdatePurchaseOrderInput` does not
+  # declare it — the reference client's update mapper includes it and would
+  # fail every save on this screen if anything ever set it (contract ⚠️ the
+  # client sends a field the schema rejects). Not reading it is what makes that
+  # impossible here.
+}
+
+query purchaseOrder($storeId: String!, $id: String!) {
+  purchaseOrder(storeId: $storeId, id: $id) {
+    __typename
+    ... on PurchaseOrderNode {
+      ...PurchaseOrderInfo
+    }
+    # The one read in this vertical with a typed error member — it is what puts
+    # the screen into its way-back-to-the-list state (spec S6 § states).
+    ... on RecordNotFound {
+      description
+    }
+  }
+}
+
+# One line of the General tab's table (spec S7 § line columns). Number of packs
+# and Line cost carry no field of their own — both are derived from the
+# quantity, the pack size and the after-discount pack price, on the rules the
+# order's own totals use (rules § pricing and totals), so purchaseOrderLine.ts
+# computes them from exactly these fields.
+fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
+  id
+  lineNumber
+  status
+  item {
+    id
+    code
+    name
+    # The item's stock on hand NOW — the SOH column. Not the line's own
+    # `stockOnHandInUnits`, which is written as 0.0 at insert and read by
+    # nothing (contract § authoring a line).
+    stats(storeId: $storeId) {
+      stockOnHand
+    }
+  }
+  unit
+  requestedPackSize
+  requestedNumberOfUnits
+  adjustedNumberOfUnits
+  # Written by the shipment, never here.
+  shippedNumberOfUnits
+  pricePerPackAfterDiscount
+  requestedDeliveryDate
+  expectedDeliveryDate
+  # The item's units on order across the store's OTHER purchase orders — the
+  # On order column, resolved server-side per line.
+  unitsOrderedInOthers
+}
+
+query purchaseOrderDetailLines(
+  $storeId: String!
+  $filter: PurchaseOrderLineFilterInput
+  $sort: [PurchaseOrderLineSortInput!]
+  $page: PaginationInput
+) {
+  purchaseOrderLines(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    ... on PurchaseOrderLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...PurchaseOrderDetailLine
+      }
+    }
+  }
+}
+
+# The order's whole line set, at its THINNEST — three things on this screen are
+# questions about every line at once, and none of them can be answered from the
+# table's page:
+#
+#  1. The lifecycle gate. An order with no lines, or ANY line carrying no
+#     quantity, cannot change state at all (rules § the status lifecycle) — a
+#     page can be clean while a later one is not.
+#  2. The two toolbar dates. Each reaches EVERY line, and the server does not
+#     cascade them: `update_lines` fills a line's requested date only when the
+#     input carries a STATUS (service/purchase_order/update/generate.rs), so a
+#     bare date change writes the order row alone. The screen therefore issues
+#     the per-line writes itself, and needs every line's id to do it — the same
+#     one-call-per-line shape the wire forces on the bulk date actions
+#     (contract § acting on a selection of lines).
+#  3. The finalise warning. It differs while stock is still owed, which is a
+#     fact about the whole set.
+#  4. The toolbar's Expected delivery date itself, which has no order-level
+#     field at all: it shows the LATEST expected date among the lines (rules §
+#     the two delivery dates are not the order's alone).
+#
+# A bounded, single-record working set, not a table: one order's lines, read
+# once, no sort and no user filter (ui-standards/tables.md § pagination & scale
+# — the bounded-working-set exception). Six scalars per line, so it stays small
+# even on the 48-line orders the master-list route makes.
+query purchaseOrderLineSet($storeId: String!, $orderId: String!) {
+  purchaseOrderLines(
+    storeId: $storeId
+    filter: { purchaseOrderId: { equalTo: $orderId } }
+    page: { first: 5000 }
+  ) {
+    ... on PurchaseOrderLineConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        status
+        requestedNumberOfUnits
+        expectedDeliveryDate
+        requestedDeliveryDate
+        # The server's own shortfall figure — what makes stock "still owed"
+        # for the finalise warning, on the same expression the outstanding
+        # list is filtered by.
+        outstandingNumberOfUnits
+      }
+    }
+  }
+}
+
+# EVERY field edit on this screen and EVERY state move (spec S6 § toolbar, S8,
+# S9, and the footer ladder). One mutation serves all three surfaces; the
+# client batches whatever was touched into a single input.
+#
+# Only TWO typed errors exist, and both are lifecycle refusals reachable only
+# by a status move: a field edit the domain refuses — a closed order, an
+# unknown supplier or donor, a party that is not a supplier — arrives as an
+# untyped `Bad user input` with no discriminator, so the screen can only report
+# that saving failed (contract ⚠️ the refusal to edit a closed order is
+# declared nowhere). That is why the screen mirrors the editability rules
+# itself rather than letting the server answer.
+mutation updatePurchaseOrder(
+  $storeId: String!
+  $input: UpdatePurchaseOrderInput!
+) {
+  updatePurchaseOrder(storeId: $storeId, input: $input) {
+    __typename
+    ... on IdResponse {
+      id
+    }
+    ... on UpdatePurchaseOrderError {
+      error {
+        __typename
+        description
+        # Carries the offending lines so the table can mark them (spec S18).
+        # Each entry is itself an error type wrapping the line it names.
+        ... on ItemsCannotBeOrdered {
+          lines {
+            line {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Removing a selection of lines (spec S7 § line-selection actions). PLURAL
+# only: there is no singular mutation, and the answer is one response per id,
+# so a single call can partly succeed (contract § acting on a selection).
+# Its one typed rejection is a missing line — the state gate that makes
+# deletion drafting-only arrives untyped (contract ⚠️).
+mutation deletePurchaseOrderLines($storeId: String!, $ids: [String!]!) {
+  deletePurchaseOrderLines(storeId: $storeId, ids: $ids) {
+    id
+    response {
+      __typename
+      ... on DeleteResponse {
+        id
+      }
+      ... on DeletePurchaseOrderLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+# Closing one line for receipt (spec S7 § line-selection actions). There is no
+# bulk line update on the wire, so the action issues this once per selected
+# line. It is the only surface in the app that changes a line's status
+# (rules § line status).
+mutation updatePurchaseOrderLine(
+  $storeId: String!
+  $input: UpdatePurchaseOrderLineInput!
+) {
+  updatePurchaseOrderLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on IdResponse {
+      id
+    }
+    ... on UpdatePurchaseOrderLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The Inbound shipment tab (spec S11) — every shipment raised against this
+# order, newest first. Read-only and owned elsewhere: a row click leaves this
+# vertical for that shipment's own screen (rules § receipt against an order).
+query purchaseOrderShipments($storeId: String!, $orderId: String!) {
+  invoices(
+    storeId: $storeId
+    filter: {
+      purchaseOrderId: { equalTo: $orderId }
+      type: { equalTo: INBOUND_SHIPMENT }
+    }
+    sort: { key: createdDatetime, desc: true }
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        invoiceNumber
+        status
+        theirReference
+        createdDatetime
+        receivedDatetime
+        otherPartyName
+      }
+    }
+  }
+}
+
+# The toolbar's currency lookup (spec S6 § toolbar). Active currencies only;
+# no store argument.
+query purchaseOrderCurrencies {
+  currencies(filter: { isActive: true }, sort: { key: currencyCode }) {
+    ... on CurrencyConnector {
+      __typename
+      nodes {
+        id
+        code
+        rate
+        isHomeCurrency
+      }
+    }
+  }
+}
