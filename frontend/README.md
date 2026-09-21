@@ -134,6 +134,8 @@ tunnelling); background and design live in `kdd/android/`.
 ## Where the docs live
 
 - [`spec/`](spec/README.md) — what the app must do (source of truth)
+- [`PROGRESS.md`](PROGRESS.md) — how far each vertical has come through the
+  spec → cases → build → e2e → exploratory pipeline
 - [`kdd/`](kdd/README.md) — key design decisions: why the code is shaped the
   way it is
 - [`src/ui/CLAUDE.md`](src/ui/CLAUDE.md) — the component library, styling
