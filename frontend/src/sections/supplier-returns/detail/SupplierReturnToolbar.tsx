@@ -47,17 +47,10 @@ export const SupplierReturnToolbar: Component<
         label={t('label.supplier-name')}
         size="small"
         // Seed the record's current supplier so the selection's label
-        // resolves before (or regardless of) its page. The detail fragment
-        // carries only the party's id + name; the seed's other fields are
-        // display hints the input text doesn't use.
+        // resolves before its page does.
         selected={{
           id: props.node.otherPartyId,
-          code: '',
           name: props.node.otherPartyName,
-          isOnHold: false,
-          isStore: false,
-          isSupplier: false,
-          isDonor: false,
         }}
         disabled={props.disabled || hasOriginalShipment(props.node)}
         error={props.supplierError}

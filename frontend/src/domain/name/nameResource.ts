@@ -20,6 +20,23 @@ export type NameOption = {
   isStore: boolean;
 };
 
+/**
+ * What a caller needs to hold to pre-set a picker's selection: the identity
+ * and the label, plus whichever display flags it actually knows. The rest
+ * default to false when the picker widens it.
+ */
+export type NameSeed = Pick<NameOption, 'id' | 'name'> &
+  Partial<Omit<NameOption, 'id' | 'name'>>;
+
+export const seedNameOption = (seed: NameSeed): NameOption => ({
+  code: '',
+  isSupplier: false,
+  isDonor: false,
+  isOnHold: false,
+  isStore: false,
+  ...seed,
+});
+
 // Which role the picker narrows to — a customer / supplier / donor /
 // manufacturer are all just `names` filtered by the corresponding
 // NameFilterInput boolean flag (a "customer" is a name with isCustomer, not a

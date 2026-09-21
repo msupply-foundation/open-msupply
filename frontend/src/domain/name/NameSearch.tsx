@@ -5,8 +5,10 @@ import { t } from '../../intl';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   namePageFetcher,
+  seedNameOption,
   type NameOption,
   type NameRole,
+  type NameSeed,
   type PartyKind,
 } from './nameResource';
 
@@ -26,8 +28,10 @@ export interface NameSearchProps {
    * against; the caller holds the name from its own data (e.g. a shipment's
    * supplier), and AsyncCombobox uses it to render the selection's label even
    * before its page loads. Omit for a fresh picker with no pre-set value.
+   * Only the identity and label are required; display flags the caller
+   * knows (a party that is a store, one on hold) may come along.
    */
-  selected?: NameOption;
+  selected?: NameSeed;
   /** The picked name, or null when the selection is cleared. */
   onSelect: (name: NameOption | null) => void;
   placeholder?: string;
@@ -134,7 +138,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     itemToValue={name => name.id}
     itemDisabled={name => name.isOnHold}
     renderItem={renderRow}
-    selected={props.selected}
+    selected={props.selected && seedNameOption(props.selected)}
     onSelect={props.onSelect}
   />
 );
