@@ -135,24 +135,32 @@ export const buildListVariables = (
   destination: Destination
 ): AssetsListVariables => ({
   storeId,
-  filter: {
-    ...buildExportFilter(state),
-    ...(destination === 'store' ? { storeId: { equalTo: storeId } } : {}),
-  },
+  filter: buildListFilter(state, storeId, destination),
   sort: state.sort,
   page: { first: state.first, offset: state.offset },
 });
 
 /**
- * What the CSV export reads: the user's own filters and the class pinning —
- * the list's filter minus the destination's store restriction.
+ * What this register reads — the user's own filters, the class pinning that
+ * makes it the cold chain register, and the destination's store restriction.
  *
- * The export deliberately covers **every store's** equipment, from either
- * destination, so a file is a register-wide extract rather than a copy of the
- * screen (rules › export). Its filters still apply, so the file matches the
- * chips the user set; only the store pin is dropped.
+ * The LIST and the EXPORT read the same thing. A file is what the screen shows,
+ * so **Cold chain › Equipment** exports the active store's equipment and
+ * **Manage › Equipment** exports every store's, exactly as each lists it
+ * (rules › export). One function, so the two cannot drift: a chip the screen
+ * applies is a chip the file honours, and a row the screen may not show is a
+ * row the file may not carry.
+ *
+ * That last point is a permission one, not a tidiness one. Manage › Equipment
+ * is gated on the asset read permission; a register-wide export from the
+ * ungated screen handed a user rows they are not allowed to open.
  */
-export const buildExportFilter = (state: EquipmentListState): AssetFilter => ({
+export const buildListFilter = (
+  state: EquipmentListState,
+  storeId: string,
+  destination: Destination
+): AssetFilter => ({
   ...stripEmpty(state.filter),
   classId: { equalTo: CCE_CLASS_ID },
+  ...(destination === 'store' ? { storeId: { equalTo: storeId } } : {}),
 });

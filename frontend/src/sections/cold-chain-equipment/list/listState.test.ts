@@ -3,7 +3,7 @@ import { CCE_CLASS_ID } from '../equipment';
 import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
-  buildExportFilter,
+  buildListFilter,
   buildListVariables,
   clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
@@ -21,25 +21,45 @@ describe('OMS-REG-CCE-07.13/.33 — what the CSV export reads', () => {
     const filtered = state({
       filter: { assetNumber: { like: 'FRIDGE' }, functionalStatus: null },
     });
-    expect(buildExportFilter(filtered).assetNumber).toEqual({ like: 'FRIDGE' });
+    const filter = buildListFilter(filtered, STORE, 'store');
+    expect(filter.assetNumber).toEqual({ like: 'FRIDGE' });
     // An added-but-empty chip is not a filter and must not reach the query.
-    expect(buildExportFilter(filtered).functionalStatus).toBeUndefined();
+    expect(filter.functionalStatus).toBeUndefined();
   });
 
   it('pins the class, so an export is never widened past this register', () => {
-    expect(buildExportFilter(state()).classId).toEqual({
+    expect(buildListFilter(state(), STORE, 'store').classId).toEqual({
       equalTo: CCE_CLASS_ID,
     });
   });
 
-  it('drops the store restriction the LIST carries — every store is exported', () => {
-    // The decision this register departs from the list-view standard on: the
-    // cold-chain destination scopes the SCREEN to the active store, but an
-    // export is a register-wide extract from either destination.
-    expect(buildExportFilter(state()).storeId).toBeUndefined();
+  /*
+   * The file is what the screen shows. Cold chain › Equipment lists the active
+   * store, so it exports the active store; Manage › Equipment lists every
+   * store, so it exports every store.
+   *
+   * It is a permission rule as much as a scoping one: Manage › Equipment is
+   * gated on the asset read permission, and a register-wide export from the
+   * ungated screen handed a user rows they may not open (issue #693).
+   */
+  it('keeps the store restriction on Cold chain › Equipment', () => {
+    expect(buildListFilter(state(), STORE, 'store').storeId).toEqual({
+      equalTo: STORE,
+    });
+  });
+
+  it('carries every store from Manage › Equipment, which lists every store', () => {
     expect(
-      buildListVariables(state(), STORE, 'store').filter?.storeId
-    ).toEqual({ equalTo: STORE });
+      buildListFilter(state(), STORE, 'all-stores').storeId
+    ).toBeUndefined();
+  });
+
+  it('is the SAME filter the list reads, so the two cannot drift', () => {
+    for (const destination of ['store', 'all-stores'] as const) {
+      expect(
+        buildListVariables(state(), STORE, destination).filter
+      ).toEqual(buildListFilter(state(), STORE, destination));
+    }
   });
 });
 

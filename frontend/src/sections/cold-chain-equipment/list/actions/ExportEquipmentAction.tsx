@@ -24,9 +24,9 @@ export const ExportEquipmentAction: Component<{
   storeId: string;
   isCentral: boolean;
   /**
-   * The list's filters and class pinning, store restriction deliberately
-   * omitted — `buildExportFilter`, never a filter built here (contract ›
-   * export).
+   * Exactly what the LIST is reading — `buildListFilter`, never a filter built
+   * here. The file is what the screen shows, store restriction included
+   * (contract › export).
    */
   filter: AssetsExportVariables['filter'];
   /** The list's active sort — the export carries it (contract › export). */
