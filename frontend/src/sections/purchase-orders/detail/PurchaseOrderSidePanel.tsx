@@ -49,16 +49,8 @@ type ReportingField =
  * The detail side panel (spec/purchase-orders S9): three sections — Pricing,
  * Other, Dates — and one action, composed per ui/docs/SIDE_PANEL.md.
  *
- * Two things here are deliberate DIVERGENCES from the reference app, both
- * recorded in the spec as its defects:
- *
- *  - Its three editable dates (PO sent, Contract signed, Advance paid) are
- *    offered on a closed order, where the domain refuses them and the save
- *    fails into a toast naming no cause. The spec states a build MUST disable
- *    them with the order's other fields (S9), so they carry `props.disabled`
- *    like every other field.
- *  - Its Delete navigates away whether or not the deletion succeeded. Here the
- *    action awaits the outcome (DeletePurchaseOrderAction).
+ * Delete leaves for the list only once the deletion has succeeded (rules §
+ * deleting from the screen; DeletePurchaseOrderAction).
  */
 export const PurchaseOrderSidePanel: Component<
   PurchaseOrderSidePanelProps

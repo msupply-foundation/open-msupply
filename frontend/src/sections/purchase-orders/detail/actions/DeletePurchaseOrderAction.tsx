@@ -22,12 +22,10 @@ export interface DeletePurchaseOrderActionProps {
  * The side panel's Delete (spec/purchase-orders S9 § actions → S3): the same
  * confirmation the list raises, over one order, and then back to the list.
  *
- * It DIVERGES from the reference app deliberately: that screen navigates away
- * whether or not the deletion succeeded, so a refused deletion is
- * indistinguishable from a successful one (rules § deleting from the screen,
- * README defect 12). Here the outcome is awaited — the screen leaves only on a
- * real deletion, and a refusal is reported in place with the order still on
- * screen.
+ * The outcome is awaited: the screen leaves only on a real deletion, and a
+ * refusal is reported in place with the order still on screen (rules §
+ * deleting from the screen). The reference app navigates away either way, so
+ * a refused deletion there looks like a successful one (README defect 12).
  *
  * The mutation, its fold and both of its unexplainable failures are the list's
  * (deletePurchaseOrders.ts): an order past Ready for approval is refused as
