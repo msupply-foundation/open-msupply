@@ -591,6 +591,7 @@ const PurchaseOrderDetailView: Component = () => {
                 <PurchaseOrderSidePanel
                   storeId={params.storeId}
                   node={node()}
+                  lineCount={lineCount()}
                   disabled={isDisabled()}
                   edit={edit}
                   onSaveField={saveField}
