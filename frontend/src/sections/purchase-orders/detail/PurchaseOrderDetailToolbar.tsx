@@ -1,4 +1,5 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { t } from '@/intl';
 import { formatNumber } from '@/intl/formatNumber';
 import { graphqlFetch } from '@/api/graphql';
@@ -14,8 +15,10 @@ import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated'
 import type {
   PurchaseOrderFieldEdit,
   PurchaseOrderPatch,
+  SaveFieldResult,
 } from './purchaseOrderEdit';
 import { canChangeCurrency } from './purchaseOrderLadder';
+import type { DeliveryDateField } from './purchaseOrderUpdate';
 export interface PurchaseOrderDetailToolbarProps {
   storeId: string;
   node: PurchaseOrderInfoFragment;
@@ -32,12 +35,12 @@ export interface PurchaseOrderDetailToolbarProps {
   /**
    * Write one date onto every line (the screen owns the cascade). Resolves
    * once the whole cascade and its re-read are done, which is when the picked
-   * day can stop standing in for the value.
+   * day can stop standing in for the value — with the first refusal, if any.
    */
   onCascadeDate: (
-    field: 'requestedDeliveryDate' | 'expectedDeliveryDate',
+    field: DeliveryDateField,
     date: string
-  ) => Promise<void>;
+  ) => Promise<SaveFieldResult>;
 }
 
 /*
@@ -56,9 +59,12 @@ export const PurchaseOrderDetailToolbar: Component<
   // made, because both reach every line (rules § the two delivery dates are
   // not the order's alone).
   const [pendingDate, setPendingDate] = createSignal<{
-    field: 'requestedDeliveryDate' | 'expectedDeliveryDate';
+    field: DeliveryDateField;
     date: string;
   }>();
+  const [dateErrors, setDateErrors] = createStore<
+    Partial<Record<DeliveryDateField, string>>
+  >({});
   // The picked-but-unconfirmed day, so cancelling reverts the input — the node
   // has not changed, so the controlled value alone would not.
   const [draftRequested, setDraftRequested] = createSignal<string>();
@@ -112,10 +118,16 @@ export const PurchaseOrderDetailToolbar: Component<
       props.onSaveField({
         requestedDeliveryDate: { value: pending.date },
       });
-    void props.onCascadeDate(pending.field, pending.date).then(() => {
+    setDateErrors(pending.field, undefined);
+    void props.onCascadeDate(pending.field, pending.date).then(result => {
       // The re-read now carries the new date, so the draft steps aside.
       setDraftRequested(undefined);
       setDraftExpected(undefined);
+      if (!result.ok)
+        setDateErrors(
+          pending.field,
+          result.message ?? t('messages.error-saving-purchase-order')
+        );
     });
     setPendingDate(undefined);
   };
@@ -193,6 +205,7 @@ export const PurchaseOrderDetailToolbar: Component<
         value={
           draftRequested() ?? props.node.requestedDeliveryDate ?? undefined
         }
+        error={dateErrors.requestedDeliveryDate}
         disabled={props.disabled}
         onChange={value => {
           if (!value) return;
@@ -210,6 +223,7 @@ export const PurchaseOrderDetailToolbar: Component<
         label={t('label.expected-delivery-date')}
         size="small"
         value={draftExpected() ?? props.latestExpectedDate}
+        error={dateErrors.expectedDeliveryDate}
         disabled={props.disabled || props.lineCount === 0}
         onChange={value => {
           if (!value) return;
