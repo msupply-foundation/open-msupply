@@ -31,14 +31,15 @@ half: how the sync runs, and what to do when something was published that should
   `mirror-public.yaml` from `develop` (Actions → Public mirror sync → Run workflow). Leave `refs`
   empty (develop, main and all release tags) or name the refs; leave `force` off. The `filter` job
   clones the selected refs, runs `git filter-repo` through the rules and the commit-message
-  rewrite, re-checks the filtered tree against the rules, runs gitleaks over the filtered history,
-  and hands a bundle to the `push` job. The push job re-checks the tree again, mints a
+  rewrite, re-checks the filtered tree against the rules, and hands a bundle to the `push` job. The push job re-checks the tree again, mints a
   `tmf-ci-bot` App token scoped to the public repo only, and pushes **without force**. A
   non-fast-forward push fails — that is the alarm. Every run publishes develop, main and all
   release tags, so the public develop is a snapshot as of the last dispatch.
 - **The `public-mirror` environment** on the push job allows dispatches from protected branches
   only (`develop`, `main`), so the sync can never run from a branch with edited rules. It holds
   no secrets and adds no delay.
+- **How long it takes.** The filter pipeline is ~75 seconds for all 144 refs on a developer laptop — `filter-repo` itself is 29s over 40.8k commits — so budget a few minutes for the `filter` job on a hosted runner, most of it the `fetch-depth: 0` checkout and the 389MB artifact upload rather than the rewrite. A dispatch is cheap; this is not a reason to avoid running one.
+- **Where it publishes** is the `PUBLIC_MIRROR_REPO` repository variable (Settings → Secrets and variables → Actions → Variables), not a constant in the workflow. Normally `msupply-foundation/open-msupply`. Both jobs read it and fail closed when it is empty, which makes clearing it the stop button — see [stopping the sync](#runbook-stop-the-sync). Pointing it at a scratch repo is how a sync is rehearsed without editing a workflow on a protected branch; the variable is not the allowlist, because a token can only be minted for a repo `tmf-ci-bot` is installed on.
 
 ## Runbook: something private was published
 
@@ -59,7 +60,7 @@ compromised the moment it was pushed, whatever happens next.
    and a one-line reason that does not itself repeat what leaked.
 5. **Dispatch with force.** Run `mirror-public.yaml` by `workflow_dispatch` with `force` ticked
    and `refs` empty (every published ref shares the rewritten history). Watch the run: the
-   self-check and gitleaks steps must pass, and the push must succeed.
+   self-check step must pass, and the push must succeed.
 6. **Verify on the public repo.** `git log --all -- <path>` on a fresh clone of the public repo
    returns nothing. The republication row is visible in the public README.
 7. **Tell the forks.** If the public repo has active forks or open PRs, comment on the open PRs
@@ -75,6 +76,14 @@ The same steps in the other direction (a `-` rule removed from the main body of 
 `mirror-reviewed` label; the sync is a force-push and gets a republication-log row. Do this
 rarely and deliberately — every fork rebases.
 
+## Runbook: stop the sync
+
+**Clear the `PUBLIC_MIRROR_REPO` variable** (Settings → Secrets and variables → Actions → Variables). Both jobs exit non-zero on an empty value, so a new dispatch fails in its first step and a run already filtering stops before it pushes — `push` re-reads the variable after the filter job. Set it back to `msupply-foundation/open-msupply` to re-enable, and note in the issue why it was stopped, since an absent variable records nothing by itself.
+
+This blocks future pushes only. History already on the public repo stays there; removing that is the [leak runbook](#runbook-something-private-was-published).
+
+For a stop that configuration cannot undo, remove the public repo from the `tmf-ci-bot` App installation instead. Slower to reverse — reach for it if the pipeline itself is what you distrust.
+
 ## Runbook: the scheduled sync failed
 
 - **Non-fast-forward on push.** Someone pushed to the public repo directly, or a rewrite was not
@@ -84,7 +93,3 @@ rarely and deliberately — every fork rebases.
 - **Self-check failed** ("path(s) in the filtered tree are not publishable"). The filter and the
   rules disagree: a filter bug, or a rules edit that landed between the two jobs. Nothing was
   pushed. Fix and re-run.
-- **gitleaks failed.** Something that looks like a secret is in the published history. Nothing
-  was pushed. Read the report artifact; if it is real, follow the leak runbook from step 1 but
-  without the "verify on the public repo" urgency — it never left; if it is a false positive,
-  add a `.gitleaks.toml` allowlist entry with a comment saying why.
