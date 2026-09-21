@@ -110,6 +110,11 @@ const FILTERS: Filter<OutstandingLineFilter>[] =
     // own and has no filter field at all.
     id: null,
     purchaseOrderId: null,
+    // The code-or-name filter belongs to an ORDER's own line table (spec S7 §
+    // filters). This list offers the item-NAME filter its own spec names (S5 §
+    // filters), so the wider search is dismissed here rather than doubling it
+    // up.
+    itemCodeOrName: null,
   });
 
 export const filterFields = (): Filter<OutstandingLineFilter>[] => FILTERS;
