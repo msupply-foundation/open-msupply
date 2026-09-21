@@ -1,16 +1,13 @@
-import { createResource, createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { t } from '@/intl';
 import { formatNumber } from '@/intl/formatNumber';
-import { graphqlFetch } from '@/api/graphql';
-import { gated } from '@/api/gated';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
-import { Combobox } from '@/ui/elements/selectors/Combobox';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { NameSearch, type NameOption } from '@/domain/name';
-import { PurchaseOrderCurrencies } from './purchaseOrderDetail.generated';
+import { CurrencySelect } from '@/domain/currency';
 import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated';
 import type {
   PurchaseOrderFieldEdit,
@@ -74,19 +71,6 @@ export const PurchaseOrderDetailToolbar: Component<
   // it. The draft stands until the re-read replaces it, which for the expected
   // date means after the whole line cascade, not one round trip.
   let confirmInFlight = false;
-
-  // The currency lookup's options. Fetched on the screen's first paint (the
-  // toolbar is always on screen), read non-suspending so the list arriving
-  // never remounts an open screen (kdd/solid-reactivity-pitfalls › No remounts
-  // on interaction).
-  const [currencyData] = createResource(async () => {
-    const result = await graphqlFetch(PurchaseOrderCurrencies, {});
-    return result.kind === 'success' &&
-      result.data.currencies.__typename === 'CurrencyConnector'
-      ? result.data.currencies.nodes
-      : [];
-  });
-  const currencies = () => gated(currencyData) ?? [];
 
   const selectedSupplier = (): NameOption | undefined => {
     const supplier = props.node.supplier;
@@ -160,13 +144,9 @@ export const PurchaseOrderDetailToolbar: Component<
         onBlur={() => props.edit.flush()}
       />
 
-      <Combobox
+      <CurrencySelect
         label={t('label.currency')}
         size="small"
-        items={currencies()}
-        loading={currencyData.loading}
-        itemToString={currency => currency.code}
-        itemToValue={currency => currency.id}
         value={props.node.currencyId ?? undefined}
         // NOT a state rule: an order carrying a confirmation moment has its
         // currency fixed whatever state it is in, and an order in a late state
