@@ -42,7 +42,6 @@ import {
   hasErrors,
   hasWarnings,
   isCsvFileName,
-  importFileFailure,
   parseImportFile,
   rowToInsertInput,
   compareReviewRows,
@@ -164,14 +163,14 @@ export const EquipmentImportModal: Component<
         isCentral: props.isCentral,
         newId: () => generateUUID(),
       });
-      // A readable CSV that yields nothing is a DIFFERENT failure from "not a
-      // CSV", and there are two of them with two remedies: a heading the
-      // import does not know (a spreadsheet's `Column1 … ColumnN` banner is the
-      // usual cause) wants the template compared; a heading it does know with
-      // nothing beneath wants rows. Say which, not the generic refusal above.
-      if (parsed.length === 0)
+      // A readable CSV that yields no rows is a DIFFERENT failure from "not a
+      // CSV", and there are two of them with two remedies: a heading the import
+      // does not know (a spreadsheet's `Column1 … ColumnN` banner is the usual
+      // cause) wants the template compared; a heading it DOES know with nothing
+      // beneath wants rows. The parse says which.
+      if (!Array.isArray(parsed))
         return setUploadError(
-          importFileFailure(text, props.isCentral) === 'no-rows'
+          parsed === 'no-rows'
             ? t('error.import-no-rows')
             : t('error.import-columns-not-recognised')
         );
