@@ -112,7 +112,7 @@ export const PurchaseOrderSidePanel: Component<
 
   return (
     <>
-      <SidePanelSection value="pricing" title={t('title.pricing')}>
+      <SidePanelSection value="pricing" title={t('title.pricing')} collapsible>
         {/* The order's undiscounted total — undiscounted by the SUPPLIER
             discount only: it already nets off every line's own discount
             (contract ⚠️ the field called "before discount"). */}
@@ -122,7 +122,13 @@ export const PurchaseOrderSidePanel: Component<
 
         {/* The five charges summed. They reach NEITHER stored total, which is
             why this row is assembled here (purchaseOrderPricing.ts). */}
-        <FieldRow label={t('label.cost-additional-fees')}>
+        <FieldRow
+          label={
+            <span style={{ 'white-space': 'pre-line' }}>
+              {t('label.cost-additional-fees')}
+            </span>
+          }
+        >
           <span data-testid="cost-additional-fees-value">
             {money(chargesTotal(props.node))}
           </span>
@@ -176,7 +182,7 @@ export const PurchaseOrderSidePanel: Component<
         </FieldRow>
       </SidePanelSection>
 
-      <SidePanelSection value="other" title={t('heading.other')}>
+      <SidePanelSection value="other" title={t('heading.other')} collapsible>
         <FieldRow label={t('label.donor')}>
           <NameSearch
             label={t('label.donor')}
@@ -225,7 +231,7 @@ export const PurchaseOrderSidePanel: Component<
         </FieldRow>
       </SidePanelSection>
 
-      <SidePanelSection value="dates" title={t('label.dates')}>
+      <SidePanelSection value="dates" title={t('label.dates')} collapsible>
         {/* The confirmation moment can be changed NOWHERE on this screen, so
             it reads as a value rather than a disabled picker
             (ui-standards/detail-views.md § never-editable fields are never
