@@ -6,7 +6,7 @@ import {
   Suspense,
   type Component,
 } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
@@ -168,7 +168,9 @@ const PurchaseOrderDetailView: Component = () => {
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
-  const [activeTab, setActiveTab] = createSignal('general');
+  // The tab in view rides the address (spec S6 § tabs).
+  const [search, setSearch] = useSearchParams<{ tab?: string }>();
+  const activeTab = () => search.tab ?? 'general';
   // Lines the last blocked state move named as unorderable — marked in the
   // table so they can be found and removed (spec S18).
   const [blockedLines, setBlockedLines] = createSignal<string[]>([]);
@@ -325,10 +327,20 @@ const PurchaseOrderDetailView: Component = () => {
     save: patch => void saveField(patch),
   });
 
+  // The requested date is the ORDER's own field as well as every line's; the
+  // expected date has no order-level field at all, so it is lines only. One
+  // re-read covers both writes.
   const cascadeDate = async (
     field: DeliveryDateField,
     date: string
   ): Promise<SaveFieldResult> => {
+    const orderWrite =
+      field === 'requestedDeliveryDate'
+        ? await updatePurchaseOrder(params.storeId, {
+            id: params.id,
+            requestedDeliveryDate: { value: date },
+          })
+        : undefined;
     const outcome = await cascadeDeliveryDate(
       params.storeId,
       lineSet(),
@@ -336,9 +348,10 @@ const PurchaseOrderDetailView: Component = () => {
       date
     );
     refetchAll();
-    return outcome.message
-      ? { ok: false, message: outcome.message }
-      : { ok: true };
+    const message =
+      (orderWrite?.kind === 'error' ? orderWrite.message : undefined) ??
+      outcome.message;
+    return message ? { ok: false, message } : { ok: true };
   };
 
   const onMove = async (target: PurchaseOrderStatus) => {
@@ -557,7 +570,7 @@ const PurchaseOrderDetailView: Component = () => {
         }
       >
         {node => (
-          <Tabs value={activeTab()} onValueChange={setActiveTab}>
+          <Tabs value={activeTab()} onValueChange={tab => setSearch({ tab })}>
             <Page
               fillBody
               sidePanelOpen={sidePanelOpen()}

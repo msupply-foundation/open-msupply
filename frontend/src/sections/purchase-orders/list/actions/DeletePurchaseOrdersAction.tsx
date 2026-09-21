@@ -112,6 +112,7 @@ export const DeletePurchaseOrdersDialog = (
   // Snapshotted on open (Body mounts once per open) so the confirm count and
   // the id → number labelling can't shift if the selection changes behind the
   // dialog.
+  // eslint-disable-next-line solid/reactivity -- see above
   const orders = props.selection();
 
   const labelFor = (id: string): string => {

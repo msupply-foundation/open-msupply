@@ -182,7 +182,7 @@ query purchaseOrderDetailLines(
 #
 # A bounded, single-record working set, not a table: one order's lines, read
 # once, no sort and no user filter (ui-standards/tables.md § pagination & scale
-# — the bounded-working-set exception). Six scalars per line, so it stays small
+# — the bounded-working-set exception). Four scalars per line, so it stays small
 # even on the 48-line orders the master-list route makes.
 query purchaseOrderLineSet($storeId: String!, $orderId: String!) {
   purchaseOrderLines(
@@ -192,13 +192,10 @@ query purchaseOrderLineSet($storeId: String!, $orderId: String!) {
   ) {
     ... on PurchaseOrderLineConnector {
       __typename
-      totalCount
       nodes {
         id
-        status
         requestedNumberOfUnits
         expectedDeliveryDate
-        requestedDeliveryDate
         # The server's own shortfall figure — what makes stock "still owed"
         # for the finalise warning, on the same expression the outstanding
         # list is filtered by.

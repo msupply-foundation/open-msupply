@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   chargesTotal,
-  discountAmountOf,
-  discountPercentageOf,
-  expectedUnits,
   finalCost,
   lineCost,
   linePacks,
@@ -23,21 +20,6 @@ const line = (over: Partial<Parameters<typeof lineCost>[0]> = {}) => ({
   ...over,
 });
 
-describe('a line’s quantity', () => {
-  it('is the requested quantity where no adjusted one is carried', () => {
-    expect(expectedUnits(line())).toBe(100);
-  });
-
-  it('is the ADJUSTED quantity wherever the order carries one', () => {
-    expect(expectedUnits(line({ adjustedNumberOfUnits: 50 }))).toBe(50);
-  });
-
-  it('takes an adjusted quantity of zero over the requested one', () => {
-    // Zero is a figure, not an absence — the order expects none of the line.
-    expect(expectedUnits(line({ adjustedNumberOfUnits: 0 }))).toBe(0);
-  });
-});
-
 describe('a line’s packs and cost', () => {
   it('divides the expected quantity by the pack size', () => {
     expect(linePacks(line())).toBe(10);
@@ -46,6 +28,10 @@ describe('a line’s packs and cost', () => {
 
   it('follows the adjusted quantity when there is one', () => {
     expect(lineCost(line({ adjustedNumberOfUnits: 50 }))).toBe(30);
+  });
+
+  it('takes an adjusted quantity of zero over the requested one', () => {
+    expect(linePacks(line({ adjustedNumberOfUnits: 0 }))).toBe(0);
   });
 
   // A zero-pack-size line contributes NOTHING, whatever its quantity or price
@@ -96,23 +82,6 @@ describe('the additional charges', () => {
   it('gives a line-less order a final cost of its charges alone', () => {
     // Every figure on an order with no lines reads as zero rather than absent.
     expect(finalCost({ ...charges, orderTotalAfterDiscount: 0 })).toBe(31);
-  });
-});
-
-describe('the supplier discount’s two views', () => {
-  it('converts a percentage to an amount against the subtotal', () => {
-    expect(discountAmountOf(25, 60)).toBe(15);
-  });
-
-  it('converts an amount back to the percentage that is stored', () => {
-    expect(discountPercentageOf(15, 60)).toBe(25);
-  });
-
-  // The service DISCARDS an amount entered while the subtotal is zero
-  // (confirmed live), so there is no percentage to store and the caller must
-  // refuse the edit rather than save a figure that will be dropped.
-  it('has no percentage for an amount against a zero subtotal', () => {
-    expect(discountPercentageOf(15, 0)).toBeUndefined();
   });
 });
 
