@@ -92,7 +92,7 @@ For a stop that configuration cannot undo, remove the public repo from the `tmf-
 
 - **Non-fast-forward on push.** Someone pushed to the public repo directly, or a rewrite was not
   logged. Do not force. Find out what changed on the public side (`git fetch` it and look), import
-  anything worth keeping through `scripts/mirror/import-public-pr.sh` or by hand, then decide
+  anything worth keeping through `.github/mirror/import-public-pr.sh` or by hand, then decide
   whether a logged republication is warranted.
 - **Self-check failed** ("path(s) in the filtered tree are not publishable"). The filter and the
   rules disagree: a filter bug, or a rules edit that landed between the two jobs. Nothing was
