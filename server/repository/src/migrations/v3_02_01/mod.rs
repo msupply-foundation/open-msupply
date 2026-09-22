@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_changelog_default_partition;
 mod add_database_error_to_system_log_type_enum;
 
 pub(crate) struct V3_02_01;
@@ -15,9 +16,10 @@ impl Migration for V3_02_01 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(
-            add_database_error_to_system_log_type_enum::Migrate,
-        )]
+        vec![
+            Box::new(add_database_error_to_system_log_type_enum::Migrate),
+            Box::new(add_changelog_default_partition::Migrate),
+        ]
     }
 }
 
