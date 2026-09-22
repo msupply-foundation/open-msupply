@@ -124,7 +124,6 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
     code
     name
     unitName
-    defaultPackSize
     # The item's stock on hand NOW — the SOH column and the editor's figure.
     # Not the line's own `stockOnHandInUnits`, which is written as 0.0 at
     # insert and read by nothing (contract § authoring a line).
@@ -146,7 +145,6 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
   manufacturer(storeId: $storeId) {
     id
     name
-    code
   }
   comment
   note

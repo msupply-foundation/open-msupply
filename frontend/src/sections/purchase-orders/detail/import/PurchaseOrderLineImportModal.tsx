@@ -21,7 +21,6 @@ import {
   getTextCell,
 } from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
-import { formatCurrency } from '@/intl/currency';
 import { insertPurchaseOrderLine } from '../purchaseOrderUpdate';
 import {
   buildTemplateCsv,
@@ -177,8 +176,6 @@ export const PurchaseOrderLineImportModal: Component<
     );
   });
 
-  const money = (value: number) => formatCurrency(value, props.currencyCode);
-
   const columns = (): Column<ImportRow, string>[] => [
     {
       c: { key: 'itemCode' },
@@ -207,8 +204,7 @@ export const PurchaseOrderLineImportModal: Component<
     {
       c: { key: 'pricePerPackBeforeDiscount' },
       header: () => t('label.price-per-pack-before-discount'),
-      ...getCurrencyCell(),
-      cell: cell => money(cell.getValue<number>()),
+      ...getCurrencyCell(undefined, () => props.currencyCode),
       size: remToPx(8),
     },
     {
@@ -220,8 +216,7 @@ export const PurchaseOrderLineImportModal: Component<
     {
       c: { key: 'pricePerPackAfterDiscount' },
       header: () => t('label.price-per-pack-after-discount'),
-      ...getCurrencyCell(),
-      cell: cell => money(cell.getValue<number>()),
+      ...getCurrencyCell(undefined, () => props.currencyCode),
       size: remToPx(8),
     },
     {

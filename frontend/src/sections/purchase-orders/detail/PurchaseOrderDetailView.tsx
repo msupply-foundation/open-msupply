@@ -331,11 +331,21 @@ const PurchaseOrderDetailView: Component = () => {
   // The editor's walk follows the table's current sort and filter (rules §
   // saving), paging the server where the next line is on the next page and
   // the table moving with it (src/list/pagedNext).
+  // The page the walk last fetched stands in for the table's rows until the
+  // resource catches up with the page turn.
+  const [walkedPage, setWalkedPage] = createSignal<readonly Line[]>([]);
   const hasNextLine = (lineId: string) => {
-    const index = rows().findIndex(line => line.id === lineId);
+    const onPage = (page: readonly Line[]) =>
+      page.findIndex(line => line.id === lineId);
+    let page: readonly Line[] = rows();
+    let index = onPage(page);
+    if (index < 0) {
+      page = walkedPage();
+      index = onPage(page);
+    }
     return (
       index >= 0 &&
-      (index < rows().length - 1 || hasFurtherPage(query(), totalCount()))
+      (index < page.length - 1 || hasFurtherPage(query(), totalCount()))
     );
   };
   const nextLine = (lineId: string): Promise<Line | undefined> =>
@@ -349,11 +359,14 @@ const PurchaseOrderDetailView: Component = () => {
           ...linesVariables(),
           page: { first, offset },
         });
-        return result.kind === 'success' &&
+        const nodes =
+          result.kind === 'success' &&
           result.data.purchaseOrderLines.__typename ===
             'PurchaseOrderLineConnector'
-          ? result.data.purchaseOrderLines.nodes
-          : undefined;
+            ? result.data.purchaseOrderLines.nodes
+            : undefined;
+        if (nodes) setWalkedPage(nodes);
+        return nodes;
       },
       pick: (pageRows, fromStart) =>
         rowAfter(pageRows, fromStart, line => line.id, lineId),
@@ -609,8 +622,7 @@ const PurchaseOrderDetailView: Component = () => {
       // side panel's Subtotal row.
       c: { accessor: line => lineCost(line), id: 'lineCost' },
       header: () => t('label.line-cost'),
-      ...getCurrencyCell(),
-      cell: cell => money(cell.getValue<number>()),
+      ...getCurrencyCell(undefined, () => info()?.currency?.code),
       footer: () =>
         money(rows().reduce((sum, line) => sum + lineCost(line), 0)),
     },
