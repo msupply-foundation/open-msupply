@@ -134,17 +134,16 @@ pub enum SyncApiErrorVariantV6 {
 }
 
 impl SyncApiErrorV6 {
-    /// Transient transport-level failure, safe to retry on an idempotent read.
-    /// Mirrors `SyncApiError::is_transient` for sync v5.
-    pub(crate) fn is_transient(&self) -> bool {
-        match &self.source {
-            SyncApiErrorVariantV6::ConnectionError(_) | SyncApiErrorVariantV6::Other(_) => true,
-            SyncApiErrorVariantV6::ParsingResponseError(error) => {
-                matches!(error, ParsingResponseError::ConnectionDropped(_))
-            }
-            // An error central deliberately returned - authoritative, not a transport fault.
-            SyncApiErrorVariantV6::ParsedError(_) => false,
-        }
+    /// The connection dropped part-way through reading the response body. Mirrors
+    /// `SyncApiError::is_dropped_response_body` for sync v5.
+    ///
+    /// Connect errors, timeouts and request-phase drops aren't included: `with_retries`
+    /// has already retried those for v6 before this error is returned.
+    pub(crate) fn is_dropped_response_body(&self) -> bool {
+        matches!(
+            &self.source,
+            SyncApiErrorVariantV6::ParsingResponseError(ParsingResponseError::ConnectionDropped(_))
+        )
     }
 }
 

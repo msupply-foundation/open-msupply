@@ -164,7 +164,7 @@ mod test {
     /// body after the transport retry loop has returned, so it needs the same
     /// classification to be retryable.
     #[actix_rt::test]
-    async fn test_dropped_response_body_is_transient() {
+    async fn test_dropped_response_body_is_classified() {
         let server = ScriptedServer::start(vec![ScriptedResponse::TruncatedBody {
             content_length: 1000,
             body: r#"{"data": {"endC"#,
@@ -184,12 +184,12 @@ mod test {
                 ..
             }
         );
-        assert!(result.is_transient());
+        assert!(result.is_dropped_response_body());
     }
 
     /// A body that arrives in full but doesn't parse is not a transport fault.
     #[actix_rt::test]
-    async fn test_unparseable_body_is_not_transient() {
+    async fn test_unparseable_body_is_not_dropped() {
         let server = ScriptedServer::start(vec![ScriptedResponse::Complete(
             "not json at all".to_string(),
         )]);
@@ -208,6 +208,6 @@ mod test {
                 ..
             }
         );
-        assert!(!result.is_transient());
+        assert!(!result.is_dropped_response_body());
     }
 }
