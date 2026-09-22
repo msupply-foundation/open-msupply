@@ -34,14 +34,8 @@ import {
   type PropertyDefinition,
 } from '../detail/assetProperties';
 import {
-  CSV_ACCEPT,
-  IMPORT_BATCH_SIZE,
   buildTemplateCsv,
-  canImport,
   failedRowsToCsv,
-  hasErrors,
-  hasWarnings,
-  isCsvFileName,
   parseImportFile,
   rowToInsertInput,
   compareReviewRows,
@@ -49,6 +43,14 @@ import {
   type ImportRow,
   type ReviewSortKey,
 } from './importParse';
+import {
+  canImport,
+  CSV_ACCEPT,
+  hasErrors,
+  hasWarnings,
+  IMPORT_BATCH_SIZE,
+  isCsvFileName,
+} from '@/domain/csvImport';
 
 /*
  * S4 — the equipment CSV import (spec/cold-chain-equipment § bulk import,

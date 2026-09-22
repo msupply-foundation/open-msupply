@@ -35,8 +35,6 @@ import {
   applicableRows,
   batches,
   buildTemplateCsv,
-  CSV_ACCEPT,
-  isCsvFileName,
   outcomeSucceeded,
   parseImportFile,
   summariseOutcome,
@@ -45,6 +43,10 @@ import {
   type PropertyDefinition,
   type RowOutcome,
 } from './propertyImport';
+import {
+  CSV_ACCEPT,
+  isCsvFileName,
+} from '@/domain/csvImport';
 
 /*
  * S6 — IMPORT FACILITY PROPERTIES (spec/names § importing facility properties):
