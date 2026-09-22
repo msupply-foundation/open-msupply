@@ -82,11 +82,12 @@ declare global {
    * `json_row` column.
    *
    * When `params` is given (any object, even `{}`) every `$name` in the text
-   * must have a key, and a positional `$1`-style placeholder does not work —
-   * postgres reads it as a name nothing supplies a value for. A key the text
-   * does not reference is fine — the report path hands this executor a whole
-   * bag of variables. When `params` is absent the text is passed through byte
-   * for byte, so a bundle built before parameters existed keeps working.
+   * must have a key, and a positional `$1`-style placeholder is REFUSED: the
+   * two styles cannot be mixed, because naming the parameters renumbers them
+   * into `$1`, `$2` … of their own. Name every one. A key the text does not
+   * reference is fine — the report path hands this executor a whole bag of
+   * variables. When `params` is absent the text is passed through byte for
+   * byte, so a bundle built before parameters existed keeps working.
    *
    * Prefer `sqlQuery` from `@common/utils`: it takes `Date` and array values
    * too, and it still works against a server that predates parameters.
