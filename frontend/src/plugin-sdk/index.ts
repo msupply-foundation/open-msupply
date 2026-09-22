@@ -124,6 +124,23 @@ export { WidgetCard } from '../ui/elements/display/WidgetCard';
 export type { WidgetCardProps } from '../ui/elements/display/WidgetCard';
 export { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 export type { InfoTooltipProps } from '../ui/elements/feedback/InfoTooltip';
+/*
+ * The registry's row-status badge (UI_ELEMENTS § StatusBadge) — the Stocktake
+ * Helper's Priority and Overdue flags (#827), which sit beside an item name on
+ * six surfaces: the ordering Last counted cell and freshness list, and the
+ * count/report screens' item rows. Those hand-rolled the chip in four
+ * near-duplicate CSS blocks, three of them subtly different, for want of this
+ * export — exactly the plugin-local styling the contract forbids (sdk-contract
+ * § styling).
+ *
+ * The "already in the eager graph" bargain again, and the cheapest one yet:
+ * ui/elements/table/tableHelpers renders the badge from a cell preset, so its
+ * module and stylesheet are linked from index.html regardless. Measured: the
+ * startup set moves +21 B JS / +17 B CSS gzipped, and the CSS half is the new
+ * `info` tone, not this export (kdd/bundle-size-by-pr).
+ */
+export { StatusBadge } from '../ui/elements/feedback/StatusBadge';
+export type { StatusBadgeProps } from '../ui/elements/feedback/StatusBadge';
 // The form set, added with the payment-form slot — the union of what the
 // audited country plugins' FORM surfaces use
 // (kdd/plugin-loading/evidence/interface-audits/).
