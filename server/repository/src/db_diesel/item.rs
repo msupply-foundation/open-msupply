@@ -448,13 +448,17 @@ impl<'a> ItemRepository<'a> {
             };
 
             if let Some(ignore_for_orders) = ignore_for_orders {
-                let item_ids_for_ignore_for_orders = item_store_join::table
+                let ignored_item_ids = item_store_join::table
                     .select(item_store_join::item_id)
                     .filter(item_store_join::store_id.eq(store_id.clone()))
-                    .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
+                    .filter(item_store_join::ignore_for_orders.eq(true))
                     .into_boxed();
 
-                query = query.filter(item::id.eq_any(item_ids_for_ignore_for_orders));
+                query = if ignore_for_orders {
+                    query.filter(item::id.eq_any(ignored_item_ids))
+                } else {
+                    query.filter(item::id.ne_all(ignored_item_ids))
+                };
             }
         }
         query
@@ -496,9 +500,13 @@ mod tests {
     use std::convert::TryFrom;
 
     use crate::{
-        mock::{mock_item_b, mock_item_link_from_item, mock_item_universal_code, MockDataInserts},
+        mock::{
+            mock_item_a, mock_item_b, mock_item_c, mock_item_link_from_item,
+            mock_item_universal_code, mock_store_a, MockDataInserts,
+        },
         test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
-        ItemRowRepository, ItemType, MasterListLineRow, MasterListLineRowRepository,
+        ItemRowRepository, ItemStoreJoinRow, ItemStoreJoinRowRepository,
+        ItemStoreJoinRowRepositoryTrait, ItemType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
         MasterListRowRepository, NameRow, NameRowRepository, Pagination, StockLineRow,
         StockLineRowRepository, StoreRow, StoreRowRepository, StringFilter,
@@ -700,6 +708,63 @@ mod tests {
             )
             .unwrap();
         assert_eq!(results.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn test_item_query_filter_ignore_for_orders() {
+        let (_, storage_connection, _, _) = test_db::setup_all(
+            "test_item_query_filter_ignore_for_orders",
+            MockDataInserts::none().units().items().names().stores(),
+        )
+        .await;
+        let joins = ItemStoreJoinRowRepository::new(&storage_connection);
+        joins
+            .upsert_one(&ItemStoreJoinRow {
+                id: "join_a".to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_a().id,
+                ignore_for_orders: true,
+                ..Default::default()
+            })
+            .unwrap();
+        joins
+            .upsert_one(&ItemStoreJoinRow {
+                id: "join_b".to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_b().id,
+                ignore_for_orders: false,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let repository = ItemRepository::new(&storage_connection);
+        let ids = |ignore_for_orders: bool| -> Vec<String> {
+            let mut ids: Vec<String> = repository
+                .query(
+                    Pagination::new(),
+                    Some(
+                        ItemFilter::new()
+                            .id(EqualFilter::equal_any(vec![
+                                mock_item_a().id,
+                                mock_item_b().id,
+                                mock_item_c().id,
+                            ]))
+                            .is_visible(false)
+                            .ignore_for_orders(ignore_for_orders),
+                    ),
+                    None,
+                    Some(mock_store_a().id),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|item| item.item_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        assert_eq!(ids(true), vec![mock_item_a().id]);
+        assert_eq!(ids(false), vec![mock_item_b().id, mock_item_c().id]);
     }
 
     // TODO not sure where this fits, seems like this unit test has a lot of dependencies
