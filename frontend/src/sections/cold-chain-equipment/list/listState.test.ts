@@ -16,7 +16,7 @@ const state = (over: Partial<EquipmentListState> = {}): EquipmentListState => ({
   ...over,
 });
 
-describe('OMS-REG-CCE-07.13/.33 — what the CSV export reads', () => {
+describe('OMS-REG-CCE-07.13/.35 — what the CSV export reads', () => {
   it('carries the active filters, so the file matches the chips on screen', () => {
     const filtered = state({
       filter: { assetNumber: { like: 'FRIDGE' }, functionalStatus: null },

@@ -15,10 +15,9 @@ import { equipmentToCsv } from '../equipmentToCsv';
 // state and the outcome report all live in ListExportAction — this file owns
 // only the query.
 //
-// The file carries the screen's active filters, unpaginated — but NOT the
-// destination's store restriction: an export is a register-wide extract, so it
-// covers every store's equipment from either destination, narrowed only by the
-// chips the user set (rules › export, OMS-REG-CCE-07.13/.33).
+// The file carries the screen's active filters AND the destination's store
+// restriction, unpaginated — so it is what the screen shows
+// (rules › export, OMS-REG-CCE-07.13/.35).
 
 export const ExportEquipmentAction: Component<{
   storeId: string;
