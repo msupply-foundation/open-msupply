@@ -19,7 +19,7 @@ import {
   describeRejections,
   MAX_BATCH_BYTES,
   MAX_FILE_BYTES,
-} from './documentUploads';
+} from '@/domain/syncFiles';
 import styles from './DocumentsTab.module.css';
 
 // S2.4 — the Documents tab (ui-surface S2.4): two halves side by side.

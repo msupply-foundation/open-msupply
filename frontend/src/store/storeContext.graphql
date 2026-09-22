@@ -62,6 +62,12 @@ query storeContext($storeId: String!) {
     # Inbound-shipment gates (spec/inbound-shipments): procurement (from-PO
     # creation option), authorisation lock, and the backdating window.
     useProcurementFunctionality
+    # Whether a purchase order passes through Ready for approval at all
+    # (spec/purchase-orders rules § the status lifecycle). With it off the
+    # state is absent from the ladder AND an order asked to enter it silently
+    # becomes Ready for sending instead, so the detail screen's footer must
+    # know before it offers a move.
+    authorisePurchaseOrder
     externalInboundShipmentLinesMustBeAuthorised
     backdating {
       inventoryAdjustmentsEnabled

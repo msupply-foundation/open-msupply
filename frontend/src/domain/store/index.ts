@@ -4,6 +4,7 @@
 // on the shared createPaginatedSearch primitive (ui/utils, via AsyncCombobox).
 export { StoreSearch, type StoreSearchProps } from './StoreSearch';
 export {
+  fetchStoresByCode,
   storePageFetcher,
   storeSearchFilter,
   type StoreOption,

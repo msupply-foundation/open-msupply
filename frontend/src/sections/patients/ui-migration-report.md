@@ -1,6 +1,6 @@
 # Patients — UI migration report
 
-**Scope:** the whole `patients` vertical — the S1 list (+ its filters and export action), the S2 create wizard and S2b fetch-from-central modal, the S3 detail screen and every tab this vertical owns (Details form, Programs / Encounters / Vaccinations, Insurance + its add/edit modal, Custom fields), and the routes/gate. Run under [`migrate-ui`](../../../.claude/skills/migrate-ui/SKILL.md) against the eleven dimensions of [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md).
+**Scope:** the whole `patients` vertical — the S1 list (+ its filters and export action), the S2 create wizard and S2b fetch-from-central modal, the S3 detail screen and every tab this vertical owns (Details form, Programs / Encounters / Vaccinations, Insurance + its add/edit modal, Custom fields), and the routes/gate. Run under [`migrate-ui`](../../../../.claude/skills/migrate-ui/SKILL.md) against the eleven dimensions of [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md).
 
 **Status: MIGRATED.** All ten findings applied (F5 as its own reviewed step), all three spec edits and the doc edit made, plus one **library addition** the wizard's width called for (`Dialog width="prose|form|wide"`). `pnpm check` and `pnpm test` green, and the reactivity pass over the diff came back clean. **The visual pass is yours to complete** — the list is at the end, and it matters more than usual here because the custom-fields change is app-wide and the `Dialog` prop is shared.
 

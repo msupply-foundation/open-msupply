@@ -151,6 +151,12 @@ export const CELL_DEF = {
   itemCode: { kind: 'code' },
   code2: { kind: 'code' },
   batch: { kind: 'code' },
+  // Header "Supplier code" — two words, so the HEADER is the constraint, not
+  // the code: at the kind's 5rem the label broke mid-word, and its 7rem cap
+  // would then stop a user widening it to read a long code (the reason
+  // `locationCode` below carries its own size and no cap, #601). Same shape,
+  // same numbers.
+  supplierCode: { kind: 'code', size: 8.5, maxSize: null },
   // Header "Location"; the value is a location CODE. NO cap, for the reason
   // `locationCode` below gives (#601): the kind's 7rem cap sits half a rem
   // above this default, so the column was effectively undraggable — nobody
@@ -241,6 +247,7 @@ export const CELL_DEF = {
   stockMovementNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   stocktakeNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   requisitionNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
+  purchaseOrderNumber: { kind: 'number', size: RECORD_NUMBER_WIDTH },
   // Percentage.
   taxPercentage: { kind: 'percentage' },
   // Currency — "Pack sell price" / "Pack cost price" headers need the room.

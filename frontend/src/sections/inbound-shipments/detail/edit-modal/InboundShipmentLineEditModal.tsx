@@ -47,7 +47,7 @@ import {
   type LocationWithVolume,
 } from '../../../../domain/location';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
-import { NameSearch, type NameOption } from '../../../../domain/name';
+import { NameSearch } from '../../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../../domain/campaign/CampaignOrProgramSelect';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import {
@@ -1321,15 +1321,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   role="donor"
                   selected={
                     b.donorId
-                      ? ({
+                      ? {
                           id: b.donorId,
                           name: b.donorName ?? '',
-                          code: '',
-                          isSupplier: false,
-                          isDonor: true,
-                          isOnHold: false,
-                          isStore: false,
-                        } satisfies NameOption)
+                        }
                       : undefined
                   }
                   onSelect={d => {
@@ -1424,15 +1419,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             role="manufacturer"
             selected={
               b.manufacturerId
-                ? ({
+                ? {
                     id: b.manufacturerId,
                     name: b.manufacturerName ?? '',
-                    code: '',
-                    isSupplier: false,
-                    isDonor: false,
-                    isOnHold: false,
-                    isStore: false,
-                  } satisfies NameOption)
+                  }
                 : undefined
             }
             onSelect={m => {
@@ -1701,7 +1691,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                           size="small"
                           data-testid="requested-quantity-value"
                         >
-                          {formatNumber(context().requested)}
+                          {/* Unit name after the figure, inflected with the
+                              count (getPlural, as unitsHint) — so the banner
+                              reads like the requisition editors' quantities. */}
+                          {(() => {
+                            const unit = item()?.unitName;
+                            const requested = context().requested;
+                            return unit
+                              ? `${formatNumber(requested)} ${getPlural(unit, requested)}`
+                              : formatNumber(requested);
+                          })()}
                         </LabelledValue>
                       )}
                     </Show>

@@ -6,6 +6,9 @@ export { NameSearch, type NameSearchProps } from './NameSearch';
 export {
   namePageFetcher,
   toNameOption,
+  seedNameOption,
   type NameOption,
+  type NameSeed,
   type NameRole,
+  type PartyKind,
 } from './nameResource';

@@ -1,0 +1,191 @@
+import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
+import { translateServerError } from '../../../intl/intlUtils';
+import {
+  UpdatePurchaseOrder,
+  UpdatePurchaseOrderLine,
+  DeletePurchaseOrderLines,
+  type UpdatePurchaseOrderVariables,
+  type UpdatePurchaseOrderLineVariables,
+} from './purchaseOrderDetail.generated';
+
+// The mutation runners behind an order's own screen. ONE mutation serves the
+// toolbar, the Details heading, the side panel and the state ladder alike, so
+// this module is where its three outcomes are sorted out once.
+//
+// A rejection reaches us two ways (contract § an order's own screen):
+//
+//  - a TYPED member of the response union — only ever the two LIFECYCLE
+//    refusals (`ItemsCannotBeOrdered`, `InboundShipmentsNotVerified`), neither
+//    reachable by editing a field;
+//  - an UNTYPED top-level `Bad user input`, which is EVERY field-level refusal
+//    this screen can provoke: a closed order, an unknown supplier or donor, a
+//    party that is not a supplier. The Rust variant name arrives in
+//    `extensions.details` and is all that distinguishes one from another.
+//
+// Every runner opts into `returnGraphqlErrors` so the untyped kind comes back
+// as a result we can report rather than tripping the app's global
+// unexpected-error modal.
+
+// A top-level (untyped) rejection carries the Rust variant name in
+// `extensions.details`; translate it to a human message (falling back to a
+// sentence-cased form of the identifier), else the bare GraphQL message.
+const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
+  const detail = errors[0]?.extensions?.details;
+  if (typeof detail === 'string' && detail.length > 0)
+    return translateServerError(detail);
+  return errors[0]?.message ?? translateServerError('UnknownError');
+};
+
+/**
+ * The outcome of an update. `blockedLines` carries the lines named by
+ * `ItemsCannotBeOrdered` so the table can mark them (spec S18) — a state move
+ * is the only thing that can produce it.
+ */
+export type PurchaseOrderUpdateResult =
+  | { kind: 'saved' }
+  | { kind: 'error'; message: string; blockedLines?: string[] }
+  | { kind: 'failed' };
+
+export const updatePurchaseOrder = async (
+  storeId: string,
+  input: UpdatePurchaseOrderVariables['input']
+): Promise<PurchaseOrderUpdateResult> => {
+  const result = await graphqlFetch(
+    UpdatePurchaseOrder,
+    { storeId, input },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.updatePurchaseOrder;
+  if (response.__typename === 'IdResponse') return { kind: 'saved' };
+  const error = response.error;
+  return {
+    kind: 'error',
+    message: error.description,
+    // `lines` is a list of error types, each wrapping the line it names.
+    blockedLines:
+      error.__typename === 'ItemsCannotBeOrdered'
+        ? error.lines.map(entry => entry.line.id)
+        : undefined,
+  };
+};
+
+/**
+ * Close one line for receipt. There is no bulk line update on the wire, so the
+ * action issues this per selected line and folds the outcomes (contract §
+ * acting on a selection of lines).
+ */
+export const updatePurchaseOrderLine = async (
+  storeId: string,
+  input: UpdatePurchaseOrderLineVariables['input']
+): Promise<PurchaseOrderUpdateResult> => {
+  const result = await graphqlFetch(
+    UpdatePurchaseOrderLine,
+    { storeId, input },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.updatePurchaseOrderLine;
+  return response.__typename === 'IdResponse'
+    ? { kind: 'saved' }
+    : { kind: 'error', message: response.error.description };
+};
+
+/** What a fold over several per-line calls comes to. */
+export type LinesOutcome = {
+  /** How many lines the server accepted — 0 means nothing changed. */
+  applied: number;
+  /** The first refusal, to report once rather than per line. */
+  message?: string;
+};
+
+/**
+ * Remove a selection of lines. The mutation is PLURAL and answers one response
+ * per id, so a single call can PARTLY succeed — the fold reports how many went
+ * and the first refusal (contract § acting on a selection of lines). Its one
+ * typed rejection is a missing line; the state gate that makes deletion
+ * drafting-only arrives untyped, which is why the surface gates it.
+ */
+export const deletePurchaseOrderLines = async (
+  storeId: string,
+  ids: string[]
+): Promise<LinesOutcome> => {
+  const result = await graphqlFetch(
+    DeletePurchaseOrderLines,
+    { storeId, ids },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError')
+    return { applied: 0, message: untypedRejectionMessage(result.errors) };
+  if (result.kind !== 'success') return { applied: 0 };
+  let applied = 0;
+  let message: string | undefined;
+  for (const entry of result.data.deletePurchaseOrderLines) {
+    if (entry.response.__typename === 'DeleteResponse') applied += 1;
+    else message ??= entry.response.error.description;
+  }
+  return { applied, message };
+};
+
+const foldLineUpdates = async (
+  storeId: string,
+  inputs: UpdatePurchaseOrderLineVariables['input'][]
+): Promise<LinesOutcome> => {
+  let applied = 0;
+  let message: string | undefined;
+  for (const input of inputs) {
+    const result = await updatePurchaseOrderLine(storeId, input);
+    if (result.kind === 'saved') applied += 1;
+    else if (result.kind === 'error') message ??= result.message;
+  }
+  return { applied, message };
+};
+
+/**
+ * Close every line in a selection for receipt, one call each. Stops at nothing
+ * — a line that refuses is counted as a refusal and the rest still run, since
+ * the server offers no bulk form and a partial close is the honest outcome.
+ */
+export const closePurchaseOrderLines = (
+  storeId: string,
+  ids: string[]
+): Promise<LinesOutcome> =>
+  foldLineUpdates(
+    storeId,
+    ids.map(id => ({ id, status: 'CLOSED' as const }))
+  );
+
+export type DeliveryDateField =
+  'requestedDeliveryDate' | 'expectedDeliveryDate';
+
+/**
+ * Write one delivery date onto EVERY line. The server does not cascade a bare
+ * date change (`update_lines` fills a line's requested date only alongside a
+ * status), so the screen issues the per-line writes itself. The requested date
+ * also fills the expected date of every line that has none — the same rule the
+ * CONFIRMED cascade applies server-side.
+ */
+export const cascadeDeliveryDate = (
+  storeId: string,
+  lines: { id: string; expectedDeliveryDate?: string | null }[],
+  field: DeliveryDateField,
+  date: string
+): Promise<LinesOutcome> =>
+  foldLineUpdates(
+    storeId,
+    lines.map(line =>
+      field === 'expectedDeliveryDate'
+        ? { id: line.id, expectedDeliveryDate: { value: date } }
+        : {
+            id: line.id,
+            requestedDeliveryDate: { value: date },
+            ...(line.expectedDeliveryDate
+              ? undefined
+              : { expectedDeliveryDate: { value: date } }),
+          }
+    )
+  );

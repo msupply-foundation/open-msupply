@@ -1,7 +1,9 @@
 use super::{DBType, RepositoryError, StorageConnection};
-use crate::db_diesel::name_row::name;
+use crate::db_diesel::currency_row::{currency, CurrencyRow};
+use crate::db_diesel::name_row::{name, NameRow};
 use crate::diesel_macros::{
-    apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
+    apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
+    apply_sort_asc_nulls_first, apply_sort_no_case, apply_string_filter,
 };
 use crate::purchase_order_row::{
     purchase_order::{self},
@@ -25,6 +27,7 @@ pub struct PurchaseOrderFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<PurchaseOrderStatus>>,
     pub supplier: Option<StringFilter>,
+    pub number: Option<EqualFilter<i64>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub confirmed_datetime: Option<DatetimeFilter>,
     pub requested_delivery_date: Option<DateFilter>,
@@ -37,6 +40,13 @@ pub enum PurchaseOrderSortField {
     CreatedDatetime,
     Status,
     TargetMonths,
+    Supplier,
+    ConfirmedDatetime,
+    SentDatetime,
+    RequestedDeliveryDate,
+    OrderTotalAfterDiscount,
+    CurrencyCode,
+    Comment,
 }
 
 pub type PurchaseOrderSort = Sort<PurchaseOrderSortField>;
@@ -45,7 +55,12 @@ pub struct PurchaseOrderRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-type PurchaseOrderJoin = (PurchaseOrderRow, Option<PurchaseOrderStatsRow>);
+type PurchaseOrderJoin = (
+    PurchaseOrderRow,
+    Option<PurchaseOrderStatsRow>,
+    Option<NameRow>,
+    Option<CurrencyRow>,
+);
 
 impl<'a> PurchaseOrderRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -87,6 +102,35 @@ impl<'a> PurchaseOrderRepository<'a> {
                 PurchaseOrderSortField::TargetMonths => {
                     apply_sort!(query, sort, purchase_order::target_months)
                 }
+                PurchaseOrderSortField::Supplier => {
+                    apply_sort_no_case!(query, sort, name::name_)
+                }
+                PurchaseOrderSortField::ConfirmedDatetime => {
+                    apply_sort_asc_nulls_first!(query, sort, purchase_order::confirmed_datetime)
+                }
+                PurchaseOrderSortField::SentDatetime => {
+                    apply_sort_asc_nulls_first!(query, sort, purchase_order::sent_datetime)
+                }
+                PurchaseOrderSortField::RequestedDeliveryDate => {
+                    apply_sort_asc_nulls_first!(
+                        query,
+                        sort,
+                        purchase_order::requested_delivery_date
+                    )
+                }
+                PurchaseOrderSortField::OrderTotalAfterDiscount => {
+                    apply_sort!(
+                        query,
+                        sort,
+                        purchase_order_stats::order_total_after_discount
+                    )
+                }
+                PurchaseOrderSortField::CurrencyCode => {
+                    apply_sort_no_case!(query, sort, currency::code)
+                }
+                PurchaseOrderSortField::Comment => {
+                    apply_sort_no_case!(query, sort, purchase_order::comment)
+                }
             }
         } else {
             query = query.order(purchase_order::created_datetime.desc())
@@ -115,6 +159,7 @@ impl<'a> PurchaseOrderRepository<'a> {
                 store_id,
                 status,
                 supplier,
+                number,
                 created_datetime,
                 confirmed_datetime,
                 requested_delivery_date,
@@ -123,12 +168,10 @@ impl<'a> PurchaseOrderRepository<'a> {
             apply_equal_filter!(query, id, purchase_order::id);
             apply_equal_filter!(query, store_id, purchase_order::store_id);
             apply_equal_filter!(query, status, purchase_order::status);
-            if let Some(supplier_string) = supplier {
-                let mut sub_query = name::table.select(name::id).into_boxed();
-                apply_string_filter!(sub_query, Some(supplier_string), name::name_);
-
-                query = query.filter(purchase_order::supplier_name_id.eq_any(sub_query));
-            }
+            apply_equal_filter!(query, number, purchase_order::purchase_order_number);
+            // Through the join the sort already needs, not a sub-select on
+            // name ids.
+            apply_string_filter!(query, supplier, name::name_);
             apply_date_time_filter!(query, created_datetime, purchase_order::created_datetime);
             apply_date_time_filter!(
                 query,
@@ -147,7 +190,9 @@ impl<'a> PurchaseOrderRepository<'a> {
     }
 }
 
-fn to_domain((purchase_order, purchase_order_stats): PurchaseOrderJoin) -> PurchaseOrder {
+fn to_domain(
+    (purchase_order, purchase_order_stats, _supplier, _currency): PurchaseOrderJoin,
+) -> PurchaseOrder {
     PurchaseOrder {
         purchase_order_row: purchase_order,
         purchase_order_stats_row: purchase_order_stats,
@@ -156,7 +201,10 @@ fn to_domain((purchase_order, purchase_order_stats): PurchaseOrderJoin) -> Purch
 
 #[diesel::dsl::auto_type]
 fn query() -> _ {
-    purchase_order::table.left_join(purchase_order_stats::table)
+    purchase_order::table
+        .left_join(purchase_order_stats::table)
+        .left_join(name::table)
+        .left_join(currency::table)
 }
 
 type BoxedPurchaseOrderQuery = IntoBoxed<'static, query, DBType>;
@@ -180,6 +228,10 @@ impl PurchaseOrderFilter {
     }
     pub fn supplier(mut self, filter: StringFilter) -> Self {
         self.supplier = Some(filter);
+        self
+    }
+    pub fn number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.number = Some(filter);
         self
     }
     pub fn confirmed_datetime(mut self, filter: DatetimeFilter) -> Self {
