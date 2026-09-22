@@ -7,6 +7,15 @@ query syncSettings {
     username
     intervalSeconds
     batchSize
+    isPaused
+  }
+}
+
+# The pause switch has its own mutation so flipping it never re-sends the
+# credentials the form holds (spec/settings/contract.md § Synchronisation).
+mutation setSyncPaused($paused: Boolean!) {
+  setSyncPaused(paused: $paused) {
+    isPaused
   }
 }
 

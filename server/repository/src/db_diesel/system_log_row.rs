@@ -29,6 +29,8 @@ pub enum SystemLogType {
     Migration,
     ServerStatus,
     SyncTranslationFkError,
+    /// Sync paused or resumed from Admin > Sync settings; the message names the user.
+    SyncPauseChanged,
 }
 
 impl SystemLogType {
@@ -40,6 +42,7 @@ impl SystemLogType {
             SystemLogType::Migration => false,
             SystemLogType::ServerStatus => false,
             SystemLogType::SyncTranslationFkError => true,
+            SystemLogType::SyncPauseChanged => false,
         }
     }
 }

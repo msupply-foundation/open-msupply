@@ -44,6 +44,7 @@ use mutations::{
     },
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
+    set_sync_paused::{set_sync_paused, SyncPausedNode},
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
     update_insurance::{update_insurance, UpdateInsuranceInput, UpdateInsuranceResponse},
     update_name_properties::{
@@ -327,6 +328,11 @@ impl GeneralQueries {
         number_of_records_in_push_queue(ctx)
     }
 
+    /// Admin pause flag (Admin > Sync settings); any signed-in user may read it.
+    pub async fn is_sync_paused(&self, ctx: &Context<'_>) -> Result<bool> {
+        is_sync_paused(ctx)
+    }
+
     pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
         sync_settings(ctx, true)
     }
@@ -608,6 +614,15 @@ impl GeneralMutations {
         _fetch_patient_id: Option<String>,
     ) -> Result<String> {
         manual_sync(ctx, true)
+    }
+
+    /// Pause or resume sync (server admin only). See `SyncPausedNode`.
+    pub async fn set_sync_paused(
+        &self,
+        ctx: &Context<'_>,
+        paused: bool,
+    ) -> Result<SyncPausedNode> {
+        set_sync_paused(ctx, paused)
     }
 
     pub async fn update_display_settings(

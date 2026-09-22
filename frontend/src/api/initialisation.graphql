@@ -85,6 +85,10 @@ query syncStatusAndQueue {
     ...SyncStatus
   }
   numberOfRecordsInPushQueue
+  # The admin pause (Admin > Sync settings): while true no scheduled or manual
+  # run starts. Rides on the post-login poll and the subscription frame so the
+  # chrome cell and the modal read it from the shared store.
+  isSyncPaused
 }
 
 subscription syncInfoUpdated {
@@ -93,6 +97,7 @@ subscription syncInfoUpdated {
       ...SyncStatus
     }
     numberOfRecordsInPushQueue
+    isSyncPaused
   }
 }
 

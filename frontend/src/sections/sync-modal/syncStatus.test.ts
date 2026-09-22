@@ -310,6 +310,13 @@ describe('statusLineKind — status-line precedence (SYNC-03.18)', () => {
     expect(statusLineKind(idle, 0)).toBe('nothing-to-push');
     expect(statusLineKind(idle, undefined)).toBe('nothing-to-push');
   });
+  it('paused outranks the queue when idle — the count is moot until resumed', () => {
+    expect(statusLineKind(idle, 12, true)).toBe('paused');
+    expect(statusLineKind(idle, 0, true)).toBe('paused');
+  });
+  it('a run already in flight still reads as syncing while paused', () => {
+    expect(statusLineKind(syncing, 0, true)).toBe('syncing');
+  });
 });
 
 describe('records-to-push drains on success (SYNC-03.6)', () => {
@@ -553,6 +560,36 @@ describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync s
     ).toEqual({ kind: 'error', tone: 'error' });
   });
 
+  it('reports the admin pause above faults, staleness and the queue', () => {
+    // A paused site will not sync whatever else is true of it, so the pause is
+    // the news — an error or a backlog can wait for the resume.
+    expect(
+      syncFooterStatus(
+        errored('INVALID_SITE_NAME_OR_PASSWORD'),
+        12,
+        0,
+        now,
+        true
+      )
+    ).toEqual({ kind: 'paused', tone: 'warning' });
+    expect(syncFooterStatus(staleBy(10), 0, 0, now, true)).toEqual({
+      kind: 'paused',
+      tone: 'warning',
+    });
+    expect(syncFooterStatus(staleBy(0), 14, 0, now, true)).toEqual({
+      kind: 'paused',
+      tone: 'warning',
+    });
+  });
+
+  it('lets a run already in flight finish before reading as paused', () => {
+    const syncing = toSyncOverview(v7({ isSyncing: true }), MODAL);
+    expect(syncFooterStatus(syncing, 0, 0, now, true)).toEqual({
+      kind: 'syncing',
+      tone: 'neutral',
+    });
+  });
+
   it('reports an unreachable server at warning level, not as a failure', () => {
     expect(syncFooterStatus(errored('CONNECTION_ERROR'), 0, 0, now)).toEqual({
       kind: 'unreachable',
@@ -646,8 +683,9 @@ describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync s
 });
 
 describe('syncFooterDimmed — the offline level (OMS-REG-FTR-03.21)', () => {
-  it('dims only while the central server is out of reach', () => {
+  it('dims only while sync cannot happen — the server out of reach, or paused', () => {
     expect(syncFooterDimmed('unreachable')).toBe(true);
+    expect(syncFooterDimmed('paused')).toBe(true);
     for (const kind of [
       'waiting',
       'syncing',

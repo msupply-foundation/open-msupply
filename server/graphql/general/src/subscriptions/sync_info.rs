@@ -12,6 +12,8 @@ use crate::sync_v7::sync_status::FullSyncStatusV7Node;
 pub struct SyncInfoUpdatedNode {
     pub sync_status: Option<FullSyncStatusNode>,
     pub number_of_records_in_push_queue: u64,
+    /// Admin pause (Admin > Sync settings): while true no scheduled or manual sync runs.
+    pub is_sync_paused: bool,
 }
 
 pub fn sync_info_stream(
@@ -26,6 +28,7 @@ pub fn sync_info_stream(
                     status,
                     last_successful,
                     push_queue_count,
+                    is_sync_paused,
                 }) => {
                     let sync_status = match status {
                         FullSyncStatus::V5V6(s) => FullSyncStatusNode::V5V6(
@@ -39,6 +42,7 @@ pub fn sync_info_stream(
                     let node = SyncInfoUpdatedNode {
                         sync_status: Some(sync_status),
                         number_of_records_in_push_queue: push_queue_count,
+                        is_sync_paused,
                     };
                     return Some((node, rx));
                 }

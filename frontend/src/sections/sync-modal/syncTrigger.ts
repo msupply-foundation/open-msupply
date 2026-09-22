@@ -1,5 +1,5 @@
 import { createEffect, createRoot, createSignal } from 'solid-js';
-import { syncStatus, triggerSync } from '../../api/syncStore';
+import { syncPaused, syncStatus, triggerSync } from '../../api/syncStore';
 import {
   advanceTriggerState,
   armTrigger,
@@ -47,9 +47,11 @@ export const triggerActive = (): boolean => trigger().active;
 
 /** Start a manual sync. A no-op while a run is already in flight (the status
  * line is aria-disabled, not disabled, so activation still reaches here; the
- * keyboard binding has no gate of its own at all). */
+ * keyboard binding has no gate of its own at all), and while an administrator
+ * has paused sync — the server would refuse, and arming the busy state with no
+ * run to release it would wedge the cell on "Syncing…". */
 export const syncNow = (): void => {
-  if (triggerActive() || syncStatus()?.isSyncing) return;
+  if (triggerActive() || syncStatus()?.isSyncing || syncPaused()) return;
   setTrigger(armTrigger(syncStatus()));
   // Fire-and-forget; a request that itself fails releases the busy state (the
   // failure surfaces through the global unexpected-error handling).
