@@ -388,6 +388,41 @@ const readImportTable = (
 };
 
 /**
+ * The distinct store codes a file names, read BEFORE the parse so the lookup
+ * can ask the server for exactly those (domain/store § fetchStoresByCode).
+ *
+ * The alternative — hand the parse a page of the register and match against it
+ * — is not a lookup on a server holding more stores than a page: the file's
+ * store is simply absent from the page and its code reports as unknown, which
+ * refuses a file this app itself exported.
+ *
+ * Yields nothing where the column is not read at all (off a central server) or
+ * where the file has no heading this import recognises; the parse reports that
+ * fault itself, and reports an unmatched code per row as it always has.
+ */
+export const storeCodesIn = (text: string, isCentral: boolean): string[] => {
+  if (!isCentral) return [];
+  const read = readImportTable(text, isCentral);
+  if (typeof read === 'string') return [];
+  const wanted = t('label.store').trim().toLowerCase();
+  const index = read.header.findIndex(
+    name => name.trim().toLowerCase() === wanted
+  );
+  if (index === -1) return [];
+  // Distinct, case-insensitively — a file naming one store on 200 rows is one
+  // request — asked for as its FIRST row spells it. The fetch matches without
+  // regard to case, so the spelling changes nothing; taking the first simply
+  // makes the request predictable from reading the file top-down.
+  const codes = new Map<string, string>();
+  for (const cells of read.body) {
+    const code = (cells[index] ?? '').trim();
+    const key = code.toLowerCase();
+    if (code && !codes.has(key)) codes.set(key, code);
+  }
+  return [...codes.values()];
+};
+
+/**
  * Parse the uploaded file into rows, each carrying its own errors and warnings
  * — or say why the file yields none.
  *
