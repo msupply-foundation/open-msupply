@@ -7,7 +7,10 @@ import {
   type ImportFileFailure,
 } from '@/domain/csvImport';
 import type { InsertPurchaseOrderLineVariables } from '../purchaseOrderDetail.generated';
-import { discountPercentage } from '../edit-modal/purchaseOrderLineEdit';
+import {
+  discountPercentage,
+  repriced,
+} from '../edit-modal/purchaseOrderLineEdit';
 
 export type ImportRow = {
   /** The id the line will be inserted under. */
@@ -128,7 +131,11 @@ export const parseImportFile = (
     const afterCell = number(cells, t('label.price-per-pack-after-discount'));
     const after =
       afterCell ??
-      before * (1 - Math.min(Math.max(discountCell ?? 0, 0), 100) / 100);
+      repriced('discountPercentage', {
+        pricePerPackBeforeDiscount: before,
+        discountPercentage: discountCell ?? 0,
+        pricePerPackAfterDiscount: 0,
+      }).pricePerPackAfterDiscount;
     if (after > before)
       errors.push(
         t('error.price-after-discount-cannot-exceed-price-before-discount')

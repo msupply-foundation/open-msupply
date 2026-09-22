@@ -35,7 +35,6 @@ const line = (
     code: 'AMOX',
     name: 'Amoxicillin',
     unitName: 'tablet',
-    defaultPackSize: 100,
     stats: { stockOnHand: 4200 },
   },
   unit: 'tablet',
