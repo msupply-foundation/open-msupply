@@ -1786,6 +1786,12 @@ const StocktakeLineEditContent = (
           showFullScreen={false}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
+          configIsDefault={tableConfig.isConfigDefault()}
+          onSaveGlobalDefault={
+            tableConfig.canSaveGlobalDefault()
+              ? tableConfig.saveGlobalTableConfig
+              : undefined
+          }
           controlsMount={tableControls()}
           emptyMessage={t('label.add-new-line')}
         />
