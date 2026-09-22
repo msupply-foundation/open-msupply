@@ -1,10 +1,9 @@
-use std::{cmp, time::Duration};
+use std::cmp;
 
 use super::{
     api::{
-        retry_delay_description, CommonSyncRecord, ParsingSyncRecordError, SyncApiError, SyncApiV5,
+        CommonSyncRecord, DroppedBodyRetries, ParsingSyncRecordError, SyncApiError, SyncApiV5,
         CENTRAL_BUSY_POLL_PERIOD_SECONDS, CENTRAL_BUSY_TIMEOUT_SECONDS,
-        TRANSIENT_RETRY_DELAYS_SECONDS,
     },
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
 };
@@ -58,10 +57,10 @@ impl CentralDataSynchroniser {
 
             // Retry while central is busy with another sync session for this site
             // (legacy central gates sync per-site); wait for idle then re-request the
-            // same cursor. Transient transport failures are retried with backoff for the
+            // same cursor. A response body cut off mid-read is retried with backoff for the
             // same reason it's safe to: the cursor hasn't advanced, so re-requesting is
             // a plain repeat of an idempotent read.
-            let mut transient_attempts = 0;
+            let mut dropped_body_retries = DroppedBodyRetries::default();
             let CentralSyncBatchV5 { max_cursor, data } = loop {
                 match self
                     .sync_api_v5
@@ -77,21 +76,15 @@ impl CentralDataSynchroniser {
                             )
                             .await?;
                     }
-                    Err(error)
-                        if error.is_transient()
-                            && transient_attempts < TRANSIENT_RETRY_DELAYS_SECONDS.len() =>
-                    {
-                        let delay = TRANSIENT_RETRY_DELAYS_SECONDS[transient_attempts];
-                        transient_attempts += 1;
-                        log::warn!(
-                            "Pulling central records at cursor {} failed with a transient transport error (attempt {}/{}, retrying {}): {:#?}",
-                            start_cursor,
-                            transient_attempts,
-                            TRANSIENT_RETRY_DELAYS_SECONDS.len(),
-                            retry_delay_description(delay),
-                            error
-                        );
-                        tokio::time::sleep(Duration::from_secs(delay)).await;
+                    Err(error) if error.is_dropped_response_body() => {
+                        let description =
+                            format!("Pulling central records at cursor {}", start_cursor);
+                        if !dropped_body_retries
+                            .wait_before_retry(&description, &error)
+                            .await
+                        {
+                            return Err(error.into());
+                        }
                     }
                     Err(error) => return Err(error.into()),
                 }
@@ -143,7 +136,55 @@ mod test {
         },
         sync_status::logger::SyncLogger,
     };
-    use repository::{mock::MockDataInserts, test_db};
+    use repository::{mock::MockDataInserts, test_db, StorageConnection};
+
+    fn truncated() -> ScriptedResponse {
+        ScriptedResponse::TruncatedBody {
+            content_length: 5000,
+            body: r#"{"maxCursor": 2, "data": [{"ID": 2, "tableN"#,
+        }
+    }
+
+    /// A batch holding one delete record at `cursor`, so it can be found in the sync buffer.
+    fn batch(cursor: u64, max_cursor: u64, record_id: &str) -> ScriptedResponse {
+        ScriptedResponse::Complete(format!(
+            r#"{{
+                "maxCursor": {max_cursor},
+                "data": [
+                    {{
+                        "ID": {cursor},
+                        "tableName": "test_table_1",
+                        "recordId": "{record_id}",
+                        "action": "delete"
+                    }}
+                ]
+            }}"#
+        ))
+    }
+
+    /// Nothing left to pull - ends the loop.
+    fn empty_batch(max_cursor: u64) -> ScriptedResponse {
+        ScriptedResponse::Complete(format!(r#"{{ "maxCursor": {max_cursor}, "data": [] }}"#))
+    }
+
+    async fn pull(
+        connection: &StorageConnection,
+        responses: Vec<ScriptedResponse>,
+    ) -> Result<(), CentralPullError> {
+        let server = ScriptedServer::start(responses);
+        let synchroniser = CentralDataSynchroniser {
+            sync_api_v5: SyncApiV5::new_test(server.url(), "", "", "site_id"),
+        };
+        let mut logger = SyncLogger::start(connection).unwrap();
+        synchroniser.pull(connection, 100, &mut logger).await
+    }
+
+    fn is_buffered(connection: &StorageConnection, record_id: &str) -> bool {
+        SyncBufferRepository::new(connection)
+            .find_latest_by_record_id_slow_unindexed(record_id)
+            .unwrap()
+            .is_some()
+    }
 
     /// The reported failure, at the level that has to survive it: central drops the
     /// connection part-way through a batch body, the pull retries the same cursor, and the
@@ -157,47 +198,108 @@ mod test {
         )
         .await;
 
-        let server = ScriptedServer::start(vec![
-            // Attempt 1: headers, then the body is cut short.
-            ScriptedResponse::TruncatedBody {
-                content_length: 5000,
-                body: r#"{"maxCursor": 2, "data": [{"ID": 2, "tableN"#,
-            },
-            // Attempt 2 (the retry): the same cursor, served in full.
-            ScriptedResponse::Complete(
-                r#"{
-                    "maxCursor": 2,
-                    "data": [
-                        {
-                            "ID": 2,
-                            "tableName": "test_table_1",
-                            "recordId": "record_from_retry",
-                            "action": "delete"
-                        }
-                    ]
-                }"#
-                .to_string(),
-            ),
-            // Nothing left to pull - ends the loop.
-            ScriptedResponse::Complete(r#"{ "maxCursor": 2, "data": [] }"#.to_string()),
-        ]);
-
-        let synchroniser = CentralDataSynchroniser {
-            sync_api_v5: SyncApiV5::new_test(server.url(), "", "", "site_id"),
-        };
-
-        let mut logger = SyncLogger::start(&connection).unwrap();
-        let result = synchroniser.pull(&connection, 100, &mut logger).await;
+        let result = pull(
+            &connection,
+            vec![
+                // Attempt 1: headers, then the body is cut short.
+                truncated(),
+                // Attempt 2 (the retry): the same cursor, served in full.
+                batch(2, 2, "record_from_retry"),
+                empty_batch(2),
+            ],
+        )
+        .await;
 
         assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
-
         // The record only exists in the response served to the retry.
-        let buffered = SyncBufferRepository::new(&connection)
-            .find_latest_by_record_id_slow_unindexed("record_from_retry")
-            .unwrap();
         assert!(
-            buffered.is_some(),
+            is_buffered(&connection, "record_from_retry"),
             "Batch from the retried request was not saved"
         );
+    }
+
+    /// A connection that keeps dropping gives up once the retry budget is spent, reporting
+    /// the dropped body rather than whatever an extra attempt would have hit.
+    #[actix_rt::test]
+    async fn test_pull_gives_up_after_dropped_body_retries() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_pull_gives_up_after_dropped_body_retries",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // The first attempt plus three retries. A fifth request would find the listener
+        // closed and fail to connect instead.
+        let result = pull(
+            &connection,
+            vec![truncated(), truncated(), truncated(), truncated()],
+        )
+        .await;
+
+        assert!(
+            matches!(&result, Err(CentralPullError::SyncApiError(error)) if error.is_dropped_response_body()),
+            "Unexpected result: {:#?}",
+            result
+        );
+    }
+
+    /// The retry budget is per batch: a batch that needs every retry doesn't leave the next
+    /// batch with none.
+    #[actix_rt::test]
+    async fn test_pull_resets_dropped_body_retries_after_each_batch() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_pull_resets_dropped_body_retries_after_each_batch",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let result = pull(
+            &connection,
+            vec![
+                truncated(),
+                truncated(),
+                truncated(),
+                batch(1, 2, "first_batch"),
+                truncated(),
+                truncated(),
+                truncated(),
+                batch(2, 2, "second_batch"),
+                empty_batch(2),
+            ],
+        )
+        .await;
+
+        assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
+        assert!(is_buffered(&connection, "first_batch"));
+        assert!(is_buffered(&connection, "second_batch"));
+    }
+
+    /// Only a dropped body is retried here. A body that arrived in full but doesn't parse
+    /// would come back the same on a retry, so it fails straight away.
+    #[actix_rt::test]
+    async fn test_pull_does_not_retry_unparseable_body() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_pull_does_not_retry_unparseable_body",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let result = pull(
+            &connection,
+            vec![
+                ScriptedResponse::Complete("not json at all".to_string()),
+                // Only reached if the parse failure were (wrongly) retried.
+                batch(2, 2, "record_from_retry"),
+                empty_batch(2),
+            ],
+        )
+        .await;
+
+        assert!(
+            matches!(&result, Err(CentralPullError::SyncApiError(error)) if !error.is_dropped_response_body()),
+            "Unexpected result: {:#?}",
+            result
+        );
+        assert!(!is_buffered(&connection, "record_from_retry"));
     }
 }

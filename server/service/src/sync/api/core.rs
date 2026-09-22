@@ -251,9 +251,8 @@ impl SyncApiV5 {
 pub(crate) const CENTRAL_BUSY_POLL_PERIOD_SECONDS: u64 = 15;
 pub(crate) const CENTRAL_BUSY_TIMEOUT_SECONDS: u64 = 30 * 60;
 
-// A transient transport failure on an idempotent read is retried in place, waiting this
-// long before each attempt. Attempts reset after any successful batch, so a long pull
-// isn't capped globally - only a persistently broken connection gives up.
+// A read whose response body was cut off is retried in place, waiting this long before
+// each attempt.
 //
 // The first retry is immediate: a dropped connection is usually a momentary blip (proxy
 // dropping a long-lived connection, NAT timeout, network handover) that's over by the time
@@ -261,14 +260,55 @@ pub(crate) const CENTRAL_BUSY_TIMEOUT_SECONDS: u64 = 30 * 60;
 // all. The later waits cover what an instant retry can't - an outage lasting seconds, or a
 // central busy enough to be dropping connections, where retrying instantly would just burn
 // the attempt budget in a few hundred milliseconds.
-pub(crate) const TRANSIENT_RETRY_DELAYS_SECONDS: [u64; 3] = [0, 5, 30];
+//
+// Zero in tests, so a test can exhaust the budget without sleeping for 35s.
+const DROPPED_BODY_RETRY_DELAYS_SECONDS: [u64; 3] = if cfg!(test) { [0, 0, 0] } else { [0, 5, 30] };
 
-/// "immediately" / "in 5s" - so the retry log reads properly when the delay is zero.
-pub(crate) fn retry_delay_description(delay_seconds: u64) -> String {
-    if delay_seconds == 0 {
-        "immediately".to_string()
-    } else {
-        format!("in {}s", delay_seconds)
+/// Retry budget for re-sending an idempotent read whose response body was cut off
+/// (`ParsingResponseError::ConnectionDropped`).
+///
+/// Only that failure is retried here. Once body bytes are streaming, central has finished
+/// handling the request, so re-sending it can't overlap work still running server-side.
+/// Connect errors, timeouts and request-phase drops are left to `with_retries_opts` and its
+/// per-endpoint policy - retrying them again here would overlap sync v5's in-flight
+/// requests, and multiply sync v6's existing attempts.
+///
+/// Create one per batch: the budget then resets after every successful read, so a long
+/// pull isn't capped globally - only a persistently broken connection gives up.
+#[derive(Default)]
+pub(crate) struct DroppedBodyRetries {
+    retries_used: usize,
+}
+
+impl DroppedBodyRetries {
+    /// Log and wait before the next retry and return `true`, or return `false` once the
+    /// budget is spent and the caller should give up.
+    pub(crate) async fn wait_before_retry(
+        &mut self,
+        description: &str,
+        error: &impl std::fmt::Debug,
+    ) -> bool {
+        let Some(&delay_seconds) = DROPPED_BODY_RETRY_DELAYS_SECONDS.get(self.retries_used) else {
+            return false;
+        };
+        self.retries_used += 1;
+
+        // "immediately" / "in 5s" - so the log reads properly when the delay is zero.
+        let when = if delay_seconds == 0 {
+            "immediately".to_string()
+        } else {
+            format!("in {}s", delay_seconds)
+        };
+        log::warn!(
+            "{} failed with a transient transport error (retry {}/{} {}): {:#?}",
+            description,
+            self.retries_used,
+            DROPPED_BODY_RETRY_DELAYS_SECONDS.len(),
+            when,
+            error
+        );
+        tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
+        true
     }
 }
 
@@ -292,11 +332,15 @@ impl ParsingResponseError {
     /// Classify a failed body read at the point it fails, so callers match on a variant
     /// instead of re-deriving this from the error chain.
     ///
-    /// Signature-based only: a genuine idle timeout stays `CannotGetTextResponse`, since
-    /// sync v5 deliberately doesn't retry those (see `with_retries_opts` -
-    /// server-side work continues after the client gives up, and retrying overlaps it).
+    /// An idle timeout stays `CannotGetTextResponse`, since sync v5 deliberately doesn't
+    /// retry those (see `with_retries_opts` - server-side work continues after the client
+    /// gives up, and retrying overlaps it). That's checked with `is_timeout()` rather than
+    /// left to the drop signatures, so a reworded reqwest/hyper message can't change it.
     pub(crate) fn from_body_read_error(error: reqwest::Error) -> Self {
-        if !error.is_status() && !error.is_builder() && util::chain_contains_transient_drop(&error)
+        if !error.is_status()
+            && !error.is_builder()
+            && !error.is_timeout()
+            && util::chain_contains_transient_drop(&error)
         {
             Self::ConnectionDropped(error)
         } else {
