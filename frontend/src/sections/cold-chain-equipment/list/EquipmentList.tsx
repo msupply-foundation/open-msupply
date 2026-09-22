@@ -357,9 +357,8 @@ const EquipmentList: Component = () => {
               // cold-chain destination of a central server, which would drop
               // the column from a file that should carry it (rules › export).
               isCentral={isCentralServer()}
-              // The screen's own filters, WITHOUT the destination's store
-              // restriction: the file carries every store's equipment by
-              // decision, narrowed only by the chips the user set
+              // Exactly what the LIST is reading — the same builder, the
+              // same destination — so the file is what the screen shows
               // (rules › export).
               filter={buildListFilter(query(), params.storeId, destination())}
               sort={variables().sort}

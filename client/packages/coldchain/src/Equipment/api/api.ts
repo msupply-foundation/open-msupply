@@ -89,10 +89,10 @@ const assetParsers = {
 };
 
 // What this register is reading, in one place: the class pinning that makes it
-// the cold chain register, the screen's own filters, and — for the LIST only —
-// the store restriction the Cold chain destination carries (the server scopes
-// neither). The EXPORT calls this with the same destination scope as the list,
-// so the file is what the screen shows (issue #693).
+// the cold chain register, the screen's own filters, and the store restriction
+// the Cold chain destination carries (the server scopes neither). The EXPORT
+// calls this with the same destination scope as the list, so the file is what
+// the screen shows (issue #693).
 //
 // ⚠️ `storeCode` never arrives. Its caller derives the flag from
 // `useCentralServerCallback()`, which returns an OBJECT of callbacks and is
