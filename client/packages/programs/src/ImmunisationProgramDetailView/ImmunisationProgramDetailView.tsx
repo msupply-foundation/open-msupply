@@ -107,6 +107,7 @@ export const ImmunisationProgramDetailView: FC = () => {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
+      testId: 'delete-lines-button',
     },
   ];
 

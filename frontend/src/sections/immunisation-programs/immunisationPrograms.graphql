@@ -1,0 +1,276 @@
+# ─── S1 — the program list (spec/immunisation-programs contract § programs,
+# § the program list) ───────────────────────────────────────────────────────
+#
+# `programs` is installation-wide: `storeId` AUTHORISES the read (store access)
+# and scopes nothing (contract wire trap), so it must never be read as a
+# filter. `ProgramsResponse` is a single-member union (ProgramConnector), so a
+# read failure is necessarily a top-level error.
+#
+# The client ALWAYS sends `isImmunisation: true` in the filter (the list shows
+# immunisation programs only) and ALWAYS sends the `name` sort: with no sort the
+# server orders by id, not name (wire trap). `ProgramSortInput` is a single
+# object, not a list, so there is no last-entry-wins trap here.
+#
+# ⚠️ `vaccineCourses` is `null`, never `[]`, for a program with no live course
+# (and for a non-immunisation program) — the register reads null as "none".
+query immunisationPrograms(
+  $storeId: String!
+  $filter: ProgramFilterInput
+  $sort: ProgramSortInput
+  $page: PaginationInput
+) {
+  programs(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on ProgramConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+        vaccineCourses {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+
+# ─── S2 — the program's name for the breadcrumb (contract § the program
+# detail). There is no by-id program query; the id filter on the list read is
+# how one program is fetched. `isImmunisation: true` keeps a requisition
+# program's id from answering here.
+query immunisationProgram($storeId: String!, $id: String!) {
+  programs(
+    storeId: $storeId
+    filter: { id: { equalTo: $id }, isImmunisation: true }
+    page: { first: 1 }
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
+
+# ─── S2 — the program's course list (contract § the course, § the program
+# detail). Needs a login and no permission. Deleted courses are excluded from
+# `nodes` and `totalCount`; `vaccineCourseDoses` answers the LIVE doses only,
+# so its length is the Doses column's count.
+#
+# ⚠️ `sort` is a list and the resolver applies its LAST element (the argument's
+# own description says first — wire trap); exactly one entry always travels.
+# With no sort the order is by id (wire trap), so the `name` sort is always
+# sent.
+query vaccineCourseRows(
+  $filter: VaccineCourseFilterInput
+  $sort: [VaccineCourseSortInput!]
+  $page: PaginationInput
+) {
+  vaccineCourses(filter: $filter, sort: $sort, page: $page) {
+    ... on VaccineCourseConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+        demographic {
+          id
+          name
+        }
+        vaccineCourseDoses {
+          id
+        }
+      }
+    }
+  }
+}
+
+# ─── S3 — one course whole, for the editor. Read through the authenticated
+# LIST operation with an id filter rather than `vaccineCourse(id)`: the by-id
+# read performs no authentication at all (contract wire trap) and the screens
+# are specced not to depend on it. A deleted course answers no node here.
+query vaccineCourseForEdit($id: String!) {
+  vaccineCourses(filter: { id: { equalTo: $id } }, page: { first: 1 }) {
+    ... on VaccineCourseConnector {
+      __typename
+      nodes {
+        id
+        name
+        programId
+        demographicId
+        coverageRate
+        wastageRate
+        useInGapsCalculations
+        canSkipDose
+        demographic {
+          id
+          name
+        }
+        vaccineCourseItems {
+          id
+          itemId
+          name
+        }
+        vaccineCourseDoses {
+          id
+          label
+          minAgeMonths
+          maxAgeMonths
+          customAgeLabel
+          minIntervalDays
+        }
+        storeConfigs {
+          id
+          storeId
+          wastageRate
+          coverageRate
+        }
+      }
+    }
+  }
+}
+
+# ─── S3 pickers — consumed reads (contract § the course, § vaccine items,
+# § per-store rates), each ONE generous page: every option is offered, in name
+# order. The reference client's first-page demographic pick (20, by id) is the
+# capture the spec README records; the rules want every group.
+query demographicGroups($storeId: String!) {
+  demographics(
+    storeId: $storeId
+    page: { first: 1000 }
+    sort: [{ key: name, desc: false }]
+  ) {
+    ... on DemographicConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
+
+# The items flagged as vaccines that the LOGGED-IN store can see — active and
+# visible to it (rules § vaccine items; captured as-is in the README).
+query vaccineItems($storeId: String!) {
+  items(
+    storeId: $storeId
+    filter: { isVaccine: true, isActive: true, isVisible: true }
+    sort: [{ key: name, desc: false }]
+    page: { first: 1000 }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
+
+# The per-store rates panel reads the stores through the SHARED store lookup
+# (src/domain/store) — server-side code-or-name search, name order, a page at
+# a time on scroll — so this vertical declares no store query of its own.
+
+# ─── The three writes, under the central namespace (contract § access). Each
+# authorises against EDIT_CENTRAL_DATA; the `centralServer` root itself refuses
+# off-central with an UNTYPED top-level error ("Internal error" / details
+# "Not a central server") before any member is reached, and a missing
+# permission is a top-level `Forbidden` — both reach the caller only because it
+# opts into returnGraphqlErrors, alongside the untyped `Bad user input`
+# rejections (ProgramDoesNotExist, DoseMinAgesAreNotInOrder,
+# DemographicDoesNotExist, VaccineCourseDoesNotExist) and the internal errors an
+# unknown group / item / store produce.
+#
+# The TYPED members are all reachable (contract § rejections):
+#   insert — RecordAlreadyExist (a duplicate id; a double-submit guard) and
+#            RecordProgramCombinationAlreadyExists (the name is taken on this
+#            program);
+#   update — RecordProgramCombinationAlreadyExists and VaccineDosesInUse (a
+#            removed dose has a vaccination recorded against it; nothing
+#            persists);
+#   delete — VaccineCourseInUse.
+# Only the interface's `__typename` + `description` are selected: the members
+# carry nothing else, and naming one in its own inline fragment would collapse
+# codegen's union onto it.
+#
+# Every write carries the WHOLE course — header, items, doses, store overrides —
+# and the server runs it in one transaction, which is what makes a save
+# all-or-nothing (rules § the editor).
+mutation insertVaccineCourse(
+  $storeId: String!
+  $input: InsertVaccineCourseInput!
+) {
+  centralServer {
+    vaccineCourse {
+      insertVaccineCourse(storeId: $storeId, input: $input) {
+        __typename
+        ... on VaccineCourseNode {
+          id
+          name
+        }
+        ... on InsertVaccineCourseError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# ⚠️ Partial for `name` and `canSkipDose` (omitted = unchanged) but DESTRUCTIVE
+# for `demographicId` (omitted = cleared), and `coverageRate` / `wastageRate` /
+# `useInGapsCalculations` / `vaccineItems` / `doses` are required — so the
+# client sends the full course every time. `storeConfigs` omitted leaves the
+# stored rows untouched; rows are never deleted on the wire (contract § per-
+# store rates). Doses not sent are retired; items not sent are retired.
+mutation updateVaccineCourse(
+  $storeId: String!
+  $input: UpdateVaccineCourseInput!
+) {
+  centralServer {
+    vaccineCourse {
+      updateVaccineCourse(storeId: $storeId, input: $input) {
+        __typename
+        ... on VaccineCourseNode {
+          id
+          name
+        }
+        ... on UpdateVaccineCourseError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# One mutation per selected course, sent SEQUENTIALLY in list order and stopped
+# at the first refusal (rules § deleting courses). Soft-deletes the course and
+# its live doses. ⚠️ An already-deleted id answers DeleteResponse again.
+mutation deleteVaccineCourse($vaccineCourseId: String!) {
+  centralServer {
+    vaccineCourse {
+      deleteVaccineCourse(vaccineCourseId: $vaccineCourseId) {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeleteVaccineCourseError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
