@@ -1,0 +1,39 @@
+/* The line editor's body (spec/purchase-orders S10 § layout): the Top row —
+   the item lookup taking the free space, Status beside it — then three
+   wrapping columns of labelled field rows, then the ordered-elsewhere figure. */
+.top {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.itemSearch {
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+}
+
+.grid {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-block: var(--space-3);
+}
+
+.column {
+  flex: 1 1 16rem;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* A never-editable figure's value — plain right-aligned text at the row's
+   inline-end, never a disabled input (ui-standards › detail-views §
+   never-editable fields). */
+.value {
+  display: block;
+  text-align: end;
+  inline-size: 100%;
+}

@@ -109,6 +109,12 @@ query purchaseOrder($storeId: String!, $id: String!) {
 # quantity, the pack size and the after-discount pack price, on the rules the
 # order's own totals use (rules § pricing and totals), so purchaseOrderLine.ts
 # computes them from exactly these fields.
+#
+# The same row is what a row click hands the line editor (spec S10), so it also
+# carries the editor's own fields — the before-discount price, the two texts,
+# the supplier's code and the manufacturer — rather than re-reading the line on
+# open. The discount percentage has no field: the editor derives it from the
+# two prices (contract § authoring a line).
 fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
   id
   lineNumber
@@ -117,9 +123,11 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
     id
     code
     name
-    # The item's stock on hand NOW — the SOH column. Not the line's own
-    # `stockOnHandInUnits`, which is written as 0.0 at insert and read by
-    # nothing (contract § authoring a line).
+    unitName
+    defaultPackSize
+    # The item's stock on hand NOW — the SOH column and the editor's figure.
+    # Not the line's own `stockOnHandInUnits`, which is written as 0.0 at
+    # insert and read by nothing (contract § authoring a line).
     stats(storeId: $storeId) {
       stockOnHand
     }
@@ -130,9 +138,18 @@ fragment PurchaseOrderDetailLine on PurchaseOrderLineNode {
   adjustedNumberOfUnits
   # Written by the shipment, never here.
   shippedNumberOfUnits
+  pricePerPackBeforeDiscount
   pricePerPackAfterDiscount
   requestedDeliveryDate
   expectedDeliveryDate
+  supplierItemCode
+  manufacturer(storeId: $storeId) {
+    id
+    name
+    code
+  }
+  comment
+  note
   # The item's units on order across the store's OTHER purchase orders — the
   # On order column, resolved server-side per line.
   unitsOrderedInOthers
@@ -311,6 +328,34 @@ query purchaseOrderShipments($storeId: String!, $orderId: String!) {
         createdDatetime
         receivedDatetime
         otherPartyName
+      }
+    }
+  }
+}
+
+# Adding a line. `itemIdOrCode` is tried as an identity and then as a code, so
+# the chooser's pick and a bare code both work. The duplicate-line collision is
+# TYPED here and carries the item code and pack size the rejection must name —
+# unlike the update path, where the same collision arrives as a plain
+# `Bad user input` (contract ⚠️). The state gate that makes hand-adding
+# drafting-only is `CannotEditPurchaseOrder`.
+mutation insertPurchaseOrderLine(
+  $storeId: String!
+  $input: InsertPurchaseOrderLineInput!
+) {
+  insertPurchaseOrderLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on IdResponse {
+      id
+    }
+    ... on InsertPurchaseOrderLineError {
+      error {
+        __typename
+        description
+        ... on PackSizeCodeCombinationExists {
+          itemCode
+          requestedPackSize
+        }
       }
     }
   }

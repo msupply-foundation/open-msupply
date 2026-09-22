@@ -1,9 +1,12 @@
 import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
 import { translateServerError } from '../../../intl/intlUtils';
+import { t } from '../../../intl';
 import {
+  InsertPurchaseOrderLine,
   UpdatePurchaseOrder,
   UpdatePurchaseOrderLine,
   DeletePurchaseOrderLines,
+  type InsertPurchaseOrderLineVariables,
   type UpdatePurchaseOrderVariables,
   type UpdatePurchaseOrderLineVariables,
 } from './purchaseOrderDetail.generated';
@@ -26,13 +29,17 @@ import {
 // as a result we can report rather than tripping the app's global
 // unexpected-error modal.
 
-// A top-level (untyped) rejection carries the Rust variant name in
-// `extensions.details`; translate it to a human message (falling back to a
-// sentence-cased form of the identifier), else the bare GraphQL message.
+// A top-level (untyped) rejection carries the Rust variant in
+// `extensions.details` — the bare name for a unit variant, the whole Debug
+// rendering for one carrying data (the line update's duplicate collision) —
+// so only the leading identifier is read. Translate it to a human message
+// (falling back to a sentence-cased form of the identifier), else the bare
+// GraphQL message.
 const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
   const detail = errors[0]?.extensions?.details;
-  if (typeof detail === 'string' && detail.length > 0)
-    return translateServerError(detail);
+  const variant =
+    typeof detail === 'string' ? /^\w+/.exec(detail)?.[0] : undefined;
+  if (variant) return translateServerError(variant);
   return errors[0]?.message ?? translateServerError('UnknownError');
 };
 
@@ -93,6 +100,40 @@ export const updatePurchaseOrderLine = async (
   return response.__typename === 'IdResponse'
     ? { kind: 'saved' }
     : { kind: 'error', message: response.error.description };
+};
+
+/**
+ * Add a line (spec S10). The duplicate collision is typed on this path and
+ * names the item code and pack size the rejection must carry
+ * (OMS-FUN-PO-02.8); every other typed refusal reports its description, and
+ * the untyped ones — an unknown item, a manufacturer that is not one — their
+ * variant.
+ */
+export const insertPurchaseOrderLine = async (
+  storeId: string,
+  input: InsertPurchaseOrderLineVariables['input']
+): Promise<PurchaseOrderUpdateResult> => {
+  const result = await graphqlFetch(
+    InsertPurchaseOrderLine,
+    { storeId, input },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.insertPurchaseOrderLine;
+  if (response.__typename === 'IdResponse') return { kind: 'saved' };
+  const error = response.error;
+  return {
+    kind: 'error',
+    message:
+      error.__typename === 'PackSizeCodeCombinationExists'
+        ? t('error.purchase-order-line-duplicate', {
+            code: error.itemCode,
+            packSize: error.requestedPackSize,
+          })
+        : error.description,
+  };
 };
 
 /** What a fold over several per-line calls comes to. */

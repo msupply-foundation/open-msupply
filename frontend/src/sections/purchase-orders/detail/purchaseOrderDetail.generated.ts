@@ -65,6 +65,8 @@ export type PurchaseOrderDetailLineFragment = {
   id: string;
   code: string;
   name: string;
+  unitName: string | null;
+  defaultPackSize: number;
   stats: {
   stockOnHand: number;
 };
@@ -74,9 +76,18 @@ export type PurchaseOrderDetailLineFragment = {
   requestedNumberOfUnits: number;
   adjustedNumberOfUnits: number | null;
   shippedNumberOfUnits: number;
+  pricePerPackBeforeDiscount: number;
   pricePerPackAfterDiscount: number;
   requestedDeliveryDate: string | null;
   expectedDeliveryDate: string | null;
+  supplierItemCode: string | null;
+  manufacturer: {
+  id: string;
+  name: string;
+  code: string;
+} | null;
+  comment: string | null;
+  note: string | null;
   unitsOrderedInOthers: number;
 };
 
@@ -168,7 +179,7 @@ export type PurchaseOrderDetailLinesResult = {
 };
 
 export const PurchaseOrderDetailLines = {
-  query: "query purchaseOrderDetailLines($storeId: String!, $filter: PurchaseOrderLineFilterInput, $sort: [PurchaseOrderLineSortInput!], $page: PaginationInput) {\n  purchaseOrderLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...PurchaseOrderDetailLine\n      }\n    }\n  }\n}\n\nfragment PurchaseOrderDetailLine on PurchaseOrderLineNode {\n  id\n  lineNumber\n  status\n  item {\n    id\n    code\n    name\n    stats(storeId: $storeId) {\n      stockOnHand\n    }\n  }\n  unit\n  requestedPackSize\n  requestedNumberOfUnits\n  adjustedNumberOfUnits\n  shippedNumberOfUnits\n  pricePerPackAfterDiscount\n  requestedDeliveryDate\n  expectedDeliveryDate\n  unitsOrderedInOthers\n}",
+  query: "query purchaseOrderDetailLines($storeId: String!, $filter: PurchaseOrderLineFilterInput, $sort: [PurchaseOrderLineSortInput!], $page: PaginationInput) {\n  purchaseOrderLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...PurchaseOrderDetailLine\n      }\n    }\n  }\n}\n\nfragment PurchaseOrderDetailLine on PurchaseOrderLineNode {\n  id\n  lineNumber\n  status\n  item {\n    id\n    code\n    name\n    unitName\n    defaultPackSize\n    stats(storeId: $storeId) {\n      stockOnHand\n    }\n  }\n  unit\n  requestedPackSize\n  requestedNumberOfUnits\n  adjustedNumberOfUnits\n  shippedNumberOfUnits\n  pricePerPackBeforeDiscount\n  pricePerPackAfterDiscount\n  requestedDeliveryDate\n  expectedDeliveryDate\n  supplierItemCode\n  manufacturer(storeId: $storeId) {\n    id\n    name\n    code\n  }\n  comment\n  note\n  unitsOrderedInOthers\n}",
 } as TypedDocument<PurchaseOrderDetailLinesResult, PurchaseOrderDetailLinesVariables>;
 
 export type PurchaseOrderLineSetVariables = {
@@ -371,3 +382,46 @@ export type PurchaseOrderShipmentsResult = {
 export const PurchaseOrderShipments = {
   query: "query purchaseOrderShipments($storeId: String!, $orderId: String!) {\n  invoices(\n    storeId: $storeId\n    filter: {purchaseOrderId: {equalTo: $orderId}, type: {equalTo: INBOUND_SHIPMENT}}\n    sort: {key: createdDatetime, desc: true}\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        theirReference\n        createdDatetime\n        receivedDatetime\n        otherPartyName\n      }\n    }\n  }\n}",
 } as TypedDocument<PurchaseOrderShipmentsResult, PurchaseOrderShipmentsVariables>;
+
+export type InsertPurchaseOrderLineVariables = {
+  storeId: string;
+  input: {
+    id: string;
+    purchaseOrderId: string;
+    itemIdOrCode: string;
+    requestedPackSize?: number | null;
+    requestedNumberOfUnits?: number | null;
+    requestedDeliveryDate?: string | null;
+    expectedDeliveryDate?: string | null;
+    pricePerPackBeforeDiscount?: number | null;
+    pricePerPackAfterDiscount?: number | null;
+    manufacturerId?: string | null;
+    note?: string | null;
+    unit?: string | null;
+    supplierItemCode?: string | null;
+    comment?: string | null;
+  };
+};
+
+export type InsertPurchaseOrderLineResult = {
+  insertPurchaseOrderLine: ({
+  __typename: "IdResponse";
+} & {
+  id: string;
+}) | ({
+  __typename: "InsertPurchaseOrderLineError";
+} & {
+  error: ({
+  __typename: "PackSizeCodeCombinationExists";
+} & {
+  itemCode: string;
+  requestedPackSize: number;
+} & {
+  description: string;
+});
+});
+};
+
+export const InsertPurchaseOrderLine = {
+  query: "mutation insertPurchaseOrderLine($storeId: String!, $input: InsertPurchaseOrderLineInput!) {\n  insertPurchaseOrderLine(storeId: $storeId, input: $input) {\n    __typename\n    ... on IdResponse {\n      id\n    }\n    ... on InsertPurchaseOrderLineError {\n      error {\n        __typename\n        description\n        ... on PackSizeCodeCombinationExists {\n          itemCode\n          requestedPackSize\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<InsertPurchaseOrderLineResult, InsertPurchaseOrderLineVariables>;
