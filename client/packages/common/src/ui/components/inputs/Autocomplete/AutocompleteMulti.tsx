@@ -28,6 +28,8 @@ export interface AutocompleteMultiProps<
     'renderInput'
   > {
   inputProps?: StandardTextFieldProps;
+  /** `data-testid` for the text input (locale-stable test hook), as `Autocomplete`'s. */
+  inputTestId?: string;
   optionKey?: keyof T;
   renderInput?: (params: AutocompleteRenderInputParams) => React.ReactNode;
   width?: string;
@@ -51,6 +53,7 @@ export function AutocompleteMulti<
   loadingText,
   noOptionsText,
   inputProps,
+  inputTestId,
   ...restOfAutocompleteProps
 }: PropsWithChildren<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>
@@ -73,6 +76,7 @@ export function AutocompleteMulti<
         },
         htmlInput: {
           ...props.inputProps,
+          ...(inputTestId ? { 'data-testid': inputTestId } : {}),
         },
         ...slotProps,
       }}
