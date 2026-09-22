@@ -80,12 +80,11 @@ workflow in full.
 
 ## Republication log
 
-Force-pushes of already-published history, newest first. Empty means none since the mirror
-started.
+Force-pushes of already-published history, newest first.
 
 | Date | Refs | Reason |
 | ---- | ---- | ------ |
-| YYYY-MM-DD | `develop`, `main`, all release tags | Cutover to the mirror: `develop` and `main` were replaced with filtered history from the private monorepo, so every commit has a new SHA. The previous public history is preserved unchanged on `pre-monorepo`. |
+| 2026-09-22 | `develop`, `main`, all release tags | Cutover to the mirror: `develop` and `main` were replaced with filtered history from the private monorepo, so every commit has a new SHA. The previous public history is preserved unchanged on `pre-monorepo`. |
 
 <!--
   CUTOVER: set the date on the row above to the day of the first sync, and
