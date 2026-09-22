@@ -555,16 +555,17 @@ const LineEditContent = (
         </div>
       </Show>
 
-      <LabelledValue
-        label={t('label.ordered-in-others')}
-        layout="inline"
-        data-testid="ordered-in-others-value"
-      >
-        {orderedElsewhere(
-          facts()?.unitsOrderedInOthers ?? 0,
-          facts()?.unitName ?? null
+      <Show when={facts()}>
+        {line => (
+          <LabelledValue
+            label={t('label.ordered-in-others')}
+            layout="inline"
+            data-testid="ordered-in-others-value"
+          >
+            {orderedElsewhere(line().unitsOrderedInOthers, line().unitName)}
+          </LabelledValue>
         )}
-      </LabelledValue>
+      </Show>
     </Dialog>
   );
 };
