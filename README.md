@@ -88,8 +88,10 @@ Force-pushes of already-published history, newest first.
 
 <!--
   CUTOVER: set the date on the row above to the day of the first sync, and
-  merge that change BEFORE dispatching it. The sync publishes this file, so a
-  row added afterwards needs a second force-push to appear.
+  merge it before dispatching. The sync publishes this file, so a row added
+  afterwards is not visible until the next sync — and syncs are manual, so
+  that can be weeks. The gap falls exactly when readers arrive, because their
+  fork has just stopped fast-forwarding.
 
   Adding a row (maintainers): newest first, directly under the header above.
 
