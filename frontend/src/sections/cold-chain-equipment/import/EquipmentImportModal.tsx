@@ -27,7 +27,7 @@ import {
   AssetCatalogueItemsList,
   AssetPropertiesList,
 } from '../catalogue.generated';
-import { storePageFetcher } from '@/domain/store';
+import { fetchStoresByCode } from '@/domain/store';
 import { buildCreatedLogInput } from '../list/createAsset';
 import {
   applicableProperties,
@@ -43,6 +43,7 @@ import {
   hasWarnings,
   isCsvFileName,
   parseImportFile,
+  storeCodesIn,
   rowToInsertInput,
   compareReviewRows,
   reviewRowText,
@@ -95,27 +96,21 @@ export const EquipmentImportModal: Component<
   let cataloguePromise:
     | Promise<{
         catalogueItems: { id: string; code: string }[];
-        stores: { id: string; code?: string | null }[];
         properties: PropertyDefinition[];
       }>
     | undefined;
 
   const loadCatalogue = () =>
     (cataloguePromise ??= (async () => {
-      const [items, properties, stores] = await Promise.all([
+      // The stores are NOT here: they depend on what the file names, so they
+      // are fetched per file in `onFile`.
+      const [items, properties] = await Promise.all([
         graphqlFetch(
           AssetCatalogueItemsList,
           { filter: { classId: { equalTo: CCE_CLASS_ID } } },
           { background: true }
         ),
         graphqlFetch(AssetPropertiesList, {}, { background: true }),
-        // Every store, for the file's optional store-code column. The shared
-        // paginated fetcher's first page is enough for the codes a file names
-        // in practice; a code beyond it reads as no match, which is the same
-        // outcome as a typo (OMS-REG-CCE-07.5 sibling).
-        props.isCentral
-          ? storePageFetcher()('', 0)
-          : Promise.resolve(undefined),
       ]);
       return {
         catalogueItems:
@@ -129,7 +124,6 @@ export const EquipmentImportModal: Component<
           properties.kind === 'success'
             ? applicableProperties(properties.data.assetProperties.nodes)
             : [],
-        stores: stores?.nodes ?? [],
       };
     })());
 
@@ -158,8 +152,15 @@ export const EquipmentImportModal: Component<
         readCsvFile(file),
         loadCatalogue(),
       ]);
+      // Only the stores this file actually names, asked for by code — a page
+      // of the register would not contain them on a server of any size
+      // (importParse § storeCodesIn).
+      const stores = await fetchStoresByCode(
+        storeCodesIn(text, props.isCentral)
+      );
       const parsed = parseImportFile(text, {
         ...catalogue,
+        stores,
         isCentral: props.isCentral,
         newId: () => generateUUID(),
       });
