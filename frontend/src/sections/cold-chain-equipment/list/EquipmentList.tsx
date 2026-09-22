@@ -51,6 +51,7 @@ import {
 import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
+  buildListFilter,
   buildListVariables,
   clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
@@ -356,6 +357,10 @@ const EquipmentList: Component = () => {
               // cold-chain destination of a central server, which would drop
               // the column from a file that should carry it (rules › export).
               isCentral={isCentralServer()}
+              // Exactly what the LIST is reading — the same builder, the
+              // same destination — so the file is what the screen shows
+              // (rules › export).
+              filter={buildListFilter(query(), params.storeId, destination())}
               sort={variables().sort}
             />
           </HeaderButtons>

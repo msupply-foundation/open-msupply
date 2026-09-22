@@ -305,9 +305,9 @@ mutation insertAssetLog($storeId: String!, $input: InsertAssetLogInput!) {
 # the warranty dates, the replacement flag, the specification and the
 # timestamps, none of which the list shows.
 #
-# ⚠️ Its filter is `classId` ALONE. The export drops the screen's active
-# filters AND the store restriction, so it covers the whole register (contract
-# ⚠️ wire trap). Captured as-is.
+# Its filter is the list's own, whole: the `classId` pinning, the screen's
+# active filters, and the mounted destination's store restriction — so the file
+# is what the screen shows (rules › export).
 query assetsExport(
   $storeId: String!
   $filter: AssetFilterInput
