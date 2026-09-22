@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { formatNumber, getPlural, t } from '../../../../intl';
+import { formatNumber, t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -648,16 +648,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // The rows the table shows: the draft minus soft-deleted batches.
   const rows = (): DraftBatch[] => batches.filter(b => !b.deleted);
 
-  // "2,000 Tablets" — the units the entered packs come to, shown under Packs
+  // "2,000 Tablet" — the units the entered packs come to, shown under Packs
   // received. Empty (not "0") when there is nothing to say yet, so a fresh
-  // batch carries no noise; the unit name inflects with the count the way every
-  // other line editor does (getPlural — English only by design, intlUtils).
+  // batch carries no noise.
   const unitsHint = (b: DraftBatch): string => {
     const units = b.numberOfPacks * b.packSize;
     if (!units) return '';
     const unit = item()?.unitName;
     return unit
-      ? `${formatNumber(units, { maximumFractionDigits: 2 })} ${getPlural(unit, units)}`
+      ? `${formatNumber(units, { maximumFractionDigits: 2 })} ${unit}`
       : formatNumber(units, { maximumFractionDigits: 2 });
   };
 
@@ -1701,14 +1700,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                           size="small"
                           data-testid="requested-quantity-value"
                         >
-                          {/* Unit name after the figure, inflected with the
-                              count (getPlural, as unitsHint) — so the banner
-                              reads like the requisition editors' quantities. */}
+                          {/* Unit name after the figure (as unitsHint) — so
+                              the banner reads like the requisition editors'
+                              quantities. */}
                           {(() => {
                             const unit = item()?.unitName;
                             const requested = context().requested;
                             return unit
-                              ? `${formatNumber(requested)} ${getPlural(unit, requested)}`
+                              ? `${formatNumber(requested)} ${unit}`
                               : formatNumber(requested);
                           })()}
                         </LabelledValue>
@@ -1744,6 +1743,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 showFullScreen={false}
                 config={tableConfig.config()}
                 setConfig={tableConfig.setConfig}
+                configIsDefault={tableConfig.isConfigDefault()}
+                onSaveGlobalDefault={
+                  tableConfig.canSaveGlobalDefault()
+                    ? tableConfig.saveGlobalTableConfig
+                    : undefined
+                }
                 controlsMount={tableControls()}
                 emptyMessage={t('label.add-batch')}
               />
