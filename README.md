@@ -80,8 +80,35 @@ workflow in full.
 
 ## Republication log
 
-Force-pushes of already-published history, newest first. Empty means none since the mirror
-started.
+Force-pushes of already-published history, newest first.
 
 | Date | Refs | Reason |
 | ---- | ---- | ------ |
+| 2026-09-22 | `develop`, `main`, all release tags | Cutover to the mirror: `develop` and `main` were replaced with filtered history from the private monorepo, so every commit has a new SHA. The previous public history is preserved unchanged on `pre-monorepo`. |
+
+<!--
+  CUTOVER: set the date on the row above to the day of the first sync, and
+  merge it before dispatching. The sync publishes this file, so a row added
+  afterwards is not visible until the next sync — and syncs are manual, so
+  that can be weeks. The gap falls exactly when readers arrive, because their
+  fork has just stopped fast-forwarding.
+
+  Adding a row (maintainers): newest first, directly under the header above.
+
+  | 2026-10-21 | `develop`, `main`, all release tags | Filtering rules corrected — a path was removed from the published history. |
+
+  Date    The day of the force-push, YYYY-MM-DD.
+
+  Refs    What was rewritten. Usually every published ref, since they share the
+          rewritten history; name a subset only if that is what was dispatched.
+
+  Reason  One line, and the direction matters. When something was REMOVED from
+          history, keep it general: this log is public, so naming the file or
+          describing its contents re-publishes what the rewrite was meant to
+          take back. When something was ADDED to the published set, name it —
+          nothing is sensitive in that direction and readers benefit.
+
+  No need to tell readers to rebase, or to link an internal issue: the
+  republication bullet under "About this mirror" already covers the first, and
+  internal issue numbers do not resolve here.
+-->

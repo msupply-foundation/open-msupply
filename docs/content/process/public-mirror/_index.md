@@ -61,10 +61,13 @@ compromised the moment it was pushed, whatever happens next.
    history, which is no smaller a decision than revealing one.
 4. **Log the republication.** In the same PR (or a follow-up merged before the sync), add a row to
    the *Republication log* table at the bottom of `README.public.md`: date, the refs rewritten,
-   and a one-line reason that does not itself repeat what leaked.
+   and a one-line reason that does not itself repeat what leaked. A template row and the rules
+   for each column are in an HTML comment directly under that table.
 5. **Dispatch with force.** Run `mirror-public.yaml` by `workflow_dispatch` with `force` ticked
    and `refs` empty (every published ref shares the rewritten history). Watch the run: the
-   self-check step must pass, and the push must succeed.
+   self-check step must pass, and the push must succeed. The push is atomic, so a failure leaves
+   the public repo untouched — fix the cause and re-dispatch, rather than chasing a half-rewritten
+   remote.
 6. **Verify on the public repo.** `git log --all -- <path>` on a fresh clone of the public repo
    returns nothing. The republication row is visible in the public README.
 7. **Tell the forks.** If the public repo has active forks or open PRs, comment on the open PRs
