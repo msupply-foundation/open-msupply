@@ -207,6 +207,7 @@ export {
   FilterDateRange,
   FilterSelect,
   FilterTextInput,
+  UnsavedChangesGuard,
 } from './lazyComponents';
 export type { DataTableProps } from '../ui/elements/table/DataTable';
 export type {
@@ -248,10 +249,10 @@ export type { Band, LayeredConfig } from '../ui/elements/table/tableConfig';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
- * The five the Cook Islands navigator names for its tiles (plugins/cook_islands
- * ui-surface.md § S2/S3): patient, open package, truck, document, stock — in
- * that order below. That file describes the PICTURE and never names an
- * export, so this list is the mapping; keep the two in step.
+ * The six the Cook Islands navigator names for its tiles (plugins/cook_islands
+ * ui-surface.md § S2/S3): patient, inbox tray, truck, box with an arrow out,
+ * stock, sheet — in that order below. That file describes the PICTURE and
+ * never names an export, so this list is the mapping; keep the two in step.
  * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
  * flip or an a11y attribute on the host icon reaches the contributed surface
  * too — a copied SVG would fork on the first such change.
@@ -266,10 +267,11 @@ export type { Band, LayeredConfig } from '../ui/elements/table/tableConfig';
  */
 export {
   CustomersIcon,
-  ReplenishmentIcon,
+  InboxIcon,
   TruckIcon,
-  FileIcon,
+  UploadIcon,
   StockIcon,
+  FileIcon,
 } from '../ui/icons';
 // The back affordance on the Stocktake Helper's drill-in views (#490) —
 // RTL-flipping, and already alive in this graph (the date picker's month
@@ -283,7 +285,7 @@ export { ChevronLeftIcon } from '../ui/icons';
  * hand-drawn in the plugin would miss `data-flip-rtl` and so point the wrong
  * way in Arabic.
  *
- * Same "already in the graph" bargain as the five above — Select pulls
+ * Same "already in the graph" bargain as the six above — Select pulls
  * ChevronDownIcon from this module eagerly, so this is one more small
  * component in a module that ships regardless.
  */
@@ -333,6 +335,19 @@ export type { PluginIntl, SupportedLocale } from './intl';
 export { storeHref, navigateTo, currentStorePath } from './navigation';
 export type { NavigateOptions } from './navigation';
 export { usePageSearch } from './pageSearch';
+/*
+ * Leaving a page with unsaved edits — the one piece of navigation a plugin
+ * INTERCEPTS rather than performs — is `UnsavedChangesGuard`, exported with
+ * the lazy components above rather than here. Its type is the options object
+ * the component takes; nothing else of it is eager, deliberately.
+ *
+ * The guard CANNOT be an eager export, and that is what fuses it to its
+ * prompt: it imports `@solidjs/router`, which runs `saveCurrentDepth()` at
+ * module scope and reads `window` on import, and this barrel MUST stay free
+ * of module-scope side effects (see the header) — it is evaluated by the
+ * facade entry, in environments with no DOM among them.
+ */
+export type { ConfirmOnLeaveOptions } from '../domain/confirmOnLeave/createConfirmOnLeave';
 export {
   DAYS_TILL_EXPIRED,
   expiredStockPath,
