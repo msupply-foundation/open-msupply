@@ -119,6 +119,22 @@ export const isDrafting = (status: PurchaseOrderStatus): boolean =>
   status === 'NEW' || status === 'REQUEST_APPROVAL';
 
 /**
+ * The contract-signed and advance-paid dates record what happens AFTER
+ * sending, so they stay open on a Sent order and close only once it is
+ * Finalised (rules § what may be changed, and when).
+ */
+export const canRecordPostSendingDates = (
+  status: PurchaseOrderStatus
+): boolean => status !== 'FINALISED';
+
+/**
+ * The sent date may be entered by hand in every state before Sent; from then
+ * on the panel reads it, and entering Sent stamps the actual moment over it.
+ */
+export const canEnterSentDate = (status: PurchaseOrderStatus): boolean =>
+  isOpenToChange(status);
+
+/**
  * Whether the currency may be changed. NOT a state rule: an order carrying a
  * confirmation moment has its currency fixed whatever state it is in, and an
  * order in a late state without one can still have it changed (rules § what

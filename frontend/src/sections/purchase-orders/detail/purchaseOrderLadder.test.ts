@@ -5,6 +5,8 @@ import {
   canChangeCurrency,
   canCloseLines,
   canDelete,
+  canEnterSentDate,
+  canRecordPostSendingDates,
   currentStep,
   isOpenToChange,
   ladderFor,
@@ -45,12 +47,7 @@ describe('the ladder', () => {
 
   // Ready for approval exists ONLY where the store requires authorisation.
   it('omits Ready for approval where it does not', () => {
-    expect(ladderFor(false)).toEqual([
-      'NEW',
-      'CONFIRMED',
-      'SENT',
-      'FINALISED',
-    ]);
+    expect(ladderFor(false)).toEqual(['NEW', 'CONFIRMED', 'SENT', 'FINALISED']);
   });
 });
 
@@ -112,9 +109,9 @@ describe('a state’s moment', () => {
     ).toBe('2026-02-02T00:00:00');
   });
 
-  // The sent moment is the exception: an order may carry one in ANY state
-  // (the side panel edits that date directly), so the ladder shows it only
-  // once the order is actually Sent or Finalised.
+  // The sent moment is the exception: the panel takes it by hand before the
+  // order is Sent and a backwards move clears no moment, so an order may carry
+  // one in ANY state — the ladder shows it only once the order is actually Sent.
   it('withholds the sent moment until the order is Sent', () => {
     expect(
       statusMoment(
@@ -138,6 +135,21 @@ describe('what may be changed, and when', () => {
     expect(isOpenToChange('CONFIRMED')).toBe(true);
     expect(isOpenToChange('SENT')).toBe(false);
     expect(isOpenToChange('FINALISED')).toBe(false);
+  });
+
+  it('takes the sent date by hand in every state before Sent', () => {
+    expect(canEnterSentDate('NEW')).toBe(true);
+    expect(canEnterSentDate('REQUEST_APPROVAL')).toBe(true);
+    expect(canEnterSentDate('CONFIRMED')).toBe(true);
+    expect(canEnterSentDate('SENT')).toBe(false);
+    expect(canEnterSentDate('FINALISED')).toBe(false);
+  });
+
+  it('keeps the post-sending dates open until the order is Finalised', () => {
+    expect(canRecordPostSendingDates('NEW')).toBe(true);
+    expect(canRecordPostSendingDates('CONFIRMED')).toBe(true);
+    expect(canRecordPostSendingDates('SENT')).toBe(true);
+    expect(canRecordPostSendingDates('FINALISED')).toBe(false);
   });
 
   it('allows line authoring, deletion and attachments on their own windows', () => {
