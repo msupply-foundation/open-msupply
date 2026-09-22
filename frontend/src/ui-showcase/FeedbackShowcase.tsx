@@ -163,6 +163,9 @@ export const FeedbackShowcase = () => {
               tone="success"
               icon={<CheckIcon />}
             />
+            {/* A standing classification, not a severity — and no icon: the
+                tone only tints the word (the Cook Islands Priority flag). */}
+            <StatusBadge label="Priority" tone="info" />
             <StatusBadge label="Disabled" icon={<LockIcon />} />
           </Row>
         </DashboardCard>

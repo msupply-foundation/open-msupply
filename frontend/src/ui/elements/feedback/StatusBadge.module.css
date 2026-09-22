@@ -26,6 +26,16 @@
   color: var(--text-body);
 }
 
+/* A standing classification rather than a severity — the flag a facility
+   assigns to a line ("Priority"), not a degree of anything. Same --info-main
+   as Alert's info severity, so the two feedback components agree on the
+   colour; the 40% body-text mix is the other tones' recipe unchanged, and
+   holds AA at --text-xs in both themes (8.1:1 light, 7.5:1 dark). */
+.badge[data-tone='info'] {
+  background: color-mix(in srgb, var(--info-main) 15%, var(--bg-white));
+  color: color-mix(in srgb, var(--info-main) 40%, var(--text-body));
+}
+
 .badge[data-tone='success'] {
   background: color-mix(in srgb, var(--success-main) 15%, var(--bg-white));
   color: color-mix(in srgb, var(--success-main) 45%, var(--text-body));
