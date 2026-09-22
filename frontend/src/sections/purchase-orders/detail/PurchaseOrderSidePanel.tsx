@@ -115,8 +115,12 @@ export const PurchaseOrderSidePanel: Component<
         {/* The order's undiscounted total — undiscounted by the SUPPLIER
             discount only: it already nets off every line's own discount
             (contract ⚠️ the field called "before discount"). */}
-        <FieldRow label={t('label.cost-subtotal')}>
-          <span data-testid="cost-subtotal-value">{total(subtotal())}</span>
+        <FieldRow
+          label={t('label.cost-subtotal')}
+          readOnly
+          valueTestId="cost-subtotal-value"
+        >
+          {total(subtotal())}
         </FieldRow>
 
         {/* The five charges summed. They reach NEITHER stored total, which is
@@ -127,10 +131,10 @@ export const PurchaseOrderSidePanel: Component<
               {t('label.cost-additional-fees')}
             </span>
           }
+          readOnly
+          valueTestId="cost-additional-fees-value"
         >
-          <span data-testid="cost-additional-fees-value">
-            {money(chargesTotal(props.node))}
-          </span>
+          {money(chargesTotal(props.node))}
         </FieldRow>
 
         {/* The two discount inputs are two views of ONE stored figure: only
@@ -174,10 +178,12 @@ export const PurchaseOrderSidePanel: Component<
             user reads as the order's final cost appears anywhere. No field
             carries it (contract ⚠️ the five charges reach no total on the
             server). */}
-        <FieldRow label={t('label.cost-final')}>
-          <strong data-testid="cost-final-value">
-            {total(finalCost(props.node))}
-          </strong>
+        <FieldRow
+          label={t('label.cost-final')}
+          readOnly
+          valueTestId="cost-final-value"
+        >
+          <strong>{total(finalCost(props.node))}</strong>
         </FieldRow>
       </SidePanelSection>
 
@@ -235,10 +241,12 @@ export const PurchaseOrderSidePanel: Component<
             it reads as a value rather than a disabled picker
             (ui-standards/detail-views.md § never-editable fields are never
             disabled controls). It is also the gate on the currency. */}
-        <FieldRow label={t('label.confirmed')}>
-          <span data-testid="confirmed-datetime-value">
-            {moment(props.node.confirmedDatetime)}
-          </span>
+        <FieldRow
+          label={t('label.confirmed')}
+          readOnly
+          valueTestId="confirmed-datetime-value"
+        >
+          {moment(props.node.confirmedDatetime)}
         </FieldRow>
 
         {/* Taken by hand until the order is Sent, read from then on: entering
