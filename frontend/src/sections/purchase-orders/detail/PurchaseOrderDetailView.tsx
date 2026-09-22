@@ -276,9 +276,10 @@ const PurchaseOrderDetailView: Component = () => {
 
   const status = () => (info()?.status ?? 'NEW') as PurchaseOrderStatus;
   // Sent or Finalised: every field on the screen is refused — except the
-  // comment, which the side panel keeps open in every state (rules § what may
-  // be changed, and when). Mirrored here because the refusal names no cause
-  // (contract ⚠️), so a control left enabled would fail into a bare toast.
+  // comment, open in every state, and the panel's two post-sending dates,
+  // open until Finalised (rules § what may be changed, and when). Mirrored
+  // here because the refusal names no cause (contract ⚠️), so a control left
+  // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
 
   const refetchAll = () => {

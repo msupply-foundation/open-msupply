@@ -28,12 +28,9 @@ mod update {
     };
 
     #[actix_rt::test]
-    async fn sent_purchase_order_accepts_post_sending_dates_only() {
-        let (_, _, connection_manager, _) = setup_all(
-            "sent_purchase_order_accepts_post_sending_dates_only",
-            MockDataInserts::all(),
-        )
-        .await;
+    async fn closed_purchase_order_field_edits() {
+        let (_, _, connection_manager, _) =
+            setup_all("closed_purchase_order_field_edits", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
@@ -41,7 +38,13 @@ mod update {
             .unwrap();
         let service = service_provider.purchase_order_service;
         let store_id = &mock_store_a().id;
-        let purchase_order_id = "sent_purchase_order".to_string();
+        let purchase_order_id = "closed_purchase_order".to_string();
+        let row = |context: &crate::service_provider::ServiceContext| {
+            PurchaseOrderRowRepository::new(&context.connection)
+                .find_one_by_id(&purchase_order_id)
+                .unwrap()
+                .unwrap()
+        };
 
         service
             .insert_purchase_order(
@@ -64,20 +67,17 @@ mod update {
                 },
             )
             .unwrap();
+        let sent = row(&context).sent_datetime;
+        assert!(sent.is_some());
 
         let contract_signed = NaiveDate::from_ymd_opt(2024, 2, 1).unwrap();
         let advance_paid = NaiveDate::from_ymd_opt(2024, 2, 15).unwrap();
-        let sent = NaiveDate::from_ymd_opt(2024, 1, 20)
-            .unwrap()
-            .and_hms_opt(9, 0, 0)
-            .unwrap();
         service
             .update_purchase_order(
                 &context,
                 store_id,
                 UpdatePurchaseOrderInput {
                     id: purchase_order_id.clone(),
-                    sent_datetime: Some(NullableUpdate { value: Some(sent) }),
                     contract_signed_date: Some(NullableUpdate {
                         value: Some(contract_signed),
                     }),
@@ -89,16 +89,29 @@ mod update {
                 },
             )
             .unwrap();
+        let sent_row = row(&context);
+        assert_eq!(sent_row.contract_signed_date, Some(contract_signed));
+        assert_eq!(sent_row.advance_paid_date, Some(advance_paid));
+        assert_eq!(sent_row.comment, Some("still editable".to_string()));
 
-        let row = PurchaseOrderRowRepository::new(&context.connection)
-            .find_one_by_id(&purchase_order_id)
+        let sent_edit = NaiveDate::from_ymd_opt(2024, 1, 20)
             .unwrap()
+            .and_hms_opt(9, 0, 0)
             .unwrap();
-        assert_eq!(row.sent_datetime, Some(sent));
-        assert_eq!(row.contract_signed_date, Some(contract_signed));
-        assert_eq!(row.advance_paid_date, Some(advance_paid));
-        assert_eq!(row.comment, Some("still editable".to_string()));
-
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    sent_datetime: Some(NullableUpdate {
+                        value: Some(sent_edit),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder)
+        );
         assert_eq!(
             service.update_purchase_order(
                 &context,
@@ -110,6 +123,62 @@ mod update {
                 },
             ),
             Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder)
+        );
+        assert_eq!(row(&context).sent_datetime, sent);
+
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(PurchaseOrderStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    contract_signed_date: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder)
+        );
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    advance_paid_date: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder)
+        );
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    comment: Some("finalised, still editable".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        let finalised_row = row(&context);
+        assert_eq!(finalised_row.contract_signed_date, Some(contract_signed));
+        assert_eq!(finalised_row.advance_paid_date, Some(advance_paid));
+        assert_eq!(
+            finalised_row.comment,
+            Some("finalised, still editable".to_string())
         );
     }
 
