@@ -13,8 +13,10 @@ use crate::StorageConnection;
 use crate::StorageConnectionManager;
 use crate::TransactionError;
 use diesel::sql_types::Text;
+use regex::Regex;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
+use std::sync::LazyLock;
 
 /// Named parameters for a statement, referenced from the text as `$name`.
 ///
@@ -186,6 +188,23 @@ fn not_a_value(name: &str, value: &serde_json::Value) -> RepositoryError {
     )
 }
 
+/// A `$name` placeholder. Compiled once; used to find the names a statement references and
+/// then to renumber them in one pass.
+static PARAMETER_NAME: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\$[A-Za-z_][A-Za-z0-9_]*")
+        .expect("the parameter-name pattern is a literal and compiles")
+});
+
+/// Everything a `$` could be hiding inside, plus a positional placeholder.
+///
+/// Each alternative before the last consumes one construct whole, so the `positional` group
+/// only ever matches in real statement text. Compiled once: `reject_positional_placeholders`
+/// runs on every report query and every plugin statement.
+static POSITIONAL_PLACEHOLDER: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"'(?:[^']|'')*'|"(?:[^"]|"")*"|--[^\n]*|/\*(?s:.*?)\*/|(?P<positional>\$[0-9])"#)
+        .expect("the positional-placeholder pattern is a literal and compiles")
+});
+
 /// Refuse a positional `$1` placeholder in a statement that also passes named parameters.
 ///
 /// The two styles cannot be mixed. The `$name` pattern needs a letter or `_` after the `$`,
@@ -194,23 +213,26 @@ fn not_a_value(name: &str, value: &serde_json::Value) -> RepositoryError {
 /// answers on Postgres, where SQLite reports an unknown parameter instead. Refusing by name
 /// makes both engines say the same thing.
 ///
-/// Unlike the rewrite below, this SKIPS single-quoted literals and comments. It has to:
-/// `'$100'` is an ordinary price in a report's text, and refusing a statement is a hard
-/// failure, so this only refuses where it is sure. Postgres dollar-quoting (`$$…$$`) is not
-/// understood, so a `$1` inside such a body would still be refused — no report or bundle in
-/// the org writes one. (The rewrite stays naive about literals — a `$name` in one is still
-/// replaced on Postgres. Being conservative here does not make that worse.)
+/// Unlike the rewrite below, this SKIPS quoted strings, quoted identifiers and comments, and
+/// it has to. Refusing is a hard failure, and this runs on every REPORT query as well as
+/// every plugin statement, so a report that merely prints `'$100'` or aliases a column
+/// `AS "Cost $1000"` must not be turned away. It only refuses where it is sure.
+///
+/// Two constructs it does not understand, both of which therefore refuse a `$<digit>` inside
+/// them. Neither appears in any report or bundle in the org, and both are far-fetched next to
+/// the misbinding this prevents:
+///
+/// - Postgres dollar-quoting (`$$ … $$`, `$tag$ … $tag$`), which needs tag matching.
+/// - A NESTED block comment (`/* a /* b */ $1 */`). Postgres nests these; this stops at the
+///   first `*/`.
+///
+/// The rewrite itself stays naive about all of this — a `$name` inside a literal is still
+/// replaced on Postgres. Being conservative here does not make that worse.
 ///
 /// Only checked when parameters are given: without them the text runs as written, and a
 /// bundle built before `sql()` took a second argument may carry a `$1` it means.
 fn reject_positional_placeholders(sql: &str) -> Result<(), RepositoryError> {
-    use regex::Regex;
-
-    // Each alternative consumes one thing a `$` could be hiding in, so the placeholder
-    // alternative only ever matches outside them. A doubled `''` stays inside its literal.
-    let re = Regex::new(r"'(?:[^']|'')*'|--[^\n]*|/\*(?s:.*?)\*/|(?P<positional>\$[0-9])").unwrap();
-
-    for captures in re.captures_iter(sql) {
+    for captures in POSITIONAL_PLACEHOLDER.captures_iter(sql) {
         if let Some(found) = captures.name("positional") {
             return Err(RepositoryError::as_db_error(
                 "SQL_POSITIONAL_PARAMETER",
@@ -240,7 +262,6 @@ fn query_json_postgres(
 ) -> Result<Vec<serde_json::Value>, RepositoryError> {
     use diesel::connection::SimpleConnection;
     use diesel::{sql_query, RunQueryDsl};
-    use regex::Regex;
     use util::uuid::small_uuid;
 
     // remove trailing ";" if there is any
@@ -254,7 +275,7 @@ fn query_json_postgres(
         Some(parameters) => {
             reject_positional_placeholders(&sql)?;
             // extract all used params from the sql query string, e.g. $myVariable
-            let re = Regex::new(r"\$[A-Za-z_][A-Za-z0-9_]*").unwrap();
+            let re = &*PARAMETER_NAME;
             // stores the variable name and the found parameter value, e.g. ($myVariable, "Hello")
             let mut used_params = Vec::<(String, serde_json::Value)>::new();
             for param in re.find_iter(&sql) {
@@ -796,18 +817,21 @@ mod tests {
         // Without parameters the text runs as written, so a `$1` is the caller's business
         assert!(plugin(&connection, &manager, "SELECT 1 AS one", None).is_ok());
 
-        // A `$` followed by a digit inside a string literal or a comment is not a
-        // placeholder, and refusing one would break an ordinary report that prints a price
+        // A `$` followed by a digit is not a placeholder when it sits inside a quoted
+        // string, a QUOTED IDENTIFIER or a comment. Refusing is a hard failure and this runs
+        // on every report query too, so an ordinary report that prints a price or aliases a
+        // column after one must still run.
         let rows = plugin(
             &connection,
             &manager,
-            "SELECT id, '$100' AS price FROM store WHERE id = $storeId -- costs $5\n",
+            "SELECT id, '$100' AS price, 'x' AS \"Cost $1000\" FROM store \
+             WHERE id = $storeId /* was $1 */ -- costs $5\n",
             Some(&params(json!({ "storeId": "store_a" }))),
         )
         .unwrap();
         assert_eq!(
             rows,
-            vec![json!({ "id": "store_a", "price": "$100" })],
+            vec![json!({ "id": "store_a", "price": "$100", "Cost $1000": "x" })],
             "{rows:?}"
         );
     }
