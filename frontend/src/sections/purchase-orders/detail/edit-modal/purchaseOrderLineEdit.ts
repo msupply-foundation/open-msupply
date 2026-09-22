@@ -152,14 +152,14 @@ export const packSizeEntered = (
 });
 
 /**
- * One input, two labels (spec S10 § middle): Requested packs while drafting,
- * Adjusted packs once Ready for sending or Sent — and, the spec's one
- * exception, Requested packs again on a Finalised order.
+ * One input, two labels (spec S10 § middle): Order quantity (Packs) while
+ * drafting, Adjusted packs once Ready for sending or Sent — and, the spec's
+ * one exception, Order quantity (Packs) again on a Finalised order.
  */
 export const packsLabelKey = (status: PurchaseOrderStatus): LocaleKey =>
   status === 'CONFIRMED' || status === 'SENT'
     ? 'label.adjusted-packs'
-    : 'label.requested-packs';
+    : 'label.order-quantity-in-packs';
 
 /** The read-only Adjusted units row appears once the order is past approval. */
 export const showsAdjustedUnits = (status: PurchaseOrderStatus): boolean =>
@@ -176,7 +176,9 @@ export const discountPercentage = (before: number, after: number): number =>
 
 export type Prices = Pick<
   LineDraft,
-  'pricePerPackBeforeDiscount' | 'discountPercentage' | 'pricePerPackAfterDiscount'
+  | 'pricePerPackBeforeDiscount'
+  | 'discountPercentage'
+  | 'pricePerPackAfterDiscount'
 >;
 
 /**
@@ -200,7 +202,8 @@ export const repriced = (changed: keyof Prices, prices: Prices): Prices => {
   return {
     pricePerPackBeforeDiscount,
     discountPercentage: discount,
-    pricePerPackAfterDiscount: pricePerPackBeforeDiscount * (1 - discount / 100),
+    pricePerPackAfterDiscount:
+      pricePerPackBeforeDiscount * (1 - discount / 100),
   };
 };
 

@@ -147,15 +147,17 @@ describe('OMS-FUN-PO-02.12 — which quantity the packs write', () => {
 });
 
 describe('OMS-FUN-PO-02.12 — one input, two labels', () => {
-  it('reads Requested packs while drafting and Adjusted packs once Ready for sending', () => {
-    expect(packsLabelKey('NEW')).toBe('label.requested-packs');
-    expect(packsLabelKey('REQUEST_APPROVAL')).toBe('label.requested-packs');
+  it('reads Order quantity (Packs) while drafting and Adjusted packs once Ready for sending', () => {
+    expect(packsLabelKey('NEW')).toBe('label.order-quantity-in-packs');
+    expect(packsLabelKey('REQUEST_APPROVAL')).toBe(
+      'label.order-quantity-in-packs'
+    );
     expect(packsLabelKey('CONFIRMED')).toBe('label.adjusted-packs');
     expect(packsLabelKey('SENT')).toBe('label.adjusted-packs');
   });
 
-  it('reads Requested packs on a Finalised order', () => {
-    expect(packsLabelKey('FINALISED')).toBe('label.requested-packs');
+  it('reads Order quantity (Packs) on a Finalised order', () => {
+    expect(packsLabelKey('FINALISED')).toBe('label.order-quantity-in-packs');
   });
 
   it('shows the Adjusted units row only past Ready for approval', () => {
