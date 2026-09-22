@@ -57,6 +57,7 @@ import {
   rememberPageSize,
 } from '../../../list/pageSize';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
+import { pagedNext, rowAfter } from '@/list/pagedNext';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -498,69 +499,42 @@ const InboundShipmentDetailView: Component = () => {
     disabled: () => !current() || isDisabled(),
   });
 
-  // "OK & next" (update mode): resolve the next item for the editor to advance
-  // to. Owned by the PARENT because the line table is server-paginated — the
-  // next item may be on a later page, and finding it pages the visible table
-  // forward. Given the current item id and the covered-items set (every item
-  // stepped through this walk, so a re-appearing item — one spans several batch
-  // rows — is never offered twice, across pages too), returns the next distinct
-  // uncovered item id in the current sorted order, or undefined when the whole
-  // list is exhausted (→ the modal drops into add mode, table left on the last
-  // page walked). Mirrors the stocktake reference (kdd/stocktake-line-editing).
-  const nextItem = async (
+  // "OK & next" (update mode): the next distinct item for the editor to
+  // advance to. Owned by the PARENT because the line table is server-paginated
+  // — the next item may be on a later page, and finding it pages the visible
+  // table forward (src/list/pagedNext). `covered` is every item stepped
+  // through this walk, so an item spanning several batch rows is never offered
+  // twice, across pages too. Undefined once the list is exhausted (→ the modal
+  // drops into add mode). Mirrors the stocktake reference
+  // (kdd/stocktake-line-editing).
+  const nextItem = (
     currentId: string,
     covered: Set<string>
-  ): Promise<string | undefined> => {
-    // The next distinct, uncovered item within a page's rows. On the CURRENT
-    // page start AFTER the current item's rows (`fromStart` false): items
-    // before it are uncovered but already behind us, so a `past` gate walks
-    // past the current item first. Later pages are all "after", so `fromStart`
-    // true.
-    const pick = (pageRows: Line[], fromStart: boolean): string | undefined => {
-      let past = fromStart;
-      for (const line of pageRows) {
-        const id = line.itemId;
-        if (id === currentId) {
-          past = true;
-          continue;
-        }
-        if (!past || covered.has(id)) continue;
-        return id;
-      }
-      return undefined;
-    };
-
-    // 1. The current page (already loaded) — scan only after the current item.
-    const onThisPage = pick(rows(), false);
-    if (onThisPage) return onThisPage;
-
-    // 2/3. Walk forward a page at a time until we find one or run out. Later
-    // pages scan from their top; the covered set guards repeats. Each page is
-    // fetched DIRECTLY (race-free) while the table's URL offset follows along.
-    let offset = query().offset;
-    const first = query().first;
-    for (;;) {
-      offset += first;
-      if (offset >= totalCount()) return undefined; // no further pages
-      setQuery({ ...query(), offset });
-      const result = await graphqlFetch(InboundShipmentLines, {
-        storeId: params.storeId,
-        filter: {
-          invoiceId: { equalTo: params.invoiceId },
-          type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
-        },
-        sort: query().sort,
-        page: { first, offset },
-      });
-      if (
-        result.kind !== 'success' ||
-        result.data.invoiceLines.__typename !== 'InvoiceLineConnector'
-      )
-        return undefined;
-      const found = pick(result.data.invoiceLines.nodes, true);
-      if (found) return found;
-    }
-  };
+  ): Promise<string | undefined> =>
+    pagedNext<Line, string>({
+      rows,
+      page: () => query(),
+      totalCount,
+      setOffset: offset => setQuery({ ...query(), offset }),
+      fetchPage: async (offset, first) => {
+        const result = await graphqlFetch(InboundShipmentLines, {
+          storeId: params.storeId,
+          filter: {
+            invoiceId: { equalTo: params.invoiceId },
+            type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
+          },
+          sort: query().sort,
+          page: { first, offset },
+        });
+        return result.kind === 'success' &&
+          result.data.invoiceLines.__typename === 'InvoiceLineConnector'
+          ? result.data.invoiceLines.nodes
+          : undefined;
+      },
+      pick: (pageRows, fromStart) =>
+        rowAfter(pageRows, fromStart, l => l.itemId, currentId, covered)
+          ?.itemId,
+    });
 
   const reportSort = () => {
     const s = query().sort[0];

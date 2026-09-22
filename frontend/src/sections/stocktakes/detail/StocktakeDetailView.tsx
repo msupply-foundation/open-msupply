@@ -83,6 +83,7 @@ import {
   rememberPageSize,
 } from '@/list/pageSize';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
+import { pagedNext, rowAfter } from '@/list/pagedNext';
 import { stripEmpty } from '@/typeHelpers';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
@@ -588,84 +589,53 @@ const StocktakeDetailView: Component = () => {
     void refetchAfterSave();
   };
 
-  // "OK & next" (update mode) asks the parent for the next item to edit. We own
-  // this (not the modal) because the list is server-paginated: the next item
-  // may be on a later PAGE, and finding it means advancing the detail table
-  // forward — the same as the user paging. Rules (see the behaviour matrix):
-  //   1. Scan the CURRENT page's rows after the current item for the next
-  //      distinct item not in `covered` (an item spans several batch rows).
-  //   2. If none on this page and more pages exist, advance to the next page
-  //      (offset += first — the table VISIBLY moves), fetch it, and rescan.
-  //   3. Exhausted (no eligible item on any further page) → undefined; the
-  //      modal then drops into add mode. The table stays on the last page.
-  // `covered` is the modal's this-iteration set (items already stepped
-  // through), passed in so a re-appearing item isn't offered twice, across
-  // pages too.
-  //
-  // Pages beyond the first are fetched DIRECTLY (not via the reactive resource)
-  // so the walk is race-free; we still setQuery(offset) so the visible table
-  // follows along, and the resource refetches that page in the background.
-  const nextItem = async (
+  // "OK & next" (update mode) asks the parent for the next item to edit: the
+  // list is server-paginated, so the next distinct item may be on a later page
+  // and finding it pages the detail table forward (src/list/pagedNext). An item
+  // spans several batch rows; `covered` — every item stepped through this walk
+  // — keeps a re-appearing one from being offered twice, across pages too.
+  const nextItem = (
     currentId: string,
     covered: Set<string>
-  ): Promise<StocktakeLineEditItem | undefined> => {
-    // Pick the next distinct, uncovered item within a page's rows. On the
-    // CURRENT page we must start AFTER the current item's row (`fromStart` =
-    // false): items before it are uncovered but already behind us, so a `past`
-    // gate walks past the current item first. On later pages everything is
-    // "after", so `fromStart` = true. An item spans several batch rows; the
-    // covered set (which includes the current item) skips repeats.
-    const pick = (
-      pageRows: Line[],
-      fromStart: boolean
-    ): StocktakeLineEditItem | undefined => {
-      let past = fromStart;
-      for (const line of pageRows) {
-        const id = line.item.id;
-        if (id === currentId) {
-          past = true; // now past the current item's rows
-          continue;
-        }
-        if (!past || covered.has(id)) continue;
-        return {
-          id,
-          code: line.item.code,
-          name: line.itemName,
-          isVaccine: line.item.isVaccine,
-          doses: line.item.doses,
-          unitName: line.item.unitName,
-          defaultPackSize: line.item.defaultPackSize,
-        };
-      }
-      return undefined;
-    };
-
-    // 1. The current page (already loaded) — scan only after the current item.
-    const onThisPage = pick(rows(), false);
-    if (onThisPage) return onThisPage;
-
-    // 2/3. Walk forward a page at a time until we find one or run out. Later
-    // pages scan from their top (fromStart), the covered set guarding repeats.
-    let offset = query().offset;
-    const first = query().first;
-    for (;;) {
-      offset += first;
-      if (offset >= totalCount()) return undefined; // no further pages
-      // Move the visible table to this page (the resource refetches it too).
-      setQuery({ ...query(), offset });
-      const result = await graphqlFetch(StocktakeLines, {
-        storeId: params.storeId,
-        stocktakeId: params.stocktakeId,
-        filter: stripEmpty(query().filter),
-        sort: query().sort,
-        page: { first, offset },
-      });
-      if (result.kind !== 'success') return undefined;
-      const found = pick(result.data.stocktakeLines.nodes, true);
-      if (found) return found;
-      // else keep advancing
-    }
-  };
+  ): Promise<StocktakeLineEditItem | undefined> =>
+    pagedNext<Line, StocktakeLineEditItem>({
+      rows,
+      page: () => query(),
+      totalCount,
+      setOffset: offset => setQuery({ ...query(), offset }),
+      fetchPage: async (offset, first) => {
+        const result = await graphqlFetch(StocktakeLines, {
+          storeId: params.storeId,
+          stocktakeId: params.stocktakeId,
+          filter: stripEmpty(query().filter),
+          sort: query().sort,
+          page: { first, offset },
+        });
+        return result.kind === 'success'
+          ? result.data.stocktakeLines.nodes
+          : undefined;
+      },
+      pick: (pageRows, fromStart) => {
+        const line = rowAfter(
+          pageRows,
+          fromStart,
+          l => l.item.id,
+          currentId,
+          covered
+        );
+        return (
+          line && {
+            id: line.item.id,
+            code: line.item.code,
+            name: line.itemName,
+            isVaccine: line.item.isVaccine,
+            doses: line.item.doses,
+            unitName: line.item.unitName,
+            defaultPackSize: line.item.defaultPackSize,
+          }
+        );
+      },
+    });
 
   // "Show error lines" (from a failed finalise / bulk action's error dialog):
   // turn on the errors filter so the table narrows to just the stamped lines

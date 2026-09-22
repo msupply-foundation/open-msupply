@@ -51,6 +51,7 @@ import {
   rememberPageSize,
 } from '@/list/pageSize';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
+import { hasFurtherPage, pagedNext, rowAfter } from '@/list/pagedNext';
 import { stripEmpty } from '@/typeHelpers';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import { ActivityLogPanel } from '@/domain/activityLog';
@@ -328,31 +329,35 @@ const PurchaseOrderDetailView: Component = () => {
   };
 
   // The editor's walk follows the table's current sort and filter (rules §
-  // saving): the next row on this page, or the first of the next page — read
-  // with the same variables and one page on, the table moving with it.
-  const morePages = () => query().offset + query().first < totalCount();
+  // saving), paging the server where the next line is on the next page and
+  // the table moving with it (src/list/pagedNext).
   const hasNextLine = (lineId: string) => {
     const index = rows().findIndex(line => line.id === lineId);
-    return index >= 0 && (index < rows().length - 1 || morePages());
+    return (
+      index >= 0 &&
+      (index < rows().length - 1 || hasFurtherPage(query(), totalCount()))
+    );
   };
-  const nextLine = async (lineId: string): Promise<Line | undefined> => {
-    const index = rows().findIndex(line => line.id === lineId);
-    if (index >= 0 && index < rows().length - 1) return rows()[index + 1];
-    if (!morePages()) return undefined;
-    const offset = query().offset + query().first;
-    const result = await graphqlFetch(PurchaseOrderDetailLines, {
-      ...linesVariables(),
-      page: { first: query().first, offset },
+  const nextLine = (lineId: string): Promise<Line | undefined> =>
+    pagedNext<Line, Line>({
+      rows,
+      page: () => query(),
+      totalCount,
+      setOffset: offset => setQuery({ ...query(), offset }),
+      fetchPage: async (offset, first) => {
+        const result = await graphqlFetch(PurchaseOrderDetailLines, {
+          ...linesVariables(),
+          page: { first, offset },
+        });
+        return result.kind === 'success' &&
+          result.data.purchaseOrderLines.__typename ===
+            'PurchaseOrderLineConnector'
+          ? result.data.purchaseOrderLines.nodes
+          : undefined;
+      },
+      pick: (pageRows, fromStart) =>
+        rowAfter(pageRows, fromStart, line => line.id, lineId),
     });
-    if (
-      result.kind !== 'success' ||
-      result.data.purchaseOrderLines.__typename !== 'PurchaseOrderLineConnector'
-    )
-      return undefined;
-    const first = result.data.purchaseOrderLines.nodes[0];
-    if (first) setQuery({ ...query(), offset });
-    return first;
-  };
   // Sent or Finalised: every field on the screen is refused — except the
   // comment, open in every state, and the panel's two post-sending dates,
   // open until Finalised (rules § what may be changed, and when). Mirrored
