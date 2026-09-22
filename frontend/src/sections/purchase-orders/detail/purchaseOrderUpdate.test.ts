@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphqlFetch } from '../../../api/graphql';
 import {
-  cascadeDeliveryDate,
+  cascadedDateFields,
+  cascadeDeliveryDates,
   closePurchaseOrderLines,
   deletePurchaseOrderLines,
+  deliveryDatesVary,
   updatePurchaseOrder,
 } from './purchaseOrderUpdate';
 
@@ -187,21 +189,16 @@ describe('closePurchaseOrderLines', () => {
   });
 });
 
-describe('cascadeDeliveryDate', () => {
-  const lines = [
-    { id: 'l1', expectedDeliveryDate: null },
-    { id: 'l2', expectedDeliveryDate: '2026-03-01' },
-  ];
+describe('cascadeDeliveryDates', () => {
+  const lines = [{ id: 'l1' }, { id: 'l2' }];
 
-  it('writes the requested date to every line and fills an absent expected date', async () => {
+  it('writes the given dates onto every line', async () => {
     fetchMock.mockResolvedValue(saved('updatePurchaseOrderLine'));
     expect(
-      await cascadeDeliveryDate(
-        's1',
-        lines,
+      await cascadeDeliveryDates('s1', lines, '2026-02-01', [
         'requestedDeliveryDate',
-        '2026-02-01'
-      )
+        'expectedDeliveryDate',
+      ])
     ).toEqual({ applied: 2, message: undefined });
     expect(fetchMock.mock.calls.map(call => call[1])).toEqual([
       {
@@ -214,27 +211,28 @@ describe('cascadeDeliveryDate', () => {
       },
       {
         storeId: 's1',
-        input: { id: 'l2', requestedDeliveryDate: { value: '2026-02-01' } },
+        input: {
+          id: 'l2',
+          requestedDeliveryDate: { value: '2026-02-01' },
+          expectedDeliveryDate: { value: '2026-02-01' },
+        },
       },
     ]);
   });
 
-  it('writes the expected date alone, overwriting what a line has', async () => {
+  it('leaves the other date untouched when not asked for it', async () => {
     fetchMock.mockResolvedValue(saved('updatePurchaseOrderLine'));
-    await cascadeDeliveryDate(
-      's1',
-      lines,
-      'expectedDeliveryDate',
-      '2026-04-01'
-    );
+    await cascadeDeliveryDates('s1', lines, '2026-02-01', [
+      'requestedDeliveryDate',
+    ]);
     expect(fetchMock.mock.calls.map(call => call[1])).toEqual([
       {
         storeId: 's1',
-        input: { id: 'l1', expectedDeliveryDate: { value: '2026-04-01' } },
+        input: { id: 'l1', requestedDeliveryDate: { value: '2026-02-01' } },
       },
       {
         storeId: 's1',
-        input: { id: 'l2', expectedDeliveryDate: { value: '2026-04-01' } },
+        input: { id: 'l2', requestedDeliveryDate: { value: '2026-02-01' } },
       },
     ]);
   });
@@ -244,12 +242,91 @@ describe('cascadeDeliveryDate', () => {
       .mockResolvedValueOnce(untyped('CannotEditSentPurchaseOrder'))
       .mockResolvedValueOnce(saved('updatePurchaseOrderLine'));
     expect(
-      await cascadeDeliveryDate(
-        's1',
-        lines,
+      await cascadeDeliveryDates('s1', lines, '2026-04-01', [
         'expectedDeliveryDate',
-        '2026-04-01'
-      )
+      ])
     ).toEqual({ applied: 1, message: 'Cannot Edit Sent Purchase Order' });
+  });
+});
+
+describe('cascadedDateFields', () => {
+  const agreeing = [
+    { requestedDeliveryDate: '2026-01-01', expectedDeliveryDate: null },
+    { requestedDeliveryDate: '2026-01-01', expectedDeliveryDate: null },
+  ];
+  const expectedDiffer = [
+    { requestedDeliveryDate: '2026-01-01', expectedDeliveryDate: '2026-02-01' },
+    { requestedDeliveryDate: '2026-01-01', expectedDeliveryDate: '2026-02-09' },
+  ];
+
+  it('carries the other date along while the lines agree on it', () => {
+    expect(cascadedDateFields(agreeing, 'requestedDeliveryDate')).toEqual([
+      'requestedDeliveryDate',
+      'expectedDeliveryDate',
+    ]);
+    expect(cascadedDateFields(agreeing, 'expectedDeliveryDate')).toEqual([
+      'expectedDeliveryDate',
+      'requestedDeliveryDate',
+    ]);
+  });
+
+  it('leaves per-line values of the other date alone once they differ', () => {
+    expect(cascadedDateFields(expectedDiffer, 'requestedDeliveryDate')).toEqual(
+      ['requestedDeliveryDate']
+    );
+  });
+});
+
+describe('deliveryDatesVary', () => {
+  it('is false for no lines, or lines that all agree on the field', () => {
+    expect(deliveryDatesVary([], 'expectedDeliveryDate')).toBe(false);
+    expect(
+      deliveryDatesVary(
+        [
+          { expectedDeliveryDate: '2026-03-01' },
+          { expectedDeliveryDate: '2026-03-01' },
+        ],
+        'expectedDeliveryDate'
+      )
+    ).toBe(false);
+    expect(
+      deliveryDatesVary(
+        [{ requestedDeliveryDate: null }, { requestedDeliveryDate: undefined }],
+        'requestedDeliveryDate'
+      )
+    ).toBe(false);
+  });
+
+  it('is true for two dates, or a date beside a line with none', () => {
+    expect(
+      deliveryDatesVary(
+        [
+          { requestedDeliveryDate: '2026-03-01' },
+          { requestedDeliveryDate: '2026-03-02' },
+        ],
+        'requestedDeliveryDate'
+      )
+    ).toBe(true);
+    expect(
+      deliveryDatesVary(
+        [
+          { expectedDeliveryDate: '2026-03-01' },
+          { expectedDeliveryDate: null },
+        ],
+        'expectedDeliveryDate'
+      )
+    ).toBe(true);
+  });
+
+  it('reads only the field asked about', () => {
+    expect(
+      deliveryDatesVary(
+        [
+          { requestedDeliveryDate: '2026-03-01', expectedDeliveryDate: 'a' },
+          { requestedDeliveryDate: '2026-03-01', expectedDeliveryDate: 'b' },
+        ],
+        'requestedDeliveryDate'
+      )
+    ).toBe(false);
   });
 });
