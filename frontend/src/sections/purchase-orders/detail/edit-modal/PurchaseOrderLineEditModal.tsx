@@ -99,20 +99,6 @@ export const PurchaseOrderLineEditModal = (
 
 const LINE_STATUSES = ['NEW', 'SENT', 'CLOSED'] as const;
 
-// A never-editable row: plain text at the row's inline-end, never a disabled
-// input (ui-standards › detail-views § never-editable fields).
-const ReadRow = (row: {
-  label: string;
-  value: string;
-  testId: string;
-}): JSX.Element => (
-  <FieldRow label={row.label}>
-    <span class={styles.value} data-testid={row.testId}>
-      {row.value}
-    </span>
-  </FieldRow>
-);
-
 const LineEditContent = (
   props: PurchaseOrderLineEditModalProps
 ): JSX.Element => {
@@ -360,21 +346,30 @@ const LineEditContent = (
       <Show when={facts() && draft()}>
         <div class={styles.grid}>
           <div class={styles.column}>
-            <ReadRow
+            <FieldRow
               label={t('label.line-number')}
-              value={String(facts()!.lineNumber)}
-              testId="line-number-value"
-            />
-            <ReadRow
+              readOnly
+              valueAlign="end"
+              valueTestId="line-number-value"
+            >
+              {String(facts()!.lineNumber)}
+            </FieldRow>
+            <FieldRow
               label={t('label.stock-on-hand')}
-              value={formatNumber(facts()!.stockOnHand)}
-              testId="stock-on-hand-value"
-            />
-            <ReadRow
+              readOnly
+              valueAlign="end"
+              valueTestId="stock-on-hand-value"
+            >
+              {formatNumber(facts()!.stockOnHand)}
+            </FieldRow>
+            <FieldRow
               label={t('label.unit')}
-              value={facts()!.unitName ?? '-'}
-              testId="unit-value"
-            />
+              readOnly
+              valueAlign="end"
+              valueTestId="unit-value"
+            >
+              {facts()!.unitName ?? '-'}
+            </FieldRow>
             <FieldRow label={t('label.supplier-item-code')}>
               <TextField
                 label={t('label.supplier-item-code')}
@@ -438,21 +433,25 @@ const LineEditContent = (
                 }
               />
             </FieldRow>
-            <ReadRow
+            <FieldRow
               label={t('label.requested-quantity')}
-              value={formatNumber(draft()!.requestedNumberOfUnits)}
-              testId="requested-units-value"
-            />
+              readOnly
+              valueAlign="end"
+              valueTestId="requested-units-value"
+            >
+              {formatNumber(draft()!.requestedNumberOfUnits)}
+            </FieldRow>
             <Show when={showsAdjustedUnits(status())}>
-              <ReadRow
+              <FieldRow
                 label={t('label.adjusted-units')}
-                value={
-                  draft()!.adjustedNumberOfUnits == null
-                    ? '-'
-                    : formatNumber(draft()!.adjustedNumberOfUnits!)
-                }
-                testId="adjusted-units-value"
-              />
+                readOnly
+                valueAlign="end"
+                valueTestId="adjusted-units-value"
+              >
+                {draft()!.adjustedNumberOfUnits == null
+                  ? '-'
+                  : formatNumber(draft()!.adjustedNumberOfUnits!)}
+              </FieldRow>
             </Show>
             <FieldRow label={t('label.price-per-pack-before-discount')}>
               <CurrencyField
@@ -494,11 +493,14 @@ const LineEditContent = (
                 onChange={value => setPrice('pricePerPackAfterDiscount', value)}
               />
             </FieldRow>
-            <ReadRow
+            <FieldRow
               label={t('label.total-cost')}
-              value={money(lineCost(draft()!))}
-              testId="total-cost-value"
-            />
+              readOnly
+              valueAlign="end"
+              valueTestId="total-cost-value"
+            >
+              {money(lineCost(draft()!))}
+            </FieldRow>
           </div>
 
           <div class={styles.column}>

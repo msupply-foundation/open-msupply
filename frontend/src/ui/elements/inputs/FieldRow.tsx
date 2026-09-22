@@ -30,6 +30,20 @@ export interface FieldRowProps {
    * box and reads as unattached to it.
    */
   align?: 'center' | 'first-line';
+  /**
+   * The children are a never-editable VALUE, not a control: plain text in the
+   * control column, no input chrome (spec/ui-standards/detail-views § never-
+   * editable fields). The caller shows a dash for an empty value.
+   */
+  readOnly?: boolean;
+  /**
+   * Where a read-only value sits in its column: `start` (default) reads as a
+   * fact beside its label; `end` lines a figure up with the numeric inputs
+   * above and below it in a dense editor.
+   */
+  valueAlign?: 'start' | 'end';
+  /** A test id on the read-only value. */
+  valueTestId?: string;
   class?: string;
 }
 
@@ -58,6 +72,16 @@ export const FieldRow = (props: FieldRowProps): JSX.Element => (
         </span>
       </Show>
     </span>
-    <div class={styles.control}>{props.children}</div>
+    <div class={styles.control}>
+      <Show when={props.readOnly} fallback={props.children}>
+        <span
+          class={styles.value}
+          data-align={props.valueAlign ?? 'start'}
+          data-testid={props.valueTestId}
+        >
+          {props.children}
+        </span>
+      </Show>
+    </div>
   </div>
 );

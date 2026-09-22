@@ -56,3 +56,15 @@
 .control {
   min-inline-size: 0;
 }
+
+/* readOnly: the value is plain text in the control column — read-only reads
+   from the ABSENCE of input chrome, never from a disabled control. */
+.value {
+  display: block;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.value[data-align='end'] {
+  text-align: end;
+}
