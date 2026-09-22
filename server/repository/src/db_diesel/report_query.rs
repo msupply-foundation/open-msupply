@@ -13,6 +13,8 @@ use crate::StorageConnection;
 use crate::StorageConnectionManager;
 use crate::TransactionError;
 use diesel::sql_types::Text;
+use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 
 /// Named parameters for a statement, referenced from the text as `$name`.
 ///
@@ -131,7 +133,8 @@ pub fn query_read_only(
     if cfg!(feature = "postgres") {
         query_json_postgres(connection, sql, parameters)
     } else {
-        query_json_sqlite(&report_connection(database_url)?, sql, parameters)
+        let connection = scoped_report_connection(database_url)?;
+        query_json_sqlite(&connection, sql, parameters)
     }
 }
 
@@ -143,6 +146,14 @@ struct JsonDataRow {
 
 /// A parameter as a Postgres literal for `EXECUTE`. The escaping here is what keeps these
 /// values data, since they are NOT bound.
+///
+/// SECURITY-CRITICAL. On Postgres this function, plus the `standard_conforming_strings` pin
+/// in `query_json_postgres`, is the whole barrier between a caller's value and executable
+/// SQL — for a report's parameters as much as a plugin's (#687). There is no second line of
+/// defence here that a bound parameter would have given: a mistake in this function is an
+/// injection, not a type error. Do not loosen either piece, and do not take the pin out
+/// because "the default is on" — `a_backslash_in_a_value_stays_in_the_value` and
+/// `a_parameter_cannot_become_an_expression` exist to fail if anyone does.
 ///
 /// They cannot simply be bound: the `PREPARE` below declares no parameter types, so
 /// Postgres infers each from how the statement uses it and coerces the literal — which is
@@ -175,6 +186,44 @@ fn not_a_value(name: &str, value: &serde_json::Value) -> RepositoryError {
     )
 }
 
+/// Refuse a positional `$1` placeholder in a statement that also passes named parameters.
+///
+/// The two styles cannot be mixed. The `$name` pattern needs a letter or `_` after the `$`,
+/// so a `$1` is not a name and is left alone — and then renumbering the names writes its own
+/// `$1`, so `EXECUTE` sees two and supplies one argument for both. That is silently wrong
+/// answers on Postgres, where SQLite reports an unknown parameter instead. Refusing by name
+/// makes both engines say the same thing.
+///
+/// Unlike the rewrite below, this SKIPS single-quoted literals and comments. It has to:
+/// `'$100'` is an ordinary price in a report's text, and refusing a statement is a hard
+/// failure, so this only refuses where it is sure. Postgres dollar-quoting (`$$…$$`) is not
+/// understood, so a `$1` inside such a body would still be refused — no report or bundle in
+/// the org writes one. (The rewrite stays naive about literals — a `$name` in one is still
+/// replaced on Postgres. Being conservative here does not make that worse.)
+///
+/// Only checked when parameters are given: without them the text runs as written, and a
+/// bundle built before `sql()` took a second argument may carry a `$1` it means.
+fn reject_positional_placeholders(sql: &str) -> Result<(), RepositoryError> {
+    use regex::Regex;
+
+    // Each alternative consumes one thing a `$` could be hiding in, so the placeholder
+    // alternative only ever matches outside them. A doubled `''` stays inside its literal.
+    let re = Regex::new(r"'(?:[^']|'')*'|--[^\n]*|/\*(?s:.*?)\*/|(?P<positional>\$[0-9])").unwrap();
+
+    for captures in re.captures_iter(sql) {
+        if let Some(found) = captures.name("positional") {
+            return Err(RepositoryError::as_db_error(
+                "SQL_POSITIONAL_PARAMETER",
+                format!(
+                    "{} is a positional placeholder; name the parameter instead, e.g. $storeId",
+                    found.as_str()
+                ),
+            ));
+        }
+    }
+    Ok(())
+}
+
 /// Run a query through diesel, wrapping it so each row comes back as JSON.
 ///
 /// Postgres only - the SQL it builds (`PREPARE`, `row_to_json`) is Postgres syntax. It still
@@ -203,6 +252,7 @@ fn query_json_postgres(
     let (sql, used_params) = match parameters {
         None => (sql, Vec::new()),
         Some(parameters) => {
+            reject_positional_placeholders(&sql)?;
             // extract all used params from the sql query string, e.g. $myVariable
             let re = Regex::new(r"\$[A-Za-z_][A-Za-z0-9_]*").unwrap();
             // stores the variable name and the found parameter value, e.g. ($myVariable, "Hello")
@@ -268,6 +318,10 @@ fn query_json_postgres(
                 // READ ONLY must be the first statement of the transaction. Pinning
                 // standard_conforming_strings is what makes doubling a quote a complete escape
                 // in `sql_literal`, whatever the server is configured with.
+                //
+                // SECURITY-CRITICAL, both halves. With the pin off, a backslash inside a
+                // literal is an escape, so a value ending in one escapes its own closing
+                // quote and what follows is read as SQL. See `sql_literal`.
                 pg_connection.batch_execute(
                     "SET TRANSACTION READ ONLY; SET LOCAL standard_conforming_strings = on;",
                 )?;
@@ -335,6 +389,75 @@ fn report_connection(database_url: &str) -> Result<rusqlite::Connection, Reposit
     Ok(conn)
 }
 
+thread_local! {
+    /// Whether a [`with_read_only_connection`] scope is open on this thread. Only inside one
+    /// is a connection kept for reuse, because only then is there something to close it.
+    static READ_ONLY_SCOPE_OPEN: Cell<bool> = const { Cell::new(false) };
+
+    /// The connection the current scope shares, opened on the first statement that needs it.
+    static SCOPED_READ_ONLY_CONNECTION: RefCell<Option<Rc<rusqlite::Connection>>> =
+        const { RefCell::new(None) };
+}
+
+/// Let every `query_read_only` inside `f` share one read-only SQLite connection, opened on
+/// the first statement that needs it and closed when `f` returns.
+///
+/// One backend-plugin invocation issues many statements — civ issues eleven — and a fresh
+/// connection per statement pays SQLite's schema parse and starts with a cold page cache
+/// every time. That is the cost [`ReportQueryExecutor::run`] already avoids for a report by
+/// running its queries on one connection; this is the same saving for a plugin. Measured on
+/// a 279 MB datafile with 416 schema objects, eleven statements took 38 ms opening per
+/// statement against 12 ms sharing one, and 163 ms against 129 ms once the statements did
+/// real work — about 2.4 ms of fixed cost per connection, on a development machine rather
+/// than a field tablet.
+///
+/// Scoped to the invocation rather than cached for the life of the thread on purpose: a
+/// long-lived handle would go on serving a file that had since been replaced (a restore, or
+/// a datafile swap) and would hold a descriptor open for nothing in between.
+///
+/// Nesting reuses the outer scope's connection and leaves closing it to the outer scope.
+/// Postgres builds never populate the cache — `query_read_only` only reaches it on the
+/// SQLite arm — so wrapping a call there is harmless.
+pub fn with_read_only_connection<R>(f: impl FnOnce() -> R) -> R {
+    // An enclosing scope already owns the connection; don't take over its clean-up
+    if READ_ONLY_SCOPE_OPEN.get() {
+        return f();
+    }
+
+    struct CloseGuard;
+    impl Drop for CloseGuard {
+        fn drop(&mut self) {
+            // Runs on unwind too, so a panicking plugin cannot leave the connection open
+            READ_ONLY_SCOPE_OPEN.set(false);
+            SCOPED_READ_ONLY_CONNECTION.with(|cell| *cell.borrow_mut() = None);
+        }
+    }
+
+    READ_ONLY_SCOPE_OPEN.set(true);
+    let _guard = CloseGuard;
+    f()
+}
+
+/// The scope's connection, opening it on first use — or, outside a scope, a connection for
+/// this one statement, which is what a report's executor and a lone `sql()` call get.
+fn scoped_report_connection(
+    database_url: &str,
+) -> Result<Rc<rusqlite::Connection>, RepositoryError> {
+    if !READ_ONLY_SCOPE_OPEN.get() {
+        return Ok(Rc::new(report_connection(database_url)?));
+    }
+
+    if let Some(connection) =
+        SCOPED_READ_ONLY_CONNECTION.with(|cell| cell.borrow().as_ref().cloned())
+    {
+        return Ok(connection);
+    }
+
+    let connection = Rc::new(report_connection(database_url)?);
+    SCOPED_READ_ONLY_CONNECTION.with(|cell| *cell.borrow_mut() = Some(connection.clone()));
+    Ok(connection)
+}
+
 /// Run a query on an existing SQLite connection.
 ///
 /// The connection is passed in rather than opened per query: SQLite's page cache is
@@ -350,6 +473,10 @@ fn query_json_sqlite(
 ) -> Result<Vec<serde_json::Value>, RepositoryError> {
     use rusqlite::types::Null;
     use serde_json::Number;
+
+    if parameters.is_some() {
+        reject_positional_placeholders(sql)?;
+    }
 
     let mut statement = conn.prepare(sql)?;
 
@@ -370,12 +497,19 @@ fn query_json_sqlite(
                 serde_json::Value::Null => statement.raw_bind_parameter(p, Null)?,
                 serde_json::Value::Bool(b) => statement.raw_bind_parameter(p, b)?,
                 serde_json::Value::Number(number) => {
-                    if let Some(number) = number.as_f64() {
+                    // Integer first: `as_f64` succeeds for EVERY JSON number, so asking it
+                    // first bound `1` as `1.0` — where the Postgres literal gives `1` — and
+                    // lost precision past 2^53. A u64 above `i64::MAX` has no SQLite integer
+                    // to bind to, so it lands on f64 rather than wrapping to a negative.
+                    if let Some(number) = number.as_i64() {
                         statement.raw_bind_parameter(p, number)?;
-                    } else if let Some(number) = number.as_u64() {
-                        statement.raw_bind_parameter(p, number as i64)?;
-                    } else if let Some(number) = number.as_i64() {
+                    } else if let Some(number) = number.as_f64() {
                         statement.raw_bind_parameter(p, number)?;
+                    } else {
+                        // Unreachable while `serde_json` is built without
+                        // `arbitrary_precision`; an error rather than silently leaving the
+                        // parameter unbound, which SQLite would then read as NULL.
+                        return Err(not_a_value(param_name, param));
                     }
                 }
                 serde_json::Value::String(s) => statement.raw_bind_parameter(p, s)?,
@@ -433,6 +567,7 @@ fn query_json_sqlite(
 mod tests {
     use chrono::NaiveDate;
     use serde_json::json;
+    use std::rc::Rc;
 
     use crate::{
         mock::MockDataInserts, test_db, ActivityLogRow, ActivityLogRowRepository, ActivityLogType,
@@ -440,7 +575,11 @@ mod tests {
         UserAccountRow, UserAccountRowRepository,
     };
 
-    use super::{query_read_only, sql_literal, ReportQueryExecutor, ReportSqlQuery, SqlParameters};
+    use super::{
+        query_json_sqlite, query_read_only, scoped_report_connection, sql_literal,
+        with_read_only_connection, ReportQueryExecutor, ReportSqlQuery, SqlParameters,
+        SCOPED_READ_ONLY_CONNECTION,
+    };
 
     /// Run one query through the executor. The SQL here is valid in both dialects, so the same
     /// string is given for each and the executor picks whichever matches the build.
@@ -590,6 +729,207 @@ mod tests {
         )
         .unwrap();
         assert_eq!(result[0]["echoed"], json!("it's"), "{result:?}");
+    }
+
+    /// A backslash in a value must stay in the value.
+    ///
+    /// This is what `SET LOCAL standard_conforming_strings = on` in `query_json_postgres` is
+    /// for. With it off, Postgres reads a backslash inside a literal as an escape, so a
+    /// trailing one would escape `sql_literal`'s closing quote and the rest of the value
+    /// would be read as SQL — doubling the quotes would not save it. Delete the pin and this
+    /// test fails.
+    #[actix_rt::test]
+    async fn a_backslash_in_a_value_stays_in_the_value() {
+        let (_, _, connection_manager, _) = test_db::setup_all(
+            "report_query_backslash_is_data",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let executor = ReportQueryExecutor::new(&connection_manager);
+
+        // A trailing backslash is the one that would reach the closing quote
+        for payload in [
+            r"ends with a backslash\",
+            r"\' || current_user || '",
+            r"C:\reports\out",
+            r"a\\b",
+        ] {
+            let result = query(
+                &executor,
+                "SELECT $injected AS echoed",
+                &params(json!({ "injected": payload })),
+            )
+            .unwrap();
+            assert_eq!(result.len(), 1, "{payload:?} -> {result:?}");
+            assert_eq!(result[0]["echoed"], json!(payload), "{payload:?}");
+        }
+    }
+
+    /// The two placeholder styles cannot be mixed, so a positional `$1` alongside named
+    /// parameters is refused rather than renumbered into a collision (Postgres) or reported
+    /// as an unknown name (SQLite).
+    #[actix_rt::test]
+    async fn a_positional_placeholder_is_refused() {
+        let (_, connection, manager, _) = test_db::setup_all(
+            "report_query_positional_placeholder",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let executor = ReportQueryExecutor::new(&manager);
+
+        let sql = "SELECT id FROM store WHERE id = $storeId AND id <> $1";
+        let error = query(&executor, sql, &params(json!({ "storeId": "store_a" })))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("positional"), "{}", error);
+
+        let error = plugin(
+            &connection,
+            &manager,
+            sql,
+            Some(&params(json!({ "storeId": "store_a" }))),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(error.contains("positional"), "{}", error);
+
+        // Without parameters the text runs as written, so a `$1` is the caller's business
+        assert!(plugin(&connection, &manager, "SELECT 1 AS one", None).is_ok());
+
+        // A `$` followed by a digit inside a string literal or a comment is not a
+        // placeholder, and refusing one would break an ordinary report that prints a price
+        let rows = plugin(
+            &connection,
+            &manager,
+            "SELECT id, '$100' AS price FROM store WHERE id = $storeId -- costs $5\n",
+            Some(&params(json!({ "storeId": "store_a" }))),
+        )
+        .unwrap();
+        assert_eq!(
+            rows,
+            vec![json!({ "id": "store_a", "price": "$100" })],
+            "{rows:?}"
+        );
+    }
+
+    /// Inside a scope every statement shares one connection, and the scope closes it.
+    ///
+    /// This is what keeps a plugin's many statements from each paying SQLite's schema parse
+    /// and a cold page cache. Outside a scope nothing is kept, so a report's executor and a
+    /// lone `sql()` behave as before.
+    #[actix_rt::test]
+    async fn a_scope_shares_one_read_only_connection() {
+        // The scope only ever holds a SQLite connection; on postgres `database_url` is a
+        // postgres URL and `query_read_only` never reaches this path
+        if cfg!(feature = "postgres") {
+            return;
+        }
+        let (_, _, connection_manager, _) = test_db::setup_all(
+            "read_only_sql_scoped_connection",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let url = connection_manager.database_url().to_string();
+
+        // Outside a scope: a connection per statement, and nothing retained
+        let first = scoped_report_connection(&url).unwrap();
+        let second = scoped_report_connection(&url).unwrap();
+        assert!(
+            !Rc::ptr_eq(&first, &second),
+            "kept a connection outside a scope"
+        );
+
+        let inner = with_read_only_connection(|| {
+            let a = scoped_report_connection(&url).unwrap();
+            let b = scoped_report_connection(&url).unwrap();
+            assert!(
+                Rc::ptr_eq(&a, &b),
+                "opened a second connection inside one scope"
+            );
+
+            // A nested scope shares the outer one's connection rather than opening its own
+            let nested = with_read_only_connection(|| scoped_report_connection(&url).unwrap());
+            assert!(
+                Rc::ptr_eq(&a, &nested),
+                "a nested scope opened its own connection"
+            );
+
+            a
+        });
+
+        // Closed on the way out: the cache holds nothing, and the next scope opens afresh
+        assert!(
+            SCOPED_READ_ONLY_CONNECTION.with(|cell| cell.borrow().is_none()),
+            "the scope left its connection behind"
+        );
+        let after = with_read_only_connection(|| scoped_report_connection(&url).unwrap());
+        assert!(
+            !Rc::ptr_eq(&inner, &after),
+            "reused a closed scope's connection"
+        );
+
+        // And statements actually run on the shared connection
+        let rows = with_read_only_connection(|| {
+            let connection = scoped_report_connection(&url).unwrap();
+            let one = query_json_sqlite(
+                &connection,
+                "SELECT id FROM store WHERE id = $id",
+                Some(&params(json!({ "id": "store_a" }))),
+            )
+            .unwrap();
+            let two =
+                query_json_sqlite(&connection, "SELECT count(*) AS n FROM store", None).unwrap();
+            (one, two)
+        });
+        assert_eq!(rows.0, vec![json!({ "id": "store_a" })], "{rows:?}");
+        assert_eq!(rows.1.len(), 1, "{rows:?}");
+    }
+
+    /// A whole number stays whole.
+    ///
+    /// SQLite binds through rusqlite, and asking `as_f64` first bound every integer as a
+    /// float: `1` arrived as `1.0` where the Postgres literal gives `1`, and an i64 past
+    /// 2^53 lost digits. Asserted in CONTEXT rather than as a bare `SELECT $n`, because on
+    /// Postgres a bare one comes back as text — `PREPARE` has nothing to infer a type from.
+    #[actix_rt::test]
+    async fn a_whole_number_is_bound_as_an_integer() {
+        let (_, connection, manager, _) = test_db::setup_all(
+            "read_only_sql_integer_parameter",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        // 2^53 + 1 is the smallest integer an f64 cannot hold: bound as a float it becomes
+        // ...992 and this comparison is false
+        let rows = plugin(
+            &connection,
+            &manager,
+            "SELECT id FROM store WHERE id = 'store_a' AND $big = 9007199254740993",
+            Some(&params(json!({ "big": 9007199254740993i64 }))),
+        )
+        .unwrap();
+        assert_eq!(rows, vec![json!({ "id": "store_a" })], "{rows:?}");
+
+        // And a small whole number must not pick up a decimal point: as a float it renders
+        // "1.0"
+        let rows = plugin(
+            &connection,
+            &manager,
+            "SELECT id FROM store WHERE id = 'store_a' AND CAST($small AS TEXT) = '1'",
+            Some(&params(json!({ "small": 1 }))),
+        )
+        .unwrap();
+        assert_eq!(rows, vec![json!({ "id": "store_a" })], "{rows:?}");
+
+        // A real number is still a real number
+        let rows = plugin(
+            &connection,
+            &manager,
+            "SELECT id FROM store WHERE id = 'store_a' AND $real > 1.4 AND $real < 1.6",
+            Some(&params(json!({ "real": 1.5 }))),
+        )
+        .unwrap();
+        assert_eq!(rows, vec![json!({ "id": "store_a" })], "{rows:?}");
     }
 
     /// One parameter's name may be a prefix of another's. Rewriting them one at a time

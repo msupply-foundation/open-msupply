@@ -46,7 +46,11 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                     &sql,
                     params.as_ref(),
                 )
-                .inspect_err(|e| log::error!("{} {sql} {params:?}", format_error(e)))
+                // Names only, never values: a plugin's parameters carry patient ids, name
+                // ids and dates, and this log is not the place for them.
+                .inspect_err(|e| {
+                    log::error!("{} {sql} {}", format_error(e), param_names(params.as_ref()))
+                })
                 .map_err(std_error_to_js_error)
             })
             .map_err(std_error_to_js_error)??;
@@ -59,6 +63,26 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
         }),
     )?;
     Ok(())
+}
+
+/// The parameter names, for an error log.
+///
+/// Only the names: the values are a caller's data and the log is not the place for them
+/// (a plugin passes patient ids, name ids and dates through here). Knowing which names the
+/// statement was given is what actually diagnoses a failure, since the errors this reports
+/// are "Invalid parameter: x" and the engine's own complaints about a value's type.
+fn param_names(params: Option<&SqlParameters>) -> String {
+    match params {
+        None => "(no parameters)".to_string(),
+        Some(params) => format!(
+            "({})",
+            params
+                .keys()
+                .map(String::as_str)
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+    }
 }
 
 /// The optional parameters object, as JSON.

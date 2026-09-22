@@ -8,6 +8,8 @@ use boa_engine::{
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
 
+use repository::with_read_only_connection;
+
 use crate::boajs::utils::NullError;
 
 use super::methods;
@@ -86,7 +88,12 @@ where
     let input: serde_json::Value = serde_json::to_value(&input)?;
     let js_input = JsValue::from_json(&input, context)?;
 
-    let js_output = callable.call(&JsValue::undefined(), &[js_input], context)?;
+    // One invocation, one read-only SQLite connection: a plugin that issues several
+    // statements (civ issues eleven) shares one instead of paying SQLite's schema parse and a
+    // cold page cache for each. It closes when this returns, so nothing holds a handle on a
+    // datafile that might be replaced between calls.
+    let js_output =
+        with_read_only_connection(|| callable.call(&JsValue::undefined(), &[js_input], context))?;
     let option_output = JsValue::to_json(&js_output, context)?;
     let output = option_output.ok_or(JsError::from(NullError))?;
 
