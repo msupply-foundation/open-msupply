@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { equipmentToCsv, type ExportRow } from './equipmentToCsv';
 import { format } from 'date-fns';
-import { parseImportDate, parseNeedsReplacement } from '../import/importParse';
+import { parseImportDate } from '@/domain/csvImport';
+import { parseNeedsReplacement } from '../import/importParse';
 import { DATE_FNS_LOADERS, t } from '@/intl';
 
 const row = (over: Partial<ExportRow> = {}): ExportRow =>

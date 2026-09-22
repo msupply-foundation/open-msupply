@@ -8,23 +8,25 @@ import { CCE_CLASS_ID } from '../equipment';
 import type { PropertyDefinition } from '../detail/assetProperties';
 import {
   buildTemplateCsv,
-  canImport,
   compareReviewRows,
   failedRowsToCsv,
   parseImportBoolean,
-  parseImportNumber,
   parsePropertyCell,
   reviewRowText,
   type ImportRow,
-  hasErrors,
-  hasWarnings,
-  isCsvFileName,
-  parseImportDate,
   parseImportFile,
   parseImportStatus,
   parseNeedsReplacement,
   rowToInsertInput,
 } from './importParse';
+import {
+  canImport,
+  hasErrors,
+  hasWarnings,
+  isCsvFileName,
+  parseImportDate,
+  parseImportNumber,
+} from '@/domain/csvImport';
 
 // In node vitest no dictionary is loaded, so `t()` answers with the key itself
 // — which is what these headers and messages are asserted against.

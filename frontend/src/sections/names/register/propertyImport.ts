@@ -30,16 +30,6 @@ export type PropertyDefinition =
 export const IMPORT_BATCH_SIZE = 10;
 
 /*
- * Only a comma-separated-values file is accepted, judged by the file's NAME
- * (`.35`). Refused BEFORE parsing — the contents are never read.
- */
-export const isCsvFileName = (fileName: string): boolean =>
-  fileName.trim().toLowerCase().endsWith('.csv');
-
-/** The `accept` list handed to the upload zone — extension and MIME alike. */
-export const CSV_ACCEPT = '.csv,text/csv';
-
-/*
  * A definition's allowed values: ONE comma-separated string on the wire, split
  * client-side. (Kept local rather than imported from the settings vertical's
  * store editor so this lazily-loaded chunk doesn't drag that module in — the
