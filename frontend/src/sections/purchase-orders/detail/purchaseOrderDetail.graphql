@@ -333,6 +333,29 @@ query purchaseOrderShipments($storeId: String!, $orderId: String!) {
   }
 }
 
+# Applying a master list (spec S14). The input carries only the two ids; the
+# success answer is the lines created, which is how the surface knows how many
+# were added — none, where every item was already present. Its state window is
+# wider than every other line action's: only a FINALISED order refuses
+# (contract ⚠️ this action's own state gate is looser).
+mutation addPurchaseOrderFromMasterList(
+  $storeId: String!
+  $input: AddToPurchaseOrderFromMasterListInput!
+) {
+  addToPurchaseOrderFromMasterList(storeId: $storeId, input: $input) {
+    __typename
+    ... on PurchaseOrderLineConnector {
+      totalCount
+    }
+    ... on AddToPurchaseOrderFromMasterListError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 # Adding a line. `itemIdOrCode` is tried as an identity and then as a code, so
 # the chooser's pick and a bare code both work. The duplicate-line collision is
 # TYPED here and carries the item code and pack size the rejection must name —

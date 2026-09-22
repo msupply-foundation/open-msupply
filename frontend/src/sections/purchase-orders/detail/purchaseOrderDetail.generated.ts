@@ -383,6 +383,33 @@ export const PurchaseOrderShipments = {
   query: "query purchaseOrderShipments($storeId: String!, $orderId: String!) {\n  invoices(\n    storeId: $storeId\n    filter: {purchaseOrderId: {equalTo: $orderId}, type: {equalTo: INBOUND_SHIPMENT}}\n    sort: {key: createdDatetime, desc: true}\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        theirReference\n        createdDatetime\n        receivedDatetime\n        otherPartyName\n      }\n    }\n  }\n}",
 } as TypedDocument<PurchaseOrderShipmentsResult, PurchaseOrderShipmentsVariables>;
 
+export type AddPurchaseOrderFromMasterListVariables = {
+  storeId: string;
+  input: {
+    purchaseOrderId: string;
+    masterListId: string;
+  };
+};
+
+export type AddPurchaseOrderFromMasterListResult = {
+  addToPurchaseOrderFromMasterList: ({
+  __typename: "PurchaseOrderLineConnector";
+} & {
+  totalCount: number;
+}) | ({
+  __typename: "AddToPurchaseOrderFromMasterListError";
+} & {
+  error: {
+  __typename: "CannotEditPurchaseOrder" | "MasterListNotFoundForThisStore" | "RecordNotFound";
+  description: string;
+};
+});
+};
+
+export const AddPurchaseOrderFromMasterList = {
+  query: "mutation addPurchaseOrderFromMasterList($storeId: String!, $input: AddToPurchaseOrderFromMasterListInput!) {\n  addToPurchaseOrderFromMasterList(storeId: $storeId, input: $input) {\n    __typename\n    ... on PurchaseOrderLineConnector {\n      totalCount\n    }\n    ... on AddToPurchaseOrderFromMasterListError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+} as TypedDocument<AddPurchaseOrderFromMasterListResult, AddPurchaseOrderFromMasterListVariables>;
+
 export type InsertPurchaseOrderLineVariables = {
   storeId: string;
   input: {

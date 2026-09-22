@@ -2,6 +2,7 @@ import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
 import { translateServerError } from '../../../intl/intlUtils';
 import { t } from '../../../intl';
 import {
+  AddPurchaseOrderFromMasterList,
   InsertPurchaseOrderLine,
   UpdatePurchaseOrder,
   UpdatePurchaseOrderLine,
@@ -230,3 +231,44 @@ export const cascadeDeliveryDate = (
           }
     )
   );
+
+export type AddFromMasterListResult =
+  | { kind: 'done'; added: number }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+/**
+ * Apply a master list (spec S14). The rejections read as the spec's fixed copy:
+ * a closed order, a missing order, a list the store cannot see, and the
+ * catch-all.
+ */
+export const addPurchaseOrderFromMasterList = async (
+  storeId: string,
+  purchaseOrderId: string,
+  masterListId: string
+): Promise<AddFromMasterListResult> => {
+  const result = await graphqlFetch(
+    AddPurchaseOrderFromMasterList,
+    { storeId, input: { purchaseOrderId, masterListId } },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'graphqlError')
+    return { kind: 'error', message: untypedRejectionMessage(result.errors) };
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.addToPurchaseOrderFromMasterList;
+  if (response.__typename === 'PurchaseOrderLineConnector')
+    return { kind: 'done', added: response.totalCount };
+  switch (response.error.__typename) {
+    case 'CannotEditPurchaseOrder':
+      return { kind: 'error', message: t('label.cannot-edit-purchase-order') };
+    case 'RecordNotFound':
+      return { kind: 'error', message: t('messages.record-not-found') };
+    case 'MasterListNotFoundForThisStore':
+      return { kind: 'error', message: t('error.master-list-not-found') };
+    default:
+      return {
+        kind: 'error',
+        message: t('label.cannot-add-item-to-purchase-order'),
+      };
+  }
+};
