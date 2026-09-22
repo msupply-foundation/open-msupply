@@ -207,6 +207,7 @@ export {
   FilterDateRange,
   FilterSelect,
   FilterTextInput,
+  UnsavedChangesGuard,
 } from './lazyComponents';
 export type { DataTableProps } from '../ui/elements/table/DataTable';
 export type {
@@ -333,6 +334,19 @@ export type { PluginIntl, SupportedLocale } from './intl';
 export { storeHref, navigateTo, currentStorePath } from './navigation';
 export type { NavigateOptions } from './navigation';
 export { usePageSearch } from './pageSearch';
+/*
+ * Leaving a page with unsaved edits — the one piece of navigation a plugin
+ * INTERCEPTS rather than performs — is `UnsavedChangesGuard`, exported with
+ * the lazy components above rather than here. Its type is the options object
+ * the component takes; nothing else of it is eager, deliberately.
+ *
+ * The guard CANNOT be an eager export, and that is what fuses it to its
+ * prompt: it imports `@solidjs/router`, which runs `saveCurrentDepth()` at
+ * module scope and reads `window` on import, and this barrel MUST stay free
+ * of module-scope side effects (see the header) — it is evaluated by the
+ * facade entry, in environments with no DOM among them.
+ */
+export type { ConfirmOnLeaveOptions } from '../domain/confirmOnLeave/createConfirmOnLeave';
 export {
   DAYS_TILL_EXPIRED,
   expiredStockPath,
