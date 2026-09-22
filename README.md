@@ -62,9 +62,9 @@ public issue is linked to that work and closed when the fix reaches this mirror.
 
 ### Pull requests
 
-Pull requests may be accepted but issues are preferred. Submitted PR would **reviewed here but not merged here**. Once accepted, a maintainer imports the commits into the private repo, where they go through the normal CI and review and merge. The change then flows back out with the next sync, with your authorship preserved on the commit. Your pull request is closed, not merged, with a comment naming the commit it landed as.
+Pull requests may be accepted but issues are preferred. Submitted PR would be **reviewed here but not merged here**. Once accepted, a maintainer imports the commits into the private repo, where they go through the normal CI and review and merge. The change then flows back out with the next sync, with your authorship preserved on the commit. Your pull request is closed, not merged, with a comment naming the commit it landed as.
 
-If raise a Pull Request, please ensure you clarify what unique experience or idea you're bringing to the implementation, if you're just asking an AI agent to fix a bug, we could do that ourselves.
+If you choose to create a Pull Request, please ensure you clarify what unique experience or idea you're bringing to the implementation, if you're just asking an AI agent to fix a bug, we could do that ourselves.
 
 What to expect:
 
