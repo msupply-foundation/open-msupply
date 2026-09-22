@@ -1,11 +1,9 @@
 #!/usr/bin/env node
-// One classified report for the nightly cross-FE e2e run. Both front ends —
-// this rewrite and open-msupply's current app — run the same suite
-// definition against the same backend; this merges the two Playwright
-// results.json files and classifies each leg against the previous
-// successful nightly (the baseline). Raw pass/fail can't distinguish
-// "tonight broke something" from "this vertical was never built" — the
-// comparison can. Per leg, vs its baseline counterpart:
+// One classified report for the nightly e2e run. It reads the Playwright
+// results.json and classifies it against that branch's previous
+// successful run (the baseline). Raw pass/fail can't distinguish "tonight broke
+// something" from "this vertical was never built" — the comparison can.
+// Vs the baseline:
 //
 //   regression     — passed (or flaky) in the baseline, fails now. With a
 //                    missing leg report (boot failure), the only thing that
@@ -18,23 +16,24 @@
 //   flaky          — passed on retry this run (reported, never fails the
 //                    job; policy: quarantine-or-fix same day).
 //
-// The cross-FE columns are the point of merging: a test failing on the
-// rewrite but passing on the current app reads as "vertical not built yet
-// (or rewrite divergence)", while failing on both points at the suite,
-// backend, or datafile.
-//
 // Usage: node scripts/e2e/nightly-report.mjs
-// Each dir holds one <dir>/e2e-report-<leg>/results.json per leg.
-//   RESULTS_DIR     (default .e2e-results)  — this nightly's reports
-//   BASELINE_DIR    (default .e2e-baseline) — the previous nightly's
+// Each dir holds one <dir>/e2e-report-<leg>/results.json.
+//   LEG_ID          (default develop)       — the branch key under test
+//   RESULTS_DIR     (default .e2e-results)  — this run's report
+//   BASELINE_DIR    (default .e2e-baseline) — that branch's previous run
 //   BASELINE_RUN_ID (env, optional)         — links the header to that run
 //
 // Both runs' when/at-what-commit provenance comes from the reports
 // themselves (stats.startTime + the config.metadata.commit stamped by
 // e2e/playwright.config.ts).
-//   Missing baseline files → that leg's failures listed unclassified, exit 0.
-//   Missing leg report     → infra failure (stack never produced one), exit 1.
-//   Otherwise exit 1 iff regressions were found on either leg.
+//   Missing baseline files → failures listed unclassified, exit 0.
+//   Missing run report     → infra failure (stack never produced one), exit 1.
+//   Otherwise exit 1 iff regressions were found.
+//
+// One leg, because one run tests one tag and so one branch. Still written
+// over a LIST: it was two when the front ends lived in separate
+// repositories, and the shape costs nothing and is what a second stack (a
+// postgres image, say) would slot back into.
 
 import * as fs from 'fs';
 
@@ -42,10 +41,14 @@ const resultsDir = process.env.RESULTS_DIR ?? '.e2e-results';
 const baselineDir = process.env.BASELINE_DIR ?? '.e2e-baseline';
 const baselineRunId = process.env.BASELINE_RUN_ID;
 
-const LEGS = [
-  { id: 'rewrite', label: 'Rewrite (this repo)' },
-  { id: 'current-app', label: 'Current app (open-msupply)' },
-];
+// `id` is the BRANCH KEY — `develop`, or an RC branch like `v3.03.00-RC`.
+// It is the artifact name's suffix (e2e-report-<id>) as well as the lookup
+// key, so it is a wire contract with the workflow in both directions, and
+// it is what keeps each branch's lineage separate: an RC's run must never
+// become develop's baseline. Changing how it is derived orphans every
+// existing baseline for that branch.
+const legId = process.env.LEG_ID ?? 'develop';
+const LEGS = [{ id: legId, label: legId }];
 
 // tests: map of "file › describe › … › title" → { outcome, error }. The
 // describe chain matters: the same leaf title recurs across groups in one
@@ -93,8 +96,8 @@ const legs = LEGS.map(leg => ({
   baseline: collect(`${baselineDir}/e2e-report-${leg.id}/results.json`),
 }));
 
-// Per-leg classification vs its baseline counterpart; also indexed by test
-// key so the cross-FE table can name each cell's category.
+// Classification vs the baseline; also indexed by test key so the
+// per-test table can name each cell's category.
 for (const leg of legs) {
   leg.cats = {
     regression: [],
@@ -137,7 +140,7 @@ const label = run =>
     .filter(Boolean)
     .join(' at ') || 'unknown provenance';
 
-// How a leg's result for one test renders in the cross-FE table.
+// How a leg's result for one test renders in the per-test table.
 const CELL = {
   regression: '❌ **regression**',
   preExisting: '⏳ pre-existing',
@@ -155,9 +158,9 @@ const cell = (leg, key) => {
   return t.outcome === 'skipped' ? '⏭ skipped' : '✅';
 };
 
-console.log('## Nightly deterministic e2e — both front ends\n');
+console.log(`## Deterministic e2e — \`${legId}\`\n`);
 
-console.log('| Front end | Run | ✅ | ❌ | ⚠️ flaky | ⏭ skipped |');
+console.log('| Branch | Run | ✅ | ❌ | ⚠️ flaky | ⏭ skipped |');
 console.log('| --- | --- | --- | --- | --- | --- |');
 for (const leg of legs) {
   const s = leg.run?.stats ?? {};
@@ -175,14 +178,14 @@ if (withBaseline.length) {
     ? ` ([run ${baselineRunId}](../actions/runs/${baselineRunId}))`
     : '';
   console.log(
-    `Baseline: previous successful nightly${link} — ${withBaseline
-      .map(l => `${l.label.toLowerCase().split(' (')[0]}: ${label(l.baseline)}`)
+    `Baseline: this branch's previous successful run${link} — ${withBaseline
+      .map(l => `\`${l.label}\`: ${label(l.baseline)}`)
       .join(' · ')}.\n`
   );
 }
 for (const leg of legs.filter(l => l.run && !l.baseline)) {
   console.log(
-    `_No baseline for the ${leg.label} leg (first nightly, or the last successful run's report expired) — its failures below are unclassified._\n`
+    `_No baseline for \`${leg.label}\` — this branch's first run, or its last successful report has expired. Baselines are never borrowed from another branch (RCs spring off older releases, so develop's would compare a different app and a different suite set), so the failures below are unclassified and this run seeds the lineage._\n`
   );
 }
 
@@ -193,29 +196,26 @@ if (missing.length) {
       missing
         .map(
           l =>
-            `- **${l.label}**: no results.json — the stack never produced a report (boot failure?). See the leg's run log and stack-logs artifact.`
+            `- **${l.label}**: no results.json — the stack never produced a report (boot failure?). See the run log and the e2e-triage artifact's server.log.`
         )
         .join('\n') +
       '\n'
   );
 }
 
-// Regressions in detail (with the failure message and the other leg's state
-// for triage); everything else lives in the cross-FE table below.
-const other = leg => legs.find(l => l !== leg);
+// Regressions in detail, with the failure message; everything else lives
+// in the per-test table below.
 for (const leg of legs) {
   if (!leg.cats.regression.length) continue;
   console.log(
     `### ❌ ${leg.label} — regressions, passed in the baseline, failing now (${leg.cats.regression.length})\n`
   );
   for (const { key, t } of leg.cats.regression)
-    console.log(
-      `- \`${key}\`${t.error ? ` — ${t.error}` : ''} _(${other(leg).label.toLowerCase().split(' (')[0]}: ${cell(other(leg), key)})_`
-    );
+    console.log(`- \`${key}\`${t.error ? ` — ${t.error}` : ''}`);
   console.log('');
 }
 
-// Every test not plain-green on both front ends, side by side.
+// Every test not plain-green, with its classification.
 const interesting = [
   ...new Set(
     legs.flatMap(l =>
@@ -226,9 +226,7 @@ const interesting = [
   ),
 ].sort();
 if (interesting.length) {
-  console.log(
-    `### Cross-FE picture — every test not green on both front ends (${interesting.length})\n`
-  );
+  console.log(`### Every test not green (${interesting.length})\n`);
   console.log(`| Test | ${legs.map(l => l.label).join(' | ')} |`);
   console.log(`| --- | ${legs.map(() => '---').join(' | ')} |`);
   for (const key of interesting)
@@ -253,20 +251,20 @@ const skippedNote = legs
   .join(' · ');
 if (skippedNote)
   console.log(
-    `Skipped tests (${skippedNote}) are per-FE \`test.skip\`s or downstream casualties of a failing serial group.\n`
+    `Skipped tests (${skippedNote}) are \`test.skip\`s or downstream casualties of a failing serial group.\n`
   );
 
 const regressions = legs.reduce((n, l) => n + l.cats.regression.length, 0);
 if (regressions || missing.length) {
   const parts = [
     regressions && `${regressions} regression(s)`,
-    missing.length && `${missing.length} leg(s) without a report`,
+    missing.length && `${missing.length} stack(s) without a report`,
   ].filter(Boolean);
   console.log(`**Verdict: ❌ ${parts.join(' + ')} — this job fails.**`);
   process.exit(1);
 }
 console.log(
   legs.every(l => l.baseline)
-    ? '**Verdict: ✅ no regressions on either front end** — every failure is pre-existing or belongs to a newly added test.'
+    ? '**Verdict: ✅ no regressions** — every failure is pre-existing or belongs to a newly added test.'
     : '**Verdict: ⬜ no regressions; baseline incomplete** — job passes; a successful run seeds the baseline for the next one.'
 );
