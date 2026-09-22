@@ -399,8 +399,10 @@ export type InternalOrderSidePanelSectionProps = {
  *
  * - `internalOrders.recentStocktake` — the store-wide recent-stocktake
  *   warning at the internal-orders New-order action (internal-orders rules §
- *   creation); consulted when New order is invoked with the warn preference
- *   on.
+ *   creation). NOT consulted: no host surface asks a suppression, so a
+ *   contribution naming this id loads and has no effect. The id stays
+ *   published and validated, and the slot keeps its contract, so a surface
+ *   that wants to be suppressible only has to start asking.
  */
 export const HOST_WARNING_IDS = ['internalOrders.recentStocktake'] as const;
 
