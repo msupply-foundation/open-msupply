@@ -1424,3 +1424,130 @@ async fn test_changelog_dedupe_windowed() {
         "index_changelog_dedup should be dropped"
     );
 }
+
+/// The v3_00_00 backfills stamp `source_site_id = 0` when the central site id isn't known
+/// (see `repair_source_site_id`). `0` is not a real site id, so the legacy push reads those
+/// rows as locally authored and sends central reference data upward. Pins both halves: that
+/// the filter does select a `0` row, and that restamping takes it back out.
+#[actix_rt::test]
+async fn test_update_source_site_id_removes_rows_from_legacy_push() {
+    let (_, connection, _, _) = setup_all(
+        "test_update_source_site_id_removes_rows_from_legacy_push",
+        MockDataInserts::none(),
+    )
+    .await;
+    delete_all_changelog(&connection);
+
+    fn insert_changelog_with_source_site_id(
+        connection: &StorageConnection,
+        cursor: i64,
+        record_id: &str,
+        source_site_id: Option<i32>,
+    ) {
+        #[derive(Insertable)]
+        #[diesel(table_name = changelog_with_links)]
+        struct TestChangelogInsert<'a> {
+            cursor: i64,
+            table_name: ChangelogTableName,
+            record_id: &'a str,
+            row_action: RowActionType,
+            source_site_id: Option<i32>,
+        }
+
+        diesel::insert_into(changelog_with_links::table)
+            .values(&TestChangelogInsert {
+                cursor,
+                table_name: ChangelogTableName::Item,
+                record_id,
+                row_action: RowActionType::Upsert,
+                source_site_id,
+            })
+            .execute(connection.lock().connection())
+            .unwrap();
+    }
+
+    fn source_site_ids_by_record(connection: &StorageConnection) -> Vec<(String, Option<i32>)> {
+        ChangelogRepository::new(connection)
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| (row.record_id, row.source_site_id))
+            .collect()
+    }
+
+    const CENTRAL_SITE_ID: i32 = 1;
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(
+            KeyType::SettingsSyncCentralServerSiteId,
+            Some(CENTRAL_SITE_ID),
+        )
+        .unwrap();
+
+    // A backfilled item row (0), one already stamped as central, and one from another site.
+    // Cursors span more than one update window, so the batching is covered too.
+    insert_changelog_with_source_site_id(&connection, 1, "item_backfilled", Some(0));
+    insert_changelog_with_source_site_id(
+        &connection,
+        2,
+        "item_from_central",
+        Some(CENTRAL_SITE_ID),
+    );
+    insert_changelog_with_source_site_id(&connection, 3, "item_from_other_site", Some(7));
+    insert_changelog_with_source_site_id(&connection, 25_000, "item_backfilled_late", Some(0));
+
+    let repo = ChangelogRepository::new(&connection);
+    let pushed = |connection: &StorageConnection| -> Vec<String> {
+        ChangelogRepository::new(connection)
+            .query(
+                ChangelogFilter::all_data_for_legacy_central(connection).unwrap(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| row.record_id)
+            .collect()
+    };
+
+    // Before: both 0 rows are selected for the push, alongside the genuinely foreign row.
+    assert_eq!(
+        pushed(&connection),
+        vec![
+            "item_backfilled".to_string(),
+            "item_from_other_site".to_string(),
+            "item_backfilled_late".to_string(),
+        ]
+    );
+
+    assert_eq!(repo.update_source_site_id(0, CENTRAL_SITE_ID).unwrap(), 2);
+
+    // After: only the row from another site, which is data this site really does relay.
+    assert_eq!(
+        pushed(&connection),
+        vec!["item_from_other_site".to_string()]
+    );
+
+    // And nothing else moved.
+    assert_eq!(
+        source_site_ids_by_record(&connection),
+        vec![
+            ("item_backfilled".to_string(), Some(CENTRAL_SITE_ID)),
+            ("item_from_central".to_string(), Some(CENTRAL_SITE_ID)),
+            ("item_from_other_site".to_string(), Some(7)),
+            ("item_backfilled_late".to_string(), Some(CENTRAL_SITE_ID)),
+        ]
+    );
+
+    // Idempotent: a second pass has nothing to do.
+    assert_eq!(repo.update_source_site_id(0, CENTRAL_SITE_ID).unwrap(), 0);
+}
