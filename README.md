@@ -85,3 +85,24 @@ started.
 
 | Date | Refs | Reason |
 | ---- | ---- | ------ |
+
+<!--
+  Adding a row (maintainers): newest first, directly under the header above.
+
+  | 2026-10-21 | `develop`, `main`, all release tags | Filtering rules corrected — a path was removed from the published history. |
+
+  Date    The day of the force-push, YYYY-MM-DD.
+
+  Refs    What was rewritten. Usually every published ref, since they share the
+          rewritten history; name a subset only if that is what was dispatched.
+
+  Reason  One line, and the direction matters. When something was REMOVED from
+          history, keep it general: this log is public, so naming the file or
+          describing its contents re-publishes what the rewrite was meant to
+          take back. When something was ADDED to the published set, name it —
+          nothing is sensitive in that direction and readers benefit.
+
+  No need to tell readers to rebase, or to link an internal issue: the
+  republication bullet under "About this mirror" already covers the first, and
+  internal issue numbers do not resolve here.
+-->
