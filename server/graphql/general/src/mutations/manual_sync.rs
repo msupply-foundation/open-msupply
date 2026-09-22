@@ -35,6 +35,17 @@ pub fn manual_sync(ctx: &Context<'_>, with_auth: bool) -> Result<String> {
         .extend());
     };
 
+    // The admin pause only applies once initialised: an initialising site must still be able
+    // to trigger its first sync with the flag set.
+    if matches!(initialisation_status, InitialisationStatus::Initialised(_))
+        && service_provider.settings.is_sync_paused(&service_context)?
+    {
+        return Err(StandardGraphqlError::BadUserInput(
+            "Sync is paused. A server administrator can resume it from sync settings".to_string(),
+        )
+        .extend());
+    }
+
     service_provider.sync_trigger.trigger();
 
     Ok("Sync triggered".to_string())

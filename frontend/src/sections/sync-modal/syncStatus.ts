@@ -192,18 +192,21 @@ export const toSyncOverview = (
   };
 };
 
-// SYNC-03.18: one status line by precedence — syncing, then a non-zero
-// records-to-push count, then nothing-to-push. 'waiting' covers the first open
-// before any status has arrived.
+// SYNC-03.18: one status line by precedence — syncing, then the admin pause,
+// then a non-zero records-to-push count, then nothing-to-push. 'waiting'
+// covers the first open before any status has arrived. A run already in flight
+// when the pause lands finishes, so syncing still leads.
 export type StatusLineKind =
-  'waiting' | 'syncing' | 'records-to-push' | 'nothing-to-push';
+  'waiting' | 'syncing' | 'paused' | 'records-to-push' | 'nothing-to-push';
 
 export const statusLineKind = (
   overview: SyncOverview | undefined,
-  pushQueueCount: number | undefined
+  pushQueueCount: number | undefined,
+  paused = false
 ): StatusLineKind => {
   if (!overview) return 'waiting';
   if (overview.isSyncing) return 'syncing';
+  if (paused) return 'paused';
   if (pushQueueCount != null && pushQueueCount > 0) return 'records-to-push';
   return 'nothing-to-push';
 };
@@ -309,6 +312,8 @@ export type SyncFooterStatus =
   | { kind: 'waiting'; tone: 'neutral' }
   // A run is in flight.
   | { kind: 'syncing'; tone: 'neutral' }
+  // A server administrator has paused sync; nothing will run until resumed.
+  | { kind: 'paused'; tone: 'warning' }
   // The latest run failed, or the site is critically stale.
   | { kind: 'error'; tone: 'error' }
   // The latest run could not reach the central server, and the site is not yet
@@ -347,19 +352,24 @@ const daysSinceSuccess = (overview: SyncOverview, now: Date): number =>
 
 /*
  * The footer sync cell's state (spec/chrome § sync status). Precedence, highest
- * first: a run in flight, a failed run, staleness, an unreachable server, the
- * queue, then the quiet "Synced …" line. Staleness escalates the WHOLE cell —
- * it is the site's one standing sync signal, so an ageing site must say so even
- * with an empty queue.
+ * first: a run in flight, the admin pause, a failed run, staleness, an
+ * unreachable server, the queue, then the quiet "Synced …" line. Staleness
+ * escalates the WHOLE cell — it is the site's one standing sync signal, so an
+ * ageing site must say so even with an empty queue. The pause sits above the
+ * fault lines because it is the one state the user can do nothing about from
+ * here: a stale or errored site that is also paused will not sync until an
+ * administrator resumes it, and that is the news.
  */
 export const syncFooterStatus = (
   overview: SyncOverview | undefined,
   pushQueueCount: number | undefined,
   displayThreshold: number,
-  now: Date
+  now: Date,
+  paused = false
 ): SyncFooterStatus => {
   if (!overview) return { kind: 'waiting', tone: 'neutral' };
   if (overview.isSyncing) return { kind: 'syncing', tone: 'neutral' };
+  if (paused) return { kind: 'paused', tone: 'warning' };
   const unreachable = overview.error?.variant === CONNECTION_VARIANT;
   if (overview.error && !unreachable) return { kind: 'error', tone: 'error' };
 
@@ -385,7 +395,8 @@ export const syncFooterStatus = (
 
 /*
  * Whether the cell reads as DIMMED (issue #1087) — sync is not running and
- * cannot, because the central server is out of reach.
+ * cannot: the central server is out of reach, or an administrator has paused
+ * it.
  *
  * Its own level, deliberately not folded into `tone`. By the precedence ladder
  * an unreachable server is a warning, and it must stay one: it MUST NOT read as
@@ -399,4 +410,4 @@ export const syncFooterStatus = (
  * ground.
  */
 export const syncFooterDimmed = (kind: SyncFooterStatus['kind']): boolean =>
-  kind === 'unreachable';
+  kind === 'unreachable' || kind === 'paused';

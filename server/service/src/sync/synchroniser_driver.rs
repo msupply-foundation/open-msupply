@@ -60,7 +60,7 @@ impl SynchroniserDriver {
         }
 
         if force_run || is_initialised(&service_provider) {
-            self.sync(service_provider.clone()).await;
+            self.sync_unless_paused(service_provider.clone()).await;
         }
 
         loop {
@@ -85,8 +85,21 @@ impl SynchroniserDriver {
                 }
             }
 
-            self.sync(service_provider.clone()).await;
+            self.sync_unless_paused(service_provider.clone()).await;
         }
+    }
+
+    /// The admin pause (Admin > Sync settings) applies to every scheduled and manual run of an
+    /// initialised site, including a central server's outbound sync to legacy central. A site
+    /// still initialising is never paused: the flag only takes effect once the first sync has
+    /// completed. The manual-sync mutation refuses while paused, so a trigger arriving here on
+    /// a paused site is the scheduled interval or a race with the switch.
+    async fn sync_unless_paused(&self, service_provider: Arc<ServiceProvider>) {
+        if is_initialised(&service_provider) && is_sync_paused(&service_provider) {
+            log::info!("Sync is paused, skipping scheduled sync");
+            return;
+        }
+        self.sync(service_provider).await;
     }
 
     pub async fn sync(&self, service_provider: Arc<ServiceProvider>) {
@@ -130,6 +143,19 @@ impl SyncTrigger {
     pub(crate) fn new_test() -> (SyncTrigger, mpsc::Receiver<()>) {
         let (sender, receiver) = mpsc::channel(1);
         (SyncTrigger { sender }, receiver)
+    }
+}
+
+fn is_sync_paused(service_provider: &ServiceProvider) -> bool {
+    let Ok(ctx) = service_provider.basic_context() else {
+        return false;
+    };
+    match service_provider.settings.is_sync_paused(&ctx) {
+        Ok(paused) => paused,
+        Err(error) => {
+            log::error!("Failed to read sync paused setting, treating as not paused: {error:#?}");
+            false
+        }
     }
 }
 

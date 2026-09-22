@@ -15,6 +15,7 @@ pub mod settings;
 pub mod site_auth;
 pub mod sync_buffer;
 pub mod sync_on_central;
+pub mod sync_pause;
 pub mod sync_status;
 pub mod synchroniser;
 pub mod synchroniser_driver;

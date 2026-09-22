@@ -23,6 +23,7 @@ import {
   pushQueueCount,
   liveConnected,
   pollSyncStatus,
+  syncPaused,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
@@ -71,7 +72,8 @@ export const SyncModal: Component<{
       centralServer: isCentralServer(),
     })
   );
-  const statusKind = () => statusLineKind(overview(), pushQueueCount());
+  const statusKind = () =>
+    statusLineKind(overview(), pushQueueCount(), syncPaused());
 
   // SYNC-03.22: fetch once on open when nothing is cached (no initial
   // subscription frame — contract.md § Records to push). Fires exactly once per
@@ -179,6 +181,9 @@ export const SyncModal: Component<{
             variant="primary"
             icon={<SyncIcon />}
             loading={busy()}
+            // Disabled, not merely no-op, while paused: the server refuses
+            // the trigger, so the control must read as unavailable.
+            disabled={syncPaused()}
             onClick={syncNow}
             data-testid="sync-now-button"
           >
@@ -197,6 +202,11 @@ export const SyncModal: Component<{
             <Match when={statusKind() === 'syncing'}>
               <p class={styles.statusLine} data-testid="sync-status-line">
                 {t('sync-info.syncing')}
+              </p>
+            </Match>
+            <Match when={statusKind() === 'paused'}>
+              <p class={styles.statusLine} data-testid="sync-status-line">
+                {t('sync-info.paused')}
               </p>
             </Match>
             <Match when={statusKind() === 'records-to-push'}>
@@ -235,6 +245,14 @@ export const SyncModal: Component<{
             </details>
           </Show>
         </div>
+
+        {/* Paused notice — who can lift it. Shown whenever paused, even beside
+            a run still finishing, so the user knows nothing follows it. */}
+        <Show when={syncPaused()}>
+          <Alert severity="warning" testId="sync-paused-alert">
+            {t('messages.sync-paused')}
+          </Alert>
+        </Show>
 
         {/* Error panel — only when the latest run errored (SYNC-03.28). */}
         <Show when={overview()?.error}>

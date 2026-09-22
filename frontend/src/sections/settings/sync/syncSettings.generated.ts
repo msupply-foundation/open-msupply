@@ -10,12 +10,27 @@ export type SyncSettingsResult = {
   username: string;
   intervalSeconds: number;
   batchSize: number | null;
+  isPaused: boolean;
 } | null;
 };
 
 export const SyncSettings = {
-  query: "query syncSettings {\n  syncSettings {\n    url\n    username\n    intervalSeconds\n    batchSize\n  }\n}",
+  query: "query syncSettings {\n  syncSettings {\n    url\n    username\n    intervalSeconds\n    batchSize\n    isPaused\n  }\n}",
 } as TypedDocument<SyncSettingsResult, SyncSettingsVariables>;
+
+export type SetSyncPausedVariables = {
+  paused: boolean;
+};
+
+export type SetSyncPausedResult = {
+  setSyncPaused: {
+  isPaused: boolean;
+};
+};
+
+export const SetSyncPaused = {
+  query: "mutation setSyncPaused($paused: Boolean!) {\n  setSyncPaused(paused: $paused) {\n    isPaused\n  }\n}",
+} as TypedDocument<SetSyncPausedResult, SetSyncPausedVariables>;
 
 export type UpdateSyncSettingsVariables = {
   input: {

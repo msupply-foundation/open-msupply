@@ -1,6 +1,7 @@
 import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
+import { pollSyncStatus } from '../../../api/syncStore';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -17,7 +18,13 @@ import {
   syncSaveErrorKey,
   type SyncFormState,
 } from './syncForm';
-import { SyncSettings, UpdateSyncSettings } from './syncSettings.generated';
+import {
+  SetSyncPaused,
+  SyncSettings,
+  UpdateSyncSettings,
+} from './syncSettings.generated';
+import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
@@ -76,6 +83,35 @@ export const SyncSection = () => {
   const validation = createFormValidation(() => syncFieldErrors(form()));
 
   const [showAdvanced, setShowAdvanced] = createSignal(false);
+
+  /*
+   * The pause switch (spec/settings/rules.md § Synchronisation) is a setting
+   * to flip, not a field of the form: it saves on change through its own
+   * mutation, so flipping it never re-sends the credentials, and it never
+   * arms the form's validation. The stored value is the switch's state — the
+   * response is discarded in favour of a re-read, and the shared sync store is
+   * re-polled so this session's chrome cell shows the paused state at once
+   * (other sessions get it from the live frame the server emits).
+   */
+  const [pauseBusy, setPauseBusy] = createSignal(false);
+  const [pauseError, setPauseError] = createSignal<string>();
+  const setPaused = async (paused: boolean) => {
+    if (pauseBusy()) return;
+    setPauseBusy(true);
+    setPauseError(undefined);
+    const result = await graphqlFetch(
+      SetSyncPaused,
+      { paused },
+      { background: true }
+    );
+    if (result.kind === 'success') {
+      await refetch();
+      void pollSyncStatus();
+    } else if (result.kind !== 'unauthenticated') {
+      setPauseError(t(SYNC_SAVE_FALLBACK_ERROR));
+    }
+    setPauseBusy(false);
+  };
 
   const edit = (patch: Partial<SyncFormState>) => {
     touched = true;
@@ -139,6 +175,23 @@ export const SyncSection = () => {
       }}
     >
       <Stack>
+        <ToggleSwitch
+          label={t('label.pause-sync')}
+          variant="caution"
+          checked={stored()?.isPaused ?? false}
+          disabled={pauseBusy() || saving()}
+          onChange={paused => void setPaused(paused)}
+          labelInfo={
+            <InfoTooltip
+              text={t('label.pause-sync-info')}
+              triggerTestId="sync-settings-pause-info"
+            />
+          }
+          testId="sync-settings-pause"
+        />
+        <Show when={pauseError()}>
+          {message => <Alert severity="error">{message()}</Alert>}
+        </Show>
         {/* The standard form layout (kdd/form-layout): stacked full-width
           fields carrying their own labels, with the two numbers paired in a
           FormRow. The accordion header titles the group, so there is no

@@ -56,6 +56,10 @@ pub enum KeyType {
     SettingsSyncSiteId,
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
+    /// Set from Admin > Sync settings: while true the synchroniser skips scheduled and
+    /// manual runs on an initialised site. Distinct from `SettingsSyncIsDisabled`, which the
+    /// CLI sets permanently on a copied datafile.
+    SettingsSyncIsPaused,
     SettingsSyncV7Token,
     SettingsSyncVersion,
     SettingsTokenSecret,

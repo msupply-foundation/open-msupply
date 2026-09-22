@@ -30,8 +30,12 @@ const [syncStatus, setSyncStatus] = createSignal<SyncStatusFragment>();
 const [pushQueueCount, setPushQueueCount] = createSignal<number>();
 // Whether the live channel is delivering; consumers poll only while it isn't.
 const [liveConnected, setLiveConnected] = createSignal(false);
+// The admin pause (Admin > Sync settings). Carried on every poll and every
+// live frame — the server re-emits a frame when the switch flips, since a
+// paused site produces no sync frames of its own to carry the change.
+const [syncPaused, setSyncPaused] = createSignal(false);
 
-export { syncStatus, pushQueueCount, liveConnected };
+export { syncStatus, pushQueueCount, liveConnected, syncPaused };
 
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
@@ -92,6 +96,7 @@ const connect = () => {
       liveDeliveries++;
       setLiveConnected(true);
       setPushQueueCount(data.syncInfoUpdated.numberOfRecordsInPushQueue);
+      setSyncPaused(data.syncInfoUpdated.isSyncPaused);
       handleStatus(data.syncInfoUpdated.syncStatus);
     },
     onFailure: () => {
@@ -146,6 +151,7 @@ export const pollSyncStatus = async (): Promise<void> => {
   if (generation !== pollGeneration || liveDeliveries !== deliveriesAtStart)
     return;
   setPushQueueCount(result.data.numberOfRecordsInPushQueue);
+  setSyncPaused(result.data.isSyncPaused);
   handleStatus(result.data.latestSyncStatus);
 };
 

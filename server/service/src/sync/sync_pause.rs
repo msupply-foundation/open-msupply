@@ -1,0 +1,112 @@
+//! The admin sync pause (Admin > Sync settings).
+//!
+//! A persisted flag (`KeyType::SettingsSyncIsPaused`) read by `SynchroniserDriver` before every
+//! scheduled or manual run and by the `manualSync` mutation. While set on an initialised site no
+//! push or pull runs, including a central server's outbound sync to legacy central. Inbound sync
+//! APIs a central serves to its remotes are unaffected, and so is initialisation: the flag only
+//! takes effect once the site's first sync has completed.
+//!
+//! Distinct from `KeyType::SettingsSyncIsDisabled`, the one-way switch the CLI sets on a copied
+//! datafile so it never syncs again.
+
+use repository::{RepositoryError, SystemLogType, UserAccountRowRepository};
+
+use crate::{
+    activity_log::system_log,
+    service_provider::{ServiceContext, ServiceProvider},
+    subscription::SubscriptionTrigger,
+};
+
+/// Set the pause flag, record who did it in the system log, and re-emit the sync info
+/// subscription so every open session's header updates. Returns the stored state.
+pub fn set_sync_paused(
+    service_provider: &ServiceProvider,
+    ctx: &ServiceContext,
+    user_id: &str,
+    paused: bool,
+) -> Result<bool, RepositoryError> {
+    let already = service_provider.settings.is_sync_paused(ctx)?;
+
+    if already != paused {
+        service_provider.settings.set_sync_paused(ctx, paused)?;
+
+        let username = UserAccountRowRepository::new(&ctx.connection)
+            .find_one_by_id(user_id)?
+            .map(|user| user.username)
+            .unwrap_or_else(|| user_id.to_string());
+        let message = if paused {
+            format!("Sync paused by {username}")
+        } else {
+            format!("Sync resumed by {username}")
+        };
+        system_log(&ctx.connection, SystemLogType::SyncPauseChanged, &message)?;
+    }
+
+    // Emit even when unchanged: a client that toggled expects a fresh frame either way.
+    service_provider
+        .subscription_trigger
+        .send(SubscriptionTrigger::SyncPauseChanged);
+
+    Ok(paused)
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{mock_user_account_a, MockDataInserts},
+        SystemLogRowRepository, SystemLogType,
+    };
+
+    use super::set_sync_paused;
+    use crate::test_helpers::setup_all_and_service_provider;
+
+    #[actix_rt::test]
+    async fn set_sync_paused_persists_and_logs_the_user() {
+        let ctx = setup_all_and_service_provider(
+            "set_sync_paused_persists_and_logs_the_user",
+            MockDataInserts::none().user_accounts(),
+        )
+        .await;
+        let service_provider = &ctx.service_provider;
+        let service_context = &ctx.service_context;
+        let user_id = mock_user_account_a().id;
+
+        let pause_logs = || {
+            SystemLogRowRepository::new(&service_context.connection)
+                .find_all()
+                .unwrap()
+                .into_iter()
+                .filter(|log| log.r#type == SystemLogType::SyncPauseChanged)
+                .collect::<Vec<_>>()
+        };
+
+        assert!(!service_provider.settings.is_sync_paused(service_context).unwrap());
+        assert!(pause_logs().is_empty());
+
+        // Pause: persisted, and logged once naming the user.
+        assert!(set_sync_paused(service_provider, service_context, &user_id, true).unwrap());
+        assert!(service_provider.settings.is_sync_paused(service_context).unwrap());
+        let logs = pause_logs();
+        assert_eq!(logs.len(), 1);
+        assert_eq!(logs[0].message.as_deref(), Some("Sync paused by username_a"));
+        assert!(!logs[0].is_error);
+
+        // Setting the same state again is a no-op for the log.
+        assert!(set_sync_paused(service_provider, service_context, &user_id, true).unwrap());
+        assert_eq!(pause_logs().len(), 1);
+
+        // Resume: persisted and logged.
+        assert!(!set_sync_paused(service_provider, service_context, &user_id, false).unwrap());
+        assert!(!service_provider.settings.is_sync_paused(service_context).unwrap());
+        let logs = pause_logs();
+        assert_eq!(logs.len(), 2);
+        assert_eq!(logs[1].message.as_deref(), Some("Sync resumed by username_a"));
+
+        // An unknown user id falls back to the id itself rather than failing.
+        set_sync_paused(service_provider, service_context, "not_a_user", true).unwrap();
+        assert_eq!(
+            pause_logs()[2].message.as_deref(),
+            Some("Sync paused by not_a_user")
+        );
+    }
+}
