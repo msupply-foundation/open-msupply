@@ -192,6 +192,7 @@ describe('validateLoadedModule', () => {
       'dashboard.panel',
       'dashboard.stat',
       'dashboard.widget',
+      'host.warningSuppression',
       'internalOrder.sidePanelSection',
       'internalOrderLine.column',
       'internalOrderLine.infoPanel',
@@ -262,6 +263,101 @@ describe('validateLoadedModule', () => {
     });
     expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
       'no Component function'
+    );
+  });
+
+  it('accepts a warning-suppression contribution — a resolver and a published warning, no Component', () => {
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          warning: 'internalOrders.recentStocktake',
+          suppresses: () => true,
+        },
+      ],
+    });
+    expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+  });
+
+  it('refuses a warning suppression with no suppresses resolver — a Component cannot stand in', () => {
+    // The slot is consulted, never rendered (sdk-contract § the
+    // warning-suppression slot): a bundle offering a Component there was built
+    // against a surface this host does not have.
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          warning: 'internalOrders.recentStocktake',
+          Component,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'has no suppresses function'
+    );
+  });
+
+  it('refuses a warning suppression that ALSO carries a Component — a consulted slot never renders', () => {
+    // Silently dropping the render half would hide from the author that the
+    // surface they built against does not exist here; the wrong form refuses
+    // whole, as everywhere (sdk-contract § contributions).
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          warning: 'internalOrders.recentStocktake',
+          suppresses: () => true,
+          Component,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'consulted, never rendered'
+    );
+  });
+
+  it('refuses a warning suppression naming an unpublished warning id, by name', () => {
+    // An unknown warning means the bundle was built against a host that
+    // publishes it — the same judgement as an unknown slot id, so the refusal
+    // names the published set instead of silently never consulting it.
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          warning: 'internalOrders.someFutureWarning',
+          suppresses: () => true,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'suppresses unknown warning "internalOrders.someFutureWarning"'
+    );
+  });
+
+  it('refuses a warning suppression naming no warning at all — a missing field is not an unknown id', () => {
+    // The refusal must say the field is absent (and name the published set),
+    // not claim an unknown warning called "undefined" — the author's defect is
+    // a missing declaration, not a bad name.
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          suppresses: () => true,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'names no warning to suppress'
     );
   });
 

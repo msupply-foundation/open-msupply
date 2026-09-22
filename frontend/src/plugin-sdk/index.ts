@@ -84,6 +84,14 @@ export type {
   ColumnContribution,
 } from './types';
 
+// ── Slot API — warning suppression ──────────────────────────────────────────
+// The catalogue const is exported alongside its type: the spec commits
+// "HOST_WARNING_IDS in the SDK is the committed set" (sdk-contract § the
+// warning-suppression slot), and it is a handful of string literals — no
+// eager weight.
+export { HOST_WARNING_IDS } from './types';
+export type { HostWarningId, WarningSuppressionResolver } from './types';
+
 // ── Slot API — the prescription payment-form slot ───────────────────────────
 export type {
   FieldValidity,
@@ -158,12 +166,31 @@ export { TextField } from '../ui/elements/inputs/TextField';
 export type { TextFieldProps } from '../ui/elements/inputs/TextField';
 export { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
+/*
+ * The registry's notice-inside-content panel (UI_ELEMENTS § Alert), for the
+ * Stocktake Helper's save refusals and save failure (#495's review round:
+ * plain red text at the card's corner was read past). The "already in the
+ * eager graph" bargain again — App.tsx renders the startup failure through
+ * Alert, statically, so the module and its CSS ship regardless.
+ */
+export { Alert } from '../ui/elements/feedback/Alert';
+export type { AlertProps, AlertSeverity } from '../ui/elements/feedback/Alert';
 // foldForSearch rides along free: it is matchesSearch's own module, already
 // eager — exported so a plugin filtering thousands of rows can fold its query
 // once per pass instead of paying matchesSearch's per-call query fold.
 export { foldForSearch, matchesSearch } from '../ui/utils/searchText';
 export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
 export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
+// The date-range filter — what the Stocktake Helper's past-reports list needs
+// (plugins/cook_islands, #490): a pick-only range whose `max` refuses future
+// dates and whose pick flow cannot produce an inverted range. New CSS-bearing
+// modules in the SDK chunk — the field, its DatePickerPanel and their shared
+// styles (measured: kdd/bundle-size-by-pr).
+export { DateRangeField } from '../ui/elements/inputs/DateRangeField';
+export type {
+  DateRangeFieldProps,
+  IsoDateRange,
+} from '../ui/elements/inputs/DateRangeField';
 
 // ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
 /*
@@ -180,6 +207,7 @@ export {
   FilterDateRange,
   FilterSelect,
   FilterTextInput,
+  UnsavedChangesGuard,
 } from './lazyComponents';
 export type { DataTableProps } from '../ui/elements/table/DataTable';
 export type {
@@ -217,17 +245,14 @@ export {
 } from './tableState';
 export type { UrlQueryState } from '../list/urlQueryStateCore';
 export type { TableConfigController } from '../api/createTableConfig';
-export type {
-  Band,
-  LayeredConfig,
-} from '../ui/elements/table/tableConfig';
+export type { Band, LayeredConfig } from '../ui/elements/table/tableConfig';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
- * The five the Cook Islands navigator names for its tiles (plugins/cook_islands
- * ui-surface.md § S2/S3): patient, open package, truck, document, stock — in
- * that order below. That file describes the PICTURE and never names an
- * export, so this list is the mapping; keep the two in step.
+ * The six the Cook Islands navigator names for its tiles (plugins/cook_islands
+ * ui-surface.md § S2/S3): patient, inbox tray, truck, box with an arrow out,
+ * stock, sheet — in that order below. That file describes the PICTURE and
+ * never names an export, so this list is the mapping; keep the two in step.
  * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
  * flip or an a11y attribute on the host icon reaches the contributed surface
  * too — a copied SVG would fork on the first such change.
@@ -242,11 +267,16 @@ export type {
  */
 export {
   CustomersIcon,
-  ReplenishmentIcon,
+  InboxIcon,
   TruckIcon,
-  FileIcon,
+  UploadIcon,
   StockIcon,
+  FileIcon,
 } from '../ui/icons';
+// The back affordance on the Stocktake Helper's drill-in views (#490) —
+// RTL-flipping, and already alive in this graph (the date picker's month
+// navigation uses it), so re-exporting costs nothing.
+export { ChevronLeftIcon } from '../ui/icons';
 /*
  * The standing "this opens something" chevron on a whole-row/whole-card
  * target — the Stocktake Helper's worklist rows (#495), which are cards whose
@@ -255,11 +285,23 @@ export {
  * hand-drawn in the plugin would miss `data-flip-rtl` and so point the wrong
  * way in Arabic.
  *
- * Same "already in the graph" bargain as the five above — Select pulls
+ * Same "already in the graph" bargain as the six above — Select pulls
  * ChevronDownIcon from this module eagerly, so this is one more small
  * component in a module that ships regardless.
  */
 export { ChevronRightIcon } from '../ui/icons';
+/*
+ * The "this is done" mark on the Stocktake Helper's counted rows (#495's
+ * visual tidy) — the same bargain again: Select pulls CheckIcon from this
+ * module eagerly, so exporting it keeps one more already-shipped component
+ * alive rather than adding anything.
+ */
+export { CheckIcon } from '../ui/icons';
+// The disclosure chevron, as the host's own accordions draw it (down,
+// rotating 180° open) — the Cook Islands order-freshness statement's
+// disclosure mirrors that look. Same bargain again: Select already pulls it
+// eagerly, so re-exporting costs nothing new.
+export { ChevronDownIcon } from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';
@@ -290,8 +332,22 @@ export type { PluginIntl, SupportedLocale } from './intl';
  * NOT here: a raw (path, filter) pair is the hand-encoding the named builders
  * exist to prevent.
  */
-export { storeHref, navigateTo } from './navigation';
+export { storeHref, navigateTo, currentStorePath } from './navigation';
 export type { NavigateOptions } from './navigation';
+export { usePageSearch } from './pageSearch';
+/*
+ * Leaving a page with unsaved edits — the one piece of navigation a plugin
+ * INTERCEPTS rather than performs — is `UnsavedChangesGuard`, exported with
+ * the lazy components above rather than here. Its type is the options object
+ * the component takes; nothing else of it is eager, deliberately.
+ *
+ * The guard CANNOT be an eager export, and that is what fuses it to its
+ * prompt: it imports `@solidjs/router`, which runs `saveCurrentDepth()` at
+ * module scope and reads `window` on import, and this barrel MUST stay free
+ * of module-scope side effects (see the header) — it is evaluated by the
+ * facade entry, in environments with no DOM among them.
+ */
+export type { ConfirmOnLeaveOptions } from '../domain/confirmOnLeave/createConfirmOnLeave';
 export {
   DAYS_TILL_EXPIRED,
   expiredStockPath,
@@ -300,6 +356,7 @@ export {
   expiringSoonStockPath,
   inboundShipmentListPath,
   internalOrderListPath,
+  internalOrderPath,
   lowStockItemsPath,
   outboundShipmentListPath,
   outOfStockItemsPath,

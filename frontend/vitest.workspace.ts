@@ -44,7 +44,9 @@ export default defineWorkspace([
     resolve: { alias, conditions: ['browser', 'development'] },
     test: {
       name: 'solid',
-      include: ['src/**/*.test.tsx'],
+      // Plugins' component-shaped tests run here too: same reason as the
+      // host's — reactivity only tracks under the browser conditions.
+      include: ['src/**/*.test.tsx', 'plugins/*/src/**/*.test.tsx'],
       environment: 'node',
     },
   },

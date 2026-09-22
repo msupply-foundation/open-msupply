@@ -137,8 +137,6 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
       header: () => t('label.program'),
     },
     {
-      // A transferred requisition's generated "From internal order N" text
-      // (rules › origin) reads here.
       c: { accessor: row => row.theirReference ?? '', id: 'theirReference' },
       header: () => t('label.reference'),
       ...getCellDefinition('theirReference'),

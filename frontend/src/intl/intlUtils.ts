@@ -46,23 +46,6 @@ export const getLocalisedFullName = (
   lastName: StringOrEmpty
 ): string => `${firstName ?? ''} ${lastName ?? ''}`.trim();
 
-// Minimal English pluralisation for dynamic words (the reference app used the
-// `pluralize` package; kept dependency-free here per the simplification spec).
-// Only English is pluralised — other languages return the word unchanged.
-const IRREGULAR: Record<string, string> = {
-  each: 'each',
-  person: 'people',
-};
-
-export const getPlural = (word: string, count: number): string => {
-  if (locale() !== 'en' || count === 1) return word;
-  const lower = word.toLowerCase();
-  if (IRREGULAR[lower]) return IRREGULAR[lower];
-  if (/(s|x|z|ch|sh)$/i.test(word)) return `${word}es`;
-  if (/[^aeiou]y$/i.test(word)) return `${word.slice(0, -1)}ies`;
-  return `${word}s`;
-};
-
 /**
  * Translate a server error key. The catalog won't hold every possible server
  * message, so fall back to a sentence-cased version of the camelCase key.
