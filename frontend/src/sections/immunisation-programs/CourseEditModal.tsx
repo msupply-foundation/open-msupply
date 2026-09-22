@@ -81,9 +81,10 @@ import { StoreRatesPanel } from './StoreRatesPanel';
 // stays open while the save is in flight with Save busy; closes on success —
 // closure plus the list refreshing IS the confirmation, never a toast; stays
 // open on a refusal with the draft intact and the reason in a banner above the
-// actions. Cancel and Escape close it discarding the draft; a click outside
-// does nothing (`Dialog` is composed with a scrim that dismisses, which the
-// `dismissable` prop governs together with Escape — see below).
+// actions. Cancel, Escape and a click on the scrim all close it, discarding
+// the draft — the shared dialog contract, and refinement 4 (the reference
+// ignored an outside click). `dismissable` governs the scrim and Escape
+// together, which is why a save in flight blocks both — see below.
 
 type Group = DemographicGroupsResult['demographics']['nodes'][number];
 type VaccineItem = VaccineItemsResult['items']['nodes'][number];
