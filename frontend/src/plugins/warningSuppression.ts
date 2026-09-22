@@ -2,10 +2,15 @@
  * The host side of warning suppression — the one CONSULTED slot
  * (spec/plugins/sdk-contract.md § the warning-suppression slot): nothing
  * renders; a host surface asks whether one of its published warnings is
- * suppressed — replaced by a plugin's own measure. The first consumer is the
- * internal-orders list, asking whether the store-wide recent-stocktake
- * warning is superseded by a plugin's own item-level measure
- * (spec/internal-orders/rules.md § creation).
+ * suppressed — replaced by a plugin's own measure.
+ *
+ * NO surface consults it today. The internal-orders New-order warning did,
+ * deferring to a per-item count-freshness measure that has since been
+ * withdrawn (#822), and its gate now reads the stocktake test alone
+ * (spec/internal-orders/rules.md § creation). The slot, its validation and
+ * its published id stay — a surface that wants to be suppressible only has
+ * to start asking — so this module is exercised by its own tests rather
+ * than by a caller.
  *
  * Consulted at the moment the warning would otherwise show, not held
  * reactively: the answer typically comes from the plugin's own data read, and
