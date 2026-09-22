@@ -122,6 +122,10 @@ const expandLists = (
       scalars[`${name}_${index}`] = element;
       return `$${name}_${index}`;
     });
+    // An empty list becomes `(NULL)`, so `x IN $empty` matches nothing, which is
+    // what an empty list means. Mind the inverse: `x NOT IN (NULL)` is NULL, not
+    // true, so it matches nothing either — a `NOT IN` over a list that can be
+    // empty needs its own emptiness check in the caller.
     lists[name] = elements.length === 0 ? '(NULL)' : `(${elements.join(', ')})`;
   }
 
@@ -146,7 +150,15 @@ const expandLists = (
  */
 const hostBindsParams = () => sql.length >= 2;
 
-/** A string as a SQL literal, with any quote of its own doubled. */
+/**
+ * A string as a SQL literal, with any quote of its own doubled.
+ *
+ * Complete only while Postgres has `standard_conforming_strings` on, or a
+ * trailing backslash escapes the closing quote. The new host pins it for the
+ * transaction; the old hosts this fallback runs against do not — they rely on
+ * the Postgres default, which has been on since 9.1. Another reason the
+ * fallback is temporary.
+ */
 const quoteLiteral = (value: string) => `'${value.replace(/'/g, "''")}'`;
 
 const renderScalar = (value: SqlScalar): string => {
