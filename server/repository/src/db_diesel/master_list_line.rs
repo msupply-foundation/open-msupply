@@ -125,19 +125,23 @@ impl<'a> MasterListLineRepository<'a> {
                 query = query.filter(master_list_line::master_list_id.eq_any(master_list_ids));
             }
 
+            // `false` excludes the barred items; an item with no join row is orderable.
             if let Some(ignore_for_orders) = f.ignore_for_orders {
-                let mut item_ids_for_ignore_for_orders = item_store_join::table
+                let mut ignored_item_ids = item_store_join::table
                     .select(item_store_join::item_id)
-                    .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
+                    .filter(item_store_join::ignore_for_orders.eq(true))
                     .into_boxed();
 
                 if let Some(store_id) = store_id {
-                    item_ids_for_ignore_for_orders = item_ids_for_ignore_for_orders
-                        .filter(item_store_join::store_id.eq(store_id));
+                    ignored_item_ids =
+                        ignored_item_ids.filter(item_store_join::store_id.eq(store_id));
                 }
 
-                query =
-                    query.filter(master_list_line::item_id.eq_any(item_ids_for_ignore_for_orders));
+                query = if ignore_for_orders {
+                    query.filter(master_list_line::item_id.eq_any(ignored_item_ids))
+                } else {
+                    query.filter(master_list_line::item_id.ne_all(ignored_item_ids))
+                };
             }
         }
 
@@ -194,5 +198,70 @@ impl MasterListLineFilter {
     pub fn ignore_for_orders(mut self, ignore_for_orders: bool) -> Self {
         self.ignore_for_orders = Some(ignore_for_orders);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        mock::{
+            mock_item_a, mock_item_b, mock_master_list_master_list_line_filter_test, mock_store_a,
+            MockDataInserts,
+        },
+        test_db, EqualFilter, ItemStoreJoinRow, ItemStoreJoinRowRepository,
+        ItemStoreJoinRowRepositoryTrait, MasterListLineFilter, MasterListLineRepository,
+        Pagination,
+    };
+
+    // An item is barred only where its store join says so: `true` returns the
+    // barred lines, `false` every other — a join saying "not barred" and no
+    // join at all alike.
+    #[actix_rt::test]
+    async fn test_master_list_line_query_filter_ignore_for_orders() {
+        let (_, storage_connection, _, _) = test_db::setup_all(
+            "test_master_list_line_query_filter_ignore_for_orders",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .full_master_lists(),
+        )
+        .await;
+        ItemStoreJoinRowRepository::new(&storage_connection)
+            .upsert_one(&ItemStoreJoinRow {
+                id: "join_a".to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_a().id,
+                ignore_for_orders: true,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let repository = MasterListLineRepository::new(&storage_connection);
+        let item_ids = |ignore_for_orders: bool| -> Vec<String> {
+            repository
+                .query(
+                    Pagination::new(),
+                    Some(MasterListLineFilter {
+                        master_list_id: Some(EqualFilter::equal_to(
+                            mock_master_list_master_list_line_filter_test()
+                                .master_list
+                                .id,
+                        )),
+                        ignore_for_orders: Some(ignore_for_orders),
+                        ..Default::default()
+                    }),
+                    None,
+                    Some(mock_store_a().id),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|line| line.item_id)
+                .collect()
+        };
+
+        assert_eq!(item_ids(true), vec![mock_item_a().id]);
+        assert_eq!(item_ids(false), vec![mock_item_b().id]);
     }
 }
