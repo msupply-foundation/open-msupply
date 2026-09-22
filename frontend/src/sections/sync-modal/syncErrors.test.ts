@@ -43,6 +43,8 @@ const EXPECTED: Record<SyncErrorVariant, string> = {
   SITE_IS_NOT_V7: 'error.site-is-not-v7',
   // waiting for central upgrade
   WAITING_FOR_CENTRAL_V7_UPGRADE: 'error.waiting-for-central-v7-upgrade',
+  // central paused its sync API (issue #717)
+  SYNC_API_PAUSED: 'error.sync-api-paused',
   // integration timed out
   INTEGRATION_TIMEOUT_REACHED: 'error.integration-timeout-reached',
   // server problem (internal)
@@ -71,6 +73,7 @@ const HINTED = new Set([
   'error.sync-v6-api-incompatible',
   'error.v6-server-not-configured',
   'error.v7-upgrade-failed',
+  'error.sync-api-paused',
 ]);
 
 const variants = Object.keys(EXPECTED) as SyncErrorVariant[];
@@ -84,7 +87,15 @@ describe('syncErrorSummary — variant → kind mapping (SYNC-03.28)', () => {
 
   it('is one distinct summary per kind — not a single generic message', () => {
     const distinct = new Set(variants.map(v => syncErrorSummary(v).summary));
-    expect(distinct.size).toBe(18);
+    expect(distinct.size).toBe(19);
+  });
+
+  it('frames only a paused central as a warning — everything else is an error', () => {
+    for (const variant of variants) {
+      expect(syncErrorSummary(variant).severity).toBe(
+        variant === 'SYNC_API_PAUSED' ? 'warning' : undefined
+      );
+    }
   });
 
   it('carries a hint only for the kinds with a known remedy', () => {

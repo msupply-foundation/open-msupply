@@ -2,7 +2,7 @@
 //!
 //! A persisted flag (`KeyType::SettingsSyncIsPaused`) read by `SynchroniserDriver` before every
 //! scheduled or manual run and by the `manualSync` mutation. While set on an initialised site no
-//! push or pull runs, including a central server's outbound sync to legacy central. Inbound sync
+//! push or pull runs, including a central server's outbound sync to legacy central. The sync
 //! APIs a central serves to its remotes are unaffected, and so is initialisation: the flag only
 //! takes effect once the site's first sync has completed.
 //!

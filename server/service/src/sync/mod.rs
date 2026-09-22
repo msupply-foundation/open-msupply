@@ -13,6 +13,7 @@ mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
 pub mod site_auth;
+pub mod sync_api_pause;
 pub mod sync_buffer;
 pub mod sync_on_central;
 pub mod sync_pause;

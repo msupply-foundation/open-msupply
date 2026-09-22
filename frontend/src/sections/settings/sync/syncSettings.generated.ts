@@ -50,12 +50,12 @@ export type UpdateSyncSettingsResult = {
 }) | ({
   __typename: "SyncErrorNode";
 } & {
-  variant: "CONNECTION_ERROR" | "SITE_UUID_IS_BEING_CHANGED" | "SITE_NAME_NOT_FOUND" | "INCORRECT_PASSWORD" | "HARDWARE_ID_MISMATCH" | "SITE_HAS_NO_STORE" | "SITE_AUTH_TIMEOUT" | "INTEGRATION_TIMEOUT_REACHED" | "INVALID_URL" | "UNKNOWN" | "API_VERSION_INCOMPATIBLE" | "CENTRAL_V6_NOT_CONFIGURED" | "V6_API_VERSION_INCOMPATIBLE" | "INTEGRATION_ERROR" | "V7_UPGRADE_FAILED";
+  variant: "CONNECTION_ERROR" | "SITE_UUID_IS_BEING_CHANGED" | "SITE_NAME_NOT_FOUND" | "INCORRECT_PASSWORD" | "HARDWARE_ID_MISMATCH" | "SITE_HAS_NO_STORE" | "SITE_AUTH_TIMEOUT" | "INTEGRATION_TIMEOUT_REACHED" | "INVALID_URL" | "UNKNOWN" | "API_VERSION_INCOMPATIBLE" | "CENTRAL_V6_NOT_CONFIGURED" | "V6_API_VERSION_INCOMPATIBLE" | "INTEGRATION_ERROR" | "V7_UPGRADE_FAILED" | "SYNC_API_PAUSED";
   fullError: string;
 }) | ({
   __typename: "SyncErrorV7Node";
 } & {
-  variantV7: "DATABASE_ERROR" | "SYNC_RECORD_SERIALIZE_ERROR" | "RECORD_NOT_FOUND" | "SYNC_FILE_NOT_FOUND" | "SYNC_VERSION_MISMATCH" | "NOT_A_CENTRAL_SERVER" | "AUTHENTICATION" | "INVALID_SITE_NAME_OR_PASSWORD" | "TOKEN_ALREADY_ALLOCATED" | "TOKEN_NOT_FOUND" | "HARDWARE_ID_MISMATCH" | "FAILED_TO_GET_HARDWARE_ID" | "MISSING_AUTH_HEADER" | "SITE_LOCK_ERROR" | "CONNECTION_ERROR" | "PARSING_ERROR" | "INTEGRATION_TIMEOUT_REACHED" | "SITE_ID_NOT_SET" | "GET_CURRENT_SITE_ID_ERROR" | "SITE_ID_MISMATCH" | "SITE_IS_NOT_V7" | "WAITING_FOR_CENTRAL_V7_UPGRADE" | "REQUEST_SITE_AUTH_ERROR" | "OTHER";
+  variantV7: "DATABASE_ERROR" | "SYNC_RECORD_SERIALIZE_ERROR" | "RECORD_NOT_FOUND" | "SYNC_FILE_NOT_FOUND" | "SYNC_VERSION_MISMATCH" | "NOT_A_CENTRAL_SERVER" | "AUTHENTICATION" | "INVALID_SITE_NAME_OR_PASSWORD" | "TOKEN_ALREADY_ALLOCATED" | "TOKEN_NOT_FOUND" | "HARDWARE_ID_MISMATCH" | "FAILED_TO_GET_HARDWARE_ID" | "MISSING_AUTH_HEADER" | "SITE_LOCK_ERROR" | "CONNECTION_ERROR" | "PARSING_ERROR" | "INTEGRATION_TIMEOUT_REACHED" | "SITE_ID_NOT_SET" | "GET_CURRENT_SITE_ID_ERROR" | "SITE_ID_MISMATCH" | "SITE_IS_NOT_V7" | "WAITING_FOR_CENTRAL_V7_UPGRADE" | "REQUEST_SITE_AUTH_ERROR" | "SYNC_API_PAUSED" | "OTHER";
   fullError: string;
 });
 };
@@ -63,3 +63,31 @@ export type UpdateSyncSettingsResult = {
 export const UpdateSyncSettings = {
   query: "mutation updateSyncSettings($input: SyncSettingsInput!) {\n  updateSyncSettings(input: $input) {\n    ... on SyncSettingsNode {\n      __typename\n      username\n    }\n    ... on SyncErrorNode {\n      __typename\n      variant\n      fullError\n    }\n    ... on SyncErrorV7Node {\n      __typename\n      variantV7: variant\n      fullError\n    }\n  }\n}",
 } as TypedDocument<UpdateSyncSettingsResult, UpdateSyncSettingsVariables>;
+
+export type IsSyncApiPausedVariables = Record<string, never>;
+
+export type IsSyncApiPausedResult = {
+  isSyncApiPaused: boolean;
+};
+
+export const IsSyncApiPaused = {
+  query: "query isSyncApiPaused {\n  isSyncApiPaused\n}",
+} as TypedDocument<IsSyncApiPausedResult, IsSyncApiPausedVariables>;
+
+export type SetSyncApiPausedVariables = {
+  paused: boolean;
+};
+
+export type SetSyncApiPausedResult = {
+  centralServer: {
+  general: {
+  setSyncApiPaused: {
+  isPaused: boolean;
+};
+};
+};
+};
+
+export const SetSyncApiPaused = {
+  query: "mutation setSyncApiPaused($paused: Boolean!) {\n  centralServer {\n    general {\n      setSyncApiPaused(paused: $paused) {\n        isPaused\n      }\n    }\n  }\n}",
+} as TypedDocument<SetSyncApiPausedResult, SetSyncApiPausedVariables>;

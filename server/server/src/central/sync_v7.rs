@@ -148,6 +148,7 @@ async fn download_file(
         Err(error) => {
             let status = match &error {
                 SyncError::SyncFileNotFound(_) => StatusCode::NOT_FOUND,
+                SyncError::SyncApiPaused => StatusCode::SERVICE_UNAVAILABLE,
                 SyncError::TokenNotFound
                 | SyncError::Authentication
                 | SyncError::HardwareIdMismatch
@@ -332,6 +333,64 @@ mod test_sync_v7_server_api {
         let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
         assert_json_include!(actual: body, expected: json!({ "Ok": 0 }));
+    }
+
+    /// Data endpoints answer with the typed error; status and token stay open so the remote
+    /// can show the paused state rather than a generic failure.
+    #[actix_rt::test]
+    async fn endpoints_while_sync_api_paused() {
+        let (sp, _) = site_provider("sync_v7_http_paused", Some("test_token"), Some("hw-1")).await;
+        KeyValueStoreRepository::new(&sp.basic_context().unwrap().connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
+            .unwrap();
+        let app = test::init_service(App::new().app_data(sp).service(sync_v7_on_central())).await;
+
+        let req = authed_post("/sync_v7/pull")
+            .set_json(json!({ "cursor": 0, "batchSize": 100, "isInitialising": false }))
+            .to_request();
+        let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(body, json!({ "Err": "SyncApiPaused" }));
+
+        let req = authed_post("/sync_v7/patient_search")
+            .set_json(json!({}))
+            .to_request();
+        let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(body, json!({ "Err": "SyncApiPaused" }));
+
+        let body: serde_json::Value =
+            test::call_and_read_body_json(&app, authed_post("/sync_v7/site_status").to_request())
+                .await;
+        assert_json_include!(
+            actual: body,
+            expected: json!({ "Ok": { "siteId": 1, "isSyncApiPaused": true } })
+        );
+    }
+
+    #[actix_rt::test]
+    async fn download_file_returns_503_while_sync_api_paused() {
+        let (sp, settings, _temp_dir) = download_app_parts("sync_v7_http_download_paused").await;
+        KeyValueStoreRepository::new(&sp.basic_context().unwrap().connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
+            .unwrap();
+        let app = test::init_service(
+            App::new()
+                .app_data(sp)
+                .app_data(settings)
+                .service(sync_v7_on_central()),
+        )
+        .await;
+
+        let req = authed_post("/sync_v7/download_file")
+            .set_json(json!({ "id": "file1", "tableName": "asset", "recordId": "rec1" }))
+            .to_request();
+        let response = test::call_service(&app, req).await;
+
+        assert_eq!(
+            response.status(),
+            actix_web::http::StatusCode::SERVICE_UNAVAILABLE
+        );
+        let body: serde_json::Value = test::read_body_json(response).await;
+        assert_eq!(body, json!("SyncApiPaused"));
     }
 
     #[actix_rt::test]

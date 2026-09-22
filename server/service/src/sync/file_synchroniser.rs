@@ -235,6 +235,19 @@ impl FileSynchroniser {
 
         // On Error
 
+        // Central paused its sync API for maintenance: not the file's fault, so don't spend one of
+        // its upload attempts, and keep the state local (no changelog) rather than reporting an
+        // error to central. Check back in a minute; the upload resumes once central is unpaused.
+        if let SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncApiPaused) = error.source {
+            sync_file_repo.upsert_without_changelog(&SyncFileReferenceRow {
+                status: SyncFileStatus::Error,
+                error: Some(format_error(&error)),
+                retry_at: Some(Utc::now().naive_utc() + Duration::minutes(1)),
+                ..sync_file_reference.clone()
+            })?;
+            return Err(error.into());
+        }
+
         // Update database to record the file has failed to upload
         let sync_file_ref_update = if sync_file_reference.retries >= MAX_UPLOAD_ATTEMPTS {
             SyncFileReferenceRow {
@@ -279,5 +292,101 @@ impl FileSynchroniser {
         })?;
 
         Err(error.into())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use chrono::Utc;
+    use httpmock::{Method::POST, MockServer};
+    use repository::{
+        mock::MockDataInserts,
+        sync_file_reference_row::{
+            SyncFileDirection, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
+        },
+        KeyType, KeyValueStoreRepository,
+    };
+    use std::sync::Arc;
+    use tokio::sync::watch;
+
+    use super::FileSynchroniser;
+    use crate::{
+        static_files::{StaticFileCategory, StaticFileService},
+        sync::{api_v6::SyncParsedErrorV6, settings::SyncSettings},
+        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+    };
+
+    /// A paused central is maintenance, not a failed upload: the file keeps its retry budget
+    /// (so a long pause can't push it to PermanentFailure) and is retried shortly after.
+    #[actix_rt::test]
+    async fn upload_to_paused_central_keeps_retry_budget() {
+        let ServiceTestContext {
+            service_provider,
+            connection,
+            settings,
+            ..
+        } = setup_all_and_service_provider(
+            "upload_to_paused_central_keeps_retry_budget",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // Test databases default to sync v7, whose tus requests carry a bearer token
+        KeyValueStoreRepository::new(&connection)
+            .set_string(KeyType::SettingsSyncV7Token, Some("token".to_string()))
+            .unwrap();
+
+        let central = MockServer::start_async().await;
+        central.mock(|when, then| {
+            when.method(POST).path("/central/sync/files");
+            then.status(503)
+                .body(serde_json::to_string(&SyncParsedErrorV6::SyncApiPaused).unwrap());
+        });
+
+        let static_file_service =
+            Arc::new(StaticFileService::new(&settings.server.base_dir).unwrap());
+        let file = static_file_service
+            .reserve_file(
+                "hello.txt",
+                &StaticFileCategory::SyncFile("asset".to_string(), "rec1".to_string()),
+                Some("file1".to_string()),
+            )
+            .unwrap();
+        std::fs::write(&file.path, b"hello").unwrap();
+
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+        repo.upsert_one(&SyncFileReferenceRow {
+            id: "file1".to_string(),
+            table_name: "asset".to_string(),
+            record_id: "rec1".to_string(),
+            file_name: "hello.txt".to_string(),
+            total_bytes: 5,
+            retries: 3,
+            direction: SyncFileDirection::Upload,
+            status: SyncFileStatus::New,
+            ..Default::default()
+        })
+        .unwrap();
+
+        let synchroniser = FileSynchroniser::new(
+            &central.base_url(),
+            SyncSettings {
+                url: central.base_url(),
+                username: "site".to_string(),
+                password_sha256: "password".to_string(),
+                ..Default::default()
+            },
+            service_provider,
+            static_file_service,
+        )
+        .unwrap();
+        let (_pause_tx, pause_rx) = watch::channel(false);
+        assert!(synchroniser.sync(pause_rx).await.is_err());
+
+        let row = repo.find_one_by_id("file1").unwrap().unwrap();
+        assert_eq!(row.status, SyncFileStatus::Error);
+        assert_eq!(row.retries, 3);
+        assert!(row.retry_at.unwrap() > Utc::now().naive_utc());
+        assert!(row.error.unwrap().contains("Central server sync is paused"));
     }
 }

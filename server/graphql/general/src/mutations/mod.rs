@@ -8,6 +8,7 @@ pub mod label_printer_settings;
 pub mod log;
 pub mod manual_sync;
 pub mod set_sync_paused;
+pub mod sync_api_pause;
 pub mod sync_settings;
 pub mod update_insurance;
 pub mod update_name_properties;

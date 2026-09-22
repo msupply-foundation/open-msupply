@@ -34,6 +34,7 @@ pub enum SyncErrorVariantV7 {
     SiteIsNotV7,
     WaitingForCentralV7Upgrade,
     RequestSiteAuthError,
+    SyncApiPaused,
     Other,
 }
 
@@ -63,6 +64,7 @@ impl SyncErrorV7Node {
             SyncError::SiteIsNotV7 => SyncErrorVariantV7::SiteIsNotV7,
             SyncError::WaitingForCentralV7Upgrade => SyncErrorVariantV7::WaitingForCentralV7Upgrade,
             SyncError::RequestSiteAuthError(_) => SyncErrorVariantV7::RequestSiteAuthError,
+            SyncError::SyncApiPaused => SyncErrorVariantV7::SyncApiPaused,
             SyncError::Other(_) => SyncErrorVariantV7::Other,
         };
 

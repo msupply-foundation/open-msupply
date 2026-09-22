@@ -45,6 +45,7 @@ use mutations::{
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     set_sync_paused::{set_sync_paused, SyncPausedNode},
+    sync_api_pause::{set_sync_api_paused_mutation, sync_api_paused_query},
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
     update_insurance::{update_insurance, UpdateInsuranceInput, UpdateInsuranceResponse},
     update_name_properties::{
@@ -335,6 +336,11 @@ impl GeneralQueries {
 
     pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
         sync_settings(ctx, true)
+    }
+
+    /// Central only: whether the sync API is paused, refusing sync from remote sites (always false on a remote)
+    pub async fn is_sync_api_paused(&self, ctx: &Context<'_>) -> Result<bool> {
+        sync_api_paused_query(ctx)
     }
 
     pub async fn display_settings(
@@ -791,5 +797,15 @@ impl CentralGeneralMutations {
         input: Vec<ConfigureNamePropertyInput>,
     ) -> Result<ConfigureNamePropertiesResponse> {
         configure_name_properties(ctx, input)
+    }
+
+    /// Pause or resume the v6/v7 sync API remote sites sync through, e.g. during central maintenance.
+    /// Returns the new state.
+    pub async fn set_sync_api_paused(
+        &self,
+        ctx: &Context<'_>,
+        paused: bool,
+    ) -> Result<SyncPausedNode> {
+        set_sync_api_paused_mutation(ctx, paused)
     }
 }

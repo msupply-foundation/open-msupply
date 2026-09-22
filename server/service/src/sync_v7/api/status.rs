@@ -8,6 +8,9 @@ pub struct Output {
     pub site_id: i32,
     pub central_site_id: i32,
     pub is_multi_device_site: bool,
+    /// Central has paused its sync API. Defaults to false when talking to an older central.
+    #[serde(default)]
+    pub is_sync_api_paused: bool,
 }
 
 pub type Response = ApiResponse<Output>;
