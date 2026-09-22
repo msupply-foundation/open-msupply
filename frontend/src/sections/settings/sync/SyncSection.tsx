@@ -25,6 +25,7 @@ import {
 } from './syncSettings.generated';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
+import { SyncApiPause } from './SyncApiPause';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
@@ -44,7 +45,10 @@ const ADVANCED_REGION_ID = 'sync-settings-advanced';
  * (OMS-REG-SET-02.15) — and the password always starts blank
  * (OMS-REG-SET-02.12).
  */
-export const SyncSection = () => {
+export const SyncSection = (props: {
+  /** Central server + Server Admin: also show the sync API pause (#717). */
+  showSyncApiPause: boolean;
+}) => {
   // Stored settings (never includes the password). Non-suspending read —
   // this section lives inside an already-open page (kdd/solid-reactivity-
   // pitfalls § no remounts).
@@ -191,6 +195,11 @@ export const SyncSection = () => {
         />
         <Show when={pauseError()}>
           {message => <Alert severity="error">{message()}</Alert>}
+        </Show>
+        {/* The two pauses sit together: this server's own sync above, the
+            sync API it serves to remote sites below (central only). */}
+        <Show when={props.showSyncApiPause}>
+          <SyncApiPause />
         </Show>
         {/* The standard form layout (kdd/form-layout): stacked full-width
           fields carrying their own labels, with the two numbers paired in a

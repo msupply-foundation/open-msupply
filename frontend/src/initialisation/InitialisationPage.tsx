@@ -580,7 +580,10 @@ export const InitialisationPage: Component<{
             return h ? t(h) : undefined;
           };
           return (
-            <Alert severity="error" testId="initialise-error">
+            <Alert
+              severity={errorSummary().severity ?? 'error'}
+              testId="initialise-error"
+            >
               <div>{t(errorSummary().summary)}</div>
               <ErrorDetails detail={err().fullError} hint={hintText()} />
             </Alert>

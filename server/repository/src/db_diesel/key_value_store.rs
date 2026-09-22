@@ -64,6 +64,8 @@ pub enum KeyType {
     SettingsSyncVersion,
     SettingsTokenSecret,
     SettingsSyncSiteIsMultiDevice,
+    // Central only: refuse inbound v6/v7 sync data requests from remotes (#717)
+    SettingsSyncApiIsPaused,
 
     DatabaseVersion,
 

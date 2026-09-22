@@ -257,6 +257,11 @@ pub async fn is_central_token_cleared(
 /// extra round-trip.
 async fn check_site_status<'a>(session: &SyncV7<'a>) -> Result<(), SyncError> {
     let status = session.sync_api_v7.site_status(()).await?;
+    // Central is under maintenance: stop before pushing so nothing is half-sent, and retry on
+    // the normal interval
+    if status.is_sync_api_paused {
+        return Err(SyncError::SyncApiPaused);
+    }
     let kvs = KeyValueStoreRepository::new(session.connection);
     kvs.set_i32(
         KeyType::SettingsSyncCentralServerSiteId,

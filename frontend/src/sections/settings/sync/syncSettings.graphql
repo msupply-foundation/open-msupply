@@ -41,3 +41,20 @@ mutation updateSyncSettings($input: SyncSettingsInput!) {
     }
   }
 }
+
+# Central only (spec/settings/contract.md § Synchronisation): while paused,
+# central refuses remote sites' v6/v7 sync data requests (issue #717). Server
+# Admin is enforced server-side on both.
+query isSyncApiPaused {
+  isSyncApiPaused
+}
+
+mutation setSyncApiPaused($paused: Boolean!) {
+  centralServer {
+    general {
+      setSyncApiPaused(paused: $paused) {
+        isPaused
+      }
+    }
+  }
+}

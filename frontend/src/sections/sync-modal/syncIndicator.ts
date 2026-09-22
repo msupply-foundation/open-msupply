@@ -98,6 +98,8 @@ export const createSyncIndicator = (): {
         return t('sync-status.footer-paused');
       case 'unreachable':
         return t('sync-status.footer-offline');
+      case 'sync-api-paused':
+        return t('sync-status.footer-sync-api-paused');
       case 'error':
         return t('sync-status.footer-error');
       case 'warning':
@@ -136,6 +138,7 @@ export const createSyncIndicator = (): {
         return localisedTimeAgo(state.finished, now());
       case 'unreachable':
       case 'paused':
+      case 'sync-api-paused':
         return lastSynced() ?? t('sync-status.footer-never-synced');
       case 'error':
       case 'warning':

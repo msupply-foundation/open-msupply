@@ -46,6 +46,11 @@ pub enum SyncParsedErrorV6 {
     /// worth knowing when one does.
     #[error("Site is not allowed to author records for table: {0}")]
     TableNotAuthoredBySite(String),
+    /// Central has paused its sync API (Admin > Sync settings) for maintenance. Remotes treat it
+    /// as a known, non-alarming state and retry on their normal interval. Like
+    /// `TableNotAuthoredBySite`, a remote built before this variant reports a parse error instead.
+    #[error("Central server sync is paused")]
+    SyncApiPaused,
 }
 
 impl From<anyhow::Error> for SyncParsedErrorV6 {
@@ -202,6 +207,9 @@ pub struct SiteStatusRequestV6 {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct SiteStatusV6 {
     pub(crate) is_integrating: bool,
+    /// Central has paused its sync API. Defaults to false when talking to an older central.
+    #[serde(default)]
+    pub(crate) is_sync_api_paused: bool,
 }
 
 #[derive(Serialize, Deserialize)]

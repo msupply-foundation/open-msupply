@@ -9,7 +9,10 @@ mod test_sync_v7_client_api {
         KeyType, KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection,
         StoreRow, SyncBufferRepository, UnitRow, Upsert,
     };
-    use repository::{KeyValueStoreRow, SyncAction, SyncBufferRow};
+    use repository::{
+        syncv7::SyncError, KeyValueStoreRow, SyncAction, SyncBufferRow, SyncLogV7Condition,
+        SyncLogV7Repository,
+    };
     use serde_json::json;
     use std::collections::VecDeque;
     use tokio::sync::Mutex;
@@ -160,13 +163,24 @@ mod test_sync_v7_client_api {
         assert!(headers.get(HARDWARE_ID_HEADER).is_some());
     }
 
+    #[derive(Clone, Copy)]
+    struct CentralStatus {
+        is_multi_device: bool,
+        is_sync_api_paused: bool,
+    }
+
     async fn site_status(
-        is_multi_device: web::Data<bool>,
+        status: web::Data<CentralStatus>,
         req: HttpRequest,
     ) -> actix_web::HttpResponse {
         assert_auth_headers(&req);
         actix_web::HttpResponse::Ok().json(json!({
-            "Ok": { "siteId": 1, "centralSiteId": 1, "isMultiDeviceSite": *is_multi_device.get_ref() }
+            "Ok": {
+                "siteId": 1,
+                "centralSiteId": 1,
+                "isMultiDeviceSite": status.is_multi_device,
+                "isSyncApiPaused": status.is_sync_api_paused,
+            }
         }))
     }
 
@@ -209,6 +223,9 @@ mod test_sync_v7_client_api {
         batch_size: BatchSize,
         is_initialising: bool,
         is_multi_device: bool,
+        is_sync_api_paused: bool,
+        /// None expects the sync to succeed
+        expected_error: Option<SyncError>,
     }
 
     /// Runs sync_v7 against a mock central with the given pull responses.
@@ -221,6 +238,8 @@ mod test_sync_v7_client_api {
             batch_size,
             is_initialising,
             is_multi_device,
+            is_sync_api_paused,
+            expected_error,
         }: Test,
     ) -> (
         StorageConnection,
@@ -270,7 +289,10 @@ mod test_sync_v7_client_api {
             .await;
 
         let pull_data = web::Data::new(Mutex::new(VecDeque::from(pull_responses)));
-        let is_multi_device_data = web::Data::new(is_multi_device);
+        let central_status = web::Data::new(CentralStatus {
+            is_multi_device,
+            is_sync_api_paused,
+        });
 
         let captured_requests = web::Data::new(Mutex::new(Vec::<serde_json::Value>::new()));
         let server_captured_requests = captured_requests.clone();
@@ -278,7 +300,7 @@ mod test_sync_v7_client_api {
             App::new()
                 .app_data(server_captured_requests.clone())
                 .app_data(pull_data.clone())
-                .app_data(is_multi_device_data.clone())
+                .app_data(central_status.clone())
                 .route("/central/sync_v7/site_status", web::post().to(site_status))
                 .route("/central/sync_v7/push", web::post().to(push))
                 .route("/central/sync_v7/pull", web::post().to(pull))
@@ -318,7 +340,7 @@ mod test_sync_v7_client_api {
             request,
         )
         .await;
-        assert!(result.is_ok(), "sync_v7 failed: {:?}", result.err());
+        assert_eq!(result.err(), expected_error, "unexpected sync_v7 result");
         handle.stop(true).await;
         let push_response = captured_requests.lock().await.clone();
         (connection, json!(push_response))
@@ -334,6 +356,7 @@ mod test_sync_v7_client_api {
         test_sync_v7_delete_then_recreate_across_pull_batches().await;
         test_sync_v7_push().await;
         test_sync_v7_writes_multi_device_kvs().await;
+        test_sync_v7_stops_before_push_when_central_paused().await;
     }
 
     /// Regression for issue #12610: a stale Delete arriving in an earlier pull
@@ -729,5 +752,25 @@ mod test_sync_v7_client_api {
             .get_bool(KeyType::SettingsSyncSiteIsMultiDevice)
             .unwrap();
         assert_eq!(stored, Some(true));
+    }
+
+    /// A paused central is caught at the site_status pre-check: nothing is pushed, and the
+    /// run is logged with the typed error so the UI can show it as a paused state.
+    async fn test_sync_v7_stops_before_push_when_central_paused() {
+        let (connection, push_response) = run_sync_v7_test(Test {
+            db_name: "test_sync_v7_stops_before_push_when_central_paused",
+            is_initialising: false,
+            is_sync_api_paused: true,
+            expected_error: Some(SyncError::SyncApiPaused),
+            ..Default::default()
+        })
+        .await;
+
+        assert_eq!(push_response, json!([]));
+        let latest = SyncLogV7Repository::new(&connection)
+            .query_one(SyncLogV7Condition::TRUE)
+            .unwrap()
+            .expect("sync log row");
+        assert_eq!(latest.error, Some(SyncError::SyncApiPaused));
     }
 }

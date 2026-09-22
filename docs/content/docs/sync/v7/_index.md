@@ -558,7 +558,13 @@ Initialisation is a separate endpoint that allocates the token. It does **not** 
 
 #### **Site Status** {#site-status}
 
-This endpoint can be used to query for a number of records to be pulled, but mainly used to see if the site is ready for the next operation. Since there is already a check for site status in the common functionality, which will result in an early return. Successful response would have **siteId** and **centralSiteId**
+This endpoint can be used to query for a number of records to be pulled, but mainly used to see if the site is ready for the next operation. Since there is already a check for site status in the common functionality, which will result in an early return. Successful response would have **siteId** and **centralSiteId**, plus **isSyncApiPaused**.
+
+#### **Pausing the sync API on central** {#pausing-sync-api}
+
+A server admin can pause the sync API on central (Admin > Sync settings, stored as the `SETTINGS_SYNC_API_IS_PAUSED` key-value entry), for example while reintegrating the sync buffer or repairing partitions. While paused, every endpoint that moves records or files (**pull**, **push**, **patient\_data\_for\_site**, **patient\_search**, **download\_file**, and the tus upload) returns the typed `SyncApiPaused` error. The v6 endpoints behave the same way. **get\_token** and **site\_status** keep working, so a remote can still initialise its token and report the state. **site\_status** returns `isSyncApiPaused: true`.
+
+A remote checks **site\_status** before pushing, so a paused central stops the run before anything is sent. The run is logged with `SyncApiPaused`, which the UI shows as a warning ("Central server sync is paused") rather than a failure. The remote retries on its normal interval and resumes by itself once central is unpaused. A file upload refused this way does not use up one of the file's upload attempts. Work already running on central when it is paused, such as an integration a push has already started, carries on to the end. Each change to the pause is written to the system log (`SYNC_API_PAUSE_CHANGED`) with the user who made it.
 
 #### **Pull** {#pull}
 

@@ -22,6 +22,7 @@ use crate::{
     sync::{
         api::{SyncApiSettings, SyncApiV5},
         settings::SYNC_V5_VERSION,
+        sync_api_pause::is_sync_api_paused,
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
     sync_v7::{
@@ -320,6 +321,19 @@ fn validate(
     Ok((site, ctx))
 }
 
+/// `validate` for endpoints that move records or files, which central refuses while inbound
+/// sync is paused. `get_token` and `site_status` skip this so remotes can report the state.
+fn validate_unpaused(
+    service_provider: &ServiceProvider,
+    common: &Common,
+) -> Result<(SiteRow, ServiceContext), SyncError> {
+    let (site, ctx) = validate(service_provider, common)?;
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(SyncError::SyncApiPaused);
+    }
+    Ok((site, ctx))
+}
+
 /// Validate v7 bearer-token site auth for endpoints living outside this module's
 /// route scope (e.g. the tus file upload in the server crate). Same checks as
 /// every v7 endpoint; local to central's DB, no legacy server involved.
@@ -340,7 +354,7 @@ pub async fn download_file(
     base_dir: String,
 ) -> Result<(actix_files::NamedFile, StaticFile), SyncError> {
     tokio::task::spawn_blocking(move || {
-        let (_site, _ctx) = validate(&service_provider, &common)?;
+        let (_site, _ctx) = validate_unpaused(&service_provider, &common)?;
 
         log::info!(
             "Sending file to v7 remote site for table: {}, record: {}, file: {}",
@@ -374,6 +388,7 @@ pub async fn site_status(
             site_id: site.id,
             central_site_id,
             is_multi_device_site: site.is_multi_device,
+            is_sync_api_paused: is_sync_api_paused(&ctx.connection)?,
         })
     })
     .await
@@ -387,7 +402,7 @@ pub async fn pull(
     input: pull::Input,
 ) -> pull::Response {
     tokio::task::spawn_blocking(move || {
-        let (site, ctx) = validate(&service_provider, &common)?;
+        let (site, ctx) = validate_unpaused(&service_provider, &common)?;
 
         let base = if site.is_multi_device {
             ChangelogFilter::multi_device_all_data_for_site(site.id, input.is_initialising, None)
@@ -440,7 +455,7 @@ pub async fn patient_search(
     input: patient_search::Input,
 ) -> patient_search::Response {
     tokio::task::spawn_blocking(move || {
-        let (_, ctx) = validate(&service_provider, &common)?;
+        let (_, ctx) = validate_unpaused(&service_provider, &common)?;
 
         let results =
             service_provider
@@ -480,7 +495,7 @@ pub async fn patient_data_for_site(
     input: patient_data_for_site::Input,
 ) -> patient_data_for_site::Response {
     tokio::task::spawn_blocking(move || {
-        let (site, ctx) = validate(&service_provider, &common)?;
+        let (site, ctx) = validate_unpaused(&service_provider, &common)?;
 
         let patient_data_for_site::Input {
             patient_id,
@@ -524,7 +539,7 @@ pub async fn push(
 ) -> push::Response {
     let sp = service_provider.clone();
     let (records_in_this_batch, remaining, site_id) = tokio::task::spawn_blocking(move || {
-        let (site, ctx) = validate(&sp, &common)?;
+        let (site, ctx) = validate_unpaused(&sp, &common)?;
         let site_id = site.id;
 
         let SyncBatchV7 {
@@ -1277,5 +1292,73 @@ mod tests {
             response,
             Err(SyncError::SyncVersionMismatch { .. })
         ));
+    }
+
+    #[actix_rt::test]
+    async fn paused_central_refuses_data_but_reports_status() {
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_inbound_paused").await;
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
+            .unwrap();
+
+        let pulled = pull(
+            service_provider.clone(),
+            common.clone(),
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: false,
+                filter: None,
+            },
+        )
+        .await;
+        assert_eq!(pulled.err(), Some(SyncError::SyncApiPaused));
+
+        let pushed = push(
+            service_provider.clone(),
+            common.clone(),
+            SyncBatchV7 {
+                site_id: 1,
+                max_cursor: 0,
+                last_cursor_in_batch: 0,
+                remaining: 0,
+                records: vec![],
+            },
+        )
+        .await;
+        assert_eq!(pushed.err(), Some(SyncError::SyncApiPaused));
+
+        // Status stays available so the remote can tell the user why sync is not running
+        let status = site_status(service_provider.clone(), common.clone())
+            .await
+            .unwrap();
+        assert!(status.is_sync_api_paused);
+
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(false))
+            .unwrap();
+        let status = site_status(service_provider.clone(), common.clone())
+            .await
+            .unwrap();
+        assert!(!status.is_sync_api_paused);
+        let pulled = pull(
+            service_provider,
+            common,
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: false,
+                filter: None,
+            },
+        )
+        .await;
+        assert!(pulled.is_ok());
     }
 }

@@ -319,6 +319,9 @@ export type SyncFooterStatus =
   // The latest run could not reach the central server, and the site is not yet
   // stale enough for the rungs below to speak for it.
   | { kind: 'unreachable'; tone: 'warning' }
+  // The central server has paused its sync API for maintenance (#717): an
+  // expected state that clears by itself, so a warning line, not a failure.
+  | { kind: 'sync-api-paused'; tone: 'warning' }
   // No failure, but the last success is old enough to warn.
   | { kind: 'warning'; tone: 'warning' }
   // Idle and clean, with records waiting to push.
@@ -333,6 +336,11 @@ export type SyncFooterStatus =
 // link would otherwise sit permanently red. They get their own warning-level
 // line, and a sustained outage still escalates through the staleness rungs.
 const CONNECTION_VARIANT: SyncErrorVariant = 'CONNECTION_ERROR';
+
+// Likewise a paused central server: the site retries on its normal interval and
+// resumes once central is unpaused, so it is not this site's failure to alarm
+// on. A long pause still escalates through the staleness rungs.
+const SYNC_API_PAUSED_VARIANT: SyncErrorVariant = 'SYNC_API_PAUSED';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -371,7 +379,9 @@ export const syncFooterStatus = (
   if (overview.isSyncing) return { kind: 'syncing', tone: 'neutral' };
   if (paused) return { kind: 'paused', tone: 'warning' };
   const unreachable = overview.error?.variant === CONNECTION_VARIANT;
-  if (overview.error && !unreachable) return { kind: 'error', tone: 'error' };
+  const syncApiPaused = overview.error?.variant === SYNC_API_PAUSED_VARIANT;
+  if (overview.error && !unreachable && !syncApiPaused)
+    return { kind: 'error', tone: 'error' };
 
   const daysStale = daysSinceSuccess(overview, now);
   if (daysStale >= overview.errorThresholdDays)
@@ -382,6 +392,7 @@ export const syncFooterStatus = (
   // spoken for it and the cell would otherwise read "Synced …" while the modal
   // beside it reports the failure.
   if (unreachable) return { kind: 'unreachable', tone: 'warning' };
+  if (syncApiPaused) return { kind: 'sync-api-paused', tone: 'warning' };
 
   const count = pushQueueCount ?? 0;
   if (count > 0 && count >= displayThreshold)
@@ -410,4 +421,4 @@ export const syncFooterStatus = (
  * ground.
  */
 export const syncFooterDimmed = (kind: SyncFooterStatus['kind']): boolean =>
-  kind === 'unreachable' || kind === 'paused';
+  kind === 'unreachable' || kind === 'paused' || kind === 'sync-api-paused';

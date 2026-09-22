@@ -517,7 +517,8 @@ describe('a later successful run clears the error (SYNC-03.30)', () => {
 describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync status)", () => {
   const now = new Date('2026-01-10T00:00:00Z');
   const errored = (
-    variant: 'CONNECTION_ERROR' | 'INVALID_SITE_NAME_OR_PASSWORD'
+    variant:
+      'CONNECTION_ERROR' | 'INVALID_SITE_NAME_OR_PASSWORD' | 'SYNC_API_PAUSED'
   ) =>
     toSyncOverview(
       v7({ error: { variantV7: variant, fullError: 'x' } }),
@@ -594,6 +595,37 @@ describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync s
     expect(syncFooterStatus(errored('CONNECTION_ERROR'), 0, 0, now)).toEqual({
       kind: 'unreachable',
       tone: 'warning',
+    });
+  });
+
+  it('reports a paused central server at warning level, not as a failure', () => {
+    // Issue #717: central refuses sync during maintenance; the site retries on
+    // its normal interval, so this is a state to report, not an alarm.
+    expect(syncFooterStatus(errored('SYNC_API_PAUSED'), 0, 0, now)).toEqual({
+      kind: 'sync-api-paused',
+      tone: 'warning',
+    });
+    // A V5/V6 site reports the same variant through the other error node.
+    const v5v6Paused = toSyncOverview(
+      v5v6({ error: { variant: 'SYNC_API_PAUSED', fullError: 'x' } }),
+      MODAL
+    );
+    expect(syncFooterStatus(v5v6Paused, 0, 0, now).kind).toBe(
+      'sync-api-paused'
+    );
+  });
+
+  it('lets staleness overtake a long central pause', () => {
+    const staleAndPaused = toSyncOverview(
+      v7({
+        error: { variantV7: 'SYNC_API_PAUSED', fullError: 'x' },
+        lastSuccessfulSync: { started: 'a', finished: finishedDaysAgo(3) },
+      }),
+      MODAL
+    );
+    expect(syncFooterStatus(staleAndPaused, 0, 0, now)).toEqual({
+      kind: 'error',
+      tone: 'error',
     });
   });
 
@@ -683,9 +715,10 @@ describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync s
 });
 
 describe('syncFooterDimmed — the offline level (OMS-REG-FTR-03.21)', () => {
-  it('dims only while sync cannot happen — the server out of reach, or paused', () => {
+  it('dims only while sync cannot happen — the server out of reach, this server paused, or the central sync API paused', () => {
     expect(syncFooterDimmed('unreachable')).toBe(true);
     expect(syncFooterDimmed('paused')).toBe(true);
+    expect(syncFooterDimmed('sync-api-paused')).toBe(true);
     for (const kind of [
       'waiting',
       'syncing',

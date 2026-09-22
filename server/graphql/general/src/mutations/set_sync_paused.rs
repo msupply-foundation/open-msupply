@@ -16,7 +16,8 @@ pub struct SyncPausedNode {
 
 /// Pause or resume sync from Admin > Sync settings (server admin only). While paused the
 /// synchroniser skips scheduled runs and `manualSync` refuses; on a central server this covers
-/// its outbound sync to legacy central but not the inbound sync API it serves to remotes. The
+/// its outbound sync to legacy central but not the sync API it serves to remotes (paused
+/// separately with `setSyncApiPaused`). The
 /// state persists across restarts and each change is written to the system log with the user.
 pub fn set_sync_paused(ctx: &Context<'_>, paused: bool) -> Result<SyncPausedNode> {
     let user = validate_auth(

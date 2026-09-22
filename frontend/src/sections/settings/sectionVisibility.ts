@@ -33,6 +33,12 @@ export const visibleSections = (
   return sections;
 };
 
+// Within Synchronisation: Pause sync API (issue #717) is a central-server
+// control, so it needs BOTH central and Server Admin, like Configuration. The
+// server refuses the query and the mutation otherwise.
+export const showSyncApiPause = (access: SettingsAccess): boolean =>
+  access.centralServer && access.serverAdmin;
+
 // Within Display settings: Language is always usable; the Custom theme and
 // Custom logo rows are Server Admin only (rules § Display settings).
 export const showThemeAndLogoRows = (access: SettingsAccess): boolean =>

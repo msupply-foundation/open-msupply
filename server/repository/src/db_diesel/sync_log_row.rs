@@ -23,6 +23,7 @@ pub enum SyncApiErrorCode {
     CentralV6NotConfigured,
     V6ApiVersionIncompatible,
     V7UpgradeFailed,
+    SyncApiPaused,
 }
 
 table! {

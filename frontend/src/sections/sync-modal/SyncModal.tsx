@@ -263,7 +263,7 @@ export const SyncModal: Component<{
               return h ? t(h) : undefined;
             };
             return (
-              <Alert severity="error">
+              <Alert severity={errorSummary().severity ?? 'error'}>
                 <div>{t(errorSummary().summary)}</div>
                 <ErrorDetails detail={err().fullError} hint={hintText()} />
               </Alert>

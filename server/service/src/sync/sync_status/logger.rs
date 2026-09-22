@@ -269,11 +269,16 @@ impl<'a> SyncLogger<'a> {
     }
 
     pub(crate) fn error(&mut self, error: &SyncError) -> Result<(), SyncLoggerError> {
-        error!("Error in sync: {}", format_error(error));
-
         // Convert to sync log error
 
         let SyncLogError { message, code } = SyncLogError::from_sync_error(error);
+
+        // An expected maintenance state, not a fault on this site
+        if code == Some(SyncApiErrorCode::SyncApiPaused) {
+            info!("Sync skipped: {}", format_error(error));
+        } else {
+            error!("Error in sync: {}", format_error(error));
+        }
 
         self.row = SyncLogV5V6Row {
             error_message: Some(message),
@@ -440,6 +445,10 @@ impl SyncLogError {
                 SyncParsedErrorV6::SyncVersionMismatch(_, _, _),
             )) => return Self::new(SyncApiErrorCode::V6ApiVersionIncompatible, sync_error),
 
+            SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ParsedError(
+                SyncParsedErrorV6::SyncApiPaused,
+            )) => return Self::new(SyncApiErrorCode::SyncApiPaused, sync_error),
+
             // map connection errors
             SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ConnectionError(_))
             | SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ConnectionError { .. }) => {
@@ -490,7 +499,9 @@ fn v5_to_sync_log_error_code(code: &SyncErrorCodeV5) -> Option<SyncApiErrorCode>
 mod test {
     use crate::sync::{
         api::{ParsedError, SyncApiError, SyncApiErrorVariantV5, SyncErrorCodeV5},
+        api_v6::{SyncApiErrorV6, SyncApiErrorVariantV6, SyncParsedErrorV6},
         central_data_synchroniser::CentralPullError,
+        central_data_synchroniser_v6::RemotePushErrorV6,
         remote_data_synchroniser::{
             PostInitialisationError, RemotePullError, RemotePushError, WaitForSyncOperationError,
         },
@@ -608,6 +619,21 @@ mod test {
             SyncLogError {
                 message: format_error(&sync_error),
                 code: Some(SyncApiErrorCode::HardwareIdMismatch)
+            }
+        );
+        // RemotePushErrorV6 -> ParsedError::SyncApiPaused -> SyncApiPaused
+        let sync_error =
+            SyncError::RemotePushErrorV6(RemotePushErrorV6::SyncApiError(SyncApiErrorV6 {
+                source: SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncApiPaused),
+                url: Url::parse("http://localhost").unwrap(),
+                route: "push".to_string(),
+            }));
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error,
+            SyncLogError {
+                message: format_error(&sync_error),
+                code: Some(SyncApiErrorCode::SyncApiPaused)
             }
         );
     }
