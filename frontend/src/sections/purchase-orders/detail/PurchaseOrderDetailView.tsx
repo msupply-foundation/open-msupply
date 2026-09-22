@@ -295,10 +295,6 @@ const PurchaseOrderDetailView: Component = () => {
   // item); the insert's state gate is typed, but the button says so first.
   const canAdd = () => !!info() && canAuthorLines(status());
 
-  // The master-list add's window is wider than every other line action's:
-  // only a Finalised order refuses (rules § adding lines from a master list).
-  const canAddFromMasterList = () => !!info() && status() !== 'FINALISED';
-
   createAddAction({
     name: 'button.add-item',
     run: () => setEditor({}),
@@ -689,10 +685,9 @@ const PurchaseOrderDetailView: Component = () => {
                 <Header>
                   <Breadcrumb crumbs={crumbs(node())} />
                   <HeaderButtons>
-                    {/* The Add split (spec S6 § page actions): Add item and
-                        Import lines while drafting, Add from master list
-                        until Finalised — so the whole control stands down
-                        only there. */}
+                    {/* The Add split (spec S6 § page actions): all three
+                        options while drafting, so the whole control stands
+                        down from Ready for sending. */}
                     <SplitButton
                       icon={<PlusCircleIcon />}
                       collapsible="narrow"
@@ -700,14 +695,10 @@ const PurchaseOrderDetailView: Component = () => {
                       menuLabel={t('button.add-item')}
                       value="item"
                       shortcut={ALT_N}
-                      disabled={!canAddFromMasterList()}
+                      disabled={!canAdd()}
                       onAction={onAddAction}
                       options={[
-                        {
-                          value: 'item',
-                          label: t('button.add-item'),
-                          disabled: !canAdd(),
-                        },
+                        { value: 'item', label: t('button.add-item') },
                         {
                           value: 'master-list',
                           label: t('button.add-from-master-list'),
@@ -715,7 +706,6 @@ const PurchaseOrderDetailView: Component = () => {
                         {
                           value: 'import',
                           label: t('button.upload-purchase-order-lines'),
-                          disabled: !canAdd(),
                         },
                       ]}
                     />
