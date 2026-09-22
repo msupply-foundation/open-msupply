@@ -119,7 +119,11 @@ export const itemPageFetcher =
     // Restrict to one master list — the program-scoped prescription picker
     // (issue #928); a program shares its master list's id. Omitted = the whole
     // visible catalogue.
-    masterListId?: () => string | undefined
+    masterListId?: () => string | undefined,
+    // The server's `ignoreForOrders` flag: `false` keeps only items the store
+    // may order — the purchase-order line editor's chooser
+    // (spec/purchase-orders rules › choosing the item). Omitted = no filter.
+    ignoreForOrders?: () => boolean | undefined
   ) =>
   async (
     search: string,
@@ -128,6 +132,7 @@ export const itemPageFetcher =
     const exclude = excludeItemIds();
     const stockOnHand = hasStockOnHand?.();
     const scopedList = masterListId?.();
+    const barred = ignoreForOrders?.();
     const result = await graphqlFetch(ItemsWithStock, {
       storeId,
       filter: {
@@ -138,6 +143,7 @@ export const itemPageFetcher =
         ...(search ? { codeOrName: { like: search } } : {}),
         ...(exclude.length ? { id: { notEqualAll: exclude } } : {}),
         ...(scopedList ? { masterListId: { equalTo: scopedList } } : {}),
+        ...(barred !== undefined ? { ignoreForOrders: barred } : {}),
       },
       // Sort by item name ascending — stable across pages so infinite scroll
       // doesn't reshuffle rows as new pages append.
