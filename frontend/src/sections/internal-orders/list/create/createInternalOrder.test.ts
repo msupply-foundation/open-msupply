@@ -1,12 +1,15 @@
 /*
  * The shared New-order gate decision (spec/internal-orders rules § creation,
- * OMS-REG-REPL-04.86/.87). Every entry point — the list's New order and the
+ * OMS-REG-REPL-04.45). Every entry point — the list's New order and the
  * dashboard's Order more — rides this one composition, so what is pinned is
- * the decision itself: the warning shows only when recent stocktakes are
- * insufficient AND no installed plugin suppresses it, and a failed stocktake
- * read never blocks creation. The consult's own semantics (per-warning
- * filtering, error isolation, parallel asking) are warningSuppression.test.ts's
- * business; here one real registered plugin is enough to pin the composition.
+ * the decision itself: the warning shows when recent stocktakes are
+ * insufficient, and a failed stocktake read never blocks creation.
+ *
+ * NO plugin suppression is consulted (#822, reverting #505). A registered
+ * suppression contribution is kept as a fixture precisely to pin that: the
+ * gate must ignore it, because the per-item measure it deferred to has been
+ * withdrawn. The slot itself still exists in the SDK and is tested by
+ * warningSuppression.test.ts; nothing in core asks it about this warning.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphqlFetch } from '@/api/graphql';
@@ -64,7 +67,7 @@ beforeEach(() => {
 const gateShows = () => recentStocktakeGateShows('store-a', 90, 2);
 
 describe('recentStocktakeGateShows', () => {
-  it('shows when recent stocktakes are insufficient and nothing suppresses', async () => {
+  it('shows when recent stocktakes are insufficient', async () => {
     fetchMock.mockResolvedValue(stocktakesCovering(['item-1']));
     expect(await gateShows()).toBe(true);
   });
@@ -78,15 +81,9 @@ describe('recentStocktakeGateShows', () => {
     expect(await gateShows()).toBe(false);
   });
 
-  it('does not show when a plugin suppresses, however short the stocktakes fall', async () => {
+  it('shows even where a plugin suppression contribution answers true — no suppression is consulted (#822)', async () => {
     fetchMock.mockResolvedValue(stocktakesCovering());
     registerPlugin(suppressionPlugin('alpha', true));
-    expect(await gateShows()).toBe(false);
-  });
-
-  it('shows when the only suppression contribution answers false', async () => {
-    fetchMock.mockResolvedValue(stocktakesCovering(['item-1']));
-    registerPlugin(suppressionPlugin('alpha', false));
     expect(await gateShows()).toBe(true);
   });
 
