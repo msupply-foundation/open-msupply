@@ -24,9 +24,12 @@ half: how the sync runs, and what to do when something was published that should
   rule is private. Evaluated by `.github/mirror/mirror_rules.py`, the single implementation shared
   by the PR check, the linter, the sync and the `mirror-paths` skill.
 - **Every PR** runs `mirror-dry-run.yaml`: lints the rules and posts one sticky comment listing the
-  PR's new paths with their verdicts, what a rules edit flips across the whole history, and whether
-  the next sync would be a force-push. A PR that publishes anything new fails the required check
-  until a reviewer adds the `mirror-reviewed` label.
+  PR's new paths with their verdicts, every new published folder, what a rules edit flips across
+  the whole history, and whether the next sync would be a force-push. The required check fails
+  until a reviewer adds the `mirror-reviewed` label when the PR edits `rules.txt`, or publishes a
+  folder no rule has looked at yet — one near the top of the tree, or one sitting beside an
+  existing carve-out. A new file inside a folder the mirror already publishes does not block: that
+  folder's rule was reviewed when it was written.
 - **By hand, on release day** and whenever else a refresh is wanted: dispatch
   `mirror-public.yaml` from `develop` (Actions → Public mirror sync → Run workflow). Leave `refs`
   empty (develop, main and all release tags) or name the refs; leave `force` off. The `filter` job
@@ -53,8 +56,9 @@ compromised the moment it was pushed, whatever happens next.
    directory. Never remove or edit an existing line in that block; the linter refuses it.
 3. **Open the PR.** The dry-run comment will list the path under "newly private" with its commit
    count and state that the next sync is a force-push. That is expected. Get it reviewed and
-   merged to `develop` as fast as the review allows; label `mirror-reviewed` is not needed for a
-   change that only removes.
+   merged to `develop` as fast as the review allows. Every `rules.txt` edit needs the
+   `mirror-reviewed` label, including one that only removes: hiding a path rewrites published
+   history, which is no smaller a decision than revealing one.
 4. **Log the republication.** In the same PR (or a follow-up merged before the sync), add a row to
    the *Republication log* table at the bottom of `README.public.md`: date, the refs rewritten,
    and a one-line reason that does not itself repeat what leaked.
