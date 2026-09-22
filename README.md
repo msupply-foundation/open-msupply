@@ -85,8 +85,13 @@ started.
 
 | Date | Refs | Reason |
 | ---- | ---- | ------ |
+| YYYY-MM-DD | `develop`, `main`, all release tags | Cutover to the mirror: `develop` and `main` were replaced with filtered history from the private monorepo, so every commit has a new SHA. The previous public history is preserved unchanged on `pre-monorepo`. |
 
 <!--
+  CUTOVER: set the date on the row above to the day of the first sync, and
+  merge that change BEFORE dispatching it. The sync publishes this file, so a
+  row added afterwards needs a second force-push to appear.
+
   Adding a row (maintainers): newest first, directly under the header above.
 
   | 2026-10-21 | `develop`, `main`, all release tags | Filtering rules corrected — a path was removed from the published history. |
