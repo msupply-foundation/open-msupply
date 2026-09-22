@@ -1,6 +1,20 @@
 import { batch, createSignal, onCleanup } from 'solid-js';
 import { createDebounced } from './createDebounced';
 
+/**
+ * Infinite scroll: fetch the next page once the scroll box is within this many
+ * px of its bottom — a small lead so the page is on its way before the user
+ * reaches the very end. Shared by every surface that pages on scroll (the
+ * combobox listbox, a paged sub-table), so they all feel the same.
+ */
+export const NEXT_PAGE_THRESHOLD_PX = 100;
+
+/**
+ * Whether a scroll box is near enough to its bottom to ask for the next page.
+ */
+export const isNearScrollEnd = (el: HTMLElement): boolean =>
+  el.scrollHeight - el.scrollTop - el.clientHeight < NEXT_PAGE_THRESHOLD_PX;
+
 // One page of results from the server: the rows plus the grand total (so we
 // know when there are no more pages to fetch).
 export interface Page<T> {

@@ -11,6 +11,7 @@ import {
   compareReviewRows,
   failedRowsToCsv,
   parseImportBoolean,
+  storeCodesIn,
   parsePropertyCell,
   reviewRowText,
   type ImportRow,
@@ -924,5 +925,72 @@ describe('the review table sorts and filters in place', () => {
     const text = reviewRowText(row as ImportRow);
     expect(text).toContain('nope');
     expect(text).toContain('error.code-no-match');
+  });
+});
+
+describe('the store codes a file names are read BEFORE the parse', () => {
+  /*
+   * The lookup used to be a page of the register — 30 stores — matched
+   * afterwards. On a server holding more than that the file's own store is
+   * simply not on the page, so its code reported as unknown and a file this
+   * app had just exported would not go back in. These pin that the codes come
+   * off the FILE, so the fetch can ask for exactly them.
+   */
+  const withStore = (...codes: string[]) =>
+    [
+      [t('label.store'), t('label.asset-number'), t('label.catalogue-item-code')].join(','),
+      ...codes.map((code, index) => `${code},A-${index},E003/059`),
+    ].join('\r\n');
+
+  it('reads every distinct code the file names', () => {
+    expect(storeCodesIn(withStore('GRY', 'SLY'), true).sort()).toEqual([
+      'GRY',
+      'SLY',
+    ]);
+  });
+
+  it('asks for one store once, however many rows name it', () => {
+    expect(storeCodesIn(withStore('GRY', 'GRY', 'GRY'), true)).toEqual(['GRY']);
+  });
+
+  it('counts a code once whatever case the rows spell it in, and asks as the file spells it', () => {
+    expect(storeCodesIn(withStore('GRY', 'gry'), true)).toEqual(['GRY']);
+  });
+
+  it('skips blank cells — an omitted store leaves the asset on the acting store', () => {
+    expect(storeCodesIn(withStore('', 'GRY', ''), true)).toEqual(['GRY']);
+  });
+
+  it('reads nothing off a non-central server, where the column is not read at all', () => {
+    expect(storeCodesIn(withStore('GRY'), false)).toEqual([]);
+  });
+
+  it('reads nothing from a file with no store column', () => {
+    const file = [
+      [t('label.asset-number'), t('label.catalogue-item-code')].join(','),
+      'A-1,E003/059',
+    ].join('\r\n');
+    expect(storeCodesIn(file, true)).toEqual([]);
+  });
+
+  it('reads nothing from a file whose heading it cannot find — the parse reports that', () => {
+    expect(storeCodesIn('nothing,here\r\n1,2', true)).toEqual([]);
+  });
+
+  it('finds the column under a banner row, like the parse does', () => {
+    const file = [
+      'Column1,Column2,Column3',
+      [t('label.store'), t('label.asset-number'), t('label.catalogue-item-code')].join(','),
+      'GRY,A-1,E003/059',
+    ].join('\r\n');
+    expect(storeCodesIn(file, true)).toEqual(['GRY']);
+  });
+
+  it('reads the separator the file used, like the parse does', () => {
+    const file = [
+      [t('label.store'), t('label.asset-number'), t('label.catalogue-item-code')].join(';'),
+      'GRY;A-1;E003/059',
+    ].join('\r\n');
+    expect(storeCodesIn(file, true)).toEqual(['GRY']);
   });
 });
