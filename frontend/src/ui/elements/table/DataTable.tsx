@@ -30,6 +30,11 @@ import {
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
 import { renderTemplate } from './renderTemplate';
 import { hiddenEdges } from './scrollEdges';
+import {
+  refetchIndicatorHome,
+  showsToolbarRow,
+  type ToolbarInputs,
+} from './toolbarState';
 import { autoFitWidth } from './autoFitWidth';
 import {
   resolveColumnVisibility,
@@ -1219,18 +1224,18 @@ export function DataTable<T, K extends string, G extends string = never>(
   // that appeared only while a refetch ran would jump the table about.
   const hasControls = () =>
     showSortControl() || !!props.setConfig || props.showFullScreen !== false;
-  // Whether the toolbar ROW renders at all. Not when the controls are lifted
-  // into a host's chrome (controlsMount) and there are no filters or count to
-  // show — and not when the cluster would be EMPTY here anyway (a modal's
-  // structural line table: every column fixed, no config, no full screen). An
-  // empty bar spends a row and draws its bottom hairline under nothing, which
-  // reads as a double line above the header. Without the row the table loses
-  // that hairline; the seam moves to the table area instead (see
-  // .root[data-no-toolbar] in the CSS).
-  const hasToolbar = () =>
-    !!filters() ||
-    !!props.pagination ||
-    (!props.controlsMount && hasControls());
+  // The toolbar row and the refetch indicator's home are decided together in
+  // toolbarState.ts (pure, and unit-tested — the two rules have to agree, and
+  // reading them apart once put two indicators on screen). Without the row the
+  // table loses the hairline it carried; the seam moves to the table area
+  // instead (see .root[data-no-toolbar] in the CSS).
+  const toolbarInputs = (): ToolbarInputs => ({
+    hasFilters: !!filters(),
+    hasPagination: !!props.pagination,
+    controlsLifted: !!props.controlsMount,
+    hasControls: hasControls(),
+  });
+  const hasToolbar = () => showsToolbarRow(toolbarInputs());
 
   // Loading indicator — a small inline spinner shown while a fetch runs AND
   // rows are already showing (a refetch on filter/sort/page — keepPreviousData
@@ -1238,16 +1243,22 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table (#160/#196). Initial load (no rows yet) uses the centred spinner
   // below instead, so the two never show together.
   //
-  // Its home is the toolbar, just left of the icon controls. A table with no
-  // toolbar row at all (see hasToolbar) would otherwise lose the indicator
+  // Its home is the control cluster, just left of the icons — which renders
+  // in the toolbar row, or portalled into a host's own chrome row
+  // (controlsMount). A table with NEITHER would otherwise lose the indicator
   // entirely — a search-driven modal list refetching with no sign of it — so
-  // there it floats in the table area's corner instead. Exactly one of the
-  // two renders.
+  // there, and only there, it floats in the table area's corner instead
+  // (floatingRefetch below). A table whose controls are lifted keeps the
+  // cluster's copy: rendering both put two of them on screen, and two
+  // `table-loading-inline` nodes against the id contract (PR #749 re-review).
   const refetching = () =>
     !!props.loading && table.getRowModel().rows.length > 0;
   const refetchSpinner = (): JSX.Element => (
     <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
   );
+  // The cluster renders nowhere, so the indicator floats instead.
+  const floatingRefetch = () =>
+    refetching() && refetchIndicatorHome(toolbarInputs()) === 'floating';
 
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
@@ -1477,8 +1488,9 @@ export function DataTable<T, K extends string, G extends string = never>(
           footer bar, so the scroll box inside it is full-height even for a
           short list. */}
       <div class={styles.tableArea}>
-        {/* The refetch indicator for a table with no toolbar to hold it. */}
-        <Show when={!hasToolbar() && refetching()}>
+        {/* The refetch indicator for a table whose control cluster renders
+            NOWHERE — no toolbar row, and not lifted into a host's chrome. */}
+        <Show when={floatingRefetch()}>
           <span class={styles.floatingLoading}>{refetchSpinner()}</span>
         </Show>
         <div
