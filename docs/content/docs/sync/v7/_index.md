@@ -200,7 +200,7 @@ We ran an insert-rate benchmark on Postgres to confirm this and to test partitio
 * With only the primary key, inserts stay flat at \~80K rows/s across 100M rows.  
 * With the v7 secondary indexes (`source_site_id`, `store_id`, `transfer_store_id`, `patient_id`), insert rate collapses more than 10× before reaching 100M rows, because each insert writes to random spots in indexes that no longer fit in cache.  
 * Range-partitioning by `cursor` (5M rows per partition) keeps each partition's indexes small enough to stay in cache. Insert rate oscillates in a sawtooth but does **not** trend downward — performance at 100M rows matches performance at 10M rows.  
-* Partitions will be maintained by a scheduled task in the Rust server (the same task that runs changelog deduplication), not by `pg_partman`.
+* Partitions will be maintained by a scheduled task in the Rust server (the same task that runs changelog deduplication), not by `pg_partman`. See [changelog partitioning](@/server/repository/db_diesel/changelog/partitioning/_index.md) for implemented strategy.
 
 Full test method, results on two servers, and proposed partitioning/migration strategy: [changelog bench summary](https://github.com/msupply-foundation/open-msupply/blob/develop/server/sync_v7_investigation/changelog/results/bench_summary.md).
 
