@@ -94,6 +94,7 @@ import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import {
   canChangeStatus,
+  hasSourceLink,
   isEditable,
   sourceLinkOf,
   supplierIsStore,
@@ -402,19 +403,10 @@ const InboundShipmentDetailView: Component = () => {
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
   const isExternal = () => isExternalScope(scope());
-  // Whether the shipment carries a SOURCE LINK — a purchase order, or a
-  // sending shipment (a transfer). Those are the two links through which
-  // something outside this store supplies the shipment's figures, so both the
-  // cost price and the supplier-declared shipped quantities are read-only
-  // whenever one is present (spec rules → source link). NOT the same as
-  // "not manual": a shipment linked only to an internal order has no source
-  // link and stays fully editable.
-  //
-  // The purchase-order half is read from the SCOPE, not through sourceLinkOf's
-  // inboundType test: the scope is what the detail was fetched with, so it
-  // cannot disagree with the record in hand, and it is the predicate cost
-  // price has always used.
-  const hasSourceLink = () => isExternal() || !!current()?.linkedShipment;
+  // Whether the shipment carries a source link — see hasSourceLink's own
+  // comment for the rule and why the PO half comes from the scope.
+  const sourceLinked = () =>
+    hasSourceLink(isExternal(), current()?.linkedShipment);
   // The rule, and why a PO-linked shipment is excluded, lives in
   // ./internalOrderContext.
   const showsOrderContext = () =>
@@ -804,6 +796,11 @@ const InboundShipmentDetailView: Component = () => {
       // without the figure it is measured against (issue #562). Ungated and
       // hidden-by-default on a narrow table, exactly like Difference: the two
       // are a pair and must appear and disappear together.
+      //
+      // No `headerPosition: 'badge'`, unlike Packs received above: a card has
+      // ONE badge slot (ui/docs/CARD_TABLE_MODEL.md), and the received count
+      // is what belongs in it. This column pairs with Difference, so it rides
+      // in the card BODY beside it rather than competing for the header.
       {
         c: { key: 'shippedNumberOfPacks' },
         header: () => t('label.shipped-number-of-packs'),
@@ -1388,14 +1385,14 @@ const InboundShipmentDetailView: Component = () => {
                 // source link — NOT merely because the supplier is another
                 // store (spec rules → header fields / AC-H1). A manual
                 // internal-supplier shipment keeps cost editable.
-                costLocked={hasSourceLink()}
+                costLocked={sourceLinked()}
                 // Packs shipped / Shipped pack size are the SENDING side's
                 // record of what left its shelf, so the receiver may read them
                 // but not retype them. Passed separately from costLocked even
                 // though the two resolve alike: they are separate rules that
                 // merely coincide, and reading one as the other is how this
                 // field came to be editable on transfers.
-                shippedLocked={hasSourceLink()}
+                shippedLocked={sourceLinked()}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,

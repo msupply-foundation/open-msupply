@@ -62,6 +62,7 @@ import {
 // rows conform to the generated InboundLineFragment (kdd/type-safety). Showcase
 // scaffolding is DCE'd from prod; the app never imports back the other way.
 import type { InboundLineFragment } from '../sections/inbound-shipments/detail/inboundShipmentDetail.generated';
+import { packDifference } from '../sections/inbound-shipments/detail/inboundShipmentLine';
 
 // The Detail-view-table demo: the SAME assembly as the details tab of the real
 // InboundShipmentDetailView — a tabbed Page whose body is the shared DataTable
@@ -472,12 +473,13 @@ export const DetailTableShowcase = () => {
       }),
     },
     {
-      // Difference — received minus shipped; blank when nothing shipped.
+      // Difference — through the shared helper, never a hand copy: the sign
+      // convention is the whole point of packDifference existing (issue #562),
+      // and a third spelling of the subtraction is the same shape as the
+      // defect it was extracted to prevent.
       c: {
         accessor: line =>
-          line.shippedNumberOfPacks != null
-            ? line.numberOfPacks - line.shippedNumberOfPacks
-            : '',
+          packDifference(line.numberOfPacks, line.shippedNumberOfPacks) ?? '',
         id: 'difference',
       },
       header: () => t('label.difference'),
