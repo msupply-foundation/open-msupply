@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
-import { getPlural, t, tPlural } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
@@ -469,9 +469,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         (sum, line) => sum + line.numberOfPacks * line.packSize,
         0
       );
-      // Pluralised on the TOTAL: the name labels the whole summary, not just
-      // the entry it trails.
-      const unit = getPlural(unitName(), total);
+      const unit = unitName();
       if (batches.length > 3)
         return `${tPlural('label.batch-count', batches.length)} · ${round(
           total,
@@ -901,14 +899,13 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   // its own line above the fields) — always visible, no
                   // vertical cost. UNLIKE the batch summary beside it this
                   // follows the allocate-in lens (it's the Issue field's
-                  // headroom); the unit name is pluralised so the two agree.
-                  // `label.doses` is already plural.
+                  // headroom).
                   end={
                     <>
                       {t('label.available')}: {formatNumber(availableInLens())}{' '}
                       {dosesMode()
                         ? t('label.doses')
-                        : getPlural(unitName(), availableInLens())}
+                        : unitName()}
                     </>
                   }
                 >

@@ -9,7 +9,7 @@ import {
   Show,
   type JSX,
 } from 'solid-js';
-import { t, tPlural } from '@/intl';
+import { measureWord, t, tPlural } from '@/intl';
 import { formatNumber } from '@/intl/formatNumber';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -35,7 +35,6 @@ import {
   fetchLineStats,
   figureInMode,
   modeToUnits,
-  modeWord,
   saveExistingLine,
   saveNewLine,
   unitsToMode,
@@ -450,12 +449,12 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     const count =
       unitsToMode(supplyUnits(), entryMode(), packSize()) === 1 ? 1 : 2;
     const options = [
-      { value: 'units', label: modeWord('units', unitName, count) },
+      { value: 'units', label: measureWord('units', unitName, count) },
     ];
     if (packSize() > 0)
       options.push({
         value: 'packs',
-        label: modeWord('packs', unitName, count),
+        label: measureWord('packs', unitName, count),
       });
     return options;
   });
@@ -486,7 +485,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         ? t('label.days')
         : rowProps.fixed === 'months'
           ? t('label.months')
-          : modeWord(entryMode(), current()?.unitName ?? null, shown());
+          : measureWord(entryMode(), current()?.unitName ?? null, shown());
     const shown = () => {
       if (rowProps.fixed) return Math.round(rowProps.units * 10) / 10;
       if (rowProps.onChange) {
@@ -684,7 +683,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         <FieldRow label={t('label.target-stock-population')}>
           <span class={styles.statValue}>
             {formatNumber(targetPopulationFigure())}{' '}
-            {modeWord(
+            {measureWord(
               entryMode(),
               current()?.unitName ?? null,
               targetPopulationFigure()
