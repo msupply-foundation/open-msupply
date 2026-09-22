@@ -1,4 +1,4 @@
-import { type Component } from 'solid-js';
+import { Show, type Component } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { t, localisedDate } from '@/intl';
 import {
@@ -23,7 +23,11 @@ import {
 } from './purchaseOrderEdit';
 import { formatCurrency } from '@/intl/currency';
 import { chargesTotal, finalCost } from './purchaseOrderPricing';
-import { canDelete } from './purchaseOrderLadder';
+import {
+  canDelete,
+  canEnterSentDate,
+  canRecordPostSendingDates,
+} from './purchaseOrderLadder';
 import type { PurchaseOrderStatus } from '../purchaseOrderStatus';
 
 export interface PurchaseOrderSidePanelProps {
@@ -31,7 +35,8 @@ export interface PurchaseOrderSidePanelProps {
   node: PurchaseOrderInfoFragment;
   /** How many lines the order has — with none, it has no totals to show. */
   lineCount: number;
-  /** True once the order is Sent or Finalised (the comment stays open). */
+  /** True once the order is Sent or Finalised (the comment and the panel's
+   *  three dates follow their own gates). */
   disabled: boolean;
   edit: PurchaseOrderFieldEdit;
   /** Resolves with the verdict, so a refusal can be reported at the field. */
@@ -77,6 +82,10 @@ export const PurchaseOrderSidePanel: Component<
   const money = (value: number) => formatCurrency(value, currency());
 
   const status = () => props.node.status as PurchaseOrderStatus;
+  const datesDisabled = () => !canRecordPostSendingDates(status());
+  const moment = (value: string | null | undefined) =>
+    value ? localisedDate(value) : '-';
+  const sentDay = () => sentWireToDay(props.node.sentDatetime);
 
   const selectedDonor = (): NameSeed | undefined => {
     const donor = props.node.donor;
@@ -228,36 +237,42 @@ export const PurchaseOrderSidePanel: Component<
             disabled controls). It is also the gate on the currency. */}
         <FieldRow label={t('label.confirmed')}>
           <span data-testid="confirmed-datetime-value">
-            {props.node.confirmedDatetime
-              ? localisedDate(props.node.confirmedDatetime)
-              : '-'}
+            {moment(props.node.confirmedDatetime)}
           </span>
         </FieldRow>
 
-        {/* These three dates record what happens AFTER sending, so they stay
-            editable in every state, Sent and Finalised included (rules § what
-            may be changed, and when) — none takes `props.disabled`. The sent
-            moment is edited here directly, which is why the ladder shows it
-            only once the order is actually Sent (rules § the state ladder). */}
+        {/* Taken by hand until the order is Sent, read from then on: entering
+            Sent stamps the actual moment over whatever was entered (rules §
+            what may be changed, and when). A DateTime on the wire, a DAY here
+            — written as UTC midnight and read back as its UTC day
+            (purchaseOrderEdit.ts). */}
         <FieldRow label={t('label.po-sent')}>
-          {/* A DateTime on the wire, a DAY here: written as UTC midnight and
-              read back as its UTC day (purchaseOrderEdit.ts). */}
-          <DateField
-            label={t('label.po-sent')}
-            hideLabel
-            size="small"
-            width="compact"
-            testId="po-sent-field"
-            value={sentWireToDay(props.node.sentDatetime)}
-            error={saveErrors.sentDatetime}
-            onChange={value =>
-              void save('sentDatetime', {
-                sentDatetime: { value: value ? sentDayToWire(value) : null },
-              })
+          <Show
+            when={canEnterSentDate(status())}
+            fallback={
+              <span data-testid="sent-datetime-value">{moment(sentDay())}</span>
             }
-          />
+          >
+            <DateField
+              label={t('label.po-sent')}
+              hideLabel
+              size="small"
+              width="compact"
+              testId="po-sent-field"
+              value={sentDay()}
+              error={saveErrors.sentDatetime}
+              onChange={value =>
+                void save('sentDatetime', {
+                  sentDatetime: { value: value ? sentDayToWire(value) : null },
+                })
+              }
+            />
+          </Show>
         </FieldRow>
 
+        {/* These two dates record what happens AFTER sending, so they stay
+            open on a Sent order and close only once it is Finalised (rules §
+            what may be changed, and when) — neither takes `props.disabled`. */}
         <FieldRow label={t('label.contract-signed')}>
           <DateField
             label={t('label.contract-signed')}
@@ -266,6 +281,7 @@ export const PurchaseOrderSidePanel: Component<
             width="compact"
             testId="contract-signed-field"
             value={props.node.contractSignedDate ?? undefined}
+            disabled={datesDisabled()}
             error={saveErrors.contractSignedDate}
             onChange={value =>
               void save('contractSignedDate', {
@@ -283,6 +299,7 @@ export const PurchaseOrderSidePanel: Component<
             width="compact"
             testId="advance-paid-field"
             value={props.node.advancePaidDate ?? undefined}
+            disabled={datesDisabled()}
             error={saveErrors.advancePaidDate}
             onChange={value =>
               void save('advancePaidDate', {
