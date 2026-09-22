@@ -7,9 +7,9 @@ import type { UpdatePurchaseOrderVariables } from './purchaseOrderDetail.generat
 // together are saved together" (rules § an order's own screen) — a shared
 // buffer coalesces a burst across all three surfaces into a single update.
 //
-// The three surfaces that are NOT here save the moment they change, so they
-// never enter the buffer: the supplier, the requested delivery date, and the
-// panel's three editable dates (same rule).
+// The surfaces that are NOT here save the moment they change, so they never
+// enter the buffer: the supplier, the requested delivery date, and the panel's
+// three editable dates (same rule).
 export type PurchaseOrderEditFields = {
   // Toolbar.
   reference: string;
@@ -20,8 +20,8 @@ export type PurchaseOrderEditFields = {
   supplierAgent: string;
   headingMessage: string;
   freightConditions: string;
-  // Side panel — editable in every state, closed orders included, like the
-  // panel's three dates (rules § what may be changed, and when).
+  // Side panel — the one field editable in every state, closed orders
+  // included (rules § what may be changed, and when).
   comment: string;
 };
 
@@ -40,12 +40,12 @@ export type SaveFieldResult = { ok: boolean; message?: string };
 
 /*
  * The sent moment is a DateTime on the wire but a DAY on the screen (S9: the
- * panel shows and edits "PO sent" date-only). Its `NullableDatetimeUpdate`
- * parses a NAIVE `YYYY-MM-DDTHH:MM:SS`, read as UTC, and rejects any zone
- * suffix — yet the node hands the field back WITH `+00:00` (contract ⚠️ the
- * sent moment is written naive and read zoned). So a picked day is written as
- * UTC midnight, and the stored value is read back as its UTC day: the two are
- * symmetric, and the time component is never surfaced.
+ * panel shows it date-only, and takes it by hand until the order is Sent). Its
+ * `NullableDatetimeUpdate` parses a NAIVE `YYYY-MM-DDTHH:MM:SS`, read as UTC,
+ * and rejects any zone suffix — yet the node hands the field back WITH
+ * `+00:00` (contract ⚠️ the sent moment is written naive and read zoned). So a
+ * picked day is written as UTC midnight, and the stored value is read back as
+ * its UTC day: the two are symmetric, and the time component is never surfaced.
  */
 export const sentDayToWire = (day: string): string => `${day}T00:00:00`;
 export const sentWireToDay = (
