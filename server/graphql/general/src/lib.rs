@@ -617,11 +617,7 @@ impl GeneralMutations {
     }
 
     /// Pause or resume sync (server admin only). See `SyncPausedNode`.
-    pub async fn set_sync_paused(
-        &self,
-        ctx: &Context<'_>,
-        paused: bool,
-    ) -> Result<SyncPausedNode> {
+    pub async fn set_sync_paused(&self, ctx: &Context<'_>, paused: bool) -> Result<SyncPausedNode> {
         set_sync_paused(ctx, paused)
     }
 

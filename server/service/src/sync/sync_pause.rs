@@ -80,15 +80,24 @@ mod test {
                 .collect::<Vec<_>>()
         };
 
-        assert!(!service_provider.settings.is_sync_paused(service_context).unwrap());
+        assert!(!service_provider
+            .settings
+            .is_sync_paused(service_context)
+            .unwrap());
         assert!(pause_logs().is_empty());
 
         // Pause: persisted, and logged once naming the user.
         assert!(set_sync_paused(service_provider, service_context, &user_id, true).unwrap());
-        assert!(service_provider.settings.is_sync_paused(service_context).unwrap());
+        assert!(service_provider
+            .settings
+            .is_sync_paused(service_context)
+            .unwrap());
         let logs = pause_logs();
         assert_eq!(logs.len(), 1);
-        assert_eq!(logs[0].message.as_deref(), Some("Sync paused by username_a"));
+        assert_eq!(
+            logs[0].message.as_deref(),
+            Some("Sync paused by username_a")
+        );
         assert!(!logs[0].is_error);
 
         // Setting the same state again is a no-op for the log.
@@ -97,10 +106,16 @@ mod test {
 
         // Resume: persisted and logged.
         assert!(!set_sync_paused(service_provider, service_context, &user_id, false).unwrap());
-        assert!(!service_provider.settings.is_sync_paused(service_context).unwrap());
+        assert!(!service_provider
+            .settings
+            .is_sync_paused(service_context)
+            .unwrap());
         let logs = pause_logs();
         assert_eq!(logs.len(), 2);
-        assert_eq!(logs[1].message.as_deref(), Some("Sync resumed by username_a"));
+        assert_eq!(
+            logs[1].message.as_deref(),
+            Some("Sync resumed by username_a")
+        );
 
         // An unknown user id falls back to the id itself rather than failing.
         set_sync_paused(service_provider, service_context, "not_a_user", true).unwrap();
