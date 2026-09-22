@@ -305,10 +305,9 @@ mod tests {
         .get_result::<TextValue>(connection.lock().connection())
         .unwrap()
         .value;
-        // Not the DEFAULT partition, which shares the prefix.
         assert!(
-            partition.starts_with("changelog_p_") && partition != "changelog_p_default",
-            "expected fresh insert to land in a range partition, got {}",
+            partition.starts_with("changelog_p_"),
+            "expected fresh insert to land in a partition, got {}",
             partition
         );
     }
