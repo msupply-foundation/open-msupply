@@ -20,9 +20,10 @@ import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
 import { Button } from '@/ui/elements/buttons/Button';
+import { SplitButton } from '@/ui/elements/buttons/SplitButton';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
-import { CloseIcon, SidebarIcon } from '@/ui/icons';
+import { CloseIcon, PlusCircleIcon, SidebarIcon } from '@/ui/icons';
 import {
   DataTable,
   type Column,
@@ -41,7 +42,8 @@ import {
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { remToPx } from '@/ui/utils/rem';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
-import { ALT_M } from '@/ui/utils/shortcuts';
+import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
+import { createAddAction } from '@/ui/utils/keyActions';
 import { useUrlQueryState } from '@/list/urlQueryState';
 import {
   DEFAULT_PAGE_SIZE,
@@ -53,7 +55,8 @@ import { stripEmpty } from '@/typeHelpers';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import { ActivityLogPanel } from '@/domain/activityLog';
 import { ExportPrintButton } from '@/domain/reports';
-import { purchaseOrderPreferences } from '@/store/storeContext';
+import { MasterListPickerModal } from '@/domain/masterList';
+import { hasPermission, purchaseOrderPreferences } from '@/store/storeContext';
 import {
   poLineStatusLabel,
   type PurchaseOrderStatus,
@@ -67,6 +70,7 @@ import {
   type PurchaseOrderDetailLinesVariables,
 } from './purchaseOrderDetail.generated';
 import {
+  addPurchaseOrderFromMasterList,
   cascadeDeliveryDate,
   updatePurchaseOrder,
   type DeliveryDateField,
@@ -95,10 +99,12 @@ import {
 import { formatCurrency } from '@/intl/currency';
 import { linePacks, lineCost } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
+import { PurchaseOrderLineEditModal } from './edit-modal/PurchaseOrderLineEditModal';
+import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
 
 // An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
-// Details tab, S9's side panel, S11-S13's remaining tabs and S18's status
-// confirmations).
+// Details tab, S9's side panel, S10's line editor, S11-S13's remaining tabs,
+// S14's master-list add, S16's line import and S18's status confirmations).
 //
 // THREE resources, each answering a different question (kdd/state-management):
 //
@@ -116,12 +122,8 @@ import { CloseLinesAction, DeleteLinesAction } from './actions';
 // and a suspend there would detach an open dialog and drop input focus. The
 // initial-load spinner is the <Show> fallback's, not the <Suspense>'s.
 //
-// NOT built in this pass, and so not reachable from here: the line editor
-// (S10), add-from-master-list (S14), the bulk delivery-date modal (S15) and
-// the line import (S16). The screen therefore offers no Add action and no row
-// click, and the General tab's empty state carries no create affordance —
-// which is what the spec says of an order whose lines may not be added by hand
-// anyway.
+// NOT built in this pass, and so not reachable from here: the bulk
+// delivery-date modal (S15).
 
 type Line = PurchaseOrderDetailLineFragment;
 type SortKey = NonNullable<
@@ -175,6 +177,19 @@ const PurchaseOrderDetailView: Component = () => {
   // Lines the last blocked state move named as unorderable — marked in the
   // table so they can be found and removed (spec S18).
   const [blockedLines, setBlockedLines] = createSignal<string[]>([]);
+  // The line editor (spec S10): a row click opens it on that line, Add item
+  // and the empty state's affordance open it on a new one.
+  const [editor, setEditor] = createSignal<{ line?: Line }>();
+  // The Add split's other two options: the master-list picker with its
+  // pending choice awaiting confirmation (spec S14), and the import (S16). A
+  // rejection from either reads as a fixed-copy notice.
+  const [masterListPickerOpen, setMasterListPickerOpen] = createSignal(false);
+  const [pendingMasterList, setPendingMasterList] = createSignal<{
+    id: string;
+    name: string;
+  }>();
+  const [importOpen, setImportOpen] = createSignal(false);
+  const [notice, setNotice] = createSignal<string>();
 
   const prefs = () => purchaseOrderPreferences();
 
@@ -275,6 +290,69 @@ const PurchaseOrderDetailView: Component = () => {
   });
 
   const status = () => (info()?.status ?? 'NEW') as PurchaseOrderStatus;
+  // Lines may be added by hand while drafting only (rules § choosing the
+  // item); the insert's state gate is typed, but the button says so first.
+  const canAdd = () => !!info() && canAuthorLines(status());
+
+  // The master-list add's window is wider than every other line action's:
+  // only a Finalised order refuses (rules § adding lines from a master list).
+  const canAddFromMasterList = () => !!info() && status() !== 'FINALISED';
+
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditor({}),
+    disabled: () => !canAdd(),
+  });
+
+  const onAddAction = (choice: string) => {
+    if (choice === 'master-list') setMasterListPickerOpen(true);
+    else if (choice === 'import') {
+      if (hasPermission('PURCHASE_ORDER_MUTATE')) setImportOpen(true);
+      else setNotice(t('error.no-purchase-order-import-permission'));
+    } else setEditor({});
+  };
+
+  // Applying a list whose items are all present adds nothing and says
+  // nothing: the unchanged table is the whole outcome (spec S14).
+  const confirmAddFromMasterList = async () => {
+    const list = pendingMasterList();
+    if (!list) return;
+    setPendingMasterList(undefined);
+    const result = await addPurchaseOrderFromMasterList(
+      params.storeId,
+      params.id,
+      list.id
+    );
+    if (result.kind === 'done') refetchAll();
+    else if (result.kind === 'error') setNotice(result.message);
+  };
+
+  // The editor's walk follows the table's current sort and filter (rules §
+  // saving): the next row on this page, or the first of the next page — read
+  // with the same variables and one page on, the table moving with it.
+  const morePages = () => query().offset + query().first < totalCount();
+  const hasNextLine = (lineId: string) => {
+    const index = rows().findIndex(line => line.id === lineId);
+    return index >= 0 && (index < rows().length - 1 || morePages());
+  };
+  const nextLine = async (lineId: string): Promise<Line | undefined> => {
+    const index = rows().findIndex(line => line.id === lineId);
+    if (index >= 0 && index < rows().length - 1) return rows()[index + 1];
+    if (!morePages()) return undefined;
+    const offset = query().offset + query().first;
+    const result = await graphqlFetch(PurchaseOrderDetailLines, {
+      ...linesVariables(),
+      page: { first: query().first, offset },
+    });
+    if (
+      result.kind !== 'success' ||
+      result.data.purchaseOrderLines.__typename !== 'PurchaseOrderLineConnector'
+    )
+      return undefined;
+    const first = result.data.purchaseOrderLines.nodes[0];
+    if (first) setQuery({ ...query(), offset });
+    return first;
+  };
   // Sent or Finalised: every field on the screen is refused — except the
   // comment, open in every state, and the panel's two post-sending dates,
   // open until Finalised (rules § what may be changed, and when). Mirrored
@@ -594,6 +672,36 @@ const PurchaseOrderDetailView: Component = () => {
                 <Header>
                   <Breadcrumb crumbs={crumbs(node())} />
                   <HeaderButtons>
+                    {/* The Add split (spec S6 § page actions): Add item and
+                        Import lines while drafting, Add from master list
+                        until Finalised — so the whole control stands down
+                        only there. */}
+                    <SplitButton
+                      icon={<PlusCircleIcon />}
+                      collapsible="narrow"
+                      testId="add-item-button"
+                      menuLabel={t('button.add-item')}
+                      value="item"
+                      shortcut={ALT_N}
+                      disabled={!canAddFromMasterList()}
+                      onAction={onAddAction}
+                      options={[
+                        {
+                          value: 'item',
+                          label: t('button.add-item'),
+                          disabled: !canAdd(),
+                        },
+                        {
+                          value: 'master-list',
+                          label: t('button.add-from-master-list'),
+                        },
+                        {
+                          value: 'import',
+                          label: t('button.upload-purchase-order-lines'),
+                          disabled: !canAdd(),
+                        },
+                      ]}
+                    />
                     <ExportPrintButton
                       context="PURCHASE_ORDER"
                       dataId={node().id}
@@ -699,6 +807,10 @@ const PurchaseOrderDetailView: Component = () => {
                   loading={linesData.loading}
                   sort={currentSort()}
                   onSort={onSort}
+                  // A row click opens the line editor on that line, in every
+                  // state — a closed line or a Finalised order opens it with
+                  // every field closed (spec S10).
+                  onRowClick={line => setEditor({ line })}
                   // A CLOSED line is marked as RESTRICTED — the same disabled
                   // row treatment the orders list gives an order closed to
                   // change, since closure is a standing property of the line
@@ -718,6 +830,20 @@ const PurchaseOrderDetailView: Component = () => {
                         : undefined
                   }
                   emptyMessage={t('error.no-purchase-order-items')}
+                  // The create affordance is offered only while lines may
+                  // still be added by hand (spec S7 § empty).
+                  empty={
+                    canAdd() ? (
+                      <Button
+                        variant="ghost"
+                        shortcut={ALT_N}
+                        data-testid="nothing-here-create-button"
+                        onClick={() => setEditor({})}
+                      >
+                        {t('button.create-a-new-one')}
+                      </Button>
+                    ) : undefined
+                  }
                   enableSelection
                   selectedIds={selectedIds()}
                   onSelectionChange={setSelectedIds}
@@ -757,6 +883,77 @@ const PurchaseOrderDetailView: Component = () => {
                   recordId={node().id}
                 />
               </TabPanel>
+
+              {/* The line editor is an overlay, not tab content, so a row
+                  click opens it whichever tab last had focus. */}
+              <PurchaseOrderLineEditModal
+                open={!!editor()}
+                onClose={() => setEditor(undefined)}
+                storeId={params.storeId}
+                order={{
+                  id: node().id,
+                  status: status(),
+                  currencyCode: node().currency?.code,
+                  requestedDeliveryDate: node().requestedDeliveryDate,
+                }}
+                latestExpectedDate={latestExpectedDate()}
+                lineCount={lineCount()}
+                canAuthorise={hasPermission('PURCHASE_ORDER_AUTHORISE')}
+                initialLine={editor()?.line}
+                hasNext={hasNextLine}
+                nextLine={nextLine}
+                onSaved={refetchAll}
+              />
+
+              {/* Add from master list (spec S14): the shared picker, then the
+                  are-you-sure confirmation, then the add and a re-read. */}
+              <MasterListPickerModal
+                open={masterListPickerOpen()}
+                onClose={() => setMasterListPickerOpen(false)}
+                storeId={params.storeId}
+                onSelect={list => {
+                  setMasterListPickerOpen(false);
+                  setPendingMasterList(list);
+                }}
+              />
+              <Show when={pendingMasterList()}>
+                <ConfirmDialog
+                  open
+                  title={t('heading.are-you-sure')}
+                  message={t('messages.confirm-add-from-master-list')}
+                  onConfirm={() => void confirmAddFromMasterList()}
+                  onClose={() => setPendingMasterList(undefined)}
+                />
+              </Show>
+
+              {/* Import lines (spec S16). A finished import lands the user
+                  back on the General tab. */}
+              <Show when={importOpen()}>
+                <PurchaseOrderLineImportModal
+                  storeId={params.storeId}
+                  orderId={node().id}
+                  currencyCode={node().currency?.code}
+                  onClose={() => {
+                    setImportOpen(false);
+                    setSearch({ tab: 'general' });
+                  }}
+                  onImported={refetchAll}
+                />
+              </Show>
+
+              {/* A rejection's fixed copy, or the missing import permission,
+                  as an acknowledgement (ui-standards › action feedback). */}
+              <Show when={notice()}>
+                {message => (
+                  <ConfirmDialog
+                    open
+                    title={t('error.something-wrong')}
+                    message={message()}
+                    onConfirm={() => setNotice(undefined)}
+                    onClose={() => setNotice(undefined)}
+                  />
+                )}
+              </Show>
             </Page>
           </Tabs>
         )}
