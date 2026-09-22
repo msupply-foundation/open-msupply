@@ -7,9 +7,8 @@ import {
   type Accessor,
 } from 'solid-js';
 import { createStore, type Store } from 'solid-js/store';
-import { reportPermissionDenied } from '@/api/graphql';
 import type { Rejection } from '@/api/rejection';
-import { hasPermission } from '@/store/storeContext';
+import { guardCentralDataEdit } from '@/store/storeContext';
 import { generateUUID } from '@/uuid';
 import {
   loadDemographics,
@@ -34,13 +33,6 @@ import {
 // permission mirror. The page composes library components over this; keeping
 // the behaviour here makes every rule node-testable against a stubbed wire,
 // the shape the patient editor (patientEditor.ts) established.
-
-/**
- * The server's permission name in the PascalCase the permission-denied modal
- * humanises — the form an actual Forbidden's `HasPermission(EditCentralData)`
- * carries, so the client's up-front refusal and the server's read the same.
- */
-const EDIT_CENTRAL_DATA = 'EditCentralData';
 
 export interface DemographicsEditorParams {
   storeId: Accessor<string>;
@@ -128,17 +120,12 @@ export const createDemographicsEditor = (
   const loadFailed = () =>
     loaded.state === 'ready' && loaded.latest === undefined;
 
-  const canEdit = () => hasPermission('EDIT_CENTRAL_DATA');
-
   // The standing-capability mirror (rules § access; startup § permission
   // denied): a user without the central-data permission is refused at the
   // click, with the same modal the server's own refusal raises, and nothing is
-  // added or sent. The server stays the real guard.
-  const permitted = (): boolean => {
-    if (canEdit()) return true;
-    reportPermissionDenied([EDIT_CENTRAL_DATA]);
-    return false;
-  };
+  // added or sent. The server stays the real guard. Shared with the other
+  // central-administration screen (store/storeContext § guardCentralDataEdit).
+  const permitted = guardCentralDataEdit;
 
   const baseline = () => baselineOf(draft.indicators);
 

@@ -66,6 +66,7 @@ import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { globalPreferencesRoutes } from './sections/global-preferences';
 import { customFieldsRoutes } from './sections/custom-fields';
 import { demographicsRoutes } from './sections/demographics';
+import { immunisationProgramsRoutes } from './sections/immunisation-programs';
 import { syncMessageRoutes } from './sections/sync-message';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
@@ -134,6 +135,9 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/help-documents': helpDocumentsRoutes,
   'manage/custom-fields': customFieldsRoutes,
   'manage/indicators-demographics': demographicsRoutes,
+  // The central server's immunisation catalogue (spec/immunisation-programs):
+  // the program list and each program's course list, under Programs.
+  'programs/immunisations': immunisationProgramsRoutes,
   'manage/sync-message': syncMessageRoutes,
   // The central server's facility register (spec/names S5) — the third list
   // over the name entity, under Manage rather than a store-scoped section.
