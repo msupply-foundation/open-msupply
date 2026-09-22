@@ -12,7 +12,7 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { gated } from '../../../../api/gated';
 import { t, tPlural } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
-import { homeCurrency } from '../../../../intl/currency';
+import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { InsetPanel } from '../../../../ui/layout/InsetPanel/InsetPanel';
@@ -68,13 +68,6 @@ import styles from './InternalOrderLineEditModal.module.css';
 // read-only context charts (target-quantity breakdown + consumption /
 // stock-evolution) or, where the store forecasts and this line carries a
 // forecast, the population-forecast calculation display (AC-PF7).
-
-const money = (value: number): string =>
-  formatNumber(value, {
-    style: 'currency',
-    currency: homeCurrency(),
-    currencyDisplay: 'narrowSymbol',
-  });
 
 export interface InternalOrderLineEditModalProps {
   open: boolean;
@@ -715,12 +708,12 @@ const LineEditContent = (
                     value={
                       editorLine().pricePerUnit == null
                         ? '-'
-                        : money(editorLine().pricePerUnit!)
+                        : formatCurrency(editorLine().pricePerUnit!)
                     }
                   />
                   <StatRow
                     label={t('label.indicative-price')}
-                    value={money(
+                    value={formatCurrency(
                       (editorLine().pricePerUnit ?? 0) * requestedUnits()
                     )}
                   />

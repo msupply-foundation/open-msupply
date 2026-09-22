@@ -25,6 +25,13 @@ let nextId = 0;
 
 vi.mock('@/store/storeContext', () => ({
   hasPermission: (permission: string) => state.permissions.has(permission),
+  // The shared central-data guard (storeContext), mirrored: true when the
+  // permission is held, else the permission-denied modal and false.
+  guardCentralDataEdit: () => {
+    if (state.permissions.has('EDIT_CENTRAL_DATA')) return true;
+    denied(['EditCentralData']);
+    return false;
+  },
 }));
 vi.mock('@/api/graphql', () => ({
   reportPermissionDenied: (permissions: string[]) => denied(permissions),

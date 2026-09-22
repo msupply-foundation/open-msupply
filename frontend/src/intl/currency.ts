@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js';
-import { intlNumberFormat } from './formatNumber';
+import { formatNumber, intlNumberFormat } from './formatNumber';
+import { locale } from './intl';
 import type { SupportedLocale } from './locales';
 import { LOCALE_META } from './locales';
 
@@ -76,4 +77,21 @@ export { homeCurrency };
 
 export const setHomeCurrency = (code: string | null | undefined): void => {
   setHomeCurrencySignal(code || 'USD');
+};
+
+/**
+ * A money figure in the given currency (ISO 4217) at that currency's minor
+ * units, with its narrow symbol in the active locale. No code: the store's
+ * home currency.
+ */
+export const formatCurrency = (value: number, code?: string | null): string => {
+  const currency = code ?? homeCurrency();
+  const { decimals } = getCurrencyInfo(currency, locale());
+  return formatNumber(value, {
+    style: 'currency',
+    currency,
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 };

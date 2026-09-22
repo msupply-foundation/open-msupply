@@ -30,6 +30,11 @@ import {
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
 import { renderTemplate } from './renderTemplate';
 import { hiddenEdges } from './scrollEdges';
+import {
+  refetchIndicatorHome,
+  showsToolbarRow,
+  type ToolbarInputs,
+} from './toolbarState';
 import { autoFitWidth } from './autoFitWidth';
 import {
   resolveColumnVisibility,
@@ -268,6 +273,20 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    *  unaffected.
    */
   showFullScreen?: boolean;
+  /**
+   * Where body-cell content sits in the row's block axis. Default `center`,
+   * which is right for a table of values: a cell that wraps to two lines
+   * centres as a block against its single-line neighbours.
+   *
+   * `start` is for a table of IN-PLACE EDITORS whose cells can grow a
+   * validation message beneath the control. Centred, that growth pushes the
+   * cell's own input UP while its neighbours stay put, so a row of controls
+   * stops lining up at the moment one of them is wrong — the state where
+   * alignment matters most. Top-aligned, the controls hold their place and the
+   * message hangs below them. A row with nothing to report looks the same
+   * either way, every cell holding one control of the same height.
+   */
+  cellAlign?: 'center' | 'start';
   /**
    * Render the toolbar's CONTROL CLUSTER (view toggle · Columns · Settings ·
    * full screen) into this element instead of the table's own toolbar row — for
@@ -1198,26 +1217,53 @@ export function DataTable<T, K extends string, G extends string = never>(
   // FUNCTION, not a stored element: it renders either in the table's own
   // toolbar or (controlsMount) portalled into the host's chrome row, and a
   // shared element node can only live in one place. Exactly one call renders.
-  // Whether the toolbar ROW renders at all. With the controls lifted into a
-  // host's chrome (controlsMount) and no filters to show, it doesn't — and the
-  // table then loses the hairline that row carried along its bottom edge, which
-  // is what separated the header from whatever sits above it. The seam moves to
-  // the table area instead (see .root[data-no-toolbar] in the CSS).
-  const hasToolbar = () =>
-    !!filters() || !!props.pagination || !props.controlsMount;
+  // Whether the control cluster has anything to show: the card-view sort
+  // control, or a control the host wired — Settings (and with it the view
+  // toggle and Columns, which both need setConfig) or full screen. The inline
+  // loading spinner is deliberately not counted: it comes and goes, and a row
+  // that appeared only while a refetch ran would jump the table about.
+  const hasControls = () =>
+    showSortControl() || !!props.setConfig || props.showFullScreen !== false;
+  // The toolbar row and the refetch indicator's home are decided together in
+  // toolbarState.ts (pure, and unit-tested — the two rules have to agree, and
+  // reading them apart once put two indicators on screen). Without the row the
+  // table loses the hairline it carried; the seam moves to the table area
+  // instead (see .root[data-no-toolbar] in the CSS).
+  const toolbarInputs = (): ToolbarInputs => ({
+    hasFilters: !!filters(),
+    hasPagination: !!props.pagination,
+    controlsLifted: !!props.controlsMount,
+    hasControls: hasControls(),
+  });
+  const hasToolbar = () => showsToolbarRow(toolbarInputs());
+
+  // Loading indicator — a small inline spinner shown while a fetch runs AND
+  // rows are already showing (a refetch on filter/sort/page — keepPreviousData
+  // keeps the rows put). Signals "updating" without blanking or remounting the
+  // table (#160/#196). Initial load (no rows yet) uses the centred spinner
+  // below instead, so the two never show together.
+  //
+  // Its home is the control cluster, just left of the icons — which renders
+  // in the toolbar row, or portalled into a host's own chrome row
+  // (controlsMount). A table with NEITHER would otherwise lose the indicator
+  // entirely — a search-driven modal list refetching with no sign of it — so
+  // there, and only there, it floats in the table area's corner instead
+  // (floatingRefetch below). A table whose controls are lifted keeps the
+  // cluster's copy: rendering both put two of them on screen, and two
+  // `table-loading-inline` nodes against the id contract (PR #749 re-review).
+  const refetching = () =>
+    !!props.loading && table.getRowModel().rows.length > 0;
+  const refetchSpinner = (): JSX.Element => (
+    <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
+  );
+  // The cluster renders nowhere, so the indicator floats instead.
+  const floatingRefetch = () =>
+    refetching() && refetchIndicatorHome(toolbarInputs()) === 'floating';
 
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
-      {/* Loading indicator — a small inline spinner just to the LEFT of the
-            icon controls while a fetch runs AND rows are already showing (a
-            refetch on filter/sort/page — keepPreviousData keeps the rows
-            put). Signals "updating" without blanking or remounting the table
-            (#160/#196). Initial load (no rows yet) uses the centred spinner
-            below instead, so the two never show together. */}
-      <Show when={props.loading && table.getRowModel().rows.length > 0}>
-        <span class={styles.toolbarLoading}>
-          <Spinner sizeRem={1.1} data-testid="table-loading-inline" />
-        </span>
+      <Show when={refetching()}>
+        <span class={styles.toolbarLoading}>{refetchSpinner()}</span>
       </Show>
       {/* Sort control — card view only (no clickable headers there): a
             labelled popover showing the active sort field + direction, listing
@@ -1392,6 +1438,9 @@ export function DataTable<T, K extends string, G extends string = never>(
           : undefined
       }
       data-no-toolbar={hasToolbar() ? undefined : ''}
+      // Body-cell block alignment (see `cellAlign`). Only the opt-in is
+      // stamped; the default stays the UA's `middle` on .td.
+      data-cell-align={props.cellAlign === 'start' ? 'start' : undefined}
       // Content height, for a host that scrolls the table together with what
       // sits below it (see `fitContent`). Card view only — a row view's
       // horizontal scrolling needs the box.
@@ -1439,6 +1488,11 @@ export function DataTable<T, K extends string, G extends string = never>(
           footer bar, so the scroll box inside it is full-height even for a
           short list. */}
       <div class={styles.tableArea}>
+        {/* The refetch indicator for a table whose control cluster renders
+            NOWHERE — no toolbar row, and not lifted into a host's chrome. */}
+        <Show when={floatingRefetch()}>
+          <span class={styles.floatingLoading}>{refetchSpinner()}</span>
+        </Show>
         <div
           class={styles.tableScroll}
           ref={scrollBox}

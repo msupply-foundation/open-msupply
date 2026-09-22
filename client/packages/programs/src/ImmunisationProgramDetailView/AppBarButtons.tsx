@@ -27,6 +27,7 @@ export const AppBarButtons = ({ onCreate }: ProgramAppBarButtonsProps) => {
           Icon={<PlusCircleIcon />}
           label={t('button.new-vaccine-course')}
           onClick={onClick}
+          data-testid="new-vaccine-course-button"
         />
       </Grid>
     </AppBarButtonsPortal>

@@ -3,6 +3,7 @@ import { CCE_CLASS_ID } from '../equipment';
 import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
+  buildListFilter,
   buildListVariables,
   clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
@@ -13,6 +14,53 @@ const STORE = 'store-a';
 const state = (over: Partial<EquipmentListState> = {}): EquipmentListState => ({
   ...DEFAULT_STATE,
   ...over,
+});
+
+describe('OMS-REG-CCE-07.13/.35 — what the CSV export reads', () => {
+  it('carries the active filters, so the file matches the chips on screen', () => {
+    const filtered = state({
+      filter: { assetNumber: { like: 'FRIDGE' }, functionalStatus: null },
+    });
+    const filter = buildListFilter(filtered, STORE, 'store');
+    expect(filter.assetNumber).toEqual({ like: 'FRIDGE' });
+    // An added-but-empty chip is not a filter and must not reach the query.
+    expect(filter.functionalStatus).toBeUndefined();
+  });
+
+  it('pins the class, so an export is never widened past this register', () => {
+    expect(buildListFilter(state(), STORE, 'store').classId).toEqual({
+      equalTo: CCE_CLASS_ID,
+    });
+  });
+
+  /*
+   * The file is what the screen shows. Cold chain › Equipment lists the active
+   * store, so it exports the active store; Manage › Equipment lists every
+   * store, so it exports every store.
+   *
+   * It is a permission rule as much as a scoping one: Manage › Equipment is
+   * gated on the asset read permission, and a register-wide export from the
+   * ungated screen handed a user rows they may not open (issue #693).
+   */
+  it('keeps the store restriction on Cold chain › Equipment', () => {
+    expect(buildListFilter(state(), STORE, 'store').storeId).toEqual({
+      equalTo: STORE,
+    });
+  });
+
+  it('carries every store from Manage › Equipment, which lists every store', () => {
+    expect(
+      buildListFilter(state(), STORE, 'all-stores').storeId
+    ).toBeUndefined();
+  });
+
+  it('is the SAME filter the list reads, so the two cannot drift', () => {
+    for (const destination of ['store', 'all-stores'] as const) {
+      expect(
+        buildListVariables(state(), STORE, destination).filter
+      ).toEqual(buildListFilter(state(), STORE, destination));
+    }
+  });
 });
 
 describe('OMS-REG-CCE-04.15 — only cold-chain-equipment assets are listed', () => {

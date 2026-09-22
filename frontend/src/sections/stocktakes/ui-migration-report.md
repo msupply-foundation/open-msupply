@@ -91,12 +91,14 @@ Dimensions: **1** C3/registry · **2** composition · **3** tables · **4** inpu
 | detail/actions/CopyStocktakeAction.tsx        | ✅  | ✅  | —   | —   | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
 | detail/actions/DeleteLinesAction.tsx          | ✅  | ✅  | —   | —   | 1 ⚠ | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
 | detail/actions/DeleteStocktakeAction.tsx      | ✅  | ✅  | —   | —   | 1   | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
-| detail/actions/ExportPrintAction.tsx          | ✅  | ✅  | —   | —   | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
+| detail/actions/ExportPrintAction.tsx ¹        | ✅  | ✅  | —   | —   | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
 | detail/actions/FinaliseAction.tsx             | ✅  | ✅  | —   | —   | 1   | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
 | detail/actions/ReduceToZeroAction.tsx         | ✅  | ✅  | —   | —   | 1 ⚠ | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
 | detail/index.tsx                              | ✅  | ✅  | —   | —   | —   | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
 | detail/lines/stocktakeLine.ts                 | —   | —   | —   | —   | —   | —   | ✅  | 1   | —   | —   | —   |
 | Spec docs (ui-surface.md / README.md)         | —   | —   | —   | —   | —   | —   | —   | —   | —   | —   | 2   |
+
+¹ Since replaced by the shared `ExportPrintButton` in `@/domain/reports` (2026-09-21), which the detail view now mounts directly; the marks stand for the vertical's own copy as audited.
 
 The remaining `.ts` logic files (`stocktakeEdit`, `stocktakeUpdate`, `stocktakeLineUpdate`, `stocktakeLineErrors`, `stocktakeStatus`, `stocktakesToCsv`, both filter modules) are ✅ on every applicable dimension — type derivation is textbook (every GraphQL-bound type derives from the generated fragments/variables; no parallel hand-written mirror), and no reactive-state pitfalls.
 

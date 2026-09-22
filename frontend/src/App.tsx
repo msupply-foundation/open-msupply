@@ -45,6 +45,7 @@ import { supplierReturnsRoutes } from './sections/supplier-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { purchaseOrdersRoutes } from './sections/purchase-orders';
 import { internalOrdersRoutes } from './sections/internal-orders';
 import { requisitionsRoutes } from './sections/requisitions';
 import { rnrFormsRoutes } from './sections/rnr-forms';
@@ -65,6 +66,7 @@ import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { globalPreferencesRoutes } from './sections/global-preferences';
 import { customFieldsRoutes } from './sections/custom-fields';
 import { demographicsRoutes } from './sections/demographics';
+import { immunisationProgramsRoutes } from './sections/immunisation-programs';
 import { syncMessageRoutes } from './sections/sync-message';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
@@ -110,6 +112,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'replenishment/internal-order': internalOrdersRoutes,
   'replenishment/r-and-r-forms': rnrFormsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
+  'replenishment/purchase-order': purchaseOrdersRoutes,
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
   'dispensary/patients': patientsRoutes,
@@ -132,6 +135,9 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/help-documents': helpDocumentsRoutes,
   'manage/custom-fields': customFieldsRoutes,
   'manage/indicators-demographics': demographicsRoutes,
+  // The central server's immunisation catalogue (spec/immunisation-programs):
+  // the program list and each program's course list, under Programs.
+  'programs/immunisations': immunisationProgramsRoutes,
   'manage/sync-message': syncMessageRoutes,
   // The central server's facility register (spec/names S5) — the third list
   // over the name entity, under Manage rather than a store-scoped section.

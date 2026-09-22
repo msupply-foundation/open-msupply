@@ -75,6 +75,7 @@ export const VaccineItemSelect = ({
       options={options}
       renderOption={renderOption}
       inputProps={{ fullWidth: true, error, required }}
+      inputTestId="vaccine-course-items-input"
     />
   );
 };

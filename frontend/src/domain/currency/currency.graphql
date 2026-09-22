@@ -1,0 +1,15 @@
+# The currency lookup — active currencies, code order. No store argument: the
+# list is the site's, not a store's.
+query activeCurrencies {
+  currencies(filter: { isActive: true }, sort: { key: currencyCode }) {
+    ... on CurrencyConnector {
+      __typename
+      nodes {
+        id
+        code
+        rate
+        isHomeCurrency
+      }
+    }
+  }
+}

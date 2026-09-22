@@ -1,7 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{
-        DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
+        DateFilterInput, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
+        StringFilterInput,
     },
     map_filter,
     pagination::PaginationInput,
@@ -24,6 +25,13 @@ pub enum PurchaseOrderSortFieldInput {
     CreatedDatetime,
     Status,
     TargetMonths,
+    Supplier,
+    ConfirmedDatetime,
+    SentDatetime,
+    RequestedDeliveryDate,
+    OrderTotalAfterDiscount,
+    CurrencyCode,
+    Comment,
 }
 
 #[derive(InputObject)]
@@ -47,6 +55,7 @@ pub struct PurchaseOrderFilterInput {
     pub created_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterPurchaseOrderStatusInput>,
     pub supplier: Option<StringFilterInput>,
+    pub number: Option<EqualFilterBigNumberInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub confirmed_datetime: Option<DatetimeFilterInput>,
     pub requested_delivery_date: Option<DateFilterInput>,
@@ -143,6 +152,7 @@ impl PurchaseOrderFilterInput {
                 .status
                 .map(|t| map_filter!(t, PurchaseOrderStatus::from)),
             supplier: self.supplier.map(StringFilter::from),
+            number: self.number.map(EqualFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             confirmed_datetime: self.confirmed_datetime.map(DatetimeFilter::from),

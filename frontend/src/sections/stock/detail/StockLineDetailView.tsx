@@ -623,11 +623,6 @@ const StockLineDetailView: Component = () => {
                                 ? {
                                     id: edit.manufacturer.id,
                                     name: edit.manufacturer.name,
-                                    code: '',
-                                    isSupplier: false,
-                                    isDonor: false,
-                                    isOnHold: false,
-                                    isStore: false,
                                   }
                                 : undefined
                             }
@@ -657,11 +652,6 @@ const StockLineDetailView: Component = () => {
                                     ? {
                                         id: edit.donorId,
                                         name: edit.donorName ?? '',
-                                        code: '',
-                                        isSupplier: false,
-                                        isDonor: true,
-                                        isOnHold: false,
-                                        isStore: false,
                                       }
                                     : undefined
                                 }

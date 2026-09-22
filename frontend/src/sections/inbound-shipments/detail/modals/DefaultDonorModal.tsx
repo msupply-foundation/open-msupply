@@ -7,7 +7,7 @@ import {
   DialogSaveButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
 import { RadioGroup } from '../../../../ui/elements/inputs/RadioGroup';
-import { NameSearch, type NameOption } from '../../../../domain/name';
+import { NameSearch, type NameSeed } from '../../../../domain/name';
 import { updateInboundShipment } from '../inboundShipmentUpdate';
 import type { InboundInfoFragment } from '../inboundShipmentDetail.generated';
 
@@ -36,16 +36,11 @@ export const DefaultDonorModal: Component<DefaultDonorModalProps> = props => (
 );
 
 const Body: Component<DefaultDonorModalProps> = props => {
-  const [donor, setDonor] = createSignal<NameOption | null>(
+  const [donor, setDonor] = createSignal<NameSeed | null>(
     props.node.defaultDonor
       ? {
           id: props.node.defaultDonor.id,
           name: props.node.defaultDonor.name,
-          code: '',
-          isSupplier: false,
-          isDonor: true,
-          isOnHold: false,
-          isStore: false,
         }
       : null
   );
