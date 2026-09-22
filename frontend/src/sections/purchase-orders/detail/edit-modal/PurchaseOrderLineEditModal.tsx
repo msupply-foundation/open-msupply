@@ -434,7 +434,9 @@ const LineEditContent = (
               />
             </FieldRow>
             <FieldRow
-              label={t('label.requested-quantity')}
+              label={t('label.order-quantity-in-unit', {
+                unit: facts()!.unitName ?? t('label.units'),
+              })}
               readOnly
               valueAlign="end"
               valueTestId="requested-units-value"
@@ -443,7 +445,9 @@ const LineEditContent = (
             </FieldRow>
             <Show when={showsAdjustedUnits(status())}>
               <FieldRow
-                label={t('label.adjusted-units')}
+                label={t('label.adjusted-units-in-unit', {
+                  unit: facts()!.unitName ?? t('label.units'),
+                })}
                 readOnly
                 valueAlign="end"
                 valueTestId="adjusted-units-value"

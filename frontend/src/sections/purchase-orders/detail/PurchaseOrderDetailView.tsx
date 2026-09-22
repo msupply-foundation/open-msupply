@@ -557,7 +557,7 @@ const PurchaseOrderDetailView: Component = () => {
       // order's totals use — a zero pack size contributes nothing
       // (purchaseOrderPricing.ts). No sort key exists for a derived column.
       c: { accessor: line => linePacks(line), id: 'numPacks' },
-      header: () => t('label.num-packs'),
+      header: () => t('label.order-quantity-in-packs'),
       ...getCellDefinition('numberOfPacks'),
     },
     {
@@ -575,7 +575,8 @@ const PurchaseOrderDetailView: Component = () => {
     {
       c: { key: 'requestedNumberOfUnits' },
       sortKey: 'requestedNumberOfUnits',
-      header: () => t('label.requested-units'),
+      header: () =>
+        t('label.order-quantity-in-unit', { unit: t('label.units') }),
       ...getNumberCell(),
       size: remToPx(8),
     },
