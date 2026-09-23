@@ -27,17 +27,36 @@ Set by how the server loads the bundle
   module is evaluated. So a method may call them; module top-level code may
   not. `src/host.d.ts` declares the ones this plugin uses; out of tree they come
   typed from `@common/types`.
-- **`sql` does not return rows keyed by column.** The host deserialises each row
-  as `JsonRawRow { json_row }`, so the statement must project a single column of
-  that name holding a JSON object — and the JSON function differs by dialect
-  (`json_object` on sqlite, `json_build_object` on postgres, hence
-  `sql_type()`). Get it wrong and the query fails _inside the engine at
-  runtime_, with `DIESEL_DESERIALIZATION_ERROR ("Column `json_row` was not
-present in query")` — naming a column you never wrote. `jsonRows` in
-  `src/plugin.ts` does the wrapping; out of tree it is `sqlQuery` from
-  `@common/utils`. (The host carries a TODO to wrap it itself; until then it is
-  the caller's job.) This one is not theoretical — the first live run of this
-  plugin hit exactly that error.
+- **`sql` returns rows keyed by column.** `[{ count: 42 }, …]`, for any SELECT
+  — so a statement projects whatever columns it likes and reads them back by
+  name. It was not always so: the host used to deserialise every row as
+  `JsonRawRow { json_row }`, and a statement that did not project exactly that
+  column failed _inside the engine at runtime_ with
+  `DIESEL_DESERIALIZATION_ERROR ("Column `json_row` was not present in query")`
+  — naming a column you never wrote. The wrapping is no longer necessary, and a
+  statement that still does it keeps working, since the host unwraps a single
+  `json_row` column. `jsonRows` in `src/plugin.ts` is kept for exactly that
+  reason: it is what lets this bundle also run against a server from before the
+  change. Out of tree, `sqlQuery` from `@common/utils` is the same idea.
+- **`sql` binds values; it does not interpolate them.** The signature is
+  `sql(query, params?)`, and a placeholder is NAMED — `$storeId`, `$from`. It
+  is the same executor the repo's **report SQL** runs through
+  (`server/repository/src/db_diesel/report_query.rs`) and the contract is a
+  report's exactly, nothing added: a plugin names a value the way a report
+  names `$storeId`. On sqlite rusqlite binds each value natively; on postgres
+  each one is rendered as a typed SQL literal (a string quoted with its own
+  quotes doubled, a number, boolean or null bare) inside a read-only
+  transaction — so postgres reads a value's type from its context exactly as
+  it would a literal written by hand, and **either way a caller's string can
+  never be SQL**. The values are SCALARS — string, number, boolean, null — a
+  datetime among them, as a `YYYY-MM-DD HH:MM:SS` string. There is no array
+  and no `Date`: an `IN` list (`item_id IN $itemIds`, no brackets of your own,
+  an empty one becoming `(NULL)`) and a `Date` are conveniences of `sqlQuery`
+  in `@common/utils`, which turns both into scalars before calling this. Pass
+  `params` and every `$name` must have a key, while a positional `$1` does not
+  work; a key the text does not use is fine. Leave `params` off and the text
+  goes through untouched, so a bundle written before this existed still runs.
+  **Never interpolate a value a caller sent** — that was open-msupply#687.
 - Whatever a method returns must survive `JSON` round-tripping — it crosses back
   into Rust as JSON. A `throw` becomes a GraphQL error carrying the message.
 
