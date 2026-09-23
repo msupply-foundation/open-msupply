@@ -45,7 +45,7 @@ use mutations::{
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     set_sync_paused::{set_sync_paused, SyncPausedNode},
-    sync_api_pause::{set_sync_api_paused_mutation, sync_api_paused_query},
+    sync_api_pause::{set_sync_api_paused_mutation, sync_api_paused_query, SyncApiPausedNode},
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
     update_insurance::{update_insurance, UpdateInsuranceInput, UpdateInsuranceResponse},
     update_name_properties::{
@@ -805,7 +805,7 @@ impl CentralGeneralMutations {
         &self,
         ctx: &Context<'_>,
         paused: bool,
-    ) -> Result<SyncPausedNode> {
+    ) -> Result<SyncApiPausedNode> {
         set_sync_api_paused_mutation(ctx, paused)
     }
 }
