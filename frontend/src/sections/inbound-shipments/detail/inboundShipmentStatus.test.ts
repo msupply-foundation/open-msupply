@@ -6,6 +6,7 @@ import {
 import {
   canChangeStatus,
   isEditable,
+  actionsLocked,
   reachableStatuses,
   sourceLinkOf,
   statusDatetime,
@@ -163,6 +164,26 @@ describe('isEditable', () => {
     expect(isEditable('')).toBe(false);
     expect(isEditable('CANCELLED')).toBe(false);
   });
+
+});
+
+// Issue #873 / REPL-09 .25: Received closes a PO-linked shipment's
+// line-selection actions while the shipment itself stays editable (its lines
+// still open, and items are still added).
+describe('actionsLocked', () => {
+  it('locks a PO-linked shipment from Received', () => {
+    expect(actionsLocked('NEW', true)).toBe(false);
+    expect(actionsLocked('SHIPPED', true)).toBe(false);
+    expect(actionsLocked('DELIVERED', true)).toBe(false);
+    expect(actionsLocked('RECEIVED', true)).toBe(true);
+    expect(actionsLocked('VERIFIED', true)).toBe(true);
+    expect(isEditable('RECEIVED')).toBe(true);
+  });
+
+  it('never locks a shipment without a purchase order', () => {
+    expect(actionsLocked('RECEIVED', false)).toBe(false);
+    expect(actionsLocked('VERIFIED', false)).toBe(false);
+  });
 });
 
 describe('canChangeStatus', () => {
@@ -171,6 +192,12 @@ describe('canChangeStatus', () => {
   it('still offers an advance at Shipped, where edits are locked', () => {
     expect(isEditable('SHIPPED')).toBe(false);
     expect(canChangeStatus('SHIPPED')).toBe(true);
+  });
+
+  // Likewise a PO-linked shipment with closed actions still reaches Verified.
+  it('still offers the advance to Verified on a PO-linked Received shipment', () => {
+    expect(actionsLocked('RECEIVED', true)).toBe(true);
+    expect(canChangeStatus('RECEIVED')).toBe(true);
   });
 
   it('closes only at Verified', () => {
