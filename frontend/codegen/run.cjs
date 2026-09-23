@@ -7,7 +7,7 @@
  *
  * Uses @graphql-codegen/core to drive the plugin — the full CLI isn't needed.
  *
- * THE SCHEMA IS THE PINNED ONE (spec/schema.graphql), not a running server.
+ * THE SCHEMA IS THE PINNED ONE (schema.graphql), not a running server.
  * Codegen is then reproducible: the same tree generates the same types on any
  * machine and in CI, and the types agree with the SDL the spec is written
  * against. Generating from whichever server a developer happened to have
@@ -35,7 +35,7 @@
  * Usage: node codegen/run.js [path ...]
  *   A path narrows the run to documents under it, e.g. `plugins`.
  *   SCHEMA_URL opts INTO introspecting a running server instead of the pin —
- *   for checking a branch whose backend has not reached spec/schema.graphql
+ *   for checking a branch whose backend has not reached schema.graphql
  *   yet. What it generates must not be committed: the pin is what the
  *   committed types belong to.
  */
@@ -52,7 +52,7 @@ const {
 const { allDocuments, graphqlImportFor } = require("./documents.cjs");
 
 const SCHEMA_URL = process.env.SCHEMA_URL;
-const SCHEMA_FILE = path.resolve(__dirname, "..", "spec", "schema.graphql");
+const SCHEMA_FILE = path.resolve(__dirname, "..", "schema.graphql");
 const PLUGIN_PATH = path.resolve(__dirname, "plugin.cjs");
 
 async function introspectSchema() {
