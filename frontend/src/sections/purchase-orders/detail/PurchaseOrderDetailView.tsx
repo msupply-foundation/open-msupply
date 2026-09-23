@@ -643,10 +643,13 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(7),
     },
     {
-      // Packs × the after-line-discount pack price, at the order currency's
-      // precision. Its footer sums the rows ON SCREEN — the page, which is
-      // what a paginated table can total; the order's whole subtotal is the
-      // side panel's Subtotal row.
+      // The line's STORED total (`lineTotal`) — packs × the after-line-discount
+      // pack price, as the server wrote it — never re-multiplied here,
+      // so the column, its footer, the side panel's Subtotal and the shipment
+      // raised against the line all read one figure (purchaseOrderPricing.ts).
+      // Its footer sums the rows ON SCREEN — the page, which is what a
+      // paginated table can total; the order's whole subtotal is the side
+      // panel's Subtotal row.
       c: { accessor: line => lineCost(line), id: 'lineCost' },
       header: () => t('label.line-cost'),
       ...getCurrencyCell(undefined, () => info()?.currency?.code),

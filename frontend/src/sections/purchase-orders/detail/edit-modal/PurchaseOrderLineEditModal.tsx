@@ -22,7 +22,7 @@ import {
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { ItemSearch, type ItemOption } from '@/domain/item';
 import { NameSearch } from '@/domain/name';
-import { lineCost } from '../purchaseOrderPricing';
+import { projectedLineCost } from '../purchaseOrderPricing';
 import type { PurchaseOrderStatus } from '../../purchaseOrderStatus';
 import type { PurchaseOrderDetailLineFragment } from '../purchaseOrderDetail.generated';
 import {
@@ -528,7 +528,10 @@ const LineEditContent = (
               valueAlign="end"
               valueTestId="total-cost-value"
             >
-              {money(lineCost(draft()!))}
+              {/* A PREVIEW of what the server will store as the line's total
+                on save (its own rule, packs × the after-discount price) — the
+                draft has no stored figure yet. */}
+              {money(projectedLineCost(draft()!))}
             </FieldRow>
           </div>
 
