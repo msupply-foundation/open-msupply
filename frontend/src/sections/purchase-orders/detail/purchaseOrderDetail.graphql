@@ -209,6 +209,10 @@ query purchaseOrderLineSet($storeId: String!, $orderId: String!) {
       __typename
       nodes {
         id
+        # Resolves a picked item to its existing line (OMS-FUN-PO-02.23).
+        item {
+          id
+        }
         requestedNumberOfUnits
         expectedDeliveryDate
         # The server's own shortfall figure — what makes stock "still owed"
