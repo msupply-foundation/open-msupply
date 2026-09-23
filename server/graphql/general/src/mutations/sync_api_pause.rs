@@ -8,7 +8,12 @@ use service::{
     sync::sync_api_pause::{is_sync_api_paused, set_sync_api_paused, SetSyncApiPausedError},
 };
 
-use super::set_sync_paused::SyncPausedNode;
+/// State of central's sync API pause. Separate from `SyncPausedNode` (this server's own sync
+/// client pause) so the two can grow their own fields.
+#[derive(SimpleObject)]
+pub struct SyncApiPausedNode {
+    pub is_paused: bool,
+}
 
 /// Whether central's sync API is paused, refusing sync from remote sites. Always false on a remote.
 pub fn sync_api_paused_query(ctx: &Context<'_>) -> Result<bool> {
@@ -25,9 +30,8 @@ pub fn sync_api_paused_query(ctx: &Context<'_>) -> Result<bool> {
     Ok(is_sync_api_paused(&service_context.connection)?)
 }
 
-/// Pause or resume central's sync API, which remote sites sync through. Returns the new state,
-/// in the same shape as `setSyncPaused`.
-pub fn set_sync_api_paused_mutation(ctx: &Context<'_>, paused: bool) -> Result<SyncPausedNode> {
+/// Pause or resume central's sync API, which remote sites sync through. Returns the new state.
+pub fn set_sync_api_paused_mutation(ctx: &Context<'_>, paused: bool) -> Result<SyncApiPausedNode> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -53,5 +57,5 @@ pub fn set_sync_api_paused_mutation(ctx: &Context<'_>, paused: bool) -> Result<S
         graphql_error.extend()
     })?;
 
-    Ok(SyncPausedNode { is_paused })
+    Ok(SyncApiPausedNode { is_paused })
 }
