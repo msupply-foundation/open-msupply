@@ -38,7 +38,7 @@ describe('a line’s packs', () => {
   });
 });
 
-describe('a line’s cost', () => {
+describe('OMS-FUN-PO-07.3 — a line’s cost is the stored figure', () => {
   // The line's cost is the server's STORED figure, never re-multiplied here:
   // the table, its footer, the order's totals and the shipment raised against
   // the line all read the one number the server wrote (rules § pricing and

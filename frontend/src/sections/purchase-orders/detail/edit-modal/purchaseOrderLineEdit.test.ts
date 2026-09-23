@@ -334,7 +334,7 @@ describe('OMS-FUN-PO-02.14 / OMS-FUN-PO-07.2 — the three prices settle', () =>
   });
 });
 
-describe('OMS-FUN-PO-07.3 — the line’s total cost', () => {
+describe('OMS-FUN-PO-07.3 — the editor previews the line’s total cost', () => {
   // The editor previews what the server will STORE on save — its own rule,
   // the after-discount price times the packs authored. A saved line's row
   // then reads the stored figure (`lineTotal`) rather than recomputing it.
