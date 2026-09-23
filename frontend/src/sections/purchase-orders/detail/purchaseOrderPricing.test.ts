@@ -33,6 +33,13 @@ describe('a line’s packs and cost', () => {
     expect(linePacks(line({ adjustedNumberOfUnits: 0 }))).toBe(0);
   });
 
+  it('keeps a fractional pack count rather than rounding it up', () => {
+    expect(
+      linePacks(line({ requestedNumberOfUnits: 1500, requestedPackSize: 7 }))
+    ).toBeCloseTo(214.2857143, 6);
+    expect(linePacks(line({ requestedNumberOfUnits: 2 }))).toBe(0.2);
+  });
+
   // A zero-pack-size line contributes NOTHING, whatever its quantity or price
   // (confirmed live: a 50-unit line at price 5 and pack size 0 left the order
   // total unchanged). On the server the term is NULLIF'd away.
