@@ -188,7 +188,8 @@ query purchaseOrderDetailLines(
 #     bare date change writes the order row alone. The screen therefore issues
 #     the per-line writes itself, and needs every line's id to do it — the same
 #     one-call-per-line shape the wire forces on the bulk date actions
-#     (contract § acting on a selection of lines).
+#     (contract § acting on a selection of lines). Either field reaches the
+#     lines only while they AGREE on that date, so both dates are read.
 #  3. The finalise warning. It differs while stock is still owed, which is a
 #     fact about the whole set.
 #  4. The toolbar's Expected delivery date itself, which has no order-level
@@ -197,7 +198,7 @@ query purchaseOrderDetailLines(
 #
 # A bounded, single-record working set, not a table: one order's lines, read
 # once, no sort and no user filter (ui-standards/tables.md § pagination & scale
-# — the bounded-working-set exception). Four scalars per line, so it stays small
+# — the bounded-working-set exception). Five scalars per line, so it stays small
 # even on the 48-line orders the master-list route makes.
 query purchaseOrderLineSet($storeId: String!, $orderId: String!) {
   purchaseOrderLines(
@@ -214,6 +215,7 @@ query purchaseOrderLineSet($storeId: String!, $orderId: String!) {
           id
         }
         requestedNumberOfUnits
+        requestedDeliveryDate
         expectedDeliveryDate
         # The server's own shortfall figure — what makes stock "still owed"
         # for the finalise warning, on the same expression the outstanding
