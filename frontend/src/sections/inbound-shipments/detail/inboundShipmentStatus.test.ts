@@ -5,6 +5,7 @@ import {
 } from '@/domain/invoice/statusGate';
 import {
   canChangeStatus,
+  hasSourceLink,
   isEditable,
   reachableStatuses,
   sourceLinkOf,
@@ -305,5 +306,32 @@ describe('filterByStatusPreference (OMS-REG-REPL-03.25 — advance choices limit
         ['NEW', 'RECEIVED', 'VERIFIED']
       )
     ).toEqual(['RECEIVED', 'VERIFIED']);
+  });
+});
+
+// The edit gate this PR turns on (issue #562): cost price and the supplier's
+// declared shipped figures are read-only exactly when a source link exists.
+// "Manual" is NARROWER than "no source link" (rules.md § source link), which
+// is the confusion that let the shipped figures stay editable on a transfer.
+describe('hasSourceLink', () => {
+  const transfer = { id: 'outbound-1' };
+
+  it('is true for a purchase-order-linked shipment', () => {
+    expect(hasSourceLink(true, null)).toBe(true);
+  });
+
+  it('is true for a transfer', () => {
+    expect(hasSourceLink(false, transfer)).toBe(true);
+  });
+
+  it('is true when a PO-linked shipment is also a transfer', () => {
+    expect(hasSourceLink(true, transfer)).toBe(true);
+  });
+
+  // The case the bug turned on: an internal order is NOT a source link, so
+  // such a shipment keeps its costs and shipped figures editable.
+  it('is false for a shipment with no link, however it was created', () => {
+    expect(hasSourceLink(false, null)).toBe(false);
+    expect(hasSourceLink(false, undefined)).toBe(false);
   });
 });
