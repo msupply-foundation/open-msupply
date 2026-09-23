@@ -43,22 +43,83 @@ Set by how the server loads the bundle
   is the same executor the repo's **report SQL** runs through
   (`server/repository/src/db_diesel/report_query.rs`) and the contract is a
   report's exactly, nothing added: a plugin names a value the way a report
-  names `$storeId`. On sqlite rusqlite binds each value natively; on postgres
-  each one is rendered as a typed SQL literal (a string quoted with its own
-  quotes doubled, a number, boolean or null bare) inside a read-only
-  transaction — so postgres reads a value's type from its context exactly as
-  it would a literal written by hand, and **either way a caller's string can
-  never be SQL**. The values are SCALARS — string, number, boolean, null — a
-  datetime among them, as a `YYYY-MM-DD HH:MM:SS` string. There is no array
-  and no `Date`: an `IN` list (`item_id IN $itemIds`, no brackets of your own,
-  an empty one becoming `(NULL)`) and a `Date` are conveniences of `sqlQuery`
-  in `@common/utils`, which turns both into scalars before calling this. Pass
-  `params` and every `$name` must have a key, while a positional `$1` does not
-  work; a key the text does not use is fine. Leave `params` off and the text
-  goes through untouched, so a bundle written before this existed still runs.
-  **Never interpolate a value a caller sent** — that was open-msupply#687.
+  names `$storeId`. **Never interpolate a value a caller sent** — that was
+  open-msupply#687. The rules are below.
 - Whatever a method returns must survive `JSON` round-tripping — it crosses back
   into Rust as JSON. A `throw` becomes a GraphQL error carrying the message.
+
+## Writing SQL
+
+One executor serves plugin `sql()` and every report's `.sql` query, so a rule
+here is a rule there. What differs is only where you write it: a report ships
+`src/<name>.sql` and is handed a fixed bag of variables, while a plugin builds
+the statement and passes the values itself.
+
+### Values
+
+SCALARS — string, number, boolean, null — a datetime among them, as a
+`YYYY-MM-DD HH:MM:SS` string. That is all the host knows, because it is all a
+report's parameters are.
+
+`sqlQuery` in `@common/utils` adds two conveniences of its own, both resolved
+before the host sees anything, and **neither exists for a report**:
+
+- a `Date` anywhere a scalar goes, rendered for you;
+- an array, expanded into one parameter per element — write `item_id IN
+  $itemIds` with no brackets of your own. An empty array becomes `(NULL)`,
+  which matches nothing. Mind the inverse: `x NOT IN (NULL)` is NULL, not
+  true, so it matches nothing either — check for empty before building that
+  branch.
+
+`sqlList` is **deprecated**: it built a quoted list by pasting values into the
+text. Pass the array instead.
+
+### What is refused
+
+Loudly, on both engines, rather than quietly returning the wrong rows:
+
+- a `$name` with no value in `params` — unbound, it would read as NULL and
+  match nothing, which looks like a real empty result;
+- an array or object as one value — refused by name (a list is `sqlQuery`'s
+  expansion, not something the host can interpret);
+- a positional `$1` alongside named parameters — the two styles cannot be
+  mixed, because naming renumbers into `$1`, `$2` of its own;
+- any write. The statement runs **read-only**, enforced by the database rather
+  than by parsing your SQL, so `UPDATE`/`INSERT`/`DELETE` fail whatever the
+  text says. Persist through the narrow `use_repository` API instead. Read-only
+  stops writes, not reads — `sql()` still reaches every table, so what you
+  select stays your responsibility.
+
+A `$` followed by a digit inside a quoted string, a quoted identifier or a
+comment is left alone, so `'$100'`, `AS "Cost $1000"` and `-- costs $5` all
+run. Two constructs are not understood and will refuse such a `$`: postgres
+dollar-quoting, and a nested block comment.
+
+### Give every parameter a context
+
+On postgres a value is rendered as a typed literal inside `PREPARE`/`EXECUTE`,
+so postgres infers its type from how the statement uses it — which is what lets
+a datetime string meet a `timestamp` column with nothing declared. A bare
+`SELECT $x` has no context to infer from and comes back as **text**. Compare
+it, cast it, or use it in an expression. On sqlite rusqlite binds each value
+natively, and `:name` works too.
+
+### Structure may be interpolated, values never
+
+An array expands to a value list `(a, b, c)` — right for `IN`, wrong for a
+`VALUES` row source, which needs one row per element. Build those parameter
+NAMES yourself (`$item0`, `$item1`, …) and interpolate the names, never the
+values; `plugins/civ/backend/src/sqlQueries.ts` does exactly this in
+`daysOutOfStockTotal`.
+
+### Older servers
+
+`sqlQuery` checks `sql.length >= 2` — the new host is registered with two
+arguments, every older one with none — and falls back to rendering the values
+itself, so a new bundle still works against a server that predates parameters.
+That fallback is temporary. Leaving `params` off entirely also still works: the
+text goes through untouched, which is what every bundle written before this
+existed does.
 
 ## Building
 
