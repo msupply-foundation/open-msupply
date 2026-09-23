@@ -72,7 +72,9 @@ import {
 } from './purchaseOrderDetail.generated';
 import {
   addPurchaseOrderFromMasterList,
-  cascadeDeliveryDate,
+  cascadedDateFields,
+  cascadeDeliveryDates,
+  deliveryDatesVary,
   updatePurchaseOrder,
   type DeliveryDateField,
 } from './purchaseOrderUpdate';
@@ -449,24 +451,25 @@ const PurchaseOrderDetailView: Component = () => {
   });
 
   // The requested date is the ORDER's own field as well as every line's; the
-  // expected date has no order-level field at all, so it is lines only. One
-  // re-read covers both writes.
+  // expected date has no order-level field at all. The other date follows only
+  // where the lines still agree on it (rules § the two delivery dates), and
+  // the order's requested date moves whenever it does; one re-read covers all.
   const cascadeDate = async (
     field: DeliveryDateField,
     date: string
   ): Promise<SaveFieldResult> => {
-    const orderWrite =
-      field === 'requestedDeliveryDate'
-        ? await updatePurchaseOrder(params.storeId, {
-            id: params.id,
-            requestedDeliveryDate: { value: date },
-          })
-        : undefined;
-    const outcome = await cascadeDeliveryDate(
+    const fields = cascadedDateFields(lineSet(), field);
+    const orderWrite = fields.includes('requestedDeliveryDate')
+      ? await updatePurchaseOrder(params.storeId, {
+          id: params.id,
+          requestedDeliveryDate: { value: date },
+        })
+      : undefined;
+    const outcome = await cascadeDeliveryDates(
       params.storeId,
       lineSet(),
-      field,
-      date
+      date,
+      fields
     );
     refetchAll();
     const message =
@@ -581,7 +584,7 @@ const PurchaseOrderDetailView: Component = () => {
       // order's totals use — a zero pack size contributes nothing
       // (purchaseOrderPricing.ts). No sort key exists for a derived column.
       c: { accessor: line => linePacks(line), id: 'numPacks' },
-      header: () => t('label.num-packs'),
+      header: () => t('label.order-quantity-in-packs'),
       ...getCellDefinition('numberOfPacks'),
     },
     {
@@ -599,7 +602,8 @@ const PurchaseOrderDetailView: Component = () => {
     {
       c: { key: 'requestedNumberOfUnits' },
       sortKey: 'requestedNumberOfUnits',
-      header: () => t('label.requested-units'),
+      header: () =>
+        t('label.order-quantity-in-unit', { unit: t('label.units') }),
       ...getNumberCell(),
       size: remToPx(8),
     },
@@ -762,6 +766,7 @@ const PurchaseOrderDetailView: Component = () => {
                       disabled={isDisabled()}
                       edit={edit}
                       latestExpectedDate={latestExpectedDate()}
+                      datesVary={field => deliveryDatesVary(lineSet(), field)}
                       lineCount={lineCount()}
                       onSaveField={saveField}
                       onCascadeDate={cascadeDate}
