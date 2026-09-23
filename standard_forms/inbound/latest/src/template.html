@@ -31,7 +31,10 @@
                 <th class="quantity" style="width:
                 50px;">{{t(k="report.received-number-of-packs",f="Packs received")}}</th>
                 <th class="pack" style="width: 50px;">{{t(k="report.pack-size",f="Pack size")}}</th>
-                <th class="pack" style="width: 50px;">{{t(k="label.unit-quantity",f="Unit Qty")}}</th>
+                <th class="pack" style="width: 50px;">{{t(k="label.total-quantity",f="Total quantity")}}</th>
+                {% if data.invoice.purchaseOrder %}
+                <th class="quantity" style="width: 70px;">{{t(k="report.quantity-received",f="Quantity received")}}</th>
+                {% endif %}
                 <th class="batch" style="width: 50px;">{{t(k="label.batch", f="Batch")}}</th>
                 <th class="expiry" style="width: 80px;">{{t(k="label.expiry",f="Expiry")}}</th>
                 <th class="cost_price" style="width: 80px;">{{t(k="description.pack-cost",f="Cost price per pack")}}
@@ -54,6 +57,9 @@
             <td class="quantity" style="width: 50px;">{{ line.numberOfPacks }}</td>
             <td class="pack" style="width: 50px;">{{ line.packSize }}</td>
             <td class="pack" style="width: 50px;">{{ line.packSize * line.numberOfPacks }}</td>
+            {% if data.invoice.purchaseOrder %}
+            <td class="quantity" style="width: 70px;">............</td>
+            {% endif %}
             <td class="batch batch-wrap" style="width: 50px;">{{ line.batch }}</td>
             <td class="expiry" style="width: 80px;">{{ self::dateOrNA(datetime=line.expiryDate) }}</td>
             <td class="cost_price" style="width: 80px;">{{ cost | round(precision=2) }}</td>

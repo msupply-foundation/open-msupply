@@ -2823,6 +2823,7 @@
   "report.program-id": "Program ID",
   "report.quan": "Quan",
   "report.quantity-to-order": "Quantity to order (packs)",
+  "report.quantity-received": "Quantity received",
   "report.received-date": "Received date",
   "report.received-from": "Received from",
   "report.received-number-of-packs": "Packs received",
