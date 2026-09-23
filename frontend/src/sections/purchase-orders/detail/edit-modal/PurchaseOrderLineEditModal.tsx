@@ -62,6 +62,9 @@ import styles from './PurchaseOrderLineEditModal.module.css';
 
 type Line = PurchaseOrderDetailLineFragment;
 
+export type LineLookup =
+  { kind: 'line'; line: Line } | { kind: 'none' } | { kind: 'failed' };
+
 export interface PurchaseOrderLineEditModalProps {
   open: boolean;
   onClose: () => void;
@@ -84,7 +87,7 @@ export interface PurchaseOrderLineEditModalProps {
   /** The line after this one in the table's current order, paging if needed. */
   nextLine: (lineId: string) => Promise<Line | undefined>;
   /** The order's existing line for an item, if any (OMS-FUN-PO-02.23). */
-  findLineForItem: (itemId: string) => Promise<Line | undefined>;
+  findLineForItem: (itemId: string) => Promise<LineLookup>;
   /** A save landed — the parent re-reads the page, the set and the node. */
   onSaved: () => void;
 }
@@ -118,6 +121,8 @@ const LineEditContent = (
 
   let disposed = false;
   onCleanup(() => (disposed = true));
+  // Only the latest pick seeds the editor; a slower earlier one is dropped.
+  let pickToken = 0;
 
   const isNew = () => !facts()?.lineId;
   const status = () => props.order.status;
@@ -143,13 +148,20 @@ const LineEditContent = (
   // with the item's own figures read live: its stock on hand now and its
   // units on order across the store's other purchase orders.
   const pickItem = async (item: ItemOption) => {
+    const token = ++pickToken;
+    const stale = () => disposed || token !== pickToken;
     setLoading(true);
     setErrorMessage(undefined);
-    const existing = await props.findLineForItem(item.id);
-    if (disposed) return;
-    if (existing) {
+    const lookup = await props.findLineForItem(item.id);
+    if (stale()) return;
+    if (lookup.kind === 'failed') {
       setLoading(false);
-      seed(factsFromLine(existing), draftFromLine(existing));
+      setErrorMessage(t('error.unable-to-load-data'));
+      return;
+    }
+    if (lookup.kind === 'line') {
+      setLoading(false);
+      seed(factsFromLine(lookup.line), draftFromLine(lookup.line));
       packsField.focus();
       return;
     }
@@ -158,11 +170,13 @@ const LineEditContent = (
       itemId: item.id,
       orderId: props.order.id,
     });
-    if (disposed) return;
+    if (stale()) return;
     setLoading(false);
-    if (result.kind !== 'success') return;
-    const node = result.data.items.nodes[0];
-    if (!node) return;
+    const node = result.kind === 'success' ? result.data.items.nodes[0] : null;
+    if (!node) {
+      setErrorMessage(t('error.unable-to-load-data'));
+      return;
+    }
     seed(
       {
         lineNumber: props.lineCount + 1,
