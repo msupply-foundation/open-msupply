@@ -172,7 +172,7 @@ const LineEditContent = (
     });
     if (stale()) return;
     setLoading(false);
-    const node = result.kind === 'success' ? result.data.items.nodes[0] : null;
+    const node = result.kind === 'success' && result.data.items.nodes[0];
     if (!node) {
       setErrorMessage(t('error.unable-to-load-data'));
       return;
