@@ -40,6 +40,16 @@ pub fn generate(
         None => unit,
     };
 
+    let pack_size = requested_pack_size.unwrap_or_default();
+    let units = requested_number_of_units.unwrap_or_default();
+    let price_before = price_per_pack_before_discount.unwrap_or(0.0);
+    let price_after = price_per_pack_after_discount.unwrap_or(0.0);
+    let number_of_packs = if pack_size > 0.0 {
+        units / pack_size
+    } else {
+        0.0
+    };
+
     Ok(PurchaseOrderLineRow {
         id,
         store_id: store_id.to_string(),
@@ -47,12 +57,13 @@ pub fn generate(
         line_number,
         item_id: item.id,
         item_name: item.name.clone(),
-        requested_number_of_units: requested_number_of_units.unwrap_or_default(),
-        requested_pack_size: requested_pack_size.unwrap_or_default(),
+        requested_number_of_units: units,
+        requested_pack_size: pack_size,
         requested_delivery_date,
         expected_delivery_date,
-        price_per_pack_before_discount: price_per_pack_before_discount.unwrap_or(0.0),
-        price_per_pack_after_discount: price_per_pack_after_discount.unwrap_or(0.0),
+        price_per_pack_before_discount: price_before,
+        price_per_pack_after_discount: price_after,
+        line_total: price_after * number_of_packs,
         manufacturer_id,
         note,
         unit,
