@@ -5,7 +5,9 @@ import { formatNumber } from '@/intl/formatNumber';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
-import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { OkButton } from '@/ui/elements/buttons/StandardButtons';
+import { AlertTriangleIcon } from '@/ui/icons';
 import { NameSearch, type NameSeed } from '@/domain/name';
 import { CurrencySelect } from '@/domain/currency';
 import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated';
@@ -26,14 +28,20 @@ export interface PurchaseOrderDetailToolbarProps {
    * The latest expected delivery date across the order's lines, or undefined.
    */
   latestExpectedDate?: string;
+  /**
+   * Whether the lines carry more than one value of the given date: the user
+   * has set them per line, so the toolbar's field no longer reaches them.
+   */
+  datesVary: (field: DeliveryDateField) => boolean;
   /** How many lines the order has — both dates reach every one of them. */
   lineCount: number;
   onSaveField: (patch: PurchaseOrderPatch) => Promise<SaveFieldResult>;
   /**
-   * Write one date onto every line — and, for the requested date,
-   * onto the order itself (the screen owns the cascade). Resolves
-   * once the whole cascade and its re-read are done, which is when the picked
-   * day can stop standing in for the value — with the first refusal, if any.
+   * Write one day onto every line's date — and the other date where the lines
+   * agree on it, and the order's own requested date (the screen owns the
+   * cascade). Resolves once the whole cascade and its re-read are done, which
+   * is when the picked day can stop standing in for the value — with the first
+   * refusal, if any.
    */
   onCascadeDate: (
     field: DeliveryDateField,
@@ -53,22 +61,24 @@ export interface PurchaseOrderDetailToolbarProps {
 export const PurchaseOrderDetailToolbar: Component<
   PurchaseOrderDetailToolbarProps
 > = props => {
-  // The picked day for either delivery date, until the re-read carries it:
-  // awaiting confirmation first, then saving. Both dates are confirmed before
-  // they are made, because both reach every line (rules § the two delivery
-  // dates are not the order's alone).
+  // The picked day for either delivery date, until the re-read carries it or
+  // the pick is dropped. A change is made at once while the lines agree on
+  // that date, and REFUSED where they do not — the picked day then stands in
+  // the field only until the notice is dismissed, so the field falls back to
+  // the stored value (rules § the two delivery dates are not the order's
+  // alone).
   const [draft, setDraft] = createSignal<{
     field: DeliveryDateField;
     date: string;
-    saving: boolean;
+    phase: 'saving' | 'refused';
   }>();
   const draftFor = (field: DeliveryDateField) => {
     const pending = draft();
     return pending?.field === field ? pending.date : undefined;
   };
-  const confirming = () => {
+  const refused = () => {
     const pending = draft();
-    return pending && !pending.saving ? pending : undefined;
+    return pending?.phase === 'refused' ? pending : undefined;
   };
   const [dateErrors, setDateErrors] = createStore<
     Partial<Record<DeliveryDateField, string>>
@@ -85,21 +95,18 @@ export const PurchaseOrderDetailToolbar: Component<
       : undefined;
   };
 
-  const confirmMessage = () =>
-    draft()?.field === 'expectedDeliveryDate'
-      ? t('label.update-purchase-order-expected-delivery-date-for-all-lines')
-      : t('label.update-purchase-order-requested-delivery-date-for-all-lines');
-
-  const commitDate = () => {
-    const pending = confirming();
-    if (!pending) return;
-    setDraft({ ...pending, saving: true });
-    setDateErrors(pending.field, undefined);
-    void props.onCascadeDate(pending.field, pending.date).then(result => {
+  const onDateChange = (field: DeliveryDateField, date: string) => {
+    if (props.datesVary(field)) {
+      setDraft({ field, date, phase: 'refused' });
+      return;
+    }
+    setDraft({ field, date, phase: 'saving' });
+    setDateErrors(field, undefined);
+    void props.onCascadeDate(field, date).then(result => {
       setDraft(undefined);
       if (!result.ok)
         setDateErrors(
-          pending.field,
+          field,
           result.message ?? t('messages.error-saving-purchase-order')
         );
     });
@@ -170,6 +177,12 @@ export const PurchaseOrderDetailToolbar: Component<
         })}
       </LabelledValue>
 
+      {/* Either date, while the lines agree on it, writes the picked day onto
+          every line — and onto the other date and the order's own requested
+          date where the lines agree on those too — with no confirmation; once
+          the lines differ on it the user has set them per line, so a change
+          here is refused with a notice and writes nothing (rules § the two
+          delivery dates are not the order's alone). */}
       <DateField
         label={t('label.requested-delivery-date')}
         size="small"
@@ -182,20 +195,13 @@ export const PurchaseOrderDetailToolbar: Component<
         error={dateErrors.requestedDeliveryDate}
         disabled={props.disabled}
         onChange={value =>
-          value &&
-          setDraft({
-            field: 'requestedDeliveryDate',
-            date: value,
-            saving: false,
-          })
+          value && onDateChange('requestedDeliveryDate', value)
         }
       />
 
       {/* No order-level field behind this one: it shows the LATEST expected
-          date among the lines, and changing it writes the new date onto every
-          line (rules § the two delivery dates are not the order's alone). An
-          order with no lines has nothing to write it to, so the field has
-          nothing to offer. */}
+          date among the lines. An order with no lines has nothing to write it
+          to, so the field has nothing to offer. */}
       <DateField
         label={t('label.expected-delivery-date')}
         size="small"
@@ -203,28 +209,30 @@ export const PurchaseOrderDetailToolbar: Component<
         value={draftFor('expectedDeliveryDate') ?? props.latestExpectedDate}
         error={dateErrors.expectedDeliveryDate}
         disabled={props.disabled || props.lineCount === 0}
-        onChange={value =>
-          value &&
-          setDraft({
-            field: 'expectedDeliveryDate',
-            date: value,
-            saving: false,
-          })
-        }
+        onChange={value => value && onDateChange('expectedDeliveryDate', value)}
       />
 
-      <Show when={confirming()}>
-        <ConfirmDialog
-          open
-          // Cancel reverts the picked day. A confirm has already moved the
-          // draft to saving, where it stands until the re-read replaces it.
-          onClose={() => {
-            if (!draft()?.saving) setDraft(undefined);
-          }}
-          title={t('heading.are-you-sure')}
-          message={confirmMessage()}
-          onConfirm={commitDate}
-        />
+      <Show when={refused()}>
+        {pending => (
+          <Dialog
+            open
+            onClose={() => setDraft(undefined)}
+            icon={<AlertTriangleIcon />}
+            testId="delivery-dates-vary-modal"
+            title={t('heading.cannot-do-that')}
+            description={t(
+              pending().field === 'expectedDeliveryDate'
+                ? 'messages.purchase-order-expected-dates-vary'
+                : 'messages.purchase-order-requested-dates-vary'
+            )}
+            actions={
+              <OkButton
+                data-testid="dialog-button-ok"
+                onClick={() => setDraft(undefined)}
+              />
+            }
+          />
+        )}
       </Show>
     </>
   );
