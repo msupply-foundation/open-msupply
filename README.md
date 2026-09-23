@@ -14,15 +14,15 @@ AGPL-3.0.
 
 ## What is here
 
-| Directory           | What it is                                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `server/`           | The Rust server: GraphQL API, sync, and either PostgreSQL or SQLite. See [server/README.md](server/README.md) |
-| `frontend/`         | The SolidJS web client, the UI going forward. See [frontend/README.md](frontend/README.md)                   |
+| Directory           | What it is                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `server/`           | The Rust server: GraphQL API, sync, and either PostgreSQL or SQLite. See [server/README.md](server/README.md)      |
+| `frontend/`         | The SolidJS web client, the UI going forward. See [frontend/README.md](frontend/README.md)                         |
 | `client/`           | The original React web client, also packaged as desktop and Android apps. See [client/README.md](client/README.md) |
-| `standard_reports/` | The standard report definitions shipped with the app                                                         |
-| `standard_forms/`   | The standard form definitions shipped with the app                                                           |
+| `standard_reports/` | The standard report definitions shipped with the app                                                               |
+| `standard_forms/`   | The standard form definitions shipped with the app                                                                 |
 | `docs/`             | The developer documentation site, published at [dev-docs.msupply.foundation](https://dev-docs.msupply.foundation/) |
-| `build/`, `docker/` | Installer and container build scripts                                                                        |
+| `build/`, `docker/` | Installer and container build scripts                                                                              |
 
 The server hosts the compiled web client and exposes a GraphQL API that the client consumes.
 Browsers, the desktop wrapper and the Android app all talk to the same server.
@@ -62,11 +62,9 @@ public issue is linked to that work and closed when the fix reaches this mirror.
 
 ### Pull requests
 
-Pull requests are welcome, and they are **reviewed here but not merged here**. Once accepted, a
-maintainer imports the commits into the private repo, where they go through the normal CI and
-review and merge. The change then flows back out with the next sync, with your authorship
-preserved on the commit. Your pull request is closed, not merged, with a comment naming the
-commit it landed as.
+Pull requests may be accepted but issues are preferred. Submitted PR would be **reviewed here but not merged here**. Once accepted, a maintainer imports the commits into the private repo, where they go through the normal CI and review and merge. The change then flows back out with the next sync, with your authorship preserved on the commit. Your pull request is closed, not merged, with a comment naming the commit it landed as.
+
+If you choose to create a Pull Request, please ensure you clarify what unique experience or idea you're bringing to the implementation, if you're just asking an AI agent to fix a bug, we could do that ourselves.
 
 What to expect:
 
@@ -82,8 +80,8 @@ workflow in full.
 
 Force-pushes of already-published history, newest first.
 
-| Date | Refs | Reason |
-| ---- | ---- | ------ |
+| Date       | Refs                                | Reason                                                                                                                                                                                                          |
+| ---------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-09-22 | `develop`, `main`, all release tags | Cutover to the mirror: `develop` and `main` were replaced with filtered history from the private monorepo, so every commit has a new SHA. The previous public history is preserved unchanged on `pre-monorepo`. |
 
 <!--
