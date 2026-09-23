@@ -22,7 +22,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "codegen": "node codegen/run.cjs",
-    "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema --path ../frontend/spec/schema.graphql && cd ../frontend && pnpm codegen",
+    "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema --path ../frontend/schema.graphql && cd ../frontend && pnpm codegen",
     "translate-locale": "node scripts/translate-locale.mjs",
     "test": "vitest run",
     "test:codegen": "node --test \"codegen/__tests__/*.test.cjs\"",
@@ -31,8 +31,8 @@
     "dev-android": "./scripts/dev-android.sh",
     "worktree": "./scripts/worktree.sh",
     "build-android": "./scripts/build-android.sh",
-    "brief": "python3 exploratory/tools/behaviour_brief.py",
-    "check:anchors": "python3 exploratory/tools/check_anchor_refs.py"
+    "brief": "if [ -f exploratory/tools/behaviour_brief.py ]; then python3 exploratory/tools/behaviour_brief.py; else echo \"brief skipped — exploratory/ is not in this tree\"; fi",
+    "check:anchors": "if [ -f exploratory/tools/check_anchor_refs.py ]; then python3 exploratory/tools/check_anchor_refs.py; else echo \"check:anchors skipped — exploratory/ is not in this tree\"; fi"
   },
   "dependencies": {
     "@capacitor-community/file-opener": "^8.0.1",

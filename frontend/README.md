@@ -56,7 +56,7 @@ Before committing, `pnpm check`, `pnpm lint`, `pnpm format:check`, and
 
 ## GraphQL codegen
 
-Types are generated from the **pinned** schema at [`spec/schema.graphql`](spec/schema.graphql),
+Types are generated from the **pinned** schema at [`schema.graphql`](schema.graphql),
 not from a running server — so the same tree generates the same types on every
 machine and in CI. Codegen writes a co-located `<name>.generated.ts` next to
 every `.graphql` file under `src/` and the plugin trees. The generated files
@@ -76,7 +76,7 @@ anything.
 exporter and then runs codegen, mirroring `yarn generate` in `client/`:
 
 ```sh
-pnpm generate   # ≈ cargo export-graphql-schema → spec/schema.graphql, then pnpm codegen
+pnpm generate   # ≈ cargo export-graphql-schema → schema.graphql, then pnpm codegen
 ```
 
 The export builds the schema from the Rust types, so it needs cargo but no
@@ -134,7 +134,7 @@ tunnelling); background and design live in `kdd/android/`.
 ## Where the docs live
 
 - [`spec/`](spec/README.md) — what the app must do (source of truth)
-- [`PROGRESS.md`](PROGRESS.md) — how far each vertical has come through the
+- [`spec/PROGRESS.md`](spec/PROGRESS.md) — how far each vertical has come through the
   spec → cases → build → e2e → exploratory pipeline
 - [`kdd/`](kdd/README.md) — key design decisions: why the code is shaped the
   way it is
