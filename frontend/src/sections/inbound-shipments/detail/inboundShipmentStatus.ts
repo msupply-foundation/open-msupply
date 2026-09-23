@@ -124,6 +124,13 @@ const EDITABLE: InboundStatus[] = ['NEW', 'DELIVERED', 'RECEIVED'];
 export const isEditable = (status: string): boolean =>
   EDITABLE.includes(status as InboundStatus);
 
+// Received closes a PO-linked shipment's line-selection actions (issue #873):
+// the goods are in stock, so a bulk change is too late. Lines are still added,
+// edited and deleted one at a time through the editor, and header fields
+// still save, until Verified.
+export const actionsLocked = (status: string, poLinked: boolean): boolean =>
+  poLinked && (status === 'RECEIVED' || status === 'VERIFIED');
+
 // Whether the shipment has actually put stock on the shelf.
 //
 // Stock first exists at RECEIVED, never before: the SDL doc-comment claiming
