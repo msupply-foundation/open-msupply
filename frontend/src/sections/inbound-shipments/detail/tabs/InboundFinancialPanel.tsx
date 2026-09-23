@@ -66,11 +66,19 @@ export const InboundFinancialPanel: Component<{
   const localCode = () => homeCurrency();
 
   // Per-line derivations (contract → Financial), pure over the line only —
-  // PO-currency figures come straight off the PO line. The rate-dependent
-  // conversions are built inside columns() from a captured rate (below).
+  // the PO price per pack comes straight off the PO line; the rate-dependent
+  // per-pack conversion is built inside columns() from a captured rate (below).
   const poPricePerPack = (line: Line) =>
     line.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0;
-  const lineTotalPo = (line: Line) => poPricePerPack(line) * line.numberOfPacks;
+  // The two line totals are the line's STORED figures, not price × packs
+  // re-multiplied here: the server writes both when it raises the shipment
+  // from the order — the PO line's own stored total, pro-rated to the units
+  // still to ship, and that figure converted at the order's exchange rate —
+  // and keeps them as the line is edited. Reading them is what makes this
+  // tab agree, to the cent, with the order's own Line cost column (contract →
+  // Financial & Delivery tab derivation).
+  const lineTotalPo = (line: Line) => line.foreignCurrencyPriceBeforeTax ?? 0;
+  const lineTotalLocal = (line: Line) => line.totalBeforeTax;
   // Adjusted total uses the line's ACTUAL cost (post charge/rate cascade), not
   // the raw PO price.
   const adjustedTotalLocal = (line: Line) =>
@@ -116,7 +124,6 @@ export const InboundFinancialPanel: Component<{
   // them change; the per-column closures then close over plain values.
   const columns = (): Column<Line, never>[] => {
     const r = rate();
-    const lineTotalLocal = (line: Line) => lineTotalPo(line) * r;
     return [
       {
         c: { accessor: line => line.itemName, id: 'itemName' },
