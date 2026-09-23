@@ -191,6 +191,9 @@ export type PurchaseOrderLineSetResult = {
 } & {
   nodes: Array<{
   id: string;
+  item: {
+  id: string;
+};
   requestedNumberOfUnits: number;
   expectedDeliveryDate: string | null;
   outstandingNumberOfUnits: number;
@@ -199,7 +202,7 @@ export type PurchaseOrderLineSetResult = {
 };
 
 export const PurchaseOrderLineSet = {
-  query: "query purchaseOrderLineSet($storeId: String!, $orderId: String!) {\n  purchaseOrderLines(\n    storeId: $storeId\n    filter: {purchaseOrderId: {equalTo: $orderId}}\n    page: {first: 5000}\n  ) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      nodes {\n        id\n        requestedNumberOfUnits\n        expectedDeliveryDate\n        outstandingNumberOfUnits\n      }\n    }\n  }\n}",
+  query: "query purchaseOrderLineSet($storeId: String!, $orderId: String!) {\n  purchaseOrderLines(\n    storeId: $storeId\n    filter: {purchaseOrderId: {equalTo: $orderId}}\n    page: {first: 5000}\n  ) {\n    ... on PurchaseOrderLineConnector {\n      __typename\n      nodes {\n        id\n        item {\n          id\n        }\n        requestedNumberOfUnits\n        expectedDeliveryDate\n        outstandingNumberOfUnits\n      }\n    }\n  }\n}",
 } as TypedDocument<PurchaseOrderLineSetResult, PurchaseOrderLineSetVariables>;
 
 export type UpdatePurchaseOrderVariables = {

@@ -223,7 +223,10 @@ export const requestedDateEntered = (
 // ─── Gates ──────────────────────────────────────────────────────────────────
 
 export type LineGates = {
-  /** The item chooser — open on a new line only (OMS-FUN-PO-02.11). */
+  /**
+   * The item chooser — live in add mode (OMS-FUN-PO-02.23), fixed on a line
+   * opened from its row (OMS-FUN-PO-02.11).
+   */
   item: boolean;
   /** The packs input (OMS-FUN-PO-02.13). */
   packs: boolean;
@@ -247,14 +250,14 @@ export type LineGates = {
 export const lineGates = (options: {
   status: PurchaseOrderStatus;
   lineStatus: LineStatus;
-  isNew: boolean;
+  addMode: boolean;
   canAuthorise: boolean;
 }): LineGates => {
   const open =
     options.lineStatus !== 'CLOSED' && options.status !== 'FINALISED';
   const drafting = open && isDrafting(options.status);
   return {
-    item: options.isNew,
+    item: options.addMode,
     packs: open && (isDrafting(options.status) || options.canAuthorise),
     drafting,
     dates: open && options.status !== 'SENT',

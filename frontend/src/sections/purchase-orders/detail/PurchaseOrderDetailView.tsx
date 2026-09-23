@@ -367,6 +367,25 @@ const PurchaseOrderDetailView: Component = () => {
       pick: (pageRows, fromStart) =>
         rowAfter(pageRows, fromStart, line => line.id, lineId),
     });
+  // A picked item already on the order resolves to its line (OMS-FUN-PO-02.23).
+  const findLineForItem = async (itemId: string): Promise<Line | undefined> => {
+    const onPage = rows().find(line => line.item.id === itemId);
+    if (onPage) return onPage;
+    const held = lineSet().find(line => line.item.id === itemId);
+    if (!held) return undefined;
+    const result = await graphqlFetch(PurchaseOrderDetailLines, {
+      storeId: params.storeId,
+      filter: {
+        id: { equalTo: held.id },
+        purchaseOrderId: { equalTo: params.id },
+      },
+      page: { first: 1 },
+    });
+    return result.kind === 'success' &&
+      result.data.purchaseOrderLines.__typename === 'PurchaseOrderLineConnector'
+      ? result.data.purchaseOrderLines.nodes[0]
+      : undefined;
+  };
   // Sent or Finalised: every field on the screen is refused — except the
   // comment, open in every state, and the panel's two post-sending dates,
   // open until Finalised (rules § what may be changed, and when). Mirrored
@@ -909,6 +928,7 @@ const PurchaseOrderDetailView: Component = () => {
                 initialLine={editor()?.line}
                 hasNext={hasNextLine}
                 nextLine={nextLine}
+                findLineForItem={findLineForItem}
                 onSaved={refetchAll}
               />
 
