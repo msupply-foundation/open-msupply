@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { buildSchema, parse, print, validate, Kind } from 'graphql';
 import type { FieldNode, OperationDefinitionNode } from 'graphql';
 // The pinned schema the contract names as the shape authority
-// (schema.graphql).
-import schemaSdl from '@/../schema.graphql?raw';
+// (server/schema.graphql).
+import schemaSdl from '@/../../server/schema.graphql?raw';
 import {
   InboundShipmentCounts,
   InboundShipmentExternalCounts,
