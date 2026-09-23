@@ -205,31 +205,48 @@ export type DeliveryDateField =
   'requestedDeliveryDate' | 'expectedDeliveryDate';
 
 /**
- * Write one delivery date onto EVERY line. The server does not cascade a bare
- * date change (`update_lines` fills a line's requested date only alongside a
- * status), so the screen issues the per-line writes itself. The requested date
- * also fills the expected date of every line that has none — the same rule the
- * CONFIRMED cascade applies server-side.
+ * Whether the lines carry more than one distinct value of one delivery date —
+ * a line with none counts as its own value. Either toolbar date reaches the
+ * lines only while they agree on it (rules § the two delivery dates).
  */
-export const cascadeDeliveryDate = (
+export const deliveryDatesVary = (
+  lines: Partial<Record<DeliveryDateField, string | null>>[],
+  field: DeliveryDateField
+): boolean => new Set(lines.map(line => line[field] ?? null)).size > 1;
+
+/**
+ * Which line dates a change to `field` reaches: the field itself, and the
+ * other date only where the lines still agree on it — per-line values already
+ * set there are left alone (rules § the two delivery dates).
+ */
+export const cascadedDateFields = (
+  lines: Partial<Record<DeliveryDateField, string | null>>[],
+  field: DeliveryDateField
+): DeliveryDateField[] => {
+  const other: DeliveryDateField =
+    field === 'requestedDeliveryDate'
+      ? 'expectedDeliveryDate'
+      : 'requestedDeliveryDate';
+  return deliveryDatesVary(lines, other) ? [field] : [field, other];
+};
+
+/**
+ * Write one day onto the given delivery dates of EVERY line. The server does
+ * not cascade a bare date change (`update_lines` fills a line's requested date
+ * only alongside a status), so the screen issues the per-line writes itself.
+ */
+export const cascadeDeliveryDates = (
   storeId: string,
-  lines: { id: string; expectedDeliveryDate?: string | null }[],
-  field: DeliveryDateField,
-  date: string
+  lines: { id: string }[],
+  date: string,
+  fields: DeliveryDateField[]
 ): Promise<LinesOutcome> =>
   foldLineUpdates(
     storeId,
-    lines.map(line =>
-      field === 'expectedDeliveryDate'
-        ? { id: line.id, expectedDeliveryDate: { value: date } }
-        : {
-            id: line.id,
-            requestedDeliveryDate: { value: date },
-            ...(line.expectedDeliveryDate
-              ? undefined
-              : { expectedDeliveryDate: { value: date } }),
-          }
-    )
+    lines.map(line => ({
+      id: line.id,
+      ...Object.fromEntries(fields.map(field => [field, { value: date }])),
+    }))
   );
 
 export type AddFromMasterListResult =
