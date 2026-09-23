@@ -13,6 +13,8 @@
  * a module both import (`plugins/civ/shared/types.ts` is the worked example).
  */
 
+import { BackendPlugins } from '@common/types';
+
 /** What a caller sends. */
 type Input = { type: 'ping' };
 
@@ -26,11 +28,11 @@ type Output = {
 
 /**
  * Project a statement's columns into the single `json_row` column the host's
- * `sql` insists on (see `host.d.ts`). Out of tree this is `sqlQuery` from
- * `@common/utils`; it is inlined here because the trap it hides is the single
- * most surprising thing about writing a backend plugin — without it the query
- * fails at runtime, inside the engine, with a Diesel error that names a column
- * you never wrote.
+ * `sql` insists on (declared, with the rest of the host globals, in
+ * `@common/types`). Out of tree this is `sqlQuery` from `@common/utils`; it is
+ * inlined here because the trap it hides is the single most surprising thing
+ * about writing a backend plugin — without it the query fails at runtime,
+ * inside the engine, with a Diesel error that names a column you never wrote.
  *
  * The JSON function differs by dialect, which is what `sql_type()` is for.
  */
@@ -51,9 +53,9 @@ const jsonRows = <K extends string>(
 
 /*
  * A `graphql_query` method receives the calling store and the caller's opaque
- * input, and returns the opaque output. Out of tree this signature comes typed
- * from `@common/types`' `BackendPlugins['graphql_query']`; spelled out here so
- * the example needs no import.
+ * input, and returns the opaque output. The parameter is spelled out rather
+ * than taken from `@common/types`' `GraphqlQueryInput` so the shape is visible
+ * at the point of use; `BackendPlugins` on the export below is what checks it.
  */
 const graphqlQuery = ({
   store_id: storeId,
@@ -91,7 +93,7 @@ const graphqlQuery = ({
  * that name — the build fails if it does not.
  */
 /* eslint-disable camelcase -- the server's PluginTypes names, not ours. */
-const plugins = { graphql_query: graphqlQuery };
+const plugins: BackendPlugins = { graphql_query: graphqlQuery };
 /* eslint-enable camelcase */
 
 export { plugins };

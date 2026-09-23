@@ -1,12 +1,14 @@
 {
   /*
-   * The in-repo plugins — the reference plugins (plugins/examples/*) and the country
-   * plugins (plugins/*) — typechecked exactly as an out-of-tree plugin would
-   * be: the SDK resolved from source through the `@openmsupply/plugin-sdk`
-   * path mapping (what civ-plugins does with a submodule/sibling checkout),
-   * and NO `@/*` mapping — a plugin reaching into host source must not
-   * compile. Compiler options mirror tsconfig.app.json so a plugin sees the
-   * host's strictness and JSX runtime.
+   * The FRONTEND halves of the in-repo plugins — the reference plugins
+   * (plugins/examples/*) and the country plugins (plugins/*) — plus the one
+   * backend half that carries its own `host.d.ts` (see the exclude at the
+   * bottom). Typechecked exactly as an out-of-tree plugin would be: the SDK
+   * resolved from source through the `@openmsupply/plugin-sdk` path mapping
+   * (what civ-plugins does with a submodule/sibling checkout), and NO `@/*`
+   * mapping — a plugin reaching into host source must not compile. Compiler
+   * options mirror tsconfig.app.json so a plugin sees the host's strictness
+   * and JSX runtime.
    */
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.plugins.tsbuildinfo",
@@ -58,5 +60,14 @@
     "plugins/cook_islands/shared/**/*.ts",
     "src/globals.d.ts",
     "src/intl/globals.d.ts"
-  ]
+  ],
+  /*
+   * The examples' BACKEND halves belong to tsconfig.backend-plugins.json,
+   * which is where `@common/*` is mapped. Without this they would be swept up
+   * by the `plugins/examples/**` globs above and fail with TS2307 on
+   * `@common/types` — this project deliberately has no such mapping.
+   * cook_islands' backend half is the exception that stays here; see the
+   * include note above and the header of tsconfig.backend-plugins.json.
+   */
+  "exclude": ["plugins/examples/*/backend/**"]
 }
