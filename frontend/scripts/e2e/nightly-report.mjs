@@ -28,6 +28,8 @@
 // e2e/playwright.config.ts).
 //   Missing baseline files → failures listed unclassified, exit 0.
 //   Missing run report     → infra failure (stack never produced one), exit 1.
+//   A report with NO passes → infra failure too: nothing ran, so it is not a
+//                            test result and must not become a baseline.
 //   Otherwise exit 1 iff regressions were found.
 //
 // One leg, because one run tests one tag and so one branch. Still written
@@ -189,14 +191,33 @@ for (const leg of legs.filter(l => l.run && !l.baseline)) {
   );
 }
 
-const missing = legs.filter(l => !l.run);
+// Infra failure has TWO shapes, and the second is the one that got through on
+// the first real run (2026-09-22, run 35791269843). Chromium could not launch
+// — a system library missing on the runner — so auth.setup failed and all 676
+// tests "did not run". Playwright still wrote a results.json, the suites step
+// swallows its exit code by design, and the job went green.
+//
+// Zero passes is not a test result, and it cannot be a legitimate one: every
+// project depends on auth.setup, so a run with nothing expected or flaky means
+// the stack, the browser or the login never worked. Treating it as a report
+// would also POISON the lineage — a baseline in which no test passed can never
+// yield a regression (every failure matches the skipped/unexpected branch
+// above and classifies pre-existing), so one broken night would silently
+// suppress every night after it.
+//
+// Red here fixes that for free, without gating the upload: the baseline walk
+// selects only SUCCESSFUL runs, so a run that fails this check can never become
+// the next run's baseline.
+const passes = l => (l.run.stats.expected ?? 0) + (l.run.stats.flaky ?? 0);
+const missing = legs.filter(l => !l.run || passes(l) === 0);
 if (missing.length) {
   console.log(
     `### 🚨 Infra failure (${missing.length})\n\n` +
       missing
-        .map(
-          l =>
-            `- **${l.label}**: no results.json — the stack never produced a report (boot failure?). See the run log and the e2e-triage artifact's server.log.`
+        .map(l =>
+          l.run
+            ? `- **${l.label}**: a report in which nothing passed (${l.run.stats.unexpected ?? 0} failed, ${l.run.stats.skipped ?? 0} did not run) — the stack, the browser or the login never came up, so this is not a test result. See the run log and the e2e-triage artifact's server.log.`
+            : `- **${l.label}**: no results.json — the stack never produced a report (boot failure?). See the run log and the e2e-triage artifact's server.log.`
         )
         .join('\n') +
       '\n'
@@ -258,7 +279,7 @@ const regressions = legs.reduce((n, l) => n + l.cats.regression.length, 0);
 if (regressions || missing.length) {
   const parts = [
     regressions && `${regressions} regression(s)`,
-    missing.length && `${missing.length} stack(s) without a report`,
+    missing.length && `${missing.length} stack(s) without a usable report`,
   ].filter(Boolean);
   console.log(`**Verdict: ❌ ${parts.join(' + ')} — this job fails.**`);
   process.exit(1);
