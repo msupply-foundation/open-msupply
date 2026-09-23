@@ -39,30 +39,22 @@ Set by how the server loads the bundle
   reason: it is what lets this bundle also run against a server from before the
   change. Out of tree, `sqlQuery` from `@common/utils` is the same idea.
 - **`sql` binds values; it does not interpolate them.** The signature is
-  `sql(query, params?)`, and a placeholder is NAMED — `$storeId`, `$from`. It
-  is the same executor the repo's **report SQL** runs through
-  (`server/repository/src/db_diesel/report_query.rs`) and the contract is a
-  report's exactly, nothing added: a plugin names a value the way a report
-  names `$storeId`. **Never interpolate a value a caller sent** — that was
-  open-msupply#687. The rules are below.
+  `sql(query, params?)`, and a placeholder is NAMED — `$storeId`, `$from`. The
+  executor is `server/repository/src/db_diesel/report_query.rs`. **Never
+  interpolate a value a caller sent** — that was open-msupply#687. The rules
+  are below.
 - Whatever a method returns must survive `JSON` round-tripping — it crosses back
   into Rust as JSON. A `throw` becomes a GraphQL error carrying the message.
 
 ## Writing SQL
 
-One executor serves plugin `sql()` and every report's `.sql` query, so a rule
-here is a rule there. What differs is only where you write it: a report ships
-`src/<name>.sql` and is handed a fixed bag of variables, while a plugin builds
-the statement and passes the values itself.
-
 ### Values
 
 SCALARS — string, number, boolean, null — a datetime among them, as a
-`YYYY-MM-DD HH:MM:SS` string. That is all the host knows, because it is all a
-report's parameters are.
+`YYYY-MM-DD HH:MM:SS` string. That is all the host knows.
 
 `sqlQuery` in `@common/utils` adds two conveniences of its own, both resolved
-before the host sees anything, and **neither exists for a report**:
+before the host sees anything:
 
 - a `Date` anywhere a scalar goes, rendered for you;
 - an array, expanded into one parameter per element — write `item_id IN
