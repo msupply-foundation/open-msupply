@@ -1,5 +1,7 @@
 {
-  // The BACKEND halves of the in-repo country plugins (`plugins/<name>/backend`).
+  // The BACKEND halves of the in-repo plugins: the country plugins
+  // (`plugins/<name>/backend`) and the reference plugin
+  // (`plugins/examples/<name>/backend`).
   //
   // A separate project from tsconfig.plugins.json because the two halves do not
   // run in the same place: this code runs in the server's BoaJS engine, so
@@ -15,11 +17,18 @@
   // above — `Duplicate identifier 'fetch'` in backendCommon. The tests still
   // run (the `backend-plugins` vitest project); they are not type-checked.
   //
-  // Two backend halves are deliberately NOT here: the reference plugin
-  // (`plugins/examples/hello_backend`) and `plugins/cook_islands/backend`. Both
-  // declare the host globals themselves in a `host.d.ts` rather than importing
+  // The reference plugin is included on purpose, and load-bearingly so: the
+  // public mirror carves out the country plugins (.github/mirror/rules.txt
+  // publishes only `plugins/examples/`), so without it this project has ZERO
+  // inputs there and `tsc -b` dies with TS18003 — taking `pnpm check`, `build`
+  // and `build:showcase` down with it. `plugins/examples/*/backend` is a
+  // separate include line because the examples sit one directory deeper than
+  // the country plugins.
+  //
+  // One backend half is still NOT here: `plugins/cook_islands/backend`. It
+  // declares the host globals itself in a `host.d.ts` rather than importing
   // `@common/types`, and two declarations of `sql` in one program do not
-  // compile. Both are type-checked by tsconfig.plugins.json instead — which is
+  // compile, so it is type-checked by tsconfig.plugins.json instead — which is
   // why the include below is a glob but the exclude names cook_islands: a
   // backend half that carries its own `host.d.ts` belongs over there.
   //
@@ -52,7 +61,11 @@
     // directory, so what type-checks is what bundles.
     "paths": { "@common/*": ["../client/packages/plugins/backendCommon/*"] }
   },
-  "include": ["plugins/*/backend/src/**/*.ts", "plugins/*/shared/**/*.ts"],
+  "include": [
+    "plugins/examples/*/backend/src/**/*.ts",
+    "plugins/*/backend/src/**/*.ts",
+    "plugins/*/shared/**/*.ts"
+  ],
   "exclude": [
     "**/*.test.ts",
     "plugins/cook_islands/backend/**",
