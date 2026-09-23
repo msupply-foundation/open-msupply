@@ -172,6 +172,9 @@ pub fn update_inbound_shipment(
                         &line.id,
                         line.cost_price_per_pack,
                         line.sell_price_per_pack,
+                        line.total_before_tax,
+                        line.total_after_tax,
+                        line.foreign_currency_price_before_tax,
                     )?;
                 }
             }
@@ -1963,6 +1966,18 @@ mod test {
             "Line B sell price should remain 25.0 (was different from old cost), got {}",
             line_b.sell_price_per_pack
         );
+        // The totals follow the new cost price: 5 × 11 and 10 × 22
+        assert!(
+            (line_a.total_before_tax - 55.0).abs() < 0.0001,
+            "Line A total should follow its cost to 55.0, got {}",
+            line_a.total_before_tax
+        );
+        assert!(
+            (line_b.total_before_tax - 220.0).abs() < 0.0001,
+            "Line B total should follow its cost to 220.0, got {}",
+            line_b.total_before_tax
+        );
+        assert_eq!(line_a.total_after_tax, line_a.total_before_tax);
 
         // ============================================================
         // Test 2: Idempotency - running again with same charges produces same result
@@ -2039,6 +2054,18 @@ mod test {
             (line_b.cost_price_per_pack - 40.0).abs() < 0.0001,
             "Line B cost should be 40.0 with rate 2.0, got {}",
             line_b.cost_price_per_pack
+        );
+        // A rate change moves the stored totals with the cost price rather
+        // than leaving them at the value written when the lines were created.
+        assert!(
+            (line_a.total_before_tax - 100.0).abs() < 0.0001,
+            "Line A total should follow its cost to 100.0, got {}",
+            line_a.total_before_tax
+        );
+        assert!(
+            (line_b.total_before_tax - 400.0).abs() < 0.0001,
+            "Line B total should follow its cost to 400.0, got {}",
+            line_b.total_before_tax
         );
 
         // ============================================================

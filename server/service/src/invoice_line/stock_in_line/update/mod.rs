@@ -164,8 +164,9 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
-            mock_immunisation_program_a, mock_inbound_shipment_a, mock_item_a, mock_item_b,
+            currency_b, mock_customer_return_a_invoice_line_a,
+            mock_customer_return_a_invoice_line_b, mock_immunisation_program_a,
+            mock_inbound_shipment_a, mock_item_a, mock_item_b,
             mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
             mock_name_store_b, mock_outbound_shipment_a, mock_purchase_order_a, mock_reason_option,
             mock_shipment_variance_reason_option, mock_store_a, mock_store_b,
@@ -1095,5 +1096,73 @@ mod test {
         assert_eq!(updated.note, Some("Received short".to_string()));
         // The line's own note is editable; the supplier's comment is not.
         assert_eq!(updated.transfer_comment, line().transfer_comment);
+    }
+
+    /// The figure in the shipment's currency is derived from the UPDATED local
+    /// total, so after a packs edit it reflects the new packs rather than
+    /// lagging one edit behind (it used to be computed from the pre-edit total).
+    #[actix_rt::test]
+    async fn update_stock_in_line_foreign_total_follows_the_edit() {
+        let invoice = InvoiceRow {
+            id: "foreign_currency_inbound_update".to_string(),
+            store_id: mock_store_b().id,
+            name_id: mock_name_store_b().id,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
+            currency_id: Some(currency_b().id),
+            currency_rate: 2.0,
+            ..Default::default()
+        };
+        // 10 packs at 10.00 local: total 100.00, 50.00 in the shipment's currency.
+        let line = InvoiceLineRow {
+            id: "foreign_currency_line_update".to_string(),
+            invoice_id: invoice.id.clone(),
+            item_id: mock_item_a().id,
+            r#type: InvoiceLineType::StockIn,
+            pack_size: 1.0,
+            number_of_packs: 10.0,
+            cost_price_per_pack: 10.0,
+            total_before_tax: 100.0,
+            total_after_tax: 100.0,
+            foreign_currency_price_before_tax: Some(50.0),
+            ..Default::default()
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_stock_in_line_foreign_total_follows_the_edit",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice],
+                invoice_lines: vec![line.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: line.id.clone(),
+                r#type: StockInType::InboundShipment,
+                number_of_packs: Some(5.0),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let updated = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&line.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated.total_before_tax, 50.0);
+        // Half the packs, half the total in the shipment's currency — not the
+        // 50.00 the pre-edit total would have given.
+        assert_eq!(updated.foreign_currency_price_before_tax, Some(25.0));
     }
 }
