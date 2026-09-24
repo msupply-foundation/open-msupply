@@ -30,6 +30,10 @@ export interface ContentFooterProps {
  * orange bar is the page's one footer landmark; this is an action strip.
  * Adapted from the RnD prototype's ContentFooter, minus its selection store:
  * contextual content is the page's job (see kdd/page-composition).
+ *
+ * Still stateless when it lights up: while a ContentFooterMessage inside it
+ * shows a success, the bar's CSS keys off the slot's `data-outcome` to run one
+ * green wave along the whole bar.
  */
 export const ContentFooter = (props: ContentFooterProps) => (
   <div

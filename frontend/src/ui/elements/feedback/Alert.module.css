@@ -101,3 +101,25 @@
 .compact .message {
   padding-block: 0;
 }
+
+/*
+ * Truncating chip — one line whatever the room, the message cut off with an
+ * ellipsis rather than wrapping (the compact chip's default), for a host whose
+ * height must not change when the chip appears: the content footer's message
+ * slot, where a second line would grow the bar under the user's pointer. Both
+ * boxes drop their min-content floor (a flex item's `min-inline-size: auto`
+ * would otherwise hold the chip at the full unwrapped text) so the chip can
+ * shrink to the slot, and the message clips inside it. The full text is still
+ * in the DOM, so a screen reader reads it whole.
+ */
+.compact.truncate {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.truncate .message {
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

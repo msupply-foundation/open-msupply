@@ -1,7 +1,8 @@
-import { For, Show, type JSX } from 'solid-js';
+import { Index, Show, type JSX } from 'solid-js';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { t } from '../../../intl';
 import { Popover } from './Popover';
+import { createStatusArrival } from './statusArrival';
 import styles from './StatusIndicator.module.css';
 
 export interface StatusStep {
@@ -41,29 +42,47 @@ export interface StatusIndicatorProps {
  * weight carry it, and the popover spells out the timeline (AA).
  *
  * Read-only progression: the only interaction is the hover popover (the
- * Popover's, already bought).
+ * Popover's, already bought). A stage the record moves onto while the strip is
+ * on screen plays a one-shot arrival motion (below) — the crumb change is
+ * otherwise easy to miss, since it sits still and away from where the user
+ * clicked.
  */
 export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
   const showHistory = () => props.history !== false;
+
+  // The stage a status change has just moved the record onto plays a one-shot
+  // arrival: a brand-tinted bloom behind its label, fading as the label's
+  // colour carries it from not-yet-reached grey to the current accent. Cleared
+  // when the animation ends, so no later render replays it.
+  const arrival = createStatusArrival(() => props.current);
 
   // The status row itself — the whole thing is the popover trigger (below), so
   // this is what the user hovers. Rendered as an ordered list (the stages ARE
   // ordered). The strip carries the shared `status-crumbs` test hook
   // (e2e/TESTIDS.md) in both the plain and popover-wrapped branches.
+  //
+  // Position-keyed (<Index>), not reference-keyed: every caller rebuilds its
+  // step objects whenever the record changes, and a reference-keyed list would
+  // then rebuild every <li> — restarting an arrival motion mid-play. Keyed by
+  // position, the same <li> updates in place.
   const row = (
     <ol class={styles.steps} data-testid="status-crumbs">
-      <For each={props.steps}>
+      <Index each={props.steps}>
         {(step, index) => (
           <li
             class={styles.step}
-            data-reached={index() < props.current ? '' : undefined}
-            data-current={index() === props.current ? '' : undefined}
-            aria-current={index() === props.current ? 'step' : undefined}
+            data-reached={index < props.current ? '' : undefined}
+            data-current={index === props.current ? '' : undefined}
+            data-arrived={index === arrival.arrived() ? '' : undefined}
+            aria-current={index === props.current ? 'step' : undefined}
+            onAnimationEnd={() => {
+              if (index === arrival.arrived()) arrival.clear();
+            }}
           >
-            <span class={styles.label}>{step.label}</span>
+            <span class={styles.label}>{step().label}</span>
           </li>
         )}
-      </For>
+      </Index>
     </ol>
   );
 
@@ -83,21 +102,23 @@ export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
         <div class={styles.history}>
           <p class={styles.historyTitle}>{t('label.order-history')}</p>
           <ol class={styles.timeline}>
-            <For each={props.steps}>
+            <Index each={props.steps}>
               {(step, index) => (
                 <li
                   class={styles.timelineStep}
-                  data-reached={index() <= props.current ? '' : undefined}
-                  data-current={index() === props.current ? '' : undefined}
+                  data-reached={index <= props.current ? '' : undefined}
+                  data-current={index === props.current ? '' : undefined}
                 >
                   <span class={styles.dot} aria-hidden="true" />
-                  <span class={styles.timelineLabel}>{step.label}</span>
+                  <span class={styles.timelineLabel}>{step().label}</span>
                   <span class={styles.timelineDate}>
-                    {step.date ? localisedDate(step.date) : ''}
+                    <Show when={step().date}>
+                      {date => localisedDate(date())}
+                    </Show>
                   </span>
                 </li>
               )}
-            </For>
+            </Index>
           </ol>
         </div>
       </Popover>

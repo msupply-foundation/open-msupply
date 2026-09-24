@@ -39,9 +39,24 @@ export interface AlertProps {
    * fits, wrapping once it hits the container) for a page-header meta strip
    * carrying persistent, low-urgency context (read-only
    * / auto-created record, locked document) that shouldn't cost a content row.
-   * Not for errors or anything the user must act on — those keep full width.
+   * Not for errors or anything the user must act on — those keep full width —
+   * except in the content footer's message slot (ContentFooterMessage), where
+   * every outcome is the same one-line chip so the bar never grows.
    */
   compact?: boolean;
+  /**
+   * Hold a compact chip to ONE line, cutting an over-long message off with an
+   * ellipsis instead of wrapping — for a host whose height must not move when
+   * the chip appears (the content footer's message slot). With `compact` only.
+   */
+  truncate?: boolean;
+  /**
+   * `false` when the host is already a live region that announces what lands
+   * in it (ContentFooterMessage): the alert then drops its own `role="alert"`,
+   * which would otherwise announce it a second time, and assertively. Default
+   * true.
+   */
+  announce?: boolean;
   class?: string;
   /** `data-testid` for the alert panel (locale-stable test hook,
    * e2e/TESTIDS.md). */
@@ -60,11 +75,15 @@ export interface AlertProps {
 export const Alert = (props: AlertProps) => (
   <div
     class={props.class ? `${styles.alert} ${props.class}` : styles.alert}
-    classList={{ [styles.compact ?? '']: props.compact === true }}
+    classList={{
+      [styles.compact ?? '']: props.compact === true,
+      [styles.truncate ?? '']:
+        props.compact === true && props.truncate === true,
+    }}
     data-severity={props.severity}
     data-compact={props.compact ? '' : undefined}
     data-testid={props.testId}
-    role="alert"
+    role={props.announce === false ? undefined : 'alert'}
   >
     <span class={styles.icon} aria-hidden="true">
       <Dynamic component={props.icon ?? ICONS[props.severity]} />
