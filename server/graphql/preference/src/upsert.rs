@@ -70,6 +70,7 @@ pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
+    pub authorise_purchase_order_store_override: Option<Vec<BoolStorePrefInput>>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     /// v2 custom translations, shape: `language -> namespace -> key -> value`.
     /// Passed as a JSON value to avoid nested-map InputObject friction.
@@ -157,6 +158,7 @@ impl UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
             authorise_purchase_order,
+            authorise_purchase_order_store_override,
             custom_translations,
             custom_translations_v2,
             prevent_transfers_months_before_initialisation,
@@ -206,6 +208,9 @@ impl UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
             authorise_purchase_order: *authorise_purchase_order,
+            authorise_purchase_order_store_override: authorise_purchase_order_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             custom_translations: custom_translations.clone(),
             custom_translations_v2: custom_translations_v2
                 .clone()
