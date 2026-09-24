@@ -107,13 +107,13 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   // (`dataError`) or not (`error` — e.g. a PDF render on a server with no
   // Chrome binary): the dialog stays open with the message, because the screen
   // behind it is healthy and the global modal's Reload/Home would only
-  // re-run the same failure or lose the user's place (AC-G6). A `failed`
-  // result is a request that never completed — already on the global modal —
-  // so we just drop back to idle.
-  // The format carries the user's INTENT (HTML = print, Excel and PDF = keep)
-  // and delivery forks on it; each arm's platform difference belongs to the
-  // capability wrapper, not here. Await the delivery: a failure keeps the
-  // dialog up with the inline error rather than closing as if it worked.
+  // re-run the same failure or lose the user's place (OMS-REG-RPT-09.10). A
+  // `failed` result is a request that never completed — already on the global
+  // modal — so we just drop back to idle. The format carries the user's INTENT
+  // (HTML = print, Excel and PDF = keep) and delivery forks on it; each arm's
+  // platform difference belongs to the capability wrapper, not here. Await the
+  // delivery: a failure keeps the dialog up with the inline error rather than
+  // closing as if it worked.
   const deliver = async (
     result: GenerateResult,
     format: PrintFormat
@@ -169,8 +169,9 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     setPhase('generating');
     // The user's timezone travels even when the report has no argument form —
     // shipped templates read `arguments.timezone` unconditionally, and the
-    // captured client sends `{ timezone }` alone on this path (AC-R11). Form
-    // args, when present, already contain it and win on key collision.
+    // captured client sends `{ timezone }` alone on this path
+    // (OMS-REG-RPT-10.21). Form args, when present, already contain it and win
+    // on key collision.
     const result = await generateReport({
       reportId: report.id,
       dataId: props.dataId,
