@@ -17,6 +17,7 @@ mod update {
         purchase_order_line::{
             insert::InsertPurchaseOrderLineInput, update::UpdatePurchaseOrderLineInput,
         },
+        sync::test_util_set_is_central_server,
     };
     use crate::{
         purchase_order::{
@@ -530,17 +531,12 @@ mod update {
             .unwrap();
         let service = service_provider.purchase_order_service;
         let store_id = &mock_store_a().id;
-        let prefs = PreferenceRowRepository::new(&context.connection);
-        let key = AuthorisePurchaseOrder.key().to_string();
-
-        let set_pref = |value: &str, store_id: Option<&String>| {
-            prefs
-                .upsert_one(&PreferenceRow {
-                    id: format!("{key}_{}", store_id.map(String::as_str).unwrap_or("global")),
-                    key: key.clone(),
-                    value: value.to_string(),
-                    store_id: store_id.cloned(),
-                })
+        // Written through the preference itself, as the real editor does; the
+        // write path only opens on a central server.
+        test_util_set_is_central_server(true);
+        let set_pref = |value: bool, store_id: Option<&String>| {
+            AuthorisePurchaseOrder
+                .upsert(&context.connection, value, store_id.cloned())
                 .unwrap();
         };
         let request_approval = |purchase_order_id: &str| {
@@ -574,16 +570,16 @@ mod update {
 
         // Authorisation required globally, but this store opts out: asking for
         // approval lands the order straight at Confirmed.
-        set_pref("true", None);
-        set_pref("false", Some(store_id));
+        set_pref(true, None);
+        set_pref(false, Some(store_id));
         assert_eq!(
             request_approval("purchase_order_override_off"),
             PurchaseOrderStatus::Confirmed
         );
 
         // The reverse: not required globally, but this store opts in.
-        set_pref("false", None);
-        set_pref("true", Some(store_id));
+        set_pref(false, None);
+        set_pref(true, Some(store_id));
         assert_eq!(
             request_approval("purchase_order_override_on"),
             PurchaseOrderStatus::RequestApproval
