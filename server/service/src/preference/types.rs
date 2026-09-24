@@ -70,6 +70,13 @@ pub enum PreferenceType {
     // Machine,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum Scope {
+    Global,
+    Store(String),
+    StoreOverride(String),
+}
+
 #[derive(Clone, PartialEq)]
 pub enum PreferenceValueType {
     Boolean,
@@ -131,21 +138,31 @@ pub trait Preference: Sync + Send {
 
     fn value_type(&self) -> PreferenceValueType;
 
+    fn scope(&self, store_id: Option<String>) -> Option<Scope> {
+        match (self.preference_type(), store_id) {
+            (PreferenceType::Store, Some(store_id)) => Some(Scope::Store(store_id)),
+            (PreferenceType::Store, None) => None,
+            (PreferenceType::Global, Some(store_id)) if self.allows_store_override() => {
+                Some(Scope::StoreOverride(store_id))
+            }
+            (PreferenceType::Global, _) => Some(Scope::Global),
+        }
+    }
+
     fn query(
         &self,
         connection: &StorageConnection,
         store_id: Option<String>,
     ) -> Result<Option<PreferenceRow>, PreferenceError> {
-        let pref = match self.preference_type() {
-            PreferenceType::Global => match store_id {
-                Some(store_id) if self.allows_store_override() => {
-                    query_store_with_global_default(connection, &self.key_str(), &store_id)?
-                }
-                _ => query_global(connection, &self.key_str())?,
-            },
-            PreferenceType::Store => {
-                let store_id = store_id.ok_or(PreferenceError::StoreIdNotProvided)?;
-                query_store(connection, &self.key_str(), &store_id)?
+        let key = self.key_str();
+        let pref = match self
+            .scope(store_id)
+            .ok_or(PreferenceError::StoreIdNotProvided)?
+        {
+            Scope::Global => query_global(connection, &key)?,
+            Scope::Store(store_id) => query_store(connection, &key, &store_id)?,
+            Scope::StoreOverride(store_id) => {
+                query_store_with_global_default(connection, &key, &store_id)?
             }
         };
 
@@ -191,16 +208,13 @@ pub trait Preference: Sync + Send {
             UpsertPreferenceError::SerializeError(self.key_str().to_string(), e.to_string())
         })?;
 
-        match self.preference_type() {
-            PreferenceType::Global => match store_id {
-                Some(store_id) if self.allows_store_override() => {
-                    upsert_store(connection, self.key_str(), serialised_value, store_id)?
-                }
-                _ => upsert_global(connection, self.key_str(), serialised_value)?,
-            },
-            PreferenceType::Store => {
-                let store_id = store_id.ok_or(UpsertPreferenceError::StoreIdNotProvided)?;
-                upsert_store(connection, self.key_str(), serialised_value, store_id)?;
+        match self
+            .scope(store_id)
+            .ok_or(UpsertPreferenceError::StoreIdNotProvided)?
+        {
+            Scope::Global => upsert_global(connection, self.key_str(), serialised_value)?,
+            Scope::Store(store_id) | Scope::StoreOverride(store_id) => {
+                upsert_store(connection, self.key_str(), serialised_value, store_id)?
             }
         };
 
