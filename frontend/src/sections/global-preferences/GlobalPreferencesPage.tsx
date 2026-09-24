@@ -1,4 +1,5 @@
 import {
+  createMemo,
   createResource,
   createSignal,
   For,
@@ -122,15 +123,18 @@ const GlobalPreferencesPage: Component = () => {
       ? overrides()[preference.key]
       : preference.value;
 
-  const catalogue = () =>
-    filterCatalogue(
-      groupPreferences(preferences()),
-      label,
-      groupLabel,
-      filter()
-    );
-  const nothingVisible = () =>
-    catalogue().ungrouped.length === 0 && catalogue().groups.length === 0;
+  // Grouped once per catalogue and filtered once per keystroke. Both memoised
+  // so the group objects keep their identity while the term changes and the
+  // keyed lists below never remount an accordion item on typing
+  // (kdd/solid-reactivity-pitfalls).
+  const grouped = createMemo(() => groupPreferences(preferences()));
+  const catalogue = createMemo(() =>
+    filterCatalogue(grouped(), label, groupLabel, filter())
+  );
+  const nothingVisible = () => {
+    const { ungrouped, groups } = catalogue();
+    return ungrouped.length === 0 && groups.length === 0;
+  };
 
   // -------------------------------------------------------------------------
   // Auto-save: one debounced, one-field write per changed preference
@@ -404,9 +408,7 @@ const GlobalPreferencesPage: Component = () => {
               <Accordion multiple>
                 <For each={catalogue().groups}>
                   {group => (
-                    <AccordionItem
-                      value={group.labelKey.replace(/^(label|title)\./, '')}
-                    >
+                    <AccordionItem value={group.id}>
                       <AccordionTrigger>{groupLabel(group)}</AccordionTrigger>
                       <AccordionContent>
                         <div class={styles.rows}>

@@ -1,4 +1,12 @@
-import { createSignal, For, Match, Show, Switch, type JSX } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  For,
+  Match,
+  Show,
+  Switch,
+  type JSX,
+} from 'solid-js';
 import { t, type LocaleKey } from '../../../intl';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -80,15 +88,18 @@ export const StorePreferencesPanel = (props: {
 
   // The catalogue as shown: ungrouped rows and groups, both filtered — a group
   // stays whole while its label or any member matches (SET-05.35, .46).
-  const catalogue = () =>
-    filterStoreCatalogue(
-      groupStorePreferences(props.preferences),
-      label,
-      groupLabel,
-      filter()
-    );
-  const nothingVisible = () =>
-    catalogue().ungrouped.length === 0 && catalogue().groups.length === 0;
+  // Grouped once per catalogue and filtered once per keystroke, both memoised
+  // so the group objects keep their identity while the term changes and the
+  // keyed lists below never remount the accordion item on typing
+  // (kdd/solid-reactivity-pitfalls).
+  const grouped = createMemo(() => groupStorePreferences(props.preferences));
+  const catalogue = createMemo(() =>
+    filterStoreCatalogue(grouped(), label, groupLabel, filter())
+  );
+  const nothingVisible = () => {
+    const { ungrouped, groups } = catalogue();
+    return ungrouped.length === 0 && groups.length === 0;
+  };
 
   const value = (preference: StorePreference) =>
     preferenceValue(preference, props.draft);
@@ -351,7 +362,7 @@ export const StorePreferencesPanel = (props: {
         <Accordion multiple>
           <For each={catalogue().groups}>
             {group => (
-              <AccordionItem value={group.labelKey.replace(/^label\./, '')}>
+              <AccordionItem value={group.id}>
                 <AccordionTrigger>{groupLabel(group)}</AccordionTrigger>
                 <AccordionContent>
                   <div class={styles.rows}>
