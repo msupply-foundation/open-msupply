@@ -22,7 +22,7 @@ import {
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { ItemSearch, type ItemOption } from '@/domain/item';
 import { NameSearch } from '@/domain/name';
-import { projectedLineCost } from '../purchaseOrderPricing';
+import { linePacks, projectedLineCost } from '../purchaseOrderPricing';
 import type { PurchaseOrderStatus } from '../../purchaseOrderStatus';
 import type { PurchaseOrderDetailLineFragment } from '../purchaseOrderDetail.generated';
 import {
@@ -32,7 +32,6 @@ import {
 import { PurchaseOrderLineItemFacts } from './purchaseOrderLineEdit.generated';
 import {
   draftFromLine,
-  draftPacks,
   factsFromLine,
   insertInput,
   lineChanges,
@@ -437,7 +436,7 @@ const LineEditContent = (
                 decimalLimit={2}
                 data-testid="packs-input"
                 ref={packsField.ref}
-                value={draftPacks(draft()!)}
+                value={linePacks(draft()!)}
                 disabled={closed(gates().packs)}
                 onChange={value =>
                   patch(packsEntered(status(), draft()!, value ?? 0))

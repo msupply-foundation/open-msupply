@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   discountPercentage,
   draftFromLine,
-  draftPacks,
   factsFromLine,
   insertInput,
   lineChanges,
@@ -18,7 +17,7 @@ import {
   showsAdjustedUnits,
   type LineDraft,
 } from './purchaseOrderLineEdit';
-import { projectedLineCost } from '../purchaseOrderPricing';
+import { linePacks, projectedLineCost } from '../purchaseOrderPricing';
 import type { PurchaseOrderDetailLineFragment } from '../purchaseOrderDetail.generated';
 
 // Anchors: spec/purchase-orders/cases/OMS-FUN-PO-02 (the line editor),
@@ -106,12 +105,13 @@ describe('OMS-FUN-PO-02.18 / .19 — the figures the editor shows come from the 
 });
 
 describe('OMS-FUN-PO-07.4 — packs are units over pack size', () => {
+  // The editor shows a draft's packs on the same rule as the table's column.
   it('shows the requested quantity in packs', () => {
-    expect(draftPacks(draft())).toBe(10);
+    expect(linePacks(draft())).toBe(10);
   });
 
   it('shows the adjusted quantity once there is one', () => {
-    expect(draftPacks(draft({ adjustedNumberOfUnits: 50 }))).toBe(5);
+    expect(linePacks(draft({ adjustedNumberOfUnits: 50 }))).toBe(5);
   });
 });
 
