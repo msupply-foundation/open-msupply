@@ -1,4 +1,4 @@
-import { type Component } from 'solid-js';
+import { createMemo, type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { homeCurrency } from '../../../../intl/currency';
@@ -33,8 +33,11 @@ const withCode = (label: string, code: string): string =>
 // The detail "Financial" tab (spec S3 tabs → Financial; contract → Financial &
 // Delivery tab derivation). A read-only table over the shipment's lines,
 // keeping per-pack prices and line totals as SEPARATE columns: a per-pack
-// column is the price for ONE pack, never quantity × price — that
-// multiplication is only in the line-total columns. Every money column names
+// column is the price for ONE pack, never quantity × price. The two Line total
+// columns are the line's STORED totals (contract → Financial & Delivery tab
+// derivation); only the Adjusted line total multiplies, cost × packs, since it
+// reflects the line's actual cost after the charge/rate cascade. Every money
+// column names
 // its currency in the header; the PO currency and the store's home (local)
 // currency are distinct columns, and the PO-currency + local-cost columns
 // appear only when the shipment is in a foreign currency.
@@ -70,22 +73,20 @@ export const InboundFinancialPanel: Component<{
   // per-pack conversion is built inside columns() from a captured rate (below).
   const poPricePerPack = (line: Line) =>
     line.purchaseOrderLine?.pricePerPackAfterDiscount ?? 0;
-  // The two line totals are the line's STORED figures, not price × packs
-  // re-multiplied here: the server writes both when it raises the shipment
-  // from the order — the PO line's own stored total, pro-rated to the units
-  // still to ship, and that figure converted at the order's exchange rate —
-  // and keeps them as the line is edited. Reading them is what makes this
-  // tab agree, to the cent, with the order's own Line cost column (contract →
-  // Financial & Delivery tab derivation).
+  // The two line totals read the line's stored figures (see the header note).
   const lineTotalPo = (line: Line) => line.foreignCurrencyPriceBeforeTax ?? 0;
   const lineTotalLocal = (line: Line) => line.totalBeforeTax;
-  // Adjusted total uses the line's ACTUAL cost (post charge/rate cascade), not
-  // the raw PO price.
   const adjustedTotalLocal = (line: Line) =>
     line.costPricePerPack * line.numberOfPacks;
 
+  // The three footer totals are pure over the rows — none depends on the rate
+  // — so they are memoised here rather than re-summed on every columns()
+  // rebuild (which also fires on rate / currency-code changes).
   const sum = (fn: (line: Line) => number) =>
     props.rows.reduce((total, line) => total + fn(line), 0);
+  const totalPo = createMemo(() => sum(lineTotalPo));
+  const totalLocal = createMemo(() => sum(lineTotalLocal));
+  const totalAdjusted = createMemo(() => sum(adjustedTotalLocal));
 
   const sortedRows = () =>
     [...props.rows].sort(
@@ -183,7 +184,7 @@ export const InboundFinancialPanel: Component<{
               'lineTotalPo',
               withCode(t('label.line-total'), poCode()),
               lineTotalPo,
-              sum(lineTotalPo)
+              totalPo()
             ),
           ]
         : []),
@@ -191,13 +192,13 @@ export const InboundFinancialPanel: Component<{
         'lineTotalLocal',
         withCode(t('label.line-total'), localCode()),
         lineTotalLocal,
-        sum(lineTotalLocal)
+        totalLocal()
       ),
       moneyColumn(
         'adjustedTotal',
         withCode(t('label.adjusted-line-total'), localCode()),
         adjustedTotalLocal,
-        sum(adjustedTotalLocal)
+        totalAdjusted()
       ),
     ];
   };

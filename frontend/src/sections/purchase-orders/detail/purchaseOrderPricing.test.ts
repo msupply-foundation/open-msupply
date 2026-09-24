@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   chargesTotal,
   finalCost,
-  lineCost,
   linePacks,
   projectedLineCost,
 } from './purchaseOrderPricing';
@@ -38,18 +37,10 @@ describe('a line’s packs', () => {
   });
 });
 
-describe('OMS-FUN-PO-07.3 — a line’s cost is the stored figure', () => {
-  // The line's cost is the server's STORED figure, never re-multiplied here:
-  // the table, its footer, the order's totals and the shipment raised against
-  // the line all read the one number the server wrote (rules § pricing and
-  // totals).
-  it('is the stored line total, whatever the raw figures would multiply to', () => {
-    expect(lineCost({ lineTotal: 60 })).toBe(60);
-    // Stored unrounded — the display rounds, this does not.
-    expect(lineCost({ lineTotal: 3.015 })).toBe(3.015);
-  });
-
-  // The editor's preview of what the server will store for an unsaved draft,
+describe('OMS-FUN-PO-07.3 — a line’s cost', () => {
+  // A saved line's cost is the server's STORED `lineTotal`, which the table
+  // reads straight off the row (no function to test). What IS computed here is
+  // the editor's preview of what the server will store for an unsaved draft,
   // on the server's own rule: packs × the after-discount pack price.
   it('projects an unsaved draft’s cost as packs times the after-discount price', () => {
     expect(projectedLineCost(line())).toBe(60);

@@ -23,7 +23,9 @@ impl MigrationFragment for Migrate {
                 SET line_total = price_per_pack_after_discount
                         * COALESCE(adjusted_number_of_units, requested_number_of_units)
                         / requested_pack_size
-                WHERE requested_pack_size > 0;
+                WHERE requested_pack_size > 0
+                  AND price_per_pack_after_discount <> 0
+                  AND COALESCE(adjusted_number_of_units, requested_number_of_units) <> 0;
             "#,
         )?;
 
