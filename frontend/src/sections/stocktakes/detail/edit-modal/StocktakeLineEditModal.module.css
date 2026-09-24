@@ -46,3 +46,18 @@
 .countBox {
   margin-inline: auto;
 }
+
+/* The table top-aligns its cells (cellAlign 'start') so a message growing under
+   one control doesn't shift the row's others. The 18px box would then sit at
+   the top of a row of small (36px) controls, so it takes half the difference
+   as block margin to stay level with their centre line. Scoped to a table cell:
+   the card header centres its own row. */
+:where(td) .countBox {
+  margin-block: calc((var(--input-height-sm) - 1.125rem) / 2);
+}
+
+@media (pointer: coarse) {
+  :where(td) .countBox {
+    margin-block: calc((var(--input-height-sm-touch) - 1.125rem) / 2);
+  }
+}

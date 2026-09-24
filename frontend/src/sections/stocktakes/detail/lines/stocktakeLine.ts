@@ -29,6 +29,26 @@ export const lineDifference = (line: CountLine): number | null => {
   return counted - (line.snapshotNumberOfPacks ?? 0);
 };
 
+// Which adjustment directions demand a reason on this stocktake right now — the
+// server's "reason required" condition per direction (active reasons of that
+// direction exist), already folded with the initial / blind exemptions, which
+// switch both off (spec/stocktakes/rules.md § adjustment-reason rules).
+export type ReasonRequirement = { positive: boolean; negative: boolean };
+
+// A counted line is AWAITING A REASON while its count differs from the
+// snapshot in a direction that demands one and it holds none
+// (OMS-REG-INV-03.86). A display mirror only — Save never gates on it; the
+// server's reason-not-provided rejection stays the guard. A level or uncounted
+// line never awaits one — a zero adjustment never requires a reason.
+export const awaitingReason = (
+  line: CountLine & { reasonOption?: { id: string } | null },
+  required: ReasonRequirement
+): boolean => {
+  const difference = lineDifference(line);
+  if (difference == null || difference === 0 || line.reasonOption) return false;
+  return difference > 0 ? required.positive : required.negative;
+};
+
 // Pack size is editable only where no stock stands behind the batch
 // (OMS-REG-INV-03.15): a batch backed by a stock line — whether an existing
 // stocktake line's or one being opted into the count — carries that stock's
