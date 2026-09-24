@@ -1,0 +1,40 @@
+{
+  "programKeys": ["demo"],
+  "documentTypes": [
+    {
+      "documentType": "Patient",
+      "category": "Patient",
+      "name": "Patient",
+      "dir": "Patient",
+      "versions": [
+        { "file": "v1.json", "source": "type.ts", "type": "DemoPatient" }
+      ]
+    },
+    {
+      "documentType": "DemoProgramEnrolment",
+      "category": "ProgramEnrolment",
+      "name": "Demo Program",
+      "programKey": "demo",
+      "dir": "DemoProgramEnrolment",
+      "versions": [
+        {
+          "file": "v1.json",
+          "source": "type.ts",
+          "type": "DemoProgramEnrolment"
+        }
+      ]
+    },
+    {
+      "documentType": "DemoEncounter",
+      "category": "Encounter",
+      "name": "Demo follow-up",
+      "programKey": "demo",
+      "dir": "DemoEncounter",
+      "versions": [
+        { "file": "v1.json", "source": "v1.ts", "type": "DemoEncounterV1" },
+        { "file": "v2.json", "source": "type.ts", "type": "DemoEncounter" }
+      ],
+      "events": "events.json"
+    }
+  ]
+}

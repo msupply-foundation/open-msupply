@@ -1,0 +1,55 @@
+/*
+ * Emit every form plugin's JSON Schemas from their TypeScript types — or,
+ * with `--check`, fail when a committed schema no longer matches its type.
+ *
+ * A form plugin is a plugin directory with a `forms/forms.json`
+ * declaration; the layout, the frozen-version rule and the generator setup
+ * are in vite/formPlugins.ts. This script walks the same directories
+ * build-plugins.mjs does (scripts/pluginDirs.mjs), and build-plugins.mjs
+ * runs the same emit itself before packing, so a bundle never carries a
+ * schema older than its type.
+ *
+ * `--check` writes nothing and exits non-zero naming each file that is
+ * stale or missing. It is part of `pnpm check`: without it, a type change
+ * whose schema was not re-emitted and committed would pass review, and the
+ * committed schema is what gets packed and installed.
+ *
+ * Usage: pnpm forms:emit    [OMS_PLUGIN_DIRS=../some-plugin-checkout]
+ *        pnpm forms:check
+ */
+import { emitFormSchemas, readFormsDeclaration } from '../vite/formPlugins.ts';
+import { envPluginDirs, inRepoPluginDirs } from './pluginDirs.mjs';
+
+const check = process.argv.includes('--check');
+const problems = [];
+let plugins = 0;
+let files = 0;
+
+for (const dir of [...inRepoPluginDirs(), ...envPluginDirs()]) {
+  let declaration;
+  try {
+    declaration = readFormsDeclaration(dir);
+  } catch (error) {
+    problems.push(error.message);
+    continue;
+  }
+  if (!declaration) continue;
+  plugins += 1;
+  const result = await emitFormSchemas(dir, declaration, { check });
+  for (const file of result.written) console.info(`[forms] wrote ${file}`);
+  files += result.written.length + result.unchanged.length;
+  problems.push(...result.problems);
+}
+
+if (problems.length > 0) {
+  console.error(
+    `[forms] ${check ? 'check failed' : 'emit failed'}:\n  - ` +
+      problems.join('\n  - ')
+  );
+  process.exit(1);
+}
+console.info(
+  `[forms] ${check ? 'checked' : 'emitted'} ${files} schema file(s) ` +
+    `across ${plugins} form plugin(s)` +
+    (check ? '; all match their types' : '')
+);

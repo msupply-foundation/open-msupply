@@ -54,6 +54,35 @@ export type {
   NoPlacement,
 } from './types';
 
+// ── Document types — the base shapes a form plugin extends ─────────────────
+// A form plugin's document type extends one of these, and its JSON Schema is
+// emitted from that type at build (./documents.ts). Type-only, so erased at
+// build: nothing here is eager weight.
+export type {
+  DocumentData,
+  Patient,
+  Person,
+  Gender,
+  MaritalStatus,
+  Note,
+  NextOfKin,
+  Address,
+  ContactDetails,
+  SocioEconomics,
+  RelatedPerson,
+  DrugAllergy,
+  Allergies,
+  ProgramEnrolment,
+  ProgramEnrolmentStatus,
+  Encounter,
+  EncounterStatus,
+  Clinician,
+  User,
+  EncounterLocation,
+  ContactTrace,
+  ContactTraceLocation,
+} from './documents';
+
 // ── Auth & context ──────────────────────────────────────────────────────────
 /*
  * The session surface (sdk-contract § SDK surface — Auth & context): the same
