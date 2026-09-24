@@ -113,6 +113,16 @@ interface ComboboxProps<T> {
    */
   errorTestId?: string;
   /**
+   * Advisory warning shown below the field when there's no error — mirrors
+   * TextField's `warning`: the error line's icon + text anatomy in the warning
+   * colour, with none of the error semantics (no aria-invalid, border
+   * unchanged; an error displaces it). For a step still to take rather than a
+   * wrong value — e.g. a stocktake line awaiting its adjustment reason.
+   */
+  warning?: string;
+  /** `data-testid` for the warning message (e2e/TESTIDS.md). */
+  warningTestId?: string;
+  /**
    * Marks the field required: an asterisk on the label (TextField's marker, so
    * a lookup and a text field read alike) plus `aria-required` on the input.
    * Indication only — the gating stays with the form's own confirm rule.
@@ -738,14 +748,31 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           <span class={styles.endAction}>{endAction()}</span>
         </Show>
       </KCombobox.Control>
-      {/* Error message (with an alert icon) takes precedence over helperText — mirrors
-          TextField. Nothing is conveyed by colour alone (icon + text). */}
+      {/* Error message (with an alert icon) takes precedence over the warning,
+          and the warning over helperText — mirrors TextField. Nothing is
+          conveyed by colour alone (icon + text). */}
       <Show
         when={props.error}
         fallback={
-          <Show when={props.helperText}>
-            <KCombobox.Description class={styles.helper}>
-              {props.helperText}
+          <Show
+            when={props.warning}
+            fallback={
+              <Show when={props.helperText}>
+                <KCombobox.Description class={styles.helper}>
+                  {props.helperText}
+                </KCombobox.Description>
+              </Show>
+            }
+          >
+            {/* role="status", as TextField's: the warning can appear while the
+                user works elsewhere in the form, so it's announced politely. */}
+            <KCombobox.Description
+              class={styles.warning}
+              role="status"
+              data-testid={props.warningTestId}
+            >
+              <AlertTriangleIcon class={styles.errorIcon} />
+              {props.warning}
             </KCombobox.Description>
           </Show>
         }
