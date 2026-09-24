@@ -270,14 +270,14 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.46)', () => {
     valueType: StorePreference['valueType'] = 'BOOLEAN'
   ): StorePreference => ({ key, valueType, value: false });
   // A slice of the served order: the purchase-order preferences sit apart
-  // (rows 4, 14 and 24) among unrelated rows.
+  // (rows 1, 5 and 15) among unrelated rows.
   const served: StorePreference[] = [
+    pref('authorisePurchaseOrder'),
     pref('blindStocktake'),
     pref('useProcurementFunctionality'),
     pref('disableManualReturns'),
     pref('externalInboundShipmentLinesMustBeAuthorised'),
     pref('firstThresholdForExpiringItems', 'INTEGER'),
-    pref('authorisePurchaseOrder'),
   ];
   const LABELS: Partial<Record<StorePreference['key'], string>> = {
     blindStocktake: 'Enable blind stock take',
@@ -301,9 +301,9 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.46)', () => {
     expect(groups).toHaveLength(1);
     expect(groups[0]?.labelKey).toBe('label.procurement');
     expect(groups[0]?.members.map(p => p.key)).toEqual([
+      'authorisePurchaseOrder',
       'useProcurementFunctionality',
       'externalInboundShipmentLinesMustBeAuthorised',
-      'authorisePurchaseOrder',
     ]);
   });
 
