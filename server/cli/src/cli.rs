@@ -280,6 +280,15 @@ enum Action {
         #[clap(long, short, default_value = "false")]
         skip_prettify: bool,
     },
+    /// Support override: turn maintenance mode off even though OMS central's own sync buffer still
+    /// has records to integrate, e.g. when those records are known to be unwanted. Clears the
+    /// sync, sync API and processor pauses with it, and records the override in the system log.
+    /// Run it with the server stopped, like the other commands that change the database.
+    ExitMaintenanceMode {
+        /// Who is running the override, recorded in the system log.
+        #[clap(long)]
+        by: String,
+    },
     /// Re-run sync buffer integration against the sync_buffer already in the database.
     /// Resets the buffer's integration state, then re-runs translate + integrate.
     /// Useful for re-processing already-pulled records after fixing a translator, or for
@@ -289,7 +298,8 @@ enum Action {
         #[clap(short, long, default_value = "1")]
         source_site_id: i32,
         /// Wrap integration in a transaction (outer batch + per-record sub-transactions).
-        /// Off by default for speed; turn on to integrate the whole batch atomically.
+        /// Off by default for speed; turn on to integrate the whole batch atomically. Without it
+        /// a database that has synced must be in maintenance mode.
         #[clap(short, long)]
         use_transaction: bool,
         /// Run pending database migrations before reintegrating.
@@ -505,6 +515,13 @@ async fn main() -> anyhow::Result<()> {
             .expect("Failed to run DB migrations");
 
             info!("Finished applying database migrations");
+        }
+        Action::ExitMaintenanceMode { by } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let connection = connection_manager.connection()?;
+            let pending =
+                service::sync::maintenance_mode::force_exit_maintenance_mode(&connection, &by)?;
+            info!("Maintenance mode turned off by support override ({by}), {pending} record(s) were still pending in OMS central's own sync buffer");
         }
         Action::ReintegrateBuffer {
             source_site_id,

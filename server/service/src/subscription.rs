@@ -52,8 +52,9 @@ pub enum SubscriptionTrigger {
     SyncStatus(SyncLogRow),
     /// Changelogs were inserted (mutations created/modified data)
     PushQueueChanged,
-    /// The admin pause switch changed; re-read the flag and re-emit so every open session's
-    /// header updates without waiting for a sync frame (a paused site produces none).
+    /// The admin pause switch (or maintenance mode, which sets it) changed; re-read the flags
+    /// and re-emit so every open session's header updates without waiting for a sync frame (a
+    /// paused site produces none).
     SyncPauseChanged,
 }
 
@@ -70,6 +71,8 @@ pub enum ResolvedSubscription {
         /// Admin pause flag (Admin > Sync settings), carried on every frame so the header can
         /// show a paused state from the live channel alone.
         is_sync_paused: bool,
+        /// Maintenance mode (central only, #840), carried alongside so the header can show it.
+        is_maintenance_mode: bool,
     },
     InitialisationStatus(InitialisationStatus),
 }
@@ -200,6 +203,7 @@ async fn subscription_worker_loop(
     let mut push_queue_count = get_push_queue_count(&service_provider).unwrap_or(0);
     // Cached rather than read per frame: progress frames arrive thousands of times per run.
     let mut is_sync_paused = get_is_sync_paused(&service_provider);
+    let mut is_maintenance_mode = get_is_maintenance_mode(&service_provider);
     let mut last_push_query = Instant::now() - PUSH_QUEUE_DEBOUNCE;
     let mut push_queue_queued = false;
     let trigger_handle = service_provider.subscription_trigger.clone();
@@ -238,6 +242,7 @@ async fn subscription_worker_loop(
                     last_successful: last_successful.clone(),
                     push_queue_count,
                     is_sync_paused,
+                    is_maintenance_mode,
                 });
 
                 // Only emit a fresh InitialisationStatus when the site transitions
@@ -286,6 +291,7 @@ async fn subscription_worker_loop(
                             last_successful: last_successful.clone(),
                             push_queue_count: count,
                             is_sync_paused,
+                            is_maintenance_mode,
                         });
                     }
                 } else if !push_queue_queued {
@@ -304,6 +310,7 @@ async fn subscription_worker_loop(
                 if result.is_none() { break; } // all senders dropped
 
                 is_sync_paused = get_is_sync_paused(&service_provider);
+                is_maintenance_mode = get_is_maintenance_mode(&service_provider);
 
                 // Nothing to attach the flag to before the first run has been observed; the
                 // client's poll covers that case.
@@ -313,6 +320,7 @@ async fn subscription_worker_loop(
                         last_successful: last_successful.clone(),
                         push_queue_count,
                         is_sync_paused,
+                        is_maintenance_mode,
                     });
                 }
             }
@@ -324,6 +332,13 @@ fn get_is_sync_paused(service_provider: &Arc<ServiceProvider>) -> bool {
     service_provider
         .basic_context()
         .and_then(|ctx| service_provider.settings.is_sync_paused(&ctx))
+        .unwrap_or(false)
+}
+
+fn get_is_maintenance_mode(service_provider: &Arc<ServiceProvider>) -> bool {
+    service_provider
+        .basic_context()
+        .and_then(|ctx| crate::sync::maintenance_mode::is_maintenance_mode(&ctx.connection))
         .unwrap_or(false)
 }
 

@@ -566,6 +566,16 @@ A server admin can pause the sync API on central (Admin > Sync settings, stored 
 
 A remote checks **site\_status** before pushing, so a paused central stops the run before anything is sent. The run is logged with `SyncApiPaused`, which the UI shows as a warning ("Central server sync is paused") rather than a failure. The remote retries on its normal interval and resumes by itself once central is unpaused. A file upload refused this way does not use up one of the file's upload attempts. Work already running on central when it is paused, such as an integration a push has already started, carries on to the end. Each change to the pause is written to the system log (`SYNC_API_PAUSE_CHANGED`) with the user who made it.
 
+#### **Maintenance mode on central** {#maintenance-mode}
+
+Maintenance mode (Admin > Sync settings, central only, `SETTINGS_MAINTENANCE_MODE_IS_ON`) is the supported way to integrate a large sync from legacy mSupply central without the outer integration transaction. That transaction only exists so changelog readers never see a half-integrated batch, so the mode first pauses every reader: turning it on sets this server's sync pause, the sync API pause above and the processor pause (`SETTINGS_PROCESSORS_ARE_PAUSED`, which drops transfer and general processor triggers) together, and the ledger fix skips its runs. It also signs out every user without the `ServerAdmin` permission, and login refuses them with a `MaintenanceMode` error until it is off.
+
+While it is on, a manual sync from the sync modal runs despite the pause (scheduled syncs stay paused), and it integrates OMS central's own buffer without the outer transaction. Instead every 500 buffer rows commit in their own transaction, with a savepoint per record so a failing record is still skipped on its own (rows are still fetched 10,000 at a time). Committing in chunks rather than per record matters on Postgres: a commit per record waits on a WAL flush for every record and every buffer mark, which made integration slower than inside the outer transaction. A restart mid-integration loses at most the 500 rows in progress, which roll back to pending: the flags persist, and the next forced sync carries on from the rows still pending. Buffers remote sites push to central always keep their transaction; they are refused anyway while the sync API is paused.
+
+The mode cannot be turned off while OMS central's own buffer (V5/V6 rows from the legacy central's site id, in tables a translator integrates) has pending rows. Rows that failed are marked integrated with an error and do not block it. Turning it off clears all four flags together and triggers the processors, which then work through their backlog. Every change is written to the system log (`MAINTENANCE_MODE_CHANGED`) with the user, and a server that starts in maintenance mode with pending rows logs that integration is incomplete.
+
+Support can leave the mode with rows still pending, for example when they are known to be unwanted, with `remote_server_cli exit-maintenance-mode --by <name>`. The override is written to the system log with the name and the pending count. Run it with the server stopped, as with the other CLI commands.
+
 #### **Pull** {#pull}
 
 Additional parameters

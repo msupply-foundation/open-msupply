@@ -43,6 +43,11 @@ use mutations::{
         UpdateLabelPrinterSettingsResponse,
     },
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
+    maintenance_mode::{
+        is_maintenance_mode_query, maintenance_mode_query, processors_paused_query,
+        set_maintenance_mode_mutation, set_processors_paused_mutation, MaintenanceModeNode,
+        ProcessorsPausedNode, SetMaintenanceModeResponse,
+    },
     manual_sync::manual_sync,
     set_sync_paused::{set_sync_paused, SyncPausedNode},
     sync_api_pause::{set_sync_api_paused_mutation, sync_api_paused_query, SyncApiPausedNode},
@@ -119,6 +124,12 @@ impl GeneralQueries {
 
     pub async fn is_central_server(&self) -> bool {
         CentralServerConfig::is_central_server()
+    }
+
+    /// Whether central is in maintenance mode, when only server admins can log in. Available
+    /// without authentication so the login screen can say so before anyone tries.
+    pub async fn is_maintenance_mode(&self, ctx: &Context<'_>) -> Result<bool> {
+        is_maintenance_mode_query(ctx)
     }
 
     pub async fn is_central_standalone(&self) -> bool {
@@ -341,6 +352,17 @@ impl GeneralQueries {
     /// Central only: whether the sync API is paused, refusing sync from remote sites (always false on a remote)
     pub async fn is_sync_api_paused(&self, ctx: &Context<'_>) -> Result<bool> {
         sync_api_paused_query(ctx)
+    }
+
+    /// Central only: whether the transfer and general processors are paused (always false on a remote)
+    pub async fn are_processors_paused(&self, ctx: &Context<'_>) -> Result<bool> {
+        processors_paused_query(ctx)
+    }
+
+    /// Central only: maintenance mode, and how much of OMS central's own sync buffer is left to
+    /// integrate before it can be turned off (server admin only)
+    pub async fn maintenance_mode(&self, ctx: &Context<'_>) -> Result<MaintenanceModeNode> {
+        maintenance_mode_query(ctx)
     }
 
     pub async fn display_settings(
@@ -807,5 +829,26 @@ impl CentralGeneralMutations {
         paused: bool,
     ) -> Result<SyncApiPausedNode> {
         set_sync_api_paused_mutation(ctx, paused)
+    }
+
+    /// Pause or resume the transfer and general processors. Resuming triggers each one so the
+    /// backlog is picked up. Returns the new state.
+    pub async fn set_processors_paused(
+        &self,
+        ctx: &Context<'_>,
+        paused: bool,
+    ) -> Result<ProcessorsPausedNode> {
+        set_processors_paused_mutation(ctx, paused)
+    }
+
+    /// Turn maintenance mode on or off. On pauses sync, the sync API and processors and signs out
+    /// every user who is not a server admin. Off is refused while OMS central's own sync buffer
+    /// has records left to integrate.
+    pub async fn set_maintenance_mode(
+        &self,
+        ctx: &Context<'_>,
+        on: bool,
+    ) -> Result<SetMaintenanceModeResponse> {
+        set_maintenance_mode_mutation(ctx, on)
     }
 }
