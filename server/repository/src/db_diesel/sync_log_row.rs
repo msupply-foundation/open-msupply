@@ -125,6 +125,25 @@ impl<'a> SyncLogV5V6RowRepository<'a> {
         self._upsert_one(row)
     }
 
+    /// Give every row that has neither finished nor failed the error `message`. Returns how many
+    /// rows it closed.
+    ///
+    /// Only for startup, when no sync can be running: such a row is a run the previous process
+    /// never got to end. Left open it reads as a run still in flight, and when the startup sync
+    /// is paused (the sync pause, maintenance mode) nothing replaces it, so the UI shows the run
+    /// as syncing and holds its Sync now control busy indefinitely.
+    pub fn close_interrupted(&self, message: &str) -> Result<usize, RepositoryError> {
+        let closed = diesel::update(
+            sync_log::table
+                .filter(sync_log::finished_datetime.is_null())
+                .filter(sync_log::error_message.is_null())
+                .filter(sync_log::error_code.is_null()),
+        )
+        .set(sync_log::error_message.eq(message))
+        .execute(self.connection.lock().connection())?;
+        Ok(closed)
+    }
+
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogV5V6Row>, RepositoryError> {
         let result = sync_log::table
             .filter(sync_log::id.eq(id))
