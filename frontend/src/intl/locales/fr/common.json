@@ -2831,7 +2831,7 @@
   "messages.import-replaces-warning": "ATTENTION : importer des traductions remplacera les traductions existantes. Téléchargez-les d’abord pour éviter toute perte de données.",
   "messages.import-warning-on-upload": "Alerte : certaines valeurs n'ont pas pu être analysées. Veuillez corriger ces valeurs, sinon elles seront ignorées lors de l'import",
   "messages.imported": "Importé",
-  "messages.inbound-automatic-info": "Cette livraison est mise à jour automatiquement ; son statut correspond à celui de l'expéditeur.",
+  "messages.inbound-automatic-info": "Cet envoi a été créé automatiquement suite à une expédition sortante depuis un autre magasin. Vous ne pouvez pas en modifier les détails tant que le statut n'est pas confirmé comme `Livré`.",
   "messages.inbound-manual-info": "Cette livraison a été créée manuellement; son état ne sera pas mis à jour automatiquement.",
   "messages.inbound-shipment-created-on": "Livraison entrante créée le {{date}}",
   "messages.inbound-shipment-line-saved": "Sauvergardé 🥳",
