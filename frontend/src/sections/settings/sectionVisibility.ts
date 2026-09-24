@@ -33,10 +33,11 @@ export const visibleSections = (
   return sections;
 };
 
-// Within Synchronisation: Pause sync API (issue #717) is a central-server
-// control, so it needs BOTH central and Server Admin, like Configuration. The
-// server refuses the query and the mutation otherwise.
-export const showSyncApiPause = (access: SettingsAccess): boolean =>
+// Within Synchronisation: maintenance mode, Pause sync API and Pause
+// processors (issues #717, #840) are central-server controls, so they need
+// BOTH central and Server Admin, like Configuration. The server refuses their
+// queries and mutations otherwise.
+export const showCentralSyncControls = (access: SettingsAccess): boolean =>
   access.centralServer && access.serverAdmin;
 
 // Within Display settings: Language is always usable; the Custom theme and

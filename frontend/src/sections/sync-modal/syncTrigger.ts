@@ -1,5 +1,5 @@
 import { createEffect, createRoot, createSignal } from 'solid-js';
-import { syncPaused, syncStatus, triggerSync } from '../../api/syncStore';
+import { syncBlocked, syncStatus, triggerSync } from '../../api/syncStore';
 import {
   advanceTriggerState,
   armTrigger,
@@ -49,9 +49,10 @@ export const triggerActive = (): boolean => trigger().active;
  * line is aria-disabled, not disabled, so activation still reaches here; the
  * keyboard binding has no gate of its own at all), and while an administrator
  * has paused sync — the server would refuse, and arming the busy state with no
- * run to release it would wedge the cell on "Syncing…". */
+ * run to release it would wedge the cell on "Syncing…". Maintenance mode
+ * (#840) is the exception: the server forces a manual sync past the pause. */
 export const syncNow = (): void => {
-  if (triggerActive() || syncStatus()?.isSyncing || syncPaused()) return;
+  if (triggerActive() || syncStatus()?.isSyncing || syncBlocked()) return;
   setTrigger(armTrigger(syncStatus()));
   // Fire-and-forget; a request that itself fails releases the busy state (the
   // failure surfaces through the global unexpected-error handling).

@@ -34,8 +34,21 @@ const [liveConnected, setLiveConnected] = createSignal(false);
 // live frame — the server re-emits a frame when the switch flips, since a
 // paused site produces no sync frames of its own to carry the change.
 const [syncPaused, setSyncPaused] = createSignal(false);
+// Central maintenance mode (#840), carried beside the pause: while on, a manual
+// sync runs despite the pause, so the sync controls stay available.
+const [maintenanceMode, setMaintenanceMode] = createSignal(false);
 
-export { syncStatus, pushQueueCount, liveConnected, syncPaused };
+export {
+  syncStatus,
+  pushQueueCount,
+  liveConnected,
+  syncPaused,
+  maintenanceMode,
+};
+
+/** Whether a manual sync would be refused: paused, and not in maintenance mode
+ * (where the server forces a manual sync past the pause). */
+export const syncBlocked = (): boolean => syncPaused() && !maintenanceMode();
 
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
@@ -97,6 +110,7 @@ const connect = () => {
       setLiveConnected(true);
       setPushQueueCount(data.syncInfoUpdated.numberOfRecordsInPushQueue);
       setSyncPaused(data.syncInfoUpdated.isSyncPaused);
+      setMaintenanceMode(data.syncInfoUpdated.isMaintenanceMode);
       handleStatus(data.syncInfoUpdated.syncStatus);
     },
     onFailure: () => {
@@ -152,6 +166,7 @@ export const pollSyncStatus = async (): Promise<void> => {
     return;
   setPushQueueCount(result.data.numberOfRecordsInPushQueue);
   setSyncPaused(result.data.isSyncPaused);
+  setMaintenanceMode(result.data.isMaintenanceMode);
   handleStatus(result.data.latestSyncStatus);
 };
 

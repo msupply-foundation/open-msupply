@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   showBarcodeScannerRows,
   showPrintViaUsbRow,
-  showSyncApiPause,
+  showCentralSyncControls,
   showThemeAndLogoRows,
   visibleSections,
 } from './sectionVisibility';
@@ -91,13 +91,14 @@ describe('the Print via USB row is desktop-only (SET-05.41)', () => {
   });
 });
 
-// Issue #717 — Pause sync API is a central control: only a Server Admin on
-// a central server sees it (the server enforces the same on both calls).
-describe('Pause sync API visibility', () => {
+// Issues #717, #840 — maintenance mode, Pause sync API and Pause processors are
+// central controls: only a Server Admin on a central server sees them (the
+// server enforces the same on every call).
+describe('Central sync controls visibility', () => {
   it('needs both central server and Server Admin', () => {
-    expect(showSyncApiPause(adminCentral)).toBe(true);
-    expect(showSyncApiPause(adminRemote)).toBe(false);
-    expect(showSyncApiPause(nonAdminCentral)).toBe(false);
-    expect(showSyncApiPause(nonAdmin)).toBe(false);
+    expect(showCentralSyncControls(adminCentral)).toBe(true);
+    expect(showCentralSyncControls(adminRemote)).toBe(false);
+    expect(showCentralSyncControls(nonAdminCentral)).toBe(false);
+    expect(showCentralSyncControls(nonAdmin)).toBe(false);
   });
 });

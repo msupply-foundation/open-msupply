@@ -22,7 +22,7 @@ import {
 import { hasPermission } from '../../store/storeContext';
 import { isCentralServer } from '../../api/serverInfo';
 import {
-  showSyncApiPause,
+  showCentralSyncControls,
   visibleSections,
   type SettingsAccess,
 } from './sectionVisibility';
@@ -93,7 +93,9 @@ const SettingsPage: Component = () => {
                 </span>
               </AccordionTrigger>
               <AccordionContent>
-                <SyncSection showSyncApiPause={showSyncApiPause(access())} />
+                <SyncSection
+                  showCentralControls={showCentralSyncControls(access())}
+                />
               </AccordionContent>
             </AccordionItem>
           </Show>
