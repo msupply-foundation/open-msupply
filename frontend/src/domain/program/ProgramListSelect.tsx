@@ -6,7 +6,7 @@ import type { ProgramListItem } from './programResource';
 /**
  * What a pick reports: a real program, the "All programs" entry, or a clear.
  * The consumer (the argument form) owns the three-key argument write this
- * drives (spec/reports contract "Arguments", AC-R12).
+ * drives (spec/reports contract "Arguments", OMS-REG-RPT-10.22).
  */
 export type ProgramListPick = ProgramListItem | 'all' | null;
 
@@ -25,7 +25,7 @@ export interface ProgramListSelectProps {
   loading?: boolean;
   /**
    * Append the translated "All programs" entry — only honoured when more than
-   * one program exists (AC-R12, matching the captured control).
+   * one program exists (OMS-REG-RPT-10.22, matching the captured control).
    */
   allProgramsOption?: boolean;
   /** Field label (required for a11y). */
@@ -41,12 +41,13 @@ export interface ProgramListSelectProps {
 type Option = { id: string; name: string; program?: ProgramListItem };
 
 /*
- * The report-argument PROGRAM picker (spec/reports AC-R12) — a Combobox over
- * the store's visible programs, labelled by name, optionally with the
+ * The report-argument PROGRAM picker (spec/reports OMS-REG-RPT-10.22) — a
+ * Combobox over the store's visible programs, labelled by name, optionally
+ * with the
  * "All programs" entry appended. Distinct from ProgramSelect (the
- * patient-program-enrolment registry picker, AC-R10): this one's value is the
- * program's own id, and its pick carries the elmisCode / fetchAllPrograms
- * companion semantics the consumer writes.
+ * patient-program-enrolment registry picker, OMS-REG-RPT-10.19): this one's
+ * value is the program's own id, and its pick carries the elmisCode /
+ * fetchAllPrograms companion semantics the consumer writes.
  */
 export const ProgramListSelect = (
   props: ProgramListSelectProps

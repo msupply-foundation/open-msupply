@@ -23,12 +23,15 @@ export interface ProgramDocumentSelectProps {
  * store-scoped program-enrolment registries resource (kdd/domain-modules).
  * Options are the registries the user may see, labelled by name; the reported
  * value is the program's CONTEXT id — what report data queries filter by —
- * never the registry's own id (spec/reports contract "Arguments", AC-R10).
+ * never the registry's own id (spec/reports contract "Arguments",
+ * OMS-REG-RPT-10.19).
  */
-export const ProgramDocumentSelect = (props: ProgramDocumentSelectProps): JSX.Element => {
+export const ProgramDocumentSelect = (
+  props: ProgramDocumentSelectProps
+): JSX.Element => {
   const items = () => programRegistriesResource.noSuspense();
 
-  // A lone option is pre-selected (spec/reports AC-R10) — the common
+  // A lone option is pre-selected (spec/reports OMS-REG-RPT-10.19) — the common
   // single-program store never has to touch the field.
   createEffect(() => {
     const single = items().length === 1 ? items()[0] : undefined;

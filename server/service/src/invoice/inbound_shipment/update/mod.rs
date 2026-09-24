@@ -168,14 +168,7 @@ pub fn update_inbound_shipment(
 
             if let Some(update_cost_price) = update_cost_price_for_lines {
                 for line in update_cost_price {
-                    invoice_line_repository.update_cost_price(
-                        &line.id,
-                        line.cost_price_per_pack,
-                        line.sell_price_per_pack,
-                        line.total_before_tax,
-                        line.total_after_tax,
-                        line.foreign_currency_price_before_tax,
-                    )?;
+                    invoice_line_repository.update_cost_price(&line)?;
                 }
             }
 
@@ -1836,6 +1829,7 @@ mod test {
                 // Set to None for mock insert (invoices inserted before POs).
                 // Updated to Some after setup_all_with_data.
                 purchase_order_id: None,
+                currency_id: Some(repository::mock::currency_b().id),
                 currency_rate: 1.0,
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
@@ -1966,15 +1960,14 @@ mod test {
             "Line B sell price should remain 25.0 (was different from old cost), got {}",
             line_b.sell_price_per_pack
         );
-        // The totals follow the new cost price: 5 × 11 and 10 × 22
         assert!(
             (line_a.total_before_tax - 55.0).abs() < 0.0001,
-            "Line A total should follow its cost to 55.0, got {}",
+            "Line A total should be 55.0 (11.0 x 5 packs), got {}",
             line_a.total_before_tax
         );
         assert!(
             (line_b.total_before_tax - 220.0).abs() < 0.0001,
-            "Line B total should follow its cost to 220.0, got {}",
+            "Line B total should be 220.0 (22.0 x 10 packs), got {}",
             line_b.total_before_tax
         );
         assert_eq!(line_a.total_after_tax, line_a.total_before_tax);
@@ -2055,16 +2048,24 @@ mod test {
             "Line B cost should be 40.0 with rate 2.0, got {}",
             line_b.cost_price_per_pack
         );
-        // A rate change moves the stored totals with the cost price rather
-        // than leaving them at the value written when the lines were created.
         assert!(
             (line_a.total_before_tax - 100.0).abs() < 0.0001,
-            "Line A total should follow its cost to 100.0, got {}",
+            "Line A total should be 100.0 (20.0 x 5 packs), got {}",
             line_a.total_before_tax
         );
         assert!(
+            (line_a.total_after_tax - 100.0).abs() < 0.0001,
+            "Line A total after tax should be 100.0 (no tax), got {}",
+            line_a.total_after_tax
+        );
+        assert!(
+            (line_a.foreign_currency_price_before_tax.unwrap() - 50.0).abs() < 0.0001,
+            "Line A foreign price should be 50.0 (100.0 / rate 2.0), got {:?}",
+            line_a.foreign_currency_price_before_tax
+        );
+        assert!(
             (line_b.total_before_tax - 400.0).abs() < 0.0001,
-            "Line B total should follow its cost to 400.0, got {}",
+            "Line B total should be 400.0 (40.0 x 10 packs), got {}",
             line_b.total_before_tax
         );
 
