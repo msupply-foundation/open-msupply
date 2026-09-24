@@ -101,6 +101,15 @@ export const StorePreferencesPanel = (props: {
     return ungrouped.length === 0 && groups.length === 0;
   };
 
+  // Which groups are open: the user's own choice, closed on arrival
+  // (SET-05.46). While a filter is active every kept group is held open so the
+  // rows it matched on are visible; clearing the filter hands the groups back
+  // to the user's choice.
+  const [openGroups, setOpenGroups] = createSignal<string[]>([]);
+  const filtering = () => filter().trim() !== '';
+  const expandedGroups = () =>
+    filtering() ? catalogue().groups.map(group => group.id) : openGroups();
+
   const value = (preference: StorePreference) =>
     preferenceValue(preference, props.draft);
 
@@ -358,23 +367,35 @@ export const StorePreferencesPanel = (props: {
           </For>
         </div>
         {/* The Procurement group — the purchase-order preferences together,
-            closed on arrival; members keep catalogue order (SET-05.46). */}
-        <Accordion multiple>
-          <For each={catalogue().groups}>
-            {group => (
-              <AccordionItem value={group.id}>
-                <AccordionTrigger>{groupLabel(group)}</AccordionTrigger>
-                <AccordionContent>
-                  <div class={styles.rows}>
-                    <For each={group.members}>
-                      {preference => <PreferenceRow preference={preference} />}
-                    </For>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-          </For>
-        </Accordion>
+            closed on arrival; members keep catalogue order (SET-05.46). Held
+            open while a filter is active; nothing renders when the filter
+            leaves no group. */}
+        <Show when={catalogue().groups.length > 0}>
+          <Accordion
+            multiple
+            value={expandedGroups()}
+            onValueChange={ids => {
+              if (!filtering()) setOpenGroups(ids);
+            }}
+          >
+            <For each={catalogue().groups}>
+              {group => (
+                <AccordionItem value={group.id}>
+                  <AccordionTrigger>{groupLabel(group)}</AccordionTrigger>
+                  <AccordionContent>
+                    <div class={styles.rows}>
+                      <For each={group.members}>
+                        {preference => (
+                          <PreferenceRow preference={preference} />
+                        )}
+                      </For>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+            </For>
+          </Accordion>
+        </Show>
       </Show>
     </Stack>
   );

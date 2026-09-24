@@ -136,6 +136,15 @@ const GlobalPreferencesPage: Component = () => {
     return ungrouped.length === 0 && groups.length === 0;
   };
 
+  // Which groups are open: the user's own choice, closed on arrival
+  // (OMS-REG-GPREF-01.3). While a filter is active every kept group is held
+  // open so the rows it matched on are visible; clearing the filter hands the
+  // groups back to the user's choice.
+  const [openGroups, setOpenGroups] = createSignal<string[]>([]);
+  const filtering = () => filter().trim() !== '';
+  const expandedGroups = () =>
+    filtering() ? catalogue().groups.map(group => group.id) : openGroups();
+
   // -------------------------------------------------------------------------
   // Auto-save: one debounced, one-field write per changed preference
   // (contract § Editing). Per-key timers so edits to different preferences
@@ -404,64 +413,76 @@ const GlobalPreferencesPage: Component = () => {
                 </For>
               </div>
               {/* The four groups, closed on arrival (OMS-REG-GPREF-01.3),
-                  ordered by first member's catalogue position. */}
-              <Accordion multiple>
-                <For each={catalogue().groups}>
-                  {group => (
-                    <AccordionItem value={group.id}>
-                      <AccordionTrigger>{groupLabel(group)}</AccordionTrigger>
-                      <AccordionContent>
-                        <div class={styles.rows}>
-                          <For each={group.members}>
-                            {preference => (
-                              <PreferenceRow preference={preference} />
-                            )}
-                          </For>
-                          {/* The AMC calculation explainer, while either AMC
+                  ordered by first member's catalogue position; held open
+                  while a filter is active. Nothing renders when the filter
+                  leaves no group. */}
+              <Show when={catalogue().groups.length > 0}>
+                <Accordion
+                  multiple
+                  value={expandedGroups()}
+                  onValueChange={ids => {
+                    if (!filtering()) setOpenGroups(ids);
+                  }}
+                >
+                  <For each={catalogue().groups}>
+                    {group => (
+                      <AccordionItem value={group.id}>
+                        <AccordionTrigger>{groupLabel(group)}</AccordionTrigger>
+                        <AccordionContent>
+                          <div class={styles.rows}>
+                            <For each={group.members}>
+                              {preference => (
+                                <PreferenceRow preference={preference} />
+                              )}
+                            </For>
+                            {/* The AMC calculation explainer, while either AMC
                               preference is active (OMS-REG-GPREF-01.7). */}
-                          <Show
-                            when={
-                              group.labelKey ===
-                                'title.average-monthly-consumption' &&
-                              isAmcExplainerShown(group.members, current)
-                            }
-                          >
-                            <div
-                              class={styles.explainer}
-                              data-testid="global-preferences-amc-explainer"
+                            <Show
+                              when={
+                                group.labelKey ===
+                                  'title.average-monthly-consumption' &&
+                                isAmcExplainerShown(group.members, current)
+                              }
                             >
-                              <span class={styles.label}>
-                                {t('label.amc-calculation')}
-                              </span>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-calculation')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-consumption')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-lookback-months')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-lookback-days')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-days-out-of-stock')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-days-out-of-stock-adjustment')}
-                              </Text>
-                              <Text variant="bodySmall">
-                                {t('messages.amc-minus-transfers')}
-                              </Text>
-                            </div>
-                          </Show>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  )}
-                </For>
-              </Accordion>
+                              <div
+                                class={styles.explainer}
+                                data-testid="global-preferences-amc-explainer"
+                              >
+                                <span class={styles.label}>
+                                  {t('label.amc-calculation')}
+                                </span>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-calculation')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-consumption')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-lookback-months')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-lookback-days')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-days-out-of-stock')}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t(
+                                    'messages.amc-days-out-of-stock-adjustment'
+                                  )}
+                                </Text>
+                                <Text variant="bodySmall">
+                                  {t('messages.amc-minus-transfers')}
+                                </Text>
+                              </div>
+                            </Show>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    )}
+                  </For>
+                </Accordion>
+              </Show>
             </Show>
           </Stack>
         </div>
