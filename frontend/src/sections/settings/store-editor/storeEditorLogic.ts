@@ -8,6 +8,13 @@ import type {
   StorePreferencesResult,
   UpsertStorePreferencesVariables,
 } from './storeEditor.generated';
+import {
+  groupCatalogue,
+  PREFERENCE_GROUPS,
+  type CatalogueGroup,
+  type PreferenceGroupDef,
+  type PreferenceGroupLabelKey,
+} from '@/domain/preferences';
 
 /** One property definition as the nameProperties catalogue serves it. */
 export type PropertyDefinition =
@@ -331,81 +338,38 @@ export const toggleInvoiceStatus = (
   return next;
 };
 
-/** Case-insensitive substring match on the displayed label (SET-05.35) — a
- *  blank term matches everything (`includes('')` is always true). */
-export const matchesPreferenceFilter = (label: string, term: string): boolean =>
-  label.toLowerCase().includes(term.trim().toLowerCase());
-
 // ---------------------------------------------------------------------------
-// Grouping (rules § The store editor › Preferences)
+// Grouping (rules § The store editor › Preferences) — the shared catalogue
+// helpers (@/domain/preferences) with this tab's own map of which key sits in
+// which group.
 
-export type StoreGroupLabelKey = 'label.procurement';
+export type StorePreferenceGroup = CatalogueGroup<
+  StorePreference,
+  PreferenceGroupLabelKey
+>;
 
 /* Which group a preference belongs to; anything unlisted is ungrouped. The
- * purchase-order preferences travel together, under the same group label the
- * global preferences page uses for its Procurement group. */
-const GROUP_OF: Partial<Record<StorePreference['key'], StoreGroupLabelKey>> = {
-  useProcurementFunctionality: 'label.procurement',
-  authorisePurchaseOrder: 'label.procurement',
-  externalInboundShipmentLinesMustBeAuthorised: 'label.procurement',
+ * purchase-order preferences travel together, in the same Procurement group
+ * the global preferences page shows. */
+const GROUP_OF: Partial<
+  Record<StorePreference['key'], PreferenceGroupDef<PreferenceGroupLabelKey>>
+> = {
+  useProcurementFunctionality: PREFERENCE_GROUPS.procurement,
+  authorisePurchaseOrder: PREFERENCE_GROUPS.procurement,
+  externalInboundShipmentLinesMustBeAuthorised: PREFERENCE_GROUPS.procurement,
 };
 
-export interface StorePreferenceGroup {
-  labelKey: StoreGroupLabelKey;
-  members: StorePreference[];
-}
+/** The served catalogue split into the ungrouped rows and the Procurement
+ *  group, both in served order (SET-05.46). */
+export const groupStorePreferences = (preferences: StorePreference[]) =>
+  groupCatalogue(preferences, GROUP_OF);
 
-export interface GroupedStoreCatalogue {
-  ungrouped: StorePreference[];
-  groups: StorePreferenceGroup[];
-}
-
-/*
- * Split the served catalogue into the ungrouped rows and the collapsible
- * groups. Both orders derive from the SERVED order: groups appear in order of
- * their first member, members keep catalogue order (SET-05.46).
- */
-export const groupStorePreferences = (
-  preferences: StorePreference[]
-): GroupedStoreCatalogue => {
-  const ungrouped: StorePreference[] = [];
-  const groups: StorePreferenceGroup[] = [];
-  for (const preference of preferences) {
-    const labelKey = GROUP_OF[preference.key];
-    if (!labelKey) {
-      ungrouped.push(preference);
-      continue;
-    }
-    const group = groups.find(g => g.labelKey === labelKey);
-    if (group) group.members.push(preference);
-    else groups.push({ labelKey, members: [preference] });
-  }
-  return { ungrouped, groups };
-};
-
-/*
- * The filtered catalogue: ungrouped rows match on their own label; a group is
- * all-or-nothing — kept whole when its label or ANY member matches
- * (SET-05.35, .46). The filter only hides rows; it never changes what a save
- * sends.
- */
-export const filterStoreCatalogue = (
-  catalogue: GroupedStoreCatalogue,
-  labelOf: (preference: StorePreference) => string,
-  groupLabelOf: (group: StorePreferenceGroup) => string,
-  term: string
-): GroupedStoreCatalogue => ({
-  ungrouped: catalogue.ungrouped.filter(preference =>
-    matchesPreferenceFilter(labelOf(preference), term)
-  ),
-  groups: catalogue.groups.filter(
-    group =>
-      matchesPreferenceFilter(groupLabelOf(group), term) ||
-      group.members.some(member =>
-        matchesPreferenceFilter(labelOf(member), term)
-      )
-  ),
-});
+/** The filter (SET-05.35): ungrouped rows match on their own label; a group
+ *  stays whole while its label or any member matches (SET-05.46). */
+export {
+  filterCatalogue as filterStoreCatalogue,
+  matchesPreferenceFilter,
+} from '@/domain/preferences';
 
 /*
  * Preferences are editable only on the central server by a session holding the

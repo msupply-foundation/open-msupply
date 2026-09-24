@@ -9,7 +9,6 @@ import {
   genderLabelKey,
   groupPreferences,
   isAmcExplainerShown,
-  matchesPreferenceFilter,
   OFFERED_GENDER_OPTIONS,
   preferenceLabelKey,
   selectedGenders,
@@ -103,15 +102,11 @@ describe('grouping (OMS-REG-GPREF-01.2)', () => {
 });
 
 describe('filter (OMS-REG-GPREF-01.4/.5/.6)', () => {
+  // The filter mechanics are the shared catalogue helper's (domain/preferences
+  // tests); this pins them to this page's groups and labels.
   const grouped = groupPreferences(CATALOGUE);
 
-  it('matches labels case-insensitively; a blank term matches everything', () => {
-    expect(matchesPreferenceFilter('Days in a month', 'DAYS')).toBe(true);
-    expect(matchesPreferenceFilter('Days in a month', '')).toBe(true);
-    expect(matchesPreferenceFilter('Days in a month', 'zzz')).toBe(false);
-  });
-
-  it('a member match keeps the whole group (.5)', () => {
+  it('a member match keeps the whole group (.5); no match leaves nothing (.6); clearing restores everything (.4)', () => {
     const filtered = filterCatalogue(
       grouped,
       labelOf,
@@ -122,24 +117,12 @@ describe('filter (OMS-REG-GPREF-01.4/.5/.6)', () => {
     expect(filtered.groups.map(g => g.labelKey)).toEqual([
       'label.expired-stock',
     ]);
-    // Whole group, both members.
     expect(filtered.groups[0]?.members).toHaveLength(2);
-  });
 
-  it('a group-label match keeps the group even when no member label matches (.5)', () => {
-    const filtered = filterCatalogue(
-      grouped,
-      labelOf,
-      groupLabelOf,
-      'procurement'
-    );
-    expect(filtered.groups.map(g => g.labelKey)).toEqual(['label.procurement']);
-  });
-
-  it('no match leaves nothing (.6); clearing restores everything (.4)', () => {
     const none = filterCatalogue(grouped, labelOf, groupLabelOf, 'zzzqqq');
     expect(none.ungrouped).toEqual([]);
     expect(none.groups).toEqual([]);
+
     const all = filterCatalogue(grouped, labelOf, groupLabelOf, '');
     expect(all.ungrouped).toHaveLength(10);
     expect(all.groups).toHaveLength(4);

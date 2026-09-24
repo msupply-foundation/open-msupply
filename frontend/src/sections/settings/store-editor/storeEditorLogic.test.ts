@@ -7,7 +7,6 @@ import {
   canEditPreferences,
   filterStoreCatalogue,
   groupStorePreferences,
-  matchesPreferenceFilter,
   preferenceValue,
   toggleInvoiceStatus,
   type StorePreference,
@@ -250,21 +249,10 @@ describe('preferenceValue', () => {
   });
 });
 
-describe('matchesPreferenceFilter (SET-05.35)', () => {
-  it('matches case-insensitively on a substring of the label', () => {
-    expect(matchesPreferenceFilter('Enable blind stock take', 'STOCK')).toBe(
-      true
-    );
-    expect(matchesPreferenceFilter('Order in packs', 'stock')).toBe(false);
-  });
-
-  it('an empty or whitespace-only term matches everything', () => {
-    expect(matchesPreferenceFilter('Anything', '')).toBe(true);
-    expect(matchesPreferenceFilter('Anything', '   ')).toBe(true);
-  });
-});
-
-describe('groupStorePreferences / filterStoreCatalogue (SET-05.46)', () => {
+describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .46)', () => {
+  // The grouping and filter mechanics are the shared catalogue helper's
+  // (domain/preferences tests); these pin which keys form the Procurement
+  // group and that the filter respects it.
   const pref = (
     key: StorePreference['key'],
     valueType: StorePreference['valueType'] = 'BOOLEAN'
@@ -307,12 +295,7 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.46)', () => {
     ]);
   });
 
-  it('omits the group entirely when none of its members are served', () => {
-    const { groups } = groupStorePreferences([pref('blindStocktake')]);
-    expect(groups).toEqual([]);
-  });
-
-  it('a member match keeps the whole group; ungrouped rows match on their own label', () => {
+  it('a member match keeps the whole group; ungrouped rows match on their own label (SET-05.35)', () => {
     const grouped = groupStorePreferences(served);
     const filtered = filterStoreCatalogue(
       grouped,
@@ -322,27 +305,6 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.46)', () => {
     );
     expect(filtered.ungrouped).toEqual([]);
     expect(filtered.groups[0]?.members).toHaveLength(3);
-  });
-
-  it('a group-label match keeps the group even when no member label matches', () => {
-    const grouped = groupStorePreferences(served);
-    const filtered = filterStoreCatalogue(
-      grouped,
-      labelOf,
-      groupLabelOf,
-      'PROCUREMENT'
-    );
-    expect(filtered.groups).toHaveLength(1);
-    expect(filtered.ungrouped).toEqual([]);
-  });
-
-  it('no match leaves nothing; a blank term restores everything', () => {
-    const grouped = groupStorePreferences(served);
-    const none = filterStoreCatalogue(grouped, labelOf, groupLabelOf, 'zzzqqq');
-    expect(none.ungrouped).toEqual([]);
-    expect(none.groups).toEqual([]);
-    const all = filterStoreCatalogue(grouped, labelOf, groupLabelOf, '  ');
-    expect(all).toEqual(grouped);
   });
 });
 
