@@ -47,7 +47,7 @@ mutation updateNameProperties(
   }
 }
 
-# The store's 24 preference descriptions, served in the order the panel shows
+# The store's preference descriptions, served in the order the panel shows
 # them (contract § The store editor). The server fabricates a default for an
 # unset preference — there is no is-set flag — and `value` is untyped JSON
 # (the schema's own declared type loss).

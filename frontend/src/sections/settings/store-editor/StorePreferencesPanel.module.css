@@ -1,7 +1,7 @@
 /*
  * The Preferences panel's row rhythm (spec/settings/ui-surface.md § S5 ›
  * Preferences panel): one labelled row per preference — label inline-start,
- * control inline-end — separated by the app-wide hairline, so 24 mixed-kind
+ * control inline-end — separated by the app-wide hairline, so the mixed-kind
  * rows read as one list rather than a wall of stacked fields. Tokens only.
  */
 
