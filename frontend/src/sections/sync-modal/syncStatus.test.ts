@@ -317,6 +317,15 @@ describe('statusLineKind — status-line precedence (SYNC-03.18)', () => {
   it('a run already in flight still reads as syncing while paused', () => {
     expect(statusLineKind(syncing, 0, true)).toBe('syncing');
   });
+  // Issue #840: maintenance mode holds the pause but lets a manual sync run,
+  // so it reads as its own line rather than 'paused'.
+  it('maintenance mode outranks the pause and the queue when idle', () => {
+    expect(statusLineKind(idle, 12, true, true)).toBe('maintenance');
+    expect(statusLineKind(idle, 0, false, true)).toBe('maintenance');
+  });
+  it('the forced run in maintenance mode still reads as syncing', () => {
+    expect(statusLineKind(syncing, 0, true, true)).toBe('syncing');
+  });
 });
 
 describe('records-to-push drains on success (SYNC-03.6)', () => {
@@ -583,6 +592,29 @@ describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync s
     });
   });
 
+  it('reports maintenance mode above the pause it holds (#840)', () => {
+    expect(syncFooterStatus(staleBy(0), 14, 0, now, true, true)).toEqual({
+      kind: 'maintenance',
+      tone: 'warning',
+    });
+    expect(
+      syncFooterStatus(
+        errored('INVALID_SITE_NAME_OR_PASSWORD'),
+        0,
+        0,
+        now,
+        true,
+        true
+      )
+    ).toEqual({ kind: 'maintenance', tone: 'warning' });
+    // The forced run it allows reads as syncing like any other.
+    const syncing = toSyncOverview(v7({ isSyncing: true }), MODAL);
+    expect(syncFooterStatus(syncing, 0, 0, now, true, true)).toEqual({
+      kind: 'syncing',
+      tone: 'neutral',
+    });
+  });
+
   it('lets a run already in flight finish before reading as paused', () => {
     const syncing = toSyncOverview(v7({ isSyncing: true }), MODAL);
     expect(syncFooterStatus(syncing, 0, 0, now, true)).toEqual({
@@ -715,9 +747,10 @@ describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync s
 });
 
 describe('syncFooterDimmed — the offline level (OMS-REG-FTR-03.21)', () => {
-  it('dims only while sync cannot happen — the server out of reach, this server paused, or the central sync API paused', () => {
+  it('dims only while sync cannot happen — the server out of reach, this server paused or in maintenance mode, or the central sync API paused', () => {
     expect(syncFooterDimmed('unreachable')).toBe(true);
     expect(syncFooterDimmed('paused')).toBe(true);
+    expect(syncFooterDimmed('maintenance')).toBe(true);
     expect(syncFooterDimmed('sync-api-paused')).toBe(true);
     for (const kind of [
       'waiting',

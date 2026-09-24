@@ -91,3 +91,75 @@ export type SetSyncApiPausedResult = {
 export const SetSyncApiPaused = {
   query: "mutation setSyncApiPaused($paused: Boolean!) {\n  centralServer {\n    general {\n      setSyncApiPaused(paused: $paused) {\n        isPaused\n      }\n    }\n  }\n}",
 } as TypedDocument<SetSyncApiPausedResult, SetSyncApiPausedVariables>;
+
+export type AreProcessorsPausedVariables = Record<string, never>;
+
+export type AreProcessorsPausedResult = {
+  areProcessorsPaused: boolean;
+};
+
+export const AreProcessorsPaused = {
+  query: "query areProcessorsPaused {\n  areProcessorsPaused\n}",
+} as TypedDocument<AreProcessorsPausedResult, AreProcessorsPausedVariables>;
+
+export type SetProcessorsPausedVariables = {
+  paused: boolean;
+};
+
+export type SetProcessorsPausedResult = {
+  centralServer: {
+  general: {
+  setProcessorsPaused: {
+  isPaused: boolean;
+};
+};
+};
+};
+
+export const SetProcessorsPaused = {
+  query: "mutation setProcessorsPaused($paused: Boolean!) {\n  centralServer {\n    general {\n      setProcessorsPaused(paused: $paused) {\n        isPaused\n      }\n    }\n  }\n}",
+} as TypedDocument<SetProcessorsPausedResult, SetProcessorsPausedVariables>;
+
+export type MaintenanceModeVariables = Record<string, never>;
+
+export type MaintenanceModeResult = {
+  maintenanceMode: {
+  isOn: boolean;
+  pendingIntegrationRecords: number;
+};
+};
+
+export const MaintenanceMode = {
+  query: "query maintenanceMode {\n  maintenanceMode {\n    isOn\n    pendingIntegrationRecords\n  }\n}",
+} as TypedDocument<MaintenanceModeResult, MaintenanceModeVariables>;
+
+export type SetMaintenanceModeVariables = {
+  on: boolean;
+};
+
+export type SetMaintenanceModeResult = {
+  centralServer: {
+  general: {
+  setMaintenanceMode: ({
+  __typename: "MaintenanceModeNode";
+} & {
+  isOn: boolean;
+  pendingIntegrationRecords: number;
+}) | ({
+  __typename: "SetMaintenanceModeError";
+} & {
+  error: ({
+  __typename: "IntegrationIncomplete";
+} & {
+  pendingIntegrationRecords: number;
+} & {
+  description: string;
+});
+});
+};
+};
+};
+
+export const SetMaintenanceMode = {
+  query: "mutation setMaintenanceMode($on: Boolean!) {\n  centralServer {\n    general {\n      setMaintenanceMode(on: $on) {\n        __typename\n        ... on MaintenanceModeNode {\n          isOn\n          pendingIntegrationRecords\n        }\n        ... on SetMaintenanceModeError {\n          error {\n            __typename\n            description\n            ... on IntegrationIncomplete {\n              pendingIntegrationRecords\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<SetMaintenanceModeResult, SetMaintenanceModeVariables>;

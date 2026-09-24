@@ -24,6 +24,8 @@ import {
   liveConnected,
   pollSyncStatus,
   syncPaused,
+  syncBlocked,
+  maintenanceMode,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
@@ -73,7 +75,12 @@ export const SyncModal: Component<{
     })
   );
   const statusKind = () =>
-    statusLineKind(overview(), pushQueueCount(), syncPaused());
+    statusLineKind(
+      overview(),
+      pushQueueCount(),
+      syncPaused(),
+      maintenanceMode()
+    );
 
   // SYNC-03.22: fetch once on open when nothing is cached (no initial
   // subscription frame — contract.md § Records to push). Fires exactly once per
@@ -182,8 +189,9 @@ export const SyncModal: Component<{
             icon={<SyncIcon />}
             loading={busy()}
             // Disabled, not merely no-op, while paused: the server refuses
-            // the trigger, so the control must read as unavailable.
-            disabled={syncPaused()}
+            // the trigger, so the control must read as unavailable. Not in
+            // maintenance mode, where the server forces the run (#840).
+            disabled={syncBlocked()}
             onClick={syncNow}
             data-testid="sync-now-button"
           >
@@ -202,6 +210,11 @@ export const SyncModal: Component<{
             <Match when={statusKind() === 'syncing'}>
               <p class={styles.statusLine} data-testid="sync-status-line">
                 {t('sync-info.syncing')}
+              </p>
+            </Match>
+            <Match when={statusKind() === 'maintenance'}>
+              <p class={styles.statusLine} data-testid="sync-status-line">
+                {t('sync-info.maintenance')}
               </p>
             </Match>
             <Match when={statusKind() === 'paused'}>
@@ -248,10 +261,19 @@ export const SyncModal: Component<{
 
         {/* Paused notice — who can lift it. Shown whenever paused, even beside
             a run still finishing, so the user knows nothing follows it. */}
-        <Show when={syncPaused()}>
-          <Alert severity="warning" testId="sync-paused-alert">
-            {t('messages.sync-paused')}
-          </Alert>
+        <Show
+          when={!maintenanceMode()}
+          fallback={
+            <Alert severity="warning" testId="sync-maintenance-alert">
+              {t('messages.sync-maintenance-mode')}
+            </Alert>
+          }
+        >
+          <Show when={syncPaused()}>
+            <Alert severity="warning" testId="sync-paused-alert">
+              {t('messages.sync-paused')}
+            </Alert>
+          </Show>
         </Show>
 
         {/* Error panel — only when the latest run errored (SYNC-03.28). */}

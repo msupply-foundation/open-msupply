@@ -192,20 +192,29 @@ export const toSyncOverview = (
   };
 };
 
-// SYNC-03.18: one status line by precedence — syncing, then the admin pause,
-// then a non-zero records-to-push count, then nothing-to-push. 'waiting'
-// covers the first open before any status has arrived. A run already in flight
-// when the pause lands finishes, so syncing still leads.
+// SYNC-03.18: one status line by precedence — syncing, then maintenance mode,
+// then the admin pause, then a non-zero records-to-push count, then
+// nothing-to-push. 'waiting' covers the first open before any status has
+// arrived. A run already in flight when the pause lands finishes, so syncing
+// still leads. Maintenance mode (#840, central only) holds the pause but lets a
+// manual sync through, so it is its own line rather than 'paused'.
 export type StatusLineKind =
-  'waiting' | 'syncing' | 'paused' | 'records-to-push' | 'nothing-to-push';
+  | 'waiting'
+  | 'syncing'
+  | 'maintenance'
+  | 'paused'
+  | 'records-to-push'
+  | 'nothing-to-push';
 
 export const statusLineKind = (
   overview: SyncOverview | undefined,
   pushQueueCount: number | undefined,
-  paused = false
+  paused = false,
+  maintenance = false
 ): StatusLineKind => {
   if (!overview) return 'waiting';
   if (overview.isSyncing) return 'syncing';
+  if (maintenance) return 'maintenance';
   if (paused) return 'paused';
   if (pushQueueCount != null && pushQueueCount > 0) return 'records-to-push';
   return 'nothing-to-push';
@@ -312,6 +321,9 @@ export type SyncFooterStatus =
   | { kind: 'waiting'; tone: 'neutral' }
   // A run is in flight.
   | { kind: 'syncing'; tone: 'neutral' }
+  // Central is in maintenance mode (#840): sync, the sync API and processors
+  // are held, and only a server administrator's manual sync runs.
+  | { kind: 'maintenance'; tone: 'warning' }
   // A server administrator has paused sync; nothing will run until resumed.
   | { kind: 'paused'; tone: 'warning' }
   // The latest run failed, or the site is critically stale.
@@ -360,7 +372,8 @@ const daysSinceSuccess = (overview: SyncOverview, now: Date): number =>
 
 /*
  * The footer sync cell's state (spec/chrome § sync status). Precedence, highest
- * first: a run in flight, the admin pause, a failed run, staleness, an
+ * first: a run in flight, maintenance mode, the admin pause, a failed run,
+ * staleness, an
  * unreachable server, the queue, then the quiet "Synced …" line. Staleness
  * escalates the WHOLE cell — it is the site's one standing sync signal, so an
  * ageing site must say so even with an empty queue. The pause sits above the
@@ -373,10 +386,12 @@ export const syncFooterStatus = (
   pushQueueCount: number | undefined,
   displayThreshold: number,
   now: Date,
-  paused = false
+  paused = false,
+  maintenance = false
 ): SyncFooterStatus => {
   if (!overview) return { kind: 'waiting', tone: 'neutral' };
   if (overview.isSyncing) return { kind: 'syncing', tone: 'neutral' };
+  if (maintenance) return { kind: 'maintenance', tone: 'warning' };
   if (paused) return { kind: 'paused', tone: 'warning' };
   const unreachable = overview.error?.variant === CONNECTION_VARIANT;
   const syncApiPaused = overview.error?.variant === SYNC_API_PAUSED_VARIANT;
@@ -421,4 +436,7 @@ export const syncFooterStatus = (
  * ground.
  */
 export const syncFooterDimmed = (kind: SyncFooterStatus['kind']): boolean =>
-  kind === 'unreachable' || kind === 'paused' || kind === 'sync-api-paused';
+  kind === 'unreachable' ||
+  kind === 'paused' ||
+  kind === 'maintenance' ||
+  kind === 'sync-api-paused';

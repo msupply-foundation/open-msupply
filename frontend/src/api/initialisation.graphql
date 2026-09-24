@@ -89,6 +89,10 @@ query syncStatusAndQueue {
   # run starts. Rides on the post-login poll and the subscription frame so the
   # chrome cell and the modal read it from the shared store.
   isSyncPaused
+  # Central maintenance mode (#840): while on, a manual sync is forced past the
+  # pause above, and the header says so. Rides alongside the pause for the same
+  # reason.
+  isMaintenanceMode
 }
 
 subscription syncInfoUpdated {
@@ -98,6 +102,7 @@ subscription syncInfoUpdated {
     }
     numberOfRecordsInPushQueue
     isSyncPaused
+    isMaintenanceMode
   }
 }
 

@@ -91,3 +91,10 @@ fragment UserInfo on UserNode {
     }
   }
 }
+
+# Central maintenance mode (#840): only server administrators can log in while
+# it is on. Unauthenticated, so the login screen can say so before anyone
+# tries.
+query isMaintenanceMode {
+  isMaintenanceMode
+}

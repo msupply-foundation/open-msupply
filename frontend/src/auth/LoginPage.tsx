@@ -1,4 +1,4 @@
-import { createSignal, onMount, Show } from 'solid-js';
+import { createResource, createSignal, onMount, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
 import { submitStateAfter, type SubmitState } from './submitState';
@@ -6,6 +6,9 @@ import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { getLastLoginUsername } from '../appData';
 import { recordPrefersOldUi } from '../preferredFrontend';
 import { serverVersion } from '../api/serverInfo';
+import { graphqlFetch } from '../api/graphql';
+import { gated } from '../api/gated';
+import { IsMaintenanceMode } from '../api/auth.generated';
 import { createFocusTarget } from '../ui/utils/createFocusTarget';
 import { useIsCompact } from '../ui/utils/createMediaQuery';
 import { TextField } from '../ui/elements/inputs/TextField';
@@ -64,6 +67,21 @@ export const LoginPage: Component = () => {
   const [submitState, setSubmitState] = createSignal<SubmitState>({
     kind: 'idle',
   });
+
+  // Central maintenance mode (#840): only server administrators can log in, so
+  // say so before anyone tries — including a user just signed out by the
+  // switch, who lands here on their next request. Unauthenticated; a failed
+  // read shows nothing (a refused login still carries the server's message).
+  // Gated so the read never suspends the page (kdd/solid-reactivity-pitfalls).
+  const [maintenanceData] = createResource(async () => {
+    const result = await graphqlFetch(
+      IsMaintenanceMode,
+      {},
+      { background: true }
+    );
+    return result.kind === 'success' && result.data.isMaintenanceMode;
+  });
+  const maintenanceMode = () => gated(maintenanceData) ?? false;
 
   // Only decides WHERE the version line renders — see versionLine() below.
   const compact = useIsCompact();
@@ -143,6 +161,11 @@ export const LoginPage: Component = () => {
               {t('login.form-heading')}
             </h2>
             <AppLogo class={styles.logo} />
+            <Show when={maintenanceMode()}>
+              <Alert severity="warning" testId="login-maintenance-mode">
+                {t('login.maintenance-mode')}
+              </Alert>
+            </Show>
             <TextField
               label={t('heading.username')}
               type="text"

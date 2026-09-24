@@ -25,7 +25,8 @@ import {
 } from './syncSettings.generated';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
-import { SyncApiPause } from './SyncApiPause';
+import { ProcessorsPause, SyncApiPause } from './CentralPauses';
+import { MaintenanceMode } from './MaintenanceMode';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
@@ -46,8 +47,10 @@ const ADVANCED_REGION_ID = 'sync-settings-advanced';
  * (OMS-REG-SET-02.12).
  */
 export const SyncSection = (props: {
-  /** Central server + Server Admin: also show the sync API pause (#717). */
-  showSyncApiPause: boolean;
+  /** Central server + Server Admin: also show the central-only controls —
+   * maintenance mode (#840), the sync API pause (#717) and the processor pause
+   * (#840). */
+  showCentralControls: boolean;
 }) => {
   // Stored settings (never includes the password). Non-suspending read —
   // this section lives inside an already-open page (kdd/solid-reactivity-
@@ -97,6 +100,19 @@ export const SyncSection = (props: {
    * re-polled so this session's chrome cell shows the paused state at once
    * (other sessions get it from the live frame the server emits).
    */
+  /*
+   * Maintenance mode (central only) sets and clears all three pauses at once,
+   * and holds them while on: the switches below it re-read their state when it
+   * flips, and are disabled while it is on.
+   */
+  const [maintenanceOn, setMaintenanceOn] = createSignal(false);
+  const [pauseVersion, setPauseVersion] = createSignal(0);
+  const onMaintenanceChanged = () => {
+    setPauseVersion(version => version + 1);
+    void refetch();
+    void pollSyncStatus();
+  };
+
   const [pauseBusy, setPauseBusy] = createSignal(false);
   const [pauseError, setPauseError] = createSignal<string>();
   const setPaused = async (paused: boolean) => {
@@ -179,11 +195,17 @@ export const SyncSection = (props: {
       }}
     >
       <Stack>
+        <Show when={props.showCentralControls}>
+          <MaintenanceMode
+            onChanged={onMaintenanceChanged}
+            onState={setMaintenanceOn}
+          />
+        </Show>
         <ToggleSwitch
           label={t('label.pause-sync')}
           variant="caution"
           checked={stored()?.isPaused ?? false}
-          disabled={pauseBusy() || saving()}
+          disabled={pauseBusy() || saving() || maintenanceOn()}
           onChange={paused => void setPaused(paused)}
           labelInfo={
             <InfoTooltip
@@ -196,10 +218,12 @@ export const SyncSection = (props: {
         <Show when={pauseError()}>
           {message => <Alert severity="error">{message()}</Alert>}
         </Show>
-        {/* The two pauses sit together: this server's own sync above, the
-            sync API it serves to remote sites below (central only). */}
-        <Show when={props.showSyncApiPause}>
-          <SyncApiPause />
+        {/* The pauses sit together: this server's own sync above, then the
+            sync API it serves to remote sites and its processors (central
+            only). */}
+        <Show when={props.showCentralControls}>
+          <SyncApiPause version={pauseVersion} disabled={maintenanceOn()} />
+          <ProcessorsPause version={pauseVersion} disabled={maintenanceOn()} />
         </Show>
         {/* The standard form layout (kdd/form-layout): stacked full-width
           fields carrying their own labels, with the two numbers paired in a

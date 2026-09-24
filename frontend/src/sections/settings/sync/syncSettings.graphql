@@ -58,3 +58,53 @@ mutation setSyncApiPaused($paused: Boolean!) {
     }
   }
 }
+
+# Central only (spec/settings/contract.md § Synchronisation): while paused,
+# central's transfer and general processors drop their triggers (issue #840).
+# Server Admin is enforced server-side on both.
+query areProcessorsPaused {
+  areProcessorsPaused
+}
+
+mutation setProcessorsPaused($paused: Boolean!) {
+  centralServer {
+    general {
+      setProcessorsPaused(paused: $paused) {
+        isPaused
+      }
+    }
+  }
+}
+
+# Central only (issue #840): the switch that holds sync, the sync API and the
+# processors together, and how much of OMS central's own sync buffer is left
+# to integrate. Turning it off is refused while that count is above zero.
+query maintenanceMode {
+  maintenanceMode {
+    isOn
+    pendingIntegrationRecords
+  }
+}
+
+mutation setMaintenanceMode($on: Boolean!) {
+  centralServer {
+    general {
+      setMaintenanceMode(on: $on) {
+        __typename
+        ... on MaintenanceModeNode {
+          isOn
+          pendingIntegrationRecords
+        }
+        ... on SetMaintenanceModeError {
+          error {
+            __typename
+            description
+            ... on IntegrationIncomplete {
+              pendingIntegrationRecords
+            }
+          }
+        }
+      }
+    }
+  }
+}
