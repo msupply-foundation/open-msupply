@@ -405,6 +405,7 @@ export type EveryStorePreferenceHandled<
     | 'storeCustomColour'
     | 'warnWhenMissingRecentStocktake'
     | 'invoiceStatusOptions'
+    | 'authorisePurchaseOrderStoreOverride'
   >,
 > = Unhandled;
 
@@ -434,6 +435,13 @@ export const buildPreferencesInput = (
   if ('invoiceStatusOptions' in draft)
     input.invoiceStatusOptions = [
       { storeId, value: asStatusList(draft.invoiceStatusOptions) },
+    ];
+  // The one global preference a store may override (rules § The store editor
+  // › Preferences): served under its own key, written through the override
+  // field so the global value is left alone.
+  if ('authorisePurchaseOrder' in draft)
+    input.authorisePurchaseOrderStoreOverride = [
+      { storeId, value: asBool(draft.authorisePurchaseOrder) },
     ];
 
   return Object.keys(input).length > 0 ? input : undefined;

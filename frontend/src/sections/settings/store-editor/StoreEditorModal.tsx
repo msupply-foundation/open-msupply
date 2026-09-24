@@ -70,7 +70,7 @@ import {
  * the draft intact, and Save is disabled while the session can edit nothing
  * (D79).
  *
- * The Preferences tab lists the store's 23 operational preferences —
+ * The Preferences tab lists the store's 24 operational preferences —
  * editable only on a central server with the central-data permission
  * (rules § The store editor › Preferences, OMS-REG-SET-05.33–.39). Its edits
  * stage per-preference (the write is per-preference, unlike the wholesale
@@ -158,7 +158,7 @@ export const StoreEditorModal = (props: {
   );
   const definitions = () => gated(definitionsData) ?? [];
 
-  // The store's 23 preference descriptions — served in display order, with a
+  // The store's 24 preference descriptions — served in display order, with a
   // fabricated default standing in for any unset preference (contract § The
   // store editor). Same interaction-opened read as the two above, so the same
   // non-suspending gate.

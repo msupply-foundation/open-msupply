@@ -369,6 +369,19 @@ describe('buildPreferencesInput (SET-05.37)', () => {
     expect(buildPreferencesInput({}, 'store-a')).toBeUndefined();
   });
 
+  it('writes the purchase-order authorisation row as the store override, never the global value (SET-05.45)', () => {
+    const input = buildPreferencesInput(
+      { authorisePurchaseOrder: false },
+      'store-a'
+    );
+    expect(input).toEqual({
+      authorisePurchaseOrderStoreOverride: [
+        { storeId: 'store-a', value: false },
+      ],
+    });
+    expect(input).not.toHaveProperty('authorisePurchaseOrder');
+  });
+
   it('carries the composite and the status set in their wire shapes', () => {
     const input = buildPreferencesInput(
       {
