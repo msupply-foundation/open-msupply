@@ -434,7 +434,7 @@ const LineEditContent = (
                 label={t(packsLabelKey(status()))}
                 hideLabel
                 min={0}
-                decimalLimit={2}
+                decimalLimit={10}
                 data-testid="packs-input"
                 ref={packsField.ref}
                 value={draftPacks(draft()!)}
