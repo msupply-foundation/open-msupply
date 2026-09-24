@@ -27,3 +27,48 @@
   background: var(--bg-white);
   border-block-start: 1px solid var(--color-border-value);
 }
+
+/*
+ * SUCCESS — while the message slot shows a success (ContentFooterMessage
+ * stamps data-outcome), one green wave travels along the whole bar,
+ * inline-start → inline-end, so a status change that lands is seen and not
+ * only read. The bar's own background stays as it is.
+ *
+ * The wave is the sync stepper's connector sweep (ProgressList.module.css)
+ * scaled up to the bar: a soft band with gradient edges, a no-repeat layer
+ * over the bar's surface, parked past the far end at rest. Its green is the
+ * stocktake/outbound placeholder rows' marking hue (--marking-unfinished). It
+ * starts when this rule STARTS matching, so it plays once per success and
+ * never on a re-render. Twice the connector's time, since it crosses the whole
+ * bar rather than one connector. The duration is a motion token, so reduced
+ * motion drops the wave and the chip alone reports the outcome.
+ */
+.footer:has([data-outcome='success']) {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--marking-unfinished) 25%, var(--bg-white)),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-size: 30% 100%;
+  background-position-x: 143%;
+  animation: footer-wave calc(var(--motion-sweep) * 2) ease-out;
+}
+
+/* RTL: the wave still travels inline-start → inline-end, now right → left, so
+   the same keyframes run in reverse and the band parks past the LEFT end. */
+:dir(rtl) .footer:has([data-outcome='success']) {
+  background-position-x: -43%;
+  animation-direction: reverse;
+}
+
+@keyframes footer-wave {
+  from {
+    background-position-x: -43%;
+  }
+
+  to {
+    background-position-x: 143%;
+  }
+}

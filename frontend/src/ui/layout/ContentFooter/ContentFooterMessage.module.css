@@ -1,0 +1,53 @@
+/*
+ * The content footer's message slot — the bar's ONE flexible item. A zero
+ * basis and no min-content floor mean it never takes part in how the bar
+ * wraps: it only grows into whatever the line has left over once the fixed
+ * items (hold toggle, crumbs, pager, actions) are placed. So a chip landing in
+ * it moves nothing and adds no line. The actions still sit at the inline end:
+ * this slot takes the free space their auto margin used to take.
+ *
+ * Its content packs to the inline END, against the actions, so the chip lands
+ * where the status button was — the spot the user's eye is on as the dialog
+ * closes — rather than out beside the crumbs.
+ */
+.message {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
+/*
+ * The success chip's carrier: it rises in (a quarter-rem lift + fade) and
+ * fades out before ContentFooterMessage removes it. A flex box of its own with
+ * no min-content floor, so the truncating chip inside can still shrink to the
+ * slot.
+ */
+.flash {
+  display: flex;
+  min-inline-size: 0;
+  animation: flash-in var(--motion-base) ease-out;
+}
+
+.flash[data-leaving] {
+  animation: flash-out var(--motion-base) ease-in forwards;
+}
+
+@keyframes flash-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes flash-out {
+  to {
+    opacity: 0;
+  }
+}
