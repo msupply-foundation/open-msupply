@@ -10,7 +10,10 @@ import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { Alert } from '../../../ui/elements/feedback/Alert';
+import {
+  ContentFooterMessage,
+  type FooterMessage,
+} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
 import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
@@ -56,12 +59,15 @@ export interface InboundShipmentStatusFooterProps {
 // SUBMITTED, not pre-validated (spec S7 / validation.md → actions): a server
 // rejection (on hold, cannot-reverse, cannot-set-shipped-on-manual, pending
 // lines) returns and is shown inline at the control, the request preserved.
+// A committed advance is reported in the same slot, as a flash of the current
+// app's save confirmation (spec/ui-standards/controls.md § action feedback):
+// the split button is gone at Verified, and the crumb alone is easy to miss.
 export const InboundShipmentStatusFooter: Component<
   InboundShipmentStatusFooterProps
 > = props => {
   const [holdConfirm, setHoldConfirm] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
-  const [errorMessage, setErrorMessage] = createSignal<string>();
+  const [outcome, setOutcome] = createSignal<FooterMessage>();
 
   const sourceLink = () => sourceLinkOf(props.node);
   // Every status surface is limited by the invoice-status-options preference
@@ -83,7 +89,7 @@ export const InboundShipmentStatusFooter: Component<
   const advance = async (status: string) => {
     if (busy()) return;
     setBusy(true);
-    setErrorMessage(undefined);
+    setOutcome(undefined);
     const result = await updateInboundShipment(
       props.storeId,
       props.isExternal,
@@ -95,8 +101,11 @@ export const InboundShipmentStatusFooter: Component<
       }
     );
     setBusy(false);
-    if (result.kind === 'saved') props.onAdvanced(result.node);
-    else if (result.kind === 'error') setErrorMessage(result.message);
+    if (result.kind === 'saved') {
+      props.onAdvanced(result.node);
+      setOutcome({ type: 'success', text: t('messages.shipment-saved') });
+    } else if (result.kind === 'error')
+      setOutcome({ type: 'error', text: result.message, persistent: true });
   };
 
   const options = () =>
@@ -131,12 +140,9 @@ export const InboundShipmentStatusFooter: Component<
           reach it. */}
       <Pagination {...props.pagination} inBar />
 
-      {/* A rejected advance shows here, at the control, request preserved. */}
-      <Show when={errorMessage()}>
-        <Alert severity="error" testId="status-error">
-          {errorMessage()}
-        </Alert>
-      </Show>
+      {/* The outcome of an advance, at the control: a rejection (request
+          preserved) or the save confirmation's flash. */}
+      <ContentFooterMessage message={outcome()} />
 
       <ContentFooterActions>
         <Show when={!props.disabled && reachable().length > 0}>

@@ -5,6 +5,10 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import {
+  ContentFooterMessage,
+  type FooterMessage,
+} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import {
   Pagination,
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
@@ -20,7 +24,10 @@ import type { OutboundNode } from './outboundUpdate';
 // invoice-status-options preference — OMS-REG-DIST-04.22), Close (back to
 // the list), and the status-change split button (its own action component).
 // Replaced by the bulk-action bar while lines are selected
-// (OMS-REG-DIST-04.20).
+// (OMS-REG-DIST-04.20). A status change that lands is reported in the bar's
+// message slot, as a flash of the save confirmation
+// (spec/ui-standards/controls.md § action feedback) — the split button is gone
+// at Shipped, and the crumb alone is easy to miss.
 
 export interface OutboundStatusFooterProps {
   storeId: string;
@@ -59,6 +66,7 @@ export const OutboundStatusFooter: Component<
   OutboundStatusFooterProps
 > = props => {
   const [holdConfirm, setHoldConfirm] = createSignal(false);
+  const [outcome, setOutcome] = createSignal<FooterMessage>();
 
   const editable = () => isEditable(props.node.status);
   const holding = () => props.node.onHold;
@@ -86,6 +94,13 @@ export const OutboundStatusFooter: Component<
   const indicatorIndex = () =>
     currentStep(STATUS_FLOW, allowedStatuses(), props.node.status);
 
+  // Both of the action's success paths (the confirm, and the on-hold notice's
+  // release-and-confirm) come through here.
+  const onSaved = (node: OutboundNode) => {
+    props.onSaved(node);
+    setOutcome({ type: 'success', text: t('messages.shipment-saved') });
+  };
+
   return (
     <ContentFooter>
       {/* The totals, on the bar itself rather than above it (narrow
@@ -106,6 +121,8 @@ export const OutboundStatusFooter: Component<
 
       <StatusIndicator steps={steps()} current={indicatorIndex()} />
 
+      <ContentFooterMessage message={outcome()} />
+
       {/* The status-change split button, which hides entirely when read-only
           (spec S3 § status footer). No Close beside it (D103): leaving the
           shipment is the breadcrumb's job, as on every other screen. */}
@@ -113,7 +130,7 @@ export const OutboundStatusFooter: Component<
         storeId={props.storeId}
         node={props.node}
         preflight={props.preflight}
-        onSaved={props.onSaved}
+        onSaved={onSaved}
         leading={
           <>
             {/* The line pager, docked in the action cluster (`inBar` — it
