@@ -5,6 +5,10 @@ import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import {
+  ContentFooterMessage,
+  type FooterMessage,
+} from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import {
   Pagination,
   type PaginationProps,
 } from '@/ui/elements/table/Pagination';
@@ -13,13 +17,17 @@ import { STATUS_LABELS, statusIndex } from './stocktakeStatus';
 import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 
 // The stocktake-level footer (Open mSupply's StocktakeDetailView footer, no
-// rows selected): the on-hold checkbox toggle, the status indicator, and the
-// finalise action. On-hold uses a plain ConfirmDialog (no user-facing failure);
-// finalise is its own self-contained component (the status stepper's
-// SplitButton + confirm/success/error ActionModal + no-lines dialog — see
-// FinaliseAction). This footer owns only the on-hold confirm; the mutations run
-// through the view's callbacks (onSetHold → saveStocktakeFields, run →
-// finaliseStocktake), which splice the returned node back with no refetch.
+// rows selected): the on-hold checkbox toggle, the status indicator, the
+// message slot, and the finalise action. On-hold uses a plain ConfirmDialog
+// (no user-facing failure); finalise is its own self-contained component (the
+// status stepper's SplitButton + its confirm → working → error dialog — see
+// FinaliseAction, kdd/action-modal). This footer owns the on-hold confirm and
+// the finalise success flash: a successful finalise closes the dialog and
+// hides the split button, so the slot is where the save confirmation lands
+// (spec/ui-standards/controls.md § action feedback). The mutations run
+// through the view's callbacks (onSetHold → saveStocktakeFields, onFinalised
+// after finaliseStocktake), which splice the returned node back with no
+// refetch.
 // Shown only when nothing is selected — the selection action bar replaces it
 // (matching OMS, which swaps the whole footer).
 
@@ -60,6 +68,13 @@ export const StocktakeStatusFooter: Component<
 > = props => {
   // Confirm-before-act, like OMS: toggling on-hold confirms first.
   const [holdConfirm, setHoldConfirm] = createSignal(false);
+  const [outcome, setOutcome] = createSignal<FooterMessage>();
+
+  // Finalise is the only status write (NEW → FINALISED).
+  const onFinalised = (node: StocktakeInfoFragment) => {
+    props.onFinalised(node);
+    setOutcome({ type: 'success', text: t('messages.saved') });
+  };
 
   const isFinalised = () => props.node.status === 'FINALISED';
   const holding = () => props.node.isLocked;
@@ -100,12 +115,14 @@ export const StocktakeStatusFooter: Component<
           reach it. */}
       <Pagination {...props.pagination} inBar />
 
+      <ContentFooterMessage message={outcome()} />
+
       {/* Finalise — the status-change split button + its modals, self-contained (kdd/action-modal). */}
       <FinaliseAction
         storeId={props.storeId}
         node={props.node}
         disabled={props.disabled}
-        onApplied={props.onFinalised}
+        onApplied={onFinalised}
         onError={props.onError}
         onShowErrors={props.onShowErrors}
       />

@@ -10,6 +10,10 @@ import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import {
+  ContentFooterMessage,
+  type FooterMessage,
+} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import {
   asRequestStatus,
   isEditable,
   statusIndex,
@@ -30,6 +34,10 @@ import type { PrescriptionRequestFieldsFragment } from './prescriptionRequestDet
 // dispensation takes is the REQUEST's own field, set on the header while it
 // was still editable, so by here there is nothing left to enter — only to
 // confirm.
+//
+// A hand-over that lands closes the dialog and hides the button, so the bar's
+// message slot flashes the save confirmation (spec/ui-standards/controls.md §
+// action feedback).
 
 export interface PrescriptionRequestStatusFooterProps {
   storeId: string;
@@ -45,6 +53,7 @@ export const PrescriptionRequestStatusFooter: Component<
   const [working, setWorking] = createSignal(false);
   const [rejection, setRejection] = createSignal<string>();
   const [noLinesOpen, setNoLinesOpen] = createSignal(false);
+  const [outcome, setOutcome] = createSignal<FooterMessage>();
 
   const status = () => asRequestStatus(props.node.status);
 
@@ -84,6 +93,7 @@ export const PrescriptionRequestStatusFooter: Component<
     if (outcome.kind === 'saved') {
       closeDialogs();
       props.onSaved(outcome.node);
+      setOutcome({ type: 'success', text: t('messages.saved') });
       return;
     }
     if (outcome.kind === 'rejected') {
@@ -101,6 +111,8 @@ export const PrescriptionRequestStatusFooter: Component<
         steps={statusSteps(props.node)}
         current={statusIndex(status())}
       />
+
+      <ContentFooterMessage message={outcome()} />
 
       <ContentFooterActions>
         {/* Hidden once past New — a permanently dead control is hidden. */}

@@ -9,11 +9,18 @@ import {
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import {
+  ContentFooterMessage,
+  type FooterMessage,
+} from '@/ui/layout/ContentFooter/ContentFooterMessage';
 import { Button } from '@/ui/elements/buttons/Button';
 import { ArrowRightIcon } from '@/ui/icons';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { hasPermission } from '@/store/storeContext';
-import { poStatusLabel, type PurchaseOrderStatus } from '../purchaseOrderStatus';
+import {
+  poStatusLabel,
+  type PurchaseOrderStatus,
+} from '../purchaseOrderStatus';
 import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated';
 import {
   currentStep,
@@ -68,7 +75,7 @@ export const PurchaseOrderStatusFooter: Component<
 > = props => {
   const [confirming, setConfirming] = createSignal<PurchaseOrderStatus>();
   const [busy, setBusy] = createSignal(false);
-  const [errorMessage, setErrorMessage] = createSignal<string>();
+  const [outcome, setOutcome] = createSignal<FooterMessage>();
 
   const status = () => props.node.status as PurchaseOrderStatus;
   const target = () => nextStatus(status(), props.authorisationRequired);
@@ -93,10 +100,10 @@ export const PurchaseOrderStatusFooter: Component<
     });
 
   const start = (to: PurchaseOrderStatus) => {
-    setErrorMessage(undefined);
+    setOutcome(undefined);
     const declined = refusal(to);
     if (declined) {
-      setErrorMessage(declined);
+      setOutcome({ type: 'error', text: declined, persistent: true });
       return;
     }
     setConfirming(to);
@@ -108,7 +115,13 @@ export const PurchaseOrderStatusFooter: Component<
     const result = await props.onMove(to);
     setBusy(false);
     setConfirming(undefined);
-    if (!result.ok) setErrorMessage(result.message);
+    if (!result.ok) {
+      // No message = a transport failure, already up in the global modal.
+      if (result.message)
+        setOutcome({ type: 'error', text: result.message, persistent: true });
+      return;
+    }
+    setOutcome({ type: 'success', text: t('messages.purchase-order-saved') });
   };
 
   return (
@@ -122,18 +135,13 @@ export const PurchaseOrderStatusFooter: Component<
           cluster so a crowded bar wraps it whole rather than crushing it). */}
       <Pagination {...props.pagination} inBar />
 
-      {/* A declined or rejected move shows here, at the control. A blocked
-          move names the offending items and the table marks those lines; a
-          finalise blocked by an unverified shipment names that instead —
-          though its wording denies a delivered shipment exists, which is the
-          server's message, not ours (contract ⚠️). */}
-      <Show when={errorMessage()}>
-        {message => (
-          <Alert severity="error" testId="status-error">
-            {message()}
-          </Alert>
-        )}
-      </Show>
+      {/* The outcome of a move, at the control. A declined or rejected move:
+          a blocked move names the offending items and the table marks those
+          lines; a finalise blocked by an unverified shipment names that
+          instead — though its wording denies a delivered shipment exists,
+          which is the server's message, not ours (contract ⚠️). A move that
+          lands: the save confirmation's flash. */}
+      <ContentFooterMessage message={outcome()} />
 
       <ContentFooterActions>
         <Show when={target()}>
@@ -166,10 +174,7 @@ export const PurchaseOrderStatusFooter: Component<
               onClose={() => setConfirming(undefined)}
               title={t('heading.are-you-sure')}
               message={
-                <Show
-                  when={confirmation.note}
-                  fallback={confirmation.message}
-                >
+                <Show when={confirmation.note} fallback={confirmation.message}>
                   {note => (
                     <Stack gap="sm">
                       <span>{confirmation.message}</span>

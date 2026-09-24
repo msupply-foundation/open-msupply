@@ -5,6 +5,10 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import {
+  ContentFooterMessage,
+  type FooterMessage,
+} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
 import { StatusChangeAction } from './actions/StatusChangeAction';
 import { currentStep, filterByStatusPreference } from '@/domain/invoice';
 import { returnKind, statusFlow, statusSteps } from './returnStatus';
@@ -19,6 +23,10 @@ import type { CustomerReturnInfoFragment } from './customerReturnDetail.generate
 // OMS-REG-DIST-07.7/.32/.33): the
 // toggle stays available while the return is editable, confirms before
 // flipping, and the messages flip with direction.
+//
+// A status change that lands is reported in the bar's message slot, as a
+// flash of the save confirmation (spec/ui-standards/controls.md § action
+// feedback) — the split button is gone at Verified.
 
 export interface CustomerReturnStatusFooterProps {
   storeId: string;
@@ -39,6 +47,7 @@ export const CustomerReturnStatusFooter: Component<
   CustomerReturnStatusFooterProps
 > = props => {
   const [holdConfirm, setHoldConfirm] = createSignal(false);
+  const [outcome, setOutcome] = createSignal<FooterMessage>();
 
   const kind = () => returnKind(props.node);
   const holding = () => props.node.onHold;
@@ -47,6 +56,11 @@ export const CustomerReturnStatusFooter: Component<
   // included earlier stage.
   const flow = () => statusFlow(kind());
   const offered = () => filterByStatusPreference(flow(), props.statusOptions);
+
+  const onApplied = (node: CustomerReturnInfoFragment) => {
+    props.onAdvanced(node);
+    setOutcome({ type: 'success', text: t('messages.return-saved') });
+  };
 
   return (
     <ContentFooter>
@@ -67,6 +81,8 @@ export const CustomerReturnStatusFooter: Component<
         current={currentStep(flow(), offered(), props.node.status)}
       />
 
+      <ContentFooterMessage message={outcome()} />
+
       {/* One inline-end cluster: the Confirm-status split button alone. No
           Close beside it (D103) — leaving the return is the breadcrumb's job,
           in the app bar, where every other screen puts it. */}
@@ -76,7 +92,7 @@ export const CustomerReturnStatusFooter: Component<
           node={props.node}
           hasLines={props.hasLines}
           statusOptions={props.statusOptions}
-          onApplied={props.onAdvanced}
+          onApplied={onApplied}
         />
       </ContentFooterActions>
 
