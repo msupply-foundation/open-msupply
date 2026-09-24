@@ -7,11 +7,11 @@ import type {
 
 // CSV-to-workbook conversion + the shared PrintReportResponse mapping, in the
 // stocktakes mutation-wrapper style (plain module, graphqlFetch, discriminated
-// result). Shared across verticals (spec/reports "Cross-cutting" / AC-F3):
-// list-screen exports convert here, then fetch/download via files.ts. The
-// reports vertical's generateReport returns the same response union and reuses
-// mapPrintResponse. Every type is derived by indexing the generated Result
-// types — no parallel interfaces (kdd/type-safety).
+// result). Shared across verticals (spec/reports "Cross-cutting" /
+// OMS-REG-RPT-09.15): list-screen exports convert here, then fetch/download via
+// files.ts. The reports vertical's generateReport returns the same response
+// union and reuses mapPrintResponse. Every type is derived by indexing the
+// generated Result types — no parallel interfaces (kdd/type-safety).
 
 export type { CsvToExcelVariables };
 
@@ -26,12 +26,12 @@ export type { CsvToExcelVariables };
 //   `message` is the description. Both wrappers opt into handling their own
 //   GraphQL errors (`returnGraphqlErrors`, the opt-in kdd/state-management
 //   sanctions), so nothing global has shown it: the caller MUST show it at the
-//   control the user clicked (spec/reports S5, AC-G6) — never the global modal,
-//   whose Reload just re-runs the same failing generation.
-// - `failed` — the call could not be made at all (a connection failure or an
-//   unusable response), which stays an unexpected error on the app's global
-//   surface by default; the caller stays silent — same convention as the
-//   stocktakes wrappers.
+// control the user clicked (spec/reports S5, OMS-REG-RPT-09.10) — never the
+// global modal, whose Reload just re-runs the same failing generation. -
+// `failed` — the call could not be made at all (a connection failure or an
+// unusable response), which stays an unexpected error on the app's global
+// surface by default; the caller stays silent — same convention as the
+// stocktakes wrappers.
 export type GenerateResult =
   | { kind: 'fileId'; fileId: string }
   | { kind: 'dataError'; errors: unknown }

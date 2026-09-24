@@ -23,7 +23,9 @@ export interface ScheduleFormFieldsProps {
   /** The store's visible programs (the modal's one programs fetch). */
   programs: ProgramListItem[];
   programsLoading?: boolean;
-  /** The five flat argument values the cascade reads back (AC-R17). */
+  /**
+   * The five flat argument values the cascade reads back (OMS-REG-RPT-10.35).
+   */
   programId?: string;
   scheduleId?: string;
   periodId?: string;
@@ -33,16 +35,18 @@ export interface ScheduleFormFieldsProps {
   onWrites: (writes: ReportArgs) => void;
   /**
    * Required-miss message for one of the five flat keys (the modal owns the
-   * attempted/required state — AC-R17's gating); undefined = no error.
+   * attempted/required state — OMS-REG-RPT-10.35's gating); undefined = no
+   * error.
    */
   errorFor?: (key: string) => string | undefined;
 }
 
 /*
- * The schedule cascade (spec/reports S3, AC-R17): program → schedule → period
- * rows plus editable from/to dates, writing five FLAT argument keys via
- * `scheduleCascadeWrites` — the control's own scoped key is deliberately
- * ignored (contract "Arguments": the captured client never populates it).
+ * The schedule cascade (spec/reports S3, OMS-REG-RPT-10.35): program →
+ * schedule → period rows plus editable from/to dates, writing five FLAT
+ * argument keys via `scheduleCascadeWrites` — the control's own scoped key is
+ * deliberately ignored (contract "Arguments": the captured client never
+ * populates it).
  * Each downstream row waits disabled for its parent; a parent change wipes
  * everything below it; a period pick fills the dates with the period's span,
  * which the date fields can still override.
@@ -71,7 +75,7 @@ export const ScheduleFormFields = (
     props.programId ? (gated(schedulesData) ?? []) : [];
 
   // The period options are the CHOSEN schedule's own list — no extra query
-  // (AC-R17).
+  // (OMS-REG-RPT-10.35).
   const periods = createMemo(() => {
     const schedule = schedules().find(s => s.id === props.scheduleId);
     return schedule ? schedule.periods.map(sp => sp.period) : [];
@@ -94,7 +98,7 @@ export const ScheduleFormFields = (
         }
       />
       {/* Each waiting step says what unlocks it (ui-standards inputs ›
-          fields): the placeholder names the prerequisite pick (AC-R17). */}
+          fields): the placeholder names the prerequisite pick (OMS-REG-RPT-10.35). */}
       <Combobox<ScheduleWithPeriods>
         label={t('label.schedule')}
         items={schedules()}
