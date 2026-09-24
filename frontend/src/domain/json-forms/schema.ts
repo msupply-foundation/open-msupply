@@ -1,4 +1,5 @@
-// S3 — the argument schema interpreter (spec/reports "Arguments", AC-R1/R3).
+// S3 — the argument schema interpreter (spec/reports "Arguments",
+// OMS-REG-RPT-10.1/.5).
 //
 // PURE logic, no SolidJS / no DOM — every branch is unit-testable in node
 // (schema.test.ts). This is the "one parse module" half of the bounded
@@ -21,14 +22,14 @@
 // `{ type: 'number', readOnly? }` (the preference thresholds), and strings
 // with `format: 'date' | 'date-time'`. A `required: [keys]` list may sit at
 // the top level or inside a definition. That is the CLOSED vocabulary the
-// form honours (spec/reports rules "Arguments", AC-R4–R8) — anything else
-// passes through un-enforced.
+// form honours (spec/reports rules "Arguments", OMS-REG-RPT-10.6–.16) —
+// anything else passes through un-enforced.
 //
 // uiSchema — `{ elements: [{ type, label, scope: '#/properties/<key>',
 // options? }] }`. `options`: `{ invert: true }` on boolean Controls, `{ show:
 // [[value, label], ...] }` on enum Controls, `{ useDebounce }` (ignored).
 //
-// Labels arrive pre-translated (AC-R2) and are used verbatim.
+// Labels arrive pre-translated (OMS-REG-RPT-10.3) and are used verbatim.
 
 import {
   localDayToUtc,
@@ -60,7 +61,10 @@ export type ParsedField =
       key: string;
       label: string;
       nullable: boolean;
-      /** Shown disabled with its seeded value, still submitted (AC-R6). */
+      /**
+       * Shown disabled with its seeded value, still submitted
+       * (OMS-REG-RPT-10.11).
+       */
       readOnly: boolean;
       required: boolean;
       default?: unknown;
@@ -94,14 +98,15 @@ export type ParsedField =
       required: boolean;
       /**
        * True for `format: 'date-time'` — rendered as the date & time input;
-       * the stored/submitted value is a UTC RFC3339 instant (AC-R5), unlike
-       * plain dates ('YYYY-MM-DD').
+       * the stored/submitted value is a UTC RFC3339 instant
+       * (OMS-REG-RPT-10.8), unlike plain dates ('YYYY-MM-DD').
        */
       dateTime: boolean;
       /**
        * uiSchema `options.dateOnly` — a date-time field edited as a calendar
        * day (no time part); the submitted value is still an instant, the day
-       * widened (AC-R18). No effect on plain `format: 'date'` fields.
+       * widened (OMS-REG-RPT-10.40). No effect on plain `format: 'date'`
+       * fields.
        */
       dateOnly: boolean;
       /**
@@ -114,7 +119,8 @@ export type ParsedField =
       disableFuture: boolean;
       /**
        * uiSchema `options.min` / `options.max` — sibling scope refs whose
-       * CURRENT form value bounds this field, resolved live (AC-R18).
+       * CURRENT form value bounds this field, resolved live
+       * (OMS-REG-RPT-10.40).
        */
       minKey?: string;
       maxKey?: string;
@@ -131,8 +137,9 @@ export type ParsedField =
   | { kind: 'location'; key: string; label: string; nullable: boolean }
   /**
    * The patient-program picker: options are the store's program-enrolment
-   * registries; the submitted value is the program's CONTEXT id (AC-R10).
-   * Carries `required` — report schemas mark the program mandatory.
+   * registries; the submitted value is the program's CONTEXT id
+   * (OMS-REG-RPT-10.19). Carries `required` — report schemas mark the program
+   * mandatory.
    */
   | {
       kind: 'program';
@@ -142,10 +149,10 @@ export type ParsedField =
       required: boolean;
     }
   /**
-   * The PROGRAM picker (AC-R12; distinct from `program`, the patient-enrolment
-   * registry picker): options are the store's visible programs; the submitted
-   * value is the program's own id, with the elmisCode / fetchAllPrograms
-   * companion writes (contract "Arguments").
+   * The PROGRAM picker (OMS-REG-RPT-10.22; distinct from `program`, the
+   * patient-enrolment registry picker): options are the store's visible
+   * programs; the submitted value is the program's own id, with the elmisCode
+   * / fetchAllPrograms companion writes (contract "Arguments").
    */
   | {
       kind: 'programSearch';
@@ -165,10 +172,11 @@ export type ParsedField =
       clearable: boolean;
     }
   /**
-   * The party picker (AC-R13): options are the store's visible names of the
-   * schema-named role, searched by code or name; the submitted value is the
-   * party's id — no companion writes. A NameSearch whose schema names no role
-   * parses as `unsupported` (the captured client rendered nothing; we keep
+   * The party picker (OMS-REG-RPT-10.25): options are the store's visible
+   * names of the schema-named role, searched by code or name; the submitted
+   * value is the party's id — no companion writes. A NameSearch whose schema
+   * names no role parses as `unsupported` (the captured client rendered
+   * nothing; we keep
    * the filter visible — contract "Arguments").
    */
   | {
@@ -181,9 +189,9 @@ export type ParsedField =
       role: 'customer' | 'supplier';
     }
   /**
-   * The stock-item picker (AC-R14): a pick writes the scoped key = the item's
-   * id PLUS the hard-coded sibling `itemName` — shipped schemas declare
-   * `itemName` with no control; templates print the side-written name
+   * The stock-item picker (OMS-REG-RPT-10.28): a pick writes the scoped key =
+   * the item's id PLUS the hard-coded sibling `itemName` — shipped schemas
+   * declare `itemName` with no control; templates print the side-written name
    * (contract "Arguments").
    */
   | {
@@ -194,9 +202,9 @@ export type ParsedField =
       required: boolean;
     }
   /**
-   * The adjustment-reason picker (AC-R15): the active positive/negative
-   * inventory-adjustment reasons only (wastage/return types excluded); the
-   * submitted value is the reason's id.
+   * The adjustment-reason picker (OMS-REG-RPT-10.30): the active
+   * positive/negative inventory-adjustment reasons only (wastage/return types
+   * excluded); the submitted value is the reason's id.
    */
   | {
       kind: 'reasonOption';
@@ -206,9 +214,10 @@ export type ParsedField =
       required: boolean;
     }
   /**
-   * The period picker (AC-R16). What a pick writes forks on the SCOPED key —
-   * see `periodSearchWrites`. With findByProgram the option list follows the
-   * form's own root `programId` (disabled until set, cleared on change).
+   * The period picker (OMS-REG-RPT-10.31). What a pick writes forks on the
+   * SCOPED key — see `periodSearchWrites`. With findByProgram the option list
+   * follows the form's own root `programId` (disabled until set, cleared on
+   * change).
    */
   | {
       kind: 'periodSearch';
@@ -222,12 +231,13 @@ export type ParsedField =
       clearable: boolean;
     }
   /**
-   * The schedule cascade (AC-R17): program → schedule → period plus editable
-   * from/to dates. Ignores its scoped key entirely — writes five flat keys
+   * The schedule cascade (OMS-REG-RPT-10.35): program → schedule → period plus
+   * editable from/to dates. Ignores its scoped key entirely — writes five flat
+   * keys
    * (see `scheduleCascadeWrites`). `requiredKeys` is the schema's required
    * list restricted to those five keys: the cascade renders the fields that
-   * write them, so they gate OK (AC-R7) even though they sit outside the
-   * element's own scope (the Congo quarterly requisition marks
+   * write them, so they gate OK (OMS-REG-RPT-10.13) even though they sit
+   * outside the element's own scope (the Congo quarterly requisition marks
    * after/before/programId required this way).
    */
   | {
@@ -350,7 +360,7 @@ const enumOptions = (
   return values.map(value => ({ value: String(value), label: String(value) }));
 };
 
-/** The five flat keys the schedule cascade writes (AC-R17). */
+/** The five flat keys the schedule cascade writes (OMS-REG-RPT-10.35). */
 export const SCHEDULE_CASCADE_KEYS = [
   'programId',
   'scheduleId',
@@ -574,8 +584,8 @@ export const parseArgumentSchema = (raw: {
  * left absent (never invented).
  */
 /**
- * The arguments a report with NO schema is generated with (AC-R11): the
- * user's IANA timezone alone — shipped templates read `arguments.timezone`
+ * The arguments a report with NO schema is generated with (OMS-REG-RPT-10.21):
+ * the user's IANA timezone alone — shipped templates read `arguments.timezone`
  * unconditionally, but the preference values travel only through the form
  * (the captured client sends `{ timezone }` alone on this path).
  */
@@ -640,8 +650,8 @@ const toDatetimeFilter = (value: unknown): ReportArgs | undefined => {
 /**
  * A calendar date's first instant in the viewer's zone, as an RFC3339 UTC
  * instant — the shared start-of-day half of the date widening convention
- * (AC-R9/R16/R17; the captured client parsed bare dates at UTC midnight —
- * normalized here, see the contract).
+ * (OMS-REG-RPT-10.17/.31/.35; the captured client parsed bare dates at UTC
+ * midnight — normalized here, see the contract).
  */
 export const dayStartInstant = (date: string): string => localDayToUtc(date);
 
@@ -665,10 +675,11 @@ export const instantToLocalDate = (value: unknown): string =>
 type DateField = Extract<ParsedField, { kind: 'date' }>;
 
 /**
- * A date field's committed argument value for a picked calendar day (AC-R18):
- * a plain `format: 'date'` field holds the day itself; a date-time field holds
- * an instant — the day widened at the device timezone to its start, or its
- * inclusive end when the element asks (`dateAsEndOfDay`, the "to date" fields).
+ * A date field's committed argument value for a picked calendar day
+ * (OMS-REG-RPT-10.40): a plain `format: 'date'` field holds the day itself; a
+ * date-time field holds an instant — the day widened at the device timezone to
+ * its start, or its inclusive end when the element asks (`dateAsEndOfDay`, the
+ * "to date" fields).
  */
 export const dateArgumentValue = (field: DateField, isoDay: string): string =>
   !field.dateTime
@@ -688,11 +699,11 @@ export const dateArgumentDay = (value: unknown): string => {
 };
 
 /**
- * A date field's selectable day bounds (AC-R18): the sibling values its
- * `min`/`max` scope refs point at — read live from the form's current values —
- * with the ceiling tightened to today when the element disallows future days.
- * ISO days compare lexicographically, so the tighter ceiling is a string
- * compare. `today` is passed in (this module stays clock-free / pure).
+ * A date field's selectable day bounds (OMS-REG-RPT-10.40): the sibling values
+ * its `min`/`max` scope refs point at — read live from the form's current
+ * values — with the ceiling tightened to today when the element disallows
+ * future days. ISO days compare lexicographically, so the tighter ceiling is a
+ * string compare. `today` is passed in (this module stays clock-free / pure).
  */
 export const dateFieldBounds = (
   field: DateField,
@@ -710,7 +721,7 @@ export const dateFieldBounds = (
  * element disallows future days and the day is past today, else 'min'/'max'
  * against the live sibling bounds. The picker can't produce a violation
  * (out-of-range days are unselectable) but typed entry can; a violation shows
- * at the field and blocks OK (AC-R18).
+ * at the field and blocks OK (OMS-REG-RPT-10.40).
  */
 export const dateFieldViolation = (
   field: DateField,
@@ -728,9 +739,10 @@ export const dateFieldViolation = (
 };
 
 /**
- * The period picker's writes (AC-R16, contract "Arguments") as a key → value
- * map (undefined = remove the key). Forks on the SCOPED key: `periodId` gets
- * the period's id; any other key gets the period's span — its start instant
+ * The period picker's writes (OMS-REG-RPT-10.31, contract "Arguments") as a
+ * key → value map (undefined = remove the key). Forks on the SCOPED key:
+ * `periodId` gets the period's id; any other key gets the period's span — its
+ * start instant
  * at the scoped key plus the hard-coded sibling `before` (end-of-day
  * widened). Clearing removes the scoped key and `before` in BOTH modes (the
  * captured client's exact behaviour).
@@ -748,11 +760,11 @@ export const periodSearchWrites = (
 };
 
 /**
- * The schedule cascade's writes (AC-R17, contract "Arguments"): five FLAT
- * keys regardless of the control's scoped key, each step wiping everything
- * downstream (undefined = remove). A period pick also fills the date bounds
- * with the period's span (day-widened); the date fields' own edits write
- * `after` / `before` directly.
+ * The schedule cascade's writes (OMS-REG-RPT-10.35, contract "Arguments"):
+ * five FLAT keys regardless of the control's scoped key, each step wiping
+ * everything downstream (undefined = remove). A period pick also fills the
+ * date bounds with the period's span (day-widened); the date fields' own edits
+ * write `after` / `before` directly.
  */
 export const scheduleCascadeWrites = {
   program: (programId: string | undefined): ReportArgs => ({
@@ -781,11 +793,12 @@ export const scheduleCascadeWrites = {
 };
 
 /**
- * The submit transform (AC-R8): strip empty values — absent and '' filter
- * differently server-side — coerce number-field entries typed as text back to
- * JSON numbers (so a numeric argument never leaves as a string; an unparseable
- * leftover like a lone '.' is dropped like an empty), and widen each date-range
- * field to its `DatetimeFilterInput` wire shape (see `toDatetimeFilter`).
+ * The submit transform (OMS-REG-RPT-10.15): strip empty values — absent and ''
+ * filter differently server-side — coerce number-field entries typed as text
+ * back to JSON numbers (so a numeric argument never leaves as a string; an
+ * unparseable leftover like a lone '.' is dropped like an empty), and widen
+ * each date-range field to its `DatetimeFilterInput` wire shape (see
+ * `toDatetimeFilter`).
  */
 export const cleanArguments = (
   fields: ParsedField[],
