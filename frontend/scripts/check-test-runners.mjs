@@ -110,11 +110,22 @@ const RUNNERS = [
   {
     name: 'Playwright (`pnpm e2e`)',
     globs: playwrightGlobs(),
-    // The nightly legs call the wrapper script rather than the pnpm alias.
+    // The nightly reaches Playwright neither through the `pnpm e2e` alias nor
+    // through scripts/e2e/run-e2e.sh. That wrapper is the LOCAL harness — it
+    // builds the server from source and boots a vite dev server — and the
+    // nightly deliberately does the opposite, driving the already-published
+    // image (see the workflow's header: "NOTHING IS BUILT HERE"). It invokes
+    // the runner directly.
+    //
+    // So match the runner and its config, which is the part that holds
+    // whichever way the binary is reached — `pnpm exec` on the runner, or
+    // node_modules inside Playwright's own container. Matching the invocation
+    // rather than a wrapper is also what keeps this honest: the wrapper could
+    // sit in the file unused and still satisfy a laxer pattern.
     ci: {
       workflow: 'frontend-e2e-nightly.yaml',
-      command: 'scripts/e2e/run-e2e.sh',
-      step: /scripts\/e2e\/run-e2e\.sh/,
+      command: 'playwright test --config e2e/playwright.config.ts',
+      step: /playwright test --config e2e\/playwright\.config\.ts/,
     },
   },
 ];
