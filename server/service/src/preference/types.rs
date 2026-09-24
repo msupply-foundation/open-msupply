@@ -5,7 +5,7 @@ use strum::{Display, EnumString};
 use thiserror::Error;
 
 use super::{
-    query_preference::{query_global, query_store},
+    query_preference::{query_global, query_store, query_store_with_global_default},
     upsert_helpers::{upsert_global, upsert_store},
 };
 
@@ -125,6 +125,10 @@ pub trait Preference: Sync + Send {
 
     fn preference_type(&self) -> PreferenceType;
 
+    fn allows_store_override(&self) -> bool {
+        false
+    }
+
     fn value_type(&self) -> PreferenceValueType;
 
     fn query(
@@ -133,7 +137,12 @@ pub trait Preference: Sync + Send {
         store_id: Option<String>,
     ) -> Result<Option<PreferenceRow>, PreferenceError> {
         let pref = match self.preference_type() {
-            PreferenceType::Global => query_global(connection, &self.key_str())?,
+            PreferenceType::Global => match store_id {
+                Some(store_id) if self.allows_store_override() => {
+                    query_store_with_global_default(connection, &self.key_str(), &store_id)?
+                }
+                _ => query_global(connection, &self.key_str())?,
+            },
             PreferenceType::Store => {
                 let store_id = store_id.ok_or(PreferenceError::StoreIdNotProvided)?;
                 query_store(connection, &self.key_str(), &store_id)?
@@ -183,7 +192,12 @@ pub trait Preference: Sync + Send {
         })?;
 
         match self.preference_type() {
-            PreferenceType::Global => upsert_global(connection, self.key_str(), serialised_value)?,
+            PreferenceType::Global => match store_id {
+                Some(store_id) if self.allows_store_override() => {
+                    upsert_store(connection, self.key_str(), serialised_value, store_id)?
+                }
+                _ => upsert_global(connection, self.key_str(), serialised_value)?,
+            },
             PreferenceType::Store => {
                 let store_id = store_id.ok_or(UpsertPreferenceError::StoreIdNotProvided)?;
                 upsert_store(connection, self.key_str(), serialised_value, store_id)?;

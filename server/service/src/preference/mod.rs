@@ -86,83 +86,85 @@ pub trait PreferenceServiceTrait: Sync + Send {
         let mut prefs: Vec<PreferenceDescription> = Vec::new();
 
         // Global preferences
-        append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
-        append_if_type(authorise_purchase_order, &mut prefs, &input)?;
-        append_if_type(custom_translations_v2, &mut prefs, &input)?;
-        append_if_type(gender_options, &mut prefs, &input)?;
+        append_if_type(&allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
+        append_if_type(&authorise_purchase_order, &mut prefs, &input)?;
+        append_if_type(&custom_translations_v2, &mut prefs, &input)?;
+        append_if_type(&gender_options, &mut prefs, &input)?;
         append_if_type(
-            prevent_transfers_months_before_initialisation,
+            &prevent_transfers_months_before_initialisation,
             &mut prefs,
             &input,
         )?;
-        append_if_type(show_contact_tracing, &mut prefs, &input)?;
-        append_if_type(sync_records_display_threshold, &mut prefs, &input)?;
-        append_if_type(warning_for_excess_request, &mut prefs, &input)?;
-        append_if_type(adjust_for_number_of_days_out_of_stock, &mut prefs, &input)?;
-        append_if_type(days_in_month, &mut prefs, &input)?;
-        append_if_type(expired_stock_prevent_issue, &mut prefs, &input)?;
-        append_if_type(expired_stock_issue_threshold, &mut prefs, &input)?;
-        append_if_type(show_indicative_price_in_requisitions, &mut prefs, &input)?;
-        append_if_type(item_margin_overrides_supplier_margin, &mut prefs, &input)?;
+        append_if_type(&show_contact_tracing, &mut prefs, &input)?;
+        append_if_type(&sync_records_display_threshold, &mut prefs, &input)?;
+        append_if_type(&warning_for_excess_request, &mut prefs, &input)?;
+        append_if_type(&adjust_for_number_of_days_out_of_stock, &mut prefs, &input)?;
+        append_if_type(&days_in_month, &mut prefs, &input)?;
+        append_if_type(&expired_stock_prevent_issue, &mut prefs, &input)?;
+        append_if_type(&expired_stock_issue_threshold, &mut prefs, &input)?;
+        append_if_type(&show_indicative_price_in_requisitions, &mut prefs, &input)?;
+        append_if_type(&item_margin_overrides_supplier_margin, &mut prefs, &input)?;
         append_if_type(
-            transfer_stock_to_internal_customers_at_cost_price,
+            &transfer_stock_to_internal_customers_at_cost_price,
             &mut prefs,
             &input,
         )?;
-        append_if_type(is_gaps, &mut prefs, &input)?;
-        append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
-        append_if_type(backdating, &mut prefs, &input)?;
-        append_if_type(global_logo, &mut prefs, &input)?;
+        append_if_type(&is_gaps, &mut prefs, &input)?;
+        append_if_type(&display_population_based_forecasting, &mut prefs, &input)?;
+        append_if_type(&backdating, &mut prefs, &input)?;
+        append_if_type(&global_logo, &mut prefs, &input)?;
         // TODO: receive_payments_from_prescriptions intentionally omitted, hidden from
         // the edit UI until prescription payment functionality exists
 
         // Store preferences
-        append_if_type(blind_stocktake, &mut prefs, &input)?;
-        append_if_type(order_in_packs, &mut prefs, &input)?;
-        append_if_type(use_procurement_functionality, &mut prefs, &input)?;
-        append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
-        append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
-        append_if_type(disable_manual_returns, &mut prefs, &input)?;
-        append_if_type(requisition_auto_finalise, &mut prefs, &input)?;
-        append_if_type(inbound_shipment_auto_verify, &mut prefs, &input)?;
-        append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
-        append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
+        append_if_type(&blind_stocktake, &mut prefs, &input)?;
+        append_if_type(&order_in_packs, &mut prefs, &input)?;
+        append_if_type(&use_procurement_functionality, &mut prefs, &input)?;
+        append_if_type(&sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
+        append_if_type(&use_simplified_mobile_ui, &mut prefs, &input)?;
+        append_if_type(&disable_manual_returns, &mut prefs, &input)?;
+        append_if_type(&requisition_auto_finalise, &mut prefs, &input)?;
+        append_if_type(&inbound_shipment_auto_verify, &mut prefs, &input)?;
+        append_if_type(&manage_vvm_status_for_stock, &mut prefs, &input)?;
+        append_if_type(&manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(
-            can_create_internal_order_from_a_requisition,
+            &can_create_internal_order_from_a_requisition,
             &mut prefs,
             &input,
         )?;
         append_if_type(
-            select_destination_store_for_an_internal_order,
+            &select_destination_store_for_an_internal_order,
             &mut prefs,
             &input,
         )?;
         append_if_type(
-            external_inbound_shipment_lines_must_be_authorised,
+            &external_inbound_shipment_lines_must_be_authorised,
             &mut prefs,
             &input,
         )?;
         append_if_type(
-            number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
+            &number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             &mut prefs,
             &input,
         )?;
         append_if_type(
-            number_of_months_threshold_to_show_low_stock_alerts_for_products,
+            &number_of_months_threshold_to_show_low_stock_alerts_for_products,
             &mut prefs,
             &input,
         )?;
         append_if_type(
-            number_of_months_threshold_to_show_over_stock_alerts_for_products,
+            &number_of_months_threshold_to_show_over_stock_alerts_for_products,
             &mut prefs,
             &input,
         )?;
-        append_if_type(first_threshold_for_expiring_items, &mut prefs, &input)?;
-        append_if_type(second_threshold_for_expiring_items, &mut prefs, &input)?;
-        append_if_type(store_custom_colour, &mut prefs, &input)?;
-        append_if_type(warn_when_missing_recent_stocktake, &mut prefs, &input)?;
-        append_if_type(invoice_status_options, &mut prefs, &input)?;
-        append_if_type(do_not_print_placeholder_line_labels, &mut prefs, &input)?;
+        append_if_type(&first_threshold_for_expiring_items, &mut prefs, &input)?;
+        append_if_type(&second_threshold_for_expiring_items, &mut prefs, &input)?;
+        append_if_type(&store_custom_colour, &mut prefs, &input)?;
+        append_if_type(&warn_when_missing_recent_stocktake, &mut prefs, &input)?;
+        append_if_type(&invoice_status_options, &mut prefs, &input)?;
+        append_if_type(&do_not_print_placeholder_line_labels, &mut prefs, &input)?;
+
+        append_if_store_override(&authorise_purchase_order, &mut prefs, &input)?;
 
         Ok(prefs)
     }
@@ -186,7 +188,7 @@ struct AppendIfTypeInputs {
 }
 
 fn append_if_type(
-    pref: impl Preference,
+    pref: &impl Preference,
     pref_descriptions: &mut Vec<PreferenceDescription>,
     AppendIfTypeInputs {
         pref_type,
@@ -195,6 +197,24 @@ fn append_if_type(
     }: &AppendIfTypeInputs,
 ) -> Result<(), PreferenceError> {
     if &pref.preference_type() == pref_type {
+        pref_descriptions.push(pref.as_description(connection, store_id.clone())?);
+    }
+    Ok(())
+}
+
+fn append_if_store_override(
+    pref: &impl Preference,
+    pref_descriptions: &mut Vec<PreferenceDescription>,
+    AppendIfTypeInputs {
+        pref_type,
+        connection,
+        store_id,
+    }: &AppendIfTypeInputs,
+) -> Result<(), PreferenceError> {
+    if pref_type == &PreferenceType::Store
+        && pref.preference_type() == PreferenceType::Global
+        && pref.allows_store_override()
+    {
         pref_descriptions.push(pref.as_description(connection, store_id.clone())?);
     }
     Ok(())
