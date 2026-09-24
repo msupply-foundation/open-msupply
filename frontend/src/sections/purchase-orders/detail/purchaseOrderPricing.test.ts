@@ -35,6 +35,13 @@ describe('a line’s packs', () => {
   it('is zero at a pack size of zero, not an infinity', () => {
     expect(linePacks(line({ requestedPackSize: 0 }))).toBe(0);
   });
+
+  it('keeps a fractional pack count rather than rounding it up', () => {
+    expect(
+      linePacks(line({ requestedNumberOfUnits: 1500, requestedPackSize: 7 }))
+    ).toBeCloseTo(214.2857143, 6);
+    expect(linePacks(line({ requestedNumberOfUnits: 2 }))).toBe(0.2);
+  });
 });
 
 describe('OMS-FUN-PO-07.3 — a line’s cost', () => {

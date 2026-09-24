@@ -2324,7 +2324,7 @@
   "messages.how-to-read-report": "Como eu leio este relatório?",
   "messages.how-to-read-stock-detail": "Este relatório tem a mesma informação que a página de estoque, só que sem nenhuma interatividade.",
   "messages.how-to-read-stock-status": "Descrição de estados: \n* Baixo estoque: o MOS é menor que o MOS mínimo (preferência da unidade de saúde: limite de estoque baixo)\n* Super abastecido: o MOS é maior que o MOS máximo (preferência da unidade de saúde: limite de estoque baixo) \n* Esgotado: o Estoque em mão é 0 e o CMM maior que 0.\n* Bem abastecido: o MOS está entre o MOS mínimo e máximo\n* Sem consumo: o CMM é 0",
-  "messages.import-error": "O carregamento de alguns ou todos os ativos falhou. Clique em exportar para descarregar o ficheiro csv com as linhas que causaram o erro. Linhas sem erros foram carregadas",
+  "messages.import-error-assets": "O carregamento de alguns ou todos os ativos falhou. Clique em exportar para descarregar o ficheiro csv com as linhas que causaram o erro. Linhas sem erros foram carregadas",
   "messages.import-error-on-upload": "Erro ao importar o ficheiro. Por favor, conserte os erros antes de importar novamente",
   "messages.import-generic": "Importação realizada com sucesso",
   "messages.import-mode-keep-existing-warning": "Serão adicionadas novas traduções. As traduções existentes não serão alteradas.",

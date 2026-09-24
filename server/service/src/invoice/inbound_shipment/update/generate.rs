@@ -400,17 +400,6 @@ fn generate_cost_price_update_for_lines(
             (line_info.po_price_local * (1.0 + cost_adjustment_fraction) * 100.0).round() / 100.0;
 
         row.cost_price_per_pack = new_cost;
-
-        // If sell price matches old cost price, update sell price too
-        // Use currency-appropriate tolerance for floating point comparison
-        if (row.sell_price_per_pack - old_cost).abs() < 0.0001 {
-            row.sell_price_per_pack = new_cost;
-        }
-
-        // The totals follow the cost price (the same rule a stock-in line
-        // update applies when its cost price changes), so a rate or charges
-        // change moves the line's totals with it instead of leaving them frozen
-        // at the value written when the line was created.
         row.total_before_tax = new_cost * row.number_of_packs;
         row.total_after_tax = calculate_total_after_tax(row.total_before_tax, row.tax_percentage);
         row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
@@ -419,6 +408,12 @@ fn generate_cost_price_update_for_lines(
             currency_id.clone(),
             &safe_rate,
         )?;
+
+        // If sell price matches old cost price, update sell price too
+        // Use currency-appropriate tolerance for floating point comparison
+        if (row.sell_price_per_pack - old_cost).abs() < 0.0001 {
+            row.sell_price_per_pack = new_cost;
+        }
 
         result.push(row);
     }
