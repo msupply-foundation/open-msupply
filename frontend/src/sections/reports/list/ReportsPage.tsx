@@ -36,12 +36,13 @@ import type {
 } from '../../../domain/reports/reports.generated';
 import { reportLabel } from '../../../domain/reports';
 
-// S1 — the Reports dashboard (spec/reports S1, AC-X1/X3). NOT a list screen: a
-// widget dashboard of clickable report cards grouped into category panels by
-// sub-context, with a preferences side panel. The grouping and gating are
-// entirely client-owned — the server only supplies context/sub-context values
-// (spec/reports "Contexts"). Only general-context reports are fetched
-// (context ∈ {REPORT, DISPENSARY}); record-context reports never appear here.
+// S1 — the Reports dashboard (spec/reports S1, OMS-REG-RPT-07.9/.10). NOT a
+// list screen: a widget dashboard of clickable report cards grouped into
+// category panels by sub-context, with a preferences side panel. The grouping
+// and gating are entirely client-owned — the server only supplies
+// context/sub-context values (spec/reports "Contexts"). Only general-context
+// reports are fetched (context ∈ {REPORT, DISPENSARY}); record-context reports
+// never appear here.
 
 type ReportNode = Extract<
   ReportsResult['reports'],
@@ -54,7 +55,7 @@ type ReportNode = Extract<
 //  - 'primary' — always rendered (the stable dashboard skeleton), even empty;
 //  - 'ifAny'   — rendered only when it has cards (Other);
 //  - 'programs'— rendered only when it has cards AND the store's program-module
-//    preference is on (AC-X3).
+//    preference is on (OMS-REG-RPT-07.10).
 type CategoryGate = 'primary' | 'ifAny' | 'programs';
 type CategoryDef = {
   titleKey: LocaleKey;
@@ -125,11 +126,12 @@ const ReportsPage: Component = () => {
   // The preferences side panel: open by default on wide viewports, closed
   // below; the user's explicit choice wins and persists across reloads. While
   // closed, the app bar's More button is the reopen affordance (spec S1
-  // layout, AC-U6, ui-standards/layout.md → page regions).
+  // layout, OMS-REG-RPT-07.12, ui-standards/layout.md → page regions).
   const [panelOpen, setPanelOpen] = createSidePanelOpen();
 
   // Only the standalone (general-context) reports, active ones. userLanguage is
-  // the current UI locale so schema/name strings arrive translated (AC-R2).
+  // the current UI locale so schema/name strings arrive translated
+  // (OMS-REG-RPT-10.3).
   const variables = createMemo<ReportsVariables>(() => ({
     storeId: params.storeId,
     userLanguage: locale(),
@@ -144,7 +146,7 @@ const ReportsPage: Component = () => {
   // so a slow initial load shows the spinner below rather than blanking the
   // router's fallback-less boundary (kdd/solid-reactivity-pitfalls rule 1). A
   // failed load trips the global permission/error modal inside graphqlFetch
-  // (AC-U5); the empty state sits behind it.
+  // (OMS-REG-RPT-07.11); the empty state sits behind it.
   const [reportsRes] = createResource(
     () => JSON.stringify(variables()),
     async serialised => {
@@ -165,7 +167,7 @@ const ReportsPage: Component = () => {
     !!storeContext()?.storePreferences.omProgramModule;
 
   // Group the reports into the ordered category panels. Programs reports are
-  // only eligible when the module preference is on (AC-X3).
+  // only eligible when the module preference is on (OMS-REG-RPT-07.10).
   const grouped = createMemo(() => {
     const module = programModule();
     return CATEGORIES.map(def => {
@@ -244,7 +246,7 @@ const ReportsPage: Component = () => {
           <HeaderButtons>
             {/* A labelled "More" button (sidebar glyph + text) that reopens the
                 closed side panel; it hides while the panel is open — the
-                panel's own close button takes over (AC-U6). */}
+                panel's own close button takes over (OMS-REG-RPT-07.12). */}
             <Show when={!panelOpen()}>
               <Button
                 variant="secondary"

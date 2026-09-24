@@ -30,6 +30,7 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  type CellFragment,
   getCellDefinition,
   getCurrencyCell,
   getDateCell,
@@ -72,7 +73,9 @@ import {
 } from './purchaseOrderDetail.generated';
 import {
   addPurchaseOrderFromMasterList,
-  cascadeDeliveryDate,
+  cascadedDateFields,
+  cascadeDeliveryDates,
+  deliveryDatesVary,
   updatePurchaseOrder,
   type DeliveryDateField,
 } from './purchaseOrderUpdate';
@@ -98,9 +101,13 @@ import {
   isOpenToChange,
 } from './purchaseOrderLadder';
 import { formatCurrency } from '@/intl/currency';
+import { formatNumber } from '@/intl/formatNumber';
 import { linePacks, lineCost } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
-import { PurchaseOrderLineEditModal } from './edit-modal/PurchaseOrderLineEditModal';
+import {
+  PurchaseOrderLineEditModal,
+  type LineLookup,
+} from './edit-modal/PurchaseOrderLineEditModal';
 import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
 
 // An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
@@ -160,6 +167,11 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   onOrder: false,
   requestedDeliveryDate: false,
   expectedDeliveryDate: false,
+};
+
+const exactQuantity: CellFragment<Line>['cell'] = info => {
+  const value = info.getValue<number | null | undefined>();
+  return value == null ? '' : formatNumber(value);
 };
 
 const PurchaseOrderDetailView: Component = () => {
@@ -367,6 +379,30 @@ const PurchaseOrderDetailView: Component = () => {
       pick: (pageRows, fromStart) =>
         rowAfter(pageRows, fromStart, line => line.id, lineId),
     });
+  // A picked item already on the order resolves to its line (OMS-FUN-PO-02.23).
+  // A failed read is reported as such, never mistaken for an item not on the
+  // order.
+  const findLineForItem = async (itemId: string): Promise<LineLookup> => {
+    const onPage = rows().find(line => line.item.id === itemId);
+    if (onPage) return { kind: 'line', line: onPage };
+    const held = lineSet().find(line => line.item.id === itemId);
+    if (!held) return { kind: 'none' };
+    const result = await graphqlFetch(PurchaseOrderDetailLines, {
+      storeId: params.storeId,
+      filter: {
+        id: { equalTo: held.id },
+        purchaseOrderId: { equalTo: params.id },
+      },
+      page: { first: 1 },
+    });
+    if (
+      result.kind !== 'success' ||
+      result.data.purchaseOrderLines.__typename !== 'PurchaseOrderLineConnector'
+    )
+      return { kind: 'failed' };
+    const line = result.data.purchaseOrderLines.nodes[0];
+    return line ? { kind: 'line', line } : { kind: 'none' };
+  };
   // Sent or Finalised: every field on the screen is refused — except the
   // comment, open in every state, and the panel's two post-sending dates,
   // open until Finalised (rules § what may be changed, and when). Mirrored
@@ -422,24 +458,25 @@ const PurchaseOrderDetailView: Component = () => {
   });
 
   // The requested date is the ORDER's own field as well as every line's; the
-  // expected date has no order-level field at all, so it is lines only. One
-  // re-read covers both writes.
+  // expected date has no order-level field at all. The other date follows only
+  // where the lines still agree on it (rules § the two delivery dates), and
+  // the order's requested date moves whenever it does; one re-read covers all.
   const cascadeDate = async (
     field: DeliveryDateField,
     date: string
   ): Promise<SaveFieldResult> => {
-    const orderWrite =
-      field === 'requestedDeliveryDate'
-        ? await updatePurchaseOrder(params.storeId, {
-            id: params.id,
-            requestedDeliveryDate: { value: date },
-          })
-        : undefined;
-    const outcome = await cascadeDeliveryDate(
+    const fields = cascadedDateFields(lineSet(), field);
+    const orderWrite = fields.includes('requestedDeliveryDate')
+      ? await updatePurchaseOrder(params.storeId, {
+          id: params.id,
+          requestedDeliveryDate: { value: date },
+        })
+      : undefined;
+    const outcome = await cascadeDeliveryDates(
       params.storeId,
       lineSet(),
-      field,
-      date
+      date,
+      fields
     );
     refetchAll();
     const message =
@@ -554,8 +591,9 @@ const PurchaseOrderDetailView: Component = () => {
       // order's totals use — a zero pack size contributes nothing
       // (purchaseOrderPricing.ts). No sort key exists for a derived column.
       c: { accessor: line => linePacks(line), id: 'numPacks' },
-      header: () => t('label.num-packs'),
+      header: () => t('label.order-quantity-in-packs'),
       ...getCellDefinition('numberOfPacks'),
+      cell: exactQuantity,
     },
     {
       c: { key: 'requestedPackSize' },
@@ -572,8 +610,10 @@ const PurchaseOrderDetailView: Component = () => {
     {
       c: { key: 'requestedNumberOfUnits' },
       sortKey: 'requestedNumberOfUnits',
-      header: () => t('label.requested-units'),
+      header: () =>
+        t('label.order-quantity-in-unit', { unit: t('label.units') }),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(8),
     },
     {
@@ -583,6 +623,7 @@ const PurchaseOrderDetailView: Component = () => {
       sortKey: 'adjustedNumberOfUnits',
       header: () => t('label.adjusted-units'),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(8),
     },
     {
@@ -591,6 +632,7 @@ const PurchaseOrderDetailView: Component = () => {
       sortKey: 'shippedNumberOfUnits',
       header: () => t('label.shipped-units'),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(8),
     },
     {
@@ -609,6 +651,7 @@ const PurchaseOrderDetailView: Component = () => {
       c: { accessor: line => line.unitsOrderedInOthers, id: 'onOrder' },
       header: () => t('label.on-order'),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(7),
     },
     {
@@ -735,6 +778,7 @@ const PurchaseOrderDetailView: Component = () => {
                       disabled={isDisabled()}
                       edit={edit}
                       latestExpectedDate={latestExpectedDate()}
+                      datesVary={field => deliveryDatesVary(lineSet(), field)}
                       lineCount={lineCount()}
                       onSaveField={saveField}
                       onCascadeDate={cascadeDate}
@@ -909,6 +953,7 @@ const PurchaseOrderDetailView: Component = () => {
                 initialLine={editor()?.line}
                 hasNext={hasNextLine}
                 nextLine={nextLine}
+                findLineForItem={findLineForItem}
                 onSaved={refetchAll}
               />
 

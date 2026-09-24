@@ -5,7 +5,9 @@ import {
 } from '@/domain/invoice/statusGate';
 import {
   canChangeStatus,
+  hasSourceLink,
   isEditable,
+  actionsLocked,
   reachableStatuses,
   sourceLinkOf,
   statusDatetime,
@@ -163,6 +165,26 @@ describe('isEditable', () => {
     expect(isEditable('')).toBe(false);
     expect(isEditable('CANCELLED')).toBe(false);
   });
+
+});
+
+// Issue #873 / REPL-09 .25: Received closes a PO-linked shipment's
+// line-selection actions while the shipment itself stays editable (its lines
+// still open, and items are still added).
+describe('actionsLocked', () => {
+  it('locks a PO-linked shipment from Received', () => {
+    expect(actionsLocked('NEW', true)).toBe(false);
+    expect(actionsLocked('SHIPPED', true)).toBe(false);
+    expect(actionsLocked('DELIVERED', true)).toBe(false);
+    expect(actionsLocked('RECEIVED', true)).toBe(true);
+    expect(actionsLocked('VERIFIED', true)).toBe(true);
+    expect(isEditable('RECEIVED')).toBe(true);
+  });
+
+  it('never locks a shipment without a purchase order', () => {
+    expect(actionsLocked('RECEIVED', false)).toBe(false);
+    expect(actionsLocked('VERIFIED', false)).toBe(false);
+  });
 });
 
 describe('canChangeStatus', () => {
@@ -171,6 +193,12 @@ describe('canChangeStatus', () => {
   it('still offers an advance at Shipped, where edits are locked', () => {
     expect(isEditable('SHIPPED')).toBe(false);
     expect(canChangeStatus('SHIPPED')).toBe(true);
+  });
+
+  // Likewise a PO-linked shipment with closed actions still reaches Verified.
+  it('still offers the advance to Verified on a PO-linked Received shipment', () => {
+    expect(actionsLocked('RECEIVED', true)).toBe(true);
+    expect(canChangeStatus('RECEIVED')).toBe(true);
   });
 
   it('closes only at Verified', () => {
@@ -305,5 +333,32 @@ describe('filterByStatusPreference (OMS-REG-REPL-03.25 — advance choices limit
         ['NEW', 'RECEIVED', 'VERIFIED']
       )
     ).toEqual(['RECEIVED', 'VERIFIED']);
+  });
+});
+
+// The edit gate this PR turns on (issue #562): cost price and the supplier's
+// declared shipped figures are read-only exactly when a source link exists.
+// "Manual" is NARROWER than "no source link" (rules.md § source link), which
+// is the confusion that let the shipped figures stay editable on a transfer.
+describe('hasSourceLink', () => {
+  const transfer = { id: 'outbound-1' };
+
+  it('is true for a purchase-order-linked shipment', () => {
+    expect(hasSourceLink(true, null)).toBe(true);
+  });
+
+  it('is true for a transfer', () => {
+    expect(hasSourceLink(false, transfer)).toBe(true);
+  });
+
+  it('is true when a PO-linked shipment is also a transfer', () => {
+    expect(hasSourceLink(true, transfer)).toBe(true);
+  });
+
+  // The case the bug turned on: an internal order is NOT a source link, so
+  // such a shipment keeps its costs and shipped figures editable.
+  it('is false for a shipment with no link, however it was created', () => {
+    expect(hasSourceLink(false, null)).toBe(false);
+    expect(hasSourceLink(false, undefined)).toBe(false);
   });
 });

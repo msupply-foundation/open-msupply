@@ -147,15 +147,17 @@ describe('OMS-FUN-PO-02.12 — which quantity the packs write', () => {
 });
 
 describe('OMS-FUN-PO-02.12 — one input, two labels', () => {
-  it('reads Requested packs while drafting and Adjusted packs once Ready for sending', () => {
-    expect(packsLabelKey('NEW')).toBe('label.requested-packs');
-    expect(packsLabelKey('REQUEST_APPROVAL')).toBe('label.requested-packs');
+  it('reads Order quantity (Packs) while drafting and Adjusted packs once Ready for sending', () => {
+    expect(packsLabelKey('NEW')).toBe('label.order-quantity-in-packs');
+    expect(packsLabelKey('REQUEST_APPROVAL')).toBe(
+      'label.order-quantity-in-packs'
+    );
     expect(packsLabelKey('CONFIRMED')).toBe('label.adjusted-packs');
     expect(packsLabelKey('SENT')).toBe('label.adjusted-packs');
   });
 
-  it('reads Requested packs on a Finalised order', () => {
-    expect(packsLabelKey('FINALISED')).toBe('label.requested-packs');
+  it('reads Order quantity (Packs) on a Finalised order', () => {
+    expect(packsLabelKey('FINALISED')).toBe('label.order-quantity-in-packs');
   });
 
   it('shows the Adjusted units row only past Ready for approval', () => {
@@ -171,7 +173,7 @@ describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
     const gates = lineGates({
       status: 'NEW',
       lineStatus: 'NEW',
-      isNew: false,
+      addMode: false,
       canAuthorise: false,
     });
     expect(gates.packs).toBe(true);
@@ -184,7 +186,7 @@ describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
     const plain = lineGates({
       status: 'CONFIRMED',
       lineStatus: 'NEW',
-      isNew: false,
+      addMode: false,
       canAuthorise: false,
     });
     expect(plain.packs).toBe(false);
@@ -193,7 +195,7 @@ describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
       ...plain,
       status: 'SENT',
       lineStatus: 'SENT',
-      isNew: false,
+      addMode: false,
       canAuthorise: true,
     });
     expect(authorised.packs).toBe(true);
@@ -203,7 +205,7 @@ describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
     const gates = lineGates({
       status: 'SENT',
       lineStatus: 'SENT',
-      isNew: false,
+      addMode: false,
       canAuthorise: true,
     });
     expect(gates.dates).toBe(false);
@@ -215,7 +217,11 @@ describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
       { status: 'FINALISED' as const, lineStatus: 'SENT' as const },
       { status: 'SENT' as const, lineStatus: 'CLOSED' as const },
     ]) {
-      const gates = lineGates({ ...options, isNew: false, canAuthorise: true });
+      const gates = lineGates({
+        ...options,
+        addMode: false,
+        canAuthorise: true,
+      });
       expect(gates.packs).toBe(false);
       expect(gates.drafting).toBe(false);
       expect(gates.dates).toBe(false);
@@ -223,12 +229,12 @@ describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
     }
   });
 
-  it('fixes the item once the line exists (OMS-FUN-PO-02.11)', () => {
+  it('keeps the chooser live in add mode and fixes the item on an opened line (OMS-FUN-PO-02.11, OMS-FUN-PO-02.23)', () => {
     expect(
       lineGates({
         status: 'NEW',
         lineStatus: 'NEW',
-        isNew: true,
+        addMode: true,
         canAuthorise: false,
       }).item
     ).toBe(true);
@@ -236,7 +242,7 @@ describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
       lineGates({
         status: 'NEW',
         lineStatus: 'NEW',
-        isNew: false,
+        addMode: false,
         canAuthorise: false,
       }).item
     ).toBe(false);
@@ -254,7 +260,7 @@ describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
         lineGates({
           status,
           lineStatus: 'NEW',
-          isNew: false,
+          addMode: false,
           canAuthorise: true,
         }).status
       ).toBe(false);

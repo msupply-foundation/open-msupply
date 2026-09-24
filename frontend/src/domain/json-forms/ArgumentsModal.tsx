@@ -70,9 +70,10 @@ export interface ArgumentSchemaSource {
   argumentSchema?: { jsonSchema: unknown; uiSchema: unknown } | null;
 }
 
-// The kinds whose empty-while-required state gates OK (AC-R7). Unsupported
-// controls are deliberately absent: a required field the client can't render
-// never blocks — the server's typed data-fetch failure reports the miss.
+// The kinds whose empty-while-required state gates OK (OMS-REG-RPT-10.13).
+// Unsupported controls are deliberately absent: a required field the client
+// can't render never blocks — the server's typed data-fetch failure reports the
+// miss.
 type RequirableField = Extract<
   ParsedField,
   {
@@ -101,11 +102,11 @@ const isRequirable = (field: ParsedField): field is RequirableField =>
   field.kind === 'reasonOption' ||
   field.kind === 'periodSearch';
 
-// The period argument field (AC-R16): owns its own periods fetch — narrowed
-// by the form's root `programId` when the schema says findByProgram (waiting
-// disabled until one exists, clearing the pick when it changes) — and the
-// selection restore for both write modes: an id-mode value IS the period id;
-// a span-mode value is the start instant, matched back to a period.
+// The period argument field (OMS-REG-RPT-10.31): owns its own periods fetch —
+// narrowed by the form's root `programId` when the schema says findByProgram
+// (waiting disabled until one exists, clearing the pick when it changes) — and
+// the selection restore for both write modes: an id-mode value IS the period
+// id; a span-mode value is the start instant, matched back to a period.
 const PeriodArgumentField = (props: {
   field: Extract<ParsedField, { kind: 'periodSearch' }>;
   storeId: string | undefined;
@@ -143,8 +144,8 @@ const PeriodArgumentField = (props: {
   };
 
   // The find-by-program cascade: any change to the program pick (including a
-  // clear) drops the period selection (AC-R16). Deferred so the initial
-  // mount/restore never wipes URL-restored values.
+  // clear) drops the period selection (OMS-REG-RPT-10.31). Deferred so the
+  // initial mount/restore never wipes URL-restored values.
   createEffect(
     on(
       () => props.programId,
@@ -165,7 +166,7 @@ const PeriodArgumentField = (props: {
       value={selectedId()}
       disabled={waiting()}
       // A disabled field says why (ui-standards inputs › fields): the
-      // placeholder names the prerequisite pick (AC-R16).
+      // placeholder names the prerequisite pick (OMS-REG-RPT-10.31).
       placeholder={waiting() ? t('message.select-program-first') : undefined}
       error={props.error}
       onChange={props.onPick}
@@ -173,16 +174,17 @@ const PeriodArgumentField = (props: {
   );
 };
 
-// S3 — the argument-entry modal (spec/reports S3, AC-R1–R8). The filter form
-// is rendered FROM the report's argument schema: field set, order, labels, and
-// control choice come from the server's schema, not per-report client code
-// (spec "Arguments"). Because that is render-from-config by wire contract, the
-// explicit-composition anti-default (kdd/explicit-composition) can't apply in
-// its usual form — so this is the bounded interpreter recorded in
-// kdd/report-argument-forms: ONE parse module (schema.ts) + ONE switch below,
-// each branch an explicit library component. The schema vocabulary is closed
-// and server-owned; a new control type is one new <Match> branch, and anything
-// unknown degrades to a disabled, labelled placeholder rather than crashing.
+// S3 — the argument-entry modal (spec/reports S3, OMS-REG-RPT-10.1–.16). The
+// filter form is rendered FROM the report's argument schema: field set, order,
+// labels, and control choice come from the server's schema, not per-report
+// client code (spec "Arguments"). Because that is render-from-config by wire
+// contract, the explicit-composition anti-default (kdd/explicit-composition)
+// can't apply in its usual form — so this is the bounded interpreter recorded
+// in kdd/report-argument-forms: ONE parse module (schema.ts) + ONE switch
+// below, each branch an explicit library component. The schema vocabulary is
+// closed and server-owned; a new control type is one new <Match> branch, and
+// anything unknown degrades to a disabled, labelled placeholder rather than
+// crashing.
 //
 // Props contract (kept exactly — S2 owns navigation): onSubmit returns the
 // entered arguments; the consumer writes them into the URL query, which drives
@@ -214,15 +216,17 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
   );
   const locations = (): Location[] => gated(locationsData) ?? [];
 
-  // Programs for a `programSearch`-kind argument (AC-R12), fetched locally in
-  // the same style; an immunisation-only field filters this one fetch.
+  // Programs for a `programSearch`-kind argument (OMS-REG-RPT-10.22), fetched
+  // locally in the same style; an immunisation-only field filters this one
+  // fetch.
   const [programsData] = createResource(currentStoreId, fetchPrograms);
   const programs = (): ProgramListItem[] => gated(programsData) ?? [];
 
-  // The program picker's three-key write (AC-R12, contract "Arguments"): the
-  // scoped key gets the program id, and the hard-coded companions `elmisCode`
-  // and `fetchAllPrograms` are written alongside — the sibling keys shipped
-  // data queries read. "All programs" leaves id and elmisCode absent.
+  // The program picker's three-key write (OMS-REG-RPT-10.22, contract
+  // "Arguments"): the scoped key gets the program id, and the hard-coded
+  // companions `elmisCode` and `fetchAllPrograms` are written alongside — the
+  // sibling keys shipped data queries read. "All programs" leaves id and
+  // elmisCode absent.
   const setProgramSearch = (key: string, pick: ProgramListPick): void => {
     if (pick === 'all') {
       setValues(key, undefined);
@@ -242,9 +246,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       setValues(key, value as never);
   };
 
-  // The adjustment-reason options (AC-R15): the global active list narrowed to
-  // the two inventory-adjustment types — wastage/return reasons excluded
-  // (contract "Arguments").
+  // The adjustment-reason options (OMS-REG-RPT-10.30): the global active list
+  // narrowed to the two inventory-adjustment types — wastage/return reasons
+  // excluded (contract "Arguments").
   const adjustmentReasons = (): ReasonOption[] =>
     reasonOptionsResource
       .noSuspense()
@@ -269,11 +273,12 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
   // Local form state as a store, updated field-by-field in place. Seeded fresh
   // each time the modal opens (an interaction never reseeds): from the URL
   // arguments when reopening pre-filled, otherwise from store preferences +
-  // schema defaults (AC-R3). reconcile replaces the contents while keeping the
-  // store's identity, so bindings that still apply don't tear down.
+  // schema defaults (OMS-REG-RPT-10.5). reconcile replaces the contents while
+  // keeping the store's identity, so bindings that still apply don't tear down.
   const [values, setValues] = createStore<ReportArgs>({});
-  // Required-field errors only show after an OK attempt (AC-R7) — the form's
-  // helper text promises the details are optional, so nothing nags earlier.
+  // Required-field errors only show after an OK attempt (OMS-REG-RPT-10.13) —
+  // the form's helper text promises the details are optional, so nothing nags
+  // earlier.
   const [attempted, setAttempted] = createSignal(false);
   createEffect(
     on(
@@ -365,9 +370,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       ? t('error.field-required')
       : undefined;
 
-  // A date field's bound violation (AC-R18), as its inline message. Unlike the
-  // required nag this shows immediately — it marks an actively wrong typed
-  // entry (the picker can't produce one) — and it gates OK (see submit).
+  // A date field's bound violation (OMS-REG-RPT-10.40), as its inline message.
+  // Unlike the required nag this shows immediately — it marks an actively wrong
+  // typed entry (the picker can't produce one) — and it gates OK (see submit).
   const dateError = (
     field: Extract<ParsedField, { kind: 'date' }>
   ): string | undefined => {
@@ -383,22 +388,23 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
     }
   };
 
-  // OK: block while a rendered required field is empty (AC-R7 — the inline
-  // error appears at the field), then emit the cleaned values: empties
-  // stripped (absent ≠ "" server-side), numbers as numbers (AC-R8). unwrap()
-  // drops the store proxy first.
+  // OK: block while a rendered required field is empty (OMS-REG-RPT-10.13 —
+  // the inline error appears at the field), then emit the cleaned values:
+  // empties stripped (absent ≠ "" server-side), numbers as numbers
+  // (OMS-REG-RPT-10.15). unwrap() drops the store proxy first.
   const submit = (): void => {
     // The schedule cascade renders the fields for its five flat keys, so the
-    // schema's required list gates them too (AC-R17 / AC-R7) — without this,
-    // an empty submit reaches the report's SQL as missing parameters.
+    // schema's required list gates them too (OMS-REG-RPT-10.35 /
+    // OMS-REG-RPT-10.13) — without this, an empty submit reaches the report's
+    // SQL as missing parameters.
     const missing = fields().some(field =>
       isRequirable(field)
         ? field.required && isEmpty(field.key)
         : field.kind === 'scheduleForm' &&
           field.requiredKeys.some(key => isEmpty(key))
     );
-    // A date outside its bounds also blocks (AC-R18) — only typed entry can
-    // produce one, and its message is already showing at the field.
+    // A date outside its bounds also blocks (OMS-REG-RPT-10.40) — only typed
+    // entry can produce one, and its message is already showing at the field.
     const outOfBounds = fields().some(
       field =>
         field.kind === 'date' &&
@@ -459,8 +465,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match when={field.kind === 'number' ? field : undefined} keyed>
                 {numberField => (
-                  /* Constrained numeric entry (AC-R4): NumberField gates
-                   * keystrokes and raises the decimal keypad. The schema
+                  /* 
+                   * Constrained numeric entry (OMS-REG-RPT-10.6): NumberField
+                   * gates keystrokes and raises the decimal keypad. The schema
                    * declares no precision; two decimal places covers the
                    * fractional-months cases without float noise.
                    */
@@ -485,7 +492,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {/* Calendar-day entry: plain `format: 'date'` fields, and
                     date-time fields whose element asks for date-only entry
-                    (AC-R18) — those still store an instant (the picked day
+                    (OMS-REG-RPT-10.40) — those still store an instant (the picked day
                     widened, dateArgumentValue), so a bare date never reaches
                     the data query's DateTime variables. Bounds resolve live
                     from the sibling values (min/max scope refs + no-future). */}
@@ -520,7 +527,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {/* format: 'date-time' — the value is a UTC RFC3339 instant
-                    (AC-R5): the field owns the local-wall-clock⇄UTC boundary,
+                    (OMS-REG-RPT-10.8): the field owns the local-wall-clock⇄UTC boundary,
                     and the instant passes to the data query's DateTime
                     variables verbatim (a bare calendar date would fail their
                     parsing — spec/reports rules "Arguments"). */}
@@ -557,14 +564,15 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     value={selectValue(enumField.key)}
                     disabled={enumField.readOnly}
                     // Select has no error slot; the required miss still gates
-                    // OK (AC-R7) and this text says why. No shipped schema
-                    // marks an enum required today.
+                    // OK (OMS-REG-RPT-10.13) and this text says why. No
+                    // shipped schema marks an enum required today.
                     helperText={requiredError(enumField)}
                     // A picked choice must be emptiable again unless required
-                    // (AC-R19); the cleared key is omitted on submit (AC-R8).
-                    // A read-only field (AC-R6: shown disabled, seeded value
-                    // still submitted) gets no clear affordance — it could
-                    // never be used.
+                    // (OMS-REG-RPT-10.42); the cleared key is omitted on
+                    // submit (OMS-REG-RPT-10.15). A read-only field
+                    // (OMS-REG-RPT-10.11: shown disabled, seeded value still
+                    // submitted) gets no clear affordance — it could never be
+                    // used.
                     clearable={!enumField.required && !enumField.readOnly}
                     onClear={() => setValues(enumField.key, undefined)}
                     onValueChange={value => setValues(enumField.key, value)}
@@ -643,8 +651,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {nameField => (
-                  /* AC-R13: the party picker writes the scoped key = the
-                   * name's id, nothing else; the picked object lives in
+                  /* 
+                   * OMS-REG-RPT-10.25: the party picker writes the scoped key
+                   * = the name's id, nothing else; the picked object lives in
                    * pickedNames for label display only.
                    */
                   <NameSearch
@@ -665,9 +674,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {itemField => (
-                  /* AC-R14: the item picker's two-key write — the scoped key
-                   * = the item's id plus the hard-coded sibling `itemName`
-                   * shipped templates print (contract "Arguments").
+                  /* 
+                   * OMS-REG-RPT-10.28: the item picker's two-key write — the
+                   * scoped key = the item's id plus the hard-coded sibling
+                   * `itemName` shipped templates print (contract "Arguments").
                    */
                   <ItemSearch
                     label={itemField.label}
@@ -688,7 +698,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {reasonField => (
-                  /* AC-R15: active inventory-adjustment reasons only. */
+                  /**
+                   * OMS-REG-RPT-10.30: active inventory-adjustment reasons
+                   * only.
+                   */
                   <Combobox<ReasonOption>
                     label={reasonField.label}
                     items={adjustmentReasons()}
@@ -708,8 +721,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {periodField => (
-                  /* AC-R16: the write forks on the scoped key — id at
-                   * `periodId`, span (+ `before` companion) anywhere else
+                  /* 
+                   * OMS-REG-RPT-10.31: the write forks on the scoped key — id
+                   * at `periodId`, span (+ `before` companion) anywhere else
                    * (periodSearchWrites).
                    */
                   <PeriodArgumentField
@@ -729,9 +743,11 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {sfField => (
-                  /* AC-R17: the cascade ignores its scoped key and writes the
-                   * five flat keys via scheduleCascadeWrites; the schema's
-                   * required list gates the keys it renders (see submit).
+                  /* 
+                   * OMS-REG-RPT-10.35: the cascade ignores its scoped key and
+                   * writes the five flat keys via scheduleCascadeWrites; the
+                   * schema's required list gates the keys it renders (see
+                   * submit).
                    */
                   <ScheduleFormFields
                     storeId={currentStoreId() ?? ''}
