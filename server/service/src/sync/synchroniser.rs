@@ -594,6 +594,7 @@ impl<'a> SyncBufferIntegrator<'a> {
         let mut integrator = TranslationAndIntegration::new(self.connection);
         for table in self.table_order {
             loop {
+                let fetch_started = Instant::now();
                 let records = get_sync_buffer_for_table(
                     self.connection,
                     action.clone(),
@@ -601,10 +602,12 @@ impl<'a> SyncBufferIntegrator<'a> {
                     self.source_site_id,
                     INTEGRATION_BATCH_SIZE,
                 )?;
+                let fetch_time = fetch_started.elapsed();
                 if records.is_empty() {
                     break;
                 }
                 let batch_size = records.len() as u64;
+                let integrate_started = Instant::now();
                 // One transaction per `INTEGRATION_COMMIT_SIZE` chunk of the fetched batch.
                 // Inside the outer integration transaction this reuses it and changes nothing.
                 // Without it (maintenance mode, or initialising with
@@ -623,6 +626,7 @@ impl<'a> SyncBufferIntegrator<'a> {
                         })
                         .map_err(|error| error.to_inner_error())?;
                 }
+                let integrate_time = integrate_started.elapsed();
                 self.done_so_far += batch_size;
                 self.total_errored += batch_errors;
 
@@ -632,12 +636,16 @@ impl<'a> SyncBufferIntegrator<'a> {
                 } else {
                     0.0
                 };
+                // Fetch vs integrate split for this batch, to tell a slow buffer query from slow
+                // translation and upserts. The rec/s window also covers the progress write.
                 log::info!(
-                    "Integration progress - table: {table}, integrated: {}, total: {}, errored: {} ({:.1} rec/s)",
+                    "Integration progress - table: {table}, integrated: {}, total: {}, errored: {} ({:.1} rec/s; fetch {:.2}s, integrate {:.2}s)",
                     self.done_so_far,
                     self.total_pending,
                     self.total_errored,
                     rec_per_sec,
+                    fetch_time.as_secs_f64(),
+                    integrate_time.as_secs_f64(),
                 );
                 self.last_progress_time = Instant::now();
 
