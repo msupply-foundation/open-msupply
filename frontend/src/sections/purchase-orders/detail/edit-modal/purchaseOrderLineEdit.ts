@@ -152,14 +152,14 @@ export const packSizeEntered = (
 });
 
 /**
- * One input, two labels (spec S10 § middle): Requested packs while drafting,
- * Adjusted packs once Ready for sending or Sent — and, the spec's one
- * exception, Requested packs again on a Finalised order.
+ * One input, two labels (spec S10 § middle): Order quantity (Packs) while
+ * drafting, Adjusted packs once Ready for sending or Sent — and, the spec's
+ * one exception, Order quantity (Packs) again on a Finalised order.
  */
 export const packsLabelKey = (status: PurchaseOrderStatus): LocaleKey =>
   status === 'CONFIRMED' || status === 'SENT'
     ? 'label.adjusted-packs'
-    : 'label.requested-packs';
+    : 'label.order-quantity-in-packs';
 
 /** The read-only Adjusted units row appears once the order is past approval. */
 export const showsAdjustedUnits = (status: PurchaseOrderStatus): boolean =>
@@ -176,7 +176,9 @@ export const discountPercentage = (before: number, after: number): number =>
 
 export type Prices = Pick<
   LineDraft,
-  'pricePerPackBeforeDiscount' | 'discountPercentage' | 'pricePerPackAfterDiscount'
+  | 'pricePerPackBeforeDiscount'
+  | 'discountPercentage'
+  | 'pricePerPackAfterDiscount'
 >;
 
 /**
@@ -200,7 +202,8 @@ export const repriced = (changed: keyof Prices, prices: Prices): Prices => {
   return {
     pricePerPackBeforeDiscount,
     discountPercentage: discount,
-    pricePerPackAfterDiscount: pricePerPackBeforeDiscount * (1 - discount / 100),
+    pricePerPackAfterDiscount:
+      pricePerPackBeforeDiscount * (1 - discount / 100),
   };
 };
 
@@ -223,7 +226,10 @@ export const requestedDateEntered = (
 // ─── Gates ──────────────────────────────────────────────────────────────────
 
 export type LineGates = {
-  /** The item chooser — open on a new line only (OMS-FUN-PO-02.11). */
+  /**
+   * The item chooser — live in add mode (OMS-FUN-PO-02.23), fixed on a line
+   * opened from its row (OMS-FUN-PO-02.11).
+   */
   item: boolean;
   /** The packs input (OMS-FUN-PO-02.13). */
   packs: boolean;
@@ -247,14 +253,14 @@ export type LineGates = {
 export const lineGates = (options: {
   status: PurchaseOrderStatus;
   lineStatus: LineStatus;
-  isNew: boolean;
+  addMode: boolean;
   canAuthorise: boolean;
 }): LineGates => {
   const open =
     options.lineStatus !== 'CLOSED' && options.status !== 'FINALISED';
   const drafting = open && isDrafting(options.status);
   return {
-    item: options.isNew,
+    item: options.addMode,
     packs: open && (isDrafting(options.status) || options.canAuthorise),
     drafting,
     dates: open && options.status !== 'SENT',

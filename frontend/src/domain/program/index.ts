@@ -3,7 +3,7 @@
 //  - ProgramNameSelect: the store's programs (ProgramNode.id) — a
 //    prescription's programId (spec/prescriptions).
 //  - ProgramDocumentSelect: program-enrolment DOCUMENT registries (context id)
-//    — the report/patient-enrolment surfaces (spec/reports AC-R10).
+//    — the report/patient-enrolment surfaces (spec/reports OMS-REG-RPT-10.19).
 export {
   programRegistriesResource,
   programsResource,

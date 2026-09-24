@@ -62,7 +62,7 @@ export interface InboundShipmentSidePanelProps {
    * panel nobody opened. The service-charge lines arm their fetch on this.
    */
   open: boolean;
-  /** True once Verified (global edit lock). */
+  /** The shipment's edit lock (rules § editability). */
   disabled: boolean;
   /**
    * Whether the shipment holds any stock-bearing lines — only those carry

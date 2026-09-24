@@ -133,7 +133,7 @@ export const PurchaseOrderLineImportModal: Component<
       props.onClose();
       return;
     }
-    setImportError(t('messages.import-error-on-upload'));
+    setImportError(t('messages.import-error-purchase-order-lines'));
     setRows(failures);
     setStep('review');
   };

@@ -62,6 +62,9 @@ import styles from './PurchaseOrderLineEditModal.module.css';
 
 type Line = PurchaseOrderDetailLineFragment;
 
+export type LineLookup =
+  { kind: 'line'; line: Line } | { kind: 'none' } | { kind: 'failed' };
+
 export interface PurchaseOrderLineEditModalProps {
   open: boolean;
   onClose: () => void;
@@ -83,6 +86,8 @@ export interface PurchaseOrderLineEditModalProps {
   hasNext: (lineId: string) => boolean;
   /** The line after this one in the table's current order, paging if needed. */
   nextLine: (lineId: string) => Promise<Line | undefined>;
+  /** The order's existing line for an item, if any (OMS-FUN-PO-02.23). */
+  findLineForItem: (itemId: string) => Promise<LineLookup>;
   /** A save landed — the parent re-reads the page, the set and the node. */
   onSaved: () => void;
 }
@@ -116,6 +121,8 @@ const LineEditContent = (
 
   let disposed = false;
   onCleanup(() => (disposed = true));
+  // Only the latest pick seeds the editor; a slower earlier one is dropped.
+  let pickToken = 0;
 
   const isNew = () => !facts()?.lineId;
   const status = () => props.order.status;
@@ -136,22 +143,40 @@ const LineEditContent = (
   if (props.initialLine)
     seed(factsFromLine(props.initialLine), draftFromLine(props.initialLine));
 
-  // A picked item → the line it would become (rules § what a new line is born
-  // as), with the item's own figures read live: its stock on hand now and its
+  // An item already on the order loads its existing line (OMS-FUN-PO-02.23);
+  // otherwise the line it would become (rules § what a new line is born as),
+  // with the item's own figures read live: its stock on hand now and its
   // units on order across the store's other purchase orders.
   const pickItem = async (item: ItemOption) => {
+    const token = ++pickToken;
+    const stale = () => disposed || token !== pickToken;
     setLoading(true);
     setErrorMessage(undefined);
+    const lookup = await props.findLineForItem(item.id);
+    if (stale()) return;
+    if (lookup.kind === 'failed') {
+      setLoading(false);
+      setErrorMessage(t('error.unable-to-load-data'));
+      return;
+    }
+    if (lookup.kind === 'line') {
+      setLoading(false);
+      seed(factsFromLine(lookup.line), draftFromLine(lookup.line));
+      packsField.focus();
+      return;
+    }
     const result = await graphqlFetch(PurchaseOrderLineItemFacts, {
       storeId: props.storeId,
       itemId: item.id,
       orderId: props.order.id,
     });
-    if (disposed) return;
+    if (stale()) return;
     setLoading(false);
-    if (result.kind !== 'success') return;
-    const node = result.data.items.nodes[0];
-    if (!node) return;
+    const node = result.kind === 'success' && result.data.items.nodes[0];
+    if (!node) {
+      setErrorMessage(t('error.unable-to-load-data'));
+      return;
+    }
     seed(
       {
         lineNumber: props.lineCount + 1,
@@ -175,7 +200,7 @@ const LineEditContent = (
     lineGates({
       status: status(),
       lineStatus: facts()?.status ?? 'NEW',
-      isNew: isNew(),
+      addMode: !props.initialLine,
       canAuthorise: props.canAuthorise,
     })
   );
@@ -409,7 +434,7 @@ const LineEditContent = (
                 label={t(packsLabelKey(status()))}
                 hideLabel
                 min={0}
-                decimalLimit={2}
+                decimalLimit={10}
                 data-testid="packs-input"
                 ref={packsField.ref}
                 value={draftPacks(draft()!)}
@@ -434,7 +459,9 @@ const LineEditContent = (
               />
             </FieldRow>
             <FieldRow
-              label={t('label.requested-quantity')}
+              label={t('label.order-quantity-in-unit', {
+                unit: facts()!.unitName ?? t('label.units'),
+              })}
               readOnly
               valueAlign="end"
               valueTestId="requested-units-value"
@@ -443,7 +470,9 @@ const LineEditContent = (
             </FieldRow>
             <Show when={showsAdjustedUnits(status())}>
               <FieldRow
-                label={t('label.adjusted-units')}
+                label={t('label.adjusted-units-in-unit', {
+                  unit: facts()!.unitName ?? t('label.units'),
+                })}
                 readOnly
                 valueAlign="end"
                 valueTestId="adjusted-units-value"
@@ -555,16 +584,17 @@ const LineEditContent = (
         </div>
       </Show>
 
-      <LabelledValue
-        label={t('label.ordered-in-others')}
-        layout="inline"
-        data-testid="ordered-in-others-value"
-      >
-        {orderedElsewhere(
-          facts()?.unitsOrderedInOthers ?? 0,
-          facts()?.unitName ?? null
+      <Show when={facts()}>
+        {line => (
+          <LabelledValue
+            label={t('label.ordered-in-others')}
+            layout="inline"
+            data-testid="ordered-in-others-value"
+          >
+            {orderedElsewhere(line().unitsOrderedInOthers, line().unitName)}
+          </LabelledValue>
         )}
-      </LabelledValue>
+      </Show>
     </Dialog>
   );
 };
