@@ -184,6 +184,8 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
             name,
             form_schema_id: _,
             config,
+            plugin_code: _,
+            program_key: _,
         },
         form_schema,
     ) = data;

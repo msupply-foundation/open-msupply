@@ -75,6 +75,8 @@ fn generate(
         name,
         form_schema_id: Some(form_schema_id),
         config: None,
+        plugin_code: None,
+        program_key: None,
     }
 }
 

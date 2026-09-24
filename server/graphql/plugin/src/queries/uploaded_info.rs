@@ -11,6 +11,7 @@ use serde_json::json;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     backend_plugin::plugin_provider::PluginBundle,
+    plugin::{form_plugin::InstalledDocumentType, InstalledPluginBundle},
     UploadedFile, UploadedFileJsonError,
 };
 use util::format_error;
@@ -78,10 +79,28 @@ fn map_error(error: UploadedFileJsonError) -> Result<UploadedPluginErrorVariant>
 
 pub struct PluginInfoNode {
     pub bundle: PluginBundle,
+    /// The registry entries an install left, `None` for an uploaded bundle
+    /// that has not been installed.
+    pub installed_document_types: Option<Vec<InstalledDocumentType>>,
 }
 impl PluginInfoNode {
     pub(crate) fn from_domain(bundle: PluginBundle) -> PluginInfoNode {
-        PluginInfoNode { bundle }
+        PluginInfoNode {
+            bundle,
+            installed_document_types: None,
+        }
+    }
+
+    pub(crate) fn from_install(
+        InstalledPluginBundle {
+            bundle,
+            document_types,
+        }: InstalledPluginBundle,
+    ) -> PluginInfoNode {
+        PluginInfoNode {
+            bundle,
+            installed_document_types: Some(document_types),
+        }
     }
 }
 
@@ -111,6 +130,17 @@ impl PluginInfoNode {
                     .iter()
                     .map(|r| json!({ "front_end": r.code.clone(), "types": r.types.clone() }))
                     .collect::<HashSet<serde_json::Value>>(),
+            "forms":
+                self.bundle
+                    .form_plugins
+                    .iter()
+                    .map(|f| json!({
+                        "plugin_code": f.plugin_code,
+                        "program_keys": f.program_keys,
+                        "document_types": f.document_types.iter().map(|d| &d.document_type).collect::<Vec<_>>(),
+                    }))
+                    .collect::<Vec<serde_json::Value>>(),
+            "installed_document_types": self.installed_document_types,
             "NOTE": "Back end plugins are not currently 'stackable', i.e. only one instance of transform request requisition line plugin will be executed"
         })
     }

@@ -104,6 +104,10 @@ impl SyncTranslation for DocumentRegistryTranslation {
             name,
             form_schema_id,
             config: config_str,
+            // Legacy central knows nothing of plugins. A row it sends replaces
+            // the whole local row, so it also clears a plugin's ownership.
+            plugin_code: None,
+            program_key: None,
         };
 
         Ok(PullTranslateResult::upsert(result))

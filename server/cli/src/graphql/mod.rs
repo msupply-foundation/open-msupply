@@ -16,7 +16,35 @@ pub struct Api {
 #[allow(dead_code)]
 #[derive(Debug, Deserialize, Serialize)]
 struct GraphQlResponse {
-    data: Root,
+    /// `None` when the request failed before resolving anything.
+    data: Option<Root>,
+    /// A field that failed resolves to `null` in `data`, and the reason is
+    /// only here.
+    #[serde(default)]
+    errors: Vec<GraphQlError>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct GraphQlError {
+    message: String,
+    #[serde(default)]
+    extensions: Option<serde_json::Value>,
+}
+
+impl GraphQlError {
+    /// The standard errors carry their specifics in `extensions.details`
+    /// (`StandardGraphqlError`), the message being only the kind of error.
+    fn describe(&self) -> String {
+        match self
+            .extensions
+            .as_ref()
+            .and_then(|e| e.get("details"))
+            .and_then(|d| d.as_str())
+        {
+            Some(details) => format!("{}: {details}", self.message),
+            None => self.message.clone(),
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -36,6 +64,8 @@ pub enum ApiError {
     GettingText(#[source] reqwest::Error, reqwest::StatusCode),
     #[error("Error parsing gql response: {1}")]
     ParsingJson(#[source] serde_json::Error, String),
+    #[error("GraphQL error: {0}")]
+    Graphql(String),
     #[error("Error validating typename, expected typename {expected_typename}, result: {json}")]
     ValidatingTypename {
         expected_typename: String,
@@ -137,7 +167,15 @@ async fn _gql(
 
     let json_result: GraphQlResponse = send_and_parse(built_request, url.clone()).await?;
 
-    let result = json_result.data.root;
+    if !json_result.errors.is_empty() {
+        let described: Vec<String> = json_result.errors.iter().map(|e| e.describe()).collect();
+        return Err(Error::Graphql(described.join("; ")));
+    }
+    let Some(Root { root: result }) = json_result.data else {
+        return Err(Error::Graphql(
+            "response has neither data nor errors".to_string(),
+        ));
+    };
 
     let Some(expected_typename) = expected_typename else {
         return Ok(result);

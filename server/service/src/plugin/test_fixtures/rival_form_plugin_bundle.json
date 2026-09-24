@@ -1,0 +1,30 @@
+{
+  "backend_plugins": [],
+  "frontend_plugins": [
+    {
+      "id": "frontend_rival_solid_1_0_0",
+      "code": "rival",
+      "version": "1.0.0",
+      "entry_point": "rival.js",
+      "types": [],
+      "files": [{ "file_name": "rival.js", "file_content_base64": "bm90aGluZyBoZXJl" }],
+      "host_runtime": "solid"
+    }
+  ],
+  "form_plugins": [
+    {
+      "plugin_code": "rival",
+      "program_keys": ["hiv"],
+      "document_types": [
+        {
+          "document_type": "DemoEncounter",
+          "category": "Encounter",
+          "name": "Rival encounter",
+          "program_key": "hiv",
+          "versions": [{ "id": "rival_DemoEncounter_v1_dddddddddddd", "json_schema": { "type": "object" } }],
+          "config": null
+        }
+      ]
+    }
+  ]
+}

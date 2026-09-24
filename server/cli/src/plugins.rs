@@ -75,6 +75,16 @@ pub struct InstallPluginBundle {
     /// Password
     #[clap(long)]
     password: String,
+    /// Program for one of a form plugin's program keys, as `<programKey>=<programId>`.
+    /// Repeat for each key. Needed for every key on first install; a key left
+    /// out of a re-install keeps the program it is already bound to.
+    #[clap(long = "program", value_parser = parse_program_choice)]
+    programs: Vec<(String, String)>,
+    /// Document type whose existing registry entry, installed by no plugin, the
+    /// plugin may take over (for example the deployment's `Patient` entry).
+    /// Repeatable.
+    #[clap(long = "take-over")]
+    take_over: Vec<String>,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -91,6 +101,27 @@ pub struct GenerateAndInstallPluginBundle {
     /// Password
     #[clap(long)]
     password: String,
+    /// Program for one of a form plugin's program keys, as `<programKey>=<programId>`.
+    /// Repeat for each key. Needed for every key on first install; a key left
+    /// out of a re-install keeps the program it is already bound to.
+    #[clap(long = "program", value_parser = parse_program_choice)]
+    programs: Vec<(String, String)>,
+    /// Document type whose existing registry entry, installed by no plugin, the
+    /// plugin may take over (for example the deployment's `Patient` entry).
+    /// Repeatable.
+    #[clap(long = "take-over")]
+    take_over: Vec<String>,
+}
+
+fn parse_program_choice(value: &str) -> Result<(String, String), String> {
+    match value.split_once('=') {
+        Some((key, id)) if !key.is_empty() && !id.is_empty() => {
+            Ok((key.to_string(), id.to_string()))
+        }
+        _ => Err(format!(
+            "expected <programKey>=<programId>, for example demo=DemoProgram, got \"{value}\""
+        )),
+    }
 }
 
 #[derive(clap::Parser, Debug)]
@@ -161,10 +192,7 @@ pub fn generate_plugin_bundle(
     ];
     let manifest_name = OsStr::new("package.json");
 
-    let mut bundle = PluginBundle {
-        backend_plugins: Vec::new(),
-        frontend_plugins: Vec::new(),
-    };
+    let mut bundle = PluginBundle::default();
 
     generate_bundle_recursive(&mut bundle, &ignore_paths, manifest_name, &in_dir)?;
     fs::write(
@@ -388,16 +416,27 @@ pub async fn install_plugin_bundle(
         url,
         username,
         password,
+        programs,
+        take_over,
     }: InstallPluginBundle,
 ) -> Result<(), Error> {
     let api = Api::new_with_token(url.clone(), username, password).await?;
 
     let uploaded_file = api.upload_file(path).await?;
 
+    let programs: Vec<_> = programs
+        .into_iter()
+        .map(|(key, id)| json!({ "programKey": key, "programId": id }))
+        .collect();
+
     let upload_result = api
         .gql(
             INSTALL_PLUGINS,
-            json!( { "fileId": uploaded_file.file_id} ),
+            json!({
+                "fileId": uploaded_file.file_id,
+                "programs": programs,
+                "takeOver": take_over,
+            }),
             Some("CentralServerMutationNode"),
         )
         .await?;
@@ -417,6 +456,8 @@ pub async fn generate_and_install_plugin_bundle(
         url,
         username,
         password,
+        programs,
+        take_over,
     }: GenerateAndInstallPluginBundle,
 ) -> Result<(), Error> {
     let out_file = PathBuf::from("report_temp.json");
@@ -431,6 +472,8 @@ pub async fn generate_and_install_plugin_bundle(
         url,
         username,
         password,
+        programs,
+        take_over,
     })
     .await?;
     fs::remove_file(out_file.clone()).map_err(|e| Error::FiledToRemoveTempFile(e, out_file))?;

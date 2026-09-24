@@ -27,6 +27,8 @@ table! {
         name -> Nullable<Text>,
         form_schema_id -> Nullable<Text>,
         config -> Nullable<Text>,
+        plugin_code -> Nullable<Text>,
+        program_key -> Nullable<Text>,
     }
 }
 
@@ -51,6 +53,14 @@ pub struct DocumentRegistryRow {
     pub name: Option<String>,
     pub form_schema_id: Option<String>,
     pub config: Option<String>,
+    /// The form plugin that installed this entry and is its only writer. `None`
+    /// for an entry written any other way (pulled from legacy central, or by
+    /// `insertDocumentRegistry`), which a plugin may take over only when told to.
+    pub plugin_code: Option<String>,
+    /// The owning plugin's name for the program this entry belongs to, set for
+    /// every category but Patient. The program it stands for is `context_id`,
+    /// chosen when the plugin is installed.
+    pub program_key: Option<String>,
 }
 
 joinable!(document_registry -> form_schema (form_schema_id));
@@ -100,6 +110,36 @@ impl<'a> DocumentRegistryRowRepository<'a> {
     ) -> Result<Vec<DocumentRegistryRow>, RepositoryError> {
         Ok(document_registry::table
             .filter(document_registry::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn find_many_by_document_type(
+        &self,
+        document_type: &str,
+    ) -> Result<Vec<DocumentRegistryRow>, RepositoryError> {
+        Ok(document_registry::table
+            .filter(document_registry::document_type.eq(document_type))
+            .order(document_registry::id)
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn find_many_by_category(
+        &self,
+        category: DocumentRegistryCategory,
+    ) -> Result<Vec<DocumentRegistryRow>, RepositoryError> {
+        Ok(document_registry::table
+            .filter(document_registry::category.eq(category))
+            .order(document_registry::id)
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn find_many_by_plugin_code(
+        &self,
+        plugin_code: &str,
+    ) -> Result<Vec<DocumentRegistryRow>, RepositoryError> {
+        Ok(document_registry::table
+            .filter(document_registry::plugin_code.eq(plugin_code))
+            .order(document_registry::id)
             .load(self.connection.lock().connection())?)
     }
 

@@ -108,6 +108,11 @@ where
 pub struct PluginBundle {
     pub backend_plugins: Vec<BackendPluginRow>,
     pub frontend_plugins: Vec<FrontendPluginRow>,
+    /// The declarative half of each form plugin in the bundle: its schema
+    /// versions and registry declarations, written to `form_schema` and
+    /// `document_registry` at install. Absent from a bundle with no form plugin.
+    #[serde(default)]
+    pub form_plugins: Vec<crate::plugin::form_plugin::FormPluginSidecar>,
 }
 
 impl PluginInstance {

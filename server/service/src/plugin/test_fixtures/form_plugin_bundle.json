@@ -1,0 +1,50 @@
+{
+  "backend_plugins": [],
+  "frontend_plugins": [
+    {
+      "id": "frontend_demo_program_solid_0_1_0",
+      "code": "demo_program",
+      "version": "0.1.0",
+      "entry_point": "demo_program.js",
+      "types": [],
+      "files": [{ "file_name": "demo_program.js", "file_content_base64": "bm90aGluZyBoZXJl" }],
+      "host_runtime": "solid"
+    }
+  ],
+  "form_plugins": [
+    {
+      "plugin_code": "demo_program",
+      "program_keys": ["demo"],
+      "document_types": [
+        {
+          "document_type": "Patient",
+          "category": "Patient",
+          "name": "Patient",
+          "program_key": null,
+          "versions": [{ "id": "demo_program_Patient_v1_aaaaaaaaaaaa", "json_schema": { "type": "object" } }],
+          "config": null
+        },
+        {
+          "document_type": "DemoEncounter",
+          "category": "Encounter",
+          "name": "Demo follow-up",
+          "program_key": "demo",
+          "versions": [
+            { "id": "demo_program_DemoEncounter_v1_bbbbbbbbbbbb", "json_schema": { "type": "object", "title": "v1" } },
+            { "id": "demo_program_DemoEncounter_v2_cccccccccccc", "json_schema": { "type": "object", "title": "v2" } }
+          ],
+          "config": {
+            "events": [
+              {
+                "type": "Schedule",
+                "conditions": [{ "field": "extension.demo.nextVisit", "isSet": true }],
+                "config": { "datetimeField": "extension.demo.nextVisit", "scheduleIn": { "days": 30 } },
+                "event": { "documentType": "DemoProgramEnrolment", "type": "followUpStatus", "data": "Overdue" }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
