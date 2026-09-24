@@ -4,11 +4,11 @@ import { generateReport } from './generateReport';
 import { csvToExcel, mapPrintResponse } from '../reportFiles/csvToExcel';
 
 // Generation faults belong to the control the user clicked, never the global
-// unexpected-error modal (spec/reports S5 / AC-G6): its Reload re-runs the same
-// failing generation and its Go to dashboard discards the user's place, while
-// the screen behind it is perfectly healthy. Both wrappers therefore take the
-// `returnGraphqlErrors` opt-in (kdd/state-management) and must come back with a
-// describable `error`, with the global signal left clear.
+// unexpected-error modal (spec/reports S5 / OMS-REG-RPT-09.10): its Reload
+// re-runs the same failing generation and its Go to dashboard discards the
+// user's place, while the screen behind it is perfectly healthy. Both wrappers
+// therefore take the `returnGraphqlErrors` opt-in (kdd/state-management) and
+// must come back with a describable `error`, with the global signal left clear.
 
 const mockFetch = (body: unknown, ok = true, status = 200) => {
   vi.stubGlobal(

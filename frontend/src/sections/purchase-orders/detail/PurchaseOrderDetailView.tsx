@@ -30,6 +30,7 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  type CellFragment,
   getCellDefinition,
   getCurrencyCell,
   getDateCell,
@@ -100,6 +101,7 @@ import {
   isOpenToChange,
 } from './purchaseOrderLadder';
 import { formatCurrency } from '@/intl/currency';
+import { formatNumber } from '@/intl/formatNumber';
 import { linePacks, lineCost } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
 import {
@@ -165,6 +167,11 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   onOrder: false,
   requestedDeliveryDate: false,
   expectedDeliveryDate: false,
+};
+
+const exactQuantity: CellFragment<Line>['cell'] = info => {
+  const value = info.getValue<number | null | undefined>();
+  return value == null ? '' : formatNumber(value);
 };
 
 const PurchaseOrderDetailView: Component = () => {
@@ -586,6 +593,7 @@ const PurchaseOrderDetailView: Component = () => {
       c: { accessor: line => linePacks(line), id: 'numPacks' },
       header: () => t('label.order-quantity-in-packs'),
       ...getCellDefinition('numberOfPacks'),
+      cell: exactQuantity,
     },
     {
       c: { key: 'requestedPackSize' },
@@ -605,6 +613,7 @@ const PurchaseOrderDetailView: Component = () => {
       header: () =>
         t('label.order-quantity-in-unit', { unit: t('label.units') }),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(8),
     },
     {
@@ -614,6 +623,7 @@ const PurchaseOrderDetailView: Component = () => {
       sortKey: 'adjustedNumberOfUnits',
       header: () => t('label.adjusted-units'),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(8),
     },
     {
@@ -622,6 +632,7 @@ const PurchaseOrderDetailView: Component = () => {
       sortKey: 'shippedNumberOfUnits',
       header: () => t('label.shipped-units'),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(8),
     },
     {
@@ -640,6 +651,7 @@ const PurchaseOrderDetailView: Component = () => {
       c: { accessor: line => line.unitsOrderedInOthers, id: 'onOrder' },
       header: () => t('label.on-order'),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(7),
     },
     {

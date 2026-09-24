@@ -97,6 +97,7 @@ import {
   canChangeStatus,
   hasSourceLink,
   isEditable,
+  actionsLocked,
   sourceLinkOf,
   supplierIsStore,
 } from './inboundShipmentStatus';
@@ -396,14 +397,18 @@ const InboundShipmentDetailView: Component = () => {
       !canMutateInboundScope(scope())
     );
   };
+  const isExternal = () => isExternalScope(scope());
   // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
   const isDisabled = () =>
     writeBlocked() || !isEditable(current()?.status ?? '');
+  // The line-selection actions close earlier on a PO-linked shipment — at
+  // Received (issue #873); its lines still open, and items are still added.
+  const bulkLocked = () =>
+    isDisabled() || actionsLocked(current()?.status ?? '', isExternal());
   // The status footer keeps its own, looser status rule — an advance has to
   // stay reachable at Shipped, which the edit gate closes.
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
-  const isExternal = () => isExternalScope(scope());
   // Whether the shipment carries a source link — see hasSourceLink's own
   // comment for the rule and why the PO half comes from the scope.
   const sourceLinked = () =>
@@ -1168,7 +1173,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1176,7 +1181,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1184,7 +1189,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       locations={locations()}
                       locationsLoading={locationsData.loading}
                       requiredVolume={selectedVolume}
@@ -1195,7 +1200,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1210,7 +1215,7 @@ const InboundShipmentDetailView: Component = () => {
                         storeId={params.storeId}
                         isExternal={isExternal()}
                         selectedIds={selectedIds}
-                        disabled={isDisabled()}
+                        disabled={bulkLocked()}
                         onChanged={onLinesChanged}
                         onError={stampErrors}
                       />
