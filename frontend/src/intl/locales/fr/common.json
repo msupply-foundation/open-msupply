@@ -2818,7 +2818,7 @@
   "messages.how-to-read-report": "Comment lire ce rapport ?",
   "messages.how-to-read-stock-detail": "Ce rapport contient les mêmes informations que la page de stock, sans aucune interactivité.",
   "messages.how-to-read-stock-status": "Descriptions des statuts :\n* Sous-stocké - Les MDS sont inférieurs au minimum (préférence dépôt : seuil pour sous-stock).\n* En excès de stock - Les MDS sont supérieurs au maximum (préférence dépôt : seuil pour excès de stock).\n* En rupture de stock - Le Stock utilisable est à 0 et la CMM est supérieure à 0.\n* En quantité suffisante - Les MDS sont entre le minimum et le maximum.\n* Pas de consommation - La CMM est à 0.",
-  "messages.import-error": "Certains ou tous les équipements n'ont pas pu être importés. Cliquez sur Exporter pour télécharger un fichier CSV contenant les lignes ayant causé une erreur. Les lignes sans erreur auront été importées.",
+  "messages.import-error-assets": "Certains ou tous les équipements n'ont pas pu être importés. Cliquez sur Exporter pour télécharger un fichier CSV contenant les lignes ayant causé une erreur. Les lignes sans erreur auront été importées.",
   "messages.import-error-on-upload": "Impossible d'importer le fichier. Veuillez corriger les erreurs et réessayer",
   "messages.import-facilities-failed": "Echec de l'import : {{ count }} de {{ total }} lignes n'ont pas pu être appliquées",
   "messages.import-facilities-updated_many": "{{ count }} structures ont été mises à jour.",
