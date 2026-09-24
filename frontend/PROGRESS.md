@@ -38,7 +38,7 @@ its skill describes — read the vertical's `BUILD_REPORT.md` and its case file 
 | [`prescription-requests`](./spec/prescription-requests/) |  ✅  |   —   |  ✅   |  —  |    —     | —                       |
 | [`prescriptions`](./spec/prescriptions/)                 |  ✅  |  ✅   |  ✅   | ✅  |    ✅    | —                       |
 | [`purchase-orders`](./spec/purchase-orders/)             |  ✅  |  ✅   |  ✅   |  —  |    —     | —                       |
-| [`reports`](./spec/reports/)                             |  ✅  |   —   |  ✅   | ✅  |    —     | —                       |
+| [`reports`](./spec/reports/)                             |  ✅  |  ✅   |  ✅   | ✅  |    ✅    | —                       |
 | [`requisitions`](./spec/requisitions/)                   |  ✅  |  ✅   |  ✅   | ✅  |    ✅    | —                       |
 | [`rnr-forms`](./spec/rnr-forms/)                         |  ✅  |  ✅   |  ✅   |  —  |    ✅    | —                       |
 | [`settings`](./spec/settings/)                           |  ✅  |  ✅   |  ✅   | ✅  |    ✅    | 2026-07-28              |

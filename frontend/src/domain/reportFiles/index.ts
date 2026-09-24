@@ -1,6 +1,6 @@
 // The cross-vertical generated-file path (spec/reports "Cross-cutting" /
-// AC-F3): convert (csvToExcel) or generate (the reports vertical's own
-// generateReport) → fetch the handle (fetchReportFile) → deliver via the
+// OMS-REG-RPT-09.15): convert (csvToExcel) or generate (the reports vertical's
+// own generateReport) → fetch the handle (fetchReportFile) → deliver via the
 // platform capabilities (src/platform/openDocument): openBlob / saveBlob to
 // view or keep the file, printBlob to print it.
 export { fetchReportFile } from './files';
