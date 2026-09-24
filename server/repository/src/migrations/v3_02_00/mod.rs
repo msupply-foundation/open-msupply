@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_clinician_to_prescription_request;
 mod add_custom_field_scope_deleted_datetime;
+mod add_maintenance_mode_pg_enums;
 mod add_prescription_request_activity_log_types;
 mod add_prescription_request_id_to_invoice;
 mod add_prescription_request_report_context;
@@ -43,6 +44,7 @@ impl Migration for V3_02_00 {
             Box::new(add_settings_sync_is_paused_key_type::Migrate),
             Box::new(add_sync_pause_changed_system_log_type::Migrate),
             Box::new(add_sync_api_pause_pg_enums::Migrate),
+            Box::new(add_maintenance_mode_pg_enums::Migrate),
         ]
     }
 }

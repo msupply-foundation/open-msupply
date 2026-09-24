@@ -10,7 +10,7 @@ use service::{
         LoginError, LoginFailure, LoginInput, LoginService, LoginSuccess, MIN_ERR_RESPONSE_TIME_SEC,
     },
     session_store::SESSION_LIFETIME,
-    sync::CentralServerConfig,
+    sync::{maintenance_mode::is_locked_out, CentralServerConfig},
     user_account::UserAccountService,
 };
 
@@ -81,6 +81,15 @@ impl NoSiteAccess {
     }
 }
 
+pub struct MaintenanceMode;
+#[Object]
+impl MaintenanceMode {
+    pub async fn description(&self) -> &str {
+        "The server is in maintenance mode. Only server administrators can log in until it is \
+         turned off"
+    }
+}
+
 pub struct InvalidCredentials;
 #[Object]
 impl InvalidCredentials {
@@ -119,6 +128,7 @@ pub enum AuthTokenErrorInterface {
     AccountBlocked(AccountBlocked),
     NoSiteAccess(NoSiteAccess),
     CentralSyncRequired(CentralSyncRequired),
+    MaintenanceMode(MaintenanceMode),
 }
 
 #[derive(SimpleObject)]
@@ -187,6 +197,9 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                         error: AuthTokenErrorInterface::NoSiteAccess(NoSiteAccess),
                     }))
                 }
+                LoginError::LoginFailure(LoginFailure::MaintenanceMode) => {
+                    return Ok(maintenance_mode_error())
+                }
                 LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
                 | LoginError::FetchUserError(_)
@@ -207,6 +220,20 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
         })?
         .create(&user_id);
 
+    // Maintenance mode could have been turned on after the login checked it and before the
+    // session above existed, in which case its sweep missed this session. The flag is written
+    // before the sweep, so reading it after creating the session catches every interleaving.
+    if is_locked_out(&service_context.connection, &user_id)? {
+        auth_data
+            .session_store
+            .write()
+            .map_err(|e| {
+                StandardGraphqlError::InternalError(format!("Session store lock poisoned: {e}"))
+            })?
+            .revoke(&token);
+        return Ok(maintenance_mode_error());
+    }
+
     let expiry_date = (Utc::now() + SESSION_LIFETIME).timestamp() as usize;
     set_session_cookie(ctx, &token, auth_data);
 
@@ -215,6 +242,12 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
         expiry_date,
         user_id,
     }))
+}
+
+fn maintenance_mode_error() -> AuthTokenResponse {
+    AuthTokenResponse::Error(AuthTokenError {
+        error: AuthTokenErrorInterface::MaintenanceMode(MaintenanceMode),
+    })
 }
 
 /// How long the browser is allowed to keep the session cookie. Intentionally **much longer** than

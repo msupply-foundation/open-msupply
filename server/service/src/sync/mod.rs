@@ -10,6 +10,7 @@ pub use central_mapping_custom_fields::seed_central_mapping_custom_fields;
 pub mod file_sync_driver;
 pub mod file_synchroniser;
 mod integrate_document;
+pub mod maintenance_mode;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
 pub mod site_auth;

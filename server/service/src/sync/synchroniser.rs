@@ -2,7 +2,8 @@ use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        sync_buffer::get_sync_buffer_for_table, sync_status::logger::SyncStep, CentralServerConfig,
+        maintenance_mode::integration_uses_transaction, sync_buffer::get_sync_buffer_for_table,
+        sync_status::logger::SyncStep, CentralServerConfig,
     },
 };
 use log::warn;
@@ -313,11 +314,18 @@ impl SynchroniserV5V6 {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
+        // Without the outer transaction only in maintenance mode (#840), or while initialising
+        // with `disable_integration_transaction` set. See `integration_uses_transaction`.
+        let use_transaction = integration_uses_transaction(
+            &ctx.connection,
+            is_initialised,
+            self.settings.disable_integration_transaction,
+        )?;
         let (upserts, deletes, merges) = integrate_and_translate_sync_outer(
             &self.service_provider,
             logger,
             central_sync_server_id,
-            !self.settings.disable_integration_transaction,
+            use_transaction,
         )
         .await?;
 
@@ -406,35 +414,7 @@ pub(crate) fn run_post_sync_triggers(
         service_provider.ledger_fix_trigger.trigger();
     }
 
-    ctx.processors_trigger
-        .trigger_requisition_transfer_processors();
-    ctx.processors_trigger.trigger_invoice_transfer_processors();
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::ContactFormEmail);
-
-    // This should be before plugin processor below, in case there is a processor error, need to be able
-    // to sync new plugin version to avoid bricking the app
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::LoadPlugin);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::AssignRequisitionNumber);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::AssignPrescriptionNumber);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::PrescriptionRequestStatus);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::Plugins);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::RequisitionAutoFinalise);
-
-    ctx.processors_trigger
-        .trigger_processor(ProcessorType::MergeSyncMessage);
+    ctx.processors_trigger.trigger_all();
 }
 
 /// Async wrapper around the synchronous `integrate_and_translate_sync_buffer`.

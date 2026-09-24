@@ -3,13 +3,15 @@ use log::info;
 use repository::{
     get_storage_connection_manager,
     migrations::{migrate, MigrationConfig},
-    StorageConnectionManager, SyncBufferRepository, SyncVersion,
+    KeyType, KeyValueStoreRepository, StorageConnection, StorageConnectionManager,
+    SyncBufferRepository, SyncVersion,
 };
 use service::{
     settings::Settings,
     sync::{
-        seed_central_mapping_custom_fields, sync_status::logger::SyncLogger,
-        synchroniser::integrate_and_translate_sync_buffer, CentralServerConfig,
+        maintenance_mode::is_maintenance_mode, seed_central_mapping_custom_fields,
+        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
+        CentralServerConfig,
     },
 };
 
@@ -79,6 +81,10 @@ pub fn reintegrate_buffer(
 
     let connection = connection_manager.connection()?;
 
+    if !use_transaction {
+        check_no_transaction_allowed(&connection)?;
+    }
+
     // The server seeds these right after it learns it is central and before it integrates
     // anything (see `SynchroniserV5V6::sync`). The category translators emit
     // `custom_field_option` rows whose `custom_field_id` is one of the mapping keys, so on a
@@ -121,6 +127,33 @@ pub fn reintegrate_buffer(
     info!("Merge results: {merges:#?}");
 
     Ok(())
+}
+
+/// Integrating without the outer transaction lets changelog readers (processors, push, remote
+/// pulls) advance through a half-integrated batch, so on a live database it is only allowed in
+/// maintenance mode, which pauses all of them (#840). A database that has never synced (a replay
+/// database built with `initialise-database` plus a restored buffer) has no readers, so it is
+/// allowed there too.
+fn check_no_transaction_allowed(connection: &StorageConnection) -> anyhow::Result<()> {
+    if is_maintenance_mode(connection)? {
+        info!("Maintenance mode is on, integrating without the outer transaction");
+        return Ok(());
+    }
+
+    let has_synced = KeyValueStoreRepository::new(connection)
+        .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+        .is_some();
+    if !has_synced {
+        info!("Database has never synced, integrating without the outer transaction");
+        return Ok(());
+    }
+
+    Err(anyhow!(
+        "Refusing to integrate without the outer transaction: this database has synced and \
+         maintenance mode is off, so processors, push and remote pulls could read a \
+         half-integrated batch. Turn on maintenance mode in Admin > Sync settings, or pass \
+         --use-transaction"
+    ))
 }
 
 /// Resets the sync buffer ahead of integration, optionally scoped by `tables` and/or `errors_only`.

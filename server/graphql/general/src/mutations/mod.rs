@@ -6,6 +6,7 @@ pub mod initialise_site;
 pub mod insert_insurance;
 pub mod label_printer_settings;
 pub mod log;
+pub mod maintenance_mode;
 pub mod manual_sync;
 pub mod set_sync_paused;
 pub mod sync_api_pause;

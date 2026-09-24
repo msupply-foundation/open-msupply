@@ -41,7 +41,9 @@
 #     remote_pull: 500
 #     central_pull: 500
 #   # Set to true to disable the outer transaction during integration. This can prevent PostgreSQL
-#   # from exhausting max_locks_per_transaction during large store migrations. Use with caution.
+#   # from exhausting max_locks_per_transaction during large store migrations. Only honoured while
+#   # the site is initialising; once initialised, use maintenance mode on central instead (Admin >
+#   # Sync settings), which pauses every reader of a half-integrated batch first.
 #   disable_integration_transaction: false
 #   # Central server only. Relax the v7 hardware-id and "token already allocated" guards so a site
 #   # can re-pair from a new machine without an admin reset (name + password still required). For

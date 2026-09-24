@@ -66,6 +66,11 @@ pub enum KeyType {
     SettingsSyncSiteIsMultiDevice,
     // Central only: refuse inbound v6/v7 sync data requests from remotes (#717)
     SettingsSyncApiIsPaused,
+    /// Central only: while true the transfer and general processors drop their triggers (#840).
+    SettingsProcessorsArePaused,
+    /// Central only: maintenance mode, which holds the sync, sync API and processor pauses
+    /// together and locks non-admin users out (#840).
+    SettingsMaintenanceModeIsOn,
 
     DatabaseVersion,
 

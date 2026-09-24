@@ -15,6 +15,7 @@ use self::transfer::{
     invoice::process_invoice_transfers, requisition::process_requisition_transfers,
 };
 use general_processor::{process_records, ProcessorError};
+use pause::processors_paused_or_log;
 
 // Processor currently disabled (not constructed in ProcessorType::get_processors), see #12547
 #[allow(dead_code, unused_imports)]
@@ -24,6 +25,7 @@ mod contact_form;
 mod general_processor;
 mod load_plugin;
 mod merge_sync_message;
+pub mod pause;
 mod plugin_processor;
 mod prescription_request_status;
 mod requisition_auto_finalise;
@@ -112,16 +114,31 @@ impl Processors {
                 // requisition must be processed before shipment, it easy to reason about future use cases if
                 // order is guaranteed when requisition transfer is triggered before shipment transfer (like it is in synchroniser)
                 // The biased flag also makes sure that `await_process_queue` is only called after all other channels are empty.
+                //
+                // While the processor pause is on (#840) a trigger is received and dropped, so the
+                // channels keep draining; resuming triggers every processor once.
                 let result = tokio::select! {
                     biased;
                     Some(_) = requisition_transfer.recv() => {
-                        process_requisition_transfers(&service_provider).map_err(ProcessorsError::RequisitionTransfer)
+                        if processors_paused_or_log(&service_provider) {
+                            Ok(())
+                        } else {
+                            process_requisition_transfers(&service_provider).map_err(ProcessorsError::RequisitionTransfer)
+                        }
                     },
                     Some(_) = invoice_transfer.recv() => {
-                        process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
+                        if processors_paused_or_log(&service_provider) {
+                            Ok(())
+                        } else {
+                            process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
+                        }
                     },
                     Some(r#type) = general_processor.recv() => {
-                        process_records(&service_provider, r#type).await.map_err(ProcessorsError::ProcessCentralRecord)
+                        if processors_paused_or_log(&service_provider) {
+                            Ok(())
+                        } else {
+                            process_records(&service_provider, r#type).await.map_err(ProcessorsError::ProcessCentralRecord)
+                        }
                     },
                     Some(sender) = await_process_queue.recv() => {
                         sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)
@@ -156,6 +173,23 @@ impl ProcessorsTrigger {
             let description = r#type.get_description();
             log::error!("Problem triggering {description} processor {error:#?}")
         }
+    }
+
+    /// Trigger the transfer processors and every general processor that runs after a sync.
+    pub(crate) fn trigger_all(&self) {
+        self.trigger_requisition_transfer_processors();
+        self.trigger_invoice_transfer_processors();
+
+        self.trigger_processor(ProcessorType::ContactFormEmail);
+        // Before the plugin processor below, in case there is a processor error: a new plugin
+        // version must still be able to sync in to avoid bricking the app.
+        self.trigger_processor(ProcessorType::LoadPlugin);
+        self.trigger_processor(ProcessorType::AssignRequisitionNumber);
+        self.trigger_processor(ProcessorType::AssignPrescriptionNumber);
+        self.trigger_processor(ProcessorType::PrescriptionRequestStatus);
+        self.trigger_processor(ProcessorType::Plugins);
+        self.trigger_processor(ProcessorType::RequisitionAutoFinalise);
+        self.trigger_processor(ProcessorType::MergeSyncMessage);
     }
 
     /// Waits till all current events in the processor queue are handled.

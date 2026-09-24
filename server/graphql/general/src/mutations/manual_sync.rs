@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync::sync_status::status::InitialisationStatus,
+    sync::{maintenance_mode::is_maintenance_mode, sync_status::status::InitialisationStatus},
 };
 
 pub fn manual_sync(ctx: &Context<'_>, with_auth: bool) -> Result<String> {
@@ -40,6 +40,14 @@ pub fn manual_sync(ctx: &Context<'_>, with_auth: bool) -> Result<String> {
     if matches!(initialisation_status, InitialisationStatus::Initialised(_))
         && service_provider.settings.is_sync_paused(&service_context)?
     {
+        // In maintenance mode (#840) a manual sync is how a server admin runs the integration
+        // the mode exists for, so it is forced past the pause. Only server admins can be
+        // signed in while the mode is on.
+        if is_maintenance_mode(&service_context.connection)? {
+            service_provider.sync_trigger.trigger_forced();
+            return Ok("Sync triggered".to_string());
+        }
+
         return Err(StandardGraphqlError::BadUserInput(
             "Sync is paused. A server administrator can resume it from sync settings".to_string(),
         )

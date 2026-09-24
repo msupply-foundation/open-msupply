@@ -388,6 +388,22 @@ pub async fn start_server(
     add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
 
+    // A restart in maintenance mode keeps everything paused (the flags are persisted and read at
+    // use), but must not look like it finished OMS central's own integration (#840). After the
+    // migrations, which add the key the check reads.
+    match service_provider.basic_context() {
+        Ok(ctx) => {
+            if let Err(error) =
+                service::sync::maintenance_mode::log_incomplete_integration_on_startup(
+                    &ctx.connection,
+                )
+            {
+                log::error!("Failed to check maintenance mode on startup: {error:?}");
+            }
+        }
+        Err(error) => log::error!("Failed to check maintenance mode on startup: {error:?}"),
+    }
+
     if let Err(e) = CentralServerConfig::restore_central_standalone(&connection) {
         log::error!(
             "Failed to restore standalone central state: {}",
