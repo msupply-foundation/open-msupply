@@ -75,7 +75,7 @@ export interface ContentFooterMessageProps {
 export const ContentFooterMessage = (props: ContentFooterMessageProps) => {
   // The chip on screen. It outlives the report by its exit animation: when the
   // report ends — its time is up, or the caller cleared it — the chip is
-  // marked leaving and fades out, and only then is it removed. A new report
+  // marked leaving and sinks out, and only then is it removed. A new report
   // replaces it at once, mid-exit or not.
   const [shown, setShown] = createSignal<FooterMessage>();
   const [leaving, setLeaving] = createSignal(false);
@@ -119,7 +119,7 @@ export const ContentFooterMessage = (props: ContentFooterMessageProps) => {
       {/* Keyed: every new report is a new chip, so its entry replays. */}
       <Show when={shown()} keyed>
         {message => (
-          // Rises in, and fades out before it is removed. Both run on
+          // Rises in, and sinks back out before it is removed. Both run on
           // --motion-base, which reduced motion zeroes: the chip then appears
           // and goes at once (animationend still fires).
           <span
