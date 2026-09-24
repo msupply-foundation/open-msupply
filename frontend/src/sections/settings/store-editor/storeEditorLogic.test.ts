@@ -5,6 +5,8 @@ import {
   asWarnParts,
   buildPreferencesInput,
   canEditPreferences,
+  filterStoreCatalogue,
+  groupStorePreferences,
   matchesPreferenceFilter,
   preferenceValue,
   toggleInvoiceStatus,
@@ -259,6 +261,88 @@ describe('matchesPreferenceFilter (SET-05.35)', () => {
   it('an empty or whitespace-only term matches everything', () => {
     expect(matchesPreferenceFilter('Anything', '')).toBe(true);
     expect(matchesPreferenceFilter('Anything', '   ')).toBe(true);
+  });
+});
+
+describe('groupStorePreferences / filterStoreCatalogue (SET-05.46)', () => {
+  const pref = (
+    key: StorePreference['key'],
+    valueType: StorePreference['valueType'] = 'BOOLEAN'
+  ): StorePreference => ({ key, valueType, value: false });
+  // A slice of the served order: the purchase-order preferences sit apart
+  // (rows 4, 14 and 24) among unrelated rows.
+  const served: StorePreference[] = [
+    pref('blindStocktake'),
+    pref('useProcurementFunctionality'),
+    pref('disableManualReturns'),
+    pref('externalInboundShipmentLinesMustBeAuthorised'),
+    pref('firstThresholdForExpiringItems', 'INTEGER'),
+    pref('authorisePurchaseOrder'),
+  ];
+  const LABELS: Partial<Record<StorePreference['key'], string>> = {
+    blindStocktake: 'Enable blind stock take',
+    useProcurementFunctionality: 'Use procurement functionality',
+    disableManualReturns: 'Disable manual returns',
+    externalInboundShipmentLinesMustBeAuthorised:
+      'Inbound shipment (external) lines must be authorised',
+    firstThresholdForExpiringItems: 'First threshold for expiring items',
+    authorisePurchaseOrder: 'Authorise purchase orders',
+  };
+  const labelOf = (p: StorePreference) => LABELS[p.key] ?? p.key;
+  const groupLabelOf = () => 'Procurement';
+
+  it('gathers the purchase-order preferences into one Procurement group, members in served order', () => {
+    const { ungrouped, groups } = groupStorePreferences(served);
+    expect(ungrouped.map(p => p.key)).toEqual([
+      'blindStocktake',
+      'disableManualReturns',
+      'firstThresholdForExpiringItems',
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.labelKey).toBe('label.procurement');
+    expect(groups[0]?.members.map(p => p.key)).toEqual([
+      'useProcurementFunctionality',
+      'externalInboundShipmentLinesMustBeAuthorised',
+      'authorisePurchaseOrder',
+    ]);
+  });
+
+  it('omits the group entirely when none of its members are served', () => {
+    const { groups } = groupStorePreferences([pref('blindStocktake')]);
+    expect(groups).toEqual([]);
+  });
+
+  it('a member match keeps the whole group; ungrouped rows match on their own label', () => {
+    const grouped = groupStorePreferences(served);
+    const filtered = filterStoreCatalogue(
+      grouped,
+      labelOf,
+      groupLabelOf,
+      'authorise'
+    );
+    expect(filtered.ungrouped).toEqual([]);
+    expect(filtered.groups[0]?.members).toHaveLength(3);
+  });
+
+  it('a group-label match keeps the group even when no member label matches', () => {
+    const grouped = groupStorePreferences(served);
+    const filtered = filterStoreCatalogue(
+      grouped,
+      labelOf,
+      groupLabelOf,
+      'PROCUREMENT'
+    );
+    expect(filtered.groups).toHaveLength(1);
+    expect(filtered.ungrouped).toEqual([]);
+  });
+
+  it('no match leaves nothing; a blank term restores everything', () => {
+    const grouped = groupStorePreferences(served);
+    const none = filterStoreCatalogue(grouped, labelOf, groupLabelOf, 'zzzqqq');
+    expect(none.ungrouped).toEqual([]);
+    expect(none.groups).toEqual([]);
+    const all = filterStoreCatalogue(grouped, labelOf, groupLabelOf, '  ');
+    expect(all).toEqual(grouped);
   });
 });
 
