@@ -31,12 +31,12 @@ pub fn query_store_with_global_default(
     key: &str,
     store_id: &str,
 ) -> Result<Option<PreferenceRow>, RepositoryError> {
-    // If there is a store-specific preference, that should override any global preference
-    let store_pref = query_store(connection, key, store_id)?;
-    // Otherwise let's see if there is a globally defined default
-    let global_pref = query_global(connection, key)?;
-
-    Ok(store_pref.or(global_pref))
+    // A store-specific preference overrides any global preference
+    if let Some(store_pref) = query_store(connection, key, store_id)? {
+        return Ok(Some(store_pref));
+    }
+    // Otherwise fall back to the globally defined default, if any
+    query_global(connection, key)
 }
 
 #[cfg(test)]
