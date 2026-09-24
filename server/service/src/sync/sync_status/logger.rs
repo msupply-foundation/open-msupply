@@ -36,7 +36,6 @@ pub(crate) enum SyncStep {
 #[derive(Clone)]
 pub(crate) enum SyncStepProgress {
     PullCentral,
-    PullRemote,
     PullCentralV6,
     Push,
     PushCentralV6,
@@ -333,15 +332,6 @@ impl<'a> SyncLogger<'a> {
                     ..self.row.clone()
                 }
             }
-            SyncStepProgress::PullRemote => {
-                let (total, done) = get_progress(remaining, self.row.pull_remote_progress_total);
-
-                SyncLogV5V6Row {
-                    pull_remote_progress_total: total,
-                    pull_remote_progress_done: done,
-                    ..self.row.clone()
-                }
-            }
             SyncStepProgress::Push => {
                 let (total, done) = get_progress(remaining, self.row.push_progress_total);
 
@@ -377,6 +367,23 @@ impl<'a> SyncLogger<'a> {
             }
         };
 
+        self.update()?;
+        Ok(())
+    }
+
+    /// Remote pull progress as records pulled so far out of pulled + still queued. Legacy central
+    /// can keep queuing while a pull runs, so the total is re-estimated every batch instead of
+    /// being fixed at the first queue length (which left `done` stuck at 0 while the queue grew).
+    pub(crate) fn pull_remote_progress(
+        &mut self,
+        pulled: u64,
+        remaining: u64,
+    ) -> Result<(), SyncLoggerError> {
+        self.row = SyncLogV5V6Row {
+            pull_remote_progress_total: Some((pulled + remaining) as i32),
+            pull_remote_progress_done: Some(pulled as i32),
+            ..self.row.clone()
+        };
         self.update()?;
         Ok(())
     }

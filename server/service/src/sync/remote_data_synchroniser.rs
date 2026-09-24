@@ -240,8 +240,6 @@ impl RemoteDataSynchroniser {
         batch_size: u32,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePullError> {
-        let step_progress = SyncStepProgress::PullRemote;
-
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
             .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
             .ok_or(RemotePullError::CentralServerSiteIdNotSet)?;
@@ -252,6 +250,7 @@ impl RemoteDataSynchroniser {
             msupply_central_server_id
         );
 
+        let mut pulled: u64 = 0;
         loop {
             // Retry while central is busy with another sync session for this site
             // (legacy central gates sync per-site); wait for idle then re-request.
@@ -286,7 +285,7 @@ impl RemoteDataSynchroniser {
 
             let number_of_pulled_records = sync_buffer_rows.len() as u64;
 
-            logger.progress(step_progress.clone(), remaining)?;
+            logger.pull_remote_progress(pulled, remaining)?;
 
             if number_of_pulled_records > 0 {
                 connection
@@ -300,7 +299,8 @@ impl RemoteDataSynchroniser {
                 break;
             }
 
-            logger.progress(step_progress.clone(), remaining - number_of_pulled_records)?;
+            pulled += number_of_pulled_records;
+            logger.pull_remote_progress(pulled, remaining - number_of_pulled_records)?;
         }
 
         Ok(())
