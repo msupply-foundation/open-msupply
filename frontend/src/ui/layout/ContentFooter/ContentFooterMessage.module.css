@@ -19,8 +19,8 @@
 }
 
 /*
- * The success chip's carrier: it rises in (a quarter-rem lift + fade) and
- * fades out before ContentFooterMessage removes it. A flex box of its own with
+ * The chip's carrier: it rises in (a quarter-rem lift + fade) and sinks back
+ * out the same way before ContentFooterMessage removes it. A flex box of its own with
  * no min-content floor, so the truncating chip inside can still shrink to the
  * slot.
  */
@@ -46,8 +46,10 @@
   }
 }
 
+/* The entrance in reverse: back down the quarter-rem it rose, fading. */
 @keyframes flash-out {
   to {
     opacity: 0;
+    transform: translateY(0.25rem);
   }
 }
