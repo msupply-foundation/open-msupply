@@ -1,5 +1,5 @@
 /*
- * PROGRESS.md-matches-the-tree check.
+ * spec/PROGRESS.md-matches-the-tree check.
  *
  * PROGRESS.md says it is "derived from the tree", and every cell records
  * whether an artifact is PRESENT — not a quality judgement. Nothing enforced
@@ -29,9 +29,17 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const FILE = 'PROGRESS.md';
+const FILE = 'spec/PROGRESS.md';
 const SPEC_DIR = 'spec';
 const SPEC_FILES = ['README.md', 'rules.md', 'contract.md', 'ui-surface.md'];
+
+// spec/ is not published to the public mirror (.github/mirror/rules.txt), and
+// this file lives inside it, so there is nothing to check there — skip rather
+// than fail, or `pnpm check` could never pass in the public repo.
+if (!existsSync(FILE)) {
+  console.log(`PROGRESS skipped — no ${FILE} in this tree`);
+  process.exit(0);
+}
 
 const text = readFileSync(FILE, 'utf8');
 
@@ -83,7 +91,7 @@ const derive = vertical => {
   };
 };
 
-// The table's rows: | [`name`](./spec/name/) | ✅ | … | <run> |
+// The table's rows: | [`name`](./name/) | ✅ | … | <run> |
 const rows = new Map();
 for (const line of text.split('\n')) {
   const match = /^\|\s*\[`([a-z0-9-]+)`\]\([^)]*\)\s*\|(.+)\|\s*$/.exec(line);
