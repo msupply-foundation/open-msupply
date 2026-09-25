@@ -28,9 +28,9 @@ export interface SyncStatusProps {
   /**
    * How loudly the cell reads. Every escalation changes the GLYPH, so the
    * ladder stays readable without colour. Error alone also takes colour (issue
-   * #519): a red bar at the cell's start, a red label, and a red-filled mark.
-   * That is safe only because the cell sits on its own off-white ground rather
-   * than on the bar's store-data colour, which no hue could be held against
+   * #519): the cell takes the default bar ground, with a red bar at its start,
+   * a red label and a red-filled mark. The ground is what makes the red safe:
+   * the bar's own colour is store data, which no hue could be held against
    * (see SyncStatus.module.css).
    */
   tone: 'neutral' | 'warning' | 'error';
