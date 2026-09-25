@@ -42,6 +42,7 @@ export const StockMovementStatusFooter: Component<
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(props.node)}
         current={currentStep(props.node.status)}
       />

@@ -21,6 +21,8 @@
   flex-wrap: wrap;
   flex-shrink: 0;
   align-items: center;
+  /* The column gap is matched by ContentFooterMessage.module.css, whose slot
+     takes back the gap in front of it (change both together). */
   gap: var(--space-2) var(--space-3);
   padding-block: var(--space-3);
   padding-inline: var(--space-5);
@@ -42,8 +44,15 @@
  * never on a re-render. Twice the connector's time, since it crosses the whole
  * bar rather than one connector. The duration is a motion token, so reduced
  * motion drops the wave and the chip alone reports the outcome.
+ *
+ * The band's travel is two custom properties, so RTL swaps the ends (below)
+ * and keeps the same ease-out; running the keyframes in reverse would reverse
+ * the easing too.
  */
 .footer:has([data-outcome='success']) {
+  --wave-from: -43%;
+  --wave-to: 143%;
+
   background-image: linear-gradient(
     to right,
     transparent,
@@ -52,23 +61,41 @@
   );
   background-repeat: no-repeat;
   background-size: 30% 100%;
-  background-position-x: 143%;
+  background-position-x: var(--wave-to);
   animation: footer-wave calc(var(--motion-sweep) * 2) ease-out;
 }
 
-/* RTL: the wave still travels inline-start → inline-end, now right → left, so
-   the same keyframes run in reverse and the band parks past the LEFT end. */
+/* RTL: the wave still travels inline-start → inline-end, now right → left, and
+   the band parks past the LEFT end. */
 :dir(rtl) .footer:has([data-outcome='success']) {
-  background-position-x: -43%;
-  animation-direction: reverse;
+  --wave-from: 143%;
+  --wave-to: -43%;
+}
+
+/* A success replacing another while it still shows leaves data-outcome as it
+   was, so the rule above never re-matches. The slot flips data-replay on every
+   report instead, and switching to an identical animation under another name
+   restarts it. */
+.footer:has([data-outcome='success'][data-replay]) {
+  animation-name: footer-wave-replay;
 }
 
 @keyframes footer-wave {
   from {
-    background-position-x: -43%;
+    background-position-x: var(--wave-from);
   }
 
   to {
-    background-position-x: 143%;
+    background-position-x: var(--wave-to);
+  }
+}
+
+@keyframes footer-wave-replay {
+  from {
+    background-position-x: var(--wave-from);
+  }
+
+  to {
+    background-position-x: var(--wave-to);
   }
 }

@@ -24,6 +24,11 @@ export interface StatusArrival {
  *   computed from the record, so it re-evaluates whenever the view replaces
  *   the record (a refetch straight after the save) and `on` runs again with
  *   next === previous. Treated as a move, that dropped the arrival a frame in.
+ * - A different RECORD is a fresh open, not a move (`record`, optional: the
+ *   record's id). A detail view keeps its footer mounted while the route
+ *   swaps one record for another (duplicating an inbound shipment, then going
+ *   Back), so `current` jumps from one record's status to another's with no
+ *   status change at all.
  *
  * The caller clears it once the motion has played (StatusIndicator does so on
  * `animationend`), which is what makes it one-shot.
@@ -33,15 +38,22 @@ export interface StatusArrival {
  * missed.
  */
 export const createStatusArrival = (
-  current: Accessor<number>
+  current: Accessor<number>,
+  record?: Accessor<unknown>
 ): StatusArrival => {
   const [arrived, setArrived] = createSignal<number>();
   createEffect(
-    on(current, (next, previous) => {
-      if (next === previous) return;
-      if (previous !== undefined && next > previous) setArrived(next);
-      else setArrived(undefined);
-    })
+    on(
+      () => [record?.(), current()] as const,
+      ([nextRecord, next], previous) => {
+        // The status the record opened at.
+        if (!previous) return;
+        const [previousRecord, previousCurrent] = previous;
+        const sameRecord = nextRecord === previousRecord;
+        if (sameRecord && next === previousCurrent) return;
+        setArrived(sameRecord && next > previousCurrent ? next : undefined);
+      }
+    )
   );
   return { arrived, clear: () => setArrived(undefined) };
 };

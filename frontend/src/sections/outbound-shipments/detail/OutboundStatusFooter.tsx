@@ -119,7 +119,11 @@ export const OutboundStatusFooter: Component<
         </CheckboxButton>
       </Show>
 
-      <StatusIndicator steps={steps()} current={indicatorIndex()} />
+      <StatusIndicator
+        recordId={props.node.id}
+        steps={steps()}
+        current={indicatorIndex()}
+      />
 
       <ContentFooterMessage message={outcome()} />
 

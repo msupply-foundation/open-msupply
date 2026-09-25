@@ -25,6 +25,13 @@ export interface StatusIndicatorProps {
    * reached.
    */
   current: number;
+  /**
+   * The id of the record whose progression this is. A detail view can keep
+   * its footer mounted while the route swaps in another record, and without
+   * this the jump from one record's status to the other's would play the
+   * arrival motion as if the status had just changed.
+   */
+  recordId?: string;
   /** Show the hover status-history popover. Default true. */
   history?: boolean;
   class?: string;
@@ -54,7 +61,10 @@ export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
   // arrival: a brand-tinted bloom behind its label, fading as the label's
   // colour carries it from not-yet-reached grey to the current accent. Cleared
   // when the animation ends, so no later render replays it.
-  const arrival = createStatusArrival(() => props.current);
+  const arrival = createStatusArrival(
+    () => props.current,
+    () => props.recordId
+  );
 
   // The status row itself — the whole thing is the popover trigger (below), so
   // this is what the user hovers. Rendered as an ordered list (the stages ARE

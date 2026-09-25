@@ -130,6 +130,7 @@ export const InboundShipmentStatusFooter: Component<
       {/* An excluded current status highlights the nearest included earlier
           stage (OMS-REG-REPL-03.26). */}
       <StatusIndicator
+        recordId={props.node.id}
         steps={steps()}
         current={currentStep(flow(), offered(), props.node.status)}
       />
