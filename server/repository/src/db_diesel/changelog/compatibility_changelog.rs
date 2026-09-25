@@ -6,7 +6,7 @@ use ts_rs::TS;
 
 use crate::{diesel_macros::apply_equal_filter, DBType, EqualFilter, RepositoryError};
 
-use super::changelog::*;
+use super::{changelog::*, changelog_cursor_tracker::ChangelogCursorTracker};
 
 // In upgrade to V7 we've change to using dynamic condition filtering
 // However some plugins will still need to use this old changelog filtering
@@ -35,13 +35,23 @@ impl<'a> ChangelogRepository<'a> {
     /// the last row they processed and pass it straight back in. An inclusive comparison
     /// here would hand that same row back on every call, and a plugin processor would
     /// re-process the newest matching row forever while starving every other processor.
+    ///
+    /// Like [`ChangelogRepository::query`], results are clamped to the
+    /// [`ChangelogCursorTracker`] safe cursor, so a caller never advances past a row
+    /// that an in-flight transaction may still commit below the rows returned.
     pub fn compatibility_query(
         &self,
         cursor: u64,
         limit: u32,
         filter: Option<CompatibilityChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_query(cursor, filter)
+        let mut query = create_filtered_query(cursor, filter);
+
+        if let Some(max_safe_cursor) = ChangelogCursorTracker::max_safe_cursor(self.connection) {
+            query = query.filter(changelog_with_links::cursor.le(max_safe_cursor as i64));
+        }
+
+        let query = query
             .order(changelog_with_links::dsl::cursor.asc())
             .limit(limit.into());
 
