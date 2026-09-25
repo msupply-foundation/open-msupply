@@ -40,7 +40,8 @@ Scoped build of the prescriptions vertical (`spec/prescriptions`) — the dispen
 | AC-S3/D2 read-only surfaces; AC-V1 table-read-only                | screens                                                             | ⚠️ built, live-verified                                                                                                               |
 | AC-Y1/Y2 payment window                                           | `PaymentsModal`                                                     | ⚠️ built; not exercisable (no insurance providers on the probe store)                                                                 |
 | AC-X2/X3 cancel restores stock / reversal invisible               | server-enforced                                                     | ⚠️ server behaviour (probed in reverse spec)                                                                                          |
-| AC-E1 report selector; AC-E2 label printing                       | screens                                                             | ⚠️ built; label print not exercised (no printer configured)                                                                           |
+| AC-E1 report selector                                             | screens                                                             | ⚠️ built, live-verified                                                                                                               |
+| AC-E2 label printing (`.47`, `.71`)                               | `labels.test.ts` · `printLabels.test.ts` · e2e (see follow-up)      | ✅ tested — delivery on both routes, and a server-rejected print; see the follow-up below                                             |
 
 ### Verification beyond unit tests
 
@@ -56,5 +57,79 @@ Scoped build of the prescriptions vertical (`spec/prescriptions`) — the dispen
 - **DIVERGENCES honoured:** D53 (modal line editor), D54 (create-patient in place), D39 (dead affordances hidden), D40 (forward-only status options), D21 (inline notices, never toasts), D12 (filtered export), D38 (permission via affordance gate — cancel), D34 (flat detail line table).
 - **Custom-field follow-ups:** (1) **list property filters** — spec'd (AC-CF4, via `InvoiceFilterInput.dynamicFilter`), but the code ships columns only; the dynamic-filter AST builder is a shared cross-vertical utility deferred to its own pass. (2) OPTION fields render their options **flat**; the `parentOptionId` hierarchy is not yet a cascading control (the reference store's two fields have empty option lists, so unexercised). (3) The shared `src/domain/invoiceCustomFields/` module is prescription-wired only; the other invoice verticals (inbound/outbound/returns) still lack their custom-field surfaces — a future adopt-the-module pass.
 - **Parked — no-stock batch:** a batch the old app shows in the issue line editor can be absent in the new one; suspected to live in the **shared allocation / `draftStockOutLines`** path (not prescriptions-specific), to revisit. `draftStockOutLines` excludes 0-available batches; open question is whether the old app's issue editor shows them via another source.
-- **Source-verified only (not live-exercisable on the probe store):** insurance/payments (no providers), label printing (no printer), diagnosis picker (empty `diagnosesActive`), prescribed-quantity UI (store pref off) — all built to the spec/contract, matching the reverse-spec's own source-verified set.
+- **Source-verified only (not live-exercisable on the probe store):** insurance/payments (no providers), diagnosis picker (empty `diagnosesActive`), prescribed-quantity UI (store pref off) — all built to the spec/contract, matching the reverse-spec's own source-verified set. (Label printing has since left this list — see the USB follow-up below.)
 - **Candidate spec refinement:** the reference app shows the raw gender value in the prescription side panel while localising it on patient screens; this build adopts the patients label map (noted as-is in `ui-surface.md`). If that inconsistency should be preserved rather than fixed, it wants a DIVERGENCES row; otherwise the spec is right as written.
+
+### Follow-up build — labels over the USB route (issue #257)
+
+Label printing was previously gated on a configured **network** printer, so a
+device set to print via USB could not print at all. Delivery now belongs to the
+device (`src/domain/labelPrinter/`, owned by the settings vertical — see its
+build report); this vertical keeps only what a label **says** and when one is
+printed.
+
+- `labels.ts` keeps `buildLabels`; its own `printLabels` fetch is gone, replaced
+  by a call to the shared route selector with this vertical's endpoint.
+- `PrescriptionDetailView` drops the printer-settings gate — the route decides
+  whether settings matter — and switches on the returned outcome. All three
+  entry points (app-bar split button, bulk-action bar, Alt+L) already funnelled
+  through `runPrintLabels`, so none needed changing; the screen decides only
+  **where** the report lands (in place on the control that started it, plus the
+  shared dialog).
+
+| Behaviour                                              | Where                                                                                                            |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `.47` labels reach the printer over the device's route | e2e `prescriptions-regression` (USB delivery: device selected, ZPL sent)                                         |
+| `.47` nothing configured → told to configure one       | e2e (pre-existing) · settings `.43` for the nothing-sent half                                                    |
+| `.71` a print the SERVER rejects is never silent       | e2e `prescriptions-regression`, one test per entry point (app bar, bulk bar) · `LabelPrintOutcomeDialog.test.ts` |
+| `.47` all three entry points reach the same action     | e2e — app bar (above), bulk bar (`.71`), and **Alt+L**                                                           |
+
+`.71` is the **network** route: it names a print "the server rejects" and "the
+server's own message". Both its tests stub a non-2xx from the label endpoint.
+They were first written against a USB print-service refusal — a different actor,
+and one already covered at the cheapest layer (`printLabels.test.ts` turns the
+refusal into a `failed` outcome carrying its detail; `LabelPrintOutcomeDialog.test.ts`
+renders it), so driving it through a browser too was dropped rather than kept.
+
+"Shows busy while it runs" is asserted on the **bulk bar only**. The current
+app's app-bar control is a SplitButton whose `isLoadingType` is never set by
+`AppBarButton`, so the `isLoading` it is passed is a dead prop and no busy state
+renders — a gap there, not a missing test id. On the bulk bar both front ends
+hold the flag across an awaited request. (It is not sound on the USB route at
+all: `printViaUsb` clears `isPrinting` in a `finally` that runs as soon as the
+callback-style `getLocalDevices` is _called_, so busy ends before the print
+does — asserted there it passed in isolation and failed in a full run.)
+
+**Alt+L had no test of any kind.** `ALT_L` appeared in exactly two files —
+`src/ui/utils/shortcuts.ts` and `PrescriptionDetailView.tsx` — and in no unit or
+e2e test; there is no keyboard e2e suite. It is one of three entry points into
+`runPrintLabels` and was the only untested one. The new test pins the **binding**
+(rebinding `ALT_L` to another key turns it red), not the printing, which the
+other rows cover.
+
+**`.71` was a duplicate ID on `develop`** — the add-mode item-selector behaviour
+had been minted as a second `.71` two days after label-print failure took that
+number, so `.71` resolved (for `pnpm brief` and `check_anchor_refs`, which check
+that an ID exists, not that it is unique) to the selector's test while the
+label-print behaviour had **no test at all**. The selector is renumbered `.74`;
+see the case file's ID history. Worth noting the same case had already been
+renumbered once for the same collision, against `.64`.
+
+**Cross-FE:** all three rows pass against both this FE and the current app. The
+current app's bulk Print-labels action carried no test id, so
+`print-labels-button` — already in `TESTIDS.md` and already here — never
+resolved there; instrumented in `client/…/Prescriptions/DetailView/Footer/Footer.tsx`
+(a test id only, no behaviour change). Two ids were added there in total — the
+second, `notification-detail-toggle`, is on the notification's info-icon
+disclosure in `useNotification.tsx`.
+
+**The outcome MESSAGE is asserted cross-FE**, and that corrected an earlier
+reading. Both front ends say the same thing, word for word ("There is no label
+printer configured. Please see the Settings > Devices section…"); the current
+app puts it behind the notification's info icon while this FE shows it outright.
+That is presentation, not behaviour, so `expectPrintMessage`
+(`e2e/helpers/labelPrinter.ts`) opens the disclosure where there is one and
+asserts the text on both. It had looked un-assertable because the pre-existing
+`.47` test hunted that icon by accessible name, which it does not have — hence
+the id, rather than an exclusion. Greening it also retires the
+"CURRENT-APP RESIDUAL" note that had carried `.47` as undiagnosed.

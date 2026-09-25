@@ -2,7 +2,7 @@ import {
   PLUGIN_API_MIN_SUPPORTED,
   PLUGIN_API_VERSION,
 } from '../plugin-sdk/apiVersion';
-import { HOST_NAV_SECTION_IDS } from '../plugin-sdk/types';
+import { HOST_NAV_SECTION_IDS, HOST_WARNING_IDS } from '../plugin-sdk/types';
 import type { PluginModule, SlotId } from '../plugin-sdk/types';
 import {
   DASHBOARD_LEGACY_PATH,
@@ -35,6 +35,7 @@ const SLOT_IDS: Record<SlotId, true> = {
   'internalOrderLine.column': true,
   'internalOrderLine.infoPanel': true,
   'internalOrder.sidePanelSection': true,
+  'host.warningSuppression': true,
   'prescription.paymentForm': true,
 };
 
@@ -44,6 +45,18 @@ const SLOT_IDS: Record<SlotId, true> = {
  * slot). Everywhere else a `Component` is the only rendering there is.
  */
 const VALUE_RENDERING_SLOTS: readonly string[] = ['internalOrderLine.column'];
+
+/**
+ * The slots that are CONSULTED rather than rendered — a resolver function is
+ * their whole contribution, and a `Component` cannot stand in for it
+ * (sdk-contract § the warning-suppression slot): a bundle offering one there
+ * was built against a surface this host does not have. `SlotId`-keyed like
+ * `SLOT_IDS`, so a mistyped or renamed slot id here is a type error rather
+ * than a silent fall-through to the Component check.
+ */
+const RESOLVER_SLOTS: Readonly<Partial<Record<SlotId, string>>> = {
+  'host.warningSuppression': 'suppresses',
+};
 
 /** Every slot id the host recognises; anything else is refused. */
 export const KNOWN_SLOT_IDS = Object.keys(SLOT_IDS) as readonly SlotId[];
@@ -59,6 +72,11 @@ export type ValidationVerdict =
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+// A refusal against a published id set names the whole set, formatted one way
+// everywhere (the nav-section and warning checks below share it).
+const publishedSet = (ids: readonly string[]): string =>
+  ids.map(known => `"${known}"`).join(', ');
 
 // A page or section path: URL segments of letters, digits, `-` and `_`, each
 // starting with a letter or digit (the spec states the same leading-character
@@ -217,7 +235,7 @@ const validatePage = (
     !navSectionIds.has(inId) &&
     !(HOST_NAV_SECTION_IDS as readonly string[]).includes(inId)
   ) {
-    return `page "${id}" nav places it in "${inId}", which is neither one of this plugin's nav sections nor a host section this app's plugin API provides (host sections: ${HOST_NAV_SECTION_IDS.map(known => `"${known}"`).join(', ')})`;
+    return `page "${id}" nav places it in "${inId}", which is neither one of this plugin's nav sections nor a host section this app's plugin API provides (host sections: ${publishedSet(HOST_NAV_SECTION_IDS)})`;
   }
   return undefined;
 };
@@ -321,20 +339,70 @@ export const validateLoadedModule = (
           message: `contribution in slot "${slot}" has no id`,
         };
       }
-      // Something must render the contribution. A column slot accepts either
-      // form; every other slot has only `Component`, so a bundle offering a
-      // bare `value` there was built against a surface this host does not have.
-      const hasComponent = typeof entry['Component'] === 'function';
-      const hasValue =
-        VALUE_RENDERING_SLOTS.includes(slot) &&
-        typeof entry['value'] === 'function';
-      if (!hasComponent && !hasValue) {
-        return {
-          kind: 'refused',
-          message: VALUE_RENDERING_SLOTS.includes(slot)
-            ? `contribution "${slot}/${id}" has neither a Component nor a value function`
-            : `contribution "${slot}/${id}" has no Component function`,
-        };
+      // Something must render — or, for a consulted slot, answer — the
+      // contribution. A column slot accepts either rendering form; a resolver
+      // slot takes only its named resolver; every other slot has only
+      // `Component`. A bundle offering the wrong form was built against a
+      // surface this host does not have.
+      // The KNOWN_SLOT_IDS check above is what makes this assertion sound.
+      const resolverField = RESOLVER_SLOTS[slot as SlotId];
+      if (resolverField !== undefined) {
+        if (typeof entry[resolverField] !== 'function') {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" has no ${resolverField} function`,
+          };
+        }
+        // A consulted slot renders nothing, ever — a contribution ALSO
+        // carrying a rendering form was built against a surface this host
+        // does not have (sdk-contract § the warning-suppression slot: "a
+        // `Component` there is refused"), and silently dropping the render
+        // half would hide that from its author.
+        if (entry['Component'] !== undefined || entry['value'] !== undefined) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" carries a rendering form — the slot is consulted, never rendered`,
+          };
+        }
+      }
+      // The suppression slot names its TARGET — a published host warning id.
+      // Keyed on the SLOT, not the resolver branch: a future consulted slot
+      // would have a resolver but no warning to name, and must not be forced
+      // through this check. Any other id means the bundle was built against a
+      // host that publishes the warning (the same judgement as an unknown slot
+      // id), refused by name so an old host names the gap instead of silently
+      // never consulting the contribution.
+      if (slot === 'host.warningSuppression') {
+        const warning = entry['warning'];
+        if (warning === undefined) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" names no warning to suppress — this app's plugin API publishes: ${publishedSet(HOST_WARNING_IDS)}`,
+          };
+        }
+        if (
+          typeof warning !== 'string' ||
+          !(HOST_WARNING_IDS as readonly string[]).includes(warning)
+        ) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" suppresses unknown warning ${JSON.stringify(warning)} — this app's plugin API publishes: ${publishedSet(HOST_WARNING_IDS)}`,
+          };
+        }
+      }
+      if (resolverField === undefined) {
+        const hasComponent = typeof entry['Component'] === 'function';
+        const hasValue =
+          VALUE_RENDERING_SLOTS.includes(slot) &&
+          typeof entry['value'] === 'function';
+        if (!hasComponent && !hasValue) {
+          return {
+            kind: 'refused',
+            message: VALUE_RENDERING_SLOTS.includes(slot)
+              ? `contribution "${slot}/${id}" has neither a Component nor a value function`
+              : `contribution "${slot}/${id}" has no Component function`,
+          };
+        }
       }
       const key = `${slot}/${id}`;
       if (seen.has(key)) {

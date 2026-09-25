@@ -24,12 +24,11 @@ pub fn validate(
         .pop()
         .ok_or(UpdatePurchaseOrderError::PurchaseOrderDoesNotExist)?;
 
-    // When PO is Sent or Finalised, only status changes are allowed (no field edits)
     let current_status = &purchase_order.purchase_order_row.status;
     if matches!(
         current_status,
         PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
-    ) && !input.is_status_only_change()
+    ) && !input.is_allowed_on_closed_order(current_status)
     {
         return Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder);
     }

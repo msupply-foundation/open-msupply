@@ -135,7 +135,7 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.3` negative ledger entry (original)              | e2e            | `ledger`                                                                              |
 | `.4` positive ledger entry (new)                   | e2e            | `ledger`                                                                              |
 | `.5` net balance unchanged                         | e2e            | `ledger`                                                                              |
-| `.21` navigation offered after a full repack       | ui             | full-repack `ConfirmDialog` + navigate (`RepackModal`)                                |
+| `.21` navigation offered after a full repack       | ui             | full-repack `ConfirmDialog` + navigate (`StockLineDetailView`)                        |
 | `.6` remainder stays at the original size          | e2e            | `insertRepack`                                                                        |
 | `.7` new line holds the repacked packs             | **unit** + e2e | `stockCalc.test.ts` (`repackNewPacks`)                                                |
 | `.8` total units unchanged                         | e2e            | server split                                                                          |
@@ -155,7 +155,10 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.23` New location is volume-aware                 | **unit** + ui  | `domain/location/volume.test.ts`; `requiredVolume` = the volume leaving the original  |
 | `.24` selected repack marked and read-only         | **unit** + ui  | `detail/repackSelection.test.ts` (`repackPanelState`)                                 |
 | `.25` print acts on the selection, else prompts    | **unit** + ui  | `detail/repackSelection.test.ts` (the print gate)                                     |
-| `.26` a saved repack stays selected                | **unit** + ui  | `detail/repackSelection.test.ts` (the post-save window)                               |
+| `.27` a new repack starts filled in                | **unit** + ui  | `detail/repackSelection.test.ts` (`newRepackDraft`)                                   |
+| `.28` saving closes the repack flow                | ui             | `RepackModal` save → `onClose`                                                        |
+| `.29` `Alt+R` opens the repack flow                | ui             | `ALT_R` action (`StockLineDetailView`)                                                |
+| `.30` `Alt+N` starts a new repack                  | ui             | `createAddAction` (`RepackModal`)                                                     |
 
 ## OMS-REG-INV-06 — VVM Status Management on Stock Lines
 

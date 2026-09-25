@@ -69,6 +69,10 @@ const EquipmentDetailView: Component = () => {
   const [saving, setSaving] = createSignal(false);
   const [confirmingSave, setConfirmingSave] = createSignal(false);
   const [confirmingDelete, setConfirmingDelete] = createSignal(false);
+  // Recording an entry changes what the Status history tab should show without
+  // changing anything the tab reads its filters from, so the tab is told
+  // separately (OMS-REG-CCE-06.18).
+  const [historyVersion, setHistoryVersion] = createSignal(0);
 
   // Back to whichever list this asset was opened from — the two destinations
   // are the same tree, so the parent path is the one to return to.
@@ -240,7 +244,13 @@ const EquipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       assetId={record().id}
                       isColdRoom={isColdRoom(record().assetCategory?.id)}
-                      onRecorded={() => void refetch()}
+                      // The asset's own read carries the new functional status
+                      // and, for a mapping, its recomputed mapping dates; the
+                      // bump carries the entry to the history tab.
+                      onRecorded={() => {
+                        void refetch();
+                        setHistoryVersion(version => version + 1);
+                      }}
                     />
                     {/* Disabled, and saying why: the label endpoint needs a
                         configured label printer, which is a setting the user
@@ -352,6 +362,7 @@ const EquipmentDetailView: Component = () => {
                   storeId={params.storeId}
                   assetId={record().id}
                   isColdRoom={isColdRoom(record().assetCategory?.id)}
+                  refreshVersion={historyVersion()}
                 />
               </TabPanel>
               <TabPanel value="documents">

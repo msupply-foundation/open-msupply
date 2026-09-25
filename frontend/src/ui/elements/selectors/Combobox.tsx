@@ -23,12 +23,8 @@ import {
   visibleOptions,
   type VisibleOptions,
 } from './comboboxLogic';
+import { isNearScrollEnd } from '../../utils/createPaginatedSearch';
 import styles from './Combobox.module.css';
-
-// Server-mode infinite scroll: fetch the next page once the listbox is scrolled
-// to within this many px of the bottom (a small lead so the next page is on its
-// way before the user hits the very end).
-const NEXT_PAGE_THRESHOLD_PX = 100;
 
 /*
  * Client mode: how many matching options are MOUNTED at once (see
@@ -561,11 +557,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // sentinel. The caller's onReachEnd is a no-op when there are no more pages
   // or a fetch is already in flight, so firing per scroll event is safe.
   const onListboxScroll = (event: Event) => {
-    const el = event.currentTarget as HTMLElement;
-    if (
-      el.scrollHeight - el.scrollTop - el.clientHeight <
-      NEXT_PAGE_THRESHOLD_PX
-    )
+    if (isNearScrollEnd(event.currentTarget as HTMLElement))
       props.onReachEnd?.();
   };
 

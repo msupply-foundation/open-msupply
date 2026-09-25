@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PRINT_LABEL_PRESCRIPTION_URL } from '../../../config';
-import { buildLabels, printLabels, type PrescriptionLabel } from './labels';
+import { describe, expect, it } from 'vitest';
+import { buildLabels } from './labels';
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
 
 // Only the fields buildLabels reads — one cast at the fixture boundary, as
@@ -47,24 +46,6 @@ const prescription = {
   },
 } as unknown as PrescriptionFieldsFragment;
 
-const label: PrescriptionLabel = {
-  itemDetails: '21 tablet Aspirin',
-  itemDirections: 'every FOUR to SIX hours',
-  warning: '',
-  patientDetails: 'Ann Smith - P0042',
-  details: 'Central Store - 20/07/2026',
-};
-
-const respondWith = (response: Response) => {
-  const fetchMock = vi.fn().mockResolvedValue(response);
-  vi.stubGlobal('fetch', fetchMock);
-  return fetchMock;
-};
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
 describe('buildLabels (.47 — one label per dispensed item)', () => {
   it('merges an item across batches, summing units and keeping its directions', () => {
     const labels = buildLabels(prescription, 'Central Store');
@@ -83,67 +64,5 @@ describe('buildLabels (.47 — one label per dispensed item)', () => {
     const labels = buildLabels(prescription, 'Central Store', selected);
     expect(labels).toHaveLength(1);
     expect(labels[0].itemDetails).toBe('20 tablet Aspirin');
-  });
-});
-
-describe('printLabels (.64 — the endpoint’s answer always reaches the caller)', () => {
-  it('POSTs the labels as JSON and reports success', async () => {
-    const fetchMock = respondWith(new Response('Label printed'));
-
-    expect(await printLabels([label])).toEqual({ ok: true });
-
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(PRINT_LABEL_PRESCRIPTION_URL);
-    expect(init.method).toBe('POST');
-    expect(init.credentials).toBe('same-origin');
-    expect(init.headers).toEqual({ 'Content-Type': 'application/json' });
-    expect(JSON.parse(String(init.body))).toEqual([label]);
-  });
-
-  it("carries the server's plain-text body as the failure detail", async () => {
-    respondWith(
-      new Response(
-        'Error getting printer settings: DBError { msg: "No label printer settings found" }',
-        { status: 500, statusText: 'Internal Server Error' }
-      )
-    );
-
-    expect(await printLabels([label])).toEqual({
-      ok: false,
-      detail:
-        'Error getting printer settings: DBError { msg: "No label printer settings found" }',
-    });
-  });
-
-  it('falls back to the status line when the body is empty', async () => {
-    respondWith(
-      new Response('', { status: 500, statusText: 'Internal Server Error' })
-    );
-
-    expect(await printLabels([label])).toEqual({
-      ok: false,
-      detail: '500 Internal Server Error',
-    });
-  });
-
-  it('reports a transport failure rather than throwing', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new Error('Failed to fetch'))
-    );
-
-    expect(await printLabels([label])).toEqual({
-      ok: false,
-      detail: 'Failed to fetch',
-    });
-  });
-
-  it('still reports a detail when what was thrown is not an Error', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue('printer exploded'));
-
-    expect(await printLabels([label])).toEqual({
-      ok: false,
-      detail: 'printer exploded',
-    });
   });
 });

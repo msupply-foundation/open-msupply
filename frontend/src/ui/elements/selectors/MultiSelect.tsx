@@ -1,7 +1,12 @@
 import { createMemo, createSignal, For, Show, type JSX } from 'solid-js';
 import * as KCombobox from '@kobalte/core/combobox';
 import { t } from '../../../intl';
-import { CheckIcon, ChevronDownIcon, CloseIcon } from '../../icons';
+import {
+  AlertTriangleIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  CloseIcon,
+} from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import styles from './MultiSelect.module.css';
@@ -21,6 +26,18 @@ interface MultiSelectProps<T> {
   renderItem?: (item: T) => JSX.Element;
   placeholder?: string;
   helperText?: string;
+  /**
+   * Error message — presence switches the control to the error state (red
+   * border, `aria-invalid`) and shows the message as icon + text below it,
+   * displacing `helperText`. As <Combobox> and <TextField>: nothing is
+   * conveyed by colour alone.
+   */
+  error?: string;
+  /**
+   * `data-testid` for the error message (locale-stable test hook,
+   * e2e/TESTIDS.md). As <Combobox>'s errorTestId.
+   */
+  errorTestId?: string;
   /**
    * Control size. 'default' is the form-field size; 'small' is the compact
    * variant for dense contexts (e.g. cards). Matches the shared input size
@@ -159,7 +176,10 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
           {props.labelInfo}
         </span>
       </Show>
-      <KCombobox.Control<T> class={styles.control}>
+      <KCombobox.Control<T>
+        class={styles.control}
+        data-error={props.error ? '' : undefined}
+      >
         {state => (
           <>
             <div class={styles.tags}>
@@ -186,6 +206,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
                 class={styles.input}
                 data-testid={props.inputTestId}
                 aria-label={props.hideLabel ? props.label : undefined}
+                aria-invalid={props.error ? 'true' : undefined}
               />
             </div>
             <KCombobox.Trigger
@@ -199,9 +220,24 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
           </>
         )}
       </KCombobox.Control>
-      <Show when={props.helperText}>
-        <KCombobox.Description class={styles.helper}>
-          {props.helperText}
+      {/* The error displaces the helper text — icon + text, as <Combobox> and
+          TextField. Nothing is conveyed by colour alone. */}
+      <Show
+        when={props.error}
+        fallback={
+          <Show when={props.helperText}>
+            <KCombobox.Description class={styles.helper}>
+              {props.helperText}
+            </KCombobox.Description>
+          </Show>
+        }
+      >
+        <KCombobox.Description
+          class={styles.error}
+          data-testid={props.errorTestId}
+        >
+          <AlertTriangleIcon class={styles.errorIcon} />
+          {props.error}
         </KCombobox.Description>
       </Show>
       <KCombobox.Portal mount={portalMount?.()}>

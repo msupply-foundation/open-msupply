@@ -8,7 +8,7 @@ import {
 } from '../../../ui/elements/selectors/Select';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { FormRowItem } from '../../../ui/layout/Form/FormRowItem';
-import { NameSearch, type NameOption } from '../../../domain/name';
+import { NameSearch, type NameSeed } from '../../../domain/name';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 
@@ -66,25 +66,16 @@ export const InternalOrderToolbar: Component<
   // on any non-editable order.
   const fieldsLocked = () => !props.editable || props.isProgram;
 
-  const supplierSeed = (): NameOption => ({
+  const supplierSeed = (): NameSeed => ({
     id: props.node.otherPartyId,
     name: props.node.otherPartyName,
-    code: '',
-    isSupplier: true,
-    isDonor: false,
-    isOnHold: false,
-    isStore: false,
   });
-  const destinationSeed = (): NameOption | undefined => {
+  const destinationSeed = (): NameSeed | undefined => {
     const dc = props.node.destinationCustomer;
     return dc
       ? {
           id: dc.id,
           name: dc.name,
-          code: '',
-          isSupplier: false,
-          isDonor: false,
-          isOnHold: false,
           isStore: true,
         }
       : undefined;
@@ -198,7 +189,7 @@ export const InternalOrderToolbar: Component<
           role="supplier"
           label={t('label.supplier-name')}
           size="small"
-          storeBacked
+          parties="internal"
           selected={supplierSeed()}
           disabled={fieldsLocked()}
           error={props.supplierError}
@@ -233,7 +224,7 @@ export const InternalOrderToolbar: Component<
             label={t('label.destination-customer')}
             size="small"
             inputTestId="customer-search-input"
-            storeBacked
+            parties="internal"
             excludeId={props.node.otherPartyId}
             selected={destinationSeed()}
             disabled={!props.editable}

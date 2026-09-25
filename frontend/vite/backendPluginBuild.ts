@@ -19,8 +19,9 @@ import type { InlineConfig, Plugin } from 'vite';
  *   - host functions as imports. `sql`, `log`, `use_graphql` and the rest are
  *     bound as GLOBALS, and bound AFTER the module evaluates — so module
  *     top-level code may not call them, only the exported methods at call
- *     time. A plugin declares them ambiently (see the reference plugin's
- *     `host.d.ts`); out of tree they come from `@common/types`.
+ *     time. They are declared ambiently by `@common/types`, which resolves
+ *     below — the reference plugin imports it for `BackendPlugins` and gets
+ *     the globals with it.
  *
  * `@common/*` resolves here, to the SAME `backendCommon` the legacy client
  * toolchain aliases it to (`backend-plugin-webpack.config.js` in that same

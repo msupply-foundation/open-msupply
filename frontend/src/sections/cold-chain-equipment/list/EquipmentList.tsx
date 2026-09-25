@@ -51,6 +51,7 @@ import {
 import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
+  buildListFilter,
   buildListVariables,
   clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
@@ -356,6 +357,10 @@ const EquipmentList: Component = () => {
               // cold-chain destination of a central server, which would drop
               // the column from a file that should carry it (rules › export).
               isCentral={isCentralServer()}
+              // Exactly what the LIST is reading — the same builder, the
+              // same destination — so the file is what the screen shows
+              // (rules › export).
+              filter={buildListFilter(query(), params.storeId, destination())}
               sort={variables().sort}
             />
           </HeaderButtons>
@@ -423,7 +428,13 @@ const EquipmentList: Component = () => {
       <Show when={importOpen()}>
         <EquipmentImportModal
           storeId={params.storeId}
-          isCentral={showStore()}
+          // The SERVER's mode, not the destination's — `showStore()` also
+          // demands the all-stores destination, which would drop the store
+          // column from the template and the review on a central server's Cold
+          // chain screen while the export beside it still wrote one. The spec
+          // says central-only of both (rules § bulk import, ui-surface S1/S4),
+          // and the current app reads its own central flag the same way.
+          isCentral={isCentralServer()}
           onClose={() => setImportOpen(false)}
           onImported={afterWrite}
         />

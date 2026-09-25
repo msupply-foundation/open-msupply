@@ -9,6 +9,8 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { PRINT_LABEL_TEST_URL } from '../../../config';
 import { getLabelPrinterUseUsb, setLabelPrinterUseUsb } from '../../../appData';
+import { isAndroid } from '../../../platform';
+import { showPrintViaUsbRow } from '../sectionVisibility';
 import { hasPermission } from '../../../store/storeContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
@@ -33,10 +35,8 @@ import {
   scanningEnabled,
   setMockScannerEnabled,
 } from './scanner';
-import {
-  LabelPrinterSettings,
-  UpdateLabelPrinterSettings,
-} from './labelPrinter.generated';
+import { LabelPrinterSettings } from '../../../domain/labelPrinter';
+import { UpdateLabelPrinterSettings } from './labelPrinter.generated';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import styles from '../Settings.module.css';
 
@@ -173,13 +173,16 @@ export const DevicesSection = () => {
           not `heading.*`. */}
       <FormSection title={t('settings.label-printing')} headingLevel="h3">
         {/* The switch's own label serves — no FieldRow wrapper, which would
-            duplicate the visible label (registry › labelled field row). */}
-        <ToggleSwitch
-          label={t('settings.print-via-usb')}
-          checked={useUsb()}
-          onChange={toggleUsb}
-          testId="print-via-usb"
-        />
+            duplicate the visible label (registry › labelled field row).
+            Absent on Android (OMS-REG-SET-05.41 — why, in sectionVisibility). */}
+        <Show when={showPrintViaUsbRow(isAndroid())}>
+          <ToggleSwitch
+            label={t('settings.print-via-usb')}
+            checked={useUsb()}
+            onChange={toggleUsb}
+            testId="print-via-usb"
+          />
+        </Show>
         {/* Explicit caps: this section's FieldRows sit in the settings page's
             58rem ContentContainer, so the control column is ~51rem wide — far
             more than a hostname or a port number has to say. These are the

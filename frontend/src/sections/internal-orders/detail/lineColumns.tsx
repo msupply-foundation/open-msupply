@@ -104,9 +104,13 @@ export const EMPTY_LINE_COLUMN_BATCH: LineColumnBatch = {
   loading: false,
 };
 
-export interface MergedLineColumns<Row, K extends string> {
-  /** Host and contributed columns in final, deterministic order. */
-  columns: Column<Row, K>[];
+export interface MergedLineColumns<Row> {
+  /**
+   * Host and contributed columns in final, deterministic order. The sort-key
+   * space is `string`, wider than the host's own key union: a contributed
+   * sortable column's key is its namespaced id.
+   */
+  columns: Column<Row, string>[];
   /** Degradations to record — the caller's, so the merge stays pure. */
   diagnostics: AnchorDiagnostic[];
 }
@@ -131,12 +135,12 @@ const parseWidth = (width: string | undefined): number | undefined => {
  * contributing `total` can never collide, and the id a user's persisted column
  * config stores stays that plugin's alone (AC-PLUG-K5).
  */
-const toHostColumn = <Row, K extends string>(
+const toHostColumn = <Row,>(
   contribution: LineColumnContribution,
   id: string,
   toView: (row: Row) => InternalOrderLineView,
   batch: LineColumnBatch
-): Column<Row, K> => {
+): Column<Row, string> => {
   // Header text resolves through the plugin's own namespace, on every header
   // render — so a locale switch retranslates it like any host header, and a
   // missing key renders the key itself rather than blank (AC-PLUG-I1).
@@ -162,6 +166,11 @@ const toHostColumn = <Row, K extends string>(
         : {}),
     },
     ...(size !== undefined ? { size } : {}),
+    // Sortability follows the declaration (AC-PLUG-K7): the sortKey is the
+    // column's namespaced id, so the table offers its standard sort control
+    // and the view resolves the active key back to this contribution's
+    // sortValue (sortLinesByContribution below).
+    ...(contribution.sortValue !== undefined ? { sortKey: id } : {}),
   };
 
   if (contribution.value !== undefined) {
@@ -192,14 +201,39 @@ const toHostColumn = <Row, K extends string>(
   }
 
   const Cell = contribution.Component;
+  // A Component column is a display column — no accessor, nothing cached, the
+  // contribution owns the whole cell — EXCEPT when it declares a sort: the
+  // table engine refuses sort on a column with no accessor (getCanSort tests
+  // accessorFn, not enableSorting alone), so a sortable one carries its sort
+  // value as the accessor. The `cell` below still owns every rendered pixel;
+  // the accessor is never displayed. A throwing sortValue is contained like a
+  // throwing value function.
+  const sortValue = contribution.sortValue;
+  let sortReported = false;
+  const identity =
+    sortValue === undefined
+      ? { id }
+      : {
+          id,
+          accessor: (row: Row) => {
+            const view = toView(row);
+            try {
+              return sortValue(view, dataFor(view));
+            } catch (error) {
+              if (!sortReported) {
+                sortReported = true;
+                console.error(`[plugins] ${id}: column sortValue failed`, error);
+              }
+              return '';
+            }
+          },
+        };
   return {
     ...fragment,
     ...base,
-    // A display column: no accessor, so nothing is cached and the contribution
-    // owns the whole cell. Its own error boundary keeps a throwing cell to that
-    // cell — the row, the column, and the rest of the table keep rendering
-    // (AC-PLUG-E1).
-    c: { id },
+    // Its own error boundary keeps a throwing cell to that cell — the row, the
+    // column, and the rest of the table keep rendering (AC-PLUG-E1).
+    c: identity,
     cell: info => {
       const view = toView(info.row.original);
       return (
@@ -238,7 +272,7 @@ export const mergeLineColumns = <Row, K extends string>(
   contributions: readonly LineColumnContribution[],
   toView: (row: Row) => InternalOrderLineView,
   batch: LineColumnBatch = EMPTY_LINE_COLUMN_BATCH
-): MergedLineColumns<Row, K> => {
+): MergedLineColumns<Row> => {
   if (contributions.length === 0)
     return { columns: [...hostColumns], diagnostics: [] };
 
@@ -256,7 +290,7 @@ export const mergeLineColumns = <Row, K extends string>(
     columns: merged.entries.map(entry =>
       entry.kind === 'host'
         ? entry.item.column
-        : toHostColumn<Row, K>(
+        : toHostColumn<Row>(
             entry.item.contribution,
             entry.item.id,
             toView,
@@ -265,4 +299,58 @@ export const mergeLineColumns = <Row, K extends string>(
     ),
     diagnostics: merged.diagnostics,
   };
+};
+
+// ── The contributed sort ────────────────────────────────────────────────────
+
+/**
+ * Order rows by a contribution's declared sort value (AC-PLUG-K7,
+ * sdk-contract § the column slot): numbers compare numerically, strings by
+ * locale, and a `null`/`undefined` value sorts LAST in either direction — the
+ * contract's "no value sorts last", which no sentinel can give a
+ * direction-flipped comparator. A throwing `sortValue` reads as no value and
+ * is named once per sort, like a throwing `value` accessor.
+ *
+ * Pure, like the merge: rows in, rows out, one decorate pass so `sortValue`
+ * runs once per row rather than once per comparison.
+ */
+export const sortLinesByContribution = <Row,>(
+  rows: readonly Row[],
+  toView: (row: Row) => InternalOrderLineView,
+  contribution: LineColumnContribution,
+  entries: ReadonlyMap<string, unknown> | undefined,
+  desc: boolean
+): Row[] => {
+  const sortValue = contribution.sortValue;
+  if (sortValue === undefined) return [...rows];
+  const id = contributionId(contribution);
+  let reported = false;
+  const decorated = rows.map(row => {
+    const view = toView(row);
+    let value: string | number | null;
+    try {
+      value = sortValue(view, entries?.get(view.id)) ?? null;
+    } catch (error) {
+      if (!reported) {
+        reported = true;
+        console.error(`[plugins] ${id}: column sortValue failed`, error);
+      }
+      value = null;
+    }
+    return { row, value };
+  });
+  const dir = desc ? -1 : 1;
+  decorated.sort((a, b) => {
+    if (a.value === null || b.value === null) {
+      if (a.value === b.value) return 0;
+      return a.value === null ? 1 : -1;
+    }
+    if (typeof a.value === 'number' && typeof b.value === 'number') {
+      const diff = (a.value - b.value) * dir;
+      // Infinity − Infinity is NaN: equal sentinels read as equal.
+      return Number.isNaN(diff) ? 0 : diff;
+    }
+    return String(a.value).localeCompare(String(b.value)) * dir;
+  });
+  return decorated.map(entry => entry.row);
 };

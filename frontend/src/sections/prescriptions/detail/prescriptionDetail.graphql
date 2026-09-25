@@ -194,17 +194,6 @@ mutation deletePrescriptionLines(
   }
 }
 
-# The label-printer settings gate (spec/prescriptions § label printing): null
-# means no printer configured — the print action explains instead of printing.
-query labelPrinterSettings {
-  labelPrinterSettings {
-    address
-    port
-    labelHeight
-    labelWidth
-  }
-}
-
 # The source request's number, for the side panel's back-link
 # (spec/prescriptions/ui-surface.md S3 § side panel). The mirror of the request
 # side's dispensation lookup: that one filters invoices by request, this one

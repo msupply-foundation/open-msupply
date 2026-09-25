@@ -16,7 +16,7 @@ import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { poLabel } from '../linkedOrder';
-import { NameSearch, type NameOption } from '../../../domain/name';
+import { NameSearch, type NameSeed } from '../../../domain/name';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
 import { sourceLinkOf, supplierIsStore } from './inboundShipmentStatus';
@@ -25,7 +25,7 @@ import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.gen
 export interface InboundShipmentDetailToolbarProps {
   storeId: string;
   node: InboundInfoFragment;
-  /** True once Verified (global edit lock). */
+  /** The shipment's edit lock (rules § editability). */
   disabled: boolean;
   edit: InboundFieldEdit;
   /** Store backdating gate + window (from inboundShipmentPreferences). */
@@ -79,13 +79,9 @@ export const InboundShipmentDetailToolbar: Component<
   // internal order has no source link, and its supplier stays editable.
   const supplierLocked = () => props.disabled || sourceLink() !== 'none';
 
-  const selectedSupplier = (): NameOption => ({
+  const selectedSupplier = (): NameSeed => ({
     id: props.node.otherPartyId,
     name: props.node.otherPartyName,
-    code: '',
-    isSupplier: true,
-    isDonor: false,
-    isOnHold: false,
     isStore: supplierIsStore(props.node),
   });
 

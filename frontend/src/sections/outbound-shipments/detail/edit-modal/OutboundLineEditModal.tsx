@@ -13,6 +13,7 @@ import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { getPlural, t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
+import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
@@ -1223,16 +1224,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             meta: { align: 'right' },
             cell: info =>
               props.currencyCode
-                ? formatNumber(info.getValue<number>(), {
-                    style: 'currency',
-                    currency: props.currencyCode,
-                    currencyDisplay: 'narrowSymbol',
-                    // formatNumber's max-digits default (10) beats Intl's own
-                    // currency default of 2 — state both, as
-                    // formatCurrencyCell does.
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })
+                ? formatCurrency(info.getValue<number>(), props.currencyCode)
                 : '',
             size: remToPx(9),
           } satisfies Column<DraftLine, never, GroupKey>,
@@ -1732,8 +1724,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </span>
               </LabelledValue>
             </div>
-            {/* Supplier comment (spec S4) — this store's reason for sending a
-                different quantity than the customer asked for. It follows
+            {/* The supplier comment (spec S4) — this store's reason for
+                sending a different quantity than the customer asked for.
+                Labelled plain "Comment" here: this store IS the supplier, so
+                "Supplier comment" reads ambiguously on this side (issue #629);
+                the receiving store sees it as "Supplier comment". It follows
                 Available because it explains the gap between that figure and
                 what was requested. ONE field for the ITEM, not per batch: the
                 save writes it onto every line of the item, so its batches can
@@ -1743,7 +1738,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <Show when={props.fromCustomerRequisition}>
               <div class={styles.supplierCommentField}>
                 <TextField
-                  label={t('label.supplier-comment')}
+                  label={t('label.comment')}
                   data-testid="supplier-comment-input"
                   value={transferComment()}
                   disabled={!props.editable || saving()}

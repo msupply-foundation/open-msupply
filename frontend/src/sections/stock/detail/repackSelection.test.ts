@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { repackPanelState } from './repackSelection';
+import { newRepackDraft, repackPanelState } from './repackSelection';
 
-// The repack modal's selection state (spec/stock OMS-REG-SMV-08.24-.26,
-// issue #794): which
-// repack is current, and therefore which row is marked, what the panel shows,
-// and what Export/Print acts on. The modal itself renders a <dialog> and a
-// table, which this harness has no DOM to mount — the decision is tested here,
-// the rendering is verified in the running app.
+// The repack modal's selection state (spec/stock OMS-REG-SMV-08.24, .25,
+// issue #794): which repack is current, and therefore which row is marked,
+// what the panel shows, and what Export/Print acts on — plus the values a new
+// repack starts from (.27, issue #516). The modal itself renders a <dialog>
+// and a table, which this harness has no DOM to mount — the decisions are
+// tested here, the rendering is verified in the running app.
 
 const repack = (id: string, invoiceId: string) => ({
   id,
@@ -66,33 +66,16 @@ describe('repackPanelState', () => {
     expect(state.canPrint).toBe(false);
   });
 
-  it('holds its tongue between a save and the refetch that lists it', () => {
-    // The saved repack is selected (its invoice came back from the mutation)
-    // but the history in hand is still the pre-save one. Prompting to select a
-    // repack here would contradict the save that just happened.
+  it('treats a selection the history does not hold as none', () => {
     const state = repackPanelState({
       repacks: history,
-      selectedInvoiceId: 'invoice-just-saved',
+      selectedInvoiceId: 'invoice-elsewhere',
       creating: false,
     });
-    expect(state.face).toBe('none');
+    expect(state.face).toBe('prompt');
     expect(state.selected).toBeUndefined();
     expect(state.selectedRowIds).toEqual([]);
-    // Print still acts on the saved repack — the report is fetched by invoice,
-    // not from the history row.
-    expect(state.canPrint).toBe(true);
-  });
-
-  it('resolves that same selection once the refetched history holds it', () => {
-    const saved = repack('repack-c', 'invoice-just-saved');
-    const state = repackPanelState({
-      repacks: [saved, ...history],
-      selectedInvoiceId: 'invoice-just-saved',
-      creating: false,
-    });
-    expect(state.face).toBe('selected');
-    expect(state.selected).toBe(saved);
-    expect(state.selectedRowIds).toEqual(['repack-c']);
+    expect(state.canPrint).toBe(false);
   });
 
   it('gives the panel to the editor while a new repack is being entered', () => {
@@ -116,5 +99,31 @@ describe('repackPanelState', () => {
       creating: true,
     });
     expect(state.face).toBe('editor');
+  });
+});
+
+describe('newRepackDraft', () => {
+  const shelf = { id: 'loc-a', code: 'A1', name: 'Shelf A1' };
+
+  it('starts with every available pack, pack size 1, and the line location', () => {
+    expect(
+      newRepackDraft({ availableNumberOfPacks: 99, location: shelf })
+    ).toEqual({ numberOfPacks: 99, newPackSize: 1, newLocation: shelf });
+  });
+
+  it('starts with no location when the line has none', () => {
+    expect(
+      newRepackDraft({ availableNumberOfPacks: 4, location: null }).newLocation
+    ).toBeNull();
+    expect(
+      newRepackDraft({ availableNumberOfPacks: 4 }).newLocation
+    ).toBeNull();
+  });
+
+  it('starts at zero packs when none are available', () => {
+    expect(
+      newRepackDraft({ availableNumberOfPacks: 0, location: shelf })
+        .numberOfPacks
+    ).toBe(0);
   });
 });

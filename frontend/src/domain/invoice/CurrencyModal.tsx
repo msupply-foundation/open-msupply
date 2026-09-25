@@ -1,6 +1,5 @@
-import { createResource, createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../intl';
-import { graphqlFetch } from '../../api/graphql';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import {
@@ -10,7 +9,7 @@ import {
 import { Select } from '../../ui/elements/selectors/Select';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
-import { ActiveCurrencies } from './invoiceModals.generated';
+import { currenciesResource, currencyLabel } from '../currency';
 
 // The change-currency modal BOTH shipment verticals host (outbound S3 side
 // panel, inbound S3 charges): a non-home currency + its exchange rate, saved
@@ -48,15 +47,6 @@ const Body: Component<CurrencyModalProps> = props => {
   const [rate, setRate] = createSignal(props.initialRate);
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
-
-  const [data] = createResource(async () => {
-    const result = await graphqlFetch(ActiveCurrencies, {});
-    return result.kind === 'success' &&
-      result.data.currencies.__typename === 'CurrencyConnector'
-      ? result.data.currencies.nodes
-      : [];
-  });
-  const currencies = () => data() ?? [];
 
   const save = async () => {
     if (saving()) return;
@@ -98,14 +88,14 @@ const Body: Component<CurrencyModalProps> = props => {
         </>
       }
     >
-      <Show when={!data.loading} fallback={<Spinner center />}>
+      <Show when={!currenciesResource.loading()} fallback={<Spinner center />}>
         <Select
           label={t('label.currency')}
           value={currencyId()}
           onValueChange={setCurrencyId}
-          options={currencies().map(c => ({
+          options={currenciesResource.noSuspense().map(c => ({
             value: c.id,
-            label: c.isHomeCurrency ? `${c.code} (${t('label.home')})` : c.code,
+            label: currencyLabel(c),
           }))}
         />
         <NumberField

@@ -1356,11 +1356,6 @@ const StocktakeLineEditContent = (
                       ? {
                           id: line.donorId,
                           name: line.donorName ?? '',
-                          code: '',
-                          isSupplier: false,
-                          isDonor: true,
-                          isOnHold: false,
-                          isStore: false,
                         }
                       : undefined
                   }
@@ -1432,11 +1427,6 @@ const StocktakeLineEditContent = (
                 ? {
                     id: line.manufacturer.id,
                     name: line.manufacturer.name,
-                    code: '',
-                    isSupplier: false,
-                    isDonor: false,
-                    isOnHold: false,
-                    isStore: false,
                   }
                 : undefined
             }

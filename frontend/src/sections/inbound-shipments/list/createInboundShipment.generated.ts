@@ -138,6 +138,13 @@ export type SentPurchaseOrdersVariables = {
     equalTo?: string | null;
     like?: string | null;
   } | null;
+    number?: {
+    equalTo?: number | null;
+    equalAny?: Array<number> | null;
+    notEqualTo?: number | null;
+    equalAnyOrNull?: Array<number> | null;
+    notEqualAll?: Array<number> | null;
+  } | null;
     storeId?: {
     equalTo?: string | null;
     equalAny?: Array<string> | null;

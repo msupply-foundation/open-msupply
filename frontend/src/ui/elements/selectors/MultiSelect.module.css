@@ -68,6 +68,17 @@
   background: var(--bg-disabled);
 }
 
+/* Error state — red border, and a red glow on focus (mirrors TextField's and
+   Combobox's data-error). Placed after the base .control rules to satisfy
+   no-descending-specificity. */
+.control[data-error] {
+  border-color: var(--error-main);
+}
+
+.control[data-error]:focus-within {
+  box-shadow: var(--focus-ring-error);
+}
+
 /* `compact` narrows only the control box; the field above keeps its `short`
    cap so a longer label still reads. As TextField.module.css. */
 .field[data-width='compact'] .control {
@@ -235,6 +246,26 @@
   font-size: var(--text-xs);
   line-height: 1.3;
   color: var(--text-secondary);
+}
+
+/* Error message — an alert icon + red text below the control (mirrors
+   TextField's and Combobox's .error). */
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--error-main);
+}
+
+/* The glyph takes the error text's own colour — it is part of the error line,
+   not a caution of its own. As Combobox.module.css. */
+.errorIcon {
+  font-size: 0.875em;
+  color: inherit;
+  flex-shrink: 0;
 }
 
 /* Small variant: denser frame + 13px label/input, matching the shared input

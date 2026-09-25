@@ -1,5 +1,5 @@
 import { createMemo, createRoot, createSignal, type Accessor } from 'solid-js';
-import { graphqlFetch } from '../api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '../api/graphql';
 import {
   StoreContext,
   type StoreContextResult,
@@ -319,6 +319,18 @@ const currentStoreName = (): string => {
   return authUser()?.stores.nodes.find(s => s.id === storeId)?.name ?? '';
 };
 
+// The purchase-order vertical's gates (spec/purchase-orders rules §
+// availability, § the status lifecycle): the per-store procurement preference
+// that decides whether the destination exists at all, and whether the approval
+// state is part of the ladder. Both live on the global PreferencesNode.
+const purchaseOrderPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  return {
+    useProcurementFunctionality: prefs?.useProcurementFunctionality ?? false,
+    authorisePurchaseOrder: prefs?.authorisePurchaseOrder ?? false,
+  };
+};
+
 // A server UserPermission name as it arrives in the store-context query
 // (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
 // generated so callers can't typo a permission. Reading the union off the
@@ -341,6 +353,28 @@ const hasPermission = (permission: UserPermission): boolean => {
   );
 };
 
+// The wire's PascalCase spelling of the same permission — the form an actual
+// Forbidden carries as `HasPermission(EditCentralData)`, and the form the
+// permission-denied modal humanises. The SCREAMING_CASE name above is the
+// store context's; the two must stay in step, which is why they sit together.
+const EDIT_CENTRAL_DATA = 'EditCentralData';
+
+/**
+ * The central-administration write guard: the standing-capability mirror the
+ * central screens share (ui-standards › validation § permission gating).
+ * Returns true when the user may write central data; otherwise raises the
+ * global permission-denied modal — the same one a server Forbidden routes to
+ * — and returns false, so the caller sends nothing.
+ *
+ * Used by Manage › Demographics and Programs › Immunizations, which had a
+ * verbatim copy each (PR #749 review, F11). The server stays the real guard.
+ */
+const guardCentralDataEdit = (): boolean => {
+  if (hasPermission('EDIT_CENTRAL_DATA')) return true;
+  reportPermissionDenied([EDIT_CENTRAL_DATA]);
+  return false;
+};
+
 export {
   storeContext,
   refetch as refetchStoreContext,
@@ -358,6 +392,8 @@ export {
   hasVaccineModule,
   hasProgramModule,
   hasProcurement,
+  purchaseOrderPreferences,
   hasPermission,
+  guardCentralDataEdit,
 };
 export type { UserPermission, StoreMode };

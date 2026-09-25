@@ -1,5 +1,6 @@
 import { createSignal, For, Show, splitProps, type JSX } from 'solid-js';
 import { t, localisedDate, formatFileSize } from '../../../intl';
+import { isAndroid } from '../../../platform';
 import { openDocument } from '../../../platform/openDocument';
 import { FileIcon, TrashIcon } from '../../icons';
 import { Alert } from '../feedback/Alert';
@@ -73,10 +74,13 @@ const FileTypeIcon = (props: { fileName: string }): JSX.Element => (
  * whatever record holds it, so the panel asks it and hands `onDelete` only the
  * confirmed removals. A consumer cannot forget the guard on a destructive
  * action. Opening is fully determined by the row's url + fileName, so the panel
- * owns that too —
- * routed through the openDocument platform capability (browser tab on web,
- * OS viewer on Android — kdd/capacitor-plugins). Modified clicks (new tab,
- * copy link) keep native anchor behaviour.
+ * owns that too.
+ *
+ * The name is a real anchor and stays one: every browser opens it, and so does
+ * a host shell watching for a sync-file address. Only Android is intercepted,
+ * through the openDocument platform capability, because there the WebView
+ * would render the file inline with no way back (kdd/capacitor-plugins).
+ * Modified clicks (new tab, copy link) keep anchor behaviour everywhere.
  */
 export const DocumentUploadPanel = (
   props: DocumentUploadPanelProps
@@ -184,6 +188,13 @@ export const DocumentUploadPanel = (
                             event.shiftKey ||
                             event.altKey;
                           if (event.button !== 0 || modified) return;
+                          // Only Android needs the file taken out of the
+                          // WebView by hand. Every browser already opens an
+                          // anchor correctly, and so does a host shell that
+                          // watches for a sync-file address — so off Android
+                          // the anchor is left alone rather than replaced with
+                          // a scripted open that the shell cannot see (#692).
+                          if (!isAndroid()) return;
                           event.preventDefault();
                           void onOpen(document, url());
                         }}

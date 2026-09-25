@@ -64,15 +64,16 @@ pub struct UpdatePurchaseOrderInput {
 }
 
 impl UpdatePurchaseOrderInput {
-    pub fn is_status_only_change(&self) -> bool {
+    pub fn is_allowed_on_closed_order(&self, status: &PurchaseOrderStatus) -> bool {
         let Self {
             id: _,
             status: _,
-            // Comment is editable on sent POs, only disabled when finalised
             comment: _,
-            // All other fields must be None
+            contract_signed_date,
+            advance_paid_date,
             supplier_id,
             confirmed_datetime,
+            sent_datetime,
             supplier_discount_percentage,
             supplier_discount_amount,
             donor_id,
@@ -80,9 +81,6 @@ impl UpdatePurchaseOrderInput {
             currency_id,
             foreign_exchange_rate,
             shipping_method,
-            sent_datetime,
-            contract_signed_date,
-            advance_paid_date,
             received_at_port_date,
             requested_delivery_date,
             supplier_agent,
@@ -97,8 +95,12 @@ impl UpdatePurchaseOrderInput {
             freight_charge,
             freight_conditions,
         } = self;
-        supplier_id.is_none()
+        let post_sending_dates_allowed = matches!(status, PurchaseOrderStatus::Sent)
+            || (contract_signed_date.is_none() && advance_paid_date.is_none());
+        post_sending_dates_allowed
+            && supplier_id.is_none()
             && confirmed_datetime.is_none()
+            && sent_datetime.is_none()
             && supplier_discount_percentage.is_none()
             && supplier_discount_amount.is_none()
             && donor_id.is_none()
@@ -106,9 +108,6 @@ impl UpdatePurchaseOrderInput {
             && currency_id.is_none()
             && foreign_exchange_rate.is_none()
             && shipping_method.is_none()
-            && sent_datetime.is_none()
-            && contract_signed_date.is_none()
-            && advance_paid_date.is_none()
             && received_at_port_date.is_none()
             && requested_delivery_date.is_none()
             && supplier_agent.is_none()
