@@ -16,6 +16,7 @@ use repository::sync_file_reference_row::SyncFileStatus;
 use repository::SyncFileDirection;
 use repository::{
     EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
+    TransactionError,
 };
 use serde::Deserialize;
 
@@ -226,7 +227,7 @@ async fn upload_sync_file(
     // For now, we just check that the user is authenticated
     // In future we might want to check that the user has access to the record
     // Access to the file UUID should normally only be exposed to users with access from the frontend
-    validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
+    let user = validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
         InternalError::new(
             "You need to be logged in",
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -242,16 +243,21 @@ async fn upload_sync_file(
     let mut static_file_ids: Vec<String> = vec![];
 
     for f in file {
-        let static_file =
-            upload_sync_file_inner(&service_provider, &settings, path_inner.clone(), f)
-                .await
-                .map_err(|error| {
-                    log::error!("Error while uploading file: {}", format_error(&error));
-                    InternalError::new(
-                        "Error uploading file, please check server logs",
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                    )
-                })?;
+        let static_file = upload_sync_file_inner(
+            &service_provider,
+            &settings,
+            path_inner.clone(),
+            f,
+            &user.user_id,
+        )
+        .await
+        .map_err(|error| {
+            log::error!("Error while uploading file: {}", format_error(&error));
+            InternalError::new(
+                "Error uploading file, please check server logs",
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )
+        })?;
 
         static_file_ids.push(static_file.id);
     }
@@ -272,6 +278,7 @@ async fn upload_sync_file_inner(
     settings: &Settings,
     (table_name, record_id): (String, String),
     file: TempFile,
+    user_id: &str,
 ) -> Result<StaticFile, UploadFileError> {
     let db_connection = service_provider.connection()?;
 
@@ -286,22 +293,35 @@ async fn upload_sync_file_inner(
         None,
     )?;
 
-    let repo = SyncFileReferenceRowRepository::new(&db_connection);
+    // One transaction: the number a version takes is read from the rows already
+    // there, so reading it and writing the row that claims it cannot be split by
+    // another upload of the same name.
+    db_connection
+        .transaction_sync(|connection| {
+            let repo = SyncFileReferenceRowRepository::new(connection);
 
-    repo.upsert_one(&SyncFileReferenceRow {
-        id: static_file.id.clone(),
-        file_name: static_file.name.clone(),
-        table_name,
-        total_bytes,
-        mime_type,
-        record_id,
-        uploaded_bytes: 0, // This is how many bytes are uploaded to the central server
-        created_datetime: chrono::Utc::now().naive_utc(),
-        deleted_datetime: None,
-        status: SyncFileStatus::New,
-        direction: SyncFileDirection::Upload,
-        ..Default::default()
-    })?;
+            // against the stored (sanitised) name, which versions are grouped by
+            let version_number =
+                repo.next_version_number(&table_name, &record_id, &static_file.name)?;
+
+            repo.upsert_one(&SyncFileReferenceRow {
+                id: static_file.id.clone(),
+                file_name: static_file.name.clone(),
+                table_name,
+                total_bytes,
+                mime_type,
+                record_id,
+                uploaded_bytes: 0, // This is how many bytes are uploaded to the central server
+                created_datetime: chrono::Utc::now().naive_utc(),
+                deleted_datetime: None,
+                status: SyncFileStatus::New,
+                direction: SyncFileDirection::Upload,
+                user_id: Some(user_id.to_string()),
+                version_number,
+                ..Default::default()
+            })
+        })
+        .map_err(TransactionError::to_inner_error)?;
 
     Ok(static_file)
 }
