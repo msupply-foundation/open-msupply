@@ -139,7 +139,10 @@ const Body = <R,>(
           fallback={
             <>
               <Show when={phase().kind === 'confirm'}>
-                <CancelButton onClick={props.onClose} />
+                <CancelButton
+                  data-testid="dialog-button-cancel"
+                  onClick={props.onClose}
+                />
               </Show>
               <Button
                 variant="danger"
@@ -155,7 +158,12 @@ const Body = <R,>(
         >
           {/* Acknowledged, not aborted — what could be deleted was
               (ui-standards/controls § footer button identity). */}
-          <Button variant="secondary" confirms="plain" onClick={finish}>
+          <Button
+            variant="secondary"
+            confirms="plain"
+            data-testid="dialog-button-close"
+            onClick={finish}
+          >
             {t('button.close')}
           </Button>
         </Show>

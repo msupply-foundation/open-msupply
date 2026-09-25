@@ -67,9 +67,9 @@ type ReviewKey =
   | 'type'
   | 'manufacturer'
   | 'model'
-  | 'className'
+  | 'class'
   | 'category'
-  | 'message';
+  | 'errorMessage';
 
 export const ImportCatalogueModal: Component<
   ImportCatalogueModalProps
@@ -249,9 +249,9 @@ export const ImportCatalogueModal: Component<
     reviewColumn('type', 'label.type'),
     reviewColumn('manufacturer', 'label.manufacturer'),
     reviewColumn('model', 'label.model'),
-    reviewColumn('className', 'label.class'),
+    reviewColumn('class', 'label.class'),
     reviewColumn('category', 'label.category'),
-    reviewColumn('message', 'label.error-message'),
+    reviewColumn('errorMessage', 'label.error-message'),
   ];
 
   return (
@@ -266,12 +266,15 @@ export const ImportCatalogueModal: Component<
       actions={
         <>
           <Show when={!running()}>
-            <CancelButton onClick={props.onClose} />
+            <CancelButton
+              data-testid="dialog-button-cancel"
+              onClick={props.onClose}
+            />
           </Show>
           <Button
             variant="secondary"
             icon={<ExportIcon />}
-            data-testid="import-export-button"
+            data-testid="dialog-button-export"
             disabled={
               running() || !(uploadFailed() || (refused()?.length ?? 0) > 0)
             }
@@ -282,7 +285,7 @@ export const ImportCatalogueModal: Component<
           <Button
             icon={<ArrowRightIcon />}
             confirms="plain"
-            data-testid="import-ok-next-button"
+            data-testid="dialog-button-next-and-ok"
             loading={running()}
             disabled={
               step() !== 'review' ||
@@ -299,17 +302,17 @@ export const ImportCatalogueModal: Component<
       <ProgressList steps={steps()} testId="import-steps" />
       <Switch>
         <Match when={invalidFile()}>
-          <Alert severity="error" testId="import-banner">
+          <Alert severity="error" testId="import-outcome">
             {t('messages.invalid-file')}
           </Alert>
         </Match>
         <Match when={refused() !== undefined}>
-          <Alert severity="error" testId="import-banner">
+          <Alert severity="error" testId="import-outcome">
             {t('messages.import-error-assets')}
           </Alert>
         </Match>
         <Match when={uploadFailed()}>
-          <Alert severity="error" testId="import-banner">
+          <Alert severity="error" testId="import-outcome">
             {t('messages.import-error-on-upload')}
           </Alert>
         </Match>
@@ -329,13 +332,21 @@ export const ImportCatalogueModal: Component<
             disabled={!ready()}
             inputTestId="import-file-input"
             onFiles={files => void onFiles(files)}
+            // The zone filters by `accept`, so a non-CSV file arrives here as
+            // a rejection, never through onFiles — refuse it just the same
+            // (rules § bulk import: not named .csv → invalid file).
+            onRejected={() => {
+              setFile(undefined);
+              setRefused(undefined);
+              setInvalidFile(true);
+            }}
           />
           <p>
             {t('messages.template-download-text')}
             <Button
               variant="ghost"
               size="small"
-              data-testid="import-template-link"
+              data-testid="download-template-button"
               disabled={!ready()}
               onClick={downloadTemplate}
             >
@@ -387,9 +398,9 @@ const reviewColumn = (
 
 const reviewValue = (r: ReviewRow, key: ReviewKey): string => {
   switch (key) {
-    case 'message':
+    case 'errorMessage':
       return r.message;
-    case 'className':
+    case 'class':
       return r.row.className;
     default:
       return r.row[key];

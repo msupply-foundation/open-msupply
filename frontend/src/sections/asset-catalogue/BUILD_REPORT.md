@@ -24,35 +24,31 @@ Every screen was also driven live (headless Chromium) against a central-pinned s
 
 ## Coverage (behaviour → test)
 
-The anchors are the behaviours in `spec/asset-catalogue/cases/` (`OMS-REG-CAT-01`–`03`, `-09`); `acceptance.md` maps the retired `AC-*` ids onto them. Ids below drop the `OMS-REG-CAT-` prefix (`01.28` is `OMS-REG-CAT-01.28`). Unit = colocated vitest; **e2e** = the deterministic suite (#942), which owns what needs the running app; **live** = verified by driving the running app during this build (above), pending that suite.
+The anchors are the behaviours in `spec/asset-catalogue/cases/` (`OMS-REG-CAT-01`–`03`, `-09`); `acceptance.md` maps the retired `AC-*` ids onto them. Ids below drop the `OMS-REG-CAT-` prefix (`01.28` is `OMS-REG-CAT-01.28`). **e2e** = `e2e/specs/asset-catalogue-regression.spec.ts`, green on both front ends; **e2e (this FE)** = in that suite but skipped on the current app, which deliberately differs (named at each test); unit = colocated vitest.
 
 | Behaviours                                                      | Covered by                                                                                      |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `01.1`–`01.4`, `01.6`, `01.7`, `01.8`, `01.17`, `01.20`–`01.23` | live · **e2e**                                                                                  |
-| `01.5`, `01.9`–`01.16`, `01.18`, `01.19`, `01.27`               | **e2e**                                                                                         |
-| `01.25`, `01.26`                                                | `catalogue/catalogueList.test.ts` · live                                                        |
-| `01.24`, `01.28`–`01.31`                                        | **e2e** on a server that is not central (the harness pins central — flags)                      |
-| `01.32`                                                         | **e2e** (wire)                                                                                  |
-| `02.1`, `02.2`, `02.17`, `02.18`, `02.20`                       | **e2e**                                                                                         |
-| `02.3`                                                          | `catalogue/catalogueList.test.ts` (columns) · **e2e**                                           |
-| `02.4`, `02.7`–`02.14`, `02.22`–`02.35`, `02.37`, `02.39`       | `import/catalogueImport.test.ts` · live (most)                                                  |
-| `02.6`, `02.15`, `02.16`, `02.21`, `02.36`, `02.38`             | live (`02.6`, `02.15`) · **e2e**                                                                |
-| `02.19`                                                         | pending in its case — the shared export's empty-state notice (flags)                            |
-| `03.1`, `03.10`, `03.12`–`03.16`, `03.22`, `03.26`              | live (`03.1`, `03.10`, `03.12`–`03.15`, `03.22`; `03.14` without a row count — flags) · **e2e** |
-| `03.2`–`03.9`, `03.17`–`03.20`                                  | `reasons/logReasons.test.ts` · live (`03.7`, `03.17`, `03.18`, `03.19`)                         |
-| `03.11`, `03.21`                                                | `refusals.test.ts` (`03.21`: a refusal becomes the editor's message) · **e2e**                  |
-| `03.23`–`03.25`                                                 | cross-vertical (equipment) — **e2e**                                                            |
-| `03.27`–`03.29`, `03.33`                                        | **e2e** on a server that is not central; `03.33`'s mapping in `refusals.test.ts`                |
-| `03.30`–`03.32`                                                 | `access.test.ts` · **e2e**                                                                      |
-| `09.1`–`09.3`, `09.10`                                          | live (`09.1`, `09.2`) · **e2e**                                                                 |
-| `09.4`–`09.6`                                                   | `refusals.test.ts` · live                                                                       |
-| `09.7`–`09.9`, `09.11`                                          | server behaviour — **e2e**                                                                      |
-| `09.12`–`09.14`                                                 | `access.test.ts` · live (`09.12`) · **e2e**                                                     |
-| `09.15`                                                         | `refusals.test.ts` (mapping) · **e2e** on a server that is not central                          |
+| `01.1`–`01.19`, `01.21`–`01.23`, `01.27`, `01.32`               | **e2e**                                                                                         |
+| `01.20`, `01.25`, `01.26`                                       | **e2e (this FE)** · `01.25`/`01.26` also `catalogue/catalogueList.test.ts`                      |
+| `01.24`, `01.28`–`01.31`                                        | out of scope — off the central server; the e2e harness pins central stack-wide                  |
+| `02.1`–`02.4`, `02.6`–`02.16`, `02.21`–`02.24`, `02.26`–`02.38` | **e2e** · the file rules also `import/catalogueImport.test.ts`                                  |
+| `02.17`, `02.18`, `02.25`, `02.39`                              | **e2e (this FE)** · `02.25`/`02.39` also `import/catalogueImport.test.ts`                       |
+| `02.19`                                                         | pending in its case (the shared export's empty-state notice — flags)                            |
+| `02.20`                                                         | out of scope — off the central server                                                           |
+| `03.1`–`03.14`, `03.17`–`03.20`, `03.22`–`03.25`, `03.32`       | **e2e** · `03.17`–`03.20` also `reasons/logReasons.test.ts`                                     |
+| `03.15`, `03.16`, `03.30`, `03.31`                              | **e2e (this FE)** · `03.30`/`03.31` also `access.test.ts`                                       |
+| `03.21`                                                         | out of scope for e2e (no refusal reachable from the editor on the harness) · `refusals.test.ts` |
+| `03.26`                                                         | out of scope — needs a datafile with no live reason                                             |
+| `03.27`–`03.29`, `03.33`                                        | out of scope — off the central server · `03.33`'s mapping in `refusals.test.ts`                 |
+| `09.1`–`09.5`, `09.7`–`09.11`, `09.14`                          | **e2e** · `09.4`/`09.5` also `refusals.test.ts`                                                 |
+| `09.6`, `09.12`, `09.13`                                        | **e2e (this FE)** · `09.12`/`09.13` also `access.test.ts`                                       |
+| `09.15`                                                         | out of scope — off the central server · mapping in `refusals.test.ts`                           |
 
-**C2 (real backend):** no CI tooling exercises the colocated tests against a server; the live drive above and the e2e suite (#942) are the real-backend leg.
+**C2 (real backend):** the e2e suite runs against a real server on both front ends; the colocated tests are logic only.
 
 ## Flags
+
+- **Found by the e2e suite and fixed: a non-CSV file was silently ignored.** The import handed the upload zone `accept=".csv"`, so a `.txt` arrived as a rejection and never reached the invalid-file handling; the modal did nothing where the current app says _Invalid file_ (`OMS-REG-CAT-02.21`). The modal now handles the zone's rejection the same way.
 
 - **Nothing-to-export notice (`OMS-REG-CAT-02.19`, pending in its case).** The spec says an export with nothing in it _says so_. The shared `ListExportAction` reverts silently when its CSV builder returns nothing, and changing that reaches every list's export. Built as the shared control behaves; needs either a library change (an empty-state flash on `ListExportAction`) or the spec sentence relaxed.
 - **No row count on the log-reasons list (S3, `OMS-REG-CAT-03.14`).** `DataTable` reads the toolbar count from `pagination.total`, so an unpaginated table shows none. Needs a library `count` input, or the S3 sentence relaxed.
@@ -73,5 +69,4 @@ The anchors are the behaviours in `spec/asset-catalogue/cases/` (`OMS-REG-CAT-01
 
 ## Follow-ups
 
-- The deterministic e2e suite (#942) — the **e2e** rows above, plus the test ids used here recorded in `e2e/TESTIDS.md` (`import-catalogue-button`, `manage-log-reasons-button`, `create-log-reason-button`, `import-*`, `log-reason-*`).
 - Library: `ListExportAction` empty feedback; a `DataTable` count without pagination; a navigable `ProgressList` step.
