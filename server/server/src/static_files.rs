@@ -15,8 +15,8 @@ use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
 use repository::SyncFileDirection;
 use repository::{
-    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
-    TransactionError,
+    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus,
+    RepositoryError, TransactionError,
 };
 use serde::Deserialize;
 
@@ -293,9 +293,8 @@ async fn upload_sync_file_inner(
         None,
     )?;
 
-    // One transaction: the number a version takes is read from the rows already
-    // there, so reading it and writing the row that claims it cannot be split by
-    // another upload of the same name.
+    // Atomic, not serialised: nothing locks the name, so a concurrent upload of
+    // it can reach the same number (see `next_version_number`).
     db_connection
         .transaction_sync(|connection| {
             let repo = SyncFileReferenceRowRepository::new(connection);
@@ -478,6 +477,18 @@ mod test {
         )
     }
 
+    /// A DB-backed provider plus settings pointing at a throwaway file tree, for
+    /// the upload tests. The `TempDir` is returned so it outlives the test.
+    async fn upload_harness(db_name: &str) -> (ServiceProvider, Settings, tempfile::TempDir) {
+        use repository::{mock::MockDataInserts, test_db::setup_all};
+
+        let (_, _, connection_manager, _) = setup_all(db_name, MockDataInserts::none()).await;
+        let base_dir = tempfile::tempdir().unwrap();
+        let mut settings = test_settings();
+        settings.server.base_dir = base_dir.path().to_str().unwrap().to_string();
+        (ServiceProvider::new(connection_manager), settings, base_dir)
+    }
+
     fn temp_file(name: &str, size: usize) -> TempFile {
         TempFile {
             file: tempfile::NamedTempFile::new().unwrap(),
@@ -540,6 +551,82 @@ mod test {
         assert_eq!(
             std::str::from_utf8(&body).unwrap(),
             "'big.pdf' exceeds the maximum file size of 50MB"
+        );
+    }
+
+    /// The upload is what stamps the uploader and claims the version number
+    /// (spec/purchase-orders OMS-FUN-PO-04 `.28`, `.31`); `next_version_number`
+    /// is tested on its own, this covers the two being written for real.
+    #[actix_rt::test]
+    async fn upload_stamps_the_uploader_and_the_next_version_of_the_name() {
+        let (service_provider, settings, _base_dir) =
+            upload_harness("upload_sync_file_stamps_uploader_and_version").await;
+        let record = ("purchase_order".to_string(), "po1".to_string());
+
+        let upload = async |name: &str, user_id: &str| {
+            upload_sync_file_inner(
+                &service_provider,
+                &settings,
+                record.clone(),
+                temp_file(name, 1),
+                user_id,
+            )
+            .await
+            .unwrap()
+        };
+
+        let first = upload("po.pdf", "user1").await;
+        let second = upload("po.pdf", "user2").await;
+        // A different name starts its own numbering.
+        let other = upload("quote.pdf", "user2").await;
+
+        let connection = service_provider.connection().unwrap();
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+        let row = |file: &StaticFile| {
+            let row = repo.find_one_by_id(&file.id).unwrap().unwrap();
+            (row.user_id, row.version_number)
+        };
+
+        assert_ne!(first.id, second.id, "each upload is its own reference");
+        assert_eq!(row(&first), (Some("user1".to_string()), 1));
+        assert_eq!(row(&second), (Some("user2".to_string()), 2));
+        assert_eq!(row(&other), (Some("user2".to_string()), 1));
+    }
+
+    /// Removing a version does not free its number: the next upload of the name
+    /// follows the highest ever issued, deleted or not (`.30`).
+    #[actix_rt::test]
+    async fn a_removed_version_does_not_free_its_number() {
+        let (service_provider, settings, _base_dir) =
+            upload_harness("upload_sync_file_removed_version_keeps_number").await;
+        let record = ("purchase_order".to_string(), "po1".to_string());
+
+        let upload = async || {
+            upload_sync_file_inner(
+                &service_provider,
+                &settings,
+                record.clone(),
+                temp_file("po.pdf", 1),
+                "user1",
+            )
+            .await
+            .unwrap()
+        };
+
+        upload().await;
+        let second = upload().await;
+
+        let connection = service_provider.connection().unwrap();
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+        repo.delete(&second.id).unwrap();
+
+        let third = upload().await;
+        assert_eq!(
+            repo.find_one_by_id(&third.id)
+                .unwrap()
+                .unwrap()
+                .version_number,
+            3
         );
     }
 }

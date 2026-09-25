@@ -305,11 +305,12 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
 
     /// Highest version of `name` on the record (deleted included) + 1, so numbers are never reissued.
     ///
-    /// Not unique by itself: read and claimed in one transaction by the upload
-    /// (`server/static_files.rs`), but a number is only ever the highest THIS
-    /// site has seen, so two sites attaching the same name to the same record
-    /// independently both reach the same number. Nothing rejects a duplicate;
-    /// readers order on the number and break ties elsewhere.
+    /// Not unique. The upload (`server/static_files.rs`) reads this and writes
+    /// the row that claims it in one transaction, but nothing locks the name, so
+    /// two concurrent uploads on one site can both reach the number — and so can
+    /// two sites attaching the same name independently, each numbering from what
+    /// it has seen. Nothing rejects a duplicate; readers order on the number and
+    /// break ties elsewhere.
     pub fn next_version_number(
         &self,
         table: &str,
