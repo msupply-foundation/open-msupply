@@ -1,6 +1,6 @@
 # Program-enrolment document registries for the current store — the option
 # source of the patient-program picker (spec/reports contract "Arguments",
-# AC-R10). One registry per program the caller may see: the server restricts
+# OMS-REG-RPT-10.19). One registry per program the caller may see: the server restricts
 # results to contexts the user holds a document permission for. The submitted
 # argument value is `contextId` (the program's context), not the registry id.
 query programRegistries($storeId: String!) {
@@ -22,7 +22,7 @@ query programRegistries($storeId: String!) {
 }
 
 # The store's visible programs, sorted by name — the option source of the
-# report argument PROGRAM picker (spec/reports contract "Arguments", AC-R12;
+# report argument PROGRAM picker (spec/reports contract "Arguments", OMS-REG-RPT-10.22;
 # distinct from the enrolment-registry picker above). isImmunisation is
 # selected so an immunisation-only field filters client-side from the same
 # fetch. The picker submits the program's id (plus the elmisCode /
@@ -48,7 +48,7 @@ query programs($storeId: String!) {
 
 # Periods that have already begun (startDate <= the given day), optionally
 # narrowed to a program — the option source of the report argument PERIOD
-# picker (spec/reports contract "Arguments", AC-R16). $today is the viewer's
+# picker (spec/reports contract "Arguments", OMS-REG-RPT-10.31). $today is the viewer's
 # current calendar date; the query has no sort input (server default order).
 query periods($storeId: String!, $programId: String, $today: NaiveDate!) {
   periods(
@@ -71,7 +71,7 @@ query periods($storeId: String!, $programId: String, $today: NaiveDate!) {
 
 # A program's period schedules, each with its CLOSED periods (ended on or
 # before today — server-enforced) — the schedule + period steps of the report
-# argument schedule cascade (spec/reports contract "Arguments", AC-R17). A
+# argument schedule cascade (spec/reports contract "Arguments", OMS-REG-RPT-10.35). A
 # consumed read owned by R&R forms: inUse marks periods already consumed by a
 # form (spec/rnr-forms contract § creation rules).
 query schedulesWithPeriods($storeId: String!, $programId: String!) {

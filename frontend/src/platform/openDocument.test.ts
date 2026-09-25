@@ -16,7 +16,7 @@ describe('openDocument (web path)', () => {
   });
 
   it('hands the URL to the browser and reports ok', async () => {
-    const open = vi.fn();
+    const open = vi.fn(() => ({}));
     // A browser window without Capacitor: the web fork, no plugin involved.
     vi.stubGlobal('window', { open });
 
@@ -30,9 +30,24 @@ describe('openDocument (web path)', () => {
     );
   });
 
+  it('navigates in place when a new window is refused', async () => {
+    // A WebView with no multiple-window support answers null and shows
+    // nothing; the file must still get in front of the user (#692).
+    const assign = vi.fn();
+    vi.stubGlobal('window', {
+      open: vi.fn(() => null),
+      location: { assign },
+    });
+
+    const result = await openDocument('/sync_files/asset/abc/f1', 'a.pdf');
+
+    expect(result).toEqual({ ok: true });
+    expect(assign).toHaveBeenCalledWith('/sync_files/asset/abc/f1');
+  });
+
   it('never fetches on the web path (plugins stay untouched)', async () => {
     const fetchSpy = vi.fn();
-    vi.stubGlobal('window', { open: vi.fn() });
+    vi.stubGlobal('window', { open: vi.fn(() => ({})) });
     vi.stubGlobal('fetch', fetchSpy);
 
     await openDocument('/sync_files/invoice/abc/f1', 'a.pdf');

@@ -221,21 +221,6 @@ export const DeletePrescriptionLines = {
   query: "mutation deletePrescriptionLines($storeId: String!, $ids: [DeletePrescriptionLineInput!]!) {\n  batchPrescription(storeId: $storeId, input: {deletePrescriptionLines: $ids}) {\n    deletePrescriptionLines {\n      id\n      response {\n        ... on DeleteResponse {\n          id\n        }\n        ... on DeletePrescriptionLineError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<DeletePrescriptionLinesResult, DeletePrescriptionLinesVariables>;
 
-export type LabelPrinterSettingsVariables = Record<string, never>;
-
-export type LabelPrinterSettingsResult = {
-  labelPrinterSettings: {
-  address: string;
-  port: number;
-  labelHeight: number;
-  labelWidth: number;
-} | null;
-};
-
-export const LabelPrinterSettings = {
-  query: "query labelPrinterSettings {\n  labelPrinterSettings {\n    address\n    port\n    labelHeight\n    labelWidth\n  }\n}",
-} as TypedDocument<LabelPrinterSettingsResult, LabelPrinterSettingsVariables>;
-
 export type SourcePrescriptionRequestVariables = {
   storeId: string;
   id: string;

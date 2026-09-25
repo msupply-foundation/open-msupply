@@ -45,8 +45,9 @@ export const programsResource = createStoreScopedResource<ProgramListItem>(
   }
 );
 
-// One pickable program for the report argument program picker (AC-R12) —
-// exactly the node the Programs operation selects (kdd/type-safety).
+// One pickable program for the report argument program picker
+// (OMS-REG-RPT-10.22) — exactly the node the Programs operation selects
+// (kdd/type-safety).
 export type ProgramListItem = Extract<
   ProgramsResult['programs'],
   { __typename: 'ProgramConnector' }
@@ -62,14 +63,15 @@ export const fetchPrograms = async (
   return result.kind === 'success' ? result.data.programs.nodes : [];
 };
 
-// One pickable period for the report argument period picker (AC-R16).
+// One pickable period for the report argument period picker
+// (OMS-REG-RPT-10.31).
 export type PeriodItem = Extract<
   PeriodsResult['periods'],
   { __typename: 'PeriodConnector' }
 >['nodes'][number];
 
 // Periods that have already begun, optionally narrowed to a program — plain
-// never-throwing fetch, read when an argument form opens (AC-R16).
+// never-throwing fetch, read when an argument form opens (OMS-REG-RPT-10.31).
 export const fetchPeriods = async (
   storeId: string,
   programId?: string
@@ -83,7 +85,7 @@ export const fetchPeriods = async (
 };
 
 // One schedule (with its closed periods) for the report argument schedule
-// cascade (AC-R17).
+// cascade (OMS-REG-RPT-10.35).
 export type ScheduleWithPeriods = Extract<
   SchedulesWithPeriodsResult['schedulesWithPeriodsByProgram'],
   { __typename: 'PeriodSchedulesConnector' }

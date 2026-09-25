@@ -27,6 +27,7 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   expiredStockIssueThreshold: 0,
   invoiceStatusOptions: [],
   useProcurementFunctionality: false,
+  authorisePurchaseOrder: false,
   externalInboundShipmentLinesMustBeAuthorised: false,
   storeCustomColour: '',
   backdating: {

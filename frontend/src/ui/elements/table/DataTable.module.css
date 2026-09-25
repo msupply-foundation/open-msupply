@@ -66,6 +66,21 @@
   flex: 1;
   flex-direction: column;
   min-block-size: 0;
+  /* Anchors the floating refetch spinner below. */
+  position: relative;
+}
+
+/* The refetch indicator when there is no toolbar row to hold it (see
+   DataTable's refetchSpinner): the table area's top inline-end corner, over
+   the sticky header band. */
+.floatingLoading {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  inset-block-start: var(--space-1);
+  inset-inline-end: var(--space-2);
+  color: var(--text-secondary);
 }
 
 /* The scroll box is borderless — the frame on .root encloses it, the
@@ -587,6 +602,15 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   text-align: center;
   padding: var(--space-2) var(--space-1);
   transition: background-color var(--motion-base);
+}
+
+/* The LAST body row draws no bottom hairline: whatever follows it supplies
+   the seam — the frame's own edge, the footer band's top hairline
+   (ContentFooter) or a <tfoot>'s (.tf) — and a row hairline pressed against
+   any of them made a doubled seam (the frame note above: single seams). A
+   scroll box taller than its rows simply runs on white below the last row. */
+tbody > tr:last-child > :is(.td, .selectCell) {
+  border-block-end: 0;
 }
 
 /* Placement of the BareCheckbox in a selection cell: centred by margin.
@@ -1951,4 +1975,25 @@ tr[data-accent='error'] > :first-child::before {
    with it (a same-specificity tie is decided by bundle order — fragile). */
 .root > .tableFooter {
   padding-block: var(--space-2);
+}
+
+/* ── In-place-editor tables: cell content at the TOP ───────────────────────
+   The one exception to the vertical centring of body cells (see `.td[data-wrap]`
+   for why centring is the default). A table of IN-PLACE EDITORS opts in with
+   `cellAlign="start"` (DataTable): such a cell grows a validation message
+   BENEATH its control, and centred growth lifts that cell's control above its
+   neighbours' — the row of inputs stops lining up exactly when one of them is
+   wrong, the state where alignment matters most. Top-aligned they hold their
+   place and the message hangs below.
+
+   This does not reopen the `vertical-align: top` reverted for wrapping columns:
+   that broke because a SINGLE-LINE cell in a wrapping column sat above its
+   centred neighbours. Here every cell in the table holds a control of the same
+   height, so the clean row is unchanged and only the error state moves.
+
+   Last in the file, and qualified past the row tint / state rules above, which
+   also target `.td`: this sheet is ordered by ascending specificity. */
+.root[data-cell-align='start'] .table tbody tr > .td,
+.root[data-cell-align='start'] .table tbody tr > .selectCell {
+  vertical-align: top;
 }
