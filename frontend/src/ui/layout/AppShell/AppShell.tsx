@@ -353,7 +353,10 @@ export const AppShell = (props: AppShellProps) => {
                     OMS-REG-FTR-02.14): a quiet, persistent cell while the
                     served bundle differs from the running build; activating it
                     hands off to the host, which confirms before reloading. Its
-                    divider goes with it, so nothing dangles while it's away. */}
+                    divider goes with it, and is drawn only when the
+                    central-server marker follows: the sync cell brings its own
+                    edge (its ground, and on error a red bar), so a hairline
+                    before it would only double that edge. */}
                   <Show when={props.updateAvailable && props.onUpdateClick}>
                     <FooterCell
                       icon={RefreshIcon}
@@ -361,20 +364,22 @@ export const AppShell = (props: AppShellProps) => {
                       onClick={props.onUpdateClick}
                       testId="footer-update-available"
                     />
-                    <span class={styles.footerDivider} aria-hidden="true" />
+                    <Show when={props.isCentralServer}>
+                      <span class={styles.footerDivider} aria-hidden="true" />
+                    </Show>
                   </Show>
-                  {/* Central-server marker: only on a central server (its
-                    divider goes with it, so nothing dangles on a remote site).
+                  {/* Central-server marker: only on a central server.
                     Immediately before the sync cell — both describe the SITE
                     rather than the session, and which role this server plays is
-                    the first thing that qualifies what its sync line means. */}
+                    the first thing that qualifies what its sync line means. No
+                    divider after it: the sync cell's own ground is the edge
+                    (issue #519). */}
                   <Show when={props.isCentralServer}>
                     <FooterCell
                       icon={CentralIcon}
                       label={t('label.central-server')}
                       testId="footer-central-server"
                     />
-                    <span class={styles.footerDivider} aria-hidden="true" />
                   </Show>
                   {/* Sync status, pinned last (issue #9229): the bar's
                     inline-end is where a standing system signal belongs, and
