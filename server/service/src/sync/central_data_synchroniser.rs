@@ -131,7 +131,7 @@ mod test {
     use super::*;
     use crate::sync::{
         api::{
-            test_helpers::{ScriptedResponse, ScriptedServer},
+            test_helpers::{set_central_server_site_id, ScriptedResponse, ScriptedServer},
             SyncApiV5,
         },
         sync_status::logger::SyncLogger,
@@ -175,6 +175,7 @@ mod test {
         let synchroniser = CentralDataSynchroniser {
             sync_api_v5: SyncApiV5::new_test(server.url(), "", "", "site_id"),
         };
+        set_central_server_site_id(connection);
         let mut logger = SyncLogger::start(connection).unwrap();
         synchroniser.pull(connection, 100, &mut logger).await
     }

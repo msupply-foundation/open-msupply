@@ -300,7 +300,7 @@ fn build_v6_push_filter(
 mod tests {
     use super::*;
     use crate::sync::api::{
-        test_helpers::{ScriptedResponse, ScriptedServer},
+        test_helpers::{set_central_server_site_id, ScriptedResponse, ScriptedServer},
         SyncApiV5,
     };
     use repository::{
@@ -430,6 +430,7 @@ mod tests {
         .await;
 
         let server = ScriptedServer::start(vec![truncated(), last_batch("record_from_retry")]);
+        set_central_server_site_id(&connection);
         let mut logger = SyncLogger::start(&connection).unwrap();
         let result = synchroniser(server.url())
             .pull(&connection, 100, true, &mut logger)
@@ -455,6 +456,7 @@ mod tests {
         // closed and fail to connect instead.
         let server =
             ScriptedServer::start(vec![truncated(), truncated(), truncated(), truncated()]);
+        set_central_server_site_id(&connection);
         let mut logger = SyncLogger::start(&connection).unwrap();
         let result = synchroniser(server.url())
             .pull(&connection, 100, true, &mut logger)

@@ -682,7 +682,7 @@ mod test {
     #[actix_rt::test]
     async fn test_pull_retries_dropped_response_body() {
         use crate::sync::{
-            api::test_helpers::{ScriptedResponse, ScriptedServer},
+            api::test_helpers::{set_central_server_site_id, ScriptedResponse, ScriptedServer},
             sync_status::logger::SyncLogger,
         };
         use repository::{mock::MockDataInserts, test_db};
@@ -720,6 +720,7 @@ mod test {
             ScriptedResponse::Complete(r#"{ "queueLength": 0, "data": [] }"#.to_string()),
         ]);
 
+        set_central_server_site_id(&connection);
         let mut logger = SyncLogger::start(&connection).unwrap();
         let result = synchroniser(server.url())
             .pull(&connection, 100, &mut logger)

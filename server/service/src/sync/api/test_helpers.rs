@@ -1,8 +1,16 @@
+use repository::{KeyType, KeyValueStoreRepository, StorageConnection};
 use std::{
     io::{Read, Write},
     net::TcpListener,
     thread,
 };
+
+/// Pulls stamp buffered rows with the central server's site id, and refuse to run without it.
+pub(crate) fn set_central_server_site_id(connection: &StorageConnection) {
+    KeyValueStoreRepository::new(connection)
+        .set_i32(KeyType::SettingsSyncCentralServerSiteId, Some(1))
+        .unwrap();
+}
 
 /// One scripted reply, consumed by one incoming connection in order.
 pub(crate) enum ScriptedResponse {
