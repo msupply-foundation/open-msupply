@@ -50,7 +50,11 @@ export const RnrFormStatusFooter: Component<{
 
   return (
     <ContentFooter>
-      <StatusIndicator steps={steps()} current={finalised() ? 1 : 0} />
+      <StatusIndicator
+        recordId={props.node.id}
+        steps={steps()}
+        current={finalised() ? 1 : 0}
+      />
       <ContentFooterMessage message={outcome()} />
       <ContentFooterActions>
         <FinaliseRnrFormAction

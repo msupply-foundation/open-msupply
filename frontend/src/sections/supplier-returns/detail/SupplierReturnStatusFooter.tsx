@@ -77,6 +77,7 @@ export const SupplierReturnStatusFooter: Component<
       </Show>
 
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(offered(), props.node)}
         current={currentStep(STATUS_FLOW, offered(), props.node.status)}
       />

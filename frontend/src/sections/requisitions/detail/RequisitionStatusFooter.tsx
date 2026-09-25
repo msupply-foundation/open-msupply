@@ -195,6 +195,7 @@ export const RequisitionStatusFooter: Component<
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(props.node)}
         current={currentStatusStep(props.node.status)}
       />

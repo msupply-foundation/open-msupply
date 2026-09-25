@@ -108,6 +108,7 @@ export const PrescriptionRequestStatusFooter: Component<
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(props.node)}
         current={statusIndex(status())}
       />

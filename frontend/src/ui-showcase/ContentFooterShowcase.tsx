@@ -145,13 +145,13 @@ export const ContentFooterShowcase = () => {
             <code>&lt;ContentFooterMessage&gt;</code> is where the footer says
             what happened instead — one compact chip, green for a success (the
             save confirmation, clearing itself) and red for a refusal (
-            <code>persistent</code>, staying until the next attempt), in the
-            bar's one flexible slot beside the actions so nothing moves when it
-            lands. As it lands, one green wave travels along the whole bar. It
-            is a polite live region, so the outcome is announced as well as
-            seen. The crumb that just arrived plays its one-shot bloom (reduced
-            motion: the colour change only). Confirm through to Verified, then
-            reset.
+            <code>persistent</code>, staying until the next attempt, and opening
+            its whole text on hover, focus or tap), in the bar's one flexible
+            slot beside the actions so nothing moves when it lands. As it lands,
+            one green wave travels along the whole bar. It is a polite live
+            region, so the outcome is announced as well as seen. The crumb that
+            just arrived plays its one-shot bloom (reduced motion: the colour
+            change only). Confirm through to Verified, then reset.
           </Lead>
           <PageFrame>
             <PageBody />

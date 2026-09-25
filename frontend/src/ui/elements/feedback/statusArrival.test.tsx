@@ -1,4 +1,4 @@
-import { createRoot, createSignal } from 'solid-js';
+import { batch, createRoot, createSignal } from 'solid-js';
 import { describe, expect, it } from 'vitest';
 import { createStatusArrival } from './statusArrival';
 
@@ -62,6 +62,30 @@ describe('createStatusArrival', () => {
     setCurrent(1);
     setCurrent(1);
     expect(arrival.arrived()).toBe(1);
+    dispose();
+  });
+
+  it('treats another record as a fresh open, not a move', () => {
+    // The footer stays mounted while the route swaps records (duplicate a
+    // Verified shipment, then go Back to it from the New copy).
+    const { arrival, setCurrent, setRecord, dispose } = createRoot(dispose => {
+      const [current, setCurrent] = createSignal(0);
+      const [record, setRecord] = createSignal('copy');
+      return {
+        arrival: createStatusArrival(current, record),
+        setCurrent,
+        setRecord,
+        dispose,
+      };
+    });
+    batch(() => {
+      setRecord('original');
+      setCurrent(3);
+    });
+    expect(arrival.arrived()).toBeUndefined();
+    // A real move on the record now showing still plays.
+    setCurrent(4);
+    expect(arrival.arrived()).toBe(4);
     dispose();
   });
 

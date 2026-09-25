@@ -107,7 +107,11 @@ export const StocktakeStatusFooter: Component<
         </CheckboxButton>
       </Show>
 
-      <StatusIndicator steps={steps()} current={currentIndex()} />
+      <StatusIndicator
+        recordId={props.node.id}
+        steps={steps()}
+        current={currentIndex()}
+      />
 
       {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
           so a crowded bar wraps it whole rather than crushing it). Spread of

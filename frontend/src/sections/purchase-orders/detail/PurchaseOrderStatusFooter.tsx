@@ -127,6 +127,7 @@ export const PurchaseOrderStatusFooter: Component<
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={steps()}
         current={currentStep(status(), props.authorisationRequired)}
       />
