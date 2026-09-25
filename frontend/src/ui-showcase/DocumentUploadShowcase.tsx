@@ -62,8 +62,61 @@ export const documentUploadMetadata: PageMetadata = {
       title: 'Empty state',
       searchTerms: ['none', 'placeholder'],
     },
+    {
+      id: 'document-upload-versioned',
+      title: 'Versioned',
+      searchTerms: ['version', 'created by', 'modified', 'history'],
+    },
   ],
 };
+
+// A versioned list (the purchase order Documents tab): one row per file name,
+// the latest upload carrying the group's facts and its earlier versions.
+const VERSIONED_DOCUMENTS: DocumentFile[] = [
+  {
+    id: 'po-3',
+    fileName: 'Official-purchase-order.pdf',
+    createdBy: 'alice',
+    createdDatetime: '2026-06-10',
+    modifiedBy: 'carol',
+    modifiedDatetime: '2026-06-24',
+    // Version 3 was removed: the numbers the others carry do not close up.
+    version: 4,
+    totalBytes: 620 * 1024,
+    url: '#',
+    previousVersions: [
+      {
+        id: 'po-2',
+        fileName: 'Official-purchase-order.pdf',
+        createdBy: 'bob',
+        createdDatetime: '2026-06-17',
+        version: 2,
+        totalBytes: 610 * 1024,
+        url: '#',
+      },
+      {
+        id: 'po-1',
+        fileName: 'Official-purchase-order.pdf',
+        createdBy: 'alice',
+        createdDatetime: '2026-06-10',
+        version: 1,
+        totalBytes: 590 * 1024,
+        url: '#',
+      },
+    ],
+  },
+  {
+    id: 'quote-1',
+    fileName: 'Supplier-quote.xlsx',
+    createdBy: 'carol',
+    createdDatetime: '2026-06-12',
+    modifiedBy: 'carol',
+    modifiedDatetime: '2026-06-12',
+    version: 1,
+    totalBytes: 88 * 1024,
+    url: '#',
+  },
+];
 
 export const DocumentUploadShowcase = () => {
   const [documents, setDocuments] = createSignal<DocumentFile[]>([
@@ -130,6 +183,30 @@ export const DocumentUploadShowcase = () => {
           <Lead>No documents yet — the zone invites the first upload.</Lead>
           <div class={styles.frame}>
             <DocumentUploadPanel documents={[]} onUpload={() => {}} />
+          </div>
+        </DashboardCard>
+
+        <DashboardCard
+          id="document-upload-versioned"
+          title="Versioned — one row per document, earlier versions beneath"
+        >
+          <Lead>
+            <code>versioned</code> swaps the upload date for Created by ·
+            Created · Modified by · Modified · Version. The caller groups
+            same-named uploads (a record's documents module knows what makes two
+            uploads one document — <code>groupDocumentVersions</code> in{' '}
+            <code>domain/syncFiles</code>); the panel presents the latest and
+            unfolds the rest from the chevron beside the version number. Each
+            earlier version opens and removes on its own. Numbers are the
+            server's and are never reissued — this document lost its version 3,
+            so it reads 4, 2, 1.
+          </Lead>
+          <div class={styles.frame}>
+            <DocumentUploadPanel
+              documents={VERSIONED_DOCUMENTS}
+              versioned
+              onDelete={() => {}}
+            />
           </div>
         </DashboardCard>
       </Stack>

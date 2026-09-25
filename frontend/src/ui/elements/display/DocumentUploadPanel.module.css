@@ -22,6 +22,15 @@
   padding: 1rem;
 }
 
+/* A versioned list needs more room than the plain one: its fixed tracks alone
+   claim ~43rem, and the 48rem cap left the list 46rem — under the 52rem at
+   which it stacks, so the column layout below could never apply and the
+   stacked line was the ONLY layout a versioned list ever had. Sized so the
+   list clears that threshold with a usable name column. */
+.panel[data-versioned] {
+  max-width: 58rem;
+}
+
 /* Section heading above the upload zone / file list ("Upload documents",
    "Uploaded documents"). Type style comes from <Text variant="heading">; the
    panel owns only the spacing below it and its colour. */
@@ -41,12 +50,30 @@
   flex-direction: column;
 }
 
+/* Versioned list: file name, then who first attached it and when, who last
+   changed it and when, its version (with the unfold beside it), its size.
+   The fixed tracks claim more of the width, so the name is the only flexible
+   one — as in the plain list, and its own narrow fallback below stacks the
+   metadata under it once the room runs out. */
+.list[data-versioned] {
+  --doc-grid: 1.75rem minmax(0, 1fr) 6.5rem 5.5rem 6.5rem 5.5rem 4.5rem 4.5rem
+    2rem;
+}
+
 .headerRow,
-.row {
+.row,
+.versionRow {
   display: grid;
   grid-template-columns: var(--doc-grid);
   align-items: center;
   gap: 0.75rem;
+}
+
+/* The versioned metadata cells are grouped in the markup (so the narrow
+   layout can flow them as one line) but lay out as the row's own grid cells
+   at full width. */
+.meta {
+  display: contents;
 }
 
 /* The open-failure alert sits between the heading and the header row; it
@@ -62,7 +89,8 @@
   font-weight: 600;
 }
 
-.rows {
+.rows,
+.versionRows {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -70,6 +98,46 @@
 
 .row {
   padding: 0.75rem 0;
+}
+
+/* An unfolded document's earlier versions, beneath its row: a hairline sets
+   them off from the row above, and a quieter tone from the current version. */
+.versionRows {
+  border-top: 1px solid var(--color-border-value);
+}
+
+.versionRow {
+  padding: 0.5rem 0;
+  color: var(--text-secondary);
+}
+
+.versionRow + .versionRow {
+  border-top: 1px solid var(--color-border-value);
+}
+
+/* Versioned lists only: a document may carry an unfolded block of versions
+   beneath it, so each document needs its own edge. The plain list keeps its
+   uninterrupted rows. */
+.list[data-versioned] .item + .item {
+  border-top: 1px solid var(--color-border-value);
+}
+
+/* The version number with its unfold: the figure first, the chevron beside
+   it, pointing at the state the unfold will move to (the accordion and
+   DisclosureToggle convention — rotation, no RTL mirroring). */
+.version {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-secondary);
+}
+
+.chevron {
+  transition: transform var(--motion-base) ease;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
 }
 
 /*
@@ -82,7 +150,8 @@
  * the document cannot be opened at all (#692, found on a tablet in portrait
  * where this panel gets ~22rem). The header row goes with it — column headings
  * describe a layout that is no longer there, and at zero width they spill over
- * each other.
+ * each other. The versioned list, with more fixed tracks, stacks at its own
+ * wider threshold below.
  */
 @container (max-width: 30rem) {
   .headerRow {
@@ -121,6 +190,66 @@
   .rowAction {
     grid-row: 1 / span 2;
     grid-column: 4;
+  }
+}
+
+/*
+ * The versioned list stacks sooner. Its fixed tracks — icon, two users, two
+ * dates, version, size, action, and the eight gaps — claim 43.25rem before
+ * the name gets anything, so the plain list's 30rem threshold would leave the
+ * name at zero width across a 30–43.25rem column (the #692 failure again).
+ * 52rem keeps the name at least ~8.75rem wide before the grouped metadata
+ * drops under it as one wrapping line — seven cells in seven columns would
+ * leave the name nothing.
+ */
+@container (max-width: 52rem) {
+  .list[data-versioned] .headerRow {
+    display: none;
+  }
+
+  .list[data-versioned] .row,
+  .list[data-versioned] .versionRow {
+    grid-template-columns: 1.75rem minmax(0, 1fr) 2rem;
+    align-items: start;
+    row-gap: 0.25rem;
+  }
+
+  .list[data-versioned] .fileType {
+    grid-row: 1 / span 2;
+  }
+
+  .list[data-versioned] .name,
+  .list[data-versioned] .nameLink {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .list[data-versioned] .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    grid-row: 2;
+    grid-column: 2;
+  }
+
+  /* A version row's blank Modified cells hold a grid column open at full
+     width; in the flowing line they would only leave a double gap. */
+  .list[data-versioned] .meta > :empty {
+    display: none;
+  }
+
+  /* No column headings here, so each cell names itself: two users, two dates
+     and a bare version number read as nothing without one. From the
+     attribute, so the copy stays translated (set only where the cell has a
+     value, so an unrecorded uploader shows neither label nor value). */
+  .list[data-versioned] .meta > [data-label]::before {
+    content: attr(data-label) ": ";
+  }
+
+  .list[data-versioned] .rowAction {
+    grid-row: 1 / span 2;
+    grid-column: 3;
   }
 }
 
@@ -175,8 +304,18 @@
 }
 
 .date,
-.size {
+.size,
+.user {
   color: var(--text-secondary);
+}
+
+/* A user name: truncated like the file name, so a long account name cannot
+   push the dates beside it out of their tracks. */
+.user {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .rowAction {
