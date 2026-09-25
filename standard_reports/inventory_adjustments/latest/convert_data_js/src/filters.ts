@@ -12,13 +12,12 @@ export const filterByItemCodeOrName = (
   );
 };
 
+// Membership is resolved from the item ids the query fetched for the chosen
+// master list, rather than from each line's own master lists - see query.graphql
 export const filterByMasterListId = (
   line: AdjustmentLineNode,
-  masterListId: string
-): boolean =>
-  (line.item?.masterLists ?? []).some(
-    (masterList: { id: string }) => masterList.id === masterListId
-  );
+  masterListItemIds: Set<string>
+): boolean => masterListItemIds.has(line.item?.id);
 
 export const filterByLocationId = (
   line: AdjustmentLineNode,
