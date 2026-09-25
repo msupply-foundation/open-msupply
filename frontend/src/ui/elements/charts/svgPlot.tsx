@@ -7,6 +7,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { formatNumber } from '../../../intl/formatNumber';
+import { rootFontSizePx } from '../../utils/rem';
 import styles from './plotChart.module.css';
 
 // Axis tick labels: grouped, ≤ 2 dp — never the raw float (niceTicks' step
@@ -28,6 +29,26 @@ export type PlotScales = {
 
 const PAD = { top: 12, right: 12, bottom: 26, left: 34 };
 const BAND_PADDING = 0.2; // gap between bars, as a fraction of the band step
+const AXIS_FONT_REM = 0.75; // .axisLabel's font-size
+const LABEL_GAP = 6; // between a y label's end and the plot
+
+// Characters about half a digit wide: spaces and the decimal / group marks.
+const NARROW_CHAR = /[\s.,'’٫٬]/u;
+
+/** The left gutter (px) the y-axis labels need: wide enough for the widest
+ *  label, never less than the default. Without it a long label (4,000,000)
+ *  draws outside the SVG — over the neighbouring chart when two sit side by
+ *  side. Estimated from the text (a digit is about 0.62em) rather than
+ *  measured, so there's no measure-then-redraw pass. */
+export const yLabelGutter = (labels: string[], fontPx: number): number => {
+  const widestEm = Math.max(
+    0,
+    ...labels.map(label =>
+      [...label].reduce((em, ch) => em + (NARROW_CHAR.test(ch) ? 0.3 : 0.62), 0)
+    )
+  );
+  return Math.max(PAD.left, Math.ceil(widestEm * fontPx) + LABEL_GAP + 2);
+};
 
 /** Build an SVG path `d` from [x, y] points; a non-finite point breaks the
  *  line into a new segment. */
@@ -80,18 +101,21 @@ export const SvgPlot = (props: {
   const bottom = () => h() - PAD.bottom;
 
   const axis = createMemo(() => niceTicks(props.maxValue, 5));
+  const padLeft = createMemo(() =>
+    yLabelGutter(axis().ticks.map(axisLabel), AXIS_FONT_REM * rootFontSizePx())
+  );
 
   const scales = createMemo<PlotScales>(() => {
-    const stepPx = (right() - PAD.left) / Math.max(props.count, 1);
+    const stepPx = (right() - padLeft()) / Math.max(props.count, 1);
     const bandWidth = stepPx * (1 - BAND_PADDING);
     const inset = (stepPx - bandWidth) / 2;
     const top = PAD.top;
     const base = bottom();
     const domainTop = axis().niceMax || 1;
     return {
-      bandLeft: i => PAD.left + i * stepPx + inset,
+      bandLeft: i => padLeft() + i * stepPx + inset,
       bandWidth,
-      bandCenter: i => PAD.left + i * stepPx + inset + bandWidth / 2,
+      bandCenter: i => padLeft() + i * stepPx + inset + bandWidth / 2,
       y: v => base - (v / domainTop) * (base - top),
     };
   });
@@ -126,14 +150,14 @@ export const SvgPlot = (props: {
             <>
               <line
                 class={styles.grid}
-                x1={PAD.left}
+                x1={padLeft()}
                 x2={right()}
                 y1={scales().y(tick)}
                 y2={scales().y(tick)}
               />
               <text
                 class={styles.axisLabel}
-                x={PAD.left - 6}
+                x={padLeft() - LABEL_GAP}
                 y={scales().y(tick)}
                 text-anchor="end"
                 dominant-baseline="middle"
@@ -163,9 +187,9 @@ export const SvgPlot = (props: {
         <defs>
           <clipPath id={clipId}>
             <rect
-              x={PAD.left}
+              x={padLeft()}
               y={0}
-              width={right() - PAD.left}
+              width={right() - padLeft()}
               height={bottom() + 2}
             />
           </clipPath>
