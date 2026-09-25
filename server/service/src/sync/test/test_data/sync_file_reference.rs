@@ -31,6 +31,7 @@ fn sync_file_reference1() -> SyncFileReferenceRow {
             .and_hms_opt(15, 16, 0)
             .unwrap(),
         deleted_datetime: None,
+        version_number: 1,
         ..Default::default()
     }
 }

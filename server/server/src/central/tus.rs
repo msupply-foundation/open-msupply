@@ -419,6 +419,9 @@ fn create_stopgap_row(
         direction: SyncFileDirection::Upload,
         created_datetime: Utc::now().naive_utc(),
         deleted_datetime: None,
+        // overwritten by the origin site's row on sync
+        user_id: None,
+        version_number: 1,
     };
     SyncFileReferenceRowRepository::new(&ctx.connection)
         .upsert_without_changelog(&row)

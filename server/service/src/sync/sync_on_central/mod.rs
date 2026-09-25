@@ -609,6 +609,8 @@ pub async fn upload_file(
                     direction: SyncFileDirection::Upload,
                     created_datetime: Utc::now().naive_utc(),
                     deleted_datetime: None,
+                    user_id: None,
+                    version_number: 1,
                 },
                 _ => {
                     return Err(Error::SyncFileNotFound(file_id.clone()));
