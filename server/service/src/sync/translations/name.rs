@@ -9,9 +9,11 @@ use util::sync_serde::{
 };
 
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 
 use crate::sync::{
-    central_mapping_custom_fields::keys, translations::currency::CurrencyTranslation,
+    central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes},
+    translations::currency::CurrencyTranslation,
     CentralServerConfig,
 };
 
@@ -31,19 +33,18 @@ use super::{
 /// refreshes them — last-writer-wins, identical to the custom fields. Push-back
 /// to OG is live for rows central relays (rows authored on this server or on a
 /// V7 site, see `skip_name_relay_to_legacy`).
-const LEGACY_NAME_OWNED_KEYS: &[&str] = &[
-    keys::NAME_CUSTOM_1,
-    keys::NAME_CUSTOM_2,
-    keys::NAME_CUSTOM_3,
-    // `custom_field.key` is globally unique, so the name category dimensions are
-    // prefixed `name_category*` (item already owns `category2`/`category3`).
-    keys::NAME_CATEGORY_1,
-    keys::NAME_CATEGORY_2,
-    keys::NAME_CATEGORY_3,
-    keys::NAME_CATEGORY_4,
-    keys::NAME_CATEGORY_5,
-    keys::NAME_CATEGORY_6,
-];
+/// Derived from the mapping registry rather than retyped, so there is one list of
+/// OG-owned keys (`central_mapping_custom_fields`) instead of a copy here to drift
+/// out of step with it. Every name mapping definition is seeded onto all three name
+/// scopes, so their union *is* the name importer's owned set.
+///
+/// (`custom_field.key` is globally unique, so the name category dimensions are
+/// prefixed `name_category*` — item already owns `category2`/`category3`.)
+///
+/// Computed once: the registry is rebuilt on each call and the import reads this
+/// per name row.
+static LEGACY_NAME_OWNED_KEYS: LazyLock<Vec<&'static str>> =
+    LazyLock::new(|| legacy_owned_keys_for_scopes(&["customer", "supplier", "patient"]));
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -339,7 +340,7 @@ impl SyncTranslation for NameTranslation {
             merge_legacy_custom_fields(
                 existing_custom_fields,
                 build_legacy_custom_fields(&legacy),
-                LEGACY_NAME_OWNED_KEYS,
+                &LEGACY_NAME_OWNED_KEYS,
             )
         } else {
             existing_custom_fields
@@ -732,7 +733,11 @@ mod tests {
         row.category2_id = Some("OG_VALUE".to_string());
         let existing = Some(json!({ "name_category_2": "OMS_EDIT", "patient_note": "keep" }));
         assert_eq!(
-            merge_legacy_custom_fields(existing, build_legacy_custom_fields(&row), LEGACY_NAME_OWNED_KEYS),
+            merge_legacy_custom_fields(
+                existing,
+                build_legacy_custom_fields(&row),
+                &LEGACY_NAME_OWNED_KEYS
+            ),
             Some(json!({ "name_category_2": "OG_VALUE", "patient_note": "keep" }))
         );
     }
@@ -767,7 +772,7 @@ mod tests {
                 merge_legacy_custom_fields(
                     existing,
                     build_legacy_custom_fields(&row),
-                    LEGACY_NAME_OWNED_KEYS,
+                    &LEGACY_NAME_OWNED_KEYS,
                 )
             } else {
                 existing
