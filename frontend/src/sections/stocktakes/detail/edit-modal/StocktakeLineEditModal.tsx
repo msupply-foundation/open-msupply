@@ -54,6 +54,7 @@ import { dosesCounted } from '../lines/doses';
 import {
   awaitingReason,
   defaultedPackSize,
+  differenceSize,
   lineDifference,
   packSizeEditable,
   type ReasonRequirement,
@@ -529,10 +530,14 @@ const StocktakeLineEditContent = (
     (awaitingReason(line, reasonRequirement()) ||
       lineErrors().get(line.id) === 'AdjustmentReasonNotProvided');
 
-  // A pack count for display — counts take up to 2 dp, and the difference
-  // arithmetic can leave float noise past that (2.3 − 5).
-  const formatPacks = (packs: number): string =>
-    formatNumber(packs, { maximumFractionDigits: 2 });
+  // A difference's size for display, at the 2 dp a count is entered to — or
+  // "<0.01" for one finer than that, never "0" (see differenceSize).
+  const formatDifference = (difference: number): string => {
+    const { packs, belowPrecision } = differenceSize(difference);
+    return belowPrecision
+      ? `<${formatNumber(0.01)}`
+      : formatNumber(packs, { maximumFractionDigits: 2 });
+  };
 
   // The line's difference in words beneath its counted packs
   // (OMS-REG-INV-03.85) — "3 short" / "2 over", nothing when level or
@@ -543,7 +548,7 @@ const StocktakeLineEditContent = (
     if (hideSnapshotStock() || !line.countThisLine || !difference)
       return undefined;
     return t(difference < 0 ? 'messages.packs-short' : 'messages.packs-over', {
-      count: formatPacks(Math.abs(difference)),
+      count: formatDifference(difference),
     });
   };
 
@@ -552,13 +557,14 @@ const StocktakeLineEditContent = (
   const reasonWarning = (line: DraftLine): string | undefined => {
     if (!lineAwaitingReason(line)) return undefined;
     const difference = lineDifference(line) ?? 0;
-    const packs = Math.abs(difference);
+    // Plural form chosen on the size as shown, so a 1.0000001 reads "the
+    // missing pack", not "the 1 missing packs".
     return tPlural(
       difference < 0
         ? 'messages.reason-for-missing-packs'
         : 'messages.reason-for-extra-packs',
-      packs,
-      { count: formatPacks(packs) }
+      differenceSize(difference).packs,
+      { count: formatDifference(difference) }
     );
   };
 

@@ -29,6 +29,20 @@ export const lineDifference = (line: CountLine): number | null => {
   return counted - (line.snapshotNumberOfPacks ?? 0);
 };
 
+// A difference's size as the line editor states it (OMS-REG-INV-03.85):
+// rounded to the 2 dp a count is entered to, since the arithmetic can leave
+// float noise past that (2.3 − 5). A nonzero difference can still be finer
+// than 0.01 — a snapshot in part-packs that a 2-dp count can't match (one unit
+// dispensed from a pack of 3 leaves a third), or noise in the stock totals —
+// and the server still asks a reason for it, so it must not round away to
+// "0 over": `belowPrecision` marks it, to read "<0.01".
+export const differenceSize = (
+  difference: number
+): { packs: number; belowPrecision: boolean } => {
+  const packs = Math.round(Math.abs(difference) * 100) / 100;
+  return { packs, belowPrecision: packs === 0 && difference !== 0 };
+};
+
 // Which adjustment directions demand a reason on this stocktake right now — the
 // server's "reason required" condition per direction (active reasons of that
 // direction exist), already folded with the initial / blind exemptions, which
