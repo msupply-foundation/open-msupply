@@ -34,6 +34,7 @@ import {
   type CardGroup,
 } from '@/ui/elements/table/DataTable';
 import { getNumberCell } from '@/ui/elements/table/tableHelpers';
+import { scrollCellIntoView } from '@/ui/elements/table/scrollCellIntoView';
 import { createTableConfig } from '@/api/createTableConfig';
 import {
   LocationVolumeSelect,
@@ -967,10 +968,12 @@ const StocktakeLineEditContent = (
       if (firstMissingReason) {
         // Centred first, rather than left to the focus handle's nearest-edge
         // scroll: a row landing on the bottom edge would hide the warning and
-        // the difference beneath its controls — the words that say why.
-        reasonFields
-          .get(firstMissingReason.id)
-          ?.scrollIntoView({ block: 'center', inline: 'nearest' });
+        // the difference beneath its controls — the words that say why. By
+        // its CELL in table view, so a table scrolled past Reason brings the
+        // whole cell out from under the pinned Batch, header and warning too.
+        const field = reasonFields.get(firstMissingReason.id);
+        if (field)
+          scrollCellIntoView(field, { block: 'center', inline: 'nearest' });
         reasonFields.focus(firstMissingReason.id);
       }
       return false; // keep the modal open on the failed lines
