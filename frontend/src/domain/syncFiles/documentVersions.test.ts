@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupDocumentVersions, versionNumberOf } from './documentVersions';
+import { groupDocumentVersions } from './documentVersions';
 
 // Anchors: spec/purchase-orders/cases/OMS-FUN-PO-04.
 //   .28 — a file uploaded under a listed document's name is a new version of
@@ -32,13 +32,11 @@ describe('groupDocumentVersions', () => {
     expect(group).toMatchObject({
       latest: only,
       previous: [],
-      versionCount: 1,
       createdDatetime: '2026-09-01T10:00:00Z',
       modifiedDatetime: '2026-09-01T10:00:00Z',
       createdBy: 'alice',
       modifiedBy: 'alice',
     });
-    expect(versionNumberOf(group!, only)).toBe(1);
   });
 
   it('.28 folds same-named uploads into one document whose latest is the highest version', () => {
@@ -49,7 +47,6 @@ describe('groupDocumentVersions', () => {
     expect(groups).toHaveLength(1);
     const [group] = groups;
     expect(group!.latest).toBe(v3);
-    expect(versionNumberOf(group!, v3)).toBe(3);
     // Modified and Modified by move with the latest upload; Created and
     // Created by stay with the first.
     expect(group!.modifiedDatetime).toBe('2026-09-04T10:00:00Z');
@@ -64,9 +61,6 @@ describe('groupDocumentVersions', () => {
     const v3 = doc('c', 'po.pdf', 3, '2026-09-03T10:00:00Z');
     const [group] = groupDocumentVersions([v1, v2, v3]);
     expect(group!.previous).toEqual([v2, v1]);
-    expect(group!.previous.map(v => versionNumberOf(group!, v))).toEqual([
-      2, 1,
-    ]);
   });
 
   it('.30 keeps the numbers of the remaining versions when one in the middle is removed', () => {
@@ -75,12 +69,10 @@ describe('groupDocumentVersions', () => {
     const v4 = doc('d', 'po.pdf', 4, '2026-09-04T10:00:00Z');
     // Version 3 is gone: 1, 2, 4 stay 1, 2, 4 — 4 does not become 3.
     const [group] = groupDocumentVersions([v1, v2, v4]);
+    // The row reads each version's OWN number, never its position, so the
+    // gap survives into the list.
     expect(group!.latest).toBe(v4);
-    expect(versionNumberOf(group!, v4)).toBe(4);
-    expect(group!.previous.map(v => versionNumberOf(group!, v))).toEqual([
-      2, 1,
-    ]);
-    expect(group!.versionCount).toBe(3);
+    expect(group!.previous.map(v => v.versionNumber)).toEqual([2, 1]);
   });
 
   it('.30 makes the highest remaining version current once the latest is gone', () => {
@@ -90,7 +82,6 @@ describe('groupDocumentVersions', () => {
     expect(before!.latest).toBe(v2);
     const [after] = groupDocumentVersions([v1]);
     expect(after!.latest).toBe(v1);
-    expect(versionNumberOf(after!, v1)).toBe(1);
     expect(after!.modifiedDatetime).toBe('2026-09-01T10:00:00Z');
   });
 
@@ -122,9 +113,11 @@ describe('groupDocumentVersions', () => {
     expect(group!.createdBy).toBeUndefined();
   });
 
-  it('falls back to upload order for files carrying no version number', () => {
+  it('orders files carrying no version number by upload moment, then id', () => {
     // A fragment that does not read the number (another vertical's list)
-    // still groups, numbering by position: no moment sorts first, ids tie.
+    // still groups: no moment sorts first, and the id breaks a tie.
+    // No number is invented for them — a position would contradict the
+    // server's numbering.
     const undated = { id: 'z', fileName: 'po.pdf', createdDatetime: null };
     const dated = {
       id: 'a',
@@ -139,8 +132,5 @@ describe('groupDocumentVersions', () => {
     const [group] = groupDocumentVersions([sameMoment, undated, dated]);
     expect(group!.latest).toBe(sameMoment);
     expect(group!.previous).toEqual([dated, undated]);
-    expect(versionNumberOf(group!, sameMoment)).toBe(3);
-    expect(versionNumberOf(group!, dated)).toBe(2);
-    expect(versionNumberOf(group!, undated)).toBe(1);
   });
 });

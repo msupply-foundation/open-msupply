@@ -9,7 +9,9 @@ export interface VersionedDocument {
   id: string;
   fileName: string;
   createdDatetime?: string | null;
-  /** The server-assigned version number; a record's fragment reads it. */
+  /** The server-assigned version number, where the record's fragment reads
+   * it. A file carrying none is ordered by its upload moment and shows no
+   * number — never a position, which would contradict the server's. */
   versionNumber?: number | null;
   user?: { username: string } | null;
 }
@@ -19,8 +21,6 @@ export interface DocumentVersionGroup<T extends VersionedDocument> {
   latest: T;
   /** Every earlier version, newest first. */
   previous: T[];
-  /** How many versions the record still holds. */
-  versionCount: number;
   /** When the document was first attached: the earliest version's upload. */
   createdDatetime: T['createdDatetime'];
   /** When it last changed: the latest version's upload. */
@@ -74,28 +74,10 @@ export const groupDocumentVersions = <T extends VersionedDocument>(
     return {
       latest,
       previous: ordered.slice(0, -1).reverse(),
-      versionCount: ordered.length,
       createdDatetime: first.createdDatetime,
       modifiedDatetime: latest.createdDatetime,
       createdBy: first.user?.username,
       modifiedBy: latest.user?.username,
     };
   });
-};
-
-/**
- * The version number shown for one file of a group: the server's, which
- * survives the removal of an earlier version (1, 2, 4 stays 1, 2, 4). A file
- * carrying none reads by its position in upload order.
- */
-export const versionNumberOf = <T extends VersionedDocument>(
-  group: DocumentVersionGroup<T>,
-  document: T
-): number => {
-  if (document.versionNumber != null) return document.versionNumber;
-  if (document.id === group.latest.id) return group.versionCount;
-  const index = group.previous.findIndex(
-    previous => previous.id === document.id
-  );
-  return index < 0 ? 0 : group.versionCount - 1 - index;
 };

@@ -7,7 +7,7 @@ import {
 import { Alert } from '@/ui/elements/feedback/Alert';
 import type { FileRejection } from '@/ui/elements/inputs/uploadFiles';
 import { deleteSyncFile, syncFileUrl, uploadSyncFiles } from './syncFiles';
-import { groupDocumentVersions, versionNumberOf } from './documentVersions';
+import { groupDocumentVersions } from './documentVersions';
 import {
   ACCEPT,
   batchTooLarge,
@@ -109,11 +109,11 @@ export const RecordDocumentsTab: Component<RecordDocumentsTabProps> = props => {
           createdDatetime: group.createdDatetime,
           modifiedBy: group.modifiedBy,
           modifiedDatetime: group.modifiedDatetime,
-          version: versionNumberOf(group, group.latest),
+          version: group.latest.versionNumber ?? undefined,
           previousVersions: group.previous.map(previous => ({
             ...toFile(previous),
             createdBy: previous.user?.username,
-            version: versionNumberOf(group, previous),
+            version: previous.versionNumber ?? undefined,
           })),
         }))
       : props.documents.map(toFile);

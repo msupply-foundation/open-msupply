@@ -21,7 +21,6 @@ export {
 } from './RecordDocumentsTab';
 export {
   groupDocumentVersions,
-  versionNumberOf,
   type DocumentVersionGroup,
   type VersionedDocument,
 } from './documentVersions';
