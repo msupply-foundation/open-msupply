@@ -828,6 +828,14 @@ export function DataTable<T, K extends string, G extends string = never>(
   const [pinnedOffsets, setPinnedOffsets] = createSignal<
     Record<string, number>
   >({});
+  // How wide the frozen blocks are at each physical edge, measured in the same
+  // walk. The scroll box reserves them as scroll padding, so a control
+  // scrolled or focused into view — a Tab into the next cell, a save jumping
+  // to a field — stops clear of the pinned columns rather than under them: the
+  // browser's own scroll-into-view knows nothing of sticky cells.
+  // A caller that wants a whole cell in view, header and all, scrolls the cell
+  // rather than its control (scrollCellIntoView).
+  const [frozenWidths, setFrozenWidths] = createSignal({ left: 0, right: 0 });
   let scrollBox: HTMLDivElement | undefined;
 
   // Walk the header row from each end, accumulating RENDERED widths for as long
@@ -863,6 +871,12 @@ export function DataTable<T, K extends string, G extends string = never>(
         keys.every(id => current[id] === next[id]);
       return same ? current : next;
     });
+    // Each walk ends on its frozen block's full width.
+    setFrozenWidths(current =>
+      current.left === fromStart && current.right === fromEnd
+        ? current
+        : { left: fromStart, right: fromEnd }
+    );
   };
 
   // A header label clamps to two lines (.thText), and a label that needs more
@@ -1500,6 +1514,17 @@ export function DataTable<T, K extends string, G extends string = never>(
           data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
           data-hidden-left={hiddenLeft() ? '' : undefined}
           data-hidden-right={hiddenRight() ? '' : undefined}
+          // The frozen blocks' widths as scroll padding (frozenWidths).
+          // Physical, like the pinning (the leading column pins physical-left
+          // in either direction). Table view only: cards pin nothing.
+          style={
+            viewMode() === 'table'
+              ? {
+                  'scroll-padding-left': `${frozenWidths().left}px`,
+                  'scroll-padding-right': `${frozenWidths().right}px`,
+                }
+              : undefined
+          }
           onScroll={syncHiddenEdges}
         >
           {/* One <table> for BOTH views — card view is now rows in the SAME
