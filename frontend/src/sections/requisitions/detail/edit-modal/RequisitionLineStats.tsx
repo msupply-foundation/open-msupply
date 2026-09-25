@@ -32,6 +32,11 @@ const percent = (part: number, total: number): number =>
 
 // The month-axis text shows only when the axis is wide enough for it.
 const MIN_AXIS_WIDTH_FOR_TEXT = 5;
+// A value bar shows its number only when wider than 5% of the target, and its
+// label only when wider than 10%, so a narrow bar never stacks its label a
+// letter per line; the bar's tooltip carries both.
+const MIN_BAR_WIDTH_FOR_VALUE = 5;
+const MIN_BAR_WIDTH_FOR_LABEL = 10;
 
 type Segment = {
   label: string;
@@ -269,9 +274,15 @@ export const RequisitionLineStats: Component<{
                 title={`${t('label.stock-on-hand')}: ${legendValue(soh())}`}
               >
                 <div class={`${styles.valueFill} ${styles.stockMainFill}`}>
-                  <span class={styles.valueNum}>{formatNumber(soh())}</span>
+                  <Show when={barFlex(soh()) > MIN_BAR_WIDTH_FOR_VALUE}>
+                    <span class={styles.valueNum}>{formatNumber(soh())}</span>
+                  </Show>
                 </div>
-                <div class={styles.valueLabel}>{t('label.stock-on-hand')}</div>
+                <Show when={barFlex(soh()) > MIN_BAR_WIDTH_FOR_LABEL}>
+                  <div class={styles.valueLabel}>
+                    {t('label.stock-on-hand')}
+                  </div>
+                </Show>
               </div>
               <div class={styles.divider} />
             </Show>
@@ -282,13 +293,17 @@ export const RequisitionLineStats: Component<{
                 title={`${t('label.suggested-order-quantity')}: ${legendValue(suggested())}`}
               >
                 <div class={`${styles.valueFill} ${styles.otherRequestedFill}`}>
-                  <span class={styles.valueNum}>
-                    {formatNumber(suggested())}
-                  </span>
+                  <Show when={barFlex(suggested()) > MIN_BAR_WIDTH_FOR_VALUE}>
+                    <span class={styles.valueNum}>
+                      {formatNumber(suggested())}
+                    </span>
+                  </Show>
                 </div>
-                <div class={styles.valueLabel}>
-                  {t('label.suggested-order-quantity')}
-                </div>
+                <Show when={barFlex(suggested()) > MIN_BAR_WIDTH_FOR_LABEL}>
+                  <div class={styles.valueLabel}>
+                    {t('label.suggested-order-quantity')}
+                  </div>
+                </Show>
               </div>
               <div class={styles.divider} />
             </Show>
