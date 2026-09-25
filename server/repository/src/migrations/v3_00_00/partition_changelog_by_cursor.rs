@@ -175,6 +175,7 @@ mod tests {
                 partition_size,
                 lookahead,
             },
+            starting_database_version: None,
         };
 
         run_partition_and_assert_partitioned(&connection, &config);
