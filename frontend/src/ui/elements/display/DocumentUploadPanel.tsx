@@ -452,9 +452,13 @@ export const DocumentUploadPanel = (
                                     aria-hidden="true"
                                   />
                                 }
+                                // Names its document: several unfolds sit in
+                                // one list, and the count alone tells them apart
+                                // for nobody reading by label.
                                 label={tPlural(
-                                  'label.previous-versions',
-                                  previous().length
+                                  'label.previous-versions-of',
+                                  previous().length,
+                                  { name: document.fileName }
                                 )}
                                 size="small"
                                 aria-expanded={isExpanded()}
