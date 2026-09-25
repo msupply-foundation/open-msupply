@@ -2,6 +2,7 @@ use super::{
     utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
     FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
+use crate::sync::central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
@@ -9,7 +10,6 @@ use crate::sync::translations::{
     purchase_order::PurchaseOrderTranslation, shipping_method::ShippingMethodTranslation,
     store::StoreTranslation, to_legacy_time,
 };
-use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -22,6 +22,7 @@ use repository::{
     UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::uuid::uuid;
 use util::sync_serde::{
@@ -334,17 +335,26 @@ pub struct LegacyTransactRow {
 /// `central_mapping_custom_fields` asserts it (the migration SQL backfill is the
 /// one copy a test can't reach; a future category-bearing type needs a NEW
 /// migration anyway, since shipped ones are frozen).
-pub(crate) const LEGACY_INVOICE_OWNED_KEYS: &[&str] = &[
-    keys::INBOUND_SHIPMENT_CATEGORY,
-    keys::OUTBOUND_SHIPMENT_CATEGORY,
-    keys::PRESCRIPTION_CATEGORY,
-    keys::SUPPLIER_RETURN_CATEGORY,
-    keys::CUSTOMER_RETURN_CATEGORY,
-    // `transact.category2_ID` is only ever written for prescriptions in OG
-    // (dispensary mode, from the "pi2" category pool), so it maps to a single
-    // prescription-scoped key rather than one per type.
-    keys::PRESCRIPTION_CATEGORY_2,
-];
+/// Derived from the mapping registry rather than retyped, so there is one list of
+/// OG-owned keys (`central_mapping_custom_fields`) instead of a copy here to drift
+/// out of step with it. Each invoice type's category definition is seeded onto that
+/// type's own scope, so the union of the five is the invoice importer's owned set —
+/// including `prescription_category_2`, which is seeded onto `prescription`
+/// alongside `prescription_category` (`transact.category2_ID` is only ever written
+/// for prescriptions in OG — dispensary mode, from the "pi2" category pool — so it
+/// maps to a single prescription-scoped key rather than one per type).
+///
+/// Computed once: the registry is filtered on each call and the import reads this
+/// per invoice row.
+pub(crate) static LEGACY_INVOICE_OWNED_KEYS: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
+    legacy_owned_keys_for_scopes(&[
+        "inbound_shipment",
+        "outbound_shipment",
+        "prescription",
+        "supplier_return",
+        "customer_return",
+    ])
+});
 
 /// The `custom_fields` key holding the transaction category for an invoice of
 /// this type — `None` for types without a mapped category custom field (repack,
@@ -586,7 +596,7 @@ impl SyncTranslation for InvoiceTranslation {
                     data.category_ID.as_deref(),
                     data.category2_ID.as_deref(),
                 ),
-                LEGACY_INVOICE_OWNED_KEYS,
+                &LEGACY_INVOICE_OWNED_KEYS,
             )
         } else {
             existing_custom_fields
