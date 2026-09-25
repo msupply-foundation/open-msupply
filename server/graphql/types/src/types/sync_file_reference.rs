@@ -1,8 +1,13 @@
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use graphql_core::loader::UserLoader;
 use graphql_core::simple_generic_errors::NodeError;
+use graphql_core::ContextExt;
 use repository::sync_file_reference::SyncFileReference;
 use service::{usize_to_u32, ListResult};
+
+use super::UserNode;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::db_diesel::sync_file_reference_row::SyncFileStatus")]
@@ -64,6 +69,26 @@ impl SyncFileReferenceNode {
 
     pub async fn status(&self) -> SyncFileReferenceNodeStatus {
         SyncFileReferenceNodeStatus::from(self.row().sync_file_reference_row.status.clone())
+    }
+
+    pub async fn user_id(&self) -> &Option<String> {
+        &self.row().sync_file_reference_row.user_id
+    }
+
+    /// Assigned at upload, never reissued: deleting version 3 of 4 leaves 1, 2, 4.
+    pub async fn version_number(&self) -> i32 {
+        self.row().sync_file_reference_row.version_number
+    }
+
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let Some(user_id) = &self.row().sync_file_reference_row.user_id else {
+            return Ok(None);
+        };
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+        Ok(loader
+            .load_one(user_id.clone())
+            .await?
+            .map(UserNode::from_domain))
     }
 }
 
