@@ -47,14 +47,20 @@ table! {
         error -> Nullable<Text>,
         created_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
+        user_id -> Nullable<Text>,
+        version_number -> Integer,
     }
+}
+
+pub fn first_version() -> i32 {
+    1
 }
 
 // Local/synced split lives in `SyncFileReferenceWire` (below). Anything absent
 // from the wire DTO is local-only by construction; the pull translator merges
 // the wire payload over an existing row to preserve those local fields.
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
 )]
 #[diesel(table_name = sync_file_reference)]
 pub struct SyncFileReferenceRow {
@@ -88,6 +94,37 @@ pub struct SyncFileReferenceRow {
     pub error: Option<String>,
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub user_id: Option<String>,
+    #[serde(default = "first_version")]
+    pub version_number: i32,
+}
+
+// Not derived: a built row is the FIRST version of its name, not version zero,
+// or a row that never sets the field sits below the numbers
+// `next_version_number` goes on to issue.
+impl Default for SyncFileReferenceRow {
+    fn default() -> Self {
+        SyncFileReferenceRow {
+            id: Default::default(),
+            table_name: Default::default(),
+            record_id: Default::default(),
+            file_name: Default::default(),
+            mime_type: Default::default(),
+            uploaded_bytes: Default::default(),
+            downloaded_bytes: Default::default(),
+            total_bytes: Default::default(),
+            retries: Default::default(),
+            retry_at: Default::default(),
+            direction: Default::default(),
+            status: Default::default(),
+            error: Default::default(),
+            created_datetime: Default::default(),
+            deleted_datetime: Default::default(),
+            user_id: Default::default(),
+            version_number: first_version(),
+        }
+    }
 }
 
 /// Subset of `SyncFileReferenceRow` that crosses sync. Anything not listed here
@@ -111,6 +148,10 @@ pub struct SyncFileReferenceWire {
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     pub deleted_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub user_id: Option<String>,
+    #[serde(default = "first_version")]
+    pub version_number: i32,
 }
 
 impl SyncFileReferenceWire {
@@ -126,6 +167,8 @@ impl SyncFileReferenceWire {
             error: row.error.clone(),
             created_datetime: row.created_datetime,
             deleted_datetime: row.deleted_datetime,
+            user_id: row.user_id.clone(),
+            version_number: row.version_number,
         }
     }
 
@@ -142,6 +185,8 @@ impl SyncFileReferenceWire {
             error: self.error,
             created_datetime: self.created_datetime,
             deleted_datetime: self.deleted_datetime,
+            user_id: self.user_id,
+            version_number: self.version_number,
             // Local-only fields preserved from the existing row.
             uploaded_bytes: local.uploaded_bytes,
             downloaded_bytes: local.downloaded_bytes,
@@ -256,6 +301,120 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         Ok(sync_file_reference::table
             .filter(sync_file_reference::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
+    }
+
+    /// Highest version of `name` on the record (deleted included) + 1, so numbers are never reissued.
+    ///
+    /// Not unique by itself: read and claimed in one transaction by the upload
+    /// (`server/static_files.rs`), but a number is only ever the highest THIS
+    /// site has seen, so two sites attaching the same name to the same record
+    /// independently both reach the same number. Nothing rejects a duplicate;
+    /// readers order on the number and break ties elsewhere.
+    pub fn next_version_number(
+        &self,
+        table: &str,
+        record: &str,
+        name: &str,
+    ) -> Result<i32, RepositoryError> {
+        let highest: Option<i32> = sync_file_reference
+            .filter(table_name.eq(table))
+            .filter(record_id.eq(record))
+            .filter(file_name.eq(name))
+            .select(diesel::dsl::max(version_number))
+            .first(self.connection.lock().connection())?;
+        Ok(highest.unwrap_or(0) + 1)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+
+    fn version(file_id: &str, name: &str, number: i32) -> SyncFileReferenceRow {
+        SyncFileReferenceRow {
+            id: file_id.to_string(),
+            table_name: "purchase_order".to_string(),
+            record_id: "po1".to_string(),
+            file_name: name.to_string(),
+            version_number: number,
+            ..Default::default()
+        }
+    }
+
+    #[actix_rt::test]
+    async fn next_version_number_skips_deleted_versions() {
+        let (_, connection, _, _) = setup_all(
+            "sync_file_reference_next_version_number",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+
+        assert_eq!(
+            repo.next_version_number("purchase_order", "po1", "po.pdf"),
+            Ok(1)
+        );
+
+        for (file_id, number) in [("v1", 1), ("v2", 2), ("v3", 3), ("v4", 4)] {
+            repo.upsert_one(&version(file_id, "po.pdf", number))
+                .unwrap();
+        }
+        repo.delete("v3").unwrap();
+
+        // deleted v3 still holds its number
+        assert_eq!(
+            repo.next_version_number("purchase_order", "po1", "po.pdf"),
+            Ok(5)
+        );
+
+        assert_eq!(
+            repo.next_version_number("purchase_order", "po1", "quote.pdf"),
+            Ok(1)
+        );
+        assert_eq!(
+            repo.next_version_number("purchase_order", "po2", "po.pdf"),
+            Ok(1)
+        );
+    }
+
+    // Guards a re-derived `Default`: the support-log uploads take
+    // `..Default::default()` and never name a version.
+    #[actix_rt::test]
+    async fn a_built_row_is_the_first_version_of_its_name() {
+        assert_eq!(
+            SyncFileReferenceRow::default().version_number,
+            first_version()
+        );
+
+        let (_, connection, _, _) = setup_all(
+            "sync_file_reference_default_version_number",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+
+        repo.upsert_one(&SyncFileReferenceRow {
+            id: "process-attached".to_string(),
+            table_name: "purchase_order".to_string(),
+            record_id: "po1".to_string(),
+            file_name: "log.txt".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+
+        // Version 1, and the next upload of the name follows it
+        assert_eq!(
+            repo.find_one_by_id("process-attached")
+                .unwrap()
+                .unwrap()
+                .version_number,
+            1
+        );
+        assert_eq!(
+            repo.next_version_number("purchase_order", "po1", "log.txt"),
+            Ok(2)
+        );
     }
 }
 
