@@ -1,9 +1,13 @@
-import { For, Show } from 'solid-js';
+import { createSignal, For, onCleanup, Show } from 'solid-js';
 import { t } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
+import { remToPx } from '../../utils/rem';
 import styles from './TargetQuantityBreakdown.module.css';
 
 const round = (n: number) => Math.round(n);
+// Narrower than this, a month cell can't hold its month count or a marker
+// label without breaking words, so the axis shows its numbers alone.
+const MIN_CELL_REM_FOR_TEXT = 3.75;
 // Displayed values to 2 decimal places (the layout maths below keep round()).
 const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
 
@@ -72,24 +76,45 @@ export const TargetQuantityBreakdown = (props: {
     soh() + suggested() < target()
       ? `${round((100 * (soh() + suggested())) / target())}%`
       : '100%';
-  const showText = () => targetWidth() > 5;
   const months = () =>
     Array.from({ length: props.targetMonths }, (_, i) => i + 1);
+  // The chart's rendered width, so the text gate below can size a cell.
+  const [chartWidth, setChartWidth] = createSignal<number>();
+  const measure = (el: HTMLDivElement) => {
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setChartWidth(entry.contentRect.width);
+    });
+    observer.observe(el);
+    onCleanup(() => observer.disconnect());
+  };
+  // The month counts, the "0" and the threshold / target markers show only
+  // when each cell has room for them. The original gates on the axis alone
+  // (wider than 5% of the row), but with many months that still leaves cells
+  // too narrow: their text broke mid-word and pushed the number out of view.
+  // Until the chart is measured, only the original's gate applies.
+  const showText = () => {
+    if (targetWidth() <= 5) return false;
+    const width = chartWidth();
+    if (width === undefined) return true;
+    const cellWidth =
+      (width * targetWidth()) / 100 / Math.max(months().length, 1);
+    return cellWidth >= remToPx(MIN_CELL_REM_FOR_TEXT);
+  };
   const monthValue = (m: number) => amc() * m;
-  const monthText = (m: number) =>
-    `${fmt(monthValue(m))}${showText() ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})` : ''}`;
-  // The threshold / target markers only show when the axis is wide enough for
-  // text (showText); in a sliver axis — stock far above target — they'd wrap
-  // one char per line and blow up the row height (matching the original, which
-  // gates the additional label on showText too).
-  const additional = (m: number) =>
-    !showText()
-      ? undefined
-      : m === props.targetMonths
-        ? t('label.max-months-of-stock')
-        : m === props.thresholdMonths
-          ? t('label.min-months-of-stock')
-          : undefined;
+  const monthCount = (m: number) =>
+    ` (${m} ${m === 1 ? t('label.month') : t('label.months')})`;
+  const marker = (m: number) =>
+    m === props.targetMonths
+      ? t('label.max-months-of-stock')
+      : m === props.thresholdMonths
+        ? t('label.min-months-of-stock')
+        : undefined;
+  // The tooltip always carries a cell's full text, whatever the cell shows.
+  const monthTitle = (m: number) => {
+    const label = marker(m);
+    const text = `${fmt(monthValue(m))}${monthCount(m)}`;
+    return label ? `${label}: ${text}` : text;
+  };
   return (
     <Show
       when={canCalculate()}
@@ -102,8 +127,12 @@ export const TargetQuantityBreakdown = (props: {
         </p>
       }
     >
-      <div class={styles.stockDist}>
-        <div class={styles.monthAxis} style={{ width: `${targetWidth()}%` }}>
+      <div class={styles.stockDist} ref={measure}>
+        <div
+          class={styles.monthAxis}
+          classList={{ [styles.numbersOnly ?? '']: !showText() }}
+          style={{ width: `${targetWidth()}%` }}
+        >
           <div class={styles.monthEdge}>
             <Show when={showText()}>
               <span class={styles.monthEdgeLabel}>0</span>
@@ -111,11 +140,14 @@ export const TargetQuantityBreakdown = (props: {
           </div>
           <For each={months()}>
             {m => (
-              <div class={styles.monthCell} title={monthText(m)}>
-                <Show when={additional(m)}>
+              <div class={styles.monthCell} title={monthTitle(m)}>
+                <Show when={showText() && marker(m)}>
                   {label => <div class={styles.monthAdditional}>{label()}</div>}
                 </Show>
-                <div class={styles.monthValue}>{monthText(m)}</div>
+                <div class={styles.monthValue}>
+                  <span class={styles.monthNumber}>{fmt(monthValue(m))}</span>
+                  {showText() ? monthCount(m) : ''}
+                </div>
               </div>
             )}
           </For>
