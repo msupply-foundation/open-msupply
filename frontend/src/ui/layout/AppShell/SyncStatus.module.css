@@ -3,19 +3,17 @@
  * visual group: the status line itself, which starts a sync, and a small
  * details button that raises the sync modal.
  *
- * THE CELL BRINGS ITS OWN GROUND (issue #519). The bar's ground is store DATA
- * — brand orange on a central server, menu-grey elsewhere, an arbitrary hex
- * wherever a store sets one — so nothing drawn straight onto it can be held to
- * a contrast ratio (--error-main measures 1.23:1 on the orange), and a hue that
- * lands near the store's own simply disappears. The cell therefore sits on its
- * own off-white patch (--footer-sync-bg), which also sets it apart from the
- * rest of the bar at any bar colour, and its text uses the theme's body ink.
- *
- * On that known ground ERROR, and only error, takes colour: a red bar at the
- * cell's start, the label in red, and the crossed-circle mark filled red. A
- * healthy or merely behind site interrupts nobody. Escalation is still carried
- * by the GLYPH as well (SyncStatus.tsx `toneIcon`), so colour is never the only
- * signal.
+ * ERROR, AND ONLY ERROR, TAKES COLOUR (issue #519). At every other tone the
+ * cell keeps the bar's own ground and content colour: a healthy or merely
+ * behind site interrupts nobody. The bar's ground is store DATA — brand orange
+ * on a central server, menu-grey elsewhere, an arbitrary hex wherever a store
+ * sets one — so red drawn straight onto it could not be held to a contrast
+ * ratio (--error-main measures 1.23:1 on the orange). So on error the cell
+ * first takes the default bar ground (--bg-drawer: the remote-site grey in
+ * light, the standard dark in dark) with the theme's body text, and on that
+ * known ground the red goes: a bar at the cell's start, the label, and the
+ * crossed-circle mark filled. Escalation is still carried by the GLYPH as well
+ * (SyncStatus.tsx `toneIcon`), so colour is never the only signal.
  *
  * The one level below the tones is DIM (issue #1087): sync is not running and
  * cannot. Dimming is not a hue, so it holds at any theme or brand colour — it
@@ -27,22 +25,24 @@
   flex-shrink: 0;
   align-items: center;
   gap: var(--space-1);
-  /* The ground runs the bar's full height and out to its inline-end edge, so
-     no bar colour shows around it: the cell reads as a panel set into the bar,
-     not a chip floating on it. The margins cancel the footer's own padding
+  /* The cell runs the bar's full height and out to its inline-end edge, so
+     the error ground shows no bar colour around it: a panel set into the bar,
+     not a chip floating on it. Set at every tone, so the cell doesn't shift
+     when the ground comes and goes. The margins cancel the footer's own padding
      (AppShell.module.css names it); the fallbacks leave the cell intact
      anywhere outside the footer. */
   align-self: stretch;
   margin-block: calc(-1 * var(--footer-pad-block, 0rem));
   margin-inline-end: calc(-1 * var(--footer-pad-inline, 0rem));
   padding-inline: var(--space-2);
-  background: var(--footer-sync-bg);
-  color: var(--text-body);
 }
 
-/* Error: a red bar marks off the cell's start edge, full height. */
+/* Error: the default bar ground, with a red bar marking off its start edge,
+   full height. */
 .group[data-tone='error'] {
   border-inline-start: 3px solid var(--error-main);
+  background: var(--bg-drawer);
+  color: var(--text-body);
 }
 
 .cell {
@@ -97,28 +97,26 @@
   font-weight: var(--weight-bold);
 }
 
-/* The error label is red — deepened a step toward the body ink, because
-   --error-main itself measures only about 4.1:1 on the off-white ground, short
-   of AA for 12px text; the mix clears 5:1 there. In dark the same mix LIGHTENS
-   it (the ink is near-white there), so the rule holds in both themes. */
 .group[data-tone='error'] .label {
-  color: color-mix(in srgb, var(--error-main) 85%, var(--text-body));
+  color: var(--error-main);
 }
 
-/* The error mark: a red disc with its cross cut out in the cell's own ground
-   (near-white in light). Fill and stroke are set in CSS, which outranks the
-   icon's fill="none" / stroke="currentColor" attributes. */
+/* The error mark: a red disc with its cross cut out in the cell's ground. Fill
+   and stroke are set in CSS, which outranks the icon's fill="none" /
+   stroke="currentColor" attributes. */
 .group[data-tone='error'] .toneMark {
   fill: var(--error-main);
-  stroke: var(--footer-sync-bg);
+  stroke: var(--bg-drawer);
 }
 
 /*
  * The timing behind the state. Quieter by WEIGHT ALONE — not by dimming the
- * colour. This rule predates the cell's own ground, when its content sat at
- * 3.48:1 on the central-server orange and 2.80:1 on the remote grey with no
- * contrast to spend (a 70%-alpha tail measured 2.42:1 and 1.97:1). Weight
- * still costs nothing and says the same thing.
+ * colour, which is the obvious way to do this and the wrong one here: the bar's
+ * own content sits at 3.48:1 on the central-server orange and 2.80:1 on the
+ * remote grey (the current app's footer palette, inherited), so there is no
+ * contrast to spend. A 70%-alpha tail measured 2.42:1 and 1.97:1 — a second
+ * half of the line that some users simply could not read. Weight costs nothing
+ * and says the same thing.
  *
  * First to be given up when the bar runs out of room: the state is the message,
  * the age only qualifies it.
