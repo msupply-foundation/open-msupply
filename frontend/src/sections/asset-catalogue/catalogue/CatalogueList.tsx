@@ -167,7 +167,7 @@ const CatalogueList: Component = () => {
       meta: { headerPosition: 'primary' },
     },
     {
-      c: { accessor: row => row.assetType?.name ?? '', id: 'type' },
+      c: { accessor: row => row.assetType?.name ?? '', id: 'typeId' },
       header: () => t('label.type'),
     },
     {
@@ -181,11 +181,11 @@ const CatalogueList: Component = () => {
       header: () => t('label.model'),
     },
     {
-      c: { accessor: row => row.assetClass?.name ?? '', id: 'class' },
+      c: { accessor: row => row.assetClass?.name ?? '', id: 'classId' },
       header: () => t('label.class'),
     },
     {
-      c: { accessor: row => row.assetCategory?.name ?? '', id: 'category' },
+      c: { accessor: row => row.assetCategory?.name ?? '', id: 'categoryId' },
       header: () => t('label.category'),
     },
   ];

@@ -88,7 +88,10 @@ export const CreateLogReasonModal: Component<
       actions={
         <>
           <Show when={!saving()}>
-            <CancelButton onClick={props.onClose} />
+            <CancelButton
+              data-testid="dialog-button-cancel"
+              onClick={props.onClose}
+            />
           </Show>
           <OkButton
             data-testid="dialog-button-ok"
