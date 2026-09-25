@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { defineConfig, loadEnv } from 'vite';
 import solid from 'vite-plugin-solid';
 import { devPluginsPlugin } from './vite/devPlugins.ts';
+import { lazyChunkGuardPlugin } from './vite/lazyChunkGuard.ts';
 import { sharedModulesPlugin } from './vite/sharedModules.ts';
 
 /*
@@ -89,7 +90,14 @@ export default defineConfig(({ mode }) => {
     // enumerates plugin sources when SERVING — in a build it resolves its
     // virtual module to an empty map, which is dead code the DEV branch in
     // src/plugins/loader.ts treeshakes away, so build output is unaffected.
-    plugins: [solid(), sharedModulesPlugin(), devPluginsPlugin()],
+    // lazyChunkGuardPlugin fails the build if the form library reaches the
+    // eager entry (vite/lazyChunkGuard.ts).
+    plugins: [
+      solid(),
+      sharedModulesPlugin(),
+      devPluginsPlugin(),
+      lazyChunkGuardPlugin(),
+    ],
     // "@/x" → src/x. Keep in sync with tsconfig.app.json "paths" and
     // vitest.config.ts (the showcase config inherits it via mergeConfig).
     // "@openmsupply/plugin-sdk" resolves the SDK from source so in-tree code

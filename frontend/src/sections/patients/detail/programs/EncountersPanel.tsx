@@ -18,7 +18,7 @@ type Row = EncounterRowFragment;
 export interface EncountersPanelProps {
   rows: Row[];
   loading: boolean;
-  /** Navigate to the encounter — the route the encounters vertical will own. */
+  /** Opens the encounter's record screen. */
   onRowClick: (encounter: Row) => void;
 }
 
@@ -29,11 +29,10 @@ const statusLabel = (status: Row['status']): string =>
     ? t(`label.encounter-status-${status.toLowerCase()}` as LocaleKey)
     : '';
 
-// The read-only encounter table on the patient detail (spec/patients ui-surface
-// › Encounters tab), newest first. Unlike the Programs/Vaccinations tabs, a row
-// click NAVIGATES to the encounter route (owned by the encounters vertical,
-// built later) rather than opening a document form — so rows are clickable
-// here. Type/Program names are the document registry names.
+// The encounter table on the patient detail (spec/patients ui-surface ›
+// Encounters tab), newest first. A row click navigates to the encounter's
+// record screen (src/sections/encounters). Type/Program names are the document
+// registry names.
 export const EncountersPanel: Component<EncountersPanelProps> = props => {
   const tableConfig = createTableConfig({
     tableId: 'patient-encounter-list',

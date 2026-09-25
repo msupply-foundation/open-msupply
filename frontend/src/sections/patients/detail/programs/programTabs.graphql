@@ -1,8 +1,10 @@
 # The patient detail's program-module tabs (spec/patients § program-module
-# tabs). READ-ONLY lists only — the enrolment/encounter document editors and the
-# vaccination card are owned by their own (unbuilt) verticals; these queries
-# feed plain tables. Program display name is the document registry name
-# (document.documentRegistry.name), matching the reference columns.
+# tabs): the lists behind the Programs, Encounters and Vaccinations tables.
+# Program display name is the document registry name
+# (document.documentRegistry.name), matching the reference columns. An
+# enrolment's `name` is its document's name, which the enrolment modal opens
+# it by; its `contextId` is its program's, which decides the encounter types
+# the patient can be given.
 #
 # Reads gate on QueryProgram (enrolments) / QueryEncounter (encounters); results
 # are already scoped to the caller's allowed program contexts server-side.
@@ -11,6 +13,8 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   __typename
   id
   type
+  name
+  contextId
   programEnrolmentId
   status
   enrolmentDatetime

@@ -6,6 +6,8 @@ export type ProgramEnrolmentRowFragment = {
   __typename: "ProgramEnrolmentNode";
   id: string;
   type: string;
+  name: string;
+  contextId: string;
   programEnrolmentId: string | null;
   status: string | null;
   enrolmentDatetime: string;
@@ -110,7 +112,7 @@ export type PatientProgramEnrolmentsResult = {
 };
 
 export const PatientProgramEnrolments = {
-  query: "query patientProgramEnrolments($storeId: String!, $filter: ProgramEnrolmentFilterInput, $sort: ProgramEnrolmentSortInput) {\n  programEnrolments(storeId: $storeId, filter: $filter, sort: $sort) {\n    ... on ProgramEnrolmentConnector {\n      __typename\n      totalCount\n      nodes {\n        ...ProgramEnrolmentRow\n      }\n    }\n  }\n}\n\nfragment ProgramEnrolmentRow on ProgramEnrolmentNode {\n  __typename\n  id\n  type\n  programEnrolmentId\n  status\n  enrolmentDatetime\n  isImmunisationProgram\n  document {\n    __typename\n    documentRegistry {\n      __typename\n      name\n    }\n  }\n}",
+  query: "query patientProgramEnrolments($storeId: String!, $filter: ProgramEnrolmentFilterInput, $sort: ProgramEnrolmentSortInput) {\n  programEnrolments(storeId: $storeId, filter: $filter, sort: $sort) {\n    ... on ProgramEnrolmentConnector {\n      __typename\n      totalCount\n      nodes {\n        ...ProgramEnrolmentRow\n      }\n    }\n  }\n}\n\nfragment ProgramEnrolmentRow on ProgramEnrolmentNode {\n  __typename\n  id\n  type\n  name\n  contextId\n  programEnrolmentId\n  status\n  enrolmentDatetime\n  isImmunisationProgram\n  document {\n    __typename\n    documentRegistry {\n      __typename\n      name\n    }\n  }\n}",
 } as TypedDocument<PatientProgramEnrolmentsResult, PatientProgramEnrolmentsVariables>;
 
 export type PatientEncountersVariables = {

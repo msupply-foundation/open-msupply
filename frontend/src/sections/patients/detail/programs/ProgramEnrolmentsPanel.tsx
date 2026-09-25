@@ -20,14 +20,22 @@ export interface ProgramEnrolmentsPanelProps {
   /** tableId + empty copy differ between the Programs and Vaccinations tabs. */
   tableId: string;
   emptyMessage: string;
+  /**
+   * Opens the enrolment. The Programs tab passes it (the enrolment modal);
+   * the Vaccinations tab does not, since its row opens a vaccination card,
+   * which is not built.
+   */
+  onRowClick?: (enrolment: Row) => void;
 }
 
-// The read-only program-enrolment table shared by the Programs tab (all
-// enrolments) and the Vaccinations tab (immunisation enrolments only — filtered
-// by the caller) — spec/patients ui-surface › Programs / Vaccinations tabs.
-// Rows are NOT clickable: opening an enrolment (or its vaccination card) needs
-// the JSON-schema document form / card surfaces owned by other verticals, which
-// are out of scope here. The program name is the document registry name.
+// The program-enrolment table shared by the Programs tab (all enrolments) and
+// the Vaccinations tab (immunisation enrolments only — filtered by the caller)
+// — spec/patients ui-surface › Programs / Vaccinations tabs. A row opens its
+// enrolment only where the caller passes `onRowClick`. The program name is the
+// document registry name.
+//
+// TO-DO: spec/patients still describes these rows as not clickable; the
+// record-screen spec (kdd/custom-forms implementation-plan H26) updates it.
 export const ProgramEnrolmentsPanel: Component<
   ProgramEnrolmentsPanelProps
 > = props => {
@@ -75,6 +83,7 @@ export const ProgramEnrolmentsPanel: Component<
       rows={props.rows}
       rowKey={r => r.id}
       loading={props.loading}
+      onRowClick={props.onRowClick}
       emptyMessage={props.emptyMessage}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}

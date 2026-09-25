@@ -7,12 +7,15 @@ import {
   type PatientEncountersVariables,
   type EncounterRowFragment,
 } from './programTabs.generated';
+import {
+  FormRegistries,
+  type FormRegistryFragment,
+} from '../../../../domain/documentForm/documentForm.generated';
 
 // Read access for the patient detail's program-module tabs (spec/patients §
-// program-module tabs). Read-only — these feed plain tables; the enrolment /
-// encounter editors and the vaccination card are owned by other verticals.
-// Never-throwing: any non-success result maps to undefined (the caller shows
-// the table's own empty/loading state), never a crash.
+// program-module tabs): the tables' rows and the registry entries behind the
+// create actions. Never-throwing: any non-success result maps to undefined
+// (the caller shows the table's own empty/loading state), never a crash.
 
 export const fetchPatientProgramEnrolments = async (
   variables: PatientProgramEnrolmentsVariables
@@ -28,4 +31,18 @@ export const fetchPatientEncounters = async (
   const result = await graphqlFetch(PatientEncounters, variables);
   if (result.kind !== 'success') return undefined;
   return result.data.encounters.nodes;
+};
+
+// The enrolment and encounter types the create actions offer: the store's
+// registry entries in the two categories, already narrowed by the server to
+// the programs the user holds a document permission for.
+export const fetchFormRegistries = async (
+  storeId: string
+): Promise<FormRegistryFragment[] | undefined> => {
+  const result = await graphqlFetch(FormRegistries, {
+    storeId,
+    filter: { category: { equalAny: ['PROGRAM_ENROLMENT', 'ENCOUNTER'] } },
+  });
+  if (result.kind !== 'success') return undefined;
+  return result.data.documentRegistries.nodes;
 };

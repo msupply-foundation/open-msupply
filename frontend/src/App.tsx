@@ -51,6 +51,7 @@ import { requisitionsRoutes } from './sections/requisitions';
 import { rnrFormsRoutes } from './sections/rnr-forms';
 import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
+import { encountersRoutes } from './sections/encounters';
 import { cliniciansRoutes } from './sections/clinicians';
 import { coldChainSensorsRoutes } from './sections/cold-chain-sensors';
 import { coldChainMonitoringRoutes } from './sections/cold-chain-monitoring';
@@ -116,6 +117,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
   'dispensary/patients': patientsRoutes,
+  'dispensary/encounter': encountersRoutes,
   'dispensary/clinicians': cliniciansRoutes,
   // ONE section, TWO destinations: the same list and detail screens, differing
   // only in whether the list is pinned to the active store (spec/cold-chain-

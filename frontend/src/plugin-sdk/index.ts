@@ -258,6 +258,46 @@ export type {
 } from '../ui/elements/table/tableConfig';
 export type { PaginationProps } from '../ui/elements/table/Pagination';
 
+// ── Form library — the fields a plugin form is written with ─────────────────
+/*
+ * Lazy like the table: the fields, the AJV validator and the host's default
+ * forms are one host chunk, fetched when the first form opens (./
+ * lazyComponents.ts; kdd/custom-forms/specs.md § Forms in the UI). A field
+ * takes the draft the host hands a form and a path into the document type,
+ * checked by the compiler. The types are erased at build.
+ */
+export {
+  TextInput,
+  TextAreaInput,
+  NumberInput,
+  DateInput,
+  DateTimeInput,
+  SelectInput,
+  CheckboxInput,
+  FieldGroup,
+} from './lazyComponents';
+export type { Draft } from '../domain/documentForm/draft';
+export type {
+  Path,
+  PathValue,
+  TextPath,
+  EnumPath,
+  NumberPath,
+  BooleanPath,
+} from '../domain/documentForm/paths';
+export type { FieldSchemaInfo } from '../domain/documentForm/schemaNode';
+export type {
+  FieldProps,
+  TextInputProps,
+  TextAreaInputProps,
+  NumberInputProps,
+  DateInputProps,
+  DateTimeInputProps,
+  SelectInputProps,
+  CheckboxInputProps,
+  FieldGroupProps,
+} from '../domain/documentForm/fields';
+
 // ── List & table state — the URL and the stored column layout ───────────────
 /*
  * Where a plugin list screen's state lives, so it remembers what a host one

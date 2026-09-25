@@ -1,0 +1,46 @@
+# The encounter record screen's header facts (kdd/custom-forms
+# implementation-plan H7): who the encounter is for, its program and its
+# document's name, which the document form host loads the document by. The
+# document itself, draft and all, is the form host's (domain/documentForm).
+# Deleted encounters are included, so a link to one opens rather than
+# answering not-found.
+
+fragment EncounterRecord on EncounterNode {
+  __typename
+  id
+  type
+  patientId
+  patient {
+    __typename
+    id
+    name
+  }
+  document {
+    __typename
+    name
+  }
+  programEnrolment {
+    __typename
+    document {
+      __typename
+      documentRegistry {
+        __typename
+        name
+      }
+    }
+  }
+}
+
+query encounterRecord($storeId: String!, $id: String!) {
+  encounters(
+    storeId: $storeId
+    filter: { id: { equalTo: $id }, includeDeleted: true }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...EncounterRecord
+      }
+    }
+  }
+}

@@ -23,6 +23,7 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_N } from '../../../ui/utils/shortcuts';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -53,9 +54,19 @@ import type { InsurancePolicyFragment } from './insurance/insurance.generated';
 import { ProgramEnrolmentsPanel } from './programs/ProgramEnrolmentsPanel';
 import { EncountersPanel } from './programs/EncountersPanel';
 import {
+  fetchFormRegistries,
   fetchPatientProgramEnrolments,
   fetchPatientEncounters,
 } from './programs/programsApi';
+import { ProgramPickerDialog } from './programs/ProgramPickerDialog';
+import {
+  EnrolmentModal,
+  type EnrolmentTarget,
+} from './programs/EnrolmentModal';
+import {
+  CreateEncounterDialog,
+  type CreatedEncounter,
+} from './programs/CreateEncounterDialog';
 import { patientPreferences } from '../../../store/storeContext';
 
 // S3 — the patient detail screen (spec/patients). Summary header + tabs
@@ -64,17 +75,21 @@ import { patientPreferences } from '../../../store/storeContext';
 // on an explicit Save behind a confirmation, with a discard prompt when leaving
 // dirty (the StockLineDetailView model). The Insurance tab lists the patient's
 // policies and adds/edits them (gated on configured providers). The Programs /
-// Encounters / Vaccinations tabs are READ-ONLY lists gated on the program
-// module — the enrolment/encounter document editors and the vaccination card
-// they'd open are owned by other (unbuilt) verticals, so Programs/Vaccinations
-// rows are non-clickable and Encounters rows navigate to the (future) encounter
-// route. The Log tab reuses the shared activity-log surface.
+// Encounters / Vaccinations tabs are lists gated on the program module: a
+// Programs row opens the enrolment modal, an Encounters row navigates to the
+// encounter's record screen, and Vaccinations rows are non-clickable. Under
+// the program module the header's split button carries the record-create
+// actions, New program and New encounter (kdd/custom-forms
+// implementation-plan H8), beside Add insurance. The Log tab reuses the shared
+// activity-log surface.
 //
-// NOT built here (owned by other/unbuilt verticals — see the implementation
-// flags): the document-path schema-driven form, the Custom fields tab, the
-// Contact-tracing tab, and — for the program-module tabs above — the enrolment
-// / encounter document editors, the create actions (New program / encounter),
-// and the vaccination card those rows would open.
+// NOT built here: the document-path schema-driven form (implementation-plan
+// H9), the Contact-tracing tab, and the vaccination card a Vaccinations row
+// would open.
+//
+// TO-DO: spec/patients describes the create actions and the enrolment modal
+// as another vertical's; the record-screen spec (implementation-plan H26)
+// brings them into it.
 
 const PatientDetailView: Component = () => {
   const params = useParams<{ storeId: string; patientId: string }>();
@@ -162,7 +177,7 @@ const PatientDetailView: Component = () => {
   // subset, derived client-side); encounters load separately, newest first.
   const hasProgramModule = () => patientPreferences().programModule;
 
-  const [enrolmentsData] = createResource(
+  const [enrolmentsData, { refetch: refetchEnrolments }] = createResource(
     () =>
       hasProgramModule()
         ? {
@@ -177,7 +192,7 @@ const PatientDetailView: Component = () => {
   const immunisationEnrolments = () =>
     enrolments().filter(e => e.isImmunisationProgram);
 
-  const [encountersData] = createResource(
+  const [encountersData, { refetch: refetchEncounters }] = createResource(
     () =>
       hasProgramModule()
         ? {
@@ -192,6 +207,76 @@ const PatientDetailView: Component = () => {
 
   const openEncounter = (encounter: { id: string }) =>
     navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);
+
+  // The record-create actions (kdd/custom-forms implementation-plan H8), over
+  // the registry entries the server lets this user see: every enrolment type,
+  // and the encounter types of the programs the patient is enrolled in, since
+  // the server refuses an encounter in any other program.
+  const [registriesData] = createResource(
+    () => (hasProgramModule() ? params.storeId : undefined),
+    fetchFormRegistries
+  );
+  const registries = () => gated(registriesData) ?? [];
+  const enrolmentRegistries = () =>
+    registries().filter(r => r.category === 'PROGRAM_ENROLMENT');
+  const enrolledTypes = () => new Set(enrolments().map(e => e.type));
+  const encounterRegistries = () => {
+    const contexts = new Set(enrolments().map(e => e.contextId));
+    return registries().filter(
+      r => r.category === 'ENCOUNTER' && contexts.has(r.contextId)
+    );
+  };
+  const canAddEncounter = () => enrolments().length > 0;
+
+  const [pickerOpen, setPickerOpen] = createSignal(false);
+  const [enrolmentTarget, setEnrolmentTarget] = createSignal<EnrolmentTarget>();
+  const [createEncounterOpen, setCreateEncounterOpen] = createSignal(false);
+
+  // A visit starting within the next five minutes is being recorded now, so
+  // its record screen opens (the old client's rule); a later one has been
+  // scheduled, and the patient's encounter list shows it.
+  const encounterCreated = (created: CreatedEncounter) => {
+    setCreateEncounterOpen(false);
+    const soon = Date.now() + 5 * 60 * 1000;
+    if (new Date(created.startDatetime).getTime() <= soon) {
+      openEncounter({ id: created.encounterId });
+      return;
+    }
+    setActiveTab('encounters');
+    void refetchEncounters();
+  };
+
+  type CreateAction = 'new-program' | 'new-encounter' | 'add-insurance';
+  const canAddInsurance = () => hasInsurance() && editor.canMutate();
+  const createOptions = () => [
+    { value: 'new-program', label: t('button.new-program') },
+    {
+      value: 'new-encounter',
+      label: t('button.new-encounter'),
+      disabled: !canAddEncounter(),
+      title: t('messages.enrol-before-encounter'),
+    },
+    ...(canAddInsurance()
+      ? [{ value: 'add-insurance', label: t('button.add-insurance') }]
+      : []),
+  ];
+  // The split button's main action follows the tab (spec/patients ui-surface
+  // S3 layout): the tab's own record kind, else New program.
+  const tabAction = (): CreateAction => {
+    if (activeTab() === 'insurance' && canAddInsurance()) return 'add-insurance';
+    if (activeTab() === 'encounters' && canAddEncounter()) {
+      return 'new-encounter';
+    }
+    return 'new-program';
+  };
+  const runCreate = (action: string) => {
+    if (action === 'new-program') setPickerOpen(true);
+    else if (action === 'new-encounter' && canAddEncounter()) {
+      setCreateEncounterOpen(true);
+    } else if (action === 'add-insurance' && canAddInsurance()) {
+      setInsuranceState({});
+    }
+  };
 
   const leave = () => navigate(`/${params.storeId}/dispensary/patients`);
 
@@ -263,23 +348,45 @@ const PatientDetailView: Component = () => {
               header={
                 <Header>
                   <Breadcrumb crumbs={crumbs()} />
-                  {/* Add insurance — the app-bar page action on the Insurance
-                      tab (spec ui-surface S3 layout). Gated on providers being
-                      configured + patient-mutate; opens the modal in add mode.
-                      (The other-vertical program create actions share this slot
-                      once built.) */}
+                  {/* The app-bar page actions (spec ui-surface S3 layout). Under
+                      the program module, one split button of record-create
+                      actions whose main action follows the tab; without it,
+                      Add insurance alone, on the Insurance tab. Add insurance
+                      is gated on providers being configured + patient-mutate
+                      and opens the modal in add mode either way. */}
                   <Show
-                    when={activeTab() === 'insurance' && editor.canMutate()}
+                    when={hasProgramModule()}
+                    fallback={
+                      <Show
+                        when={
+                          activeTab() === 'insurance' && editor.canMutate()
+                        }
+                      >
+                        <HeaderButtons>
+                          <Button
+                            icon={<PlusCircleIcon />}
+                            shortcut={ALT_N}
+                            data-testid="add-insurance-header-button"
+                            onClick={() => setInsuranceState({})}
+                          >
+                            {t('button.add-insurance')}
+                          </Button>
+                        </HeaderButtons>
+                      </Show>
+                    }
                   >
                     <HeaderButtons>
-                      <Button
+                      <SplitButton
                         icon={<PlusCircleIcon />}
-                        shortcut={ALT_N}
-                        data-testid="add-insurance-header-button"
-                        onClick={() => setInsuranceState({})}
-                      >
-                        {t('button.add-insurance')}
-                      </Button>
+                        options={createOptions()}
+                        value={tabAction()}
+                        onAction={runCreate}
+                        menuLabel={t('button.create')}
+                        shortcut={
+                          tabAction() === 'add-insurance' ? ALT_N : undefined
+                        }
+                        data-testid="patient-create-split-button"
+                      />
                     </HeaderButtons>
                   </Show>
                   {/* Summary (spec/patients S3): Patient ID · Gender · DOB
@@ -379,17 +486,23 @@ const PatientDetailView: Component = () => {
                 </ContentContainer>
               </TabPanel>
               <Show when={hasProgramModule()}>
-                {/* Read-only program-module lists. Programs + Vaccinations
-                    share the enrolment table (Vaccinations = immunisation
-                    subset); rows aren't clickable (editing needs the document
-                    form / vaccination card, other verticals). Encounters rows
-                    navigate to the (future) encounter route. */}
+                {/* Program-module lists. Programs + Vaccinations share the
+                    enrolment table (Vaccinations = immunisation subset). A
+                    Programs row opens its enrolment in the modal; Vaccinations
+                    rows aren't clickable (the vaccination card is unbuilt).
+                    Encounters rows navigate to the encounter screen. */}
                 <TabPanel value="programs">
                   <ProgramEnrolmentsPanel
                     rows={enrolments()}
                     loading={enrolmentsData.loading}
                     tableId="patient-program-enrolment-list"
                     emptyMessage={t('messages.no-programs')}
+                    onRowClick={row =>
+                      setEnrolmentTarget({
+                        kind: 'existing',
+                        documentName: row.name,
+                      })
+                    }
                   />
                 </TabPanel>
                 <TabPanel value="encounters">
@@ -439,6 +552,35 @@ const PatientDetailView: Component = () => {
                 <ActivityLogPanel storeId={params.storeId} recordId={n().id} />
               </TabPanel>
 
+              <ProgramPickerDialog
+                open={pickerOpen()}
+                registries={enrolmentRegistries()}
+                enrolledTypes={enrolledTypes()}
+                onPick={registry => {
+                  setPickerOpen(false);
+                  setEnrolmentTarget({ kind: 'new', registry });
+                }}
+                onClose={() => setPickerOpen(false)}
+              />
+              <EnrolmentModal
+                storeId={params.storeId}
+                patientId={n().id}
+                target={enrolmentTarget()}
+                onClose={() => setEnrolmentTarget(undefined)}
+                onSaved={() => {
+                  setActiveTab('programs');
+                  void refetchEnrolments();
+                }}
+              />
+              <CreateEncounterDialog
+                open={createEncounterOpen()}
+                storeId={params.storeId}
+                patientId={n().id}
+                registries={encounterRegistries()}
+                defaultType={encounters()[0]?.type}
+                onCreated={encounterCreated}
+                onClose={() => setCreateEncounterOpen(false)}
+              />
               <InsuranceModal
                 open={insuranceState() !== undefined}
                 onClose={() => setInsuranceState(undefined)}
