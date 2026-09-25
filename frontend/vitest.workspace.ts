@@ -33,7 +33,18 @@ import { BACKEND_COMMON } from './vite/backendPluginBuild';
 
 const define = { APP_VERSION: JSON.stringify('0.0.0-test') };
 // "@/x" → src/x — mirrors vite.config.ts / tsconfig.app.json "paths".
-const alias = { '@': new URL('./src', import.meta.url).pathname };
+// "@/x" → src/x, and the SDK specifier an in-repo plugin imports by name —
+// both mirroring vitest.config.ts, so a plugin's component test resolves what
+// its build does. The SDK entry is what lets a plugin test that reaches the
+// SDK (directly, or through a module it mocks) run in THIS project rather than
+// only in the node one.
+const alias = {
+  '@': new URL('./src', import.meta.url).pathname,
+  '@openmsupply/plugin-sdk': new URL(
+    './src/plugin-sdk/index.ts',
+    import.meta.url
+  ).pathname,
+};
 
 export default defineWorkspace([
   // The node project IS the root config, referenced rather than restated.

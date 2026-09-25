@@ -208,10 +208,8 @@ const InternalOrdersList: Component = () => {
       return;
     }
     setChecking(true);
-    // The gate decision cannot reject (the suppression consult isolates plugin
-    // failures and graphqlFetch never throws), but this await spans plugin
-    // code — the finally guarantees a fault can never leave the button
-    // disabled for good.
+    // The gate decision cannot reject (graphqlFetch never throws), but the
+    // finally guarantees a fault can never leave the button disabled for good.
     try {
       const shows = await recentStocktakeGateShows(
         params.storeId,

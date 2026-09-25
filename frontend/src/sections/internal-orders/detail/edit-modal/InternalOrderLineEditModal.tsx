@@ -10,7 +10,7 @@ import {
 } from 'solid-js';
 import { graphqlFetch } from '../../../../api/graphql';
 import { gated } from '../../../../api/gated';
-import { t, tPlural } from '../../../../intl';
+import { measureWord, t, tPlural } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { homeCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -52,7 +52,6 @@ import {
   modeToUnits,
   unitsToMode,
   statInMode,
-  modeWord,
   saveNewLine,
   saveExistingLine,
   type EditorLine,
@@ -170,6 +169,12 @@ const LineEditContent = (
   // request is made from the branches below rather than declared as the
   // Dialog's initialFocus.
   const itemSearch = createFocusTarget();
+  // Requested — focused on every landing on a line, however it was reached:
+  // an edit-mode open, a "Save & next" advance, or an add-mode item pick
+  // (spec S4, AC-LN12). Driven from seedLine, not the Dialog's initialFocus:
+  // that prop fires only as the dialog opens, and the other two landings
+  // happen in a dialog already open.
+  const requestedField = createFocusTarget();
 
   let disposed = false;
   onCleanup(() => (disposed = true));
@@ -208,7 +213,8 @@ const LineEditContent = (
 
   // Land the editor on a line — an existing line (edit) or an add-mode
   // preview. Seeds the entry mode from the store preference (AC-LN18) and the
-  // draft from the line's current values.
+  // draft from the line's current values, and lands the caret on Requested —
+  // a read-only order being the one exception, having nothing to type into.
   const seedLine = (editorLine: EditorLine) => {
     setLine(editorLine);
     covered.add(editorLine.lineId);
@@ -224,6 +230,7 @@ const LineEditContent = (
     setComment(editorLine.comment);
     setReasonId(editorLine.reasonId);
     setErrorMessage(undefined);
+    if (props.editable) requestedField.focus();
   };
 
   const pickItem = async (itemId: string) => {
@@ -316,7 +323,7 @@ const LineEditContent = (
   // inflected for the figure it suffixes ("1 pack" / "61 packs").
   const stat = (units: number, roundUp = false): string => {
     const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
-    return `${formatNumber(figure)} ${modeWord(entryMode(), current()?.unitName ?? null, figure)}`;
+    return `${formatNumber(figure)} ${measureWord(entryMode(), current()?.unitName ?? null, figure)}`;
   };
 
   // A unit quantity re-expressed in the OTHER measure (AC-LN20): units when
@@ -324,7 +331,7 @@ const LineEditContent = (
   const otherMeasure = (units: number): string => {
     if (entryMode() === 'doses') {
       const unitCount = Math.round(units);
-      return `${formatNumber(unitCount)} ${modeWord('units', current()?.unitName ?? null, unitCount)}`;
+      return `${formatNumber(unitCount)} ${measureWord('units', current()?.unitName ?? null, unitCount)}`;
     }
     const doseCount = Math.round(units * doses());
     return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
@@ -418,17 +425,17 @@ const LineEditContent = (
     const unitName = current()?.unitName ?? null;
     const count = requestedDisplay() === 1 ? 1 : 2;
     const options = [
-      { value: 'units', label: modeWord('units', unitName, count) },
+      { value: 'units', label: measureWord('units', unitName, count) },
     ];
     if (packSize() > 0)
       options.push({
         value: 'packs',
-        label: modeWord('packs', unitName, count),
+        label: measureWord('packs', unitName, count),
       });
     if (dosesApply())
       options.push({
         value: 'doses',
-        label: modeWord('doses', unitName, count),
+        label: measureWord('doses', unitName, count),
       });
     return options;
   });
@@ -681,6 +688,7 @@ const LineEditContent = (
                       min={0}
                       decimalLimit={2}
                       data-testid="requested-quantity-input"
+                      ref={requestedField.ref}
                       disabled={disabled() || saving()}
                       value={requestedDisplay()}
                       onChange={onRequestedChange}
