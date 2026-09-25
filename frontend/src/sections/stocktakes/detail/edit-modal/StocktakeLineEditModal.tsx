@@ -710,6 +710,17 @@ const StocktakeLineEditContent = (
   // The rows the table shows: the draft minus soft-deleted lines.
   const rows = (): DraftLine[] => draft.filter(line => !line.deleted);
 
+  // Drop a line's stale server error, so the footer's count falls with it.
+  const clearLineError = (id: string) => {
+    if (lineErrors().has(id)) {
+      setLineErrors(prev => {
+        const next = new Map(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
   // Edit ONE field of ONE line (fine-grained store write); clears the line's
   // stale server error.
   const update = <F extends keyof DraftLine>(
@@ -719,13 +730,7 @@ const StocktakeLineEditContent = (
   ) => {
     const index = draft.findIndex(line => line.id === id);
     if (index >= 0) setDraft(index, field, value as never);
-    if (lineErrors().has(id)) {
-      setLineErrors(prev => {
-        const next = new Map(prev);
-        next.delete(id);
-        return next;
-      });
-    }
+    clearLineError(id);
   };
 
   // Update a line's counted packs AND drop a now-mismatched reason: recounting
@@ -823,7 +828,8 @@ const StocktakeLineEditContent = (
   };
 
   // Soft-delete a row (isNew splices out; existing flagged deleted → sent as a
-  // delete on save).
+  // delete on save). A removed row takes its save error with it — nothing is
+  // left on screen to show it, so the footer must not keep counting it.
   const removeLine = (line: DraftLine) => {
     if (line.isNew) {
       setDraft(
@@ -836,6 +842,7 @@ const StocktakeLineEditContent = (
       const index = draft.findIndex(l => l.id === line.id);
       if (index >= 0) setDraft(index, 'deleted', true);
     }
+    clearLineError(line.id);
   };
 
   // Duplicate a row — clone into a fresh isNew draft (new id + blank count),
