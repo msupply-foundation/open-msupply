@@ -1,6 +1,7 @@
 /*
- * Emit every form plugin's JSON Schemas from their TypeScript types — or,
- * with `--check`, fail when a committed schema no longer matches its type.
+ * Emit every form plugin's JSON Schemas from their TypeScript types, and the
+ * host's schemas of the SDK's base document types — or, with `--check`, fail
+ * when a committed schema no longer matches its type.
  *
  * A form plugin is a plugin directory with a `forms/forms.json`
  * declaration; the layout, the frozen-version rule and the generator setup
@@ -17,7 +18,11 @@
  * Usage: pnpm forms:emit    [OMS_PLUGIN_DIRS=../some-plugin-checkout]
  *        pnpm forms:check
  */
-import { emitFormSchemas, readFormsDeclaration } from '../vite/formPlugins.ts';
+import {
+  emitBaseSchemas,
+  emitFormSchemas,
+  readFormsDeclaration,
+} from '../vite/formPlugins.ts';
 import { envPluginDirs, inRepoPluginDirs } from './pluginDirs.mjs';
 
 const check = process.argv.includes('--check');
@@ -40,6 +45,13 @@ for (const dir of [...inRepoPluginDirs(), ...envPluginDirs()]) {
   files += result.written.length + result.unchanged.length;
   problems.push(...result.problems);
 }
+
+// The host's copies of the base document types' schemas, which it validates
+// every draft against beside the registry entry's own (vite/formPlugins.ts).
+const base = await emitBaseSchemas({ check });
+for (const file of base.written) console.info(`[forms] wrote ${file}`);
+files += base.written.length + base.unchanged.length;
+problems.push(...base.problems);
 
 if (problems.length > 0) {
   console.error(

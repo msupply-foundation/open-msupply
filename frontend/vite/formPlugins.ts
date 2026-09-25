@@ -462,14 +462,14 @@ export const toDocumentSchema = (
 };
 
 /**
- * A generator over one plugin's `forms/` sources. One TS program serves every
- * type in the plugin, since building it (the plugin's files plus the SDK
- * graph they import) is most of the cost.
+ * A generator over one set of sources: a plugin's `forms/`, or the SDK's base
+ * document types. One TS program serves every type in the set, since building
+ * it (the files plus the SDK graph they import) is most of the cost.
  */
-const createSchemaGenerator = (pluginDir: string) => {
+const createSchemaGenerator = (sourceGlob: string) => {
   const config: CompletedConfig = {
     ...DEFAULT_CONFIG,
-    path: join(resolve(pluginDir), FORMS_DIR, '**', '*.ts'),
+    path: sourceGlob,
     tsconfig: PLUGINS_TSCONFIG,
     /*
      * `tsc -b` type-checks these files under the same tsconfig, with its
@@ -558,7 +558,9 @@ export const emitFormSchemas = async (
   { check }: { check: boolean }
 ): Promise<EmitResult> => {
   const result: EmitResult = { written: [], unchanged: [], problems: [] };
-  const generate = createSchemaGenerator(pluginDir);
+  const generate = createSchemaGenerator(
+    join(resolve(pluginDir), FORMS_DIR, '**', '*.ts')
+  );
   for (const entry of declaration.documentTypes) {
     const dir = typeDir(pluginDir, entry);
     for (const [i, version] of entry.versions.entries()) {
@@ -599,6 +601,64 @@ export const emitFormSchemas = async (
         writeFileSync(file, text);
         result.written.push(file);
       }
+    }
+  }
+  return result;
+};
+
+// ── Base document schemas ───────────────────────────────────────────────────
+
+/** The SDK's base document types (src/plugin-sdk/documents.ts). */
+export const BASE_DOCUMENT_SOURCE = fileURLToPath(
+  new URL('../src/plugin-sdk/documents.ts', import.meta.url)
+);
+
+/** Where the host keeps the schemas emitted from them. */
+export const BASE_SCHEMA_DIR = fileURLToPath(
+  new URL('../src/domain/documentForm/baseSchemas/', import.meta.url)
+);
+
+/** One base type per document category that has a host form. */
+export const BASE_DOCUMENT_TYPES = [
+  'Patient',
+  'ProgramEnrolment',
+  'Encounter',
+  'ContactTrace',
+] as const;
+
+/**
+ * Emit (or, with `check`, verify) the base document types' schemas into the
+ * host. The server reads a document's base fields on its own terms, whatever
+ * the registry entry's schema says (an enrolment's date is parsed as RFC
+ * 3339), so the host validates every draft against its category's base
+ * schema as well (src/domain/documentForm/baseSchemas). Emitted from the same
+ * types plugin schemas extend, so the two cannot disagree.
+ */
+export const emitBaseSchemas = async ({
+  check,
+}: {
+  check: boolean;
+}): Promise<EmitResult> => {
+  const result: EmitResult = { written: [], unchanged: [], problems: [] };
+  const generate = createSchemaGenerator(BASE_DOCUMENT_SOURCE);
+  for (const type of BASE_DOCUMENT_TYPES) {
+    const file = join(BASE_SCHEMA_DIR, `${type}.json`);
+    const text = await schemaFileText(
+      generate(BASE_DOCUMENT_SOURCE, type),
+      file
+    );
+    const before = existsSync(file) ? readFileSync(file, 'utf8') : undefined;
+    if (before === text) {
+      result.unchanged.push(file);
+    } else if (check) {
+      result.problems.push(
+        `${file}: ${before === undefined ? 'missing' : 'stale'} — ${type} in ` +
+          'src/plugin-sdk/documents.ts generates a different schema; run ' +
+          '`pnpm forms:emit` and commit the result'
+      );
+    } else {
+      writeFileSync(file, text);
+      result.written.push(file);
     }
   }
   return result;

@@ -19,6 +19,7 @@ export const LAZY_ONLY_MODULES: readonly string[] = [
   '/src/domain/documentForm/validation.ts',
   '/src/domain/documentForm/fields.tsx',
   '/src/domain/documentForm/defaults.tsx',
+  '/src/domain/documentForm/baseSchemas/',
   '/node_modules/ajv/',
   '/node_modules/ajv-formats/',
 ];

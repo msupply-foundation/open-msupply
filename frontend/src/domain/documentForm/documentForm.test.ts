@@ -17,6 +17,7 @@ import {
   type Path,
   type TextPath,
 } from './paths';
+import { baseSchemaFor } from './baseSchemas';
 import { fieldSchemaInfo, type JsonSchema } from './schemaNode';
 import { validateDocument } from './validation';
 
@@ -333,5 +334,55 @@ describe('withFirstNoteText', () => {
     expect(
       withFirstNoteText([{ text: 'x' }, { text: 'y' }], '', author, now)
     ).toEqual([{ text: 'y' }]);
+  });
+});
+
+// A registry entry whose schema says nothing about the base fields: the e2e
+// datafile's immunisation enrolment ships `{ type: 'object' }`. The server
+// still parses an enrolment's date as RFC 3339, so the host must hold the
+// draft to the base type.
+describe('the base schema behind a thin registry schema', () => {
+  const thin = { id: 'thin', jsonSchema: { type: 'object' } };
+  const draftFor = () =>
+    createDraft<{ enrolmentDatetime: string; programEnrolmentId?: string }>({
+      schema: () => thin,
+      baseSchema: () => baseSchemaFor('PROGRAM_ENROLMENT'),
+      validate: () => validateDocument,
+    });
+
+  it("takes the base type's format and required mark", () => {
+    createRoot(dispose => {
+      const c = draftFor();
+      expect(c.draft.schemaFor('enrolmentDatetime')).toEqual({
+        required: true,
+        format: 'date-time',
+        enum: undefined,
+      });
+      dispose();
+    });
+  });
+
+  it('refuses a bare date the thin schema would let through', () => {
+    createRoot(dispose => {
+      const c = draftFor();
+      c.reset({ enrolmentDatetime: '2026-09-21' });
+      expect(c.validation.valid()).toBe(false);
+      expect(c.draft.errorFor('enrolmentDatetime')).toBe(
+        'error.document-invalid-date-time'
+      );
+      c.draft.set('enrolmentDatetime', '2026-09-20T12:00:00.000Z');
+      expect(c.validation.valid()).toBe(true);
+      dispose();
+    });
+  });
+
+  it('has a base schema for every form category but Custom', () => {
+    expect(baseSchemaFor('PATIENT')?.id).toBe('base:Patient');
+    expect(baseSchemaFor('PROGRAM_ENROLMENT')?.id).toBe(
+      'base:ProgramEnrolment'
+    );
+    expect(baseSchemaFor('ENCOUNTER')?.id).toBe('base:Encounter');
+    expect(baseSchemaFor('CONTACT_TRACE')?.id).toBe('base:ContactTrace');
+    expect(baseSchemaFor('CUSTOM')).toBeUndefined();
   });
 });

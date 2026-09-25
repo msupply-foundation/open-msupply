@@ -69,7 +69,15 @@ export interface DraftController<T> {
 }
 
 export interface CreateDraftOptions {
+  /** The registry entry's current schema: the document type's own. */
   schema: Accessor<DraftSchema | undefined>;
+  /**
+   * The category's base schema (baseSchemas/). The draft is validated against
+   * it as well, and a field's facts fall back to it wherever the type's own
+   * schema says nothing: a thin or legacy schema still gets the base fields'
+   * formats, required marks and checks, which the server applies regardless.
+   */
+  baseSchema?: Accessor<DraftSchema | undefined>;
   /** The loaded validator; undefined until the lazy chunk has arrived. */
   validate: Accessor<ValidateDocument | undefined>;
   readOnly?: Accessor<boolean>;
@@ -120,11 +128,14 @@ export const createDraft = <T extends object>(
 
   const errors = createMemo((): FieldError[] => {
     version();
-    const schema = options.schema();
     const validate = options.validate();
     const found: FieldError[] = [];
-    if (schema && validate) {
+    const schemas = [options.schema(), options.baseSchema?.()];
+    for (const schema of schemas) {
+      if (!schema || !validate) continue;
       for (const e of validate(schema.id, schema.jsonSchema, unwrap(store))) {
+        // One message per field: the type's own schema speaks first.
+        if (found.some(f => f.id === e.path)) continue;
         found.push({
           id: e.path,
           label: labelFor(e.path),
@@ -169,7 +180,15 @@ export const createDraft = <T extends object>(
     },
     schemaFor: path => {
       const schema = options.schema();
-      return schema ? fieldSchemaInfo(schema.jsonSchema, path) : undefined;
+      const base = options.baseSchema?.();
+      const own = schema ? fieldSchemaInfo(schema.jsonSchema, path) : undefined;
+      const fallback = base ? fieldSchemaInfo(base.jsonSchema, path) : undefined;
+      if (!own || !fallback) return own ?? fallback;
+      return {
+        required: own.required || fallback.required,
+        format: own.format ?? fallback.format,
+        enum: own.enum ?? fallback.enum,
+      };
     },
     errorFor: path => validation.errorFor(path),
     unresolved: path => unresolvedValues()[path],

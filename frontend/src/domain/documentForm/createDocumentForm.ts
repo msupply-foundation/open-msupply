@@ -272,6 +272,10 @@ export const createDocumentForm = <T extends object>(
         ? { id: r.formSchemaId, jsonSchema: r.jsonSchema as JsonSchema }
         : undefined;
     },
+    baseSchema: () => {
+      const r = registry();
+      return r ? gated(library)?.baseSchemaFor(r.category) : undefined;
+    },
     validate: () => gated(library)?.validateDocument,
     readOnly: saving,
     labels: options.labels,
