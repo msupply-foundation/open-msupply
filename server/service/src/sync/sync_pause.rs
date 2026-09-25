@@ -12,7 +12,7 @@
 use repository::{RepositoryError, SystemLogType, UserAccountRowRepository};
 
 use crate::{
-    activity_log::system_log,
+    activity_log::system_log_in_background,
     service_provider::{ServiceContext, ServiceProvider},
     subscription::SubscriptionTrigger,
 };
@@ -39,7 +39,13 @@ pub fn set_sync_paused(
         } else {
             format!("Sync resumed by {username}")
         };
-        system_log(&ctx.connection, SystemLogType::SyncPauseChanged, &message)?;
+        // Off the request, so the switch returns even while an integration holds `changelog`
+        // (see `system_log_in_background`).
+        system_log_in_background(
+            service_provider.connection_manager.clone(),
+            SystemLogType::SyncPauseChanged,
+            message,
+        );
     }
 
     // Emit even when unchanged: a client that toggled expects a fresh frame either way.
@@ -54,11 +60,11 @@ pub fn set_sync_paused(
 mod test {
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
-        SystemLogRowRepository, SystemLogType,
+        SystemLogType,
     };
 
     use super::set_sync_paused;
-    use crate::test_helpers::setup_all_and_service_provider;
+    use crate::test_helpers::{setup_all_and_service_provider, wait_for_system_log_messages};
 
     #[actix_rt::test]
     async fn set_sync_paused_persists_and_logs_the_user() {
@@ -71,20 +77,19 @@ mod test {
         let service_context = &ctx.service_context;
         let user_id = mock_user_account_a().id;
 
-        let pause_logs = || {
-            SystemLogRowRepository::new(&service_context.connection)
-                .find_all()
-                .unwrap()
-                .into_iter()
-                .filter(|log| log.r#type == SystemLogType::SyncPauseChanged)
-                .collect::<Vec<_>>()
+        let pause_logs = |expected: usize| {
+            wait_for_system_log_messages(
+                &service_context.connection,
+                SystemLogType::SyncPauseChanged,
+                expected,
+            )
         };
 
         assert!(!service_provider
             .settings
             .is_sync_paused(service_context)
             .unwrap());
-        assert!(pause_logs().is_empty());
+        assert!(pause_logs(0).is_empty());
 
         // Pause: persisted, and logged once naming the user.
         assert!(set_sync_paused(service_provider, service_context, &user_id, true).unwrap());
@@ -92,17 +97,12 @@ mod test {
             .settings
             .is_sync_paused(service_context)
             .unwrap());
-        let logs = pause_logs();
-        assert_eq!(logs.len(), 1);
-        assert_eq!(
-            logs[0].message.as_deref(),
-            Some("Sync paused by username_a")
-        );
-        assert!(!logs[0].is_error);
+        let logs = pause_logs(1);
+        assert_eq!(logs, vec!["Sync paused by username_a".to_string()]);
 
         // Setting the same state again is a no-op for the log.
         assert!(set_sync_paused(service_provider, service_context, &user_id, true).unwrap());
-        assert_eq!(pause_logs().len(), 1);
+        assert_eq!(pause_logs(1).len(), 1);
 
         // Resume: persisted and logged.
         assert!(!set_sync_paused(service_provider, service_context, &user_id, false).unwrap());
@@ -110,18 +110,12 @@ mod test {
             .settings
             .is_sync_paused(service_context)
             .unwrap());
-        let logs = pause_logs();
+        let logs = pause_logs(2);
         assert_eq!(logs.len(), 2);
-        assert_eq!(
-            logs[1].message.as_deref(),
-            Some("Sync resumed by username_a")
-        );
+        assert!(logs.contains(&"Sync resumed by username_a".to_string()));
 
         // An unknown user id falls back to the id itself rather than failing.
         set_sync_paused(service_provider, service_context, "not_a_user", true).unwrap();
-        assert_eq!(
-            pause_logs()[2].message.as_deref(),
-            Some("Sync paused by not_a_user")
-        );
+        assert!(pause_logs(3).contains(&"Sync paused by not_a_user".to_string()));
     }
 }

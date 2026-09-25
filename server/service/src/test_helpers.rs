@@ -132,3 +132,30 @@ pub mod email_test {
         println!("Skipping email sending");
     }
 }
+
+/// Messages of the system log entries of `log_type`, once at least `expected` exist. Entries
+/// written with `system_log_in_background` land shortly after the call that spawned them, so
+/// this polls for up to five seconds before returning what is there.
+pub(crate) fn wait_for_system_log_messages(
+    connection: &StorageConnection,
+    log_type: repository::SystemLogType,
+    expected: usize,
+) -> Vec<String> {
+    let read = || -> Vec<String> {
+        repository::SystemLogRowRepository::new(connection)
+            .find_all()
+            .unwrap()
+            .into_iter()
+            .filter(|log| log.r#type == log_type)
+            .filter_map(|log| log.message)
+            .collect()
+    };
+    for _ in 0..100 {
+        let messages = read();
+        if messages.len() >= expected {
+            return messages;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    read()
+}

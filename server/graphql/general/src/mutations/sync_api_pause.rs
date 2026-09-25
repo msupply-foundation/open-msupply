@@ -41,21 +41,21 @@ pub fn set_sync_api_paused_mutation(ctx: &Context<'_>, paused: bool) -> Result<S
         },
     )?;
 
-    let service_context = ctx
-        .service_provider()
-        .context("".to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context("".to_string(), user.user_id)?;
 
-    let is_paused = set_sync_api_paused(&service_context, paused).map_err(|error| {
-        let graphql_error = match error {
-            SetSyncApiPausedError::NotACentralServer => {
-                StandardGraphqlError::BadUserInput("Not a central server".to_string())
-            }
-            SetSyncApiPausedError::DatabaseError(error) => {
-                StandardGraphqlError::InternalError(format!("{error:?}"))
-            }
-        };
-        graphql_error.extend()
-    })?;
+    let is_paused =
+        set_sync_api_paused(service_provider, &service_context, paused).map_err(|error| {
+            let graphql_error = match error {
+                SetSyncApiPausedError::NotACentralServer => {
+                    StandardGraphqlError::BadUserInput("Not a central server".to_string())
+                }
+                SetSyncApiPausedError::DatabaseError(error) => {
+                    StandardGraphqlError::InternalError(format!("{error:?}"))
+                }
+            };
+            graphql_error.extend()
+        })?;
 
     Ok(SyncApiPausedNode { is_paused })
 }

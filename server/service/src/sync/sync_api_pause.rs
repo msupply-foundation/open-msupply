@@ -7,7 +7,10 @@ use repository::{
     UserAccountRowRepository,
 };
 
-use crate::{activity_log::system_log, service_provider::ServiceContext};
+use crate::{
+    activity_log::system_log_in_background,
+    service_provider::{ServiceContext, ServiceProvider},
+};
 
 use super::CentralServerConfig;
 
@@ -31,7 +34,12 @@ pub fn is_sync_api_paused(connection: &StorageConnection) -> Result<bool, Reposi
 
 /// Persist the pause state and record who changed it in the system log. Permission is checked
 /// by the caller (graphql requires server admin).
+///
+/// The flag is committed on its own and the system log is written in the background, so the
+/// switch takes effect even while an integration holds `changelog` (see
+/// [`system_log_in_background`]).
 pub fn set_sync_api_paused(
+    service_provider: &ServiceProvider,
     ctx: &ServiceContext,
     paused: bool,
 ) -> Result<bool, SetSyncApiPausedError> {
@@ -45,17 +53,13 @@ pub fn set_sync_api_paused(
         .unwrap_or_else(|| ctx.user_id.clone());
     let action = if paused { "paused" } else { "resumed" };
 
-    ctx.connection
-        .transaction_sync(|connection| {
-            KeyValueStoreRepository::new(connection)
-                .set_bool(KeyType::SettingsSyncApiIsPaused, Some(paused))?;
-            system_log(
-                connection,
-                SystemLogType::SyncApiPauseChanged,
-                &format!("Sync API {action} by {username}"),
-            )
-        })
-        .map_err(|error| error.to_inner_error())?;
+    KeyValueStoreRepository::new(&ctx.connection)
+        .set_bool(KeyType::SettingsSyncApiIsPaused, Some(paused))?;
+    system_log_in_background(
+        service_provider.connection_manager.clone(),
+        SystemLogType::SyncApiPauseChanged,
+        format!("Sync API {action} by {username}"),
+    );
 
     Ok(paused)
 }
@@ -64,13 +68,15 @@ pub fn set_sync_api_paused(
 mod test {
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
-        SystemLogRowRepository, SystemLogType,
+        SystemLogType,
     };
 
     use super::*;
     use crate::{
         sync::test_util_set_is_central_server,
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        test_helpers::{
+            setup_all_and_service_provider, wait_for_system_log_messages, ServiceTestContext,
+        },
     };
 
     #[actix_rt::test]
@@ -91,24 +97,22 @@ mod test {
 
         test_util_set_is_central_server(false);
         assert_eq!(
-            set_sync_api_paused(&ctx, true),
+            set_sync_api_paused(&service_provider, &ctx, true),
             Err(SetSyncApiPausedError::NotACentralServer)
         );
         assert!(!is_sync_api_paused(&connection).unwrap());
 
         test_util_set_is_central_server(true);
-        assert_eq!(set_sync_api_paused(&ctx, true), Ok(true));
+        assert_eq!(set_sync_api_paused(&service_provider, &ctx, true), Ok(true));
         assert!(is_sync_api_paused(&connection).unwrap());
-        assert_eq!(set_sync_api_paused(&ctx, false), Ok(false));
+        assert_eq!(
+            set_sync_api_paused(&service_provider, &ctx, false),
+            Ok(false)
+        );
         assert!(!is_sync_api_paused(&connection).unwrap());
 
-        let mut messages: Vec<String> = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap()
-            .into_iter()
-            .filter(|log| log.r#type == SystemLogType::SyncApiPauseChanged && !log.is_error)
-            .filter_map(|log| log.message)
-            .collect();
+        let mut messages =
+            wait_for_system_log_messages(&connection, SystemLogType::SyncApiPauseChanged, 2);
         messages.sort();
         assert_eq!(
             messages,
