@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { deleteEach, outcomeOf, refusalReason } from './refusals';
 
-// Anchors: spec/asset-catalogue/acceptance.md — AC-A2 (off-central refusal),
-// AC-D3 / AC-D4 (the in-use guard and a mixed bulk delete), AC-R13 (a reason
-// delete). The item delete and the reason writes refuse ONLY with top-level
+// Anchors: spec/asset-catalogue/cases — OMS-REG-CAT-09.15 / 03.33 (the
+// off-central refusal), OMS-REG-CAT-09.4–.6 (the in-use guard and a mixed bulk
+// delete), OMS-REG-CAT-03.12 (a reason delete). The item delete and the reason writes refuse ONLY with top-level
 // errors (contract § deleting catalogue items), which is what is read here.
 
 const error = (details: string, message = 'Bad user input') => ({
@@ -11,7 +11,7 @@ const error = (details: string, message = 'Bad user input') => ({
   extensions: { details },
 });
 
-describe('AC-D3 — an in-use item is refused with its reason', () => {
+describe('OMS-REG-CAT-09.4 — an in-use item is refused with its reason', () => {
   it('maps AssetCatalogueItemInUse to the in-use message', () => {
     expect(refusalReason([error('AssetCatalogueItemInUse')])).toBe(
       'error.asset-catalogue-item-in-use'
@@ -27,7 +27,7 @@ describe('AC-D3 — an in-use item is refused with its reason', () => {
   });
 });
 
-describe('AC-A2 — a write off the central server is refused as not central', () => {
+describe('OMS-REG-CAT-09.15 / OMS-REG-CAT-03.33 — a write off the central server is refused as not central', () => {
   it('maps the wrapper refusal', () => {
     expect(
       refusalReason([error('Not a central server', 'Internal error')])
@@ -57,7 +57,7 @@ describe('outcomes', () => {
   });
 });
 
-describe('AC-D4 / AC-R13 — each selected record is deleted on its own', () => {
+describe('OMS-REG-CAT-09.5 / .6 / OMS-REG-CAT-03.12 — each selected record is deleted on its own', () => {
   it('a refusal of one leaves the others deleted, and both sides are reported', async () => {
     const summary = await deleteEach(['a', 'in-use', 'b'], async record =>
       record === 'in-use'

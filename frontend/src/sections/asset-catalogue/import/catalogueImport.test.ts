@@ -20,9 +20,8 @@ const {
 } = await import('./catalogueImport');
 type Lookups = import('./catalogueImport').CatalogueLookups;
 
-// Anchors: spec/asset-catalogue/acceptance.md — the Import group (AC-I*), the
-// identity criteria the import exercises (AC-C1, AC-C3) and the export of
-// failed rows. The upload zone, the dialog and the wire are the e2e suite's;
+// Anchors: spec/asset-catalogue/cases/OMS-REG-CAT-02 — the import, the
+// identity rules it meets (.37, .39) and the refused-rows download. The upload zone, the dialog and the wire are the e2e suite's;
 // here the rules the import applies are pinned as pure functions.
 
 const lookups: Lookups = {
@@ -105,7 +104,7 @@ const errorsOf = (cells: string[]) => parse(cells).rows[0]!.errors;
 const withCell = (index: number, value: string) =>
   good.map((cell, i) => (i === index ? value : cell));
 
-describe('AC-I1 — the template', () => {
+describe('OMS-REG-CAT-02.4 — the template', () => {
   it('holds the seven item columns, one column per distinct property key, and one example row', () => {
     const lines = templateCsv(lookups.properties).split('\r\n');
     expect(lines).toHaveLength(2);
@@ -137,7 +136,7 @@ describe('AC-I1 — the template', () => {
   });
 });
 
-describe('AC-I3 / AC-I12 — well-formed rows', () => {
+describe('OMS-REG-CAT-02.22 / .13 — well-formed rows', () => {
   it('a complete row carries no error, blank manufacturer and property cells included', () => {
     expect(errorsOf(good)).toEqual([]);
     expect(errorsOf(withCell(3, ''))).toEqual([]);
@@ -149,7 +148,7 @@ describe('AC-I3 / AC-I12 — well-formed rows', () => {
   });
 });
 
-describe('AC-I6 / AC-I7 / AC-I8 — required cells', () => {
+describe('OMS-REG-CAT-02.14 — required cells', () => {
   it('a blank sub-catalogue is named as missing', () => {
     expect(errorsOf(withCell(0, '  '))).toEqual([
       'error.field-must-be-specified(label.sub-catalogue)',
@@ -167,7 +166,7 @@ describe('AC-I6 / AC-I7 / AC-I8 — required cells', () => {
   });
 });
 
-describe('AC-I9 / AC-I10 / AC-I11 — names that match nothing', () => {
+describe('OMS-REG-CAT-02.8 / .10 / .23 — names that match nothing', () => {
   it.each([
     [5, 'Bogus class', 'label.class'],
     [6, 'Bogus category', 'label.category'],
@@ -182,7 +181,7 @@ describe('AC-I9 / AC-I10 / AC-I11 — names that match nothing', () => {
   });
 });
 
-describe('AC-I13 / AC-I28 — allowed values', () => {
+describe('OMS-REG-CAT-02.24 / .25 — allowed values', () => {
   it('a value outside the list is refused', () => {
     expect(errorsOf(withCell(8, 'Sometimes'))).toEqual([
       'error.invalid-field-value(Temperature monitoring device|Sometimes)',
@@ -194,7 +193,7 @@ describe('AC-I13 / AC-I28 — allowed values', () => {
   });
 });
 
-describe('AC-I14 — number properties', () => {
+describe('OMS-REG-CAT-02.26 — number properties', () => {
   it('a non-number is refused, once per definition of its key (README › captured as-is)', () => {
     expect(errorsOf(withCell(7, 'abc'))).toEqual([
       'error.invalid-field-value(Storage capacity +5 °C (litres)|abc)',
@@ -208,7 +207,7 @@ describe('AC-I14 — number properties', () => {
   });
 });
 
-describe('AC-I15 / AC-I16 — date properties', () => {
+describe('OMS-REG-CAT-02.27 / .28 — date properties', () => {
   it('DD/MM/YYYY is stored as the plain date', () => {
     expect(parse(withCell(9, '01/02/2024')).rows[0]!.properties).toEqual(
       Object.fromEntries([['initial_mapping_date', '2024-02-01']])
@@ -224,7 +223,7 @@ describe('AC-I15 / AC-I16 — date properties', () => {
   );
 });
 
-describe('AC-I17 — a failing row blocks the whole file', () => {
+describe('OMS-REG-CAT-02.29 — a failing row blocks the whole file', () => {
   it('only a file of clean rows can start', () => {
     expect(canStartImport(parse(good, good).rows)).toBe(true);
     expect(canStartImport(parse(good, withCell(1, '')).rows)).toBe(false);
@@ -232,7 +231,7 @@ describe('AC-I17 — a failing row blocks the whole file', () => {
   });
 });
 
-describe('AC-I19 — the item cells are read by position', () => {
+describe('OMS-REG-CAT-02.31 — the item cells are read by position', () => {
   it('renamed headings read the same rows', () => {
     const renamed = parseCatalogueRows(
       [['a', 'b', 'c', 'd', 'e', 'f', 'g'], good.slice(0, 7)],
@@ -248,7 +247,7 @@ describe('AC-I19 — the item cells are read by position', () => {
   });
 });
 
-describe('AC-I20 — classification is checked to exist, not to belong together', () => {
+describe('OMS-REG-CAT-02.32 — classification is checked to exist, not to belong together', () => {
   it('a cold-room type under the refrigerator category passes as written', () => {
     const row = parse(withCell(2, 'Cold room')).rows[0]!;
     expect(row.errors).toEqual([]);
@@ -256,7 +255,7 @@ describe('AC-I20 — classification is checked to exist, not to belong together'
   });
 });
 
-describe('AC-I5 / AC-C1 / AC-C3 — the insert a row becomes', () => {
+describe('OMS-REG-CAT-02.7 / .37 / .39 — the insert a row becomes', () => {
   it('carries every item cell as typed and the specification as JSON', () => {
     const row = parse(withCell(7, '4')).rows[0]!;
     expect(toInsertInput(row, 'id-1')).toEqual({
@@ -271,19 +270,19 @@ describe('AC-I5 / AC-C1 / AC-C3 — the insert a row becomes', () => {
       properties: '{"storage_capacity_5c":4}',
     });
   });
-  it('keeps the code as typed — codes differing by case stay distinct (AC-C1)', () => {
+  it('keeps the code as typed — codes differing by case stay distinct (OMS-REG-CAT-02.37)', () => {
     expect(
       toInsertInput(parse(withCell(1, 'e001/001-c')).rows[0]!, 'i').code
     ).toBe('e001/001-c');
   });
-  it('a blank manufacturer is sent as none, so it never joins the manufacturer/model/type check (AC-C3)', () => {
+  it('a blank manufacturer is sent as none, so it never joins the manufacturer/model/type check (.39)', () => {
     expect(
       toInsertInput(parse(withCell(3, ' ')).rows[0]!, 'i').manufacturer
     ).toBeNull();
   });
 });
 
-describe('AC-I21 / AC-I23 — the reasons refused rows carry', () => {
+describe('OMS-REG-CAT-02.12 / .34 — the reasons refused rows carry', () => {
   const refused = (error: object) =>
     insertRefusal({
       __typename: 'InsertAssetCatalogueItemError',
@@ -319,7 +318,7 @@ describe('AC-I21 / AC-I23 — the reasons refused rows carry', () => {
   });
 });
 
-describe('AC-I22 / AC-I24 — the run adds each row on its own', () => {
+describe('OMS-REG-CAT-02.33 / .35 — the run adds each row on its own', () => {
   it('returns only the refused rows, in file order, and reports progress per batch', async () => {
     const rows = parse(
       ...Array.from({ length: 23 }, (_, i) => withCell(1, `C-${i}`))
@@ -339,7 +338,7 @@ describe('AC-I22 / AC-I24 — the run adds each row on its own', () => {
   });
 });
 
-describe('AC-I18 / AC-I25 — the downloadable rows', () => {
+describe('OMS-REG-CAT-02.30 / .15 — the downloadable rows', () => {
   it("keep the upload's columns in its order with the reason appended", () => {
     const csv = rowsCsv(
       ['A', 'B', 'extra'],

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { typesFor } from './catalogueFilters';
 import { catalogueToCsv, type CatalogueRow } from './catalogueToCsv';
 
-// Anchors: spec/asset-catalogue/acceptance.md — AC-F2 / AC-F3 (the type
-// filter's options) and AC-E1 (the export's columns). The filtering itself is
+// Anchors: spec/asset-catalogue/cases — OMS-REG-CAT-01.25 / .26 (the type
+// filter's options) and OMS-REG-CAT-02.3 (the export's columns). The filtering itself is
 // the server's; the e2e suite drives it.
 
 const types = [
@@ -12,7 +12,7 @@ const types = [
   { id: 'fridge', name: 'Refrigerator', categoryId: 'fridges' },
 ];
 
-describe('AC-F2 / AC-F3 — the type filter follows the chosen category', () => {
+describe('OMS-REG-CAT-01.25 / .26 — the type filter follows the chosen category', () => {
   it('a chosen category offers only its types', () => {
     expect(typesFor(types, 'rooms').map(t => t.name)).toEqual([
       'Cold room',
@@ -24,7 +24,7 @@ describe('AC-F2 / AC-F3 — the type filter follows the chosen category', () => 
   });
 });
 
-describe("AC-E1 — the export carries the list's seven columns in order", () => {
+describe("OMS-REG-CAT-02.3 — the export carries the list's seven columns in order", () => {
   it('headings and one line per item', () => {
     const row: CatalogueRow = {
       id: '1',

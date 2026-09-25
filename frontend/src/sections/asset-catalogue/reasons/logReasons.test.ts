@@ -7,9 +7,9 @@ import {
   toReasonInput,
 } from './logReasons';
 
-// Anchors: spec/asset-catalogue/acceptance.md — the Log reasons group.
+// Anchors: spec/asset-catalogue/cases/OMS-REG-CAT-03 — the log reasons.
 
-describe('AC-R7 — a new reason starts at Functioning, comments not required', () => {
+describe('OMS-REG-CAT-03.17 — a new reason starts at Functioning, comments not required', () => {
   it('the empty draft', () => {
     expect(emptyDraft()).toEqual({
       reason: '',
@@ -19,7 +19,7 @@ describe('AC-R7 — a new reason starts at Functioning, comments not required', 
   });
 });
 
-describe('AC-R8 — a blank or spaces-only reason is missing', () => {
+describe('OMS-REG-CAT-03.18 — a blank or spaces-only reason is missing', () => {
   it.each(['', '   '])('"%s" is missing', reason => {
     expect(isReasonMissing({ ...emptyDraft(), reason })).toBe(true);
   });
@@ -28,7 +28,7 @@ describe('AC-R8 — a blank or spaces-only reason is missing', () => {
   });
 });
 
-describe('AC-R9 / AC-R10 — a reason for each of the six statuses', () => {
+describe('OMS-REG-CAT-03.2–.9 / .19 — a reason for each of the six statuses', () => {
   it("offers the six statuses in the server's order", () => {
     expect(statusOptions().map(o => o.value)).toEqual([
       'DECOMMISSIONED',
@@ -57,7 +57,7 @@ describe('AC-R9 / AC-R10 — a reason for each of the six statuses', () => {
   );
 });
 
-describe('AC-R11 — nothing checks a duplicate reason text', () => {
+describe('OMS-REG-CAT-03.20 — nothing checks a duplicate reason text', () => {
   it('two drafts with the same text and status both become inserts', () => {
     const draft = {
       reason: 'Stored',

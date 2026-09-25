@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOGUE_WRITE, REASON_WRITE, missingFor } from './access';
 
-// Anchors: spec/asset-catalogue/acceptance.md AC-A5–AC-A10 — the permission
-// mirror. Each write needs two permissions; the mirror names what is missing,
+// Anchors: spec/asset-catalogue/cases — OMS-REG-CAT-09.12–.14 and
+// OMS-REG-CAT-03.30–.32, the permission mirror. Each write needs two permissions; the mirror names what is missing,
 // in the spelling the permission-denied modal humanises. (That the affordance
 // then raises the modal and sends nothing is the e2e suite's.)
 
@@ -11,7 +11,7 @@ const holding =
   (permission: string) =>
     held.includes(permission);
 
-describe('AC-A5 / AC-A6 / AC-A9 — catalogue writes need the catalogue-item change AND the central-data permission', () => {
+describe('OMS-REG-CAT-09.12 / .13 / .14 — catalogue writes need the catalogue-item change AND the central-data permission', () => {
   it('both held: nothing missing', () => {
     expect(
       missingFor(
@@ -33,7 +33,7 @@ describe('AC-A5 / AC-A6 / AC-A9 — catalogue writes need the catalogue-item cha
   });
 });
 
-describe('AC-A7 / AC-A8 / AC-A10 — reason writes need the asset change AND the central-data permission', () => {
+describe('OMS-REG-CAT-03.30 / .31 / .32 — reason writes need the asset change AND the central-data permission', () => {
   it('asset change alone: the central-data permission is missing', () => {
     expect(missingFor(REASON_WRITE, holding('ASSET_MUTATE'))).toEqual([
       'EditCentralData',
