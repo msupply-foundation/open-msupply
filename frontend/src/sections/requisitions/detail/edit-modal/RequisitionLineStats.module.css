@@ -133,7 +133,10 @@
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
-  min-width: 0;
+  /* Never narrower than its number, so the numbers read side by side even in
+     a sliver axis (stock far above target); only the number sets this, as the
+     month count wraps anywhere. */
+  min-width: min-content;
   /* Fixed height so a sliver-width cell whose label wraps is clipped, never
      growing the row; the tooltip carries the full text. */
   height: 2.4rem;
@@ -144,11 +147,20 @@
   border-block-end: 1px solid var(--gray-dark);
 }
 
+/* With no month counts to show, a cell shrinks to its number's one line. */
+.numbersOnly .monthCell {
+  height: auto;
+}
+
 .monthValue {
   margin-block-start: auto;
   color: var(--gray-dark);
   line-height: 1.2;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.monthNumber {
+  white-space: nowrap;
 }
 
 /* The value bars (stock on hand, suggested order) proportioned to target. */
@@ -160,8 +172,10 @@
 
 .divider {
   flex: 0 0 auto;
+  align-self: stretch;
   width: 1px;
-  height: 2.8rem;
+  /* Stretches with the row, so it reaches the foot of a label that wraps. */
+  min-height: 2.8rem;
   background: var(--gray-dark);
 }
 
@@ -181,14 +195,14 @@
   color: var(--primary-contrast);
 }
 
+/* Wraps onto more lines in a narrow bar rather than truncating; the row, and
+   its dividers, grow to fit. */
 .valueLabel {
   padding-block-start: var(--space-2);
   padding-inline-end: 0.6rem;
   text-align: end;
   color: var(--text-body);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
 }
 
 /* The volume block (AC-LE12): plain guidance lines; the no-capacity message

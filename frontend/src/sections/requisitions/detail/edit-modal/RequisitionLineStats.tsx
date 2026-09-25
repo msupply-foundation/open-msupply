@@ -212,8 +212,12 @@ export const RequisitionLineStats: Component<{
     const showText = () => axisWidth() > MIN_AXIS_WIDTH_FOR_TEXT;
     const months = () =>
       Array.from({ length: Math.ceil(maxMonths()) }, (_, i) => i + 1);
-    const monthText = (m: number) =>
-      `${formatNumber(Math.ceil(amc() * m))}${showText() ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})` : ''}`;
+    const monthNumber = (m: number) => formatNumber(Math.ceil(amc() * m));
+    const monthCount = (m: number) =>
+      showText()
+        ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})`
+        : '';
+    const monthText = (m: number) => `${monthNumber(m)}${monthCount(m)}`;
     const barFlex = (value: number) =>
       target() === 0
         ? 0
@@ -235,7 +239,11 @@ export const RequisitionLineStats: Component<{
           <h3 class={styles.sectionHeading}>
             {`${t('heading.target-quantity')} (${measure()})`}
           </h3>
-          <div class={styles.monthAxis} style={{ width: `${axisWidth()}%` }}>
+          <div
+            class={styles.monthAxis}
+            classList={{ [styles.numbersOnly ?? '']: !showText() }}
+            style={{ width: `${axisWidth()}%` }}
+          >
             <div class={styles.monthEdge}>
               <Show when={showText()}>
                 <span class={styles.monthEdgeLabel}>0</span>
@@ -244,7 +252,10 @@ export const RequisitionLineStats: Component<{
             <For each={months()}>
               {m => (
                 <div class={styles.monthCell} title={monthText(m)}>
-                  <div class={styles.monthValue}>{monthText(m)}</div>
+                  <div class={styles.monthValue}>
+                    <span class={styles.monthNumber}>{monthNumber(m)}</span>
+                    {monthCount(m)}
+                  </div>
                 </div>
               )}
             </For>
