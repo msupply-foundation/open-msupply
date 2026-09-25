@@ -21,7 +21,9 @@
    of consumption; its width shrinks when stock exceeds the target. A cell is
    never narrower than its number, so the numbers always read side by side on
    one line — in a sliver axis (stock far above target) the cells outgrow the
-   axis's share of the row rather than stack the digits. The rest of a label
+   axis's share of the row rather than stack the digits. A long target (24
+   months) can do the same at full width, running the axis past the chart's
+   edge, as the original's cells do. The rest of a label
    wraps anywhere and clips, so it never bleeds into its neighbour;
    equal-height cells keep the baseline (cell bottom border) straight. When
    the cells are too narrow for any text (numbersOnly), they shrink to the one

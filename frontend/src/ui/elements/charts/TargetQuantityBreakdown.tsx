@@ -1,4 +1,4 @@
-import { createSignal, For, onCleanup, Show } from 'solid-js';
+import { createMemo, createSignal, For, onCleanup, Show } from 'solid-js';
 import { t } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { remToPx } from '../../utils/rem';
@@ -10,6 +10,24 @@ const round = (n: number) => Math.round(n);
 const MIN_CELL_REM_FOR_TEXT = 3.75;
 // Displayed values to 2 decimal places (the layout maths below keep round()).
 const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
+
+/** Whether the month axis has room for text: the month counts, the "0" and the
+ *  threshold / target markers. The original gates on the axis alone (wider
+ *  than 5% of the row), but with many months that still leaves cells too
+ *  narrow: their text broke mid-word and pushed the number out of view. So
+ *  each cell (the axis's share of the chart, split evenly across its months)
+ *  must also be at least `minCellPx` wide. Until the chart is measured
+ *  (`chartPx` undefined), only the original's gate applies. */
+export const monthAxisFitsText = (
+  axisPercent: number,
+  months: number,
+  chartPx: number | undefined,
+  minCellPx: number
+): boolean => {
+  if (axisPercent <= 5) return false;
+  if (chartPx === undefined) return true;
+  return (chartPx * axisPercent) / 100 / Math.max(months, 1) >= minCellPx;
+};
 
 // One horizontal value bar (stock on hand / suggested order). A zero-value bar
 // collapses to just its start divider — mirrors the app's original ValueBar.
@@ -87,19 +105,15 @@ export const TargetQuantityBreakdown = (props: {
     observer.observe(el);
     onCleanup(() => observer.disconnect());
   };
-  // The month counts, the "0" and the threshold / target markers show only
-  // when each cell has room for them. The original gates on the axis alone
-  // (wider than 5% of the row), but with many months that still leaves cells
-  // too narrow: their text broke mid-word and pushed the number out of view.
-  // Until the chart is measured, only the original's gate applies.
-  const showText = () => {
-    if (targetWidth() <= 5) return false;
-    const width = chartWidth();
-    if (width === undefined) return true;
-    const cellWidth =
-      (width * targetWidth()) / 100 / Math.max(months().length, 1);
-    return cellWidth >= remToPx(MIN_CELL_REM_FOR_TEXT);
-  };
+  // A memo: every cell reads it, and the chart width changes on each resize.
+  const showText = createMemo(() =>
+    monthAxisFitsText(
+      targetWidth(),
+      months().length,
+      chartWidth(),
+      remToPx(MIN_CELL_REM_FOR_TEXT)
+    )
+  );
   const monthValue = (m: number) => amc() * m;
   const monthCount = (m: number) =>
     ` (${m} ${m === 1 ? t('label.month') : t('label.months')})`;
