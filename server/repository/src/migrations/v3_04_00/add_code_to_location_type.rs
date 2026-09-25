@@ -66,7 +66,7 @@ mod test {
     #[actix_rt::test]
     async fn migration_add_code_to_location_type() {
         let previous_version = v3_02_00::V3_02_00.version();
-        let version = v3_03_00::V3_03_00.version();
+        let version = v3_04_00::V3_04_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!("migration_{version}_add_code_to_location_type"),

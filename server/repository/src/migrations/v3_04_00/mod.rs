@@ -3,11 +3,11 @@ use crate::StorageConnection;
 
 mod add_code_to_location_type;
 
-pub(crate) struct V3_03_00;
+pub(crate) struct V3_04_00;
 
-impl Migration for V3_03_00 {
+impl Migration for V3_04_00 {
     fn version(&self) -> Version {
-        Version::from_str("3.03.0")
+        Version::from_str("3.04.0")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -22,14 +22,14 @@ impl Migration for V3_03_00 {
 #[cfg(test)]
 mod test {
     #[actix_rt::test]
-    async fn migration_3_03_00() {
+    async fn migration_3_04_00() {
         use crate::migrations::*;
         use crate::test_db::*;
         use v3_02_00::V3_02_00;
-        use v3_03_00::V3_03_00;
+        use v3_04_00::V3_04_00;
 
         let previous_version = V3_02_00.version();
-        let version = V3_03_00.version();
+        let version = V3_04_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!("migration_{version}"),
