@@ -1,5 +1,8 @@
 {
   "data": {
+    "masterListItems": {
+      "nodes": [{ "id": "item-1" }]
+    },
     "invoices": {
       "nodes": [
         {
@@ -27,10 +30,7 @@
                   "id": "item-1",
                   "code": "ABC123",
                   "name": "Paracetamol 500mg",
-                  "unitName": "Tablet",
-                  "masterLists": [
-                    { "id": "ml-1", "name": "Essential Medicines" }
-                  ]
+                  "unitName": "Tablet"
                 }
               }
             ]
@@ -61,8 +61,7 @@
                   "id": "item-2",
                   "code": "DEF456",
                   "name": "Ibuprofen 200mg",
-                  "unitName": "Tablet",
-                  "masterLists": []
+                  "unitName": "Tablet"
                 }
               }
             ]
