@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   awaitingReason,
   defaultedPackSize,
+  differenceSize,
   isUncounted,
   lineDifference,
   packSizeEditable,
@@ -15,6 +16,8 @@ import {
 //         bar) and reads "Not counted"; any count (incl. 0) is an ordinary row
 //   .15 — pack size editable only on a batch with no stock line behind it
 //   .79/.80 — an editable batch's pack size defaults to the item's default
+//   .85 — the editor states a difference's size at 2 dp, and a nonzero one
+//         finer than that is marked rather than rounded away to 0
 //   .86 — a line awaits a reason while its count is off the snapshot in a
 //         direction that demands one and it holds none (.56/.57/.70 → none)
 // Pure count arithmetic — the cheapest layer to pin the exact rule; the detail
@@ -99,6 +102,33 @@ describe('OMS-REG-INV-03.79/.80 — editable pack size defaults to the item defa
 
   it('keeps a deliberate fractional or small pack size untouched', () => {
     expect(defaultedPackSize({ defaultPackSize: 12 }, 0.5)).toBe(0.5);
+  });
+});
+
+describe('OMS-REG-INV-03.85 — the difference size the editor states', () => {
+  it('rounds to the 2 dp a count is entered to, dropping float noise', () => {
+    expect(differenceSize(2.3 - 5)).toEqual({
+      packs: 2.7,
+      belowPrecision: false,
+    });
+    expect(differenceSize(3)).toEqual({ packs: 3, belowPrecision: false });
+  });
+
+  it('marks a nonzero difference finer than 0.01 instead of reading 0', () => {
+    // A part-pack snapshot (one unit out of a pack of 3) counted to its 2-dp
+    // display, and float noise in the stock totals — both still need a reason.
+    expect(differenceSize(9.67 - 29 / 3)).toEqual({
+      packs: 0,
+      belowPrecision: true,
+    });
+    expect(differenceSize(0.3 - (0.1 + 0.2))).toEqual({
+      packs: 0,
+      belowPrecision: true,
+    });
+  });
+
+  it('a level line is plain 0, not below precision', () => {
+    expect(differenceSize(0)).toEqual({ packs: 0, belowPrecision: false });
   });
 });
 
