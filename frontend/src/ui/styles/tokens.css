@@ -133,6 +133,11 @@
      for the boundaries a fill step alone can't carry: the footer's top edge,
      the flyout's outline. */
   --surface-edge: #e1ddd4;
+  /* The bottom bar's sync cell sits on its OWN ground (issue #519): the bar's
+     colour is store data, so a state colour drawn straight onto it could not
+     be held to any contrast ratio. An off-white patch gives the cell a known
+     ground at every bar colour, and on it the error red can be used. */
+  --footer-sync-bg: #fcfcfc;
 
   /* text (theme.ts → typography + palette.form) */
   --text-body: #1c1c28; /* body1 / th */
@@ -629,6 +634,8 @@
   --surface-chrome: #191921;
   --surface-sunken: #21212b;
   --surface-edge: #33333f;
+  /* The raised rung, so the cell lifts off the dark bar as it does the light. */
+  --footer-sync-bg: #2b2b3a;
 
   /* Elevation via near-BLACK shadows. The light theme's grey shadows are
      lighter than a dark surface, so they read as a glow — black reads as depth.

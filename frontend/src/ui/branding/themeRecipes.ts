@@ -224,6 +224,12 @@ export const TOKEN_RECIPES: Record<string, ModeRecipes> = {
     light: mix('page', 'body', 1),
     dark: mix('page', 'muted', 0.91),
   },
+  /* A hair off the page, as the sync cell's own ground on the bottom bar;
+     the raised rung in dark (tokens.css). */
+  '--footer-sync-bg': {
+    light: mix('page', 'body', 0.987),
+    dark: mix('page', 'muted', 0.91),
+  },
   '--drawer-selected-bg': {
     light: mix('page', 'body', 1),
     dark: mix('page', 'body', 0.94),
@@ -399,7 +405,7 @@ export const ROLES: Record<RoleName, RoleSpec> = {
       nav: ['--bg-drawer', '--bg-menu', '--surface-chrome'],
       navSelected: ['--drawer-selected-bg'],
       header: ['--header-bg'],
-      raised: ['--surface-raised'],
+      raised: ['--surface-raised', '--footer-sync-bg'],
       /* NB `--table-card-surface-disabled` is deliberately NOT here, though it
          is the same well one rung on: an author setting `sunken` would then
          paint a disabled card the SAME colour as the list it sits on, which is
@@ -488,6 +494,7 @@ export const NEUTRAL_FAMILY: string[] = [
   '--table-card-surface',
   '--table-card-surface-disabled',
   '--surface-raised',
+  '--footer-sync-bg',
   '--drawer-selected-bg',
   '--drawer-hover-bg',
   '--bg-login',
