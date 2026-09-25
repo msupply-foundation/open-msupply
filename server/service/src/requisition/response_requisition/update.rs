@@ -161,7 +161,16 @@ pub fn validate(
 
     let prefs = get_store_preferences(connection, store_id)?;
 
+    // The variance reason is asked of the store that made the variance. A
+    // requisition transferred from a customer's internal order carries THEIR
+    // requested quantities, so the reason for departing from the suggestion is
+    // theirs to give, and their own store preference decides whether they are
+    // asked for one at all. Asking this store instead would have it guess the
+    // customer's reasoning, and where the two stores are set up differently it
+    // dead-ends the requisition: every line save and the finalise are refused
+    // with no reason available to satisfy them (#712).
     if requisition_row.program_id.is_some()
+        && requisition_row.linked_requisition_id.is_none()
         && prefs.extra_fields_in_requisition
         && !reason_options.is_empty()
     {
@@ -234,19 +243,22 @@ mod test_update {
     use chrono::Utc;
     use repository::{
         mock::{
-            mock_finalised_response_requisition, mock_new_response_requisition,
-            mock_new_response_requisition_for_update_test, mock_response_program_requisition,
+            mock_finalised_response_requisition, mock_new_response_program_requisition,
+            mock_new_response_requisition, mock_new_response_requisition_for_update_test,
+            mock_request_program_requisition, mock_response_program_requisition,
             mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
             MockDataInserts,
         },
         requisition_row::{RequisitionRow, RequisitionStatus},
         test_db::setup_all,
-        ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
+        ActivityLogRowRepository, ActivityLogType, EqualFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionRowRepository, StorePreferenceRow,
+        StorePreferenceRowRepository,
     };
 
     #[actix_rt::test]
     async fn update_response_requisition_errors() {
-        let (_, _, connection_manager, _) =
+        let (_, connection, connection_manager, _) =
             setup_all("update_response_requisition_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
@@ -329,7 +341,89 @@ mod test_update {
             Err(ServiceError::CannotEditRequisition)
         );
 
-        // TODO: ReasonsNotProvided
+        // ReasonsNotProvided: a program requisition of this store's own making,
+        // with a line departing from the suggestion and no reason given
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&StorePreferenceRow {
+                id: mock_store_a().id,
+                extra_fields_in_requisition: true,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let unreasoned_line = mock_new_response_program_requisition().lines[0].clone();
+        let expected_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new().id(EqualFilter::equal_to(unreasoned_line.id)),
+            )
+            .unwrap();
+
+        assert_eq!(
+            service.update_response_requisition(
+                &context,
+                UpdateResponseRequisition {
+                    id: mock_new_response_program_requisition().requisition.id,
+                    status: Some(UpdateResponseRequisitionStatus::Finalised),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::ReasonsNotProvided(expected_lines))
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_response_requisition_transferred_needs_no_reason() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_response_requisition_transferred_needs_no_reason",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_b().id)
+            .unwrap();
+        let service = service_provider.requisition_service;
+
+        // The store keeps the extra requisition fields and variance reasons
+        // exist, so a requisition of its own making would be refused here.
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&StorePreferenceRow {
+                id: mock_store_a().id,
+                extra_fields_in_requisition: true,
+                ..Default::default()
+            })
+            .unwrap();
+
+        // This one came from the customer's internal order, and its first line
+        // arrived asking for less than the suggestion with no reason.
+        let requisition = mock_new_response_program_requisition().requisition;
+        RequisitionRowRepository::new(&connection)
+            .upsert_one(&RequisitionRow {
+                linked_requisition_id: Some(mock_request_program_requisition().id),
+                ..requisition.clone()
+            })
+            .unwrap();
+
+        service
+            .update_response_requisition(
+                &context,
+                UpdateResponseRequisition {
+                    id: requisition.id.clone(),
+                    status: Some(UpdateResponseRequisitionStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            RequisitionRowRepository::new(&connection)
+                .find_one_by_id(&requisition.id)
+                .unwrap()
+                .unwrap()
+                .status,
+            RequisitionStatus::Finalised
+        );
     }
 
     #[actix_rt::test]
