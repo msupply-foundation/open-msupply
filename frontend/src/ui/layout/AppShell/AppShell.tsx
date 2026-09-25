@@ -234,6 +234,12 @@ export const AppShell = (props: AppShellProps) => {
   // here, outside the Page.
   const [panelOverlay, setPanelOverlay] = createSignal(false);
   const isOverlay = useIsNavOverlay();
+  // The sync cell draws its own red start edge in error, which stands in for
+  // the footer divider before it.
+  const syncError = () =>
+    !!props.syncStatus &&
+    !!props.onSyncNow &&
+    props.syncStatus.tone === 'error';
 
   // Menu nav model — the app's own navModel by default; a host (the showcase)
   // can supply its own. Overriding `upper` replaces the whole model, so
@@ -353,10 +359,10 @@ export const AppShell = (props: AppShellProps) => {
                     OMS-REG-FTR-02.14): a quiet, persistent cell while the
                     served bundle differs from the running build; activating it
                     hands off to the host, which confirms before reloading. Its
-                    divider goes with it, and is drawn only when the
-                    central-server marker follows: the sync cell brings its own
-                    edge (its ground, and on error a red bar), so a hairline
-                    before it would only double that edge. */}
+                    divider goes with it, and is dropped when the sync cell
+                    follows it directly in error: that cell's red start bar is
+                    the edge then, and a hairline beside it would only double
+                    it (issue #519). */}
                   <Show when={props.updateAvailable && props.onUpdateClick}>
                     <FooterCell
                       icon={RefreshIcon}
@@ -364,22 +370,25 @@ export const AppShell = (props: AppShellProps) => {
                       onClick={props.onUpdateClick}
                       testId="footer-update-available"
                     />
-                    <Show when={props.isCentralServer}>
+                    <Show when={props.isCentralServer || !syncError()}>
                       <span class={styles.footerDivider} aria-hidden="true" />
                     </Show>
                   </Show>
                   {/* Central-server marker: only on a central server.
                     Immediately before the sync cell — both describe the SITE
                     rather than the session, and which role this server plays is
-                    the first thing that qualifies what its sync line means. No
-                    divider after it: the sync cell's own ground is the edge
-                    (issue #519). */}
+                    the first thing that qualifies what its sync line means. Its
+                    divider is dropped while the sync cell is in error, as the
+                    cell's red start bar is the edge then (issue #519). */}
                   <Show when={props.isCentralServer}>
                     <FooterCell
                       icon={CentralIcon}
                       label={t('label.central-server')}
                       testId="footer-central-server"
                     />
+                    <Show when={!syncError()}>
+                      <span class={styles.footerDivider} aria-hidden="true" />
+                    </Show>
                   </Show>
                   {/* Sync status, pinned last (issue #9229): the bar's
                     inline-end is where a standing system signal belongs, and
