@@ -1,0 +1,36 @@
+# The program data functions the SDK offers form plugins (./programs.ts;
+# kdd/custom-forms/specs.md § Generated identifiers, § Program events;
+# implementation-plan K1, K2).
+
+# The next number of a named counter in the store, for a generated
+# identifier. Gated on MutateProgram in the store.
+mutation sdkAllocateProgramNumber($storeId: String!, $numberName: String!) {
+  allocateProgramNumber(storeId: $storeId, input: { numberName: $numberName }) {
+    ... on NumberNode {
+      __typename
+      number
+    }
+  }
+}
+
+# The program events active now for a patient's target document type, as the
+# server derived them from its event rules on each document save.
+query sdkActiveProgramEvents(
+  $storeId: String!
+  $filter: ProgramEventFilterInput
+) {
+  activeProgramEvents(storeId: $storeId, filter: $filter) {
+    ... on ProgramEventConnector {
+      __typename
+      nodes {
+        __typename
+        type
+        data
+        activeStartDatetime
+        activeEndDatetime
+        documentType
+        documentName
+      }
+    }
+  }
+}

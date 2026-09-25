@@ -192,11 +192,13 @@ describe('validateLoadedModule', () => {
       'dashboard.panel',
       'dashboard.stat',
       'dashboard.widget',
+      'encounter.form',
       'host.warningSuppression',
       'internalOrder.sidePanelSection',
       'internalOrderLine.column',
       'internalOrderLine.infoPanel',
       'prescription.paymentForm',
+      'programEnrolment.form',
     ]);
   });
 
@@ -359,6 +361,85 @@ describe('validateLoadedModule', () => {
     expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
       'names no warning to suppress'
     );
+  });
+
+  describe('the document form slots', () => {
+    const withForms = (contributions: readonly unknown[]) =>
+      definePlugin({
+        manifest: {
+          code: 'demo',
+          version: '1.0.0',
+          pluginApiVersion: PLUGIN_API_VERSION,
+        },
+        contributions: contributions as never,
+      });
+
+    it('accepts a form naming the document type it renders, in each form slot', () => {
+      const module = withForms([
+        {
+          slot: 'programEnrolment.form',
+          id: 'enrolment',
+          documentType: 'DemoProgramEnrolment',
+          Component,
+        },
+        {
+          slot: 'encounter.form',
+          id: 'encounter',
+          documentType: 'DemoEncounter',
+          Component,
+        },
+      ]);
+      expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+    });
+
+    it('refuses a form naming no document type', () => {
+      const module = withForms([
+        { slot: 'encounter.form', id: 'encounter', Component },
+      ]);
+      expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+        '"encounter.form/encounter" names no document type to render'
+      );
+    });
+
+    it("refuses two of one plugin's forms for the same document type", () => {
+      const module = withForms([
+        {
+          slot: 'encounter.form',
+          id: 'first',
+          documentType: 'DemoEncounter',
+          Component,
+        },
+        {
+          slot: 'encounter.form',
+          id: 'second',
+          documentType: 'DemoEncounter',
+          Component,
+        },
+      ]);
+      expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+        'both render document type "DemoEncounter"'
+      );
+    });
+
+    it('lets one document type name be used in each form slot', () => {
+      // The pair is (slot, type): a category's slot never sees another
+      // category's documents, so the same name in two slots is no clash.
+      const module = withForms([
+        {
+          slot: 'programEnrolment.form',
+          id: 'enrolment',
+          documentType: 'Shared',
+          Component,
+        },
+        {
+          slot: 'encounter.form',
+          id: 'encounter',
+          documentType: 'Shared',
+          Component,
+        },
+      ]);
+      expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+    });
   });
 
   it('refuses an empty contribution id', () => {

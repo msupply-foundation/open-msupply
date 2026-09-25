@@ -18,6 +18,7 @@ import type {
 const ctx = vi.hoisted(() => ({
   current: {
     storeId: 'store-a',
+    storeCode: undefined,
     permissions: [],
     storeMode: undefined,
     storePreferences: {
@@ -97,6 +98,7 @@ beforeEach(() => {
   clearPlugins();
   ctx.current = {
     storeId: 'store-a',
+    storeCode: undefined,
     permissions: [],
     storeMode: undefined,
     storePreferences: {

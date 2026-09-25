@@ -37,6 +37,18 @@ const SLOT_IDS: Record<SlotId, true> = {
   'internalOrder.sidePanelSection': true,
   'host.warningSuppression': true,
   'prescription.paymentForm': true,
+  'programEnrolment.form': true,
+  'encounter.form': true,
+};
+
+/**
+ * The slots whose contribution is a document type's form, placed by the type
+ * it names (sdk-contract § the document form slots). `SlotId`-keyed like
+ * `SLOT_IDS`, so a renamed slot here is a type error.
+ */
+const DOCUMENT_FORM_SLOTS: Readonly<Partial<Record<SlotId, true>>> = {
+  'programEnrolment.form': true,
+  'encounter.form': true,
 };
 
 /**
@@ -318,6 +330,8 @@ export const validateLoadedModule = (
     // fine, twice in one slot is not: the pair is the render key and the anchor
     // target, so a duplicate would make placement and suppression ambiguous.
     const seen = new Set<string>();
+    // `<slot>/<documentType>` → the contribution id rendering it.
+    const formsByType = new Map<string, string>();
     for (const entry of contributions as readonly unknown[]) {
       if (!isRecord(entry)) {
         return { kind: 'refused', message: 'a contribution is not an object' };
@@ -403,6 +417,28 @@ export const validateLoadedModule = (
               : `contribution "${slot}/${id}" has no Component function`,
           };
         }
+      }
+      // A form names the document type it renders, and a plugin renders a
+      // type one way: two of its own forms for one type would leave the
+      // host guessing, knowably from this module alone. Two PLUGINS claiming
+      // a type is a load-order fact, resolved where the form renders.
+      if (DOCUMENT_FORM_SLOTS[slot as SlotId]) {
+        const documentType = entry['documentType'];
+        if (typeof documentType !== 'string' || documentType.length === 0) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" names no document type to render`,
+          };
+        }
+        const formKey = `${slot}/${documentType}`;
+        const prior = formsByType.get(formKey);
+        if (prior !== undefined) {
+          return {
+            kind: 'refused',
+            message: `contributions "${slot}/${prior}" and "${slot}/${id}" both render document type "${documentType}"`,
+          };
+        }
+        formsByType.set(formKey, id);
       }
       const key = `${slot}/${id}`;
       if (seen.has(key)) {

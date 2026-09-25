@@ -31,6 +31,7 @@ import { SaveIcon, XCircleIcon } from '../../ui/icons';
 import { createConfirmOnLeave } from '../../domain/confirmOnLeave';
 import { ClinicianSelect } from '../../domain/clinician';
 import { createDocumentForm } from '../../domain/documentForm/createDocumentForm';
+import { DocumentFormRegion } from '../../plugins/DocumentFormRegion';
 import type { Encounter, EncounterStatus } from '../../plugin-sdk/documents';
 import {
   EncounterRecord,
@@ -60,17 +61,17 @@ const fetchEncounterRecord = async (variables: {
 /*
  * The encounter record screen (kdd/custom-forms/specs.md § Forms in the UI:
  * the host record screen; implementation-plan H7). The host owns the route,
- * the frame, the toolbar and the save; the body is the encounter's form. The
- * toolbar's visit date, clinician and status and the body's fields edit one
- * draft, the document form host's, saved in one go by Save.
+ * the frame, the toolbar and the save; the body is the plugin form
+ * contributed for the encounter's type, or the host's default encounter form
+ * (DocumentFormRegion). The toolbar's visit date, clinician and status and the
+ * body's fields edit one draft, the document form host's, saved in one go by
+ * Save.
  *
  * Opened from a patient's Encounters row, and after "New encounter" creates
  * one whose visit is under way. Every read is non-suspending: the screen
  * shows its own spinner while the encounter and its document load.
  *
- * TO-DO: render the plugin's form for the encounter type when one is loaded
- * (implementation-plan H5, chunk 4), and write this screen's spec
- * (implementation-plan H26).
+ * TO-DO: write this screen's spec (implementation-plan H26).
  */
 const EncounterDetailView: Component = () => {
   const params = useParams<{ storeId: string; encounterId: string }>();
@@ -152,7 +153,7 @@ const EncounterDetailView: Component = () => {
       </Match>
       <Match when={ready() && form.library()}>
         {lib => {
-          const Form = lib().DefaultEncounterForm;
+          const Default = lib().DefaultEncounterForm;
           return (
             <Page
               header={
@@ -253,7 +254,16 @@ const EncounterDetailView: Component = () => {
                 <Show when={form.saveError()}>
                   <Alert severity="error">{form.saveError()}</Alert>
                 </Show>
-                <Form draft={draft} />
+                <DocumentFormRegion
+                  slot="encounter.form"
+                  documentType={form.registry()?.documentType ?? ''}
+                  draft={draft}
+                  record={{
+                    patientId: record()?.patientId ?? '',
+                    documentName: form.document()?.name,
+                  }}
+                  fallback={() => <Default draft={draft} />}
+                />
                 <FormErrorSummary
                   errors={form.validation.visible()}
                   testId="encounter-error-summary"

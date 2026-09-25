@@ -17,7 +17,16 @@ Its event rules ([`forms/DemoEncounter/events.json`](forms/DemoEncounter/events.
 - a Field rule copying `extension.demo.regimen` into a `currentRegimen` event;
 - two Schedule rules from `extension.demo.nextVisit`, producing a `followUpStatus` event of "Due" at 0 days and "Overdue" at 30 days.
 
-`plugin.tsx` declares the plugin's identity and the display names, and no contributions. The forms, the patient field group and the follow-up trigger join it as their host slots are built (plan items P2, H9, H10, H10b).
+## Its forms
+
+`plugin.tsx` contributes a form for each program type, beside that type's schema versions:
+
+- **Enrolment** ([`forms/DemoProgramEnrolment/form.tsx`](forms/DemoProgramEnrolment/form.tsx)), the body of the enrolment modal for `DemoProgramEnrolment`: the enrolment date; the enrolment ID with a Generate button, which builds `GRY-0001` from the store code and the server counter `DemoProgramEnrolment` and asks before replacing an ID already there; where the patient was referred from; notes; and the patient's current regimen and follow-up status, read-only from the program events the encounters' rules write.
+- **Encounter** ([`forms/DemoEncounter/form.tsx`](forms/DemoEncounter/form.tsx)), the body of the encounter record screen for `DemoEncounter`: weight and height with the BMI worked out from them, the regimen, the next visit and notes. The screen's toolbar holds the visit date, clinician and status.
+
+Saving an encounter with a regimen and a next visit gives the enrolment a `currentRegimen` event at once, and a `followUpStatus` of Due from the next-visit day (Overdue 30 days after). A next visit in the future therefore shows no follow-up status until that day.
+
+The patient field group, the patient code override and the follow-up trigger join as their host slots are built (plan items P2, H9, H9b, H10b).
 
 ## Running it
 

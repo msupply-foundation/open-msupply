@@ -1,5 +1,6 @@
 import type { SlotContext, SlotStoreMode } from '../plugin-sdk/types';
 import {
+  currentStoreCode,
   currentStoreId,
   currentStoreMode,
   storeContext,
@@ -34,6 +35,9 @@ export const slotContext = (): SlotContext => {
   const mode = currentStoreMode();
   return {
     storeId: currentStoreId(),
+    // From the me/login store list, like the mode below; undefined while the
+    // store is unresolved.
+    storeCode: currentStoreCode(),
     // Passed through as the wire's own `UserPermission` values (SCREAMING_CASE)
     // — not remapped to a parallel vocabulary (kdd/type-safety). The query is
     // already scoped to the entered store, so every node's list applies.

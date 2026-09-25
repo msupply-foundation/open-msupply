@@ -16,6 +16,7 @@ import { SaveIcon, XCircleIcon } from '../../../../ui/icons';
 import { FormErrorSummary } from '../../../../ui/layout/Form/FormErrorSummary';
 import type { ProgramEnrolment } from '../../../../plugin-sdk/documents';
 import { createDocumentForm } from '../../../../domain/documentForm/createDocumentForm';
+import { DocumentFormRegion } from '../../../../plugins/DocumentFormRegion';
 import type { FormRegistryFragment } from '../../../../domain/documentForm/documentForm.generated';
 
 /** What the modal opens: a program to enrol in, or a saved enrolment. */
@@ -36,12 +37,10 @@ export interface EnrolmentModalProps {
 /*
  * The enrolment form in a modal (kdd/custom-forms/specs.md § Forms in the UI:
  * the modal mount point; implementation-plan H8): the document form host over
- * one ProgramEnrolment document, new or saved, rendering the host's default
- * enrolment form. Opened from the program picker to enrol, and from a
+ * one ProgramEnrolment document, new or saved. The body is the plugin form
+ * contributed for the enrolment's type, or the host's default enrolment form
+ * (DocumentFormRegion). Opened from the program picker to enrol, and from a
  * Programs row to edit. Remounts per open, so each open loads afresh.
- *
- * TO-DO: render the plugin's form for the enrolment type when one is loaded
- * (implementation-plan H5, chunk 4).
  */
 export const EnrolmentModal = (props: EnrolmentModalProps): JSX.Element => (
   <Show when={props.target} keyed>
@@ -146,10 +145,19 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
           </Match>
           <Match when={form.status() === 'ready' && form.library()}>
             {lib => {
-              const Form = lib().DefaultEnrolmentForm;
+              const Default = lib().DefaultEnrolmentForm;
               return (
                 <>
-                  <Form draft={form.draft} />
+                  <DocumentFormRegion
+                    slot="programEnrolment.form"
+                    documentType={form.registry()?.documentType ?? ''}
+                    draft={form.draft}
+                    record={{
+                      patientId: props.patientId,
+                      documentName: form.document()?.name,
+                    }}
+                    fallback={() => <Default draft={form.draft} />}
+                  />
                   <FormErrorSummary
                     errors={form.validation.visible()}
                     testId="enrolment-error-summary"

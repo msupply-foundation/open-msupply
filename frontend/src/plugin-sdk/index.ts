@@ -130,6 +130,17 @@ export type {
   PrescriptionPaymentFormProps,
 } from './types';
 
+// ── Slot API — the document form slots ──────────────────────────────────────
+// A program record's body, per category: the form a plugin contributes for
+// one of its document types, written with the form library below.
+export type {
+  DocumentFormSlotId,
+  DocumentFormPlacement,
+  FormRecordView,
+  ProgramEnrolmentFormProps,
+  EncounterFormProps,
+} from './types';
+
 // ── UI kit ──────────────────────────────────────────────────────────────────
 /*
  * The host component library, re-exported so a contribution's markup IS host
@@ -175,6 +186,10 @@ export { Select } from '../ui/elements/selectors/Select';
 export type { SelectOption } from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
+// The two-up row, for the demo program's forms (#468): a field with its
+// Generate button, weight beside height (kdd/form-layout). Already in the
+// eager graph (the patient details form renders it), so it adds nothing new.
+export { FormRow } from '../ui/layout/Form/FormRow';
 export { FormSection } from '../ui/layout/Form/FormSection';
 export type { FormSectionProps } from '../ui/layout/Form/FormSection';
 export { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
@@ -204,6 +219,14 @@ export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
  */
 export { Alert } from '../ui/elements/feedback/Alert';
 export type { AlertProps, AlertSeverity } from '../ui/elements/feedback/Alert';
+/*
+ * The confirm-before-acting dialog, for the demo program's enrolment ID
+ * generator, which confirms before replacing an ID already given (#468). The
+ * same bargain: the app shell (nav/ShellLayout.tsx) renders it statically, so
+ * the module, its Dialog and their CSS ship regardless.
+ */
+export { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+export type { ConfirmDialogProps } from '../ui/elements/feedback/ConfirmDialog';
 // foldForSearch rides along free: it is matchesSearch's own module, already
 // eager — exported so a plugin filtering thousands of rows can fold its query
 // once per pass instead of paying matchesSearch's per-call query fold.
@@ -429,6 +452,13 @@ export type {
   GraphqlFailure,
   GraphqlErrorItem,
 } from './graphql';
+
+// ── Data access — program data ──────────────────────────────────────────────
+// What a form plugin reads and draws beyond its own document: a server
+// counter for generated identifiers, and the program events the server
+// derives from documents (./programs.ts).
+export { allocateProgramNumber, useActiveProgramEvents } from './programs';
+export type { ProgramEventView, ActiveProgramEventsInput } from './programs';
 
 // ── Data access — the backend bridge ────────────────────────────────────────
 export { pluginBridge, usePluginQuery } from './bridge';

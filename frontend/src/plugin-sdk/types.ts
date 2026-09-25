@@ -9,6 +9,8 @@
  */
 import type { Component } from 'solid-js';
 import type { SupportedLocale } from '../intl';
+import type { Draft } from '../domain/documentForm/draft';
+import type { Encounter, ProgramEnrolment } from './documents';
 
 // ── Manifest ────────────────────────────────────────────────────────────────
 
@@ -64,6 +66,12 @@ export interface SlotContext {
    * The store the user has entered; undefined before the store guard resolves.
    */
   storeId: string | undefined;
+  /**
+   * The entered store's code (e.g. 'GRY'), the part of a generated identifier
+   * that names the store it was issued at; undefined until the store
+   * resolves.
+   */
+  storeCode: string | undefined;
   /**
    * The user's permissions in the entered store, as the wire's SCREAMING_SNAKE
    * `UserPermission` enum values (e.g. 'REQUISITION_MUTATE') — NOT the
@@ -508,6 +516,74 @@ export type PrescriptionPaymentFormProps = {
   readonly form: FormParticipation;
 };
 
+// ── The document form slots ─────────────────────────────────────────────────
+// The body of a program record: the fields of an enrolment in its modal, of
+// an encounter on its record screen (kdd/custom-forms/specs.md § Forms in the
+// UI). One slot per document category. Within it a contribution names the one
+// document type it renders, and the host gives every document of that type
+// the contribution's form, in whichever mount the document opens: the host
+// keeps the frame, the toolbar and the save, and the form is the fields. A
+// document type with no form contributed, or whose form throws, renders in
+// the host's default form for its category.
+
+/**
+ * The record a form edits, as the SDK publishes it: what a form reads beyond
+ * its draft. SDK-owned and read-only, and additive-only within a
+ * `PLUGIN_API_VERSION` major.
+ *
+ * It holds only what forms have needed, and grows as forms need more: the
+ * patient's details, an encounter's enrolment, previous encounters, and
+ * `FormParticipation` for cross-field rules and a save veto are the expected
+ * additions. Each joins when a form uses it, since a field is public API
+ * from the day it ships.
+ */
+export interface FormRecordView {
+  /** The patient the document belongs to. */
+  readonly patientId: string;
+  /** The document's name; undefined until its first save. */
+  readonly documentName: string | undefined;
+}
+
+/**
+ * The props a `programEnrolment.form` contribution receives. `T` is the
+ * plugin's own document type, so the draft's paths are checked against it:
+ * `(props: ProgramEnrolmentFormProps<HivCareEnrolment>) => …`.
+ *
+ * `record` updates IN PLACE (its `documentName` arrives with the first save),
+ * so a form reads it through `props` rather than destructuring it once. The
+ * draft is one stable object for the form's life.
+ *
+ * A `type`, not an interface, so it carries an implicit index signature and
+ * is usable as the `P` of the uniform `Contribution<P>`.
+ */
+export type ProgramEnrolmentFormProps<
+  T extends ProgramEnrolment = ProgramEnrolment,
+> = {
+  readonly draft: Draft<T>;
+  readonly record: FormRecordView;
+};
+
+/**
+ * The props an `encounter.form` contribution receives: the encounter
+ * record screen's body. The screen's toolbar edits the visit date, the
+ * clinician and the status on the same draft. Otherwise as
+ * {@link ProgramEnrolmentFormProps}.
+ */
+export type EncounterFormProps<T extends Encounter = Encounter> = {
+  readonly draft: Draft<T>;
+  readonly record: FormRecordView;
+};
+
+/**
+ * Where a form contribution goes: the document type it renders, as its
+ * registry entry names it (`'HIVCareEncounter'`). One plugin contributes at
+ * most one form per document type; where two plugins both do, the first in
+ * registry order renders and the other is named in diagnostics.
+ */
+export interface DocumentFormPlacement {
+  documentType: string;
+}
+
 // ── The slot catalogue ──────────────────────────────────────────────────────
 
 /** Every slot id, and the props its contributions receive. */
@@ -525,9 +601,14 @@ export interface SlotPropsMap {
   // type, which would publish a props DTO no plugin can ever be handed.
   'host.warningSuppression': Record<string, never>;
   'prescription.paymentForm': PrescriptionPaymentFormProps;
+  'programEnrolment.form': ProgramEnrolmentFormProps;
+  'encounter.form': EncounterFormProps;
 }
 
 export type SlotId = keyof SlotPropsMap;
+
+/** The slots whose contributions are a document type's form. */
+export type DocumentFormSlotId = 'programEnrolment.form' | 'encounter.form';
 
 /**
  * The dashboard's PIECE slot ids — the three that contribute into a container
@@ -575,6 +656,10 @@ export interface SlotPlacement {
   // rest.
   'host.warningSuppression': { warning: HostWarningId };
   'prescription.paymentForm': NoPlacement;
+  // A form's place is the body of its document type's record, wherever that
+  // record opens: naming the type is the whole of its placement.
+  'programEnrolment.form': DocumentFormPlacement;
+  'encounter.form': DocumentFormPlacement;
 }
 
 /**
@@ -602,6 +687,8 @@ export interface SlotRender {
   'prescription.paymentForm': {
     Component: Component<PrescriptionPaymentFormProps>;
   };
+  'programEnrolment.form': { Component: Component<ProgramEnrolmentFormProps> };
+  'encounter.form': { Component: Component<EncounterFormProps> };
 }
 
 /**
