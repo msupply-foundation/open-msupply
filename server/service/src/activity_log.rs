@@ -218,6 +218,29 @@ pub fn system_log(
     Ok(())
 }
 
+/// [`system_log`] on its own connection on Tokio's blocking pool, so the caller never waits on it.
+/// Must be called from within the Tokio runtime (every caller is a GraphQL resolver).
+///
+/// A system log row also writes a changelog row, so it queues behind anything holding
+/// `changelog`: for example a long integration transaction, with the changelog dedup task's
+/// `DROP INDEX` waiting behind that (open-msupply#11920). Switches whose effect must not wait for
+/// that (the sync pauses, maintenance mode) commit their flag first and record who changed it
+/// here; the entry lands once the lock clears. A failure to write it goes to the server log.
+pub fn system_log_in_background(
+    connection_manager: StorageConnectionManager,
+    log_type: SystemLogType,
+    message: String,
+) {
+    tokio::task::spawn_blocking(move || {
+        let result = connection_manager
+            .connection()
+            .and_then(|connection| system_log(&connection, log_type, &message));
+        if let Err(error) = result {
+            log::error!("Failed to write system log entry '{message}': {error:?}");
+        }
+    });
+}
+
 pub fn add_migration_results_to_system_log(
     connection: &StorageConnection,
     migration_result: Vec<(String, NaiveDateTime)>,

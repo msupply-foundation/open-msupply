@@ -24,7 +24,7 @@ use repository::{
 };
 
 use crate::{
-    activity_log::system_log,
+    activity_log::{system_log, system_log_in_background},
     auth_data::AuthData,
     processors::pause::username_or_id,
     service_provider::{ServiceContext, ServiceProvider},
@@ -146,13 +146,19 @@ pub fn integration_uses_transaction(
 /// Turn maintenance mode on or off. Permission is checked by the caller (graphql requires
 /// server admin).
 ///
-/// On: sets the sync, sync API and processor pauses and the mode flag in one transaction, logs
-/// it, then removes every non-admin session. The flag is written before the sweep, and login
-/// re-checks it after creating a session (see [`is_locked_out`]), so a login racing the switch
-/// cannot leave a non-admin session behind.
+/// On: sets the sync, sync API and processor pauses and the mode flag in one transaction, then
+/// removes every non-admin session. The flag is written before the sweep, and login re-checks it
+/// after creating a session (see [`is_locked_out`]), so a login racing the switch cannot leave a
+/// non-admin session behind.
 ///
 /// Off: refused while OMS central's own buffer has pending rows. Otherwise clears all four
-/// flags together, logs it, and triggers every processor so their backlog is picked up.
+/// flags together and triggers every processor so their backlog is picked up.
+///
+/// The flags commit in a transaction of their own, touching nothing but the key-value store.
+/// The mode is needed most while an integration holds `changelog` inside its outer transaction,
+/// and anything that writes a changelog row then queues behind it for as long as it runs. So the
+/// system log entry, which does write one, is written off the request once the flags are in
+/// ([`system_log_in_background`]).
 pub fn set_maintenance_mode(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
@@ -170,18 +176,16 @@ pub fn set_maintenance_mode(
     if on {
         if !already_on {
             connection
-                .transaction_sync(|connection| {
-                    write_flags(connection, true)?;
-                    system_log(
-                        connection,
-                        SystemLogType::MaintenanceModeChanged,
-                        &format!(
-                            "Maintenance mode turned on by {username}: sync, sync API and \
-                             processors paused, non-admin users signed out"
-                        ),
-                    )
-                })
+                .transaction_sync(|connection| write_flags(connection, true))
                 .map_err(|error| error.to_inner_error())?;
+            system_log_in_background(
+                service_provider.connection_manager.clone(),
+                SystemLogType::MaintenanceModeChanged,
+                format!(
+                    "Maintenance mode turned on by {username}: sync, sync API and processors \
+                     paused, non-admin users signed out"
+                ),
+            );
         }
 
         // Swept even when already on, so a repeated switch also closes any gap.
@@ -196,18 +200,15 @@ pub fn set_maintenance_mode(
         }
 
         connection
-            .transaction_sync(|connection| {
-                write_flags(connection, false)?;
-                system_log(
-                    connection,
-                    SystemLogType::MaintenanceModeChanged,
-                    &format!(
-                        "Maintenance mode turned off by {username}: sync, sync API and \
-                         processors resumed"
-                    ),
-                )
-            })
+            .transaction_sync(|connection| write_flags(connection, false))
             .map_err(|error| error.to_inner_error())?;
+        system_log_in_background(
+            service_provider.connection_manager.clone(),
+            SystemLogType::MaintenanceModeChanged,
+            format!(
+                "Maintenance mode turned off by {username}: sync, sync API and processors resumed"
+            ),
+        );
 
         ctx.processors_trigger.trigger_all();
     }
@@ -314,7 +315,7 @@ mod test {
         processors::pause::are_processors_paused,
         session_store::SessionStore,
         sync::{sync_api_pause::is_sync_api_paused, test_util_set_is_central_server},
-        test_helpers::setup_all_and_service_provider,
+        test_helpers::{setup_all_and_service_provider, wait_for_system_log_messages},
     };
 
     const LEGACY_CENTRAL_SITE_ID: i32 = 1;
@@ -462,7 +463,8 @@ mod test {
         assert_eq!(flags(connection), [false; 4]);
         assert!(!is_locked_out(connection, &other.id).unwrap());
 
-        let mut logs = maintenance_logs(connection);
+        let mut logs =
+            wait_for_system_log_messages(connection, SystemLogType::MaintenanceModeChanged, 2);
         logs.sort();
         assert_eq!(logs.len(), 2);
         assert!(logs[0].starts_with(&format!(

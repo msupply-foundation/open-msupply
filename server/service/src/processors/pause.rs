@@ -11,7 +11,7 @@ use repository::{
 };
 
 use crate::{
-    activity_log::system_log,
+    activity_log::system_log_in_background,
     service_provider::{ServiceContext, ServiceProvider},
     sync::CentralServerConfig,
 };
@@ -52,7 +52,12 @@ pub(crate) fn processors_paused_or_log(service_provider: &ServiceProvider) -> bo
 /// Persist the pause and record who changed it in the system log. On resume every processor is
 /// triggered once so work that arrived while paused is picked up. Permission is checked by the
 /// caller (graphql requires server admin).
+///
+/// The flag is committed on its own and the system log is written in the background, so the
+/// switch takes effect even while an integration holds `changelog` (see
+/// [`system_log_in_background`]).
 pub fn set_processors_paused(
+    service_provider: &ServiceProvider,
     ctx: &ServiceContext,
     paused: bool,
 ) -> Result<bool, SetProcessorsPausedError> {
@@ -64,17 +69,13 @@ pub fn set_processors_paused(
         let username = username_or_id(&ctx.connection, &ctx.user_id)?;
         let action = if paused { "paused" } else { "resumed" };
 
-        ctx.connection
-            .transaction_sync(|connection| {
-                KeyValueStoreRepository::new(connection)
-                    .set_bool(KeyType::SettingsProcessorsArePaused, Some(paused))?;
-                system_log(
-                    connection,
-                    SystemLogType::ProcessorsPauseChanged,
-                    &format!("Processors {action} by {username}"),
-                )
-            })
-            .map_err(|error| error.to_inner_error())?;
+        KeyValueStoreRepository::new(&ctx.connection)
+            .set_bool(KeyType::SettingsProcessorsArePaused, Some(paused))?;
+        system_log_in_background(
+            service_provider.connection_manager.clone(),
+            SystemLogType::ProcessorsPauseChanged,
+            format!("Processors {action} by {username}"),
+        );
     }
 
     if !paused {
@@ -98,12 +99,13 @@ pub(crate) fn username_or_id(
 mod test {
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
-        SystemLogRowRepository, SystemLogType,
+        SystemLogType,
     };
 
     use super::*;
     use crate::{
-        sync::test_util_set_is_central_server, test_helpers::setup_all_and_service_provider,
+        sync::test_util_set_is_central_server,
+        test_helpers::{setup_all_and_service_provider, wait_for_system_log_messages},
     };
 
     #[actix_rt::test]
@@ -119,38 +121,35 @@ mod test {
             .context("".to_string(), user.id.clone())
             .unwrap();
 
-        let logs = || {
-            SystemLogRowRepository::new(&ctx.connection)
-                .find_all()
-                .unwrap()
-                .into_iter()
-                .filter(|log| log.r#type == SystemLogType::ProcessorsPauseChanged)
-                .filter_map(|log| log.message)
-                .collect::<Vec<_>>()
-        };
-        let sorted_logs = || {
-            let mut logs = logs();
-            logs.sort();
-            logs
-        };
-
         test_util_set_is_central_server(false);
         assert_eq!(
-            set_processors_paused(&ctx, true),
+            set_processors_paused(&test.service_provider, &ctx, true),
             Err(SetProcessorsPausedError::NotACentralServer)
         );
         assert!(!are_processors_paused(&ctx.connection).unwrap());
 
         test_util_set_is_central_server(true);
-        assert_eq!(set_processors_paused(&ctx, true), Ok(true));
+        assert_eq!(
+            set_processors_paused(&test.service_provider, &ctx, true),
+            Ok(true)
+        );
         assert!(are_processors_paused(&ctx.connection).unwrap());
         // Same state again: no second log entry.
-        assert_eq!(set_processors_paused(&ctx, true), Ok(true));
-        assert_eq!(set_processors_paused(&ctx, false), Ok(false));
+        assert_eq!(
+            set_processors_paused(&test.service_provider, &ctx, true),
+            Ok(true)
+        );
+        assert_eq!(
+            set_processors_paused(&test.service_provider, &ctx, false),
+            Ok(false)
+        );
         assert!(!are_processors_paused(&ctx.connection).unwrap());
 
+        let mut logs =
+            wait_for_system_log_messages(&ctx.connection, SystemLogType::ProcessorsPauseChanged, 2);
+        logs.sort();
         assert_eq!(
-            sorted_logs(),
+            logs,
             vec![
                 format!("Processors paused by {}", user.username),
                 format!("Processors resumed by {}", user.username),
