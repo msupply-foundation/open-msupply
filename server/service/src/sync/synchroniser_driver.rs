@@ -4,6 +4,7 @@ use crate::service_provider::ServiceProvider;
 use crate::sync::{is_initialised, CentralServerConfig};
 
 use super::file_sync_driver::FileSyncTrigger;
+use super::sync_pause::is_sync_paused;
 use super::{settings::SyncSettings, synchroniser_runner::Synchroniser};
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
@@ -143,19 +144,6 @@ impl SyncTrigger {
     pub(crate) fn new_test() -> (SyncTrigger, mpsc::Receiver<()>) {
         let (sender, receiver) = mpsc::channel(1);
         (SyncTrigger { sender }, receiver)
-    }
-}
-
-fn is_sync_paused(service_provider: &ServiceProvider) -> bool {
-    let Ok(ctx) = service_provider.basic_context() else {
-        return false;
-    };
-    match service_provider.settings.is_sync_paused(&ctx) {
-        Ok(paused) => paused,
-        Err(error) => {
-            log::error!("Failed to read sync paused setting, treating as not paused: {error:#?}");
-            false
-        }
     }
 }
 
