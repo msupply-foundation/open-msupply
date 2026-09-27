@@ -12,9 +12,13 @@
  * must not suspend (kdd/solid-reactivity-pitfalls › No remounts on
  * interaction). The screen shows its own spinner while `status` is loading.
  *
- * TO-DO: when the document's pinned schema (`schema.id`) is not the entry's
- * current one, run the migration chain before seeding, and open archived forms
- * read-only (implementation-plan H4's versioning half, chunk 5).
+ * A document pinned to an earlier schema version than the entry's current one
+ * (kdd/custom-forms/specs.md § Opening an older document) opens by the
+ * versioning its plugin form declares: read-only in the archived form for its
+ * version where there is one, until Edit; otherwise, and after Edit, in the
+ * current form with its migrations run on the loaded data, the values they
+ * clear held against their paths. A save re-pins it to the current version;
+ * closing writes nothing. A version the plugin does not list opens read-only.
  */
 import {
   createEffect,
@@ -33,6 +37,8 @@ import { gated } from '../../api/gated';
 import { t } from '../../intl';
 import type { FormValidation } from '../../ui/layout/Form/formValidation';
 import { createDraft, type Draft } from './draft';
+import { applyMigrations, keptFields, type MigrationStep } from './migration';
+import { getAt } from './paths';
 import {
   FormDocumentByName,
   InsertFormEncounter,
@@ -56,6 +62,41 @@ export type DocumentFormSource =
   /** A document not yet saved: its registry entry and first data. */
   | { kind: 'new'; registry: FormRegistryFragment; data: object };
 
+/** A document type's versioning, as its plugin form declares it. */
+export interface FormVersioning {
+  /** Every schema id of the type, oldest first. */
+  versions: readonly string[];
+  migrations: readonly MigrationStep[];
+  /** The version numbers that have an archived form. */
+  archived: readonly number[];
+}
+
+/** How the opened document stands against the current schema version. */
+export type DocumentVersion =
+  /** Pinned to the current version, or with no versioning to go by. */
+  | { kind: 'current' }
+  /** Read-only in the archived form for its version, until Edit. */
+  | { kind: 'archived'; version: number }
+  /** In the current form, migrated from its version in memory. */
+  | { kind: 'migrated'; version: number }
+  /** Pinned to a version the plugin does not list: read-only. */
+  | { kind: 'unknown' };
+
+/** A value a migration kept, listed read-only under its author's label. */
+export interface KeptValue {
+  path: string;
+  label: string;
+  value: unknown;
+}
+
+const CURRENT: DocumentVersion = { kind: 'current' };
+
+const sameVersion = (a: DocumentVersion, b: DocumentVersion): boolean =>
+  a.kind === b.kind &&
+  (a.kind === 'archived' || a.kind === 'migrated'
+    ? a.version === (b as typeof a).version
+    : true);
+
 export interface CreateDocumentFormOptions {
   storeId: Accessor<string>;
   /** The patient the document belongs to; every form category has one. */
@@ -64,6 +105,12 @@ export interface CreateDocumentFormOptions {
   source: Accessor<DocumentFormSource | undefined>;
   /** Summary names for the fields the screen renders itself (createDraft). */
   labels?: Accessor<Readonly<Record<string, string>>>;
+  /**
+   * The versioning of a document type's plugin form, or undefined where no
+   * plugin form declares any. Read inside a memo, so it may read the plugin
+   * registry reactively.
+   */
+  versioning?: (documentType: string) => FormVersioning | undefined;
 }
 
 export type DocumentFormStatus = 'idle' | 'loading' | 'ready' | 'not-found';
@@ -82,6 +129,12 @@ export interface DocumentForm<T> {
   /** A new document may be saved as seeded; a saved one only once edited. */
   canSave: Accessor<boolean>;
   validation: FormValidation;
+  /** The document's schema version against the current one. */
+  version: Accessor<DocumentVersion>;
+  /** Leaves an archived form for the current one, migrating the document. */
+  edit: () => void;
+  /** Values the type's migrations keep that the document holds. */
+  kept: Accessor<readonly KeptValue[]>;
   saving: Accessor<boolean>;
   saveError: Accessor<string | undefined>;
   /**
@@ -262,12 +315,71 @@ export const createDocumentForm = <T extends object>(
     return registry() ? 'ready' : 'not-found';
   });
 
+  const versioning = createMemo(() => {
+    const r = registry();
+    return r ? options.versioning?.(r.documentType) : undefined;
+  });
+
+  // The saved version the user pressed Edit on, leaving its archived form.
+  const [editing, setEditing] = createSignal<string>();
+
+  const version = createMemo(
+    (): DocumentVersion => {
+      const doc = document();
+      const r = registry();
+      const v = versioning();
+      const pinned = doc?.schema?.id;
+      if (!doc || !r || !v || !pinned || pinned === r.formSchemaId) {
+        return CURRENT;
+      }
+      const at = v.versions.indexOf(pinned) + 1;
+      const current = v.versions.indexOf(r.formSchemaId) + 1;
+      if (at === 0 || current === 0 || at > current) return { kind: 'unknown' };
+      if (v.archived.includes(at) && editing() !== doc.id) {
+        return { kind: 'archived', version: at };
+      }
+      return { kind: 'migrated', version: at };
+    },
+    CURRENT,
+    { equals: sameVersion }
+  );
+
+  // Read as it was recorded: against its own schema, with nothing to fix.
+  const readingOnly = () =>
+    version().kind === 'archived' || version().kind === 'unknown';
+
+  /** The draft's starting point for the document as it stands. */
+  const seedFor = ():
+    { data: object; unresolved: Record<string, unknown> } | undefined => {
+    const s = options.source();
+    const doc = document();
+    const raw = doc ? doc.data : s?.kind === 'new' ? s.data : undefined;
+    if (raw === undefined) return undefined;
+    const v = version();
+    const r = registry();
+    const steps = versioning();
+    if (v.kind === 'migrated' && r && steps) {
+      const migrated = applyMigrations(
+        raw,
+        v.version,
+        steps.versions.indexOf(r.formSchemaId) + 1,
+        steps.migrations
+      );
+      if (migrated) return migrated;
+    }
+    return { data: raw as object, unresolved: {} };
+  };
+
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string>();
 
   const controller = createDraft<T>({
     schema: () => {
       const r = registry();
+      const pinned = document()?.schema;
+      if (readingOnly() && pinned) {
+        return { id: pinned.id, jsonSchema: pinned.jsonSchema as JsonSchema };
+      }
       return r
         ? { id: r.formSchemaId, jsonSchema: r.jsonSchema as JsonSchema }
         : undefined;
@@ -277,12 +389,14 @@ export const createDocumentForm = <T extends object>(
       return r ? gated(library)?.baseSchemaFor(r.category) : undefined;
     },
     validate: () => gated(library)?.validateDocument,
-    readOnly: saving,
+    readOnly: () => saving() || readingOnly(),
+    validates: () => !readingOnly(),
     labels: options.labels,
   });
 
   // Seed the draft once per document version: on load, after each save (the
-  // saved version is the new baseline), and afresh when the source changes.
+  // saved version is the new baseline), afresh when the source changes, and
+  // when Edit leaves an archived form for the migrated current one.
   let seededKey: string | undefined;
   createEffect(() => {
     if (status() === 'idle') {
@@ -292,20 +406,36 @@ export const createDocumentForm = <T extends object>(
     if (status() !== 'ready') return;
     const s = options.source();
     const doc = document();
-    const key = `${sourceKey(s)}|${doc?.id ?? 'unsaved'}`;
+    const key = `${sourceKey(s)}|${doc?.id ?? 'unsaved'}|${version().kind}`;
     if (key === seededKey) return;
     seededKey = key;
-    const seed = doc ? doc.data : s?.kind === 'new' ? s.data : {};
     untrack(() => {
+      const seed = seedFor() ?? { data: {}, unresolved: {} };
       setSaveError(undefined);
-      controller.reset(seed as T);
+      controller.reset(seed.data as T, seed.unresolved);
     });
   });
 
   const isNew = () => options.source() !== undefined && !document();
 
+  const kept = createMemo((): readonly KeptValue[] => {
+    const steps = versioning();
+    if (!steps || version().kind === 'archived') return [];
+    const data = controller.draft.data;
+    return keptFields(steps.migrations).flatMap(field => {
+      const value = getAt(data, field.path);
+      return value === undefined || value === null || value === ''
+        ? []
+        : [{ path: field.path, label: field.label(), value }];
+    });
+  });
+
+  const edit = () => {
+    if (version().kind === 'archived') setEditing(document()?.id);
+  };
+
   const save = async () => {
-    if (saving()) return undefined;
+    if (saving() || readingOnly()) return undefined;
     controller.validation.arm();
     const r = registry();
     if (!r || !controller.validation.valid()) return undefined;
@@ -330,10 +460,8 @@ export const createDocumentForm = <T extends object>(
   };
 
   const discard = () => {
-    const s = options.source();
-    const doc = document();
-    const seed = doc ? doc.data : s?.kind === 'new' ? s.data : undefined;
-    if (seed !== undefined) controller.reset(seed as T);
+    const seed = seedFor();
+    if (seed) controller.reset(seed.data as T, seed.unresolved);
     setSaveError(undefined);
   };
 
@@ -345,8 +473,14 @@ export const createDocumentForm = <T extends object>(
     document,
     isNew,
     isDirty: controller.isDirty,
-    canSave: () => isNew() || controller.isDirty(),
+    // A migrated document may be saved untouched: the save re-pins it.
+    canSave: () =>
+      !readingOnly() &&
+      (isNew() || controller.isDirty() || version().kind === 'migrated'),
     validation: controller.validation,
+    version,
+    edit,
+    kept,
     saving,
     saveError,
     save,

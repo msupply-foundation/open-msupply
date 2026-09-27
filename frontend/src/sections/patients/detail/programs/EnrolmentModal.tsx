@@ -16,7 +16,10 @@ import { SaveIcon, XCircleIcon } from '../../../../ui/icons';
 import { FormErrorSummary } from '../../../../ui/layout/Form/FormErrorSummary';
 import type { ProgramEnrolment } from '../../../../plugin-sdk/documents';
 import { createDocumentForm } from '../../../../domain/documentForm/createDocumentForm';
+import { DocumentKeptValues } from '../../../../domain/documentForm/DocumentKeptValues';
+import { DocumentVersionNotice } from '../../../../domain/documentForm/DocumentVersionNotice';
 import { DocumentFormRegion } from '../../../../plugins/DocumentFormRegion';
+import { documentFormVersioning } from '../../../../plugins/documentFormSlot';
 import type { FormRegistryFragment } from '../../../../domain/documentForm/documentForm.generated';
 
 /** What the modal opens: a program to enrol in, or a saved enrolment. */
@@ -82,7 +85,12 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
     storeId: () => props.storeId,
     patientId: () => props.patientId,
     source,
+    versioning: type => documentFormVersioning('programEnrolment.form', type),
   });
+  const archivedVersion = () => {
+    const v = form.version();
+    return v.kind === 'archived' ? v.version : undefined;
+  };
 
   const [confirmDiscard, setConfirmDiscard] = createSignal(false);
   const close = () => {
@@ -148,6 +156,10 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
               const Default = lib().DefaultEnrolmentForm;
               return (
                 <>
+                  <DocumentVersionNotice
+                    version={form.version()}
+                    onEdit={form.edit}
+                  />
                   <DocumentFormRegion
                     slot="programEnrolment.form"
                     documentType={form.registry()?.documentType ?? ''}
@@ -157,7 +169,10 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
                       documentName: form.document()?.name,
                     }}
                     fallback={() => <Default draft={form.draft} />}
+                    archivedVersion={archivedVersion()}
+                    currentSchemaId={form.registry()?.formSchemaId}
                   />
+                  <DocumentKeptValues values={form.kept()} />
                   <FormErrorSummary
                     errors={form.validation.visible()}
                     testId="enrolment-error-summary"

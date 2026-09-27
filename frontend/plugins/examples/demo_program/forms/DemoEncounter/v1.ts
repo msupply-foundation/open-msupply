@@ -31,6 +31,8 @@ export interface DemoEncounterV1Extension {
   nextVisit?: string;
   /** Free-text notes about the visit */
   notes?: string;
+  /** Notes on how well the patient is keeping to the regimen */
+  adherence?: string;
 }
 
 export interface DemoEncounterV1 extends Encounter {

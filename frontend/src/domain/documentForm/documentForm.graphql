@@ -2,7 +2,9 @@
 # in the UI; implementation-plan H4). A document carries the registry entry
 # for its type, whose formSchemaId and jsonSchema are the CURRENT schema: the
 # one a form validates against and a save pins the new version to. `schema` is
-# the version this document was pinned to when it was written.
+# the version this document was pinned to when it was written, with its JSON
+# Schema: a document pinned to an earlier version is shown against its own
+# schema (its archived form reads that version's formats and allowed values).
 
 fragment FormRegistry on DocumentRegistryNode {
   __typename
@@ -24,6 +26,7 @@ fragment FormDocument on DocumentNode {
   schema {
     __typename
     id
+    jsonSchema
   }
   documentRegistry {
     ...FormRegistry

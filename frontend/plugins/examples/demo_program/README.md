@@ -10,7 +10,9 @@ The reference **form plugin**: one small program, modelled on an HIV care progra
 | `DemoProgramEnrolment` | ProgramEnrolment | `demo`      | v1       | `referredFrom`, `enrolmentNotes`                                 |
 | `DemoEncounter`        | Encounter        | `demo`      | v1, v2   | `vitals.{ weightKg, heightCm }`, `regimen`, `nextVisit`, `notes` |
 
-`DemoEncounter` carries a breaking change between its versions. v1 ([`forms/DemoEncounter/v1.ts`](forms/DemoEncounter/v1.ts), the archived type `DemoEncounterV1`) stored weight and height flat under `extension.demo` and allowed the regimen `LEGACY_TRIAL`. v2 ([`forms/DemoEncounter/type.ts`](forms/DemoEncounter/type.ts)) moves them under `vitals` and retires that value. `v1.json` is frozen; only `v2.json` is regenerated from its type.
+`DemoEncounter` carries a breaking change between its versions. v1 ([`forms/DemoEncounter/v1.ts`](forms/DemoEncounter/v1.ts), the archived type `DemoEncounterV1`) stored weight and height flat under `extension.demo`, allowed the regimen `LEGACY_TRIAL`, and had adherence notes. v2 ([`forms/DemoEncounter/type.ts`](forms/DemoEncounter/type.ts)) moves the vitals under `vitals`, retires that value and removes the notes field. `v1.json` is frozen; only `v2.json` is regenerated from its type.
+
+The migration ([`forms/DemoEncounter/migrations.ts`](forms/DemoEncounter/migrations.ts)) covers all three differences: the vitals are moved, a `LEGACY_TRIAL` regimen is unresolved (cleared and shown as previously recorded until a current regimen is chosen), and the adherence notes are kept (left in the document and listed read-only after the form). [`fixtures/v1.json`](forms/DemoEncounter/fixtures/v1.json) is the v1 encounter the build migrates and validates.
 
 Its event rules ([`forms/DemoEncounter/events.json`](forms/DemoEncounter/events.json)) all write to the enrolment:
 
@@ -23,6 +25,7 @@ Its event rules ([`forms/DemoEncounter/events.json`](forms/DemoEncounter/events.
 
 - **Enrolment** ([`forms/DemoProgramEnrolment/form.tsx`](forms/DemoProgramEnrolment/form.tsx)), the body of the enrolment modal for `DemoProgramEnrolment`: the enrolment date; the enrolment ID with a Generate button, which builds `GRY-0001` from the store code and the server counter `DemoProgramEnrolment` and asks before replacing an ID already there; where the patient was referred from; notes; and the patient's current regimen and follow-up status, read-only from the program events the encounters' rules write.
 - **Encounter** ([`forms/DemoEncounter/form.tsx`](forms/DemoEncounter/form.tsx)), the body of the encounter record screen for `DemoEncounter`: weight and height with the BMI worked out from them, the regimen, the next visit and notes. The screen's toolbar holds the visit date, clinician and status.
+- **Archived v1 encounter** ([`forms/DemoEncounter/v1Form.tsx`](forms/DemoEncounter/v1Form.tsx)), the form as it was at v1: weight and height in one Visit group with the regimen (`Legacy trial` among its options), no BMI, and the adherence notes. The host shows it read-only for encounters recorded under v1; Edit migrates the encounter and opens the current form, and saving pins it to v2.
 
 Saving an encounter with a regimen and a next visit gives the enrolment a `currentRegimen` event at once, and a `followUpStatus` of Due from the next-visit day (Overdue 30 days after). A next visit in the future therefore shows no follow-up status until that day.
 
@@ -32,8 +35,8 @@ The patient field group, the patient code override and the follow-up trigger joi
 
 ```bash
 pnpm forms:emit        # re-emit v2 (and any missing frozen version) after editing a type
-pnpm forms:check       # what `pnpm check` runs: fails if a committed schema is stale
-pnpm build:plugins     # emits, then packs dist/bundles/demo_program.json with its form_plugins
+pnpm forms:check       # what `pnpm check` runs: fails if a committed schema or versions.ts is stale, or the versions do not fit together
+pnpm build:plugins     # emits, checks the versions, then packs dist/bundles/demo_program.json with its form_plugins
 ```
 
 Install it on a dev server, choosing the program for the `demo` key and taking over the server's existing `Patient` entry:

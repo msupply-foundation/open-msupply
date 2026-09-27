@@ -8,6 +8,11 @@
  * category's slot under the document type it renders, so the host shows it
  * wherever a document of that type opens.
  *
+ * The encounter's contribution also carries the type's versioning: every
+ * schema id (generated into `versions.ts`), the migration from v1 to v2, and
+ * the archived v1 form, which the host shows read-only for encounters
+ * recorded under v1 until the user presses Edit.
+ *
  * TO-DO: contribute the patient field group, the patient code override and
  * the follow-up trigger (plan item P2) once their host slots exist (H9, H9b,
  * H10b, chunk 6).
@@ -20,6 +25,9 @@ import { PLUGIN_API_VERSION, definePlugin } from '@openmsupply/plugin-sdk';
 import { name, version } from './package.json';
 import { DemoEnrolmentForm } from './forms/DemoProgramEnrolment/form';
 import { DemoEncounterForm } from './forms/DemoEncounter/form';
+import { DemoEncounterV1Form } from './forms/DemoEncounter/v1Form';
+import { migrations as encounterMigrations } from './forms/DemoEncounter/migrations';
+import { versions as encounterVersions } from './forms/DemoEncounter/versions';
 
 export default definePlugin({
   manifest: {
@@ -39,6 +47,9 @@ export default definePlugin({
       id: 'encounter-form',
       documentType: 'DemoEncounter',
       Component: DemoEncounterForm,
+      versions: encounterVersions,
+      migrations: encounterMigrations,
+      archived: { 1: DemoEncounterV1Form },
     },
   ],
   translations: {
@@ -88,6 +99,12 @@ export default definePlugin({
         'The follow-up status is Due from this day, and Overdue 30 days after',
       'group.notes': 'Notes',
       'field.visit-notes': 'Visit notes',
+
+      // The archived v1 encounter form, and what its migration keeps.
+      'group.visit': 'Visit',
+      'regimen.LEGACY_TRIAL': 'Legacy trial',
+      'field.adherence': 'Adherence notes',
+      'kept.adherence': 'Adherence notes',
     },
   },
 });

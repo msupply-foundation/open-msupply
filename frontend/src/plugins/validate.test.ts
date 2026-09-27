@@ -440,6 +440,59 @@ describe('validateLoadedModule', () => {
       ]);
       expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
     });
+
+    describe('versioning', () => {
+      const encounter = (versioning: Record<string, unknown>) =>
+        withForms([
+          {
+            slot: 'encounter.form',
+            id: 'encounter',
+            documentType: 'DemoEncounter',
+            Component,
+            ...versioning,
+          },
+        ]);
+      const outcome = (versioning: Record<string, unknown>) =>
+        validateLoadedModule('demo', asModule(encounter(versioning)));
+
+      it('accepts versions with migrations and archived forms keyed by them', () => {
+        expect(
+          outcome({
+            versions: ['v1', 'v2', 'v3'],
+            migrations: [{ from: 1 }, { from: 2, to: 3 }, { from: 1, to: 3 }],
+            archived: { 1: Component, 2: Component },
+          }).kind
+        ).toBe('ok');
+      });
+
+      it('refuses migrations or archived forms with no versions', () => {
+        expect(refusal(outcome({ migrations: [{ from: 1 }] }))).toContain(
+          'without the versions they are keyed by'
+        );
+      });
+
+      it('refuses versions that are not distinct schema ids', () => {
+        expect(refusal(outcome({ versions: ['v1', 'v1'] }))).toContain(
+          'not a list of distinct schema ids'
+        );
+      });
+
+      it('refuses a step outside the versions', () => {
+        expect(
+          refusal(
+            outcome({ versions: ['v1', 'v2'], migrations: [{ from: 2 }] })
+          )
+        ).toContain('not within 1 to 2');
+      });
+
+      it('refuses an archived form for the current version', () => {
+        expect(
+          refusal(
+            outcome({ versions: ['v1', 'v2'], archived: { 2: Component } })
+          )
+        ).toContain('archived form for version 2');
+      });
+    });
   });
 
   it('refuses an empty contribution id', () => {

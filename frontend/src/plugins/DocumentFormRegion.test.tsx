@@ -84,7 +84,14 @@ const encounterForm = (
 const resolve = (value: unknown): unknown =>
   typeof value === 'function' ? resolve((value as () => unknown)()) : value;
 
-const mount = (documentType: string, record: () => FormRecordView) => {
+const mount = (
+  documentType: string,
+  record: () => FormRecordView,
+  version: {
+    archived?: () => number | undefined;
+    currentSchemaId?: string;
+  } = {}
+) => {
   let render!: () => unknown;
   const dispose = createRoot(disposeRoot => {
     const region = DocumentFormRegion({
@@ -95,6 +102,10 @@ const mount = (documentType: string, record: () => FormRecordView) => {
         return record();
       },
       fallback: () => 'default form',
+      get archivedVersion() {
+        return version.archived?.();
+      },
+      currentSchemaId: version.currentSchemaId,
     });
     render = () => resolve(region);
     render();
@@ -198,6 +209,51 @@ describe('DocumentFormRegion', () => {
       pluginCode: 'b_plugin',
       message: expect.stringContaining(
         'passed over: document type "DemoEncounter" renders one form, and "a_plugin.encounter" claimed it first'
+      ),
+    });
+    dispose();
+    warnings.mockRestore();
+  });
+  it('renders the archived form for the version it is told, and the current form after Edit', () => {
+    let currentMounts = 0;
+    register('demo_program', [
+      {
+        ...encounterForm('DemoEncounter', () => {
+          currentMounts++;
+          return 'v2 form';
+        }),
+        versions: ['v1-id', 'v2-id'],
+        archived: { 1: (() => 'v1 form') as never },
+      } as AnyContribution,
+    ]);
+    const [archived, setArchived] = createSignal<number | undefined>(1);
+    const { render, dispose } = mount('DemoEncounter', () => record, {
+      archived,
+      currentSchemaId: 'v2-id',
+    });
+    expect(render()).toBe('v1 form');
+    expect(currentMounts).toBe(0);
+    setArchived(undefined);
+    expect(render()).toBe('v2 form');
+    expect(currentMounts).toBe(1);
+    dispose();
+  });
+
+  it("names a plugin whose versions end at another schema than the server's", () => {
+    const warnings = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    register('demo_program', [
+      {
+        ...encounterForm('DemoEncounter', () => 'v2 form'),
+        versions: ['v1-id', 'v2-id'],
+      } as AnyContribution,
+    ]);
+    const { dispose } = mount('DemoEncounter', () => record, {
+      currentSchemaId: 'v3-id',
+    });
+    expect(pluginDiagnostics().at(-1)).toMatchObject({
+      pluginCode: 'demo_program',
+      message: expect.stringContaining(
+        'lists v2-id as the current schema of "DemoEncounter", but the server\'s is v3-id'
       ),
     });
     dispose();

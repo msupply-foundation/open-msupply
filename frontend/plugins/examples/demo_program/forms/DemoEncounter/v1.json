@@ -72,6 +72,10 @@
     },
     "DemoEncounterV1Extension": {
       "properties": {
+        "adherence": {
+          "description": "Notes on how well the patient is keeping to the regimen",
+          "type": "string"
+        },
         "heightCm": {
           "description": "Height in centimetres",
           "type": "number"

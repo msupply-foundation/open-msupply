@@ -51,6 +51,71 @@ const DOCUMENT_FORM_SLOTS: Readonly<Partial<Record<SlotId, true>>> = {
   'encounter.form': true,
 };
 
+const isVersionNumber = (value: unknown, count: number): value is number =>
+  Number.isInteger(value) &&
+  (value as number) >= 1 &&
+  (value as number) <= count;
+
+/*
+ * A form's versioning (sdk-contract § the document form slots): `versions`
+ * is every schema id of its type, oldest first; `migrations` and `archived`
+ * are keyed by position in it, so neither means anything without it. Checked
+ * as far as the shape goes; whether a step covers its versions is the plugin
+ * build's check, which has the schemas.
+ */
+const formVersioningProblem = (
+  entry: Record<string, unknown>
+): string | undefined => {
+  const { versions, migrations, archived } = entry;
+  if (versions === undefined) {
+    return migrations !== undefined || archived !== undefined
+      ? 'declares migrations or archived forms without the versions they are keyed by'
+      : undefined;
+  }
+  if (
+    !Array.isArray(versions) ||
+    versions.length === 0 ||
+    !versions.every(v => typeof v === 'string' && v.length > 0) ||
+    new Set(versions).size !== versions.length
+  ) {
+    return 'has versions that are not a list of distinct schema ids';
+  }
+  const count = versions.length;
+  if (migrations !== undefined) {
+    if (!Array.isArray(migrations)) return 'has migrations that are not a list';
+    for (const step of migrations as unknown[]) {
+      const record =
+        typeof step === 'object' && step !== null
+          ? (step as Record<string, unknown>)
+          : undefined;
+      const from = record?.['from'];
+      const to =
+        record?.['to'] ?? (typeof from === 'number' ? from + 1 : undefined);
+      if (
+        !isVersionNumber(from, count) ||
+        !isVersionNumber(to, count) ||
+        (to as number) <= from
+      ) {
+        return `has a migration step whose versions are not within 1 to ${count}, from an earlier to a later one`;
+      }
+    }
+  }
+  if (archived !== undefined) {
+    if (typeof archived !== 'object' || archived === null) {
+      return 'has archived forms that are not an object keyed by version';
+    }
+    for (const [key, form] of Object.entries(archived)) {
+      if (
+        !isVersionNumber(Number(key), count - 1) ||
+        typeof form !== 'function'
+      ) {
+        return `has an archived form for version ${key}, which is not an earlier version of its ${count} or not a component`;
+      }
+    }
+  }
+  return undefined;
+};
+
 /**
  * The slots whose contributions MAY render declaratively (a `value` function)
  * instead of with a `Component` — the column slots (sdk-contract § the column
@@ -428,6 +493,13 @@ export const validateLoadedModule = (
           return {
             kind: 'refused',
             message: `contribution "${slot}/${id}" names no document type to render`,
+          };
+        }
+        const versioningProblem = formVersioningProblem(entry);
+        if (versioningProblem) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" ${versioningProblem}`,
           };
         }
         const formKey = `${slot}/${documentType}`;

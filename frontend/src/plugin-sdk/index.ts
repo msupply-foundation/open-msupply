@@ -309,6 +309,16 @@ export type {
   BooleanPath,
 } from '../domain/documentForm/paths';
 export type { FieldSchemaInfo } from '../domain/documentForm/schemaNode';
+// Migrations between a document type's schema versions: eager and tiny, since
+// `defineMigration` only returns its argument, and the form contribution that
+// lists the steps is read at load.
+export { defineMigration } from './migrations';
+export type {
+  JsonScalar,
+  Migration,
+  MigrationStep,
+  MigrationTransform,
+} from '../domain/documentForm/migration';
 export type {
   FieldProps,
   TextInputProps,

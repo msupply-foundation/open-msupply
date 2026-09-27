@@ -1,0 +1,237 @@
+import { describe, expect, it } from 'vitest';
+import type { Encounter } from '../../plugin-sdk/documents';
+import v1 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v1.json';
+import v2 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
+import v1Fixture from '../../../plugins/examples/demo_program/forms/DemoEncounter/fixtures/v1.json';
+import {
+  applyMigrations,
+  keptFields,
+  type Migration,
+  type MigrationStep,
+} from './migration';
+import { checkCoverage, flattenSchema } from './schemaDiff';
+
+// The demo's v1 → v2 step, restated: the app tsconfig cannot resolve the
+// plugin's own modules (worklog, chunk 4), only its emitted JSON.
+const v1ToV2: MigrationStep = {
+  from: 1,
+  moved: {
+    'extension.demo.weightKg': 'extension.demo.vitals.weightKg',
+    'extension.demo.heightCm': 'extension.demo.vitals.heightCm',
+  },
+  unresolved: { 'extension.demo.regimen': ['LEGACY_TRIAL'] },
+  kept: { 'extension.demo.adherence': () => 'Adherence notes' },
+};
+
+describe('applyMigrations', () => {
+  it('moves, clears unresolved values and keeps kept ones', () => {
+    const result = applyMigrations(v1Fixture, 1, 2, [v1ToV2]);
+    expect(result?.data.extension).toEqual({
+      demo: {
+        vitals: { weightKg: 68, heightCm: 172 },
+        nextVisit: '2026-08-29T12:00:00.000Z',
+        notes: 'Reports feeling well; some tiredness in the afternoons.',
+        adherence: 'Missed two doses last month while travelling.',
+      },
+    });
+    expect(result?.unresolved).toEqual({
+      'extension.demo.regimen': 'LEGACY_TRIAL',
+    });
+  });
+
+  it('leaves the loaded data untouched', () => {
+    const before = structuredClone(v1Fixture);
+    applyMigrations(v1Fixture, 1, 2, [v1ToV2]);
+    expect(v1Fixture).toEqual(before);
+  });
+
+  it('leaves a current value alone', () => {
+    const data = { extension: { demo: { regimen: 'FIRST_LINE' } } };
+    expect(applyMigrations(data, 1, 2, [v1ToV2])).toEqual({
+      data,
+      unresolved: {},
+    });
+  });
+
+  it('maps, drops and runs the transform after the map', () => {
+    const step: MigrationStep = {
+      from: 1,
+      mapped: { status: { DONE: 'VISITED' } },
+      dropped: ['legacy'],
+      transform: (data, unresolve) => {
+        const bp = data.bp as string | undefined;
+        if (bp === 'unreadable') unresolve('bp', bp);
+      },
+    };
+    expect(
+      applyMigrations({ status: 'DONE', legacy: 1, bp: 'unreadable' }, 1, 2, [
+        step,
+      ])
+    ).toEqual({
+      data: { status: 'VISITED' },
+      unresolved: { bp: 'unreadable' },
+    });
+  });
+
+  it('chains steps, carrying an unresolved value along a later move', () => {
+    const steps: MigrationStep[] = [
+      { from: 1, unresolved: { a: ['OLD'] } },
+      { from: 2, moved: { a: 'b.a' } },
+    ];
+    expect(applyMigrations({ a: 'OLD' }, 1, 3, steps)).toEqual({
+      data: {},
+      unresolved: { 'b.a': 'OLD' },
+    });
+  });
+
+  it('prefers a squashed step to the single steps it replaced', () => {
+    const steps: MigrationStep[] = [
+      { from: 1, moved: { a: 'b' } },
+      { from: 2, moved: { b: 'c' } },
+      { from: 1, to: 3, moved: { a: 'd' } },
+    ];
+    expect(applyMigrations({ a: 1 }, 1, 3, steps)?.data).toEqual({ d: 1 });
+  });
+
+  it('carries data unchanged across a version with no step', () => {
+    expect(
+      applyMigrations({ a: 1 }, 1, 3, [{ from: 2, moved: { a: 'b' } }])
+    ).toEqual({ data: { b: 1 }, unresolved: {} });
+  });
+
+  it('cannot go back from a later version', () => {
+    expect(applyMigrations({}, 3, 2, [v1ToV2])).toBeUndefined();
+  });
+
+  it('lists every kept path once', () => {
+    expect(keptFields([v1ToV2, v1ToV2]).map(k => k.path)).toEqual([
+      'extension.demo.adherence',
+    ]);
+  });
+});
+
+describe('flattenSchema', () => {
+  it('follows $refs to every field, with types and enums', () => {
+    const fields = flattenSchema(v2);
+    expect(fields.get('extension.demo.vitals.weightKg')).toEqual({
+      types: ['number'],
+    });
+    expect(fields.get('extension.demo.regimen')?.enum).toEqual([
+      'FIRST_LINE',
+      'SECOND_LINE',
+    ]);
+    expect(fields.has('clinician.firstName')).toBe(true);
+    expect(fields.has('extension.demo.weightKg')).toBe(false);
+  });
+});
+
+describe('checkCoverage', () => {
+  it('passes the demo step', () => {
+    expect(checkCoverage(v1, v2, v1ToV2)).toEqual([]);
+  });
+
+  it('names a retired value the map leaves out', () => {
+    expect(checkCoverage(v1, v2, { ...v1ToV2, unresolved: {} })).toEqual([
+      'v1 → v2: extension.demo.regimen value "LEGACY_TRIAL" is retired and not covered — add it to mapped or unresolved',
+    ]);
+  });
+
+  it('names a removed path the map leaves out', () => {
+    expect(checkCoverage(v1, v2, { ...v1ToV2, kept: {} })).toEqual([
+      'v1 → v2: extension.demo.adherence is removed and not covered — add it to moved, kept or dropped',
+    ]);
+  });
+
+  it('accepts a mapping in place of an unresolved mark', () => {
+    const step = {
+      ...v1ToV2,
+      unresolved: {},
+      mapped: { 'extension.demo.regimen': { LEGACY_TRIAL: 'SECOND_LINE' } },
+    };
+    expect(checkCoverage(v1, v2, step)).toEqual([]);
+  });
+
+  it('refuses entries that cover nothing', () => {
+    const step: MigrationStep = {
+      ...v1ToV2,
+      moved: {
+        ...v1ToV2.moved,
+        'extension.demo.weight': 'extension.demo.notes',
+      },
+      unresolved: { 'extension.demo.regimen': ['LEGACY_TRIAL', 'FIRST_LINE'] },
+      dropped: ['extension.demo.gone'],
+    };
+    expect(checkCoverage(v1, v2, step)).toEqual([
+      'v1 → v2: moved names extension.demo.weight, which v1 does not have',
+      'v1 → v2: dropped names extension.demo.gone, which v1 does not have',
+      'v1 → v2: unresolved names extension.demo.regimen value "FIRST_LINE", which is not retired',
+    ]);
+  });
+
+  it('covers an object by its path, but still checks inside a move', () => {
+    const bp = (inner: Record<string, unknown>) => ({
+      type: 'object',
+      properties: { bp: { type: 'object', properties: inner } },
+    });
+    const old = bp({ sys: { type: 'number' }, dia: { type: 'number' } });
+    const renamed = {
+      type: 'object',
+      properties: {
+        vitals: bp({
+          systolic: { type: 'number' },
+          diastolic: { type: 'number' },
+        }),
+      },
+    };
+    expect(
+      checkCoverage(old, renamed, { from: 1, moved: { bp: 'vitals.bp' } })
+    ).toEqual([
+      'v1 → v2: bp.sys moves with its parent to vitals.bp.sys, which v2 does not have — add it to moved, kept or dropped',
+      'v1 → v2: bp.dia moves with its parent to vitals.bp.dia, which v2 does not have — add it to moved, kept or dropped',
+    ]);
+    expect(
+      checkCoverage(old, { type: 'object' }, { from: 1, dropped: ['bp'] })
+    ).toEqual([]);
+  });
+
+  it('names a changed type, which unresolved covers as any', () => {
+    const old = { type: 'object', properties: { bp: { type: 'string' } } };
+    const next = {
+      type: 'object',
+      properties: {
+        bp: { type: 'object', properties: { systolic: { type: 'number' } } },
+      },
+    };
+    expect(checkCoverage(old, next, { from: 1 })).toEqual([
+      "v1 → v2: bp changes type from string to object and is not covered — add it to unresolved as 'any'",
+    ]);
+    expect(
+      checkCoverage(old, next, { from: 1, unresolved: { bp: 'any' } })
+    ).toEqual([]);
+  });
+});
+
+describe('Migration typing', () => {
+  interface Doc extends Encounter {
+    extension?: { demo?: { regimen?: 'A' | 'B'; vitals?: { kg?: number } } };
+  }
+  it('checks new paths and mapped values against the target type', () => {
+    const ok: Migration<Doc> = {
+      from: 1,
+      moved: { anything: 'extension.demo.vitals.kg' },
+      mapped: { 'extension.demo.regimen': { OLD: 'A' } },
+      unresolved: {
+        'extension.demo.regimen': ['X'],
+        'extension.demo.vitals': 'any',
+      },
+    };
+    const bad: Migration<Doc> = {
+      from: 1,
+      // @ts-expect-error — not a path of the target type
+      moved: { anything: 'extension.demo.vitals.lbs' },
+      // @ts-expect-error — not one of the enum's values
+      mapped: { 'extension.demo.regimen': { OLD: 'C' } },
+    };
+    expect([ok, bad]).toHaveLength(2);
+  });
+});

@@ -58,7 +58,7 @@ export interface DraftController<T> {
   draft: Draft<T>;
   /**
    * Replaces the document, making the form pristine. `unresolved` carries
-   * what a migration could not map (empty until migrations exist).
+   * the values a migration cleared, by the path they were cleared from.
    */
   reset: (seed: T, unresolved?: Record<string, unknown>) => void;
   /** A plain copy of the document, for the save. */
@@ -81,6 +81,12 @@ export interface CreateDraftOptions {
   /** The loaded validator; undefined until the lazy chunk has arrived. */
   validate: Accessor<ValidateDocument | undefined>;
   readOnly?: Accessor<boolean>;
+  /**
+   * False while the document is only being read as it was recorded (an
+   * archived form, a version this app does not know): viewing never depends
+   * on validity, so nothing is reported. True when absent.
+   */
+  validates?: Accessor<boolean>;
   /**
    * The error summary's names for fields the caller renders itself (a record
    * screen's toolbar), by path. Any other path is named by pathLabel. An
@@ -128,6 +134,7 @@ export const createDraft = <T extends object>(
 
   const errors = createMemo((): FieldError[] => {
     version();
+    if (options.validates?.() === false) return [];
     const validate = options.validate();
     const found: FieldError[] = [];
     const schemas = [options.schema(), options.baseSchema?.()];

@@ -31,7 +31,10 @@ import { SaveIcon, XCircleIcon } from '../../ui/icons';
 import { createConfirmOnLeave } from '../../domain/confirmOnLeave';
 import { ClinicianSelect } from '../../domain/clinician';
 import { createDocumentForm } from '../../domain/documentForm/createDocumentForm';
+import { DocumentKeptValues } from '../../domain/documentForm/DocumentKeptValues';
+import { DocumentVersionNotice } from '../../domain/documentForm/DocumentVersionNotice';
 import { DocumentFormRegion } from '../../plugins/DocumentFormRegion';
+import { documentFormVersioning } from '../../plugins/documentFormSlot';
 import type { Encounter, EncounterStatus } from '../../plugin-sdk/documents';
 import {
   EncounterRecord,
@@ -71,6 +74,11 @@ const fetchEncounterRecord = async (variables: {
  * one whose visit is under way. Every read is non-suspending: the screen
  * shows its own spinner while the encounter and its document load.
  *
+ * An encounter recorded under an earlier version of its type opens as the
+ * form host resolves it (DocumentVersionNotice above the body): read-only in
+ * its archived form, with Edit to bring it into the current one, or in the
+ * current form after migration.
+ *
  * TO-DO: write this screen's spec (implementation-plan H26).
  */
 const EncounterDetailView: Component = () => {
@@ -101,7 +109,12 @@ const EncounterDetailView: Component = () => {
       clinician: t('label.clinician'),
       status: t('label.status'),
     }),
+    versioning: type => documentFormVersioning('encounter.form', type),
   });
+  const archivedVersion = () => {
+    const v = form.version();
+    return v.kind === 'archived' ? v.version : undefined;
+  };
   const draft = form.draft;
 
   const patientHref = () =>
@@ -254,6 +267,10 @@ const EncounterDetailView: Component = () => {
                 <Show when={form.saveError()}>
                   <Alert severity="error">{form.saveError()}</Alert>
                 </Show>
+                <DocumentVersionNotice
+                  version={form.version()}
+                  onEdit={form.edit}
+                />
                 <DocumentFormRegion
                   slot="encounter.form"
                   documentType={form.registry()?.documentType ?? ''}
@@ -263,7 +280,10 @@ const EncounterDetailView: Component = () => {
                     documentName: form.document()?.name,
                   }}
                   fallback={() => <Default draft={draft} />}
+                  archivedVersion={archivedVersion()}
+                  currentSchemaId={form.registry()?.formSchemaId}
                 />
+                <DocumentKeptValues values={form.kept()} />
                 <FormErrorSummary
                   errors={form.validation.visible()}
                   testId="encounter-error-summary"

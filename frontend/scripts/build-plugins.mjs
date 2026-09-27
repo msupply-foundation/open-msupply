@@ -58,6 +58,7 @@ import {
   packFormPlugin,
   readFormsDeclaration,
 } from '../vite/formPlugins.ts';
+import { checkFormVersions } from '../vite/formVersionChecks.ts';
 import { envPluginDirs, inRepoPluginDirs } from './pluginDirs.mjs';
 
 const OUT_DIR = 'dist/frontend_plugins';
@@ -330,7 +331,14 @@ if (plugins.length === 0 && backendPlugins.length === 0) {
  * The FORM halves, before anything builds: each type's current schema
  * version is re-emitted from its TypeScript type, so the bundle cannot carry
  * a schema its type no longer describes, and a type that does not emit fails
- * the run before any vite build starts. What is packed is the files on disk;
+ * the run before any vite build starts. The emit also writes each type's
+ * `versions.ts` and fails on an archived type that no longer generates its
+ * frozen file. Then the versioning checks (vite/formVersionChecks.ts): every
+ * event-rule path is a field of the current schema, every migration step
+ * covers the differences it spans, and every earlier version's fixture
+ * migrates to a valid current document. This is the step CI runs and
+ * `pnpm plugin:install` runs before installing, so a plugin failing them is
+ * never packed or installed. What is packed is the files on disk;
  * `pnpm forms:check` (part of `pnpm check`) is what fails a change to a type
  * whose re-emitted schema was not committed with it.
  */
@@ -340,6 +348,7 @@ for (const plugin of plugins) {
   if (!declaration) continue;
   const emitted = await emitFormSchemas(plugin.dir, declaration, {
     check: false,
+    pluginCode: plugin.code,
   });
   if (emitted.problems.length > 0) {
     throw new Error(
@@ -349,6 +358,13 @@ for (const plugin of plugins) {
   }
   for (const file of emitted.written) {
     console.info(`[build-plugins] emitted ${file}`);
+  }
+  const versioning = await checkFormVersions(plugin.dir, declaration);
+  if (versioning.length > 0) {
+    throw new Error(
+      `${plugin.code}: its form versions do not fit together:\n  - ` +
+        versioning.join('\n  - ')
+    );
   }
   formPlugins.push({ plugin, declaration });
 }

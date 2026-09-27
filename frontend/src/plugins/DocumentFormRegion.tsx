@@ -13,14 +13,20 @@
  * place. Its SDK fields are lazy wrappers, which suspend on their first
  * render, so the form has a Suspense boundary of its own: the enrolment modal
  * opens over the patient screen, whose boundary must never see it.
+ *
+ * A document on an earlier schema version renders in the plugin's archived
+ * form for that version when the form host says so (`archivedVersion`;
+ * kdd/custom-forms/specs.md § Opening an older document).
  */
 import {
   createComponent,
+  createEffect,
   createMemo,
   ErrorBoundary,
   onMount,
   Show,
   Suspense,
+  type Component,
   type JSX,
 } from 'solid-js';
 import type {
@@ -44,6 +50,14 @@ export interface DocumentFormRegionProps<S extends DocumentFormSlotId> {
    * throws.
    */
   fallback: () => JSX.Element;
+  /** The version whose archived form renders, read-only; else the current. */
+  archivedVersion?: number;
+  /**
+   * The registry entry's current schema id. A plugin whose `versions` end
+   * elsewhere was built against another install of its types, which is
+   * named in diagnostics.
+   */
+  currentSchemaId?: string;
 }
 
 /**
@@ -92,8 +106,43 @@ export const DocumentFormRegion = <S extends DocumentFormSlotId>(
     () => props.slot
   );
 
+  // The component the document renders in: the archived form for its
+  // version, or the current form. Held by identity, so Edit (archived to
+  // current) remounts the body while nothing else does.
+  const rendered = createMemo<
+    { id: string; Component: Component<SlotPropsMap[S]> } | undefined
+  >(
+    () => {
+      const o = occupant();
+      if (!o) return undefined;
+      const version = props.archivedVersion;
+      const archived =
+        version === undefined ? undefined : o.archived?.[version];
+      return archived
+        ? { id: o.id, Component: archived }
+        : { id: o.id, Component: o.Component };
+    },
+    undefined,
+    {
+      equals: (previous, next) =>
+        previous?.id === next?.id && previous?.Component === next?.Component,
+    }
+  );
+
+  createEffect(() => {
+    const versions = occupant()?.versions;
+    const current = props.currentSchemaId;
+    if (!versions || !current || versions.at(-1) === current) return;
+    const id = occupant()?.id ?? '';
+    recordPluginDiagnostic({
+      level: 'warning',
+      pluginCode: id.split('.')[0],
+      message: `${props.slot}: ${id} lists ${versions.at(-1) ?? 'no version'} as the current schema of "${props.documentType}", but the server's is ${current} — the plugin in the browser and the one installed differ`,
+    });
+  });
+
   return (
-    <Show when={occupant()} keyed fallback={props.fallback()}>
+    <Show when={rendered()} keyed fallback={props.fallback()}>
       {form => (
         <ErrorBoundary
           fallback={error => (

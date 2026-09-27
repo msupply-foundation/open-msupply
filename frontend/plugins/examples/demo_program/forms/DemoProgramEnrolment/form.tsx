@@ -26,8 +26,8 @@ import {
   type ProgramEnrolmentFormProps,
 } from '@openmsupply/plugin-sdk';
 import { intl } from '../../intl';
-import { regimenLabels } from '../DemoEncounter/labels';
-import type { DemoRegimen } from '../DemoEncounter/type';
+import { regimenLabelsV1 } from '../DemoEncounter/labels';
+import type { DemoRegimenV1 } from '../DemoEncounter/v1';
 import { ENROLMENT_ID_COUNTER, formatEnrolmentId } from './enrolmentId';
 import type { DemoProgramEnrolment, DemoReferralSource } from './type';
 
@@ -116,11 +116,9 @@ const referralLabels = (): Record<DemoReferralSource, string> => ({
 // The event values as users read them. An event holds a string the rule
 // wrote, so a value this form has no name for shows as written.
 const regimenName = (value: string): string =>
-  regimenLabels()[value as DemoRegimen] ?? value;
+  regimenLabelsV1()[value as DemoRegimenV1] ?? value;
 const followUpName = (value: string): string =>
-  value === 'Due' || value === 'Overdue'
-    ? intl.t(`follow-up.${value}`)
-    : value;
+  value === 'Due' || value === 'Overdue' ? intl.t(`follow-up.${value}`) : value;
 
 export const DemoEnrolmentForm = (
   props: ProgramEnrolmentFormProps<DemoProgramEnrolment>
