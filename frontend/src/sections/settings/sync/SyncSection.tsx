@@ -2,6 +2,7 @@ import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { pollSyncStatus } from '../../../api/syncStore';
+import { isCentralServer } from '../../../api/serverInfo';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -92,20 +93,25 @@ export const SyncSection = (props: {
    * The pause switch (spec/settings/rules.md § Synchronisation) is a setting
    * to flip, not a field of the form: it saves on change through its own
    * mutation, so flipping it never re-sends the credentials, and it never
-   * arms the form's validation. The stored value is the switch's state — the
-   * response is discarded in favour of a re-read, and the shared sync store is
-   * re-polled so this session's chrome cell shows the paused state at once
+   * arms the form's validation. The switch shows `override ?? stored` (the
+   * same idiom as DisplaySettingsSection): the flip holds while its save is in
+   * flight, and dropping the override on failure reverts it to the stored
+   * value. On success the stored value is re-read, and the shared sync store
+   * is re-polled so this session's chrome cell shows the paused state at once
    * (other sessions get it from the live frame the server emits).
    */
+  const [pauseOverride, setPauseOverride] = createSignal<boolean>();
+  const paused = () => pauseOverride() ?? stored()?.isPaused ?? false;
   const [pauseBusy, setPauseBusy] = createSignal(false);
   const [pauseError, setPauseError] = createSignal<string>();
-  const setPaused = async (paused: boolean) => {
+  const setPaused = async (next: boolean) => {
     if (pauseBusy()) return;
     setPauseBusy(true);
     setPauseError(undefined);
+    setPauseOverride(next);
     const result = await graphqlFetch(
       SetSyncPaused,
-      { paused },
+      { paused: next },
       { background: true }
     );
     if (result.kind === 'success') {
@@ -114,6 +120,7 @@ export const SyncSection = (props: {
     } else if (result.kind !== 'unauthenticated') {
       setPauseError(t(SYNC_SAVE_FALLBACK_ERROR));
     }
+    setPauseOverride(undefined);
     setPauseBusy(false);
   };
 
@@ -182,12 +189,16 @@ export const SyncSection = (props: {
         <ToggleSwitch
           label={t('label.pause-sync')}
           variant="caution"
-          checked={stored()?.isPaused ?? false}
+          checked={paused()}
           disabled={pauseBusy() || saving()}
-          onChange={paused => void setPaused(paused)}
+          onChange={next => void setPaused(next)}
           labelInfo={
             <InfoTooltip
-              text={t('label.pause-sync-info')}
+              text={t(
+                isCentralServer()
+                  ? 'label.pause-sync-info-central'
+                  : 'label.pause-sync-info-remote'
+              )}
               triggerTestId="sync-settings-pause-info"
             />
           }

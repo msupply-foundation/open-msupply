@@ -1,9 +1,10 @@
 //! The admin sync pause (Admin > Sync settings).
 //!
 //! A persisted flag (`KeyType::SettingsSyncIsPaused`) read by `SynchroniserDriver` before every
-//! scheduled or manual run and by the `manualSync` mutation. While set on an initialised site no
-//! push or pull runs, including a central server's outbound sync to legacy central. The sync
-//! APIs a central serves to its remotes are unaffected, and so is initialisation: the flag only
+//! scheduled or manual run, by `FileSyncDriver` before every upload, and by the `manualSync`
+//! mutation. While set on an initialised site no push or pull runs, including a central server's
+//! outbound sync to legacy central, and no file uploads start. The sync APIs a central serves to
+//! its remotes are unaffected (see `sync_api_pause`), and so is initialisation: the flag only
 //! takes effect once the site's first sync has completed.
 //!
 //! Distinct from `KeyType::SettingsSyncIsDisabled`, the one-way switch the CLI sets on a copied
@@ -16,6 +17,23 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     subscription::SubscriptionTrigger,
 };
+
+/// Whether the admin pause is set, for the sync and file sync drivers. They check this on every
+/// run or loop, so pausing live and restarting while paused behave the same (the key value store
+/// is cached, so it is cheap). A read failure is logged and treated as not paused. Callers apply
+/// it only once the site is initialised.
+pub(crate) fn is_sync_paused(service_provider: &ServiceProvider) -> bool {
+    let Ok(ctx) = service_provider.basic_context() else {
+        return false;
+    };
+    match service_provider.settings.is_sync_paused(&ctx) {
+        Ok(paused) => paused,
+        Err(error) => {
+            log::error!("Failed to read sync paused setting, treating as not paused: {error:#?}");
+            false
+        }
+    }
+}
 
 /// Set the pause flag, record who did it in the system log, and re-emit the sync info
 /// subscription so every open session's header updates. Returns the stored state.
