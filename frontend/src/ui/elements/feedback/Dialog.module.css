@@ -115,10 +115,11 @@
      CARD view spread thin across 1840px, and the card view is what people
      actually see.
 
-     Every line editor but one takes the sheet, and so this ceiling. A modal
-     whose content measures narrower can ask for a card instead (`large` +
-     widthRem) — the internal-order editor does (78rem) — but mind the HEIGHT
-     as well as the width: a card stops at 80vh. That is harmless for short
+     Most line editors take the sheet, and so this ceiling. A modal whose
+     content measures narrower can ask for a card instead (`large` +
+     widthRem) — the internal-order editor does (78rem), and so does the
+     form-only stock-movement editor — but mind the HEIGHT as well as the
+     width: a card stops at 80vh. That is harmless for short
      content and costly for tall: the requisition editor tried the same card
      (#617) and lost its stats tabs below the fold on a landscape tablet, so
      it stays a sheet. */
