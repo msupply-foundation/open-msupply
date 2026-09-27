@@ -28,8 +28,19 @@
      up in one column and a long label wraps within the track instead.
 
      Wide enough for the longest label in the app's panels on one line; the
-     hint line above them is free-flowing text and is unaffected. */
-  --field-row-label: 9.5rem;
+     hint line above them is free-flowing text and is unaffected.
+
+     Capped as a SHARE of the row too — the same rule the dialog body applies
+     to its own track (Dialog.module.css). A fixed 9.5rem is right while the
+     panel is wide, but a panel squeezed into a narrow column (a line editor's
+     three panels on a portrait tablet, #617) is left with too little room
+     for its values, and they clip at the panel's edge instead of the labels
+     wrapping. `min()` only bites below ~24rem of row. Measured at #617: at
+     desktop widths only the internal-order editor's 22rem statistics panels
+     narrow (9.5 -> 8rem, labels still on one line); on a phone the stocktake
+     create form's filter labels narrow and "Items expiring before" wraps,
+     giving its controls the room. */
+  --field-row-label: min(9.5rem, 40%);
 }
 
 .hint {

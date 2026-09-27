@@ -165,16 +165,24 @@ export interface DialogProps {
    * the narrow-viewport line like a `width` measure. They differ in how far
    * they may GROW:
    *  - `'large'` — a centred CARD: 56rem wide by default (`widthRem` for a
-   *    wider table), ceiling ~80vh so the scrim still frames it top and bottom.
-   *  - `'full'` — a SHEET: fills the viewport in both axes bar a 2rem gutter.
+   *    wider table, or for content whose width can be measured — the
+   *    internal-order line editor's capped panels take 78rem), ceiling ~80vh
+   *    so the scrim still frames it top and bottom. Mind that height cap when
+   *    picking a card over the sheet: tall content scrolls sooner (the
+   *    requisition editor tried a card and lost its stats tabs below the fold
+   *    on a landscape tablet, #617).
+   *  - `'full'` — a SHEET: fills the viewport bar a 2rem gutter in both axes,
+   *    up to a 90rem width ceiling (a laptop's sheet, so a large monitor gets
+   *    the same box rather than one spreading its content across the screen).
    *    For content no card width fits: a table too wide (the shipment and
    *    stocktake line editors run to ~20 columns, where narrowing hides columns
-   *    without removing any empty space), a region that caps itself wider than
-   *    a card's body (the internal-order editor's 64rem charts row, the
-   *    requisition editor's three-column figure grid), or a row count that
-   *    wants every row it can show before scrolling. Also the right choice for
-   *    a modal hosting a PLUGIN SLOT: what a deployment contributes there is
-   *    not ours to measure, so no card width is safe. `widthRem` is ignored.
+   *    without removing any empty space), a region wider than a card's body
+   *    that is also tall (the requisition editor's three-column figure grid),
+   *    or a row count that wants every row it can show before scrolling. The
+   *    default too for a modal hosting a PLUGIN SLOT: what a deployment
+   *    contributes there is not ours to measure. The internal-order editor's
+   *    card is the recorded exception (ui/docs/DESIGN_STANDARDS.md, #617).
+   *    `widthRem` is ignored.
    */
   size?: 'auto' | 'large' | 'full';
   /**

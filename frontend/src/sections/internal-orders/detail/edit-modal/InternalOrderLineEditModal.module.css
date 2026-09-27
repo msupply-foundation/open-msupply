@@ -1,26 +1,55 @@
 /* The line editor's panels (spec/internal-orders S4): the item's statistics
    and (under the extended gate) its stock movements on the inline-start, the
    edits on a recessed inset panel at the inline-end; they stack on narrow
-   viewports. */
+   viewports.
+
+   CENTRED as a block, because the columns are CAPPED (below) and the card is
+   sized to the three-panel layout: without it a general order's two panels
+   pack against the inline-start of that box, and the whole editor reads as if
+   it had slid off centre. The gap is a step wider than the default for the
+   same reason it was asked for (#617): with a background on each column, the
+   space between them is what separates one group from the next. */
 .panels {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-5);
   align-items: flex-start;
   flex-wrap: wrap;
+  justify-content: center;
   margin-block-start: var(--space-3);
 }
 
+/* A statistics column — the stat rows on their own recessed panel, so the
+   label/value pairs read as one group rather than text floating on the modal
+   surface (#617; the edits panel next door already did this). The gap is
+   tighter than InsetPanel's own: these are dense read-only figures, not
+   controls.
+
+   CAPPED, which is the actual fix for "the labels and inputs are so far from
+   each other". The value right-aligns at the row's inline-end, so on a 34"
+   monitor an uncapped third-of-the-modal column put it ~370px from its label.
+   22rem is the house form-column width (FormColumn's --form-column-min), and
+   22 + 22 + 28 + the two gaps lands the three panels at 75rem = the 1200px the
+   React client capped this same editor at — and the modal is a card sized
+   to exactly that group (widthRem 78 = 75rem + the body's padding), so no
+   empty frame surrounds it on a big monitor. */
 .column {
   flex: 1 1 14rem;
   min-inline-size: 0;
+  max-inline-size: 22rem;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
+/* The edits panel caps a step wider than the statistics columns: its Requested
+   row splits into a number box AND the entry-mode select at equal widths, and
+   the select must not truncate its mode word (spec S4). 28rem is the width a
+   field row has in a standard dialog, so the panel is no wider than an
+   ordinary modal's form. */
 .edits {
   flex: 1 1 18rem;
   min-inline-size: 0;
+  max-inline-size: 28rem;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -41,12 +70,15 @@
   font-size: var(--text-sm);
 }
 
-/* The middle-panel Suggested row (spec S4): tinted like the edits inset panel —
-   the requested block it is read against. The negative inline margin lets the
-   tint extend slightly past both sides, while the matching inline padding keeps
-   the row's text aligned with the column's other (un-highlighted) rows. */
+/* The middle-panel Suggested row (spec S4): tinted a step DARKER than the
+   panel it now sits on — it used to take the inset panel's own fill, which
+   became invisible once the statistics columns gained that same fill (#617).
+   One step up the group scale keeps it reading as "the requested block's
+   figure" without introducing a second accent. The negative inline margin lets
+   the tint extend slightly past both sides, while the matching inline padding
+   keeps the row's text aligned with the column's other (un-highlighted) rows. */
 .highlight {
-  background: var(--bg-group-light);
+  background: var(--bg-group-main);
   border-radius: var(--radius-md);
   margin-inline: calc(-1 * var(--space-2));
   padding-inline: var(--space-2);
@@ -78,10 +110,11 @@
   gap: var(--space-4);
   margin-block-start: var(--space-4);
   /* Cap the region and centre it as a cohesive block, so the charts don't
-     sprawl across the full-bleed modal (they'd read as uncentered). Wide enough
-     for the two ~29rem charts + gap + padding side by side — which is why this
-     editor takes Dialog's `size="full"` rather than the 56rem `large` card:
-     a ~53rem body can't reach this cap, so the pair would stack (#771). */
+     sprawl across the modal (they'd read as uncentered). Wide enough for the
+     two ~29rem charts + gap + padding side by side — which is why this editor
+     is a 78rem card rather than the 56rem `large` default: a ~53rem body
+     can't reach this cap, so the pair would stack (#771); the 78rem card's
+     75rem body clears it (#617). */
   inline-size: 100%;
   max-inline-size: 64rem;
   margin-inline: auto;
