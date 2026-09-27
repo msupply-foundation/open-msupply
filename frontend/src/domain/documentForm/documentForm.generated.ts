@@ -177,3 +177,46 @@ export type UpdateFormEncounterResult = {
 export const UpdateFormEncounter = {
   query: "mutation updateFormEncounter($storeId: String!, $input: UpdateEncounterInput!) {\n  updateEncounter(storeId: $storeId, input: $input) {\n    ... on EncounterNode {\n      __typename\n      id\n      document {\n        ...FormDocument\n      }\n    }\n  }\n}\n\nfragment FormDocument on DocumentNode {\n  __typename\n  id\n  name\n  type\n  data\n  schema {\n    __typename\n    id\n    jsonSchema\n  }\n  documentRegistry {\n    ...FormRegistry\n  }\n}\n\nfragment FormRegistry on DocumentRegistryNode {\n  __typename\n  id\n  documentType\n  category\n  contextId\n  name\n  formSchemaId\n  jsonSchema\n}",
 } as TypedDocument<UpdateFormEncounterResult, UpdateFormEncounterVariables>;
+
+export type InsertFormPatientVariables = {
+  storeId: string;
+  input: {
+    data: unknown;
+    schemaId: string;
+  };
+};
+
+export type InsertFormPatientResult = {
+  insertProgramPatient: ({
+  __typename: "PatientNode";
+} & {
+  id: string;
+  document: FormDocumentFragment | null;
+});
+};
+
+export const InsertFormPatient = {
+  query: "mutation insertFormPatient($storeId: String!, $input: InsertProgramPatientInput!) {\n  insertProgramPatient(storeId: $storeId, input: $input) {\n    ... on PatientNode {\n      __typename\n      id\n      document {\n        ...FormDocument\n      }\n    }\n  }\n}\n\nfragment FormDocument on DocumentNode {\n  __typename\n  id\n  name\n  type\n  data\n  schema {\n    __typename\n    id\n    jsonSchema\n  }\n  documentRegistry {\n    ...FormRegistry\n  }\n}\n\nfragment FormRegistry on DocumentRegistryNode {\n  __typename\n  id\n  documentType\n  category\n  contextId\n  name\n  formSchemaId\n  jsonSchema\n}",
+} as TypedDocument<InsertFormPatientResult, InsertFormPatientVariables>;
+
+export type UpdateFormPatientVariables = {
+  storeId: string;
+  input: {
+    data: unknown;
+    schemaId: string;
+    parent: string;
+  };
+};
+
+export type UpdateFormPatientResult = {
+  updateProgramPatient: ({
+  __typename: "PatientNode";
+} & {
+  id: string;
+  document: FormDocumentFragment | null;
+});
+};
+
+export const UpdateFormPatient = {
+  query: "mutation updateFormPatient($storeId: String!, $input: UpdateProgramPatientInput!) {\n  updateProgramPatient(storeId: $storeId, input: $input) {\n    ... on PatientNode {\n      __typename\n      id\n      document {\n        ...FormDocument\n      }\n    }\n  }\n}\n\nfragment FormDocument on DocumentNode {\n  __typename\n  id\n  name\n  type\n  data\n  schema {\n    __typename\n    id\n    jsonSchema\n  }\n  documentRegistry {\n    ...FormRegistry\n  }\n}\n\nfragment FormRegistry on DocumentRegistryNode {\n  __typename\n  id\n  documentType\n  category\n  contextId\n  name\n  formSchemaId\n  jsonSchema\n}",
+} as TypedDocument<UpdateFormPatientResult, UpdateFormPatientVariables>;

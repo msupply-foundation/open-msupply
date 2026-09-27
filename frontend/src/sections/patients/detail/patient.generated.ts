@@ -34,9 +34,15 @@ export type PatientResult = {
   id: string;
   name: string;
 } | null;
+  document: {
+  __typename: "DocumentNode";
+  id: string;
+  name: string;
+} | null;
+  documentDraft: unknown | null;
 } | null;
 };
 
 export const Patient = {
-  query: "query patient($storeId: String!, $patientId: String!) {\n  patient(storeId: $storeId, patientId: $patientId) {\n    id\n    name\n    code\n    code2\n    firstName\n    lastName\n    gender\n    dateOfBirth\n    age\n    phone\n    address1\n    address2\n    country\n    email\n    website\n    isDeceased\n    dateOfDeath\n    nextOfKinId\n    nextOfKinName\n    createdDatetime\n    customFields\n    nextOfKin {\n      id\n      name\n    }\n  }\n}",
+  query: "query patient($storeId: String!, $patientId: String!) {\n  patient(storeId: $storeId, patientId: $patientId) {\n    id\n    name\n    code\n    code2\n    firstName\n    lastName\n    gender\n    dateOfBirth\n    age\n    phone\n    address1\n    address2\n    country\n    email\n    website\n    isDeceased\n    dateOfDeath\n    nextOfKinId\n    nextOfKinName\n    createdDatetime\n    customFields\n    nextOfKin {\n      id\n      name\n    }\n    document {\n      __typename\n      id\n      name\n    }\n    documentDraft\n  }\n}",
 } as TypedDocument<PatientResult, PatientVariables>;

@@ -6,7 +6,7 @@ The reference **form plugin**: one small program, modelled on an HIV care progra
 
 | Document type          | Category         | Program key | Versions | Adds under `extension.demo`                                      |
 | ---------------------- | ---------------- | ----------- | -------- | ---------------------------------------------------------------- |
-| `Patient`              | Patient          | none        | v1       | `occupation`, `preferredLanguage`                                |
+| `Patient`              | Patient          | none        | v1       | `treatmentSupporter`, `preferredLanguage`                        |
 | `DemoProgramEnrolment` | ProgramEnrolment | `demo`      | v1       | `referredFrom`, `enrolmentNotes`                                 |
 | `DemoEncounter`        | Encounter        | `demo`      | v1, v2   | `vitals.{ weightKg, heightCm }`, `regimen`, `nextVisit`, `notes` |
 
@@ -21,7 +21,9 @@ Its event rules ([`forms/DemoEncounter/events.json`](forms/DemoEncounter/events.
 
 ## Its forms
 
-`plugin.tsx` contributes a form for each program type, beside that type's schema versions:
+`plugin.tsx` contributes a form for each of its types, beside that type's schema versions, and a trigger:
+
+- **Patient** ([`forms/Patient/form.tsx`](forms/Patient/form.tsx)), the body of the patient screen's Details tab: the host's patient fields (names, date of birth with age, gender, address, phone, next of kin, deceased) composed with the program's own. In place of the host's code field it renders its own, whose Generate button builds `GRY-K7Q-0001` from the store code, three random characters and the server counter `DemoPatientCode` ([`forms/Patient/patientCode.ts`](forms/Patient/patientCode.ts)), asks before replacing a code, and shows only with the document-mutate permission; after the date of birth, a Demo Program group with the treatment supporter and preferred language. The host checks the code against other patients when the patient is saved.
 
 - **Enrolment** ([`forms/DemoProgramEnrolment/form.tsx`](forms/DemoProgramEnrolment/form.tsx)), the body of the enrolment modal for `DemoProgramEnrolment`: the enrolment date; the enrolment ID with a Generate button, which builds `GRY-0001` from the store code and the server counter `DemoProgramEnrolment` and asks before replacing an ID already there; where the patient was referred from; notes; and the patient's current regimen and follow-up status, read-only from the program events the encounters' rules write.
 - **Encounter** ([`forms/DemoEncounter/form.tsx`](forms/DemoEncounter/form.tsx)), the body of the encounter record screen for `DemoEncounter`: weight and height with the BMI worked out from them, the regimen, the next visit and notes. The screen's toolbar holds the visit date, clinician and status.
@@ -29,7 +31,7 @@ Its event rules ([`forms/DemoEncounter/events.json`](forms/DemoEncounter/events.
 
 Saving an encounter with a regimen and a next visit gives the enrolment a `currentRegimen` event at once, and a `followUpStatus` of Due from the next-visit day (Overdue 30 days after). A next visit in the future therefore shows no follow-up status until that day.
 
-The patient field group, the patient code override and the follow-up trigger join as their host slots are built (plan items P2, H9, H9b, H10b).
+- **Record follow-up**, a trigger on the patient screen's header for patients enrolled in the program, opens a new `DemoEncounter` in the host's modal: the visit date, clinician and status above the same encounter form the record screen shows. Saving records the encounter and refreshes the patient's encounters and enrolments.
 
 ## Running it
 

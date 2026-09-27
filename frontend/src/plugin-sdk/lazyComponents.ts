@@ -36,6 +36,8 @@ import type {
   NumberPath,
   TextPath,
 } from '../domain/documentForm/paths';
+import type { PatientFieldProps } from '../domain/patient/documentFields';
+import type { Patient } from './documents';
 
 const LazyDataTable = lazy(() =>
   import('../ui/elements/table/DataTable').then(m => ({
@@ -222,3 +224,121 @@ export const CheckboxInput = LazyCheckboxInput as unknown as <
 export const FieldGroup: Component<FieldGroupProps> = lazy(() =>
   formLibrary().then(m => ({ default: m.FieldGroup }))
 );
+
+/*
+ * The host's patient fields (kdd/custom-forms/specs.md § Host-owned surfaces,
+ * Patient): one per field of the host's patient form, each bound to a patient
+ * document's draft, for a `patient.form` to compose beside its own fields.
+ * They carry the host's behaviour for the field (the code generator, age
+ * beside date of birth, the store's genders, the next-of-kin search) and
+ * write where the base Patient keeps the value, the first contact block for
+ * address and phone. From the form library's chunk.
+ */
+
+const LazyPatientCodeField = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientCodeField as Component<PatientFieldProps>,
+  }))
+);
+/** The patient code, with the host's generator beside it. */
+export const PatientCodeField = LazyPatientCodeField as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientCode2Field = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientCode2Field as Component<PatientFieldProps>,
+  }))
+);
+/** The secondary patient code. */
+export const PatientCode2Field = LazyPatientCode2Field as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientFirstNameField = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientFirstNameField as Component<PatientFieldProps>,
+  }))
+);
+/** First name, which the base Patient requires. */
+export const PatientFirstNameField = LazyPatientFirstNameField as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientLastNameField = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientLastNameField as Component<PatientFieldProps>,
+  }))
+);
+/** Last name, which the base Patient requires. */
+export const PatientLastNameField = LazyPatientLastNameField as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientDateOfBirthField = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientDateOfBirthField as Component<PatientFieldProps>,
+  }))
+);
+/**
+ * Date of birth with age beside it, editable both ways; an age entry marks the
+ * date estimated.
+ */
+export const PatientDateOfBirthField = LazyPatientDateOfBirthField as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientGenderField = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientGenderField as Component<PatientFieldProps>,
+  }))
+);
+/** Gender, from the store's configured subset. */
+export const PatientGenderField = LazyPatientGenderField as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientAddressField = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientAddressField as Component<PatientFieldProps>,
+  }))
+);
+/**
+ * The address, in the first contact block (the one the patient record shows).
+ */
+export const PatientAddressField = LazyPatientAddressField as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientPhoneField = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientPhoneField as Component<PatientFieldProps>,
+  }))
+);
+/**
+ * The phone number, in the first contact block (the one the patient record
+ * shows).
+ */
+export const PatientPhoneField = LazyPatientPhoneField as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientNextOfKinField = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientNextOfKinField as Component<PatientFieldProps>,
+  }))
+);
+/** The next of kin, picked from the store's patients. */
+export const PatientNextOfKinField = LazyPatientNextOfKinField as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;
+
+const LazyPatientDeceasedFields = lazy(() =>
+  formLibrary().then(m => ({
+    default: m.PatientDeceasedFields as Component<PatientFieldProps>,
+  }))
+);
+/** Deceased, with the date of death while it is ticked. */
+export const PatientDeceasedFields = LazyPatientDeceasedFields as unknown as <T extends Patient>(
+  props: PatientFieldProps<T>
+) => JSX.Element;

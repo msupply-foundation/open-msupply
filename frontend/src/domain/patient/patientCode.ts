@@ -4,7 +4,7 @@ import { graphqlFetch } from '../../api/graphql';
 // re-exports PatientSearch, and pulling a Solid component into this module puts
 // Kobalte's client-only code in the import graph of a node-environment unit
 // test (the ItemVariantEditModal → domain/name/nameResource precedent).
-import { searchLocalPatients } from '../../domain/patient/patientResource';
+import { searchLocalPatients } from './patientResource';
 import {
   AllocatePatientCodeNumber,
   type AllocatePatientCodeNumberVariables,

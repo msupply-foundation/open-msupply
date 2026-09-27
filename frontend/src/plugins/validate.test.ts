@@ -197,6 +197,8 @@ describe('validateLoadedModule', () => {
       'internalOrder.sidePanelSection',
       'internalOrderLine.column',
       'internalOrderLine.infoPanel',
+      'patient.form',
+      'patient.toolbarTrigger',
       'prescription.paymentForm',
       'programEnrolment.form',
     ]);
@@ -363,6 +365,76 @@ describe('validateLoadedModule', () => {
     );
   });
 
+  describe('the patient toolbar trigger slot', () => {
+    const onClick = () => undefined;
+    const withTrigger = (trigger: Record<string, unknown>) =>
+      asModule(
+        definePlugin({
+          manifest: {
+            code: 'demo',
+            version: '1.0.0',
+            pluginApiVersion: PLUGIN_API_VERSION,
+          },
+          contributions: [
+            { slot: 'patient.toolbarTrigger', id: 'follow-up', ...trigger },
+          ] as never,
+        })
+      );
+
+    it('accepts a label key and a handler, with an icon and a record gate', () => {
+      expect(
+        validateLoadedModule(
+          'demo',
+          withTrigger({
+            label: 'button.record-follow-up',
+            icon: Component,
+            visible: () => true,
+            onClick,
+          })
+        ).kind
+      ).toBe('ok');
+    });
+
+    it('refuses a trigger with no label or no handler', () => {
+      expect(
+        refusal(validateLoadedModule('demo', withTrigger({ onClick })))
+      ).toContain('"patient.toolbarTrigger/follow-up" has no label key');
+      expect(
+        refusal(validateLoadedModule('demo', withTrigger({ label: 'x' })))
+      ).toContain('has no onClick function');
+    });
+
+    it('refuses a trigger carrying a Component — the host draws it', () => {
+      expect(
+        refusal(
+          validateLoadedModule(
+            'demo',
+            withTrigger({ label: 'x', onClick, Component })
+          )
+        )
+      ).toContain('carries a Component');
+    });
+
+    it('refuses a visible or an icon that is not a function', () => {
+      expect(
+        refusal(
+          validateLoadedModule(
+            'demo',
+            withTrigger({ label: 'x', onClick, visible: true })
+          )
+        )
+      ).toContain('has a visible that is not a function');
+      expect(
+        refusal(
+          validateLoadedModule(
+            'demo',
+            withTrigger({ label: 'x', onClick, icon: 'plus' })
+          )
+        )
+      ).toContain('has an icon that is not a component');
+    });
+  });
+
   describe('the document form slots', () => {
     const withForms = (contributions: readonly unknown[]) =>
       definePlugin({
@@ -386,6 +458,18 @@ describe('validateLoadedModule', () => {
           slot: 'encounter.form',
           id: 'encounter',
           documentType: 'DemoEncounter',
+          Component,
+        },
+      ]);
+      expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+    });
+
+    it('accepts a patient form, keyed by the Patient type', () => {
+      const module = withForms([
+        {
+          slot: 'patient.form',
+          id: 'patient',
+          documentType: 'Patient',
           Component,
         },
       ]);

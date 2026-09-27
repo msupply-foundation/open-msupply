@@ -1,8 +1,10 @@
 import {
   createResource,
   createSignal,
+  Match,
   Show,
   Suspense,
+  Switch,
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
@@ -42,7 +44,14 @@ import {
   EMPTY_FIELD_VALUE,
 } from '../../../domain/customFields';
 import { createPatientEditor } from './patientEditor';
+import { createPatientDocumentEditor } from './patientDocumentEditor';
 import { PatientDetailsForm } from './PatientDetailsForm';
+import { DocumentKeptValues } from '../../../domain/documentForm/DocumentKeptValues';
+import { DocumentVersionNotice } from '../../../domain/documentForm/DocumentVersionNotice';
+import { DocumentFormRegion } from '../../../plugins/DocumentFormRegion';
+import { PatientToolbarTriggers } from '../../../plugins/PatientToolbarTriggers';
+import { recordPluginDiagnostic } from '../../../plugins/diagnostics';
+import type { FormRegistryFragment } from '../../../domain/documentForm/documentForm.generated';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { InsurancePanel } from './insurance/InsurancePanel';
 import { InsuranceModal } from './insurance/InsuranceModal';
@@ -57,6 +66,7 @@ import {
   fetchFormRegistries,
   fetchPatientProgramEnrolments,
   fetchPatientEncounters,
+  fetchPatientRegistry,
 } from './programs/programsApi';
 import { ProgramPickerDialog } from './programs/ProgramPickerDialog';
 import {
@@ -67,13 +77,19 @@ import {
   CreateEncounterDialog,
   type CreatedEncounter,
 } from './programs/CreateEncounterDialog';
+import { EncounterFormModal } from './programs/EncounterFormModal';
 import { patientPreferences } from '../../../store/storeContext';
 
 // S3 — the patient detail screen (spec/patients). Summary header + tabs
 // (Details / Programs / Encounters / Vaccinations / Insurance / Log). The
-// Details tab is the plain-path built-in form, buffered locally and committed
-// on an explicit Save behind a confirmation, with a discard prompt when leaving
-// dirty (the StockLineDetailView model). The Insurance tab lists the patient's
+// Details tab edits the patient on one of two paths (spec/patients rules › two
+// persistence paths), buffered locally and committed on an explicit Save
+// behind a confirmation, with a discard prompt when leaving dirty (the
+// StockLineDetailView model). With a Patient registry entry installed it is
+// the document path: the patient document in the document form host, its body
+// the plugin form contributed to `patient.form` or the host's default patient
+// form (kdd/custom-forms implementation-plan H9). Without one it is the
+// plain-path built-in form. The Insurance tab lists the patient's
 // policies and adds/edits them (gated on configured providers). The Programs /
 // Encounters / Vaccinations tabs are lists gated on the program module: a
 // Programs row opens the enrolment modal, an Encounters row navigates to the
@@ -83,9 +99,12 @@ import { patientPreferences } from '../../../store/storeContext';
 // implementation-plan H8), beside Add insurance. The Log tab reuses the shared
 // activity-log surface.
 //
-// NOT built here: the document-path schema-driven form (implementation-plan
-// H9), the Contact-tracing tab, and the vaccination card a Vaccinations row
-// would open.
+// The header also carries the triggers plugins contribute to
+// `patient.toolbarTrigger` (implementation-plan H10b); `openDocumentForm`
+// opens a new encounter in the encounter form modal.
+//
+// NOT built here: the Contact-tracing tab, and the vaccination card a
+// Vaccinations row would open.
 //
 // TO-DO: spec/patients describes the create actions and the enrolment modal
 // as another vertical's; the record-screen spec (implementation-plan H26)
@@ -125,6 +144,33 @@ const PatientDetailView: Component = () => {
     node,
   });
 
+  // The document path (spec/patients rules › two persistence paths): the
+  // store's Patient registry entry, read once. Undefined while unanswered;
+  // `entry` undefined means none is installed, so the plain path applies.
+  const [patientRegistryData] = createResource(
+    () => params.storeId,
+    fetchPatientRegistry
+  );
+  const patientRegistry = () => gated(patientRegistryData);
+  const onDocumentPath = () => patientRegistry()?.entry !== undefined;
+  const documentEditor = createPatientDocumentEditor({
+    storeId: () => params.storeId,
+    node,
+    registry: () => patientRegistry()?.entry,
+  });
+  const documentForm = documentEditor.form;
+  const archivedVersion = () => {
+    const v = documentForm.version();
+    return v.kind === 'archived' ? v.version : undefined;
+  };
+
+  // The Details tab's save surface, whichever path it is on.
+  const details = () => (onDocumentPath() ? documentEditor : editor);
+  const detailsCanSave = () =>
+    onDocumentPath()
+      ? documentEditor.canSave() && !documentEditor.saving()
+      : editor.isDirty() && !editor.saving();
+
   // Insurance (spec § insurance policies). The tab + add action gate on the
   // site having at least one configured (active) insurance provider; policies
   // load only once that surface is shown. Modal state: undefined = closed,
@@ -148,14 +194,14 @@ const PatientDetailView: Component = () => {
   }>();
 
   // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the two controls that trigger it (the app-bar button and
-  // the ghost button in the Insurance panel's empty slot); each carries
+  // the SCREEN, once, for the two controls that trigger it (the app-bar button
+  // and the ghost button in the Insurance panel's empty slot); each carries
   // `shortcut={ALT_N}` for its badge.
   //
-  // Disabled — and so unlisted in the palette — except on the Insurance tab with
-  // the mutate permission, which is exactly when either control renders. KB-R2's
-  // "unclaimed only where the thing is absent": on the Details tab this screen has
-  // no add action, so nothing here answers the key.
+  // Disabled — and so unlisted in the palette — except on the Insurance tab
+  // with the mutate permission, which is exactly when either control renders.
+  // KB-R2's "unclaimed only where the thing is absent": on the Details tab this
+  // screen has no add action, so nothing here answers the key.
   createAddAction({
     name: 'button.add-insurance',
     run: () => setInsuranceState({}),
@@ -228,6 +274,27 @@ const PatientDetailView: Component = () => {
   };
   const canAddEncounter = () => enrolments().length > 0;
 
+  // A trigger's `openDocumentForm` (implementation-plan H10b): a new
+  // encounter of a type in a program the patient is enrolled in, which is
+  // all the server accepts. Anything else is refused and named against the
+  // plugin that asked.
+  const [encounterFormType, setEncounterFormType] =
+    createSignal<FormRegistryFragment>();
+  const openDocumentForm = (documentType: string, pluginCode: string) => {
+    const registry = encounterRegistries().find(
+      r => r.documentType === documentType
+    );
+    if (!registry) {
+      recordPluginDiagnostic({
+        level: 'warning',
+        pluginCode,
+        message: `patient.toolbarTrigger: openDocumentForm("${documentType}") refused — not an encounter type of a program this patient is enrolled in`,
+      });
+      return;
+    }
+    setEncounterFormType(registry);
+  };
+
   const [pickerOpen, setPickerOpen] = createSignal(false);
   const [enrolmentTarget, setEnrolmentTarget] = createSignal<EnrolmentTarget>();
   const [createEncounterOpen, setCreateEncounterOpen] = createSignal(false);
@@ -284,8 +351,8 @@ const PatientDetailView: Component = () => {
   // route change, tab switch, browser back, reload / tab close. onDiscard
   // resets the draft so a tab switch — which stays mounted — is truly cleared.
   const leaveGuard = createConfirmOnLeave({
-    isDirty: editor.isDirty,
-    onDiscard: editor.resetDraft,
+    isDirty: () => details().isDirty(),
+    onDiscard: () => details().resetDraft(),
   });
 
   const displayName = () => node()?.name || t('label.new-patient');
@@ -354,15 +421,24 @@ const PatientDetailView: Component = () => {
                       Add insurance alone, on the Insurance tab. Add insurance
                       is gated on providers being configured + patient-mutate
                       and opens the modal in add mode either way. */}
-                  <Show
-                    when={hasProgramModule()}
-                    fallback={
-                      <Show
-                        when={
-                          activeTab() === 'insurance' && editor.canMutate()
-                        }
-                      >
-                        <HeaderButtons>
+                  <HeaderButtons>
+                    <PatientToolbarTriggers
+                      props={{
+                        patient: {
+                          id: n().id,
+                          enrolmentTypes: enrolments().map(e => e.type),
+                        },
+                      }}
+                      openDocumentForm={openDocumentForm}
+                    />
+                    <Show
+                      when={hasProgramModule()}
+                      fallback={
+                        <Show
+                          when={
+                            activeTab() === 'insurance' && editor.canMutate()
+                          }
+                        >
                           <Button
                             icon={<PlusCircleIcon />}
                             shortcut={ALT_N}
@@ -371,11 +447,9 @@ const PatientDetailView: Component = () => {
                           >
                             {t('button.add-insurance')}
                           </Button>
-                        </HeaderButtons>
-                      </Show>
-                    }
-                  >
-                    <HeaderButtons>
+                        </Show>
+                      }
+                    >
                       <SplitButton
                         icon={<PlusCircleIcon />}
                         options={createOptions()}
@@ -387,8 +461,8 @@ const PatientDetailView: Component = () => {
                         }
                         data-testid="patient-create-split-button"
                       />
-                    </HeaderButtons>
-                  </Show>
+                    </Show>
+                  </HeaderButtons>
                   {/* Summary (spec/patients S3): Patient ID · Gender · DOB
                       (with derived age) live in the app-bar toolbar row above
                       the tabs — the header field cluster, never a hand-rolled
@@ -441,17 +515,17 @@ const PatientDetailView: Component = () => {
                         data-testid="cancel-button"
                         onClick={leave}
                       >
-                        {editor.isDirty()
+                        {details().isDirty()
                           ? t('button.cancel')
                           : t('button.close')}
                       </Button>
-                      <Show when={editor.canMutate()}>
+                      <Show when={details().canMutate()}>
                         <Button
                           icon={<SaveIcon />}
                           data-testid="save-button"
-                          loading={editor.saving()}
-                          disabled={!editor.isDirty() || editor.saving()}
-                          onClick={() => void editor.attemptSave()}
+                          loading={details().saving()}
+                          disabled={!detailsCanSave()}
+                          onClick={() => void details().attemptSave()}
                         >
                           {t('button.save')}
                         </Button>
@@ -468,21 +542,66 @@ const PatientDetailView: Component = () => {
                     ContentContainer's `padded` supplies (ui-standards/
                     detail-views → detail form). */}
                 <ContentContainer size="form" padded>
-                  <Show when={editor.saveError()}>
-                    <Alert severity="error">{editor.saveError()}</Alert>
+                  <Show when={details().saveError()}>
+                    <Alert severity="error">{details().saveError()}</Alert>
                   </Show>
-                  <PatientDetailsForm
-                    storeId={params.storeId}
-                    patientId={params.patientId}
-                    draft={editor.edit}
-                    setField={editor.setField}
-                    disabled={!editor.canMutate()}
-                    errorFor={editor.validation.errorFor}
-                  />
-                  <FormErrorSummary
-                    errors={editor.validation.visible()}
-                    testId="patient-detail-error-summary"
-                  />
+                  <Switch fallback={<Spinner center />}>
+                    <Match when={patientRegistry() && !onDocumentPath()}>
+                      <PatientDetailsForm
+                        storeId={params.storeId}
+                        patientId={params.patientId}
+                        draft={editor.edit}
+                        setField={editor.setField}
+                        disabled={!editor.canMutate()}
+                        errorFor={editor.validation.errorFor}
+                      />
+                      <FormErrorSummary
+                        errors={editor.validation.visible()}
+                        testId="patient-detail-error-summary"
+                      />
+                    </Match>
+                    <Match
+                      when={
+                        documentForm.status() === 'ready' &&
+                        documentForm.library()
+                      }
+                    >
+                      {lib => {
+                        const Default = lib().DefaultPatientForm;
+                        return (
+                          <>
+                            <DocumentVersionNotice
+                              version={documentForm.version()}
+                              onEdit={documentForm.edit}
+                            />
+                            <DocumentFormRegion
+                              slot="patient.form"
+                              documentType={
+                                documentForm.registry()?.documentType ?? ''
+                              }
+                              draft={documentForm.draft}
+                              record={{
+                                patientId: n().id,
+                                documentName: documentForm.document()?.name,
+                              }}
+                              fallback={() => (
+                                <Default draft={documentForm.draft} />
+                              )}
+                              archivedVersion={archivedVersion()}
+                              currentSchemaId={
+                                documentForm.registry()?.formSchemaId
+                              }
+                            />
+                            <DocumentKeptValues values={documentForm.kept()} />
+                            <FormErrorSummary
+                              errors={documentForm.validation.visible()}
+                              testId="patient-detail-error-summary"
+                            />
+                          </>
+                        );
+                      }}
+                    </Match>
+                  </Switch>
                 </ContentContainer>
               </TabPanel>
               <Show when={hasProgramModule()}>
@@ -592,13 +711,24 @@ const PatientDetailView: Component = () => {
                 onSaved={() => void refetchPolicies()}
               />
 
+              <EncounterFormModal
+                storeId={params.storeId}
+                patientId={n().id}
+                registry={encounterFormType()}
+                onClose={() => setEncounterFormType(undefined)}
+                onSaved={() => {
+                  void refetchEncounters();
+                  void refetchEnrolments();
+                }}
+              />
+
               <ConfirmDialog
-                open={editor.confirmSaveOpen()}
+                open={details().confirmSaveOpen()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-generic')}
                 confirmAction="save"
-                onConfirm={() => void editor.doSave(() => void refetch())}
-                onClose={() => editor.setConfirmSaveOpen(false)}
+                onConfirm={() => void details().doSave(() => void refetch())}
+                onClose={() => details().setConfirmSaveOpen(false)}
               />
               <ConfirmDialog
                 open={leaveGuard.open()}

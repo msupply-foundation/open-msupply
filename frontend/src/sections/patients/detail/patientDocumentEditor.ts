@@ -1,0 +1,161 @@
+import { createMemo, createSignal, type Accessor } from 'solid-js';
+import { t } from '../../../intl';
+import { hasPermission } from '../../../store/storeContext';
+import { createCodeTakenCheck } from '../../../domain/patient/patientCode';
+import {
+  createDocumentForm,
+  type DocumentForm,
+  type DocumentFormSource,
+} from '../../../domain/documentForm/createDocumentForm';
+import type { FormRegistryFragment } from '../../../domain/documentForm/documentForm.generated';
+import { documentFormVersioning } from '../../../plugins/documentFormSlot';
+import type { Patient } from '../../../plugin-sdk/documents';
+import { seedPatientDocument } from './patientDocumentSeed';
+import type { PatientResult } from './patient.generated';
+
+type PatientNode = NonNullable<PatientResult['patient']>;
+
+/*
+ * The Details tab's editor on the document path (kdd/custom-forms/specs.md §
+ * Host-owned surfaces, Patient; implementation-plan H9): the patient document
+ * in the document form host, with the save surface the plain-path editor
+ * gives the screen (patientEditor.ts), so the screen's footer, confirm prompt
+ * and leave guard work the same on both paths.
+ *
+ * A patient with a document is edited from the server's `documentDraft` (the
+ * latest version with later changes to the name row merged in) and saved as
+ * the next version. A patient with none, a name row made by the plain path or
+ * a sync, is seeded from that row and gets its first document on its first
+ * Save; opening it writes nothing.
+ */
+
+/** The error summary's names for the host's patient fields, by path. */
+const patientFieldLabels = (): Record<string, string> => ({
+  code: t('label.code'),
+  code2: t('label.code2'),
+  firstName: t('label.first-name'),
+  lastName: t('label.last-name'),
+  dateOfBirth: t('label.date-of-birth'),
+  gender: t('label.gender'),
+  contactDetails: t('label.contact'),
+  nextOfKin: t('label.next-of-kin'),
+  dateOfDeath: t('label.date-of-death'),
+});
+
+export interface PatientDocumentEditorParams {
+  storeId: Accessor<string>;
+  /** The loaded patient — undefined while unresolved. */
+  node: Accessor<PatientNode | undefined>;
+  /** The store's Patient registry entry; undefined off the document path. */
+  registry: Accessor<FormRegistryFragment | undefined>;
+}
+
+export interface PatientDocumentEditor {
+  form: DocumentForm<Patient>;
+  isDirty: () => boolean;
+  canMutate: () => boolean;
+  canSave: () => boolean;
+  saving: () => boolean;
+  saveError: () => string;
+  confirmSaveOpen: () => boolean;
+  setConfirmSaveOpen: (open: boolean) => void;
+  /** Arms validation and checks the code; opens the confirm once valid. */
+  attemptSave: () => Promise<void>;
+  /** Runs the write; `afterSave` fires only on success. */
+  doSave: (afterSave?: () => void) => Promise<void>;
+  resetDraft: () => void;
+}
+
+export const createPatientDocumentEditor = (
+  params: PatientDocumentEditorParams
+): PatientDocumentEditor => {
+  const source = createMemo((): DocumentFormSource | undefined => {
+    const registry = params.registry();
+    const node = params.node();
+    if (!registry || !node) return undefined;
+    if (node.document) {
+      return {
+        kind: 'existing',
+        name: node.document.name,
+        seed: (node.documentDraft as object | null) ?? undefined,
+      };
+    }
+    return { kind: 'new', registry, data: seedPatientDocument(node) };
+  });
+
+  const canMutate = () => hasPermission('PATIENT_MUTATE');
+
+  // The duplicate-code check (spec/patients § generating a code): whoever
+  // renders the code, the host's field or a plugin's, the save attempt checks
+  // it. Declared before the form, which shows its answer as an error; its
+  // code accessor reads the form's draft once both exist.
+  let form: DocumentForm<Patient> | undefined;
+  const codeCheck = createCodeTakenCheck({
+    storeId: params.storeId,
+    code: () => form?.draft.data.code ?? '',
+    savedCode: () => params.node()?.code ?? '',
+    patientId: () => params.node()?.id,
+  });
+
+  form = createDocumentForm<Patient>({
+    storeId: params.storeId,
+    patientId: () => params.node()?.id ?? '',
+    source,
+    labels: patientFieldLabels,
+    extraErrors: () => [
+      {
+        id: 'code',
+        label: t('label.code'),
+        failed: codeCheck.taken(),
+        message: t('error.duplicated-code', {
+          code: (form?.draft.data.code ?? '').trim(),
+        }),
+      },
+    ],
+    readOnly: () => !canMutate(),
+    versioning: type => documentFormVersioning('patient.form', type),
+  });
+  const documentForm = form;
+
+  const [checking, setChecking] = createSignal(false);
+  const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
+
+  // A patient without a document opens pristine and saves only once edited,
+  // as the plain path does; a document migrated from an earlier version may
+  // be saved untouched, which re-pins it.
+  const canSave = () =>
+    documentForm.status() === 'ready' &&
+    canMutate() &&
+    documentForm.canSave() &&
+    (documentForm.isDirty() || documentForm.version().kind === 'migrated');
+
+  const attemptSave = async () => {
+    documentForm.validation.arm();
+    if (!documentForm.validation.valid() || checking()) return;
+    setChecking(true);
+    const taken = await codeCheck.check();
+    setChecking(false);
+    if (taken) return;
+    setConfirmSaveOpen(true);
+  };
+
+  const doSave = async (afterSave?: () => void) => {
+    const saved = await documentForm.save();
+    setConfirmSaveOpen(false);
+    if (saved) afterSave?.();
+  };
+
+  return {
+    form: documentForm,
+    isDirty: documentForm.isDirty,
+    canMutate,
+    canSave,
+    saving: () => checking() || documentForm.saving(),
+    saveError: () => documentForm.saveError() ?? '',
+    confirmSaveOpen,
+    setConfirmSaveOpen,
+    attemptSave,
+    doSave,
+    resetDraft: documentForm.discard,
+  };
+};

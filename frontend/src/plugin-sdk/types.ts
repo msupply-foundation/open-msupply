@@ -11,7 +11,7 @@ import type { Component } from 'solid-js';
 import type { SupportedLocale } from '../intl';
 import type { Draft } from '../domain/documentForm/draft';
 import type { MigrationStep } from '../domain/documentForm/migration';
-import type { Encounter, ProgramEnrolment } from './documents';
+import type { Encounter, Patient, ProgramEnrolment } from './documents';
 
 // ── Manifest ────────────────────────────────────────────────────────────────
 
@@ -489,7 +489,9 @@ export interface FormParticipation {
  * within a `PLUGIN_API_VERSION` major.
  */
 export interface PrescriptionPaymentView {
-  /** The prescription (invoice) id — the natural `relatedRecordId` for a row. */
+  /**
+   * The prescription (invoice) id — the natural `relatedRecordId` for a row.
+   */
   readonly id: string;
   /** The prescription's human-facing number. */
   readonly invoiceNumber: number;
@@ -518,14 +520,15 @@ export type PrescriptionPaymentFormProps = {
 };
 
 // ── The document form slots ─────────────────────────────────────────────────
-// The body of a program record: the fields of an enrolment in its modal, of
-// an encounter on its record screen (kdd/custom-forms/specs.md § Forms in the
-// UI). One slot per document category. Within it a contribution names the one
-// document type it renders, and the host gives every document of that type
-// the contribution's form, in whichever mount the document opens: the host
+// The body of a record: the fields of a patient on the patient screen's
+// Details tab, of an enrolment in its modal, of an encounter on its record
+// screen and in the patient screen's modal (kdd/custom-forms/specs.md § Forms
+// in the UI). One slot per document category. Within it a contribution names
+// the one document type it renders, and the host gives every document of that
+// type the contribution's form, in whichever mount the document opens: the host
 // keeps the frame, the toolbar and the save, and the form is the fields. A
-// document type with no form contributed, or whose form throws, renders in
-// the host's default form for its category.
+// document type with no form contributed, or whose form throws, renders in the
+// host's default form for its category.
 
 /**
  * The record a form edits, as the SDK publishes it: what a form reads beyond
@@ -576,6 +579,21 @@ export type EncounterFormProps<T extends Encounter = Encounter> = {
 };
 
 /**
+ * The props a `patient.form` contribution receives: the body of the patient
+ * screen's Details tab on the document path. `T` is the plugin's own Patient
+ * type, which extends the base `Patient`, so every base field the server
+ * projects to the patient record is in its shape; the host checks the values
+ * against the base schema before any save. The form composes the host's
+ * patient fields (`PatientFirstNameField`, `PatientDateOfBirthField`, …) with
+ * its own, and the header, tabs and Save stay the host's. Otherwise as
+ * {@link ProgramEnrolmentFormProps}.
+ */
+export type PatientFormProps<T extends Patient = Patient> = {
+  readonly draft: Draft<T>;
+  readonly record: FormRecordView;
+};
+
+/**
  * Where a form contribution goes: the document type it renders, as its
  * registry entry names it (`'HIVCareEncounter'`). One plugin contributes at
  * most one form per document type; where two plugins both do, the first in
@@ -599,6 +617,58 @@ export interface DocumentFormPlacement {
   migrations?: readonly MigrationStep[];
 }
 
+// ── The patient toolbar trigger slot ────────────────────────────────────────
+// A button a plugin places on the patient screen's header (kdd/custom-forms/
+// specs.md § Forms in the UI, trigger slots). The host owns the place and
+// draws the button in its own style; the plugin supplies the entry: a label,
+// an icon, when it shows and what a click does. The first trigger slot; the
+// encounter and enrolment toolbars and the list row menus take the same
+// trigger shape with their own props.
+
+/** The patient a trigger sits on, as the SDK publishes it. Read-only. */
+export interface TriggerPatientView {
+  readonly id: string;
+  /** The document types of the patient's program enrolments. */
+  readonly enrolmentTypes: readonly string[];
+}
+
+/**
+ * What a `patient.toolbarTrigger` contribution's `visible` and `onClick`
+ * receive. A `type`, like every slot's props.
+ */
+export type PatientTriggerProps = {
+  readonly patient: TriggerPatientView;
+};
+
+/**
+ * The host actions a patient trigger may take, bound to the screen's patient.
+ */
+export interface PatientTriggerActions {
+  /**
+   * Opens a new document of `documentType` for this patient in the host's
+   * modal: its form, wherever it is contributed, over a draft the host seeds
+   * and saves. An encounter type, of a program the patient is enrolled in.
+   */
+  openDocumentForm(input: { documentType: string }): void;
+}
+
+/**
+ * A trigger: the host renders it, so it declares a label and a handler in
+ * place of a `Component`.
+ */
+export interface TriggerRender<P, A> {
+  /** The button's text, as a key in the plugin's catalogue. */
+  label: string;
+  /** A host icon the SDK exports (`PlusCircleIcon`), drawn before the label. */
+  icon?: Component;
+  /**
+   * Whether the trigger shows for this record. `when(ctx)` gates on the
+   * session, as on every slot; this gates on the record it sits on.
+   */
+  visible?: (props: P) => boolean;
+  onClick: (props: P, actions: A) => void;
+}
+
 // ── The slot catalogue ──────────────────────────────────────────────────────
 
 /** Every slot id, and the props its contributions receive. */
@@ -618,12 +688,15 @@ export interface SlotPropsMap {
   'prescription.paymentForm': PrescriptionPaymentFormProps;
   'programEnrolment.form': ProgramEnrolmentFormProps;
   'encounter.form': EncounterFormProps;
+  'patient.form': PatientFormProps;
+  'patient.toolbarTrigger': PatientTriggerProps;
 }
 
 export type SlotId = keyof SlotPropsMap;
 
 /** The slots whose contributions are a document type's form. */
-export type DocumentFormSlotId = 'programEnrolment.form' | 'encounter.form';
+export type DocumentFormSlotId =
+  'programEnrolment.form' | 'encounter.form' | 'patient.form';
 
 /**
  * The dashboard's PIECE slot ids — the three that contribute into a container
@@ -675,6 +748,9 @@ export interface SlotPlacement {
   // record opens: naming the type is the whole of its placement.
   'programEnrolment.form': DocumentFormPlacement;
   'encounter.form': DocumentFormPlacement;
+  'patient.form': DocumentFormPlacement;
+  // One place, the patient header's actions; contribution order within it.
+  'patient.toolbarTrigger': NoPlacement;
 }
 
 /**
@@ -713,6 +789,16 @@ export interface SlotRender {
     Component: Component<EncounterFormProps>;
     archived?: Readonly<Record<number, Component<EncounterFormProps>>>;
   };
+  'patient.form': {
+    Component: Component<PatientFormProps>;
+    archived?: Readonly<Record<number, Component<PatientFormProps>>>;
+  };
+  // The third departure from the uniform `Component` shape: the host draws
+  // the button, so a trigger declares its label and handler instead.
+  'patient.toolbarTrigger': TriggerRender<
+    PatientTriggerProps,
+    PatientTriggerActions
+  >;
 }
 
 /**

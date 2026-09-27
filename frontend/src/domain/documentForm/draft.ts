@@ -93,6 +93,12 @@ export interface CreateDraftOptions {
    * accessor, so translated names follow a change of language.
    */
   labels?: Accessor<Readonly<Record<string, string>>>;
+  /**
+   * Failures the caller finds itself, beyond the schema's (a duplicate
+   * patient code), each with its own message. A field with a schema failure
+   * shows that one.
+   */
+  extraErrors?: Accessor<readonly FieldError[]>;
 }
 
 /*
@@ -165,6 +171,10 @@ export const createDraft = <T extends object>(
           value: displayValue(value),
         }),
       });
+    }
+    for (const extra of options.extraErrors?.() ?? []) {
+      if (!extra.failed || found.some(f => f.id === extra.id)) continue;
+      found.push(extra);
     }
     return found;
   });

@@ -35,15 +35,20 @@ import {
 } from '../../api/graphql';
 import { gated } from '../../api/gated';
 import { t } from '../../intl';
-import type { FormValidation } from '../../ui/layout/Form/formValidation';
+import type {
+  FieldError,
+  FormValidation,
+} from '../../ui/layout/Form/formValidation';
 import { createDraft, type Draft } from './draft';
 import { applyMigrations, keptFields, type MigrationStep } from './migration';
 import { getAt } from './paths';
 import {
   FormDocumentByName,
   InsertFormEncounter,
+  InsertFormPatient,
   InsertFormProgramEnrolment,
   UpdateFormEncounter,
+  UpdateFormPatient,
   UpdateFormProgramEnrolment,
   type FormDocumentFragment,
   type FormRegistryFragment,
@@ -57,8 +62,13 @@ export const loadFormLibrary = (): Promise<FormLibrary> =>
   import('./formLibrary');
 
 export type DocumentFormSource =
-  /** The latest version of a saved document. */
-  | { kind: 'existing'; name: string }
+  /**
+   * The latest version of a saved document. `seed`, when given, is what the
+   * draft starts from in place of that version's data: a patient document
+   * seeds from the server's `documentDraft`, which merges in later changes
+   * to the patient's name row.
+   */
+  | { kind: 'existing'; name: string; seed?: object }
   /** A document not yet saved: its registry entry and first data. */
   | { kind: 'new'; registry: FormRegistryFragment; data: object };
 
@@ -105,6 +115,13 @@ export interface CreateDocumentFormOptions {
   source: Accessor<DocumentFormSource | undefined>;
   /** Summary names for the fields the screen renders itself (createDraft). */
   labels?: Accessor<Readonly<Record<string, string>>>;
+  /**
+   * Failures only the screen can know (the patient screen's duplicate-code
+   * check), shown and counted with the draft's own.
+   */
+  extraErrors?: Accessor<readonly FieldError[]>;
+  /** True while the user may only read the document (no permission to save). */
+  readOnly?: Accessor<boolean>;
   /**
    * The versioning of a document type's plugin form, or undefined where no
    * plugin form declares any. Read inside a memo, so it may read the plugin
@@ -173,7 +190,8 @@ export interface SaveInput {
 /*
  * The category's own mutation: each has an insert and an update, and the
  * server derives the category's flat row (program_enrolment, encounter) and
- * its program events from the saved document. The schema id is always the
+ * its program events from the saved document, or, for a patient, projects
+ * its base fields onto the patient's name row. The schema id is always the
  * entry's current one, so an edit re-pins the document to it. Exported for
  * a create step that writes a document before any form opens (the
  * create-encounter dialog).
@@ -187,11 +205,18 @@ export const persistDocument = async (
   const options = { returnGraphqlErrors: true };
   const outcome = <R>(
     result: GraphqlResult<R>,
-    pick: (data: R) => { id: string; document: FormDocumentFragment }
+    pick: (data: R) => {
+      id: string;
+      document: FormDocumentFragment | null | undefined;
+    }
   ): SaveOutcome => {
     if (result.kind === 'success') {
       const node = pick(result.data);
-      return { kind: 'saved', document: node.document, recordId: node.id };
+      // Every category's save returns the version it wrote; a patient's
+      // types it as nullable because a patient need not have a document.
+      return node.document
+        ? { kind: 'saved', document: node.document, recordId: node.id }
+        : { kind: 'reported' };
     }
     if (result.kind === 'graphqlError') {
       return { kind: 'refused', message: describeErrors(result.errors) };
@@ -235,6 +260,24 @@ export const persistDocument = async (
               options
             ),
             r => r.insertEncounter
+          );
+    case 'PATIENT':
+      return parent
+        ? outcome(
+            await graphqlFetch(
+              UpdateFormPatient,
+              { storeId, input: { data, schemaId, parent } },
+              options
+            ),
+            r => r.updateProgramPatient
+          )
+        : outcome(
+            await graphqlFetch(
+              InsertFormPatient,
+              { storeId, input: { data, schemaId } },
+              options
+            ),
+            r => r.insertProgramPatient
           );
     default:
       return {
@@ -290,9 +333,19 @@ export const createDocumentForm = <T extends object>(
   });
 
   const document = createMemo((): FormDocumentFragment | undefined => {
-    const key = sourceKey(options.source());
+    const source = options.source();
+    const key = sourceKey(source);
     const s = saved();
-    if (s && s.key === key) return s.document;
+    // A first save turns a new source into an existing one under the saved
+    // name (the patient screen re-reads its patient); the saved version still
+    // stands for it, so the form does not drop to loading and back.
+    if (
+      s &&
+      (s.key === key ||
+        (source?.kind === 'existing' && source.name === s.document.name))
+    ) {
+      return s.document;
+    }
     return gated(loaded)?.document ?? undefined;
   });
 
@@ -353,7 +406,15 @@ export const createDocumentForm = <T extends object>(
     { data: object; unresolved: Record<string, unknown> } | undefined => {
     const s = options.source();
     const doc = document();
-    const raw = doc ? doc.data : s?.kind === 'new' ? s.data : undefined;
+    // A source's seed stands for the version it was read with; a version
+    // this form has just saved is its own seed.
+    const seed =
+      s?.kind === 'existing' && doc !== saved()?.document ? s.seed : undefined;
+    const raw = doc
+      ? (seed ?? doc.data)
+      : s?.kind === 'new'
+        ? s.data
+        : undefined;
     if (raw === undefined) return undefined;
     const v = version();
     const r = registry();
@@ -389,9 +450,11 @@ export const createDocumentForm = <T extends object>(
       return r ? gated(library)?.baseSchemaFor(r.category) : undefined;
     },
     validate: () => gated(library)?.validateDocument,
-    readOnly: () => saving() || readingOnly(),
+    readOnly: () =>
+      saving() || readingOnly() || (options.readOnly?.() ?? false),
     validates: () => !readingOnly(),
     labels: options.labels,
+    extraErrors: options.extraErrors,
   });
 
   // Seed the draft once per document version: on load, after each save (the

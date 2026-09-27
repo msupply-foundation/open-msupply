@@ -202,13 +202,13 @@
     },
     "DemoPatientExtension": {
       "properties": {
-        "occupation": {
-          "description": "The patient's occupation",
-          "type": "string"
-        },
         "preferredLanguage": {
           "$ref": "#/definitions/DemoPreferredLanguage",
           "description": "The language the patient prefers to be spoken to in"
+        },
+        "treatmentSupporter": {
+          "description": "The person who supports the patient with their treatment",
+          "type": "string"
         }
       },
       "type": "object"

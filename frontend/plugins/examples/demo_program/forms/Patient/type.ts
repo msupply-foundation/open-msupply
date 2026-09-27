@@ -12,8 +12,8 @@ import type { Patient } from '@openmsupply/plugin-sdk';
 export type DemoPreferredLanguage = 'ENGLISH' | 'FRENCH' | 'SPANISH' | 'OTHER';
 
 export interface DemoPatientExtension {
-  /** The patient's occupation */
-  occupation?: string;
+  /** The person who supports the patient with their treatment */
+  treatmentSupporter?: string;
   /** The language the patient prefers to be spoken to in */
   preferredLanguage?: DemoPreferredLanguage;
 }

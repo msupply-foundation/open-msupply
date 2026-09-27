@@ -3,26 +3,33 @@
  * § The demo program): a form plugin whose document types, schema versions
  * and event rules live under `forms/`, declared in `forms/forms.json`.
  *
- * The module declares its identity, the forms for its enrolment and encounter
- * types, and the plugin's translations. Each form is contributed to its
- * category's slot under the document type it renders, so the host shows it
- * wherever a document of that type opens.
+ * The module declares its identity, the forms for its patient, enrolment and
+ * encounter types, a trigger on the patient screen, and the plugin's
+ * translations. Each form is contributed to its category's slot under the
+ * document type it renders, so the host shows it wherever a document of that
+ * type opens: the patient form as the patient screen's Details tab.
  *
  * The encounter's contribution also carries the type's versioning: every
  * schema id (generated into `versions.ts`), the migration from v1 to v2, and
  * the archived v1 form, which the host shows read-only for encounters
  * recorded under v1 until the user presses Edit.
  *
- * TO-DO: contribute the patient field group, the patient code override and
- * the follow-up trigger (plan item P2) once their host slots exist (H9, H9b,
- * H10b, chunk 6).
+ * The "Record follow-up" trigger sits on the header of patients enrolled in
+ * the program and opens a new `DemoEncounter` in the host's modal, the same
+ * encounter form the encounter's own screen shows.
  *
  * The identity is read from `./package.json`, the manifest the pack step and
  * the server's install gate read, so the module and its bundle cannot
  * disagree.
  */
-import { PLUGIN_API_VERSION, definePlugin } from '@openmsupply/plugin-sdk';
+import {
+  PLUGIN_API_VERSION,
+  PlusCircleIcon,
+  definePlugin,
+} from '@openmsupply/plugin-sdk';
 import { name, version } from './package.json';
+import { DemoPatientForm } from './forms/Patient/form';
+import { versions as patientVersions } from './forms/Patient/versions';
 import { DemoEnrolmentForm } from './forms/DemoProgramEnrolment/form';
 import { DemoEncounterForm } from './forms/DemoEncounter/form';
 import { DemoEncounterV1Form } from './forms/DemoEncounter/v1Form';
@@ -36,6 +43,23 @@ export default definePlugin({
     pluginApiVersion: PLUGIN_API_VERSION,
   },
   contributions: [
+    {
+      slot: 'patient.form',
+      id: 'patient-form',
+      documentType: 'Patient',
+      Component: DemoPatientForm,
+      versions: patientVersions,
+    },
+    {
+      slot: 'patient.toolbarTrigger',
+      id: 'record-follow-up',
+      label: 'button.record-follow-up',
+      icon: PlusCircleIcon,
+      visible: ({ patient }) =>
+        patient.enrolmentTypes.includes('DemoProgramEnrolment'),
+      onClick: (_props, { openDocumentForm }) =>
+        openDocumentForm({ documentType: 'DemoEncounter' }),
+    },
     {
       slot: 'programEnrolment.form',
       id: 'enrolment-form',
@@ -60,6 +84,23 @@ export default definePlugin({
       'documentType.Patient': 'Patient',
       'documentType.DemoProgramEnrolment': 'Demo Program',
       'documentType.DemoEncounter': 'Demo follow-up',
+
+      // The patient form, and the trigger on the patient screen.
+      'group.patient-details': 'Patient details',
+      'group.contact': 'Contact',
+      'group.status': 'Status',
+      'field.patient-code': 'Patient code',
+      'heading.replace-patient-code': 'Replace the patient code?',
+      'message.replace-patient-code':
+        'This patient already has the code {{ code }}. Generating a new one replaces it and uses up the next number.',
+      'group.demo-details': 'Demo Program',
+      'field.treatment-supporter': 'Treatment supporter',
+      'field.preferred-language': 'Preferred language',
+      'language.ENGLISH': 'English',
+      'language.FRENCH': 'French',
+      'language.SPANISH': 'Spanish',
+      'language.OTHER': 'Other',
+      'button.record-follow-up': 'Record follow-up',
 
       // The enrolment form.
       'group.enrolment': 'Enrolment',

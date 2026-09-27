@@ -111,3 +111,37 @@ mutation updateFormEncounter($storeId: String!, $input: UpdateEncounterInput!) {
     }
   }
 }
+
+# A patient document's first version and its later ones. Both project the
+# document's base fields onto the patient's name row. The insert writes the
+# first document of a patient that may already exist as a name row: the
+# server refuses it only when a patient document already exists.
+mutation insertFormPatient(
+  $storeId: String!
+  $input: InsertProgramPatientInput!
+) {
+  insertProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      id
+      document {
+        ...FormDocument
+      }
+    }
+  }
+}
+
+mutation updateFormPatient(
+  $storeId: String!
+  $input: UpdateProgramPatientInput!
+) {
+  updateProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      id
+      document {
+        ...FormDocument
+      }
+    }
+  }
+}

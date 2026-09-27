@@ -10,7 +10,6 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
 import { gated } from '../../api/gated';
 import { t, localisedDate } from '../../intl';
-import type { LocaleKey } from '../../intl/locales';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
@@ -25,32 +24,24 @@ import { Alert } from '../../ui/elements/feedback/Alert';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
-import { DateTimeField } from '../../ui/elements/inputs/DateTimeField';
-import { Select } from '../../ui/elements/selectors/Select';
 import { SaveIcon, XCircleIcon } from '../../ui/icons';
 import { createConfirmOnLeave } from '../../domain/confirmOnLeave';
-import { ClinicianSelect } from '../../domain/clinician';
+import {
+  EncounterClinicianField,
+  EncounterStatusField,
+  EncounterVisitDateField,
+  encounterVisitLabels,
+} from '../../domain/encounter/EncounterVisitFields';
 import { createDocumentForm } from '../../domain/documentForm/createDocumentForm';
 import { DocumentKeptValues } from '../../domain/documentForm/DocumentKeptValues';
 import { DocumentVersionNotice } from '../../domain/documentForm/DocumentVersionNotice';
 import { DocumentFormRegion } from '../../plugins/DocumentFormRegion';
 import { documentFormVersioning } from '../../plugins/documentFormSlot';
-import type { Encounter, EncounterStatus } from '../../plugin-sdk/documents';
+import type { Encounter } from '../../plugin-sdk/documents';
 import {
   EncounterRecord,
   type EncounterRecordFragment,
 } from './encounter.generated';
-
-// The statuses a user can set. DELETED is a record's removal, not a visit's
-// outcome, and has no place in the picker.
-const STATUSES: readonly EncounterStatus[] = [
-  'PENDING',
-  'VISITED',
-  'CANCELLED',
-];
-
-const statusLabel = (status: EncounterStatus): string =>
-  t(`label.encounter-status-${status.toLowerCase()}` as LocaleKey);
 
 const fetchEncounterRecord = async (variables: {
   storeId: string;
@@ -104,11 +95,7 @@ const EncounterDetailView: Component = () => {
     storeId: () => params.storeId,
     patientId: () => record()?.patientId ?? '',
     source,
-    labels: () => ({
-      startDatetime: t('label.visit-date'),
-      clinician: t('label.clinician'),
-      status: t('label.status'),
-    }),
+    labels: encounterVisitLabels,
     versioning: type => documentFormVersioning('encounter.form', type),
   });
   const archivedVersion = () => {
@@ -184,57 +171,13 @@ const EncounterDetailView: Component = () => {
                       </LabelledValue>
                     </FormRowItem>
                     <FormRowItem weight={0} minWidth="13rem">
-                      <DateTimeField
-                        label={t('label.visit-date')}
-                        size="small"
-                        value={draft.data.startDatetime ?? null}
-                        onChange={v =>
-                          draft.set('startDatetime', v ?? undefined)
-                        }
-                        required
-                        error={draft.errorFor('startDatetime')}
-                        disabled={draft.readOnly()}
-                        testId="encounter-visit-date"
-                      />
+                      <EncounterVisitDateField draft={draft} size="small" />
                     </FormRowItem>
                     <FormRowItem weight={1.5}>
-                      <ClinicianSelect
-                        label={t('label.clinician')}
-                        size="small"
-                        width="full"
-                        value={draft.data.clinician?.id}
-                        onChange={c =>
-                          draft.set(
-                            'clinician',
-                            c
-                              ? {
-                                  id: c.id,
-                                  firstName: c.firstName ?? undefined,
-                                  lastName: c.lastName,
-                                }
-                              : undefined
-                          )
-                        }
-                        disabled={draft.readOnly()}
-                        inputTestId="encounter-clinician"
-                      />
+                      <EncounterClinicianField draft={draft} size="small" />
                     </FormRowItem>
                     <FormRowItem weight={1}>
-                      <Select
-                        label={t('label.status')}
-                        size="small"
-                        options={STATUSES.map(s => ({
-                          value: s,
-                          label: statusLabel(s),
-                        }))}
-                        value={draft.data.status}
-                        onValueChange={v =>
-                          draft.set('status', v as EncounterStatus)
-                        }
-                        error={draft.errorFor('status')}
-                        disabled={draft.readOnly()}
-                        testId="encounter-status"
-                      />
+                      <EncounterStatusField draft={draft} size="small" />
                     </FormRowItem>
                   </HeaderToolbar>
                 </Header>

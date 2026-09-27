@@ -54,7 +54,7 @@ import {
   toInsertInput,
   type PatientDraft,
 } from '../detail/patientEdit';
-import { createCodeTakenCheck } from '../patientCode';
+import { createCodeTakenCheck } from '../../../domain/patient/patientCode';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
 import { FetchFromCentralModal } from './FetchFromCentralModal';
 

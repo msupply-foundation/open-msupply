@@ -39,6 +39,8 @@ const SLOT_IDS: Record<SlotId, true> = {
   'prescription.paymentForm': true,
   'programEnrolment.form': true,
   'encounter.form': true,
+  'patient.form': true,
+  'patient.toolbarTrigger': true,
 };
 
 /**
@@ -49,6 +51,7 @@ const SLOT_IDS: Record<SlotId, true> = {
 const DOCUMENT_FORM_SLOTS: Readonly<Partial<Record<SlotId, true>>> = {
   'programEnrolment.form': true,
   'encounter.form': true,
+  'patient.form': true,
 };
 
 const isVersionNumber = (value: unknown, count: number): value is number =>
@@ -133,6 +136,16 @@ const VALUE_RENDERING_SLOTS: readonly string[] = ['internalOrderLine.column'];
  */
 const RESOLVER_SLOTS: Readonly<Partial<Record<SlotId, string>>> = {
   'host.warningSuppression': 'suppresses',
+};
+
+/**
+ * The slots whose contributions are TRIGGERS — a button the host draws from
+ * the contribution's `label` and runs its `onClick` (sdk-contract § the patient
+ * toolbar trigger slot), so a `Component` there was built against a surface
+ * this host does not have. `SlotId`-keyed like `SLOT_IDS`.
+ */
+const TRIGGER_SLOTS: Readonly<Partial<Record<SlotId, true>>> = {
+  'patient.toolbarTrigger': true,
 };
 
 /** Every slot id the host recognises; anything else is refused. */
@@ -469,7 +482,28 @@ export const validateLoadedModule = (
           };
         }
       }
-      if (resolverField === undefined) {
+      if (TRIGGER_SLOTS[slot as SlotId]) {
+        const problem =
+          typeof entry['label'] !== 'string' || entry['label'].length === 0
+            ? 'has no label key'
+            : typeof entry['onClick'] !== 'function'
+              ? 'has no onClick function'
+              : entry['visible'] !== undefined &&
+                  typeof entry['visible'] !== 'function'
+                ? 'has a visible that is not a function'
+                : entry['icon'] !== undefined &&
+                    typeof entry['icon'] !== 'function'
+                  ? 'has an icon that is not a component'
+                  : entry['Component'] !== undefined
+                    ? 'carries a Component — the host draws a trigger from its label'
+                    : undefined;
+        if (problem) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" ${problem}`,
+          };
+        }
+      } else if (resolverField === undefined) {
         const hasComponent = typeof entry['Component'] === 'function';
         const hasValue =
           VALUE_RENDERING_SLOTS.includes(slot) &&

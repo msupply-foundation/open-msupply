@@ -139,6 +139,17 @@ export type {
   FormRecordView,
   ProgramEnrolmentFormProps,
   EncounterFormProps,
+  PatientFormProps,
+} from './types';
+
+// ── Slot API — the patient toolbar trigger slot ─────────────────────────────
+// A button on the patient screen's header: the host draws it from the
+// trigger's label and icon, and runs its handler with the host actions.
+export type {
+  TriggerRender,
+  TriggerPatientView,
+  PatientTriggerProps,
+  PatientTriggerActions,
 } from './types';
 
 // ── UI kit ──────────────────────────────────────────────────────────────────
@@ -299,6 +310,21 @@ export {
   CheckboxInput,
   FieldGroup,
 } from './lazyComponents';
+// The host's patient fields, for a `patient.form` to compose: lazy from the
+// same chunk.
+export {
+  PatientCodeField,
+  PatientCode2Field,
+  PatientFirstNameField,
+  PatientLastNameField,
+  PatientDateOfBirthField,
+  PatientGenderField,
+  PatientAddressField,
+  PatientPhoneField,
+  PatientNextOfKinField,
+  PatientDeceasedFields,
+} from './lazyComponents';
+export type { PatientFieldProps } from '../domain/patient/documentFields';
 export type { Draft } from '../domain/documentForm/draft';
 export type {
   Path,
@@ -397,6 +423,14 @@ export { ChevronRightIcon } from '../ui/icons';
  * alive rather than adding anything.
  */
 export { CheckIcon } from '../ui/icons';
+/*
+ * The host's create mark, for a trigger that records something new (the demo
+ * program's "Record follow-up" on the patient header) — drawn beside the
+ * host's own create actions, it should be the same mark. The same bargain as
+ * the icons above: one more small component from a module the barrel already
+ * ships.
+ */
+export { PlusCircleIcon } from '../ui/icons';
 // The disclosure chevron, as the host's own accordions draw it (down,
 // rotating 180° open) — the Cook Islands order-freshness statement's
 // disclosure mirrors that look. Same bargain again: Select already pulls it

@@ -46,3 +46,17 @@ export const fetchFormRegistries = async (
   if (result.kind !== 'success') return undefined;
   return result.data.documentRegistries.nodes;
 };
+
+// The store's Patient registry entry, which puts the patient's Details tab on
+// the document path (spec/patients rules › two persistence paths): `entry` is
+// undefined when there is none. Undefined itself while unanswered or failed.
+export const fetchPatientRegistry = async (
+  storeId: string
+): Promise<{ entry: FormRegistryFragment | undefined } | undefined> => {
+  const result = await graphqlFetch(FormRegistries, {
+    storeId,
+    filter: { category: { equalTo: 'PATIENT' } },
+  });
+  if (result.kind !== 'success') return undefined;
+  return { entry: result.data.documentRegistries.nodes[0] };
+};

@@ -2,7 +2,7 @@ import { createEffect, createMemo, createSignal, on } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { hasPermission } from '../../../store/storeContext';
 import { runUpdatePatient } from '../patientApi';
-import { createCodeTakenCheck } from '../patientCode';
+import { createCodeTakenCheck } from '../../../domain/patient/patientCode';
 import {
   createFormValidation,
   type FormValidation,
@@ -41,7 +41,10 @@ export interface PatientEditor {
   setConfirmSaveOpen: (open: boolean) => void;
   /** Arms validation; opens the confirm-save prompt once the draft is valid. */
   attemptSave: () => Promise<void>;
-  /** Runs the write; `afterSave` fires only on success (e.g. the caller's own refetch). */
+  /**
+   * Runs the write; `afterSave` fires only on success (e.g. the caller's own
+   * refetch).
+   */
   doSave: (afterSave?: () => void) => Promise<void>;
   /** Re-seeds the draft from the current node, discarding local edits. */
   resetDraft: () => void;
