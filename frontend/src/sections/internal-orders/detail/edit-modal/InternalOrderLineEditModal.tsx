@@ -481,11 +481,12 @@ const LineEditContent = (
       //
       // A card also caps HEIGHT at 80vh, and that is what decides it per
       // editor. This one's content is short, so on landscape tablets it fits
-      // either way (an A/B against develop showed no difference); the
-      // requisition editor tried the same card and lost its stats tabs below
-      // the fold, so it stays a sheet. The cost here: with a deployment's
-      // plugin panel below the form (CIV's six-column table) the editor
-      // scrolls sooner than the sheet would — ~116px less in view at 1512x900.
+      // either way (an A/B against the pre-#617 editor showed no
+      // difference); the requisition editor tried the same card and lost its
+      // stats tabs below the fold, so it stays a sheet. The cost here: with a
+      // deployment's plugin panel below the form (CIV's six-column table)
+      // the editor scrolls sooner than the sheet would — ~116px less in view
+      // at 1512x900.
       //
       // Two widths, one latch: the PRE-PICK state stays a command-palette-
       // shaped card at the standard create-modal width (the
