@@ -2,6 +2,7 @@ import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { pollSyncStatus } from '../../../api/syncStore';
+import { isCentralServer } from '../../../api/serverInfo';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -189,7 +190,11 @@ export const SyncSection = () => {
           onChange={next => void setPaused(next)}
           labelInfo={
             <InfoTooltip
-              text={t('label.pause-sync-info')}
+              text={t(
+                isCentralServer()
+                  ? 'label.pause-sync-info-central'
+                  : 'label.pause-sync-info-remote'
+              )}
               triggerTestId="sync-settings-pause-info"
             />
           }
