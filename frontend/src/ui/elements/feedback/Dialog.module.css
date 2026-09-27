@@ -96,7 +96,33 @@
    top-left by fullscreen's margin:0, the whole 4rem gutter landed on the right/bottom
    edge (#918's tablet gap). */
 .dialog.large.bleed:not([data-fullscreen]) {
-  width: calc(100vw - 4rem);
+  /* A CEILING on the sheet (#617). "Fills the viewport" was written for a
+     laptop; on a 3024px monitor it made a line editor a ~2960px box whose
+     content — a stack of full-width batch cards — simply spread out inside
+     it. A sheet is still "as wide as the viewport allows", just not without
+     bound.
+
+     90rem (1440px) is the width this sheet already has on a standard 1512px
+     laptop (100vw - 4rem = 1448px). So the rule is "a big monitor gets the
+     laptop's sheet, and no wider": every screen from a laptop up sees the
+     same box, and only smaller screens clamp it further.
+
+     The cost, taken on purpose: the widest thing any `full` modal holds is
+     the outbound line table, 1766px wide at its natural size (14 columns,
+     measured live), so its TABLE view scrolls sideways inside this sheet on
+     every screen — as it already did on every laptop. A 115rem ceiling was
+     tried first so that no big monitor lost a column; it left the default
+     CARD view spread thin across 1840px, and the card view is what people
+     actually see.
+
+     Every line editor but one takes the sheet, and so this ceiling. A modal
+     whose content measures narrower can ask for a card instead (`large` +
+     widthRem) — the internal-order editor does (78rem) — but mind the HEIGHT
+     as well as the width: a card stops at 80vh. That is harmless for short
+     content and costly for tall: the requisition editor tried the same card
+     (#617) and lost its stats tabs below the fold on a landscape tablet, so
+     it stays a sheet. */
+  width: min(calc(100vw - 4rem), 90rem);
   max-block-size: calc(100vh - 4rem);
 }
 
