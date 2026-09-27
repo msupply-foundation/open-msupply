@@ -1,4 +1,7 @@
-use crate::service_provider::ServiceProvider;
+use crate::{
+    service_provider::ServiceProvider,
+    sync::api::{DroppedBodyRetries, ParsingResponseError},
+};
 use repository::{migrations::Version, syncv7::SyncError, KeyType, KeyValueStoreRepository};
 use reqwest::{
     header::{HeaderMap, HeaderValue, IntoHeaderName, AUTHORIZATION},
@@ -133,11 +136,45 @@ impl SyncApiV7 {
         Ok(SyncApiV7 { url, auth_headers })
     }
 
+    /// Send an idempotent read. If the connection drops part-way through the response
+    /// body, the same request is re-sent under the `DroppedBodyRetries` policy shared with
+    /// sync v5/v6.
+    ///
+    /// The budget is per call, so a pull gets a fresh one for every batch - only a
+    /// persistently broken connection gives up.
     pub async fn op<I: Serialize, O: DeserializeOwned>(
         &self,
         route: &str,
         input: I,
     ) -> Result<O, SyncError> {
+        let description = format!("Sync v7 {route}");
+        let mut retries = DroppedBodyRetries::default();
+        loop {
+            match self.send(route, &input).await {
+                Err(OpError::DroppedBody { error, .. })
+                    if retries.wait_before_retry(&description, &error).await => {}
+                result => return result.map_err(SyncError::from),
+            }
+        }
+    }
+
+    /// Send a request that must not be repeated in place (push). A dropped response body
+    /// fails straight away: central may have integrated the batch and only the
+    /// acknowledgement was lost. The push cursor only advances on success, so the next sync
+    /// re-pushes the batch anyway.
+    pub async fn op_without_dropped_body_retry<I: Serialize, O: DeserializeOwned>(
+        &self,
+        route: &str,
+        input: I,
+    ) -> Result<O, SyncError> {
+        self.send(route, &input).await.map_err(SyncError::from)
+    }
+
+    async fn send<I: Serialize, O: DeserializeOwned>(
+        &self,
+        route: &str,
+        input: &I,
+    ) -> Result<O, OpError> {
         let url = self
             .url
             .join("central/sync_v7/")
@@ -150,15 +187,43 @@ impl SyncApiV7 {
             client
                 .post(url.clone())
                 .headers(auth_headers.clone())
-                .json(&input)
+                .json(input)
         })
         .await;
 
-        let res = response_or_err(result, url).await;
-        match res {
-            Ok(ApiResponse::Ok(output)) => Ok(output),
-            Ok(ApiResponse::Err(error)) => Err(error),
-            Err(error) => Err(error),
+        match response_or_err(result, url).await? {
+            ApiResponse::Ok(output) => Ok(output),
+            ApiResponse::Err(error) => Err(error.into()),
+        }
+    }
+}
+
+enum OpError {
+    /// The connection dropped part-way through the response body (reset, incomplete
+    /// message). Nothing was parsed - the body never arrived in full - so this is a
+    /// transport failure, and a read can be re-sent.
+    DroppedBody {
+        url: String,
+        error: ParsingResponseError,
+    },
+    Sync(SyncError),
+}
+
+impl From<SyncError> for OpError {
+    fn from(error: SyncError) -> Self {
+        OpError::Sync(error)
+    }
+}
+
+impl From<OpError> for SyncError {
+    fn from(error: OpError) -> Self {
+        match error {
+            // A connection problem, so report it as one rather than `Other`.
+            OpError::DroppedBody { url, error } => SyncError::ConnectionError {
+                url,
+                e: format_error(&error),
+            },
+            OpError::Sync(error) => error,
         }
     }
 }
@@ -166,7 +231,7 @@ impl SyncApiV7 {
 async fn response_or_err<T: DeserializeOwned>(
     result: Result<Response, reqwest::Error>,
     url: reqwest::Url,
-) -> Result<T, SyncError> {
+) -> Result<T, OpError> {
     let response = match result {
         Ok(result) => result,
         Err(error) => {
@@ -185,17 +250,38 @@ async fn response_or_err<T: DeserializeOwned>(
                 return Err(SyncError::ConnectionError {
                     url: url.to_string(),
                     e,
-                });
+                }
+                .into());
             } else {
-                return Err(SyncError::Other(formatted_error));
+                return Err(SyncError::Other(formatted_error).into());
             }
         }
     };
 
-    let response_text = response
-        .text()
-        .await
-        .map_err(|e| SyncError::Other(format_error(&e)))?;
+    let log_url = util::redact_url_for_log(response.url());
+    let started = std::time::Instant::now();
+    let response_text = match response.text().await {
+        Ok(text) => text,
+        // Headers already logged a successful response, so without this the log just stops.
+        // Say what broke, here.
+        Err(error) => {
+            let error = ParsingResponseError::from_body_read_error(error);
+            log::warn!(
+                "API body read failed: url '{}', after {:.1}s: {}",
+                log_url,
+                started.elapsed().as_secs_f64(),
+                format_error(&error),
+            );
+            return Err(match error {
+                ParsingResponseError::ConnectionDropped(_) => OpError::DroppedBody {
+                    url: url.to_string(),
+                    error,
+                },
+                other => SyncError::Other(format_error(&other)).into(),
+            });
+        }
+    };
+    util::log_body_read(&log_url, response_text.len(), started.elapsed());
 
     let result = serde_json::from_str(&response_text).map_err(|e| SyncError::ParsingError {
         e: format_error(&e),
@@ -208,6 +294,59 @@ async fn response_or_err<T: DeserializeOwned>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::sync::api::test_helpers::{ScriptedResponse, ScriptedServer};
+
+    fn api(url: &str) -> SyncApiV7 {
+        SyncApiV7 {
+            url: url.parse().unwrap(),
+            auth_headers: HeaderMap::new(),
+        }
+    }
+
+    fn truncated() -> ScriptedResponse {
+        ScriptedResponse::TruncatedBody {
+            content_length: 1000,
+            body: r#"{"Ok": {"siteId": 1, "cen"#,
+        }
+    }
+
+    /// Reads other than pull go through `op` too, so they get the same retry.
+    #[actix_rt::test]
+    async fn site_status_retries_dropped_response_body() {
+        let server = ScriptedServer::start(vec![
+            truncated(),
+            ScriptedResponse::Complete(
+                r#"{"Ok": {"siteId": 2, "centralSiteId": 1, "isMultiDeviceSite": false}}"#
+                    .to_string(),
+            ),
+        ]);
+
+        let result = api(server.url()).site_status(()).await;
+
+        assert!(
+            matches!(&result, Ok(status::Output { site_id: 2, .. })),
+            "Expected Ok, got {:#?}",
+            result.err()
+        );
+    }
+
+    /// Push is not re-sent in place: central may have integrated the batch and only lost
+    /// the acknowledgement. A retry would have been served the `Ok` reply.
+    #[actix_rt::test]
+    async fn push_does_not_retry_dropped_response_body() {
+        let server = ScriptedServer::start(vec![
+            truncated(),
+            ScriptedResponse::Complete(r#"{"Ok": 1}"#.to_string()),
+        ]);
+
+        let result = api(server.url()).push(Default::default()).await;
+
+        assert!(
+            matches!(&result, Err(SyncError::ConnectionError { e, .. }) if e.contains("Connection dropped while reading response body")),
+            "Unexpected result: {:#?}",
+            result
+        );
+    }
 
     fn from_authorization(authorization: Option<&str>) -> Result<Common, SyncError> {
         Common::from_header_values(

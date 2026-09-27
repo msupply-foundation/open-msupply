@@ -42,10 +42,11 @@ pub async fn get_token(
     })
     .await;
 
+    // Not retried on a dropped body: central may already have allocated the token.
     let res = response_or_err(result, url).await;
     match res {
         Ok(ApiResponse::Ok(output)) => Ok(output),
         Ok(ApiResponse::Err(error)) => Err(error),
-        Err(error) => Err(error),
+        Err(error) => Err(error.into()),
     }
 }

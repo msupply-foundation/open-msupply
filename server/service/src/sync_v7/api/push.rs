@@ -7,6 +7,6 @@ static ROUTE: &str = "push";
 
 impl SyncApiV7 {
     pub async fn push(&self, input: Input) -> Response {
-        self.op(ROUTE, input).await
+        self.op_without_dropped_body_retry(ROUTE, input).await
     }
 }
