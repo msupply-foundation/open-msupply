@@ -93,6 +93,19 @@ impl<'a> LocationTypeRowRepository<'a> {
         Ok(exists)
     }
 
+    /// Whether a location type OTHER than `excluding_id` already carries `code`.
+    /// Nothing in the schema enforces uniqueness; the code is derived from the
+    /// name, so two same-named types would otherwise collide.
+    pub fn code_is_taken(&self, code: &str, excluding_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            location_type::table
+                .filter(location_type::code.eq(code))
+                .filter(location_type::id.ne(excluding_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationTypeRow>, RepositoryError> {
         let result = location_type::table
             .filter(location_type::id.eq_any(ids))
