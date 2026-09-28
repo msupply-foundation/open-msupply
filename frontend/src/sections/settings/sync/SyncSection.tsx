@@ -27,6 +27,7 @@ import {
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { Stack } from '../../../ui/layout/Stack/Stack';
+import { createSaveOnToggle } from './saveOnToggle';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
 import { DisclosureToggle } from '../../../ui/elements/buttons/DisclosureToggle';
@@ -89,36 +90,34 @@ export const SyncSection = () => {
    * The pause switch (spec/settings/rules.md § Synchronisation) is a setting
    * to flip, not a field of the form: it saves on change through its own
    * mutation, so flipping it never re-sends the credentials, and it never
-   * arms the form's validation. The switch shows `override ?? stored` (the
-   * same idiom as DisplaySettingsSection): the flip holds while its save is in
-   * flight, and dropping the override on failure reverts it to the stored
-   * value. On success the stored value is re-read, and the shared sync store
-   * is re-polled so this session's chrome cell shows the paused state at once
-   * (other sessions get it from the live frame the server emits).
+   * arms the form's validation. A failed save reverts the switch
+   * (saveOnToggle). On success the stored value is re-read before the flip is
+   * released, and the shared sync store is re-polled so this session's chrome
+   * cell shows the paused state at once (other sessions get it from the live
+   * frame the server emits).
    */
-  const [pauseOverride, setPauseOverride] = createSignal<boolean>();
-  const paused = () => pauseOverride() ?? stored()?.isPaused ?? false;
-  const [pauseBusy, setPauseBusy] = createSignal(false);
   const [pauseError, setPauseError] = createSignal<string>();
-  const setPaused = async (next: boolean) => {
-    if (pauseBusy()) return;
-    setPauseBusy(true);
-    setPauseError(undefined);
-    setPauseOverride(next);
-    const result = await graphqlFetch(
-      SetSyncPaused,
-      { paused: next },
-      { background: true }
-    );
-    if (result.kind === 'success') {
-      await refetch();
-      void pollSyncStatus();
-    } else if (result.kind !== 'unauthenticated') {
-      setPauseError(t(SYNC_SAVE_FALLBACK_ERROR));
+  const {
+    checked: paused,
+    busy: pauseBusy,
+    toggle: setPaused,
+  } = createSaveOnToggle(
+    () => stored()?.isPaused ?? false,
+    async next => {
+      setPauseError(undefined);
+      const result = await graphqlFetch(
+        SetSyncPaused,
+        { paused: next },
+        { background: true }
+      );
+      if (result.kind === 'success') {
+        await refetch();
+        void pollSyncStatus();
+      } else if (result.kind !== 'unauthenticated') {
+        setPauseError(t(SYNC_SAVE_FALLBACK_ERROR));
+      }
     }
-    setPauseOverride(undefined);
-    setPauseBusy(false);
-  };
+  );
 
   const edit = (patch: Partial<SyncFormState>) => {
     touched = true;
