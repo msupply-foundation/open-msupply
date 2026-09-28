@@ -870,10 +870,28 @@ const PurchaseOrderDetailView: Component = () => {
                     line.status === 'CLOSED' ? 'disabled' : undefined
                   }
                   // A line named by a blocked state move reads in the error
-                  // tone so it can be found and removed (spec S18); a line
-                  // with no quantity reads as a placeholder — not yet ordered
-                  // (spec S7). Error wins when both hold.
+                  // tone so it can be found and removed (spec S18).
                   rowTone={line =>
+                    blockedLines().includes(line.id) ? 'error' : undefined
+                  }
+                  // A line with no quantity is a placeholder — not yet ordered
+                  // (spec S7) — and carries the unfinished-work marking: the
+                  // teal row tint plus a bar of the same colour down the
+                  // leading edge — the outbound and stocktake line tables'
+                  // marking, same tokens and CSS (#269). It replaces the
+                  // whole-row action-blue text, the colour row selection
+                  // already spends.
+                  rowTint={line =>
+                    line.requestedNumberOfUnits === 0 ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    line.requestedNumberOfUnits === 0 ? 'unfinished' : undefined
+                  }
+                  // Cards have neither a row background nor a leading edge, so
+                  // a placeholder card keeps the info tone on its title (the
+                  // teal is a graphic colour, below the text-contrast floor).
+                  // Error wins when both hold.
+                  cardTone={line =>
                     blockedLines().includes(line.id)
                       ? 'error'
                       : line.requestedNumberOfUnits === 0
