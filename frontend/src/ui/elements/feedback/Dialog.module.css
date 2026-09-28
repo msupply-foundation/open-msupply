@@ -481,3 +481,15 @@
 .dialog[data-hold-height] {
   min-block-size: min(var(--dialog-held-height), calc(100vh - 2rem));
 }
+
+/* …and the panel fills the held box, as a workbench's does: a flex column so the footer stays
+   at the bottom where it was, instead of riding up with shorter content and leaving bare
+   <dialog> below it — which a click reads as the scrim. Scoped to [open], like .large[open]. */
+.dialog[data-hold-height][open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog[data-hold-height][open] .body {
+  flex: 1;
+}
