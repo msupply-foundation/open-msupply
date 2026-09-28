@@ -1,6 +1,8 @@
 import { createSignal, For, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
+import { displayVolume } from '../../../intl/numberDisplay';
+import { renderDisplayedNumber } from '../../../ui/elements/table/tableHelpers';
 import { DetailCard } from '../../../ui/layout/Detail/DetailCard';
 import { FormRow } from '../../../ui/layout/Form/FormRow';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
@@ -144,7 +146,15 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
                     <td>{row.packagingLevel}</td>
                     <td>{row.name}</td>
                     <td data-numeric>{row.packSize}</td>
-                    <td data-numeric>{row.volumePerUnit}</td>
+                    {/* Blank when unset — a cell, not a labelled field
+                        (ui-standards § tables › absent values). */}
+                    <td data-numeric>
+                      {row.volumePerUnit == null
+                        ? ''
+                        : renderDisplayedNumber(
+                            displayVolume(row.volumePerUnit)
+                          )}
+                    </td>
                   </tr>
                 )}
               </For>

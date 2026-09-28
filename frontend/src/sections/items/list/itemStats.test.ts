@@ -1,33 +1,49 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  DEFAULT_DECIMAL_PLACES,
+  setDecimalPlaces,
+} from '../../../intl/numberDisplay';
 import {
   dosesEquivalent,
   formatMonthsOfStock,
   monthsOfStockCell,
+  roundedStat,
   shouldShowDoses,
-  truncateToTwoDecimals,
   unitsWithDoses,
 } from './itemStats';
 
+// Every figure here follows the configured decimal places (ui-standards §
+// display rounding); the cases assume its default of 2 unless they set it.
+afterEach(() => setDecimalPlaces(DEFAULT_DECIMAL_PLACES));
+
 describe('itemStats — item statistics display (spec/items S1/S2)', () => {
-  // The BAND: a fixed two decimals, and a zero-AMC item (null on the wire)
-  // reads 0.00 — the reference app's behaviour (ui-surface S2 § statistics
-  // band). The list cell dashes the same absence; see the next test.
-  it('the MOS stat band shows a fixed 2dp, 0.00 at zero AMC', () => {
-    expect(formatMonthsOfStock(null)).toBe('0.00');
-    expect(formatMonthsOfStock(undefined)).toBe('0.00');
-    expect(formatMonthsOfStock(2.5)).toBe('2.50');
-    expect(formatMonthsOfStock(0)).toBe('0.00');
+  // The BAND: PADDED to the configured places, and a zero-AMC item (null on
+  // the wire) reads zero — the reference app's behaviour (ui-surface S2 §
+  // statistics band). The list cell dashes the same absence; see the next test.
+  it('the MOS stat band pads to the configured places, zero at zero AMC', () => {
+    expect(formatMonthsOfStock(null)).toEqual({ text: '0.00' });
+    expect(formatMonthsOfStock(undefined)).toEqual({ text: '0.00' });
+    expect(formatMonthsOfStock(2.5)).toEqual({ text: '2.50' });
+    expect(formatMonthsOfStock(0)).toEqual({ text: '0.00' });
+  });
+
+  it('the MOS stat band follows a reconfigured number of places', () => {
+    setDecimalPlaces(3);
+    expect(formatMonthsOfStock(2.5)).toEqual({ text: '2.500' });
+    // Rounded away: marked, with the exact figure to hover.
+    setDecimalPlaces(0);
+    expect(formatMonthsOfStock(2.5)).toEqual({ text: '3*', exact: '2.5' });
   });
 
   // OMS-REG-CAT-04.34 — the list CELL renders a zero-AMC item as a dash, never
-  // `0`. It also takes the numeric-cell rule rather than the band's fixed 2dp:
-  // at most two decimals, "…" + hover when precision drops.
-  it('the MOS list cell dashes at zero AMC and truncates (CAT-04.34)', () => {
+  // `0`. It also takes the numeric-cell rule rather than the band's padding:
+  // the configured places, unpadded, with a hover when digits were dropped.
+  it('the MOS list cell dashes at zero AMC and rounds (CAT-04.34)', () => {
     expect(monthsOfStockCell(null)).toEqual({ text: '—' });
     // 2.5 reads "2.5" here where the band reads "2.50" — no padding zero
     expect(monthsOfStockCell(2.5)).toEqual({ text: '2.5', title: undefined });
     expect(monthsOfStockCell(3.3333)).toEqual({
-      text: '3.33…',
+      text: '3.33*',
       title: '3.3333',
     });
     // zero is a value, not an absence — only null dashes
@@ -48,42 +64,43 @@ describe('itemStats — item statistics display (spec/items S1/S2)', () => {
     expect(dosesEquivalent(0, 20)).toBe(0);
   });
 
-  // Numeric cell truncation — >2 decimals truncates to two with a trailing "…"
-  // (captured as-is from the reference list); the full value rides the hover.
-  it('truncates >2-decimal values to two with a trailing ellipsis', () => {
-    expect(truncateToTwoDecimals(666.6666666667)).toEqual({
-      text: '666.67…',
-      truncated: true,
+  // The numeric-cell rule: the configured places, the rounded mark when digits
+  // were dropped (the hover reveals them) — never an ellipsis.
+  it('rounds to the configured places, marking what it dropped', () => {
+    expect(roundedStat(666.6666666667)).toEqual({
+      text: '666.67*',
+      rounded: true,
     });
-    expect(truncateToTwoDecimals(3000)).toEqual({
-      text: '3,000',
-      truncated: false,
-    });
-    expect(truncateToTwoDecimals(2.5)).toEqual({
-      text: '2.5',
-      truncated: false,
-    });
+    expect(roundedStat(3000)).toEqual({ text: '3,000', rounded: false });
+    expect(roundedStat(2.5)).toEqual({ text: '2.5', rounded: false });
+  });
+
+  it('reports a figure as rounded only when digits were actually dropped', () => {
+    // Binary-float dust is not a rounding: the user typed 0.3.
+    expect(roundedStat(0.1 + 0.2)).toEqual({ text: '0.3', rounded: false });
+    setDecimalPlaces(4);
+    expect(roundedStat(3.3333)).toEqual({ text: '3.3333', rounded: false });
   });
 
   // ITEMS-F1 — the AMC/stock-on-hand cells format through `unitsWithDoses`.
   // The bug: it was wired to a 0-decimal formatter, so a real AMC of 0.33
   // rendered as "0". These pin that the cell uses the numeric-cell rule
   // (ui-surface.md:47). Non-vaccine path (showDoses=false) needs no `t()`.
-  it('formats a fractional AMC to 2dp, not a rounded 0 (ITEMS-F1)', () => {
+  it('formats a fractional AMC to the configured places, not a rounded 0 (ITEMS-F1)', () => {
     const row = { isVaccine: false, doses: 0 };
     expect(unitsWithDoses(0.33, row, false).text).toBe('0.33');
-    expect(unitsWithDoses(0.3333, row, false).text).toBe('0.33…');
-    // integer stock-on-hand is unchanged — no decimals, no ellipsis
+    expect(unitsWithDoses(0.3333, row, false).text).toBe('0.33*');
+    // integer stock-on-hand is unchanged — no decimals
     expect(unitsWithDoses(12499, row, false).text).toBe('12,499');
   });
 
-  // The other half of the same numeric-cell rule (ui-surface.md:47): a
-  // truncated cell MUST expose the full-precision value as its hover text, and
-  // a cell showing every digit carries no hover at all.
-  it('a truncated cell carries the full value as its hover (ITEMS-F1)', () => {
+  // The other half of the same numeric-cell rule: a ROUNDED cell MUST expose
+  // the full value as its hover text, and a cell showing every digit carries no
+  // hover at all.
+  it('a rounded cell carries the full value as its hover (ITEMS-F1)', () => {
     const row = { isVaccine: false, doses: 0 };
     expect(unitsWithDoses(666.6666666667, row, false)).toEqual({
-      text: '666.67…',
+      text: '666.67*',
       title: '666.6666666667',
     });
     // Nothing dropped ⇒ nothing to reveal.

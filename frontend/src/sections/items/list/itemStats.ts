@@ -1,4 +1,9 @@
-import { formatNumber } from '../../../intl/formatNumber';
+import {
+  decimalPlaces,
+  displayNumber,
+  exactText,
+  type DisplayedNumber,
+} from '../../../intl/numberDisplay';
 import { t } from '../../../intl';
 
 // Pure display logic for item statistics (spec/items rules "item statistics",
@@ -9,28 +14,26 @@ import { t } from '../../../intl';
 
 const EMPTY_CELL = '—';
 
-// Months of stock for the DETAIL STATS BAND: a fixed two decimals, so the
-// figure reads the same width every time in a band of headline numbers. The
-// wire value is null when AMC is 0 (the figure is undefined, not zero/∞) and
-// the band renders that absence as 0.00, matching the reference app (ui-surface
-// S2 § statistics band). The LIST CELL renders the same absence as a dash and
-// follows the truncating numeric-cell rule instead — see monthsOfStockCell
-// below.
+// Months of stock for the DETAIL STATS BAND: PADDED to the configured decimal
+// places, so the figure reads the same width every time in a band of headline
+// numbers (ui-surface S2 § statistics band; ui-standards § display rounding),
+// marked and hovered like any rounded figure. The wire value is null when AMC
+// is 0 (the figure is undefined, not zero/∞) and the band renders that absence
+// as zero, matching the reference app. The LIST CELL renders the same absence
+// as a dash and takes the numeric-cell rule instead — see monthsOfStockCell.
 export const formatMonthsOfStock = (
   monthsOfStockOnHand: number | null | undefined
-): string =>
-  formatNumber(monthsOfStockOnHand ?? 0, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+): DisplayedNumber =>
+  displayNumber(monthsOfStockOnHand ?? 0, decimalPlaces(), true);
 
 // A plain unit statistic (stock on hand, AMC), locale-formatted with thousands
-// separators. `decimals` lets AMC show two decimals while stock-on-hand rounds.
-export const formatUnits = (value: number, decimals = 0): string =>
-  formatNumber(value, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
+// separators and PADDED to `decimals`. The default is whole units: a count of
+// units, doses or packs carries no fraction, and padding one reads as false
+// precision. A fractional figure passes decimalPlaces() — the configured
+// places (ui-standards § display rounding). A figure the padding rounded is
+// marked and hovers its exact value.
+export const formatUnits = (value: number, decimals = 0): DisplayedNumber =>
+  displayNumber(value, decimals, true);
 
 // The doses equivalent of a unit figure for a vaccine item = units × the item's
 // doses-per-unit (display-only; there is no stored doses fact —
@@ -46,33 +49,24 @@ export const shouldShowDoses = (
   manageVaccinesInDoses: boolean
 ): boolean => isVaccine && manageVaccinesInDoses;
 
-// Numeric list cells: a value with more than two decimals renders truncated to
-// two with a literal trailing "…" (the full-precision value rides the cell's
-// hover title). Captured as-is from the reference list (ui-surface S1).
-export const truncateToTwoDecimals = (
+// Numeric list cells take the shared numeric-cell rule (ui-standards § display
+// rounding): the value at the configured places, trailing zeroes unpadded, the
+// rounded mark when digits were dropped — and the hover text revealing them.
+export const roundedStat = (
   value: number
-): { text: string; truncated: boolean } => {
-  // The reference renders the value ROUNDED to two decimals (666.6666… →
-  // 666.67) with a trailing "…" flagging the dropped precision (the full value
-  // rides the hover). `truncated` = the value carried more than two decimals.
-  const truncated = Math.round(value * 100) / 100 !== value;
-  const text =
-    formatNumber(value, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }) + (truncated ? '…' : '');
-  return { text, truncated };
+): { text: string; rounded: boolean } => {
+  const { text, exact } = displayNumber(value);
+  return { text, rounded: exact !== undefined };
 };
 
-// Every digit of a value, for the hover reading behind a truncated cell —
-// locale-formatted (so the decimal separator is the reader's) but never
-// rounded.
-const fullPrecision = (value: number): string =>
-  formatNumber(value, { maximumFractionDigits: 20 });
+// Every digit of a value, for the hover reading behind a rounded cell —
+// locale-formatted (so the decimal separator is the reader's), capped where
+// binary-float dust begins rather than at the stored float's last bit.
+const fullPrecision = exactText;
 
-/** What a truncating numeric cell renders: its text, and the hover reading. */
+/** What a rounding numeric cell renders: its text, and the hover reading. */
 export type StatCell = {
-  /** The cell's text — at most two decimals, "…" when precision was dropped. */
+  /** The cell's text — the value at the configured places, marked if rounded. */
   text: string;
   /**
    * The full-precision reading for the cell's hover title, or undefined when
@@ -82,10 +76,10 @@ export type StatCell = {
 };
 
 // A unit figure formatted for a list cell (stock-on-hand, AMC): the
-// numeric-cell rule — at most two decimals, a trailing "…" when precision
-// drops AND the full-precision value in the cell's hover text (ui-surface S1 §
-// numeric cells, ui-surface.md:47) — so AMC renders 0.33, not a rounded 0, and
-// 666.67… still reveals 666.6666666667. The doses equivalent is appended
+// numeric-cell rule — the value at the configured places, the full value in
+// the cell's hover text when digits were dropped (ui-surface S1 § numeric
+// cells) — so AMC renders 0.33, not a rounded 0, and 666.67 still reveals
+// 666.6666666667 on hover. The doses equivalent is appended
 // (suffix "ds") when the manage-vaccines-in-doses preference is on AND the row
 // is a vaccine (OMS-REG-CAT-04.35); the hover then carries both sides at full
 // precision. Pure (structural row) so the formatting is unit-tested without
@@ -95,31 +89,31 @@ export const unitsWithDoses = (
   row: { isVaccine: boolean; doses: number },
   showDoses: boolean
 ): StatCell => {
-  const base = truncateToTwoDecimals(units);
+  const base = roundedStat(units);
   if (!showDoses || !row.isVaccine)
     return {
       text: base.text,
-      title: base.truncated ? fullPrecision(units) : undefined,
+      title: base.rounded ? fullPrecision(units) : undefined,
     };
 
   const doses = dosesEquivalent(units, row.doses);
-  const dosesCell = truncateToTwoDecimals(doses);
+  const dosesCell = roundedStat(doses);
   const suffix = t('label.doses-short');
   return {
     text: `${base.text} (${dosesCell.text} ${suffix})`,
     // Either side losing precision earns the hover, and it shows BOTH in full
     // so the reading matches the cell it explains.
     title:
-      base.truncated || dosesCell.truncated
+      base.rounded || dosesCell.rounded
         ? `${fullPrecision(units)} (${fullPrecision(doses)} ${suffix})`
         : undefined,
   };
 };
 
 // Months of stock as a LIST CELL: the numeric-cell rule its neighbours follow —
-// at most two decimals, a trailing "…" when precision drops, the full value in
-// the hover (ui-surface S1 § numeric cells). NOT the stats band's fixed two
-// decimals: the band shows one headline figure where an even width reads well,
+// the value at the configured places, the full value in the hover when digits
+// were dropped (ui-surface S1 § numeric cells). NOT the stats band's PADDED
+// figure: the band shows one headline number where an even width reads well,
 // while a column of figures alongside stock-on-hand and AMC must flag dropped
 // precision the same way they do (the reference list renders all three through
 // one number cell). null (zero AMC) is the dash, never 0 (OMS-REG-CAT-04.34).
@@ -127,9 +121,9 @@ export const monthsOfStockCell = (
   monthsOfStockOnHand: number | null | undefined
 ): StatCell => {
   if (monthsOfStockOnHand == null) return { text: EMPTY_CELL };
-  const cell = truncateToTwoDecimals(monthsOfStockOnHand);
+  const cell = roundedStat(monthsOfStockOnHand);
   return {
     text: cell.text,
-    title: cell.truncated ? fullPrecision(monthsOfStockOnHand) : undefined,
+    title: cell.rounded ? fullPrecision(monthsOfStockOnHand) : undefined,
   };
 };

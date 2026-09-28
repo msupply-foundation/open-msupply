@@ -2,7 +2,6 @@ import { createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { StatusBadge } from '../../ui/elements/feedback/StatusBadge';
-import { formatNumber } from '../../intl/formatNumber';
 import { t } from '../../intl';
 import {
   itemPageFetcher,
@@ -11,6 +10,8 @@ import {
 } from './itemResource';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import styles from './ItemSearch.module.css';
+import { displayNumber } from '../../intl/numberDisplay';
+import { renderDisplayedNumber } from '../../ui/elements/table/tableHelpers';
 
 const PAGE_SIZE = 30;
 
@@ -177,7 +178,8 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       <span class={styles.total}>
         {/* Fixed, localised "Units" label for every item (old-app parity — the
             item's own unitName is untranslatable catalogue data). */}
-        {formatNumber(item.availableUnits)} {t('label.units')}
+        {renderDisplayedNumber(displayNumber(item.availableUnits))}{' '}
+        {t('label.units')}
       </span>
     </span>
   );

@@ -51,6 +51,9 @@ import {
   formatUnits,
   dosesEquivalent,
 } from '../list/itemStats';
+import { decimalPlaces, displayVolume } from '@/intl/numberDisplay';
+import { formatCurrency } from '@/intl/currency';
+import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
 
 // The item detail screen (spec/items S2). Read-only: the General and Store tabs
 // render each field as a read-only labelled value (label above value, no input
@@ -245,15 +248,23 @@ const ItemDetailView: Component = () => {
                     >
                       <Statistic
                         label={t('label.units')}
-                        value={formatUnits(i().stats.stockOnHand)}
+                        value={formatUnits(i().stats.stockOnHand).text}
+                        title={formatUnits(i().stats.stockOnHand).exact}
                         href={stockHref()}
                       />
                       <Show when={i().isVaccine}>
                         <Statistic
                           label={t('label.doses')}
-                          value={formatUnits(
-                            dosesEquivalent(i().stats.stockOnHand, i().doses)
-                          )}
+                          value={
+                            formatUnits(
+                              dosesEquivalent(i().stats.stockOnHand, i().doses)
+                            ).text
+                          }
+                          title={
+                            formatUnits(
+                              dosesEquivalent(i().stats.stockOnHand, i().doses)
+                            ).exact
+                          }
                           href={stockHref()}
                         />
                       </Show>
@@ -264,10 +275,18 @@ const ItemDetailView: Component = () => {
                     >
                       <Statistic
                         label={t('label.units')}
-                        value={formatUnits(
-                          i().stats.averageMonthlyConsumption,
-                          2
-                        )}
+                        value={
+                          formatUnits(
+                            i().stats.averageMonthlyConsumption,
+                            decimalPlaces()
+                          ).text
+                        }
+                        title={
+                          formatUnits(
+                            i().stats.averageMonthlyConsumption,
+                            decimalPlaces()
+                          ).exact
+                        }
                       />
                     </StatsPanel>
                     <StatsPanel
@@ -276,9 +295,14 @@ const ItemDetailView: Component = () => {
                     >
                       <Statistic
                         label={t('text.months')}
-                        value={formatMonthsOfStock(
-                          i().stats.monthsOfStockOnHand
-                        )}
+                        value={
+                          formatMonthsOfStock(i().stats.monthsOfStockOnHand)
+                            .text
+                        }
+                        title={
+                          formatMonthsOfStock(i().stats.monthsOfStockOnHand)
+                            .exact
+                        }
                       />
                     </StatsPanel>
                   </Toolbar>
@@ -354,7 +378,7 @@ const ItemDetailView: Component = () => {
                               variant="field"
                               label={t('label.doses')}
                             >
-                              {formatUnits(i().doses)}
+                              {renderDisplayedNumber(formatUnits(i().doses))}
                             </LabelledValue>
                           </Show>
                         </FormRow>
@@ -403,13 +427,17 @@ const ItemDetailView: Component = () => {
                             variant="field"
                             label={t('label.default-pack-size')}
                           >
-                            {formatUnits(i().defaultPackSize)}
+                            {renderDisplayedNumber(
+                              formatUnits(i().defaultPackSize)
+                            )}
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
                             label={t('label.outer-pack-size')}
                           >
-                            {formatUnits(i().outerPackSize)}
+                            {renderDisplayedNumber(
+                              formatUnits(i().outerPackSize)
+                            )}
                           </LabelledValue>
                         </FormRow>
                         <FormRow>
@@ -417,13 +445,17 @@ const ItemDetailView: Component = () => {
                             variant="field"
                             label={t('label.volume-per-pack')}
                           >
-                            {formatUnits(i().volumePerPack, 2)}
+                            {renderDisplayedNumber(
+                              displayVolume(i().volumePerPack)
+                            )}
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
                             label={t('label.volume-per-outer-pack')}
                           >
-                            {formatUnits(i().volumePerOuterPack, 2)}
+                            {renderDisplayedNumber(
+                              displayVolume(i().volumePerOuterPack)
+                            )}
                           </LabelledValue>
                         </FormRow>
                         <FormRow>
@@ -431,7 +463,9 @@ const ItemDetailView: Component = () => {
                             variant="field"
                             label={t('label.weight')}
                           >
-                            {formatUnits(i().weight, 2)}
+                            {renderDisplayedNumber(
+                              formatUnits(i().weight, decimalPlaces())
+                            )}
                           </LabelledValue>
                         </FormRow>
                       </FormSection>
@@ -441,7 +475,8 @@ const ItemDetailView: Component = () => {
                             variant="field"
                             label={t('label.margin')}
                           >
-                            {formatUnits(i().margin, 2)}
+                            {/* A percentage — its own precision, not the configured places. */}
+                            {renderDisplayedNumber(formatUnits(i().margin, 2))}
                           </LabelledValue>
                         </FormRow>
                       </FormSection>
@@ -461,10 +496,9 @@ const ItemDetailView: Component = () => {
                             variant="field"
                             label={t('label.default-sell-price-per-pack')}
                           >
-                            {formatUnits(
+                            {formatCurrency(
                               i().itemStoreProperties
-                                ?.defaultSellPricePerPack ?? 0,
-                              2
+                                ?.defaultSellPricePerPack ?? 0
                             )}
                           </LabelledValue>
                         </FormRow>
