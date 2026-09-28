@@ -2,7 +2,7 @@ use repository::{syncv7::SyncError, SyncFileReferenceRow};
 use serde::{Deserialize, Serialize};
 use util::{format_error, with_retries, RetrySeconds};
 
-use super::SyncApiV7;
+use super::{is_connection_problem, SyncApiV7};
 use crate::static_files::{StaticFile, StaticFileService};
 
 #[derive(Serialize, Deserialize)]
@@ -50,7 +50,7 @@ impl SyncApiV7 {
             Ok(response) => response,
             Err(error) => {
                 let formatted_error = format_error(&error);
-                if error.is_connect() {
+                if is_connection_problem(&error) {
                     return Err(SyncError::ConnectionError {
                         url: url.to_string(),
                         e: formatted_error,

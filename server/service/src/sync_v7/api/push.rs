@@ -7,9 +7,10 @@ static ROUTE: &str = "push";
 
 impl SyncApiV7 {
     pub async fn push(&self, input: Input) -> Response {
-        // Not retried on a dropped body: central may have integrated the batch and only the
-        // acknowledgement was lost. The push cursor only advances on success, so the next
-        // sync re-pushes the batch anyway.
-        self.request(ROUTE, input).await
+        // Safe to send twice: central appends the batch to its sync buffer again, and
+        // integration keeps only the newest row per record. A re-sent final batch can find
+        // central already integrating it and fail with `IntegrationInProgress`; the push
+        // cursor hasn't advanced, so the next sync re-pushes it.
+        self.request_with_body_retry(ROUTE, input).await
     }
 }

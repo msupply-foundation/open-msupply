@@ -22,6 +22,9 @@ pub(crate) enum ScriptedResponse {
     },
     /// A complete `200` with this body.
     Complete(String),
+    /// Read the request, then drop the socket without replying - the client sees the
+    /// connection die before any response arrives.
+    CloseBeforeResponse,
 }
 
 /// A minimal HTTP server that replies to each connection with the next scripted response.
@@ -76,6 +79,7 @@ impl ScriptedServer {
                         );
                         let _ = stream.flush();
                     }
+                    ScriptedResponse::CloseBeforeResponse => drop(stream),
                 }
             }
         });

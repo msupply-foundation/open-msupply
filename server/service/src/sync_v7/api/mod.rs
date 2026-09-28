@@ -136,7 +136,8 @@ impl SyncApiV7 {
         Ok(SyncApiV7 { url, auth_headers })
     }
 
-    /// As `request`, but if the connection drops part-way through the response body, the
+    /// POST `input` to `route`. `with_retries` re-sends it if the connection fails before a
+    /// response arrives, and if the connection drops part-way through the response body, the
     /// same request is sent again under the `DroppedBodyRetries` policy shared with sync
     /// v5/v6. Only use this for requests that are safe to send twice.
     ///
@@ -156,16 +157,6 @@ impl SyncApiV7 {
                 result => return result.map_err(SyncError::from),
             }
         }
-    }
-
-    /// POST `input` to `route`. `with_retries` re-sends it if the connection fails before
-    /// a response arrives, but a response body cut off mid-read fails straight away.
-    async fn request<I: Serialize, O: DeserializeOwned>(
-        &self,
-        route: &str,
-        input: I,
-    ) -> Result<O, SyncError> {
-        self.attempt(route, &input).await.map_err(SyncError::from)
     }
 
     async fn attempt<I: Serialize, O: DeserializeOwned>(
@@ -226,6 +217,13 @@ impl From<RequestError> for SyncError {
     }
 }
 
+/// Connect failures, timeouts and drops before the response are all connection problems,
+/// whichever retry layer gave up, so they're reported as `SyncError::ConnectionError`, the
+/// same as a dropped body.
+pub(super) fn is_connection_problem(error: &reqwest::Error) -> bool {
+    error.is_connect() || error.is_timeout() || error.is_request()
+}
+
 async fn response_or_err<T: DeserializeOwned>(
     result: Result<Response, reqwest::Error>,
     url: reqwest::Url,
@@ -234,7 +232,7 @@ async fn response_or_err<T: DeserializeOwned>(
         Ok(result) => result,
         Err(error) => {
             let formatted_error = format_error(&error);
-            if error.is_connect() {
+            if is_connection_problem(&error) {
                 // InvalidContentType is rustls signalling it received plaintext instead of a TLS
                 // handshake — happens when the URL uses https:// but the server is HTTP only.
                 let e = if formatted_error.contains("InvalidContentType") {
@@ -328,10 +326,10 @@ mod tests {
         );
     }
 
-    /// Push is not re-sent in place: central may have integrated the batch and only lost
-    /// the acknowledgement. A retry would have been served the `Ok` reply.
+    /// Push is safe to send twice, so a cut-off acknowledgement is re-sent and the retry's
+    /// `Ok` reply is returned.
     #[actix_rt::test]
-    async fn push_does_not_retry_dropped_response_body() {
+    async fn push_retries_dropped_response_body() {
         let server = ScriptedServer::start(vec![
             truncated(),
             ScriptedResponse::Complete(r#"{"Ok": 1}"#.to_string()),
@@ -340,7 +338,58 @@ mod tests {
         let result = api(server.url()).push(Default::default()).await;
 
         assert!(
-            matches!(&result, Err(SyncError::ConnectionError { e, .. }) if e.contains("Connection dropped while reading response body")),
+            matches!(&result, Ok(1)),
+            "Expected Ok(1), got {:#?}",
+            result
+        );
+    }
+
+    /// A drop before any response arrives is a connection problem too, once the transport
+    /// retries run out - not `Other`.
+    #[actix_rt::test]
+    async fn drop_before_response_is_connection_error() {
+        // `with_retries` makes three attempts; a fourth would find the listener closed.
+        let server = ScriptedServer::start(vec![
+            ScriptedResponse::CloseBeforeResponse,
+            ScriptedResponse::CloseBeforeResponse,
+            ScriptedResponse::CloseBeforeResponse,
+        ]);
+
+        let result = api(server.url()).site_status(()).await;
+
+        assert!(
+            matches!(&result, Err(SyncError::ConnectionError { .. })),
+            "Unexpected result: {:#?}",
+            result.err()
+        );
+    }
+
+    /// get_token isn't re-sent once the request may have reached central: central may have
+    /// allocated the token, and a second request would fail with `TokenAlreadyAllocated`.
+    /// A re-send would have been served the token.
+    #[actix_rt::test]
+    async fn get_token_is_not_resent_after_drop_before_response() {
+        let server = ScriptedServer::start(vec![
+            ScriptedResponse::CloseBeforeResponse,
+            ScriptedResponse::Complete(
+                r#"{"Ok": {"token": "t", "siteId": 2, "centralSiteId": 1}}"#.to_string(),
+            ),
+        ]);
+
+        let result = get_token::get_token(
+            &server.url().parse().unwrap(),
+            get_token::GetTokenInput {
+                version: Version::from_package_json(),
+                app_name: "Open mSupply Desktop".to_string(),
+                name: "site".to_string(),
+                password_sha256: "".to_string(),
+                hardware_id: "hw-1".to_string(),
+            },
+        )
+        .await;
+
+        assert!(
+            matches!(&result, Err(SyncError::ConnectionError { .. })),
             "Unexpected result: {:#?}",
             result
         );

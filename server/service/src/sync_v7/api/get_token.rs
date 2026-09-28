@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{response_or_err, ApiResponse};
 use repository::{migrations::Version, syncv7::SyncError};
-use util::{with_retries, RetrySeconds};
+use util::{with_retries_opts, RetrySeconds};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -37,12 +37,14 @@ pub async fn get_token(
         .join(ROUTE)
         .unwrap();
 
-    let result = with_retries(RetrySeconds::default(), |client| {
+    // Only re-sent if the connection couldn't be made. Once the request may have reached
+    // central, it may have allocated the token, and a second request would fail with
+    // `TokenAlreadyAllocated`.
+    let result = with_retries_opts(RetrySeconds::default(), false, |client| {
         client.post(url.clone()).json(&input)
     })
     .await;
 
-    // Not retried on a dropped body: central may already have allocated the token.
     let res = response_or_err(result, url).await;
     match res {
         Ok(ApiResponse::Ok(output)) => Ok(output),
