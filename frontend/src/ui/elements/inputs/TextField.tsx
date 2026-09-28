@@ -196,7 +196,7 @@ export const TextField = (props: TextFieldProps) => {
             when={local.warning}
             fallback={
               <Show when={local.helperText}>
-                <p id={messageId()} class={styles.helper}>
+                <p id={messageId()} class={styles.helper} data-field-message="helper">
                   {local.helperText}
                 </p>
               </Show>
@@ -208,6 +208,7 @@ export const TextField = (props: TextFieldProps) => {
             <p
               id={messageId()}
               class={styles.warning}
+              data-field-message="warning"
               role="status"
               data-testid={local.warningTestId}
             >
@@ -220,6 +221,7 @@ export const TextField = (props: TextFieldProps) => {
         <p
           id={messageId()}
           class={styles.error}
+          data-field-message="error"
           data-testid={local.errorTestId}
         >
           <AlertTriangleIcon class={styles.messageIcon} />

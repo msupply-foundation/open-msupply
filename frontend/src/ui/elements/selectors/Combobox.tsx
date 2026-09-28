@@ -758,7 +758,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             when={props.warning}
             fallback={
               <Show when={props.helperText}>
-                <KCombobox.Description class={styles.helper}>
+                <KCombobox.Description
+                  class={styles.helper}
+                  data-field-message="helper"
+                >
                   {props.helperText}
                 </KCombobox.Description>
               </Show>
@@ -768,6 +771,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
                 user works elsewhere in the form, so it's announced politely. */}
             <KCombobox.Description
               class={styles.warning}
+              data-field-message="warning"
               role="status"
               data-testid={props.warningTestId}
             >
@@ -779,6 +783,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       >
         <KCombobox.Description
           class={styles.error}
+          data-field-message="error"
           data-testid={props.errorTestId}
         >
           <AlertTriangleIcon class={styles.messageIcon} />

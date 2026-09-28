@@ -2041,3 +2041,23 @@ tr[data-accent='error'] > :first-child::before {
   scroll-margin-left: var(--frozen-left);
   scroll-margin-right: var(--frozen-right);
 }
+
+/* A field's message line under a control in a TABLE cell ([data-field-message]:
+   error / warning / helper). Cells don't wrap (white-space above), so a long
+   message ran on one line, widened its column to the cell cap and was then
+   cut off. Now every message line wraps within its field, and none widens
+   its column by its own length (`contain: inline-size`) — a helper such as
+   "3 short" never does. An error or warning instead makes its cell at least
+   16rem wide, so a sentence-long server message takes a few lines rather
+   than a column of single words beside a narrow number field. Table view
+   only: a card field has its own width and wraps already. */
+.tableScroll[data-view='table'] .td [data-field-message] {
+  white-space: normal;
+  contain: inline-size;
+}
+
+.tableScroll[data-view='table']
+  .td
+  :is([data-field-message='error'], [data-field-message='warning']) {
+  min-inline-size: 16rem;
+}
