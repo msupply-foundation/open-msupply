@@ -45,6 +45,8 @@ import {
 } from './requisitionLineEdit';
 import { RequisitionLineStats } from './RequisitionLineStats';
 import styles from './RequisitionLineEditModal.module.css';
+import { displayNumber } from '@/intl/numberDisplay';
+import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
 
 // The requisition line editor (spec/requisitions S4): add an item (add mode —
 // manual non-program requisitions only) or fill one line (edit mode, any
@@ -501,7 +503,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           when={rowProps.onChange}
           fallback={
             <span class={styles.statValue} data-testid={rowProps.testId}>
-              {formatNumber(shown())} {suffix()}
+              {renderDisplayedNumber(displayNumber(shown()))} {suffix()}
             </span>
           }
         >
@@ -540,13 +542,17 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
       <Show when={packSize() > 0}>
         <HStack justify="between" gap="sm" class={styles.caption}>
           <span>{t('label.default-pack-size')}</span>
-          <span class={styles.captionValue}>{formatNumber(packSize())}</span>
+          <span class={styles.captionValue}>
+            {renderDisplayedNumber(displayNumber(packSize()))}
+          </span>
         </HStack>
       </Show>
       <Show when={dosesApply()}>
         <HStack justify="between" gap="sm" class={styles.caption}>
           <span>{t('label.doses-per-unit')}</span>
-          <span class={styles.captionValue}>{formatNumber(doses())}</span>
+          <span class={styles.captionValue}>
+            {renderDisplayedNumber(displayNumber(doses()))}
+          </span>
         </HStack>
       </Show>
     </>
@@ -683,7 +689,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
             § read-only figures), so it bypasses FigureRow's ceil. */}
         <FieldRow label={t('label.target-stock-population')}>
           <span class={styles.statValue}>
-            {formatNumber(targetPopulationFigure())}{' '}
+            {renderDisplayedNumber(displayNumber(targetPopulationFigure()))}{' '}
             {modeWord(
               entryMode(),
               current()?.unitName ?? null,

@@ -1,6 +1,6 @@
 import { Show, type Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
-import { formatNumber, t } from '@/intl';
+import { displayNumber, formatNumber, t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -30,6 +30,7 @@ import {
   type DraftIndicator,
   type Year,
 } from './draft';
+import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
 
 // S1 — the demographics grid (spec/demographics ui-surface S1): the general
 // population baseline, the indicators' shares, the yearly growth rates in the
@@ -168,7 +169,9 @@ const DemographicsPage: Component = () => {
           <Show
             when={isGeneralRow(row)}
             // Every other row's current population derives from the baseline.
-            fallback={formatNumber(figures(row).current)}
+            fallback={renderDisplayedNumber(
+              displayNumber(figures(row).current)
+            )}
           >
             {/* The baseline — the one editable current population, a whole
                 number of people (rules § input bounds). */}
@@ -217,7 +220,10 @@ const DemographicsPage: Component = () => {
         textLabel: () => yearLabel(year),
       },
       size: remToPx(11),
-      cell: info => formatNumber(figures(info.row.original).years[year - 1]),
+      cell: info =>
+        renderDisplayedNumber(
+          displayNumber(figures(info.row.original).years[year - 1])
+        ),
     })),
   ];
 

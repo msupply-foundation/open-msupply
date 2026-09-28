@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
-import { getPlural, t, tPlural } from '../../../../intl';
+import { displayNumber, getPlural, t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
@@ -37,6 +37,7 @@ import styles from './PrescriptionLineEditModal.module.css';
 import {
   getExpiryDateCell,
   getNumberCell,
+  renderDisplayedNumber,
 } from '../../../../ui/elements/table/tableHelpers';
 import { getBooleanCell } from '../../../../ui/elements/table/BooleanCell';
 import { ItemSearch } from '../../../../domain/item';
@@ -905,7 +906,8 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   // `label.doses` is already plural.
                   end={
                     <>
-                      {t('label.available')}: {formatNumber(availableInLens())}{' '}
+                      {t('label.available')}:{' '}
+                      {renderDisplayedNumber(displayNumber(availableInLens()))}{' '}
                       {dosesMode()
                         ? t('label.doses')
                         : getPlural(unitName(), availableInLens())}

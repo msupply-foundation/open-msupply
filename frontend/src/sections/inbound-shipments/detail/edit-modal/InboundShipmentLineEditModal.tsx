@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { formatNumber, getPlural, t } from '../../../../intl';
+import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -34,6 +35,7 @@ import {
 import {
   formatCurrencyCell,
   getNumberCell,
+  renderDisplayedNumber,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { packDifference } from '../inboundShipmentLine';
@@ -672,8 +674,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     if (!units) return '';
     const unit = item()?.unitName;
     return unit
-      ? `${formatNumber(units, { maximumFractionDigits: 2 })} ${getPlural(unit, units)}`
-      : formatNumber(units, { maximumFractionDigits: 2 });
+      ? `${roundedText(units)} ${getPlural(unit, units)}`
+      : roundedText(units);
   };
 
   // Seed on mount: a row open (update mode) loads its item — focusing the
@@ -884,7 +886,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     <span class={styles.statValue}>
       {value() === undefined
         ? '—'
-        : formatNumber(value()!, { maximumFractionDigits: 2 })}
+        : renderDisplayedNumber(displayNumber(value()!))}
     </span>
   );
 
@@ -1040,9 +1042,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                       // discrepancy reads without any colour doing the work.
                       // The mismatch Alert above the cards carries the alarm;
                       // this stays a figure among figures.
-                      `${diff()! > 0 ? '+' : ''}${formatNumber(diff()!, {
-                        maximumFractionDigits: 2,
-                      })}`}
+                      `${diff()! > 0 ? '+' : ''}${roundedText(diff()!)}`}
                 </span>
               );
             },

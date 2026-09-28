@@ -9,7 +9,7 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
+import { displayNumber } from '@/intl/numberDisplay';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -34,6 +34,7 @@ import {
   getCellDefinition,
   getDateCell,
   getExpiryDateCell,
+  renderDisplayedNumber,
 } from '@/ui/elements/table/tableHelpers';
 import {
   Pagination,
@@ -794,7 +795,9 @@ const StocktakeDetailView: Component = () => {
               const value = info.getValue<number | null | undefined>();
               return (
                 <>
-                  {formatNumber(value, { maximumFractionDigits: 2 })}
+                  {value == null
+                    ? ''
+                    : renderDisplayedNumber(displayNumber(value))}
                   <Show
                     when={
                       lineErrors().get(info.row.original.id) ===
@@ -844,9 +847,9 @@ const StocktakeDetailView: Component = () => {
         isUncounted(info.row.original) ? (
           <AbsentValue label={t('label.not-counted')} />
         ) : (
-          formatNumber(info.getValue<number | null | undefined>(), {
-            maximumFractionDigits: 2,
-          })
+          renderDisplayedNumber(
+            displayNumber(info.getValue<number | null | undefined>() ?? 0)
+          )
         ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine

@@ -1,6 +1,6 @@
 import type { JSX } from 'solid-js';
 import { Show } from 'solid-js';
-import { formatNumber, t } from '@/intl';
+import { displayNumber, t } from '@/intl';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
@@ -8,6 +8,7 @@ import { type Column } from '@/ui/elements/table/DataTable';
 import {
   getCellDefinition,
   getNumberCell,
+  renderDisplayedNumber,
 } from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
 import { HStack } from '@/ui/layout/Stack/HStack';
@@ -105,7 +106,7 @@ const derivedNumber = (
     <Show when={marker}>
       {m => <StatusMarker severity={m().severity} label={m().label} />}
     </Show>
-    {formatNumber(value)}
+    {renderDisplayedNumber(displayNumber(value))}
   </HStack>
 );
 

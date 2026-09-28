@@ -13,6 +13,8 @@ import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { getPlural, t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
+import { displayNumber, displayVolume } from '../../../../intl/numberDisplay';
+import { renderDisplayedNumber } from '../../../../ui/elements/table/tableHelpers';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -1357,11 +1359,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         const line = info.row.original;
         return (
           <>
-            {formatNumber(
-              dosesView()
-                ? line.numberOfPacks
-                : line.numberOfPacks * line.packSize,
-              { maximumFractionDigits: 2 }
+            {renderDisplayedNumber(
+              displayNumber(
+                dosesView()
+                  ? line.numberOfPacks
+                  : line.numberOfPacks * line.packSize
+              )
             )}
           </>
         );
@@ -1408,9 +1411,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                       the raw subtraction carries float dust (2.34 − 3). */}
                   {line.receivedNumberOfPacks == null
                     ? ''
-                    : formatNumber(
-                        line.receivedNumberOfPacks - line.numberOfPacks,
-                        { maximumFractionDigits: 2 }
+                    : renderDisplayedNumber(
+                        displayNumber(
+                          line.receivedNumberOfPacks - line.numberOfPacks
+                        )
                       )}
                 </>
               );
@@ -1431,9 +1435,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         const line = info.row.original;
         return (
           <>
-            {formatNumber((line.volumePerPack ?? 0) * line.numberOfPacks, {
-              maximumFractionDigits: 2,
-            })}
+            {renderDisplayedNumber(
+              displayVolume((line.volumePerPack ?? 0) * line.numberOfPacks)
+            )}
           </>
         );
       },
@@ -1556,11 +1560,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <Show when={item()}>
               <HStack gap="md">
                 <span>
-                  {t('label.unallocated')}: {formatNumber(placeholderUnits())}
+                  {t('label.unallocated')}:{' '}
+                  {renderDisplayedNumber(displayNumber(placeholderUnits()))}
                 </span>
                 <span>
                   {t('label.total-units')}:{' '}
-                  {formatNumber(issuedUnits() + placeholderUnits())}
+                  {renderDisplayedNumber(
+                    displayNumber(issuedUnits() + placeholderUnits())
+                  )}
                 </span>
               </HStack>
             </Show>
@@ -1719,7 +1726,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 <span class={styles.availableValue}>
                   {/* Unit name pluralised to the count (old-app parity —
                       English only; getPlural passes other languages through). */}
-                  {formatNumber(availableUnits())}{' '}
+                  {renderDisplayedNumber(displayNumber(availableUnits()))}{' '}
                   {getPlural(unitName(), availableUnits())}
                 </span>
               </LabelledValue>

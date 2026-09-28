@@ -38,6 +38,8 @@ import {
   isCandidateDisabled,
 } from './stockMovementLineEdit';
 import type { StockMovementLineFragment } from '../stockMovementDetail.generated';
+import { displayNumber } from '@/intl/numberDisplay';
+import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
 
 // The line editor (spec/stock-movements/ui-surface.md S3): one move per line —
 // item → batch → destination → quantity, progressively disclosed. Add mode
@@ -381,10 +383,13 @@ export const StockMovementLineEditModal: Component<
             </FieldRow>
             <FieldRow label={t('label.for-reference')}>
               <span data-testid="for-reference-field">
-                {t('label.pack-size')} {formatNumber(batch().packSize)}
+                {t('label.pack-size')}{' '}
+                {renderDisplayedNumber(displayNumber(batch().packSize))}
                 {' · '}
                 {t('label.packs-in-stock')}{' '}
-                {formatNumber(batch().totalNumberOfPacks)}
+                {renderDisplayedNumber(
+                  displayNumber(batch().totalNumberOfPacks)
+                )}
               </span>
             </FieldRow>
             <FieldRow label={t('label.packs-to-move')}>

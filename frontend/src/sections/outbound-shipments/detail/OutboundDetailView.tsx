@@ -30,7 +30,7 @@ import {
   AbsentValue,
   getCellDefinition,
   getFlagCell,
-  getNumberCell,
+  getVolumeCell,
   isNearOrPastExpiry,
 } from '../../../ui/elements/table/tableHelpers';
 import {
@@ -988,10 +988,10 @@ const OutboundDetailView: Component = () => {
           id: 'volume',
         },
         header: () => t('label.volume'),
-        // Same display rounding as the column's cells (ui-standards § tables'
-        // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
-        // mismatch.
-        ...getNumberCell(),
+        // A volume's own places (ui-standards § display rounding), the same
+        // as the totals strip beneath — a footer at one precision under cells
+        // at another reads as a mismatch.
+        ...getVolumeCell(),
         // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
         size: remToPx(6),
       },

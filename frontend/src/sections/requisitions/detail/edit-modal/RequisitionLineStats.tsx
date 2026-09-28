@@ -1,6 +1,7 @@
 import { For, Show, type Component, type JSX } from 'solid-js';
 import { t } from '@/intl';
-import { formatNumber, round } from '@/intl/formatNumber';
+import { formatNumber } from '@/intl/formatNumber';
+import { displayNumber, displayVolume } from '@/intl/numberDisplay';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import { InfoIcon } from '@/ui/icons';
 import {
@@ -14,6 +15,7 @@ import {
   type LineStats,
 } from './requisitionLineEdit';
 import styles from './RequisitionLineStats.module.css';
+import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
 
 // The line editor's two read-only stats tabs (spec S4 § stats tabs): My store
 // — the proportional stacked our-stock / requested bars — and Customer — the
@@ -204,8 +206,7 @@ export const RequisitionLineStats: Component<{
     const suggested = () => q(s()?.suggestedQuantity ?? 0);
     const maxMonths = () => s()?.maxMonthsOfStock ?? 0;
     const target = () => maxMonths() * amc();
-    const canCalculate = () =>
-      amc() > 0 && !(soh() === 0 && suggested() === 0);
+    const canCalculate = () => amc() > 0 && !(soh() === 0 && suggested() === 0);
     // The axis shrinks when stock exceeds the target, else spans the row.
     const axisWidth = () =>
       soh() > target() ? Math.round((100 * target()) / soh()) : 100;
@@ -215,9 +216,7 @@ export const RequisitionLineStats: Component<{
     const monthText = (m: number) =>
       `${formatNumber(Math.ceil(amc() * m))}${showText() ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})` : ''}`;
     const barFlex = (value: number) =>
-      target() === 0
-        ? 0
-        : Math.min(Math.round((100 * value) / target()), 100);
+      target() === 0 ? 0 : Math.min(Math.round((100 * value) / target()), 100);
     return (
       <section class={styles.section}>
         <Show when={amc() === 0}>
@@ -258,7 +257,9 @@ export const RequisitionLineStats: Component<{
                 title={`${t('label.stock-on-hand')}: ${legendValue(soh())}`}
               >
                 <div class={`${styles.valueFill} ${styles.stockMainFill}`}>
-                  <span class={styles.valueNum}>{formatNumber(soh())}</span>
+                  <span class={styles.valueNum}>
+                    {renderDisplayedNumber(displayNumber(soh()))}
+                  </span>
                 </div>
                 <div class={styles.valueLabel}>{t('label.stock-on-hand')}</div>
               </div>
@@ -272,7 +273,7 @@ export const RequisitionLineStats: Component<{
               >
                 <div class={`${styles.valueFill} ${styles.otherRequestedFill}`}>
                   <span class={styles.valueNum}>
-                    {formatNumber(suggested())}
+                    {renderDisplayedNumber(displayNumber(suggested()))}
                   </span>
                 </div>
                 <div class={styles.valueLabel}>
@@ -297,9 +298,16 @@ export const RequisitionLineStats: Component<{
     return (
       <section class={styles.section}>
         <h3 class={styles.sectionHeading}>{t('label.volume')}</h3>
-        <p class={styles.volumeLine}>
+        {/* A volume's own places, not the configured ones (intl/numberDisplay
+            displayVolume; ui-surface § volume block). The hover reading carries
+            whatever those drop — on the line rather than the figure, since the
+            translated sentence leaves no element around the figure alone. */}
+        <p
+          class={styles.volumeLine}
+          title={displayVolume(props.volume!.itemVolume).exact}
+        >
           {t('label.volume-for-item', {
-            itemVolume: round(props.volume!.itemVolume, 5),
+            itemVolume: displayVolume(props.volume!.itemVolume).text,
           })}
         </p>
         <Show
@@ -312,10 +320,10 @@ export const RequisitionLineStats: Component<{
             </p>
           }
         >
-          <p class={styles.volumeLine}>
+          <p class={styles.volumeLine} title={displayVolume(remaining()).exact}>
             {t('label.available-volume-for-location-type', {
               locationType: props.volume!.locationTypeName,
-              availableVolume: round(remaining(), 5),
+              availableVolume: displayVolume(remaining()).text,
             })}
           </p>
         </Show>

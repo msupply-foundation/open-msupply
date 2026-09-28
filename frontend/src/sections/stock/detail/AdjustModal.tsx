@@ -30,6 +30,8 @@ import {
   type StockLineDetailFragment,
   type CreateInventoryAdjustmentVariables,
 } from './stockLine.generated';
+import { displayNumber } from '../../../intl/numberDisplay';
+import { renderDisplayedNumber } from '../../../ui/elements/table/tableHelpers';
 
 // The stock adjustment modal (spec/stock S4, FL4). Correct one line's quantity
 // by a direction + amount, with an optional reason and (when the backdating
@@ -270,7 +272,7 @@ const AdjustContent = (props: {
             }}
           >
             {props.line.item.code} · {t('label.pack-size')}{' '}
-            {formatNumber(packSize())}
+            {renderDisplayedNumber(displayNumber(packSize()))}
           </span>
         </div>
 
