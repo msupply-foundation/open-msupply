@@ -17,7 +17,7 @@ static ROUTE: &str = "download_file";
 
 impl SyncApiV7 {
     /// Download file bytes from central, streaming them into local static file storage.
-    /// Unlike the JSON `op` endpoints, a success response here is a raw byte stream;
+    /// Unlike the JSON `request` endpoints, a success response here is a raw byte stream;
     /// errors come back as a non-2xx status with a JSON-serialized `SyncError` body.
     pub async fn download_file(
         &self,

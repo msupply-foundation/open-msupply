@@ -136,13 +136,13 @@ impl SyncApiV7 {
         Ok(SyncApiV7 { url, auth_headers })
     }
 
-    /// Send an idempotent read. If the connection drops part-way through the response
-    /// body, the same request is re-sent under the `DroppedBodyRetries` policy shared with
-    /// sync v5/v6.
+    /// As `request`, but if the connection drops part-way through the response body, the
+    /// same request is sent again under the `DroppedBodyRetries` policy shared with sync
+    /// v5/v6. Only use this for requests that are safe to send twice.
     ///
     /// The budget is per call, so a pull gets a fresh one for every batch - only a
     /// persistently broken connection gives up.
-    pub async fn op<I: Serialize, O: DeserializeOwned>(
+    pub async fn request_with_body_retry<I: Serialize, O: DeserializeOwned>(
         &self,
         route: &str,
         input: I,
@@ -150,31 +150,29 @@ impl SyncApiV7 {
         let description = format!("Sync v7 {route}");
         let mut retries = DroppedBodyRetries::default();
         loop {
-            match self.send(route, &input).await {
-                Err(OpError::DroppedBody { error, .. })
+            match self.attempt(route, &input).await {
+                Err(RequestError::DroppedBody { error, .. })
                     if retries.wait_before_retry(&description, &error).await => {}
                 result => return result.map_err(SyncError::from),
             }
         }
     }
 
-    /// Send a request that must not be repeated in place (push). A dropped response body
-    /// fails straight away: central may have integrated the batch and only the
-    /// acknowledgement was lost. The push cursor only advances on success, so the next sync
-    /// re-pushes the batch anyway.
-    pub async fn op_without_dropped_body_retry<I: Serialize, O: DeserializeOwned>(
+    /// POST `input` to `route`. `with_retries` re-sends it if the connection fails before
+    /// a response arrives, but a response body cut off mid-read fails straight away.
+    pub async fn request<I: Serialize, O: DeserializeOwned>(
         &self,
         route: &str,
         input: I,
     ) -> Result<O, SyncError> {
-        self.send(route, &input).await.map_err(SyncError::from)
+        self.attempt(route, &input).await.map_err(SyncError::from)
     }
 
-    async fn send<I: Serialize, O: DeserializeOwned>(
+    async fn attempt<I: Serialize, O: DeserializeOwned>(
         &self,
         route: &str,
         input: &I,
-    ) -> Result<O, OpError> {
+    ) -> Result<O, RequestError> {
         let url = self
             .url
             .join("central/sync_v7/")
@@ -198,7 +196,7 @@ impl SyncApiV7 {
     }
 }
 
-enum OpError {
+enum RequestError {
     /// The connection dropped part-way through the response body (reset, incomplete
     /// message). Nothing was parsed - the body never arrived in full - so this is a
     /// transport failure, and a read can be re-sent.
@@ -209,21 +207,21 @@ enum OpError {
     Sync(SyncError),
 }
 
-impl From<SyncError> for OpError {
+impl From<SyncError> for RequestError {
     fn from(error: SyncError) -> Self {
-        OpError::Sync(error)
+        RequestError::Sync(error)
     }
 }
 
-impl From<OpError> for SyncError {
-    fn from(error: OpError) -> Self {
+impl From<RequestError> for SyncError {
+    fn from(error: RequestError) -> Self {
         match error {
             // A connection problem, so report it as one rather than `Other`.
-            OpError::DroppedBody { url, error } => SyncError::ConnectionError {
+            RequestError::DroppedBody { url, error } => SyncError::ConnectionError {
                 url,
                 e: format_error(&error),
             },
-            OpError::Sync(error) => error,
+            RequestError::Sync(error) => error,
         }
     }
 }
@@ -231,7 +229,7 @@ impl From<OpError> for SyncError {
 async fn response_or_err<T: DeserializeOwned>(
     result: Result<Response, reqwest::Error>,
     url: reqwest::Url,
-) -> Result<T, OpError> {
+) -> Result<T, RequestError> {
     let response = match result {
         Ok(result) => result,
         Err(error) => {
@@ -273,7 +271,7 @@ async fn response_or_err<T: DeserializeOwned>(
                 format_error(&error),
             );
             return Err(match error {
-                ParsingResponseError::ConnectionDropped(_) => OpError::DroppedBody {
+                ParsingResponseError::ConnectionDropped(_) => RequestError::DroppedBody {
                     url: url.to_string(),
                     error,
                 },
@@ -310,7 +308,7 @@ mod tests {
         }
     }
 
-    /// Reads other than pull go through `op` too, so they get the same retry.
+    /// Reads other than pull use `request_with_body_retry` too, so they get the same retry.
     #[actix_rt::test]
     async fn site_status_retries_dropped_response_body() {
         let server = ScriptedServer::start(vec![

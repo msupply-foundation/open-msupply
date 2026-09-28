@@ -7,6 +7,9 @@ static ROUTE: &str = "push";
 
 impl SyncApiV7 {
     pub async fn push(&self, input: Input) -> Response {
-        self.op_without_dropped_body_retry(ROUTE, input).await
+        // Not retried on a dropped body: central may have integrated the batch and only the
+        // acknowledgement was lost. The push cursor only advances on success, so the next
+        // sync re-pushes the batch anyway.
+        self.request(ROUTE, input).await
     }
 }
