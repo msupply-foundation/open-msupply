@@ -9,6 +9,7 @@ import {
   createFocusTargets,
 } from '@/ui/utils/createFocusTarget';
 import { createAction } from '@/ui/utils/keyActions';
+import { createDebounced } from '@/ui/utils/createDebounced';
 import { PLUS } from '@/ui/utils/shortcuts';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
@@ -57,6 +58,7 @@ import {
   differenceSize,
   lineDifference,
   packSizeEditable,
+  type CountLine,
   type ReasonRequirement,
 } from '../lines/stocktakeLine';
 import {
@@ -151,7 +153,7 @@ type DraftLine = Omit<StocktakeLineFragment, 'volumePerPack'> & {
 // (spec/stocktakes/rules.md §adjustment-reason rules). The reason itself stays
 // server-validated; this only narrows the choices to help the user.
 const adjustmentDirection = (
-  line: DraftLine
+  line: CountLine
 ): 'positive' | 'negative' | null => {
   const counted = line.countedNumberOfPacks;
   if (counted == null) return null;
@@ -160,6 +162,11 @@ const adjustmentDirection = (
   if (delta < 0) return 'negative';
   return null;
 };
+
+// How long a count's typing must pause before its difference and
+// awaiting-a-reason marking catch up (see typingCount) — the app's usual
+// keystroke debounce.
+const COUNT_SETTLE_MS = 500;
 
 // How many lines/stock lines to pull for one item (a single item never has many
 // batches — one page covers it).
@@ -517,6 +524,33 @@ const StocktakeLineEditContent = (
         }
   );
 
+  // While a count is being TYPED, its line's difference and awaiting-a-reason
+  // state hold what they showed before the burst (OMS-REG-INV-03.90): "9" on
+  // the way to "900" would otherwise flash "891 short", an amber row and a
+  // footer count for one keystroke. They catch up once typing pauses, or at
+  // Save. Only the presentation lags — the draft, the reason picker's
+  // direction and what Save sends all follow every keystroke.
+  const [typingCount, setTypingCount] = createSignal<{
+    id: string;
+    shown: number | null;
+  }>();
+  const settleCount = createDebounced(
+    () => setTypingCount(undefined),
+    COUNT_SETTLE_MS
+  );
+  // The count a line's difference and marking are drawn from.
+  const shownCount = (
+    line: DraftLine
+  ): CountLine & { reasonOption: DraftLine['reasonOption'] } => {
+    const typing = typingCount();
+    return {
+      snapshotNumberOfPacks: line.snapshotNumberOfPacks,
+      countedNumberOfPacks:
+        typing?.id === line.id ? typing.shown : line.countedNumberOfPacks,
+      reasonOption: line.reasonOption,
+    };
+  };
+
   // A batch AWAITING A REASON (OMS-REG-INV-03.86): counted off its snapshot in
   // a direction that demands one and holding none — or refused by the last
   // save for exactly that, which covers any gap in the mirror above. A
@@ -525,7 +559,7 @@ const StocktakeLineEditContent = (
   // gates on it.
   const lineAwaitingReason = (line: DraftLine): boolean =>
     line.countThisLine &&
-    (awaitingReason(line, reasonRequirement()) ||
+    (awaitingReason(shownCount(line), reasonRequirement()) ||
       (lineErrors().get(line.id) === 'AdjustmentReasonNotProvided' &&
         !line.reasonOption &&
         !!lineDifference(line)));
@@ -544,7 +578,7 @@ const StocktakeLineEditContent = (
   // uncounted. It justifies the reason being asked for and catches a mis-keyed
   // count. Withheld under blind stocktake, with the snapshot it would reveal.
   const differenceText = (line: DraftLine): string | undefined => {
-    const difference = lineDifference(line);
+    const difference = lineDifference(shownCount(line));
     if (hideSnapshotStock() || !line.countThisLine || !difference)
       return undefined;
     // Plural keys, like the reason warning below, so a locale can word the
@@ -560,7 +594,7 @@ const StocktakeLineEditContent = (
   // the packs it explains ("Choose a reason for the 3 missing packs").
   const reasonWarning = (line: DraftLine): string | undefined => {
     if (!lineAwaitingReason(line)) return undefined;
-    const difference = lineDifference(line) ?? 0;
+    const difference = lineDifference(shownCount(line)) ?? 0;
     // Plural form chosen on the size as shown, so a 1.0000001 reads "the
     // missing pack", not "the 1 missing packs".
     return tPlural(
@@ -743,6 +777,13 @@ const StocktakeLineEditContent = (
   // clear it so a stale, wrong-direction reason can't survive unseen (the
   // server would reject it as AdjustmentReasonNotValid anyway).
   const setCounted = (line: DraftLine, value: number | null) => {
+    // Hold this line's shown count at its pre-burst value until typing pauses
+    // (typingCount). A burst on another line settles that one first.
+    if (typingCount()?.id !== line.id) {
+      settleCount.flush();
+      setTypingCount({ id: line.id, shown: line.countedNumberOfPacks });
+    }
+    settleCount();
     update(line.id, 'countedNumberOfPacks', value);
     const direction = adjustmentDirection({
       ...line,
@@ -960,6 +1001,8 @@ const StocktakeLineEditContent = (
   // the committed lines). The awaiting-a-reason marking never gates this call:
   // a missing reason reaches the server and comes back as its rejection.
   const save = async (): Promise<boolean> => {
+    // A count typed right up to Save shows its final difference and marking.
+    settleCount.flush();
     setSaving(true);
     const outcome = await runBatchStocktakeLines(props.storeId, buildBatch());
     setSaving(false);
@@ -1168,6 +1211,9 @@ const StocktakeLineEditContent = (
             disabled={!line.countThisLine}
             value={line.countedNumberOfPacks ?? undefined}
             helperText={differenceText(line)}
+            // Leaving the field ends the typing burst: its difference and
+            // marking catch up at once rather than after the pause.
+            onFocusOut={() => settleCount.flush()}
             error={
               lineErrors().get(line.id) === 'StockLineReducedBelowZero'
                 ? t('error.reduced-below-zero')
@@ -1355,16 +1401,17 @@ const StocktakeLineEditContent = (
               // snapshot. A level batch takes no reason at all (rules.md
               // §reason rules — "a zero adjustment never requires a reason"),
               // and an uncounted line has no direction yet, so the field is
-              // withdrawn rather than shown inert. It reappears the moment the
-              // count moves off the snapshot, because the predicate reads the
-              // draft store.
+              // withdrawn rather than shown inert. It reappears once the count
+              // moves off the snapshot and typing pauses (shownCount), so it
+              // doesn't pop in and out on the way to a multi-digit count.
               //
               // Card-only. TABLE view keeps the column on every row (below:
               // `disabled` when there is no direction) — a column is a
               // property of the grid there, and blanking one row's cell is
               // what keeps the rows aligned.
               hideOnCardWhen: (line: DraftLine) =>
-                !line.countThisLine || adjustmentDirection(line) === null,
+                !line.countThisLine ||
+                adjustmentDirection(shownCount(line)) === null,
             },
             cell: info => {
               const line = info.row.original;
