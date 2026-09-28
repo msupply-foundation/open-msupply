@@ -456,7 +456,7 @@ The Settings popover also carries a bold **"Settings"** heading and a leading ic
 | Inbound shipment  | 21-column line table               | **`full`** (`100vw - 4rem`; 90rem ceiling since #617) |
 | Outbound shipment | 20-column line table               | **`full`**                                            |
 | Stocktake         | 20-column line table               | **`full`**                                            |
-| Internal order    | context charts, a 64rem region     | ~~`full`~~ → **78rem card** (#617)                    |
+| Internal order    | context charts, a 64rem region     | ~~`full`~~ → **`wide` card** (80rem, #617)            |
 | Requisition       | 3-column figure grid, ~50rem basis | **`full`** (a card was tried and reverted, #617)      |
 | Prescription      | fits a card — takes `full` anyway  | **`full`**                                            |
 
@@ -507,14 +507,14 @@ Note the columns are only reachable via the card ⇄ table toggle (#886); the th
 
 **Per-editor: cap the columns.** Both named editors cap their COLUMNS and centre the group, and both put their statistics/consumption columns on the same recessed inset panel their edits column already used — the background the issue asked for, so the two halves read as two groups:
 
-| Editor         | Columns                                     | Group width                                               |
-| -------------- | ------------------------------------------- | --------------------------------------------------------- |
-| Internal order | 22rem stats · 22rem movements · 28rem edits | 75rem — the 1200px the React client capped this editor at |
-| Requisition    | 26rem × 2 or 3                              | 81rem at three columns                                    |
+| Editor         | Columns                                     | Group width                                                     |
+| -------------- | ------------------------------------------- | --------------------------------------------------------------- |
+| Internal order | 22rem stats · 22rem movements · 28rem edits | 76rem — about the 1200px the React client capped this editor at |
+| Requisition    | 26rem × 2 or 3                              | 82rem at three columns                                          |
 
 22rem is not invented either: it is `FormColumn`'s `--form-column-min`, the house form-column width. The requisition's captions (default pack size, doses per unit) move **inside** the first column's panel under a hairline, which is the answer to "what is it doing?"; its extra-fields consumption column gains a panel so all three columns read alike. The internal-order movements panel's highlighted **Suggested** row retints one step up the group scale (`--bg-group-main`) — it used to take the inset panel's own fill, which stops being a highlight once the column has that fill.
 
-**Sized cards: kept for the internal order, reverted for the requisition.** With the columns capped, each editor had a measurable content width (75rem and 81rem), so each can take a `size="large"` card sized to it (`widthRem` 78 / 84) instead of the sheet — no empty frame on a big monitor. What decides it is HEIGHT: **a card stops at 80vh**, 54–81px short of the sheet's `100vh - 4rem` on a landscape tablet. An A/B against the editors as they were before #617, on emulated tablets (2026-09-24), split the two:
+**Sized cards: kept for the internal order, reverted for the requisition.** With the columns capped, each editor had a measurable content width (76rem and 82rem), so each can take a `size="large"` card sized to it with a `width` measure instead of the sheet — the internal order's is `wide` (80rem) — no empty frame on a big monitor. What decides it is HEIGHT: **a card stops at 80vh**, 54–81px short of the sheet's `100vh - 4rem` on a landscape tablet. An A/B against the editors as they were before #617, on emulated tablets (2026-09-24), split the two:
 
 - **Requisition — reverted to `full`.** At 1280×800 and on an iPad Pro 11 its My store / Customer stats tabs dropped below the fold, where the pre-#617 sheet shows them.
 - **Internal order — kept as a card.** Its content is short: on every emulated tablet it measured the same as before #617. The cost is with a deployment's plugin panel below the form (CIV's six-column table): the editor scrolls sooner than the sheet would — ~116px less in view at 1512×900, ~103px on an iPad in landscape. The pre-#617 sheet scrolls there too, so it is more scrolling rather than new scrolling.
@@ -527,7 +527,7 @@ So one line editor is a card and five are sheets. #771 put the prescription edit
 
 **It went through 115rem first, and that is worth keeping on the record.** 115rem (1840px) was measured against the widest content any `full` modal holds — the outbound line table, **1766px natural width** at 14 columns — so that no table view would lose a column it showed on a big monitor. It did that, but it left the **card view** (the default, and what people actually see) spread thin: three batch cards 1840px wide, their seven fields a long way apart. The trade taken: the table view now scrolls sideways inside the sheet on every screen. It already did on every laptop (it overflows at 1680, 1512, 1400, 1280 …), so this is no new behaviour — just no longer an exception for large monitors. The #771 entry above argues against narrowing a sheet to a CARD width (~900px), where columns vanish outright; 1440px is not that.
 
-**So the width rule lives in one place, with one knowing exception.** The sheet's ceiling bounds every line editor that takes the sheet, and a modal whose own content is narrower can ask for a card with `size="large"` + `widthRem` — minding that a card also caps HEIGHT, which is what kept the requisition a sheet and let the internal order be a card. The question the #771 entry asks — _does this modal hold something that genuinely needs the space?_ — is unchanged.
+**So the width rule lives in one place, with one knowing exception.** The sheet's ceiling bounds every line editor that takes the sheet, and a modal whose own content is narrower can ask for a card with `size="large"` + a `width` measure (`widthRem` for a bespoke width) — minding that a card also caps HEIGHT, which is what kept the requisition a sheet and let the internal order be a card. The question the #771 entry asks — _does this modal hold something that genuinely needs the space?_ — is unchanged.
 
 **On the library's own primitives (#896 review).** The widths are tokens, not copies: the sheet's ceiling is `--measure-sheet`, a statistics column is capped at `--measure-form-column` (FormColumn's default basis too), and the internal-order card is `--measure-wide` — `size="large"` now takes a `width` measure — rather than a rem number summed from the column caps, gaps and body padding. The column rows are `HStack` (`wrap`, centred, `gap="lg"`) and the requisition's columns `Stack`, instead of hand-rolled flex rules. `InsetPanel` gained a `head` slot (the requisition's pack-size captions, above the panel's own divider) and a `gap` prop in the Stack presets, so no section CSS resets a panel's internals.
 

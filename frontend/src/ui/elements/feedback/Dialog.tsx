@@ -165,9 +165,9 @@ export interface DialogProps {
    * tall space once content passes the ceiling, and both go full-screen below
    * the narrow-viewport line like a `width` measure. They differ in how far
    * they may GROW:
-   *  - `'large'` — a centred CARD: 56rem wide by default (`widthRem` for a
-   *    wider table, or for content whose width can be measured — the
-   *    internal-order line editor's capped panels take 78rem), ceiling ~80vh
+   *  - `'large'` — a centred CARD: 56rem wide by default, or a `width`
+   *    measure (the internal-order line editor takes `wide`), or `widthRem`
+   *    for a bespoke width such as a wider table; ceiling ~80vh
    *    so the scrim still frames it top and bottom. Mind that height cap when
    *    picking a card over the sheet: tall content scrolls sooner (the
    *    requisition editor tried a card and lost its stats tabs below the fold
