@@ -156,6 +156,15 @@ export interface DialogProps {
    */
   minBodyHeightRem?: number;
   /**
+   * Minimum height of the DIALOG, in rem — for a multi-step flow whose content
+   * shrinks between steps (an import's review → progress → refused rows), so
+   * the box, and with it the centred footer, holds still under the pointer.
+   * At the workbench sizes it raises their 60vh floor, never past the ceiling.
+   * minBodyHeightRem can't do this there: a workbench body fills the dialog
+   * and drops its own floor.
+   */
+  minHeightRem?: number;
+  /**
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
    * by widthRem + the viewport cap). The two WORKBENCH sizes are for
    * content-heavy modals like the line-edit table. Both start at a ~60vh FLOOR
@@ -622,6 +631,9 @@ export const Dialog = (props: DialogProps) => {
         ...(props.minBodyHeightRem
           ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
           : {}),
+        ...(props.minHeightRem
+          ? { '--dialog-min-height': `${props.minHeightRem}rem` }
+          : {}),
       }}
       // A string title labels via aria-labelledby (the <h2 id={titleId}>); a
       // component title has no label text, so fall back to the caller's
@@ -637,6 +649,27 @@ export const Dialog = (props: DialogProps) => {
       // dialog swallows it here, so the element never closes underneath the
       // parent's `open` state.
       onCancel={event => props.dismissable === false && event.preventDefault()}
+      // A focused control that is disabled or removed while the dialog is
+      // open — a confirm turning into its busy spinner, a Cancel hidden for
+      // the length of a run — drops focus to <body>, OUTSIDE the dialog. Keys
+      // then skip every handler here: Escape reaches the app's navigate-up
+      // rung (keyboardDispatcher) and leaves the screen, dialog and all. Put
+      // focus back on the panel, where showModal() parks it on open. Both
+      // drops arrive with no relatedTarget; so does the window losing focus,
+      // but that leaves activeElement in place, which the check below skips.
+      onFocusOut={event => {
+        if (event.relatedTarget !== null) return;
+        queueMicrotask(() => {
+          // The element's own state: the effect above closes it the moment
+          // `open` turns false, so this also covers a dialog being dismissed.
+          if (!dialog.open) return;
+          const active = document.activeElement;
+          if (active !== null && active !== document.body) return;
+          dialog
+            .querySelector<HTMLElement>(`:scope > .${styles.body ?? ''}`)
+            ?.focus({ preventScroll: true });
+        });
+      }}
       // A modal dialog is an event boundary for Escape: the dialog renders in
       // place (not portaled), so the keydown would bubble on into ancestor
       // key handlers — e.g. Kobalte's accordion root, whose Escape clears the

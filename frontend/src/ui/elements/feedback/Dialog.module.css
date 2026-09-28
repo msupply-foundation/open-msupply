@@ -7,11 +7,17 @@
  */
 
 .dialog {
-  /* Defaults for the caller-overridable custom properties (widthRem / minBodyHeightRem).
-     Declared HERE (not on .body) so an inline override on the <dialog> inherits down to
-     .body — a default on .body would shadow the inherited value. */
+  /* Defaults for the caller-overridable custom properties (widthRem / minBodyHeightRem /
+     minHeightRem). Declared HERE (not on .body) so an inline override on the <dialog>
+     inherits down to .body — a default on .body would shadow the inherited value.
+     --dialog-min-height carries a unit: it is read inside .large's max(), where a bare 0
+     beside a length makes the whole declaration invalid. */
   --dialog-width: 30rem;
   --dialog-min-body-height: 0;
+  --dialog-min-height: 0px;
+
+  /* The dialog's own floor (minHeightRem); 0 unless a caller sets one. */
+  min-block-size: var(--dialog-min-height);
 
   /* Fixed width (steady box), clamped down to the viewport on narrow screens. */
   width: min(var(--dialog-width), calc(100vw - 2rem));
@@ -68,10 +74,11 @@
    short content makes a short modal, and past the cap the body flex column (already
    bounded) lets a flex-1 child (a DataTable) fill the tall space and scroll internally.
    A card keeps the 80vh ceiling so the scrim still frames it top and bottom; `full`
-   below raises it, since a sheet has no frame to preserve. */
+   below raises it, since a sheet has no frame to preserve.
+   A caller's minHeightRem raises the 60vh floor (never past the ceiling). */
 .large {
   width: min(var(--dialog-width), calc(100vw - 4rem));
-  min-block-size: 60vh;
+  min-block-size: max(60vh, var(--dialog-min-height));
   max-block-size: 80vh;
 }
 
