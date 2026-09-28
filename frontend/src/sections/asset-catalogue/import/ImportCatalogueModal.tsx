@@ -1,17 +1,26 @@
-import { createResource, createSignal, Match, Show, Switch } from 'solid-js';
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  Match,
+  Show,
+  Switch,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { t, tPlural } from '@/intl';
-import { graphqlFetch } from '@/api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { generateUUID } from '@/uuid';
 import { saveBlob } from '@/platform/openDocument';
-import { parseCsv, readCsvFile } from '@/domain/reportFiles';
+import { parseCsv, readCsvFile, sniffSeparator } from '@/domain/reportFiles';
 import { CSV_ACCEPT, isCsvFileName } from '@/domain/csvImport';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { UploadZone } from '@/ui/elements/inputs/UploadZone';
+import { TextField } from '@/ui/elements/inputs/TextField';
+import { Text } from '@/ui/elements/typography/Text';
 import { ProgressList, type ProgressStep } from '@/ui/sync/ProgressList';
 import {
   DataTable,
@@ -19,7 +28,7 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import { sortRows } from '@/list/sortRows';
-import { ArrowRightIcon, ExportIcon, ImportIcon } from '@/ui/icons';
+import { ExportIcon, ImportIcon } from '@/ui/icons';
 import { AssetCategories, AssetTypes } from '../catalogue/catalogue.generated';
 import {
   AssetClasses,
@@ -30,6 +39,7 @@ import {
   canStartImport,
   errorMessage,
   importFilename,
+  importRowText,
   insertRefusal,
   parseCatalogueRows,
   rowsCsv,
@@ -39,9 +49,10 @@ import {
   type CatalogueLookups,
   type ImportRow,
   type ParsedFile,
+  type RefusedRow,
   type RunProgress,
 } from './catalogueImport';
-import { refusalReason } from '../refusals';
+import { outcomeOf } from '../refusals';
 
 // The catalogue import (spec/asset-catalogue S2 · rules § bulk import):
 // upload → review → import. The upload checks block a file with any failing
@@ -82,16 +93,13 @@ export const ImportCatalogueModal: Component<
   const [progress, setProgress] = createSignal<RunProgress>();
   const [saveError, setSaveError] = createSignal<string>();
   const [sort, setSort] = createSignal<SortState<ReviewKey>>();
-  // The dialog's height when OK & next was pressed, held (in rem) through the
-  // run and its outcome. Without it the sheet drops to its floor while the run
-  // shows only progress, then to the refused rows' height, and the footer moves
-  // under the pointer: the second click of a double-click lands on the scrim
-  // and dismisses the outcome unseen. Released by Upload a new one.
-  const [heldHeightRem, setHeldHeightRem] = createSignal<number>();
+  const [search, setSearch] = createSignal('');
 
   // What a file's names resolve against — fetched once, when the modal opens.
-  const [lookups] = createResource(
-    async (): Promise<CatalogueLookups | undefined> => {
+  // `null` when any read failed, so the modal can say so and offer a retry
+  // rather than leave the upload zone disabled with no word.
+  const [lookups, { refetch: retryLookups }] = createResource(
+    async (): Promise<CatalogueLookups | null> => {
       const [classes, categories, types, properties] = await Promise.all([
         graphqlFetch(AssetClasses, {}),
         graphqlFetch(AssetCategories, {}),
@@ -104,7 +112,7 @@ export const ImportCatalogueModal: Component<
         types.kind !== 'success' ||
         properties.kind !== 'success'
       )
-        return undefined;
+        return null;
       return {
         classes: classes.data.assetClasses.nodes,
         categories: categories.data.assetCategories.nodes,
@@ -113,7 +121,8 @@ export const ImportCatalogueModal: Component<
       };
     }
   );
-  const ready = () => gated(lookups);
+  const ready = () => gated(lookups) ?? undefined;
+  const lookupsFailed = () => gated(lookups) === null;
 
   const running = () => step() === 'import';
   const uploadFailed = () =>
@@ -128,9 +137,14 @@ export const ImportCatalogueModal: Component<
         row,
         message: errorMessage(row.errors),
       }));
+    const needle = search().trim().toLowerCase();
+    const matched = needle
+      ? rows.filter(r => importRowText(r.row, r.message).includes(needle))
+      : rows;
     const s = sort();
-    return s ? sortRows(rows, s, (r, key) => reviewValue(r, key)) : rows;
+    return s ? sortRows(matched, s, (r, key) => reviewValue(r, key)) : matched;
   };
+  const visibleRows = createMemo(reviewRows);
 
   const download = async (csv: string, name: string) => {
     setSaveError(undefined);
@@ -152,10 +166,17 @@ export const ImportCatalogueModal: Component<
 
   const exportRows = () => {
     const header = file()?.header ?? [];
+    // Every row under review, whatever the search shows.
+    const rows =
+      refused() ??
+      (file()?.rows ?? []).map(row => ({
+        row,
+        message: errorMessage(row.errors),
+      }));
     void download(
       rowsCsv(
         header,
-        reviewRows().map(r => ({ cells: r.row.cells, message: r.message }))
+        rows.map(r => ({ cells: r.row.cells, message: r.message }))
       ),
       t('filename.failed-import-rows')
     );
@@ -173,8 +194,12 @@ export const ImportCatalogueModal: Component<
       return;
     }
     setInvalidFile(false);
-    const table = parseCsv(await readCsvFile(picked));
-    setFile(parseCatalogueRows(table, known));
+    setSearch('');
+    const text = await readCsvFile(picked);
+    const separator = sniffSeparator(text);
+    setFile(
+      parseCatalogueRows(parseCsv(text, separator), known, separator === ';')
+    );
     setStep('review');
   };
 
@@ -183,10 +208,14 @@ export const ImportCatalogueModal: Component<
     setFile(undefined);
     setRefused(undefined);
     setInvalidFile(false);
-    setHeldHeightRem(undefined);
+    setSearch('');
     setStep('upload');
   };
 
+  // A Forbidden mid-run (a permission revoked since the modal opened) goes to
+  // the permission-denied modal, once, as every other Forbidden does — the
+  // rows it refused say so rather than carry the raw server text.
+  let forbidden: string[] | undefined;
   const insertOne = async (row: ImportRow): Promise<string | undefined> => {
     const result = await graphqlFetch(
       InsertAssetCatalogueItem,
@@ -197,19 +226,34 @@ export const ImportCatalogueModal: Component<
       return insertRefusal(
         result.data.centralServer.assetCatalogue.insertAssetCatalogueItem
       );
-    if (result.kind === 'graphqlError') return refusalReason(result.errors);
-    return t('messages.unknown-error');
+    const outcome = outcomeOf(result);
+    switch (outcome.kind) {
+      case 'refused':
+        return outcome.reason;
+      case 'forbidden':
+        forbidden = outcome.permissions;
+        return t('error.permission-denied');
+      default:
+        return t('messages.unknown-error');
+    }
   };
 
-  const startImport = async (from: Element) => {
+  const startImport = async () => {
     const parsed = file();
     if (!parsed || !canStartImport(parsed.rows) || running()) return;
-    const height = from.closest('dialog')?.getBoundingClientRect().height;
-    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    if (height && rem) setHeldHeightRem(height / rem);
     setStep('import');
     setProgress({ sent: 0, total: parsed.rows.length, refused: 0 });
-    const failures = await runImport(parsed.rows, insertOne, setProgress);
+    forbidden = undefined;
+    let failures: RefusedRow[];
+    try {
+      failures = await runImport(parsed.rows, insertOne, setProgress);
+    } catch {
+      // Unexpected (and already reported globally): back to the review, so
+      // the dialog is never left spinning with no way out.
+      setStep('review');
+      return;
+    }
+    if (forbidden) reportPermissionDenied(forbidden);
     if (failures.length < parsed.rows.length) props.onImported();
     if (failures.length === 0) {
       props.onClose();
@@ -267,8 +311,11 @@ export const ImportCatalogueModal: Component<
   return (
     <Dialog
       open
-      size="full"
-      minHeightRem={heldHeightRem()}
+      // The widest content measure, as the sibling imports (ui-surface S2).
+      width="wide"
+      // From OK & next through the refused rows, the box holds its height, so
+      // the footer can't move under a second click (CAT-20260925-F3).
+      holdHeight={running() || refused() !== undefined}
       onClose={props.onClose}
       dismissable={!running()}
       icon={<ImportIcon />}
@@ -294,7 +341,6 @@ export const ImportCatalogueModal: Component<
             {t('button.export')}
           </Button>
           <Button
-            icon={<ArrowRightIcon />}
             confirms="plain"
             data-testid="dialog-button-next-and-ok"
             loading={running()}
@@ -303,7 +349,7 @@ export const ImportCatalogueModal: Component<
               refused() !== undefined ||
               !canStartImport(file()?.rows ?? [])
             }
-            onClick={event => void startImport(event.currentTarget)}
+            onClick={() => void startImport()}
           >
             {t('button.ok-and-next')}
           </Button>
@@ -328,6 +374,19 @@ export const ImportCatalogueModal: Component<
           </Alert>
         </Match>
       </Switch>
+      <Show when={lookupsFailed()}>
+        <Alert severity="error" testId="import-lookups-error">
+          {t('error.unable-to-load-data')}{' '}
+          <Button
+            variant="ghost"
+            size="small"
+            data-testid="import-lookups-retry"
+            onClick={() => void retryLookups()}
+          >
+            {t('button.retry')}
+          </Button>
+        </Alert>
+      </Show>
       <Show when={saveError()}>
         {message => (
           <Alert severity="error">
@@ -352,7 +411,7 @@ export const ImportCatalogueModal: Component<
               setInvalidFile(true);
             }}
           />
-          <p>
+          <Text>
             {t('messages.template-download-text')}
             <Button
               variant="ghost"
@@ -363,12 +422,12 @@ export const ImportCatalogueModal: Component<
             >
               {t('heading.download-example')}
             </Button>
-          </p>
+          </Text>
         </Match>
         <Match when={step() === 'review'}>
           {/* The step indicator is not navigable, so returning to Upload —
               to fix a blocked file, or re-upload corrected refused rows — is
-              this action (BUILD_REPORT › refinements). */}
+              this action (BUILD_REPORT › Decisions the spec should take). */}
           <Button
             variant="ghost"
             size="small"
@@ -379,18 +438,27 @@ export const ImportCatalogueModal: Component<
           </Button>
           <DataTable
             columns={columns()}
-            rows={reviewRows()}
+            rows={visibleRows()}
             rowKey={r => r.id}
             sort={sort()}
             onSort={(key, desc) => setSort({ key, desc })}
+            filters={
+              <TextField
+                label={t('label.search')}
+                width="short"
+                data-testid="import-review-search"
+                value={search()}
+                onInput={e => setSearch(e.currentTarget.value)}
+              />
+            }
           />
         </Match>
         <Match when={step() === 'import'}>
-          <p data-testid="import-refused-count">
+          <Text data-testid="import-refused-count">
             <Show when={(progress()?.refused ?? 0) > 0}>
               {tPlural('messages.error-generic', progress()?.refused ?? 0)}
             </Show>
-          </p>
+          </Text>
         </Match>
       </Switch>
     </Dialog>

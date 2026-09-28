@@ -5,7 +5,10 @@ import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import { CancelButton, OkButton } from '@/ui/elements/buttons/StandardButtons';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '@/ui/elements/buttons/StandardButtons';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { Checkbox } from '@/ui/elements/inputs/Checkbox';
 import { Select } from '@/ui/elements/selectors/Select';
@@ -93,8 +96,8 @@ export const CreateLogReasonModal: Component<
               onClick={props.onClose}
             />
           </Show>
-          <OkButton
-            data-testid="dialog-button-ok"
+          <DialogSaveButton
+            data-testid="dialog-button-save"
             disabled={isReasonMissing(draft())}
             loading={saving()}
             onClick={() => void create()}

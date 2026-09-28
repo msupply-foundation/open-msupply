@@ -165,8 +165,6 @@ export interface DialogProps {
    * never passes the viewport cap. Released when it turns false.
    */
   holdHeight?: boolean;
-  /** @deprecated superseded by holdHeight; removed once its one caller moves. */
-  minHeightRem?: number;
   /**
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
    * by widthRem + the viewport cap). The two WORKBENCH sizes are for
@@ -647,9 +645,6 @@ export const Dialog = (props: DialogProps) => {
           : {}),
         ...(heldHeight() !== undefined
           ? { '--dialog-held-height': `${heldHeight()}px` }
-          : {}),
-        ...(props.minHeightRem
-          ? { '--dialog-min-height': `${props.minHeightRem}rem` }
           : {}),
       }}
       // A string title labels via aria-labelledby (the <h2 id={titleId}>); a

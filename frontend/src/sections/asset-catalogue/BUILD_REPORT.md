@@ -50,26 +50,25 @@ The anchors are the behaviours in `spec/asset-catalogue/cases/` (`OMS-REG-CAT-01
 
 - **Found by the e2e suite and fixed: a non-CSV file was silently ignored.** The import handed the upload zone `accept=".csv"`, so a `.txt` arrived as a rejection and never reached the invalid-file handling; the modal did nothing where the current app says _Invalid file_ (`OMS-REG-CAT-02.21`). The modal now handles the zone's rejection the same way.
 
-- **Found by the exploratory run and fixed: a running import could be left, and its refused rows lost** (`CAT-20260925-F3`, `OMS-REG-CAT-02.35`). Two causes, both fixed in the shared `Dialog`:
-  - **Escape.** Pressing OK & next turns it into a disabled spinner and withdraws Cancel, so the focused control drops focus to `<body>`, outside the dialog. Escape then skipped the dialog and reached the app's navigate-up rung, leaving the list with the dialog in it. `Dialog` now re-parks focus on its panel whenever a focused control inside it is disabled or removed — every dialog with a busy confirm had the same leak.
-  - **A double-click.** The `full` sheet shrank to its 60vh floor for the run and to the refused rows after it, so the second click landed on the scrim once the run was over. The modal now holds its height from OK & next until the file is replaced, through a new opt-in `Dialog` prop, `minHeightRem` (the dialog's own floor; `minBodyHeightRem` cannot do it at the workbench sizes, whose body fills the dialog).
-    Guarded by two e2e tests; the Escape one runs on this FE only, since the current app has the defect too.
+- **Found by the exploratory run and fixed: a running import could be left, and its refused rows lost** (`CAT-20260925-F3`, `OMS-REG-CAT-02.35`). Two causes:
+  - **Escape.** Pressing OK & next turns it into a disabled spinner and withdraws Cancel, so the focused control drops focus to `<body>`, outside the dialog. Escape then skipped the dialog and reached the app's navigate-up rung, leaving the list with the dialog in it. Fixed twice over, in shared code: the Escape ladder (`keyboard/globalActions.ts`) stops at an open `dialog:modal`, whatever the browser or however focus moved; and `Dialog` re-parks focus on its panel when a focused control inside it is disabled, so Escape and Tab keep working in the dialog after a busy state.
+  - **A double-click.** The dialog shrank for the run and again to the refused rows, so the second click landed on the scrim once the run was over. `Dialog`'s new `holdHeight` flag keeps the box at the height it had when the hold began (Dialog measures itself, clamped to the viewport cap); the import holds it from OK & next through the refused rows.
+  - Guarded by two e2e tests; the Escape one runs on this FE only, since the current app has the defect too.
 
 - **Nothing-to-export notice (`OMS-REG-CAT-02.19`, pending in its case).** The spec says an export with nothing in it _says so_. The shared `ListExportAction` reverts silently when its CSV builder returns nothing, and changing that reaches every list's export. Built as the shared control behaves; needs either a library change (an empty-state flash on `ListExportAction`) or the spec sentence relaxed.
 - **No row count on the log-reasons list (S3, `OMS-REG-CAT-03.14`).** `DataTable` reads the toolbar count from `pagination.total`, so an unpaginated table shows none. Needs a library `count` input, or the S3 sentence relaxed.
 - **The step indicator is not navigable (S2).** `ProgressList` has no click, so "Upload is always reachable" is built as an **Upload a new one** action (`button.upload-a-new-one`) above the review table, in every review state — needed both to fix a blocked file and to re-upload corrected refused rows.
-- **The review table sorts in place but has no filter bar (S2).** The spec says "sortable and filterable in place"; there is no local filter bar for an in-memory table.
 - **Off-central and cross-vertical anchors need the e2e rig.** the off-central behaviours need a server that is not central; `03.23`–`03.25` need the equipment screens.
 - **The filter chip's menu stays open after a pick** — the shared `FilterSelect`; stocktakes behaves the same. Not this vertical's.
 
 ## Decisions the spec should take (candidate refinements)
 
 - **The partial-delete outcome's heading** reads _Can't do that!_ (`heading.cannot-do-that`, the phase-tracking title of `kdd/action-modal`) though some records were deleted. The spec names the banner's content, not the heading.
-- **Two new strings, no reference key** (the reference reports no refusal at all): `error.asset-catalogue-item-in-use` — _Equipment uses this catalogue item, so it cannot be deleted._ — and `messages.error-deleting-assets` (_{{count}} asset(s) could not be deleted_, after `messages.error-deleting-reasons`). Added to `en` only.
+- **New strings, no reference key** (the reference reports no refusal at all): the refusals translate through the house `server-error.<Variant>` keys (`rejectionFrom`) — `server-error.AssetCatalogueItemInUse`, `-AssetCatalogueItemDoesNotExist`, `-ReasonDoesNotExist`, `-AssetLogReasonAlreadyExists`, and `-NotACentralServer` for the central-server wrapper's plain-sentence refusal — and `messages.error-deleting-assets` (_{{count}} asset(s) could not be deleted_, after `messages.error-deleting-reasons`). Added to `en` only.
 - **A blank manufacturer is sent as none**, so it never joins the manufacturer/model/type check (rules § identity). The reference sends an empty string, which does join it.
 - **A bad property value is still reported once per definition of its key**, as the README captures. De-duplicating is one line in `readProperty`; worth a ruling.
-- **The Comments required column's help text** rides the header's `title` attribute — `DataTable` has no column-description slot (the reference shows it in the column menu).
-- **The number cells use the shared import reader** (`parseImportNumber`), so `12,5` reads as 12.5 where the reference's `Number()` refuses it.
+- **The Comments required column's help text** is declared as the column's `meta.description`; the header tooltip that renders it is the table's own follow-up (`columnTypes.ts`).
+- **The number cells use the shared import reader** (`parseImportNumber`), with the comma as the decimal separator in a `;`-separated file as the sibling imports read it, so `12,5` reads as 12.5 where the reference's `Number()` refuses it (`CAT-20260925-F4`, for a ruling).
 - **`spec/PROGRESS.md`'s Build cell is ticked here.** A build never edits `spec/`, but `check-progress.mjs` (in `pnpm check`) requires the tick in the change that adds the section; the row is a tracker, not behaviour.
 
 ## Follow-ups

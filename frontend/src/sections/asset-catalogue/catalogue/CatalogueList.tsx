@@ -18,6 +18,7 @@ import {
 } from '@/ui/elements/table/DataTable';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { createTableConfig } from '@/api/createTableConfig';
+import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 import { CloseIcon, EditIcon, ImportIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
 import {
@@ -35,6 +36,7 @@ import {
   type AssetCatalogueItemsVariables,
 } from './catalogue.generated';
 import { catalogueFilters, type CatalogueFilter } from './catalogueFilters';
+import { nextSelection, type CatalogueSelection } from './selection';
 import type { CatalogueRow } from './catalogueToCsv';
 import { ExportCatalogueAction } from './actions/ExportCatalogueAction';
 import { ImportCatalogueModal } from '../import/ImportCatalogueModal';
@@ -73,7 +75,13 @@ const CatalogueList: Component = () => {
     ...DEFAULT_STATE,
     first: initialPageSize(),
   });
-  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // The selection carries each item's code beside its id, across pages
+  // (./selection.ts), so a delete covers every page's selection.
+  const [selection, setSelection] = createSignal<CatalogueSelection[]>([]);
+  const selectedIds = createMemo(() => selection().map(s => s.id));
+  const onSelectionChange = (ids: string[]) =>
+    setSelection(nextSelection(ids, selection(), rows()));
+  const clearSelection = () => setSelection([]);
   const [importOpen, setImportOpen] = createSignal(false);
 
   const tableConfig = createTableConfig({
@@ -135,21 +143,18 @@ const CatalogueList: Component = () => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
   const onFilterChange = (filter: CatalogueFilter) => {
     setQuery({ ...query(), filter, offset: 0 });
-    setSelectedIds([]);
+    clearSelection();
   };
 
   const openImport = () => {
     if (guardWrite(CATALOGUE_WRITE)) setImportOpen(true);
   };
 
-  const selectedRows = () =>
-    rows().filter(row => selectedIds().includes(row.id));
-
-  const deleteOne = async (row: CatalogueRow) =>
+  const deleteOne = async (item: CatalogueSelection) =>
     outcomeOf(
       await graphqlFetch(
         DeleteAssetCatalogueItem,
-        { id: row.id },
+        { id: item.id },
         { returnGraphqlErrors: true }
       )
     );
@@ -164,7 +169,7 @@ const CatalogueList: Component = () => {
       c: { key: 'code' },
       sortKey: 'code',
       header: () => t('label.code'),
-      meta: { headerPosition: 'primary' },
+      ...getCellDefinition('code', { headerPosition: 'primary' }),
     },
     {
       c: { accessor: row => row.assetType?.name ?? '', id: 'typeId' },
@@ -174,6 +179,7 @@ const CatalogueList: Component = () => {
       c: { accessor: row => row.manufacturer ?? '', id: 'manufacturer' },
       sortKey: 'manufacturer',
       header: () => t('label.manufacturer'),
+      ...getCellDefinition('manufacturer'),
     },
     {
       c: { key: 'model' },
@@ -233,10 +239,10 @@ const CatalogueList: Component = () => {
               {selectedIds().length} {t('label.selected')}
             </strong>
             <DeleteSelectedAction
-              selected={selectedRows}
+              selected={selection}
               guard={() => guardWrite(CATALOGUE_WRITE)}
               deleteOne={deleteOne}
-              nameOf={row => row.code}
+              nameOf={item => item.code}
               confirmMessage={count =>
                 tPlural('messages.confirm-delete-assets', count)
               }
@@ -247,13 +253,13 @@ const CatalogueList: Component = () => {
                 tPlural('messages.error-deleting-assets', count)
               }
               onChanged={() => void refetch()}
-              onDone={() => setSelectedIds([])}
+              onDone={clearSelection}
             />
             <ContentFooterActions>
               <Button
                 variant="secondary"
                 icon={<CloseIcon />}
-                onClick={() => setSelectedIds([])}
+                onClick={clearSelection}
               >
                 {t('label.clear-selection')}
               </Button>
@@ -290,7 +296,7 @@ const CatalogueList: Component = () => {
         }
         enableSelection={writesOffered()}
         selectedIds={selectedIds()}
-        onSelectionChange={setSelectedIds}
+        onSelectionChange={onSelectionChange}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
         onSaveGlobalDefault={

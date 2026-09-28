@@ -58,14 +58,21 @@ describe('OMS-REG-CAT-03.2–.9 / .19 — a reason for each of the six statuses'
 });
 
 describe('OMS-REG-CAT-03.20 — nothing checks a duplicate reason text', () => {
-  it('two drafts with the same text and status both become inserts', () => {
-    const draft = {
+  const draft = {
+    reason: 'Stored',
+    status: 'NOT_IN_USE' as const,
+    commentsRequired: false,
+  };
+  it("the editor's one check is a missing text, so a text already listed under that status passes it", () => {
+    expect(isReasonMissing(draft)).toBe(false);
+  });
+  it('each create is its own insert under its own id — nothing merges two of one text', () => {
+    expect(toReasonInput(draft, 'a')).toEqual({
+      id: 'a',
+      assetLogStatus: 'NOT_IN_USE',
       reason: 'Stored',
-      status: 'NOT_IN_USE' as const,
       commentsRequired: false,
-    };
-    expect(toReasonInput(draft, 'a').reason).toBe(
-      toReasonInput(draft, 'b').reason
-    );
+    });
+    expect(toReasonInput(draft, 'b').id).toBe('b');
   });
 });
