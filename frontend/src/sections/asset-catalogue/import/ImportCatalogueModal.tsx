@@ -17,7 +17,10 @@ import { CSV_ACCEPT, isCsvFileName } from '@/domain/csvImport';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
-import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import {
+  CancelButton,
+  SaveAndNextButton,
+} from '@/ui/elements/buttons/StandardButtons';
 import { UploadZone } from '@/ui/elements/inputs/UploadZone';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { Text } from '@/ui/elements/typography/Text';
@@ -340,8 +343,7 @@ export const ImportCatalogueModal: Component<
           >
             {t('button.export')}
           </Button>
-          <Button
-            confirms="plain"
+          <SaveAndNextButton
             data-testid="dialog-button-next-and-ok"
             loading={running()}
             disabled={
@@ -350,9 +352,7 @@ export const ImportCatalogueModal: Component<
               !canStartImport(file()?.rows ?? [])
             }
             onClick={() => void startImport()}
-          >
-            {t('button.ok-and-next')}
-          </Button>
+          />
         </>
       }
     >
