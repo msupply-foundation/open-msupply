@@ -31,6 +31,7 @@ const PAD = { top: 12, right: 12, bottom: 26, left: 34 };
 const BAND_PADDING = 0.2; // gap between bars, as a fraction of the band step
 const AXIS_FONT_REM = 0.75; // .axisLabel's font-size
 const LABEL_GAP = 6; // between a y label's end and the plot
+const LABEL_EDGE = 2; // keeps a y label's first glyph off the SVG's edge
 
 // Characters about half a digit wide: spaces and the decimal / group marks.
 const NARROW_CHAR = /[\s.,'’٫٬]/u;
@@ -47,7 +48,10 @@ export const yLabelGutter = (labels: string[], fontPx: number): number => {
       [...label].reduce((em, ch) => em + (NARROW_CHAR.test(ch) ? 0.3 : 0.62), 0)
     )
   );
-  return Math.max(PAD.left, Math.ceil(widestEm * fontPx) + LABEL_GAP + 2);
+  return Math.max(
+    PAD.left,
+    Math.ceil(widestEm * fontPx) + LABEL_GAP + LABEL_EDGE
+  );
 };
 
 /** Build an SVG path `d` from [x, y] points; a non-finite point breaks the
@@ -128,9 +132,7 @@ export const SvgPlot = (props: {
   // (Recharts thins for free; our hand-rolled axis must do it explicitly).
   const labelIndices = createMemo(() => {
     const step = Math.max(1, Math.ceil(props.count / 8));
-    return indices().filter(
-      i => i % step === 0 || i === props.count - 1
-    );
+    return indices().filter(i => i % step === 0 || i === props.count - 1);
   });
   const [active, setActive] = createSignal<number>();
   const clipId = createUniqueId();
