@@ -78,7 +78,7 @@ export const CreateLogReasonModal: Component<
   return (
     <Dialog
       open
-      width="form"
+      width="prose"
       onClose={props.onClose}
       dismissable={!saving()}
       icon={<PlusCircleIcon />}
