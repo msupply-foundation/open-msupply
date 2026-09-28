@@ -2,7 +2,7 @@ import { generateUUID } from '@/uuid';
 import { createMemo, createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '@/api/graphql';
-import { formatNumber, t, tPlural } from '@/intl';
+import { round, t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import {
   createFocusTarget,
@@ -525,18 +525,18 @@ const StocktakeLineEditContent = (
   // gates on it.
   const lineAwaitingReason = (line: DraftLine): boolean =>
     line.countThisLine &&
-    !line.reasonOption &&
-    !!lineDifference(line) &&
     (awaitingReason(line, reasonRequirement()) ||
-      lineErrors().get(line.id) === 'AdjustmentReasonNotProvided');
+      (lineErrors().get(line.id) === 'AdjustmentReasonNotProvided' &&
+        !line.reasonOption &&
+        !!lineDifference(line)));
 
   // A difference's size for display, at the 2 dp a count is entered to — or
   // "<0.01" for one finer than that, never "0" (see differenceSize).
   const formatDifference = (difference: number): string => {
     const { packs, belowPrecision } = differenceSize(difference);
     return belowPrecision
-      ? `<${formatNumber(0.01)}`
-      : formatNumber(packs, { maximumFractionDigits: 2 });
+      ? t('messages.less-than', { value: round(0.01, 2) })
+      : round(packs, 2);
   };
 
   // The line's difference in words beneath its counted packs
@@ -547,9 +547,13 @@ const StocktakeLineEditContent = (
     const difference = lineDifference(line);
     if (hideSnapshotStock() || !line.countThisLine || !difference)
       return undefined;
-    return t(difference < 0 ? 'messages.packs-short' : 'messages.packs-over', {
-      count: formatDifference(difference),
-    });
+    // Plural keys, like the reason warning below, so a locale can word the
+    // difference by number.
+    return tPlural(
+      difference < 0 ? 'messages.packs-short' : 'messages.packs-over',
+      differenceSize(difference).packs,
+      { count: formatDifference(difference) }
+    );
   };
 
   // The reason field's warning on a batch awaiting a reason: what to do, and
@@ -978,17 +982,17 @@ const StocktakeLineEditContent = (
       const firstMissingReason = rows().find(
         line => errors.get(line.id) === 'AdjustmentReasonNotProvided'
       );
-      if (firstMissingReason) {
-        // Centred first, rather than left to the focus handle's nearest-edge
-        // scroll: a row landing on the bottom edge would hide the warning and
-        // the difference beneath its controls — the words that say why. By
-        // its CELL in table view, so a table scrolled past Reason brings the
-        // whole cell out from under the pinned Batch, header and warning too.
-        const field = reasonFields.get(firstMissingReason.id);
-        if (field)
-          scrollCellIntoView(field, { block: 'center', inline: 'nearest' });
-        reasonFields.focus(firstMissingReason.id);
-      }
+      // Centred, rather than the handle's default nearest-edge scroll: a row
+      // landing on the bottom edge would hide the warning and the difference
+      // beneath its controls — the words that say why. By its CELL in table
+      // view, so a table scrolled past Reason brings the whole cell out from
+      // under the pinned Batch, header and warning too. Passed as the
+      // landing scroll, so it runs once, when the picker is attached.
+      if (firstMissingReason)
+        reasonFields.focus(firstMissingReason.id, {
+          scroll: el =>
+            scrollCellIntoView(el, { block: 'center', inline: 'nearest' }),
+        });
       return false; // keep the modal open on the failed lines
     }
     return true;
@@ -1708,10 +1712,19 @@ const StocktakeLineEditContent = (
     // table row's tint + edge bar, and a card's tone only tints a TEXT identity
     // title (here the batch input) — toned card borders were dropped from the
     // library on purpose, leaving the corner badges as the card-status
-    // vocabulary. The outbound editor marks its not-yet-issued lines the same
-    // way. Card-only: table view already marks the row, and the chip there
-    // would only repeat it past the scroll edge. Structural, so out of the
-    // Columns popover.
+    // vocabulary. Card-only: table view already marks the row, and the chip
+    // there would only repeat it past the scroll edge. Structural, so out of
+    // the Columns popover.
+    //
+    // Built by hand, NOT with getFlagCell (outbound's card-only "Not issued"
+    // chip), for two reasons that don't apply to that read-only table:
+    // - getFlagCell reads the column's accessor value, which TanStack caches
+    //   per row. This state follows the editable draft store, whose rows are
+    //   edited in place, so the flag would stick at its first value.
+    // - its hidden [data-flag] marker switches the card header to the
+    //   "title · statuses" layout (DataTable.module.css § STATUS flag
+    //   badges), so the row actions sharing this badge slot would jump out
+    //   of the corner every time a line started or stopped awaiting a reason.
     {
       c: { id: 'awaitingReason' },
       header: () => t('label.needs-a-reason'),

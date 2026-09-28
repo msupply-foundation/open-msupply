@@ -1,3 +1,5 @@
+import { roundTo } from '@/intl/formatNumber';
+
 // Pure per-line count arithmetic for the stocktake detail table
 // (spec/stocktakes S3). Kept as free functions — not inline accessors — so the
 // two observable outcomes they drive can be pinned at the unit layer and the
@@ -39,7 +41,7 @@ export const lineDifference = (line: CountLine): number | null => {
 export const differenceSize = (
   difference: number
 ): { packs: number; belowPrecision: boolean } => {
-  const packs = Math.round(Math.abs(difference) * 100) / 100;
+  const packs = roundTo(Math.abs(difference), 2);
   return { packs, belowPrecision: packs === 0 && difference !== 0 };
 };
 
