@@ -3,20 +3,21 @@
  * visual group: the status line itself, which starts a sync, and a small
  * details button that raises the sync modal.
  *
- * NO TONE COLOUR here, deliberately. The bar's ground is store DATA — brand
- * orange on a central server, menu-grey elsewhere, an arbitrary hex wherever a
- * store sets one — so nothing drawn onto it can be held to a contrast ratio
- * (--error-main measures 1.23:1 on the orange), and worse, a hue that lands
- * near the store's own simply disappears: on a green bar a green mark is a
- * mark you cannot see. Escalation is carried by the GLYPH instead
- * (SyncStatus.tsx `toneIcon`), while text and glyph keep the bar's own
- * contrast-checked content colour at every tone. The state is then never
- * signalled by colour at all, so colour independence holds by construction
- * rather than resting on the label.
+ * ERROR, AND ONLY ERROR, TAKES COLOUR (issue #519). At every other tone the
+ * cell keeps the bar's own ground and content colour: a healthy or merely
+ * behind site interrupts nobody. The bar's ground is store DATA — brand orange
+ * on a central server, menu-grey elsewhere, an arbitrary hex wherever a store
+ * sets one — so red drawn straight onto it could not be held to a contrast
+ * ratio (--error-main measures 1.23:1 on the orange). So on error the cell
+ * first takes the default bar ground (--bg-drawer: the remote-site grey in
+ * light, the standard dark in dark) with the theme's body text, and on that
+ * known ground the red goes: a bar at the cell's start, the label, and the
+ * crossed-circle mark filled. Escalation is still carried by the GLYPH as well
+ * (SyncStatus.tsx `toneIcon`), so colour is never the only signal.
  *
  * The one level below the tones is DIM (issue #1087): sync is not running and
- * cannot. Dimming is not a hue, so it survives an unknown ground — it reads as
- * "switched off" against a bar of any colour.
+ * cannot. Dimming is not a hue, so it holds at any theme or brand colour — it
+ * reads as "switched off" whatever surrounds it.
  */
 
 .group {
@@ -24,6 +25,27 @@
   flex-shrink: 0;
   align-items: center;
   gap: var(--space-1);
+  /* The cell runs the bar's full height and out to its inline-end edge, so
+     the error ground shows no bar colour around it: a panel set into the bar,
+     not a chip floating on it. The margins cancel the footer's own padding
+     (AppShell.module.css names it); the fallbacks leave the cell intact
+     anywhere outside the footer. The end padding stands in for the footer's
+     own at every tone. The start takes none at rest: the footer's divider and
+     gap already space it, as they do every other cell. */
+  align-self: stretch;
+  margin-block: calc(-1 * var(--footer-pad-block, 0rem));
+  margin-inline-end: calc(-1 * var(--footer-pad-inline, 0rem));
+  padding-inline: 0 var(--space-2);
+}
+
+/* Error: the default bar ground, with a red bar marking off its start edge,
+   full height, standing in for the divider the footer drops (AppShell.tsx).
+   Only here does the start need padding, to hold the label off that bar. */
+.group[data-tone='error'] {
+  border-inline-start: 3px solid var(--error-main);
+  padding-inline-start: var(--space-2);
+  background: var(--bg-drawer);
+  color: var(--text-body);
 }
 
 .cell {
@@ -35,7 +57,7 @@
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: inherit; /* a <button> resets colour; take the bar's */
+  color: inherit; /* a <button> resets colour; take the cell's */
   font: inherit;
   white-space: nowrap;
   cursor: pointer;
@@ -69,13 +91,25 @@
   color: inherit;
 }
 
-/* The state itself, which is what the eye should land on — set a step heavier
-   than the timing behind it. */
+/* The state itself, which is what the eye should land on — set in bold, well
+   above the timing behind it (issue #519: the medium weight was easy to miss). */
 .label {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-bold);
+}
+
+.group[data-tone='error'] .label {
+  color: var(--error-main);
+}
+
+/* The error mark: a red disc with its cross cut out in the cell's ground. Fill
+   and stroke are set in CSS, which outranks the icon's fill="none" /
+   stroke="currentColor" attributes. */
+.group[data-tone='error'] .toneMark {
+  fill: var(--error-main);
+  stroke: var(--bg-drawer);
 }
 
 /*
@@ -115,18 +149,15 @@
 
 /*
  * Dimmed: sync is not running and cannot (issue #1087). Carried by WEIGHT, for
- * the reason measured on .detail above — the bar's own content starts at 3.48:1
- * and 2.80:1, so there is no contrast to spend, and every alpha deep enough to
- * READ as dimmed lands in the range that measurement already rejected (a 70%
- * tail fell to 2.42:1 and 1.97:1). Fading the whole group would have spent it
- * on the one state carrying the most to say: "No connection" plus the age that
- * qualifies it.
+ * the reason measured on .detail above — every alpha deep enough to READ as
+ * dimmed cost the line its legibility. Fading the whole group would have spent
+ * that on the one state carrying the most to say: "No connection" plus the age
+ * that qualifies it.
  *
  * So the state recedes by giving up the label's emphasis rather than its
  * contrast, and it is not carrying itself alone — the cell also takes the
  * struck-through connection mark and says the words. Three carriers, none of
- * them a hue and none of them contrast, which is what "survives an unknown
- * ground" has to mean on a bar whose colour is store data.
+ * them a hue and none of them contrast.
  */
 .group[data-dimmed] .label {
   font-weight: var(--weight-regular);
