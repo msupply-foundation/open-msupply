@@ -218,15 +218,23 @@ export const RequisitionLineStats: Component<{
     const months = () =>
       Array.from({ length: Math.ceil(maxMonths()) }, (_, i) => i + 1);
     const monthNumber = (m: number) => formatNumber(Math.ceil(amc() * m));
-    const monthCount = (m: number) =>
-      showText()
-        ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})`
-        : '';
+    const fullCount = (m: number) =>
+      ` (${m} ${m === 1 ? t('label.month') : t('label.months')})`;
+    const monthCount = (m: number) => (showText() ? fullCount(m) : '');
     const monthText = (m: number) => `${monthNumber(m)}${monthCount(m)}`;
     const barFlex = (value: number) =>
       target() === 0
         ? 0
         : Math.min(Math.round((100 * value) / target()), 100);
+    // A bar's number or label shows only when the bar is wide enough for it.
+    const valueClass = (value: number) =>
+      barFlex(value) > MIN_BAR_WIDTH_FOR_VALUE
+        ? styles.valueNum
+        : styles.srOnly;
+    const labelClass = (value: number) =>
+      barFlex(value) > MIN_BAR_WIDTH_FOR_LABEL
+        ? styles.valueLabel
+        : styles.srOnly;
     return (
       <section class={styles.section}>
         <Show when={amc() === 0}>
@@ -259,7 +267,16 @@ export const RequisitionLineStats: Component<{
                 <div class={styles.monthCell} title={monthText(m)}>
                   <div class={styles.monthValue}>
                     <span class={styles.monthNumber}>{monthNumber(m)}</span>
-                    {monthCount(m)}
+                    {/* A count the axis has no room for stays for screen
+                        readers. */}
+                    <Show
+                      when={showText()}
+                      fallback={
+                        <span class={styles.srOnly}>{fullCount(m)}</span>
+                      }
+                    >
+                      {monthCount(m)}
+                    </Show>
                   </div>
                 </div>
               )}
@@ -273,16 +290,11 @@ export const RequisitionLineStats: Component<{
                 style={{ 'flex-basis': `${barFlex(soh())}%` }}
                 title={`${t('label.stock-on-hand')}: ${legendValue(soh())}`}
               >
+                {/* Text too big for a thin bar stays for screen readers. */}
                 <div class={`${styles.valueFill} ${styles.stockMainFill}`}>
-                  <Show when={barFlex(soh()) > MIN_BAR_WIDTH_FOR_VALUE}>
-                    <span class={styles.valueNum}>{formatNumber(soh())}</span>
-                  </Show>
+                  <span class={valueClass(soh())}>{formatNumber(soh())}</span>
                 </div>
-                <Show when={barFlex(soh()) > MIN_BAR_WIDTH_FOR_LABEL}>
-                  <div class={styles.valueLabel}>
-                    {t('label.stock-on-hand')}
-                  </div>
-                </Show>
+                <div class={labelClass(soh())}>{t('label.stock-on-hand')}</div>
               </div>
               <div class={styles.divider} />
             </Show>
@@ -293,17 +305,13 @@ export const RequisitionLineStats: Component<{
                 title={`${t('label.suggested-order-quantity')}: ${legendValue(suggested())}`}
               >
                 <div class={`${styles.valueFill} ${styles.otherRequestedFill}`}>
-                  <Show when={barFlex(suggested()) > MIN_BAR_WIDTH_FOR_VALUE}>
-                    <span class={styles.valueNum}>
-                      {formatNumber(suggested())}
-                    </span>
-                  </Show>
+                  <span class={valueClass(suggested())}>
+                    {formatNumber(suggested())}
+                  </span>
                 </div>
-                <Show when={barFlex(suggested()) > MIN_BAR_WIDTH_FOR_LABEL}>
-                  <div class={styles.valueLabel}>
-                    {t('label.suggested-order-quantity')}
-                  </div>
-                </Show>
+                <div class={labelClass(suggested())}>
+                  {t('label.suggested-order-quantity')}
+                </div>
               </div>
               <div class={styles.divider} />
             </Show>

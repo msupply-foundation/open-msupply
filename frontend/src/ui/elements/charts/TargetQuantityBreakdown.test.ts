@@ -35,4 +35,20 @@ describe('monthAxisFitsText', () => {
   it('treats zero months as one', () => {
     expect(monthAxisFitsText(100, 0, 736, MIN_CELL_PX)).toBe(true);
   });
+
+  it('keeps showing text while the chart narrows by less than the margin', () => {
+    // One month at full width: the cell is the chart. A 17px scrollbar takes
+    // a 70px chart to 53px, under the 60px minimum; a 20px margin holds it.
+    expect(monthAxisFitsText(100, 1, 70, MIN_CELL_PX)).toBe(true);
+    expect(monthAxisFitsText(100, 1, 53, MIN_CELL_PX)).toBe(false);
+    expect(monthAxisFitsText(100, 1, 53, MIN_CELL_PX, 20)).toBe(true);
+  });
+
+  it('hides text once the chart narrows past the margin', () => {
+    expect(monthAxisFitsText(100, 1, 39, MIN_CELL_PX, 20)).toBe(false);
+  });
+
+  it('never lets the margin beat the axis gate', () => {
+    expect(monthAxisFitsText(5, 1, 2000, MIN_CELL_PX, 20)).toBe(false);
+  });
 });

@@ -11,7 +11,7 @@
 
 .calcError {
   inline-size: fit-content;
-  max-width: 28rem;
+  max-inline-size: 28rem;
   margin: 0 auto;
   font-size: var(--text-sm);
   color: var(--error-main);
@@ -140,4 +140,15 @@
   text-align: end;
   color: var(--text-body);
   overflow-wrap: break-word;
+}
+
+/* Text the chart has no room to show, kept for screen readers (the hover
+   title isn't reachable by keyboard, touch or most screen readers). */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
