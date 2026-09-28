@@ -284,7 +284,10 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * stops lining up at the moment one of them is wrong — the state where
    * alignment matters most. Top-aligned, the controls hold their place and the
    * message hangs below them. A row with nothing to report looks the same
-   * either way, every cell holding one control of the same height.
+   * either way, every cell holding one control of the same height — the small
+   * input height, which is the line the table centres a SHORTER control on:
+   * a checkbox in a cell (the selection column's included) takes the
+   * difference as block margin rather than riding the top of its cell.
    */
   cellAlign?: 'center' | 'start';
   /**
@@ -829,10 +832,13 @@ export function DataTable<T, K extends string, G extends string = never>(
     Record<string, number>
   >({});
   // How wide the frozen blocks are at each physical edge, measured in the same
-  // walk. The scroll box reserves them as scroll padding, so a control
-  // scrolled or focused into view — a Tab into the next cell, a save jumping
-  // to a field — stops clear of the pinned columns rather than under them: the
-  // browser's own scroll-into-view knows nothing of sticky cells.
+  // walk. The UNPINNED cells take them as scroll margin (--frozen-left/right,
+  // see DataTable.module.css), so a control scrolled or focused into view — a
+  // Tab into the next cell, a save jumping to a field — stops clear of the
+  // pinned columns rather than under them: the browser's own scroll-into-view
+  // knows nothing of sticky cells. Not scroll PADDING on the box: that also
+  // counts the pinned cells' own controls as hidden, so a Tab onto a row's
+  // select box scrolled the table back toward its start.
   // A caller that wants a whole cell in view, header and all, scrolls the cell
   // rather than its control (scrollCellIntoView).
   const [frozenWidths, setFrozenWidths] = createSignal({ left: 0, right: 0 });
@@ -1514,14 +1520,15 @@ export function DataTable<T, K extends string, G extends string = never>(
           data-empty={table.getRowModel().rows.length === 0 ? '' : undefined}
           data-hidden-left={hiddenLeft() ? '' : undefined}
           data-hidden-right={hiddenRight() ? '' : undefined}
-          // The frozen blocks' widths as scroll padding (frozenWidths).
-          // Physical, like the pinning (the leading column pins physical-left
-          // in either direction). Table view only: cards pin nothing.
+          // The frozen blocks' widths, for the unpinned cells' scroll margin
+          // (frozenWidths). Physical, like the pinning (the leading column pins
+          // physical-left in either direction). Table view only: cards pin
+          // nothing.
           style={
             viewMode() === 'table'
               ? {
-                  'scroll-padding-left': `${frozenWidths().left}px`,
-                  'scroll-padding-right': `${frozenWidths().right}px`,
+                  '--frozen-left': `${frozenWidths().left}px`,
+                  '--frozen-right': `${frozenWidths().right}px`,
                 }
               : undefined
           }
