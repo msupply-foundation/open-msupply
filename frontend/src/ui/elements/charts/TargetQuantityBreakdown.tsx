@@ -1,11 +1,12 @@
 import { For, Show } from 'solid-js';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
+import { roundedText } from '../../../intl/numberDisplay';
 import styles from './TargetQuantityBreakdown.module.css';
 
 const round = (n: number) => Math.round(n);
-// Displayed values to 2 decimal places (the layout maths below keep round()).
-const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
+// Displayed values at the configured decimal places (the layout maths below
+// keep round()).
+const fmt = (n: number) => roundedText(n);
 
 // One horizontal value bar (stock on hand / suggested order). A zero-value bar
 // collapses to just its start divider — mirrors the app's original ValueBar.

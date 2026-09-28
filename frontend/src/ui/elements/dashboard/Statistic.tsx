@@ -10,6 +10,8 @@ export interface StatisticProps {
   label: string;
   /** The value, already locale-formatted for display. */
   value: string;
+  /** Hover text behind the value — a rounded figure's exact value. */
+  title?: string;
   /**
    * Link target — the list this metric drills into. OMIT it for a stat with no
    * drill-down: the row then renders as plain text, not a link. Never pass a
@@ -56,7 +58,9 @@ export const Statistic = (props: StatisticProps) => {
   // mounts (kdd/solid-reactivity-pitfalls §3: never reuse a JSX value twice).
   const body = () => (
     <>
-      <span class={styles.value}>{props.value}</span>
+      <span class={styles.value} title={props.title}>
+        {props.value}
+      </span>
       <span class={styles.label}>{props.label}</span>
     </>
   );

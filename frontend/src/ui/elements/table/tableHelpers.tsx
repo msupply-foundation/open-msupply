@@ -2,6 +2,12 @@ import type { JSX } from 'solid-js';
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
+import {
+  displayNumber,
+  displayTotal,
+  displayVolume,
+  VOLUME_DECIMALS,
+} from '../../../intl/numberDisplay';
 import { formatCurrency } from '../../../intl/currency';
 import { Comment } from '../feedback/Comment';
 import { StatusBadge } from '../feedback/StatusBadge';
@@ -96,27 +102,89 @@ export const getTextCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
 });
 
-// Numbers: right-aligned, displayed locale-formatted to at most 2 dp
-// (ui-standards § tables; the old app's number-cell default) — derived values
-// carry float dust and raw renders skip digit grouping. Display-only: the
-// underlying value is untouched. Non-number values (a pre-formatted string)
-// pass through; absent renders blank.
+// Numbers: right-aligned, locale-formatted at the installation's configured
+// decimal places (ui-standards § tables › display rounding — the global
+// decimalPlacesForNumbers preference) — derived values carry float dust and
+// raw renders skip digit grouping. Display-only: the underlying value is
+// untouched, and a cell that lost digits to the rounding hovers its exact
+// figure. Grouped parent → the SUM of its leaves at full precision, shown
+// rounded and MARKED when the shown figure differs. Non-number values (a
+// pre-formatted string) pass through; absent renders blank.
 export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
+  aggregationFn: 'sum',
   cell: info => {
     const value = info.getValue<number | string | null | undefined>();
     return typeof value === 'number'
-      ? formatNumber(value, { maximumFractionDigits: 2 })
+      ? renderDisplayedNumber(displayNumber(value))
       : (value ?? '');
+  },
+  // The leaves, not the pre-summed parent value: the total is summed here at
+  // full precision so the mark and hover text can tell whether it was rounded.
+  aggregatedCell: info => {
+    const leaves = numericLeafValues(info.row, info.column.id);
+    return leaves.length === 0
+      ? ''
+      : renderDisplayedNumber(displayTotal(leaves));
   },
 });
 
+// Volumes (m³): the number cell at a volume's own fixed places rather than the
+// configured ones — a volume per pack runs orders of magnitude below a count
+// (intl/numberDisplay VOLUME_DECIMALS; ui-standards § display rounding). Same
+// hover and grouped-total treatment as a number.
+export const getVolumeCell = <T,>(meta?: Meta): CellFragment<T> => ({
+  meta: { align: 'right', ...meta },
+  aggregationFn: 'sum',
+  cell: info => {
+    const value = info.getValue<number | string | null | undefined>();
+    return typeof value === 'number'
+      ? renderDisplayedNumber(displayVolume(value))
+      : (value ?? '');
+  },
+  aggregatedCell: info => {
+    const leaves = numericLeafValues(info.row, info.column.id);
+    return leaves.length === 0
+      ? ''
+      : renderDisplayedNumber(displayTotal(leaves, VOLUME_DECIMALS));
+  },
+});
+
+/*
+ * The numeric leaf values under a grouped row — what its total is summed from.
+ * A group with no numeric leaf has no total and renders BLANK, not `0`:
+ * "nothing to add up" and "adds up to zero" are different facts (ui-standards
+ * § tables › absent values).
+ */
+export const numericLeafValues = (
+  row: { getLeafRows: () => { getValue: (columnId: string) => unknown }[] },
+  columnId: string
+): number[] =>
+  row
+    .getLeafRows()
+    .map(leaf => leaf.getValue(columnId))
+    .filter((value): value is number => typeof value === 'number');
+
+// A displayed number: bare text when it shows the whole value, otherwise the
+// rounded text with its exact figure as hover text (the shape ProportionCell
+// uses for its precise reading). Exported for labelled figures rendered outside
+// a table (item detail fields, line-editor readouts).
+export const renderDisplayedNumber = (n: {
+  text: string;
+  exact?: string;
+}): JSX.Element =>
+  n.exact === undefined ? n.text : <span title={n.exact}>{n.text}</span>;
+
 // Percentage — a Number variant: right-aligned, value + '%' (blank when null).
+// Its own precision — the 2 dp every percentage input accepts (ui-standards ›
+// conventions) — exempt from the configured places and their mark.
 export const getPercentageCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
   cell: info => {
     const value = info.getValue<number | null | undefined>();
-    return value == null ? '' : `${formatNumber(value)}%`;
+    return value == null
+      ? ''
+      : `${formatNumber(value, { maximumFractionDigits: 2 })}%`;
   },
 });
 
@@ -357,6 +425,8 @@ const kindFragment = <T,>(kind: CellKind, meta?: Meta): CellFragment<T> => {
       return getTextCell<T>({ mono: true, ...meta });
     case 'number':
       return getNumberCell<T>(meta);
+    case 'volume':
+      return getVolumeCell<T>(meta);
     case 'percentage':
       return getPercentageCell<T>(meta);
     case 'currency':

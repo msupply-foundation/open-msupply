@@ -6,13 +6,13 @@ import {
   Show,
   type JSX,
 } from 'solid-js';
-import { formatNumber } from '../../../intl/formatNumber';
+import { roundedText } from '../../../intl/numberDisplay';
 import styles from './plotChart.module.css';
 
-// Axis tick labels: grouped, ≤ 2 dp — never the raw float (niceTicks' step
-// arithmetic can yield 0.6000000000000001).
-const axisLabel = (value: number): string =>
-  formatNumber(value, { maximumFractionDigits: 2 });
+// Axis tick labels: grouped, at the configured decimal places — never the raw
+// float (niceTicks' step arithmetic can yield 0.6000000000000001). A tick has
+// no room for hover text, so it is the rounded text alone.
+const axisLabel = (value: number): string => roundedText(value);
 
 /** Scales handed to a plot's mark-drawing children. */
 export type PlotScales = {
@@ -104,9 +104,7 @@ export const SvgPlot = (props: {
   // (Recharts thins for free; our hand-rolled axis must do it explicitly).
   const labelIndices = createMemo(() => {
     const step = Math.max(1, Math.ceil(props.count / 8));
-    return indices().filter(
-      i => i % step === 0 || i === props.count - 1
-    );
+    return indices().filter(i => i % step === 0 || i === props.count - 1);
   });
   const [active, setActive] = createSignal<number>();
   const clipId = createUniqueId();
