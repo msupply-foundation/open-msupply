@@ -8,7 +8,7 @@ import {
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { getPlural, t } from '../../../../intl';
-import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
+import { roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -35,7 +35,6 @@ import {
 import {
   formatCurrencyCell,
   getNumberCell,
-  renderDisplayedNumber,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { packDifference } from '../inboundShipmentLine';
@@ -67,6 +66,7 @@ import {
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import { requestedQuantityForItem } from '../internalOrderContext';
 import styles from './InboundShipmentLineEditModal.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // One line of the linked purchase order — the PO-line picker's options (derived
 // from the generated result, not restated).
@@ -884,9 +884,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // (kdd/solid-reactivity-pitfalls).
   const declaredValue = (value: () => number | undefined) => (
     <span class={styles.statValue}>
-      {value() === undefined
-        ? '—'
-        : renderDisplayedNumber(displayNumber(value()!))}
+      {value() === undefined ? '—' : <Num value={value()!} />}
     </span>
   );
 

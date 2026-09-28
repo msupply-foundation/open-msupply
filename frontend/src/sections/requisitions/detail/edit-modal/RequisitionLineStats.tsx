@@ -1,11 +1,7 @@
 import { For, Show, type Component, type JSX } from 'solid-js';
 import { t } from '@/intl';
 import { formatNumber } from '@/intl/formatNumber';
-import {
-  displayNumber,
-  displayVolume,
-  roundedText,
-} from '@/intl/numberDisplay';
+import { displayVolume, roundedText } from '@/intl/numberDisplay';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import { InfoIcon } from '@/ui/icons';
 import {
@@ -19,7 +15,7 @@ import {
   type LineStats,
 } from './requisitionLineEdit';
 import styles from './RequisitionLineStats.module.css';
-import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The line editor's two read-only stats tabs (spec S4 § stats tabs): My store
 // — the proportional stacked our-stock / requested bars — and Customer — the
@@ -262,7 +258,7 @@ export const RequisitionLineStats: Component<{
               >
                 <div class={`${styles.valueFill} ${styles.stockMainFill}`}>
                   <span class={styles.valueNum}>
-                    {renderDisplayedNumber(displayNumber(soh()))}
+                    <Num value={soh()} />
                   </span>
                 </div>
                 <div class={styles.valueLabel}>{t('label.stock-on-hand')}</div>
@@ -277,7 +273,7 @@ export const RequisitionLineStats: Component<{
               >
                 <div class={`${styles.valueFill} ${styles.otherRequestedFill}`}>
                   <span class={styles.valueNum}>
-                    {renderDisplayedNumber(displayNumber(suggested()))}
+                    <Num value={suggested()} />
                   </span>
                 </div>
                 <div class={styles.valueLabel}>

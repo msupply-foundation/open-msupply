@@ -49,8 +49,7 @@ import {
   type Prices,
 } from './purchaseOrderLineEdit';
 import styles from './PurchaseOrderLineEditModal.module.css';
-import { displayNumber } from '@/intl/numberDisplay';
-import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The line editor (spec/purchase-orders S10): one surface that both adds a
 // line and edits one. Nothing is saved until the confirming action; an
@@ -385,7 +384,7 @@ const LineEditContent = (
               valueAlign="end"
               valueTestId="stock-on-hand-value"
             >
-              {renderDisplayedNumber(displayNumber(facts()!.stockOnHand))}
+              <Num value={facts()!.stockOnHand} />
             </FieldRow>
             <FieldRow
               label={t('label.unit')}
@@ -466,9 +465,7 @@ const LineEditContent = (
               valueAlign="end"
               valueTestId="requested-units-value"
             >
-              {renderDisplayedNumber(
-                displayNumber(draft()!.requestedNumberOfUnits)
-              )}
+              <Num value={draft()!.requestedNumberOfUnits} />
             </FieldRow>
             <Show when={showsAdjustedUnits(status())}>
               <FieldRow
@@ -479,11 +476,11 @@ const LineEditContent = (
                 valueAlign="end"
                 valueTestId="adjusted-units-value"
               >
-                {draft()!.adjustedNumberOfUnits == null
-                  ? '-'
-                  : renderDisplayedNumber(
-                      displayNumber(draft()!.adjustedNumberOfUnits!)
-                    )}
+                {draft()!.adjustedNumberOfUnits == null ? (
+                  '-'
+                ) : (
+                  <Num value={draft()!.adjustedNumberOfUnits!} />
+                )}
               </FieldRow>
             </Show>
             <FieldRow label={t('label.price-per-pack-before-discount')}>

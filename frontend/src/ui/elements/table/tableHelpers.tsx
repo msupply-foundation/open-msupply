@@ -7,6 +7,7 @@ import {
   displayVolume,
   type DisplayedNumber,
 } from '../../../intl/numberDisplay';
+import { Num } from '../typography/Num';
 import { formatCurrency } from '../../../intl/currency';
 import { Comment } from '../feedback/Comment';
 import { StatusBadge } from '../feedback/StatusBadge';
@@ -103,8 +104,8 @@ export const getTextCell = <T,>(meta?: Meta): CellFragment<T> => ({
 
 // A rounded figure: right-aligned, `display` choosing the places, the exact
 // figure hovered when the rounding dropped digits (ui-standards § tables ›
-// display rounding). Display-only: the underlying value is untouched.
-// Non-number values (a pre-formatted string) pass through; absent renders blank.
+// display rounding). Display-only: the underlying value is untouched. A
+// non-number (a pre-formatted string) passes through; absent renders blank.
 const roundedCell = <T,>(
   display: (value: number) => DisplayedNumber,
   meta?: Meta
@@ -112,9 +113,11 @@ const roundedCell = <T,>(
   meta: { align: 'right', ...meta },
   cell: info => {
     const value = info.getValue<number | string | null | undefined>();
-    return typeof value === 'number'
-      ? renderDisplayedNumber(display(value))
-      : (value ?? '');
+    return typeof value === 'number' ? (
+      <Num value={display(value)} />
+    ) : (
+      (value ?? '')
+    );
   },
 });
 
@@ -128,13 +131,6 @@ export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> =>
 // of magnitude below a count (intl/numberDisplay VOLUME_DECIMALS).
 export const getVolumeCell = <T,>(meta?: Meta): CellFragment<T> =>
   roundedCell<T>(displayVolume, meta);
-
-// A displayed number: bare text when it shows the whole value, otherwise the
-// rounded text with its exact figure as hover text (the shape ProportionCell
-// uses for its precise reading). Exported for labelled figures rendered outside
-// a table (item detail fields, line-editor readouts).
-export const renderDisplayedNumber = (n: DisplayedNumber): JSX.Element =>
-  n.exact === undefined ? n.text : <span title={n.exact}>{n.text}</span>;
 
 // Percentage — a Number variant: right-aligned, value + '%' (blank when null).
 // Its own precision — the 2 dp every percentage input accepts (ui-standards ›

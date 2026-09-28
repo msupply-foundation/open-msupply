@@ -12,12 +12,7 @@ import {
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { getPlural, t } from '../../../../intl';
-import {
-  displayNumber,
-  displayVolume,
-  roundedText,
-} from '../../../../intl/numberDisplay';
-import { renderDisplayedNumber } from '../../../../ui/elements/table/tableHelpers';
+import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -95,6 +90,7 @@ import {
 } from '../../../../domain/allocation';
 import { outboundShipmentPreferences } from '@/store/storeContext';
 import { issueWarningMessages } from './allocationWarnings';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The line editor (spec S4): the SINGLE surface for issuing an item — set the
 // quantity to issue and distribute it across batches. The batch grid is the
@@ -1362,13 +1358,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         const line = info.row.original;
         return (
           <>
-            {renderDisplayedNumber(
-              displayNumber(
+            <Num
+              value={
                 dosesView()
                   ? line.numberOfPacks
                   : line.numberOfPacks * line.packSize
-              )
-            )}
+              }
+            />
           </>
         );
       },
@@ -1412,13 +1408,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 <>
                   {/* Displayed to 2 dp (the old app's number-cell default) —
                       the raw subtraction carries float dust (2.34 − 3). */}
-                  {line.receivedNumberOfPacks == null
-                    ? ''
-                    : renderDisplayedNumber(
-                        displayNumber(
-                          line.receivedNumberOfPacks - line.numberOfPacks
-                        )
-                      )}
+                  {line.receivedNumberOfPacks == null ? (
+                    ''
+                  ) : (
+                    <Num
+                      value={line.receivedNumberOfPacks - line.numberOfPacks}
+                    />
+                  )}
                 </>
               );
             },
@@ -1438,9 +1434,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         const line = info.row.original;
         return (
           <>
-            {renderDisplayedNumber(
-              displayVolume((line.volumePerPack ?? 0) * line.numberOfPacks)
-            )}
+            <Num
+              value={(line.volumePerPack ?? 0) * line.numberOfPacks}
+              volume
+            />
           </>
         );
       },
@@ -1563,14 +1560,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <Show when={item()}>
               <HStack gap="md">
                 <span>
-                  {t('label.unallocated')}:{' '}
-                  {renderDisplayedNumber(displayNumber(placeholderUnits()))}
+                  {t('label.unallocated')}: <Num value={placeholderUnits()} />
                 </span>
                 <span>
                   {t('label.total-units')}:{' '}
-                  {renderDisplayedNumber(
-                    displayNumber(issuedUnits() + placeholderUnits())
-                  )}
+                  <Num value={issuedUnits() + placeholderUnits()} />
                 </span>
               </HStack>
             </Show>
@@ -1729,7 +1723,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 <span class={styles.availableValue}>
                   {/* Unit name pluralised to the count (old-app parity —
                       English only; getPlural passes other languages through). */}
-                  {renderDisplayedNumber(displayNumber(availableUnits()))}{' '}
+                  <Num value={availableUnits()} />{' '}
                   {getPlural(unitName(), availableUnits())}
                 </span>
               </LabelledValue>

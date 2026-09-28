@@ -9,7 +9,6 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
-import { displayNumber } from '@/intl/numberDisplay';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -34,7 +33,6 @@ import {
   getCellDefinition,
   getDateCell,
   getExpiryDateCell,
-  renderDisplayedNumber,
 } from '@/ui/elements/table/tableHelpers';
 import {
   Pagination,
@@ -90,6 +88,7 @@ import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
 import { isUncounted, lineDifference } from './lines/stocktakeLine';
 import styles from './StocktakeDetailView.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
 // editable description + filters), the lines in a SERVER-paginated DataTable
@@ -795,9 +794,7 @@ const StocktakeDetailView: Component = () => {
               const value = info.getValue<number | null | undefined>();
               return (
                 <>
-                  {value == null
-                    ? ''
-                    : renderDisplayedNumber(displayNumber(value))}
+                  {value == null ? '' : <Num value={value} />}
                   <Show
                     when={
                       lineErrors().get(info.row.original.id) ===
@@ -847,9 +844,7 @@ const StocktakeDetailView: Component = () => {
         isUncounted(info.row.original) ? (
           <AbsentValue label={t('label.not-counted')} />
         ) : (
-          renderDisplayedNumber(
-            displayNumber(info.getValue<number | null | undefined>() ?? 0)
-          )
+          <Num value={info.getValue<number | null | undefined>() ?? 0} />
         ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine

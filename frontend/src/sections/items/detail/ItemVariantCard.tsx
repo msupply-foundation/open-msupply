@@ -1,8 +1,6 @@
 import { createSignal, For, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { displayVolume } from '../../../intl/numberDisplay';
-import { renderDisplayedNumber } from '../../../ui/elements/table/tableHelpers';
 import { DetailCard } from '../../../ui/layout/Detail/DetailCard';
 import { FormRow } from '../../../ui/layout/Form/FormRow';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
@@ -23,6 +21,7 @@ import {
 import { formatRatio, invertRatio } from './bundledItemEdit';
 import type { ItemVariantRow } from './itemVariantEdit';
 import { BundledItemModal } from './BundledItemModal';
+import { Num } from '../../../ui/elements/typography/Num';
 
 // One variant, as a card (spec/items S2 › Variants tab). Built on the new
 // DetailCard: header = name + Edit/Delete; body = the read-only field set (the
@@ -149,11 +148,11 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
                     {/* Blank when unset — a cell, not a labelled field
                         (ui-standards § tables › absent values). */}
                     <td data-numeric>
-                      {row.volumePerUnit == null
-                        ? ''
-                        : renderDisplayedNumber(
-                            displayVolume(row.volumePerUnit)
-                          )}
+                      {row.volumePerUnit == null ? (
+                        ''
+                      ) : (
+                        <Num value={row.volumePerUnit} volume />
+                      )}
                     </td>
                   </tr>
                 )}

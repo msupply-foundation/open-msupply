@@ -34,7 +34,6 @@ import {
   getCurrencyCell,
   getDateCell,
   getNumberCell,
-  renderDisplayedNumber,
   type CellFragment,
 } from '@/ui/elements/table/tableHelpers';
 import {
@@ -109,7 +108,7 @@ import {
   type LineLookup,
 } from './edit-modal/PurchaseOrderLineEditModal';
 import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
-import { displayNumber } from '@/intl/numberDisplay';
+import { Num } from '@/ui/elements/typography/Num';
 
 // An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
 // Details tab, S9's side panel, S10's line editor, S11-S13's remaining tabs,
@@ -172,7 +171,7 @@ const NARROW_HIDDEN: Record<string, boolean> = {
 
 const exactQuantity: CellFragment<Line>['cell'] = info => {
   const value = info.getValue<number | null | undefined>();
-  return value == null ? '' : renderDisplayedNumber(displayNumber(value));
+  return value == null ? '' : <Num value={value} />;
 };
 
 const PurchaseOrderDetailView: Component = () => {

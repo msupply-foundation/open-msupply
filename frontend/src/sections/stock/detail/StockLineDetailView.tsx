@@ -68,8 +68,7 @@ import { VvmHistoryPanel } from './VvmHistoryPanel';
 import { AdjustModal } from './AdjustModal';
 import { RepackModal } from './RepackModal';
 import { VvmStatusEntryModal } from './VvmStatusEntryModal';
-import { displayNumber, displayVolume } from '../../../intl/numberDisplay';
-import { renderDisplayedNumber } from '../../../ui/elements/table/tableHelpers';
+import { Num } from '../../../ui/elements/typography/Num';
 
 // The stock-line detail view (spec/stock S2). Inspect one line, edit its
 // attributes (buffered locally, committed on an explicit Save with a pre-save
@@ -188,7 +187,7 @@ const StockLineDetailView: Component = () => {
   // equivalent in muted small text when the dose gate is on for a vaccine item.
   const qtyValue = (main: number, doseUnits: number) => (
     <>
-      {renderDisplayedNumber(displayNumber(main))}
+      <Num value={main} />
       <Show when={showDoses()}>
         {' '}
         <span
@@ -198,9 +197,7 @@ const StockLineDetailView: Component = () => {
           }}
         >
           (
-          {renderDisplayedNumber(
-            displayNumber(doseUnits * (line()?.item.doses ?? 0))
-          )}{' '}
+          <Num value={doseUnits * (line()?.item.doses ?? 0)} />{' '}
           {t('label.doses')})
         </span>
       </Show>
@@ -607,9 +604,7 @@ const StockLineDetailView: Component = () => {
                               label={t('label.pack-size')}
                               data-testid="field-pack-size"
                             >
-                              {renderDisplayedNumber(
-                                displayNumber(l().packSize)
-                              )}
+                              <Num value={l().packSize} />
                             </LabelledValue>
                             <Checkbox
                               label={t('label.on-hold')}
@@ -635,14 +630,13 @@ const StockLineDetailView: Component = () => {
                               label={t('label.total-volume')}
                               data-testid="field-total-volume"
                             >
-                              {renderDisplayedNumber(
-                                displayVolume(
-                                  totalVolume(
-                                    edit.volumePerPack,
-                                    l().totalNumberOfPacks
-                                  )
-                                )
-                              )}
+                              <Num
+                                value={totalVolume(
+                                  edit.volumePerPack,
+                                  l().totalNumberOfPacks
+                                )}
+                                volume
+                              />
                             </LabelledValue>
                           </FormRow>
                         </FormSection>

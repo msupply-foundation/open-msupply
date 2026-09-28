@@ -4,11 +4,11 @@ import type { CardGroup } from '../../../ui/elements/table/columnTypes';
 import {
   getCellDefinition,
   getNumberCell,
-  renderDisplayedNumber,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import type { ItemsResult } from './items.generated';
 import { monthsOfStockCell, unitsWithDoses } from './itemStats';
+import { Num } from '../../../ui/elements/typography/Num';
 
 export type ItemRow = ItemsResult['items']['nodes'][number];
 
@@ -121,10 +121,15 @@ export const fixedColumns = (
     // card header would read as an id or a quantity of anything.
     ...getNumberCell({ headerPosition: 'badge', showLabel: true }),
     size: remToPx(STAT_WIDTH_REM),
-    cell: info =>
-      renderDisplayedNumber(
-        unitsWithDoses(info.getValue<number>(), info.row.original, showDoses())
-      ),
+    cell: info => (
+      <Num
+        value={unitsWithDoses(
+          info.getValue<number>(),
+          info.row.original,
+          showDoses()
+        )}
+      />
+    ),
   },
   {
     // AMC and Months of stock (below) join Unit in the card's always-shown
@@ -134,10 +139,15 @@ export const fixedColumns = (
     enableSorting: false,
     ...getNumberCell(),
     size: remToPx(AMC_WIDTH_REM),
-    cell: info =>
-      renderDisplayedNumber(
-        unitsWithDoses(info.getValue<number>(), info.row.original, showDoses())
-      ),
+    cell: info => (
+      <Num
+        value={unitsWithDoses(
+          info.getValue<number>(),
+          info.row.original,
+          showDoses()
+        )}
+      />
+    ),
   },
   {
     c: {
@@ -148,7 +158,8 @@ export const fixedColumns = (
     enableSorting: false,
     ...getNumberCell(),
     size: remToPx(STAT_WIDTH_REM),
-    cell: info =>
-      renderDisplayedNumber(monthsOfStockCell(info.getValue<number | null>())),
+    cell: info => (
+      <Num value={monthsOfStockCell(info.getValue<number | null>())} />
+    ),
   },
 ];

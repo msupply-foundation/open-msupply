@@ -29,8 +29,8 @@ import {
   type StockLineDetailFragment,
   type CreateInventoryAdjustmentVariables,
 } from './stockLine.generated';
-import { displayNumber, roundedText } from '../../../intl/numberDisplay';
-import { renderDisplayedNumber } from '../../../ui/elements/table/tableHelpers';
+import { roundedText } from '../../../intl/numberDisplay';
+import { Num } from '../../../ui/elements/typography/Num';
 
 // The stock adjustment modal (spec/stock S4, FL4). Correct one line's quantity
 // by a direction + amount, with an optional reason and (when the backdating
@@ -271,7 +271,7 @@ const AdjustContent = (props: {
             }}
           >
             {props.line.item.code} · {t('label.pack-size')}{' '}
-            {renderDisplayedNumber(displayNumber(packSize()))}
+            <Num value={packSize()} />
           </span>
         </div>
 

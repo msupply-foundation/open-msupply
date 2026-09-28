@@ -44,8 +44,8 @@ import {
 } from './requisitionLineEdit';
 import { RequisitionLineStats } from './RequisitionLineStats';
 import styles from './RequisitionLineEditModal.module.css';
-import { displayNumber, roundedText } from '@/intl/numberDisplay';
-import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
+import { roundedText } from '@/intl/numberDisplay';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The requisition line editor (spec/requisitions S4): add an item (add mode —
 // manual non-program requisitions only) or fill one line (edit mode, any
@@ -502,7 +502,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           when={rowProps.onChange}
           fallback={
             <span class={styles.statValue} data-testid={rowProps.testId}>
-              {renderDisplayedNumber(displayNumber(shown()))} {suffix()}
+              <Num value={shown()} /> {suffix()}
             </span>
           }
         >
@@ -542,7 +542,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         <HStack justify="between" gap="sm" class={styles.caption}>
           <span>{t('label.default-pack-size')}</span>
           <span class={styles.captionValue}>
-            {renderDisplayedNumber(displayNumber(packSize()))}
+            <Num value={packSize()} />
           </span>
         </HStack>
       </Show>
@@ -550,7 +550,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         <HStack justify="between" gap="sm" class={styles.caption}>
           <span>{t('label.doses-per-unit')}</span>
           <span class={styles.captionValue}>
-            {renderDisplayedNumber(displayNumber(doses()))}
+            <Num value={doses()} />
           </span>
         </HStack>
       </Show>
@@ -688,7 +688,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
             § read-only figures), so it bypasses FigureRow's ceil. */}
         <FieldRow label={t('label.target-stock-population')}>
           <span class={styles.statValue}>
-            {renderDisplayedNumber(displayNumber(targetPopulationFigure()))}{' '}
+            <Num value={targetPopulationFigure()} />{' '}
             {modeWord(
               entryMode(),
               current()?.unitName ?? null,

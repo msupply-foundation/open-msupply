@@ -60,6 +60,7 @@ import {
 } from './internalOrderLineEdit';
 import { ForecastCalculationDisplay } from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
+import { Num } from '../../../../ui/elements/typography/Num';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
 // mode, general orders only — AC-LN1) or fill one line (edit mode, any status;
@@ -307,9 +308,14 @@ const LineEditContent = (
 
   // A statistic (units) rendered in the active mode with its measure word,
   // inflected for the figure it suffixes ("1 pack" / "61 packs").
-  const stat = (units: number, roundUp = false): string => {
+  const stat = (units: number, roundUp = false): JSX.Element => {
     const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
-    return `${roundedText(figure)} ${modeWord(entryMode(), current()?.unitName ?? null, figure)}`;
+    return (
+      <>
+        <Num value={figure} />{' '}
+        {modeWord(entryMode(), current()?.unitName ?? null, figure)}
+      </>
+    );
   };
 
   // A unit quantity re-expressed in the OTHER measure (AC-LN20): units when
@@ -434,7 +440,7 @@ const LineEditContent = (
   // with the column.
   const StatRow = (rowProps: {
     label: string;
-    value: string;
+    value: JSX.Element;
     caption?: string;
     highlight?: boolean;
   }): JSX.Element => (
@@ -568,13 +574,13 @@ const LineEditContent = (
                 <Show when={editorLine().defaultPackSize > 0}>
                   <StatRow
                     label={t('label.default-pack-size')}
-                    value={roundedText(editorLine().defaultPackSize)}
+                    value={<Num value={editorLine().defaultPackSize} />}
                   />
                 </Show>
                 <Show when={dosesApply()}>
                   <StatRow
                     label={t('label.doses-per-unit')}
-                    value={roundedText(editorLine().doses)}
+                    value={<Num value={editorLine().doses} />}
                   />
                 </Show>
                 <StatRow

@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
-import { displayNumber, getPlural, t, tPlural } from '../../../../intl';
+import { getPlural, t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
@@ -37,7 +37,6 @@ import styles from './PrescriptionLineEditModal.module.css';
 import {
   getExpiryDateCell,
   getNumberCell,
-  renderDisplayedNumber,
 } from '../../../../ui/elements/table/tableHelpers';
 import { getBooleanCell } from '../../../../ui/elements/table/BooleanCell';
 import { ItemSearch } from '../../../../domain/item';
@@ -71,6 +70,7 @@ import {
   SavePrescriptionItemLines,
   type PrescriptionEditLinesResult,
 } from './prescriptionLineEdit.generated';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The prescription line editor (spec/prescriptions/ui-surface.md S4 — the
 // D53 modal replacing the real app's full-page route): item lookup (locked in
@@ -906,8 +906,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   // `label.doses` is already plural.
                   end={
                     <>
-                      {t('label.available')}:{' '}
-                      {renderDisplayedNumber(displayNumber(availableInLens()))}{' '}
+                      {t('label.available')}: <Num value={availableInLens()} />{' '}
                       {dosesMode()
                         ? t('label.doses')
                         : getPlural(unitName(), availableInLens())}

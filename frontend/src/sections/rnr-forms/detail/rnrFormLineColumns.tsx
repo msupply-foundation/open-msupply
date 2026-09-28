@@ -1,6 +1,6 @@
 import type { JSX } from 'solid-js';
 import { Show } from 'solid-js';
-import { displayNumber, t } from '@/intl';
+import { t } from '@/intl';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
@@ -8,7 +8,6 @@ import { type Column } from '@/ui/elements/table/DataTable';
 import {
   getCellDefinition,
   getNumberCell,
-  renderDisplayedNumber,
 } from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
 import { HStack } from '@/ui/layout/Stack/HStack';
@@ -16,6 +15,7 @@ import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import { InfoTooltip } from '@/ui/elements/feedback/InfoTooltip';
 import type { LocaleKey } from '@/intl';
 import { type DraftRnrLine, type EditableRnrField } from './rnrFormEdit';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The R&R form line table's columns (spec/rnr-forms/ui-surface.md S3 § line
 // table): one row per program item, editable cells over a draft store, derived
@@ -106,7 +106,7 @@ const derivedNumber = (
     <Show when={marker}>
       {m => <StatusMarker severity={m().severity} label={m().label} />}
     </Show>
-    {renderDisplayedNumber(displayNumber(value))}
+    <Num value={value} />
   </HStack>
 );
 

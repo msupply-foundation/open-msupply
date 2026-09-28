@@ -15,10 +15,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
-import {
-  getCellDefinition,
-  renderDisplayedNumber,
-} from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
@@ -42,7 +39,7 @@ import {
   type StockLineDetailFragment,
   type RepacksByStockLineResult,
 } from './stockLine.generated';
-import { displayNumber } from '../../../intl/numberDisplay';
+import { Num } from '../../../ui/elements/typography/Num';
 
 // The repack modal (spec/stock S5, FL6). Review this line's repack history and
 // create a repack (split N packs into a new line at a new pack size, optionally
@@ -390,7 +387,7 @@ const RepackContent = (props: {
                 <>
                   <FieldRow label={t('label.packs-available')}>
                     <span>
-                      {renderDisplayedNumber(displayNumber(available()))}
+                      <Num value={available()} />
                     </span>
                   </FieldRow>
                   <FieldRow label={t('label.packs-to-repack')}>
@@ -413,9 +410,7 @@ const RepackContent = (props: {
                   </FieldRow>
                   <FieldRow label={t('label.pack-size')}>
                     <span>
-                      {renderDisplayedNumber(
-                        displayNumber(props.line.packSize)
-                      )}
+                      <Num value={props.line.packSize} />
                     </span>
                   </FieldRow>
                   <FieldRow label={t('label.location')}>
@@ -427,11 +422,11 @@ const RepackContent = (props: {
                 <>
                   <FieldRow label={t('label.new-number-of-packs')}>
                     <span data-testid="repack-new-number-of-packs">
-                      {newPacks() === undefined
-                        ? '—'
-                        : renderDisplayedNumber(
-                            displayNumber(newPacks() as number)
-                          )}
+                      {newPacks() === undefined ? (
+                        '—'
+                      ) : (
+                        <Num value={newPacks() as number} />
+                      )}
                     </span>
                   </FieldRow>
                   <FieldRow label={t('label.new-pack-size')}>
@@ -500,16 +495,12 @@ const RepackContent = (props: {
                   <>
                     <FieldRow label={t('label.number-of-packs')}>
                       <span>
-                        {renderDisplayedNumber(
-                          displayNumber(repack().from.numberOfPacks)
-                        )}
+                        <Num value={repack().from.numberOfPacks} />
                       </span>
                     </FieldRow>
                     <FieldRow label={t('label.pack-size')}>
                       <span>
-                        {renderDisplayedNumber(
-                          displayNumber(repack().from.packSize)
-                        )}
+                        <Num value={repack().from.packSize} />
                       </span>
                     </FieldRow>
                     <FieldRow label={t('label.location')}>
@@ -521,16 +512,12 @@ const RepackContent = (props: {
                   <>
                     <FieldRow label={t('label.new-number-of-packs')}>
                       <span data-testid="repack-selected-number-of-packs">
-                        {renderDisplayedNumber(
-                          displayNumber(repack().to.numberOfPacks)
-                        )}
+                        <Num value={repack().to.numberOfPacks} />
                       </span>
                     </FieldRow>
                     <FieldRow label={t('label.new-pack-size')}>
                       <span data-testid="repack-selected-pack-size">
-                        {renderDisplayedNumber(
-                          displayNumber(repack().to.packSize)
-                        )}
+                        <Num value={repack().to.packSize} />
                       </span>
                     </FieldRow>
                     <FieldRow label={t('label.new-location')}>

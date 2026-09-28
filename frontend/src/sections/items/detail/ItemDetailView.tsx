@@ -51,9 +51,9 @@ import {
   formatUnits,
   dosesEquivalent,
 } from '../list/itemStats';
-import { decimalPlaces, displayVolume } from '@/intl/numberDisplay';
+import { decimalPlaces } from '@/intl/numberDisplay';
 import { formatCurrency } from '@/intl/currency';
-import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The item detail screen (spec/items S2). Read-only: the General and Store tabs
 // render each field as a read-only labelled value (label above value, no input
@@ -248,23 +248,15 @@ const ItemDetailView: Component = () => {
                     >
                       <Statistic
                         label={t('label.units')}
-                        value={formatUnits(i().stats.stockOnHand).text}
-                        title={formatUnits(i().stats.stockOnHand).exact}
+                        value={formatUnits(i().stats.stockOnHand)}
                         href={stockHref()}
                       />
                       <Show when={i().isVaccine}>
                         <Statistic
                           label={t('label.doses')}
-                          value={
-                            formatUnits(
-                              dosesEquivalent(i().stats.stockOnHand, i().doses)
-                            ).text
-                          }
-                          title={
-                            formatUnits(
-                              dosesEquivalent(i().stats.stockOnHand, i().doses)
-                            ).exact
-                          }
+                          value={formatUnits(
+                            dosesEquivalent(i().stats.stockOnHand, i().doses)
+                          )}
                           href={stockHref()}
                         />
                       </Show>
@@ -275,18 +267,10 @@ const ItemDetailView: Component = () => {
                     >
                       <Statistic
                         label={t('label.units')}
-                        value={
-                          formatUnits(
-                            i().stats.averageMonthlyConsumption,
-                            decimalPlaces()
-                          ).text
-                        }
-                        title={
-                          formatUnits(
-                            i().stats.averageMonthlyConsumption,
-                            decimalPlaces()
-                          ).exact
-                        }
+                        value={formatUnits(
+                          i().stats.averageMonthlyConsumption,
+                          decimalPlaces()
+                        )}
                       />
                     </StatsPanel>
                     <StatsPanel
@@ -295,14 +279,9 @@ const ItemDetailView: Component = () => {
                     >
                       <Statistic
                         label={t('text.months')}
-                        value={
-                          formatMonthsOfStock(i().stats.monthsOfStockOnHand)
-                            .text
-                        }
-                        title={
-                          formatMonthsOfStock(i().stats.monthsOfStockOnHand)
-                            .exact
-                        }
+                        value={formatMonthsOfStock(
+                          i().stats.monthsOfStockOnHand
+                        )}
                       />
                     </StatsPanel>
                   </Toolbar>
@@ -378,7 +357,7 @@ const ItemDetailView: Component = () => {
                               variant="field"
                               label={t('label.doses')}
                             >
-                              {renderDisplayedNumber(formatUnits(i().doses))}
+                              <Num value={formatUnits(i().doses)} />
                             </LabelledValue>
                           </Show>
                         </FormRow>
@@ -427,17 +406,13 @@ const ItemDetailView: Component = () => {
                             variant="field"
                             label={t('label.default-pack-size')}
                           >
-                            {renderDisplayedNumber(
-                              formatUnits(i().defaultPackSize)
-                            )}
+                            <Num value={formatUnits(i().defaultPackSize)} />
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
                             label={t('label.outer-pack-size')}
                           >
-                            {renderDisplayedNumber(
-                              formatUnits(i().outerPackSize)
-                            )}
+                            <Num value={formatUnits(i().outerPackSize)} />
                           </LabelledValue>
                         </FormRow>
                         <FormRow>
@@ -445,17 +420,13 @@ const ItemDetailView: Component = () => {
                             variant="field"
                             label={t('label.volume-per-pack')}
                           >
-                            {renderDisplayedNumber(
-                              displayVolume(i().volumePerPack)
-                            )}
+                            <Num value={i().volumePerPack} volume />
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
                             label={t('label.volume-per-outer-pack')}
                           >
-                            {renderDisplayedNumber(
-                              displayVolume(i().volumePerOuterPack)
-                            )}
+                            <Num value={i().volumePerOuterPack} volume />
                           </LabelledValue>
                         </FormRow>
                         <FormRow>
@@ -463,9 +434,9 @@ const ItemDetailView: Component = () => {
                             variant="field"
                             label={t('label.weight')}
                           >
-                            {renderDisplayedNumber(
-                              formatUnits(i().weight, decimalPlaces())
-                            )}
+                            <Num
+                              value={formatUnits(i().weight, decimalPlaces())}
+                            />
                           </LabelledValue>
                         </FormRow>
                       </FormSection>
@@ -476,7 +447,7 @@ const ItemDetailView: Component = () => {
                             label={t('label.margin')}
                           >
                             {/* A percentage — its own precision, not the configured places. */}
-                            {renderDisplayedNumber(formatUnits(i().margin, 2))}
+                            <Num value={formatUnits(i().margin, 2)} />
                           </LabelledValue>
                         </FormRow>
                       </FormSection>

@@ -10,8 +10,7 @@ import {
 } from './itemResource';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import styles from './ItemSearch.module.css';
-import { displayNumber } from '../../intl/numberDisplay';
-import { renderDisplayedNumber } from '../../ui/elements/table/tableHelpers';
+import { Num } from '../../ui/elements/typography/Num';
 
 const PAGE_SIZE = 30;
 
@@ -178,8 +177,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       <span class={styles.total}>
         {/* Fixed, localised "Units" label for every item (old-app parity — the
             item's own unitName is untranslatable catalogue data). */}
-        {renderDisplayedNumber(displayNumber(item.availableUnits))}{' '}
-        {t('label.units')}
+        <Num value={item.availableUnits} /> {t('label.units')}
       </span>
     </span>
   );
