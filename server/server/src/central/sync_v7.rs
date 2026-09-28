@@ -189,9 +189,24 @@ mod test_sync_v7_server_api {
     };
     use serde_json::json;
     use service::{
-        sync::test_util_set_is_central_server,
+        sync::{
+            sync_api_pause::{remote_knows_sync_api_paused, SYNC_API_PAUSED_MESSAGE},
+            test_util_set_is_central_server,
+        },
         sync_v7::api::{APP_VERSION_HEADER, HARDWARE_ID_HEADER},
     };
+
+    /// The error a remote on this build is refused with while the sync API is paused. Test
+    /// requests carry the package version, which only reaches 3.03 (the first release that knows
+    /// `SyncApiPaused`) on the release branch, and central refuses remotes newer than itself, so
+    /// the version cannot be pinned.
+    fn paused_error_for_this_build() -> serde_json::Value {
+        if remote_knows_sync_api_paused(&Version::from_package_json()) {
+            json!("SyncApiPaused")
+        } else {
+            json!({ "ConnectionError": { "url": "", "e": SYNC_API_PAUSED_MESSAGE } })
+        }
+    }
 
     /// Precomputed bcrypt (cost 4) of `"hashed_password_value"`. Only used by
     /// the `/get_token` test; other endpoints don't read `hashed_password`.
@@ -349,13 +364,13 @@ mod test_sync_v7_server_api {
             .set_json(json!({ "cursor": 0, "batchSize": 100, "isInitialising": false }))
             .to_request();
         let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-        assert_eq!(body, json!({ "Err": "SyncApiPaused" }));
+        assert_eq!(body, json!({ "Err": paused_error_for_this_build() }));
 
         let req = authed_post("/sync_v7/patient_search")
             .set_json(json!({}))
             .to_request();
         let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
-        assert_eq!(body, json!({ "Err": "SyncApiPaused" }));
+        assert_eq!(body, json!({ "Err": paused_error_for_this_build() }));
 
         let body: serde_json::Value =
             test::call_and_read_body_json(&app, authed_post("/sync_v7/site_status").to_request())
@@ -367,7 +382,7 @@ mod test_sync_v7_server_api {
     }
 
     #[actix_rt::test]
-    async fn download_file_returns_503_while_sync_api_paused() {
+    async fn download_file_refused_while_sync_api_paused() {
         let (sp, settings, _temp_dir) = download_app_parts("sync_v7_http_download_paused").await;
         KeyValueStoreRepository::new(&sp.basic_context().unwrap().connection)
             .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
@@ -385,12 +400,16 @@ mod test_sync_v7_server_api {
             .to_request();
         let response = test::call_service(&app, req).await;
 
-        assert_eq!(
-            response.status(),
+        let expected = paused_error_for_this_build();
+        // 503 for the typed error; an older remote's connection style error is a plain 500
+        let status = if expected == json!("SyncApiPaused") {
             actix_web::http::StatusCode::SERVICE_UNAVAILABLE
-        );
+        } else {
+            actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
+        };
+        assert_eq!(response.status(), status);
         let body: serde_json::Value = test::read_body_json(response).await;
-        assert_eq!(body, json!("SyncApiPaused"));
+        assert_eq!(body, expected);
     }
 
     #[actix_rt::test]

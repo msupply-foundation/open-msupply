@@ -24,6 +24,7 @@ import {
   liveConnected,
   pollSyncStatus,
   syncPaused,
+  syncApiPaused,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
@@ -251,6 +252,15 @@ export const SyncModal: Component<{
         <Show when={syncPaused()}>
           <Alert severity="warning" testId="sync-paused-alert">
             {t('messages.sync-paused')}
+          </Alert>
+        </Show>
+
+        {/* Central only: the sync API pause. This modal reports central's own
+            runs, which the API pause doesn't stop, so without this nothing
+            outside Settings says remote sites are being refused. */}
+        <Show when={syncApiPaused()}>
+          <Alert severity="warning" testId="sync-api-paused-alert">
+            {t('messages.sync-api-paused-modal')}
           </Alert>
         </Show>
 

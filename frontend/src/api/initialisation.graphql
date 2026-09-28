@@ -89,6 +89,9 @@ query syncStatusAndQueue {
   # run starts. Rides on the post-login poll and the subscription frame so the
   # chrome cell and the modal read it from the shared store.
   isSyncPaused
+  # Central only: its sync API pause, refusing remote sites' sync. Carried the
+  # same way so the modal can say remotes are being refused.
+  isSyncApiPaused
 }
 
 subscription syncInfoUpdated {
@@ -98,6 +101,7 @@ subscription syncInfoUpdated {
     }
     numberOfRecordsInPushQueue
     isSyncPaused
+    isSyncApiPaused
   }
 }
 

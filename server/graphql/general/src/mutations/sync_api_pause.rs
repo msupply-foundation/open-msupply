@@ -16,11 +16,12 @@ pub struct SyncApiPausedNode {
 }
 
 /// Whether central's sync API is paused, refusing sync from remote sites. Always false on a remote.
+/// Readable by any signed-in user, like `isSyncPaused`, so the sync modal can show it.
 pub fn sync_api_paused_query(ctx: &Context<'_>) -> Result<bool> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::SyncInfo,
             store_id: None,
             require_central_standalone: false,
         },
@@ -45,17 +46,18 @@ pub fn set_sync_api_paused_mutation(ctx: &Context<'_>, paused: bool) -> Result<S
         .service_provider()
         .context("".to_string(), user.user_id)?;
 
-    let is_paused = set_sync_api_paused(&service_context, paused).map_err(|error| {
-        let graphql_error = match error {
-            SetSyncApiPausedError::NotACentralServer => {
-                StandardGraphqlError::BadUserInput("Not a central server".to_string())
-            }
-            SetSyncApiPausedError::DatabaseError(error) => {
-                StandardGraphqlError::InternalError(format!("{error:?}"))
-            }
-        };
-        graphql_error.extend()
-    })?;
+    let is_paused =
+        set_sync_api_paused(ctx.service_provider(), &service_context, paused).map_err(|error| {
+            let graphql_error = match error {
+                SetSyncApiPausedError::NotACentralServer => {
+                    StandardGraphqlError::BadUserInput("Not a central server".to_string())
+                }
+                SetSyncApiPausedError::DatabaseError(error) => {
+                    StandardGraphqlError::InternalError(format!("{error:?}"))
+                }
+            };
+            graphql_error.extend()
+        })?;
 
     Ok(SyncApiPausedNode { is_paused })
 }

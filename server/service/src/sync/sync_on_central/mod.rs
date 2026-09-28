@@ -6,12 +6,12 @@ use std::{
 
 use actix_multipart::form::tempfile::TempFile;
 use chrono::Utc;
+use repository::{migrations::Version, SyncFileDirection, SyncFileStatus};
 use repository::{
     Authoring, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow,
     CursorAndLimit, QueryWithData, SyncBufferRepository, SyncBufferRowInsert, SyncFileReferenceRow,
     SyncFileReferenceRowRepository, SyncVersions,
 };
-use repository::{SyncFileDirection, SyncFileStatus};
 use util::format_error;
 
 use crate::{
@@ -19,9 +19,11 @@ use crate::{
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
-        api::{validate_site_auth, CommonSyncRecord},
+        api::{validate_site_auth, CommonSyncRecord, SyncApiSettings},
         api_v6::SiteStatusV6,
-        sync_api_pause::is_sync_api_paused,
+        sync_api_pause::{
+            is_sync_api_paused, remote_knows_sync_api_paused, SYNC_API_PAUSED_MESSAGE,
+        },
         synchroniser::integrate_and_translate_sync_buffer,
         translations::{all_translators, ToSyncRecordTranslationType},
         CentralServerConfig,
@@ -40,6 +42,16 @@ use super::{
 // See ../README.md for when to increment versions!
 static MIN_VERSION: u32 = 0;
 static MAX_VERSION: u32 = 5;
+
+/// `SyncApiPaused`, or for a remote too old to read it the same news as an `OtherServerError`
+/// (see `FIRST_VERSION_WITH_SYNC_API_PAUSED`)
+fn sync_api_paused_error(sync_v5_settings: &SyncApiSettings) -> SyncParsedErrorV6 {
+    if remote_knows_sync_api_paused(&Version::from_str(&sync_v5_settings.app_version)) {
+        SyncParsedErrorV6::SyncApiPaused
+    } else {
+        SyncParsedErrorV6::OtherServerError(SYNC_API_PAUSED_MESSAGE.to_string())
+    }
+}
 
 /// Send Records to a remote open-mSupply Server
 pub async fn pull(
@@ -70,7 +82,7 @@ pub async fn pull(
 
     // Checked after version compatibility, so a remote that must upgrade is still told so
     if is_sync_api_paused(&ctx.connection)? {
-        return Err(Error::SyncApiPaused);
+        return Err(sync_api_paused_error(&sync_v5_settings));
     }
     let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
@@ -160,7 +172,7 @@ pub async fn push(
     let ctx = service_provider.basic_context()?;
 
     if is_sync_api_paused(&ctx.connection)? {
-        return Err(Error::SyncApiPaused);
+        return Err(sync_api_paused_error(&sync_v5_settings));
     }
     let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
@@ -389,7 +401,7 @@ pub async fn patient_pull(
     let ctx = service_provider.basic_context()?;
 
     if is_sync_api_paused(&ctx.connection)? {
-        return Err(Error::SyncApiPaused);
+        return Err(sync_api_paused_error(&sync_v5_settings));
     }
     let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
@@ -544,7 +556,7 @@ pub async fn download_file(
     let ctx = service_provider.basic_context()?;
 
     if is_sync_api_paused(&ctx.connection)? {
-        return Err(Error::SyncApiPaused);
+        return Err(sync_api_paused_error(&sync_v5_settings));
     }
     validate_site_auth(&ctx, &sync_v5_settings)
         .await
@@ -601,7 +613,7 @@ pub async fn upload_file(
     let ctx = service_provider.basic_context()?;
 
     if is_sync_api_paused(&ctx.connection)? {
-        return Err(Error::SyncApiPaused);
+        return Err(sync_api_paused_error(&sync_v5_settings));
     }
     validate_site_auth(&ctx, &sync_v5_settings)
         .await
@@ -780,6 +792,7 @@ mod tests {
                 api_v6::{
                     SyncBatchV6, SyncPatientPullRequestV6, SyncPullRequestV6, SyncPushRequestV6,
                 },
+                sync_api_pause::SYNC_API_PAUSED_MESSAGE,
                 test_util_set_is_central_server,
             },
             test_helpers::{setup_all_and_service_provider, ServiceTestContext},
@@ -800,15 +813,17 @@ mod tests {
             .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
             .unwrap();
 
-        let settings = || SyncApiSettings {
+        let settings_for = |app_version: &str| SyncApiSettings {
             server_url: "http://0.0.0.0:0".to_string(),
             username: "site".to_string(),
             password_sha256: "password".to_string(),
             site_uuid: "uuid".to_string(),
-            app_version: "1.0".to_string(),
+            app_version: app_version.to_string(),
             app_name: "test".to_string(),
             sync_version: "5".to_string(),
         };
+        // Pinned, not the package version: that only reaches 3.03 on the release branch
+        let settings = || settings_for("3.03.00");
 
         let pulled = pull(
             &service_provider,
@@ -822,6 +837,26 @@ mod tests {
         )
         .await;
         assert!(matches!(pulled, Err(SyncParsedErrorV6::SyncApiPaused)));
+
+        // A remote too old to read `SyncApiPaused` is told in a form it can show
+        let old_remote_pulled = pull(
+            &service_provider,
+            SyncPullRequestV6 {
+                cursor: 0,
+                batch_size: 10,
+                sync_v5_settings: settings_for("3.02.00"),
+                is_initialised: true,
+                sync_v6_version: 5,
+            },
+        )
+        .await;
+        assert_eq!(
+            old_remote_pulled.err().map(|error| error.to_string()),
+            Some(
+                SyncParsedErrorV6::OtherServerError(SYNC_API_PAUSED_MESSAGE.to_string())
+                    .to_string()
+            )
+        );
 
         let patient_pulled = patient_pull(
             &service_provider,
