@@ -107,6 +107,14 @@ pub fn ensure_partition_lookahead(
     let size = config.partition_size;
     let target_headroom = config.lookahead;
 
+    // Nothing to do: skip the loop, which locks the DEFAULT.
+    if max_upper - current_max >= target_headroom && overflow_rows == 0 {
+        return Ok(PartitionTopUp::Created {
+            partitions: 0,
+            overflow_rows: 0,
+        });
+    }
+
     let mut created = 0;
     let mut next_lower = max_upper;
     loop {
@@ -369,16 +377,21 @@ mod tests {
 
     /// Same tight starting layout but no rows. With size=2, lookahead=4:
     /// target_headroom = 4, actual = max_upper(5) - max_cursor(0) = 5, so
-    /// ensure_partition_lookahead is a no-op and creates nothing.
+    /// ensure_partition_lookahead is a no-op and creates nothing. A reader on
+    /// the DEFAULT must not cause a `LockedOut`.
     #[actix_rt::test]
     async fn test_ensure_partition_lookahead_noop_when_no_records() {
-        let (_, connection, _, _) = test_db::setup_all(
+        let (_, connection, connection_manager, _) = test_db::setup_all(
             "test_ensure_partition_lookahead_noop",
             MockDataInserts::none(),
         )
         .await;
 
         reset_to_tight_partition_layout(&connection);
+        let holder = hold_open_transaction(
+            &connection_manager,
+            "SELECT count(*) FROM changelog_p_default",
+        );
 
         let config = ChangelogPartitionConfig {
             partition_size: 2,
@@ -393,6 +406,7 @@ mod tests {
                 overflow_rows: 0
             }
         );
+        holder.release();
         assert_eq!(count_range_partitions(&connection), 2);
     }
 
