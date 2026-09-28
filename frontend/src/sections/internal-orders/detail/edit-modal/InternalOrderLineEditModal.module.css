@@ -39,10 +39,9 @@
   font-size: var(--text-sm);
 }
 
-/* The middle-panel Suggested row (spec S4): tinted a step DARKER than the
-   panel it now sits on — it used to take the inset panel's own fill, which
-   became invisible once the statistics columns gained that same fill (#617).
-   One step up the group scale keeps it reading as "the requested block's
+/* The middle-panel Suggested row (spec S4): tinted one step up the group
+   scale (`--bg-group-main`) so it reads against the inset panel's own fill.
+   That keeps it reading as "the requested block's
    figure" without introducing a second accent. The negative inline margin lets
    the tint extend slightly past both sides, while the matching inline padding
    keeps the row's text aligned with the column's other (un-highlighted) rows. */
@@ -81,9 +80,9 @@
   /* Cap the region and centre it as a cohesive block, so the charts don't
      sprawl across the modal (they'd read as uncentered). Wide enough for the
      two ~29rem charts + gap + padding side by side — which is why this editor
-     is a 78rem card rather than the 56rem `large` default: a ~53rem body
-     can't reach this cap, so the pair would stack (#771); the 78rem card's
-     75rem body clears it (#617). */
+     is a card at the wide measure (80rem) rather than the 56rem `large`
+     default: a ~53rem body can't reach this cap, so the pair would stack
+     (#771); the wide card's body clears it (#617). */
   inline-size: 100%;
   max-inline-size: 64rem;
   margin-inline: auto;

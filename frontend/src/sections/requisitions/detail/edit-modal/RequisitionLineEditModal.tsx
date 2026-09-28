@@ -725,14 +725,12 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
       size={workingSize() ? 'full' : 'auto'}
       // The full-bleed SHEET, like the other line editors — its three-column
       // figure grid wants ~50rem of basis before gaps, more than a 56rem card's
-      // body. On a large monitor it no longer spreads: `full` carries the
-      // shared 90rem ceiling (Dialog.module.css), and the columns inside are
-      // capped and centred, so labels stay next to their values (#617).
+      // body. `full` is bounded by `--measure-sheet`, and the columns inside
+      // are capped and centred, so labels stay next to their values (#617).
       //
-      // A card sized to the columns (78/84rem) was tried under #617 and
-      // reverted: a card's height stops at 80vh, which on a LANDSCAPE TABLET
-      // (1280x800, iPad Pro 11) pushed the requisition's stats tabs below the
-      // fold where the sheet — 100vh less a 2rem gutter — shows them.
+      // Not a card: its content is tall, and a card's height stops at 80vh,
+      // which on a LANDSCAPE TABLET (1280x800, iPad Pro 11) puts the stats
+      // tabs below the fold; the sheet (100vh less a 2rem gutter) shows them.
       //
       // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
       // command-palette-shaped card at the standard create-modal width (the
