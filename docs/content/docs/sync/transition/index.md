@@ -1,8 +1,7 @@
 +++
 title = "Living with V5, V6 and V7"
 weight = 40
-sort_by = "weight"
-template = "docs/section.html"
+template = "docs/page.html"
 +++
 
 # Living with V5, V6 and V7

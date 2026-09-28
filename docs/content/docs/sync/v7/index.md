@@ -1,8 +1,7 @@
 +++
 title = "Sync V7"
 weight = 30
-sort_by = "weight"
-template = "docs/section.html"
+template = "docs/page.html"
 +++
 
 # Introduction {#introduction}
