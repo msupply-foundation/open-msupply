@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { setDictionaries, setLocale } from '@/intl/intl';
+import commonEn from '@/intl/locales/en/common.json';
 import { deleteEach, outcomeOf, refusalReason } from './refusals';
+
+// The refusal copy is the behaviour, so a real dictionary is seeded (as
+// api/rejection.test.ts does) — without it `server-error.*` falls back to the
+// sentence-cased variant name and the assertions would prove nothing.
+setDictionaries({ en: commonEn });
+setLocale('en');
 
 // Anchors: spec/asset-catalogue/cases — OMS-REG-CAT-09.15 / 03.33 (the
 // off-central refusal), OMS-REG-CAT-09.4–.6 (the in-use guard and a mixed bulk
@@ -14,15 +22,20 @@ const error = (details: string, message = 'Bad user input') => ({
 describe('OMS-REG-CAT-09.4 — an in-use item is refused with its reason', () => {
   it('maps AssetCatalogueItemInUse to the in-use message', () => {
     expect(refusalReason([error('AssetCatalogueItemInUse')])).toBe(
-      'error.asset-catalogue-item-in-use'
+      'Equipment uses this catalogue item, so it cannot be deleted'
     );
   });
   it('maps a vanished record (item or reason) to not found', () => {
     expect(refusalReason([error('AssetCatalogueItemDoesNotExist')])).toBe(
-      'messages.record-not-found'
+      'This catalogue item no longer exists'
     );
     expect(refusalReason([error('ReasonDoesNotExist')])).toBe(
-      'messages.record-not-found'
+      'This log reason no longer exists'
+    );
+  });
+  it('names a reason id already taken (the reason create)', () => {
+    expect(refusalReason([error('AssetLogReasonAlreadyExists')])).toBe(
+      'This log reason already exists'
     );
   });
 });
@@ -31,7 +44,7 @@ describe('OMS-REG-CAT-09.15 / OMS-REG-CAT-03.33 — a write off the central serv
   it('maps the wrapper refusal', () => {
     expect(
       refusalReason([error('Not a central server', 'Internal error')])
-    ).toBe('auth.not-a-central-server');
+    ).toBe('Operation is only permitted on central server');
   });
 });
 
@@ -61,13 +74,11 @@ describe('OMS-REG-CAT-09.5 / .6 / OMS-REG-CAT-03.12 — each selected record is 
   it('a refusal of one leaves the others deleted, and both sides are reported', async () => {
     const summary = await deleteEach(['a', 'in-use', 'b'], async record =>
       record === 'in-use'
-        ? { kind: 'refused', reason: 'error.asset-catalogue-item-in-use' }
+        ? { kind: 'refused', reason: 'in use' }
         : { kind: 'done' }
     );
     expect(summary.deleted).toEqual(['a', 'b']);
-    expect(summary.refused).toEqual([
-      { record: 'in-use', reason: 'error.asset-catalogue-item-in-use' },
-    ]);
+    expect(summary.refused).toEqual([{ record: 'in-use', reason: 'in use' }]);
     expect(summary.failed).toBe(false);
   });
 });

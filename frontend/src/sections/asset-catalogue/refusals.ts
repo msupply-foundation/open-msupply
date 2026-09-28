@@ -1,4 +1,3 @@
-import { t } from '@/intl';
 import {
   describeErrors,
   isForbidden,
@@ -6,6 +5,8 @@ import {
   type GraphqlErrorItem,
   type GraphqlResult,
 } from '@/api/graphql';
+import { rejectionFrom } from '@/api/rejection';
+import { mapInBatches } from './batches';
 
 // The writes here refuse through TOP-LEVEL GraphQL errors, not the unions their
 // schema declares (spec/asset-catalogue › contract § deleting catalogue items,
@@ -24,26 +25,15 @@ export type WriteOutcome =
   // Transport / unexpected — the global modal has already said so.
   | { kind: 'failed' };
 
-const details = (errors: GraphqlErrorItem[]): string[] =>
-  errors.map(e => String(e.extensions?.details ?? ''));
-
-/** The user-facing reason for a refusal's details, or the server's own text. */
-export const refusalReason = (errors: GraphqlErrorItem[]): string => {
-  const all = details(errors);
-  if (all.some(d => d.includes('AssetCatalogueItemInUse')))
-    return t('error.asset-catalogue-item-in-use');
-  if (
-    all.some(
-      d =>
-        d.includes('AssetCatalogueItemDoesNotExist') ||
-        d.includes('ReasonDoesNotExist')
-    )
-  )
-    return t('messages.record-not-found');
-  if (all.some(d => d.includes('Not a central server')))
-    return t('auth.not-a-central-server');
-  return describeErrors(errors);
-};
+/** The user-facing reason for a refusal: the house `rejectionFrom`, which
+ *  translates the bare variant name in `extensions.details` through
+ *  `server-error.<Variant>`. The central-server wrapper's refusal is a plain
+ *  sentence rather than a variant, so it is recovered as one by name. A dump
+ *  it can't name shows the server's own text. */
+export const refusalReason = (errors: GraphqlErrorItem[]): string =>
+  rejectionFrom(errors, describeErrors(errors), detail =>
+    detail.includes('Not a central server') ? 'NotACentralServer' : undefined
+  ).message;
 
 /** Classify a write's result. A Forbidden is kept apart so the caller routes
  *  it to the permission-denied modal, as every other Forbidden is. */
@@ -77,7 +67,8 @@ export const deleteEach = async <R>(
   records: readonly R[],
   deleteOne: (record: R) => Promise<WriteOutcome>
 ): Promise<DeleteSummary<R>> => {
-  const outcomes = await Promise.all(records.map(deleteOne));
+  // A batch at a time, as the import sends its rows.
+  const outcomes = await mapInBatches(records, deleteOne);
   const summary: DeleteSummary<R> = { deleted: [], refused: [], failed: false };
   outcomes.forEach((outcome, index) => {
     const record = records[index]!;

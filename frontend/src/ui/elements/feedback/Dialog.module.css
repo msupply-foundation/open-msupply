@@ -14,9 +14,6 @@
   --dialog-min-body-height: 0;
   /* holdHeight's measured floor — set inline, read only under [data-hold-height]. */
   --dialog-held-height: 0px;
-  --dialog-min-height: 0px;
-
-  min-block-size: var(--dialog-min-height);
 
   /* Fixed width (steady box), clamped down to the viewport on narrow screens. */
   width: min(var(--dialog-width), calc(100vw - 2rem));
@@ -76,7 +73,7 @@
    below raises it, since a sheet has no frame to preserve. */
 .large {
   width: min(var(--dialog-width), calc(100vw - 4rem));
-  min-block-size: max(60vh, var(--dialog-min-height));
+  min-block-size: 60vh;
   max-block-size: 80vh;
 }
 

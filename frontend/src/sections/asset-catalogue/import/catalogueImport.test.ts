@@ -11,6 +11,7 @@ const {
   distinctPropertyKeys,
   errorMessage,
   importFilename,
+  importRowText,
   insertRefusal,
   parseCatalogueRows,
   rowsCsv,
@@ -348,5 +349,92 @@ describe('OMS-REG-CAT-02.30 / .15 — the downloadable rows', () => {
       'A,B,extra,label.error-message',
       '1,2,x,"first, second"',
     ]);
+  });
+});
+
+describe('OMS-REG-CAT-02.14 / .8 / .10 / .23 — a blank class, category or type is missing, not unknown', () => {
+  it.each([
+    [5, 'error.field-must-be-specified(label.class)'],
+    [6, 'error.field-must-be-specified(label.category)'],
+    [2, 'error.field-must-be-specified(label.type)'],
+  ])('column %i blank', (index, message) => {
+    expect(errorsOf(withCell(index, ''))).toEqual([message]);
+  });
+});
+
+describe('rules § bulk import — a property is read from the column headed by its NAME as well as its key', () => {
+  it('a column headed "Storage capacity +5 °C (litres)" fills storage_capacity_5c', () => {
+    const header = HEADER.map(h =>
+      h === 'storage_capacity_5c' ? 'Storage capacity +5 °C (litres)' : h
+    );
+    const file = parseCatalogueRows([header, withCell(7, '3')], lookups);
+    expect(file.rows[0]!.properties).toEqual(
+      Object.fromEntries([['storage_capacity_5c', 3]])
+    );
+  });
+});
+
+describe('rules § bulk import — a yes/no property', () => {
+  const withBoolean: Lookups = {
+    ...lookups,
+    properties: [
+      ...lookups.properties,
+      {
+        id: 'p6',
+        key: 'needs_power',
+        name: 'Needs power',
+        valueType: 'BOOLEAN',
+        allowedValues: null,
+      },
+    ],
+  };
+  const read = (value: string) =>
+    parseCatalogueRows(
+      [
+        [...HEADER, 'needs_power'],
+        [...good, value],
+      ],
+      withBoolean
+    ).rows[0]!.properties['needs_power'];
+  it.each(['true', 'TRUE', 'yes', 'Yes'])('%s reads as yes', value => {
+    expect(read(value)).toBe('true');
+  });
+  it.each(['no', 'false', '1', 'y'])('%s reads as no', value => {
+    expect(read(value)).toBe('false');
+  });
+});
+
+describe('OMS-REG-CAT-02.26 — numbers in a comma file and in a semicolon (decimal-comma) file', () => {
+  const read = (value: string, decimalComma: boolean) =>
+    parseCatalogueRows([HEADER, withCell(7, value)], lookups, decimalComma)
+      .rows[0]!.properties['storage_capacity_5c'];
+  it('a comma file reads digit groups', () => {
+    expect(read('1,500', false)).toBe(1500);
+  });
+  it('a semicolon file reads the comma as the decimal separator', () => {
+    expect(read('1,5', true)).toBe(1.5);
+    expect(read('1,500', true)).toBe(1.5);
+  });
+});
+
+describe("the review's search matches a row by its item cells and its message", () => {
+  it('in any case', () => {
+    const row = parse(good).rows[0]!;
+    expect(
+      importRowText(row, 'A record with this Code already exists')
+    ).toContain('maker');
+    expect(
+      importRowText(row, 'A record with this Code already exists')
+    ).toContain('already exists');
+  });
+});
+
+describe('an insert error the generated union does not list is named, never thrown', () => {
+  it('falls back to its description', () => {
+    const response = {
+      __typename: 'InsertAssetCatalogueItemError',
+      error: { __typename: 'DatabaseError', description: 'Database error' },
+    } as unknown as Parameters<typeof insertRefusal>[0];
+    expect(insertRefusal(response)).toBe('Database error');
   });
 });

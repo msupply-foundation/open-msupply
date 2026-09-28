@@ -1,7 +1,7 @@
 import { t, type LocaleKey } from '@/intl';
 import { toCsv } from '@/domain/reportFiles';
 import { parseImportDate, parseImportNumber } from '@/domain/csvImport';
-import { exhaustiveCheck } from '@/typeHelpers';
+import { mapInBatches, WRITE_CONCURRENCY } from '../batches';
 import type {
   AssetPropertiesResult,
   InsertAssetCatalogueItemResult,
@@ -106,7 +106,8 @@ const DATE = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
 const readProperty = (
   property: Property,
   value: string,
-  row: ImportRow
+  row: ImportRow,
+  decimalComma: boolean
 ): void => {
   if (property.allowedValues) {
     // Stored comma-and-space separated ("Integrated, External, None"); each
@@ -118,7 +119,7 @@ const readProperty = (
   switch (property.valueType) {
     case 'INTEGER':
     case 'FLOAT': {
-      const number = parseImportNumber(value);
+      const number = parseImportNumber(value, decimalComma);
       if (number === undefined) row.errors.push(invalid(property.name, value));
       else row.properties[property.key] = number;
       return;
@@ -160,7 +161,10 @@ const resolve = (
  *  skipped. The upload checks are the UI's alone — the server repeats none. */
 export const parseCatalogueRows = (
   table: readonly string[][],
-  lookups: CatalogueLookups
+  lookups: CatalogueLookups,
+  /** A `;`-separated file comes from a decimal-comma locale, where `1,5` is
+   *  one and a half — the sibling imports read it the same way. */
+  decimalComma = false
 ): ParsedFile => {
   const header = table[0] ?? [];
   const columnOf = (property: Property): number => {
@@ -200,7 +204,7 @@ export const parseCatalogueRows = (
     for (const property of lookups.properties) {
       const index = columnOf(property);
       const value = index === -1 ? '' : cell(index);
-      if (value.trim()) readProperty(property, value, row);
+      if (value.trim()) readProperty(property, value, row, decimalComma);
     }
     return row;
   });
@@ -241,14 +245,19 @@ export const insertRefusal = (response: InsertResponse): string | undefined => {
         : error.description;
     case 'UniqueCombinationViolation':
       return t('error.manufacturer-model-unique');
-    default:
-      return exhaustiveCheck(error);
+    default: {
+      // The generated union omits members the schema's error interface has
+      // (InternalError, DatabaseError), so this is not truly exhaustive: an
+      // unexpected member is named by its own description, never thrown.
+      const unexpected: { description?: string } = error;
+      return unexpected.description ?? t('messages.unknown-error');
+    }
   }
 };
 
 /** Rows are sent this many at a time; nothing batches or rolls back across
  *  them (contract § bulk import). */
-export const IMPORT_CONCURRENCY = 10;
+export const IMPORT_CONCURRENCY = WRITE_CONCURRENCY;
 
 export interface RunProgress {
   sent: number;
@@ -269,22 +278,34 @@ export const runImport = async (
   insertOne: (row: ImportRow) => Promise<string | undefined>,
   onProgress: (progress: RunProgress) => void = () => {}
 ): Promise<RefusedRow[]> => {
-  const reasons: (string | undefined)[] = [];
-  for (let start = 0; start < rows.length; start += IMPORT_CONCURRENCY) {
-    const chunk = rows.slice(start, start + IMPORT_CONCURRENCY);
-    const results = await Promise.all(chunk.map(insertOne));
-    reasons.push(...results);
+  const reasons = await mapInBatches(rows, insertOne, sofar =>
     onProgress({
-      sent: reasons.length,
+      sent: sofar.length,
       total: rows.length,
-      refused: reasons.filter(r => r !== undefined).length,
-    });
-  }
+      refused: sofar.filter(r => r !== undefined).length,
+    })
+  );
   return rows.flatMap((row, index) => {
     const reason = reasons[index];
     return reason === undefined ? [] : [{ row, reason }];
   });
 };
+
+/** What the review's search matches a row by: its seven item cells and its
+ *  message, in any case (the equipment import's review searches the same way). */
+export const importRowText = (row: ImportRow, message: string): string =>
+  [
+    row.subCatalogue,
+    row.code,
+    row.type,
+    row.manufacturer,
+    row.model,
+    row.className,
+    row.category,
+    message,
+  ]
+    .join(' ')
+    .toLowerCase();
 
 /** A row's failures as one comma-separated message. */
 export const errorMessage = (errors: readonly string[]): string =>

@@ -17,6 +17,7 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import { getBooleanCell } from '@/ui/elements/table/BooleanCell';
+import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 import {
   FilterSelect,
   FilterBar,
@@ -147,19 +148,17 @@ const LogReasonsList: Component = () => {
     {
       c: { key: 'reason' },
       header: () => t('label.reason'),
-      meta: { headerPosition: 'primary' },
+      ...getCellDefinition('reason', { headerPosition: 'primary' }),
     },
     {
       c: { key: 'commentsRequired' },
-      header: () => (
-        <span title={t('description.comments-required')}>
-          {t('label.comments-required')}
-        </span>
+      header: () => t('label.comments-required'),
+      ...getBooleanCell<LogReasonRow>(
+        { display: 'check', label: t('label.comments-required') },
+        // The header's explanation, where every column declares one (its
+        // tooltip render is the table's own follow-up — columnTypes.ts).
+        { description: t('description.comments-required') }
       ),
-      ...getBooleanCell<LogReasonRow>({
-        display: 'check',
-        label: t('label.comments-required'),
-      }),
     },
   ];
 

@@ -1,4 +1,5 @@
-import { t, type LocaleKey } from '@/intl';
+import { t } from '@/intl';
+import { ASSET_STATUSES, statusLabelKey } from '@/domain/asset';
 import type {
   AssetLogReasonsResult,
   InsertAssetLogReasonVariables,
@@ -12,28 +13,12 @@ export type LogReasonRow =
   AssetLogReasonsResult['assetLogReasons']['nodes'][number];
 export type AssetLogStatus = LogReasonRow['assetLogStatus'];
 
-/** The six statuses, in the order every surface lists them — the server's own
- *  status order (its sort key orders by this same internal text). */
-export const STATUSES: readonly AssetLogStatus[] = [
-  'DECOMMISSIONED',
-  'FUNCTIONING',
-  'FUNCTIONING_BUT_NEEDS_ATTENTION',
-  'NOT_FUNCTIONING',
-  'NOT_IN_USE',
-  'UNSERVICEABLE',
-];
-
-const STATUS_KEY: Record<AssetLogStatus, LocaleKey> = {
-  DECOMMISSIONED: 'status.decommissioned',
-  FUNCTIONING: 'status.functioning',
-  FUNCTIONING_BUT_NEEDS_ATTENTION: 'status.functioning-but-needs-attention',
-  NOT_FUNCTIONING: 'status.not-functioning',
-  NOT_IN_USE: 'status.not-in-use',
-  UNSERVICEABLE: 'status.unserviceable',
-};
+/** The six statuses, in the order every surface lists them — the Asset
+ *  domain module's, shared with the equipment register. */
+export const STATUSES: readonly AssetLogStatus[] = ASSET_STATUSES;
 
 export const statusLabel = (status: AssetLogStatus): string =>
-  t(STATUS_KEY[status]);
+  t(statusLabelKey(status));
 
 export const statusOptions = () =>
   STATUSES.map(value => ({ value, label: statusLabel(value) }));
