@@ -60,27 +60,28 @@ pub fn set_sync_api_paused(
         return Err(SetSyncApiPausedError::NotACentralServer);
     }
 
-    ctx.connection
-        .transaction_sync(|connection| {
-            // Unchanged: nothing to write or log. Read inside the transaction so two admins
-            // toggling at once cannot both get past it.
-            if is_sync_api_paused(connection)? == paused {
-                return Ok(());
-            }
-            KeyValueStoreRepository::new(connection)
-                .set_bool(KeyType::SettingsSyncApiIsPaused, Some(paused))?;
-            let username = UserAccountRowRepository::new(connection)
-                .find_one_by_id(&ctx.user_id)?
-                .map(|user| user.username)
-                .unwrap_or_else(|| ctx.user_id.clone());
-            let action = if paused { "paused" } else { "resumed" };
-            system_log(
-                connection,
-                SystemLogType::SyncApiPauseChanged,
-                &format!("Sync API {action} by {username}"),
-            )
-        })
-        .map_err(|error| error.to_inner_error())?;
+    // Unchanged: nothing to write or log (as `set_sync_paused`)
+    let already = is_sync_api_paused(&ctx.connection)?;
+
+    if already != paused {
+        let username = UserAccountRowRepository::new(&ctx.connection)
+            .find_one_by_id(&ctx.user_id)?
+            .map(|user| user.username)
+            .unwrap_or_else(|| ctx.user_id.clone());
+        let action = if paused { "paused" } else { "resumed" };
+
+        ctx.connection
+            .transaction_sync(|connection| {
+                KeyValueStoreRepository::new(connection)
+                    .set_bool(KeyType::SettingsSyncApiIsPaused, Some(paused))?;
+                system_log(
+                    connection,
+                    SystemLogType::SyncApiPauseChanged,
+                    &format!("Sync API {action} by {username}"),
+                )
+            })
+            .map_err(|error| error.to_inner_error())?;
+    }
 
     // Emit even when unchanged, as `set_sync_paused`: a client that toggled expects a fresh frame
     service_provider
