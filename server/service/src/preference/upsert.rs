@@ -39,6 +39,7 @@ pub struct UpsertPreferences {
     pub backdating: Option<BackdatingData>,
     pub receive_payments_from_prescriptions: Option<bool>,
     pub global_logo: Option<String>,
+    pub decimal_places_for_numbers: Option<i32>,
 
     // Store preferences
     pub blind_stocktake: Option<Vec<StorePrefUpdate<bool>>>,
@@ -96,6 +97,7 @@ pub fn upsert_preferences(
         backdating: backdating_input,
         receive_payments_from_prescriptions: receive_payments_from_prescriptions_input,
         global_logo: global_logo_input,
+        decimal_places_for_numbers: decimal_places_for_numbers_input,
 
         // Store preferences
         blind_stocktake: blind_stocktake_input,
@@ -152,6 +154,7 @@ pub fn upsert_preferences(
         backdating,
         receive_payments_from_prescriptions,
         global_logo,
+        decimal_places_for_numbers,
 
         // Store preferences
         blind_stocktake,
@@ -267,6 +270,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = global_logo_input {
                 global_logo.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = decimal_places_for_numbers_input {
+                decimal_places_for_numbers.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
