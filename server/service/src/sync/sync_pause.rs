@@ -43,22 +43,28 @@ pub fn set_sync_paused(
     user_id: &str,
     paused: bool,
 ) -> Result<bool, RepositoryError> {
-    let already = service_provider.settings.is_sync_paused(ctx)?;
+    // The compare, the flag write and the log row happen together, so the flag and the log
+    // cannot disagree if one write fails. The settings service works on `ctx.connection`, the
+    // connection this transaction runs on.
+    ctx.connection
+        .transaction_sync(|_| {
+            if service_provider.settings.is_sync_paused(ctx)? == paused {
+                return Ok(());
+            }
+            service_provider.settings.set_sync_paused(ctx, paused)?;
 
-    if already != paused {
-        service_provider.settings.set_sync_paused(ctx, paused)?;
-
-        let username = UserAccountRowRepository::new(&ctx.connection)
-            .find_one_by_id(user_id)?
-            .map(|user| user.username)
-            .unwrap_or_else(|| user_id.to_string());
-        let message = if paused {
-            format!("Sync paused by {username}")
-        } else {
-            format!("Sync resumed by {username}")
-        };
-        system_log(&ctx.connection, SystemLogType::SyncPauseChanged, &message)?;
-    }
+            let username = UserAccountRowRepository::new(&ctx.connection)
+                .find_one_by_id(user_id)?
+                .map(|user| user.username)
+                .unwrap_or_else(|| user_id.to_string());
+            let message = if paused {
+                format!("Sync paused by {username}")
+            } else {
+                format!("Sync resumed by {username}")
+            };
+            system_log(&ctx.connection, SystemLogType::SyncPauseChanged, &message)
+        })
+        .map_err(|error| error.to_inner_error())?;
 
     // Emit even when unchanged: a client that toggled expects a fresh frame either way.
     service_provider
