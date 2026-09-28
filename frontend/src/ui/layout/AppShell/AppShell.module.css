@@ -41,8 +41,13 @@
   gap: var(--space-4);
   row-gap: var(--space-1);
   min-block-size: 2.25rem;
-  padding-block: var(--space-1);
-  padding-inline: var(--space-4);
+  /* Named so a cell that runs edge to edge (the sync cell, SyncStatus.module.css)
+     can cancel the padding exactly rather than restate it. */
+  --footer-pad-block: var(--space-1);
+  --footer-pad-inline: var(--space-4);
+
+  padding-block: var(--footer-pad-block);
+  padding-inline: var(--footer-pad-inline);
   /* Matches Open mSupply's AppFooter: on a remote site the bar is the menu
      surface (--bg-drawer = OMS background.menu) with muted grey text/icons
      (--gray-main = OMS gray.main); on a central server it flips to brand
