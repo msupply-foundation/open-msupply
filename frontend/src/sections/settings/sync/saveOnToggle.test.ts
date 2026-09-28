@@ -23,8 +23,8 @@ const setup = (initial: boolean) =>
     return { ...toggleState, ...deferred, stored, setStored, dispose };
   });
 
-// The Pause sync API switch (settings › Pause sync API): it saves on flip, and
-// a failed save must not leave it showing a state that was never stored.
+// The settings pause switches save on flip, and a failed save must not leave
+// one showing a state that was never stored.
 describe('createSaveOnToggle', () => {
   it('shows the stored value until flipped', () => {
     const s = setup(true);
