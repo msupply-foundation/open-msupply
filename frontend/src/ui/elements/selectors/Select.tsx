@@ -49,7 +49,8 @@ interface SelectProps {
    * empties its bound state. Requires controlled usage (`value`): under
    * `clearable` an absent `value` reads as "no selection" rather than
    * uncontrolled. Default false — most selects are a must-have pick (a
-   * direction, a rows-per-page count) where emptiness is meaningless.
+   * direction, a rows-per-page count) where emptiness is meaningless. Hidden
+   * while `disabled`.
    */
   clearable?: boolean;
   /** Called when the clear affordance is activated (see `clearable`). */
@@ -151,7 +152,9 @@ export const Select = (props: SelectProps) => {
     props.clearable
       ? (findOption(props.value) ?? null)
       : findOption(props.value);
-  const showClear = () => Boolean(props.clearable) && !!findOption(props.value);
+  // A disabled select cannot be cleared, so it offers no clear affordance.
+  const showClear = () =>
+    Boolean(props.clearable) && !props.disabled && !!findOption(props.value);
 
   // What Kobalte sees: the caller's options, or the disabled sentinel when it
   // has none (see NO_OPTIONS_VALUE). Resolution of `value` still runs against

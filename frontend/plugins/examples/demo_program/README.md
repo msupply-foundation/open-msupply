@@ -12,7 +12,7 @@ The reference **form plugin**: one small program, modelled on an HIV care progra
 
 `DemoEncounter` carries a breaking change between its versions. v1 ([`forms/DemoEncounter/v1.ts`](forms/DemoEncounter/v1.ts), the archived type `DemoEncounterV1`) stored weight and height flat under `extension.demo`, allowed the regimen `LEGACY_TRIAL`, and had adherence notes. v2 ([`forms/DemoEncounter/type.ts`](forms/DemoEncounter/type.ts)) moves the vitals under `vitals`, retires that value and removes the notes field. `v1.json` is frozen; only `v2.json` is regenerated from its type.
 
-The migration ([`forms/DemoEncounter/migrations.ts`](forms/DemoEncounter/migrations.ts)) covers all three differences: the vitals are moved, a `LEGACY_TRIAL` regimen is unresolved (cleared and shown as previously recorded until a current regimen is chosen), and the adherence notes are kept (left in the document and listed read-only after the form). [`fixtures/v1.json`](forms/DemoEncounter/fixtures/v1.json) is the v1 encounter the build migrates and validates.
+The migration ([`forms/DemoEncounter/migrations.ts`](forms/DemoEncounter/migrations.ts)) covers all three differences: the vitals are moved, a `LEGACY_TRIAL` regimen is unresolved (cleared and shown as previously recorded, under its v1 label "Legacy trial", until a current regimen is chosen), and the adherence notes are kept (left in the document and listed read-only after the form). [`fixtures/v1.json`](forms/DemoEncounter/fixtures/v1.json) is the v1 encounter the build migrates and validates.
 
 Its event rules ([`forms/DemoEncounter/events.json`](forms/DemoEncounter/events.json)) all write to the enrolment:
 

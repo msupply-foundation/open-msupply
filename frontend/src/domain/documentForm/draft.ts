@@ -19,6 +19,7 @@ import {
   type FieldSchemaInfo,
   type JsonSchema,
 } from './schemaNode';
+import type { UnresolvedValue } from './migration';
 import type { ValidateDocument } from './validation';
 
 /**
@@ -60,7 +61,7 @@ export interface DraftController<T> {
    * Replaces the document, making the form pristine. `unresolved` carries
    * the values a migration cleared, by the path they were cleared from.
    */
-  reset: (seed: T, unresolved?: Record<string, unknown>) => void;
+  reset: (seed: T, unresolved?: Record<string, UnresolvedValue>) => void;
   /** A plain copy of the document, for the save. */
   snapshot: () => T;
   isDirty: Accessor<boolean>;
@@ -128,7 +129,7 @@ export const createDraft = <T extends object>(
   const [store, setStore] = createStore<Record<string, unknown>>({});
   const [seed, setSeed] = createSignal<unknown>({});
   const [unresolvedValues, setUnresolvedValues] = createSignal<
-    Record<string, unknown>
+    Record<string, UnresolvedValue>
   >({});
   // Bumped on every write. Validation and the dirty check read the whole
   // document through `unwrap`, which the store cannot track, so they depend on
@@ -160,7 +161,7 @@ export const createDraft = <T extends object>(
         });
       }
     }
-    for (const [path, value] of Object.entries(unresolvedValues())) {
+    for (const [path, old] of Object.entries(unresolvedValues())) {
       if (!isEmpty(getAt(unwrap(store), path))) continue;
       if (found.some(f => f.id === path)) continue;
       found.push({
@@ -168,7 +169,7 @@ export const createDraft = <T extends object>(
         label: labelFor(path),
         failed: true,
         message: t('error.document-previously-recorded', {
-          value: displayValue(value),
+          value: old.label?.() ?? displayValue(old.value),
         }),
       });
     }
@@ -199,7 +200,9 @@ export const createDraft = <T extends object>(
       const schema = options.schema();
       const base = options.baseSchema?.();
       const own = schema ? fieldSchemaInfo(schema.jsonSchema, path) : undefined;
-      const fallback = base ? fieldSchemaInfo(base.jsonSchema, path) : undefined;
+      const fallback = base
+        ? fieldSchemaInfo(base.jsonSchema, path)
+        : undefined;
       if (!own || !fallback) return own ?? fallback;
       return {
         required: own.required || fallback.required,
@@ -208,7 +211,7 @@ export const createDraft = <T extends object>(
       };
     },
     errorFor: path => validation.errorFor(path),
-    unresolved: path => unresolvedValues()[path],
+    unresolved: path => unresolvedValues()[path]?.value,
     readOnly: () => options.readOnly?.() ?? false,
   };
 

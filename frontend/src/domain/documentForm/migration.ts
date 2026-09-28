@@ -31,19 +31,44 @@ export type JsonScalar = string | number | boolean | null;
 /**
  * The escape hatch: runs after the map, on the migrated copy, and edits it in
  * place. `unresolve` clears a path and records the value it held, as the
- * map's `unresolved` does.
+ * map's `unresolved` does, with the label to show it under when given.
  */
 export type MigrationTransform = (
   data: Record<string, unknown>,
-  unresolve: (path: string, oldValue: unknown) => void
+  unresolve: (path: string, oldValue: unknown, label?: () => string) => void
 ) => void;
+
+/**
+ * The old values a coverage map marks unresolved at one path: a list, shown
+ * as stored; each retired value with its label, shown under the label; or
+ * `'any'`, whatever the path holds (a changed type).
+ */
+export type UnresolvedValues =
+  readonly JsonScalar[] | Readonly<Record<string, () => string>> | 'any';
+
+/** The retired values an `unresolved` entry names, or `'any'`. */
+export const retiredValues = (
+  values: UnresolvedValues
+): readonly JsonScalar[] | 'any' =>
+  values === 'any' || Array.isArray(values)
+    ? (values as readonly JsonScalar[] | 'any')
+    : Object.keys(values);
+
+/** A value a migration cleared, as the form shows it. */
+export interface UnresolvedValue {
+  value: unknown;
+  /** Its name, where the migration gives one; else the value is shown. */
+  label?: () => string;
+}
 
 /**
  * One migration step, typed against `T`, the document type it migrates TO
  * (usually the current one). Written through `defineMigration<T>(…)`.
  */
 export interface Migration<T extends object> {
-  /** The schema version it migrates from: its 1-based position in `versions`. */
+  /**
+   * The schema version it migrates from: its 1-based position in `versions`.
+   */
   from: number;
   /**
    * The version it migrates to; `from + 1` when absent. Greater for a step
@@ -62,9 +87,11 @@ export interface Migration<T extends object> {
    * Current path → the old values the current schema rejects, or `'any'` to
    * clear whatever the path holds (a changed type). The value is cleared and
    * recorded against the path, and the form shows it as previously recorded
-   * until a current value is chosen.
+   * until a current value is chosen. Naming each value with a label
+   * (`{ LEGACY_TRIAL: () => t('regimen.LEGACY_TRIAL') }`) shows it under that
+   * name, since the current form's options no longer label it.
    */
-  unresolved?: { readonly [P in Path<T>]?: readonly JsonScalar[] | 'any' };
+  unresolved?: { readonly [P in Path<T>]?: UnresolvedValues };
   /**
    * Old path → its label. The value stays in the document, round-trips on
    * save, and is listed read-only at the end of the form under the label.
@@ -84,7 +111,7 @@ export interface MigrationStep {
   readonly to?: number;
   readonly moved?: Readonly<Record<string, string>>;
   readonly mapped?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
-  readonly unresolved?: Readonly<Record<string, readonly JsonScalar[] | 'any'>>;
+  readonly unresolved?: Readonly<Record<string, UnresolvedValues>>;
   readonly kept?: Readonly<Record<string, () => string>>;
   readonly dropped?: readonly string[];
   readonly transform?: MigrationTransform;
@@ -97,7 +124,7 @@ export const stepTarget = (step: MigrationStep): number =>
 export interface MigrationResult {
   data: Record<string, unknown>;
   /** Current path → the value a step cleared from it. */
-  unresolved: Record<string, unknown>;
+  unresolved: Record<string, UnresolvedValue>;
 }
 
 const isUnder = (path: string, prefix: string): boolean =>
@@ -122,7 +149,7 @@ export const movedPath = (
 const applyStep = (
   data: Record<string, unknown>,
   step: MigrationStep,
-  unresolved: Record<string, unknown>
+  unresolved: Record<string, UnresolvedValue>
 ): void => {
   // Every moved value is read before any is written, so two paths that swap
   // places do not overwrite each other.
@@ -150,16 +177,23 @@ const applyStep = (
     }
   }
 
-  const unresolve = (path: string, oldValue: unknown) => {
-    unresolved[path] = oldValue;
+  const unresolve = (path: string, oldValue: unknown, label?: () => string) => {
+    unresolved[path] = label ? { value: oldValue, label } : { value: oldValue };
     setAt(data, path, undefined);
   };
   for (const [path, values] of Object.entries(step.unresolved ?? {})) {
     const value = getAt(data, path);
     if (value === undefined) continue;
-    if (values === 'any' || values.includes(value as JsonScalar)) {
-      unresolve(path, value);
-    }
+    const retired = retiredValues(values);
+    if (retired !== 'any' && !retired.includes(value as JsonScalar)) continue;
+    const labelled = values !== 'any' && !Array.isArray(values);
+    unresolve(
+      path,
+      value,
+      labelled && typeof value === 'string'
+        ? (values as Readonly<Record<string, () => string>>)[value]
+        : undefined
+    );
   }
 
   for (const path of step.dropped ?? []) setAt(data, path, undefined);
@@ -186,7 +220,7 @@ export const applyMigrations = (
   const copy = structuredClone(
     (data ?? {}) as Record<string, unknown>
   ) as Record<string, unknown>;
-  const unresolved: Record<string, unknown> = {};
+  const unresolved: Record<string, UnresolvedValue> = {};
   let at = from;
   while (at < to) {
     const step = nextStep(steps, at, to);

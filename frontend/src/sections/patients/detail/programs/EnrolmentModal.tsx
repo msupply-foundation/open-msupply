@@ -14,6 +14,7 @@ import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { SaveIcon, XCircleIcon } from '../../../../ui/icons';
 import { FormErrorSummary } from '../../../../ui/layout/Form/FormErrorSummary';
+import { Stack } from '../../../../ui/layout/Stack/Stack';
 import type { ProgramEnrolment } from '../../../../plugin-sdk/documents';
 import { createDocumentForm } from '../../../../domain/documentForm/createDocumentForm';
 import { DocumentKeptValues } from '../../../../domain/documentForm/DocumentKeptValues';
@@ -155,7 +156,7 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
             {lib => {
               const Default = lib().DefaultEnrolmentForm;
               return (
-                <>
+                <Stack>
                   <DocumentVersionNotice
                     version={form.version()}
                     onEdit={form.edit}
@@ -177,7 +178,7 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
                     errors={form.validation.visible()}
                     testId="enrolment-error-summary"
                   />
-                </>
+                </Stack>
               );
             }}
           </Match>

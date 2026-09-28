@@ -14,6 +14,7 @@
  */
 import {
   movedPath,
+  retiredValues,
   stepTarget,
   type JsonScalar,
   type MigrationStep,
@@ -189,7 +190,8 @@ export const checkCoverage = (
 
   const clearedWhole = (path: string) =>
     Object.entries(unresolved).some(
-      ([prefix, values]) => values === 'any' && isUnder(path, prefix)
+      ([prefix, values]) =>
+        retiredValues(values) === 'any' && isUnder(path, prefix)
     );
 
   // The retired values the map names, so an entry covering nothing is found.
@@ -230,7 +232,7 @@ export const checkCoverage = (
       set.add(value);
       retiredAt.set(target, set);
       const map = mapped[target];
-      const list = unresolved[target];
+      const list = unresolved[target] && retiredValues(unresolved[target]);
       const covered =
         (typeof value === 'string' && map && Object.hasOwn(map, value)) ||
         (Array.isArray(list) && list.includes(value));
@@ -253,8 +255,9 @@ export const checkCoverage = (
     }
   }
   for (const [path, values] of Object.entries(unresolved)) {
-    if (values === 'any') continue;
-    for (const value of values) {
+    const retired = retiredValues(values);
+    if (retired === 'any') continue;
+    for (const value of retired) {
       if (!retiredAt.get(path)?.has(value)) {
         problems.push(
           `${at}: unresolved names ${path} value ${quote(value)}, which is not retired`

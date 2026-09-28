@@ -1,5 +1,6 @@
 import { createRoot } from 'solid-js';
 import { describe, expect, it } from 'vitest';
+import { setDictionaries, setLocale } from '../../intl/intl';
 import encounterV2 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
 import enrolmentV1 from '../../../plugins/examples/demo_program/forms/DemoProgramEnrolment/v1.json';
 import type { Encounter } from '../../plugin-sdk/documents';
@@ -277,7 +278,7 @@ describe('createDraft', () => {
     createRoot(dispose => {
       const c = draftFor();
       c.reset({ ...validEncounter } as DemoEncounter, {
-        'extension.demo.regimen': 'LEGACY_TRIAL',
+        'extension.demo.regimen': { value: 'LEGACY_TRIAL' },
       });
       expect(c.draft.unresolved('extension.demo.regimen')).toBe('LEGACY_TRIAL');
       expect(c.draft.errorFor('extension.demo.regimen')).toBe(
@@ -289,6 +290,27 @@ describe('createDraft', () => {
       expect(c.validation.valid()).toBe(true);
       dispose();
     });
+  });
+
+  it('names an unresolved value by its label when the migration gives one', () => {
+    setDictionaries({
+      en: { 'error.document-previously-recorded': 'Previously: {{value}}' },
+    });
+    setLocale('en');
+    createRoot(dispose => {
+      const c = draftFor();
+      c.reset({ ...validEncounter } as DemoEncounter, {
+        'extension.demo.regimen': {
+          value: 'LEGACY_TRIAL',
+          label: () => 'Legacy trial',
+        },
+      });
+      expect(c.draft.errorFor('extension.demo.regimen')).toBe(
+        'Previously: Legacy trial'
+      );
+      dispose();
+    });
+    setDictionaries({});
   });
 
   it('reads the required flag from the schema', () => {

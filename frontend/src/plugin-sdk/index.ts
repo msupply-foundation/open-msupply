@@ -344,6 +344,7 @@ export type {
   Migration,
   MigrationStep,
   MigrationTransform,
+  UnresolvedValues,
 } from '../domain/documentForm/migration';
 export type {
   FieldProps,

@@ -19,6 +19,7 @@ import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
 import { FormRowItem } from '../../ui/layout/Form/FormRowItem';
 import { FormErrorSummary } from '../../ui/layout/Form/FormErrorSummary';
+import { Stack } from '../../ui/layout/Stack/Stack';
 import { Button } from '../../ui/elements/buttons/Button';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
@@ -207,30 +208,32 @@ const EncounterDetailView: Component = () => {
               }
             >
               <ContentContainer size="form" padded>
-                <Show when={form.saveError()}>
-                  <Alert severity="error">{form.saveError()}</Alert>
-                </Show>
-                <DocumentVersionNotice
-                  version={form.version()}
-                  onEdit={form.edit}
-                />
-                <DocumentFormRegion
-                  slot="encounter.form"
-                  documentType={form.registry()?.documentType ?? ''}
-                  draft={draft}
-                  record={{
-                    patientId: record()?.patientId ?? '',
-                    documentName: form.document()?.name,
-                  }}
-                  fallback={() => <Default draft={draft} />}
-                  archivedVersion={archivedVersion()}
-                  currentSchemaId={form.registry()?.formSchemaId}
-                />
-                <DocumentKeptValues values={form.kept()} />
-                <FormErrorSummary
-                  errors={form.validation.visible()}
-                  testId="encounter-error-summary"
-                />
+                <Stack>
+                  <Show when={form.saveError()}>
+                    <Alert severity="error">{form.saveError()}</Alert>
+                  </Show>
+                  <DocumentVersionNotice
+                    version={form.version()}
+                    onEdit={form.edit}
+                  />
+                  <DocumentFormRegion
+                    slot="encounter.form"
+                    documentType={form.registry()?.documentType ?? ''}
+                    draft={draft}
+                    record={{
+                      patientId: record()?.patientId ?? '',
+                      documentName: form.document()?.name,
+                    }}
+                    fallback={() => <Default draft={draft} />}
+                    archivedVersion={archivedVersion()}
+                    currentSchemaId={form.registry()?.formSchemaId}
+                  />
+                  <DocumentKeptValues values={form.kept()} />
+                  <FormErrorSummary
+                    errors={form.validation.visible()}
+                    testId="encounter-error-summary"
+                  />
+                </Stack>
               </ContentContainer>
               <ConfirmDialog
                 open={leaveGuard.open()}

@@ -53,6 +53,7 @@ import { PatientToolbarTriggers } from '../../../plugins/PatientToolbarTriggers'
 import { recordPluginDiagnostic } from '../../../plugins/diagnostics';
 import type { FormRegistryFragment } from '../../../domain/documentForm/documentForm.generated';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import { InsurancePanel } from './insurance/InsurancePanel';
 import { InsuranceModal } from './insurance/InsuranceModal';
 import {
@@ -330,7 +331,8 @@ const PatientDetailView: Component = () => {
   // The split button's main action follows the tab (spec/patients ui-surface
   // S3 layout): the tab's own record kind, else New program.
   const tabAction = (): CreateAction => {
-    if (activeTab() === 'insurance' && canAddInsurance()) return 'add-insurance';
+    if (activeTab() === 'insurance' && canAddInsurance())
+      return 'add-insurance';
     if (activeTab() === 'encounters' && canAddEncounter()) {
       return 'new-encounter';
     }
@@ -569,7 +571,7 @@ const PatientDetailView: Component = () => {
                       {lib => {
                         const Default = lib().DefaultPatientForm;
                         return (
-                          <>
+                          <Stack>
                             <DocumentVersionNotice
                               version={documentForm.version()}
                               onEdit={documentForm.edit}
@@ -597,7 +599,7 @@ const PatientDetailView: Component = () => {
                               errors={documentForm.validation.visible()}
                               testId="patient-detail-error-summary"
                             />
-                          </>
+                          </Stack>
                         );
                       }}
                     </Match>

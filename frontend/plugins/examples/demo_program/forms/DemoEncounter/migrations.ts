@@ -8,8 +8,9 @@
  * v1 → v2 (./v1.ts → ./type.ts):
  *   - weight and height move under `vitals`;
  *   - the `LEGACY_TRIAL` regimen is retired with no current equivalent, so a
- *     v1 value is unresolved: the form shows it as previously recorded and
- *     asks for a current regimen before the encounter can be saved;
+ *     v1 value is unresolved: the form shows it as previously recorded, under
+ *     the label the archived v1 form gave it, and asks for a current regimen
+ *     before the encounter can be saved;
  *   - `adherence` is removed from the type but kept in the document, listed
  *     read-only at the end of the form.
  */
@@ -23,7 +24,11 @@ export const v1ToV2 = defineMigration<DemoEncounter>({
     'extension.demo.weightKg': 'extension.demo.vitals.weightKg',
     'extension.demo.heightCm': 'extension.demo.vitals.heightCm',
   },
-  unresolved: { 'extension.demo.regimen': ['LEGACY_TRIAL'] },
+  unresolved: {
+    'extension.demo.regimen': {
+      LEGACY_TRIAL: () => intl.t('regimen.LEGACY_TRIAL'),
+    },
+  },
   kept: { 'extension.demo.adherence': () => intl.t('kept.adherence') },
 });
 

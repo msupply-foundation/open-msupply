@@ -19,7 +19,9 @@ const v1ToV2: MigrationStep = {
     'extension.demo.weightKg': 'extension.demo.vitals.weightKg',
     'extension.demo.heightCm': 'extension.demo.vitals.heightCm',
   },
-  unresolved: { 'extension.demo.regimen': ['LEGACY_TRIAL'] },
+  unresolved: {
+    'extension.demo.regimen': { LEGACY_TRIAL: () => 'Legacy trial' },
+  },
   kept: { 'extension.demo.adherence': () => 'Adherence notes' },
 };
 
@@ -34,8 +36,18 @@ describe('applyMigrations', () => {
         adherence: 'Missed two doses last month while travelling.',
       },
     });
-    expect(result?.unresolved).toEqual({
-      'extension.demo.regimen': 'LEGACY_TRIAL',
+    expect(Object.keys(result?.unresolved ?? {})).toEqual([
+      'extension.demo.regimen',
+    ]);
+    const regimen = result?.unresolved['extension.demo.regimen'];
+    expect(regimen?.value).toBe('LEGACY_TRIAL');
+    expect(regimen?.label?.()).toBe('Legacy trial');
+  });
+
+  it('records a value named only in a list without a label', () => {
+    const step: MigrationStep = { ...v1ToV2, unresolved: { a: ['OLD'] } };
+    expect(applyMigrations({ a: 'OLD' }, 1, 2, [step])?.unresolved).toEqual({
+      a: { value: 'OLD' },
     });
   });
 
@@ -69,7 +81,7 @@ describe('applyMigrations', () => {
       ])
     ).toEqual({
       data: { status: 'VISITED' },
-      unresolved: { bp: 'unreadable' },
+      unresolved: { bp: { value: 'unreadable' } },
     });
   });
 
@@ -80,7 +92,7 @@ describe('applyMigrations', () => {
     ];
     expect(applyMigrations({ a: 'OLD' }, 1, 3, steps)).toEqual({
       data: {},
-      unresolved: { 'b.a': 'OLD' },
+      unresolved: { 'b.a': { value: 'OLD' } },
     });
   });
 
@@ -149,6 +161,21 @@ describe('checkCoverage', () => {
       mapped: { 'extension.demo.regimen': { LEGACY_TRIAL: 'SECOND_LINE' } },
     };
     expect(checkCoverage(v1, v2, step)).toEqual([]);
+  });
+
+  it('reads a labelled entry by its values', () => {
+    const step = {
+      ...v1ToV2,
+      unresolved: {
+        'extension.demo.regimen': {
+          LEGACY_TRIAL: () => 'Legacy trial',
+          FIRST_LINE: () => 'First line',
+        },
+      },
+    };
+    expect(checkCoverage(v1, v2, step)).toEqual([
+      'v1 → v2: unresolved names extension.demo.regimen value "FIRST_LINE", which is not retired',
+    ]);
   });
 
   it('refuses entries that cover nothing', () => {

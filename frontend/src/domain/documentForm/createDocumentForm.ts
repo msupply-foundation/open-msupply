@@ -40,7 +40,12 @@ import type {
   FormValidation,
 } from '../../ui/layout/Form/formValidation';
 import { createDraft, type Draft } from './draft';
-import { applyMigrations, keptFields, type MigrationStep } from './migration';
+import {
+  applyMigrations,
+  keptFields,
+  type MigrationStep,
+  type UnresolvedValue,
+} from './migration';
 import { getAt } from './paths';
 import {
   FormDocumentByName,
@@ -403,7 +408,8 @@ export const createDocumentForm = <T extends object>(
 
   /** The draft's starting point for the document as it stands. */
   const seedFor = ():
-    { data: object; unresolved: Record<string, unknown> } | undefined => {
+    | { data: object; unresolved: Record<string, UnresolvedValue> }
+    | undefined => {
     const s = options.source();
     const doc = document();
     // A source's seed stands for the version it was read with; a version

@@ -12,7 +12,11 @@ import type {
  *     export const v1ToV2 = defineMigration<DemoEncounter>({
  *       from: 1,
  *       moved: { 'extension.demo.weightKg': 'extension.demo.vitals.weightKg' },
- *       unresolved: { 'extension.demo.regimen': ['LEGACY_TRIAL'] },
+ *       unresolved: {
+ *         'extension.demo.regimen': {
+ *           LEGACY_TRIAL: () => intl.t('regimen.LEGACY_TRIAL'),
+ *         },
+ *       },
  *     });
  *
  * Pure: it returns the step unchanged, with its paths erased to strings, so
