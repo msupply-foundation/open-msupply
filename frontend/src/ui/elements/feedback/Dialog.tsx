@@ -1,10 +1,12 @@
 import {
   children,
+  createComputed,
   createEffect,
   createSignal,
   createUniqueId,
   onCleanup,
   Show,
+  untrack,
   type JSX,
 } from 'solid-js';
 import { CloseIcon } from '../../icons';
@@ -156,13 +158,14 @@ export interface DialogProps {
    */
   minBodyHeightRem?: number;
   /**
-   * Minimum height of the DIALOG, in rem — for a multi-step flow whose content
-   * shrinks between steps (an import's review → progress → refused rows), so
-   * the box, and with it the centred footer, holds still under the pointer.
-   * At the workbench sizes it raises their 60vh floor, never past the ceiling.
-   * minBodyHeightRem can't do this there: a workbench body fills the dialog
-   * and drops its own floor.
+   * While true, the dialog stays at least as tall as it was the moment this
+   * turned true — for a flow whose content shrinks mid-action (an import's
+   * review → progress → refused rows), so the box, and with it the centred
+   * footer, holds still under the pointer. Dialog measures itself; the floor
+   * never passes the viewport cap. Released when it turns false.
    */
+  holdHeight?: boolean;
+  /** @deprecated superseded by holdHeight; removed once its one caller moves. */
   minHeightRem?: number;
   /**
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
@@ -555,6 +558,16 @@ export const Dialog = (props: DialogProps) => {
     } else if (!props.open && dialog.open) dialog.close();
   });
 
+  // holdHeight: measured in a COMPUTATION, which runs before this update's DOM
+  // work (inserts are render effects), so it reads the height the dialog had
+  // BEFORE the content that turned the hold on replaced what was there.
+  const [heldHeight, setHeldHeight] = createSignal<number>();
+  createComputed(() => {
+    if (!props.holdHeight) return setHeldHeight(undefined);
+    if (untrack(heldHeight) === undefined && dialog?.open)
+      setHeldHeight(dialog.getBoundingClientRect().height);
+  });
+
   // Solid removes the node on unmount, but close() while still connected also
   // releases the top layer + restores focus deterministically.
   onCleanup(() => dialog.open && dialog.close());
@@ -623,6 +636,7 @@ export const Dialog = (props: DialogProps) => {
       data-fullscreen={fullscreen() ? '' : undefined}
       // The measure preset has nothing to say at either workbench size.
       data-width={workbench() ? undefined : props.width}
+      data-hold-height={heldHeight() !== undefined ? '' : undefined}
       style={{
         // Sets the working width in `large` too, overriding the .large class's
         // 56rem default (#771). In `full` it is inert: .bleed sets `width`
@@ -630,6 +644,9 @@ export const Dialog = (props: DialogProps) => {
         ...(props.widthRem ? { '--dialog-width': `${props.widthRem}rem` } : {}),
         ...(props.minBodyHeightRem
           ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
+          : {}),
+        ...(heldHeight() !== undefined
+          ? { '--dialog-held-height': `${heldHeight()}px` }
           : {}),
         ...(props.minHeightRem
           ? { '--dialog-min-height': `${props.minHeightRem}rem` }
