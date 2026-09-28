@@ -19,8 +19,10 @@ export interface FlyoutTarget {
    GAP has to clear the RAIL TOGGLE, which straddles the same edge and hangs
    12px past it (MenuBar.module.css .railToggle). At 10 the panel opened inside
    that overhang, so a tall flyout — one pushed up the viewport by the clamp
-   below — covered the toggle. 20 leaves the disc a visible 8px. */
-const GAP = 20;
+   below — covered the toggle. 12 is exactly that overhang: any wider and the
+   panel reads as detached from the rail, and the pointer has further to go to
+   reach it (#425). The gap itself is bridged — see .flyout::before. */
+const GAP = 12;
 const EDGE = 8;
 
 /*
@@ -76,14 +78,32 @@ export const NavFlyout = (props: {
       EDGE,
       Math.min(inlineOffset, window.innerWidth - width - EDGE)
     );
-    // Aligned with the icon, then clamped so a long section list stays fully
-    // on screen.
+    // The panel's first row — the section heading, or a leaf's label — is
+    // centred on the rail button, so it reads as level with the icon (#425).
+    // Lining up the two top edges instead left the row off-centre, since the
+    // panel's padding and the row's own padding differ from the button's.
+    // Layout offsets, not bounding boxes, for the same animation reason.
+    const first = panel.firstElementChild as HTMLElement | null;
+    const rowCentre = first
+      ? panel.clientTop + first.offsetTop + first.offsetHeight / 2
+      : height / 2;
+    // Then clamped so a long section list stays fully on screen.
     const top = Math.max(
       EDGE,
-      Math.min(a.top, window.innerHeight - height - EDGE)
+      Math.min(
+        a.top + a.height / 2 - rowCentre,
+        window.innerHeight - height - EDGE
+      )
     );
     panel.style.left = `${Math.round(left)}px`;
     panel.style.top = `${Math.round(top)}px`;
+    // How far the panel stands off the rail, for the CSS bridge across it. It
+    // is GAP unless the viewport clamp above pushed the panel over.
+    const gap = rtl ? rail.left - (left + width) : left - rail.right;
+    panel.style.setProperty(
+      '--flyout-gap',
+      `${Math.max(0, Math.round(gap))}px`
+    );
   };
 
   // The panel content is inserted by render effects, which run before this
@@ -99,13 +119,21 @@ export const NavFlyout = (props: {
     if (target.focusFirst) panel.querySelector('button')?.focus();
   });
 
-  // A window resize moves the rail button under an open panel.
+  // A window resize, or scrolling the rail's list, moves the rail button out
+  // from beside an open panel. Scroll events don't bubble, so the listener
+  // captures them on the way down — from whichever element scrolled.
   const reposition = () => {
     if (props.target && panel.matches(':popover-open'))
       place(props.target.anchor);
   };
-  onMount(() => window.addEventListener('resize', reposition));
-  onCleanup(() => window.removeEventListener('resize', reposition));
+  onMount(() => {
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
+  });
+  onCleanup(() => {
+    window.removeEventListener('resize', reposition);
+    window.removeEventListener('scroll', reposition, true);
+  });
 
   return (
     <div
