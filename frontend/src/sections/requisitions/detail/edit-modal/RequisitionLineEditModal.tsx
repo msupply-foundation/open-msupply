@@ -15,6 +15,7 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
 import { HStack } from '@/ui/layout/Stack/HStack';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { TextField } from '@/ui/elements/inputs/TextField';
@@ -535,14 +536,13 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     );
   };
 
-  // The plain caption figures at the head of the first column's PANEL (spec S4
-  // § layout): default pack size, and doses per unit under the doses gate.
-  // Inside the panel, not floating above it — outside they read as belonging
-  // to nothing (#617). Nothing renders when neither applies, so the panel
-  // doesn't open with an empty hairline.
+  // The first column's heading figures (spec S4 § layout): default pack size,
+  // and doses per unit under the doses gate — plain captions, not boxed rows.
+  // Passed as that panel's `head`, which draws the divider under them. When
+  // neither applies nothing renders, so the panel has no head.
   const Captions = (): JSX.Element => (
     <Show when={packSize() > 0 || dosesApply()}>
-      <div class={styles.captions}>
+      <Stack gap="sm">
         <Show when={packSize() > 0}>
           <HStack justify="between" gap="sm" class={styles.caption}>
             <span>{t('label.default-pack-size')}</span>
@@ -555,7 +555,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
             <span class={styles.captionValue}>{formatNumber(doses())}</span>
           </HStack>
         </Show>
-      </div>
+      </Stack>
     </Show>
   );
 
@@ -563,17 +563,11 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   // their available stock, our stock on hand, suggested — and the variance
   // reason on the extra-fields layout.
   const DemandPanel = (panelProps: {
-    /**
-     * Head the panel with the pack-size captions — the general layout,
-     * where this IS the first column's panel. The extra-fields layout
-     * heads its own consumption panel with them instead.
-     */
-    captions?: boolean;
+    /** The panel's heading figures — the pack-size captions where this is
+        the first column's panel (the general layout). */
+    head?: JSX.Element;
   }): JSX.Element => (
-    <InsetPanel class={styles.panel}>
-      <Show when={panelProps.captions}>
-        <Captions />
-      </Show>
+    <InsetPanel gap="sm" head={panelProps.head}>
       <FigureRow
         label={t('label.customer-requested')}
         units={requestedUnits()}
@@ -617,7 +611,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   // The supply panel (spec S4 § layout, the last column): approved (gated),
   // the Supply entry beside the representation select, remaining, issued.
   const SupplyPanel = (): JSX.Element => (
-    <InsetPanel class={styles.panel}>
+    <InsetPanel gap="sm">
       <Show when={props.showApproved}>
         <FigureRow
           label={t('label.approved')}
@@ -834,33 +828,38 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
       </Show>
 
       <Show when={current()}>
-        <div class={styles.grid}>
+        <HStack
+          wrap
+          justify="center"
+          align="start"
+          gap="lg"
+          class={styles.grid}
+        >
           <Show
             when={props.showExtended}
             fallback={
               <>
                 {/* General requisition — two columns (spec S4 § layout). */}
-                <div class={styles.column}>
-                  <DemandPanel captions />
+                <Stack gap="sm" class={styles.column}>
+                  <DemandPanel head={<Captions />} />
                   <Show when={excess()}>
                     <Alert severity="warning" testId="excess-request-warning">
                       {t('messages.requested-exceeds-suggested')}
                     </Alert>
                   </Show>
-                </div>
-                <div class={styles.column}>
+                </Stack>
+                <Stack gap="sm" class={styles.column}>
                   <SupplyPanel />
                   <SupplyContext />
-                </div>
+                </Stack>
               </>
             }
           >
             {/* Extra-fields program requisition — three columns. The
                 consumption figures group on their own recessed panel, like the
                 demand and supply columns beside them (#617). */}
-            <div class={styles.column}>
-              <InsetPanel class={styles.panel}>
-                <Captions />
+            <Stack gap="sm" class={styles.column}>
+              <InsetPanel gap="sm" head={<Captions />}>
                 <FigureRow
                   label={t('label.initial-stock-on-hand')}
                   units={draft()?.initialStockOnHandUnits ?? 0}
@@ -901,8 +900,8 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
                   onChange={units => patchDraft({ daysOutOfStock: units })}
                 />
               </InsetPanel>
-            </div>
-            <div class={styles.column}>
+            </Stack>
+            <Stack gap="sm" class={styles.column}>
               <DemandPanel />
               <Show when={excess()}>
                 <Alert severity="warning" testId="excess-request-warning">
@@ -916,13 +915,13 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
                 disabled={demandDisabled()}
                 onChange={units => patchDraft({ expiringUnits: units })}
               />
-            </div>
-            <div class={styles.column}>
+            </Stack>
+            <Stack gap="sm" class={styles.column}>
               <SupplyPanel />
               <SupplyContext />
-            </div>
+            </Stack>
           </Show>
-        </div>
+        </HStack>
 
         {/* The two read-only stats tabs (spec S4 § stats tabs): My store ·
             Customer, with the volume block and the forecast calculation

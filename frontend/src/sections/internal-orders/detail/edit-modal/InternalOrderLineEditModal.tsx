@@ -16,6 +16,7 @@ import { homeCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { InsetPanel } from '../../../../ui/layout/InsetPanel/InsetPanel';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
@@ -471,32 +472,23 @@ const LineEditContent = (
       onClose={props.onClose}
       dismissable={!saving()}
       size={workingSize() ? 'large' : 'auto'}
-      // A CARD sized to the three panels, not the full-bleed sheet the other
-      // line editors take (#617). The panels cap at 22 + 22 + 28rem with two
-      // 1.5rem gaps = 75rem (the CSS module), plus the workbench body's
-      // 1.5rem inline padding each side = 78rem, so the card is as wide as
-      // the program-order layout and no wider; a general order's two panels
-      // sit centred in the same box. `min(widthRem, 100vw - 4rem)` keeps it
-      // near-full-bleed on a laptop and a framed card above that.
-      //
-      // A card also caps HEIGHT at 80vh, and that is what decides it per
-      // editor. This one's content is short, so on landscape tablets it fits
-      // either way (an A/B against the pre-#617 editor showed no
-      // difference); the requisition editor tried the same card and lost its
-      // stats tabs below the fold, so it stays a sheet. The cost here: with a
-      // deployment's plugin panel below the form (CIV's six-column table)
-      // the editor scrolls sooner than the sheet would — ~116px less in view
-      // at 1512x900.
-      //
-      // Two widths, one latch: the PRE-PICK state stays a command-palette-
-      // shaped card at the standard create-modal width (the
-      // CreateStocktake/CreateInternalOrder family), with a body tall enough
-      // to OWN the open suggestions list — the search takes initial focus and
-      // the combobox opens on focus, so the list is this state's resting face,
-      // and without the reserved height it would dangle past the card onto the
-      // scrim. The popup itself matches its trigger's width. The reserved
-      // height is likewise dropped once the latch flips.
-      widthRem={workingSize() ? 78 : 44}
+      // A CARD at the wide content measure, not the full-bleed sheet: the
+      // three panels (22 + 22 + 28rem and two `lg` gaps, 76rem) fit inside
+      // it, centred, and a general order's two panels sit in the same box. A
+      // card also caps its HEIGHT at 80vh; this editor's content is short, so
+      // that costs it nothing on a landscape tablet (the requisition editor's
+      // does, so it stays a sheet). With a deployment's plugin panel below
+      // the form, it scrolls sooner than a sheet would.
+      width={workingSize() ? 'wide' : undefined}
+      // widthRem sizes the PRE-PICK state only: a command-palette-shaped card
+      // at the standard create-modal width (the CreateStocktake/
+      // CreateInternalOrder family), with a body tall enough to OWN the open
+      // suggestions list — the search takes initial focus and the combobox
+      // opens on focus, so the list is this state's resting face, and without
+      // the reserved height it would dangle past the card onto the scrim. The
+      // popup matches its trigger's width. Both are dropped once the latch
+      // flips, so the measure above takes over.
+      widthRem={workingSize() ? undefined : 44}
       minBodyHeightRem={28}
       testId="internal-order-line-edit-modal"
       // Untitled per spec S4 — the title stays as the accessible name only.
@@ -573,11 +565,17 @@ const LineEditContent = (
       <Show when={current()}>
         {editorLine => (
           <>
-            <div class={styles.panels}>
+            <HStack
+              wrap
+              justify="center"
+              align="start"
+              gap="lg"
+              class={styles.panels}
+            >
               {/* Left — the line's statistics (AC-LN19: every stock quantity in
                 the active entry mode; time quantities exempt), on a recessed
                 inset panel like the edits (#617). */}
-              <InsetPanel class={styles.column}>
+              <InsetPanel gap="sm" class={styles.column}>
                 <Show when={editorLine().unitName}>
                   <StatRow
                     label={t('label.unit')}
@@ -642,7 +640,7 @@ const LineEditContent = (
               {/* Middle — stock movements (extended gate only), on its own
                 inset panel. */}
               <Show when={props.showExtended}>
-                <InsetPanel class={styles.column}>
+                <InsetPanel gap="sm" class={styles.column}>
                   <StatRow
                     label={t('label.suggested')}
                     value={stat(editorLine().suggestedQuantity, true)}
@@ -677,7 +675,7 @@ const LineEditContent = (
               </Show>
 
               {/* Right — the edits, on a recessed inset panel. */}
-              <InsetPanel class={styles.edits}>
+              <InsetPanel gap="sm" class={styles.edits}>
                 {/* Suggested here only when the movements panel is absent. */}
                 <Show when={!props.showExtended}>
                   <StatRow
@@ -767,7 +765,7 @@ const LineEditContent = (
                   />
                 </FieldRow>
               </InsetPanel>
-            </div>
+            </HStack>
 
             {/* The plugin info-panel region (internal-orders ui-surface § S8 ›
               editor region): read-only decoration between the record panels
