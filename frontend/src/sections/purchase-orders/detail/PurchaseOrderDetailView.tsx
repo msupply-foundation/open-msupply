@@ -102,7 +102,7 @@ import {
 } from './purchaseOrderLadder';
 import { formatCurrency } from '@/intl/currency';
 import { formatNumber } from '@/intl/formatNumber';
-import { linePacks, lineCost } from './purchaseOrderPricing';
+import { linePacks } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
 import {
   PurchaseOrderLineEditModal,
@@ -655,15 +655,15 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(7),
     },
     {
-      // Packs × the after-line-discount pack price, at the order currency's
-      // precision. Its footer sums the rows ON SCREEN — the page, which is
-      // what a paginated table can total; the order's whole subtotal is the
-      // side panel's Subtotal row.
-      c: { accessor: line => lineCost(line), id: 'lineCost' },
+      // The line's STORED total, as the server wrote it — never re-multiplied
+      // here (rules § pricing and totals). Its footer sums the rows ON SCREEN
+      // — the page, which is what a paginated table can total; the order's
+      // whole subtotal is the side panel's Subtotal row.
+      c: { accessor: line => line.lineTotal, id: 'lineCost' },
       header: () => t('label.line-cost'),
       ...getCurrencyCell(undefined, () => info()?.currency?.code),
       footer: () =>
-        money(rows().reduce((sum, line) => sum + lineCost(line), 0)),
+        money(rows().reduce((sum, line) => sum + line.lineTotal, 0)),
     },
     {
       c: { key: 'requestedDeliveryDate' },
