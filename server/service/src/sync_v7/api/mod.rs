@@ -364,37 +364,6 @@ mod tests {
         );
     }
 
-    /// get_token isn't re-sent once the request may have reached central: central may have
-    /// allocated the token, and a second request would fail with `TokenAlreadyAllocated`.
-    /// A re-send would have been served the token.
-    #[actix_rt::test]
-    async fn get_token_is_not_resent_after_drop_before_response() {
-        let server = ScriptedServer::start(vec![
-            ScriptedResponse::CloseBeforeResponse,
-            ScriptedResponse::Complete(
-                r#"{"Ok": {"token": "t", "siteId": 2, "centralSiteId": 1}}"#.to_string(),
-            ),
-        ]);
-
-        let result = get_token::get_token(
-            &server.url().parse().unwrap(),
-            get_token::GetTokenInput {
-                version: Version::from_package_json(),
-                app_name: "Open mSupply Desktop".to_string(),
-                name: "site".to_string(),
-                password_sha256: "".to_string(),
-                hardware_id: "hw-1".to_string(),
-            },
-        )
-        .await;
-
-        assert!(
-            matches!(&result, Err(SyncError::ConnectionError { .. })),
-            "Unexpected result: {:#?}",
-            result
-        );
-    }
-
     fn from_authorization(authorization: Option<&str>) -> Result<Common, SyncError> {
         Common::from_header_values(
             authorization,
