@@ -140,8 +140,9 @@ Swapping the served bundle must never discard a user's in-progress work.
   been removed.
 - Because previous versions are retained on disk (below), old chunks keep resolving, so the stale
   detector will usually *not* fire. Proactive notification is therefore required, not optional:
-  the client needs to learn the active bundle version has changed. `/VERSION.txt` is already served
-  from the dist and is the obvious source.
+  the client needs to learn the active bundle version has changed. The dist no longer ships a
+  `VERSION.txt` manifest and the client no longer polls one (the update prompt was removed with
+  front-end sync shelved), so this would need a new served-version signal.
 - A reload re-fetches plugins along with the host, which resolves the module-federation shared-scope
   problem: a swapped host and a plugin loaded against the previous host never coexist.
 - Translations need no special handling: the dictionary cache is keyed on a per-build `LANG_VERSION`
