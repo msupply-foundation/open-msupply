@@ -131,19 +131,29 @@ export const TargetQuantityBreakdown = (props: {
     observer.observe(el);
     onCleanup(() => observer.disconnect());
   };
-  // A memo: every cell reads it, and the chart width changes on each resize.
-  // It also remembers whether text is showing, for monthAxisFitsText's margin.
-  const showText = createMemo<boolean>(
-    showing =>
-      monthAxisFitsText(
-        targetWidth(),
-        months().length,
-        chartWidth(),
-        remToPx(MIN_CELL_REM_FOR_TEXT),
-        showing ? remToPx(TEXT_KEEP_REM) : 0
-      ),
-    false
+  // Remembers whether text showed at the last MEASURED width, since the margin
+  // in monthAxisFitsText is only for a measured chart: before measuring the
+  // text shows by default, and carrying the margin into the first measurement
+  // would keep text a just-too-narrow chart should hide.
+  const textFit = createMemo<{ show: boolean; measured: boolean }>(
+    prev => {
+      const width = chartWidth();
+      const keep = prev.show && prev.measured ? remToPx(TEXT_KEEP_REM) : 0;
+      return {
+        show: monthAxisFitsText(
+          targetWidth(),
+          months().length,
+          width,
+          remToPx(MIN_CELL_REM_FOR_TEXT),
+          keep
+        ),
+        measured: width !== undefined,
+      };
+    },
+    { show: false, measured: false }
   );
+  // A memo: every cell reads it, and it changes far less often than textFit.
+  const showText = createMemo(() => textFit().show);
   const monthValue = (m: number) => amc() * m;
   const monthCount = (m: number) =>
     ` (${m} ${m === 1 ? t('label.month') : t('label.months')})`;
