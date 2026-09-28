@@ -20,7 +20,7 @@ import {
   minimalPatientOption,
   type GenderOption,
 } from '../../../domain/patient';
-import { currentStoreName, hasPermission } from '../../../store/storeContext';
+import { currentStoreName } from '../../../store/storeContext';
 import { generatePatientCode } from '../patientCode';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import {
@@ -106,11 +106,11 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
   const monthsAndDays = () =>
     dobFromAgeEntry() ? undefined : ageMonthsAndDays(props.draft.dateOfBirth);
 
-  // The code generator (spec/patients § generating a code). Gated on
-  // DOCUMENT_MUTATE, NOT the patient-mutate permission gating the rest of the
-  // form: the counter behind it is a program-number allocation (contract › wire
-  // trap), so a patient-mutate-only user would just get Forbidden. Without the
-  // permission the field is still typeable — only the shortcut is missing.
+  // The code generator (spec/patients § generating a code). No permission gate
+  // of its own: allocatePatientNumber costs PATIENT_MUTATE, the very thing
+  // `disabled` already carries, so the button rides the form's own state
+  // (#268). It used to hang off DOCUMENT_MUTATE, a program permission that no
+  // amount of store-permission ticking can grant.
   const [generating, setGenerating] = createSignal(false);
   const [confirmRegenerate, setConfirmRegenerate] = createSignal(false);
 
@@ -142,10 +142,10 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
       <FormColumns>
         <FormColumn>
           <FormSection title={t('heading.patient-details')}>
-            {/* Code + its Generate button share a row. Without the permission
-                the button is absent and the field simply keeps the whole row —
-                a dead control would suggest the shortcut is merely unavailable
-                right now, when the user can never have it. */}
+            {/* Code + its Generate button share a row. A read-only viewer
+                gets the button disabled rather than absent, like every other
+                control on the form — the shortcut is unavailable for exactly
+                the reason the field itself is. */}
             <FormRow>
               <TextField
                 label={t('label.code')}
@@ -155,17 +155,15 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
                 disabled={props.disabled}
                 onInput={e => props.setField('code', e.currentTarget.value)}
               />
-              <Show when={hasPermission('DOCUMENT_MUTATE')}>
-                <Button
-                  class={styles.generate}
-                  variant="secondary"
-                  disabled={props.disabled}
-                  loading={generating()}
-                  onClick={onGenerate}
-                >
-                  {t('label.generate')}
-                </Button>
-              </Show>
+              <Button
+                class={styles.generate}
+                variant="secondary"
+                disabled={props.disabled}
+                loading={generating()}
+                onClick={onGenerate}
+              >
+                {t('label.generate')}
+              </Button>
             </FormRow>
             <TextField
               label={t('label.code2')}
