@@ -10,7 +10,6 @@ import {
   type JSX,
 } from 'solid-js';
 import { t, tPlural } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
@@ -45,7 +44,7 @@ import {
 } from './requisitionLineEdit';
 import { RequisitionLineStats } from './RequisitionLineStats';
 import styles from './RequisitionLineEditModal.module.css';
-import { displayNumber } from '@/intl/numberDisplay';
+import { displayNumber, roundedText } from '@/intl/numberDisplay';
 import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
 
 // The requisition line editor (spec/requisitions S4): add an item (add mode —
@@ -351,7 +350,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   const supplyDoseCaption = (): string | undefined => {
     if (!dosesApply()) return undefined;
     const doseCount = Math.round(supplyUnits() * doses());
-    return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
+    return `${roundedText(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
 
   // The draft's reason on the wire: where the editor offers the reason

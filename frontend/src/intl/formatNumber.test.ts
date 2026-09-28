@@ -112,41 +112,12 @@ describe('parseNumber', () => {
   });
 });
 
-describe('formatNumber default places', () => {
-  // A bare call keeps the installation's configured decimal places (spec
-  // ui-standards/tables.md § display rounding) — the root that every quantity
-  // readout without an explicit option passes through.
-  it('rounds a bare call to the configured places, marks it, and follows a change', async () => {
-    const { setDecimalPlaces, DEFAULT_DECIMAL_PLACES } =
-      await import('./decimalPlaces');
-    try {
-      expect(formatNumber(23.333333, { locale: 'en' })).toBe('23.33*');
-      setDecimalPlaces(3);
-      expect(formatNumber(23.333333, { locale: 'en' })).toBe('23.333*');
-      setDecimalPlaces(0);
-      expect(formatNumber(23.333333, { locale: 'en' })).toBe('23*');
-    } finally {
-      setDecimalPlaces(DEFAULT_DECIMAL_PLACES);
-    }
-  });
-
-  it('leaves a bare call unmarked when it shows the whole value', () => {
-    expect(formatNumber(23.3, { locale: 'en' })).toBe('23.3');
-    expect(formatNumber(1234, { locale: 'en' })).toBe('1,234');
-    // Float dust is not a rounding.
+describe('formatNumber is a plain formatter', () => {
+  // Display rounding and its mark live in numberDisplay; a bare call shows the
+  // value in full (float dust capped) and appends nothing.
+  it('shows a bare call in full, unmarked', () => {
+    expect(formatNumber(23.333333, { locale: 'en' })).toBe('23.333333');
     expect(formatNumber(0.1 + 0.2, { locale: 'en' })).toBe('0.3');
-  });
-
-  it('never marks a caller that names its own places — money, an input', () => {
-    expect(
-      formatNumber(23.333333, { locale: 'en', maximumFractionDigits: 10 })
-    ).toBe('23.333333');
-    expect(
-      formatNumber(1.005, {
-        locale: 'en',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-    ).toBe('1.01');
+    expect(formatNumber(1234, { locale: 'en' })).toBe('1,234');
   });
 });

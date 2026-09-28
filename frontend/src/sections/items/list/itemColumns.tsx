@@ -4,23 +4,13 @@ import type { CardGroup } from '../../../ui/elements/table/columnTypes';
 import {
   getCellDefinition,
   getNumberCell,
+  renderDisplayedNumber,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import type { ItemsResult } from './items.generated';
-import { monthsOfStockCell, unitsWithDoses, type StatCell } from './itemStats';
+import { monthsOfStockCell, unitsWithDoses } from './itemStats';
 
 export type ItemRow = ItemsResult['items']['nodes'][number];
-
-// Render a truncating statistics cell: the text, with the full-precision
-// reading as the cell's hover title when digits were dropped (ui-surface S1 §
-// numeric cells). A bare string when there is nothing to reveal, so the cell
-// carries no empty title attribute.
-const statCell = (cell: StatCell) =>
-  cell.title === undefined ? (
-    cell.text
-  ) : (
-    <span title={cell.title}>{cell.text}</span>
-  );
 
 // Only Code and Name are sortable — the sort surface matches the wire's sort
 // keys (spec/items S1 › Columns). Clicking any other header does nothing.
@@ -132,7 +122,7 @@ export const fixedColumns = (
     ...getNumberCell({ headerPosition: 'badge', showLabel: true }),
     size: remToPx(STAT_WIDTH_REM),
     cell: info =>
-      statCell(
+      renderDisplayedNumber(
         unitsWithDoses(info.getValue<number>(), info.row.original, showDoses())
       ),
   },
@@ -145,7 +135,7 @@ export const fixedColumns = (
     ...getNumberCell(),
     size: remToPx(AMC_WIDTH_REM),
     cell: info =>
-      statCell(
+      renderDisplayedNumber(
         unitsWithDoses(info.getValue<number>(), info.row.original, showDoses())
       ),
   },
@@ -158,6 +148,7 @@ export const fixedColumns = (
     enableSorting: false,
     ...getNumberCell(),
     size: remToPx(STAT_WIDTH_REM),
-    cell: info => statCell(monthsOfStockCell(info.getValue<number | null>())),
+    cell: info =>
+      renderDisplayedNumber(monthsOfStockCell(info.getValue<number | null>())),
   },
 ];

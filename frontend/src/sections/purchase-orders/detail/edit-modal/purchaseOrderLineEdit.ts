@@ -1,4 +1,4 @@
-import { formatNumber, getPlural, tPlural, type LocaleKey } from '@/intl';
+import { getPlural, roundedText, tPlural, type LocaleKey } from '@/intl';
 import type { PurchaseOrderStatus } from '../../purchaseOrderStatus';
 import type {
   InsertPurchaseOrderLineVariables,
@@ -343,6 +343,6 @@ export const orderedElsewhere = (
   units: number,
   unitName: string | null
 ): string =>
-  `${formatNumber(units)} ${
+  `${roundedText(units)} ${
     unitName ? getPlural(unitName, units) : tPlural('label.units-plural', units)
   }`;

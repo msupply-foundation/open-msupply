@@ -1,7 +1,11 @@
 import { For, Show, type Component, type JSX } from 'solid-js';
 import { t } from '@/intl';
 import { formatNumber } from '@/intl/formatNumber';
-import { displayNumber, displayVolume } from '@/intl/numberDisplay';
+import {
+  displayNumber,
+  displayVolume,
+  roundedText,
+} from '@/intl/numberDisplay';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import { InfoIcon } from '@/ui/icons';
 import {
@@ -69,7 +73,7 @@ export const RequisitionLineStats: Component<{
   // inflects for the figure it suffixes.
   const measure = () => modeWord(props.entryMode, props.unitName);
   const legendValue = (value: number) =>
-    `${formatNumber(value)} ${modeWord(props.entryMode, props.unitName, value)}`;
+    `${roundedText(value)} ${modeWord(props.entryMode, props.unitName, value)}`;
 
   // One stats section: heading, the proportional stacked bar (sized against
   // the sibling section via `width`), and its legend — or the italic info

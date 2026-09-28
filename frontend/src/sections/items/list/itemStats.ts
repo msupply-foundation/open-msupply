@@ -52,78 +52,40 @@ export const shouldShowDoses = (
 // Numeric list cells take the shared numeric-cell rule (ui-standards § display
 // rounding): the value at the configured places, trailing zeroes unpadded, the
 // rounded mark when digits were dropped — and the hover text revealing them.
-export const roundedStat = (
-  value: number
-): { text: string; rounded: boolean } => {
-  const { text, exact } = displayNumber(value);
-  return { text, rounded: exact !== undefined };
-};
+// (The band above pads instead.)
 
-// Every digit of a value, for the hover reading behind a rounded cell —
-// locale-formatted (so the decimal separator is the reader's), capped where
-// binary-float dust begins rather than at the stored float's last bit.
-const fullPrecision = exactText;
-
-/** What a rounding numeric cell renders: its text, and the hover reading. */
-export type StatCell = {
-  /** The cell's text — the value at the configured places, marked if rounded. */
-  text: string;
-  /**
-   * The full-precision reading for the cell's hover title, or undefined when
-   * `text` already shows every digit (nothing to reveal).
-   */
-  title?: string;
-};
-
-// A unit figure formatted for a list cell (stock-on-hand, AMC): the
-// numeric-cell rule — the value at the configured places, the full value in
-// the cell's hover text when digits were dropped (ui-surface S1 § numeric
-// cells) — so AMC renders 0.33, not a rounded 0, and 666.67 still reveals
-// 666.6666666667 on hover. The doses equivalent is appended
-// (suffix "ds") when the manage-vaccines-in-doses preference is on AND the row
-// is a vaccine (OMS-REG-CAT-04.35); the hover then carries both sides at full
-// precision. Pure (structural row) so the formatting is unit-tested without
-// the column/table stack.
+// A unit figure formatted for a list cell (stock-on-hand, AMC) — so AMC renders
+// 0.33, not a rounded 0, and 666.67* still reveals 666.6666666667 on hover.
+// The doses equivalent is appended (suffix "ds") when the
+// manage-vaccines-in-doses preference is on AND the row is a vaccine
+// (OMS-REG-CAT-04.35); the hover then carries both sides at full precision.
+// Pure (structural row) so the formatting is unit-tested without a table.
 export const unitsWithDoses = (
   units: number,
   row: { isVaccine: boolean; doses: number },
   showDoses: boolean
-): StatCell => {
-  const base = roundedStat(units);
-  if (!showDoses || !row.isVaccine)
-    return {
-      text: base.text,
-      title: base.rounded ? fullPrecision(units) : undefined,
-    };
+): DisplayedNumber => {
+  const base = displayNumber(units);
+  if (!showDoses || !row.isVaccine) return base;
 
   const doses = dosesEquivalent(units, row.doses);
-  const dosesCell = roundedStat(doses);
+  const dosesCell = displayNumber(doses);
   const suffix = t('label.doses-short');
-  return {
-    text: `${base.text} (${dosesCell.text} ${suffix})`,
-    // Either side losing precision earns the hover, and it shows BOTH in full
-    // so the reading matches the cell it explains.
-    title:
-      base.rounded || dosesCell.rounded
-        ? `${fullPrecision(units)} (${fullPrecision(doses)} ${suffix})`
-        : undefined,
-  };
+  const text = `${base.text} (${dosesCell.text} ${suffix})`;
+  // Either side losing precision earns the hover, and it shows BOTH in full
+  // so the reading matches the cell it explains.
+  return base.exact === undefined && dosesCell.exact === undefined
+    ? { text }
+    : { text, exact: `${exactText(units)} (${exactText(doses)} ${suffix})` };
 };
 
-// Months of stock as a LIST CELL: the numeric-cell rule its neighbours follow —
-// the value at the configured places, the full value in the hover when digits
-// were dropped (ui-surface S1 § numeric cells). NOT the stats band's PADDED
-// figure: the band shows one headline number where an even width reads well,
-// while a column of figures alongside stock-on-hand and AMC must flag dropped
-// precision the same way they do (the reference list renders all three through
-// one number cell). null (zero AMC) is the dash, never 0 (OMS-REG-CAT-04.34).
+// Months of stock as a LIST CELL: the numeric-cell rule its neighbours follow,
+// NOT the stats band's PADDED figure — a column of figures alongside
+// stock-on-hand and AMC must flag dropped precision the same way they do. null
+// (zero AMC) is the dash, never 0 (OMS-REG-CAT-04.34).
 export const monthsOfStockCell = (
   monthsOfStockOnHand: number | null | undefined
-): StatCell => {
-  if (monthsOfStockOnHand == null) return { text: EMPTY_CELL };
-  const cell = roundedStat(monthsOfStockOnHand);
-  return {
-    text: cell.text,
-    title: cell.rounded ? fullPrecision(monthsOfStockOnHand) : undefined,
-  };
-};
+): DisplayedNumber =>
+  monthsOfStockOnHand == null
+    ? { text: EMPTY_CELL }
+    : displayNumber(monthsOfStockOnHand);

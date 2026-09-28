@@ -7,7 +7,6 @@ import {
   dosesEquivalent,
   formatMonthsOfStock,
   monthsOfStockCell,
-  roundedStat,
   shouldShowDoses,
   unitsWithDoses,
 } from './itemStats';
@@ -41,10 +40,10 @@ describe('itemStats — item statistics display (spec/items S1/S2)', () => {
   it('the MOS list cell dashes at zero AMC and rounds (CAT-04.34)', () => {
     expect(monthsOfStockCell(null)).toEqual({ text: '—' });
     // 2.5 reads "2.5" here where the band reads "2.50" — no padding zero
-    expect(monthsOfStockCell(2.5)).toEqual({ text: '2.5', title: undefined });
+    expect(monthsOfStockCell(2.5)).toEqual({ text: '2.5' });
     expect(monthsOfStockCell(3.3333)).toEqual({
       text: '3.33*',
-      title: '3.3333',
+      exact: '3.3333',
     });
     // zero is a value, not an absence — only null dashes
     expect(monthsOfStockCell(0).text).toBe('0');
@@ -64,22 +63,18 @@ describe('itemStats — item statistics display (spec/items S1/S2)', () => {
     expect(dosesEquivalent(0, 20)).toBe(0);
   });
 
-  // The numeric-cell rule: the configured places, the rounded mark when digits
-  // were dropped (the hover reveals them) — never an ellipsis.
-  it('rounds to the configured places, marking what it dropped', () => {
-    expect(roundedStat(666.6666666667)).toEqual({
+  // The numeric-cell rule marks a figure only when digits were actually
+  // dropped — never an ellipsis, and never for binary-float dust.
+  it('marks a figure only when digits were actually dropped', () => {
+    expect(monthsOfStockCell(666.6666666667)).toEqual({
       text: '666.67*',
-      rounded: true,
+      exact: '666.6666666667',
     });
-    expect(roundedStat(3000)).toEqual({ text: '3,000', rounded: false });
-    expect(roundedStat(2.5)).toEqual({ text: '2.5', rounded: false });
-  });
-
-  it('reports a figure as rounded only when digits were actually dropped', () => {
-    // Binary-float dust is not a rounding: the user typed 0.3.
-    expect(roundedStat(0.1 + 0.2)).toEqual({ text: '0.3', rounded: false });
+    expect(monthsOfStockCell(3000)).toEqual({ text: '3,000' });
+    // The user typed 0.3.
+    expect(monthsOfStockCell(0.1 + 0.2)).toEqual({ text: '0.3' });
     setDecimalPlaces(4);
-    expect(roundedStat(3.3333)).toEqual({ text: '3.3333', rounded: false });
+    expect(monthsOfStockCell(3.3333)).toEqual({ text: '3.3333' });
   });
 
   // ITEMS-F1 — the AMC/stock-on-hand cells format through `unitsWithDoses`.
@@ -101,10 +96,10 @@ describe('itemStats — item statistics display (spec/items S1/S2)', () => {
     const row = { isVaccine: false, doses: 0 };
     expect(unitsWithDoses(666.6666666667, row, false)).toEqual({
       text: '666.67*',
-      title: '666.6666666667',
+      exact: '666.6666666667',
     });
     // Nothing dropped ⇒ nothing to reveal.
-    expect(unitsWithDoses(2.5, row, false).title).toBeUndefined();
-    expect(unitsWithDoses(3000, row, false).title).toBeUndefined();
+    expect(unitsWithDoses(2.5, row, false).exact).toBeUndefined();
+    expect(unitsWithDoses(3000, row, false).exact).toBeUndefined();
   });
 });

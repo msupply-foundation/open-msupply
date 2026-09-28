@@ -1,10 +1,10 @@
 import { createSignal } from 'solid-js';
 
 /*
- * The installation's decimal places for displayed numbers — the one signal
- * formatNumber's DEFAULT and the numberDisplay helpers both read (spec/
- * ui-standards/tables.md § display rounding). Its own module so neither of
- * those imports the other.
+ * The installation's decimal places for displayed numbers — the signal the
+ * numberDisplay helpers read (spec/ui-standards/tables.md § display rounding).
+ * Its own module, with the formatter's ceiling, so formatNumber and
+ * numberDisplay share these without importing each other.
  */
 
 // The most decimal places any formatter emits — also what "the exact value"

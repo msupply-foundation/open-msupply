@@ -11,7 +11,7 @@ import {
 import { graphqlFetch } from '../../../../api/graphql';
 import { gated } from '../../../../api/gated';
 import { t, tPlural } from '../../../../intl';
-import { formatNumber } from '../../../../intl/formatNumber';
+import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -309,7 +309,7 @@ const LineEditContent = (
   // inflected for the figure it suffixes ("1 pack" / "61 packs").
   const stat = (units: number, roundUp = false): string => {
     const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
-    return `${formatNumber(figure)} ${modeWord(entryMode(), current()?.unitName ?? null, figure)}`;
+    return `${roundedText(figure)} ${modeWord(entryMode(), current()?.unitName ?? null, figure)}`;
   };
 
   // A unit quantity re-expressed in the OTHER measure (AC-LN20): units when
@@ -317,10 +317,10 @@ const LineEditContent = (
   const otherMeasure = (units: number): string => {
     if (entryMode() === 'doses') {
       const unitCount = Math.round(units);
-      return `${formatNumber(unitCount)} ${modeWord('units', current()?.unitName ?? null, unitCount)}`;
+      return `${roundedText(unitCount)} ${modeWord('units', current()?.unitName ?? null, unitCount)}`;
     }
     const doseCount = Math.round(units * doses());
-    return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
+    return `${roundedText(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
 
   // The dose caption beneath the requested number (AC-LN20).
@@ -568,13 +568,13 @@ const LineEditContent = (
                 <Show when={editorLine().defaultPackSize > 0}>
                   <StatRow
                     label={t('label.default-pack-size')}
-                    value={formatNumber(editorLine().defaultPackSize)}
+                    value={roundedText(editorLine().defaultPackSize)}
                   />
                 </Show>
                 <Show when={dosesApply()}>
                   <StatRow
                     label={t('label.doses-per-unit')}
-                    value={formatNumber(editorLine().doses)}
+                    value={roundedText(editorLine().doses)}
                   />
                 </Show>
                 <StatRow
@@ -651,7 +651,7 @@ const LineEditContent = (
                   />
                   <StatRow
                     label={t('label.days-out-of-stock')}
-                    value={`${formatNumber(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
+                    value={`${roundedText(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
                   />
                 </div>
               </Show>

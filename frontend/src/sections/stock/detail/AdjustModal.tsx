@@ -2,7 +2,6 @@ import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -30,7 +29,7 @@ import {
   type StockLineDetailFragment,
   type CreateInventoryAdjustmentVariables,
 } from './stockLine.generated';
-import { displayNumber } from '../../../intl/numberDisplay';
+import { displayNumber, roundedText } from '../../../intl/numberDisplay';
 import { renderDisplayedNumber } from '../../../ui/elements/table/tableHelpers';
 
 // The stock adjustment modal (spec/stock S4, FL4). Correct one line's quantity
@@ -153,10 +152,10 @@ const AdjustContent = (props: {
   const showDoses = () => prefs().manageVaccinesInDoses && isVaccine();
   const packSize = () => props.line.packSize;
   const doseNote = (packs: number): string | undefined =>
-    showDoses() ? `${formatNumber(packs * packSize() * doses())}` : undefined;
+    showDoses() ? `${roundedText(packs * packSize() * doses())}` : undefined;
 
   const previewOf = (value: number) =>
-    hasAmount() ? formatNumber(value) : undefined;
+    hasAmount() ? roundedText(value) : undefined;
   const previewDoseNote = (value: number) =>
     hasAmount() ? doseNote(value) : undefined;
 
@@ -286,7 +285,7 @@ const AdjustContent = (props: {
           <StatComparisonTile
             label={t('label.available-packs')}
             testId="adjust-tile-available"
-            current={formatNumber(currentAvail())}
+            current={roundedText(currentAvail())}
             currentNote={doseNote(currentAvail())}
             adjusted={previewOf(adjustedAvail())}
             adjustedNote={previewDoseNote(adjustedAvail())}
@@ -294,7 +293,7 @@ const AdjustContent = (props: {
           <StatComparisonTile
             label={t('label.packs-on-hand')}
             testId="adjust-tile-total"
-            current={formatNumber(currentTotal())}
+            current={roundedText(currentTotal())}
             currentNote={doseNote(currentTotal())}
             adjusted={previewOf(adjustedTotal())}
             adjustedNote={previewDoseNote(adjustedTotal())}

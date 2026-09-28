@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { formatNumber, getPlural, t } from '../../../../intl';
+import { getPlural, t } from '../../../../intl';
 import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -1748,8 +1748,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                             const unit = item()?.unitName;
                             const requested = context().requested;
                             return unit
-                              ? `${formatNumber(requested)} ${getPlural(unit, requested)}`
-                              : formatNumber(requested);
+                              ? `${roundedText(requested)} ${getPlural(unit, requested)}`
+                              : roundedText(requested);
                           })()}
                         </LabelledValue>
                       )}

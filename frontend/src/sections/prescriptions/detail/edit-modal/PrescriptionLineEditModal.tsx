@@ -42,7 +42,7 @@ import {
 import { getBooleanCell } from '../../../../ui/elements/table/BooleanCell';
 import { ItemSearch } from '../../../../domain/item';
 import { prescriptionPreferences } from '../../../../store/storeContext';
-import { formatNumber, round } from '../../../../intl';
+import { round, roundedText } from '../../../../intl';
 import {
   clampManualPacks,
   issuedUnits,
@@ -154,8 +154,8 @@ const banner = (
     case 'messages.over-allocated-line':
       return {
         text: t(message.key, {
-          quantity: formatNumber(message.quantity),
-          issueQuantity: formatNumber(message.issueQuantity),
+          quantity: roundedText(message.quantity),
+          issueQuantity: roundedText(message.issueQuantity),
         }),
         testId: 'prescription-adjusted-entry-warning',
         severity: 'warning',
@@ -164,7 +164,7 @@ const banner = (
     case 'messages.partial-pack-warning-doses':
       return {
         text: t(message.key, {
-          nearestAbove: formatNumber(message.nearestAbove),
+          nearestAbove: roundedText(message.nearestAbove),
         }),
         testId: 'prescription-partial-pack-warning',
         severity: 'warning',
@@ -849,7 +849,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   ? 'warning.cannot-create-placeholder-doses'
                   : 'warning.cannot-create-placeholder-units',
                 {
-                  allocatedQuantity: formatNumber(
+                  allocatedQuantity: roundedText(
                     unitsToLens(allocatedUnits(), allocateLens())
                   ),
                 }

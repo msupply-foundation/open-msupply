@@ -6,7 +6,6 @@ import {
   type Component,
 } from 'solid-js';
 import { t } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import { generateUUID } from '@/uuid';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
@@ -38,7 +37,7 @@ import {
   isCandidateDisabled,
 } from './stockMovementLineEdit';
 import type { StockMovementLineFragment } from '../stockMovementDetail.generated';
-import { displayNumber } from '@/intl/numberDisplay';
+import { displayNumber, roundedText } from '@/intl/numberDisplay';
 import { renderDisplayedNumber } from '@/ui/elements/table/tableHelpers';
 
 // The line editor (spec/stock-movements/ui-surface.md S3): one move per line —
@@ -407,7 +406,7 @@ export const StockMovementLineEditModal: Component<
                 decimalLimit={10}
                 value={packs()}
                 helperText={t('messages.move-all-or-partial', {
-                  max: formatNumber(batch().availableNumberOfPacks),
+                  max: roundedText(batch().availableNumberOfPacks),
                 })}
                 onChange={value => setEnteredPacks(value ?? null)}
               />

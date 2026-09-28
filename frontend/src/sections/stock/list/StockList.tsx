@@ -3,7 +3,7 @@ import type { Component, JSX } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
+import { roundedText } from '../../../intl/numberDisplay';
 import { doseEquivalent } from '../stockCalc';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -171,8 +171,8 @@ const StockList: Component = () => {
       doses,
     });
     return asDoses === undefined
-      ? formatNumber(units)
-      : `${formatNumber(units)} (${formatNumber(asDoses)} ${t('label.doses-short')})`;
+      ? roundedText(units)
+      : `${roundedText(units)} (${roundedText(asDoses)} ${t('label.doses-short')})`;
   };
 
   // Every column is shown by default; the user hides / reorders / pins them

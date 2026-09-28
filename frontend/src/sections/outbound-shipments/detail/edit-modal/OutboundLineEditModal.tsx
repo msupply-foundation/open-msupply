@@ -12,8 +12,11 @@ import {
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { getPlural, t } from '../../../../intl';
-import { formatNumber } from '../../../../intl/formatNumber';
-import { displayNumber, displayVolume } from '../../../../intl/numberDisplay';
+import {
+  displayNumber,
+  displayVolume,
+  roundedText,
+} from '../../../../intl/numberDisplay';
 import { renderDisplayedNumber } from '../../../../ui/elements/table/tableHelpers';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -342,8 +345,8 @@ const warningMessages = (
   issueWarningMessages(derived, requestedUnits).map(message =>
     message.key === 'messages.over-allocated'
       ? t(message.key, {
-          quantity: formatNumber(message.quantity),
-          issueQuantity: formatNumber(message.issueQuantity),
+          quantity: roundedText(message.quantity),
+          issueQuantity: roundedText(message.issueQuantity),
         })
       : t(message.key, {
           reasons: message.reasons.map(reason => t(reason)).join(', '),
@@ -824,8 +827,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       value != null && appliedQuantity !== value
         ? [
             t('messages.over-allocated-line', {
-              quantity: formatNumber(appliedQuantity),
-              issueQuantity: formatNumber(value),
+              quantity: roundedText(appliedQuantity),
+              issueQuantity: roundedText(value),
             }),
           ]
         : []
@@ -1834,10 +1837,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <Show when={placeholderUnits() > 0}>
               <Alert severity="info">
                 {t('messages.placeholder-allocated-units', {
-                  requestedQuantity: formatNumber(
+                  requestedQuantity: roundedText(
                     issuedUnits() + placeholderUnits()
                   ),
-                  placeholderQuantity: formatNumber(placeholderUnits()),
+                  placeholderQuantity: roundedText(placeholderUnits()),
                 })}
               </Alert>
             </Show>

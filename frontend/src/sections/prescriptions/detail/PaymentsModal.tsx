@@ -316,9 +316,9 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
             label={t('label.discount-rate')}
             readonly
             value={(policy =>
-              policy ? `${formatNumber(policy.discountPercentage)}%` : '—')(
-              selected()
-            )}
+              policy
+                ? `${formatNumber(policy.discountPercentage, { maximumFractionDigits: 2 })}%`
+                : '—')(selected())}
           />
           <CurrencyField
             label={t('label.paid-by-insurance')}

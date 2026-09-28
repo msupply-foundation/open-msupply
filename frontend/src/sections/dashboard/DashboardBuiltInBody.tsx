@@ -16,7 +16,7 @@ import {
   type TypedDocument,
 } from '@/api/graphql';
 import { gated } from '@/api/gated';
-import { formatNumber, t, tPlural } from '@/intl';
+import { roundedText, t, tPlural } from '@/intl';
 import { hasPermission, storeContext } from '@/store/storeContext';
 import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '@/ui/elements/dashboard/DashboardCard';
@@ -374,7 +374,7 @@ export const DashboardBuiltInBody: Component = () => {
     }
   };
 
-  const num = (n: number | undefined) => formatNumber(n ?? 0);
+  const num = (n: number | undefined) => roundedText(n ?? 0);
 
   // Suppression at render (OMS-REG-DB-02.6–.8): a built-in a loaded plugin
   // names by published id is absent, not disabled. Reactive, so a plugin

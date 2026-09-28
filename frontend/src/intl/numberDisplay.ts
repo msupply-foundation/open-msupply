@@ -54,40 +54,40 @@ export const exactText = (value: number, minimumFractionDigits = 0): string =>
     maximumFractionDigits: MAX_FRACTION_DIGITS,
   });
 
-/*
- * Whether displaying `value` at `places` actually loses something. Decided on
- * the FORMATTED strings rather than by comparing numbers: that is the question
- * the user can see ("does the cell show me everything?"), and it absorbs float
- * dust for free — comparing `value` to its rounded self would flag 0.1 + 0.2 as
- * truncated and offer "0.30000000000000004" as the truth. A padded figure is
- * compared against the exact value padded the same way, so 2.50 for 2.5 is
- * not called a rounding.
- */
-export const isRounded = (
-  value: number,
-  places = decimalPlaces(),
-  pad = false
-): boolean =>
-  plainText(value, places, pad) !== exactText(value, pad ? places : 0);
-
 /**
  * A number ready to render: the text to show — marked when rounding lost
  * something — and the exact value to hover when, and only when, it did.
  */
 export type DisplayedNumber = { text: string; exact?: string };
 
-/** `pad` fills the fraction to `places` (2.50) — a headline figure in a band,
- *  where an even width reads better than an unpadded one. */
+/*
+ * Whether the rounding lost something is decided on the FORMATTED strings
+ * rather than by comparing numbers: that is the question the user can see
+ * ("does the cell show me everything?"), and it absorbs float dust for free —
+ * comparing `value` to its rounded self would flag 0.1 + 0.2 as truncated and
+ * offer "0.30000000000000004" as the truth. A padded figure is compared against
+ * the exact value padded the same way, so 2.50 for 2.5 is not called a
+ * rounding.
+ *
+ * `pad` fills the fraction to `places` (2.50) — a headline figure in a band,
+ * where an even width reads better than an unpadded one.
+ */
 export const displayNumber = (
   value: number,
   places = decimalPlaces(),
   pad = false
 ): DisplayedNumber => {
   const text = plainText(value, places, pad);
-  return isRounded(value, places, pad)
-    ? { text: `${text}${ROUNDED_MARK}`, exact: exactText(value) }
-    : { text };
+  if (text === exactText(value, pad ? places : 0)) return { text };
+  return { text: `${text}${ROUNDED_MARK}`, exact: exactText(value) };
 };
+
+/** Whether displaying `value` at `places` actually loses something. */
+export const isRounded = (
+  value: number,
+  places = decimalPlaces(),
+  pad = false
+): boolean => displayNumber(value, places, pad).exact !== undefined;
 
 /** The value as shown — rounded to `places` and marked when that lost digits —
  *  for a figure with no element to hang hover text on (a chart axis tick, a

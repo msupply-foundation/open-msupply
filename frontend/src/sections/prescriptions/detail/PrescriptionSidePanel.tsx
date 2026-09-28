@@ -271,7 +271,10 @@ export const PrescriptionSidePanel: Component<
               </FieldRow>
               <FieldRow label={t('label.discount-percentage')}>
                 <Text variant="body">
-                  {formatNumber(props.node.insuranceDiscountPercentage ?? 0)}%
+                  {formatNumber(props.node.insuranceDiscountPercentage ?? 0, {
+                    maximumFractionDigits: 2,
+                  })}
+                  %
                 </Text>
               </FieldRow>
             </>
