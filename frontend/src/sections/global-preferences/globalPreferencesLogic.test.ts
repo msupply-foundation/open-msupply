@@ -46,6 +46,7 @@ const CATALOGUE: GlobalPreference[] = [
     inventoryAdjustmentsEnabled: false,
     maxDays: 0,
   }),
+  pref('decimalPlacesForNumbers', 'INTEGER', 2),
 ];
 
 // Label lookup for filter tests — English labels, as displayed.
@@ -83,6 +84,7 @@ describe('grouping (OMS-REG-GPREF-01.2)', () => {
       'itemMarginOverridesSupplierMargin',
       'isGaps',
       'displayPopulationBasedForecasting',
+      'decimalPlacesForNumbers',
     ]);
     // Groups ordered by their FIRST member's catalogue position — Procurement
     // first (authorisePurchaseOrder is row 2), then AMC, Expired stock,
@@ -141,7 +143,7 @@ describe('filter (OMS-REG-GPREF-01.4/.5/.6)', () => {
     expect(none.ungrouped).toEqual([]);
     expect(none.groups).toEqual([]);
     const all = filterCatalogue(grouped, labelOf, groupLabelOf, '');
-    expect(all.ungrouped).toHaveLength(10);
+    expect(all.ungrouped).toHaveLength(11);
     expect(all.groups).toHaveLength(4);
   });
 });
@@ -180,6 +182,9 @@ describe('auto-save input (OMS-REG-GPREF-01.8/.9)', () => {
     expect(
       buildAutoSaveInput('preventTransfersMonthsBeforeInitialisation', 6)
     ).toEqual({ preventTransfersMonthsBeforeInitialisation: 6 });
+    expect(buildAutoSaveInput('decimalPlacesForNumbers', 3)).toEqual({
+      decimalPlacesForNumbers: 3,
+    });
   });
 
   it('coerces wrong-typed values to the kind’s zero', () => {

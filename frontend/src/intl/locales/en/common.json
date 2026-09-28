@@ -3174,6 +3174,7 @@
   "preference.canCreateInternalOrderFromARequisition": "Can create internal order from a requisition",
   "preference.customTranslations": "Custom translations",
   "preference.daysInMonth": "Days in a month",
+  "preference.decimalPlacesForNumbers": "Decimal places to show for numbers",
   "preference.disableManualReturns": "Disable manual returns",
   "preference.displayPopulationBasedForecasting": "Display population based forecasting",
   "preference.doNotPrintPlaceholderLineLabels": "Do not print labels for placeholder (zero quantity) dispensing record lines",

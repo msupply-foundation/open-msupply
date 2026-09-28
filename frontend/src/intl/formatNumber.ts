@@ -1,7 +1,12 @@
 import { LOCALE_META, type SupportedLocale } from './locales';
 import { locale } from './intl';
+import {
+  decimalPlaces,
+  MAX_FRACTION_DIGITS,
+  ROUNDED_MARK,
+} from './decimalPlaces';
 
-const MAX_FRACTION_DIGITS = 10;
+export { MAX_FRACTION_DIGITS };
 
 /*
  * Constructed formatters, keyed by locale + options — because `new
@@ -56,6 +61,15 @@ export const intlNumberFormat = (
  * Number formatting bound to the current locale (reactive). Returns plain
  * functions rather than a hook object, matching the app's direct-call style;
  * read `locale()` inside each so callers used within an effect stay reactive.
+ *
+ * With no `maximumFractionDigits` the figure keeps the installation's
+ * configured decimal places and, when that dropped digits, takes the rounded
+ * mark (spec/ui-standards/tables.md § display rounding) — so a bare
+ * `formatNumber(x)` anywhere in the app rounds and declares it like every
+ * other displayed number. A caller that names its places is never marked here:
+ * the exact-value hover passes MAX_FRACTION_DIGITS, money its currency's minor
+ * units, an input its own decimal limit. A figure that should also REVEAL what
+ * it dropped goes through numberDisplay's displayNumber instead.
  */
 export const formatNumber = (
   value: number | undefined | null,
@@ -65,22 +79,26 @@ export const formatNumber = (
   const active = options?.locale ?? locale();
 
   const {
-    maximumFractionDigits = MAX_FRACTION_DIGITS,
+    maximumFractionDigits = decimalPlaces(),
     minimumFractionDigits,
     locale: _ignored,
     ...rest
   } = options ?? {};
 
-  return intlNumberFormat(active, {
-    ...rest,
-    minimumFractionDigits,
-    // The browser throws if max < min; raise max to min when needed.
-    maximumFractionDigits:
-      minimumFractionDigits !== undefined &&
-      maximumFractionDigits < minimumFractionDigits
-        ? minimumFractionDigits
-        : maximumFractionDigits,
-  }).format(value);
+  const at = (max: number) =>
+    intlNumberFormat(active, {
+      ...rest,
+      minimumFractionDigits,
+      // The browser throws if max < min; raise max to min when needed.
+      maximumFractionDigits:
+        minimumFractionDigits !== undefined && max < minimumFractionDigits
+          ? minimumFractionDigits
+          : max,
+    }).format(value);
+
+  const text = at(maximumFractionDigits);
+  if (options?.maximumFractionDigits !== undefined) return text;
+  return text === at(MAX_FRACTION_DIGITS) ? text : `${text}${ROUNDED_MARK}`;
 };
 
 export const round = (value: number | undefined | null, dp = 0): string => {
