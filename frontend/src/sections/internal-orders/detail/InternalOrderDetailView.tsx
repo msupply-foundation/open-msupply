@@ -1285,10 +1285,22 @@ const InternalOrderDetailView: Component = () => {
                   // A row click opens the line editor on that line (AC-LN11);
                   // on a read-only order it opens with every control disabled.
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
-                  // Placeholder lines (requested 0) read in the info tone —
-                  // whole-row blue text, de-emphasising them (ui-surface S3
-                  // line table), matching outbound's placeholder lines.
-                  rowTone={line =>
+                  // Placeholder lines (requested 0) carry the unfinished-work
+                  // marking (ui-surface S3 line table): the teal row tint plus
+                  // a bar of the same colour down the leading edge — the
+                  // outbound and stocktake line tables' marking, same tokens
+                  // and CSS (#269). It replaces the whole-row action-blue
+                  // text, the colour row selection already spends.
+                  rowTint={line =>
+                    line.requestedQuantity === 0 ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    line.requestedQuantity === 0 ? 'unfinished' : undefined
+                  }
+                  // Cards have neither a row background nor a leading edge, so
+                  // a placeholder card keeps the info tone on its title (the
+                  // teal is a graphic colour, below the text-contrast floor).
+                  cardTone={line =>
                     line.requestedQuantity === 0 ? 'info' : undefined
                   }
                   emptyMessage={

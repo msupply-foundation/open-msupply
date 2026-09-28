@@ -1265,9 +1265,27 @@ const InboundShipmentDetailView: Component = () => {
                   onSort={onSort}
                   onRowClick={isDisabled() ? undefined : openRow}
                   // A line the last bulk op failed reads in the error tone
-                  // (spec S8 → per-line indicators); an untouched placeholder
-                  // reads in the info tone (AC-V3). Error wins when both hold.
+                  // (spec S8 → per-line indicators).
                   rowTone={line =>
+                    lineErrors().has(line.id) ? 'error' : undefined
+                  }
+                  // An untouched placeholder carries the unfinished-work
+                  // marking (AC-V3): the teal row tint plus a bar of the same
+                  // colour down the leading edge — the outbound and stocktake
+                  // line tables' marking, same tokens and CSS (#269). It
+                  // replaces the whole-row action-blue text, the colour row
+                  // selection already spends.
+                  rowTint={line =>
+                    isPlaceholderLine(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isPlaceholderLine(line) ? 'unfinished' : undefined
+                  }
+                  // Cards have neither a row background nor a leading edge, so
+                  // a placeholder card keeps the info tone on its title (the
+                  // teal is a graphic colour, below the text-contrast floor).
+                  // Error wins when both hold.
+                  cardTone={line =>
                     lineErrors().has(line.id)
                       ? 'error'
                       : isPlaceholderLine(line)

@@ -709,8 +709,24 @@ const PrescriptionDetailView: Component = () => {
                 rowKey={line => line.id}
                 // The placeholder is a line awaiting an action — nothing is
                 // dispensed for the item yet (its own cells say so: no batch,
-                // zero packs, a prescribed quantity).
-                rowTone={line => (isPlaceholderLine(line) ? 'info' : undefined)}
+                // zero packs, a prescribed quantity). It carries the
+                // unfinished-work marking: the teal row tint plus a bar of the
+                // same colour down the leading edge — the outbound and
+                // stocktake line tables' marking, same tokens and CSS (#269).
+                // It replaces the whole-row action-blue text, the colour row
+                // selection already spends.
+                rowTint={line =>
+                  isPlaceholderLine(line) ? 'unfinished' : undefined
+                }
+                rowAccent={line =>
+                  isPlaceholderLine(line) ? 'unfinished' : undefined
+                }
+                // Cards have neither a row background nor a leading edge, so
+                // a placeholder card keeps the info tone on its title (the
+                // teal is a graphic colour, below the text-contrast floor).
+                cardTone={line =>
+                  isPlaceholderLine(line) ? 'info' : undefined
+                }
                 loading={data.loading && !info()}
                 onRowClick={openRow}
                 emptyMessage={t('error.no-items')}
