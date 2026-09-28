@@ -125,6 +125,16 @@ pub struct SyncApiErrorV6 {
     pub(crate) route: String,
 }
 
+impl SyncApiErrorV6 {
+    /// Central refused the request because its sync API is paused for maintenance.
+    pub(crate) fn is_sync_api_paused(&self) -> bool {
+        matches!(
+            self.source,
+            SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncApiPaused)
+        )
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum SyncApiErrorVariantV6 {
     #[error("Connection problem")]
