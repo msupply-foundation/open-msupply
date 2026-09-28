@@ -120,11 +120,12 @@ export interface DialogProps {
    * measure keeps the box steady across a multi-step flow: the width belongs to
    * the dialog frame, so capping the CONTENT with a `ContentContainer` inside
    * would leave the frame (and its title + actions rows) at its old width with
-   * the body floating in the middle. Ignored in `size="large"`, whose working
-   * width is a rem number (see `widthRem`) rather than a content measure — a
-   * workbench is sized by the table it holds, not by reading comfort. If both
-   * are passed the rem number wins — it sets the custom property inline, which
-   * beats the preset's rule.
+   * the body floating in the middle. Also sets the working width of a
+   * `size="large"` card, overriding its 56rem default — the way to size a
+   * workbench whose content fits a measure. Ignored in `size="full"`, whose
+   * width is the sheet's own. If both this and `widthRem` are passed the rem
+   * number wins — it sets the custom property inline, which beats the preset's
+   * rule.
    *
    * A measure also opts the dialog into the shared **full-screen** treatment
    * below the narrow-viewport line (tablet portrait and phones, breakpoints.ts
@@ -620,8 +621,9 @@ export const Dialog = (props: DialogProps) => {
       }}
       data-testid={props.testId}
       data-fullscreen={fullscreen() ? '' : undefined}
-      // The measure preset has nothing to say at either workbench size.
-      data-width={workbench() ? undefined : props.width}
+      // A measure sizes a default dialog or a `large` card; the `full` sheet
+      // has its own width.
+      data-width={props.size === 'full' ? undefined : props.width}
       style={{
         // Sets the working width in `large` too, overriding the .large class's
         // 56rem default (#771). In `full` it is inert: .bleed sets `width`

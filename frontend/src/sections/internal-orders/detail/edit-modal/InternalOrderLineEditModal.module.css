@@ -1,58 +1,27 @@
 /* The line editor's panels (spec/internal-orders S4): the item's statistics
    and (under the extended gate) its stock movements on the inline-start, the
-   edits on a recessed inset panel at the inline-end; they stack on narrow
-   viewports.
-
-   CENTRED as a block, because the columns are CAPPED (below) and the card is
-   sized to the three-panel layout: without it a general order's two panels
-   pack against the inline-start of that box, and the whole editor reads as if
-   it had slid off centre. The gap is a step wider than the default for the
-   same reason it was asked for (#617): with a background on each column, the
-   space between them is what separates one group from the next. */
+   edits at the inline-end, each on a recessed InsetPanel. The row itself is an
+   HStack (wrap, centred, `lg` gap); this only spaces it from the item above. */
 .panels {
-  display: flex;
-  gap: var(--space-5);
-  align-items: flex-start;
-  flex-wrap: wrap;
-  justify-content: center;
   margin-block-start: var(--space-3);
 }
 
-/* A statistics column — the stat rows on their own recessed panel, so the
-   label/value pairs read as one group rather than text floating on the modal
-   surface (#617; the edits panel next door already did this). The gap is
-   tighter than InsetPanel's own: these are dense read-only figures, not
-   controls.
-
-   CAPPED, which is the actual fix for "the labels and inputs are so far from
-   each other". The value right-aligns at the row's inline-end, so on a 34"
-   monitor an uncapped third-of-the-modal column put it ~370px from its label.
-   22rem is the house form-column width (FormColumn's --form-column-min), and
-   22 + 22 + 28 + the two gaps lands the three panels at 75rem = the 1200px the
-   React client capped this same editor at — and the modal is a card sized
-   to exactly that group (widthRem 78 = 75rem + the body's padding), so no
-   empty frame surrounds it on a big monitor. */
+/* A statistics column, capped at one form column so each value stays next to
+   its label however wide the modal is. */
 .column {
   flex: 1 1 14rem;
   min-inline-size: 0;
-  max-inline-size: 22rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  max-inline-size: var(--measure-form-column);
 }
 
-/* The edits panel caps a step wider than the statistics columns: its Requested
-   row splits into a number box AND the entry-mode select at equal widths, and
-   the select must not truncate its mode word (spec S4). 28rem is the width a
-   field row has in a standard dialog, so the panel is no wider than an
-   ordinary modal's form. */
+/* The edits panel caps a step wider: its Requested row splits into a number
+   box AND the entry-mode select at equal widths, and the select must not
+   truncate its mode word (spec S4). 28rem is the width a field row has in a
+   standard dialog. */
 .edits {
   flex: 1 1 18rem;
   min-inline-size: 0;
   max-inline-size: 28rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
 }
 
 /* Every statistics value sits right-aligned at the row's end. */

@@ -1,45 +1,19 @@
 /* The requisition line editor's figure grid (spec/requisitions S4 § layout):
    even columns — two for a general requisition, three for an extra-fields
-   program one — each stacking labelled figure rows; they wrap to stacked on
-   narrow viewports.
-
-   CENTRED as a block, because the columns are CAPPED (below) and this modal is
-   full-bleed: uncentred, the whole grid would pack against the inline-start of
-   a much wider sheet. The gap is a step wider than the default so the space
-   between two panelled columns reads as the separation between groups
-   (#617). */
+   program one — each a Stack of labelled figure rows and panels. The row is an
+   HStack (wrap, centred, `lg` gap); this only spaces it from the item above. */
 .grid {
-  display: flex;
-  gap: var(--space-5);
-  align-items: flex-start;
-  flex-wrap: wrap;
-  justify-content: center;
   margin-block-start: var(--space-3);
 }
 
-/* CAPPED — the fix for "the labels and inputs are so far from each other"
-   (#617). Every figure box right-aligns at its row's inline-end, so an
-   uncapped column on a 34" monitor put the box a third of the modal away from
-   the label naming it. A step above the house form-column width (22rem,
-   FormColumn's --form-column-min) because the supply column's entry row splits
-   into a number box AND the units/packs select at equal widths; at 26rem the
-   three columns and their gaps come to 81rem, near the 1200px the React client
-   capped this same editor at, and inside the sheet's shared 90rem ceiling
-   (Dialog.module.css). */
+/* Capped, so each figure box stays next to its label however wide the sheet
+   is. A step above one form column (--measure-form-column) because the supply
+   column's entry row splits into a number box AND the units/packs select at
+   equal widths. */
 .column {
   flex: 1 1 16rem;
   min-inline-size: 0;
   max-inline-size: 26rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-/* A grouping panel's rows stack a little tighter than the column's blocks. */
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
 }
 
 /* Every figure box sits right-aligned at its row's inline-end, all the same
@@ -54,27 +28,12 @@
   text-align: end;
 }
 
-/* The plain caption figures at the head of the first column's panel (default
-   pack size, doses per unit) — not boxed rows. Typography only; the row itself
-   is the generic HStack. They used to sit ABOVE the panel with nothing around
-   them, which is what "what is the Default pack size doing??" was asking
-   (#617); inside it they read as the panel's own heading figures, so the
-   hairline below separates them from the boxed rows. */
+/* The first panel's heading figures (default pack size, doses per unit) —
+   plain captions, not boxed rows. Typography only: the rows are HStacks in a
+   Stack, and the panel's `head` slot draws the divider under them. */
 .caption {
   font-size: var(--text-sm);
   color: var(--text-secondary);
-}
-
-/* The captions as a group: a hairline under them separates the panel's
-   heading figures from its boxed rows. The same lightened divider InsetPanel
-   draws its own edge with, so the two read as one panel, not two. */
-.captions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  border-block-end: 1px solid
-    color-mix(in srgb, var(--color-divider) 55%, transparent);
-  padding-block-end: var(--space-2);
 }
 
 /* A never-editable figure's value — plain right-aligned text at the row's
