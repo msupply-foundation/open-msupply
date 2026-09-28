@@ -1,12 +1,14 @@
 import { createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
+import { pollSyncStatus } from '../../../api/syncStore';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { t } from '../../../intl';
 import { IsSyncApiPaused, SetSyncApiPaused } from './syncSettings.generated';
+import { createSaveOnToggle } from './saveOnToggle';
 
 /*
  * Pause sync API (issue #717) — central server + Server Admin only (gated
@@ -23,35 +25,37 @@ export const SyncApiPause = () => {
     const result = await graphqlFetch(IsSyncApiPaused, {});
     return result.kind === 'success' ? result.data.isSyncApiPaused : false;
   });
-  const paused = () => gated(pausedData) ?? false;
+  const stored = () => gated(pausedData) ?? false;
 
-  const [busy, setBusy] = createSignal(false);
   const [failed, setFailed] = createSignal(false);
 
-  const toggle = async (checked: boolean) => {
-    setBusy(true);
+  // A failed save reverts the switch (saveOnToggle); the response lands in
+  // the resource before the flip is released, so it never flickers.
+  const { checked, busy, toggle } = createSaveOnToggle(stored, async next => {
     setFailed(false);
     // `background`: this row owns its failure surface rather than the global
     // unexpected-error modal.
     const result = await graphqlFetch(
       SetSyncApiPaused,
-      { paused: checked },
+      { paused: next },
       { background: true }
     );
     if (result.kind === 'success') {
       mutate(result.data.centralServer.general.setSyncApiPaused.isPaused);
+      // So this session's sync modal shows it at once; other sessions get it
+      // from the live frame the server emits (as the Pause sync switch).
+      void pollSyncStatus();
     } else if (result.kind !== 'unauthenticated') {
       setFailed(true);
     }
-    setBusy(false);
-  };
+  });
 
   return (
     <Stack gap="sm">
       <ToggleSwitch
         label={t('label.pause-sync-api')}
-        checked={paused()}
-        onChange={checked => void toggle(checked)}
+        checked={checked()}
+        onChange={next => void toggle(next)}
         disabled={busy() || pausedData.state !== 'ready'}
         variant="caution"
         labelInfo={
@@ -63,7 +67,9 @@ export const SyncApiPause = () => {
         }
         testId="sync-settings-pause-sync-api"
       />
-      <Show when={paused()}>
+      {/* The saved state, not the in-flight flip: the warning appears only
+          once central is actually refusing remotes. */}
+      <Show when={stored()}>
         <Alert severity="warning">{t('messages.sync-api-paused')}</Alert>
       </Show>
       <Show when={failed()}>

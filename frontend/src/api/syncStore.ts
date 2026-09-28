@@ -34,8 +34,11 @@ const [liveConnected, setLiveConnected] = createSignal(false);
 // live frame — the server re-emits a frame when the switch flips, since a
 // paused site produces no sync frames of its own to carry the change.
 const [syncPaused, setSyncPaused] = createSignal(false);
+// Central's sync API pause (central only; always false on a remote), carried
+// and re-emitted the same way.
+const [syncApiPaused, setSyncApiPaused] = createSignal(false);
 
-export { syncStatus, pushQueueCount, liveConnected, syncPaused };
+export { syncStatus, pushQueueCount, liveConnected, syncPaused, syncApiPaused };
 
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
@@ -97,6 +100,7 @@ const connect = () => {
       setLiveConnected(true);
       setPushQueueCount(data.syncInfoUpdated.numberOfRecordsInPushQueue);
       setSyncPaused(data.syncInfoUpdated.isSyncPaused);
+      setSyncApiPaused(data.syncInfoUpdated.isSyncApiPaused);
       handleStatus(data.syncInfoUpdated.syncStatus);
     },
     onFailure: () => {
@@ -152,6 +156,7 @@ export const pollSyncStatus = async (): Promise<void> => {
     return;
   setPushQueueCount(result.data.numberOfRecordsInPushQueue);
   setSyncPaused(result.data.isSyncPaused);
+  setSyncApiPaused(result.data.isSyncApiPaused);
   handleStatus(result.data.latestSyncStatus);
 };
 

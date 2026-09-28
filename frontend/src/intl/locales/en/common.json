@@ -2935,6 +2935,7 @@
   "messages.supply-to-requested": "Are you sure you want to set all lines supply quantity to the requested?",
   "messages.swipe-to-see-more": "Swipe to see more",
   "messages.sync-api-paused": "The sync API is paused. Remote sites cannot sync with this server until it is resumed.",
+  "messages.sync-api-paused-modal": "The sync API is paused, so remote sites cannot sync with this server. A server administrator can resume it from Settings.",
   "messages.sync-paused": "Sync is paused. A server administrator can resume it from Settings.",
   "messages.temperature": "{{temperature}} °C",
   "messages.template-download-text": "Not sure how to start? ",

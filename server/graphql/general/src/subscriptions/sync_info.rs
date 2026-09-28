@@ -14,6 +14,9 @@ pub struct SyncInfoUpdatedNode {
     pub number_of_records_in_push_queue: u64,
     /// Admin pause (Admin > Sync settings): while true no scheduled or manual sync runs.
     pub is_sync_paused: bool,
+    /// Central's sync API pause: while true central refuses remote sites' sync. Always false on
+    /// a remote.
+    pub is_sync_api_paused: bool,
 }
 
 pub fn sync_info_stream(
@@ -29,6 +32,7 @@ pub fn sync_info_stream(
                     last_successful,
                     push_queue_count,
                     is_sync_paused,
+                    is_sync_api_paused,
                 }) => {
                     let sync_status = match status {
                         FullSyncStatus::V5V6(s) => FullSyncStatusNode::V5V6(
@@ -43,6 +47,7 @@ pub fn sync_info_stream(
                         sync_status: Some(sync_status),
                         number_of_records_in_push_queue: push_queue_count,
                         is_sync_paused,
+                        is_sync_api_paused,
                     };
                     return Some((node, rx));
                 }
