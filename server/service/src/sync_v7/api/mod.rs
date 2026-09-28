@@ -142,7 +142,7 @@ impl SyncApiV7 {
     ///
     /// The budget is per call, so a pull gets a fresh one for every batch - only a
     /// persistently broken connection gives up.
-    pub async fn request_with_body_retry<I: Serialize, O: DeserializeOwned>(
+    async fn request_with_body_retry<I: Serialize, O: DeserializeOwned>(
         &self,
         route: &str,
         input: I,
@@ -160,7 +160,7 @@ impl SyncApiV7 {
 
     /// POST `input` to `route`. `with_retries` re-sends it if the connection fails before
     /// a response arrives, but a response body cut off mid-read fails straight away.
-    pub async fn request<I: Serialize, O: DeserializeOwned>(
+    async fn request<I: Serialize, O: DeserializeOwned>(
         &self,
         route: &str,
         input: I,
