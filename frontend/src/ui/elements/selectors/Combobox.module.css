@@ -387,10 +387,10 @@
 }
 
 /* The glyph takes its message line's own colour (inherited from .error /
-   .warning) — it is part of the line, not a caution of its own. It used to be
-   --color-warning, which rendered an amber triangle above red text and read as
-   a second, milder severity sitting on the same message. */
-.errorIcon {
+   .warning) — it is part of the line, not a caution of its own, so an error
+   never shows an amber triangle beside red text. Named as TextField names the
+   same class. */
+.messageIcon {
   font-size: 0.875em;
   color: inherit;
   flex-shrink: 0;

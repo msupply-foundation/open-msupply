@@ -771,7 +771,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
               role="status"
               data-testid={props.warningTestId}
             >
-              <AlertTriangleIcon class={styles.errorIcon} />
+              <AlertTriangleIcon class={styles.messageIcon} />
               {props.warning}
             </KCombobox.Description>
           </Show>
@@ -781,7 +781,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           class={styles.error}
           data-testid={props.errorTestId}
         >
-          <AlertTriangleIcon class={styles.errorIcon} />
+          <AlertTriangleIcon class={styles.messageIcon} />
           {props.error}
         </KCombobox.Description>
       </Show>
