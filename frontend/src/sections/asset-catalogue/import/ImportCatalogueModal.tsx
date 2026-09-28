@@ -82,6 +82,12 @@ export const ImportCatalogueModal: Component<
   const [progress, setProgress] = createSignal<RunProgress>();
   const [saveError, setSaveError] = createSignal<string>();
   const [sort, setSort] = createSignal<SortState<ReviewKey>>();
+  // The dialog's height when OK & next was pressed, held (in rem) through the
+  // run and its outcome. Without it the sheet drops to its floor while the run
+  // shows only progress, then to the refused rows' height, and the footer moves
+  // under the pointer: the second click of a double-click lands on the scrim
+  // and dismisses the outcome unseen. Released by Upload a new one.
+  const [heldHeightRem, setHeldHeightRem] = createSignal<number>();
 
   // What a file's names resolve against — fetched once, when the modal opens.
   const [lookups] = createResource(
@@ -177,6 +183,7 @@ export const ImportCatalogueModal: Component<
     setFile(undefined);
     setRefused(undefined);
     setInvalidFile(false);
+    setHeldHeightRem(undefined);
     setStep('upload');
   };
 
@@ -194,9 +201,12 @@ export const ImportCatalogueModal: Component<
     return t('messages.unknown-error');
   };
 
-  const startImport = async () => {
+  const startImport = async (from: Element) => {
     const parsed = file();
     if (!parsed || !canStartImport(parsed.rows) || running()) return;
+    const height = from.closest('dialog')?.getBoundingClientRect().height;
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    if (height && rem) setHeldHeightRem(height / rem);
     setStep('import');
     setProgress({ sent: 0, total: parsed.rows.length, refused: 0 });
     const failures = await runImport(parsed.rows, insertOne, setProgress);
@@ -258,6 +268,7 @@ export const ImportCatalogueModal: Component<
     <Dialog
       open
       size="full"
+      minHeightRem={heldHeightRem()}
       onClose={props.onClose}
       dismissable={!running()}
       icon={<ImportIcon />}
@@ -292,7 +303,7 @@ export const ImportCatalogueModal: Component<
               refused() !== undefined ||
               !canStartImport(file()?.rows ?? [])
             }
-            onClick={() => void startImport()}
+            onClick={event => void startImport(event.currentTarget)}
           >
             {t('button.ok-and-next')}
           </Button>
