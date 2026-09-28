@@ -2,8 +2,8 @@
  * Scroll a control inside a DataTable into view by its CELL.
  *
  * In table view the whole <td> is the target: its padding, and the column
- * header above it, land clear of the pinned columns (the scroll box reserves
- * the frozen blocks as scroll padding — see DataTable's frozenWidths). The
+ * header above it, land clear of the pinned columns (unpinned cells take the
+ * frozen blocks' widths as scroll margin — see DataTable's frozenWidths). The
  * control alone is the wrong target there: it can sit behind leading chrome
  * (a combobox's search icon), so lining IT up with the frozen edge leaves the
  * control's own start — and the cell's message line — under the pinned block.
