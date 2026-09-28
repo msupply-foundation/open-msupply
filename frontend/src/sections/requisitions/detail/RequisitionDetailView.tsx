@@ -1112,9 +1112,22 @@ const RequisitionDetailView: Component = () => {
                   // A row click opens the line editor on that line (AC-LE1);
                   // on a read-only requisition it opens all-disabled (AC-LE9).
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
-                  // Rows with a ZERO supply quantity read in the info tone —
-                  // visually de-emphasised as placeholders (AC-V4).
-                  rowTone={line =>
+                  // Rows with a ZERO supply quantity are placeholders (AC-V4)
+                  // and carry the unfinished-work marking: the teal row tint
+                  // plus a bar of the same colour down the leading edge — the
+                  // outbound and stocktake line tables' marking, same tokens
+                  // and CSS (#269). It replaces the whole-row action-blue
+                  // text, the colour row selection already spends.
+                  rowTint={line =>
+                    line.supplyQuantity === 0 ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    line.supplyQuantity === 0 ? 'unfinished' : undefined
+                  }
+                  // Cards have neither a row background nor a leading edge, so
+                  // a placeholder card keeps the info tone on its title (the
+                  // teal is a graphic colour, below the text-contrast floor).
+                  cardTone={line =>
                     line.supplyQuantity === 0 ? 'info' : undefined
                   }
                   emptyMessage={
