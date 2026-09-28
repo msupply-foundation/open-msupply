@@ -124,8 +124,8 @@ async fn create(
     let metadata = parse_metadata(req.headers())?;
 
     let ctx = service_provider.basic_context().map_err(internal)?;
-    authenticate(&req, &metadata, &ctx, &service_provider).await?;
     require_sync_api_unpaused(&ctx)?;
+    authenticate(&req, &metadata, &ctx, &service_provider).await?;
 
     let file_id = require_metadata(&metadata, "file_id")?;
 
@@ -183,8 +183,8 @@ async fn head_offset(
     let metadata = parse_metadata(req.headers())?;
 
     let ctx = service_provider.basic_context().map_err(internal)?;
-    authenticate(&req, &metadata, &ctx, &service_provider).await?;
     require_sync_api_unpaused(&ctx)?;
+    authenticate(&req, &metadata, &ctx, &service_provider).await?;
 
     let file_id = path.into_inner();
     let repo = SyncFileReferenceRowRepository::new(&ctx.connection);
@@ -223,8 +223,8 @@ async fn patch_chunk(
     let metadata = parse_metadata(req.headers())?;
 
     let ctx = service_provider.basic_context().map_err(internal)?;
-    authenticate(&req, &metadata, &ctx, &service_provider).await?;
     require_sync_api_unpaused(&ctx)?;
+    authenticate(&req, &metadata, &ctx, &service_provider).await?;
 
     let file_id = path.into_inner();
     let repo = SyncFileReferenceRowRepository::new(&ctx.connection);

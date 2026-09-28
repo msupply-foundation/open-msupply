@@ -201,9 +201,6 @@ impl SyncApiV6 {
     }
 }
 
-/// Build a tus Upload-Metadata header value. Format: `key1 base64,key2 base64,...`
-/// `sync_v5_settings` is only embedded for v5/v6-authenticated uploads; v7 uploads
-/// carry auth in request headers instead.
 /// Central answers a paused sync API with the JSON of `SyncParsedErrorV6::SyncApiPaused`;
 /// surface that as the typed error so the file sync driver can back off without burning a retry.
 /// Any other failure body (tus errors are plain text) stays a generic error.
@@ -214,6 +211,9 @@ fn tus_error(error: anyhow::Error, body: &str) -> SyncApiErrorVariantV6 {
     }
 }
 
+/// Build a tus Upload-Metadata header value. Format: `key1 base64,key2 base64,...`
+/// `sync_v5_settings` is only embedded for v5/v6-authenticated uploads; v7 uploads
+/// carry auth in request headers instead.
 fn build_upload_metadata(
     sync_v5_settings: Option<&SyncApiSettings>,
     file_id: &str,
