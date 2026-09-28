@@ -222,6 +222,11 @@ impl FileSyncDriver {
 
         let files_to_upload = match result {
             Ok(num_of_files) => num_of_files,
+            // Central paused its sync API: the upload is held, not failed (as the sync loggers)
+            Err(error) if error.is_sync_api_paused() => {
+                log::info!("File sync skipped: {}", format_error(&error));
+                0
+            }
             Err(error) => {
                 log::error!("Problem syncing files {}", format_error(&error));
                 0 // Assume there's no files to upload...
