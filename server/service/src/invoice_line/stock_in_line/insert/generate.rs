@@ -1,8 +1,8 @@
 use crate::{
     barcode::{self, BarcodeInput},
     invoice::common::{
-        calculate_total_after_tax, generate_invoice_user_id_update, generate_vvm_status_log,
-        GenerateVVMStatusLogInput,
+        calculate_foreign_currency_total, calculate_total_after_tax,
+        generate_invoice_user_id_update, generate_vvm_status_log, GenerateVVMStatusLogInput,
     },
     invoice_line::stock_in_line::{
         convert_invoice_line_to_single_pack, generate_batch, should_update_stock, StockInType,
@@ -41,11 +41,12 @@ pub fn generate(
             .map_err(PreferenceError::into_repository_error)?;
 
     let mut new_line = generate_line(
+        connection,
         input.clone(),
         item_row,
         existing_invoice_row.clone(),
         external_inbound_shipment_lines_must_be_authorised,
-    );
+    )?;
 
     // Check if the stock line already exists, if it does we may need to update it rather than replacing it
     let old_stock_line = match &input.stock_line_id {
@@ -121,6 +122,7 @@ pub fn generate(
 }
 
 fn generate_line(
+    connection: &StorageConnection,
     InsertStockInLine {
         id,
         invoice_id,
@@ -161,12 +163,25 @@ fn generate_line(
         tax_percentage,
         default_donor_id,
         purchase_order_id,
+        currency_id,
+        currency_rate,
         ..
     }: InvoiceRow,
     external_inbound_shipment_lines_must_be_authorised: bool,
-) -> InvoiceLineRow {
+) -> Result<InvoiceLineRow, RepositoryError> {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
+    // The line's total in the shipment's currency: None on a home-currency
+    // shipment, otherwise the local total at the shipment's own rate — the same
+    // relation every later recalculation on the shipment keeps, so a line added
+    // by hand carries the figure from the start rather than until something
+    // else recomputes it.
+    let foreign_currency_price_before_tax = calculate_foreign_currency_total(
+        connection,
+        total_before_tax,
+        currency_id,
+        &currency_rate,
+    )?;
     // default to invoice_row donor_id if none supplied on insert
     let donor_id = donor_id.or(default_donor_id);
 
@@ -178,7 +193,7 @@ fn generate_line(
         false => None,
     };
 
-    InvoiceLineRow {
+    Ok(InvoiceLineRow {
         id,
         invoice_id,
         item_id,
@@ -208,7 +223,7 @@ fn generate_line(
         shipped_number_of_packs,
         volume_per_pack: volume_per_pack.unwrap_or(0.0),
         shipped_pack_size,
-        foreign_currency_price_before_tax: None,
+        foreign_currency_price_before_tax,
         linked_invoice_id: None,
         prescribed_quantity: None,
         reason_option_id,
@@ -216,7 +231,8 @@ fn generate_line(
         received_number_of_packs: None,
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
-    }
+        transfer_comment: None,
+    })
 }
 
 fn should_create_stock_line_for_new_line(

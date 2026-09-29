@@ -48,12 +48,15 @@ type ModalTab = 'details' | 'insurance' | 'custom-fields';
  * header's picker and the prescription-request header's (PatientSearch's
  * `onEditPatient`, spec/prescriptions ui-surface S3 § header fields; #1038).
  *
- * Custom fields earn a tab here because standing facts about the person —
- * Category among them — are captured mid-prescribing, and sending the
- * prescriber to the full patient screen to set one would lose the request they
- * are in the middle of authoring. The tab owns its own explicit Save (the
- * patient-specific merge write), independent of the footer's details Save,
- * exactly as the full patient screen's tab does.
+ * Custom fields earn a tab here because a patient's configured fields are
+ * standing facts about the person, and they surface mid-task: sending the user
+ * to the full patient screen to correct one would lose the record they are in
+ * the middle of authoring. Category is NOT among them — it is the prescription
+ * request's own field, set in that header, because a category holds only for
+ * the moment it was written (issue #514, spec/prescription-requests/rules.md
+ * § custom fields). The tab owns its own explicit Save (the patient-specific
+ * merge write), independent of the footer's details Save, exactly as the full
+ * patient screen's tab does.
  *
  * Mounted fresh per open (the stocktakes/PrescriptionLineEditModal shape — a
  * call site keys it to the id it's opened for) so the edit state always starts

@@ -1,12 +1,10 @@
-use self::query::{get_stock_line, get_stock_lines, get_items_by_stock_line_filter};
+use self::query::{get_items_by_stock_line_filter, get_stock_line, get_stock_lines};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::NaiveDateTime;
 use historical_stock::get_historical_stock_lines;
-use repository::{
-    Item, ItemSort, PaginationOption, StockLine, StockLineFilter, StockLineSort,
-};
+use repository::{Item, ItemSort, PaginationOption, StockLine, StockLineFilter, StockLineSort};
 
 pub mod historical_stock;
 pub mod query;

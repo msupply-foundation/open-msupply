@@ -1,5 +1,5 @@
 import { t } from '../../../intl';
-import { localisedDate } from '../../../intl';
+import { exportDate } from '../../../intl';
 import { toCsv } from '../../../domain/reportFiles';
 import { statusLabel } from './internalOrderStatus';
 import type { InternalOrderRowFragment } from './internalOrders.generated';
@@ -28,7 +28,7 @@ export const internalOrdersToCsv = (
   const data = rows.map(row => [
     row.otherPartyName,
     row.requisitionNumber,
-    localisedDate(row.createdDatetime),
+    exportDate(row.createdDatetime),
     statusLabel(row.status),
     row.comment ?? '',
     ...(includeProgram

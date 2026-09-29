@@ -11,16 +11,16 @@ pub mod patient_updated;
 mod query;
 mod search;
 mod search_central;
-mod update_patient;
 mod update_custom_fields;
+mod update_patient;
 mod upsert_program_patient;
 
 pub use self::insert_patient::*;
 pub use self::query::*;
 pub use self::search::*;
 pub use self::search_central::*;
-pub use self::update_patient::*;
 pub use self::update_custom_fields::*;
+pub use self::update_patient::*;
 pub use self::upsert_program_patient::*;
 
 pub fn main_patient_doc_name(patient_id: &str) -> String {

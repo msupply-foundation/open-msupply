@@ -1,5 +1,5 @@
 import { t } from '@/intl';
-import { localisedDate } from '@/intl';
+import { exportDate } from '@/intl';
 import { toCsv } from '@/domain/reportFiles';
 import { statusLabel } from './requisitionStatus';
 import type { RequisitionRowFragment } from './requisitions.generated';
@@ -29,7 +29,7 @@ export const requisitionsToCsv = (
   const data = rows.map(row => [
     row.otherPartyName,
     row.requisitionNumber,
-    localisedDate(row.createdDatetime),
+    exportDate(row.createdDatetime),
     statusLabel(row.status),
     row.comment ?? '',
     ...(includeProgram

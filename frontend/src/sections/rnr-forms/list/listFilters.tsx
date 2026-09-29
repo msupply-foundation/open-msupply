@@ -35,6 +35,7 @@ const FILTERS: Filter<RnrFormFilter>[] = constructFilters<RnrFormFilter>({
         type="dateTime"
         label={t('label.created')}
         testId={props.testId}
+        disableFuture
         value={props.filter().createdDatetime}
         onChange={value => props.setPartialFilter({ createdDatetime: value })}
       />

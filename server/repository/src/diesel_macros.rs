@@ -1049,8 +1049,7 @@ mod diesel_string_enum_test {
     #[test]
     fn verbatim_db_case_captures_unknown_as_is() {
         assert_eq!(
-            serde_json::from_value::<VerbatimFallback>(serde_json::json!("FutureVariant"))
-                .unwrap(),
+            serde_json::from_value::<VerbatimFallback>(serde_json::json!("FutureVariant")).unwrap(),
             VerbatimFallback::Other("FutureVariant".to_string())
         );
     }

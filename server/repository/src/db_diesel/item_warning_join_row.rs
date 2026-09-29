@@ -29,9 +29,7 @@ joinable!(item_warning_join -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_warning_join, item);
 allow_tables_to_appear_in_same_query!(item_warning_join, warning);
 
-#[derive(
-    Clone, Default, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize,
-)]
+#[derive(Clone, Default, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[diesel(table_name = item_warning_join)]
 pub struct ItemWarningJoinRow {
     pub id: String,

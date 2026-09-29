@@ -1,0 +1,8 @@
+/* The word Ongoing in a Duration cell: emphasised as an exception rather than
+   shown as a number — error tone, italic — and never the tone alone, since the
+   word carries the meaning (ui-surface T2 column 8; accessibility › colour
+   independence). */
+.ongoing {
+  color: var(--error-main);
+  font-style: italic;
+}

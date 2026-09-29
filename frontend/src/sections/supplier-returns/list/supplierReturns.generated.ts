@@ -245,7 +245,7 @@ export type InsertSupplierReturnResult = {
   __typename: "InsertSupplierReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotASupplier" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -288,7 +288,7 @@ export type DeleteSupplierReturnResult = {
   __typename: "DeleteSupplierReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });

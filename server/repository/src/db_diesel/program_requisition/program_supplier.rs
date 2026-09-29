@@ -80,9 +80,7 @@ impl<'a> ProgramSupplierRepository<'a> {
             name_store_join::table::all_columns()
                 .nullable()
                 .assume_not_null(),
-            store::table::all_columns()
-                .nullable()
-                .assume_not_null(),
+            store::table::all_columns().nullable().assume_not_null(),
             program::table::all_columns().nullable().assume_not_null(),
         ));
         let result = query.load::<ProgramSupplierJoin>(self.connection.lock().connection())?;

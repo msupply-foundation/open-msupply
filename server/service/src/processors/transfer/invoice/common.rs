@@ -81,6 +81,7 @@ pub(crate) fn generate_inbound_lines(
                     purchase_order_line_id,
                     received_number_of_packs: _,
                     legacy_goods_received_line_id: _,
+                    transfer_comment,
                 },
                 ItemRow {
                     id: item_id,
@@ -179,6 +180,8 @@ pub(crate) fn generate_inbound_lines(
                     status,
                     received_number_of_packs: None,
                     legacy_goods_received_line_id: None,
+                    // Travels with the line; read-only at the receiving store.
+                    transfer_comment,
                 }
             },
         )

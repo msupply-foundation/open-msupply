@@ -12,15 +12,22 @@ export type DeleteOutcome =
   /** OMS-REG-INV-01.21 — the location was removed. */
   | { kind: 'deleted'; id: string }
   /**
-   * OMS-REG-INV-01.32 — the typed LocationInUse rejection, carrying the
-   * referencing stock-line / invoice-line counts that block the delete.
+   * OMS-REG-INV-01.32 / OMS-REG-INV-01.35 — the typed LocationInUse rejection,
+   * carrying the referencing stock-line / invoice-line counts that block the
+   * delete.
+   *
+   * Both counts are ZERO on a real refusal whenever what holds the location is
+   * something the server's guard does not enumerate — a cold-chain sensor
+   * (typed, but never on the wire) or movement history, a stocktake line, a
+   * temperature log (caught at the database constraint and mapped to this same
+   * error). So an in-use outcome means blocked; the counts only say whether it
+   * can name what by (contract.md ⚠️ the two deletion wire traps).
    */
   | { kind: 'inUse'; id: string; stockLines: number; invoiceLines: number }
   /**
-   * OMS-REG-INV-01.35 — an untyped failure: a location with stock-movement
-   * history fails storage-side as a plain Internal-error GraphQL error (not
-   * the in-use report); wrong-store / not-found also arrive untyped
-   * (contract.md ⚠️ wire trap). The location remains.
+   * An untyped failure — wrong-store / not-found arrive as plain GraphQL
+   * errors rather than members of the union (contract.md ⚠️ wire trap). The
+   * location remains.
    */
   | { kind: 'failed'; id: string };
 
@@ -53,7 +60,7 @@ export type DeleteSummary = {
    * with their references.
    */
   inUse: Extract<DeleteOutcome, { kind: 'inUse' }>[];
-  /** Untyped failures (OMS-REG-INV-01.35) — reported by count only. */
+  /** Untyped failures — reported by count only. */
   failedCount: number;
 };
 

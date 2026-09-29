@@ -20,7 +20,11 @@ use crate::{
 pub(crate) struct DocumentUpsert(pub(crate) Document);
 
 impl Upsert for DocumentUpsert {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         sync_upsert_document(con, &self.0)?;
         Ok(())
     }

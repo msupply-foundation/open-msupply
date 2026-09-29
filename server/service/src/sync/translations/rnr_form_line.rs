@@ -10,7 +10,8 @@ use crate::sync::translations::{
 
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 /// FK column renamed during the entity-link abstraction. Central emits both the canonical
@@ -45,10 +46,8 @@ impl SyncTranslation for RnRFormLineTranslation {
         fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let row = from_renamed_keys_str::<RnRFormLineRow>(
-            &sync_record.data.0.to_string(),
-            RENAMED_KEYS,
-        )?;
+        let row =
+            from_renamed_keys_str::<RnRFormLineRow>(&sync_record.data.0.to_string(), RENAMED_KEYS)?;
 
         let check_fk = fk_checker.with_table_required(connection, "rnr_form_line", &row.id);
 

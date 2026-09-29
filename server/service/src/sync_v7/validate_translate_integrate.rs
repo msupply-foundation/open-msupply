@@ -128,7 +128,9 @@ fn translate_delete(
         ChangelogTableName::Site => Box::new(SiteRowDelete(id)),
         ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
         ChangelogTableName::PrescriptionRequest => Box::new(PrescriptionRequestRowDelete(id)),
-        ChangelogTableName::PrescriptionRequestLine => Box::new(PrescriptionRequestLineRowDelete(id)),
+        ChangelogTableName::PrescriptionRequestLine => {
+            Box::new(PrescriptionRequestLineRowDelete(id))
+        }
         ChangelogTableName::StockRelocation => Box::new(StockRelocationRowDelete(id)),
         ChangelogTableName::StockRelocationLine => Box::new(StockRelocationLineRowDelete(id)),
         ChangelogTableName::Stocktake => Box::new(StocktakeRowDelete(id)),

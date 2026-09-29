@@ -56,6 +56,7 @@ import {
 import { filterFields, type PrescriptionRequestFilter } from './listFilters';
 import { CreatePrescriptionRequestModal } from './CreatePrescriptionRequestModal';
 import { DeletePrescriptionRequestsAction } from './actions/DeletePrescriptionRequestsAction';
+import { ExportPrescriptionRequestsAction } from './actions/ExportPrescriptionRequestsAction';
 
 // The prescription-requests list (spec/prescription-requests/ui-surface.md S1):
 // the standard list screen over prescriptionRequests. Past-New rows take the
@@ -275,6 +276,12 @@ const PrescriptionRequestsList: Component = () => {
             >
               {t('button.new-prescription')}
             </Button>
+            <ExportPrescriptionRequestsAction
+              storeId={params.storeId}
+              filter={() => query().filter}
+              customFieldFilter={() => query().cf}
+              customFields={cfDefs}
+            />
           </HeaderButtons>
         </Header>
       }

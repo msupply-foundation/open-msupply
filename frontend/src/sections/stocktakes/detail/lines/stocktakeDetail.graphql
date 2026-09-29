@@ -21,6 +21,9 @@ fragment StocktakeInfo on StocktakeNode {
   verifiedBy
   stocktakeDate
   finalisedDatetime
+  # An initial (opening-balance) stocktake never requires a reason, so the line
+  # editor's awaiting-a-reason marking is off there (rules § adjustment-reason rules).
+  isInitialStocktake
   # Read-only "Entered by" / "Created" in the Additional-info side panel —
   # the email rides the entered-by info tooltip.
   createdDatetime

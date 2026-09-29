@@ -92,7 +92,11 @@ export const CreateAssetModal = ({
   const [isCatalogueAsset, setIsCatalogueAsset] = useState(true);
   const [draft, setDraft] = useState<Partial<InsertAsset>>(getEmptyAsset());
 
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({
+    isOpen,
+    onClose,
+    testId: 'create-asset-modal',
+  });
 
   const { data: categoryData, isLoading: isLoadingCategories } =
     useAssetCategories({ classId: { equalTo: CCE_CLASS_ID } });
@@ -210,6 +214,7 @@ export const CreateAssetModal = ({
               }}
               checked={isCatalogueAsset}
               label={t('label.use-catalogue')}
+              testId="use-catalogue-toggle"
             />
           </Box>
           {isCentralServer && !isColdChain && (
@@ -239,6 +244,7 @@ export const CreateAssetModal = ({
                 }}
                 value={draft.categoryId ?? ''}
                 clearable
+                data-testid="category-select"
               />
             }
           />
@@ -266,6 +272,7 @@ export const CreateAssetModal = ({
                   onChange={(_event, selected) =>
                     updateDraft({ catalogueItemId: selected?.id ?? '' })
                   }
+                  inputTestId="catalogue-item-input"
                   paginationDebounce={DEBOUNCE_TIMEOUT}
                   onPageChange={() => fetchNextPage()}
                   loading={isFetching}
@@ -293,6 +300,7 @@ export const CreateAssetModal = ({
                   }}
                   value={draft.typeId}
                   disabled={!draft.categoryId}
+                  data-testid="type-select"
                 />
               }
             />
@@ -304,6 +312,9 @@ export const CreateAssetModal = ({
                 fullWidth
                 value={draft.assetNumber}
                 onChange={e => updateDraft({ assetNumber: e.target.value })}
+                slotProps={{
+                  htmlInput: { 'data-testid': 'asset-number-input' },
+                }}
               />
             }
           />

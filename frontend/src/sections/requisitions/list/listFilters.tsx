@@ -163,6 +163,7 @@ const FILTERS: Filter<RequisitionFilter>[] =
           type="dateTime"
           label={t('label.created')}
           testId={props.testId}
+          disableFuture
           value={props.filter().createdDatetime}
           onChange={value => props.setPartialFilter({ createdDatetime: value })}
         />

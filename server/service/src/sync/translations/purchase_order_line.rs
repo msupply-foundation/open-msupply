@@ -127,7 +127,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
-            price_extension_expected: _,
+            price_extension_expected,
             comment,
             manufacturer_id,
             note,
@@ -158,6 +158,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
+            line_total: price_extension_expected,
             comment,
             manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             note,
@@ -203,22 +204,13 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
+            line_total,
             comment,
             manufacturer_id: manufacturer_link_id,
             note,
             unit,
             status,
         } = purchase_order_line_row;
-
-        // Total Cost calculated in Front End: price_per_pack_after_discount * number_of_packs
-        // Number of packs = (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
-        let price_extension_expected = if requested_pack_size > 0.0 {
-            price_per_pack_after_discount
-                * (adjusted_number_of_units.unwrap_or(requested_number_of_units)
-                    / requested_pack_size)
-        } else {
-            0.0
-        };
 
         let legacy_row = LegacyPurchaseOrderLineRow {
             id,
@@ -236,7 +228,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
-            price_extension_expected,
+            price_extension_expected: line_total,
             comment,
             manufacturer_id: manufacturer_link_id,
             note,
@@ -259,7 +251,6 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
         Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
-
 #[cfg(test)]
 mod tests {
     use crate::sync::translations::ToSyncRecordTranslationType;

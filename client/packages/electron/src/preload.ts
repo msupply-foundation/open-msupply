@@ -33,3 +33,35 @@ const electronNativeAPI: NativeAPI = {
 };
 
 contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);
+
+// The new front end's discovery host contract
+// (frontend/src/discovery/hostContract.ts), exposed ONLY on the discovery
+// page's own origin.
+//
+// A preload runs again for every document this window loads, and after a
+// connection that document is the chosen server's UI. Without the gate that
+// UI — and anything that gets script into it — would keep hostInfo (this
+// machine's id and network addresses), probe (an arbitrary-URL fetch from this
+// machine with certificate checks off) and navigate. Nothing past the hand-off
+// uses this API: the served login screen's way back is a plain link.
+//
+// electronNativeAPI above is deliberately left as it was. The old front end is
+// served by the connected server and needs it there, so narrowing it is a
+// separate change with its own blast radius.
+const originArgument = process.argv.find(argument =>
+  argument.startsWith('--discovery-origin=')
+);
+const pageOrigin = originArgument?.slice('--discovery-origin='.length);
+
+if (pageOrigin && location.origin === pageOrigin) {
+  contextBridge.exposeInMainWorld('discoveryHostApi', {
+    hostInfo: () => ipcRenderer.invoke(IPC_MESSAGES.DISCOVERY_HOST_INFO),
+    startDiscovery: () => ipcRenderer.send(IPC_MESSAGES.DISCOVERY_START),
+    announcements: () =>
+      ipcRenderer.invoke(IPC_MESSAGES.DISCOVERY_ANNOUNCEMENTS),
+    probe: (url: string, timeoutMs: number) =>
+      ipcRenderer.invoke(IPC_MESSAGES.DISCOVERY_PROBE, url, timeoutMs),
+    navigate: (url: string, server: unknown) =>
+      ipcRenderer.send(IPC_MESSAGES.DISCOVERY_NAVIGATE, url, server),
+  });
+}

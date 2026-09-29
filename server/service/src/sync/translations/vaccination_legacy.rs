@@ -3,9 +3,7 @@ use serde::Serialize;
 use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
-use repository::{
-    ChangelogRow, ChangelogTableName, Row, StorageConnection, VaccinationRow,
-};
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection, VaccinationRow};
 
 /*
     This translator is only used to push Vaccination rows to the legacy mSupply server.

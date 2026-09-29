@@ -8,6 +8,7 @@
 import { createEffect } from 'solid-js';
 import { t, type LocaleKey } from './intl';
 import { navTrail } from './nav/navConfig';
+import { pluginScreenLabelKey } from './plugins/pluginPages';
 import { findLeafByPath } from './ui/layout/AppShell/navModel';
 
 /**
@@ -30,7 +31,12 @@ export const pageTitle = (screenKey: LocaleKey | undefined): string =>
 export const screenTitleKey = (relativePath: string): LocaleKey | undefined => {
   const trail = navTrail(relativePath);
   return (
-    trail[trail.length - 1]?.labelKey ?? findLeafByPath(relativePath)?.labelKey
+    trail[trail.length - 1]?.labelKey ??
+    findLeafByPath(relativePath)?.labelKey ??
+    // A plugin-contributed page's own label, from the registry's plugin half
+    // (spec/navigation § plugin destinations) — a namespaced key t() resolves
+    // through the plugin's registered catalogue, like every surface showing it.
+    pluginScreenLabelKey(relativePath)
   );
 };
 

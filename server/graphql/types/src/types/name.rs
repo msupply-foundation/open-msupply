@@ -158,10 +158,7 @@ impl NameNode {
     /// `"patient"` if it's a patient, `"customer"` if `is_customer`,
     /// `"supplier"` if `is_supplier`. A name that matches none of these (e.g. a
     /// manufacturer/donor/store-only name) has no scope and surfaces nothing.
-    pub async fn custom_fields(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<serde_json::Value>> {
+    pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
         let Some(raw) = self.row().custom_fields.clone() else {
             return Ok(None);
         };

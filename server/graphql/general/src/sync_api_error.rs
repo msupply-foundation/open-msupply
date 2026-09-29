@@ -133,7 +133,10 @@ pub fn map_request_auth_error(error: RequestAndSetSiteAuthError) -> Result<SyncE
             SyncErrorNode::from_error_variant(Variant::SiteUUIDIsBeingChanged, &error),
         ),
         from::SyncApiV5CreatingError(SyncApiV5CreatingError::CannotParseSyncUrl(_, _)) => {
-            SyncErrorEither::V5V6(SyncErrorNode::from_error_variant(Variant::InvalidUrl, &error))
+            SyncErrorEither::V5V6(SyncErrorNode::from_error_variant(
+                Variant::InvalidUrl,
+                &error,
+            ))
         }
         from::SyncV7Error(sync_error) => {
             SyncErrorEither::V7(SyncErrorV7Node::from_sync_error(sync_error.clone()))

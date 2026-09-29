@@ -1,7 +1,8 @@
 use super::{item_link_row::item_link, master_list_row::master_list::dsl::*, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
+    SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -18,7 +19,17 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = master_list)]
 pub struct MasterListRow {
     pub id: String,

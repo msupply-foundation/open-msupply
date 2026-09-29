@@ -5,6 +5,7 @@ import {
   isAvailable,
   isEmpty,
   passesFullness,
+  visibleLocations,
 } from './volume';
 
 // A minimal location shape for the pure volume helpers (the real node has
@@ -200,5 +201,52 @@ describe('passesFullness', () => {
         originalLocationId: 'orig',
       })
     ).toBe(false);
+  });
+});
+
+// The list the picker actually offers, and the field-level suppression on top
+// of the filter — `fullnessFilter={false}` on a field that references a
+// location without placing stock in it (a sensor's assignment, AC-P8 of
+// spec/cold-chain-sensors). Such a field shows no tabs, so it must not narrow
+// its options either: there would be no control on screen to explain a missing
+// location.
+describe('visibleLocations', () => {
+  const FULL = withId('full', 10, 10, 5);
+  const EMPTY = withId('empty', 10, 0, 0);
+  const HELD = withId('held', 10, 0, 0, true);
+  const ALL = [FULL, EMPTY, HELD];
+
+  it('applies the chosen mode when the filter is offered', () => {
+    expect(visibleLocations(ALL, 'empty')).toEqual([EMPTY, HELD]);
+    expect(visibleLocations(ALL, 'available')).toEqual([EMPTY]);
+  });
+
+  it('keeps every location under "all"', () => {
+    expect(visibleLocations(ALL, 'all')).toEqual(ALL);
+  });
+
+  it('honours the exemptions the mode would otherwise hide', () => {
+    expect(visibleLocations(ALL, 'available', { selectedId: 'full' })).toEqual([
+      FULL,
+      EMPTY,
+    ]);
+  });
+
+  it('offers every location when the filter is suppressed', () => {
+    // Whatever mode the tab strip happens to hold: a field with no tabs can
+    // never be narrowing its own list behind the user's back.
+    for (const mode of ['all', 'empty', 'available'] as const) {
+      expect(visibleLocations(ALL, mode, { fullnessFilter: false })).toEqual(
+        ALL
+      );
+    }
+  });
+
+  it('filters as usual when the flag is absent or explicitly true', () => {
+    expect(visibleLocations(ALL, 'empty', {})).toEqual([EMPTY, HELD]);
+    expect(visibleLocations(ALL, 'empty', { fullnessFilter: true })).toEqual([
+      EMPTY,
+      HELD,
+    ]);
   });
 });

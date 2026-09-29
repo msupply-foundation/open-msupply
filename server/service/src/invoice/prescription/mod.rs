@@ -9,4 +9,3 @@ pub use self::delete::*;
 
 pub mod batch;
 pub use self::batch::*;
-

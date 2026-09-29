@@ -24,6 +24,7 @@ import { StatsPanel } from '@/ui/elements/dashboard/StatsPanel';
 import type { StatsPanelState } from '@/ui/elements/dashboard/StatsPanel';
 import { Statistic } from '@/ui/elements/dashboard/Statistic';
 import { Button } from '@/ui/elements/buttons/Button';
+import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { PlusCircleIcon, StockIcon } from '@/ui/icons';
 import {
   InboundShipmentCounts,
@@ -34,14 +35,24 @@ import {
   StockCounts,
 } from './dashboardCounts.generated';
 import type { StockCountsVariables } from './dashboardCounts.generated';
-import { dashboardGates, dashboardSlots } from './dashboardPreferences';
+import { PrescriptionRequestCounts } from './prescriptionRequestCounts.generated';
+import type { PrescriptionRequestCountsVariables } from './prescriptionRequestCounts.generated';
+import {
+  dashboardGates,
+  dashboardPanels,
+  dashboardSlots,
+} from './dashboardPreferences';
 import { itemCountsThresholds } from './dashboardGates';
 import { countPanelState, type CountValue } from './panelState';
 import { suppressedPieces } from '@/plugins/registry';
 import { recordPluginDiagnostic } from '@/plugins/diagnostics';
 import { visibleContributions } from '@/plugins/PluginSlot';
-import { applicableSuppressions, DASHBOARD_IDS } from './regions';
-import { widgetBuiltIns } from './regionBuiltIns';
+import {
+  applicableSuppressions,
+  DASHBOARD_IDS,
+  type DashboardPanelId,
+} from './regions';
+import { widgetBuiltIns, widgetShowsPanel } from './regionBuiltIns';
 import { PluginRegion } from './PluginRegion';
 import {
   customerRequisitionListHref,
@@ -67,11 +78,15 @@ import {
   itemsOverstockedHref,
   outboundListHref,
   outboundNotShippedHref,
+  prescriptionRequestListHref,
+  prescriptionRequestsDispensedThisWeekHref,
+  prescriptionRequestsReadyHref,
   stockListHref,
+  thisWeekWindow,
 } from './statLinks';
 
 // The create shortcuts hand off to the owning verticals' flows (rules.md §
-// create shortcuts): both modals are self-contained (they navigate to the
+// create shortcuts): every modal is self-contained (they navigate to the
 // created record themselves) and lazy, so the dashboard bundle doesn't carry
 // them until a shortcut is used. Each gets its OWN <Suspense> where it mounts
 // (below) — a lazy component's first read suspends the nearest boundary, which
@@ -104,14 +119,24 @@ const StocktakeWarningDialog = lazy(() =>
     })
   )
 );
+const CreatePrescriptionRequestModal = lazy(() =>
+  import('@/sections/prescription-requests/list/CreatePrescriptionRequestModal').then(
+    m => ({
+      default: m.CreatePrescriptionRequestModal,
+    })
+  )
+);
 
 // One count family = one resource owning one panel's loading / error state
-// (ui-surface S2: panels load independently and fail independently —
-// OMS-REG-DB-01.23).
-// Forbidden is handled IN the panel (returnGraphqlErrors), not by the global
-// permission modal: a count the user can't read shows an error in place of a
-// value while every other panel keeps working. The outcome → panel-state
-// mapping is the pure panelState module.
+// (ui-surface S2: panels load independently and fail independently).
+//
+// A family the user cannot read is not fetched at all — its panel is absent
+// (OMS-REG-DB-01.60), which is the sources' business below. Forbidden remains
+// handled IN the panel (returnGraphqlErrors), not by the global permission
+// modal, for the case the client cannot foresee: a permission revoked centrally
+// while the screen is open. That panel then shows an error in place of a value
+// while every other panel keeps working. The outcome → panel-state mapping is
+// the pure panelState module.
 type CountResource<T> = {
   /** The StatsPanel state — loading / error(with message) / ready. */
   state: () => StatsPanelState;
@@ -166,11 +191,18 @@ const createCountResource = <TResult, TVariables>(
   };
 };
 
-// S1 — the BUILT-IN dashboard body (spec/dashboard/ui-surface.md): three
-// widgets in the card grid (Replenishment, Distribution, Inventory Management),
-// each a DashboardCard of StatsPanels with a footer create shortcut. Read-only
-// and store-scoped (OMS-REG-DB-01.21/.24) — the only actions are the stat links
-// and the three permission-gated create shortcuts (OMS-REG-DB-01.56).
+// S1 — the BUILT-IN dashboard body (spec/dashboard/ui-surface.md): four widgets
+// in the card grid (Replenishment, Distribution, Inventory Management,
+// Prescriptions), each a DashboardCard of StatsPanels with a footer create
+// shortcut. Read-only and store-scoped (OMS-REG-DB-01.21/.24) — the only
+// actions are the stat links and the four permission-gated create shortcuts
+// (OMS-REG-DB-01.56).
+//
+// Every panel is gated twice over — by the permission its counts need and by
+// its store gate, both stated in regionBuiltIns' panelVisibility. A panel the
+// user cannot read is absent, never an error tile; a widget with no visible
+// panel goes too; and when that leaves no widget at all the body says so
+// (OMS-REG-DB-01.60/.61/.62).
 //
 // The body only: the page frame around it is `DashboardPage`'s, and which of
 // the two bodies renders is `DashboardBody`'s (§ body-region semantics). This
@@ -203,37 +235,81 @@ export const DashboardBuiltInBody: Component = () => {
 
   const gates = dashboardGates;
   const slots = dashboardSlots;
+  // Whether each panel renders: the permission its counts need and its store
+  // gate, stated once in regionBuiltIns and read here, by the plugin regions,
+  // and by the resource sources below (OMS-REG-DB-01.60).
+  const panels = dashboardPanels;
+  /** Whether any panel this count family fills is on screen. */
+  const fills = (...panelIds: DashboardPanelId[]) =>
+    panelIds.some(id => panels()[id]);
 
   // ── count resources (one per panel family) ────────────────────────────────
+  // Each family fetches only while a panel it fills is on screen: `fills`
+  // false ⇒ the source answers undefined, which pauses the resource, so the
+  // dashboard asks only for counts it will show (OMS-REG-DB-01.60 — the same
+  // "a hidden piece costs nothing" principle as OMS-REG-DB-02.10). The
+  // Forbidden branch in `createCountResource` stays as the defensive path: a
+  // permission revoked centrally mid-session shows the panel's error rather
+  // than a wrong number.
   const storeVars = () => JSON.stringify({ storeId: params.storeId });
 
   // Each document carries its own result + variables types, so both come from
   // the argument — no type arguments to restate (kdd/type-safety).
-  const inbound = createCountResource(InboundShipmentCounts, storeVars);
-  // Fetched only while the procurement gate shows the panel
-  // (OMS-REG-DB-02.10's principle: a hidden piece costs nothing).
+  const inbound = createCountResource(InboundShipmentCounts, () =>
+    fills(DASHBOARD_IDS.replenishment.inbound.id) ? storeVars() : undefined
+  );
   const inboundExternal = createCountResource(
     InboundShipmentExternalCounts,
-    () => (gates()?.externalInboundPanel ? storeVars() : undefined)
+    () =>
+      fills(DASHBOARD_IDS.replenishment.inboundExternal.id)
+        ? storeVars()
+        : undefined
   );
-  const requisitions = createCountResource(RequisitionCounts, storeVars);
-  const outbound = createCountResource(OutboundShipmentCounts, storeVars);
+  // The one family serving two panels: it fetches while EITHER renders.
+  const requisitions = createCountResource(RequisitionCounts, () =>
+    fills(
+      DASHBOARD_IDS.replenishment.internalOrder.id,
+      DASHBOARD_IDS.distribution.customerRequisition.id
+    )
+      ? storeVars()
+      : undefined
+  );
+  const outbound = createCountResource(OutboundShipmentCounts, () =>
+    fills(DASHBOARD_IDS.distribution.shipments.id) ? storeVars() : undefined
+  );
   const stock = createCountResource(StockCounts, () =>
-    JSON.stringify({
-      storeId: params.storeId,
-      daysTillExpired: DAYS_TILL_EXPIRED,
-    } satisfies StockCountsVariables)
+    fills(DASHBOARD_IDS.inventory.expiringStock.id)
+      ? JSON.stringify({
+          storeId: params.storeId,
+          daysTillExpired: DAYS_TILL_EXPIRED,
+        } satisfies StockCountsVariables)
+      : undefined
   );
   // The thresholds are always sent explicitly from the store understock /
   // overstock preferences (contract.md § stock levels); the fetch waits for the
   // store context so the explicit values are never skipped.
   const items = createCountResource(ItemCounts, () =>
-    itemCountsThresholds(params.storeId, slots())
+    fills(DASHBOARD_IDS.inventory.stockLevels.id)
+      ? itemCountsThresholds(params.storeId, slots())
+      : undefined
+  );
+  // The prescription counts (OMS-REG-DB-01.63/.64). The week window comes from
+  // the CAPTURED `today`: a fresh timestamp per read would re-key the resource
+  // and refetch forever.
+  const prescriptions = createCountResource(PrescriptionRequestCounts, () =>
+    fills(DASHBOARD_IDS.prescriptions.requests.id)
+      ? JSON.stringify({
+          storeId: params.storeId,
+          dispensedDatetime: thisWeekWindow(today),
+        } satisfies PrescriptionRequestCountsVariables)
+      : undefined
   );
 
   // ── create shortcuts (OMS-REG-DB-01.56) ───────────────────────────────────
   const [inboundCreateOpen, setInboundCreateOpen] = createSignal(false);
   const [outboundCreateOpen, setOutboundCreateOpen] = createSignal(false);
+  const [prescriptionCreateOpen, setPrescriptionCreateOpen] =
+    createSignal(false);
 
   const newInboundShipment = () => {
     if (!hasPermission('INBOUND_SHIPMENT_MUTATE')) {
@@ -249,11 +325,20 @@ export const DashboardBuiltInBody: Component = () => {
     }
     setOutboundCreateOpen(true);
   };
+  const newPrescription = () => {
+    if (!hasPermission('PRESCRIPTION_REQUEST_MUTATE')) {
+      reportPermissionDenied(['PrescriptionRequestMutate']);
+      return;
+    }
+    setPrescriptionCreateOpen(true);
+  };
   // Order more hands off to the internal-orders vertical's create flow —
-  // including its recent-stocktake warning gate (spec/internal-orders
-  // AC-C1/C5), so the dashboard entry behaves exactly like the list's
-  // New-order button. The warn preference rides the guard-3 store context;
-  // the insufficiency check (and its module) load only on click.
+  // including its recent-stocktake warning gate and the plugin
+  // warning-suppression consult, both inside the shared gate decision
+  // (spec/internal-orders AC-C1/C5, OMS-REG-REPL-04.86/.87), so the dashboard
+  // entry behaves exactly like the list's New-order button. The warn
+  // preference rides the guard-3 store context; the gate decision (and its
+  // module) load only on click.
   const [internalOrderCreateOpen, setInternalOrderCreateOpen] =
     createSignal(false);
   const [stocktakeGateOpen, setStocktakeGateOpen] = createSignal(false);
@@ -272,16 +357,21 @@ export const DashboardBuiltInBody: Component = () => {
       return;
     }
     setOrderMoreChecking(true);
-    const { recentStocktakeIsInsufficient } =
-      await import('@/sections/internal-orders/list/create/createInternalOrder');
-    const insufficient = await recentStocktakeIsInsufficient(
-      params.storeId,
-      warn.maxAge,
-      warn.minItems
-    );
-    setOrderMoreChecking(false);
-    if (insufficient) setStocktakeGateOpen(true);
-    else setInternalOrderCreateOpen(true);
+    // The gate decision cannot reject, but the await spans plugin code — the
+    // finally guarantees a fault can never leave Order more checking for good.
+    try {
+      const { recentStocktakeGateShows } =
+        await import('@/sections/internal-orders/list/create/createInternalOrder');
+      const shows = await recentStocktakeGateShows(
+        params.storeId,
+        warn.maxAge,
+        warn.minItems
+      );
+      if (shows) setStocktakeGateOpen(true);
+      else setInternalOrderCreateOpen(true);
+    } finally {
+      setOrderMoreChecking(false);
+    }
   };
 
   const num = (n: number | undefined) => formatNumber(n ?? 0);
@@ -300,12 +390,16 @@ export const DashboardBuiltInBody: Component = () => {
   // down a live contribution's subtree.
   const suppression = createMemo(() =>
     applicableSuppressions(
-      widgetBuiltIns(),
+      widgetBuiltIns(panels()),
       visibleContributions('dashboard.widget').length,
       suppressedPieces()
     )
   );
   const shows = (id: string) => !suppression().applied.has(id);
+  // A piece renders when its own gates show it AND no plugin suppresses it.
+  const panelShown = (id: DashboardPanelId) => panels()[id] && shows(id);
+  const widgetShown = (id: string) =>
+    shows(id) && widgetShowsPanel(id, panels());
 
   // Recorded out of the memo (a memo's body stays a pure computation) and
   // deduped, so a re-evaluation cannot spam the same refusal.
@@ -326,9 +420,14 @@ export const DashboardBuiltInBody: Component = () => {
 
   return (
     <>
-      <CardGrid>
+      {/* Each card stops growing at a card's width, because how many render
+          varies — with the store's preferences and with what this user may
+          read (OMS-REG-DB-01.60/.61). Capping the card rather than the column
+          keeps every column the row would otherwise have, so a dashboard of
+          one widget shows a widget instead of a page-wide banner. */}
+      <CardGrid maxItemWidth="30rem">
         {/* id: replenishment */}
-        <Show when={shows(DASHBOARD_IDS.replenishment.id)}>
+        <Show when={widgetShown(DASHBOARD_IDS.replenishment.id)}>
           <DashboardCard
             title={t('replenishment')}
             testId="dashboard-widget-replenishment"
@@ -343,7 +442,7 @@ export const DashboardBuiltInBody: Component = () => {
             }
           >
             {/* id: replenishment.inbound */}
-            <Show when={shows(DASHBOARD_IDS.replenishment.inbound.id)}>
+            <Show when={panelShown(DASHBOARD_IDS.replenishment.inbound.id)}>
               <StatsPanel
                 title={t('inbound-shipment')}
                 titleHref={inboundListHref(params.storeId)}
@@ -395,13 +494,11 @@ export const DashboardBuiltInBody: Component = () => {
               </StatsPanel>
             </Show>
             {/* id: replenishment.inbound-external — procurement gate
-                (OMS-REG-DB-01.36); absent entirely when off, not shown
-                disabled. */}
+                (OMS-REG-DB-01.36) and the external read, both carried by the
+                panel's visibility; absent entirely when either is off, not
+                shown disabled. */}
             <Show
-              when={
-                gates()?.externalInboundPanel &&
-                shows(DASHBOARD_IDS.replenishment.inboundExternal.id)
-              }
+              when={panelShown(DASHBOARD_IDS.replenishment.inboundExternal.id)}
             >
               <StatsPanel
                 title={t('dashboard.inbound-shipment-external')}
@@ -465,7 +562,9 @@ export const DashboardBuiltInBody: Component = () => {
               </StatsPanel>
             </Show>
             {/* id: replenishment.internal-order */}
-            <Show when={shows(DASHBOARD_IDS.replenishment.internalOrder.id)}>
+            <Show
+              when={panelShown(DASHBOARD_IDS.replenishment.internalOrder.id)}
+            >
               <StatsPanel
                 title={t('internal-order')}
                 titleHref={internalOrderListHref(params.storeId)}
@@ -500,7 +599,7 @@ export const DashboardBuiltInBody: Component = () => {
         </Show>
 
         {/* id: distribution */}
-        <Show when={shows(DASHBOARD_IDS.distribution.id)}>
+        <Show when={widgetShown(DASHBOARD_IDS.distribution.id)}>
           <DashboardCard
             title={t('distribution')}
             testId="dashboard-widget-distribution"
@@ -515,7 +614,7 @@ export const DashboardBuiltInBody: Component = () => {
             }
           >
             {/* id: distribution.shipments */}
-            <Show when={shows(DASHBOARD_IDS.distribution.shipments.id)}>
+            <Show when={panelShown(DASHBOARD_IDS.distribution.shipments.id)}>
               <StatsPanel
                 title={t('heading.shipments')}
                 titleHref={outboundListHref(params.storeId)}
@@ -544,7 +643,9 @@ export const DashboardBuiltInBody: Component = () => {
             </Show>
             {/* id: distribution.customer-requisition */}
             <Show
-              when={shows(DASHBOARD_IDS.distribution.customerRequisition.id)}
+              when={panelShown(
+                DASHBOARD_IDS.distribution.customerRequisition.id
+              )}
             >
               <StatsPanel
                 title={t('customer-requisition')}
@@ -606,7 +707,7 @@ export const DashboardBuiltInBody: Component = () => {
         </Show>
 
         {/* id: inventory */}
-        <Show when={shows(DASHBOARD_IDS.inventory.id)}>
+        <Show when={widgetShown(DASHBOARD_IDS.inventory.id)}>
           <DashboardCard
             title={t('inventory-management')}
             testId="dashboard-widget-inventory"
@@ -622,7 +723,7 @@ export const DashboardBuiltInBody: Component = () => {
             }
           >
             {/* id: inventory.expiring-stock */}
-            <Show when={shows(DASHBOARD_IDS.inventory.expiringStock.id)}>
+            <Show when={panelShown(DASHBOARD_IDS.inventory.expiringStock.id)}>
               <StatsPanel
                 title={t('heading.expiring-stock')}
                 titleHref={stockListHref(params.storeId)}
@@ -637,7 +738,7 @@ export const DashboardBuiltInBody: Component = () => {
                   <Statistic
                     testId="dashboard-stat-inventory.expiring-stock.expired"
                     label={tPlural(
-                      'label.expired',
+                      'label.expired-batches',
                       stock.data()?.stockCounts.expired ?? 0
                     )}
                     value={num(stock.data()?.stockCounts.expired)}
@@ -653,7 +754,7 @@ export const DashboardBuiltInBody: Component = () => {
                   <Statistic
                     testId="dashboard-stat-inventory.expiring-stock.expiring-soon"
                     label={tPlural(
-                      'label.expiring-soon',
+                      'label.batches-expiring-soon',
                       stock.data()?.stockCounts.expiringSoon ?? 0
                     )}
                     value={num(stock.data()?.stockCounts.expiringSoon)}
@@ -713,7 +814,7 @@ export const DashboardBuiltInBody: Component = () => {
               </StatsPanel>
             </Show>
             {/* id: inventory.stock-levels */}
-            <Show when={shows(DASHBOARD_IDS.inventory.stockLevels.id)}>
+            <Show when={panelShown(DASHBOARD_IDS.inventory.stockLevels.id)}>
               <StatsPanel
                 title={t('heading.stock-levels')}
                 titleHref={itemCatalogueHref(params.storeId)}
@@ -879,9 +980,96 @@ export const DashboardBuiltInBody: Component = () => {
             />
           </DashboardCard>
         </Show>
+        {/* id: prescriptions — the PRESCRIBER's record (the navigation
+            registry's "Prescriptions"), gated on its read permission and a
+            dispensary store (OMS-REG-DB-01.65). Its shortcut opens the
+            vertical's own create dialog — the same one its list opens, so a
+            prescriber who lands here starts a script without the detour
+            through the list (OMS-REG-DB-01.66). */}
+        <Show when={widgetShown(DASHBOARD_IDS.prescriptions.id)}>
+          <DashboardCard
+            title={t('prescriptions')}
+            testId="dashboard-widget-prescriptions"
+            footer={
+              <Button
+                icon={<PlusCircleIcon />}
+                onClick={newPrescription}
+                data-testid="dashboard-create-prescriptions"
+              >
+                {t('button.new-prescription')}
+              </Button>
+            }
+          >
+            {/* id: prescriptions.requests */}
+            <Show when={panelShown(DASHBOARD_IDS.prescriptions.requests.id)}>
+              <StatsPanel
+                title={t('label.prescription-request')}
+                titleHref={prescriptionRequestListHref(params.storeId)}
+                icon={<StockIcon />}
+                state={prescriptions.state()}
+                testId="dashboard-panel-prescriptions.requests"
+              >
+                {/* id: prescriptions.requests.ready-to-dispense */}
+                <Show
+                  when={shows(
+                    DASHBOARD_IDS.prescriptions.requests.readyToDispense
+                  )}
+                >
+                  <Statistic
+                    testId="dashboard-stat-prescriptions.requests.ready-to-dispense"
+                    label={t('status.ready-to-dispense')}
+                    value={num(
+                      prescriptions.data()?.readyToDispense.totalCount
+                    )}
+                    href={prescriptionRequestsReadyHref(params.storeId)}
+                  />
+                </Show>
+                {/* id: prescriptions.requests.dispensed-this-week — the
+                    dispensed-datetime window, never a status window. */}
+                <Show
+                  when={shows(
+                    DASHBOARD_IDS.prescriptions.requests.dispensedThisWeek
+                  )}
+                >
+                  <Statistic
+                    testId="dashboard-stat-prescriptions.requests.dispensed-this-week"
+                    label={t('label.dispensed-this-week')}
+                    value={num(
+                      prescriptions.data()?.dispensedThisWeek.totalCount
+                    )}
+                    href={prescriptionRequestsDispensedThisWeekHref(
+                      params.storeId,
+                      today
+                    )}
+                  />
+                </Show>
+                <PluginRegion
+                  slot="dashboard.stat"
+                  container={DASHBOARD_IDS.prescriptions.requests.id}
+                />
+              </StatsPanel>
+            </Show>
+            <PluginRegion
+              slot="dashboard.panel"
+              container={DASHBOARD_IDS.prescriptions.id}
+            />
+          </DashboardCard>
+        </Show>
         {/* The card grid's own region: whole plugin widgets, last. */}
         <PluginRegion slot="dashboard.widget" />
       </CardGrid>
+
+      {/* Nothing to show (OMS-REG-DB-01.62): every built-in widget is hidden by
+          its own gates — a user holding none of the count permissions — and no
+          plugin widget is visible. A message, not a blank grid. Rendered as the
+          grid's SIBLING so no reactive condition wraps the grid or its plugin
+          outlets, which would remount a live contribution. */}
+      <Show when={suppression().empty}>
+        <EmptyState
+          message={t('messages.dashboard-no-widgets')}
+          data-testid="dashboard-empty"
+        />
+      </Show>
 
       {/* The owning verticals' create flows, mounted lazily on first use. The
           <Show> gates the mount, so each modal takes a bare `open`; the
@@ -932,6 +1120,14 @@ export const DashboardBuiltInBody: Component = () => {
               setInternalOrderCreateOpen(false);
               navigate(`/${params.storeId}/replenishment/internal-order/${id}`);
             }}
+          />
+        </Suspense>
+      </Show>
+      <Show when={prescriptionCreateOpen()}>
+        <Suspense>
+          <CreatePrescriptionRequestModal
+            open
+            onClose={() => setPrescriptionCreateOpen(false)}
           />
         </Suspense>
       </Show>

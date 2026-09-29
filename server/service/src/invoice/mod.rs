@@ -53,10 +53,10 @@ pub mod prescription;
 pub use self::prescription::*;
 
 pub mod common;
+pub mod custom_fields;
 pub(crate) mod invoice_date_utils;
 pub mod stock_effect;
 pub mod update_picked_date;
-pub mod custom_fields;
 pub use self::custom_fields::invoice_custom_field_scope;
 
 pub trait InvoiceServiceTrait: Sync + Send {

@@ -2,14 +2,13 @@ use crate::{
     db_diesel::{
         changelog::{changelog::RowOrId, Changelogs},
         item_row::item,
+        name_row::name,
         purchase_order_row::purchase_order,
     },
     diesel_macros::define_linked_tables,
     ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
-use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, StorageConnection,
-};
+use crate::{ChangelogRepository, RepositoryError, RowActionType, StorageConnection};
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -52,6 +51,7 @@ define_linked_tables! {
         supplier_item_code -> Nullable<Text>,
         price_per_pack_before_discount -> Double,
         price_per_pack_after_discount -> Double,
+        line_total -> Double,
         comment -> Nullable<Text>,
         note -> Nullable<Text>,
         unit -> Nullable<Text>,
@@ -73,6 +73,8 @@ allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, purchase_order);
+allow_tables_to_appear_in_same_query!(purchase_order_line, name);
+allow_tables_to_appear_in_same_query!(purchase_order_line_stats, name);
 
 #[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order_line)]
@@ -91,6 +93,7 @@ pub struct PurchaseOrderLineRow {
     pub supplier_item_code: Option<String>,
     pub price_per_pack_before_discount: f64,
     pub price_per_pack_after_discount: f64,
+    pub line_total: f64,
     pub comment: Option<String>,
     pub note: Option<String>,
     pub unit: Option<String>,
@@ -211,7 +214,10 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PurchaseOrderLineRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<PurchaseOrderLineRow>, RepositoryError> {
         Ok(purchase_order_line::table
             .filter(purchase_order_line::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

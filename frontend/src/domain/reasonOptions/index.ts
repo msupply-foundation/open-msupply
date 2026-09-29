@@ -9,6 +9,7 @@ export {
   ReasonSelect,
   reasonsOfKind,
   reasonMatchesKind,
+  adjustmentReasonRequired,
   type ReasonSelectProps,
   type ReasonKind,
 } from './ReasonSelect';

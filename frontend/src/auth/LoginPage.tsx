@@ -5,7 +5,7 @@ import { submitStateAfter, type SubmitState } from './submitState';
 import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { getLastLoginUsername } from '../appData';
 import { recordPrefersOldUi } from '../preferredFrontend';
-import { serverVersion } from '../api/serverInfo';
+import { serverVersion, serverVersionDiffers } from '../api/serverInfo';
 import { createFocusTarget } from '../ui/utils/createFocusTarget';
 import { useIsCompact } from '../ui/utils/createMediaQuery';
 import { TextField } from '../ui/elements/inputs/TextField';
@@ -13,6 +13,7 @@ import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ArrowRightIcon, ClockIcon } from '../ui/icons';
+import { ChangeServerAction } from '../ui/layout/ChangeServerAction';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
@@ -92,9 +93,10 @@ export const LoginPage: Component = () => {
     setSubmitState(submitStateAfter(result));
   };
 
-  // Spec (App version, OMS-REG-LGN-01.18/.20): the running build's version and
-  // — once the startup pass has fetched it, never as a placeholder — the
-  // server's, on one line at the bottom of the page's left half.
+  // Spec (App version, OMS-REG-LGN-01.18/.20): the running build's version on
+  // one line at the bottom of the page's left half — a single "Version" while
+  // it matches the server's (or the server's is not yet known), split into
+  // Interface / Server only once the startup pass finds they differ (#574).
   //
   // ONE element, rendered either in the hero or, below the compact breakpoint
   // where the hero doesn't render at all, in the panel. Never both, so
@@ -103,10 +105,17 @@ export const LoginPage: Component = () => {
   // breakpoint decides which element renders).
   const versionLine = (placement: string) => (
     <p class={`${styles.versionBar} ${placement}`} data-testid="login-version">
-      <span>
-        <strong>{t('label.version-interface')}</strong> {APP_VERSION}
-      </span>
-      <Show when={serverVersion()}>
+      <Show
+        when={serverVersionDiffers()}
+        fallback={
+          <span>
+            <strong>{t('label.version')}</strong> {APP_VERSION}
+          </span>
+        }
+      >
+        <span>
+          <strong>{t('label.version-interface')}</strong> {APP_VERSION}
+        </span>
         <span>
           <strong>{t('label.version-server')}</strong> {serverVersion()}
         </span>
@@ -209,6 +218,16 @@ export const LoginPage: Component = () => {
                   <ClockIcon class={styles.secondaryActionIcon} />
                   {t('login.use-old-interface')}
                 </a>
+                {/* Arriving from the desktop discovery page (spec/desktop §
+                    server selection, AC-DT16): the hand-off names its return
+                    URL in the query string, and this becomes the way to leave
+                    this server for another. A plain anchor — the discovery
+                    page may be a different origin (the shell's own bundled
+                    page), so this is a document navigation, not the router's.
+                    Absent the parameter (every browser/served deployment),
+                    nothing renders. Read once: the URL is fixed while this
+                    page shows. */}
+                <ChangeServerAction testId="login-change-server" />
                 <div class={styles.languageAction}>
                   <LanguageSelector
                     language={locale()}

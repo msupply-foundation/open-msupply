@@ -10,3 +10,12 @@
   gap: var(--space-5);
   align-items: start;
 }
+
+/* Optional per-card cap (`maxItemWidth`): a card stops growing at this width
+   inside its column, so a grid with one card in it still shows a card rather
+   than a page-wide banner — with the column count untouched, which is what
+   capping the TRACK would change. Stretch is the grid default, so a capped
+   card sits at its column's start and the leftover stays empty. */
+.grid > * {
+  max-inline-size: var(--card-grid-item-max, none);
+}

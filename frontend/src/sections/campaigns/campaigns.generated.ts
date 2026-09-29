@@ -55,7 +55,7 @@ export type UpsertCampaignResult = {
   __typename: "UpsertCampaignError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "InternalError" | "UniqueValueViolation";
   description: string;
 };
 });

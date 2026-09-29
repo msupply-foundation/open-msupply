@@ -316,3 +316,27 @@
     display: none;
   }
 }
+
+/* Opt-in: reach that compact layout earlier, for a screen whose panel needs
+   the whole width sooner than a phone breakpoint gives it. Set
+   `data-compact-at="tablet"` on .page.
+   Named apart from Alert's boolean `data-compact`, which means something else
+   entirely and is selected on by HeaderToolbar.
+   
+   Discovery uses it (src/discovery/DiscoveryPage.tsx). Its panel carries a
+   list of servers, a heading with a refresh control, and a URL field with a
+   button beside it — at a tablet's portrait width the 50/50 split leaves that
+   about 400px against a hero that is mostly empty space, which is what
+   reviewers saw as cramped. Login and initialisation ask for far less room and
+   keep the phone line above.
+   
+   1023px so every portrait tablet collapses and a 1024-wide landscape one
+   still gets the split, where half is a comfortable panel. Kept here rather
+   than overridden from the page's own stylesheet: the layout owns its
+   breakpoints, and a page-side rule of equal specificity would depend on which
+   stylesheet the bundler happened to emit last. */
+@media (max-width: 1023px) {
+  .page[data-compact-at='tablet'] .hero {
+    display: none;
+  }
+}

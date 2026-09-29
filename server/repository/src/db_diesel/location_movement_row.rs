@@ -22,7 +22,17 @@ joinable!(location_movement -> store (store_id));
 joinable!(location_movement -> stock_line (stock_line_id));
 joinable!(location_movement -> location (location_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = location_movement)]
 pub struct LocationMovementRow {
     pub id: String,
@@ -75,7 +85,10 @@ impl<'a> LocationMovementRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationMovementRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<LocationMovementRow>, RepositoryError> {
         Ok(location_movement::table
             .filter(location_movement::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

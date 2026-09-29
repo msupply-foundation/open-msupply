@@ -117,11 +117,7 @@ fn create_filtered_query(filter: Option<AncillaryItemFilter>) -> BoxedAncillaryI
 
         apply_equal_filter!(query, id, ancillary_item::id);
         apply_equal_filter!(query, item_id, ancillary_item::item_id);
-        apply_equal_filter!(
-            query,
-            ancillary_item_id,
-            ancillary_item::ancillary_item_id
-        );
+        apply_equal_filter!(query, ancillary_item_id, ancillary_item::ancillary_item_id);
     }
 
     query
@@ -154,7 +150,8 @@ pub fn validate_ancillary_item_link(
         return Err(AncillaryItemValidationError::SelfLink);
     }
 
-    let edges = AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
+    let edges =
+        AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
 
     // Build adjacency maps, skipping the row being updated (if any)
     let mut forward: HashMap<String, Vec<String>> = HashMap::new();

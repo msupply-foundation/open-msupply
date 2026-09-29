@@ -8,8 +8,8 @@ export type GlobalPreferencesVariables = {
 
 export type GlobalPreferencesResult = {
   preferenceDescriptions: Array<{
-  key: "allowTrackingOfStockByDonor" | "authorisePurchaseOrder" | "customTranslations" | "customTranslationsV2" | "genderOptions" | "preventTransfersMonthsBeforeInitialisation" | "showContactTracing" | "syncRecordsDisplayThreshold" | "adjustForNumberOfDaysOutOfStock" | "daysInMonth" | "expiredStockPreventIssue" | "expiredStockIssueThreshold" | "itemMarginOverridesSupplierMargin" | "isGaps" | "displayPopulationBasedForecasting" | "globalTableConfigs" | "backdating" | "receivePaymentsFromPrescriptions" | "blindStocktake" | "manageVaccinesInDoses" | "manageVvmStatusForStock" | "orderInPacks" | "useProcurementFunctionality" | "sortByVvmStatusThenExpiry" | "useSimplifiedMobileUi" | "disableManualReturns" | "requisitionAutoFinalise" | "inboundShipmentAutoVerify" | "warningForExcessRequest" | "canCreateInternalOrderFromARequisition" | "selectDestinationStoreForAnInternalOrder" | "externalInboundShipmentLinesMustBeAuthorised" | "numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts" | "numberOfMonthsThresholdToShowLowStockAlertsForProducts" | "numberOfMonthsThresholdToShowOverStockAlertsForProducts" | "firstThresholdForExpiringItems" | "secondThresholdForExpiringItems" | "skipIntermediateStatusesInOutbound" | "storeCustomColour" | "warnWhenMissingRecentStocktake" | "invoiceStatusOptions" | "showIndicativePriceInRequisitions" | "doNotPrintPlaceholderLineLabels";
-  valueType: "BOOLEAN" | "INTEGER" | "FLOAT" | "MULTI_CHOICE" | "CUSTOM_TRANSLATIONS" | "CUSTOM_TRANSLATIONS_V2" | "WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA" | "BACKDATING_DATA" | "STRING" | "COLOUR";
+  key: "allowTrackingOfStockByDonor" | "authorisePurchaseOrder" | "customTranslations" | "customTranslationsV2" | "genderOptions" | "preventTransfersMonthsBeforeInitialisation" | "showContactTracing" | "syncRecordsDisplayThreshold" | "adjustForNumberOfDaysOutOfStock" | "daysInMonth" | "expiredStockPreventIssue" | "expiredStockIssueThreshold" | "itemMarginOverridesSupplierMargin" | "transferStockToInternalCustomersAtCostPrice" | "isGaps" | "displayPopulationBasedForecasting" | "globalTableConfigs" | "backdating" | "receivePaymentsFromPrescriptions" | "globalLogo" | "blindStocktake" | "manageVaccinesInDoses" | "manageVvmStatusForStock" | "orderInPacks" | "useProcurementFunctionality" | "sortByVvmStatusThenExpiry" | "useSimplifiedMobileUi" | "disableManualReturns" | "requisitionAutoFinalise" | "inboundShipmentAutoVerify" | "warningForExcessRequest" | "canCreateInternalOrderFromARequisition" | "selectDestinationStoreForAnInternalOrder" | "externalInboundShipmentLinesMustBeAuthorised" | "numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts" | "numberOfMonthsThresholdToShowLowStockAlertsForProducts" | "numberOfMonthsThresholdToShowOverStockAlertsForProducts" | "firstThresholdForExpiringItems" | "secondThresholdForExpiringItems" | "skipIntermediateStatusesInOutbound" | "storeCustomColour" | "warnWhenMissingRecentStocktake" | "invoiceStatusOptions" | "showIndicativePriceInRequisitions" | "doNotPrintPlaceholderLineLabels";
+  valueType: "BOOLEAN" | "INTEGER" | "FLOAT" | "MULTI_CHOICE" | "CUSTOM_TRANSLATIONS" | "CUSTOM_TRANSLATIONS_V2" | "WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA" | "BACKDATING_DATA" | "STRING" | "COLOUR" | "IMAGE";
   value: unknown;
 }>;
 };
@@ -35,6 +35,7 @@ export type UpsertGlobalPreferencesVariables = {
     expiredStockPreventIssue?: boolean | null;
     expiredStockIssueThreshold?: number | null;
     itemMarginOverridesSupplierMargin?: boolean | null;
+    transferStockToInternalCustomersAtCostPrice?: boolean | null;
     isGaps?: boolean | null;
     displayPopulationBasedForecasting?: boolean | null;
     globalTableConfigs?: unknown | null;
@@ -44,6 +45,7 @@ export type UpsertGlobalPreferencesVariables = {
     maxDays: number;
   } | null;
     receivePaymentsFromPrescriptions?: boolean | null;
+    globalLogo?: string | null;
     blindStocktake?: Array<{
     storeId: string;
     value: boolean;

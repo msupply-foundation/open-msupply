@@ -40,6 +40,12 @@ pub enum SyncParsedErrorV6 {
     SyncFileNotFound(String),
     #[error("Sync V6 API version not compatible, minVersion: {0}, maxVersion: {1}, received: {2}")]
     SyncVersionMismatch(u32, u32, u32),
+    /// New in this version, and this enum is externally tagged, so a remote built before
+    /// it cannot deserialise the body and reports a generic parse error rather than this
+    /// message. Only a site pushing a table it may not author ever sees it, but that is
+    /// worth knowing when one does.
+    #[error("Site is not allowed to author records for table: {0}")]
+    TableNotAuthoredBySite(String),
 }
 
 impl From<anyhow::Error> for SyncParsedErrorV6 {

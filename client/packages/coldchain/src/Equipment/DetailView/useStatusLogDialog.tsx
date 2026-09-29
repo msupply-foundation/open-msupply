@@ -32,7 +32,10 @@ export const useStatusLogDialog = (assetId: string | undefined) => {
   }, [assetId]);
 
   const onClose = () => setDraft(getEmptyAssetLog(assetId ?? ''));
-  const { Modal, hideDialog, showDialog } = useDialog({ onClose });
+  const { Modal, hideDialog, showDialog } = useDialog({
+    onClose,
+    testId: 'update-status-modal',
+  });
 
   const { data: reasonsData } = useAssetLogReasonList(
     draft.status

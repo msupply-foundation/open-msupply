@@ -110,7 +110,11 @@ impl<'a> ClinicianLinkRowRepository<'a> {
 }
 
 impl Upsert for ClinicianLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ClinicianLinkRowRepository::new(con).upsert_one(self)?;
         Ok(()) // Table not in Changelog
     }

@@ -33,6 +33,7 @@ export type SaveGlobalTableConfigsVariables = {
     expiredStockPreventIssue?: boolean | null;
     expiredStockIssueThreshold?: number | null;
     itemMarginOverridesSupplierMargin?: boolean | null;
+    transferStockToInternalCustomersAtCostPrice?: boolean | null;
     isGaps?: boolean | null;
     displayPopulationBasedForecasting?: boolean | null;
     globalTableConfigs?: unknown | null;
@@ -42,6 +43,7 @@ export type SaveGlobalTableConfigsVariables = {
     maxDays: number;
   } | null;
     receivePaymentsFromPrescriptions?: boolean | null;
+    globalLogo?: string | null;
     blindStocktake?: Array<{
     storeId: string;
     value: boolean;

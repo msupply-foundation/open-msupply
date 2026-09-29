@@ -29,6 +29,7 @@ import {
   type SplitButtonOption,
 } from '../../../ui/elements/buttons/SplitButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { Comment } from '../../../ui/elements/feedback/Comment';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { CloseIcon, PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
 import {
@@ -56,6 +57,7 @@ import {
   rememberPageSize,
 } from '../../../list/pageSize';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
+import { pagedNext, rowAfter } from '@/list/pagedNext';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -93,17 +95,22 @@ import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import {
   canChangeStatus,
+  hasSourceLink,
   isEditable,
+  actionsLocked,
   sourceLinkOf,
   supplierIsStore,
 } from './inboundShipmentStatus';
+import { packDifference } from './inboundShipmentLine';
 import { SupplierKindIcon } from '../SupplierKindIcon';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { ExportPrintButton } from '@/domain/reports';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
+import { showsInternalOrderContext } from './internalOrderContext';
 import { AddFromMasterListModal } from './modals/AddFromMasterListModal';
 import { AddFromInternalOrderModal } from './modals/AddFromInternalOrderModal';
 import {
@@ -112,7 +119,6 @@ import {
   ChangeLocationAction,
   AuthoriseLinesAction,
   ChangeCampaignProgramAction,
-  ExportPrintAction,
 } from './actions';
 // "Return selected lines" → the supplier-return from-shipment create flow. The
 // entry point is owned here (inbound detail); the flow is the returns
@@ -145,8 +151,11 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   location: false,
   unitName: false,
   dosesPerUnit: false,
+  shippedNumberOfPacks: false,
   difference: false,
-  unitQuantity: false,
+  unitsReceived: false,
+  requested: false,
+  supplierComment: false,
   doses: false,
   costPricePerPack: false,
   sellPricePerPack: false,
@@ -388,14 +397,26 @@ const InboundShipmentDetailView: Component = () => {
       !canMutateInboundScope(scope())
     );
   };
+  const isExternal = () => isExternalScope(scope());
   // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
   const isDisabled = () =>
     writeBlocked() || !isEditable(current()?.status ?? '');
+  // The line-selection actions close earlier on a PO-linked shipment — at
+  // Received (issue #873); its lines still open, and items are still added.
+  const bulkLocked = () =>
+    isDisabled() || actionsLocked(current()?.status ?? '', isExternal());
   // The status footer keeps its own, looser status rule — an advance has to
   // stay reachable at Shipped, which the edit gate closes.
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
-  const isExternal = () => isExternalScope(scope());
+  // Whether the shipment carries a source link — see hasSourceLink's own
+  // comment for the rule and why the PO half comes from the scope.
+  const sourceLinked = () =>
+    hasSourceLink(isExternal(), current()?.linkedShipment);
+  // The rule, and why a PO-linked shipment is excluded, lives in
+  // ./internalOrderContext.
+  const showsOrderContext = () =>
+    showsInternalOrderContext(!!current()?.requisition, isExternal());
 
   const refetchAll = () => {
     void refetchInfo();
@@ -490,69 +511,42 @@ const InboundShipmentDetailView: Component = () => {
     disabled: () => !current() || isDisabled(),
   });
 
-  // "OK & next" (update mode): resolve the next item for the editor to advance
-  // to. Owned by the PARENT because the line table is server-paginated — the
-  // next item may be on a later page, and finding it pages the visible table
-  // forward. Given the current item id and the covered-items set (every item
-  // stepped through this walk, so a re-appearing item — one spans several batch
-  // rows — is never offered twice, across pages too), returns the next distinct
-  // uncovered item id in the current sorted order, or undefined when the whole
-  // list is exhausted (→ the modal drops into add mode, table left on the last
-  // page walked). Mirrors the stocktake reference (kdd/stocktake-line-editing).
-  const nextItem = async (
+  // "OK & next" (update mode): the next distinct item for the editor to
+  // advance to. Owned by the PARENT because the line table is server-paginated
+  // — the next item may be on a later page, and finding it pages the visible
+  // table forward (src/list/pagedNext). `covered` is every item stepped
+  // through this walk, so an item spanning several batch rows is never offered
+  // twice, across pages too. Undefined once the list is exhausted (→ the modal
+  // drops into add mode). Mirrors the stocktake reference
+  // (kdd/stocktake-line-editing).
+  const nextItem = (
     currentId: string,
     covered: Set<string>
-  ): Promise<string | undefined> => {
-    // The next distinct, uncovered item within a page's rows. On the CURRENT
-    // page start AFTER the current item's rows (`fromStart` false): items
-    // before it are uncovered but already behind us, so a `past` gate walks
-    // past the current item first. Later pages are all "after", so `fromStart`
-    // true.
-    const pick = (pageRows: Line[], fromStart: boolean): string | undefined => {
-      let past = fromStart;
-      for (const line of pageRows) {
-        const id = line.itemId;
-        if (id === currentId) {
-          past = true;
-          continue;
-        }
-        if (!past || covered.has(id)) continue;
-        return id;
-      }
-      return undefined;
-    };
-
-    // 1. The current page (already loaded) — scan only after the current item.
-    const onThisPage = pick(rows(), false);
-    if (onThisPage) return onThisPage;
-
-    // 2/3. Walk forward a page at a time until we find one or run out. Later
-    // pages scan from their top; the covered set guards repeats. Each page is
-    // fetched DIRECTLY (race-free) while the table's URL offset follows along.
-    let offset = query().offset;
-    const first = query().first;
-    for (;;) {
-      offset += first;
-      if (offset >= totalCount()) return undefined; // no further pages
-      setQuery({ ...query(), offset });
-      const result = await graphqlFetch(InboundShipmentLines, {
-        storeId: params.storeId,
-        filter: {
-          invoiceId: { equalTo: params.invoiceId },
-          type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
-        },
-        sort: query().sort,
-        page: { first, offset },
-      });
-      if (
-        result.kind !== 'success' ||
-        result.data.invoiceLines.__typename !== 'InvoiceLineConnector'
-      )
-        return undefined;
-      const found = pick(result.data.invoiceLines.nodes, true);
-      if (found) return found;
-    }
-  };
+  ): Promise<string | undefined> =>
+    pagedNext<Line, string>({
+      rows,
+      page: () => query(),
+      totalCount,
+      setOffset: offset => setQuery({ ...query(), offset }),
+      fetchPage: async (offset, first) => {
+        const result = await graphqlFetch(InboundShipmentLines, {
+          storeId: params.storeId,
+          filter: {
+            invoiceId: { equalTo: params.invoiceId },
+            type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
+          },
+          sort: query().sort,
+          page: { first, offset },
+        });
+        return result.kind === 'success' &&
+          result.data.invoiceLines.__typename === 'InvoiceLineConnector'
+          ? result.data.invoiceLines.nodes
+          : undefined;
+      },
+      pick: (pageRows, fromStart) =>
+        rowAfter(pageRows, fromStart, l => l.itemId, currentId, covered)
+          ?.itemId,
+    });
 
   const reportSort = () => {
     const s = query().sort[0];
@@ -775,29 +769,133 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.packs-received'),
         ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
       },
-      // Difference (H6) — supplier-shipped packs minus received packs; blank
-      // when nothing was recorded as shipped.
+      // Packs shipped — what the supplier declared they sent. Sits between
+      // Packs received and Difference so the subtraction reads left to right
+      // in the order it is performed, and so the Difference is never shown
+      // without the figure it is measured against (issue #562). Ungated and
+      // hidden-by-default on a narrow table, exactly like Difference: the two
+      // are a pair and must appear and disappear together.
+      //
+      // No `headerPosition: 'badge'`, unlike Packs received above: a card has
+      // ONE badge slot (ui/docs/CARD_TABLE_MODEL.md), and the received count
+      // is what belongs in it. This column pairs with Difference, so it rides
+      // in the card BODY beside it rather than competing for the header.
+      {
+        c: { key: 'shippedNumberOfPacks' },
+        header: () => t('label.shipped-number-of-packs'),
+        ...getCellDefinition('shippedNumberOfPacks'),
+      },
+      // Difference (H6) — received packs minus supplier-shipped packs, so the
+      // figure reads against Packs received beside it: POSITIVE means more
+      // arrived than the supplier declared, negative means the delivery fell
+      // short. Blank when nothing was recorded as shipped. The subtraction
+      // itself lives in packDifference, shared with the line editor's cell so
+      // the two surfaces cannot drift apart in sign.
       {
         c: {
           accessor: line =>
-            line.shippedNumberOfPacks != null
-              ? line.shippedNumberOfPacks - line.numberOfPacks
-              : '',
+            packDifference(line.numberOfPacks, line.shippedNumberOfPacks) ?? '',
           id: 'difference',
         },
         header: () => t('label.difference'),
         ...getCellDefinition('difference'),
       },
-      // Unit quantity (H6) — pack size × pack quantity; manual shipments only.
+      // Units received (H6) — received pack size × packs received. `isManual`
+      // IS "not purchase-order-linked" here: the two inbound scopes split on
+      // purchaseOrderId alone (inboundShipmentScope.ts).
       ...(isManual
         ? [
             {
               c: {
                 accessor: line => line.packSize * line.numberOfPacks,
-                id: 'unitQuantity',
+                id: 'unitsReceived',
               },
-              header: () => t('label.unit-quantity'),
+              // The generic word stands in for {{unit}}: one column spans items
+              // of differing units.
+              header: () =>
+                t('label.units-received', { unit: t('label.units') }),
+              // `unitQuantity` preset: the same 5rem two-word measurement as
+              // "Packs received" beside it.
               ...getCellDefinition('unitQuantity'),
+            } satisfies Column<Line, SortKey>,
+          ]
+        : []),
+      // The discrepancy pair (spec S3 cols 15-16), gated as one on the
+      // SHIPMENT's internal-order link so that within a table every row has
+      // both or no row has either.
+      //
+      // Units requested (col 15) — the units requested for this line's ITEM,
+      // so every batch of one item shows the same figure. Never summed: a
+      // per-item figure repeated down an item's batches would total to a
+      // multiple of itself.
+      //
+      // An item with no line on the order gets an EM DASH — the exception the
+      // house blank-by-default rule allows (ui-standards/tables › empty
+      // treatment). In a column of quantities sitting beside the receiver's own
+      // typed figures, a blank reads as a figure that failed to load and a `0`
+      // reads as a counted zero; neither says "never asked for". A genuine
+      // requested ZERO is a real figure and still renders `0`, and the number
+      // cell passes the dash straight through (it formats numbers only).
+      ...(showsOrderContext()
+        ? [
+            {
+              c: {
+                accessor: line =>
+                  line.requisitionLine?.requestedQuantity ?? '—',
+                id: 'requested',
+              },
+              // Sorted server-side on the linked order line's figure, so a page
+              // of lines orders against the WHOLE shipment, not the page
+              // (InvoiceLineSortField::RequestedQuantity). A line whose item
+              // has no order line has no figure and sorts last ascending — the
+              // dash is a rendering, and never reaches the sort.
+              sortKey: 'requestedQuantity',
+              // The generic word stands in for {{unit}}, as in "Units
+              // received" above.
+              header: () =>
+                t('label.units-requested', { unit: t('label.units') }),
+              ...getCellDefinition('requestedQuantity'),
+            } satisfies Column<Line, SortKey>,
+            // Supplier comment (spec S3 col 16) — the supplying store's own
+            // explanation of a difference, read-only at every status: nothing
+            // on an inbound shipment writes it, the supplying side authors it.
+            // It rides on the LINE, so every batch of an item repeats the one
+            // text written for that item. Inside the SAME gate as Units
+            // requested —
+            // the two that read the discrepancy arrive and leave together. Not
+            // sortable (rules § requested quantity and supplier comment).
+            {
+              c: {
+                accessor: line => line.transferComment,
+                id: 'supplierComment',
+              },
+              // The WORDS, where every other comment column takes the bare
+              // glyph (CommentHeader): column 1 is already a comment column,
+              // and two identical icons over icon cells are indistinguishable —
+              // a hover title is no way to tell a reader which is which. The
+              // cells stay iconic, so only the header pays for the name.
+              header: () => t('label.supplier-comment'),
+              // The header is the binding constraint, not the cell: the
+              // comment preset is 3.5rem, sized for a glyph over a glyph. 5rem
+              // gives the wrapped "Supplier / comment" a text box wider than
+              // its longest word (the same reasoning as `numberOfPacks` in the
+              // width config), and the preset's 5rem growth CAP has to go with
+              // it or the column lands on its cap and can't be dragged (#601).
+              // textLabel overrides the preset's "Comment" for the Columns
+              // popover and the card's field label.
+              ...getCellDefinition('comment', {
+                textLabel: () => t('label.supplier-comment'),
+              }),
+              size: remToPx(5),
+              maxSize: remToPx(12),
+              // The popover's own heading and the trigger's accessible name —
+              // "Comment" by default, which is the other column's word.
+              cell: info => (
+                <Comment
+                  comment={info.getValue<string | null>()}
+                  label={t('label.supplier-comment')}
+                />
+              ),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -822,7 +920,7 @@ const InboundShipmentDetailView: Component = () => {
         : []),
       // Auth status — gated by the authorisation preference. Header "Auth
       // status" (not the generic "Status"); values humanised from the raw
-      // PENDING/PASSED/REJECTED enum (spec col 16 / M6).
+      // PENDING/PASSED/REJECTED enum (spec col 18 / M6).
       ...(prefs().externalInboundShipmentLinesMustBeAuthorised
         ? [
             {
@@ -982,8 +1080,9 @@ const InboundShipmentDetailView: Component = () => {
                         onAction={onAddAction}
                       />
                     </Show>
-                    <ExportPrintAction
-                      invoiceId={node().id}
+                    <ExportPrintButton
+                      context="INBOUND_SHIPMENT"
+                      dataId={node().id}
                       sort={reportSort()}
                     />
                     {/* More — the closed-panel reopen affordance, at the end
@@ -1074,7 +1173,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1082,7 +1181,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1090,7 +1189,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       locations={locations()}
                       locationsLoading={locationsData.loading}
                       requiredVolume={selectedVolume}
@@ -1101,7 +1200,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1116,7 +1215,7 @@ const InboundShipmentDetailView: Component = () => {
                         storeId={params.storeId}
                         isExternal={isExternal()}
                         selectedIds={selectedIds}
-                        disabled={isDisabled()}
+                        disabled={bulkLocked()}
                         onChanged={onLinesChanged}
                         onError={stampErrors}
                       />
@@ -1257,12 +1356,23 @@ const InboundShipmentDetailView: Component = () => {
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
+                // Gates the editor's internal-order banner, on the same rule as
+                // the Units requested column so the two can't disagree.
+                requisitionId={
+                  showsOrderContext() ? node().requisition?.id : undefined
+                }
                 // Cost price is read-only only when the shipment carries a
-                // source link — a purchase order or a linked shipment (a
-                // transfer) — NOT merely because the supplier is another store
-                // (spec rules → header fields / AC-H1). A manual internal-
-                // supplier shipment keeps cost editable.
-                costLocked={isExternal() || !!node().linkedShipment}
+                // source link — NOT merely because the supplier is another
+                // store (spec rules → header fields / AC-H1). A manual
+                // internal-supplier shipment keeps cost editable.
+                costLocked={sourceLinked()}
+                // Packs shipped / Shipped pack size are the SENDING side's
+                // record of what left its shelf, so the receiver may read them
+                // but not retype them. Passed separately from costLocked even
+                // though the two resolve alike: they are separate rules that
+                // merely coincide, and reading one as the other is how this
+                // field came to be editable on transfers.
+                shippedLocked={sourceLinked()}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,

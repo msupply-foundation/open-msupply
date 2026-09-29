@@ -1,0 +1,21 @@
+/*
+ * The Documents tab's two halves (see DocumentsTab.tsx): the catalogue's
+ * documents beside the record's own, parted by a rule.
+ *
+ * The rule is drawn only while the halves ARE side by side. It hangs off a
+ * container query on the tab's own width — never the viewport's — set at the
+ * width the columns themselves wrap at (2 x --form-column-min plus the
+ * inter-column gap), so the rule disappears exactly when the trailing half
+ * drops below the leading one. Left drawn on a stacked pair it would read as a
+ * stray line down one side of the page.
+ */
+.halves {
+  container-type: inline-size;
+}
+
+@container (min-inline-size: 46rem) {
+  .trailing {
+    border-inline-start: 1px solid var(--color-border-value);
+    padding-inline-start: var(--space-6);
+  }
+}

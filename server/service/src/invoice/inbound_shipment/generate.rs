@@ -48,6 +48,7 @@ pub fn generate_empty_invoice_lines(
                     donor_id: None,
                     manufacturer_id: None,
                     legacy_goods_received_line_id: None,
+                    transfer_comment: None,
                     vvm_status_id: None,
                     reason_option_id: None,
                     campaign_id: None,

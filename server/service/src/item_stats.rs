@@ -51,14 +51,6 @@ pub trait ItemStatsServiceTrait: Sync + Send {
 pub struct ItemStatsService {}
 impl ItemStatsServiceTrait for ItemStatsService {}
 
-/// Whether item-stats computations will invoke a backend plugin (a full JS engine run plus the
-/// plugin's own SQL). Used by callers that fan out many computations (the graphql dataloader) to
-/// decide whether to throttle — see `ItemsStatsForItemLoader`.
-pub fn item_stats_uses_plugin() -> bool {
-    PluginInstance::get_one(PluginType::GetConsumption).is_some()
-        || PluginInstance::get_one(PluginType::AverageMonthlyConsumption).is_some()
-}
-
 pub fn get_item_stats(
     connection: &StorageConnection,
     store_id: &str,

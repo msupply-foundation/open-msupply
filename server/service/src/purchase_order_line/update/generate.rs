@@ -22,7 +22,7 @@ pub fn generate(
         status,
     }: UpdatePurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
-    Ok(PurchaseOrderLineRow {
+    let mut row = PurchaseOrderLineRow {
         item_id: item_id.clone().unwrap_or(purchase_order_line.item_id),
         requested_pack_size: requested_pack_size.unwrap_or(purchase_order_line.requested_pack_size),
         requested_number_of_units: requested_number_of_units
@@ -52,5 +52,8 @@ pub fn generate(
             .unwrap_or(purchase_order_line.comment),
         status: status.unwrap_or(purchase_order_line.status),
         ..purchase_order_line
-    })
+    };
+    row.line_total = row.calculate_line_total();
+
+    Ok(row)
 }

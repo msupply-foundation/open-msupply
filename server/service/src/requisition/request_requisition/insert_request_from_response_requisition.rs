@@ -145,9 +145,8 @@ fn generate(
             RepositoryError::NotFound,
         ))?;
 
-    let other_party_store = StoreRepository::new(connection).query_one(
-        StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())),
-    )?;
+    let other_party_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())))?;
 
     let requisition = RequisitionRow {
         id: id.clone(),

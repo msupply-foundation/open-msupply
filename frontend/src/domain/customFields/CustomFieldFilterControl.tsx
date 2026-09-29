@@ -114,33 +114,37 @@ export const CustomFieldFilterControl = (props: {
         )}
       </Match>
 
-      <Match when={props.field.kind === 'number'}>
-        <Range
-          from={
-            <FilterNumberInput
-              label={t('label.from')}
-              placeholder={t('label.from')}
-              value={asNumber()?.min}
-              onChange={min =>
-                props.onChange(
-                  cleanRange({ kind: 'number', min, max: asNumber()?.max })
-                )
-              }
-            />
-          }
-          to={
-            <FilterNumberInput
-              label={t('label.to')}
-              placeholder={t('label.to')}
-              value={asNumber()?.max}
-              onChange={max =>
-                props.onChange(
-                  cleanRange({ kind: 'number', min: asNumber()?.min, max })
-                )
-              }
-            />
-          }
-        />
+      <Match when={props.field.kind === 'number' && props.field}>
+        {numberField => (
+          <Range
+            from={
+              <FilterNumberInput
+                label={t('label.from')}
+                placeholder={t('label.from')}
+                decimalLimit={numberField().integer ? 0 : 6}
+                value={asNumber()?.min}
+                onChange={min =>
+                  props.onChange(
+                    cleanRange({ kind: 'number', min, max: asNumber()?.max })
+                  )
+                }
+              />
+            }
+            to={
+              <FilterNumberInput
+                label={t('label.to')}
+                placeholder={t('label.to')}
+                decimalLimit={numberField().integer ? 0 : 6}
+                value={asNumber()?.max}
+                onChange={max =>
+                  props.onChange(
+                    cleanRange({ kind: 'number', min: asNumber()?.min, max })
+                  )
+                }
+              />
+            }
+          />
+        )}
       </Match>
 
       <Match when={props.field.kind === 'date'}>

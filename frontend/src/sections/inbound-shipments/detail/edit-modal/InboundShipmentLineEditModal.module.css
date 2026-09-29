@@ -150,3 +150,13 @@
 .statusRejected {
   background: var(--error-main);
 }
+
+/* The internal-order context band (spec S4): the item's Requested quantity and
+   the supplying store's comment, above the batch cards. The banner inside
+   carries the panel — its own tint, radius and padding — so this wrapper only
+   holds the gap to the cards below. A banner, not a field row: the values
+   belong to the ITEM and are read-only, so they must not read as two more
+   per-batch fields. */
+.orderContext {
+  margin-block-end: var(--space-3);
+}

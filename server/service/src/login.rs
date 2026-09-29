@@ -27,6 +27,18 @@ use crate::{
 
 const CONNECTION_TIMEOUT_SEC: u64 = 10;
 
+/// What a login flow settled about the user, and about the hash on their local row.
+struct Authenticated {
+    user: UserAccountRow,
+    /// Central accepted the password and the local row holds a hash that password does
+    /// not verify against, so the row predates a reset sync has not landed here yet.
+    ///
+    /// Only the v7 central-verified path can be in that position: every other flow
+    /// either writes the row from central before verifying, or verifies the password
+    /// against the row itself, so the two always agree by the time it returns.
+    stored_hash_is_stale: bool,
+}
+
 /// Minimum response time on a failed login. Disguises whether the username
 /// exists by making "wrong password" and "no such user" indistinguishable by
 /// latency. Must be longer than the worst-case bcrypt verify time.
@@ -158,7 +170,7 @@ impl LoginService {
 
     async fn do_login(
         service_provider: &ServiceProvider,
-        _auth_data: &AuthData,
+        auth_data: &AuthData,
         input: LoginInput,
     ) -> Result<LoginSuccess, LoginError> {
         // Pick login flow based on which sync version this site is running.
@@ -173,10 +185,46 @@ impl LoginService {
             )?
         };
 
-        let user_account = match sync_version {
+        let Authenticated {
+            user: user_account,
+            stored_hash_is_stale,
+        } = match sync_version {
             SyncVersion::V5V6 => Self::authenticate_v5v6(service_provider, &input).await?,
             SyncVersion::V7 => Self::authenticate_v7(service_provider, &input).await?,
         };
+
+        // Sessions issued against the old credentials are no longer the user's to hold:
+        // evict them before this login gets its own. Nothing else invalidates a session
+        // when a password changes.
+        //
+        // The comparison is against the hash the session store last issued sessions
+        // against, not against the row as it looked at the top of this call. A password
+        // reset at central reaches the local row through the `user` sync translation,
+        // which writes `password_hash` outside any login, and the v7 flow never writes
+        // the row at all - so a before/after comparison here would miss the reset in
+        // exactly the case an incident responder cares about.
+        //
+        // Where the row itself still predates the reset there is no new hash to compare
+        // anything to, and the change is taken on central's word - see `authenticate_v7`.
+        let revoked = {
+            let mut session_store = auth_data.session_store.write().map_err(|err| {
+                LoginError::InternalError(format!("Session store lock poisoned: {err}"))
+            })?;
+
+            if stored_hash_is_stale {
+                session_store.revoke_for_credentials_changed_at_central(&user_account.id)
+            } else {
+                session_store
+                    .revoke_if_credentials_changed(&user_account.id, &user_account.hashed_password)
+            }
+        };
+
+        if revoked {
+            log::info!(
+                "Password changed for user {}, revoked existing sessions",
+                user_account.id
+            );
+        }
 
         let mut service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
@@ -210,7 +258,7 @@ impl LoginService {
     async fn authenticate_v5v6(
         service_provider: &ServiceProvider,
         input: &LoginInput,
-    ) -> Result<UserAccountRow, LoginError> {
+    ) -> Result<Authenticated, LoginError> {
         let mut username = input.username.clone();
         let mut connection_failure = false;
         // Don't do login via v5 and v6 on central server, permissions with v3 and up will come via sync
@@ -244,7 +292,11 @@ impl LoginService {
         let service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
         match user_service.verify_password(&username, &input.password) {
-            Ok(user) => Ok(user),
+            // The password was verified against this row's own hash, so the two agree.
+            Ok(user) => Ok(Authenticated {
+                user,
+                stored_hash_is_stale: false,
+            }),
             Err(err) => Err(match err {
                 VerifyPasswordError::UsernameDoesNotExist => {
                     LoginError::LoginFailure(LoginFailure::InvalidCredentials)
@@ -276,7 +328,7 @@ impl LoginService {
     async fn authenticate_v7(
         service_provider: &ServiceProvider,
         input: &LoginInput,
-    ) -> Result<UserAccountRow, LoginError> {
+    ) -> Result<Authenticated, LoginError> {
         let mut central_verified = false;
         let mut connection_failure = false;
 
@@ -299,13 +351,37 @@ impl LoginService {
             // user row so we have the id for site-access / token / activity
             // log. If sync hasn't propagated the user yet, surface as
             // InvalidCredentials — they can retry once sync catches up.
-            UserAccountRowRepository::new(&service_ctx.connection)
+            let user = UserAccountRowRepository::new(&service_ctx.connection)
                 .find_one_by_user_name(&input.username)
                 .map_err(LoginError::DatabaseError)?
-                .ok_or(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+                .ok_or(LoginError::LoginFailure(LoginFailure::InvalidCredentials))?;
+
+            // Central has just accepted this password and this flow never writes the
+            // row, so a stored hash the password does not verify against belongs to a
+            // reset central has already applied and sync has not delivered here. Say so,
+            // or the sessions held under the old password would outlive the reset and
+            // outlive the user's own login with the new one, until the `user`
+            // translation lands and the user logs in a second time.
+            let stored_hash_is_stale = match bcrypt::verify(&input.password, &user.hashed_password)
+            {
+                Ok(verified) => !verified,
+                // Not a hash anything can be concluded from - an empty one on a row sync
+                // has yet to fill in. Leave it to the ordinary comparison, which only
+                // needs the stored string to change.
+                Err(_) => false,
+            };
+
+            Ok(Authenticated {
+                user,
+                stored_hash_is_stale,
+            })
         } else {
             match user_service.verify_password(&input.username, &input.password) {
-                Ok(user) => Ok(user),
+                // Verified against this row's own hash, so the two agree.
+                Ok(user) => Ok(Authenticated {
+                    user,
+                    stored_hash_is_stale: false,
+                }),
                 Err(err) => Err(match err {
                     VerifyPasswordError::UsernameDoesNotExist => {
                         LoginError::LoginFailure(LoginFailure::InvalidCredentials)
@@ -435,9 +511,7 @@ impl LoginService {
         let hashed_password = UserAccountRowRepository::new(&service_ctx.connection)
             .find_one_by_id(&user_info.user.id)
             .map_err(UpdateUserError::DatabaseError)?
-            .filter(|existing| {
-                bcrypt::verify(password, &existing.hashed_password).unwrap_or(false)
-            })
+            .filter(|existing| bcrypt::verify(password, &existing.hashed_password).unwrap_or(false))
             .map(|existing| existing.hashed_password);
         let hashed_password = match hashed_password {
             Some(existing_hash) => existing_hash,
@@ -541,7 +615,7 @@ mod test {
         auth_data::AuthData,
         login::{LoginError, LoginFailure, LoginInput},
         login_mock_data::LOGIN_V4_RESPONSE_1,
-        service_provider::ServiceProvider,
+        service_provider::{ServiceContext, ServiceProvider},
         session_store::SessionStore,
         user_account::{CreateUserAccount, UserAccountService},
     };
@@ -559,6 +633,319 @@ mod test {
         UserAccountRowRepository::new(&ctx.connection)
             .upsert_one(&user)
             .unwrap();
+    }
+
+    /// A site with a mocked login endpoint and an empty session store, shared by the
+    /// session-revocation tests.
+    struct SessionFixture {
+        service_provider: ServiceProvider,
+        context: ServiceContext,
+        auth_data: AuthData,
+        user_id: String,
+        username: String,
+        central_server_url: String,
+        // Kept alive for as long as the fixture is; dropping it stops serving the mock
+        _mock_server: MockServer,
+    }
+
+    impl SessionFixture {
+        /// A V5V6 site: the legacy endpoint hands back the user row, and the login
+        /// writes it locally before verifying against it.
+        async fn new(db_name: &str) -> Self {
+            let (_, _, connection_manager, _) = setup_all(
+                db_name,
+                MockDataInserts::none().names().stores().user_accounts(),
+            )
+            .await;
+            let service_provider = ServiceProvider::new(connection_manager);
+            let context = service_provider
+                .context("".to_string(), "".to_string())
+                .unwrap();
+
+            SyncVersion::set(&context.connection, SyncVersion::V5V6).unwrap();
+
+            let expected: LoginResponseV4 = serde_json::from_str(LOGIN_V4_RESPONSE_1).unwrap();
+            let user_id = expected.user_info.unwrap().user.id;
+
+            Self::assemble(
+                service_provider,
+                context,
+                user_id,
+                "Gryffindor".to_string(),
+                |when, then| {
+                    when.method(POST).path("/api/v4/login".to_string());
+                    then.status(200).body(LOGIN_V4_RESPONSE_1);
+                },
+            )
+        }
+
+        /// A V7 site: central only says yes or no to the password, and the flow never
+        /// writes the user row - so the row has to be seeded, joined to a store on this
+        /// site, and given a real hash of "password" up front.
+        async fn new_v7(db_name: &str) -> Self {
+            let (_, _, connection_manager, _) = setup_all(
+                db_name,
+                MockDataInserts::none()
+                    .names()
+                    .stores()
+                    .user_accounts()
+                    .user_store_joins(),
+            )
+            .await;
+            let service_provider = ServiceProvider::new(connection_manager);
+            let context = service_provider
+                .context("".to_string(), "".to_string())
+                .unwrap();
+
+            SyncVersion::set(&context.connection, SyncVersion::V7).unwrap();
+            seed_user_with_real_hash(&service_provider);
+
+            let user = mock_user_account_a();
+
+            Self::assemble(
+                service_provider,
+                context,
+                user.id,
+                user.username,
+                |when, then| {
+                    when.method(POST).path("/central/user/login".to_string());
+                    then.status(200).body(r#"{"success":true}"#);
+                },
+            )
+        }
+
+        fn assemble(
+            service_provider: ServiceProvider,
+            context: ServiceContext,
+            user_id: String,
+            username: String,
+            mock: impl FnOnce(httpmock::When, httpmock::Then),
+        ) -> Self {
+            KeyValueStoreRepository::new(&context.connection)
+                .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+                .unwrap();
+
+            let mock_server = MockServer::start();
+            mock_server.mock(mock);
+            let central_server_url = mock_server.base_url();
+
+            SessionFixture {
+                service_provider,
+                context,
+                auth_data: AuthData {
+                    session_store: Arc::new(RwLock::new(SessionStore::new())),
+                    cookie_suffix: "test".to_string(),
+                    no_ssl: true,
+                    debug_no_access_control: false,
+                },
+                user_id,
+                username,
+                central_server_url,
+                _mock_server: mock_server,
+            }
+        }
+
+        async fn login(&self) {
+            self.login_with_password("password").await
+        }
+
+        async fn login_with_password(&self, password: &str) {
+            LoginService::login(
+                &self.service_provider,
+                &self.auth_data,
+                LoginInput {
+                    username: self.username.clone(),
+                    password: password.to_string(),
+                    central_server_url: self.central_server_url.clone(),
+                },
+                0,
+            )
+            .await
+            .unwrap();
+        }
+
+        /// A session held against the credentials as they stand — another device, or an
+        /// attacker holding a stolen token.
+        fn create_session(&self) -> String {
+            self.auth_data
+                .session_store
+                .write()
+                .unwrap()
+                .create(&self.user_id)
+        }
+
+        fn session_is_live(&self, token: &str) -> bool {
+            self.auth_data
+                .session_store
+                .write()
+                .unwrap()
+                .validate_and_slide(token)
+                .is_some()
+        }
+
+        fn stored_password_hash(&self) -> String {
+            UserAccountRowRepository::new(&self.context.connection)
+                .find_one_by_id(&self.user_id)
+                .unwrap()
+                .unwrap()
+                .hashed_password
+        }
+
+        fn set_stored_password_hash(&self, hashed_password: String) {
+            let repo = UserAccountRowRepository::new(&self.context.connection);
+            let mut user = repo.find_one_by_id(&self.user_id).unwrap().unwrap();
+            user.hashed_password = hashed_password;
+            repo.upsert_one(&user).unwrap();
+        }
+    }
+
+    /// Security audit DS-4: a session issued against the old credentials must not
+    /// survive the password changing. Before this, `revoke_all_for_user` had no
+    /// production caller and only a server restart evicted a stolen token.
+    #[actix_rt::test]
+    async fn login_revokes_existing_sessions_when_the_password_hash_changes() {
+        let fixture =
+            SessionFixture::new("login_revokes_existing_sessions_on_password_change").await;
+
+        // First login writes the user row locally
+        fixture.login().await;
+
+        let existing_session = fixture.create_session();
+        assert!(fixture.session_is_live(&existing_session));
+
+        // The credentials change: the stored hash is no longer one the user's
+        // password verifies against, so the next login re-hashes it
+        fixture.set_stored_password_hash("ATTACKER-CONTROLLED-HASH".to_string());
+
+        fixture.login().await;
+
+        assert!(
+            !fixture.session_is_live(&existing_session),
+            "session issued against the old password should have been revoked"
+        );
+    }
+
+    /// The case an incident responder actually produces: the password is reset at
+    /// central, sync delivers the new hash to this site (the `user` translation writes
+    /// `password_hash`), and only then does the user log in with the new password.
+    ///
+    /// Comparing the stored hash before and after the login call cannot see this - by the
+    /// time the user logs in, the row already holds the new hash and `update_user` keeps
+    /// it, so nothing looks changed. The session store is what remembers which hash the
+    /// live sessions were issued against.
+    #[actix_rt::test]
+    async fn login_revokes_existing_sessions_when_sync_landed_the_new_hash_first() {
+        let fixture = SessionFixture::new("login_revokes_when_sync_landed_hash_first").await;
+
+        fixture.login().await;
+        let attacker_session = fixture.create_session();
+
+        // Central resets the password and sync writes the new hash onto the local row,
+        // as a freshly bcrypted hash of the new password - exactly what central sends
+        fixture.set_stored_password_hash(UserAccountService::hash_password("password").unwrap());
+
+        // The user logs in with the new password
+        fixture.login().await;
+
+        assert!(
+            !fixture.session_is_live(&attacker_session),
+            "session issued before the password reset should have been revoked"
+        );
+    }
+
+    /// The other direction: an ordinary re-login leaves other sessions alone.
+    #[actix_rt::test]
+    async fn login_keeps_existing_sessions_when_the_password_is_unchanged() {
+        let fixture = SessionFixture::new("login_keeps_existing_sessions_when_unchanged").await;
+
+        fixture.login().await;
+        let existing_session = fixture.create_session();
+
+        // Same password again — the stored hash is kept (see update_user), so nothing
+        // is revoked and the user's other device stays logged in
+        fixture.login().await;
+
+        assert!(fixture.session_is_live(&existing_session));
+    }
+
+    /// The v7 transport is the one the stored-hash comparison cannot see a reset
+    /// through: central vets the password, the flow never writes the user row, and until
+    /// the `user` translation lands the reset the row still holds the hash the live
+    /// sessions were issued against. Central's verdict is the only evidence there is.
+    #[actix_rt::test]
+    async fn v7_login_revokes_existing_sessions_when_central_accepts_a_changed_password() {
+        let fixture = SessionFixture::new_v7("v7_login_revokes_on_central_verdict").await;
+
+        fixture.login().await;
+        let attacker_session = fixture.create_session();
+        assert!(fixture.session_is_live(&attacker_session));
+
+        // The password is reset at central and the user logs in with the new one. Sync
+        // has not delivered the new hash, so the local row is byte-for-byte what it was.
+        let hash_before = fixture.stored_password_hash();
+        fixture.login_with_password("new-password").await;
+        assert_eq!(fixture.stored_password_hash(), hash_before);
+
+        assert!(
+            !fixture.session_is_live(&attacker_session),
+            "session issued before the reset should have been revoked on central's verdict"
+        );
+    }
+
+    /// Nothing names the new credentials until sync lands the hash, so the window has to
+    /// be quiet: a second device logging in with the same new password must not evict
+    /// the first.
+    #[actix_rt::test]
+    async fn v7_login_keeps_sessions_issued_earlier_in_the_same_stale_window() {
+        let fixture = SessionFixture::new_v7("v7_login_keeps_sessions_in_stale_window").await;
+
+        fixture.login().await;
+        fixture.login_with_password("new-password").await;
+        let first_device = fixture.create_session();
+
+        fixture.login_with_password("new-password").await;
+
+        assert!(
+            fixture.session_is_live(&first_device),
+            "a second login in the same window should not evict the first"
+        );
+    }
+
+    /// And once a usable hash is there again, nothing can tell the reset arriving over
+    /// sync from a second reset since. It revokes, which is the direction that stops a
+    /// session issued under a password that has changed again from surviving.
+    #[actix_rt::test]
+    async fn v7_login_revokes_once_a_usable_hash_lands_after_a_central_verified_change() {
+        let fixture = SessionFixture::new_v7("v7_login_revokes_when_a_hash_lands").await;
+
+        fixture.login().await;
+        fixture.login_with_password("new-password").await;
+        let session_from_the_window = fixture.create_session();
+
+        // Sync delivers a hash the password verifies against
+        fixture
+            .set_stored_password_hash(UserAccountService::hash_password("new-password").unwrap());
+        fixture.login_with_password("new-password").await;
+
+        assert!(
+            !fixture.session_is_live(&session_from_the_window),
+            "a login that finds a usable hash again must revoke rather than guess"
+        );
+    }
+
+    /// The v7 fallback, where central is unreachable and the password is verified
+    /// against the row: the two agree by construction, so an ordinary re-login must not
+    /// be read as a change.
+    #[actix_rt::test]
+    async fn v7_login_keeps_existing_sessions_when_the_password_is_unchanged() {
+        let fixture = SessionFixture::new_v7("v7_login_keeps_existing_sessions").await;
+
+        fixture.login().await;
+        let existing_session = fixture.create_session();
+
+        fixture.login().await;
+
+        assert!(fixture.session_is_live(&existing_session));
     }
 
     /// V5V6 (legacy /api/v4/login) login flow. Exercises the original

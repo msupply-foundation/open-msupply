@@ -9,10 +9,7 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 use crate::SourceSiteId;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, RowActionType,
-    Upsert,
-};
+use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, Upsert};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -252,7 +249,10 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
         Ok(sync_file_reference::table
             .filter(sync_file_reference::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

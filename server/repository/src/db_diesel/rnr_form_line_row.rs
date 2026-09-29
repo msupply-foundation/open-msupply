@@ -58,9 +58,7 @@ allow_tables_to_appear_in_same_query!(rnr_form_line, rnr_form);
 allow_tables_to_appear_in_same_query!(rnr_form_line, item);
 allow_tables_to_appear_in_same_query!(rnr_form_line, requisition_line);
 
-#[derive(
-    Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, Default,
-)]
+#[derive(Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, Default)]
 #[diesel(table_name = rnr_form_line)]
 pub struct RnRFormLineRow {
     pub id: String,
@@ -224,12 +222,14 @@ impl Delete for RnRFormLineDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormLineRow::generate_changelog(
-                RowOrId::Id(&self.0),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                RnRFormLineRow::generate_changelog(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
@@ -255,12 +255,14 @@ impl Upsert for RnRFormLineRow {
         RnRFormLineRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormLineRow::generate_changelog(
-                RowOrId::Row(self),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                RnRFormLineRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

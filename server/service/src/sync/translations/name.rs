@@ -229,27 +229,63 @@ pub struct LegacyNameRow {
     // convention) and serde rename pins the wire name to the 4D column name.
     // TODO: when we widen this beyond custom1/2/3, consider #[serde(flatten)]
     // into a HashMap and filter by custom field scope at translate time.
-    #[serde(default, rename = "custom1", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "custom1",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub custom_1: Option<String>,
-    #[serde(default, rename = "custom2", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "custom2",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub custom_2: Option<String>,
-    #[serde(default, rename = "custom3", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "custom3",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub custom_3: Option<String>,
 
     // Legacy 4D `[name]category1_ID..category6_ID` columns — six independent
     // category dimensions, each storing a leaf id. Imported as OPTION props
     // (`build_legacy_custom_fields`); category1 is hierarchical, 2–6 flat.
-    #[serde(default, rename = "category1_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category1_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category1_id: Option<String>,
-    #[serde(default, rename = "category2_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category2_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category2_id: Option<String>,
-    #[serde(default, rename = "category3_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category3_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category3_id: Option<String>,
-    #[serde(default, rename = "category4_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category4_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category4_id: Option<String>,
-    #[serde(default, rename = "category5_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category5_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category5_id: Option<String>,
-    #[serde(default, rename = "category6_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category6_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category6_id: Option<String>,
 
     #[serde(default)]
@@ -732,7 +768,11 @@ mod tests {
         row.category2_id = Some("OG_VALUE".to_string());
         let existing = Some(json!({ "name_category_2": "OMS_EDIT", "patient_note": "keep" }));
         assert_eq!(
-            merge_legacy_custom_fields(existing, build_legacy_custom_fields(&row), LEGACY_NAME_OWNED_KEYS),
+            merge_legacy_custom_fields(
+                existing,
+                build_legacy_custom_fields(&row),
+                LEGACY_NAME_OWNED_KEYS
+            ),
             Some(json!({ "name_category_2": "OG_VALUE", "patient_note": "keep" }))
         );
     }
@@ -747,9 +787,15 @@ mod tests {
             Some("A".to_string())
         );
         // absent key
-        assert_eq!(legacy_value_from_custom_fields(&custom_fields, "custom_2"), None);
+        assert_eq!(
+            legacy_value_from_custom_fields(&custom_fields, "custom_2"),
+            None
+        );
         // non-string value is not pushed to a TEXT column
-        assert_eq!(legacy_value_from_custom_fields(&custom_fields, "custom_3"), None);
+        assert_eq!(
+            legacy_value_from_custom_fields(&custom_fields, "custom_3"),
+            None
+        );
         // NULL blob
         assert_eq!(legacy_value_from_custom_fields(&None, "custom_1"), None);
     }
@@ -786,7 +832,10 @@ mod tests {
         // The central server derives the owned keys and merges them with the
         // existing OMS-authored keys (and fans the result out over v7).
         test_util_set_is_central_server(true);
-        assert_eq!(derive(None), Some(json!({"custom_1": "Red", "custom_3": "Blue"})));
+        assert_eq!(
+            derive(None),
+            Some(json!({"custom_1": "Red", "custom_3": "Blue"}))
+        );
         assert_eq!(
             derive(Some(json!({"patient_note": "keep"}))),
             Some(json!({"custom_1": "Red", "custom_3": "Blue", "patient_note": "keep"}))
@@ -802,7 +851,9 @@ mod tests {
     #[actix_rt::test]
     async fn name_relay_to_legacy_routed_by_source_site() {
         use crate::sync::test_util_set_is_central_server;
-        use repository::{KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion};
+        use repository::{
+            KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion,
+        };
 
         let (_, connection, _, _) = setup_all(
             "name_relay_to_legacy_routed_by_source_site",

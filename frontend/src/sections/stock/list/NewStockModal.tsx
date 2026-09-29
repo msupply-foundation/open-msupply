@@ -520,11 +520,6 @@ const NewStockContent = (props: {
                         ? {
                             id: draft.manufacturer.id,
                             name: draft.manufacturer.name,
-                            code: '',
-                            isSupplier: false,
-                            isDonor: false,
-                            isOnHold: false,
-                            isStore: false,
                           }
                         : undefined
                     }
@@ -555,11 +550,6 @@ const NewStockContent = (props: {
                             ? {
                                 id: draft.donorId,
                                 name: draft.donorName ?? '',
-                                code: '',
-                                isSupplier: false,
-                                isDonor: true,
-                                isOnHold: false,
-                                isStore: false,
                               }
                             : undefined
                         }

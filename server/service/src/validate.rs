@@ -131,7 +131,8 @@ pub fn check_other_party(
             }
         }
         // Already handled above
-        CheckOtherPartyType::Manufacturer | CheckOtherPartyType::Donor
+        CheckOtherPartyType::Manufacturer
+        | CheckOtherPartyType::Donor
         | CheckOtherPartyType::Patient => {}
     };
 

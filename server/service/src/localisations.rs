@@ -6,7 +6,8 @@ use thiserror::Error;
 use rust_embed::RustEmbed;
 
 use crate::preference::{
-    CustomTranslations, CustomTranslationsV2, CustomTranslationsV2Value, Preference, PreferenceError,
+    CustomTranslations, CustomTranslationsV2, CustomTranslationsV2Value, Preference,
+    PreferenceError,
 };
 
 #[derive(RustEmbed)]
@@ -364,18 +365,24 @@ mod test {
         // v2 override wins over the embedded translation for that language
         assert_eq!(
             "FR Custom",
-            localisations.get_translation(args("button.close"), "fr").unwrap()
+            localisations
+                .get_translation(args("button.close"), "fr")
+                .unwrap()
         );
         assert_eq!(
             "EN Custom",
-            localisations.get_translation(args("button.close"), "en").unwrap()
+            localisations
+                .get_translation(args("button.close"), "en")
+                .unwrap()
         );
 
         // A language without a v2 override falls back to its OWN embedded
         // translation, NOT another language's custom override.
         assert_eq!(
             "Cerrar",
-            localisations.get_translation(args("button.close"), "es").unwrap()
+            localisations
+                .get_translation(args("button.close"), "es")
+                .unwrap()
         );
 
         // Dialect with no v2 override falls back to the base language's v2.

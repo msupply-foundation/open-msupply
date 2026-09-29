@@ -1,18 +1,18 @@
 // Which repack the repack modal (spec/stock S5) is showing, and what that
 // means for the surfaces around it — the tinted history row, the panel below
-// the table, and the Export/Print gate (OMS-REG-SMV-08 `.24`–`.26`). Pure, so
-// the decision is testable in node without a DOM: the modal itself renders a
-// <dialog> and a table, which the unit harness cannot mount.
+// the table, and the Export/Print gate (OMS-REG-SMV-08 `.24`, `.25`) — plus the
+// values a new repack starts from (`.27`). Pure, so both are testable in node
+// without a DOM: the modal itself renders a <dialog> and a table, which the
+// unit harness cannot mount.
 
 // The panel below the history table wears one face at a time:
 //
-// | face       | when                                                        |
-// | ---------- | ----------------------------------------------------------- |
-// | `editor`   | a new repack is being entered                                |
-// | `selected` | a repack is selected AND present in the history              |
-// | `prompt`   | nothing selected, with a history to select from              |
-// | `none`     | nothing to say — no history and nothing selected, or a saved |
-// |            | repack the refetched history does not hold yet               |
+// | face       | when                                            |
+// | ---------- | ----------------------------------------------- |
+// | `editor`   | a new repack is being entered                   |
+// | `selected` | a repack is selected AND present in the history |
+// | `prompt`   | nothing selected, with a history to select from |
+// | `none`     | nothing to say — no history                     |
 export type RepackPanelFace = 'editor' | 'selected' | 'prompt' | 'none';
 
 // The minimum shape this needs of a repack-history node: its own id (the
@@ -35,12 +35,9 @@ export interface RepackPanelState<T extends RepackSelectable> {
 }
 
 /*
- * The selection is held as an INVOICE id rather than a row key because that is
- * what saving a repack returns: the saved repack then selects itself the moment
- * the refetched history holds it, with no second source of truth. The cost is a
- * window — selected, not yet in the history — and the `none` face is what
- * covers it: right after a save, "select a repack" would be a lie, so the panel
- * says nothing until the row lands.
+ * The selection is held as an INVOICE id rather than a row key because the
+ * repack report is fetched by invoice. A selection the history does not hold
+ * counts as none: nothing is marked, shown, or printable.
  */
 export const repackPanelState = <T extends RepackSelectable>(input: {
   repacks: readonly T[];
@@ -50,21 +47,43 @@ export const repackPanelState = <T extends RepackSelectable>(input: {
   const selected = input.selectedInvoiceId
     ? input.repacks.find(r => r.invoice.id === input.selectedInvoiceId)
     : undefined;
-  const canPrint = input.selectedInvoiceId !== undefined;
   return {
     face: input.creating
       ? 'editor'
       : selected
         ? 'selected'
-        : input.selectedInvoiceId
-          ? 'none'
-          : input.repacks.length > 0
-            ? 'prompt'
-            : 'none',
+        : input.repacks.length > 0
+          ? 'prompt'
+          : 'none',
     selected,
-    // A selected repack the history doesn't hold marks no row — there is no row
-    // to mark.
     selectedRowIds: selected ? [selected.id] : [],
-    canPrint,
+    canPrint: selected !== undefined,
   };
 };
+
+// The minimum shape the new-repack defaults need of the stock line — the
+// generated detail fragment passes unchanged.
+export interface RepackSource<L> {
+  availableNumberOfPacks: number;
+  location?: L | null;
+}
+
+export interface NewRepackDraft<L> {
+  numberOfPacks: number;
+  newPackSize: number;
+  newLocation: L | null;
+}
+
+/*
+ * What a new repack starts from (OMS-REG-SMV-08 `.27`, issue #516): the common
+ * case, where a bulk carton is broken down whole for issue — every available
+ * pack, down to single units, staying where it is. Each is one edit away from
+ * the rarer choices (one pack, another size, another location, or none).
+ */
+export const newRepackDraft = <L>(
+  line: RepackSource<L>
+): NewRepackDraft<L> => ({
+  numberOfPacks: line.availableNumberOfPacks,
+  newPackSize: 1,
+  newLocation: line.location ?? null,
+});

@@ -1,5 +1,5 @@
 import { t } from '@/intl';
-import { localisedDate } from '@/intl';
+import { exportDate } from '@/intl';
 import { toCsv } from '@/domain/reportFiles';
 import type { StocktakesResult } from './stocktakes.generated';
 
@@ -25,8 +25,8 @@ export const stocktakesToCsv = (rows: StocktakeRow[]): string => {
     row.status === 'FINALISED' ? t('status.finalised') : t('status.new'),
     row.description,
     row.comment,
-    localisedDate(row.createdDatetime),
-    row.stocktakeDate ? localisedDate(row.stocktakeDate) : '',
+    exportDate(row.createdDatetime),
+    row.stocktakeDate ? exportDate(row.stocktakeDate) : '',
     row.isLocked ? t('messages.yes') : t('messages.no'),
   ]);
   return toCsv(fields, data);

@@ -1,7 +1,10 @@
 # The dashboard's wire surface (spec/dashboard/contract.md): six
 # read-only count queries, one operation per panel family so each panel owns
-# its own loading / error state (OMS-REG-DB-01.22/.23 — a Forbidden family errors in place
-# without touching its siblings). All are store-scoped; none mutate (OMS-REG-DB-01.21/.24).
+# its own loading / error state, and a family that fails does not touch its
+# siblings. A family the user cannot read is not requested at all
+# (OMS-REG-DB-01.60 — the page pauses its resource); the prescription counts
+# ride the requests list instead (./prescriptionRequestCounts.graphql). All are
+# store-scoped; none mutate (OMS-REG-DB-01.21/.24).
 #
 # timezoneOffset is deliberately omitted everywhere — the app sends no offset,
 # so the server buckets "today" / "this week" in its own local timezone

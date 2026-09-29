@@ -44,7 +44,7 @@ export const useNotification = (): NotificationHook => {
             </PaperPopoverSection>
           }
         >
-          <IconButton size="small">
+          <IconButton size="small" data-testid="notification-detail-toggle">
             <InfoIcon style={{ color: '#fff' }} />
           </IconButton>
         </PaperPopover>

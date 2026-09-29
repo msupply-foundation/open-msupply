@@ -12,9 +12,11 @@ import {
   lowStockItemsPath,
   outboundShipmentListPath,
   outOfStockItemsPath,
+  dispensingListPath,
   prescriptionListPath,
   stockListPath,
   stocktakeListPath,
+  stocktakeDetailPath,
 } from './deepLinks';
 
 /*
@@ -51,8 +53,18 @@ describe('task-list targets', () => {
     expect(inboundShipmentListPath()).toBe('replenishment/inbound-shipment');
     expect(outboundShipmentListPath()).toBe('distribution/outbound-shipment');
     expect(internalOrderListPath()).toBe('replenishment/internal-order');
-    expect(prescriptionListPath()).toBe('dispensary/prescription');
+    expect(dispensingListPath()).toBe('dispensary/dispensing');
+    // The pre-#551 name stays exported so built plugins keep resolving it.
+    expect(prescriptionListPath()).toBe('dispensary/dispensing');
     expect(stocktakeListPath()).toBe('inventory/stocktakes');
+  });
+
+  it('addresses one stocktake as the section routes it (:stocktakeId)', () => {
+    // The record page behind a count — the Cook Islands count log's row
+    // target (plugins/cook_islands/ui-surface.md § S5). The segment is
+    // encoded so an id can never smuggle a separator.
+    expect(stocktakeDetailPath('abc123')).toBe('inventory/stocktakes/abc123');
+    expect(stocktakeDetailPath('a/b')).toBe('inventory/stocktakes/a%2Fb');
   });
 });
 

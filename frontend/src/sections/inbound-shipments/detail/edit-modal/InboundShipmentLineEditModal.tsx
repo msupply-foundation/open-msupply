@@ -36,6 +36,7 @@ import {
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
+import { packDifference } from '../inboundShipmentLine';
 import { CopyIcon, PlusCircleIcon, TrashIcon } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
 import {
@@ -47,7 +48,7 @@ import {
   type LocationWithVolume,
 } from '../../../../domain/location';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
-import { NameSearch, type NameOption } from '../../../../domain/name';
+import { NameSearch } from '../../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../../domain/campaign/CampaignOrProgramSelect';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import {
@@ -56,10 +57,13 @@ import {
   type BatchInboundShipmentVariables,
 } from '../inboundShipmentDetail.generated';
 import {
+  InternalOrderLines,
+  type InternalOrderLineRowFragment,
   PurchaseOrderLines,
   type PurchaseOrderLinesResult,
 } from '../inboundShipmentLookups.generated';
 import { runInboundBatch } from '../inboundShipmentUpdate';
+import { requestedQuantityForItem } from '../internalOrderContext';
 import styles from './InboundShipmentLineEditModal.module.css';
 
 // One line of the linked purchase order — the PO-line picker's options (derived
@@ -106,8 +110,28 @@ export interface InboundShipmentLineEditModalProps {
    * purchaseOrderId to switch the add selector to the PO-line picker.
    */
   purchaseOrderId?: string;
+  /**
+   * The shipment's linked internal order. Presence alone gates the
+   * internal-order banner (spec S4); undefined where there is no such link, or
+   * where ./internalOrderContext rules the context out.
+   */
+  requisitionId?: string;
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
+  /**
+   * The supplier-declared figures (Packs shipped / Shipped pack size) are
+   * read-only, because something outside this store declared them: the
+   * shipment carries a source link (spec rules → source link) — a purchase
+   * order, or a sending shipment (a transfer). Only a shipment with NO source
+   * link records them by hand.
+   *
+   * Deliberately its own prop rather than a second reading of `costLocked`,
+   * even though the two resolve the same way today: they are different rules
+   * that happen to coincide, and collapsing one into the other is exactly how
+   * this field came to be editable on transfers (spec rules → source link
+   * warns against leaning on "manual" alone to carry a gate).
+   */
+  shippedLocked: boolean;
   locations: LocationWithVolume[];
   prefs: LineEditPrefs;
   onSaved: () => void;
@@ -150,7 +174,7 @@ type DraftBatch = {
   sellPricePerPack: number;
   note: string;
   vvmStatusId: string | null;
-  /** Line authorisation status (spec col 16); null on shipments without it. */
+  /** Line authorisation status (spec col 18); null on shipments without it. */
   status: InboundLineFragment['status'];
   donorId: string | null;
   donorName: string | null;
@@ -173,7 +197,7 @@ type DraftBatch = {
 // The three authorisation states a line can hold (the fragment's non-null set).
 type AuthStatus = NonNullable<DraftBatch['status']>;
 
-// Each auth state's dot class (spec col 16): amber awaiting, green approved,
+// Each auth state's dot class (spec col 18): amber awaiting, green approved,
 // red rejected — the colours live in the CSS module, one class per state.
 const AUTH_STATUS_CLASS: Record<AuthStatus, string> = {
   PENDING: styles.statusPending,
@@ -338,6 +362,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // & next" advance) so the body shows a spinner instead of flashing its empty
   // state. Starts true; add mode clears it once the selector is ready.
   const [loadingLines, setLoadingLines] = createSignal(true);
+  // The banner's two per-ITEM facts, read off the item's existing lines (every
+  // batch carries the same pair, so the first answers for all). Null in add
+  // mode: nothing has been supplied yet, so there is genuinely no comment, and
+  // the requested quantity falls back to the order's own lines.
+  const [loadedRequested, setLoadedRequested] = createSignal<number | null>(
+    null
+  );
+  const [transferComment, setTransferComment] = createSignal<string | null>(
+    null
+  );
   // Mode: 'update' (opened from a row — "OK & next" walks to the next item on
   // the shipment) or 'add' ("Add item", or fallen into when an update walk
   // runs out — "OK & next" then resets to add another). Only ever flips update
@@ -410,6 +444,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       return;
     }
     setBatches(lines.map(fromLine));
+    setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
+    setTransferComment(first.transferComment);
     setItem({
       id: first.itemId,
       code: first.itemCode,
@@ -455,6 +491,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // editor). State for any item currently in the editor is lost, by design.
   const chooseItem = (option: ItemOption | null) => {
     setMode('add');
+    // A fresh item has no line on this shipment, so neither per-item fact
+    // carries over from whatever was open before.
+    setLoadedRequested(null);
+    setTransferComment(null);
     if (!option) {
       setItem(null);
       setBatches([]);
@@ -476,6 +516,29 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setBatches([batch]);
     // Picking an item drops focus straight onto its first batch's packs field.
     batchFields.focus(batch.id);
+  };
+
+  // The linked order's lines. Fetched once into a plain signal, like the
+  // PO-line load below and for the same reason: no createResource, so an item
+  // change mid-walk never suspends the open dialog
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). Needed even
+  // though a loaded LINE carries its own `requisitionLine` — in add mode there
+  // is no line yet, and this is what tells an item that isn't on the order
+  // apart from one that is (OMS-REG-ISH-01.16).
+  const [orderLines, setOrderLines] = createSignal<
+    InternalOrderLineRowFragment[]
+  >([]);
+  const loadOrderLines = async () => {
+    if (!props.requisitionId) return;
+    const result = await graphqlFetch(InternalOrderLines, {
+      storeId: props.storeId,
+      requisitionId: props.requisitionId,
+    });
+    if (
+      result.kind === 'success' &&
+      result.data.requisition.__typename === 'RequisitionNode'
+    )
+      setOrderLines(result.data.requisition.lines.nodes);
   };
 
   // PO-linked add mode: pick a purchase-order LINE instead of an item search
@@ -501,6 +564,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     const line = poLines().find(l => l.id === id);
     if (!line) return;
     setPoLineId(id);
+    setLoadedRequested(null);
+    setTransferComment(null);
     // The PO-line lookup carries only id/code/name for the item; unit/vaccine
     // attributes fill in once the line is saved and reloaded via the full line
     // fragment (edit mode). Default them for the pre-save PO-add view.
@@ -618,6 +683,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // walk exhausts). Matches the stocktake editor.
   onMount(() => {
     void loadPoLines();
+    void loadOrderLines();
     if (props.initialItemId)
       void loadItemById(props.initialItemId, props.initialLineId);
     else {
@@ -625,6 +691,25 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       topSelector.focus();
     }
   });
+
+  // Internal-order context (spec S4). Both facts are per ITEM, so they don't
+  // move as batches are added or edited, and both are always stated — a dash
+  // where there is no value — rather than hidden (OMS-REG-ISH-01.15).
+  const requestedQuantity = (): number | undefined =>
+    props.requisitionId
+      ? requestedQuantityForItem(item()?.id, loadedRequested(), orderLines())
+      : undefined;
+
+  // The requested quantity's content, or undefined when the item has no line
+  // on the linked order — which gets the neutral notice in its place, the
+  // supplier comment staying put beside it (OMS-REG-ISH-01.16). Wrapped rather
+  // than handed to `<Show>` bare: a genuine requested quantity of ZERO is a
+  // figure, and `<Show when={0}>` would render the not-on-the-order fallback
+  // for it.
+  const orderContext = () => {
+    const requested = requestedQuantity();
+    return requested == null ? undefined : { requested };
+  };
 
   const buildBatch = (): BatchInboundShipmentVariables['input'] | null => {
     const chosen = item();
@@ -786,6 +871,23 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           (b.shippedPackSize !== undefined && b.shippedPackSize !== b.packSize))
     );
 
+  // A figure declared by whoever supplied the shipment — shown to the receiver
+  // but never typed by them. Rendered as a plain value, not a disabled box:
+  // the absence of a box is what says read-only (kdd/form-layout), where
+  // `disabled` means "an input you can't use right now", which is what a
+  // locked Cost price is. Sized by the column's own cell definition, so it
+  // still lines up with the inputs beside it. An em dash where nothing was
+  // declared, matching the Difference cell. Takes a GETTER, not a value, so
+  // the figure stays tracked as the draft store changes
+  // (kdd/solid-reactivity-pitfalls).
+  const declaredValue = (value: () => number | undefined) => (
+    <span class={styles.statValue}>
+      {value() === undefined
+        ? '—'
+        : formatNumber(value()!, { maximumFractionDigits: 2 })}
+    </span>
+  );
+
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
     {
@@ -856,8 +958,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     // Packs shipped, and the Difference it implies, sit immediately beside
     // Packs received — the comparison the receiver is actually making
-    // (reference design). Supplier-declared quantities are manual-shipment only
-    // (spec S4); they also feed the received-vs-shipped mismatch warning.
+    // (reference design). They also feed the received-vs-shipped mismatch
+    // warning. Absent on a PO-linked shipment, which declares nothing to
+    // compare against; present but READ-ONLY once the shipment carries a
+    // source link (a transfer), because the figure is the sending store's
+    // record of what left its shelf and the receiver must not retype it.
     ...(!props.purchaseOrderId
       ? [
           {
@@ -868,22 +973,32 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             cell: info => {
               const b = info.row.original;
               return (
-                <NumberField
-                  label={t('label.shipped-number-of-packs')}
-                  hideLabel
-                  size="small"
-                  value={b.shippedNumberOfPacks}
-                  min={0}
-                  decimalLimit={2}
-                  onChange={v => updateBatch(b.id, 'shippedNumberOfPacks', v)}
-                />
+                <Show
+                  when={props.shippedLocked}
+                  fallback={
+                    <NumberField
+                      label={t('label.shipped-number-of-packs')}
+                      hideLabel
+                      size="small"
+                      value={b.shippedNumberOfPacks}
+                      min={0}
+                      decimalLimit={2}
+                      onChange={v =>
+                        updateBatch(b.id, 'shippedNumberOfPacks', v)
+                      }
+                    />
+                  }
+                >
+                  {declaredValue(() => b.shippedNumberOfPacks)}
+                </Show>
               );
             },
           } satisfies Column<DraftBatch, never, GroupKey>,
-          // Difference (computed) — shipped minus received, the SAME direction
+          // Difference (computed) — received minus shipped, the SAME direction
           // the detail table's Difference column reports (H6), so the two never
-          // disagree in sign. Blank until the supplier's shipped figure is
-          // entered; there is nothing to compare against before that.
+          // disagree in sign: POSITIVE means more arrived than the supplier
+          // declared. Blank until the supplier's shipped figure is entered;
+          // there is nothing to compare against before that.
           {
             c: { id: 'difference' },
             header: () => t('label.difference'),
@@ -902,9 +1017,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               // tracked, so the figure and its tone follow the draft store as
               // the receiver types (kdd/solid-reactivity-pitfalls).
               const diff = () =>
-                b.shippedNumberOfPacks === undefined
-                  ? undefined
-                  : b.shippedNumberOfPacks - b.numberOfPacks;
+                packDifference(b.numberOfPacks, b.shippedNumberOfPacks);
               return (
                 <span
                   class={styles.statValue}
@@ -962,7 +1075,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       },
     },
     // Shipped pack size follows the received one so the two pack sizes read as
-    // a pair (manual shipments only, like Packs shipped above).
+    // a pair, and is gated and locked exactly like Packs shipped above.
     ...(!props.purchaseOrderId
       ? [
           {
@@ -975,15 +1088,22 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             cell: info => {
               const b = info.row.original;
               return (
-                <NumberField
-                  label={t('label.shipped-pack-size')}
-                  hideLabel
-                  size="small"
-                  value={b.shippedPackSize}
-                  min={0}
-                  decimalLimit={2}
-                  onChange={v => updateBatch(b.id, 'shippedPackSize', v)}
-                />
+                <Show
+                  when={props.shippedLocked}
+                  fallback={
+                    <NumberField
+                      label={t('label.shipped-pack-size')}
+                      hideLabel
+                      size="small"
+                      value={b.shippedPackSize}
+                      min={0}
+                      decimalLimit={2}
+                      onChange={v => updateBatch(b.id, 'shippedPackSize', v)}
+                    />
+                  }
+                >
+                  {declaredValue(() => b.shippedPackSize)}
+                </Show>
               );
             },
           } satisfies Column<DraftBatch, never, GroupKey>,
@@ -1251,15 +1371,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   role="donor"
                   selected={
                     b.donorId
-                      ? ({
+                      ? {
                           id: b.donorId,
                           name: b.donorName ?? '',
-                          code: '',
-                          isSupplier: false,
-                          isDonor: true,
-                          isOnHold: false,
-                          isStore: false,
-                        } satisfies NameOption)
+                        }
                       : undefined
                   }
                   onSelect={d => {
@@ -1354,15 +1469,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             role="manufacturer"
             selected={
               b.manufacturerId
-                ? ({
+                ? {
                     id: b.manufacturerId,
                     name: b.manufacturerName ?? '',
-                    code: '',
-                    isSupplier: false,
-                    isDonor: false,
-                    isOnHold: false,
-                    isStore: false,
-                  } satisfies NameOption)
+                  }
                 : undefined
             }
             onSelect={m => {
@@ -1608,6 +1718,57 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         >
           {/* Unit is a labelled fact in the header now, not a field row here. */}
           <>
+            {/* Internal-order context (spec S4). An item with no line on the
+                order swaps the requested quantity for the neutral notice but
+                KEEPS the supplier comment: the supplying store often uses it to
+                say why an unordered item was included, which is exactly the
+                case where the reader has no other explanation. Absent on a
+                shipment with no internal-order link, and — via the enclosing
+                no-item fallback — until an item is chosen in add mode. */}
+            <Show when={props.requisitionId}>
+              <div class={styles.orderContext}>
+                <Alert severity={orderContext() ? 'info' : 'neutral'}>
+                  <HStack gap="lg" align="center" wrap>
+                    <Show
+                      when={orderContext()}
+                      fallback={t('messages.item-not-on-internal-order')}
+                    >
+                      {context => (
+                        <LabelledValue
+                          label={t('label.requested-quantity')}
+                          variant="field"
+                          layout="inline"
+                          size="small"
+                          data-testid="requested-quantity-value"
+                        >
+                          {/* Unit name after the figure, inflected with the
+                              count (getPlural, as unitsHint) — so the banner
+                              reads like the requisition editors' quantities. */}
+                          {(() => {
+                            const unit = item()?.unitName;
+                            const requested = context().requested;
+                            return unit
+                              ? `${formatNumber(requested)} ${getPlural(unit, requested)}`
+                              : formatNumber(requested);
+                          })()}
+                        </LabelledValue>
+                      )}
+                    </Show>
+                    <LabelledValue
+                      label={t('label.supplier-comment')}
+                      variant="field"
+                      layout="inline"
+                      size="small"
+                      data-testid="supplier-comment-value"
+                    >
+                      {/* Always stated, dash and all: an empty comment on a
+                          short supply is itself worth seeing. */}
+                      {transferComment() || '—'}
+                    </LabelledValue>
+                  </HStack>
+                </Alert>
+              </div>
+            </Show>
             <Show when={hasMismatch()}>
               <Alert severity="warning">
                 {t('messages.received-shipped-mismatch')}

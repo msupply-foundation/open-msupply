@@ -1,6 +1,4 @@
-use repository::{
-    PluginDataRow, PluginDataRowRepository, RepositoryError,
-};
+use repository::{PluginDataRow, PluginDataRowRepository, RepositoryError};
 
 use crate::{service_provider::ServiceContext, sync::CentralServerConfig, WithDBError};
 

@@ -1,5 +1,5 @@
 import { t } from '@/intl';
-import { toCsv } from '@/domain/reportFiles';
+import { parseCsv, toCsv } from '@/domain/reportFiles';
 import type { NamePropertiesResult } from '../names.generated';
 import type { FacilityRow } from './facilityRegisterLogic';
 
@@ -28,16 +28,6 @@ export type PropertyDefinition =
  * current app (README § captured as-is: "the import is not transactional").
  */
 export const IMPORT_BATCH_SIZE = 10;
-
-/*
- * Only a comma-separated-values file is accepted, judged by the file's NAME
- * (`.35`). Refused BEFORE parsing — the contents are never read.
- */
-export const isCsvFileName = (fileName: string): boolean =>
-  fileName.trim().toLowerCase().endsWith('.csv');
-
-/** The `accept` list handed to the upload zone — extension and MIME alike. */
-export const CSV_ACCEPT = '.csv,text/csv';
 
 /*
  * A definition's allowed values: ONE comma-separated string on the wire, split
@@ -107,55 +97,6 @@ export const buildTemplateCsv = (
     ];
   });
   return toCsv(fields, rows);
-};
-
-/*
- * A minimal RFC-4180 reader — quoted fields (with embedded commas, newlines and
- * doubled quotes), CRLF or LF line endings, and a leading BOM. Own the simple:
- * the app already writes its CSVs by hand (domain/reportFiles § toCsv), and a
- * parser dependency would cost more bundle than these thirty lines
- * (CLAUDE.md § keep the bundle small).
- */
-export const parseCsv = (text: string): string[][] => {
-  const source = text.replace(/^\uFEFF/, '');
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = '';
-  let quoted = false;
-
-  const endField = () => {
-    row.push(field);
-    field = '';
-  };
-  const endRow = () => {
-    endField();
-    rows.push(row);
-    row = [];
-  };
-
-  for (let i = 0; i < source.length; i++) {
-    const char = source[i];
-    if (quoted) {
-      if (char === '"') {
-        if (source[i + 1] === '"') {
-          field += '"';
-          i++;
-        } else quoted = false;
-      } else field += char;
-      continue;
-    }
-    if (char === '"') quoted = true;
-    else if (char === ',') endField();
-    else if (char === '\n') endRow();
-    else if (char === '\r') {
-      // Swallow the CR of a CRLF; a lone CR also ends the row.
-      if (source[i + 1] !== '\n') endRow();
-    } else field += char;
-  }
-  // A trailing newline leaves nothing pending; anything else is the last row.
-  if (field !== '' || row.length > 0) endRow();
-  // Drop rows that are entirely empty (a blank line in the file).
-  return rows.filter(cells => cells.some(cell => cell.trim() !== ''));
 };
 
 /*

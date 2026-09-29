@@ -1,6 +1,6 @@
 use crate::{
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, RepositoryError,
+    RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -60,7 +60,10 @@ impl<'a> AncillaryItemRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AncillaryItemRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<AncillaryItemRow>, RepositoryError> {
         Ok(ancillary_item::table
             .filter(ancillary_item::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

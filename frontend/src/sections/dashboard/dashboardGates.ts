@@ -1,8 +1,13 @@
 // The dashboard's display-gate and label-slot rules (spec/dashboard/rules.md §
 // display gates + § thresholds), stated once over the raw preference values.
-// Pure — type-only imports — so the gate rules are unit-testable against the AC
-// criteria; the reactive reads over the guard-3 store context live in
+// Pure — type-only imports — so the gate rules are unit-testable against the
+// behaviour anchors; the reactive reads over the guard-3 store context live in
 // dashboardPreferences.ts.
+//
+// These are the STORE's conditions. The other gate family — what this USER may
+// read (rules.md § permission gates) — is each panel naming the permission it
+// needs, in `panelVisibility` (regionBuiltIns.ts), where the two families meet
+// per panel. Both hide their piece; neither disables it.
 //
 // All are client-side display gates: the server still computes every count; a
 // gated-off stat is absent entirely, never shown disabled (ui-surface §

@@ -115,9 +115,7 @@ impl ItemLedgerNode {
             return Ok(false);
         }
         let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
-        let invoice = loader
-            .load_one(self.item_ledger.invoice_id.clone())
-            .await?;
+        let invoice = loader.load_one(self.item_ledger.invoice_id.clone()).await?;
         Ok(invoice
             .and_then(|i| i.invoice_row.purchase_order_id)
             .is_some())

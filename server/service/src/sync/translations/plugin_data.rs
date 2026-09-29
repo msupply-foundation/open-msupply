@@ -6,8 +6,7 @@ use repository::{
 use crate::sync::translations::store::StoreTranslation;
 
 use super::{
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translators()

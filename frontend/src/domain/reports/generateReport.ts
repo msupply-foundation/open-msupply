@@ -43,8 +43,8 @@ export interface GenerateReportParams {
   sort?: ReportSort;
   /**
    * Cancels this generation, resolving it to `{ kind: 'aborted' }`. Generation
-   * is the app's longest single request, so a caller that can supersede one (the
-   * dashboard re-generating on an argument change) or walk away from one
+   * is the app's longest single request, so a caller that can supersede one
+   * (the dashboard re-generating on an argument change) or walk away from one
    * (navigating off the screen) should pass a signal rather than leave it in
    * flight holding a connection and a pending resource.
    */
@@ -72,7 +72,8 @@ export const generateReport = async (
   // On the default path those trip the global modal, which offers Reload (it
   // re-runs the same failing generation) and Go to dashboard (it discards the
   // user's place) for a screen that is perfectly healthy; the caller shows the
-  // message inline at the export control instead (spec/reports S5, AC-G6).
+  // message inline at the export control instead (spec/reports S5,
+  // OMS-REG-RPT-09.10).
   const result = await graphqlFetch(GenerateReport, variables, {
     returnGraphqlErrors: true,
     signal: params.signal,

@@ -9,7 +9,6 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { ClinicianSelect } from '../../../domain/clinician';
 import {
   asRequestStatus,
   isEditable,
@@ -27,10 +26,10 @@ import type { PrescriptionRequestFieldsFragment } from './prescriptionRequestDet
 // notice — never a toast. There is no Dispensed action: that flip is the
 // server's (rules § becoming dispensed).
 //
-// The confirmation also ASKS FOR A CLINICIAN (AC-R6): the one field the
-// dispensation needs that the request does not hold. It is optional, and it is
-// asked here rather than on the header because it is the hand-over's parameter
-// — the request itself never names a clinician (rules § who is recorded).
+// The confirmation asks for NOTHING (AC-R6): the clinician the generated
+// dispensation takes is the REQUEST's own field, set on the header while it
+// was still editable, so by here there is nothing left to enter — only to
+// confirm.
 
 export interface PrescriptionRequestStatusFooterProps {
   storeId: string;
@@ -43,9 +42,6 @@ export const PrescriptionRequestStatusFooter: Component<
   PrescriptionRequestStatusFooterProps
 > = props => {
   const [confirmOpen, setConfirmOpen] = createSignal(false);
-  // Lives with the footer, not the request: it is written once, onto the
-  // dispensation, and there is nothing on the request to read it back from.
-  const [clinicianId, setClinicianId] = createSignal<string>();
   const [working, setWorking] = createSignal(false);
   const [rejection, setRejection] = createSignal<string>();
   const [noLinesOpen, setNoLinesOpen] = createSignal(false);
@@ -81,11 +77,7 @@ export const PrescriptionRequestStatusFooter: Component<
     setRejection(undefined);
     const outcome = await savePrescriptionRequest(
       props.storeId,
-      {
-        id: props.node.id,
-        status: 'READY_TO_DISPENSE',
-        clinicianId: clinicianId(),
-      },
+      { id: props.node.id, status: 'READY_TO_DISPENSE' },
       { inSurface: true }
     );
     setWorking(false);
@@ -194,24 +186,7 @@ export const PrescriptionRequestStatusFooter: Component<
               </Button>
             </Show>
           }
-        >
-          {/* Optional — the hand-over goes through without one (AC-R6). Hidden
-              once a rejection owns the dialog: nothing is being entered then,
-              only read. Creation is offered here as it is on the dispensing
-              side, so a clinician missing from the list is not a dead end. */}
-          <Show when={!rejection()}>
-            <ClinicianSelect
-              label={t('label.clinician')}
-              width="full"
-              inputTestId="clinician-select"
-              allowCreate
-              storeId={props.storeId}
-              disabled={working()}
-              value={clinicianId()}
-              onChange={clinician => setClinicianId(clinician?.id)}
-            />
-          </Show>
-        </Dialog>
+        />
       </Show>
     </ContentFooter>
   );

@@ -49,7 +49,11 @@ pub fn update(
     map_response(
         service_provider
             .invoice_line_service
-            .update_inbound_shipment_service_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
+            .update_inbound_shipment_service_line(
+                &service_context,
+                input.to_domain(),
+                Some(r#type.to_domain()),
+            ),
     )
 }
 

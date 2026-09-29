@@ -1,4 +1,6 @@
-use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference, PreferenceError};
+use crate::preference::{
+    ExternalInboundShipmentLinesMustBeAuthorised, Preference, PreferenceError,
+};
 use repository::InvoiceRow;
 use repository::InvoiceStatus;
 use repository::InvoiceType;

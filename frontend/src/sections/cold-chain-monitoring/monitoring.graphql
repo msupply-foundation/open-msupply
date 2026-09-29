@@ -1,0 +1,234 @@
+# Cold chain — Monitoring (spec/cold-chain-monitoring). A read-mostly vertical:
+# three reads over the store's temperature record (logs, breaches, the
+# notification digest) and ONE routine write, acknowledging a breach. The
+# fridge-sensor import is a REST upload (import/importFridgeTag.ts), not
+# GraphQL. The sensor entity belongs to cold-chain-sensors; this vertical only
+# reads a sensor's id and name off the records that point at it.
+#
+# Every read is store-scoped server-side by `storeId` — each resolver
+# overwrites any client-supplied store filter with the requested store, so the
+# scope cannot be widened from here (contract › store scoping).
+#
+# Sort inputs: the server evaluates exactly ONE entry, and it is the LAST — the
+# schema's own description says "first", but the resolver pops the list
+# (contract ⚠️ wire trap). Every list read here sends a single-element list,
+# at which the two readings coincide.
+
+# One reading. `sensor` is read for the chart's per-sensor series and the
+# tables' Sensor name; `location` for the code the tables show;
+# `temperatureBreach` for the Log tab's breach-kind column and for the chart's
+# breach markers — the "first reading of a run" detection is client-side
+# (contract › the chart), nothing on the wire marks it.
+fragment TemperatureLogRow on TemperatureLogNode {
+  __typename
+  id
+  datetime
+  temperature
+  sensorId
+  sensor {
+    id
+    name
+  }
+  location {
+    id
+    code
+  }
+  temperatureBreach {
+    id
+    type
+  }
+}
+
+# One breach. `unacknowledged` is the NEGATIVE of the domain word — everything
+# reading it inverts (contract › breaches). `durationMilliseconds` is the
+# stored column and reads 0 for an ongoing breach (⚠️ wire trap), so the
+# displayed duration is derived from start/end instead. `maxOrMinTemperature`
+# is null only where the breach has no readings; a real 0 is a reading and is
+# shown (rules › temperature display).
+fragment TemperatureBreachRow on TemperatureBreachNode {
+  __typename
+  id
+  sensorId
+  sensor {
+    id
+    name
+  }
+  startDatetime
+  endDatetime
+  unacknowledged
+  durationMilliseconds
+  type
+  location {
+    id
+    code
+    name
+  }
+  maxOrMinTemperature
+  comment
+}
+
+# T1 (the chart) and T3 (the Log tab) share this read. The chart sends
+# `page.first` at its data-point cap and detects truncation by comparing
+# `totalCount` with the rows returned — the server reports none of its own
+# (contract › the chart).
+query temperatureLogs(
+  $storeId: String!
+  $filter: TemperatureLogFilterInput
+  $sort: [TemperatureLogSortInput!]
+  $page: PaginationInput
+) {
+  temperatureLogs(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    ... on TemperatureLogConnector {
+      __typename
+      totalCount
+      nodes {
+        ...TemperatureLogRow
+      }
+    }
+  }
+}
+
+# T2 (the Breaches tab). The screen's date range binds to `startDatetime`,
+# never `endDatetime`: an `endDatetime` bound silently drops every ongoing
+# breach (⚠️ wire trap), which is why no end-date filter exists anywhere on
+# the screen.
+query temperatureBreaches(
+  $storeId: String!
+  $filter: TemperatureBreachFilterInput
+  $sort: [TemperatureBreachSortInput!]
+  $page: PaginationInput
+) {
+  temperatureBreaches(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    ... on TemperatureBreachConnector {
+      __typename
+      totalCount
+      nodes {
+        ...TemperatureBreachRow
+      }
+    }
+  }
+}
+
+# S2 (the chart marker's summary popover): the one breach behind a marker,
+# re-read by id when the popover opens. The location shown here is the
+# location's NAME, where the tables show its code (contract ⚠️ wire trap) —
+# the fragment carries both, the popover reads `name`.
+query breachSummary($storeId: String!, $id: String!) {
+  temperatureBreaches(
+    storeId: $storeId
+    filter: { id: { equalTo: $id } }
+    page: { first: 1 }
+  ) {
+    ... on TemperatureBreachConnector {
+      __typename
+      nodes {
+        ...TemperatureBreachRow
+      }
+    }
+  }
+}
+
+# S5 (the notification band). The query takes NO filter: its breach half is
+# hard-coded server-side to the store's unacknowledged breaches on ACTIVE
+# sensors, newest first, and its excursion half is computed over the last 7
+# days of unattributed readings — and, unlike the breach half, is NOT limited
+# to active sensors (contract ⚠️ wire trap). `page.first` bounds `nodes` but
+# not `totalCount`, so one node is enough: the band shows the newest and
+# counts the rest off `totalCount`.
+#
+# An excursion's `startDatetime` and `maxOrMinTemperature` are the triggering
+# reading's own timestamp and temperature — not an aggregate — and its `id` is
+# that reading's log id, so nothing identifies an excursion stably across reads
+# (contract › temperature excursions).
+query temperatureNotifications($storeId: String!) {
+  temperatureNotifications(storeId: $storeId, page: { first: 1 }) {
+    ... on TemperatureNotificationConnector {
+      __typename
+      breaches {
+        totalCount
+        nodes {
+          id
+          sensorId
+          sensor {
+            id
+            name
+          }
+          startDatetime
+          location {
+            id
+            name
+          }
+          maxOrMinTemperature
+        }
+      }
+      excursions {
+        totalCount
+        nodes {
+          id
+          sensorId
+          sensor {
+            id
+            name
+          }
+          startDatetime
+          location {
+            id
+            name
+          }
+          maxOrMinTemperature
+        }
+      }
+    }
+  }
+}
+
+# S3 (acknowledging a breach) — the vertical's only routine write. The input's
+# `unacknowledged` is the TARGET state: `false` acknowledges. `comment` is
+# required in BOTH directions and only checked for emptiness (`""` rejected,
+# a lone space accepted) — the non-blank rule is the frontend's alone. The
+# ongoing-breach guard is likewise frontend-only: the server acknowledges an
+# ongoing breach without complaint (contract › acknowledging a breach).
+#
+# The response union has exactly one member, so every rejection is a TOP-LEVEL
+# GraphQL error (`Bad user input` + `extensions.details`), never a typed
+# branch — callers read the error's details, there is no __typename to branch
+# on (⚠️ wire trap).
+mutation updateTemperatureBreach(
+  $storeId: String!
+  $input: UpdateTemperatureBreachInput!
+) {
+  updateTemperatureBreach(storeId: $storeId, input: $input) {
+    ... on TemperatureBreachNode {
+      ...TemperatureBreachRow
+    }
+  }
+}
+
+# Consumed read (the sensor entity is cold-chain-sensors'): the name of one
+# sensor by id, for the phone-sized import hand-off that narrows the screen to
+# the sensor the file created — the import response carries only the id.
+query sensorName($storeId: String!, $id: String!) {
+  sensors(
+    storeId: $storeId
+    filter: { id: { equalTo: $id } }
+    page: { first: 1 }
+  ) {
+    ... on SensorConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}

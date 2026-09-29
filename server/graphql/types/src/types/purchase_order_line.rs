@@ -48,6 +48,9 @@ impl PurchaseOrderLineNode {
     pub async fn price_per_pack_after_discount(&self) -> f64 {
         self.row().price_per_pack_after_discount
     }
+    pub async fn line_total(&self) -> f64 {
+        self.row().line_total
+    }
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
     }
@@ -91,6 +94,9 @@ impl PurchaseOrderLineNode {
     }
     pub async fn received_number_of_units(&self) -> f64 {
         self.stats().received_number_of_units
+    }
+    pub async fn outstanding_number_of_units(&self) -> f64 {
+        self.purchase_order_line.outstanding_number_of_units()
     }
     pub async fn requested_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().requested_delivery_date

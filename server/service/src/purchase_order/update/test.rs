@@ -28,6 +28,161 @@ mod update {
     };
 
     #[actix_rt::test]
+    async fn closed_purchase_order_field_edits() {
+        let (_, _, connection_manager, _) =
+            setup_all("closed_purchase_order_field_edits", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+        let store_id = &mock_store_a().id;
+        let purchase_order_id = "closed_purchase_order".to_string();
+        let row = |context: &crate::service_provider::ServiceContext| {
+            PurchaseOrderRowRepository::new(&context.connection)
+                .find_one_by_id(&purchase_order_id)
+                .unwrap()
+                .unwrap()
+        };
+
+        service
+            .insert_purchase_order(
+                &context,
+                store_id,
+                InsertPurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    supplier_id: mock_name_a().id.to_string(),
+                },
+            )
+            .unwrap();
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(PurchaseOrderStatus::Sent),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        let sent = row(&context).sent_datetime;
+        assert!(sent.is_some());
+
+        let contract_signed = NaiveDate::from_ymd_opt(2024, 2, 1).unwrap();
+        let advance_paid = NaiveDate::from_ymd_opt(2024, 2, 15).unwrap();
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    contract_signed_date: Some(NullableUpdate {
+                        value: Some(contract_signed),
+                    }),
+                    advance_paid_date: Some(NullableUpdate {
+                        value: Some(advance_paid),
+                    }),
+                    comment: Some("still editable".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        let sent_row = row(&context);
+        assert_eq!(sent_row.contract_signed_date, Some(contract_signed));
+        assert_eq!(sent_row.advance_paid_date, Some(advance_paid));
+        assert_eq!(sent_row.comment, Some("still editable".to_string()));
+
+        let sent_edit = NaiveDate::from_ymd_opt(2024, 1, 20)
+            .unwrap()
+            .and_hms_opt(9, 0, 0)
+            .unwrap();
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    sent_datetime: Some(NullableUpdate {
+                        value: Some(sent_edit),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder)
+        );
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    reference: Some("too late".to_string()),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder)
+        );
+        assert_eq!(row(&context).sent_datetime, sent);
+
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    status: Some(PurchaseOrderStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    contract_signed_date: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder)
+        );
+        assert_eq!(
+            service.update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    advance_paid_date: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder)
+        );
+        service
+            .update_purchase_order(
+                &context,
+                store_id,
+                UpdatePurchaseOrderInput {
+                    id: purchase_order_id.clone(),
+                    comment: Some("finalised, still editable".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        let finalised_row = row(&context);
+        assert_eq!(finalised_row.contract_signed_date, Some(contract_signed));
+        assert_eq!(finalised_row.advance_paid_date, Some(advance_paid));
+        assert_eq!(
+            finalised_row.comment,
+            Some("finalised, still editable".to_string())
+        );
+    }
+
+    #[actix_rt::test]
     async fn update_purchase_order_errors() {
         let (_, _, connection_manager, _) =
             setup_all("update_purchase_order_errors", MockDataInserts::all()).await;

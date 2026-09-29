@@ -254,7 +254,7 @@ export type InsertCustomerReturnResult = {
   __typename: "InsertCustomerReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotACustomer" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -280,7 +280,7 @@ export type UpdateCustomerReturnColourResult = {
   __typename: "UpdateCustomerReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotACustomer" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -304,7 +304,7 @@ export type DeleteCustomerReturnResult = {
   __typename: "DeleteCustomerReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });

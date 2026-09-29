@@ -166,6 +166,10 @@ export const Chart = ({
     <NothingHere body={t('error.no-temperature-logs')} />
   ) : (
     <Box
+      // e2e contract (frontend/e2e/TESTIDS.md § Cold chain › Monitoring): the
+      // chart region — plot and legend — the suites read the legend's sensor
+      // names from.
+      data-testid="temperature-chart"
       sx={{
         flex: 1,
         py: 2,
@@ -177,7 +181,7 @@ export const Chart = ({
         {t('heading.chart')}
       </Typography>
       {dataTruncated && (
-        <Typography variant="body2" color="error">
+        <Typography variant="body2" color="error" data-testid="chart-truncated">
           {t('error.too-many-datapoints')}
         </Typography>
       )}

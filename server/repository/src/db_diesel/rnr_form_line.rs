@@ -91,9 +91,7 @@ impl<'a> RnRFormLineRepository<'a> {
     }
 }
 
-fn to_domain(
-    (rnr_form_line_row, item_row, requisition_line_row): RnRFormLineJoin,
-) -> RnRFormLine {
+fn to_domain((rnr_form_line_row, item_row, requisition_line_row): RnRFormLineJoin) -> RnRFormLine {
     RnRFormLine {
         rnr_form_line_row,
         requisition_line_row,

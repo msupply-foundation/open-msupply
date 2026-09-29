@@ -3,8 +3,8 @@ use diesel::prelude::*;
 
 use crate::{
     db_diesel::{
-        location_row::location,
         location::{LocationFilter, LocationRepository},
+        location_row::location,
     },
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,

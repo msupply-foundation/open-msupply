@@ -17,7 +17,7 @@ export type CustomFieldScopeConfigResult = {
   id: string;
   key: string;
   name: string;
-  valueType: "INTEGER" | "TEXT" | "DATE" | "REAL" | "OPTION" | "BOOLEAN";
+  valueType: "INTEGER" | "TEXT" | "DATE" | "REAL" | "OPTION" | "MULTI_OPTION" | "BOOLEAN";
   displayMode: "HIDDEN" | "VISIBLE" | "PROMINENT" | "OTHER" | null;
 }>;
 });
@@ -50,7 +50,7 @@ export type UpdateCustomFieldScopesResult = {
   id: string;
   key: string;
   name: string;
-  valueType: "INTEGER" | "TEXT" | "DATE" | "REAL" | "OPTION" | "BOOLEAN";
+  valueType: "INTEGER" | "TEXT" | "DATE" | "REAL" | "OPTION" | "MULTI_OPTION" | "BOOLEAN";
   displayMode: "HIDDEN" | "VISIBLE" | "PROMINENT" | "OTHER" | null;
 }>;
 });

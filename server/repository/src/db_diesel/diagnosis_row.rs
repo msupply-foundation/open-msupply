@@ -77,10 +77,9 @@ impl<'a> DiagnosisRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, diagnosis_id: &str) -> Result<bool, RepositoryError> {
-        let exists: bool = diesel::select(diesel::dsl::exists(
-            diagnosis.filter(id.eq(diagnosis_id)),
-        ))
-        .get_result(self.connection.lock().connection())?;
+        let exists: bool =
+            diesel::select(diesel::dsl::exists(diagnosis.filter(id.eq(diagnosis_id))))
+                .get_result(self.connection.lock().connection())?;
         Ok(exists)
     }
 

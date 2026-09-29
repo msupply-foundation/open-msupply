@@ -10,7 +10,13 @@
   gap: 1.5rem;
   /* Cap the width so the zone + list don't stretch across a wide desktop tab,
      and centre it in the tab; the list stays readable and the drop target
-     stays a sensible size. */
+     stays a sensible size.
+     `width: 100%` is load-bearing, not decoration: the auto inline margins
+     defeat the flex stretch, which would leave the panel sized by its content —
+     and the list below is a size CONTAINER, so it contributes no intrinsic
+     width at all. A panel whose only content is that list (the catalogue half
+     of the equipment Documents tab) would collapse to its padding. */
+  width: 100%;
   max-width: 48rem;
   margin-inline: auto;
   padding: 1rem;
@@ -27,6 +33,10 @@
 .list {
   --doc-grid: 1.75rem minmax(0, 1fr) 9rem 6rem 2rem;
 
+  /* The rows reflow on the LIST's own width, not the viewport's: this panel
+     sits in a column (the equipment Documents tab puts two side by side), so
+     the viewport says nothing about how much room a row actually has. */
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
 }
@@ -60,6 +70,58 @@
 
 .row {
   padding: 0.75rem 0;
+}
+
+/*
+ * Narrow column: stack the metadata under the filename.
+ *
+ * The wide row's fixed tracks — icon, date, size, action, and the four gaps —
+ * claim 21.75rem before the name gets anything, and the name is the only
+ * flexible one. Below that the name resolves to ZERO: the link is still in the
+ * DOM with the right href, but it has no area, so there is nothing to tap and
+ * the document cannot be opened at all (#692, found on a tablet in portrait
+ * where this panel gets ~22rem). The header row goes with it — column headings
+ * describe a layout that is no longer there, and at zero width they spill over
+ * each other.
+ */
+@container (max-width: 30rem) {
+  .headerRow {
+    display: none;
+  }
+
+  /* The DATE takes its natural width and the size the remainder: sized the
+     other way round the date overflows its track and its text runs into the
+     size beside it. */
+  .row {
+    grid-template-columns: 1.75rem auto minmax(0, 1fr) 2rem;
+    align-items: start;
+    row-gap: 0.25rem;
+  }
+
+  .fileType {
+    grid-row: 1 / span 2;
+  }
+
+  .name,
+  .nameLink {
+    grid-row: 1;
+    grid-column: 2 / span 2;
+  }
+
+  .date {
+    grid-row: 2;
+    grid-column: 2;
+  }
+
+  .size {
+    grid-row: 2;
+    grid-column: 3;
+  }
+
+  .rowAction {
+    grid-row: 1 / span 2;
+    grid-column: 4;
+  }
 }
 
 /* File-type marker: the file glyph with its extension as a small caption. */

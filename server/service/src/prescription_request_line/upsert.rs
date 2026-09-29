@@ -148,6 +148,7 @@ mod test {
                 },
             )
             .unwrap()
+            .prescription_request_row
     }
 
     fn line_input(request_id: &str) -> UpsertPrescriptionRequestLine {
@@ -244,9 +245,7 @@ mod test {
                 "store_a",
                 UpdatePrescriptionRequest {
                     id: request.id.clone(),
-                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
-                        clinician_id: None,
-                    }),
+                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
                     ..Default::default()
                 },
             )

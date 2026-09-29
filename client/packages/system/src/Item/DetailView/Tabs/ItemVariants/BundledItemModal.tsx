@@ -88,7 +88,7 @@ const BundledItemForm = ({
     <Box justifyContent="center" display="flex" gap={3}>
       <Box display="flex" flexDirection="column" gap={1} flex={1}>
         <InputWithLabelRow
-          label={t('label.item_one')}
+          label={t('label.item')}
           labelWidth="200"
           Input={
             <Box width="100%">

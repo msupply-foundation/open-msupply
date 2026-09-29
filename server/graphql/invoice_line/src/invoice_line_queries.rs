@@ -101,6 +101,8 @@ pub enum InvoiceLineSortFieldInput {
     PackSize,
     /// Invoice line item stock location name
     LocationName,
+    /// Units requested for the line's item on the invoice's linked requisition
+    RequestedQuantity,
 }
 
 #[derive(InputObject)]

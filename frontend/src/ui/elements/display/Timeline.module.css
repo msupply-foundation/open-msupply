@@ -1,0 +1,69 @@
+/*
+ * The rail: a marker column on the inline-start and the event's content
+ * filling the rest. The connector is drawn BETWEEN markers — each item after
+ * the first carries the segment arriving from the one above — so the rail
+ * starts at the first marker and ends at the last, never dangling past either.
+ *
+ * Geometry in rem; the marker's radius and the connector's offset are one
+ * custom property each, so the two stay centred on one another if either
+ * changes.
+ */
+
+.list {
+  --marker-size: 2rem;
+  --connector-width: 2px;
+
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.item {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--marker-size) 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* The segment leaving this marker for the next one: from this marker's bottom
+   edge, down the whole of this item's content, and on through the gap to meet
+   the marker below. Both block insets are set so the segment STRETCHES to the
+   item's height — an event's content is as tall as it needs to be, and a fixed
+   height would leave the rail broken beside every tall card.
+
+   Drawn by each item except the last, so the rail starts at the first marker
+   and ends at the last, never dangling past either. */
+.item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  inline-size: var(--connector-width);
+  inset-inline-start: calc((var(--marker-size) - var(--connector-width)) / 2);
+  inset-block: var(--marker-size) calc(-1 * var(--space-4));
+  background: var(--gray-main);
+}
+
+.marker {
+  inline-size: var(--marker-size);
+  block-size: var(--marker-size);
+  border-radius: 50%;
+  background: var(--gray-main);
+  color: var(--bg-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The glyph sits comfortably inside the circle rather than filling it. */
+  font-size: var(--text-sm);
+}
+
+.marker > :global(svg) {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+.content {
+  min-inline-size: 0;
+}

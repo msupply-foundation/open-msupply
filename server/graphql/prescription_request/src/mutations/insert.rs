@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
-use repository::{PrescriptionRequest, PrescriptionRequestRow};
+use repository::PrescriptionRequest;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::prescription_request::insert::{
     InsertPrescriptionRequest as ServiceInput, InsertPrescriptionRequestError as ServiceError,
@@ -16,8 +16,8 @@ use crate::types::PrescriptionRequestNode;
 pub struct InsertInput {
     pub id: String,
     pub patient_id: String,
+    pub clinician_id: Option<String>,
     pub diagnosis_id: Option<String>,
-    pub program_id: Option<String>,
     pub prescription_datetime: Option<DateTime<Utc>>,
 }
 
@@ -26,15 +26,15 @@ impl InsertInput {
         let InsertInput {
             id,
             patient_id,
+            clinician_id,
             diagnosis_id,
-            program_id,
             prescription_datetime,
         } = self;
         ServiceInput {
             id,
             patient_id,
+            clinician_id,
             diagnosis_id,
-            program_id,
             prescription_datetime: prescription_datetime.map(|d| d.naive_utc()),
         }
     }
@@ -69,12 +69,10 @@ pub fn insert_prescription_request(
     )
 }
 
-fn map_response(from: Result<PrescriptionRequestRow, ServiceError>) -> Result<InsertResponse> {
+fn map_response(from: Result<PrescriptionRequest, ServiceError>) -> Result<InsertResponse> {
     match from {
-        Ok(prescription_request_row) => Ok(InsertResponse::Response(
-            PrescriptionRequestNode::from_domain(PrescriptionRequest {
-                prescription_request_row,
-            }),
+        Ok(prescription_request) => Ok(InsertResponse::Response(
+            PrescriptionRequestNode::from_domain(prescription_request),
         )),
         Err(error) => Err(map_error(error)),
     }
@@ -85,9 +83,10 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
     match error {
         ServiceError::PrescriptionRequestAlreadyExists
         | ServiceError::PatientDoesNotExist
-        | ServiceError::DiagnosisDoesNotExist
-        | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        | ServiceError::ClinicianDoesNotExist
+        | ServiceError::DiagnosisDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::NewlyCreatedPrescriptionRequestDoesNotExist
+        | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     }
     .extend()
 }

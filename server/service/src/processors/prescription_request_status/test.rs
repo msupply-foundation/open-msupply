@@ -186,7 +186,8 @@ async fn verify_via_dispensing_service_flips_request_immediately() {
                 ..Default::default()
             },
         )
-        .unwrap();
+        .unwrap()
+        .prescription_request_row;
     service_provider
         .prescription_request_line_service
         .upsert_prescription_request_line(
@@ -208,9 +209,7 @@ async fn verify_via_dispensing_service_flips_request_immediately() {
             "store_a",
             UpdatePrescriptionRequest {
                 id: request.id.clone(),
-                status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
-                    clinician_id: None,
-                }),
+                status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
                 ..Default::default()
             },
         )

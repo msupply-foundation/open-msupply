@@ -1,7 +1,4 @@
-use super::{
-    name_row::name, ChangelogRepository, RowActionType,
-    StorageConnection,
-};
+use super::{name_row::name, ChangelogRepository, RowActionType, StorageConnection};
 use crate::ChangelogSyncType;
 use crate::SourceSiteId;
 use crate::{
@@ -31,7 +28,17 @@ define_linked_tables! {
 joinable!(indicator_value -> name (customer_name_id));
 allow_tables_to_appear_in_same_query!(indicator_value, name);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = indicator_value)]
 pub struct IndicatorValueRow {
     pub id: String,
@@ -63,9 +70,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        let row = self
-            .find_one_by_id(id)?
-            .ok_or(RepositoryError::NotFound)?;
+        let row = self.find_one_by_id(id)?.ok_or(RepositoryError::NotFound)?;
         let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Delete,
@@ -91,7 +96,10 @@ impl<'a> IndicatorValueRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
         Ok(indicator_value::table
             .filter(indicator_value::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
@@ -107,14 +115,16 @@ impl Delete for IndicatorValueRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => IndicatorValueRowRepository::new(con)
-                .find_one_by_id(&self.0)?
-                .ok_or(RepositoryError::NotFound)?
-                .generate_changelog(
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                IndicatorValueRowRepository::new(con)
+                    .find_one_by_id(&self.0)?
+                    .ok_or(RepositoryError::NotFound)?
+                    .generate_changelog(
+                        con,
+                        RowActionType::Delete,
+                        SourceSiteId::SourceSiteId(source_site_id),
+                    )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

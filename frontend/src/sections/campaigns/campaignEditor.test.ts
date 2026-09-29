@@ -50,8 +50,17 @@ const successResult = (name: string): GraphqlResult<UpsertCampaignResult> => ({
   },
 });
 
+// The upsert's error variants, taken FROM the generated result rather than
+// restated: codegen narrows `__typename` to the union the schema allows, so a
+// variant that is renamed or retired server-side fails this file rather than
+// letting a test go on asserting a shape the server can no longer return.
+type UpsertCampaignErrorTypename = Extract<
+  UpsertCampaignResult['centralServer']['campaign']['upsertCampaign'],
+  { __typename: 'UpsertCampaignError' }
+>['error']['__typename'];
+
 const errorResult = (
-  typename: string,
+  typename: UpsertCampaignErrorTypename,
   description: string
 ): GraphqlResult<UpsertCampaignResult> => ({
   kind: 'success',

@@ -1,8 +1,7 @@
 use boa_engine::*;
 
 use crate::{
-    boajs::context::use_boajs_connection, boajs::utils::*,
-    store_preference::get_store_preferences,
+    boajs::context::use_boajs_connection, boajs::utils::*, store_preference::get_store_preferences,
 };
 
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {

@@ -564,7 +564,10 @@ mod user_account_test {
         service
             .upsert_user(
                 reconcile_user(),
-                store_a_permissions(vec![permission("reconcile_p1", PermissionType::StoreAccess)]),
+                store_a_permissions(vec![permission(
+                    "reconcile_p1",
+                    PermissionType::StoreAccess,
+                )]),
             )
             .unwrap();
 
@@ -576,8 +579,7 @@ mod user_account_test {
 
         let remaining = UserPermissionRepository::new(&connection)
             .query_by_filter(
-                UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(reconcile_user().id)),
+                UserPermissionFilter::new().user_id(EqualFilter::equal_to(reconcile_user().id)),
             )
             .unwrap();
         assert_eq!(remaining.len(), 1);
@@ -606,7 +608,10 @@ mod user_account_test {
                 reconcile_user(),
                 store_a_permissions(vec![
                     permission("reconcile_p1", PermissionType::StoreAccess),
-                    permission("reconcile_request", PermissionType::PrescriptionRequestQuery),
+                    permission(
+                        "reconcile_request",
+                        PermissionType::PrescriptionRequestQuery,
+                    ),
                 ]),
             )
             .unwrap();
@@ -656,7 +661,10 @@ mod user_account_test {
         let payload = || {
             store_a_permissions(vec![
                 permission("reconcile_p1", PermissionType::StoreAccess),
-                permission("reconcile_request", PermissionType::PrescriptionRequestQuery),
+                permission(
+                    "reconcile_request",
+                    PermissionType::PrescriptionRequestQuery,
+                ),
             ])
         };
 

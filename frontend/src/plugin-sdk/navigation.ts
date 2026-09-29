@@ -14,7 +14,8 @@
  * (kdd/router, kdd/plugin-loading). So the primitives are host-owned functions
  * over a PATH, not re-exported router API.
  *
- * TWO functions and no `<Link>` component, deliberately — the eager SDK surface
+ * TWO write functions, one read (`currentStorePath`) and no `<Link>`
+ * component, deliberately — the eager SDK surface
  * is startup weight for every plugin-bearing deployment (kdd/bundling § the
  * SDK-eager rule):
  *
@@ -39,7 +40,12 @@
  *    kdd/plugin-loading/evidence/interface-audits/).
  */
 import { hostNavigate } from '../nav/hostNavigate';
-import { routerBase, storePath } from '../nav/storeRelativePath';
+import { hostPathname } from '../nav/hostLocation';
+import {
+  routerBase,
+  storePath,
+  storeRelativePath,
+} from '../nav/storeRelativePath';
 import { currentStoreId } from '../store/storeContext';
 
 /** How a navigation joins history; matches the host's own navigations. */
@@ -51,7 +57,7 @@ export interface NavigateOptions {
 /**
  * An href for a host screen BELOW the store root, from the path as the
  * navigation registry spells it — `'inventory/stock'`,
- * `'dispensary/prescription'`, `''` for the store's landing screen — plus any
+ * `'dispensary/dispensing'`, `''` for the store's landing screen — plus any
  * query string of its own (`'inventory/stock?query=…'`, or `'?query=…'` on the
  * landing screen itself). A leading slash is tolerated; the path is
  * store-relative either way.
@@ -75,6 +81,26 @@ export const storeHref = (path: string): string => {
   // URL (OMS-REG-NAV-01.22). The mount prefix is this function's own: a bare
   // `<a href>` gets no resolution from the router.
   return `${routerBase}${storePath(storeId, path)}`;
+};
+
+/**
+ * The path the app currently shows, in the same store-relative vocabulary the
+ * write primitives take — `'stock-count/report/past'`, `''` on the store's
+ * landing screen. The read half of this surface: a page owns everything below
+ * its own path (sdk-contract § Paths), and this is how it reads which of those
+ * paths it is on, so drill-in views get real URLs — Back, refresh and links
+ * all work — instead of view state a reload forgets.
+ *
+ * Reactive: it reads the router's live location (bound by the shell, like
+ * `navigateTo`'s navigator), so a read inside a component's JSX or a memo
+ * re-runs on navigation. Before a store is entered there is no store-relative
+ * path to speak of, so it is `undefined` — transient by the same argument as
+ * `storeHref`'s early render, since every routed page mounts inside a store.
+ */
+export const currentStorePath = (): string | undefined => {
+  const storeId = currentStoreId();
+  if (storeId === undefined) return undefined;
+  return storeRelativePath(hostPathname(), storeId);
 };
 
 /**

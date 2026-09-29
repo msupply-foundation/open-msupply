@@ -33,7 +33,7 @@ The rest of this page documents the CI pipeline and manual steps if you need mor
 
 ## CI/CD (GitHub Actions)
 
-The `dockerise.yaml` workflow fires automatically when a tag starting with `v` is pushed:
+The `docker-release.yaml` workflow fires automatically when a tag starting with `v` is pushed:
 
 ```bash
 git tag v2.8.0
@@ -51,14 +51,22 @@ Non-release tags are typically created automatically by the nightly build proces
 
 ### How it works
 
-1. **Check tag** — determines if the tag is a release or non-release
-2. **Build client** — installs Node dependencies and runs `yarn build`
-3. **Build server** (2 or 4 parallel jobs) — compiles `remote_server` and `remote_server_cli` for each (db, arch) combination:
-   - **amd64** builds run natively on the amd64 GitHub runner
-   - **arm64** builds use cross-compilation (`gcc-aarch64-linux-gnu`) from the amd64 runner, which is much faster than QEMU emulation (release tags only)
-   - **Postgres** builds use `rust:1.94` (includes `libpq-dev`), SQLite builds use `rust:1.94-slim`
-4. **Dockerise** (2 or 4 parallel jobs) — builds and pushes Docker images using the compiled binaries
-5. **Trigger plugin tests** — runs downstream plugin test suite against the new dev images (release tags only)
+The build itself is defined once, in `docker-image.yaml`, which has no triggers of its own — it is called by `docker-release.yaml` (tags), `docker-named-deployment.yaml` (develop, release candidates and QA deployments) and `docker-pr-preview.yaml` (per-PR previews). Each caller passes a matrix, a version, and whether it wants floating aliases and dev images; the shared build has no idea which one called it.
+
+The *deploy* is defined once in the same way, in `docker-deploy.yaml`: pull an immutable tag, `docker compose up --wait`, prove the deployment answers through the reverse proxy, and report to a GitHub environment. `docker-named-deployment.yaml` and `docker-pr-preview.yaml` both call it, so every deployment — develop, an RC, a QA server, a PR preview — comes up through identical code.
+
+1. **Classify** (`docker-release.yaml`) — decides from the tag whether it is a release or a nightly, and produces the variant matrix and floating alias prefix. `docker-named-deployment.yaml` has an equivalent `plan` job that names the deployment, resolves the ref to a commit and decides whether a build is needed at all.
+2. **Image** (1, 2 or 4 parallel jobs) — one `docker buildx build` per (db, arch). Everything is compiled inside the Dockerfile: the server, the old UI, and the new frontend. Release tags additionally build the `-dev` images.
+   - **amd64** builds run natively on the runner
+   - **arm64** builds cross-compile — the Dockerfile pins its compile stages to `$BUILDPLATFORM`, so `rustc` never runs emulated (release tags only)
+3. **Deploy** (`docker-named-deployment.yaml`, `docker-pr-preview.yaml`) — brings that deployment up on the new image, by calling `docker-deploy.yaml`. No part of a tag build ever deploys: pushing `v2.8.0` publishes images and stops. Standing a server up *on* a release tag is a separate, deliberate act — a named deployment with `ref: v2.8.0`, which finds the images already built.
+4. **Trigger plugin tests** (`docker-release.yaml`) — runs the downstream plugin test suite against the new dev images (release tags only)
+
+Both callers share the build cache. BuildKit keys on the build's content, not on the workflow that invoked it, so a develop merge warms what the nightly tag needs.
+
+There is no separate client or server build job and no artifact hand-off between jobs. That shape suited GitHub-hosted runners, where each job gets a fresh VM; on a self-hosted box the jobs serialise on a lane and the artifacts move ~100MB between two steps on the same disk. BuildKit runs the frontend build concurrently with the server compile inside one job instead. Use `--progress plain` (already set) rather than splitting it back out for per-step visibility.
+
+Everything publishes to `msupplyfoundation/omsupply`. Deployment builds (`docker-named-deployment.yaml`) are tagged `<name>-<sha>-<db>-amd64` — so `develop-<sha>-<db>-amd64` for develop, as before — and get **no** floating tag: `latest-develop*` is the nightly pointer that demo servers follow, and repointing it on every merge would push unvetted commits at them several times a day. Deployment tags are immutable and the nightly cleanup sweeps them after 30 days like any other non-release tag.
 
 ### Image tags
 
@@ -71,10 +79,116 @@ Images are pushed to `msupplyfoundation/omsupply` with the naming convention:
 | `latest[-{db}]`              | `latest`, `latest-postgres` | Repointed on every release tag     |
 | `latest-develop[-{db}]`      | `latest-develop`            | Repointed on every develop nightly |
 | `latest-rc[-{db}]`           | `latest-rc-postgres`        | Repointed on every RC nightly      |
+| `pr-{number}-{sha}-{db}-{arch}` | `pr-470-abc1234-postgres-amd64` | Every push to a PR labelled `deploy` |
+| `{name}-{sha}-{db}-{arch}` | `develop-abc1234-postgres-amd64`, `vaccine-flow-abc1234-postgres-amd64` | Every named deployment, unless that tag already exists |
+| `…-{db}-{arch}-debug` | `pr-470-abc1234-postgres-amd64-debug` | Any build of the `debug` profile — every preview, and a named deployment that asked for it |
 
 Dev images (which include Node/Yarn and the client source for frontend development) are only built for amd64 on release tags.
 
 The `latest*` floating tags always point at **amd64** images, and the bare tags (`latest`, `latest-develop`, `latest-rc`) are the **sqlite** flavour. If more than one RC branch (or more than one develop-family branch) receives commits on the same day, the nightly build tags each of them and the shared floating tag ends up on whichever build pushed last.
+
+### How a deployment is addressed
+
+Every deployment — develop, a release candidate, a QA server, a PR preview — is reached at `https://<name>.<DEPLOY_DOMAIN>`, and **the name is the only key**. It is at once the GitHub environment, the compose project, the container name and the first label of the hostname:
+
+| deployment | hostname | container |
+|---|---|---|
+| develop | `develop.<DEPLOY_DOMAIN>` | `develop` |
+| release candidate `v3.01.00-RC` | `v3-01-00-rc.<DEPLOY_DOMAIN>` | `v3-01-00-rc` |
+| ad-hoc deployment `vaccine-flow` | `vaccine-flow.<DEPLOY_DOMAIN>` | `vaccine-flow` |
+| preview of PR 470 | `pr-470.<DEPLOY_DOMAIN>` | `pr-470` |
+
+Nothing publishes a host port. A reverse proxy on the deploy box maps the first label of the hostname straight to a container name, which means it holds **one static route** for every deployment: no per-deployment config, no reloads, and a link that is known before the build starts. See the [self-hosted runners](../github-actions/self-hosted-runners/) page for how it is set up.
+
+Because compose namespaces volumes by project, and the project is the name, no two deployments ever share a database.
+
+### Named deployments
+
+Run the **Docker named deployment** workflow to get a server of your own. Nothing here needs command-line access — it is a form in the Actions tab.
+
+| field | what to put in it |
+|---|---|
+| `name` | A name for your server, e.g. `vaccine-flow`. This becomes its web address: `vaccine-flow.<DEPLOY_DOMAIN>`. Anything is accepted and tidied into a valid address, so `Vaccine Flow` works too. |
+| `ref` | What to put on it, and what it then tracks: a **branch** keeps updating as people push to it; a **release tag** or a **commit** freezes it. Leave blank if you are removing a server. |
+| `days` | How many days to keep it, up to 30. `0` gives a permanent server. Ignored by `teardown`. |
+| `action` | `deploy` creates it, or updates an existing one and keeps its data. `reseed` wipes its data and starts again from the sample dataset. `teardown` deletes it and its data. |
+| `central` | `keep` (the default) leaves it as whatever it already is. `central` makes it a central server, `remote` makes it an ordinary site. A choice rather than a tick-box on purpose: a box that defaults to off is read on every redeploy, so extending an expiry would have quietly demoted a central server. |
+| `dataset` | What goes in its database, **on a first deploy or a `reseed` only** — after that the database has its own history and this is not consulted. `default` uses whatever the repository is set to, `e2e` and `reference1` are the sample datasets, and `none` leaves it empty. |
+| `profile` | `keep` (the default) reuses whatever this deployment was built with last time, so extending an expiry does not quietly change it — `release` for a brand new one. `release` is what ships. `debug` compiles in a fraction of the time but runs slower: good for trying a feature out, no use for judging performance. Whatever you pick sticks, for pushes and for later dispatches alike. |
+
+The workflow reports the address in its summary, and the server is usually ready in about twenty minutes — or about one if the commit has been built before, or if you gave it a release tag.
+
+**The database persists by name.** Redeploy the same name and you get the same database, whatever ref you point it at — so a deployment can be set up how you need it, shared, and then moved onto a newer branch to test the upgrade in place. Only `reseed` discards it.
+
+**To extend an expiry, deploy it again with a bigger `days`.** The expiry lives as a label on the container, so a redeploy restamps it. That costs about a minute rather than a full build, because:
+
+**A build is skipped when the image already exists.** Redeploying the same name at the same ref resolves to a tag that is already published, so nothing is compiled. Deploying a **release tag** skips the build entirely — the image was built when the tag was — which makes standing up a server for a release candidate close to instant.
+
+`days` is capped at 30 because the nightly tag cleanup sweeps non-release tags at 30 days, and a deployment that outlived its own image tag could not be redeployed.
+
+`docker-expire.yaml` sweeps expired deployments daily. Its job summary lists everything currently deployed and when each expires, which is the quickest answer to "what is running right now" — the Environments page shows what *was* deployed, not what is still up.
+
+A deployment tracks the ref you gave it. Deploy from a branch and every push to that branch updates it; deploy from a tag or a commit and it is frozen. That is how `develop` works — it is simply the deployment named after the develop branch, with no expiry — and it is equally how a server following `feature/foo` works.
+
+| deployed from | what happens on a push |
+|---|---|
+| `develop` | updated on every merge to develop |
+| `v3.01.00-RC` | updated on every push to that branch |
+| `feature/foo` | updated on every push to that branch |
+| `v2.8.0` | nothing — frozen |
+| a commit sha | nothing — frozen |
+
+The branch a deployment follows is **recorded on it**, so its name and its branch are free to differ — `vaccine-flow` can follow `feature/foo`. Pinning is simply the absence of that record: deploy from a tag or a commit and there is nothing for a push to match.
+
+One branch, one deployment. Two deployments following the same branch would each need their own image and their own deploy, so it says so and stops rather than updating one and leaving the other behind — point the extras at a tag to freeze them. Two *different* RC branches are fine and get a server each.
+
+A deployment's whole record is four labels on its container — the branch it follows, when it expires, how it was built, and whether it is a central server — so there is nothing to configure per deployment and nothing to keep in step. Each one exists because a push carries no form to read, so a redeploy that had to guess would guess wrong in a way nothing announced.
+
+**One caveat, and it is a sharp one: the deploy uses `docker/compose.deploy.yaml` as of the ref being deployed, not as of the workflow.** That file supplies the compose project name, the container name and the labels, so deploying a ref that predates it does not merely lose the labels — it ignores the name you asked for and comes up under whatever that older file hardcoded. The deployment then has a container name the proxy is not looking for, and the run fails its routing check with a 502 while the server itself is perfectly healthy.
+
+Two consequences worth knowing:
+
+- **A ref has to contain this deployment machinery for a deployment of it to work.** Until it is on every branch you care about, deploy a ref that has it.
+- **An older ref can collide with an existing deployment.** If the hardcoded name in that older compose file belongs to a deployment that is already up, the deploy lands on *that* project — its container and its volumes — regardless of the name on the form.
+
+**An auto-update changes the image and nothing else.** A push has no form to read, so the deployment keeps the expiry it already had and rebuilds with the profile it was already built with — the clock does not move and `debug` does not silently become `release`.
+
+**A push only ever updates.** Pushing to a branch nobody has deployed does nothing, and a deployment removed while a build was running is not resurrected by it.
+
+**Anything can be torn down or reseeded, `develop` included.** Both destroy the database, and nothing stops you — these are testing servers seeded from a sample dataset, any of them comes back by deploying it again, and the ones following a branch come back on the next push.
+
+### Per-PR preview deployments
+
+Add the **`deploy`** label to a pull request and every push to it builds an image and brings up a server of its own at `https://pr-<number>.<DEPLOY_DOMAIN>`. Remove the label, or close the PR, and the server and its database are removed. A comment on the PR carries the link and is rewritten on each push; the link itself never changes.
+
+Previews build the `debug` profile, unlike named deployments, which build `release`. A preview is the containerised equivalent of checking the branch out and running it, so that matches what a reviewer would get locally — it compiles faster, runs slower and is not stripped, which is reason enough never to benchmark a preview or quote its image size.
+
+**The database persists across pushes.** It is seeded once, on the first deploy, and left alone after that. Set a preview up how you need it, share the link, and pushing more commits will not wipe it — the server migrates the existing data instead, which incidentally means every push after the first tests that PR's migrations against data that already exists.
+
+Two situations need a clean database, and both are the same fix — run the workflow manually with `reseed`, or remove and re-add the label:
+
+- a migration that was added and then dropped again leaves the database ahead of the binary, and the server will refuse to start
+- a first deploy that failed part-way through leaves a database that looks seeded but is not
+
+Previews only work for branches in this repository. A PR from a fork gets a read-only token and no secrets, so the workflow says so and stops rather than failing at the registry twenty minutes later.
+
+Preview images are swept from Docker Hub after 7 days rather than the usual 30 — one push makes one tag, and a tag is dead as soon as the next push supersedes it.
+
+### What every deployment has in common
+
+- **Its own bundled postgres, in a named volume.** The container is disposable; the data is not. The volume survives every redeploy and image change, and is removed only by tearing the deployment down. Nothing here can be pointed at an external database.
+- **A stable hardware id.** Each deployment gets its own `machine-id` file, bind-mounted read only, so a redeploy does not change the site's identity. Without it `entry.sh` generates a fresh UUID per container and v7 pairing would reject the site after every deploy.
+- **A seeded deployment cannot sync.** Initialising from a reference dataset disables sync unconditionally, so a deployment seeded from `e2e` or `reference1` can never reach a central server. `dataset: none` is the way round it: an empty database, no sample data and no users to log in as, but sync left alone.
+- **mDNS discovery off.** Nothing is reachable except through the proxy, so there is nothing for discovery to do.
+
+### Known gap: a paired central and remote
+
+A pair like `develop-central` and `develop-remote` deploys today and needs nothing special — two names are two names, and because each deployment gets its *own* hardware id they are distinguishable to a central server. Two things are missing:
+
+- **One branch auto-updates one deployment.** Names are free — a pair can be called anything — but both halves of a pair built from `develop` would carry `oms.branch=develop`, and the push path stops rather than guess between two matches. So a pair from a single branch needs one half pinned to a commit, or redeployed by hand, until this fans out per deployment.
+- **Seeding and sync are mutually exclusive**, so the remote half has to be deployed with `dataset: none` and initialise *through* sync instead. That is now reachable from the form, but it is only half the answer: initialising through sync needs sync credentials, which nothing here supplies, and the central may need `standalone_store_name`/`standalone_admin_*` to bootstrap with no upstream of its own.
+
+That is a different first-deploy path from every other deployment here and has not been established against a real image yet. It blocks nothing: the pair works now as two independent seeded servers.
 
 ### Auto-updating demo/test servers (Watchtower)
 
@@ -112,25 +226,33 @@ Floating tags are amd64-only. Nightly develop builds may include schema migratio
 
 ### Docker Hub cleanup
 
-A separate `cleanup-docker-tags.yaml` workflow runs nightly to remove old non-release images from Docker Hub. Release images and the floating `latest*` tags are always kept. Non-release images older than 30 days (configurable) are deleted.
+A separate `cleanup-docker-tags.yaml` workflow runs nightly to remove old non-release images from Docker Hub. Release images and the floating `latest*` tags are always kept. Everything else is swept on one of two clocks:
+
+| tags | swept after | why |
+|---|---|---|
+| per-PR previews, `pr-<number>-<sha>` | 7 days | one tag per push, and a tag is dead as soon as the next push supersedes it |
+| every other non-release tag, including named deployments | 30 days | also the reason `days` is capped at 30 — a deployment cannot outlive its own image tag |
+
+Both are configurable. A variant marker (`-dev`, `-debug`) is stripped before the release check and before the preview match, so a debug build stays in the same retention class as its release equivalent.
 
 The cleanup script can also be run locally:
 
 ```bash
 export DOCKER_USERNAME=myuser
-export DOCKER_TOKEN=mytoken
+export DOCKER_PAT=mytoken   # scope: Read, Write & Delete
 # Preview what would be deleted (no actual deletions)
-bash .github/scripts/cleanup-docker-tags.sh --dry-run
-# Delete non-release tags older than 14 days
-bash .github/scripts/cleanup-docker-tags.sh --max-age-days 14
+node .github/scripts/cleanup-docker-tags.mjs --dry-run
+# Delete non-release tags older than 14 days, previews after 3
+node .github/scripts/cleanup-docker-tags.mjs --max-age-days 14 --preview-max-age-days 3
 ```
 
-Run `bash .github/scripts/cleanup-docker-tags.sh --help` for all options.
+Run `node .github/scripts/cleanup-docker-tags.mjs --help` for all options.
 
 ### Requirements
 
-- Docker Hub credentials must be configured as repository secrets: `DOCKER_USERNAME` and `DOCKER_TOKEN`
+- Docker Hub credentials must be configured as repository secrets: `DOCKER_USERNAME` and `DOCKER_PAT`. The PAT needs the **Read, Write & Delete** scope — the nightly cleanup deletes tags.
 - The tmf-ci-bot GitHub App credentials (`TMF_CI_BOT_APP_ID` variable and `TMF_CI_BOT_PRIVATE_KEY` secret) are needed for triggering downstream plugin tests
+- Deployments additionally need the `DEPLOY_*` repository variables and a deploy box with its reverse proxy — see the [self-hosted runners](../github-actions/self-hosted-runners/) page.
 
 ### Testing the workflow
 
@@ -146,148 +268,99 @@ git push origin :refs/tags/v0.0.0-test
 
 Since `v0.0.0-test` is a non-release tag, this will only build the amd64 variants (no arm64, no dev images).
 
-## Manual build
+## Building an image
 
-The Dockerfile has two pre-requisites: `remote_server` and `remote_server_cli` built in release mode (after building the client).
-
-If building on a non-Linux host (e.g. macOS), use a Docker container to cross-compile a Linux binary. The `-v` flag mounts your source code into the container and the compiled binary is written back to your host filesystem.
-
-If building natively on Linux, you can use `cargo build` directly.
-
-### SQLite (default)
-
-Via Docker (for macOS or other non-Linux hosts — uses `rust:1.94-slim` since SQLite is compiled from source and needs no system libraries):
+Everything - the server, the legacy client, and the new frontend - is compiled
+inside the Dockerfile. One command produces a complete image:
 
 ```bash
-docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
+docker buildx build --target postgres -t msupplyfoundation/omsupply:dev .
 ```
 
-Native Linux:
+There is no separate compile step and nothing to stage beforehand. The previous
+process (build the client, build the frontend into `frontend-dist/`, compile the
+server with `docker run ... cargo build`, then `docker build` to assemble) has
+been folded into the Dockerfile's stage graph, which is drawn at the top of that
+file.
+
+Interactively, with prompts for architecture, database, cargo profile and pushing:
 
 ```bash
-cd server && cargo build --release --bin remote_server --bin remote_server_cli
+yarn dockerise
 ```
 
-### Postgres
+### Targets
 
-Via Docker (for macOS or other non-Linux hosts — uses `rust:1.94` non-slim because it includes `libpq-dev`):
+| `--target`     | contents |
+| -------------- | -------- |
+| `sqlite`       | SQLite server. The default if `--target` is omitted |
+| `postgres`     | Postgres server, with a Postgres instance bundled in the image |
+| `dev`          | `sqlite` plus Node, Yarn and the client source |
+| `postgres-dev` | `postgres` plus the same |
+
+BuildKit only runs the stages a target needs, so `--target sqlite` never
+compiles the Postgres binaries.
+
+### Debug builds
+
+The server compile defaults to cargo's `release` profile. `CARGO_PROFILE=debug`
+swaps it for the `dev` profile:
 
 ```bash
-docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
+docker buildx build --build-arg CARGO_PROFILE=debug --target postgres -t <tag> .
 ```
 
-Native Linux (requires `libpq-dev` installed, e.g. `apt-get install libpq-dev`):
+What changes, mechanically: the optimisation pass is skipped, so the compile is faster and the binary slower; the output is not stripped, where release sets `strip = true` in `server/Cargo.toml`; and debug assertions and integer-overflow checks are on. That last one is arguably a feature for a preview - an overflow that would silently wrap in production panics instead.
+
+PR previews always build `debug`, with no choice offered: a preview is the containerised equivalent of checking a PR out and running it, which is already a debug build, and every push to a labelled PR triggers one — the faster compile is what makes them affordable. Release tags and nightlies always build `release`. Named deployments choose, defaulting to `release`.
+
+A debug image is tagged with a trailing `-debug`, in the same position as `-dev`, so the two builds of one commit never contend for a name. Never benchmark a debug image or quote its size.
+
+#### What the deltas actually are
+
+Not yet measured. The job summary of each image build records the profile, image
+size and build time, so the numbers accumulate as builds run; to get both halves
+on one commit, deploy it by name twice — once with `profile: release` and once
+with `debug` — and compare the two summaries. The two tags differ by the
+trailing `-debug`, so neither overwrites the other.
+
+The one thing worth knowing before reading those numbers is the baseline. A
+*stripped release* `remote_server` is already large, because `rust-embed` bakes
+both frontends, the locales and the standard reports and forms into it:
+
+| image                                       | `remote_server` | `remote_server_cli` |
+| ------------------------------------------- | --------------- | ------------------- |
+| `latest-develop-postgres` (amd64)           | 386 MB          | 110 MB              |
+| `3.01.01-2026-09-02-sqlite-arm64`           | 316 MB          | 86 MB               |
+
+So roughly 300MB of that is embedded assets, which is the same in either
+profile. Debug adds unoptimised code and DWARF on top of that floor rather than
+multiplying it, so expect the *ratio* to be less alarming than the raw delta.
+If size turns out to be the binding constraint rather than build time,
+`debug = "line-tables-only"` on `[profile.dev]` keeps usable backtraces for a
+fraction of the debug info.
+
+### Other architectures
 
 ```bash
-cd server && cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
+docker buildx build --platform linux/arm64 --target postgres -t <tag> .
 ```
 
-**Important:** When using Docker, the rust image version must match the version in the Dockerfile (`rust:1.94-slim`) to avoid glibc version mismatches.
+The compile stages are pinned to the *build* platform and cross-compile to the
+target, so `rustc` runs natively rather than under emulation. Do **not** add
+QEMU to work around this - it is what the pinning exists to avoid, and it makes
+the build several times slower.
 
-`entry.sh` calls cli before starting server or allows use of cli as an argument.
+### Rebuilds
 
-`entry-postgres.sh` starts an embedded PostgreSQL instance, optionally imports a dump file, then hands off to `entry.sh`.
-
-## Docker targets
-
-| Target         | Database | Description                                                            |
-| -------------- | -------- | ---------------------------------------------------------------------- |
-| `sqlite`       | SQLite   | Default runtime image                                                  |
-| `dev`          | SQLite   | Includes client with Node/Yarn for frontend development                |
-| `postgres`     | Postgres | Runtime image with embedded PostgreSQL server                          |
-| `postgres-dev` | Postgres | Embedded PostgreSQL with client and Node/Yarn for frontend development |
-
-## Building image locally
-
-By default, `docker build` produces an image matching your host architecture. On Apple Silicon Macs this means `linux/arm64`, which won't run on typical x86_64 Linux servers. Use `--platform linux/amd64` on **both** the cargo compile step and the `docker build` step to produce an amd64 image.
-
-### SQLite
-
-#### For linux/amd64 servers (built on Apple Silicon Mac)
-
-QEMU cannot reliably emulate `rustc` on Apple Silicon, so we cross-compile from a native ARM container instead. The `docker build` step still uses `--platform linux/amd64` to get the correct base image layers.
+The cargo target directory and the package caches are BuildKit cache mounts, so
+an unchanged rebuild costs seconds and a changed one recompiles only what the
+change reaches. To force a genuinely cold build:
 
 ```bash
-# Build client
-cd client && yarn && yarn build
-# Cross-compile server for amd64 from native ARM container
-cd ../ && docker run --rm --platform linux/arm64 -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim bash -c "\
-  apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
-  rustup target add x86_64-unknown-linux-gnu && \
-  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
-    cargo build --release --target x86_64-unknown-linux-gnu --target-dir target-amd64 --bin remote_server --bin remote_server_cli && \
-  mkdir -p target/release && \
-  cp target-amd64/x86_64-unknown-linux-gnu/release/remote_server target/release/remote_server && \
-  cp target-amd64/x86_64-unknown-linux-gnu/release/remote_server_cli target/release/remote_server_cli && \
-  chown -R $(id -u):$(id -g) target/release"
-# Dockerise with tag
-docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3 && \
-docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3-dev --target dev
-# "docker hub" in bitwarden
-docker login
-docker push msupplyfoundation/omsupply:v2.7.3 && \
-docker push msupplyfoundation/omsupply:v2.7.3-dev
+docker builder prune --filter type=exec.cachemount
 ```
 
-#### For Apple Silicon (arm64) Macs
-
-```bash
-# Build client
-cd client && yarn && yarn build
-# Build server (native arm64)
-cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
-# Dockerise with tag
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64 && \
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-dev --target dev
-# "docker hub" in bitwarden
-docker login
-docker push msupplyfoundation/omsupply:v2.7.3-arm64 && \
-docker push msupplyfoundation/omsupply:v2.7.3-arm64-dev
-```
-
-### Postgres
-
-#### For linux/amd64 servers (built on Apple Silicon Mac)
-
-Same cross-compilation approach as SQLite above:
-
-```bash
-# Build client
-cd client && yarn && yarn build
-# Cross-compile server for amd64 with postgres feature
-cd ../ && docker run --rm --platform linux/arm64 -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 bash -c "\
-  apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
-  rustup target add x86_64-unknown-linux-gnu && \
-  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
-    cargo build --release --target x86_64-unknown-linux-gnu --target-dir target-postgres-amd64 --bin remote_server --bin remote_server_cli --no-default-features --features postgres && \
-  mkdir -p target-postgres/release && \
-  cp target-postgres-amd64/x86_64-unknown-linux-gnu/release/remote_server target-postgres/release/remote_server && \
-  cp target-postgres-amd64/x86_64-unknown-linux-gnu/release/remote_server_cli target-postgres/release/remote_server_cli && \
-  chown -R $(id -u):$(id -g) target-postgres/release"
-# Dockerise with tag
-docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3-postgres --target postgres && \
-docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3-postgres-dev --target postgres-dev
-# "docker hub" in bitwarden
-docker login
-docker push msupplyfoundation/omsupply:v2.7.3-postgres && \
-docker push msupplyfoundation/omsupply:v2.7.3-postgres-dev
-```
-
-#### For Apple Silicon (arm64) Macs
-
-```bash
-# Build client
-cd client && yarn && yarn build
-# Build server with postgres feature (native arm64)
-cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
-# Dockerise with tag
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-postgres --target postgres && \
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-postgres-dev --target postgres-dev
-# "docker hub" in bitwarden
-docker login
-docker push msupplyfoundation/omsupply:v2.7.3-arm64-postgres && \
-docker push msupplyfoundation/omsupply:v2.7.3-arm64-postgres-dev
-```
 
 ## Running the images
 
@@ -484,7 +557,7 @@ Edit files in `clientdev/client` and the web app should pick them up. Hot reload
 
 ### Configuration overrides
 
-All configuration values can be overridden via environment variables using the `APP_` prefix with `__` for nesting. See [example.yaml](../server/configuration/example.yaml) for all available options.
+All configuration values can be overridden via environment variables using the `APP_` prefix with `__` for nesting. See `server/configuration/example.yaml` in the repo for all available options.
 
 ```bash
 docker run -p 9000:8000 \

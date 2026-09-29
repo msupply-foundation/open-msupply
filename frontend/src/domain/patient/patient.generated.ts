@@ -73,7 +73,7 @@ export type CentralPatientSearchResult = {
   __typename: "CentralPatientSearchError";
 } & {
   error: {
-  __typename: string;
+  __typename: "ConnectionError";
   description: string;
 };
 });
@@ -99,7 +99,7 @@ export type LinkPatientToStoreResult = {
   __typename: "LinkPatientPatientToStoreError";
 } & {
   error: {
-  __typename: string;
+  __typename: "ConnectionError";
   description: string;
 };
 });

@@ -82,9 +82,7 @@ impl<'a> ItemWarningJoinRepository<'a> {
         Ok(final_result)
     }
 }
-fn to_domain(
-    (item_warning_join_row, item_row, warning_row): ItemWarningQueryJoin,
-) -> ItemWarning {
+fn to_domain((item_warning_join_row, item_row, warning_row): ItemWarningQueryJoin) -> ItemWarning {
     ItemWarning {
         warning_row,
         item_row,

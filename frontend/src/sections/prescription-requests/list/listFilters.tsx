@@ -12,9 +12,10 @@ import {
 } from '../prescriptionRequestStatus';
 import type { PrescriptionRequestsVariables } from './prescriptionRequests.generated';
 
-// The prescription-requests list filters (spec/prescription-requests/ui-surface.md
-// S1): Patient + the prescription-date range are on by default; Status and
-// Entered by join via the filter menu. The filter object is exactly the
+// The prescription-requests list filters
+// (spec/prescription-requests/ui-surface.md S1): Patient + the
+// prescription-date range are on by default; the dispensed-date range, Status
+// and Entered by join via the filter menu. The filter object is exactly the
 // generated GraphQL shape (kdd/type-safety — no remapping); the map is
 // exhaustive over
 // PrescriptionRequestFilterInput so a schema addition stops compiling until a
@@ -50,6 +51,8 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
         />
       ),
     },
+    // Both date ranges filter recorded facts, so future days are unselectable
+    // (ui-standards/list-views.md § Filters).
     prescriptionDatetime: {
       label: () => t('label.prescription-date'),
       render: props => (
@@ -57,9 +60,29 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
           type="dateTime"
           label={t('label.prescription-date')}
           testId={props.testId}
+          disableFuture
           value={props.filter().prescriptionDatetime}
           onChange={value =>
             props.setPartialFilter({ prescriptionDatetime: value })
+          }
+        />
+      ),
+    },
+    // The dispensed date: when the hand-over flipped the request to Dispensed
+    // (never a status window — see the dashboard's Dispensed-this-week count,
+    // whose link lands here with exactly this filter). Menu-only, like Status:
+    // it is meaningless on the requests still being worked on.
+    dispensedDatetime: {
+      label: () => t('label.dispensed-date'),
+      render: props => (
+        <FilterDateRange
+          type="dateTime"
+          label={t('label.dispensed-date')}
+          testId={props.testId}
+          disableFuture
+          value={props.filter().dispensedDatetime}
+          onChange={value =>
+            props.setPartialFilter({ dispensedDatetime: value })
           }
         />
       ),

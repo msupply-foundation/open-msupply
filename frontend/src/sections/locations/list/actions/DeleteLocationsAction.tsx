@@ -179,11 +179,21 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
                 <For each={summary().inUse}>
                   {blocked => (
                     <Alert severity="error" testId="location-in-use">
-                      {t('messages.location-in-use', {
-                        code: labelFor(blocked.id),
-                        stockLines: blocked.stockLines,
-                        invoiceLines: blocked.invoiceLines,
-                      })}
+                      {/* The counts are only worth printing when there are
+                          any. A sensor, or a reference the server's guard
+                          cannot enumerate, refuses with both connectors empty
+                          (contract.md ⚠️ the two deletion wire traps) — and
+                          "in use (0 stock lines, 0 transaction lines)"
+                          contradicts itself. Say the refusal alone. */}
+                      {blocked.stockLines + blocked.invoiceLines > 0
+                        ? t('messages.location-in-use', {
+                            code: labelFor(blocked.id),
+                            stockLines: blocked.stockLines,
+                            invoiceLines: blocked.invoiceLines,
+                          })
+                        : t('messages.location-in-use-unspecified', {
+                            code: labelFor(blocked.id),
+                          })}
                     </Alert>
                   )}
                 </For>

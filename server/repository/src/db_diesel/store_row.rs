@@ -1,10 +1,9 @@
 use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
 use crate::{
-    db_diesel::changelog::ChangelogRepository,
-    diesel_macros::define_linked_tables,
-    repository_error::RepositoryError,
-    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository, diesel_macros::define_linked_tables,
+    repository_error::RepositoryError, ChangelogSyncType, ChangelogTableName, RowActionType,
+    SourceSiteId, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -209,7 +208,11 @@ impl<'a> StoreRowRepository<'a> {
 }
 
 impl Upsert for StoreRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con)._upsert(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StoreRow::generate_changelog(

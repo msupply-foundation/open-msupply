@@ -39,6 +39,11 @@ server/configuration/*.yaml
 # Keep the example and base configuration files
 !configuration/base.yaml
 !configuration/example.yaml
+# Per-developer server config copies. The server reads configuration/ relative
+# to its working directory (server/server/src/configuration.rs), so nothing
+# under server/.config/ is a config the repo needs; only nextest.toml there is
+# tracked, and it is unaffected by this pattern.
+server/.config/*.yaml
 server/target-postgres/
 
 # Playwright MCP scratch logs / page dumps
@@ -49,6 +54,9 @@ frontend/dist/
 frontend/dist-showcase/
 frontend/dist-prototypes/
 frontend/dist-ssr/
+frontend/dist-desktop/
+# staging tree the desktop packager copies (scripts/package-desktop.sh)
+frontend/dist-desktop-stage/
 # Generated CSS type declarations, both CSS-module (*.module.css.d.ts) and
 # global stylesheets (index.css, tokens.css → *.css.d.ts)
 *.css.d.ts
@@ -64,3 +72,6 @@ __pycache__/
 
 # Security audit reports and working notes (agent-generated artifacts)
 /security/
+
+# Staged discovery-page slice for the desktop installer (yarn stage-discovery-page)
+client/packages/electron/discovery-page/

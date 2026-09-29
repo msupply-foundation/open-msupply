@@ -17,11 +17,12 @@ export interface PeriodSelectProps {
 }
 
 /*
- * The report-argument PERIOD picker (spec/reports AC-R16) — a Combobox over
- * periods that have already begun, labelled by name. The consumer owns the
- * fork-on-scoped-key write (`periodSearchWrites`) and the find-by-program
- * cascade; this is just the option list. Also the period step of the schedule
- * cascade (AC-R17), fed the chosen schedule's own periods.
+ * The report-argument PERIOD picker (spec/reports OMS-REG-RPT-10.31) — a
+ * Combobox over periods that have already begun, labelled by name. The
+ * consumer owns the fork-on-scoped-key write (`periodSearchWrites`) and the
+ * find-by-program cascade; this is just the option list. Also the period step
+ * of the schedule cascade (OMS-REG-RPT-10.35), fed the chosen schedule's own
+ * periods.
  */
 export const PeriodSelect = (props: PeriodSelectProps): JSX.Element => (
   <Combobox<PeriodItem>

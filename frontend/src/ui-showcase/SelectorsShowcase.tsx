@@ -299,6 +299,11 @@ export const selectorsMetadata: PageMetadata = {
       searchTerms: ['combobox', 'search', 'async', 'multi-select', 'typeahead'],
     },
     {
+      id: 'selectors-message-states',
+      title: 'Error vs warning',
+      searchTerms: ['error', 'warning', 'message', 'invalid', 'advisory'],
+    },
+    {
       id: 'selectors-no-options',
       title: 'No options',
       searchTerms: ['empty', 'no options', 'blank', 'misconfigured'],
@@ -614,6 +619,35 @@ export const SelectorsShowcase = () => {
             renderItem={renderItem}
             placeholder="Search to add items…"
             helperText={`${multi().length} selected`}
+          />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-message-states"
+          title="Error vs warning — the message line under a combobox"
+        >
+          <Lead>
+            The same line TextField has: <code>error</code> is a wrong value
+            (red border, <code>aria-invalid</code>); <code>warning</code> is a
+            step still to take — the line alone turns amber, the border stays
+            neutral. An error displaces a warning, a warning displaces{' '}
+            <code>helperText</code>.
+          </Lead>
+          <Combobox<DemoItem>
+            label="Reason (wrong direction)"
+            items={ITEMS}
+            itemToString={item => item.name}
+            itemToValue={item => item.code}
+            onChange={() => {}}
+            error="Adjustment reason does not match adjustment direction"
+          />
+          <Combobox<DemoItem>
+            label="Reason (still to choose)"
+            items={ITEMS}
+            itemToString={item => item.name}
+            itemToValue={item => item.code}
+            onChange={() => {}}
+            warning="Choose a reason for the 3 missing packs"
           />
         </DashboardCard>
 

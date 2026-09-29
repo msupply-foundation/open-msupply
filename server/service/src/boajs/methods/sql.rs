@@ -1,12 +1,16 @@
 use boa_engine::*;
-use repository::{raw_query, JsonRawRow};
+use repository::{raw_query_read_only, JsonRawRow};
 use util::format_error;
 
 use crate::boajs::{context::use_boajs_connection, utils::*};
 
 // SQL method accepts first argument as SQL string
 // TODO add the json row wrapper, so that consumer doesn't need to add "json_object" or "row_to_json"
-// TODO check SQL is SELECT only with "sqlparser"
+//
+// The statement is arbitrary text from a plugin bundle, so it runs read-only — the
+// database refuses any write, rather than this trying to tell reads and writes apart by
+// parsing (see `raw_query_read_only`). Plugins that need to persist something use the
+// narrow `use_repository` API instead.
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
     context.register_global_callable(
         JsString::from("sql"),
@@ -16,7 +20,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
 
             // When using BoaJsContext, it's best to use 'scope' see PluginContext for a link to testing repo
             let results = use_boajs_connection(|connection| -> Result<Vec<JsonRawRow>, JsError> {
-                raw_query(connection, sql.clone())
+                raw_query_read_only(connection, sql.clone())
                     .inspect_err(|e| log::error!("{} {sql}", format_error(e)))
                     .map_err(std_error_to_js_error)
             })

@@ -25,6 +25,9 @@ pub enum SetPrescribedQuantityError {
     NotAStockItem,
     NotAPrescription,
     NotThisStoreInvoice,
+    /// The figure is the prescriber's, on a dispensation generated from a
+    /// prescription request, and this input would change it.
+    CannotChangePrescribedQuantity,
     NewlyCreatedLineDoesNotExist,
     DatabaseError(RepositoryError),
 }

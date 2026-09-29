@@ -1,6 +1,10 @@
 import { createAction, type KeyAction } from '../ui/utils/keyActions';
 import { navConfig, type NavItem } from '../nav/navConfig';
 import { gateNav } from '../nav/navGates';
+import {
+  pluginOfferedPaths,
+  pluginPaletteDestinations,
+} from '../plugins/pluginPages';
 import { t } from '../intl';
 import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
 
@@ -26,18 +30,27 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  * generic action, which is the defect KB-R2 exists to forbid.
  */
 
+// The pick of NavItem a palette row actually consumes — plugin destinations
+// supply exactly this shape, so one row builder serves both registries.
+type PaletteDestination = Pick<NavItem, 'path' | 'labelKey' | 'cmdkKey'>;
+
 /*
- * Every destination the registry holds, sections flattened into their
- * children — UNGATED here; the gates are each row's `disabled` (below).
+ * Every destination the registry holds — host sections flattened into their
+ * children, plus every page a loaded plugin contributes (D107: the set is
+ * settled before the shell mounts, behind the boot gate) — UNGATED here; the
+ * gates are each row's `disabled` (below).
  *
  * A SECTION WITH CHILDREN IS NOT ONE. Its landing page renders that section's
  * sub-menu, so "Go to: Inventory" would offer the user a menu from inside the
  * surface that exists to skip the menu. A section's children carry the reach;
  * a childless top-level entry (Home, Reports, Settings, Help) is itself a
- * destination and is listed.
+ * destination and is listed. The same rule gives a plugin SECTION no row —
+ * its pages carry the reach (pluginPaletteDestinations).
  */
-const paletteDestinations = (): NavItem[] =>
-  navConfig.flatMap(item => item.children ?? [item]);
+const paletteDestinations = (): PaletteDestination[] => [
+  ...navConfig.flatMap(item => item.children ?? [item]),
+  ...pluginPaletteDestinations(),
+];
 
 /**
  * The leaf paths the gates offer RIGHT NOW — the menu's set, recomputed per
@@ -45,11 +58,15 @@ const paletteDestinations = (): NavItem[] =>
  * moment of registration.
  */
 const offeredPaths = (): ReadonlySet<string> =>
-  new Set(
-    gateNav(navConfig).flatMap(item =>
+  new Set([
+    ...gateNav(navConfig).flatMap(item =>
       (item.children ?? [item]).map(destination => destination.path)
-    )
-  );
+    ),
+    // Plugin pages, through their own two gates — the same menu set, so the
+    // palette and the menu agree about contributed destinations too
+    // (spec/navigation § plugin destinations; AC-KB4).
+    ...pluginOfferedPaths(),
+  ]);
 
 /**
  * The destination's palette row, complete with its "Go to:" prefix — the
@@ -60,7 +77,7 @@ const offeredPaths = (): ReadonlySet<string> =>
  * and the palette resolves names per open (see KeyAction.name), so this reads
  * the catalog at render time exactly as a bare locale key would.
  */
-const paletteName = (destination: NavItem): (() => string) => {
+const paletteName = (destination: PaletteDestination): (() => string) => {
   const override = destination.cmdkKey;
   return override === undefined
     ? () => t('cmdk.goto', { destination: t(destination.labelKey) })
@@ -98,6 +115,10 @@ const DESTINATION_SHORTCUTS: Record<string, Shortcut> = {
 export const createNavActions = (
   navigate: (path: string) => void
 ): KeyAction[] =>
+  // ONE map over the merged destination list: a plugin page's row is built by
+  // exactly the code a host row is, so a palette-row feature (a shortcut, a
+  // cmdk override) can never land on one half of the registry only.
+  // DESTINATION_SHORTCUTS and cmdkKey simply never match a plugin row.
   paletteDestinations().map(destination => {
     const shortcut = DESTINATION_SHORTCUTS[destination.path];
     return createAction({

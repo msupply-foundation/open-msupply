@@ -9,10 +9,11 @@ mod graphql {
             mock_name_a, mock_name_linked_to_store, mock_name_not_linked_to_store,
             mock_store_linked_to_name, MockDataInserts,
         },
-        EqualFilter, GeneralFilter, Name, NameCondition, NameFilter, NameSort, NameSortField,
-        NameType, PaginationOption, CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow,
-        CustomFieldScopeRowRepository, CustomFieldRow, CustomFieldRowRepository, CustomFieldValueFilter,
-        CustomFieldValueType, StorageConnectionManager, StringFilter,
+        CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+        CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueFilter,
+        CustomFieldValueType, EqualFilter, GeneralFilter, Name, NameCondition, NameFilter,
+        NameSort, NameSortField, NameType, PaginationOption, StorageConnectionManager,
+        StringFilter,
     };
     use serde_json::json;
     use service::{
