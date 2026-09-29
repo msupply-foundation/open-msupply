@@ -1,7 +1,9 @@
 #[cfg(not(target_os = "android"))]
 use std::env;
 
-use service::settings::{Level, LogMode, LoggingSettings};
+use service::settings::{
+    Level, LogMode, LoggingSettings, DEFAULT_LOG_MAX_FILE_COUNT, DEFAULT_LOG_MAX_FILE_SIZE_MB,
+};
 use simple_log::LogConfigBuilder;
 
 // Can use log4rs to extend logging functionality beyond what is available in current
@@ -36,8 +38,6 @@ pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>) {
 fn file_logger(settings: &LoggingSettings) -> LogConfigBuilder {
     let default_log_file = "remote_server.log".to_string();
     let default_log_dir = "log".to_string();
-    let default_max_file_count = 10;
-    let default_max_file_size = 1;
 
     // Note: the file_split will panic if the path separator isn't appended
     // and the path separator has to be unix-style, even on windows
@@ -49,8 +49,12 @@ fn file_logger(settings: &LoggingSettings) -> LogConfigBuilder {
     let log_path = std::path::PathBuf::from(&log_dir);
     let log_file = settings.filename.clone().unwrap_or(default_log_file);
     let log_file = log_path.join(log_file).to_string_lossy().to_string();
-    let max_file_count = settings.max_file_count.unwrap_or(default_max_file_count);
-    let max_file_size = settings.max_file_size.unwrap_or(default_max_file_size);
+    let max_file_count = settings
+        .max_file_count
+        .unwrap_or(DEFAULT_LOG_MAX_FILE_COUNT);
+    let max_file_size = settings
+        .max_file_size
+        .unwrap_or(DEFAULT_LOG_MAX_FILE_SIZE_MB);
 
     LogConfigBuilder::builder()
         .path(log_file)

@@ -200,17 +200,22 @@ impl Display for Level {
     }
 }
 
+// Kept to modest file sizes as the log viewers read a whole logfile into memory
+// (see open-msupply-internal#1012)
+pub const DEFAULT_LOG_MAX_FILE_SIZE_MB: usize = 20;
+pub const DEFAULT_LOG_MAX_FILE_COUNT: i64 = 50;
+
 #[derive(Deserialize, Serialize, Clone)]
 pub struct LoggingSettings {
     /// Console (default) | File
     pub mode: LogMode,
     ///  Off | Error | Warn | Info (default) | Debug | Trace
     pub level: Level,
-    /// Max number of temp logfiles to retain
     pub directory: Option<String>,
     pub filename: Option<String>,
+    /// Max number of rotated (gzip compressed) logfiles to retain, in addition to the active logfile
     pub max_file_count: Option<i64>,
-    /// Max logfile size in MB
+    /// Max logfile size in MB before it is rotated
     pub max_file_size: Option<usize>,
 }
 

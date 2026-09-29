@@ -420,8 +420,9 @@ This allows site information (initialised/site) to be presented during discovery
 
 # Logging
 
-By default, the server logs to console with a logging level of `Info`
-You can configure this, to log to a file, for example, with a rollover of log files based on file size.
+By default (`base.yaml`), the server logs to a file in the `log` directory with a logging level of `Info`.
+When the active log file reaches `max_file_size` (in MB, default 20) it is gzip compressed and rotated, keeping up to `max_file_count` compressed files (default 50) in addition to the active file.
+The Windows server installer asks for these values, suggesting 100 MB and 50 files.
 See the `example.yaml` file for the available options.
 
 # Directory structure
