@@ -16,7 +16,13 @@
      where the group starts without competing with the selectable cards above
      it. A mix toward transparent rather than a second token, so it lightens
      against whatever surface it sits on, in either theme. */
-  border: 1px solid color-mix(in srgb, var(--color-divider) 55%, transparent);
+  --inset-panel-hairline: color-mix(
+    in srgb,
+    var(--color-divider) 55%,
+    transparent
+  );
+
+  border: 1px solid var(--inset-panel-hairline);
   border-radius: var(--radius-md);
   background: var(--bg-group-light);
 
@@ -28,12 +34,36 @@
      up in one column and a long label wraps within the track instead.
 
      Wide enough for the longest label in the app's panels on one line; the
-     hint line above them is free-flowing text and is unaffected. */
-  --field-row-label: 9.5rem;
+     hint line above them is free-flowing text and is unaffected.
+
+     Capped as a SHARE of the row too — the rule the dialog body applies to
+     its own track (Dialog.module.css) — so a panel squeezed into a narrow
+     column wraps its labels instead of clipping its values. */
+  --field-row-label: min(9.5rem, 40%);
 }
 
 .hint {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);
+}
+
+/* gap: the Stack/HStack presets, overriding the panel's own --space-3. */
+.panel[data-gap='sm'] {
+  gap: var(--space-2);
+}
+
+.panel[data-gap='md'] {
+  gap: var(--space-4);
+}
+
+.panel[data-gap='lg'] {
+  gap: var(--space-6);
+}
+
+/* head: the group's own heading figures, divided from its rows by the same
+   hairline the panel's edge uses, so head and rows read as one panel. */
+.head {
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--inset-panel-hairline);
 }

@@ -141,10 +141,25 @@ pub enum SyncApiErrorVariantV6 {
     ConnectionError(#[from] reqwest::Error),
     #[error("Could not parse response")]
     ParsedError(#[from] SyncParsedErrorV6),
-    #[error("Could not parse response")]
+    // See sync v5's equivalent: let the inner variant speak.
+    #[error(transparent)]
     ParsingResponseError(#[from] ParsingResponseError),
     #[error("Unknown api error")]
     Other(#[from] anyhow::Error),
+}
+
+impl SyncApiErrorV6 {
+    /// The connection dropped part-way through reading the response body. Mirrors
+    /// `SyncApiError::is_dropped_response_body` for sync v5.
+    ///
+    /// Connect errors, timeouts and request-phase drops aren't included: `with_retries`
+    /// has already retried those for v6 before this error is returned.
+    pub(crate) fn is_dropped_response_body(&self) -> bool {
+        matches!(
+            &self.source,
+            SyncApiErrorVariantV6::ParsingResponseError(ParsingResponseError::ConnectionDropped(_))
+        )
+    }
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -282,10 +297,21 @@ async fn response_or_err<T: DeserializeOwned>(
     let url = util::redact_url_for_log(response.url());
     let started = std::time::Instant::now();
     // Not checking for status, expecting 200 only, even if there is error
-    let response_text = response
-        .text()
-        .await
-        .map_err(ParsingResponseError::CannotGetTextResponse)?;
+    let response_text = match response.text().await {
+        Ok(text) => text,
+        // Same as sync v5's `to_json`: classify the drop where it happens, and say so in
+        // the log rather than leaving a gap after the successful-headers line.
+        Err(error) => {
+            let error = ParsingResponseError::from_body_read_error(error);
+            log::warn!(
+                "API body read failed: url '{}', after {:.1}s: {}",
+                url,
+                started.elapsed().as_secs_f64(),
+                format_error(&error),
+            );
+            return Err(error.into());
+        }
+    };
     log_body_read(&url, response_text.len(), started.elapsed());
 
     let result = serde_json::from_str(&response_text).map_err(|source| {
