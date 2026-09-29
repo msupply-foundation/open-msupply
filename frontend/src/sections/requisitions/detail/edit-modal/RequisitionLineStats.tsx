@@ -31,6 +31,11 @@ const percent = (part: number, total: number): number =>
 
 // The month-axis text shows only when the axis is wide enough for it.
 const MIN_AXIS_WIDTH_FOR_TEXT = 5;
+// A value bar shows its number only when wider than 5% of the target, and its
+// label only when wider than 10%, so a narrow bar never stacks its label a
+// letter per line; the bar's tooltip carries both.
+const MIN_BAR_WIDTH_FOR_VALUE = 5;
+const MIN_BAR_WIDTH_FOR_LABEL = 10;
 
 type Segment = {
   label: string;
@@ -211,12 +216,24 @@ export const RequisitionLineStats: Component<{
     const showText = () => axisWidth() > MIN_AXIS_WIDTH_FOR_TEXT;
     const months = () =>
       Array.from({ length: Math.ceil(maxMonths()) }, (_, i) => i + 1);
-    const monthText = (m: number) =>
-      `${formatNumber(Math.ceil(amc() * m))}${showText() ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})` : ''}`;
+    const monthNumber = (m: number) => formatNumber(Math.ceil(amc() * m));
+    const fullCount = (m: number) =>
+      ` (${m} ${m === 1 ? t('label.month') : t('label.months')})`;
+    const monthCount = (m: number) => (showText() ? fullCount(m) : '');
+    const monthText = (m: number) => `${monthNumber(m)}${monthCount(m)}`;
     const barFlex = (value: number) =>
       target() === 0
         ? 0
         : Math.min(Math.round((100 * value) / target()), 100);
+    // A bar's number or label shows only when the bar is wide enough for it.
+    const valueClass = (value: number) =>
+      barFlex(value) > MIN_BAR_WIDTH_FOR_VALUE
+        ? styles.valueNum
+        : styles.srOnly;
+    const labelClass = (value: number) =>
+      barFlex(value) > MIN_BAR_WIDTH_FOR_LABEL
+        ? styles.valueLabel
+        : styles.srOnly;
     return (
       <section class={styles.section}>
         <Show when={amc() === 0}>
@@ -234,7 +251,11 @@ export const RequisitionLineStats: Component<{
           <h3 class={styles.sectionHeading}>
             {`${t('heading.target-quantity')} (${measure()})`}
           </h3>
-          <div class={styles.monthAxis} style={{ width: `${axisWidth()}%` }}>
+          <div
+            class={styles.monthAxis}
+            classList={{ [styles.numbersOnly ?? '']: !showText() }}
+            style={{ width: `${axisWidth()}%` }}
+          >
             <div class={styles.monthEdge}>
               <Show when={showText()}>
                 <span class={styles.monthEdgeLabel}>0</span>
@@ -243,7 +264,19 @@ export const RequisitionLineStats: Component<{
             <For each={months()}>
               {m => (
                 <div class={styles.monthCell} title={monthText(m)}>
-                  <div class={styles.monthValue}>{monthText(m)}</div>
+                  <div class={styles.monthValue}>
+                    <span class={styles.monthNumber}>{monthNumber(m)}</span>
+                    {/* A count the axis has no room for stays for screen
+                        readers. */}
+                    <Show
+                      when={showText()}
+                      fallback={
+                        <span class={styles.srOnly}>{fullCount(m)}</span>
+                      }
+                    >
+                      {monthCount(m)}
+                    </Show>
+                  </div>
                 </div>
               )}
             </For>
@@ -256,10 +289,11 @@ export const RequisitionLineStats: Component<{
                 style={{ 'flex-basis': `${barFlex(soh())}%` }}
                 title={`${t('label.stock-on-hand')}: ${legendValue(soh())}`}
               >
+                {/* Text too big for a thin bar stays for screen readers. */}
                 <div class={`${styles.valueFill} ${styles.stockMainFill}`}>
-                  <span class={styles.valueNum}>{formatNumber(soh())}</span>
+                  <span class={valueClass(soh())}>{formatNumber(soh())}</span>
                 </div>
-                <div class={styles.valueLabel}>{t('label.stock-on-hand')}</div>
+                <div class={labelClass(soh())}>{t('label.stock-on-hand')}</div>
               </div>
               <div class={styles.divider} />
             </Show>
@@ -270,11 +304,11 @@ export const RequisitionLineStats: Component<{
                 title={`${t('label.suggested-order-quantity')}: ${legendValue(suggested())}`}
               >
                 <div class={`${styles.valueFill} ${styles.otherRequestedFill}`}>
-                  <span class={styles.valueNum}>
+                  <span class={valueClass(suggested())}>
                     {formatNumber(suggested())}
                   </span>
                 </div>
-                <div class={styles.valueLabel}>
+                <div class={labelClass(suggested())}>
                   {t('label.suggested-order-quantity')}
                 </div>
               </div>

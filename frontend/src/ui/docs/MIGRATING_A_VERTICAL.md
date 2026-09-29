@@ -1,6 +1,6 @@
 # Migrating a vertical to the UI library
 
-Companion to [`ADDING_A_COMPONENT.md`](./ADDING_A_COMPONENT.md). That doc is for adding a _new_ component; this one is for bringing an _existing_ vertical (or one screen / tab / modal of it) onto the library — the right components, used correctly, laid out to the standards. The [`migrate-ui` skill](../../../.claude/skills/migrate-ui/SKILL.md) automates the audit-then-fix; this doc is the shared checklist behind it, and the reference for doing it by hand.
+Companion to [`ADDING_A_COMPONENT.md`](./ADDING_A_COMPONENT.md). That doc is for adding a _new_ component; this one is for bringing an _existing_ vertical (or one screen / tab / modal of it) onto the library — the right components, used correctly, laid out to the standards. The [`migrate-ui` skill](../../../../.claude/skills/migrate-ui/SKILL.md) automates the audit-then-fix; this doc is the shared checklist behind it, and the reference for doing it by hand.
 
 ## What "correct UI" means
 

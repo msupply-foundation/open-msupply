@@ -1,5 +1,11 @@
 import { t } from '@/intl';
-import { parseCsv, toCsv } from '@/domain/reportFiles';
+import { parseCsv, sniffSeparator, toCsv } from '@/domain/reportFiles';
+import {
+  findHeaderRow,
+  parseImportDate,
+  parseImportNumber,
+  type ImportFileFailure,
+} from '@/domain/csvImport';
 import { ASSET_STATUSES, statusLabelKey } from '../equipment';
 import type { AssetStatus } from '../equipment';
 import type { PropertyDefinition } from '../detail/assetProperties';
@@ -18,15 +24,6 @@ import type { PropertyValues } from '../detail/assetEdit';
  * server-side validation of the file (contract § bulk import). Partial
  * application is therefore the contract, not a failure mode.
  */
-
-/** Only a comma-separated-values file is accepted, judged by its NAME (OMS-REG-CCE-07.1). */
-export const isCsvFileName = (fileName: string): boolean =>
-  fileName.trim().toLowerCase().endsWith('.csv');
-
-export const CSV_ACCEPT = '.csv,text/csv';
-
-/** Rows are created in batches, with no rollback across them. */
-export const IMPORT_BATCH_SIZE = 100;
 
 /**
  * A parsed row. `errors` block the import; `warnings` do not — a blank or
@@ -102,32 +99,6 @@ export const buildTemplateCsv = (
 };
 
 /**
- * A date cell → the ISO day the wire wants, or null.
- *
- * `DD/MM/YYYY`, and the **year must be four digits** — a two-digit year is
- * exactly what this rule exists to catch, because `05/10/24` would otherwise
- * import as the year 24 (OMS-REG-CCE-07.7).
- */
-export const parseImportDate = (value: string): string | null => {
-  const parts = value.trim().split('/');
-  if (parts.length !== 3) return null;
-  const [day, month, year] = parts;
-  if (!year || year.length !== 4) return null;
-  const dayNumber = Number(day);
-  const monthNumber = Number(month);
-  const yearNumber = Number(year);
-  if (!dayNumber || !monthNumber || !yearNumber) return null;
-  if (monthNumber < 1 || monthNumber > 12 || dayNumber < 1 || dayNumber > 31)
-    return null;
-  const date = new Date(yearNumber, monthNumber - 1, dayNumber);
-  // Rejects an impossible day that would otherwise roll over (31/02/2024).
-  if (date.getMonth() !== monthNumber - 1 || date.getDate() !== dayNumber)
-    return null;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${yearNumber}-${pad(monthNumber)}-${pad(dayNumber)}`;
-};
-
-/**
  * A status cell → one of the six, matched against their own catalog labels
  * case-insensitively. Anything that matches none falls back to _Functioning_
  * (OMS-REG-CCE-07.8) — an unreadable status is not worth failing a row over.
@@ -139,6 +110,32 @@ export const parseImportStatus = (value: string): AssetStatus => {
     status => t(statusLabelKey(status)).toLowerCase() === normalised
   );
   return match ?? 'FUNCTIONING';
+};
+
+/**
+ * A cell that answers yes or no → the answer, or `undefined` where it does not
+ * answer at all.
+ *
+ * ONE vocabulary for every boolean a file can carry, because a file carries
+ * them in one column and the app read them in two: the raw `true`/`false` the
+ * current app exports, the plain words a user types, and the `Yes`/`No` this
+ * app's own export writes IN THE READER'S LANGUAGE. Split, a Russian user's
+ * `Да` set the replacement flag and was dropped from a boolean specification
+ * column one cell over, and a `1` did the reverse — the same silent mismatch
+ * this vertical keeps turning up.
+ */
+const AFFIRMATIVE = /^(true|yes|y|1)$/i;
+const NEGATIVE = /^(false|no|n|0)$/i;
+
+export const parseImportBoolean = (raw: string): boolean | undefined => {
+  const value = raw.trim();
+  if (!value) return undefined;
+  if (AFFIRMATIVE.test(value)) return true;
+  if (NEGATIVE.test(value)) return false;
+  const lower = value.toLowerCase();
+  if (lower === t('messages.yes').trim().toLowerCase()) return true;
+  if (lower === t('messages.no').trim().toLowerCase()) return false;
+  return undefined;
 };
 
 /**
@@ -157,20 +154,17 @@ export const parseImportStatus = (value: string): AssetStatus => {
  */
 export const parsePropertyCell = (
   raw: string,
-  definition: Pick<PropertyDefinition, 'valueType' | 'allowedValues'>
+  definition: Pick<PropertyDefinition, 'valueType' | 'allowedValues'>,
+  decimalComma = false
 ): string | number | boolean | undefined => {
   const value = raw.trim();
   if (!value) return undefined;
 
-  if (definition.valueType === 'BOOLEAN') {
-    if (/^(true|yes|y|1)$/i.test(value)) return true;
-    if (/^(false|no|n|0)$/i.test(value)) return false;
-    return undefined;
-  }
+  if (definition.valueType === 'BOOLEAN') return parseImportBoolean(value);
 
   if (definition.valueType === 'INTEGER' || definition.valueType === 'FLOAT') {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return undefined;
+    const parsed = parseImportNumber(value, decimalComma);
+    if (parsed === undefined) return undefined;
     return definition.valueType === 'INTEGER' ? Math.trunc(parsed) : parsed;
   }
 
@@ -186,9 +180,23 @@ export const parsePropertyCell = (
   return value;
 };
 
-/** The replacement flag reads as set for any value containing "true". */
+/**
+ * The replacement flag.
+ *
+ * Reads the vocabulary a user's file actually carries, not one spelling of it.
+ * `true` is what the import's own failed-rows file writes; **`Yes` is what the
+ * list EXPORT writes**, so without it an asset exported and re-imported came
+ * back with the flag silently cleared — a round trip that loses data is worse
+ * than one that refuses. The translated yes is matched too, so a file exported
+ * in the user's own language re-imports in it.
+ *
+ * Purely additive: every value that set the flag before still sets it.
+ */
+// The flag is a boolean, never absent: a cell that answers nothing means the
+// asset is not flagged. The substring match stays because the import's own
+// failed-rows file has always written a bare `true`.
 export const parseNeedsReplacement = (value: string): boolean =>
-  /true/i.test(value);
+  /true/i.test(value) || parseImportBoolean(value) === true;
 
 type Lookup = {
   catalogueItems: readonly { id: string; code: string }[];
@@ -199,20 +207,93 @@ type Lookup = {
   newId: (index: number) => string;
 };
 
+type ImportTable = {
+  header: string[];
+  body: string[][];
+  /** Where the heading sits in the file, 0-based. */
+  headerIndex: number;
+  /** The file writes `12,5` for twelve and a half (see parseImportNumber). */
+  decimalComma: boolean;
+};
+
+/*
+ * Read the file into its heading and body, or say why it cannot be. The
+ * separator is sniffed ONCE here and handed to the reader, then kept, because
+ * it also says which numeric convention the file is written in.
+ */
+const readImportTable = (
+  text: string,
+  isCentral: boolean
+): ImportTable | ImportFileFailure => {
+  const separator = sniffSeparator(text);
+  const table = parseCsv(text, separator);
+  const headerIndex = findHeaderRow(table, importColumnKeys(isCentral));
+  if (headerIndex === -1) return 'no-header';
+  const [header = [], ...body] = table.slice(headerIndex);
+  if (body.length === 0) return 'no-rows';
+  // Only `;` is evidence. The argument for reading a comma as a decimal mark is
+  // that a spreadsheet reaches for the semicolon BECAUSE its locale took the
+  // comma — a tab says nothing either way, and treating it as evidence turned a
+  // grouped thousand from an en-locale sheet into one-and-a-bit, silently.
+  return { header, body, headerIndex, decimalComma: separator === ';' };
+};
+
 /**
- * Parse the uploaded file into rows, each carrying its own errors and warnings.
+ * The distinct store codes a file names, read BEFORE the parse so the lookup
+ * can ask the server for exactly those (domain/store § fetchStoresByCode).
+ *
+ * The alternative — hand the parse a page of the register and match against it
+ * — is not a lookup on a server holding more stores than a page: the file's
+ * store is simply absent from the page and its code reports as unknown, which
+ * refuses a file this app itself exported.
+ *
+ * Yields nothing where the column is not read at all (off a central server) or
+ * where the file has no heading this import recognises; the parse reports that
+ * fault itself, and reports an unmatched code per row as it always has.
+ */
+export const storeCodesIn = (text: string, isCentral: boolean): string[] => {
+  if (!isCentral) return [];
+  const read = readImportTable(text, isCentral);
+  if (typeof read === 'string') return [];
+  const wanted = t('label.store').trim().toLowerCase();
+  const index = read.header.findIndex(
+    name => name.trim().toLowerCase() === wanted
+  );
+  if (index === -1) return [];
+  // Distinct, case-insensitively — a file naming one store on 200 rows is one
+  // request — asked for as its FIRST row spells it. The fetch matches without
+  // regard to case, so the spelling changes nothing; taking the first simply
+  // makes the request predictable from reading the file top-down.
+  const codes = new Map<string, string>();
+  for (const cells of read.body) {
+    const code = (cells[index] ?? '').trim();
+    const key = code.toLowerCase();
+    if (code && !codes.has(key)) codes.set(key, code);
+  }
+  return [...codes.values()];
+};
+
+/**
+ * Parse the uploaded file into rows, each carrying its own errors and warnings
+ * — or say why the file yields none.
  *
  * Header matching is by column NAME, so a column the file does not carry simply
- * reads as blank — which is why the required columns are checked per row rather
+ * reads as blank, which is why the required columns are checked per row rather
  * than up front.
+ *
+ * The two outcomes are returned TOGETHER rather than flattening a failure to an
+ * empty list and making the caller ask again: the read already knows which
+ * fault it hit, and asking a second time meant parsing the whole file twice to
+ * recover an answer that had been thrown away. `Array.isArray` tells them
+ * apart.
  */
 export const parseImportFile = (
   text: string,
   lookup: Lookup
-): ImportRow[] => {
-  const table = parseCsv(text);
-  if (table.length < 2) return [];
-  const [header = [], ...body] = table;
+): ImportRow[] | ImportFileFailure => {
+  const read = readImportTable(text, lookup.isCentral);
+  if (typeof read === 'string') return read;
+  const { header, body, headerIndex, decimalComma } = read;
   const columnAt = new Map(
     header.map((name, index) => [name.trim().toLowerCase(), index])
   );
@@ -282,14 +363,19 @@ export const parseImportFile = (
       } else storeId = store.id;
     }
 
-    // The four dates are SOFT: a blank or unreadable one warns and the row
-    // imports without it (OMS-REG-CCE-07.6/.7).
+    /*
+     * The four dates are SOFT: an unreadable one warns and the row imports
+     * without it (OMS-REG-CCE-07.6/.7).
+     *
+     * An EMPTY one says nothing at all. All four are optional, so a blank is an
+     * answer — "no warranty recorded" — not a value we failed to read, and
+     * warning about it fired the banner on the most ordinary file there is. A
+     * warning every user learns to dismiss is worse than no warning, because it
+     * takes the real ones down with it.
+     */
     const softDate = (label: string): string | null => {
       const raw = cell(cells, label);
-      if (!raw) {
-        warnings.push(t('warning.field-not-parsed', { field: label }));
-        return null;
-      }
+      if (!raw) return null;
       const parsed = parseImportDate(raw);
       if (!parsed) {
         warnings.push(t('warning.field-not-parsed', { field: label }));
@@ -303,7 +389,7 @@ export const parseImportFile = (
       // A property column is headed by the property's own display name.
       const raw = cell(cells, definition.name);
       if (raw) {
-        const value = parsePropertyCell(raw, definition);
+        const value = parsePropertyCell(raw, definition, decimalComma);
         if (value === undefined)
           warnings.push(
             t('warning.field-not-parsed', { field: definition.name })
@@ -314,9 +400,11 @@ export const parseImportFile = (
 
     return {
       id: lookup.newId(index),
-      // +2: the header is line 1 and rows are 1-based, so the first body row
-      // is the file's line 2 — the number a user reads in their spreadsheet.
-      lineNumber: index + 2,
+      // The number a user reads in their spreadsheet: rows are 1-based, the
+      // header sits at `headerIndex`, and the first body row is the line after
+      // it. Counted from the header's real position rather than from 1, so a
+      // banner row above it does not shift every reported line by one.
+      lineNumber: headerIndex + index + 2,
       assetNumber,
       catalogueItemCode,
       catalogueItemId,
@@ -338,16 +426,6 @@ export const parseImportFile = (
     };
   });
 };
-
-/** Any row error blocks the import; warnings do not (OMS-REG-CCE-07.3/.6). */
-export const hasErrors = (rows: readonly ImportRow[]): boolean =>
-  rows.some(row => row.errors.length > 0);
-
-export const hasWarnings = (rows: readonly ImportRow[]): boolean =>
-  rows.some(row => row.warnings.length > 0);
-
-export const canImport = (rows: readonly ImportRow[]): boolean =>
-  rows.length > 0 && !hasErrors(rows);
 
 /**
  * A parsed row → the insert input that creates its asset.

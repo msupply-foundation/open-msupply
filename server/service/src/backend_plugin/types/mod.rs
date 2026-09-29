@@ -28,6 +28,23 @@ pub mod generate_typescript_types {
         output: O,
     }
 
+    /// The backend-plugin type surface, and the source of truth for it.
+    ///
+    /// `remote_server_cli generate-plugin-typescript-types` turns this struct
+    /// into the TypeScript that backend plugins compile against, committed at
+    /// `client/packages/plugins/backendCommon/generated/` (59 files, each
+    /// carrying a ts-rs "do not edit" header).
+    ///
+    /// That command is run BY HAND. Nothing in CI regenerates those files or
+    /// diffs them against this struct, so a type changed here without a rerun
+    /// leaves the two silently out of step — and the drift is invisible until
+    /// a plugin happens to touch the part that moved.
+    ///
+    /// So: change anything reachable from here, regenerate, and commit the
+    /// result in the same change. `frontend/plugins/civ/backend` resolves
+    /// `@common/*` to that directory (`frontend/tsconfig.backend-plugins.json`),
+    /// which makes `pnpm check` in `frontend/` the thing most likely to catch
+    /// a mismatch — but only for the surface that plugin actually uses.
     #[derive(TS)]
     #[allow(unused)]
     struct PluginTypes {
@@ -51,7 +68,11 @@ pub mod generate_typescript_types {
         fetch: Function<FetchInput, FetchOutput>,
         enqueue_email: Function<EnqueueEmailInput, EnqueueEmailOutput>,
     }
-    // Runs in CLI
+    // Runs in CLI: `remote_server_cli generate-plugin-typescript-types`, which
+    // needs no arguments — `--path` already defaults to
+    // ../client/packages/plugins/backendCommon/generated — and prettifies the
+    // output afterwards unless `--skip-prettify` is passed. See PluginTypes
+    // above for when you are obliged to run it.
     pub fn export_plugin_typescript(path: PathBuf) {
         PluginTypes::export_all(&Config::new().with_out_dir(path)).unwrap();
     }

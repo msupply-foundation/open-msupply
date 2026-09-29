@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  awaitingReason,
   defaultedPackSize,
+  differenceSize,
   isUncounted,
   lineDifference,
   packSizeEditable,
   type CountLine,
+  type ReasonRequirement,
 } from './stocktakeLine';
 
 // Anchors: spec/stocktakes/cases/OMS-REG-INV-03.
@@ -13,6 +16,10 @@ import {
 //         bar) and reads "Not counted"; any count (incl. 0) is an ordinary row
 //   .15 — pack size editable only on a batch with no stock line behind it
 //   .79/.80 — an editable batch's pack size defaults to the item's default
+//   .85 — the editor states a difference's size at 2 dp, and a nonzero one
+//         finer than that is marked rather than rounded away to 0
+//   .86 — a line awaits a reason while its count is off the snapshot in a
+//         direction that demands one and it holds none (.56/.57/.70 → none)
 // Pure count arithmetic — the cheapest layer to pin the exact rule; the detail
 // table's rendering of it (the tint/accent attributes, the absent-value word)
 // is exercised in the e2e suite.
@@ -95,5 +102,76 @@ describe('OMS-REG-INV-03.79/.80 — editable pack size defaults to the item defa
 
   it('keeps a deliberate fractional or small pack size untouched', () => {
     expect(defaultedPackSize({ defaultPackSize: 12 }, 0.5)).toBe(0.5);
+  });
+});
+
+describe('OMS-REG-INV-03.85 — the difference size the editor states', () => {
+  it('rounds to the 2 dp a count is entered to, dropping float noise', () => {
+    expect(differenceSize(2.3 - 5)).toEqual({
+      packs: 2.7,
+      belowPrecision: false,
+    });
+    expect(differenceSize(3)).toEqual({ packs: 3, belowPrecision: false });
+  });
+
+  it('marks a nonzero difference finer than 0.01 instead of reading 0', () => {
+    // A part-pack snapshot (one unit out of a pack of 3) counted to its 2-dp
+    // display, and float noise in the stock totals — both still need a reason.
+    expect(differenceSize(9.67 - 29 / 3)).toEqual({
+      packs: 0,
+      belowPrecision: true,
+    });
+    expect(differenceSize(0.3 - (0.1 + 0.2))).toEqual({
+      packs: 0,
+      belowPrecision: true,
+    });
+  });
+
+  it('a level line is plain 0, not below precision', () => {
+    expect(differenceSize(0)).toEqual({ packs: 0, belowPrecision: false });
+  });
+});
+
+describe('OMS-REG-INV-03.86 — a line awaits a reason', () => {
+  const both: ReasonRequirement = { positive: true, negative: true };
+  const counted = (countedNumberOfPacks: number | null, reason = false) => ({
+    snapshotNumberOfPacks: 10,
+    countedNumberOfPacks,
+    reasonOption: reason ? { id: 'reason-1' } : null,
+  });
+
+  it('awaits one as soon as the count moves off the snapshot, either way', () => {
+    expect(awaitingReason(counted(7), both)).toBe(true);
+    expect(awaitingReason(counted(12), both)).toBe(true);
+  });
+
+  it('never awaits one on a level or uncounted line', () => {
+    expect(awaitingReason(counted(10), both)).toBe(false);
+    expect(awaitingReason(counted(null), both)).toBe(false);
+  });
+
+  it('stops awaiting once a reason is chosen', () => {
+    expect(awaitingReason(counted(7, true), both)).toBe(false);
+  });
+
+  it('follows the direction — only a direction that demands a reason marks (.56)', () => {
+    const negativeOnly: ReasonRequirement = { positive: false, negative: true };
+    expect(awaitingReason(counted(7), negativeOnly)).toBe(true);
+    expect(awaitingReason(counted(12), negativeOnly)).toBe(false);
+  });
+
+  it('never marks when nothing is required — initial (.57) or blind (.70) stocktake', () => {
+    const none: ReasonRequirement = { positive: false, negative: false };
+    expect(awaitingReason(counted(7), none)).toBe(false);
+    expect(awaitingReason(counted(12), none)).toBe(false);
+  });
+
+  it('treats a missing snapshot as 0 — a new batch counted up awaits a positive reason', () => {
+    expect(
+      awaitingReason(
+        { snapshotNumberOfPacks: null, countedNumberOfPacks: 5 },
+        { positive: true, negative: false }
+      )
+    ).toBe(true);
   });
 });

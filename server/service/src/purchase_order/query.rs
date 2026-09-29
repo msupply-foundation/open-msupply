@@ -44,10 +44,13 @@ pub fn get_purchase_order(
 #[cfg(test)]
 mod test {
     use crate::service_provider::ServiceProvider;
-    use repository::mock::{mock_name_c, mock_store_a};
+    use repository::mock::{mock_name_a, mock_name_c, mock_store_a};
 
     use repository::PurchaseOrderRowRepository;
-    use repository::{db_diesel::PurchaseOrderRow, mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        db_diesel::PurchaseOrderRow, mock::MockDataInserts, test_db::setup_all, EqualFilter,
+        PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField,
+    };
 
     #[actix_rt::test]
     async fn purchase_order_service_queries() {
@@ -96,5 +99,141 @@ mod test {
         let result = service.get_purchase_orders(&context, Some(&po.store_id), None, None, None);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().count, 1);
+    }
+
+    #[actix_rt::test]
+    async fn purchase_order_list_filter_and_sort() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "purchase_order_list_filter_and_sort",
+            MockDataInserts::none().stores().names().currencies(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.purchase_order_service;
+        let repo = PurchaseOrderRowRepository::new(&connection);
+
+        let first = PurchaseOrderRow {
+            id: "po_sort_1".to_string(),
+            store_id: mock_store_a().id,
+            supplier_name_id: mock_name_c().id,
+            created_datetime: chrono::Utc::now().naive_utc(),
+            status: repository::PurchaseOrderStatus::New,
+            purchase_order_number: 10,
+            comment: Some("z".to_string()),
+            sent_datetime: Some(
+                chrono::NaiveDate::from_ymd_opt(2026, 3, 1)
+                    .unwrap()
+                    .and_hms_opt(9, 0, 0)
+                    .unwrap(),
+            ),
+            ..Default::default()
+        };
+        let second = PurchaseOrderRow {
+            id: "po_sort_2".to_string(),
+            store_id: mock_store_a().id,
+            supplier_name_id: mock_name_a().id,
+            created_datetime: chrono::Utc::now().naive_utc(),
+            status: repository::PurchaseOrderStatus::New,
+            purchase_order_number: 11,
+            comment: Some("a".to_string()),
+            ..Default::default()
+        };
+        repo.upsert_one(&first).unwrap();
+        repo.upsert_one(&second).unwrap();
+
+        let ids = |filter, sort| {
+            service
+                .get_purchase_orders(&context, Some(&mock_store_a().id), None, filter, sort)
+                .unwrap()
+                .rows
+                .into_iter()
+                .map(|order| order.purchase_order_row.id)
+                .collect::<Vec<String>>()
+        };
+
+        assert_eq!(
+            ids(
+                Some(PurchaseOrderFilter::new().number(EqualFilter::equal_to(11i64))),
+                None
+            ),
+            vec![second.id.clone()]
+        );
+        assert_eq!(
+            ids(
+                Some(PurchaseOrderFilter::new().number(EqualFilter::equal_to(99i64))),
+                None
+            ),
+            Vec::<String>::new()
+        );
+
+        assert_eq!(
+            ids(
+                None,
+                Some(PurchaseOrderSort {
+                    key: PurchaseOrderSortField::Supplier,
+                    desc: Some(false),
+                })
+            ),
+            vec![second.id.clone(), first.id.clone()]
+        );
+
+        assert_eq!(
+            ids(
+                None,
+                Some(PurchaseOrderSort {
+                    key: PurchaseOrderSortField::Comment,
+                    desc: Some(false),
+                })
+            ),
+            vec![second.id.clone(), first.id.clone()]
+        );
+
+        assert_eq!(
+            ids(
+                None,
+                Some(PurchaseOrderSort {
+                    key: PurchaseOrderSortField::SentDatetime,
+                    desc: Some(true),
+                })
+            ),
+            vec![first.id.clone(), second.id.clone()]
+        );
+
+        assert_eq!(
+            ids(
+                None,
+                Some(PurchaseOrderSort {
+                    key: PurchaseOrderSortField::SentDatetime,
+                    desc: Some(false),
+                })
+            ),
+            vec![second.id.clone(), first.id.clone()]
+        );
+
+        assert_eq!(
+            ids(
+                None,
+                Some(PurchaseOrderSort {
+                    key: PurchaseOrderSortField::OrderTotalAfterDiscount,
+                    desc: Some(false),
+                })
+            )
+            .len(),
+            2
+        );
+
+        assert_eq!(
+            ids(
+                None,
+                Some(PurchaseOrderSort {
+                    key: PurchaseOrderSortField::CurrencyCode,
+                    desc: Some(false),
+                })
+            )
+            .len(),
+            2
+        );
     }
 }

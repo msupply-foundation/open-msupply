@@ -46,8 +46,8 @@ import {
  * (`failed` — a connection failure, an unusable response) has already reached
  * the global error modal, so reporting it again would double up. A conversion
  * the server REJECTED is not in that set — the wrapper takes those errors
- * itself (spec/reports AC-G6), so nothing global shows them and they land in
- * the dialog below with the server's description.
+ * itself (spec/reports OMS-REG-RPT-09.10), so nothing global shows them and
+ * they land in the dialog below with the server's description.
  */
 
 export interface ListExportActionProps {

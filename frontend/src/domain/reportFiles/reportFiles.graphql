@@ -1,5 +1,5 @@
 # The generated-file wire surface shared across verticals (spec/reports
-# "Cross-cutting" / AC-F3): plain CSV-to-workbook conversion for list-screen
+# "Cross-cutting" / OMS-REG-RPT-09.15): plain CSV-to-workbook conversion for list-screen
 # exports. Same PrintReportResponse shape as the reports vertical's
 # generateReport; shares the report permission and the file service.
 query csvToExcel(

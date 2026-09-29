@@ -248,4 +248,38 @@ describe('createFocusTargets (keyed)', () => {
       expect(targets.get('never-registered')).toBeUndefined();
       dispose();
     }));
+
+  it("lands with the caller's scroll instead of the default, then focuses once", () =>
+    createRoot(dispose => {
+      const targets = createFocusTargets();
+      const scroll = vi.fn();
+      // Requested before the row mounts — the landing scroll must ride along
+      // with the armed request, not be applied up front.
+      targets.focus('row-1', { scroll });
+      flushFrame();
+      const { el, focus, scrollIntoView } = fakeElement();
+      targets.ref('row-1')(el);
+      expect(scroll).not.toHaveBeenCalled();
+
+      flushFrame();
+      expect(scroll).toHaveBeenCalledWith(el);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+      dispose();
+    }));
+
+  it('a later plain request drops an earlier landing scroll', () =>
+    createRoot(dispose => {
+      const targets = createFocusTargets();
+      const scroll = vi.fn();
+      const { el, scrollIntoView } = fakeElement();
+      targets.ref('row-1')(el);
+
+      targets.focus('row-1', { scroll });
+      targets.focus('row-1');
+      flushFrame();
+      expect(scroll).not.toHaveBeenCalled();
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+      dispose();
+    }));
 });

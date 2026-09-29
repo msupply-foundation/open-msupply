@@ -90,6 +90,7 @@ export const FooterComponent = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: showDeleteConfirmation,
+      testId: 'delete-lines-button',
     },
   ];
 

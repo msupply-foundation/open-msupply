@@ -1,0 +1,23 @@
+# Creating an order from the list (spec/purchase-orders S2). The input carries
+# ONLY the id and the supplier — everything else is defaulted by the service
+# (New status, the store's next number, the creation moment and user, the
+# supplier's currency and exchange rate) and authored afterwards on the order's
+# own screen (rules § creating an order from the list).
+#
+# ⚠️ InsertPurchaseOrderResponse is a union with the SINGLE member IdResponse:
+# there is no error member at all, so every rejection — supplier unknown, not a
+# supplier, order already exists — arrives as an undifferentiated top-level
+# `Bad user input` (contract ⚠️ insertPurchaseOrder has no error path at all).
+# That is why the create surface can only say that creation failed, not why,
+# and why this mutation is fetched with returnGraphqlErrors.
+mutation insertPurchaseOrder(
+  $storeId: String!
+  $input: InsertPurchaseOrderInput!
+) {
+  insertPurchaseOrder(storeId: $storeId, input: $input) {
+    __typename
+    ... on IdResponse {
+      id
+    }
+  }
+}

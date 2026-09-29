@@ -22,6 +22,7 @@ import {
 } from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
 import { saveBlob } from '@/platform/openDocument';
+import { readCsvFile } from '@/domain/reportFiles';
 import {
   Facilities,
   UpdateFacilityProperties,
@@ -34,8 +35,6 @@ import {
   applicableRows,
   batches,
   buildTemplateCsv,
-  CSV_ACCEPT,
-  isCsvFileName,
   outcomeSucceeded,
   parseImportFile,
   summariseOutcome,
@@ -44,6 +43,10 @@ import {
   type PropertyDefinition,
   type RowOutcome,
 } from './propertyImport';
+import {
+  CSV_ACCEPT,
+  isCsvFileName,
+} from '@/domain/csvImport';
 
 /*
  * S6 — IMPORT FACILITY PROPERTIES (spec/names § importing facility properties):
@@ -134,7 +137,10 @@ export const ImportPropertiesModal: Component<
       return setUploadError(t('messages.invalid-file'));
     try {
       const [text, facilities] = await Promise.all([
-        file.text(),
+        // NOT file.text(), which always decodes UTF-8: a spreadsheet on Windows
+        // saves the machine's legacy code page, and a facility name with one
+        // accent in it then arrives mangled (domain/reportFiles § readCsvFile).
+        readCsvFile(file),
         loadFacilities(),
       ]);
       const parsed = parseImportFile(text, props.definitions, facilities);

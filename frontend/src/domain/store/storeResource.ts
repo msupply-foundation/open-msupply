@@ -60,3 +60,39 @@ export const storePageFetcher =
       totalCount: result.data.stores.totalCount,
     };
   };
+
+/**
+ * The stores carrying these exact codes — what a CSV naming a store needs.
+ *
+ * NOT a page of the register filtered afterwards. A central server holds
+ * thousands of stores and a page is 30, so scanning one and hoping the file's
+ * store is on it is not a lookup: it refuses a file the app itself exported,
+ * and says the code does not exist when it plainly does.
+ *
+ * One bounded request per distinct code, because the wire cannot do better —
+ * `StoreFilterInput.code` is a `StringFilterInput`, which has only `equalTo`
+ * and `like`, no `equalAny`. `equalTo` is case-SENSITIVE and a file's code is
+ * matched case-insensitively, so this asks with `like` — a substring match —
+ * and keeps only the exact answers. A code nothing matches simply yields
+ * nothing, which is the same outcome as a typo.
+ */
+export const fetchStoresByCode = async (
+  codes: readonly string[]
+): Promise<StoreOption[]> => {
+  const found = new Map<string, StoreOption>();
+  await Promise.all(
+    codes.map(async code => {
+      const wanted = code.trim().toLowerCase();
+      if (!wanted) return;
+      const result = await graphqlFetch(
+        StoreSearch,
+        { filter: { code: { like: code } }, page: { first: PAGE_SIZE, offset: 0 } },
+        { background: true }
+      );
+      if (result.kind !== 'success') return;
+      for (const node of result.data.stores.nodes)
+        if (node.code.trim().toLowerCase() === wanted) found.set(node.id, node);
+    })
+  );
+  return [...found.values()];
+};

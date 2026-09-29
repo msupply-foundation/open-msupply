@@ -139,7 +139,7 @@ describe('parseArgumentSchema — item-list shape', () => {
     });
   });
 
-  it('maps ProgramSearch with its option flags (AC-R12)', () => {
+  it('maps ProgramSearch with its option flags (OMS-REG-RPT-10.22)', () => {
     const parsed = parseArgumentSchema({
       jsonSchema: {
         properties: {
@@ -411,7 +411,7 @@ describe('cleanArguments', () => {
     expect(cleanArguments(fields, { monthsOverstock: '.' })).toEqual({});
   });
 
-  it('omits a cleared enum choice entirely (AC-R19 via AC-R8)', () => {
+  it('omits a cleared enum choice entirely (OMS-REG-RPT-10.42 via OMS-REG-RPT-10.15)', () => {
     // Clearing an enum pick writes its key undefined in the form store; the
     // submitted arguments must omit the key, not send an empty value.
     const enumFields = parseArgumentSchema(itemListSchema);
@@ -555,9 +555,9 @@ describe('seedDefaults', () => {
   });
 });
 
-// The five search/cascade controls (AC-R13–R17), shaped like the shipped
-// schemas that use them: the standard outbound-shipments NameSearch, the
-// Afghanistan stock-delivery-record ItemSearch (with its control-less
+// The five search/cascade controls (OMS-REG-RPT-10.25–.35), shaped like the
+// shipped schemas that use them: the standard outbound-shipments NameSearch,
+// the Afghanistan stock-delivery-record ItemSearch (with its control-less
 // `itemName` companion property), the Niger inventory_adjustments
 // ReasonOptionSearch, the standard per-period reports' two PeriodSearch modes,
 // and the Congo quarterly requisition's ScheduleForm.
@@ -611,10 +611,10 @@ const searchControlsSchema = {
   },
 };
 
-describe('parseArgumentSchema — search controls (AC-R13–R17)', () => {
+describe('parseArgumentSchema — search controls (OMS-REG-RPT-10.25–.35)', () => {
   const fields = parseArgumentSchema(searchControlsSchema);
 
-  it('maps NameSearch with its party role (AC-R13)', () => {
+  it('maps NameSearch with its party role (OMS-REG-RPT-10.25)', () => {
     expect(byKey(fields, 'otherPartyId')).toEqual({
       kind: 'nameSearch',
       key: 'otherPartyId',
@@ -646,7 +646,7 @@ describe('parseArgumentSchema — search controls (AC-R13–R17)', () => {
     });
   });
 
-  it('maps ItemSearch, carrying required (AC-R14)', () => {
+  it('maps ItemSearch, carrying required (OMS-REG-RPT-10.28)', () => {
     expect(byKey(fields, 'itemId')).toEqual({
       kind: 'itemSearch',
       key: 'itemId',
@@ -656,11 +656,11 @@ describe('parseArgumentSchema — search controls (AC-R13–R17)', () => {
     });
   });
 
-  it('maps ReasonOptionSearch (AC-R15)', () => {
+  it('maps ReasonOptionSearch (OMS-REG-RPT-10.30)', () => {
     expect(byKey(fields, 'reasonOptionId').kind).toBe('reasonOption');
   });
 
-  it('maps both PeriodSearch modes with their option flags (AC-R16)', () => {
+  it('maps both PeriodSearch modes with their option flags (OMS-REG-RPT-10.31)', () => {
     expect(byKey(fields, 'periodId')).toEqual({
       kind: 'periodSearch',
       key: 'periodId',
@@ -677,7 +677,7 @@ describe('parseArgumentSchema — search controls (AC-R13–R17)', () => {
     });
   });
 
-  it('maps ScheduleForm (AC-R17)', () => {
+  it('maps ScheduleForm (OMS-REG-RPT-10.35)', () => {
     expect(byKey(fields, 'schedule')).toEqual({
       kind: 'scheduleForm',
       key: 'schedule',
@@ -686,7 +686,7 @@ describe('parseArgumentSchema — search controls (AC-R13–R17)', () => {
     });
   });
 
-  it('collects required cascade keys from the schema, Congo-style (AC-R17)', () => {
+  it('collects required cascade keys from the schema, Congo-style (OMS-REG-RPT-10.35)', () => {
     // The Congo quarterly requisition marks after/before/programId required —
     // keys OUTSIDE the element's own scope, but rendered by the cascade, so
     // they gate OK. scheduleId/periodId stay optional there.
@@ -713,7 +713,7 @@ describe('parseArgumentSchema — search controls (AC-R13–R17)', () => {
   });
 });
 
-describe('periodSearchWrites (AC-R16)', () => {
+describe('periodSearchWrites (OMS-REG-RPT-10.31)', () => {
   const period = {
     id: 'p1',
     startDate: '2026-06-01',
@@ -745,7 +745,7 @@ describe('periodSearchWrites (AC-R16)', () => {
   });
 });
 
-describe('scheduleCascadeWrites (AC-R17)', () => {
+describe('scheduleCascadeWrites (OMS-REG-RPT-10.35)', () => {
   it('a program pick wipes everything downstream', () => {
     expect(scheduleCascadeWrites.program('prog-1')).toEqual({
       programId: 'prog-1',
@@ -801,10 +801,10 @@ describe('instantToLocalDate', () => {
   });
 });
 
-// The customer-returns shape (AC-R18): date-time properties whose elements ask
-// for date-only entry, end-of-day widening on the "to" bound, no-future, and
-// live sibling min/max scope refs — the exact options the standard shipments /
-// returns / adjustments / encounters schemas carry.
+// The customer-returns shape (OMS-REG-RPT-10.40): date-time properties whose
+// elements ask for date-only entry, end-of-day widening on the "to" bound,
+// no-future, and live sibling min/max scope refs — the exact options the
+// standard shipments / returns / adjustments / encounters schemas carry.
 const dateOptionsSchema = {
   jsonSchema: {
     type: 'object',
@@ -842,7 +842,7 @@ const dateOptionsSchema = {
   },
 };
 
-describe('date options (AC-R18)', () => {
+describe('date options (OMS-REG-RPT-10.40)', () => {
   const fields = parseArgumentSchema(dateOptionsSchema);
   const dateByKey = (key: string) => {
     const field = byKey(fields, key);
@@ -972,7 +972,7 @@ describe('date options (AC-R18)', () => {
   });
 });
 
-describe('read-only marking — both wire homes (AC-R6)', () => {
+describe('read-only marking — both wire homes (OMS-REG-RPT-10.11)', () => {
   // stock-status / item-usage mark read-only on the uiSchema element
   // (options.readonly, lowercase); expiring-items uses the jsonSchema property
   // keyword (readOnly). Both must render disabled-but-submitted.

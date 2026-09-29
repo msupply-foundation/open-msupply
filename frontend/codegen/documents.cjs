@@ -19,14 +19,11 @@ const FRONTEND_DIR = path.resolve(__dirname, "..");
 const SRC_DIR = path.join(FRONTEND_DIR, "src");
 
 /*
- * Both trees build through the plugin preset, so both take the SDK import:
- * the per-deployment plugins, and the reference plugins they are modelled on
- * (frontend/CLAUDE.md § country plugins).
+ * Everything under plugins/ builds through the plugin preset, so it all takes
+ * the SDK import: the per-deployment plugins, and the reference plugins they
+ * are modelled on at plugins/examples/ (frontend/CLAUDE.md § country plugins).
  */
-const PLUGIN_DIRS = [
-  path.join(FRONTEND_DIR, "plugins"),
-  path.join(FRONTEND_DIR, "examples"),
-];
+const PLUGIN_DIRS = [path.join(FRONTEND_DIR, "plugins")];
 
 /** The SDK re-exports the host's own `TypedDocument`; same type, bare specifier. */
 const PLUGIN_SDK_SPECIFIER = "@openmsupply/plugin-sdk";

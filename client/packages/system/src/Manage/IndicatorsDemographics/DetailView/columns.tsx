@@ -90,6 +90,11 @@ export const useIndicatorsDemographicsColumns = ({
               max={100}
               decimalLimit={2}
               endAdornment="%"
+              // Cross-FE e2e contract (frontend/e2e/TESTIDS.md § Demographics):
+              // the id sits on the <input>, as every input id does.
+              slotProps={{
+                htmlInput: { 'data-testid': `growth-rate-year-${yearOffset}` },
+              }}
               onChange={value => {
                 if (!headerDraft) return;
                 handleGrowthChange({

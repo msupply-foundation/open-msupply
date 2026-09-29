@@ -41,6 +41,13 @@ export interface StatusHistoryTabProps {
   assetId: string;
   /** Only a cold room records mappings, so only it offers that kind (OMS-REG-CCE-06.38). */
   isColdRoom: boolean;
+  /**
+   * Bumped by the detail screen whenever an entry is recorded. The filters
+   * alone do not change when one is, so without this the list the user is
+   * looking at keeps the answer it already has and the new entry only appears
+   * once the tab is left and re-entered (OMS-REG-CCE-06.18).
+   */
+  refreshVersion: number;
 }
 
 export const StatusHistoryTab: Component<StatusHistoryTabProps> = props => {
@@ -73,11 +80,13 @@ export const StatusHistoryTab: Component<StatusHistoryTabProps> = props => {
   // already-open screen's boundary (kdd/solid-reactivity-pitfalls § no
   // remounts).
   const [data] = createResource(
-    () => JSON.stringify(variables()),
-    async serialised => {
+    () => `${JSON.stringify(variables())}#${props.refreshVersion}`,
+    async key => {
       const result = await graphqlFetch(
         AssetLogsList,
-        JSON.parse(serialised) as ReturnType<typeof variables>
+        JSON.parse(key.slice(0, key.lastIndexOf('#'))) as ReturnType<
+          typeof variables
+        >
       );
       return result.kind === 'success' ? result.data.assetLogs : undefined;
     }

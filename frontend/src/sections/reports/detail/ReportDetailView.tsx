@@ -45,11 +45,12 @@ import { ArgumentsModal } from '../../../domain/json-forms/ArgumentsModal';
 import { timezoneArgument } from '../../../domain/json-forms/schema';
 import styles from './ReportDetailView.module.css';
 
-// S2 — the single-report detail (spec/reports S2, AC-U1–U3, AC-R1, AC-G1/G4).
-// Fetches the report (name + argument schema), then generates its HTML and
-// embeds it. The chosen arguments round-trip through the URL query (AC-U2), so
-// opening/reloading the route re-generates. With a schema and no URL arguments
-// it opens the arguments modal (S3) first; otherwise it generates immediately.
+// S2 — the single-report detail (spec/reports S2, OMS-REG-RPT-11.1–.4,
+// OMS-REG-RPT-10.1, OMS-REG-RPT-09.4/.8). Fetches the report (name + argument
+// schema), then generates its HTML and embeds it. The chosen arguments
+// round-trip through the URL query (OMS-REG-RPT-11.3), so opening/reloading the
+// route re-generates. With a schema and no URL arguments it opens the arguments
+// modal (S3) first; otherwise it generates immediately.
 
 type ReportNode = Extract<ReportResult['report'], { __typename: 'ReportNode' }>;
 
@@ -83,9 +84,9 @@ const ReportDetailView: Component = () => {
     reportArgs?: string;
   }>();
 
-  // The chosen arguments, carried in the route's query string (AC-U2). Parsed
-  // defensively: an absent or garbled param reads as "no arguments"
-  // (undefined).
+  // The chosen arguments, carried in the route's query string
+  // (OMS-REG-RPT-11.3). Parsed defensively: an absent or garbled param reads as
+  // "no arguments" (undefined).
   const reportArgs = (): Record<string, unknown> | undefined => {
     const raw = searchParams.reportArgs;
     if (!raw) return undefined;
@@ -122,8 +123,8 @@ const ReportDetailView: Component = () => {
     return r ? reportLabel(r) : '';
   };
   // The per-report explanation, keyed by report code in the message catalog
-  // (AC-U9). Only some codes have copy — t() echoes the key back when no
-  // catalog holds it, so a key-echo reads as "no disclosure" (the
+  // (OMS-REG-RPT-11.5). Only some codes have copy — t() echoes the key back
+  // when no catalog holds it, so a key-echo reads as "no disclosure" (the
   // translateServerError probe).
   const howToRead = (): string | undefined => {
     const code = report()?.code;
@@ -141,9 +142,9 @@ const ReportDetailView: Component = () => {
   const [argsModalOpen, setArgsModalOpen] = createSignal(false);
 
   // Auto-open S3 exactly when a schema'd report loads with no URL arguments
-  // (spec S2 / AC-R1). Tracks only report + URL args, so Cancel — which changes
-  // neither — leaves the modal closed instead of reopening it; Submit writes
-  // the URL args, so the condition is false thereafter.
+  // (spec S2 / OMS-REG-RPT-10.1). Tracks only report + URL args, so Cancel —
+  // which changes neither — leaves the modal closed instead of reopening it;
+  // Submit writes the URL args, so the condition is false thereafter.
   createEffect(
     on([report, reportArgs], ([r, args]) => {
       if (r?.argumentSchema && args === undefined) setArgsModalOpen(true);
@@ -152,10 +153,10 @@ const ReportDetailView: Component = () => {
 
   // The generation request. Undefined while there is no report yet, or while a
   // schema'd report is still waiting for its arguments — a falsy resource
-  // source simply doesn't fetch, so generation waits for the modal (AC-R1).
-  // Carries `language` even though the domain wrapper reads locale() itself:
-  // the serialised object is the resource key, and a language switch must
-  // re-generate (AC-U3).
+  // source simply doesn't fetch, so generation waits for the modal
+  // (OMS-REG-RPT-10.1). Carries `language` even though the domain wrapper reads
+  // locale() itself: the serialised object is the resource key, and a language
+  // switch must re-generate (OMS-REG-RPT-11.4).
   const generateVars = createMemo<
     | { reportId: string; args?: Record<string, unknown>; language: string }
     | undefined
@@ -166,7 +167,7 @@ const ReportDetailView: Component = () => {
     if (r.argumentSchema && args === undefined) return undefined;
     // A schema-less report generates immediately, but still with the user's
     // timezone — shipped templates read `arguments.timezone` unconditionally,
-    // and the timezone alone travels on this path (AC-R11).
+    // and the timezone alone travels on this path (OMS-REG-RPT-10.21).
     return {
       reportId: r.id,
       args: args ?? timezoneArgument(),
@@ -232,8 +233,8 @@ const ReportDetailView: Component = () => {
   // the typed data-fetch failure's raw query errors, or an untyped fault's
   // description (a broken definition, a failed transform, a PDF render with no
   // Chrome binary — spec/reports/contract § Generation). The wrapper takes both
-  // (AC-G6), so the region says what happened rather than going blank behind a
-  // global modal.
+  // (OMS-REG-RPT-09.10), so the region says what happened rather than going
+  // blank behind a global modal.
   const generationDetail = (): string | undefined => {
     const r = result();
     if (r?.kind === 'dataError') return JSON.stringify(r.errors, null, 2);
@@ -260,7 +261,8 @@ const ReportDetailView: Component = () => {
   };
 
   // Submit from S3: S2 owns navigation — write the arguments into the URL
-  // query, which re-keys the generation resource (AC-U2 / AC-R1).
+  // query, which re-keys the generation resource (OMS-REG-RPT-11.3 /
+  // OMS-REG-RPT-10.1).
   const onArgsSubmit = (args: Record<string, unknown>) => {
     setArgsModalOpen(false);
     setActionError(undefined);
@@ -340,7 +342,7 @@ const ReportDetailView: Component = () => {
   };
 
   // Crumbs are an accessor so t() + the report name re-resolve on locale change
-  // (AC-U3). The leaf is the report's translated name.
+  // (OMS-REG-RPT-11.4). The leaf is the report's translated name.
   const crumbs = () => [
     {
       label: t('reports'),
@@ -412,7 +414,7 @@ const ReportDetailView: Component = () => {
           <Spinner center />
         </Match>
         <Match when={result()?.kind === 'fileId'}>
-          {/* A report document runs its own scripts (AC-U10) — a template may
+          {/* A report document runs its own scripts (OMS-REG-RPT-11.7) — a template may
               chart, paginate, or lay itself out in script, and a blocked one
               takes the console with it (issue #1112). So the frame takes
               `allow-scripts` INSTEAD of the default `allow-same-origin`, never
@@ -431,7 +433,7 @@ const ReportDetailView: Component = () => {
         <Match
           when={result()?.kind === 'dataError' || result()?.kind === 'error'}
         >
-          {/* Generation failure (AC-G4/G6): the headline in the banner, the
+          {/* Generation failure (OMS-REG-RPT-09.8/.10): the headline in the banner, the
               underlying fault tucked into a details affordance (spec S5) —
               the typed failure's raw query errors, or an untyped fault's
               description. Either way the region says what happened, and the
