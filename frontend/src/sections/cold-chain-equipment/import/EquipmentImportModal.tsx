@@ -5,10 +5,7 @@ import { generateUUID } from '@/uuid';
 import { saveBlob } from '@/platform/openDocument';
 import { readCsvFile } from '@/domain/reportFiles';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
-import {
-  CancelButton,
-  SaveAndNextButton,
-} from '@/ui/elements/buttons/StandardButtons';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { Button } from '@/ui/elements/buttons/Button';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Text } from '@/ui/elements/typography/Text';
@@ -501,12 +498,16 @@ export const EquipmentImportModal: Component<
           </Button>
           {/* Disabled until at least one row has parsed with no errors
               (OMS-REG-CCE-07.2/.3). */}
-          <SaveAndNextButton
+          <Button
+            variant="primary"
+            confirms="plain"
             loading={importing()}
             disabled={!canImport(rows()) || importing()}
             onClick={() => void runImport()}
             data-testid="dialog-button-ok"
-          />
+          >
+            {t('button.import')}
+          </Button>
         </>
       }
     >
