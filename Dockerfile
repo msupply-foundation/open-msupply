@@ -265,6 +265,12 @@ RUN --mount=type=cache,id=yarn,target=/root/.yarn/berry/cache,sharing=locked \
     && cd client \
     && NODE_OPTIONS="--max_old_space_size=4096" yarn build:old-ui
 # New FE, served at /
+# The displayed interface version (vite.config.ts § appVersion) comes from
+# RELEASE_VERSION or else `git describe` - and .git is not in the build
+# context, so without this arg the image shows the bare package.json 0.0.0.
+# Declared here, after the old UI build, so a new tag does not invalidate that
+# layer. Build args are visible to RUN as environment variables.
+ARG RELEASE_VERSION
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store,sharing=locked \
     cd frontend && corepack pnpm install --frozen-lockfile && corepack pnpm build
 
