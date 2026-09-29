@@ -20,7 +20,7 @@ pub enum PartitionTopUp {
         partitions: usize,
         overflow_rows: i64,
     },
-    /// The tick hit the 2 s lock timeout. `created` partitions were committed
+    /// The tick hit a lock timeout. `created` partitions were committed
     /// before the one that timed out; `headroom` is how many cursor values
     /// remain insertable above `max(cursor)`; `overflow_rows` as for
     /// `Created`, not all moved yet. Retry on the next tick.
@@ -64,7 +64,7 @@ fn attach_range_partition(
 /// `config.lookahead` cursor records of empty headroom above `max(cursor)`,
 /// moving any rows spilled into the DEFAULT partition into range partitions.
 ///
-/// Each partition is created in its own transaction under a 2 s `lock_timeout`
+/// Each partition is created in its own transaction under a `lock_timeout`
 /// (the catalog reads too: `pg_get_expr` takes a read lock on each partition).
 /// Spilled rows for a range are moved into its table before the attach, which
 /// Postgres refuses otherwise. A DDL timeout yields
@@ -121,7 +121,7 @@ pub fn ensure_partition_lookahead(
         let next_upper = next_lower + size;
         let needs_headroom = next_lower - current_max < target_headroom;
         let result = connection.transaction_sync(|connection| {
-            set_lock_timeout(connection)?;
+            set_default_lock_timeout(connection)?;
             // Attach takes this lock anyway; take it first so no row lands in
             // the DEFAULT between the move and the attach.
             diesel::sql_query(format!(
@@ -192,6 +192,13 @@ pub fn ensure_partition_lookahead(
 /// `SET LOCAL`: the timeout ends with the current transaction.
 fn set_lock_timeout(connection: &StorageConnection) -> Result<(), RepositoryError> {
     diesel::sql_query("SET LOCAL lock_timeout = '2s'").execute(connection.lock().connection())?;
+    Ok(())
+}
+
+/// Shorter: reads of the DEFAULT queue behind a pending lock on it.
+fn set_default_lock_timeout(connection: &StorageConnection) -> Result<(), RepositoryError> {
+    diesel::sql_query("SET LOCAL lock_timeout = '500ms'")
+        .execute(connection.lock().connection())?;
     Ok(())
 }
 
@@ -275,8 +282,8 @@ mod tests {
         parse_upper_bound, PartitionTopUp, DEFAULT_PARTITION,
     };
     use crate::{
-        migrations::ChangelogPartitionConfig, mock::MockDataInserts, test_db, StorageConnection,
-        StorageConnectionManager,
+        migrations::ChangelogPartitionConfig, mock::MockDataInserts, test_db, ChangeLogInsertRow,
+        ChangelogRepository, ChangelogTableName, StorageConnection, StorageConnectionManager,
     };
     use diesel::{
         prelude::*,
@@ -835,7 +842,7 @@ mod tests {
                 overflow_rows: 0
             }
         );
-        // Bounded by the 2 s lock_timeout, not by the holder.
+        // Bounded by the lock_timeout, not by the holder.
         assert!(
             waited < Duration::from_secs(10),
             "top-up waited {:?}; lock_timeout did not fire",
@@ -854,6 +861,74 @@ mod tests {
             }
         );
         assert_eq!(count_range_partitions(&connection), 4);
+    }
+
+    /// A holds a read lock on the DEFAULT; B's top-up queues behind A; C's
+    /// tracked insert queues behind B, for no longer than the DEFAULT lock timeout.
+    #[actix_rt::test]
+    async fn test_tracked_insert_waits_behind_top_up_lock_request() {
+        let (_, connection, connection_manager, _) = test_db::setup_all(
+            "test_tracked_insert_waits_behind_top_up",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        reset_to_tight_partition_layout(&connection);
+        // Headroom 5 - 2 = 3 < 4; C's insert takes cursor 3, in [3,5).
+        diesel::sql_query(
+            "INSERT INTO changelog (cursor, table_name, record_id, row_action) VALUES \
+                 (1, 'invoice', 'r1', 'UPSERT'), \
+                 (2, 'invoice', 'r2', 'UPSERT')",
+        )
+        .execute(connection.lock().connection())
+        .unwrap();
+        diesel::sql_query("SELECT setval('changelog_cursor_seq', 2)")
+            .execute(connection.lock().connection())
+            .unwrap();
+
+        let holder =
+            hold_open_transaction(&connection_manager, "SELECT max(cursor) FROM changelog");
+
+        let config = ChangelogPartitionConfig {
+            partition_size: 2,
+            lookahead: 4,
+        };
+        let top_up_connection = connection_manager.connection().unwrap();
+        let top_up =
+            thread::spawn(move || ensure_partition_lookahead(&top_up_connection, &config).unwrap());
+        // Let B's lock request reach the queue before C starts.
+        thread::sleep(Duration::from_millis(200));
+
+        let insert_connection = connection_manager.connection().unwrap();
+        let waited = run_with_timeout(move || {
+            let started = Instant::now();
+            insert_connection
+                .transaction_sync(|connection| {
+                    ChangelogRepository::new(connection).insert(&ChangeLogInsertRow {
+                        table_name: ChangelogTableName::Invoice,
+                        record_id: "tracked".to_string(),
+                        ..Default::default()
+                    })
+                })
+                .unwrap();
+            started.elapsed()
+        });
+        // Twice the 500ms DEFAULT lock timeout, so a slow runner doesn't flake.
+        assert!(
+            waited < Duration::from_secs(1),
+            "tracked insert waited {:?}",
+            waited
+        );
+
+        assert_eq!(
+            top_up.join().unwrap(),
+            PartitionTopUp::LockedOut {
+                headroom: 3,
+                created: 0,
+                overflow_rows: 0
+            }
+        );
+        holder.release();
     }
 
     /// Drop existing partitions, recreate two small ones [1,3), [3,5) plus the
@@ -888,7 +963,7 @@ mod tests {
         )
         .execute(connection.lock().connection())
         .unwrap();
-        // Same statement the 3.02.01 migration fragment uses.
+        // Same statement the 3.03.00 migration fragment uses.
         diesel::sql_query(format!(
             "CREATE TABLE {DEFAULT_PARTITION} PARTITION OF changelog DEFAULT"
         ))
