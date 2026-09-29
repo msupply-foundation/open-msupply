@@ -282,10 +282,11 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
         </Grid>
       ) : null}
       <Stack spacing={2}>
-        <UploadFile onUpload={csvImport} />
+        <UploadFile onUpload={csvImport} testId="import-file-input" />
         <Typography textAlign="center">
           {t('messages.template-download-text')}
           <Link
+            data-testid="download-template-button"
             onClick={() => {
               csvExample();
             }}

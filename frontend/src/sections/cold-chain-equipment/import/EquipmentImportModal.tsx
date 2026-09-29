@@ -506,7 +506,7 @@ export const EquipmentImportModal: Component<
             onClick={() => void runImport()}
             data-testid="dialog-button-ok"
           >
-            {t('button.ok-and-next')}
+            {t('button.import')}
           </Button>
         </>
       }

@@ -1,10 +1,12 @@
 import {
   children,
+  createComputed,
   createEffect,
   createSignal,
   createUniqueId,
   onCleanup,
   Show,
+  untrack,
   type JSX,
 } from 'solid-js';
 import { CloseIcon } from '../../icons';
@@ -155,6 +157,14 @@ export interface DialogProps {
    * custom-property mechanism as widthRem.
    */
   minBodyHeightRem?: number;
+  /**
+   * While true, the dialog stays at least as tall as it was the moment this
+   * turned true — for a flow whose content shrinks mid-action (an import's
+   * review → progress → refused rows), so the box, and with it the centred
+   * footer, holds still under the pointer. Dialog measures itself; the floor
+   * never passes the viewport cap. Released when it turns false.
+   */
+  holdHeight?: boolean;
   /**
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
    * by widthRem + the viewport cap). The two WORKBENCH sizes are for
@@ -546,6 +556,16 @@ export const Dialog = (props: DialogProps) => {
     } else if (!props.open && dialog.open) dialog.close();
   });
 
+  // holdHeight: measured in a COMPUTATION, which runs before this update's DOM
+  // work (inserts are render effects), so it reads the height the dialog had
+  // BEFORE the content that turned the hold on replaced what was there.
+  const [heldHeight, setHeldHeight] = createSignal<number>();
+  createComputed(() => {
+    if (!props.holdHeight) return setHeldHeight(undefined);
+    if (untrack(heldHeight) === undefined && dialog?.open)
+      setHeldHeight(dialog.getBoundingClientRect().height);
+  });
+
   // Solid removes the node on unmount, but close() while still connected also
   // releases the top layer + restores focus deterministically.
   onCleanup(() => dialog.open && dialog.close());
@@ -614,6 +634,7 @@ export const Dialog = (props: DialogProps) => {
       data-fullscreen={fullscreen() ? '' : undefined}
       // The measure preset has nothing to say at either workbench size.
       data-width={workbench() ? undefined : props.width}
+      data-hold-height={heldHeight() !== undefined ? '' : undefined}
       style={{
         // Sets the working width in `large` too, overriding the .large class's
         // 56rem default (#771). In `full` it is inert: .bleed sets `width`
@@ -621,6 +642,9 @@ export const Dialog = (props: DialogProps) => {
         ...(props.widthRem ? { '--dialog-width': `${props.widthRem}rem` } : {}),
         ...(props.minBodyHeightRem
           ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
+          : {}),
+        ...(heldHeight() !== undefined
+          ? { '--dialog-held-height': `${heldHeight()}px` }
           : {}),
       }}
       // A string title labels via aria-labelledby (the <h2 id={titleId}>); a
@@ -637,6 +661,27 @@ export const Dialog = (props: DialogProps) => {
       // dialog swallows it here, so the element never closes underneath the
       // parent's `open` state.
       onCancel={event => props.dismissable === false && event.preventDefault()}
+      // A focused control that is disabled or removed while the dialog is
+      // open — a confirm turning into its busy spinner, a Cancel hidden for
+      // the length of a run — drops focus to <body>, OUTSIDE the dialog. Keys
+      // then skip every handler here: Escape reaches the app's navigate-up
+      // rung (keyboardDispatcher) and leaves the screen, dialog and all. Put
+      // focus back on the panel, where showModal() parks it on open. Both
+      // drops arrive with no relatedTarget; so does the window losing focus,
+      // but that leaves activeElement in place, which the check below skips.
+      onFocusOut={event => {
+        if (event.relatedTarget !== null) return;
+        queueMicrotask(() => {
+          // The element's own state: the effect above closes it the moment
+          // `open` turns false, so this also covers a dialog being dismissed.
+          if (!dialog.open) return;
+          const active = document.activeElement;
+          if (active !== null && active !== document.body) return;
+          dialog
+            .querySelector<HTMLElement>(`:scope > .${styles.body ?? ''}`)
+            ?.focus({ preventScroll: true });
+        });
+      }}
       // A modal dialog is an event boundary for Escape: the dialog renders in
       // place (not portaled), so the keydown would bubble on into ancestor
       // key handlers — e.g. Kobalte's accordion root, whose Escape clears the
