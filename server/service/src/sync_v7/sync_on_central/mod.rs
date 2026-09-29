@@ -171,6 +171,12 @@ pub async fn get_token(
 ///   `WaitingForCentralV7Upgrade` rather than upgrading locally — after
 ///   triggering COMS's own sync, so the wait is seconds, not a sync interval.
 ///
+/// - Sync API paused (including maintenance mode): refuses with the pause error
+///   before any of the above. The site could not initialise anyway, since every
+///   pull is refused while paused, so there is no point asking the legacy server
+///   to transition it or triggering a COMS sync the pause would skip. An already
+///   v7 site still gets its token, so an initialised remote can report the pause.
+///
 /// Acquires a connection per DB touch rather than holding one across the legacy
 /// server roundtrip, so a pool slot isn't tied up during the network call.
 async fn ensure_site_is_v7(
@@ -183,6 +189,9 @@ async fn ensure_site_is_v7(
     }
 
     let ctx = service_provider.basic_context()?;
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&input.version));
+    }
     let api_v5 = build_v5_api_for_request(&ctx.connection, input)?;
 
     // Ask the legacy server to transition the site to v7. This is idempotent:
@@ -1100,6 +1109,54 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(stored.sync_version, SyncVersion::V5V6);
+    }
+
+    /// A paused sync API refuses a not-yet-v7 site before asking the legacy server
+    /// to transition it: the site could not pull anyway, and the COMS sync it would
+    /// trigger is paused too.
+    #[actix_rt::test]
+    async fn ensure_site_is_v7_refuses_while_sync_api_paused() {
+        let mock_server = MockServer::start();
+        let upgrade = mock_server.mock(|when, then| {
+            when.method(httpmock::Method::GET)
+                .path("/sync/v5/v7_url_and_upgrade");
+            then.status(200)
+                .body(r#"{ "v7Url": "http://oms-central:8000" }"#);
+        });
+
+        let ServiceTestContext {
+            connection,
+            connection_manager,
+            ..
+        } = setup_all_and_service_provider(
+            "ensure_site_is_v7_refuses_while_sync_api_paused",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
+            .unwrap();
+
+        let (sync_trigger, mut sync_receiver) = SyncTrigger::new_test();
+        let mut service_provider = ServiceProvider::new(connection_manager);
+        service_provider.sync_trigger = sync_trigger;
+
+        let site = non_v7_site(&connection, &mock_server.base_url());
+
+        let err = ensure_site_is_v7(&service_provider, site, &input())
+            .await
+            .unwrap_err();
+        assert_eq!(err, sync_api_paused_error(&input().version));
+        // Neither the legacy server nor a COMS sync was touched
+        assert_eq!(upgrade.hits(), 0);
+        assert!(sync_receiver.try_recv().is_err());
+
+        // An already v7 site still gets through, so it can report the pause
+        let v7_site = test_site(&connection, None);
+        assert!(ensure_site_is_v7(&service_provider, v7_site, &input())
+            .await
+            .is_ok());
     }
 
     #[actix_rt::test]
