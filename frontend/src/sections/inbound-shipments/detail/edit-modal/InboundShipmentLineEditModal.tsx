@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { formatNumber, getPlural, t } from '../../../../intl';
+import { formatNumber, t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -398,18 +398,18 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     defaultConfig: { base: { viewMode: 'card' } },
   });
 
-  // Load one item's existing lines and seed the batch draft — a plain
-  // SEQUENTIAL fetch, NOT a createResource (issue #428: draft state is built
-  // from individual fetches). Advancing between items during a walk then
-  // mutates the draft in place with no <Suspense> boundary to trip, so it never
-  // remounts (kdd/solid-reactivity-pitfalls › No remounts on interaction).
-  // `focusLineId` is the batch to focus once loaded (the clicked batch on a row
-  // open); omitted → the first row. Records the item in the covered set for the
-  // walk. Closes if the item has no lines left (it vanished).
-  const loadItemById = async (id: string, focusLineId?: string) => {
-    setLoadingLines(true);
-    setErrorMessage(undefined);
-    coveredItemIds.add(id);
+  // Which item load is current. Both loaders take a ticket before their fetch
+  // and drop their result if another load started meanwhile, so picking two
+  // items in quick succession can't let the slower fetch land last and seed the
+  // editor with the item the user already moved off. Not reactive.
+  let loadTicket = 0;
+
+  // One item's existing lines on this shipment — a plain SEQUENTIAL fetch, NOT
+  // a createResource (issue #428: draft state is built from individual
+  // fetches). Advancing between items during a walk then mutates the draft in
+  // place with no <Suspense> boundary to trip, so it never remounts
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction).
+  const fetchItemLines = async (id: string) => {
     const result = await graphqlFetch(InboundShipmentLines, {
       storeId: props.storeId,
       filter: {
@@ -418,19 +418,46 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       },
       page: { first: 200 },
     });
-    const lines =
-      result.kind === 'success' &&
+    return result.kind === 'success' &&
       result.data.invoiceLines.__typename === 'InvoiceLineConnector'
-        ? result.data.invoiceLines.nodes
-        : [];
+      ? result.data.invoiceLines.nodes
+      : [];
+  };
+
+  // Seed the batch draft from an item's existing lines, plus the two per-ITEM
+  // banner facts and the PO link (every batch of an item carries the same
+  // trio, so the first answers for all).
+  const seedFromLines = (lines: InboundLineFragment[]) => {
+    const first = lines[0];
+    if (!first) return;
+    setBatches(lines.map(fromLine));
+    setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
+    setTransferComment(first.transferComment);
+    // A PO-linked shipment's existing lines already cite the order line they
+    // fill — inherit it so "Add batch" (another batch for this same item)
+    // carries the link automatically, instead of requiring a re-pick that
+    // update mode's locked selector doesn't even offer (new batches were
+    // otherwise saving with purchaseOrderLineId undefined).
+    setPoLineId(first.purchaseOrderLine?.id ?? undefined);
+  };
+
+  // Load one item's existing lines and seed the draft from them. `focusLineId`
+  // is the batch to focus once loaded (the clicked batch on a row open);
+  // omitted → the first row. Records the item in the covered set for the walk.
+  // Closes if the item has no lines left (it vanished).
+  const loadItemById = async (id: string, focusLineId?: string) => {
+    setLoadingLines(true);
+    setErrorMessage(undefined);
+    coveredItemIds.add(id);
+    const ticket = ++loadTicket;
+    const lines = await fetchItemLines(id);
+    if (ticket !== loadTicket) return;
     const first = lines[0];
     if (!first) {
       props.onClose();
       return;
     }
-    setBatches(lines.map(fromLine));
-    setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
-    setTransferComment(first.transferComment);
+    seedFromLines(lines);
     setItem({
       id: first.itemId,
       code: first.itemCode,
@@ -441,12 +468,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       defaultPackSize: first.item?.defaultPackSize ?? 1,
       defaultSellPricePerPack: 0,
     });
-    // A PO-linked shipment's existing lines already cite the order line they
-    // fill — inherit it so "Add batch" (another batch for this same item)
-    // carries the link automatically, instead of requiring a re-pick that
-    // update mode's locked selector doesn't even offer (new batches were
-    // otherwise saving with purchaseOrderLineId undefined).
-    setPoLineId(first.purchaseOrderLine?.id ?? undefined);
     // Focus the requested batch, else the first row.
     batchFields.focus(focusLineId ?? first.id);
     setLoadingLines(false);
@@ -471,21 +492,36 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
 
   // Picking from the item search is an ADD-flow action (update mode is entered
   // only by clicking a row, and locks the selector), so it keeps mode 'add'.
-  // Items already on the shipment are NOT excluded — picking one loads a fresh
-  // batch for it (issue #428, confirmed with Mark; matches the stocktake
-  // editor). State for any item currently in the editor is lost, by design.
+  // Items already on the shipment are NOT excluded from the search (issue #428,
+  // confirmed with Mark; matches the stocktake editor) — but picking one must
+  // land the user ON that item's existing batches, exactly as a row click does,
+  // not on a blank editor that silently authors a SECOND entry for the same
+  // item (issue #775). The exclusion and the lookup are two halves of one rule;
+  // dropping the exclusion without the lookup is what regressed. State for any
+  // item currently in the editor is lost, by design.
   const chooseItem = (option: ItemOption | null) => {
     setMode('add');
-    // A fresh item has no line on this shipment, so neither per-item fact
-    // carries over from whatever was open before.
-    setLoadedRequested(null);
-    setTransferComment(null);
     if (!option) {
+      // Cleared: no item, so neither per-item fact applies.
+      setLoadedRequested(null);
+      setTransferComment(null);
       setItem(null);
       setBatches([]);
       topSelector.focus();
       return;
     }
+    void loadChosenItem(option);
+  };
+
+  // Seed the editor for a search-picked item. The item descriptor comes from
+  // the SEARCH option, not from any loaded line: only the option carries the
+  // store default sell price, so keeping it is what lets a later "Add batch"
+  // prefill its price (AC-H6) even on an item loaded from its existing lines.
+  const loadChosenItem = async (option: ItemOption) => {
+    setLoadingLines(true);
+    setErrorMessage(undefined);
+    coveredItemIds.add(option.id);
+    const ticket = ++loadTicket;
     const chosen: ChosenItem = {
       id: option.id,
       code: option.code,
@@ -496,11 +532,26 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       defaultPackSize: option.defaultPackSize,
       defaultSellPricePerPack: option.defaultSellPricePerPack,
     };
-    const batch = prefillFromItem(chosen);
+    const existing = await fetchItemLines(option.id);
+    if (ticket !== loadTicket) return;
     setItem(chosen);
-    setBatches([batch]);
-    // Picking an item drops focus straight onto its first batch's packs field.
-    batchFields.focus(batch.id);
+    if (existing.length > 0) {
+      // Already on the shipment: show what has been received for it so far and
+      // land on the first batch. No blank batch is appended — the user adds one
+      // with "Add batch" if that is what they came for, and it prefills then.
+      seedFromLines(existing);
+      batchFields.focus(existing[0]?.id ?? '');
+    } else {
+      // Genuinely new to this shipment, so neither per-item fact carries over
+      // from whatever was open before.
+      setLoadedRequested(null);
+      setTransferComment(null);
+      const batch = prefillFromItem(chosen);
+      setBatches([batch]);
+      // Picking a new item drops focus straight onto its batch's packs field.
+      batchFields.focus(batch.id);
+    }
+    setLoadingLines(false);
   };
 
   // The linked order's lines. Fetched once into a plain signal, like the
@@ -648,16 +699,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // The rows the table shows: the draft minus soft-deleted batches.
   const rows = (): DraftBatch[] => batches.filter(b => !b.deleted);
 
-  // "2,000 Tablets" — the units the entered packs come to, shown under Packs
+  // "2,000 Tablet" — the units the entered packs come to, shown under Packs
   // received. Empty (not "0") when there is nothing to say yet, so a fresh
-  // batch carries no noise; the unit name inflects with the count the way every
-  // other line editor does (getPlural — English only by design, intlUtils).
+  // batch carries no noise.
   const unitsHint = (b: DraftBatch): string => {
     const units = b.numberOfPacks * b.packSize;
     if (!units) return '';
     const unit = item()?.unitName;
     return unit
-      ? `${formatNumber(units, { maximumFractionDigits: 2 })} ${getPlural(unit, units)}`
+      ? `${formatNumber(units, { maximumFractionDigits: 2 })} ${unit}`
       : formatNumber(units, { maximumFractionDigits: 2 });
   };
 
@@ -1701,14 +1751,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                           size="small"
                           data-testid="requested-quantity-value"
                         >
-                          {/* Unit name after the figure, inflected with the
-                              count (getPlural, as unitsHint) — so the banner
-                              reads like the requisition editors' quantities. */}
+                          {/* Unit name after the figure (as unitsHint) — so
+                              the banner reads like the requisition editors'
+                              quantities. */}
                           {(() => {
                             const unit = item()?.unitName;
                             const requested = context().requested;
                             return unit
-                              ? `${formatNumber(requested)} ${getPlural(unit, requested)}`
+                              ? `${formatNumber(requested)} ${unit}`
                               : formatNumber(requested);
                           })()}
                         </LabelledValue>
@@ -1744,6 +1794,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 showFullScreen={false}
                 config={tableConfig.config()}
                 setConfig={tableConfig.setConfig}
+                configIsDefault={tableConfig.isConfigDefault()}
+                onSaveGlobalDefault={
+                  tableConfig.canSaveGlobalDefault()
+                    ? tableConfig.saveGlobalTableConfig
+                    : undefined
+                }
                 controlsMount={tableControls()}
                 emptyMessage={t('label.add-batch')}
               />
