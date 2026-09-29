@@ -16,11 +16,12 @@ pub struct SyncApiPausedNode {
 }
 
 /// Whether central's sync API is paused, refusing sync from remote sites. Always false on a remote.
+/// Readable by any signed-in user, like `isSyncPaused`, so the sync modal can show it.
 pub fn sync_api_paused_query(ctx: &Context<'_>) -> Result<bool> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::SyncInfo,
             store_id: None,
             require_central_standalone: false,
         },

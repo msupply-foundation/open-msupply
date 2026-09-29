@@ -11,7 +11,9 @@ use crate::{
 
 use super::{
     api::{CommonSyncRecord, ParsingSyncRecordError, SyncApiSettings},
-    api_v6::{SyncApiErrorV6, SyncApiV6, SyncApiV6CreatingError},
+    api_v6::{
+        SyncApiErrorV6, SyncApiErrorVariantV6, SyncApiV6, SyncApiV6CreatingError, SyncParsedErrorV6,
+    },
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
         translate_rows_to_sync_records, PushTranslationError, ToSyncRecordTranslationType,
@@ -146,6 +148,8 @@ impl SynchroniserV6 {
         batch_size: u32,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePushErrorV6> {
+        self.require_sync_api_unpaused().await?;
+
         let changelog_repo = ChangelogRepository::new(connection);
         let change_log_filter = build_v6_push_filter(connection)?;
         let cursor_controller = CursorController::new(KeyType::SyncPushCursorV6);
@@ -203,6 +207,21 @@ impl SynchroniserV6 {
         }
 
         Ok(())
+    }
+
+    /// Ask central whether its sync API is paused before pushing, as v7 does: a paused central
+    /// refuses the push anyway, so this saves translating and sending a batch. The sync stops
+    /// with `SyncApiPaused` and retries on the normal interval. An older central doesn't report
+    /// the pause, so this passes and its push goes ahead as before.
+    async fn require_sync_api_unpaused(&self) -> Result<(), SyncApiErrorV6> {
+        if !self.sync_api_v6.get_site_status().await?.is_sync_api_paused {
+            return Ok(());
+        }
+        Err(SyncApiErrorV6 {
+            source: SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncApiPaused),
+            url: self.sync_api_v6.url.clone(),
+            route: "site_status".to_string(),
+        })
     }
 
     pub(crate) async fn wait_for_sync_operation(
@@ -263,4 +282,55 @@ fn build_v6_push_filter(
                 .collect(),
         ),
     ]))
+}
+
+#[cfg(test)]
+mod test {
+    use httpmock::{Method::POST, MockServer};
+
+    use super::SynchroniserV6;
+    use crate::sync::{
+        api::SyncApiSettings,
+        api_v6::{SiteStatusResponseV6, SiteStatusV6},
+        settings::SYNC_V6_VERSION,
+    };
+
+    fn site_status_body(is_sync_api_paused: bool) -> String {
+        serde_json::to_string(&SiteStatusResponseV6::Data(SiteStatusV6 {
+            is_integrating: false,
+            is_sync_api_paused,
+        }))
+        .unwrap()
+    }
+
+    /// The push asks site_status first, so a paused central is found without sending a batch
+    #[actix_rt::test]
+    async fn push_checks_for_a_paused_central_first() {
+        let central = MockServer::start_async().await;
+        let settings = SyncApiSettings {
+            server_url: central.base_url(),
+            username: "site".to_string(),
+            password_sha256: "password".to_string(),
+            site_uuid: "uuid".to_string(),
+            app_version: "3.03.00".to_string(),
+            app_name: "test".to_string(),
+            sync_version: "5".to_string(),
+        };
+        let synchroniser =
+            SynchroniserV6::new(&central.base_url(), &settings, SYNC_V6_VERSION).unwrap();
+
+        let mut status = central.mock(|when, then| {
+            when.method(POST).path("/central/sync/site_status");
+            then.status(200).body(site_status_body(true));
+        });
+        let error = synchroniser.require_sync_api_unpaused().await.unwrap_err();
+        assert!(error.is_sync_api_paused());
+        status.delete();
+
+        central.mock(|when, then| {
+            when.method(POST).path("/central/sync/site_status");
+            then.status(200).body(site_status_body(false));
+        });
+        assert!(synchroniser.require_sync_api_unpaused().await.is_ok());
+    }
 }

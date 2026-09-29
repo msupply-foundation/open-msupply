@@ -93,6 +93,9 @@ query syncStatusAndQueue {
   # pause above, and the header says so. Rides alongside the pause for the same
   # reason.
   isMaintenanceMode
+  # Central only: its sync API pause, refusing remote sites' sync. Carried the
+  # same way so the modal can say remotes are being refused.
+  isSyncApiPaused
 }
 
 subscription syncInfoUpdated {
@@ -103,6 +106,7 @@ subscription syncInfoUpdated {
     numberOfRecordsInPushQueue
     isSyncPaused
     isMaintenanceMode
+    isSyncApiPaused
   }
 }
 

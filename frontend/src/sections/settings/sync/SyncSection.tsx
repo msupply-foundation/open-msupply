@@ -2,6 +2,7 @@ import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { pollSyncStatus } from '../../../api/syncStore';
+import { isCentralServer } from '../../../api/serverInfo';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -28,6 +29,7 @@ import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { ProcessorsPause, SyncApiPause } from './CentralPauses';
 import { MaintenanceMode } from './MaintenanceMode';
 import { Stack } from '../../../ui/layout/Stack/Stack';
+import { createSaveOnToggle } from './saveOnToggle';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
 import { DisclosureToggle } from '../../../ui/elements/buttons/DisclosureToggle';
@@ -92,15 +94,6 @@ export const SyncSection = (props: {
   const [showAdvanced, setShowAdvanced] = createSignal(false);
 
   /*
-   * The pause switch (spec/settings/rules.md § Synchronisation) is a setting
-   * to flip, not a field of the form: it saves on change through its own
-   * mutation, so flipping it never re-sends the credentials, and it never
-   * arms the form's validation. The stored value is the switch's state — the
-   * response is discarded in favour of a re-read, and the shared sync store is
-   * re-polled so this session's chrome cell shows the paused state at once
-   * (other sessions get it from the live frame the server emits).
-   */
-  /*
    * Maintenance mode (central only) sets and clears all three pauses at once,
    * and holds them while on: the switches below it re-read their state when it
    * flips, and are disabled while it is on.
@@ -113,25 +106,38 @@ export const SyncSection = (props: {
     void pollSyncStatus();
   };
 
-  const [pauseBusy, setPauseBusy] = createSignal(false);
+  /*
+   * The pause switch (spec/settings/rules.md § Synchronisation) is a setting
+   * to flip, not a field of the form: it saves on change through its own
+   * mutation, so flipping it never re-sends the credentials, and it never
+   * arms the form's validation. A failed save reverts the switch
+   * (saveOnToggle). On success the stored value is re-read before the flip is
+   * released, and the shared sync store is re-polled so this session's chrome
+   * cell shows the paused state at once (other sessions get it from the live
+   * frame the server emits).
+   */
   const [pauseError, setPauseError] = createSignal<string>();
-  const setPaused = async (paused: boolean) => {
-    if (pauseBusy()) return;
-    setPauseBusy(true);
-    setPauseError(undefined);
-    const result = await graphqlFetch(
-      SetSyncPaused,
-      { paused },
-      { background: true }
-    );
-    if (result.kind === 'success') {
-      await refetch();
-      void pollSyncStatus();
-    } else if (result.kind !== 'unauthenticated') {
-      setPauseError(t(SYNC_SAVE_FALLBACK_ERROR));
+  const {
+    checked: paused,
+    busy: pauseBusy,
+    toggle: setPaused,
+  } = createSaveOnToggle(
+    () => stored()?.isPaused ?? false,
+    async next => {
+      setPauseError(undefined);
+      const result = await graphqlFetch(
+        SetSyncPaused,
+        { paused: next },
+        { background: true }
+      );
+      if (result.kind === 'success') {
+        await refetch();
+        void pollSyncStatus();
+      } else if (result.kind !== 'unauthenticated') {
+        setPauseError(t(SYNC_SAVE_FALLBACK_ERROR));
+      }
     }
-    setPauseBusy(false);
-  };
+  );
 
   const edit = (patch: Partial<SyncFormState>) => {
     touched = true;
@@ -204,12 +210,16 @@ export const SyncSection = (props: {
         <ToggleSwitch
           label={t('label.pause-sync')}
           variant="caution"
-          checked={stored()?.isPaused ?? false}
+          checked={paused()}
           disabled={pauseBusy() || saving() || maintenanceOn()}
-          onChange={paused => void setPaused(paused)}
+          onChange={next => void setPaused(next)}
           labelInfo={
             <InfoTooltip
-              text={t('label.pause-sync-info')}
+              text={t(
+                isCentralServer()
+                  ? 'label.pause-sync-info-central'
+                  : 'label.pause-sync-info-remote'
+              )}
               triggerTestId="sync-settings-pause-info"
             />
           }
