@@ -26,6 +26,7 @@ import {
   syncPaused,
   syncBlocked,
   maintenanceMode,
+  syncApiPaused,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
@@ -274,6 +275,16 @@ export const SyncModal: Component<{
               {t('messages.sync-paused')}
             </Alert>
           </Show>
+        </Show>
+
+        {/* Central only: the sync API pause. This modal reports central's own
+            runs, which the API pause doesn't stop, so without this nothing
+            outside Settings says remote sites are being refused. Maintenance
+            mode holds the pause and has its own notice, as in Settings. */}
+        <Show when={syncApiPaused() && !maintenanceMode()}>
+          <Alert severity="warning" testId="sync-api-paused-alert">
+            {t('messages.sync-api-paused-modal')}
+          </Alert>
         </Show>
 
         {/* Error panel — only when the latest run errored (SYNC-03.28). */}

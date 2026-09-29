@@ -22,7 +22,9 @@ use crate::{
     sync::{
         api::{SyncApiSettings, SyncApiV5},
         settings::SYNC_V5_VERSION,
-        sync_api_pause::is_sync_api_paused,
+        sync_api_pause::{
+            is_sync_api_paused, remote_knows_sync_api_paused, SYNC_API_PAUSED_MESSAGE,
+        },
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
     sync_v7::{
@@ -329,9 +331,22 @@ fn validate_unpaused(
 ) -> Result<(SiteRow, ServiceContext), SyncError> {
     let (site, ctx) = validate(service_provider, common)?;
     if is_sync_api_paused(&ctx.connection)? {
-        return Err(SyncError::SyncApiPaused);
+        return Err(sync_api_paused_error(&common.version));
     }
     Ok((site, ctx))
+}
+
+/// `SyncApiPaused`, or for a remote too old to read it the same news as a `ConnectionError`
+/// (see `FIRST_VERSION_WITH_SYNC_API_PAUSED`)
+fn sync_api_paused_error(remote_version: &Version) -> SyncError {
+    if remote_knows_sync_api_paused(remote_version) {
+        SyncError::SyncApiPaused
+    } else {
+        SyncError::ConnectionError {
+            url: String::new(),
+            e: SYNC_API_PAUSED_MESSAGE.to_string(),
+        }
+    }
 }
 
 /// Validate v7 bearer-token site auth for endpoints living outside this module's
@@ -1294,6 +1309,21 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn older_remotes_are_told_of_the_pause_as_a_connection_error() {
+        assert_eq!(
+            sync_api_paused_error(&Version::from_str("3.03.00")),
+            SyncError::SyncApiPaused
+        );
+        assert_eq!(
+            sync_api_paused_error(&Version::from_str("3.02.00")),
+            SyncError::ConnectionError {
+                url: String::new(),
+                e: SYNC_API_PAUSED_MESSAGE.to_string(),
+            }
+        );
+    }
+
     #[actix_rt::test]
     async fn paused_central_refuses_data_but_reports_status() {
         let (
@@ -1307,6 +1337,9 @@ mod tests {
         KeyValueStoreRepository::new(&connection)
             .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
             .unwrap();
+        // What a remote on this build is told (the package version only reaches 3.03 on the
+        // release branch, and central refuses remotes newer than itself, so it is not pinned)
+        let paused_error = sync_api_paused_error(&common.version);
 
         let pulled = pull(
             service_provider.clone(),
@@ -1319,7 +1352,30 @@ mod tests {
             },
         )
         .await;
-        assert_eq!(pulled.err(), Some(SyncError::SyncApiPaused));
+        assert_eq!(pulled.err(), Some(paused_error.clone()));
+
+        // A remote too old to read `SyncApiPaused` is told in a form it can show
+        let old_remote_pulled = pull(
+            service_provider.clone(),
+            Common {
+                version: Version::from_str("3.02.00"),
+                ..common.clone()
+            },
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: false,
+                filter: None,
+            },
+        )
+        .await;
+        assert_eq!(
+            old_remote_pulled.err(),
+            Some(SyncError::ConnectionError {
+                url: String::new(),
+                e: SYNC_API_PAUSED_MESSAGE.to_string(),
+            })
+        );
 
         let pushed = push(
             service_provider.clone(),
@@ -1333,7 +1389,7 @@ mod tests {
             },
         )
         .await;
-        assert_eq!(pushed.err(), Some(SyncError::SyncApiPaused));
+        assert_eq!(pushed.err(), Some(paused_error));
 
         // Status stays available so the remote can tell the user why sync is not running
         let status = site_status(service_provider.clone(), common.clone())

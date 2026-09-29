@@ -9,6 +9,7 @@ use crate::{
 };
 
 use super::settings::SyncSettings;
+use super::sync_pause::is_sync_paused;
 use super::CentralServerConfig;
 use tokio::{
     sync::{
@@ -180,9 +181,11 @@ impl FileSyncDriver {
             // across the await point and the whole `run` future becomes !Send.
             let paused = *self.pause_rx.borrow();
 
-            // If not stopped or paused and we have a central server URL to upload to
-            // (file bytes only ever transfer remote ↔ central, never on central itself)
-            if !stopped && !paused {
+            // If not stopped, paused, or held by the admin sync pause (Admin > Sync settings),
+            // and we have a central server URL to upload to (file bytes only ever transfer
+            // remote ↔ central, never on central itself). A file already uploading when the admin
+            // pause lands finishes, as a main sync already running does.
+            if !stopped && !paused && !is_sync_paused(&service_provider) {
                 if let Some(url) = file_sync_central_url(&service_provider) {
                     files_to_upload = self
                         .sync(&url, service_provider.clone(), self.pause_rx.clone())
@@ -219,6 +222,11 @@ impl FileSyncDriver {
 
         let files_to_upload = match result {
             Ok(num_of_files) => num_of_files,
+            // Central paused its sync API: the upload is held, not failed (as the sync loggers)
+            Err(error) if error.is_sync_api_paused() => {
+                log::info!("File sync skipped: {}", format_error(&error));
+                0
+            }
             Err(error) => {
                 log::error!("Problem syncing files {}", format_error(&error));
                 0 // Assume there's no files to upload...
@@ -484,6 +492,97 @@ mod tests {
                 Instant::now() < deadline,
                 "FileSyncDriver never picked up the pending upload after initialisation — \
                  it is parked on the not-initialised recv().await (issue #12232)"
+            );
+            tokio::time::sleep(Duration::from_millis(25)).await;
+        }
+
+        driver_task.abort();
+    }
+
+    /// The admin sync pause holds file uploads too, whatever state the internal pause is in, so
+    /// pausing live (internal pause off, left by the last sync) and restarting while paused
+    /// behave the same. Resuming lets the pending upload go.
+    #[actix_rt::test]
+    async fn file_sync_driver_holds_uploads_while_sync_is_paused() {
+        const FILE_ID: &str = "sync_paused_file";
+
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            settings,
+            connection,
+            ..
+        } = setup_all_and_service_provider(
+            "file_sync_driver_holds_uploads_while_sync_is_paused",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // An initialised V5/V6 remote. As above, the URL is never dialled: the row has no bytes
+        // on disk, so reaching FileSynchroniser::sync shows as New -> InProgress.
+        test_util_set_is_initialised(true);
+        SyncVersion::set(&connection, SyncVersion::V5V6).unwrap();
+        test_util_set_central_server_url("http://central-oms.invalid:2000".to_string());
+        service_provider
+            .settings
+            .update_sync_settings(
+                &service_context,
+                &SyncSettings {
+                    url: "http://legacy.invalid:8080".to_string(),
+                    username: "site".to_string(),
+                    password_sha256: "abc".to_string(),
+                    interval_seconds: 300,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let file_repo = SyncFileReferenceRowRepository::new(&connection);
+        file_repo
+            .upsert_without_changelog(&SyncFileReferenceRow {
+                id: FILE_ID.to_string(),
+                table_name: "invoice".to_string(),
+                record_id: "sync_paused_record".to_string(),
+                file_name: "test.txt".to_string(),
+                total_bytes: 4,
+                direction: SyncFileDirection::Upload,
+                status: SyncFileStatus::New,
+                ..Default::default()
+            })
+            .unwrap();
+        let status = || file_repo.find_one_by_id(FILE_ID).unwrap().unwrap().status;
+
+        service_provider
+            .settings
+            .set_sync_paused(&service_context, true)
+            .unwrap();
+
+        let (trigger, driver) = FileSyncDriver::init(&settings);
+        let driver_task = tokio::spawn(driver.run(service_provider.clone()));
+
+        // Internal pause off, as the last main sync leaves it: only the admin pause holds the
+        // upload. The unpause also wakes the driver's loop.
+        trigger.unpause();
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        assert_eq!(
+            status(),
+            SyncFileStatus::New,
+            "driver must not upload files while sync is paused"
+        );
+
+        // Resume, then wake the loop (in production the idle loop wakes within
+        // FILE_SYNC_NO_FILES_DELAY on its own).
+        service_provider
+            .settings
+            .set_sync_paused(&service_context, false)
+            .unwrap();
+        trigger.start();
+
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while status() == SyncFileStatus::New {
+            assert!(
+                Instant::now() < deadline,
+                "FileSyncDriver never picked up the pending upload after sync was resumed"
             );
             tokio::time::sleep(Duration::from_millis(25)).await;
         }

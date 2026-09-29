@@ -37,6 +37,9 @@ const [syncPaused, setSyncPaused] = createSignal(false);
 // Central maintenance mode (#840), carried beside the pause: while on, a manual
 // sync runs despite the pause, so the sync controls stay available.
 const [maintenanceMode, setMaintenanceMode] = createSignal(false);
+// Central's sync API pause (central only; always false on a remote), carried
+// and re-emitted the same way.
+const [syncApiPaused, setSyncApiPaused] = createSignal(false);
 
 export {
   syncStatus,
@@ -44,6 +47,7 @@ export {
   liveConnected,
   syncPaused,
   maintenanceMode,
+  syncApiPaused,
 };
 
 /** Whether a manual sync would be refused: paused, and not in maintenance mode
@@ -111,6 +115,7 @@ const connect = () => {
       setPushQueueCount(data.syncInfoUpdated.numberOfRecordsInPushQueue);
       setSyncPaused(data.syncInfoUpdated.isSyncPaused);
       setMaintenanceMode(data.syncInfoUpdated.isMaintenanceMode);
+      setSyncApiPaused(data.syncInfoUpdated.isSyncApiPaused);
       handleStatus(data.syncInfoUpdated.syncStatus);
     },
     onFailure: () => {
@@ -167,6 +172,7 @@ export const pollSyncStatus = async (): Promise<void> => {
   setPushQueueCount(result.data.numberOfRecordsInPushQueue);
   setSyncPaused(result.data.isSyncPaused);
   setMaintenanceMode(result.data.isMaintenanceMode);
+  setSyncApiPaused(result.data.isSyncApiPaused);
   handleStatus(result.data.latestSyncStatus);
 };
 

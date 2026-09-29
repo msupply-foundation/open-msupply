@@ -1,6 +1,7 @@
 import { createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
+import { pollSyncStatus } from '../../../api/syncStore';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -12,6 +13,7 @@ import {
   SetProcessorsPaused,
   SetSyncApiPaused,
 } from './syncSettings.generated';
+import { createSaveOnToggle } from './saveOnToggle';
 
 type CentralPauseProps = {
   /** Bumped by the section when maintenance mode flips every pause at once, so
@@ -50,26 +52,25 @@ const CentralPauseSwitch = (
     // eslint-disable-next-line solid/reactivity
     () => props.read().then(paused => paused ?? false)
   );
-  const paused = () => gated(pausedData) ?? false;
+  const stored = () => gated(pausedData) ?? false;
 
-  const [busy, setBusy] = createSignal(false);
   const [failed, setFailed] = createSignal(false);
 
-  const toggle = async (checked: boolean) => {
-    setBusy(true);
+  // A failed save reverts the switch (saveOnToggle); the response lands in
+  // the resource before the flip is released, so it never flickers.
+  const { checked, busy, toggle } = createSaveOnToggle(stored, async next => {
     setFailed(false);
-    const stored = await props.write(checked);
-    if (stored === 'failed') setFailed(true);
-    else if (stored !== undefined) mutate(stored);
-    setBusy(false);
-  };
+    const saved = await props.write(next);
+    if (saved === 'failed') setFailed(true);
+    else if (saved !== undefined) mutate(saved);
+  });
 
   return (
     <Stack gap="sm">
       <ToggleSwitch
         label={t(props.label)}
-        checked={paused()}
-        onChange={checked => void toggle(checked)}
+        checked={checked()}
+        onChange={next => void toggle(next)}
         disabled={busy() || props.disabled || pausedData.state !== 'ready'}
         variant="caution"
         labelInfo={
@@ -81,7 +82,9 @@ const CentralPauseSwitch = (
         }
         testId={props.testId}
       />
-      <Show when={paused() && !props.disabled}>
+      {/* The saved state, not the in-flight flip: the warning appears only
+          once the pause is actually on. */}
+      <Show when={stored() && !props.disabled}>
         <Alert severity="warning">{t(props.pausedMessage)}</Alert>
       </Show>
       <Show when={failed()}>
@@ -108,9 +111,11 @@ const writeSyncApiPaused = async (paused: boolean) => {
     { paused },
     { background: true }
   );
-  return result.kind === 'success'
-    ? result.data.centralServer.general.setSyncApiPaused.isPaused
-    : writeFailed(result.kind);
+  if (result.kind !== 'success') return writeFailed(result.kind);
+  // So this session's sync modal shows it at once; other sessions get it from
+  // the live frame the server emits (as the Pause sync switch).
+  void pollSyncStatus();
+  return result.data.centralServer.general.setSyncApiPaused.isPaused;
 };
 
 const readProcessorsPaused = async () => {

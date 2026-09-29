@@ -17,6 +17,9 @@ pub struct SyncInfoUpdatedNode {
     /// Central maintenance mode (#840): only server admins are signed in, and a manual sync is
     /// forced past the sync pause.
     pub is_maintenance_mode: bool,
+    /// Central's sync API pause: while true central refuses remote sites' sync. Always false on
+    /// a remote.
+    pub is_sync_api_paused: bool,
 }
 
 pub fn sync_info_stream(
@@ -33,6 +36,7 @@ pub fn sync_info_stream(
                     push_queue_count,
                     is_sync_paused,
                     is_maintenance_mode,
+                    is_sync_api_paused,
                 }) => {
                     let sync_status = match status {
                         FullSyncStatus::V5V6(s) => FullSyncStatusNode::V5V6(
@@ -48,6 +52,7 @@ pub fn sync_info_stream(
                         number_of_records_in_push_queue: push_queue_count,
                         is_sync_paused,
                         is_maintenance_mode,
+                        is_sync_api_paused,
                     };
                     return Some((node, rx));
                 }

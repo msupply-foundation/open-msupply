@@ -50,6 +50,13 @@ pub(crate) enum FileSyncError {
     Other(#[from] anyhow::Error),
 }
 
+impl FileSyncError {
+    /// Central paused its sync API for maintenance: expected, not a fault on this site.
+    pub(crate) fn is_sync_api_paused(&self) -> bool {
+        matches!(self, FileSyncError::SyncApiError(error) if error.is_sync_api_paused())
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum DownloadFileError {
     #[error(transparent)]
@@ -238,7 +245,7 @@ impl FileSynchroniser {
         // Central paused its sync API for maintenance: not the file's fault, so don't spend one of
         // its upload attempts, and keep the state local (no changelog) rather than reporting an
         // error to central. Check back in a minute; the upload resumes once central is unpaused.
-        if let SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncApiPaused) = error.source {
+        if error.is_sync_api_paused() {
             sync_file_repo.upsert_without_changelog(&SyncFileReferenceRow {
                 status: SyncFileStatus::Error,
                 error: Some(format_error(&error)),
@@ -381,7 +388,9 @@ mod test {
         )
         .unwrap();
         let (_pause_tx, pause_rx) = watch::channel(false);
-        assert!(synchroniser.sync(pause_rx).await.is_err());
+        // The driver logs this at info, not error: it recognises the pause
+        let error = synchroniser.sync(pause_rx).await.unwrap_err();
+        assert!(error.is_sync_api_paused());
 
         let row = repo.find_one_by_id("file1").unwrap().unwrap();
         assert_eq!(row.status, SyncFileStatus::Error);
