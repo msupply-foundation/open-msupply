@@ -52,7 +52,6 @@ export const RelatedDocumentsSectionComponent = () => {
                     )
                     .addPart(String(originalShipment?.id))
                     .build()}
-                  data-testid="originating-shipment-link"
                 >{`#${originalShipment?.invoiceNumber}`}</Link>
               </PanelField>
             </PanelRow>

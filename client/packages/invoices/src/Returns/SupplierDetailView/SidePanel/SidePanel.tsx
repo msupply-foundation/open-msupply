@@ -60,14 +60,12 @@ export const SidePanelComponent = () => {
       Actions={
         <>
           <DetailPanelAction
-            testId="delete-return-button"
             icon={<DeleteIcon />}
             title={t('label.delete')}
             onClick={onDelete}
             disabled={!canDelete}
           />
           <DetailPanelAction
-            testId="copy-to-clipboard-button"
             icon={<CopyIcon />}
             title={t('link.copy-to-clipboard')}
             onClick={copyToClipboard}
