@@ -47,13 +47,13 @@ impl MigrationFragment for Migrate {
 #[cfg(test)]
 mod tests {
     use crate::{
-        migrations::{v2_18_00::V2_18_00, v3_00_00::V3_00_00, *},
+        migrations::{v2_18_00::V2_18_00, v3_01_01::V3_01_01, *},
         test_db::*,
     };
     use diesel::{connection::SimpleConnection, prelude::*, RunQueryDsl};
 
     // Minimal changelog columns needed for verification.
-    // The test runs the full v3_00_00 sequence, which includes the
+    // The test runs the full sequence through v3_00_00, which includes the
     // partition_changelog_by_cursor rename, so the helper sees `patient_link_id`.
     table! {
         changelog (cursor) {
@@ -71,7 +71,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_populate_missing_changelog_for_form_schema() {
         let previous_version = V2_18_00.version();
-        let version = V3_00_00.version();
+        let version = V3_01_01.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: "migration_populate_missing_changelog_for_form_schema",
