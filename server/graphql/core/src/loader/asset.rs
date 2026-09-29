@@ -59,7 +59,9 @@ impl Loader<String> for AssetByLocationLoader {
 mod tests {
     use async_graphql::dataloader::Loader;
     use repository::{
-        asset_internal_location_row::{AssetInternalLocationRow, AssetInternalLocationRowRepository},
+        asset_internal_location_row::{
+            AssetInternalLocationRow, AssetInternalLocationRowRepository,
+        },
         mock::{
             mock_asset_a, mock_asset_b, mock_location_1, mock_location_2, mock_location_3,
             MockDataInserts,

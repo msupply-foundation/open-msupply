@@ -139,7 +139,8 @@ export const filterRows = (
 /*
  * Adding one variant of a pluralisation family adds the whole family
  * (OMS-REG-GPREF-01.17): keys sharing the `prefix_` stem before the first
- * underscore-suffix (`label.item_one`, `label.item_other`, …).
+ * underscore-suffix (`label.items-selected_one`,
+ * `label.items-selected_other`, …).
  */
 export const pluralisationFamily = (
   option: TranslationOption,

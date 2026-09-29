@@ -126,7 +126,10 @@ const Body = (
       description={
         <Show
           when={phase() === 'refused' || phase() === 'error'}
-          fallback={tPlural('messages.confirm-delete-prescriptions', count)}
+          fallback={tPlural(
+            'messages.confirm-delete-dispensing-records',
+            count
+          )}
         >
           <Alert severity="error">{errorMessage()}</Alert>
         </Show>

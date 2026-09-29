@@ -1,3 +1,5 @@
+import { roundTo } from '@/intl/formatNumber';
+
 // Pure per-line count arithmetic for the stocktake detail table
 // (spec/stocktakes S3). Kept as free functions — not inline accessors — so the
 // two observable outcomes they drive can be pinned at the unit layer and the
@@ -27,6 +29,40 @@ export const lineDifference = (line: CountLine): number | null => {
   const counted = line.countedNumberOfPacks;
   if (counted == null) return null;
   return counted - (line.snapshotNumberOfPacks ?? 0);
+};
+
+// A difference's size as the line editor states it (OMS-REG-INV-03.85):
+// rounded to the 2 dp a count is entered to, since the arithmetic can leave
+// float noise past that (2.3 − 5). A nonzero difference can still be finer
+// than 0.01 — a snapshot in part-packs that a 2-dp count can't match (one unit
+// dispensed from a pack of 3 leaves a third), or noise in the stock totals —
+// and the server still asks a reason for it, so it must not round away to
+// "0 over": `belowPrecision` marks it, to read "<0.01".
+export const differenceSize = (
+  difference: number
+): { packs: number; belowPrecision: boolean } => {
+  const packs = roundTo(Math.abs(difference), 2);
+  return { packs, belowPrecision: packs === 0 && difference !== 0 };
+};
+
+// Which adjustment directions demand a reason on this stocktake right now — the
+// server's "reason required" condition per direction (active reasons of that
+// direction exist), already folded with the initial / blind exemptions, which
+// switch both off (spec/stocktakes/rules.md § adjustment-reason rules).
+export type ReasonRequirement = { positive: boolean; negative: boolean };
+
+// A counted line is AWAITING A REASON while its count differs from the
+// snapshot in a direction that demands one and it holds none
+// (OMS-REG-INV-03.86). A display mirror only — Save never gates on it; the
+// server's reason-not-provided rejection stays the guard. A level or uncounted
+// line never awaits one — a zero adjustment never requires a reason.
+export const awaitingReason = (
+  line: CountLine & { reasonOption?: { id: string } | null },
+  required: ReasonRequirement
+): boolean => {
+  const difference = lineDifference(line);
+  if (difference == null || difference === 0 || line.reasonOption) return false;
+  return difference > 0 ? required.positive : required.negative;
 };
 
 // Pack size is editable only where no stock stands behind the batch

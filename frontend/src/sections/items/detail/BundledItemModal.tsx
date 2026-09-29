@@ -149,7 +149,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
       {/* Item — the item catalogue lookup, excluding this variant's own item
           (no self-bundling, rules.md § bundled variants). */}
       <ItemSearch
-        label={t('label.item_one')}
+        label={t('label.item')}
         storeId={props.storeId}
         focusTarget={itemSearch}
         excludeItemIds={[props.principalItemId]}

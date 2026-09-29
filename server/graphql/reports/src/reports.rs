@@ -58,6 +58,7 @@ pub enum ReportContext {
     SupplierReturn,
     CustomerReturn,
     StockMovement,
+    PrescriptionRequest,
 }
 
 #[derive(InputObject, Clone)]

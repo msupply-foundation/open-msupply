@@ -49,7 +49,7 @@ export type InsertOrderFromRequisitionResult = {
   __typename: "InsertFromResponseRequisitionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotASupplier" | "OtherPartyNotVisible";
   description: string;
 };
 });

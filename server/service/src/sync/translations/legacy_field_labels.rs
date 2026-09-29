@@ -77,7 +77,8 @@ fn updated_custom_field_name(
     if label.is_empty() {
         return Ok(None);
     }
-    let Some(custom_field) = CustomFieldRowRepository::new(connection).find_one_by_id(custom_field_id)?
+    let Some(custom_field) =
+        CustomFieldRowRepository::new(connection).find_one_by_id(custom_field_id)?
     else {
         return Ok(None);
     };
@@ -509,10 +510,7 @@ mod tests {
         // Apply the rename (as integration would), then re-translate the same
         // pref: no change, no churn.
         let repo = CustomFieldRowRepository::new(&connection);
-        let mut custom_field = repo
-            .find_one_by_id("user_field_1")
-            .unwrap()
-            .unwrap();
+        let mut custom_field = repo.find_one_by_id("user_field_1").unwrap().unwrap();
         custom_field.name = "ABC classification".to_string();
         repo.upsert_one(&custom_field).unwrap();
         let result = translator

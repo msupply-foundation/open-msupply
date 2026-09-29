@@ -56,11 +56,8 @@ pub(crate) fn generate(
     let should_create_batches = match &patch.status {
         Some(new_status) => {
             let to = new_status.as_invoice_row_status();
-            stock_effects(
-                &InvoiceType::CustomerReturn,
-                &existing_return.status,
-                &to,
-            ) == StockEffect::CreateStock
+            stock_effects(&InvoiceType::CustomerReturn, &existing_return.status, &to)
+                == StockEffect::CreateStock
         }
         None => false,
     };

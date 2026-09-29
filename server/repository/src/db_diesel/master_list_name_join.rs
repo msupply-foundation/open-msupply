@@ -6,9 +6,7 @@ use super::{
 use crate::diesel_macros::define_linked_tables;
 use crate::name_row::name;
 use crate::repository_error::RepositoryError;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
-};
+use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert};
 use diesel::prelude::*;
 
 define_linked_tables! {

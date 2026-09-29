@@ -1,8 +1,8 @@
 use super::program_row::program;
 use crate::{
     db_diesel::{
-        item_row::item, master_list_line_row::master_list_line,
-        master_list_row::master_list, name_row::name, store_row::store,
+        item_row::item, master_list_line_row::master_list_line, master_list_row::master_list,
+        name_row::name, store_row::store,
     },
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     master_list_name_join::master_list_name_join,
@@ -117,19 +117,12 @@ impl<'a> ProgramRepository<'a> {
                 let mut master_list_name_join_query = program::table
                     .select(program::id)
                     .distinct()
-                    .left_join(
-                        master_list::table.left_join(
-                            master_list_name_join::table
-                                .left_join(name::table.left_join(store::table)),
-                        ),
-                    )
+                    .left_join(master_list::table.left_join(
+                        master_list_name_join::table.left_join(name::table.left_join(store::table)),
+                    ))
                     .into_boxed();
 
-                apply_equal_filter!(
-                    master_list_name_join_query,
-                    exists_for_store_id,
-                    store::id
-                );
+                apply_equal_filter!(master_list_name_join_query, exists_for_store_id, store::id);
 
                 query = query.filter(program::id.eq_any(master_list_name_join_query));
             }

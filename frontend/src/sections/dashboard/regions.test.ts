@@ -29,19 +29,20 @@ const ids = (region: ReturnType<typeof mergeRegion>) =>
 const NONE: ReadonlySet<string> = new Set();
 
 describe('published ids (OMS-REG-DB-01.58, OMS-REG-DB-02.1, ui-surface § S3)', () => {
-  // OMS-REG-DB-01.58 / OMS-REG-DB-02.1 — the built-in set is exactly the three
+  // OMS-REG-DB-01.58 / OMS-REG-DB-02.1 — the built-in set is exactly the four
   // widgets with their documented panels and stats; the ids are the stable
   // public API a contribution anchors to or suppresses.
-  it('OMS-REG-DB-01.58: exposes exactly the three built-in widgets', () => {
+  it('OMS-REG-DB-01.58: exposes exactly the four built-in widgets', () => {
     expect(DASHBOARD_IDS.replenishment.id).toBe('replenishment');
     expect(DASHBOARD_IDS.distribution.id).toBe('distribution');
     expect(DASHBOARD_IDS.inventory.id).toBe('inventory');
+    expect(DASHBOARD_IDS.prescriptions.id).toBe('prescriptions');
   });
 
   it('OMS-REG-DB-02.1: every published id is unique and dot-scoped under its widget', () => {
     const all = publishedIds();
-    // Documented count: 3 widgets + 7 panels + 21 stats = 31 (ui-surface § S3).
-    expect(all).toHaveLength(31);
+    // Documented count: 4 widgets + 8 panels + 23 stats = 35 (ui-surface § S3).
+    expect(all).toHaveLength(35);
     expect(new Set(all).size).toBe(all.length); // all unique
     // A stat id prefixes its panel, which prefixes its widget.
     expect(all).toContain('inventory.stock-levels.low-stock');
@@ -244,6 +245,24 @@ describe('applicableSuppressions — the never-blank body (OMS-REG-DB-02.18)', (
     // it could not have emptied the body, so nothing about it is in doubt.
     expect([...result.applied]).toEqual(['inventory.stock-levels']);
     expect(result.ignored).not.toContain('inventory.stock-levels');
+  });
+
+  it('OMS-REG-DB-01.62: reports an empty body only when nothing can render', () => {
+    // `empty` is what the page shows its empty state on: nothing renders AND
+    // suppression cannot bring anything back.
+    const gated: RegionBuiltIn[] = widgets.map(w => ({ ...w, hidden: true }));
+    expect(applicableSuppressions(gated, 0, NONE).empty).toBe(true);
+    // A visible contribution is a non-empty body, whatever the built-ins do.
+    expect(applicableSuppressions(gated, 1, NONE).empty).toBe(false);
+    // Ordinary bodies, and one whose suppressions were refused, are not empty.
+    expect(applicableSuppressions(widgets, 0, NONE).empty).toBe(false);
+    expect(
+      applicableSuppressions(
+        widgets,
+        0,
+        new Set(['replenishment', 'distribution', 'inventory'])
+      ).empty
+    ).toBe(false);
   });
 
   it('does not pretend to recover a built-in its own gate hides', () => {

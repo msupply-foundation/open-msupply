@@ -17,4 +17,13 @@ export const IPC_MESSAGES = {
   GET_SCANNER_TYPE: 'get-scanner-type',
   SAVE_DATABASE: 'save-database',
   SAVE_FILE: 'save-file',
+  // The new front end's discovery host contract
+  // (frontend/src/discovery/hostContract.ts). Separate channels from the
+  // fused CONNECT_TO_SERVER above, which the old front end still uses: the
+  // page drives probe -> record -> navigate itself.
+  DISCOVERY_HOST_INFO: 'discovery:host-info',
+  DISCOVERY_START: 'discovery:start',
+  DISCOVERY_ANNOUNCEMENTS: 'discovery:announcements',
+  DISCOVERY_PROBE: 'discovery:probe',
+  DISCOVERY_NAVIGATE: 'discovery:navigate',
 };

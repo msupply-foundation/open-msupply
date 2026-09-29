@@ -15,9 +15,11 @@
  * project keeps a single, readable code path. Types are derived from the schema
  * AST, so nullability / scalars are accurate.
  *
- * Two behaviours worth knowing:
+ * Three behaviours worth knowing:
  *   - Inline fragments on a union/interface produce a DISCRIMINATED union
  *     (`{ __typename: "A"; ... } | { __typename: "B"; ... }`), not a flat merge.
+ *   - `__typename` selected on a union/interface WITHOUT inline fragments still
+ *     narrows, to the union of the concrete types it could resolve to.
  *   - Fragment spreads are referenced by their `<Name>Fragment` type
  *     (intersected with any sibling fields), so fragments stay DRY and reusable.
  */
@@ -28,6 +30,7 @@ const {
   isScalarType,
   isEnumType,
   isObjectType,
+  isAbstractType,
   print,
   validate,
   specifiedRules,
@@ -122,6 +125,28 @@ function getNamedType(type) {
 }
 
 /**
+ * The TS type for a selected `__typename` on `parentType` — the discriminant.
+ *
+ * A concrete object type narrows to its own name. An ABSTRACT type (interface
+ * or union) reached without inline-fragment branches narrows to the union of
+ * the concrete types it can resolve to, so `switch (x.__typename)` still gets
+ * exhaustiveness instead of the useless `string`. (When the selection DOES have
+ * branches, renderSelectionSet injects a per-branch literal and never calls
+ * this.) An abstract type with no possible types can only be a schema in the
+ * middle of being built, so fall back to `string` rather than emitting `never`.
+ */
+function typenameType(parentType, schema) {
+  if (isObjectType(parentType)) return JSON.stringify(parentType.name);
+  if (isAbstractType(parentType)) {
+    const possible = schema.getPossibleTypes(parentType);
+    if (possible.length > 0) {
+      return possible.map((t) => JSON.stringify(t.name)).join(" | ");
+    }
+  }
+  return "string";
+}
+
+/**
  * Render a TS object body for a plain list of FIELD selections against an
  * object/interface type. (No inline-fragment branching here — that's handled by
  * the caller in renderSelectionSet.) Returns `{\n  field: type;\n  ...\n}`.
@@ -134,10 +159,7 @@ function renderFields(objectFields, parentType, schema, fragments) {
   for (const sel of objectFields) {
     const fieldName = sel.name.value;
     if (fieldName === "__typename") {
-      // Discriminant. When this is a concrete object type, narrow to a literal;
-      // otherwise (abstract type with no branches) keep it as string.
-      const literal = isObjectType(parentType) ? JSON.stringify(parentType.name) : "string";
-      lines.push(`  __typename: ${literal};`);
+      lines.push(`  __typename: ${typenameType(parentType, schema)};`);
       continue;
     }
     // Unions have no fields of their own (only __typename is selectable at the

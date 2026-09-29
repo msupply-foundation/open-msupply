@@ -773,7 +773,11 @@ export const InputsShowcase = () => {
             create-stocktake filter rows). Hand-rolled layout only; the wrapped
             control keeps its own look but hides its own label (via{' '}
             <code>hideLabel</code>) so this row is the single visible label,
-            announced to assistive tech. RTL-safe (logical properties).
+            announced to assistive tech. RTL-safe (logical properties). A fact
+            that can never be edited on the screen takes <code>readOnly</code>:
+            plain text in the control column, no input chrome and never a
+            disabled control (detail-views § never-editable fields);{' '}
+            <code>valueAlign="end"</code> lines a figure up with numeric inputs.
           </Lead>
           <FormPreview>
             <FieldRow label="Master list">
@@ -789,6 +793,12 @@ export const InputsShowcase = () => {
                 value={expiringBefore()}
                 onChange={setExpiringBefore}
               />
+            </FieldRow>
+            <FieldRow label="Created" readOnly>
+              12 Mar 2026
+            </FieldRow>
+            <FieldRow label="Stock on hand" readOnly valueAlign="end">
+              4,200
             </FieldRow>
           </FormPreview>
         </DashboardCard>

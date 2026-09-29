@@ -61,7 +61,11 @@ pub fn insert(
     map_response(
         service_provider
             .invoice_line_service
-            .insert_inbound_shipment_service_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
+            .insert_inbound_shipment_service_line(
+                &service_context,
+                input.to_domain(),
+                Some(r#type.to_domain()),
+            ),
     )
 }
 

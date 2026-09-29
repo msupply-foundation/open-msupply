@@ -184,12 +184,6 @@ fn generate_line(
     update_line.tax_percentage = tax_percentage
         .map(|tax| tax.percentage)
         .unwrap_or(update_line.tax_percentage);
-    update_line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
-        connection,
-        update_line.total_before_tax,
-        currency_id,
-        currency_rate,
-    )?;
     update_line.item_variant_id = item_variant_id
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
@@ -236,6 +230,15 @@ fn generate_line(
 
     update_line.total_after_tax =
         calculate_total_after_tax(update_line.total_before_tax, update_line.tax_percentage);
+
+    // From the UPDATED local total (above), so the figure in the shipment's
+    // currency never lags one edit behind the packs or cost price it reflects.
+    update_line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+        connection,
+        update_line.total_before_tax,
+        currency_id,
+        currency_rate,
+    )?;
 
     update_line.campaign_id = campaign_id
         .map(|c| c.value)

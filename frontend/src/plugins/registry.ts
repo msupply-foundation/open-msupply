@@ -3,6 +3,8 @@ import type {
   AnyContribution,
   DashboardPieceId,
   PluginModule,
+  PluginNavSection,
+  PluginPage,
   SlotId,
 } from '../plugin-sdk/types';
 
@@ -46,6 +48,12 @@ export type RegisteredContribution<S extends SlotId> = SlotContribution<S> & {
 };
 
 const [plugins, setPlugins] = createSignal<readonly LoadedPlugin[]>([]);
+
+// The one plugin-code comparator — the determinism guarantee both accessors
+// below document. A single definition, so the pages surfaces and the slot
+// contributions can never order plugins differently.
+const compareCodes = (a: string, b: string): number =>
+  a < b ? -1 : a > b ? 1 : 0;
 
 /** Every loaded plugin, in load-completion order. Reactive. */
 export const loadedPlugins = plugins;
@@ -100,14 +108,81 @@ export const contributionsFor =
       (a, b) =>
         (a.order ?? Number.POSITIVE_INFINITY) -
           (b.order ?? Number.POSITIVE_INFINITY) ||
-        (a.pluginCode < b.pluginCode
-          ? -1
-          : a.pluginCode > b.pluginCode
-            ? 1
-            : 0) ||
+        compareCodes(a.pluginCode, b.pluginCode) ||
         (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
     );
   };
+
+/**
+ * A page as the host consumes it: the plugin's own frozen declaration plus the
+ * code that supplied it. The declaration keeps its identity (no spread) so
+ * consumers can cache derived objects against it — the same object for the
+ * registry's whole life, however often this accessor is read.
+ */
+export interface RegisteredPage {
+  pluginCode: string;
+  page: PluginPage;
+}
+
+/** A nav section as the host consumes it — same identity contract. */
+export interface RegisteredNavSection {
+  pluginCode: string;
+  section: PluginNavSection;
+}
+
+// The accessors' caches, keyed on the plugins() array's identity:
+// registerPlugin replaces the array wholesale, so reference equality IS
+// "nothing changed". The signal read stays inside each accessor, so reactivity
+// is untouched — the cache only stops every navigation, palette open and menu
+// re-derive from re-sorting a list that changes once per session.
+let pagesInput: readonly LoadedPlugin[] | undefined;
+let pagesResult: readonly RegisteredPage[] = [];
+let navSectionsInput: readonly LoadedPlugin[] | undefined;
+let navSectionsResult: readonly RegisteredNavSection[] = [];
+
+/**
+ * Every loaded plugin's pages, in deterministic order — plugin code, then
+ * declaration order — independent of which bundle finished loading first
+ * (rules § contributions). A plain accessor over the registry signal, like
+ * `contributionsFor`: compose it into a single `createMemo` where the read
+ * feeds a `<For>`. Cross-plugin path collisions are NOT resolved here — the
+ * order is what makes their resolution (first claim wins) deterministic
+ * downstream (src/plugins/pluginPages.tsx). The result keeps its identity
+ * until the registry changes, so downstream derivations can cache against it.
+ */
+export const registeredPages = (): readonly RegisteredPage[] => {
+  const current = plugins();
+  if (current === pagesInput) return pagesResult;
+  const found: RegisteredPage[] = [];
+  const byCode = [...current].sort((a, b) => compareCodes(a.code, b.code));
+  for (const plugin of byCode) {
+    for (const page of plugin.module.pages ?? []) {
+      found.push({ pluginCode: plugin.code, page });
+    }
+  }
+  pagesInput = current;
+  pagesResult = found;
+  return found;
+};
+
+/**
+ * Every loaded plugin's nav sections, in the same deterministic order and with
+ * the same identity contract as `registeredPages`.
+ */
+export const registeredNavSections = (): readonly RegisteredNavSection[] => {
+  const current = plugins();
+  if (current === navSectionsInput) return navSectionsResult;
+  const found: RegisteredNavSection[] = [];
+  const byCode = [...current].sort((a, b) => compareCodes(a.code, b.code));
+  for (const plugin of byCode) {
+    for (const section of plugin.module.navSections ?? []) {
+      found.push({ pluginCode: plugin.code, section });
+    }
+  }
+  navSectionsInput = current;
+  navSectionsResult = found;
+  return found;
+};
 
 /**
  * The built-in dashboard pieces the loaded plugins ask to hide, by published id

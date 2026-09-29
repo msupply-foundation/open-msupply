@@ -77,12 +77,15 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
   },
 
   // ─ addable ─
+  // A recorded date, so the calendar offers no future day
+  // (ui-standards/list-views.md § Filters).
   dateOfBirth: {
     label: () => t('label.date-of-birth'),
     render: props => (
       <FilterDate
         label={t('label.date-of-birth')}
         testId={props.testId}
+        disableFuture
         value={props.filter().dateOfBirth?.equalTo ?? ''}
         onInput={value =>
           props.setPartialFilter({

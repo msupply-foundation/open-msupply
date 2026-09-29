@@ -77,7 +77,7 @@ export const Checkbox = (props: CheckboxProps) => {
         </span>
       </Show>
       <Show when={props.error}>
-        <p id={messageId()} class={styles.error}>
+        <p id={messageId()} class={styles.error} data-field-message="error">
           <AlertTriangleIcon class={styles.errorIcon} />
           {props.error}
         </p>

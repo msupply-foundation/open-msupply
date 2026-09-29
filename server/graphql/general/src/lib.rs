@@ -22,8 +22,9 @@ use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
-    MasterListFilterInput, CustomFieldsResponse, StorePreferenceNode,
+    AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput,
+    CustomFieldsResponse, DiagnosisNode, MasterListFilterInput, PeriodScheduleFilterInput,
+    PeriodScheduleRowResponse, StorePreferenceNode,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -178,6 +179,15 @@ impl GeneralQueries {
         sort: Option<Vec<MasterListLineSortInput>>,
     ) -> Result<MasterListLinesResponse> {
         master_list_lines(ctx, store_id, master_list_id, page, filter, sort)
+    }
+
+    pub async fn period_schedules(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        filter: Option<PeriodScheduleFilterInput>,
+    ) -> Result<PeriodScheduleRowResponse> {
+        period_schedules(ctx, store_id, filter)
     }
 
     /// Query omSupply "item" entries

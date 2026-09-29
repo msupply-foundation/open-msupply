@@ -46,6 +46,11 @@ export type PrescriptionRequestsVariables = {
     beforeOrEqualTo?: string | null;
     afterOrEqualTo?: string | null;
   } | null;
+    dispensedDatetime?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
     username?: {
     equalTo?: string | null;
     like?: string | null;
@@ -90,12 +95,12 @@ export const PrescriptionRequests = {
 
 export type DeletePrescriptionRequestsVariables = {
   storeId: string;
-  ids: string[];
+  ids: Array<string>;
 };
 
 export type DeletePrescriptionRequestsResult = {
   batchPrescriptionRequest: {
-  deletePrescriptionRequests?: Array<{
+  deletePrescriptionRequests: Array<{
   id: string;
   response: ({
   id: string;

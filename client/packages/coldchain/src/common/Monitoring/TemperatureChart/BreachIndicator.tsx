@@ -21,6 +21,9 @@ export const BreachIndicator = ({
 
   return (
     <CircleAlertIcon
+      // e2e contract (frontend/e2e/TESTIDS.md § Cold chain › Monitoring): one
+      // marker per breach run, the thing a test clicks to open the summary.
+      data-testid="breach-marker"
       onClick={event =>
         setCurrentBreach({
           breachId,

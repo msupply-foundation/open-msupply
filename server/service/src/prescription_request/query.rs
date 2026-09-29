@@ -39,10 +39,11 @@ pub fn get_prescription_request(
 
 #[cfg(test)]
 mod test {
+    use chrono::NaiveDate;
     use repository::{
         mock::{mock_patient, MockDataInserts},
         test_db::setup_all,
-        CustomFieldValueFilter, GeneralFilter, PrescriptionRequestCondition,
+        CustomFieldValueFilter, DatetimeFilter, GeneralFilter, PrescriptionRequestCondition,
         PrescriptionRequestRow, PrescriptionRequestRowRepository, PrescriptionRequestStatus,
         StringFilter,
     };
@@ -108,15 +109,98 @@ mod test {
         );
 
         assert_eq!(
-            ids(
-                PrescriptionRequestFilter::new().dynamic_filter(
-                    PrescriptionRequestCondition::CustomField::condition(
-                        "prescription_request_occupation",
-                        CustomFieldValueFilter::Text(GeneralFilter::Like("nurs".to_string())),
-                    )
+            ids(PrescriptionRequestFilter::new().dynamic_filter(
+                PrescriptionRequestCondition::CustomField::condition(
+                    "prescription_request_occupation",
+                    CustomFieldValueFilter::Text(GeneralFilter::Like("nurs".to_string())),
                 )
-            ),
+            )),
             ["req_a"]
         );
+    }
+
+    /// The dispensed-datetime window: what a "dispensed in this period" count
+    /// asks for. Windowed on the datetime alone — a request dispensed inside
+    /// the window counts however it was created or prescribed, and one still
+    /// awaiting the hand-over (null datetime) never counts.
+    #[actix_rt::test]
+    async fn dispensed_datetime_window() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "prescription_request_dispensed_window",
+            MockDataInserts::all(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider
+            .context("store_a".to_string(), "user_account_a".to_string())
+            .unwrap();
+
+        let datetime = |day: u32| {
+            NaiveDate::from_ymd_opt(2026, 9, day)
+                .unwrap()
+                .and_hms_opt(9, 0, 0)
+                .unwrap()
+        };
+
+        let row_repo = PrescriptionRequestRowRepository::new(&connection);
+        for (id, number, status, dispensed_datetime) in [
+            // Dispensed inside the window, prescribed well before it.
+            (
+                "in_window",
+                11,
+                PrescriptionRequestStatus::Dispensed,
+                Some(datetime(9)),
+            ),
+            (
+                "before_window",
+                12,
+                PrescriptionRequestStatus::Dispensed,
+                Some(datetime(2)),
+            ),
+            (
+                "after_window",
+                13,
+                PrescriptionRequestStatus::Dispensed,
+                Some(datetime(20)),
+            ),
+            // Not dispensed at all — the null the window must exclude.
+            (
+                "not_dispensed",
+                14,
+                PrescriptionRequestStatus::ReadyToDispense,
+                None,
+            ),
+        ] {
+            row_repo
+                .upsert_one(&PrescriptionRequestRow {
+                    id: id.to_string(),
+                    store_id: "store_a".to_string(),
+                    prescription_request_number: number,
+                    status,
+                    created_by: "user_account_a".to_string(),
+                    patient_id: mock_patient().id,
+                    prescription_datetime: datetime(1),
+                    dispensed_datetime,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        let window = PrescriptionRequestFilter::new()
+            .dispensed_datetime(DatetimeFilter::date_range(datetime(7), datetime(13)));
+        let result =
+            get_prescription_requests(&ctx, Some("store_a"), None, Some(window), None).unwrap();
+
+        assert_eq!(
+            result
+                .rows
+                .into_iter()
+                .map(|r| r.prescription_request_row.id)
+                .collect::<Vec<_>>(),
+            ["in_window"]
+        );
+        // The count backs the connector's totalCount, which is what a dashboard
+        // figure reads: it must agree with the rows.
+        assert_eq!(result.count, 1);
     }
 }

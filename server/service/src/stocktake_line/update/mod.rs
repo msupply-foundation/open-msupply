@@ -371,7 +371,9 @@ mod stocktake_line_test {
             ..Default::default()
         };
 
-        StocktakeLineRowRepository::new(&context.connection).upsert_one(&stocktake_line).unwrap();
+        StocktakeLineRowRepository::new(&context.connection)
+            .upsert_one(&stocktake_line)
+            .unwrap();
 
         let error = service
             .update_stocktake_line(

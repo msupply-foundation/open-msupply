@@ -18,12 +18,12 @@ use crate::{
     apis::patient_v4::PatientV4,
     programs::patient::patient_updated::create_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
+    static_files::{StaticFile, StaticFileService},
     sync::{
         api::{SyncApiSettings, SyncApiV5},
         settings::SYNC_V5_VERSION,
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
-    static_files::{StaticFile, StaticFileService},
     sync_v7::{
         api::{
             download_file,

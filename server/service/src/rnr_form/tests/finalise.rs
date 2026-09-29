@@ -194,9 +194,7 @@ mod finalise {
         // Check correct data was populated
         let auto_populated_line = &requisition_lines
             .iter()
-            .find(|line| {
-                line.requisition_line_row.item_id == auto_populated_line().item_id
-            })
+            .find(|line| line.requisition_line_row.item_id == auto_populated_line().item_id)
             .unwrap()
             .requisition_line_row;
 
@@ -208,9 +206,7 @@ mod finalise {
 
         let manually_entered_line = &requisition_lines
             .iter()
-            .find(|line| {
-                line.requisition_line_row.item_id == manually_entered_line().item_id
-            })
+            .find(|line| line.requisition_line_row.item_id == manually_entered_line().item_id)
             .unwrap()
             .requisition_line_row;
 

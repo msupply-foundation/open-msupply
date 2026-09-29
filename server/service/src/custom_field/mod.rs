@@ -305,9 +305,7 @@ mod tests {
         let service = &service_provider.custom_field_service;
 
         // Config read includes the hidden field.
-        let config = service
-            .get_custom_field_scope_config(&ctx, "item")
-            .unwrap();
+        let config = service.get_custom_field_scope_config(&ctx, "item").unwrap();
         assert_eq!(config.count, 2);
 
         // Flip f_a Hidden -> Prominent, f_b Visible -> Hidden.

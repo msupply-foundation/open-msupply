@@ -434,7 +434,10 @@ const OutboundDetailView: Component = () => {
 
   // The store's locations (code/name only) for the Location filter chip.
   // Volume-blind — the chip narrows a line list, capacity is irrelevant.
-  const [locationsData] = createResource(() => params.storeId, fetchLocations);
+  const [locationsData] = createResource(
+    () => params.storeId,
+    storeId => fetchLocations(storeId)
+  );
   const locations = () => locationsData.latest ?? [];
 
   // A save-triggered refetch is SILENT — no refreshing bar (the table stays
@@ -1326,6 +1329,11 @@ const OutboundDetailView: Component = () => {
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
                 customerIsStore={current().otherParty.store != null}
+                // Gates the editor's supplier-comment field: only a shipment
+                // raised from a customer requisition has a requested quantity
+                // for a comment to explain (spec S4 § supplier comment).
+                fromCustomerRequisition={current().requisition != null}
+                editable={editable()}
                 currencyCode={current().currency?.code}
                 currencyRate={current().currencyRate}
                 initialItem={editState()?.item}

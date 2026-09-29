@@ -186,7 +186,9 @@ pub(crate) fn deserialize(
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
         ChangelogTableName::PrescriptionRequest => from_value::<PrescriptionRequestRow>(data),
-        ChangelogTableName::PrescriptionRequestLine => from_value::<PrescriptionRequestLineRow>(data),
+        ChangelogTableName::PrescriptionRequestLine => {
+            from_value::<PrescriptionRequestLineRow>(data)
+        }
         ChangelogTableName::StockRelocation => from_value::<StockRelocationRow>(data),
         ChangelogTableName::StockRelocationLine => from_value::<StockRelocationLineRow>(data),
         ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),

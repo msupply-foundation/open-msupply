@@ -8,7 +8,7 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
-import { AlertCircleIcon, CheckIcon, DownloadIcon } from '../../ui/icons';
+import { AlertCircleIcon, CheckIcon, ExportIcon } from '../../ui/icons';
 import { createFlash } from '../../ui/utils/createFlash';
 import { saveBlob } from '../../platform/openDocument';
 import { storeCodeOf } from '../../auth/authContext';
@@ -46,8 +46,8 @@ import {
  * (`failed` — a connection failure, an unusable response) has already reached
  * the global error modal, so reporting it again would double up. A conversion
  * the server REJECTED is not in that set — the wrapper takes those errors
- * itself (spec/reports AC-G6), so nothing global shows them and they land in
- * the dialog below with the server's description.
+ * itself (spec/reports OMS-REG-RPT-09.10), so nothing global shows them and
+ * they land in the dialog below with the server's description.
  */
 
 export interface ListExportActionProps {
@@ -160,7 +160,7 @@ export const ListExportAction: Component<ListExportActionProps> = props => {
     ) : feedback.value() === 'failed' ? (
       <AlertCircleIcon />
     ) : (
-      <DownloadIcon />
+      <ExportIcon />
     );
 
   return (

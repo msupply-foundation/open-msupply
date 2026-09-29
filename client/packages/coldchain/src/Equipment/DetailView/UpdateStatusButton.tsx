@@ -40,6 +40,7 @@ export const UpdateStatusButtonComponent = ({
         Icon={<PlusCircleIcon />}
         label={t('button.update-status')}
         onClick={onClick}
+        data-testid="update-status-button"
       />
     </>
   );

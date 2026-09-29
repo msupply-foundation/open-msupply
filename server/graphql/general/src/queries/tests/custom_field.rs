@@ -4,8 +4,8 @@ mod graphql {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::MockDataInserts, EqualFilter, CustomFieldKind, CustomField, CustomFieldFilter,
-        CustomFieldRow, CustomFieldValueType, RepositoryError, StorageConnection,
+        mock::MockDataInserts, CustomField, CustomFieldFilter, CustomFieldKind, CustomFieldRow,
+        CustomFieldValueType, EqualFilter, RepositoryError, StorageConnection,
         StorageConnectionManager,
     };
     use serde_json::json;
@@ -156,10 +156,7 @@ mod graphql {
         let test_service = TestService(Box::new(|filter| {
             assert_eq!(
                 filter,
-                Some(
-                    CustomFieldFilter::new()
-                        .scope(EqualFilter::equal_to("customer".to_string()))
-                )
+                Some(CustomFieldFilter::new().scope(EqualFilter::equal_to("customer".to_string())))
             );
             Ok(ListResult::empty())
         }));

@@ -5,8 +5,11 @@ import { t } from '../../intl';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   namePageFetcher,
+  seedNameOption,
   type NameOption,
   type NameRole,
+  type NameSeed,
+  type PartyKind,
 } from './nameResource';
 
 const PAGE_SIZE = 30;
@@ -25,8 +28,10 @@ export interface NameSearchProps {
    * against; the caller holds the name from its own data (e.g. a shipment's
    * supplier), and AsyncCombobox uses it to render the selection's label even
    * before its page loads. Omit for a fresh picker with no pre-set value.
+   * Only the identity and label are required; display flags the caller
+   * knows (a party that is a store, one on hold) may come along.
    */
-  selected?: NameOption;
+  selected?: NameSeed;
   /** The picked name, or null when the selection is cleared. */
   onSelect: (name: NameOption | null) => void;
   placeholder?: string;
@@ -48,12 +53,13 @@ export interface NameSearchProps {
    */
   focusTarget?: FocusTarget;
   /**
-   * Narrow to store-backed parties only (isStore) — a supplier/customer that is
-   * itself another store in the system. Used by the internal-order create
-   * picker (spec/internal-orders AC-C3). Default false (every visible party of
-   * the role).
+   * Narrow to one side of the system — `internal` for parties that are
+   * themselves stores in it (the internal-order create picker,
+   * spec/internal-orders AC-C3), `external` for parties outside it (the
+   * purchase-order create picker, spec/purchase-orders § S2). Omit for every
+   * visible party of the role. See {@link PartyKind} for what each sends.
    */
-  storeBacked?: boolean;
+  parties?: PartyKind;
   /**
    * Withhold one party by id — the internal-order destination-customer picker
    * excludes the chosen supplier (spec/internal-orders › header fields).
@@ -123,8 +129,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
       props.storeId,
       props.role ?? 'supplier',
       PAGE_SIZE,
-      props.storeBacked,
-      props.excludeId
+      { parties: props.parties, excludeId: props.excludeId }
     )}
     // The selected value's input text is just the name; the dropdown row still
     // shows code + name. Server mode disables the client filter, so this isn't
@@ -133,7 +138,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     itemToValue={name => name.id}
     itemDisabled={name => name.isOnHold}
     renderItem={renderRow}
-    selected={props.selected}
+    selected={props.selected && seedNameOption(props.selected)}
     onSelect={props.onSelect}
   />
 );

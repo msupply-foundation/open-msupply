@@ -491,8 +491,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
-                    .to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -585,8 +586,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#
-                    .to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -609,8 +611,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":1}"#
-                    .to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":1}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -665,8 +668,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
-                    .to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":true,"maxDays":0}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();

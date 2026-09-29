@@ -280,7 +280,7 @@ export const Select = (props: SelectProps) => {
         </Show>
       </div>
       <Show when={props.helperText}>
-        <KSelect.Description class={styles.helper}>
+        <KSelect.Description class={styles.helper} data-field-message="helper">
           {props.helperText}
         </KSelect.Description>
       </Show>

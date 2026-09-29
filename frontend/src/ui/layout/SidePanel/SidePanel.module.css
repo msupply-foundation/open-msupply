@@ -57,7 +57,11 @@
   --field-helper-color: var(--text-body);
 }
 
-.section + .section {
+/* The general sibling (~), not adjacent (+): a plugin slot region may put a
+   contributed element between two sections (the internal-order panel's S8
+   region sits before Actions), and the following section keeps its divider —
+   the panel's own chrome must not change because a plugin contributed. */
+.section ~ .section {
   border-block-start: 1px solid var(--color-divider);
 }
 
@@ -196,7 +200,7 @@
    scrolling flex column, so margin-block-start: auto glues the section to the
    foot when content is short, and sticky keeps it visible over the content
    when the panel scrolls. Opaque background for the content passing beneath;
-   the divider comes from the .section + .section rule. */
+   the divider comes from the .section ~ .section rule. */
 .section:has(> .actions) {
   position: sticky;
   inset-block-end: 0;

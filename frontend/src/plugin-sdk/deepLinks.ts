@@ -114,9 +114,30 @@ export const outboundShipmentListPath = (): string =>
 export const internalOrderListPath = (): string =>
   'replenishment/internal-order';
 
-export const prescriptionListPath = (): string => 'dispensary/prescription';
+/** One internal order's detail screen, by the order's id. */
+export const internalOrderPath = (orderId: string): string =>
+  `${internalOrderListPath()}/${orderId}`;
+
+// Named for the record it reaches, which the UI calls a dispensing record
+// (issue #551). The export keeps its original name so plugins built against it
+// keep compiling; it is the returned path that moved.
+export const dispensingListPath = (): string => 'dispensary/dispensing';
+
+/** @deprecated Use {@link dispensingListPath} — the vertical is "Dispensing". */
+export const prescriptionListPath = dispensingListPath;
 
 export const stocktakeListPath = (): string => 'inventory/stocktakes';
+
+/**
+ * One stocktake's detail screen — the record page behind a count, which is
+ * what the Cook Islands count log opens from a row
+ * (plugins/cook_islands/stocktake/ui-surface.md § S5). A record path, not a
+ * filtered list: it takes the record's id and nothing else. The segment is
+ * URI-encoded so an id can never smuggle a path separator, though real ids
+ * are host-minted UUIDs.
+ */
+export const stocktakeDetailPath = (stocktakeId: string): string =>
+  `${stocktakeListPath()}/${encodeURIComponent(stocktakeId)}`;
 
 // ── Stock ────────────────────────────────────────────────────────────────────
 
@@ -160,7 +181,10 @@ export const expiringBetweenThresholdsStockPath = (
   secondDays: number
 ): string =>
   listPath(stockListPath(), {
-    expiryDate: dateRange(addDays(today, firstDays), addDays(today, secondDays)),
+    expiryDate: dateRange(
+      addDays(today, firstDays),
+      addDays(today, secondDays)
+    ),
   } satisfies StockFilter);
 
 // ── Items ────────────────────────────────────────────────────────────────────

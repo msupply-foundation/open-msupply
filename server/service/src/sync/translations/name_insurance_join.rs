@@ -11,8 +11,7 @@ use crate::sync::translations::{
 };
 
 use super::{
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 #[derive(Deserialize, Serialize, Debug)]

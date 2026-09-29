@@ -1,7 +1,4 @@
-use crate::{
-    ChangelogRepository, ChangelogSyncType, RowActionType,
-    Upsert,
-};
+use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, Upsert};
 use crate::{RepositoryError, SourceSiteId, StorageConnection};
 
 use chrono::NaiveDateTime;

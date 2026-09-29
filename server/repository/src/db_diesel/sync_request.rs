@@ -126,7 +126,6 @@ impl<'a> SyncRequestRepository<'a> {
             .load::<SyncRequestRow>(self.connection.lock().connection())?;
         Ok(rows)
     }
-
 }
 
 impl Upsert for SyncRequestRow {

@@ -65,7 +65,7 @@ export type RnrFormDetailResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });

@@ -1,6 +1,6 @@
 # Master Lists (Catalogue) — UI migration report
 
-**Scope:** the whole `master-lists` vertical — the S1 list screen, its export action, the export logic, the routes, and the S2 detail view. Run under [`migrate-ui`](../../../.claude/skills/migrate-ui/SKILL.md) against the eleven dimensions of [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md).
+**Scope:** the whole `master-lists` vertical — the S1 list screen, its export action, the export logic, the routes, and the S2 detail view. Run under [`migrate-ui`](../../../../.claude/skills/migrate-ui/SKILL.md) against the eleven dimensions of [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md).
 
 **Plus one directed structural change** ([#776](https://github.com/msupply-foundation/open-msupply-frontend/issues/776)): remove the S2 detail view and make a list row open the **Items list filtered to that master list** instead.
 

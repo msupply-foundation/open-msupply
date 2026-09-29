@@ -261,9 +261,16 @@ pub trait PluginServiceTrait: Sync + Send {
                 code: row.code,
                 version: row.version,
                 kind: InstalledPluginKind::Backend,
-                types: row.types.0.iter().filter_map(|t| {
-                    serde_json::to_value(t).ok().and_then(|v| v.as_str().map(ToString::to_string))
-                }).collect(),
+                types: row
+                    .types
+                    .0
+                    .iter()
+                    .filter_map(|t| {
+                        serde_json::to_value(t)
+                            .ok()
+                            .and_then(|v| v.as_str().map(ToString::to_string))
+                    })
+                    .collect(),
                 host_runtime: None,
             });
         }
@@ -630,7 +637,8 @@ mod test {
         plugins.sort_by(|a, b| a.id.cmp(&b.id));
 
         // Same code, same version — every other listed field is identical.
-        let runtimes: Vec<Option<&str>> = plugins.iter().map(|p| p.host_runtime.as_deref()).collect();
+        let runtimes: Vec<Option<&str>> =
+            plugins.iter().map(|p| p.host_runtime.as_deref()).collect();
         assert_eq!(runtimes, vec![Some("react"), Some("solid")]);
     }
 

@@ -3,10 +3,7 @@ use crate::db_diesel::item_row::item;
 use crate::diesel_macros::define_linked_tables;
 use crate::RepositoryError;
 use crate::StorageConnection;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
-};
+use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -31,9 +28,7 @@ define_linked_tables! {
 joinable!(vaccine_course_item -> item (item_id));
 allow_tables_to_appear_in_same_query!(vaccine_course_item, item);
 
-#[derive(
-    Clone, Queryable, Debug, PartialEq, Default, Deserialize, Serialize,
-)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, Deserialize, Serialize)]
 #[diesel(table_name = vaccine_course_item)]
 pub struct VaccineCourseItemRow {
     pub id: String,
@@ -100,9 +95,10 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
             vaccine_course_item_with_links::table
                 .filter(vaccine_course_item_with_links::id.eq(vaccine_course_item_id)),
         )
-        .set(vaccine_course_item_with_links::deleted_datetime.eq(Some(
-            chrono::Utc::now().naive_utc(),
-        )))
+        .set(
+            vaccine_course_item_with_links::deleted_datetime
+                .eq(Some(chrono::Utc::now().naive_utc())),
+        )
         .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
@@ -115,7 +111,10 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseItemRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<VaccineCourseItemRow>, RepositoryError> {
         Ok(vaccine_course_item::table
             .filter(vaccine_course_item::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

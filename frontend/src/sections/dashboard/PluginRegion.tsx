@@ -5,7 +5,7 @@ import { createRegionDiagnostics } from '../../plugins/diagnostics';
 import { suppressedPieces } from '../../plugins/registry';
 import { contributionId, visibleContributions } from '../../plugins/PluginSlot';
 import { PluginRegionOutlet } from '../../ui/elements/plugins/PluginRegionOutlet';
-import { dashboardGates } from './dashboardPreferences';
+import { dashboardGates, dashboardPanels } from './dashboardPreferences';
 import {
   mergeRegion,
   type MergedEntry,
@@ -37,12 +37,11 @@ import { panelBuiltIns, statBuiltIns, widgetBuiltIns } from './regionBuiltIns';
  */
 
 const builtInsFor = (slot: DashboardSlotId, container: string | undefined) => {
-  const gates = dashboardGates();
-  if (slot === 'dashboard.widget') return widgetBuiltIns();
+  if (slot === 'dashboard.widget') return widgetBuiltIns(dashboardPanels());
   if (container === undefined) return [];
   return slot === 'dashboard.panel'
-    ? panelBuiltIns(container, gates)
-    : statBuiltIns(container, gates);
+    ? panelBuiltIns(container, dashboardPanels())
+    : statBuiltIns(container, dashboardGates());
 };
 
 export const PluginRegion = (props: {

@@ -1,7 +1,12 @@
 import { createMemo, createSignal, For, Show, type JSX } from 'solid-js';
 import * as KCombobox from '@kobalte/core/combobox';
 import { t } from '../../../intl';
-import { CheckIcon, ChevronDownIcon, CloseIcon } from '../../icons';
+import {
+  AlertTriangleIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  CloseIcon,
+} from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import styles from './MultiSelect.module.css';
@@ -21,6 +26,18 @@ interface MultiSelectProps<T> {
   renderItem?: (item: T) => JSX.Element;
   placeholder?: string;
   helperText?: string;
+  /**
+   * Error message — presence switches the control to the error state (red
+   * border, `aria-invalid`) and shows the message as icon + text below it,
+   * displacing `helperText`. As <Combobox> and <TextField>: nothing is
+   * conveyed by colour alone.
+   */
+  error?: string;
+  /**
+   * `data-testid` for the error message (locale-stable test hook,
+   * e2e/TESTIDS.md). As <Combobox>'s errorTestId.
+   */
+  errorTestId?: string;
   /**
    * Control size. 'default' is the form-field size; 'small' is the compact
    * variant for dense contexts (e.g. cards). Matches the shared input size
@@ -48,14 +65,13 @@ interface MultiSelectProps<T> {
   /** `data-testid` for the input. As <Combobox>'s inputTestId. */
   inputTestId?: string;
   /**
-   * READ-ONLY, not disabled: the field still takes focus and its list still
-   * OPENS, but nothing in it can be ticked and no tag can be removed. A
-   * multi-value control summarises what it holds ("A, B +2 more"), so a
-   * disabled one would hide values the reader can never reach — the reason the
-   * read-only rendering of a MULTI_OPTION custom field is this and not
-   * `disabled` (spec/ui-standards/custom-fields › value types).
+   * Locked shut, as <Combobox>'s disabled: the list can't be opened, nothing
+   * can be ticked, no tag can be removed. The tags still render in the control
+   * (they wrap, so nothing is hidden) — a locked record's field stays readable
+   * without needing to open (spec/ui-standards/custom-fields › value types,
+   * #581).
    */
-  readOnly?: boolean;
+  disabled?: boolean;
   class?: string;
 }
 
@@ -109,7 +125,6 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       multiple
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
       data-width={props.width ?? 'full'}
-      data-readonly={props.readOnly ? 'true' : undefined}
       data-size={props.size ?? 'default'}
       options={props.items}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
@@ -117,14 +132,8 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       optionLabel={item => props.itemToString(item as T)}
       defaultFilter={(item, input) => matches(item as T, input)}
       value={props.selectedItems}
-      onChange={items => {
-        if (props.readOnly) return;
-        props.onChange(items);
-      }}
-      // Read-only marks every option aria-disabled (Kobalte's own mechanism),
-      // so the list reads as non-interactive rather than merely ignoring
-      // clicks.
-      optionDisabled={() => props.readOnly ?? false}
+      onChange={items => props.onChange(items)}
+      disabled={props.disabled}
       onInputChange={setInputValue}
       allowsEmptyCollection
       // Open the listbox as soon as the field is focused/clicked, as <Combobox>
@@ -167,7 +176,10 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
           {props.labelInfo}
         </span>
       </Show>
-      <KCombobox.Control<T> class={styles.control}>
+      <KCombobox.Control<T>
+        class={styles.control}
+        data-error={props.error ? '' : undefined}
+      >
         {state => (
           <>
             <div class={styles.tags}>
@@ -177,7 +189,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
                     <span class={styles.tagLabel}>
                       {props.itemToString(item)}
                     </span>
-                    <Show when={!props.readOnly}>
+                    <Show when={!props.disabled}>
                       <button
                         type="button"
                         class={styles.tagRemove}
@@ -192,9 +204,9 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
               </For>
               <KCombobox.Input
                 class={styles.input}
-                readOnly={props.readOnly}
                 data-testid={props.inputTestId}
                 aria-label={props.hideLabel ? props.label : undefined}
+                aria-invalid={props.error ? 'true' : undefined}
               />
             </div>
             <KCombobox.Trigger
@@ -208,9 +220,28 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
           </>
         )}
       </KCombobox.Control>
-      <Show when={props.helperText}>
-        <KCombobox.Description class={styles.helper}>
-          {props.helperText}
+      {/* The error displaces the helper text — icon + text, as <Combobox> and
+          TextField. Nothing is conveyed by colour alone. */}
+      <Show
+        when={props.error}
+        fallback={
+          <Show when={props.helperText}>
+            <KCombobox.Description
+              class={styles.helper}
+              data-field-message="helper"
+            >
+              {props.helperText}
+            </KCombobox.Description>
+          </Show>
+        }
+      >
+        <KCombobox.Description
+          class={styles.error}
+          data-field-message="error"
+          data-testid={props.errorTestId}
+        >
+          <AlertTriangleIcon class={styles.errorIcon} />
+          {props.error}
         </KCombobox.Description>
       </Show>
       <KCombobox.Portal mount={portalMount?.()}>

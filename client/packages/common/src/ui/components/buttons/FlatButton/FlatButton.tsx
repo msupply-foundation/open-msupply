@@ -77,6 +77,7 @@ export const FlatButton: React.FC<ButtonProps> = ({
       sx={sx}
       name={name}
       disabled={loading || disabled}
+      aria-busy={loading || undefined}
       startIcon={
         loading ? <CircularProgress size={20} sx={{ color }} /> : regularIcon
       }

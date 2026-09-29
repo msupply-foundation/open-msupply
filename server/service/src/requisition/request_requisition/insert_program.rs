@@ -24,8 +24,8 @@ use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
-    IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter,
-    NameRepository, NumberRowType, Pagination, PeriodRowRepository, PluginDataRowRepository,
+    IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
+    NumberRowType, Pagination, PeriodRowRepository, PluginDataRowRepository,
     ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
     Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
     StorageConnection, StoreFilter, StoreRepository,
@@ -198,9 +198,8 @@ fn generate(
 ) -> Result<GenerateResult, PluginOrRepositoryError> {
     let connection = &ctx.connection;
 
-    let other_party_store = StoreRepository::new(connection).query_one(
-        StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())),
-    )?;
+    let other_party_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())))?;
 
     let requisition = RequisitionRow {
         id,

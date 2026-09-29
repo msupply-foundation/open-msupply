@@ -108,7 +108,12 @@ mod tests {
         }
     }
 
-    fn test_line(id: &str, requisition_id: &str, item_id: &str, available_volume: f64) -> RequisitionLineRow {
+    fn test_line(
+        id: &str,
+        requisition_id: &str,
+        item_id: &str,
+        available_volume: f64,
+    ) -> RequisitionLineRow {
         RequisitionLineRow {
             id: id.to_string(),
             requisition_id: requisition_id.to_string(),
@@ -145,8 +150,10 @@ mod tests {
             service_provider: Data::new(ServiceProvider::new(connection_manager)),
         };
 
-        let req1_input = AvailableVolumeOnRequisitionLoaderInput::new("avail_req_1", "avail_item_x");
-        let req2_input = AvailableVolumeOnRequisitionLoaderInput::new("avail_req_2", "avail_item_y");
+        let req1_input =
+            AvailableVolumeOnRequisitionLoaderInput::new("avail_req_1", "avail_item_x");
+        let req2_input =
+            AvailableVolumeOnRequisitionLoaderInput::new("avail_req_2", "avail_item_y");
 
         let result = loader
             .load(&[req1_input.clone(), req2_input.clone()])

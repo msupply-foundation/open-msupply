@@ -235,6 +235,7 @@ const BOOL_PREFERENCE_KEYS = [
   'adjustForNumberOfDaysOutOfStock',
   'expiredStockPreventIssue',
   'itemMarginOverridesSupplierMargin',
+  'transferStockToInternalCustomersAtCostPrice',
   'isGaps',
   'displayPopulationBasedForecasting',
   'receivePaymentsFromPrescriptions',

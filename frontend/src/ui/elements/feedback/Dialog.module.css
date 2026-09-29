@@ -12,6 +12,8 @@
      .body — a default on .body would shadow the inherited value. */
   --dialog-width: 30rem;
   --dialog-min-body-height: 0;
+  /* holdHeight's measured floor — set inline, read only under [data-hold-height]. */
+  --dialog-held-height: 0px;
 
   /* Fixed width (steady box), clamped down to the viewport on narrow screens. */
   width: min(var(--dialog-width), calc(100vw - 2rem));
@@ -134,6 +136,26 @@
   /* The panel takes initial focus on open (tabindex=-1 + autofocus, see
      Dialog.tsx) — a container holding programmatic focus shows no ring. */
   outline: none;
+
+  /* A FIXED label track for every FieldRow in the dialog (the var hook in
+     FieldRow.module.css). A dialog body stacks rows with mixed-length labels,
+     and FieldRow's default track is sized PER ROW — so one long label ("New
+     functional status", "Last recording date/time") shoves its own control
+     clear of the column its siblings share, and the form reads as a ragged
+     staircase. Fixed, every control lines up and a long label wraps within the
+     track instead. The side and inset panels each set their own for the same
+     reason; a dialog had none, so every modal in the app was ragged.
+
+     Wider than the panels' (8 / 9.5rem) because dialog labels are the app's
+     longest. Rows that opt out with labelWidth="auto" don't read this var.
+
+     Capped as a SHARE of the row as well: a default-width dialog on a 320px
+     screen is narrower than 10rem + the control's own 8rem minimum, and a
+     fixed track there pushes the body wider than the dialog and scrolls it
+     sideways. `min()` keeps the alignment everywhere it fits and yields the
+     track on the narrowest screens, where alignment is worth less than a form
+     that fits. */
+  --field-row-label: min(10rem, 40%);
   /* Reserve a minimum height (Dialog's minBodyHeightRem) so a dialog whose content changes
      size doesn't jump; inherits the default (0) or the caller's inline override from .dialog. */
   min-block-size: var(--dialog-min-body-height);
@@ -451,4 +473,23 @@
   flex: 1;
   min-block-size: 0;
   max-block-size: none;
+}
+
+/* holdHeight: the height Dialog measured when the hold began, as a floor. Clamped to the
+   viewport cap itself, because min-block-size beats max-block-size — a viewport that shrinks
+   mid-hold must not push the box off screen. Two selectors, so it outranks .large's floor. */
+.dialog[data-hold-height] {
+  min-block-size: min(var(--dialog-held-height), calc(100vh - 2rem));
+}
+
+/* …and the panel fills the held box, as a workbench's does: a flex column so the footer stays
+   at the bottom where it was, instead of riding up with shorter content and leaving bare
+   <dialog> below it — which a click reads as the scrim. Scoped to [open], like .large[open]. */
+.dialog[data-hold-height][open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog[data-hold-height][open] .body {
+  flex: 1;
 }

@@ -43,7 +43,9 @@ use crate::{
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     preference::{PreferenceService, PreferenceServiceTrait},
     prescription_request::{PrescriptionRequestService, PrescriptionRequestServiceTrait},
-    prescription_request_line::{PrescriptionRequestLineService, PrescriptionRequestLineServiceTrait},
+    prescription_request_line::{
+        PrescriptionRequestLineService, PrescriptionRequestLineServiceTrait,
+    },
     pricing::{PricingService, PricingServiceTrait},
     printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,

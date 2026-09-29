@@ -12,7 +12,9 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 
 import androidx.annotation.Nullable;
@@ -29,8 +31,10 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 class CertWebViewClient extends ExtendedWebViewClient {
     public static final String TAG = "CertWebViewClient";
@@ -39,6 +43,9 @@ class CertWebViewClient extends ExtendedWebViewClient {
     @Nullable
     Certificate selfSignedCert;
     private final SharedPreferences savedCertFingerprints;
+    /** Keys ({@code identifier:fingerprint}) of the SSL notices currently on
+     * screen, so the requests that fail together share one dialog (#544). */
+    private final Set<String> sslDialogsShowing = new HashSet<>();
 
     public CertWebViewClient(Bridge bridge, File filesDir, NativeApi nativeApi) {
         super(bridge);
@@ -46,6 +53,101 @@ class CertWebViewClient extends ExtendedWebViewClient {
         savedCertFingerprints = bridge.getContext().getSharedPreferences("savedCertFingerprints", Context.MODE_PRIVATE);
         this.nativeApi = nativeApi;
         this.filesDir = filesDir;
+    }
+
+    /**
+     * Host duty (frontend/src/discovery/hostContract.ts, AC-DT4): a server that
+     * answered the reachability check but then fails to serve its UI must land
+     * back on app-owned content — the discovery page, with the
+     * could-not-connect notice seeded — never on WebView error content.
+     *
+     * Main frame only: a failed subresource is the served page's own business.
+     * And never for this device's own server, whose failure is the local server
+     * dying — the readiness poll and ErrorPage already own that, and reloading
+     * discovery would not fix it.
+     */
+    @Override
+    public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        super.onReceivedError(view, request, error);
+        if (!request.isForMainFrame()) return;
+        String failed = request.getUrl().toString();
+        if (failed.startsWith(this.nativeApi.getLocalUrl())) return;
+        String chosenUrl = NativeApi.getChosenUrl();
+        // Only a server the discovery page sent us to: the old front end's
+        // connect path has its own error handling and must not be yanked here.
+        if (chosenUrl == null || !failed.startsWith(chosenUrl)) return;
+        if (chosenServerIsLocal()) return;
+        this.nativeApi.returnToDiscovery(true);
+    }
+
+    /**
+     * Two duties, both about a load that REACHED its address and was answered
+     * with an error — which onReceivedError above never sees.
+     *
+     * One: the discovery page is not in every bundle this shell can be built
+     * with. The debug web bundle stages the old UI alone (capacitor.config.ts §
+     * webDir, DEBUG_BUILD), and the embedded server answers a missing file with
+     * a real 404 rather than an index fallback
+     * (server/server/src/serve_frontend.rs). So a 404 for the discovery page ON
+     * THIS DEVICE'S OWN SERVER falls back to the old front end's own chooser,
+     * which such a bundle does have. Without it a debug build boots to "file
+     * not found". Only that one URL, and only a 404 — anything else on the
+     * local origin is a real error and stays visible.
+     *
+     * Two: the same AC-DT4 recovery onReceivedError does, for a server the
+     * discovery page chose. An address can pass the reachability check and
+     * still have no app on it — the likeliest is the server's own discovery
+     * port, at port + 1, which answers 404 to everything but a POSTed query.
+     * Landing there is otherwise a dead end: the 404 is the server's own
+     * content, so it carries no way back, and the address is remembered, so the
+     * next launch goes straight there again. Clearing app data was the only way
+     * out. Any error status counts, since none of them is an app.
+     */
+    @Override
+    public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+        super.onReceivedHttpError(view, request, errorResponse);
+        if (!request.isForMainFrame()) return;
+        String failed = request.getUrl().toString();
+        int status = errorResponse.getStatusCode();
+
+        if (failed.startsWith(this.nativeApi.getLocalUrl())) {
+            if (status != 404) return;
+            if (!failed.startsWith(this.nativeApi.getLocalUrl() + NativeApi.DISCOVERY_PATH)) return;
+            Log.w(NativeApi.OM_SUPPLY, "No " + NativeApi.DISCOVERY_PATH
+                    + " in this bundle, falling back to the old front end's chooser");
+            this.nativeApi.loadLegacyDiscovery();
+            return;
+        }
+
+        // Only a server the discovery page sent us to: the old front end's
+        // connect path has its own error handling and must not be yanked here.
+        String chosenUrl = NativeApi.getChosenUrl();
+        if (chosenUrl == null || !failed.startsWith(chosenUrl)) return;
+        if (chosenServerIsLocal()) return;
+        Log.w(NativeApi.OM_SUPPLY, "Chosen server answered " + status + " for " + failed
+                + " — no app is served there, returning to discovery");
+        this.nativeApi.returnToDiscovery(true);
+    }
+
+    /**
+     * Whether the server the page chose is THIS DEVICE'S OWN.
+     *
+     * Both recoveries above stop here, because a local server failing is the
+     * local server dying: the readiness poll and ErrorPage own that, and
+     * reloading discovery cannot fix it.
+     *
+     * Asked of the IDENTITY the page stated, never of how the address happens
+     * to be spelled. A prefix test against localUrl (https://localhost:8000)
+     * misses both spellings the page actually hands off with — 127.0.0.1 for a
+     * device in server mode (discovery.ts STANDALONE_LOCAL_SERVER) and the LAN
+     * address for a discovered local server (toFrontEndHost § address
+     * rewriting) — so the guard would silently never fire. This is the same
+     * address-versus-identity trap that navigate(url, server) exists to
+     * remove; chosenIsLocal is already recorded, and certificate trust already
+     * uses it.
+     */
+    private static boolean chosenServerIsLocal() {
+        return NativeApi.getChosenIsLocal();
     }
 
     private Certificate get_self_signed_cert() {
@@ -116,26 +218,26 @@ class CertWebViewClient extends ExtendedWebViewClient {
     }
 
     /**
-     * In this scenario, we are connecting to a non-local server with uses a
-     * self-signed certificate.
-     * It needs to be checked that we know/trust the server before performing the
-     * certificate validation.
+     * Fingerprint-store key for a non-local server the old front end connected
+     * to: hardware id and port, the identifier this store has always used
+     * (NativeApi.getChosenFingerprintKey spells the same key for the new
+     * front end's chosen server).
      */
-    private boolean validateNonLocalCertificate(SslCertificate targetCert, NativeApi.FrontEndHost connectedServer) {
-        // Calculate SSL fingerprint
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("SHA-256");
-            md.update(get_x509(targetCert).getEncoded());
-        } catch (Exception e) {
-            Log.e(TAG, "Problem hashing certificate" + e);
+    private String nonLocalFingerprintKey(NativeApi.FrontEndHost connectedServer) {
+        return connectedServer.getHardwareId() + "-" + connectedServer.getPort();
+    }
+
+    /** Trust on first use, against the fingerprint recorded under
+     * {@code identifier}: record it the first time, require the same one
+     * afterwards (AC-AN9/AC-AN10). The identifier is hardware id and port for
+     * both front ends, so a server already trusted on this device stays
+     * trusted after an upgrade. */
+    private boolean validateFingerprint(SslCertificate targetCert, String identifier) {
+        String fingerprint = this.certificateFingerprint(targetCert);
+        if (fingerprint == null) {
             return false;
         }
-        String fingerprint = Base64.encodeToString(md.digest(), Base64.DEFAULT).trim();
 
-        // Match SSL fingerprint for server stored in app data
-        // Match by hardware id and port
-        String identifier = connectedServer.getHardwareId() + "-" + connectedServer.getPort();
         String savedCertFingerprint = savedCertFingerprints.getString(identifier, "");
         // Save if fingerprint was not found for server
         if (savedCertFingerprint.length() == 0) {
@@ -146,6 +248,19 @@ class CertWebViewClient extends ExtendedWebViewClient {
         }
 
         return savedCertFingerprint.equals(fingerprint);
+    }
+
+    /** SHA-256 of the certificate, base64 — the value the fingerprint store
+     * records. Null when the certificate cannot be extracted or hashed. */
+    private String certificateFingerprint(SslCertificate targetCert) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(this.get_x509(targetCert).getEncoded());
+            return Base64.encodeToString(md.digest(), Base64.DEFAULT).trim();
+        } catch (Exception e) {
+            Log.e(TAG, "Problem hashing certificate" + e);
+            return null;
+        }
     }
 
     @SuppressLint("WebViewClientOnReceivedSslError")
@@ -166,33 +281,77 @@ class CertWebViewClient extends ExtendedWebViewClient {
 
         String url = error.getUrl();
         Boolean isDiscovery = url.startsWith(nativeApi.getLocalUrl());
+
+        // Which server this is, from whichever front end chose it. The old
+        // front end still connects through NativeApi.connectToServer, which
+        // records a FrontEndHost; the new front end's discovery page drives
+        // probe -> record -> navigate itself and states the identity through
+        // DiscoveryHostPlugin.navigate instead (hostContract.ts §
+        // ConnectedServer). Both ship, so both are honoured — and neither
+        // recognises a server by address, which loopback-versus-hostname
+        // spellings make unreliable.
+        //
+        // Both match by ORIGIN, not by the URL that was navigated to: this
+        // callback fires per REQUEST, so the document, every script and style,
+        // and every GraphQL call each arrive here separately. A rule scoped to
+        // the hand-off URL would answer the first and drop the rest to the
+        // refusal below (NativeApi.getChosenOrigin).
         NativeApi.FrontEndHost connectedServer = nativeApi.getConnectedServer();
+        String chosenOrigin = NativeApi.getChosenOrigin();
+        Boolean isChosenByPage = chosenOrigin != null && url.startsWith(chosenOrigin);
         Boolean isConnectedToServer = connectedServer != null && url.startsWith(connectedServer.getUrl());
 
         // Default behaviour if not connected to a server or not discovery
-        if (!(isConnectedToServer || isDiscovery)) {
+        if (!(isConnectedToServer || isChosenByPage || isDiscovery)) {
             super.onReceivedSslError(view, handler, error);
             return;
         }
 
-        // Local certificate check for local server connections
-        Boolean valid = isDiscovery || connectedServer.isLocal() ? validateLocalCertificate(error.getCertificate())
-                : validateNonLocalCertificate(error.getCertificate(), connectedServer);
+        // This machine's own server can be PROVED: it wrote its certificate to
+        // this device, so compare against that. Anyone else's can only be
+        // trusted on first use, keyed by identity so a changed certificate is
+        // caught (AC-AN9/AC-AN10).
+        Boolean isOwnServer = isDiscovery
+                || (isChosenByPage ? NativeApi.getChosenIsLocal() : connectedServer.isLocal());
+        Boolean valid;
+        String identifier;
+        if (isOwnServer) {
+            valid = this.validateLocalCertificate(error.getCertificate());
+            identifier = "local";
+        } else if (isChosenByPage) {
+            identifier = NativeApi.getChosenFingerprintKey();
+            valid = this.validateFingerprint(error.getCertificate(), identifier);
+        } else {
+            identifier = this.nonLocalFingerprintKey(connectedServer);
+            valid = this.validateFingerprint(error.getCertificate(), identifier);
+        }
 
         if (valid) {
             handler.proceed();
             return;
-        } else {
-            // Display error message
+        }
+
+        // Every failing request is refused either way — the dialog is only a
+        // notice. This callback fires per REQUEST (see above), so without
+        // sharing, a changed certificate stacked one identical dialog per
+        // request in flight (#544). Show one per server and certificate:
+        // events that arrive while it is up refuse silently, and the key
+        // includes the certificate, so a DIFFERENT bad certificate later
+        // still gets its own notice.
+        String dialogKey = identifier + ":" + this.certificateFingerprint(error.getCertificate());
+        // UI thread only (WebViewClient callbacks and dialog dismissal both
+        // run there), so plain check-then-add is race-free.
+        if (this.sslDialogsShowing.add(dialogKey)) {
             new AlertDialog.Builder(this.bridge.getContext())
                     .setTitle("SSL Error")
                     .setMessage("Certificate fingerprint for server was changed")
                     .setNegativeButton("OK", null)
                     .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setOnDismissListener(dialog -> this.sslDialogsShowing.remove(dialogKey))
                     .show();
-
-            super.onReceivedSslError(view, handler, error);
         }
+
+        super.onReceivedSslError(view, handler, error);
     }
 
 

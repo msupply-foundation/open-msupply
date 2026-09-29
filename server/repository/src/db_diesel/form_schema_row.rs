@@ -1,6 +1,4 @@
-use super::{
-    ChangelogRepository, RowActionType, StorageConnection,
-};
+use super::{ChangelogRepository, RowActionType, StorageConnection};
 
 use crate::{ChangelogSyncType, Delete, RepositoryError, SourceSiteId, Upsert};
 
@@ -16,7 +14,9 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Deserialize, serde::Serialize)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Deserialize, serde::Serialize,
+)]
 #[diesel(table_name = form_schema)]
 pub struct FormSchemaRow {
     /// The json schema id
@@ -170,12 +170,14 @@ impl Upsert for FormSchemaRow {
     ) -> Result<(), RepositoryError> {
         FormSchemaRowRepository::new(con)._upsert_one_row(self)?;
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FormSchemaJson::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                FormSchemaJson::generate_changelog(
+                    self.id.clone(),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
         ChangelogRepository::new(con).insert(&changelog)?;
@@ -229,12 +231,14 @@ impl Delete for FormSchemaRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FormSchemaJson::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                FormSchemaJson::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

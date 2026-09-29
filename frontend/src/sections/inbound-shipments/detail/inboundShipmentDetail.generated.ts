@@ -110,6 +110,11 @@ export type InboundLineFragment = {
   totalAfterTax: number;
   taxPercentage: number | null;
   note: string | null;
+  transferComment: string | null;
+  requisitionLine: {
+  id: string;
+  requestedQuantity: number;
+} | null;
   volumePerPack: number;
   status: "PENDING" | "PASSED" | "REJECTED" | null;
   linkedInvoiceId: string | null;
@@ -191,7 +196,7 @@ export type BatchResultFragment = {
   __typename: "InsertInboundShipmentLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError";
   description: string;
 };
 });
@@ -206,7 +211,7 @@ export type BatchResultFragment = {
   __typename: "UpdateInboundShipmentLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "BatchIsReserved" | "CannotEditInvoice" | "ForeignKeyError" | "NotAnInboundShipment" | "RecordNotFound";
   description: string;
 };
 });
@@ -221,7 +226,7 @@ export type BatchResultFragment = {
   __typename: "DeleteInboundShipmentLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "BatchIsReserved" | "CannotEditInvoice" | "ForeignKeyError" | "LineLinkedToTransferredInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -244,7 +249,7 @@ export type BatchResultFragment = {
   __typename: "InsertInboundShipmentServiceLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError";
   description: string;
 };
 });
@@ -259,7 +264,7 @@ export type BatchResultFragment = {
   __typename: "UpdateInboundShipmentServiceLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });
@@ -274,7 +279,7 @@ export type BatchResultFragment = {
   __typename: "DeleteInboundShipmentServiceLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });
@@ -294,7 +299,7 @@ export type InboundShipmentResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -322,14 +327,14 @@ export type FullInboundShipmentResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
 };
 
 export const FullInboundShipment = {
-  query: "query fullInboundShipment($storeId: String!, $id: String!, $type: InvoiceTypeInput) {\n  invoice(storeId: $storeId, id: $id, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n      lines {\n        totalCount\n        nodes {\n          ...InboundLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}\n\nfragment InboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  shippedPackSize\n  costPricePerPack\n  sellPricePerPack\n  foreignCurrencyPriceBeforeTax\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  note\n  volumePerPack\n  status\n  linkedInvoiceId\n  locationId\n  location {\n    id\n    code\n    name\n  }\n  vvmStatusId\n  vvmStatus {\n    id\n    code\n    description\n  }\n  stockLine {\n    id\n    availableNumberOfPacks\n    totalNumberOfPacks\n  }\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n    defaultPackSize\n  }\n  donor(storeId: $storeId) {\n    id\n    name\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  reasonOption {\n    id\n    reason\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n  itemVariant {\n    id\n    name\n  }\n  purchaseOrderLine {\n    id\n    lineNumber\n    requestedPackSize\n    requestedNumberOfUnits\n    adjustedNumberOfUnits\n    shippedNumberOfUnits\n    inTransitNumberOfUnits\n    receivedNumberOfUnits\n    pricePerPackAfterDiscount\n  }\n}",
+  query: "query fullInboundShipment($storeId: String!, $id: String!, $type: InvoiceTypeInput) {\n  invoice(storeId: $storeId, id: $id, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n      lines {\n        totalCount\n        nodes {\n          ...InboundLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n      isDisabled\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n    email\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n    orderTotalAfterDiscount\n    currency {\n      id\n      code\n      isHomeCurrency\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n      totalBytes\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n  customFields\n}\n\nfragment InboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  shippedPackSize\n  costPricePerPack\n  sellPricePerPack\n  foreignCurrencyPriceBeforeTax\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  note\n  transferComment\n  requisitionLine {\n    id\n    requestedQuantity\n  }\n  volumePerPack\n  status\n  linkedInvoiceId\n  locationId\n  location {\n    id\n    code\n    name\n  }\n  vvmStatusId\n  vvmStatus {\n    id\n    code\n    description\n  }\n  stockLine {\n    id\n    availableNumberOfPacks\n    totalNumberOfPacks\n  }\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n    defaultPackSize\n  }\n  donor(storeId: $storeId) {\n    id\n    name\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  reasonOption {\n    id\n    reason\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n  itemVariant {\n    id\n    name\n  }\n  purchaseOrderLine {\n    id\n    lineNumber\n    requestedPackSize\n    requestedNumberOfUnits\n    adjustedNumberOfUnits\n    shippedNumberOfUnits\n    inTransitNumberOfUnits\n    receivedNumberOfUnits\n    pricePerPackAfterDiscount\n  }\n}",
 } as TypedDocument<FullInboundShipmentResult, FullInboundShipmentVariables>;
 
 export type InboundShipmentByNumberVariables = {
@@ -347,7 +352,7 @@ export type InboundShipmentByNumberResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -445,6 +450,13 @@ export type InboundShipmentLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    inventoryAdjustmentReason?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     verifiedDatetime?: {
     equalTo?: string | null;
     beforeOrEqualTo?: string | null;
@@ -460,7 +472,7 @@ export type InboundShipmentLinesVariables = {
     isProgramInvoice?: boolean | null;
   } | null;
   sort?: Array<{
-    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName";
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "requestedQuantity";
     desc?: boolean | null;
   }> | null;
   page?: {
@@ -479,7 +491,7 @@ export type InboundShipmentLinesResult = {
 };
 
 export const InboundShipmentLines = {
-  query: "query inboundShipmentLines($storeId: String!, $filter: InvoiceLineFilterInput, $sort: [InvoiceLineSortInput!], $page: PaginationInput) {\n  invoiceLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundLine\n      }\n    }\n  }\n}\n\nfragment InboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  shippedPackSize\n  costPricePerPack\n  sellPricePerPack\n  foreignCurrencyPriceBeforeTax\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  note\n  volumePerPack\n  status\n  linkedInvoiceId\n  locationId\n  location {\n    id\n    code\n    name\n  }\n  vvmStatusId\n  vvmStatus {\n    id\n    code\n    description\n  }\n  stockLine {\n    id\n    availableNumberOfPacks\n    totalNumberOfPacks\n  }\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n    defaultPackSize\n  }\n  donor(storeId: $storeId) {\n    id\n    name\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  reasonOption {\n    id\n    reason\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n  itemVariant {\n    id\n    name\n  }\n  purchaseOrderLine {\n    id\n    lineNumber\n    requestedPackSize\n    requestedNumberOfUnits\n    adjustedNumberOfUnits\n    shippedNumberOfUnits\n    inTransitNumberOfUnits\n    receivedNumberOfUnits\n    pricePerPackAfterDiscount\n  }\n}",
+  query: "query inboundShipmentLines($storeId: String!, $filter: InvoiceLineFilterInput, $sort: [InvoiceLineSortInput!], $page: PaginationInput) {\n  invoiceLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundLine\n      }\n    }\n  }\n}\n\nfragment InboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  shippedPackSize\n  costPricePerPack\n  sellPricePerPack\n  foreignCurrencyPriceBeforeTax\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  note\n  transferComment\n  requisitionLine {\n    id\n    requestedQuantity\n  }\n  volumePerPack\n  status\n  linkedInvoiceId\n  locationId\n  location {\n    id\n    code\n    name\n  }\n  vvmStatusId\n  vvmStatus {\n    id\n    code\n    description\n  }\n  stockLine {\n    id\n    availableNumberOfPacks\n    totalNumberOfPacks\n  }\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n    defaultPackSize\n  }\n  donor(storeId: $storeId) {\n    id\n    name\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  reasonOption {\n    id\n    reason\n  }\n  campaign {\n    id\n    name\n  }\n  program {\n    id\n    name\n  }\n  itemVariant {\n    id\n    name\n  }\n  purchaseOrderLine {\n    id\n    lineNumber\n    requestedPackSize\n    requestedNumberOfUnits\n    adjustedNumberOfUnits\n    shippedNumberOfUnits\n    inTransitNumberOfUnits\n    receivedNumberOfUnits\n    pricePerPackAfterDiscount\n  }\n}",
 } as TypedDocument<InboundShipmentLinesResult, InboundShipmentLinesVariables>;
 
 export type InboundServiceLinesVariables = {
@@ -570,6 +582,13 @@ export type InboundServiceLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    inventoryAdjustmentReason?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     verifiedDatetime?: {
     equalTo?: string | null;
     beforeOrEqualTo?: string | null;
@@ -640,7 +659,7 @@ export type UpdateInboundShipmentResult = {
   __typename: "UpdateInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotChangeStatusOfInvoiceOnHold" | "CannotEditInvoice" | "CannotIssueInForeignCurrency" | "CannotReceiveWithPendingLines" | "CannotReverseInvoiceStatus" | "OtherPartyNotASupplier" | "OtherPartyNotVisible" | "RecordNotFound";
   description: string;
 };
 });
@@ -683,7 +702,7 @@ export type UpdateInboundShipmentExternalResult = {
   __typename: "UpdateInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotChangeStatusOfInvoiceOnHold" | "CannotEditInvoice" | "CannotIssueInForeignCurrency" | "CannotReceiveWithPendingLines" | "CannotReverseInvoiceStatus" | "OtherPartyNotASupplier" | "OtherPartyNotVisible" | "RecordNotFound";
   description: string;
 };
 });
@@ -705,7 +724,6 @@ export type BatchInboundShipmentVariables = {
     colour?: string | null;
     requisitionId?: string | null;
     purchaseOrderId?: string | null;
-    prescriptionRequestId?: string | null;
     insertLinesFromPurchaseOrder?: boolean | null;
   }> | null;
     insertInboundShipmentLines?: Array<{
@@ -865,7 +883,6 @@ export type BatchInboundShipmentExternalVariables = {
     colour?: string | null;
     requisitionId?: string | null;
     purchaseOrderId?: string | null;
-    prescriptionRequestId?: string | null;
     insertLinesFromPurchaseOrder?: boolean | null;
   }> | null;
     insertInboundShipmentLines?: Array<{
@@ -1030,7 +1047,7 @@ export type AddToInboundShipmentFromMasterListResult = {
   __typename: "AddToInboundShipmentFromMasterListError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "MasterListNotFoundForThisStore" | "RecordNotFound";
   description: string;
 };
 });
@@ -1056,7 +1073,7 @@ export type DeleteInboundShipmentResult = {
   __typename: "DeleteInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -1082,7 +1099,7 @@ export type DeleteInboundShipmentExternalResult = {
   __typename: "DeleteInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });

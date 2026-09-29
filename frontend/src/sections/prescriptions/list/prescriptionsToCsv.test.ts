@@ -26,7 +26,7 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
       'label.name',
       'label.status',
       'label.invoice-number',
-      'label.prescription-date',
+      'label.dispensed-date',
       'label.reference',
       'label.comment',
     ]);

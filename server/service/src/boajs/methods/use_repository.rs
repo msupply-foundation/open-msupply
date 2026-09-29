@@ -34,8 +34,8 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
             let input: UseRepositoryInput = get_serde_argument(ctx, args, 0)?;
 
             // When using BoaJsContext, it's best to use 'scope'
-            let output: UseRepositoryOutput = use_boajs_connection(
-                |connection| -> Result<UseRepositoryOutput, JsError> {
+            let output: UseRepositoryOutput =
+                use_boajs_connection(|connection| -> Result<UseRepositoryOutput, JsError> {
                     use UseRepositoryInput as In;
                     use UseRepositoryOutput as Out;
 
@@ -62,9 +62,8 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                         ),
                     };
                     Ok(output)
-                },
-            )
-            .map_err(std_error_to_js_error)??;
+                })
+                .map_err(std_error_to_js_error)??;
 
             let value: serde_json::Value =
                 serde_json::to_value(&output).map_err(std_error_to_js_error)?;

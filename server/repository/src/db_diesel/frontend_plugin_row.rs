@@ -1,10 +1,6 @@
-use super::{
-    ChangelogRepository, RowActionType, StorageConnection,
-};
+use super::{ChangelogRepository, RowActionType, StorageConnection};
 
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -192,7 +188,10 @@ impl<'a> FrontendPluginRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<FrontendPluginRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<FrontendPluginRow>, RepositoryError> {
         Ok(frontend_plugin::table
             .filter(frontend_plugin::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
@@ -239,12 +238,14 @@ impl Delete for FrontendPluginRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FrontendPluginRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                FrontendPluginRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 

@@ -7,8 +7,7 @@ use http2::header::SET_COOKIE;
 use service::{
     auth_data::AuthData,
     login::{
-        LoginError, LoginFailure, LoginInput, LoginService, LoginSuccess,
-        MIN_ERR_RESPONSE_TIME_SEC,
+        LoginError, LoginFailure, LoginInput, LoginService, LoginSuccess, MIN_ERR_RESPONSE_TIME_SEC,
     },
     session_store::SESSION_LIFETIME,
     sync::CentralServerConfig,
@@ -191,7 +190,9 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                 LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
                 | LoginError::FetchUserError(_)
-                | LoginError::UpdateUserError(_) => StandardGraphqlError::InternalError(formatted_error),
+                | LoginError::UpdateUserError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
             };
             return Err(graphql_error.extend());
         }

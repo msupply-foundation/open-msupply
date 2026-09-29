@@ -17,7 +17,17 @@ joinable!(clinician_store_join -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(clinician, clinician_store_join);
 allow_tables_to_appear_in_same_query!(clinician_store_join, clinician_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = clinician_store_join)]
 pub struct ClinicianStoreJoinRow {
     pub id: String,
@@ -74,7 +84,10 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ClinicianStoreJoinRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ClinicianStoreJoinRow>, RepositoryError> {
         Ok(clinician_store_join::table
             .filter(clinician_store_join::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

@@ -3,9 +3,7 @@ use crate::sync::{
     translations::{IntegrationOperation, PullTranslateResult},
 };
 use chrono::NaiveDate;
-use repository::{
-    sync_buffer::SyncRecordData, StoreLogoRow, StoreRow, SyncAction, SyncBufferRow,
-};
+use repository::{sync_buffer::SyncRecordData, StoreLogoRow, StoreRow, SyncAction, SyncBufferRow};
 
 const TABLE_NAME: &str = "store";
 

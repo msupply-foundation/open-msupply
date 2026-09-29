@@ -59,7 +59,11 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
         let result = ClinicianStoreJoinRow {
             id,
             store_id: check_fk(store_id, "store_id", FkField::Store)?,
-            clinician_link_id: check_fk(prescriber_id, "clinician_link_id", FkField::ClinicianLink)?,
+            clinician_link_id: check_fk(
+                prescriber_id,
+                "clinician_link_id",
+                FkField::ClinicianLink,
+            )?,
         };
         Ok(PullTranslateResult::upsert(result))
     }

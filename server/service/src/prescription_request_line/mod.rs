@@ -6,7 +6,8 @@ pub mod upsert;
 
 use self::delete::{delete_prescription_request_line, DeletePrescriptionRequestLineError};
 use self::upsert::{
-    upsert_prescription_request_line, UpsertPrescriptionRequestLine, UpsertPrescriptionRequestLineError,
+    upsert_prescription_request_line, UpsertPrescriptionRequestLine,
+    UpsertPrescriptionRequestLineError,
 };
 
 // No filtered read here: lines are only ever read through their parent request,

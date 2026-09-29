@@ -25,7 +25,8 @@ pub fn get_ancillary_plan(
     requisition_id: &str,
 ) -> Result<AncillaryPlan, GetAncillaryPlanError> {
     let lines = RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
+        RequisitionLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
     )?;
     let line_rows: Vec<_> = lines.into_iter().map(|l| l.requisition_line_row).collect();
 
@@ -34,8 +35,8 @@ pub fn get_ancillary_plan(
     // walk into. Simplest correct approach is to pull every row and let the
     // compute step filter — there aren't many and the repository already
     // excludes deleted rows.
-    let ancillary_rows = AncillaryItemRepository::new(connection)
-        .query_by_filter(AncillaryItemFilter::new())?;
+    let ancillary_rows =
+        AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
 
     Ok(compute_ancillary_plan(&line_rows, &ancillary_rows))
 }

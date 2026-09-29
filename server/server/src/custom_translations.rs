@@ -53,13 +53,15 @@ async fn custom_translations(
         return Ok(HttpResponse::Ok().json(v1));
     };
 
-    let v2 = CustomTranslationsV2.load(&connection, None).map_err(|err| {
-        log::error!("Failed to load v2 custom translations: {err}");
-        InternalError::new(
-            "Could not load preference",
-            StatusCode::INTERNAL_SERVER_ERROR,
-        )
-    })?;
+    let v2 = CustomTranslationsV2
+        .load(&connection, None)
+        .map_err(|err| {
+            log::error!("Failed to load v2 custom translations: {err}");
+            InternalError::new(
+                "Could not load preference",
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )
+        })?;
 
     // The frontend has a single custom-translations override namespace, so we
     // return a flat key -> value map for the requested language. v1 is the base

@@ -10,7 +10,7 @@ import { DashboardBody } from './DashboardBody';
  *
  * The page is the FRAME: the header and its breadcrumb, inside the app frame
  * and the navigation menu the shell owns. What fills the body is the body
- * region's answer — the built-in card grid of three widgets, or a plugin
+ * region's answer — the built-in card grid of widgets, or a plugin
  * contribution in place of the whole of it (§ body-region semantics) — and that
  * choice is `DashboardBody`'s. The frame is unchanged either way: a contributed
  * body fills the body only.

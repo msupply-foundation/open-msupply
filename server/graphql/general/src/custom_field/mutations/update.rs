@@ -7,7 +7,8 @@ use graphql_types::types::{
 use service::{
     auth::{Resource, ResourceAccessRequest},
     custom_field::{
-        CustomFieldScopeUpdate, UpdateCustomFieldScopes, UpdateCustomFieldScopesError as ServiceError,
+        CustomFieldScopeUpdate, UpdateCustomFieldScopes,
+        UpdateCustomFieldScopesError as ServiceError,
     },
     ListResult,
 };

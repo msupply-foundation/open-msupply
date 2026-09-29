@@ -159,9 +159,7 @@ The first `Builtin` set (see above) — four fields on the `prescription_request
 | --- | ----- | ---------- | ------------------- |
 | `prescription_request_weight` | `prescription_request` | `Real` | `Prominent` (toolbar) |
 | `prescription_request_patient_unit` | `prescription_request` | `Text` | `Prominent` (toolbar) |
-| `prescription_request_occupation` | `prescription_request` | `Text` | `Visible` (tab) |
-| `patient_category` | `patient` | `MultiOption` | `Visible` (tab) |
-
-`patient_category` describes the person rather than the script, so it is scoped to `patient` and rides `name.custom_fields`: a flat vocabulary of `pregnant`, `lactating`, `under_5`, `disabled`, `destitute`, `other` (option ids are `<field_key>__<option_key>`). It is `MultiOption` because a patient is routinely in several of these at once. `other` has no free-text companion — adding one means a second field.
+| `prescription_request_occupation` | `prescription_request` | `Text` | `Prominent` (toolbar) |
+| `prescription_request_category` | `prescription_request` | `MultiOption` | `Prominent` (toolbar) |
 
 None of the four is read by OMS code; they're captured, displayed and printed. A value that ever feeds a calculation, a shipped report or a validation belongs in a real column instead — the JSON blob has no type enforcement and no required constraint.

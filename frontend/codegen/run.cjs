@@ -2,19 +2,26 @@
  * Codegen runner.
  *
  * Finds every .graphql under src/ and under the plugin trees, runs our custom
- * plugin (codegen/plugin.js) against the live schema, and writes a co-located
+ * plugin (codegen/plugin.js) against the pinned schema, and writes a co-located
  * <name>.generated.ts next to each .graphql file.
  *
  * Uses @graphql-codegen/core to drive the plugin — the full CLI isn't needed.
  *
- * THE SCHEMA IS THE PINNED ONE (spec/schema.graphql), not a running server.
+ * THE SCHEMA IS THE PINNED ONE (server/schema.graphql), not a running server.
  * Codegen is then reproducible: the same tree generates the same types on any
  * machine and in CI, and the types agree with the SDL the spec is written
- * against (spec/IMPLEMENTING.md § C7 keeps that pin honest, refreshed wholesale
- * from introspection and never hand-edited). Generating from whichever server
- * a developer happened to have running made the output depend on that server's
- * build — a schema behind the tree silently rewrote committed types, and one
- * ahead of it generated against fields the branch does not have.
+ * against. Generating from whichever server a developer happened to have
+ * running made the output depend on that server's build — a schema behind the
+ * tree silently rewrote committed types, and one ahead of it generated against
+ * fields the branch does not have.
+ *
+ * The pin is refreshed wholesale by the server's own exporter and never
+ * hand-edited: `pnpm generate` does the export and this run in one step (the
+ * counterpart of `yarn generate` in client/). Use plain `pnpm codegen` when
+ * only a .graphql document changed — it needs no cargo and no backend. CI
+ * enforces both halves: spec/IMPLEMENTING.md § C7 and the two workflows
+ * (generate-schema.yml for pin == server, frontend-check-test.yaml for
+ * generated types == pin).
  *
  * Host and plugin documents differ in exactly one way: where the emitted file
  * imports `TypedDocument` from. A host document gets a relative path to
@@ -28,7 +35,7 @@
  * Usage: node codegen/run.js [path ...]
  *   A path narrows the run to documents under it, e.g. `plugins`.
  *   SCHEMA_URL opts INTO introspecting a running server instead of the pin —
- *   for checking a branch whose backend has not reached spec/schema.graphql
+ *   for checking a branch whose backend has not reached schema.graphql
  *   yet. What it generates must not be committed: the pin is what the
  *   committed types belong to.
  */
@@ -45,7 +52,7 @@ const {
 const { allDocuments, graphqlImportFor } = require("./documents.cjs");
 
 const SCHEMA_URL = process.env.SCHEMA_URL;
-const SCHEMA_FILE = path.resolve(__dirname, "..", "spec", "schema.graphql");
+const SCHEMA_FILE = path.resolve(__dirname, "..", "..", "server", "schema.graphql");
 const PLUGIN_PATH = path.resolve(__dirname, "plugin.cjs");
 
 async function introspectSchema() {

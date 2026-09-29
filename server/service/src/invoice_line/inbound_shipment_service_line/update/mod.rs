@@ -7,10 +7,8 @@ use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
 use crate::{
-    invoice::inbound_shipment::InboundShipmentType,
-    invoice_line::query::get_invoice_line,
-    service_provider::ServiceContext,
-    WithDBError,
+    invoice::inbound_shipment::InboundShipmentType, invoice_line::query::get_invoice_line,
+    service_provider::ServiceContext, WithDBError,
 };
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct UpdateInboundShipmentServiceLine {
@@ -131,7 +129,8 @@ mod test {
                 UpdateInboundShipmentServiceLine {
                     id: "invalid".to_string(),
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::LineDoesNotExist)
         );
@@ -143,7 +142,8 @@ mod test {
                 UpdateInboundShipmentServiceLine {
                     id: mock_draft_outbound_service_line().id,
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
@@ -155,7 +155,8 @@ mod test {
                 UpdateInboundShipmentServiceLine {
                     id: mock_draft_inbound_verified_service_line().id,
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::CannotEditInvoice)
         );
@@ -168,7 +169,8 @@ mod test {
                     id: mock_draft_inbound_service_line().id,
                     item_id: Some("invalid".to_string()),
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -181,7 +183,8 @@ mod test {
                     id: mock_draft_inbound_service_line().id,
                     item_id: Some(mock_item_a().id),
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::NotAServiceItem)
         );
@@ -195,7 +198,8 @@ mod test {
                     id: mock_draft_inbound_service_line().id,
                     item_id: Some(mock_item_service_item().id),
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -223,7 +227,8 @@ mod test {
                     id: mock_draft_inbound_service_line().id,
                     item_id: Some(mock_item_service_item().id),
                     ..Default::default()
-                }, None
+                },
+                None,
             )
             .unwrap();
 
@@ -243,7 +248,8 @@ mod test {
                     item_id: Some(mock_default_service_item().id),
                     name: Some("name".to_string()),
                     ..Default::default()
-                }, None
+                },
+                None,
             )
             .unwrap();
 
@@ -268,7 +274,8 @@ mod test {
                         percentage: Some(10.0),
                     }),
                     note: Some("note".to_string()),
-                }, None
+                },
+                None,
             )
             .unwrap();
 

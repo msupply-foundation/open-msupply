@@ -28,10 +28,7 @@ impl ItemStorePropertiesNode {
         self.item_store_properties.margin
     }
 
-    pub async fn default_location(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<LocationNode>> {
+    pub async fn default_location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
         let location_id = match &self.item_store_properties.default_location_id {
             Some(id) => id,
             None => return Ok(None),

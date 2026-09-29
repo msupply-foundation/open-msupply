@@ -1,6 +1,6 @@
 use super::{name_link_row::name_link::dsl::*, name_row::name};
 
-use crate::{RepositoryError, StorageConnection, ChangelogSyncType, Upsert};
+use crate::{ChangelogSyncType, RepositoryError, StorageConnection, Upsert};
 
 use diesel::prelude::*;
 
@@ -82,7 +82,11 @@ impl<'a> NameLinkRowRepository<'a> {
 }
 
 impl Upsert for NameLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         NameLinkRowRepository::new(con).upsert_one(self)?;
         Ok(()) // Table not in Changelog
     }

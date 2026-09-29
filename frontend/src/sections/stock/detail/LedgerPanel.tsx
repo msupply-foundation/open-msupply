@@ -5,7 +5,7 @@ import {
   type Component,
 } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
-import { t } from '../../../intl';
+import { t, type LocaleKey } from '../../../intl';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import {
   DataTable,
@@ -32,13 +32,11 @@ type Ledger = StockLedgerResult['ledger']['nodes'][number];
 
 type SortKey = NonNullable<StockLedgerVariables['sort']>[number]['key'];
 
-// A document-type label: humanise the InvoiceNodeType enum (title-cased words).
-const typeLabel = (invoiceType: string): string =>
-  invoiceType
-    .toLowerCase()
-    .split('_')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
+type Kebab<S extends string> = S extends `${infer H}_${infer T}`
+  ? `${H}-${Kebab<T>}`
+  : S;
+const typeLabelKey = (invoiceType: Ledger['invoiceType']): LocaleKey =>
+  `label.${invoiceType.toLowerCase().split('_').join('-') as Lowercase<Kebab<Ledger['invoiceType']>>}`;
 
 export const LedgerPanel: Component<{
   storeId: string;
@@ -115,7 +113,7 @@ export const LedgerPanel: Component<{
       // fits — the explicit text helper, per docs/CELL_TYPES.md.
       ...getTextCell(),
       cell: info =>
-        `${typeLabel(info.row.original.invoiceType)} ${info.row.original.invoiceNumber}`,
+        `${t(typeLabelKey(info.row.original.invoiceType))} ${info.row.original.invoiceNumber}`,
     },
     {
       c: { accessor: l => l.reason ?? '', id: 'reason' },

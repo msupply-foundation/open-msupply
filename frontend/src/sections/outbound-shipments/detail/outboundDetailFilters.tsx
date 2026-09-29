@@ -93,4 +93,8 @@ export const outboundDetailFilters = (
     itemId: null,
     stockLineId: null,
     reasonOption: null,
+    // The pre-reason-options spelling of the key above, still served for
+    // backwards compatibility. Dismissed for the same reason, and doubly so:
+    // exposing both would offer two chips that filter the same thing.
+    inventoryAdjustmentReason: null,
   });

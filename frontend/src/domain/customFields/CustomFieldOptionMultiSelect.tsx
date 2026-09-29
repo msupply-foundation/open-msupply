@@ -21,15 +21,16 @@ import {
 // parse.ts and are shared with the list filter (parse › applyOptionToggle), so
 // the two surfaces cannot drift.
 //
-// `readOnly` is the locked-record rendering: openable and focusable, nothing
-// selectable. Not `disabled` — the trigger summarises the value, so a control
-// that can't be opened hides the values it doesn't have room to show.
+// `disabled` is the locked-record rendering, as every other value type's
+// control (spec/ui-standards/custom-fields › value types; #581). The chosen
+// options stay readable — MultiSelect renders them as wrapping tags inside the
+// control, so nothing is hidden by the control not opening.
 export const CustomFieldOptionMultiSelect = (props: {
   def: CustomFieldDef;
   /** Stored option ids (the minimal covering set). */
   value: string[];
   onChange: (ids: string[]) => void;
-  readOnly?: boolean;
+  disabled?: boolean;
   /** Hide the picker's own label (default false — label shown above). */
   hideLabel?: boolean;
   size?: 'default' | 'small';
@@ -71,7 +72,7 @@ export const CustomFieldOptionMultiSelect = (props: {
       label={props.def.name}
       hideLabel={props.hideLabel}
       size={props.size}
-      readOnly={props.readOnly}
+      disabled={props.disabled}
       inputTestId={props.testId}
       items={items()}
       itemToString={o => o.option.name}

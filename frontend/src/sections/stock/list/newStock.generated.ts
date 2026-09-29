@@ -72,6 +72,7 @@ export type InsertStockLineVariables = {
   } | null;
     expiryDate?: string | null;
     manufactureDate?: string | null;
+    inventoryAdjustmentReasonId?: string | null;
     reasonOptionId?: string | null;
     barcode?: string | null;
     itemVariantId?: string | null;
@@ -93,7 +94,7 @@ export type InsertStockLineResult = {
   __typename: "InsertStockLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "AdjustmentReasonNotProvided";
   description: string;
 };
 });

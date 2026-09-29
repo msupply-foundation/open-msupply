@@ -92,9 +92,7 @@ fn map_error(error: ServiceError) -> Result<UpsertSiteErrorInterface> {
 
     let graphql_error = match error {
         ServiceError::CodeRequired => {
-            return Ok(UpsertSiteErrorInterface::CodeRequired(
-                CodeRequired,
-            ))
+            return Ok(UpsertSiteErrorInterface::CodeRequired(CodeRequired))
         }
         ServiceError::NameRequired => {
             return Ok(UpsertSiteErrorInterface::NameRequired(NameRequired))

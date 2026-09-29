@@ -112,13 +112,15 @@ where
 mod test {
     use repository::{
         mock::{
-            currency_a, currency_b, mock_inbound_shipment_c, mock_name_a,
+            currency_a, currency_b, mock_inbound_shipment_c, mock_item_a, mock_name_a,
             mock_name_linked_to_store_join, mock_name_not_linked_to_store, mock_store_a,
             mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceRowRepository, NameRow, NameStoreJoinRow, PurchaseOrderRow,
-        PurchaseOrderRowRepository,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
+        PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
+        PurchaseOrderRow, PurchaseOrderRowRepository,
     };
 
     use crate::{
@@ -195,7 +197,7 @@ mod test {
                     other_party_id: "invalid".to_string(),
                     ..Default::default()
                 },
-            InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -208,7 +210,7 @@ mod test {
                     other_party_id: not_visible().id,
                     ..Default::default()
                 },
-            InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -221,7 +223,7 @@ mod test {
                     other_party_id: not_a_supplier().id,
                     ..Default::default()
                 },
-            InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -274,7 +276,7 @@ mod test {
                     other_party_id: supplier().id,
                     ..Default::default()
                 },
-            InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -330,7 +332,7 @@ mod test {
                     other_party_id: mock_name_linked_to_store_join().name_id.clone(),
                     ..Default::default()
                 },
-                    InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -356,7 +358,7 @@ mod test {
                     other_party_id: mock_name_not_linked_to_store().id.clone(),
                     ..Default::default()
                 },
-                    InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -476,5 +478,153 @@ mod test {
             invoice.currency_rate, 1.0,
             "Invoice without PO should have currency_rate 1.0"
         );
+    }
+
+    /// Seeding lines from a purchase order takes each line's STORED total,
+    /// pro-rated to the units still to ship, rather than multiplying price by
+    /// packs again — and only the outstanding packs are added.
+    #[actix_rt::test]
+    async fn insert_inbound_shipment_pro_rates_stored_line_total() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "pro_rate_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "pro_rate_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        // Same rate on the order as in the currency table, so the assertions
+        // hold whichever of the two the conversion uses.
+        fn po() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "pro_rate_po".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: supplier().id,
+                currency_id: Some(currency_b().id),
+                foreign_exchange_rate: currency_b().rate,
+                ..Default::default()
+            }
+        }
+
+        // 100 units at pack size 10, stored total 60.00 in the order's currency.
+        fn po_line() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "pro_rate_po_line".to_string(),
+                purchase_order_id: po().id,
+                store_id: mock_store_a().id,
+                line_number: 1,
+                item_id: mock_item_a().id,
+                requested_pack_size: 10.0,
+                requested_number_of_units: 100.0,
+                price_per_pack_after_discount: 6.0,
+                line_total: 60.0,
+                status: PurchaseOrderLineStatus::Sent,
+                ..Default::default()
+            }
+        }
+
+        // An earlier shipment already carries 4 packs (40 units) of the line.
+        fn shipped_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "pro_rate_shipped".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Shipped,
+                purchase_order_id: Some(po().id),
+                ..Default::default()
+            }
+        }
+
+        fn shipped_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "pro_rate_shipped_line".to_string(),
+                invoice_id: shipped_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                purchase_order_line_id: Some(po_line().id),
+                number_of_packs: 4.0,
+                pack_size: 10.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_inbound_shipment_pro_rates_stored_line_total",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&po())
+            .unwrap();
+        PurchaseOrderLineRowRepository::new(&connection)
+            .upsert_one(&po_line())
+            .unwrap();
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&shipped_invoice())
+            .unwrap();
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&shipped_line())
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        service_provider
+            .invoice_service
+            .insert_inbound_shipment(
+                &context,
+                InsertInboundShipment {
+                    id: "pro_rate_new".to_string(),
+                    other_party_id: supplier().id,
+                    purchase_order_id: Some(po().id),
+                    insert_lines_from_purchase_order: true,
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("pro_rate_new")
+            .unwrap()
+            .unwrap();
+        let lines = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id("pro_rate_new")
+            .unwrap();
+        assert_eq!(lines.len(), 1);
+        let line = &lines[0];
+
+        // 60 of 100 units remain: 6 packs, and 60% of the stored 60.00 = 36.00
+        let close = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        assert_eq!(line.number_of_packs, 6.0);
+        assert!(
+            close(line.foreign_currency_price_before_tax.unwrap(), 36.0),
+            "foreign total should be the stored total pro-rated, got {:?}",
+            line.foreign_currency_price_before_tax
+        );
+        assert!(
+            close(line.total_before_tax, 36.0 * invoice.currency_rate),
+            "local total should be the pro-rated total at the rate, got {}",
+            line.total_before_tax
+        );
+        assert!(close(line.total_after_tax, line.total_before_tax));
     }
 }

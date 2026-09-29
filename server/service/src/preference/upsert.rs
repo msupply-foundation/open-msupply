@@ -232,15 +232,15 @@ pub fn upsert_preferences(
             if let Some(input) = expired_stock_prevent_issue_input {
                 expired_stock_prevent_issue.upsert(connection, input, None)?;
             }
-            
+
             if let Some(input) = expired_stock_issue_threshold_input {
                 expired_stock_issue_threshold.upsert(connection, input, None)?;
             }
 
-            if let Some(input) = is_gaps_input { 
+            if let Some(input) = is_gaps_input {
                 is_gaps.upsert(connection, input, None)?;
             }
-            
+
             if let Some(input) = item_margin_overrides_supplier_margin_input {
                 item_margin_overrides_supplier_margin.upsert(connection, input, None)?;
             }
@@ -252,7 +252,7 @@ pub fn upsert_preferences(
             if let Some(input) = display_population_based_forecasting_input {
                 display_population_based_forecasting.upsert(connection, input, None)?;
             }
-            
+
             if let Some(input) = global_table_configs_input {
                 global_table_configs.upsert(connection, input, None)?;
             }
@@ -304,7 +304,7 @@ pub fn upsert_preferences(
             if let Some(inputs) = requisition_auto_finalise_input {
                 upsert_store_input(connection, requisition_auto_finalise, inputs)?;
             }
-      
+
             if let Some(inputs) = inbound_shipment_auto_verify_input {
                 upsert_store_input(connection, inbound_shipment_auto_verify, inputs)?;
             }
@@ -353,7 +353,7 @@ pub fn upsert_preferences(
                     input,
                 )?;
             }
-            
+
             if let Some(input) = first_threshold_for_expiring_items_input {
                 upsert_store_input(
                     connection,

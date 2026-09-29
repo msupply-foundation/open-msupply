@@ -1,6 +1,6 @@
 use super::item_row::item;
-use super::{item_direction_row::item_direction, ItemDirectionRow, StorageConnection};
 use super::ItemRow;
+use super::{item_direction_row::item_direction, ItemDirectionRow, StorageConnection};
 
 use crate::diesel_macros::apply_equal_filter;
 

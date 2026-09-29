@@ -24,7 +24,7 @@ export type ReportResult = {
   __typename: "QueryReportError";
 } & {
   error: {
-  __typename: string;
+  __typename: "FailedTranslation";
   description: string;
 };
 });

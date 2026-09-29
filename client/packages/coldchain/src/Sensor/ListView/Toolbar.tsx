@@ -60,6 +60,7 @@ export const Toolbar = ({ activeOnly, onToggleActiveOnly }: ToolbarProps) => {
           label={t('label.active-only')}
           labelPlacement="end"
           size="small"
+          testId="active-only-toggle"
         />
       </Box>
     </AppBarContentPortal>

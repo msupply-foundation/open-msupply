@@ -57,6 +57,9 @@ pub enum UpdatePrescriptionError {
     NotThisStoreInvoice,
     ClinicianDoesNotExist,
     PatientDoesNotExist,
+    /// A change to a field the prescriber owns, on a dispensation generated
+    /// from a prescription request. Holds the field's name.
+    CannotChangePrescriberField(&'static str),
     UnknownPropertyKey(String),
     /// A customFields patch gives a defined property a value of the wrong
     /// shape for its value type.
@@ -533,6 +536,7 @@ mod test {
             received_number_of_packs: None,
             linked_invoice_line_id: None,
             legacy_goods_received_line_id: None,
+            transfer_comment: None,
         };
 
         invoice_line_row_repo.upsert_one(&invoice_line).unwrap();

@@ -28,6 +28,7 @@ query stockLocations($storeId: String!) {
         }
         locationType {
           id
+          name
         }
       }
     }

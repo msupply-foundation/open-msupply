@@ -19,6 +19,7 @@ import { NumberField } from '../inputs/NumberField';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import { DateRangeField } from '../inputs/DateRangeField';
 import {
+  localTodayIso,
   utcBoundsFromLocalDays,
   utcToLocalDay,
 } from '../inputs/dateTimeConvert';
@@ -132,7 +133,7 @@ export interface FilterGroup<C extends object> {
   onChange: (filter: C) => void;
 }
 
-interface FilterBarProps<
+export interface FilterBarProps<
   F extends object,
   C extends object = Record<string, never>,
 > {
@@ -362,6 +363,10 @@ export const FilterBar = <
         <button
           type="button"
           class={styles.clearAll}
+          // Same id as the current app's "Remove all filters" menu entry — the
+          // e2e suites locate the action, not its placement (e2e/TESTIDS.md
+          // § Shared ids).
+          data-testid="filters-clear-all"
           // As on a chip's ✕: taking the caret out of an editor shrinks it and
           // shifts this button mid-press, losing the click.
           onMouseDown={e => e.preventDefault()}
@@ -521,7 +526,7 @@ const FiltersMenu = (props: {
  * once; a draft still pending at unmount is discarded, never applied
  * (flushing there would resurrect a chip the user just removed).
  */
-export const FilterTextInput = (props: {
+export interface FilterTextInputProps {
   value: string;
   onInput: (value: string) => void;
   placeholder?: string;
@@ -536,7 +541,9 @@ export const FilterTextInput = (props: {
    * (client-side sets).
    */
   debounceMs?: number;
-}) => {
+}
+
+export const FilterTextInput = (props: FilterTextInputProps) => {
   const chipFocus = useChipFocus();
   // undefined = no pending edit → the input shows the committed props.value.
   const [draft, setDraft] = createSignal<string>();
@@ -756,7 +763,7 @@ const NoOptions = () => (
  * A discrete choice, so `onChange` applies immediately — no debounce (spec:
  * ui-standards/inputs.md § Server-bound input).
  */
-export const FilterSelect = <V extends string>(props: {
+export interface FilterSelectProps<V extends string> {
   value: V | '';
   options: readonly { value: V | ''; label: string }[];
   onChange: (value: V | '') => void;
@@ -766,7 +773,9 @@ export const FilterSelect = <V extends string>(props: {
    * `filter-input-<key>`).
    */
   testId?: string;
-}) => {
+}
+
+export const FilterSelect = <V extends string>(props: FilterSelectProps<V>) => {
   const chipFocus = useChipFocus();
   const current = () => props.options.find(o => o.value === props.value);
   return (
@@ -971,7 +980,7 @@ export const FilterCheckbox = (props: {
 
 /** Inclusive range bounds on a filter key (shared by `DatetimeFilterInput`
  *  and `DateFilterInput`). */
-interface RangeBounds {
+export interface RangeBounds {
   afterOrEqualTo?: string | null;
   beforeOrEqualTo?: string | null;
 }
@@ -984,16 +993,19 @@ interface RangeBounds {
  * through. The value is the field's own wire bounds, so a vertical binds its
  * key directly.
  */
-export const FilterDateRange = (props: {
+export interface FilterDateRangeProps {
   value: RangeBounds | null | undefined;
   onChange: (value: RangeBounds | null) => void;
   /** The target field's wire scalar — governs conversion, not the UI. */
   type: 'date' | 'dateTime';
   label: string;
+  disableFuture?: boolean;
   /** `data-testid` for the trigger (FilterBar supplies
    *  `filter-input-<key>`). */
   testId?: string;
-}) => {
+}
+
+export const FilterDateRange = (props: FilterDateRangeProps) => {
   // The field's ONE focusable is its popover trigger — a button, so a
   // just-added chip OPENS its calendar rather than merely focusing it.
   const chipFocus = useChipFocus();
@@ -1023,6 +1035,7 @@ export const FilterDateRange = (props: {
           start: toLocal(props.value?.afterOrEqualTo),
           end: toLocal(props.value?.beforeOrEqualTo),
         }}
+        max={props.disableFuture ? localTodayIso() : undefined}
         onChange={({ start, end }) => props.onChange(toWire(start, end))}
       />
     </span>
@@ -1041,16 +1054,19 @@ export interface IsoDateTimeRange {
  * de-boxed onto the chip pill via .bareField. Unlike FilterDateRange (one
  * corvu range-mode calendar, date-only), there is no shared range primitive
  * that also picks time, so this composes two whole fields rather than
- * extending DateRangeField — the items Ledger tab is the first caller
- * (spec/items/ui-surface.md § Ledger tab: "From date/time" / "To date/time").
- * Value is a `{ start, end }` pair of UTC ISO instants; the caller maps it
- * onto its filter's bounds (e.g. after/beforeOrEqualTo).
+ * extending DateRangeField. Callers: the items Ledger tab
+ * (spec/items/ui-surface.md § Ledger tab: "From date/time" / "To date/time")
+ * and the cold-chain monitoring screen's breach-start window. Either side
+ * clears on its own, so a one-sided range is one chip, not two. Value is a
+ * `{ start, end }` pair of UTC ISO instants; the caller maps it onto its
+ * filter's bounds (e.g. after/beforeOrEqualTo).
  */
 export const FilterDateTimeRange = (props: {
   value: IsoDateTimeRange;
   onChange: (value: IsoDateTimeRange) => void;
   fromLabel: string;
   toLabel: string;
+  disableFuture?: boolean;
   /** `data-testid` stem for the two fields (FilterBar supplies
    *  `filter-input-<key>`), stamped on each field's DATE input as
    *  `<testId>-from` / `<testId>-to`. */
@@ -1069,6 +1085,7 @@ export const FilterDateTimeRange = (props: {
         testId={props.testId && `${props.testId}-from`}
         focusTarget={chipFocus}
         value={props.value.start}
+        max={props.disableFuture ? new Date().toISOString() : undefined}
         onChange={start => props.onChange({ ...props.value, start })}
       />
       <span aria-hidden="true">–</span>
@@ -1078,6 +1095,7 @@ export const FilterDateTimeRange = (props: {
         size="small"
         testId={props.testId && `${props.testId}-to`}
         value={props.value.end}
+        max={props.disableFuture ? new Date().toISOString() : undefined}
         onChange={end => props.onChange({ ...props.value, end })}
       />
     </span>
@@ -1094,6 +1112,7 @@ export const FilterDate = (props: {
   value: string;
   onInput: (value: string) => void;
   label: string;
+  disableFuture?: boolean;
   /**
    * `data-testid` for the input (FilterBar's render supplies
    * `filter-input-<key>`).
@@ -1112,6 +1131,7 @@ export const FilterDate = (props: {
         data-testid={props.testId}
         ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
         value={props.value}
+        max={props.disableFuture ? localTodayIso() : undefined}
         aria-label={props.label}
         onInput={e => props.onInput(e.currentTarget.value)}
       />

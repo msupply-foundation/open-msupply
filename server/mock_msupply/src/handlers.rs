@@ -43,10 +43,7 @@ struct CreateSiteResponse {
     store: CreateSiteResponseStore,
 }
 
-pub async fn create_site(
-    state: web::Data<MockState>,
-    _body: web::Bytes,
-) -> impl Responder {
+pub async fn create_site(state: web::Data<MockState>, _body: web::Bytes) -> impl Responder {
     let site_id = state.alloc_site_id();
     // Use a recognisable, unique name so concurrent test invocations don't
     // collide on the by-name lookup.

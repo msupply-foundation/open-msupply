@@ -49,7 +49,7 @@ export type BulkDeleteResultFragment = {
   __typename: "DeleteInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });

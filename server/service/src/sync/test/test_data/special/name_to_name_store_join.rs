@@ -1,4 +1,6 @@
-use repository::{mock::MockData, sync_buffer::SyncRecordData, NameRow, NameStoreJoinRow, StoreRow, SyncBufferRow};
+use repository::{
+    mock::MockData, sync_buffer::SyncRecordData, NameRow, NameStoreJoinRow, StoreRow, SyncBufferRow,
+};
 use serde_json::json;
 
 use crate::sync::{

@@ -111,26 +111,50 @@ mod tests {
         let app = || Some("Open mSupply Desktop".to_string());
 
         let t0 = dt("2026-01-01 00:00:00");
-        record_site_connection(&connection, &base_site(), app(), Some("7.0.0".to_string()), t0)
-            .unwrap();
+        record_site_connection(
+            &connection,
+            &base_site(),
+            app(),
+            Some("7.0.0".to_string()),
+            t0,
+        )
+        .unwrap();
         let after_first = repo.find_one_by_id(1).unwrap().unwrap();
         assert_eq!(after_first.last_connection_datetime, Some(t0));
         assert_eq!(after_first.app_version.as_deref(), Some("7.0.0"));
-        assert_eq!(after_first.app_name.as_deref(), Some("Open mSupply Desktop"));
+        assert_eq!(
+            after_first.app_name.as_deref(),
+            Some("Open mSupply Desktop")
+        );
 
         // Within the throttle window, same identity -> no write (timestamp unchanged).
         let t30s = dt("2026-01-01 00:00:30");
-        record_site_connection(&connection, &after_first, app(), Some("7.0.0".to_string()), t30s)
-            .unwrap();
+        record_site_connection(
+            &connection,
+            &after_first,
+            app(),
+            Some("7.0.0".to_string()),
+            t30s,
+        )
+        .unwrap();
         assert_eq!(
-            repo.find_one_by_id(1).unwrap().unwrap().last_connection_datetime,
+            repo.find_one_by_id(1)
+                .unwrap()
+                .unwrap()
+                .last_connection_datetime,
             Some(t0)
         );
 
         // Within the window but a new version -> write through immediately.
         let current = repo.find_one_by_id(1).unwrap().unwrap();
-        record_site_connection(&connection, &current, app(), Some("7.1.0".to_string()), t30s)
-            .unwrap();
+        record_site_connection(
+            &connection,
+            &current,
+            app(),
+            Some("7.1.0".to_string()),
+            t30s,
+        )
+        .unwrap();
         let after_version = repo.find_one_by_id(1).unwrap().unwrap();
         assert_eq!(after_version.app_version.as_deref(), Some("7.1.0"));
         assert_eq!(after_version.last_connection_datetime, Some(t30s));
@@ -138,10 +162,19 @@ mod tests {
         // After the throttle window -> write through.
         let t2min = dt("2026-01-01 00:02:00");
         let current = repo.find_one_by_id(1).unwrap().unwrap();
-        record_site_connection(&connection, &current, app(), Some("7.1.0".to_string()), t2min)
-            .unwrap();
+        record_site_connection(
+            &connection,
+            &current,
+            app(),
+            Some("7.1.0".to_string()),
+            t2min,
+        )
+        .unwrap();
         assert_eq!(
-            repo.find_one_by_id(1).unwrap().unwrap().last_connection_datetime,
+            repo.find_one_by_id(1)
+                .unwrap()
+                .unwrap()
+                .last_connection_datetime,
             Some(t2min)
         );
     }

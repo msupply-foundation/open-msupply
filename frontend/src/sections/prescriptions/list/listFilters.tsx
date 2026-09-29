@@ -61,14 +61,16 @@ const FILTERS: Filter<PrescriptionFilter>[] =
     },
     // Prescription date — a DateTime field (created-or-backdated coalescence,
     // AC-L1); FilterDateRange (type="dateTime") owns the local ⇄ UTC
-    // conversion (#456).
+    // conversion (#456). A recorded fact, so future days are unselectable
+    // (ui-standards/list-views.md § Filters).
     createdOrBackdatedDatetime: {
-      label: () => t('label.prescription-date'),
+      label: () => t('label.dispensed-date'),
       render: props => (
         <FilterDateRange
           type="dateTime"
-          label={t('label.prescription-date')}
+          label={t('label.dispensed-date')}
           testId={props.testId}
+          disableFuture
           value={props.filter().createdOrBackdatedDatetime}
           onChange={value =>
             props.setPartialFilter({ createdOrBackdatedDatetime: value })

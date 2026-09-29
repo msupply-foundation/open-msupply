@@ -32,11 +32,8 @@ impl SyncTranslation for AssetCategoryTranslation {
         fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let AssetCategoryRow {
-            id,
-            name,
-            class_id,
-        } = serde_json::from_value::<AssetCategoryRow>(sync_record.data.0.clone())?;
+        let AssetCategoryRow { id, name, class_id } =
+            serde_json::from_value::<AssetCategoryRow>(sync_record.data.0.clone())?;
 
         let check_fk = fk_checker.with_table_required(connection, "asset_category", &id);
 

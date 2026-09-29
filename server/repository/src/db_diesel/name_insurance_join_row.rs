@@ -1,7 +1,4 @@
-use super::{
-    name_row::name, ChangelogRepository, RowActionType,
-    StorageConnection,
-};
+use super::{name_row::name, ChangelogRepository, RowActionType, StorageConnection};
 
 use crate::ChangelogSyncType;
 use crate::SourceSiteId;

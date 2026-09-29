@@ -1,6 +1,6 @@
 use super::{
-    custom_fields_json::JsonValue, diagnosis_row::diagnosis, name_row::name, program_row::program,
-    store_row::store, StorageConnection,
+    clinician_link_row::clinician_link, clinician_row::clinician, custom_fields_json::JsonValue,
+    diagnosis_row::diagnosis, name_row::name, store_row::store, StorageConnection,
 };
 
 use crate::db_diesel::changelog::changelog::RowOrId;
@@ -24,7 +24,6 @@ define_linked_tables! {
         prescription_request_number -> BigInt,
         status -> crate::db_diesel::prescription_request_row::PrescriptionRequestStatusMapping,
         diagnosis_id -> Nullable<Text>,
-        program_id -> Nullable<Text>,
         created_datetime -> Timestamp,
         prescription_datetime -> Timestamp,
         ready_datetime -> Nullable<Timestamp>,
@@ -32,6 +31,7 @@ define_linked_tables! {
         created_by -> Text,
         comment -> Nullable<Text>,
         custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
+        clinician_link_id -> Nullable<Text>,
     },
     links: {
         patient_link_id -> patient_id,
@@ -41,13 +41,14 @@ define_linked_tables! {
 }
 
 joinable!(prescription_request -> store (store_id));
+joinable!(prescription_request -> clinician_link (clinician_link_id));
 joinable!(prescription_request -> diagnosis (diagnosis_id));
-joinable!(prescription_request -> program (program_id));
 joinable!(prescription_request -> name (patient_id));
 
 allow_tables_to_appear_in_same_query!(prescription_request, name);
+allow_tables_to_appear_in_same_query!(prescription_request, clinician_link);
+allow_tables_to_appear_in_same_query!(prescription_request, clinician);
 allow_tables_to_appear_in_same_query!(prescription_request, diagnosis);
-allow_tables_to_appear_in_same_query!(prescription_request, program);
 allow_tables_to_appear_in_same_query!(prescription_request, store);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -68,23 +69,29 @@ pub struct PrescriptionRequestRow {
     pub prescription_request_number: i64,
     pub status: PrescriptionRequestStatus,
     pub diagnosis_id: Option<String>,
-    pub program_id: Option<String>,
     pub created_datetime: NaiveDateTime,
     /// The prescriber-facing prescription date; defaults to now but is editable
     /// (mirrors the dispensing invoice's backdated_datetime behaviour).
     pub prescription_datetime: NaiveDateTime,
     pub ready_datetime: Option<NaiveDateTime>,
     pub dispensed_datetime: Option<NaiveDateTime>,
-    /// The user who entered the request — the SOLE record of who prescribed
-    /// (spec/prescription-requests § who prescribed). There is no clinician
-    /// column: the picker was removed and the generated dispensation carries
-    /// the same identity in `invoice.user_id`.
+    /// The account that ENTERED the request. Not the prescriber, and not the
+    /// same fact as `clinician_link_id` — the two may name different people
+    /// (spec/prescription-requests § who is recorded).
     pub created_by: String,
     pub comment: Option<String>,
     /// Properties-v2 values keyed by `custom_field.key` (weight, patient unit,
-    /// occupation, ... per deployment config). The patient's category is NOT
-    /// here — it is a `patient`-scoped field on the name record.
+    /// occupation, category, ... per deployment config). The patient's category
+    /// is here rather than on the name record because it is time-dependent: it
+    /// records what held when this prescription was written (issue #514).
     pub custom_fields: Option<JsonValue>,
+    /// The clinician the request is written on behalf of — optional, chosen at
+    /// creation and editable while New, and what fills the generated
+    /// dispensation's own clinician (issue #513). Held as the LINK id, like
+    /// every other clinician reference in the schema (`invoice`, `encounter`,
+    /// `vaccination`): readers resolve it through `clinician_link` rather than
+    /// treating it as a clinician id, because a merge repoints the link.
+    pub clinician_link_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub patient_id: String,
 }

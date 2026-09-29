@@ -366,7 +366,10 @@ mod test {
             .iter()
             .find(|l| l.invoice_line_row.r#type == InvoiceLineType::StockIn)
             .unwrap();
-        assert_eq!(stock_in.invoice_line_row.stock_line_id, Some(new_id.clone()));
+        assert_eq!(
+            stock_in.invoice_line_row.stock_line_id,
+            Some(new_id.clone())
+        );
         assert_eq!(
             stock_in.invoice_line_row.location_id,
             Some(mock_location_1().id)
@@ -443,7 +446,10 @@ mod test {
                 set_status(&fraction_movement, StockRelocationStatus::Finalised),
             )
             .unwrap();
-        let fraction_line = line_repo.find_one_by_id(&fraction_line_id).unwrap().unwrap();
+        let fraction_line = line_repo
+            .find_one_by_id(&fraction_line_id)
+            .unwrap()
+            .unwrap();
         let fraction_new_id = fraction_line.destination_stock_line_id.clone().unwrap();
         let fraction_new_line = stock_line_repo
             .find_one_by_id(&fraction_new_id)

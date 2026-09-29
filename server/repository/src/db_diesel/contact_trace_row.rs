@@ -176,10 +176,7 @@ impl<'a> ContactTraceRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<ContactTraceRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ContactTraceRow>, RepositoryError> {
         Ok(contact_trace_name_link_view::table
             .filter(contact_trace_name_link_view::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

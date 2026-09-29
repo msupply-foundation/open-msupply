@@ -27,9 +27,7 @@ define_linked_tables! {
 joinable!(item_direction -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_direction, item);
 
-#[derive(
-    Clone, Default, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize,
-)]
+#[derive(Clone, Default, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[diesel(table_name = item_direction)]
 pub struct ItemDirectionRow {
     pub id: String,

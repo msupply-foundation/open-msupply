@@ -79,7 +79,7 @@ export type InsertInternalOrderResult = {
   __typename: "InsertRequestRequisitionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotASupplier" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -112,7 +112,7 @@ export type InsertProgramInternalOrderResult = {
   __typename: "InsertProgramRequestRequisitionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "MaxOrdersReachedForPeriod" | "SupplierNotValid";
   description: string;
 };
 });

@@ -12,6 +12,13 @@ export interface TextFieldProps extends Omit<
   /** Error message — presence switches the field to the error state. */
   error?: string;
   /**
+   * The error STATE without a message of its own — for one half of a composite
+   * field (an age's years and months, a range's two ends) whose single message
+   * a FieldShell carries beneath the pair. Sets the border and `aria-invalid`;
+   * the message line is `error`'s alone.
+   */
+  invalid?: boolean;
+  /**
    * Advisory warning shown below the field when there's no error — the error
    * line's icon + text anatomy in the warning colour, with none of the error
    * semantics (no aria-invalid, border unchanged; an error displaces it). For
@@ -24,6 +31,8 @@ export interface TextFieldProps extends Omit<
    * e2e/TESTIDS.md) — e.g. the line-edit modal's per-line errors.
    */
   errorTestId?: string;
+  /** `data-testid` for the warning message (e2e/TESTIDS.md). */
+  warningTestId?: string;
   required?: boolean;
   /** Spec: 2.5rem (40px) default, 2.25rem (36px) small. */
   size?: 'default' | 'small';
@@ -85,7 +94,9 @@ export const TextField = (props: TextFieldProps) => {
     'label',
     'helperText',
     'error',
+    'invalid',
     'warning',
+    'warningTestId',
     'errorTestId',
     'required',
     'size',
@@ -101,6 +112,7 @@ export const TextField = (props: TextFieldProps) => {
   const autoId = createUniqueId();
   const inputId = () => local.id ?? autoId;
   const messageId = () => `${inputId()}-message`;
+  const inError = () => local.invalid || Boolean(local.error);
 
   // The <label for> itself (text + required asterisk). A local component so it
   // renders fresh in either branch (bare, or beside labelInfo) — reusing one
@@ -146,7 +158,7 @@ export const TextField = (props: TextFieldProps) => {
             : undefined
         }
         data-size={local.size ?? 'default'}
-        data-error={local.error ? '' : undefined}
+        data-error={inError() ? '' : undefined}
       >
         <Show when={local.startAdornment}>
           <span class={styles.adornment} aria-hidden="true">
@@ -157,10 +169,10 @@ export const TextField = (props: TextFieldProps) => {
           id={inputId()}
           class={styles.input}
           data-size={local.size ?? 'default'}
-          data-error={local.error ? '' : undefined}
+          data-error={inError() ? '' : undefined}
           required={local.required}
           aria-label={local.hideLabel ? local.label : undefined}
-          aria-invalid={local.error ? 'true' : undefined}
+          aria-invalid={inError() ? 'true' : undefined}
           aria-describedby={
             local.error || local.warning || local.helperText
               ? messageId()
@@ -184,7 +196,11 @@ export const TextField = (props: TextFieldProps) => {
             when={local.warning}
             fallback={
               <Show when={local.helperText}>
-                <p id={messageId()} class={styles.helper}>
+                <p
+                  id={messageId()}
+                  class={styles.helper}
+                  data-field-message="helper"
+                >
                   {local.helperText}
                 </p>
               </Show>
@@ -193,7 +209,13 @@ export const TextField = (props: TextFieldProps) => {
             {/* role="status": the warning appears while the user is typing
                 (the caps-lock notice), so it's announced politely rather than
                 relying on them to glance down mid-entry. */}
-            <p id={messageId()} class={styles.warning} role="status">
+            <p
+              id={messageId()}
+              class={styles.warning}
+              data-field-message="warning"
+              role="status"
+              data-testid={local.warningTestId}
+            >
               <AlertTriangleIcon class={styles.messageIcon} />
               {local.warning}
             </p>
@@ -203,6 +225,7 @@ export const TextField = (props: TextFieldProps) => {
         <p
           id={messageId()}
           class={styles.error}
+          data-field-message="error"
           data-testid={local.errorTestId}
         >
           <AlertTriangleIcon class={styles.messageIcon} />

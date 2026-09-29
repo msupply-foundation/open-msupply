@@ -50,7 +50,7 @@ export type InsertRequisitionResult = {
   __typename: "InsertResponseRequisitionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotACustomer" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -79,7 +79,7 @@ export type InsertProgramRequisitionResult = {
   __typename: "InsertProgramResponseRequisitionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "MaxOrdersReachedForPeriod";
   description: string;
 };
 });

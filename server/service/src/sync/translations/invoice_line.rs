@@ -143,6 +143,13 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goods_received_lines_ID: Option<String>,
+    // Legacy's `[trans_line]transfer_comment` is declared `never_null`, so skip
+    // the key on push when we have nothing rather than sending an explicit
+    // null at it.
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transfer_comment: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -212,6 +219,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_pack_size,
             manufacturer_id,
             goods_received_lines_ID,
+            transfer_comment,
         } = sync_record.deserialize()?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -235,52 +243,51 @@ impl SyncTranslation for InvoiceLineTranslation {
         };
 
         let item_code = item_code.unwrap_or("".to_string());
-        let (item_code, tax_percentage, total_before_tax, total_after_tax) = match item_code
-            .is_empty()
-        {
-            false => {
-                // use new om_* fields
-                (
-                    item_code,
-                    tax_percentage,
-                    total_before_tax.unwrap_or(0.0),
-                    total_after_tax.unwrap_or(0.0),
-                )
-            }
-            true => {
-                // Use find_one_by_id (not find_active_by_id) here: this lookup only derives the
-                // item code for the legacy path, and an invoice line can legitimately reference an
-                // inactive item (e.g. an item deactivated by a merge). Gating on is_active caused
-                // integration to fail for lines linked to inactive items. See issue #12328.
-                let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
-                    Some(item) => item,
-                    None => {
-                        return Err(anyhow::Error::msg(format!(
-                            "Failed to get item: {}",
-                            item_id
-                        )))
-                    }
-                };
-                let total_multiplier = match r#type {
-                    LegacyTransLineType::StockIn => cost_price_per_pack,
-                    LegacyTransLineType::StockOut => sell_price_per_pack,
-                    LegacyTransLineType::Service
-                        if invoice.r#type == InvoiceType::InboundShipment =>
-                    {
-                        cost_price_per_pack
-                    }
-                    LegacyTransLineType::Service
-                        if invoice.r#type == InvoiceType::OutboundShipment =>
-                    {
-                        sell_price_per_pack
-                    }
-                    _ => 0.0,
-                };
+        let (item_code, tax_percentage, total_before_tax, total_after_tax) =
+            match item_code.is_empty() {
+                false => {
+                    // use new om_* fields
+                    (
+                        item_code,
+                        tax_percentage,
+                        total_before_tax.unwrap_or(0.0),
+                        total_after_tax.unwrap_or(0.0),
+                    )
+                }
+                true => {
+                    // Use find_one_by_id (not find_active_by_id) here: this lookup only derives the
+                    // item code for the legacy path, and an invoice line can legitimately reference an
+                    // inactive item (e.g. an item deactivated by a merge). Gating on is_active caused
+                    // integration to fail for lines linked to inactive items. See issue #12328.
+                    let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
+                        Some(item) => item,
+                        None => {
+                            return Err(anyhow::Error::msg(format!(
+                                "Failed to get item: {}",
+                                item_id
+                            )))
+                        }
+                    };
+                    let total_multiplier = match r#type {
+                        LegacyTransLineType::StockIn => cost_price_per_pack,
+                        LegacyTransLineType::StockOut => sell_price_per_pack,
+                        LegacyTransLineType::Service
+                            if invoice.r#type == InvoiceType::InboundShipment =>
+                        {
+                            cost_price_per_pack
+                        }
+                        LegacyTransLineType::Service
+                            if invoice.r#type == InvoiceType::OutboundShipment =>
+                        {
+                            sell_price_per_pack
+                        }
+                        _ => 0.0,
+                    };
 
-                let total = total_multiplier * number_of_packs;
-                (item.code, None, total, total)
-            }
-        };
+                    let total = total_multiplier * number_of_packs;
+                    (item.code, None, total, total)
+                }
+            };
 
         let is_record_active_on_site = is_active_record_on_site(
             connection,
@@ -396,6 +403,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             received_number_of_packs,
             manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             legacy_goods_received_line_id: goods_received_lines_ID,
+            transfer_comment,
         };
 
         let result = adjust_negative_values(result);
@@ -470,6 +478,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     linked_invoice_line_id,
                     manufacturer_id,
                     legacy_goods_received_line_id: _,
+                    transfer_comment,
                 },
             item_row,
             ..
@@ -522,6 +531,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_pack_size,
             manufacturer_id,
             goods_received_lines_ID: None,
+            transfer_comment,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -592,8 +602,8 @@ mod tests {
         mock::{mock_item_a, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder, ItemRow,
-        KeyType, KeyValueStoreRow, ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
+        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder,
+        ItemRow, KeyType, KeyValueStoreRow, ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -935,7 +945,10 @@ mod tests {
             .unwrap();
 
         let PullTranslateResult::IntegrationOperations(ops) = result else {
-            panic!("{}", format!("expected IntegrationOperations, got {result:?}"));
+            panic!(
+                "{}",
+                format!("expected IntegrationOperations, got {result:?}")
+            );
         };
         let debug = format!("{ops:?}");
         // Code is derived from the inactive item, and the line still references it.

@@ -96,3 +96,32 @@ export const passesFullness = (
   if (location.id === context.originalLocationId) return true;
   return isAvailable(location, context.requiredVolume);
 };
+
+/*
+ * The options the picker actually offers — `passesFullness` applied across the
+ * list, with the field's own suppression on top.
+ *
+ * `fullnessFilter: false` is a FIELD-level fact, not a mode: a field that
+ * references a location without placing stock in it (a sensor's assignment)
+ * offers no tabs, because "where will this fit" is not a question it asks. Such
+ * a field MUST then never narrow its list either — a suppressed filter that
+ * still filtered would hide locations with no control on screen to explain why.
+ * Pure, so that guarantee is testable away from the widget: it is invisible
+ * when wrong, exactly like the two exemptions above.
+ */
+export const visibleLocations = <
+  T extends Pick<
+    LocationWithVolume,
+    'id' | 'volume' | 'volumeUsed' | 'onHold' | 'stock'
+  >,
+>(
+  locations: T[],
+  mode: Fullness,
+  context: FullnessContext & {
+    /** False on a field that offers no fullness tabs. Default true. */
+    fullnessFilter?: boolean;
+  } = {}
+): T[] =>
+  context.fullnessFilter === false || mode === 'all'
+    ? locations
+    : locations.filter(location => passesFullness(location, mode, context));
