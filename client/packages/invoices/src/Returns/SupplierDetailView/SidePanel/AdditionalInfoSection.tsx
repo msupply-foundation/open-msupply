@@ -34,9 +34,7 @@ export const AdditionalInfoSectionComponent: FC = () => {
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          <PanelField data-testid="edited-by-field">
-            {user?.username ?? UNDEFINED_STRING_VALUE}
-          </PanelField>
+          <PanelField>{user?.username ?? UNDEFINED_STRING_VALUE}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
 
@@ -56,7 +54,6 @@ export const AdditionalInfoSectionComponent: FC = () => {
           disabled={isDisabled}
           onChange={e => onChange({ comment: e.target.value })}
           value={comment ?? ''}
-          inputProps={{ 'data-testid': 'comment-field' }}
         />
       </Grid>
     </DetailPanelSection>

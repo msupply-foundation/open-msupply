@@ -34,7 +34,6 @@ export const TransportSectionComponent: FC = () => {
             debouncedUpdate({ id, transportReference });
           }}
           value={transportReference ?? ''}
-          inputProps={{ 'data-testid': 'transport-reference-field' }}
           slotProps={{
             input: {
               style: {
