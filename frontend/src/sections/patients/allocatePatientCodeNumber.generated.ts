@@ -4,17 +4,14 @@ import type { TypedDocument } from "../../api/graphql";
 
 export type AllocatePatientCodeNumberVariables = {
   storeId: string;
-  numberName: string;
 };
 
 export type AllocatePatientCodeNumberResult = {
-  allocateProgramNumber: ({
-  __typename: "NumberNode";
-} & {
+  allocatePatientNumber: {
   number: number;
-});
+};
 };
 
 export const AllocatePatientCodeNumber = {
-  query: "mutation allocatePatientCodeNumber($storeId: String!, $numberName: String!) {\n  allocateProgramNumber(storeId: $storeId, input: {numberName: $numberName}) {\n    ... on NumberNode {\n      __typename\n      number\n    }\n  }\n}",
+  query: "mutation allocatePatientCodeNumber($storeId: String!) {\n  allocatePatientNumber(storeId: $storeId) {\n    number\n  }\n}",
 } as TypedDocument<AllocatePatientCodeNumberResult, AllocatePatientCodeNumberVariables>;

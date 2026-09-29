@@ -3036,7 +3036,5 @@
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "preference": {
-    "doNotPrintPlaceholderLineLabels": "Do not print labels for placeholder (zero quantity) dispensing record lines"
-  }
+  "preference.doNotPrintPlaceholderLineLabels": "Do not print labels for placeholder (zero quantity) dispensing record lines"
 }
