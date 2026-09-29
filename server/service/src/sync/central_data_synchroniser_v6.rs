@@ -258,9 +258,9 @@ impl SynchroniserV6 {
     }
 }
 
-/// Returns the changelog filter for v6 push: records edited on this site (by
-/// source_site_id null = locally originated, or matching this site_id),
-/// touching one of this site's active stores.
+/// Returns the changelog filter for v6 push: records edited on this site
+/// (source_site_id matching this site_id), touching one of this site's active
+/// stores.
 fn build_v6_push_filter(
     connection: &StorageConnection,
 ) -> Result<ChangelogCondition::Inner, RemotePushErrorV6> {
@@ -269,11 +269,13 @@ fn build_v6_push_filter(
     let active_stores = ActiveStoresOnSite::get(connection)?;
     let store_ids = active_stores.store_ids();
 
-    // Records that originate on this site (no source_site_id set on local edits)
-    // and that affect one of our active stores. Records arriving via sync from
-    // central will have source_site_id set, so this naturally excludes them.
+    // Records that originate on this site are stamped with this site's id, so
+    // these are the ones to send to central over v6. Records arriving via sync
+    // from central carry the sending site's id, so this excludes them. Which
+    // tables actually get sent is decided later, when the rows are translated
+    // with PushToOmSupplyCentral.
     Ok(C::And(vec![
-        C::source_site_id::is_null(),
+        C::source_site_id::equal(active_stores.site_id),
         C::Or(
             store_ids
                 .into_iter()
@@ -285,15 +287,88 @@ fn build_v6_push_filter(
 }
 
 #[cfg(test)]
-mod test {
-    use httpmock::{Method::POST, MockServer};
-
-    use super::SynchroniserV6;
+mod tests {
+    use super::*;
     use crate::sync::{
         api::SyncApiSettings,
         api_v6::{SiteStatusResponseV6, SiteStatusV6},
         settings::SYNC_V6_VERSION,
     };
+    use httpmock::{Method::POST, MockServer};
+    use repository::{
+        mock::{mock_store_a, mock_store_b, MockDataInserts},
+        test_db::setup_all,
+        ChangeLogInsertRow, ChangelogTableName, RowActionType,
+    };
+
+    /// Local edits are stamped with this site's id (SourceSiteId::CurrentSiteId),
+    /// records pulled from central carry the sending site's id. The push filter
+    /// must keep the former and drop the latter.
+    #[actix_rt::test]
+    async fn test_build_v6_push_filter() {
+        let (_, connection, _, _) =
+            setup_all("test_build_v6_push_filter", MockDataInserts::all()).await;
+
+        let this_site_id = mock_store_a().site_id;
+        let central_site_id = 999;
+        assert_ne!(this_site_id, central_site_id);
+
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(this_site_id))
+            .unwrap();
+
+        let changelog_repo = ChangelogRepository::new(&connection);
+        // Ignore changelog rows created by the mock setup
+        let cursor = changelog_repo.max_cursor().unwrap() as i64;
+
+        let insert = |record_id: &str, store_id: Option<String>, source_site_id: Option<i32>| {
+            changelog_repo
+                .insert(&ChangeLogInsertRow {
+                    table_name: ChangelogTableName::NameOmsFields,
+                    record_id: record_id.to_string(),
+                    row_action: RowActionType::Upsert,
+                    store_id,
+                    source_site_id,
+                    ..Default::default()
+                })
+                .unwrap()
+        };
+
+        // Kept: authored here, no store (e.g. name_oms_fields)
+        insert("local_no_store", None, Some(this_site_id));
+        // Kept: authored here, for a store active on this site
+        insert(
+            "local_active_store",
+            Some(mock_store_a().id),
+            Some(this_site_id),
+        );
+        // Dropped: arrived from central
+        insert("from_central", None, Some(central_site_id));
+        // Dropped: authored here, but for a store on another site
+        insert(
+            "local_other_store",
+            Some(mock_store_b().id),
+            Some(this_site_id),
+        );
+
+        let filter = build_v6_push_filter(&connection).unwrap();
+        let mut record_ids: Vec<String> = changelog_repo
+            .query(filter, CursorAndLimit { cursor, limit: 100 })
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| row.record_id)
+            .collect();
+        record_ids.sort();
+
+        assert_eq!(
+            record_ids,
+            vec![
+                "local_active_store".to_string(),
+                "local_no_store".to_string()
+            ]
+        );
+    }
 
     fn site_status_body(is_sync_api_paused: bool) -> String {
         serde_json::to_string(&SiteStatusResponseV6::Data(SiteStatusV6 {
