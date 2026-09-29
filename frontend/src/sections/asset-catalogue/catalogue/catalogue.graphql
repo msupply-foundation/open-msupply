@@ -1,0 +1,80 @@
+# The asset catalogue list (spec/asset-catalogue S1). Filter / sort / page are
+# the generated GraphQL input types, so the URL state maps straight onto them
+# (kdd/type-safety). The export reuses this query with no page.
+query assetCatalogueItems(
+  $filter: AssetCatalogueItemFilterInput
+  $sort: [AssetCatalogueItemSortInput!]
+  $page: PaginationInput
+) {
+  assetCatalogueItems(filter: $filter, sort: $sort, page: $page) {
+    ... on AssetCatalogueItemConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        subCatalogue
+        code
+        manufacturer
+        model
+        assetClassId
+        assetCategoryId
+        assetTypeId
+        assetClass {
+          name
+        }
+        assetCategory {
+          name
+        }
+        assetType {
+          name
+        }
+      }
+    }
+  }
+}
+
+# The category and type filters' options (and the import's name lookups).
+# Name-sorted; the type list carries its category so the type filter can narrow
+# to the chosen category.
+query assetCategories {
+  assetCategories(sort: [{ key: name }]) {
+    ... on AssetCategoryConnector {
+      __typename
+      nodes {
+        id
+        name
+        classId
+      }
+    }
+  }
+}
+
+query assetTypes {
+  assetTypes(sort: [{ key: name }]) {
+    ... on AssetTypeConnector {
+      __typename
+      nodes {
+        id
+        name
+        categoryId
+      }
+    }
+  }
+}
+
+# Delete one catalogue item. Every real refusal is a TOP-LEVEL error
+# (extensions.details AssetCatalogueItemInUse / AssetCatalogueItemDoesNotExist
+# — spec/asset-catalogue contract § deleting catalogue items); the union's
+# error branch is never returned, so it is not selected.
+mutation deleteAssetCatalogueItem($id: String!) {
+  centralServer {
+    assetCatalogue {
+      deleteAssetCatalogueItem(assetCatalogueItemId: $id) {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
