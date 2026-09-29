@@ -99,7 +99,10 @@ export const TimeField = (props: TimeFieldProps) => {
         </KTimeField.Input>
       </div>
       <Show when={props.helperText && !props.error}>
-        <KTimeField.Description class={styles.helper} data-field-message="helper">
+        <KTimeField.Description
+          class={styles.helper}
+          data-field-message="helper"
+        >
           {props.helperText}
         </KTimeField.Description>
       </Show>

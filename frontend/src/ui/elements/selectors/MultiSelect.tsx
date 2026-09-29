@@ -226,7 +226,10 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
         when={props.error}
         fallback={
           <Show when={props.helperText}>
-            <KCombobox.Description class={styles.helper} data-field-message="helper">
+            <KCombobox.Description
+              class={styles.helper}
+              data-field-message="helper"
+            >
               {props.helperText}
             </KCombobox.Description>
           </Show>
