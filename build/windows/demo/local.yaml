@@ -13,7 +13,8 @@ logging:
   directory: log
   filename: remote_server.log
   #   max number of rotated (gzip compressed) logfiles to keep, in addition to the active logfile
-  max_file_count: 50
-  #   max size in MB of the active logfile before it is rotated
-  max_file_size: 20
+  # max_file_count: 50
+  #   max size in MB of the active logfile before it is rotated.
+  #   Left unset, defaults to 100 for postgres builds and 20 for sqlite builds
+  # max_file_size: 20
 

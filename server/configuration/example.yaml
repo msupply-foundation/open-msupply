@@ -65,7 +65,8 @@
 #   filename: remote_server.log
 ##   max number of rotated (gzip compressed) logfiles to keep, in addition to the active logfile
 #   max_file_count: 50
-##   max size in MB of the active logfile before it is rotated
+##   max size in MB of the active logfile before it is rotated.
+##   Left unset, defaults to 100 for postgres builds and 20 for sqlite builds
 #   max_file_size: 20
 # backup: # see cli backup/restore
 #   backup_dir: "~/Documents/omSupply_backup"

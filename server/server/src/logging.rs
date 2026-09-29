@@ -1,10 +1,17 @@
 #[cfg(not(target_os = "android"))]
 use std::env;
 
-use service::settings::{
-    Level, LogMode, LoggingSettings, DEFAULT_LOG_MAX_FILE_COUNT, DEFAULT_LOG_MAX_FILE_SIZE_MB,
-};
+use service::settings::{Level, LogMode, LoggingSettings};
 use simple_log::LogConfigBuilder;
+
+// Postgres is used for busier and more important servers (e.g. central servers), where more log
+// history is worth the disk space. Sqlite (including Android) keeps smaller files, as the log
+// viewers read a whole logfile into memory (see open-msupply-internal#1012)
+#[cfg(feature = "postgres")]
+const DEFAULT_MAX_FILE_SIZE_MB: usize = 100;
+#[cfg(not(feature = "postgres"))]
+const DEFAULT_MAX_FILE_SIZE_MB: usize = 20;
+const DEFAULT_MAX_FILE_COUNT: i64 = 50;
 
 // Can use log4rs to extend logging functionality beyond what is available in current
 // log crate since simple-log is based on log4rs.
@@ -49,12 +56,8 @@ fn file_logger(settings: &LoggingSettings) -> LogConfigBuilder {
     let log_path = std::path::PathBuf::from(&log_dir);
     let log_file = settings.filename.clone().unwrap_or(default_log_file);
     let log_file = log_path.join(log_file).to_string_lossy().to_string();
-    let max_file_count = settings
-        .max_file_count
-        .unwrap_or(DEFAULT_LOG_MAX_FILE_COUNT);
-    let max_file_size = settings
-        .max_file_size
-        .unwrap_or(DEFAULT_LOG_MAX_FILE_SIZE_MB);
+    let max_file_count = settings.max_file_count.unwrap_or(DEFAULT_MAX_FILE_COUNT);
+    let max_file_size = settings.max_file_size.unwrap_or(DEFAULT_MAX_FILE_SIZE_MB);
 
     LogConfigBuilder::builder()
         .path(log_file)

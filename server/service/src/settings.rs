@@ -200,11 +200,6 @@ impl Display for Level {
     }
 }
 
-// Kept to modest file sizes as the log viewers read a whole logfile into memory
-// (see open-msupply-internal#1012)
-pub const DEFAULT_LOG_MAX_FILE_SIZE_MB: usize = 20;
-pub const DEFAULT_LOG_MAX_FILE_COUNT: i64 = 50;
-
 #[derive(Deserialize, Serialize, Clone)]
 pub struct LoggingSettings {
     /// Console (default) | File

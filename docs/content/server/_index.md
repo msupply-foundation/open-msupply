@@ -421,8 +421,10 @@ This allows site information (initialised/site) to be presented during discovery
 # Logging
 
 By default (`base.yaml`), the server logs to a file in the `log` directory with a logging level of `Info`.
-When the active log file reaches `max_file_size` (in MB, default 20) it is gzip compressed and rotated, keeping up to `max_file_count` compressed files (default 50) in addition to the active file.
-The Windows server installer asks for these values, suggesting 100 MB and 50 files.
+When the active log file reaches `max_file_size` (in MB) it is gzip compressed and rotated, keeping up to `max_file_count` compressed files (default 50) in addition to the active file.
+If `max_file_size` is not set, it defaults to 100 MB for postgres builds (used for busier servers, e.g. central servers) and 20 MB for sqlite builds, including Android.
+The Windows server installer asks for these values, suggesting the default for the chosen database.
+In docker, set them in a mounted `local.yaml` or with `APP__LOGGING__MAX_FILE_SIZE` / `APP__LOGGING__MAX_FILE_COUNT`.
 See the `example.yaml` file for the available options.
 
 # Directory structure
