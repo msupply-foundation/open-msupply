@@ -8,8 +8,6 @@ mod add_prescription_request_id_to_invoice;
 mod add_prescription_request_report_context;
 mod add_prescription_request_status_processor_cursor_pg_enum;
 mod add_prescription_request_tables;
-mod add_settings_sync_is_paused_key_type;
-mod add_sync_pause_changed_system_log_type;
 mod add_transfer_comment_to_invoice_line;
 mod remove_program_from_prescription_request;
 mod restore_stocktake_line_indexes;
@@ -39,8 +37,6 @@ impl Migration for V3_02_00 {
             Box::new(add_transfer_comment_to_invoice_line::Migrate),
             Box::new(restore_stocktake_line_indexes::Migrate),
             Box::new(add_prescription_request_report_context::Migrate),
-            Box::new(add_settings_sync_is_paused_key_type::Migrate),
-            Box::new(add_sync_pause_changed_system_log_type::Migrate),
         ]
     }
 }
