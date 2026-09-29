@@ -42,6 +42,11 @@ concurrency:
 jobs:
   # Single deploy job since we're just deploying
   deploy:
+    # This file lives in both the internal repo and its public mirror, but the
+    # site is only published from the public one: that repo's GitHub Pages is
+    # the public dev-docs site. Internally the job is skipped, so a change
+    # merged here goes live only after mirror-public.yaml syncs it out.
+    if: github.repository == 'msupply-foundation/open-msupply'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
