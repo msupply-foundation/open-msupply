@@ -134,7 +134,11 @@ export const TextArea = (props: TextAreaProps) => {
         when={local.error}
         fallback={
           <Show when={local.helperText}>
-            <p id={messageId()} class={styles.helper} data-field-message="helper">
+            <p
+              id={messageId()}
+              class={styles.helper}
+              data-field-message="helper"
+            >
               {local.helperText}
             </p>
           </Show>

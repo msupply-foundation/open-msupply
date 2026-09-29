@@ -2031,13 +2031,17 @@ tr[data-accent='error'] > :first-child::before {
 }
 
 /* Anything scrolled or focused into view inside an UNPINNED cell — the cell
-   itself or a control in it — stops clear of the pinned columns instead of
-   under them. Scroll margin on those targets rather than scroll padding on the
-   box: padding would also treat the pinned cells' own controls as hidden, and
-   a Tab onto a row's select box would scroll the table back. Last in the file
-   for its specificity. */
+   itself or a focusable control in it — stops clear of the pinned columns
+   instead of under them. Scroll margin on those targets rather than scroll
+   padding on the box: padding would also treat the pinned cells' own controls
+   as hidden, and a Tab onto a row's select box would scroll the table back.
+   The controls are named rather than matched with `*`, which would test every
+   element on the page on each style recalculation. Last in the file for its
+   specificity. */
 .tableScroll :is(.td, .th):not([data-pinned]),
-.tableScroll :is(.td, .th):not([data-pinned]) * {
+.tableScroll
+  :is(.td, .th):not([data-pinned])
+  :is(input, button, select, textarea, a[href], [tabindex]) {
   scroll-margin-left: var(--frozen-left);
   scroll-margin-right: var(--frozen-right);
 }
