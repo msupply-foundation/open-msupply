@@ -404,6 +404,10 @@
   --input-height-sm: 2.25rem; /* 36px — small, rest */
   --input-height-touch: max(3rem, 48px); /* standard, touch-enforced */
   --input-height-sm-touch: max(2.75rem, 44px); /* small, touch-enforced */
+  /* The drawn checkbox square (BareCheckbox's box). A token rather than a
+     literal in that one stylesheet so a host that lines the box up against
+     other controls — a start-aligned DataTable row — reads the same size. */
+  --checkbox-size: 1.125rem; /* 18px */
   /* Font size on touch — PURE rem, deliberately NOT the `max(rem, px)` shape
      the heights above take. That split is the rule: type scales with the root,
      a tap target keeps a physical floor. A px floor on a font-size only ever
