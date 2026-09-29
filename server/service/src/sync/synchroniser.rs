@@ -2,7 +2,8 @@ use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        maintenance_mode::integration_uses_transaction, sync_buffer::get_sync_buffer_for_table,
+        maintenance_mode::integration_uses_transaction,
+        repair_source_site_id::repair_source_site_id, sync_buffer::get_sync_buffer_for_table,
         sync_status::logger::SyncStep, CentralServerConfig,
     },
 };
@@ -214,6 +215,10 @@ impl SynchroniserV5V6 {
             KeyType::SettingsSyncCentralServerSiteId,
             Some(site_info.msupply_central_site_id),
         )?;
+
+        // Must run after the central site id is known and before the push and integration
+        // below, which both read what it corrects - see `repair_source_site_id`.
+        repair_source_site_id(&ctx.connection, central_sync_server_id)?;
 
         // First check sync status
 

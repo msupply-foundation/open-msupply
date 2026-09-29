@@ -12,6 +12,7 @@ pub mod file_synchroniser;
 mod integrate_document;
 pub mod maintenance_mode;
 pub(crate) mod remote_data_synchroniser;
+pub(crate) mod repair_source_site_id;
 pub mod settings;
 pub mod site_auth;
 pub mod sync_api_pause;

@@ -97,7 +97,7 @@ export const createProgramOrder = async (
 // stocktakes within maxAge days cover fewer than minItems DISTINCT items — so
 // New order must confirm before opening the modal. Called only when the
 // preference is enabled. A failed read never blocks creation (returns false).
-export const recentStocktakeIsInsufficient = async (
+const recentStocktakeIsInsufficient = async (
   storeId: string,
   maxAge: number,
   minItems: number
@@ -112,3 +112,21 @@ export const recentStocktakeIsInsufficient = async (
     for (const line of stocktake.lines.nodes) items.add(line.itemId);
   return items.size < minItems;
 };
+
+// The whole gate decision, shared by every New-order entry point (the
+// internal-orders list and the dashboard's Order more): the warning shows when
+// recent stocktakes are insufficient (rules › creation, OMS-REG-REPL-04.45).
+// Called only when the preference is enabled; never rejects (a failed
+// stocktake read answers false).
+//
+// No plugin suppression is consulted. The Cook Islands helper used to stand
+// this warning down where a counting cycle was in force, deferring to its own
+// per-item measure on the order (#505) — that measure came from a spec section
+// that was never a real requirement and has been withdrawn, so there is
+// nothing to defer to and this warning is every store's only measure again
+// (#822). The `host.warningSuppression` slot itself remains in the SDK.
+export const recentStocktakeGateShows = async (
+  storeId: string,
+  maxAge: number,
+  minItems: number
+): Promise<boolean> => recentStocktakeIsInsufficient(storeId, maxAge, minItems);

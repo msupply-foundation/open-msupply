@@ -506,6 +506,7 @@ async fn main() -> anyhow::Result<()> {
                     .clone()
                     .unwrap_or_default()
                     .to_migration_config(),
+                starting_database_version: None,
             };
             migrate(
                 &connection_manager.connection().unwrap(),
