@@ -1,4 +1,6 @@
-use repository::{PartitionTopUp, StorageConnection, SystemLogType};
+use repository::{
+    migrations::ChangelogPartitionConfig, PartitionTopUp, StorageConnection, SystemLogType,
+};
 use service::{
     activity_log::{system_log_entry, SystemLogMessage},
     service_provider::ServiceProvider,
@@ -11,8 +13,11 @@ use tokio::task::JoinHandle;
 ///
 /// A tick that times out on a lock (`LockedOut`) is retried next tick.
 /// Repeated lock-outs with less than a partition's worth of headroom left are
-/// escalated to an error log line and a system log row, since inserts fail
-/// once the cursor passes the top partition.
+/// escalated to an error log line and a system log row, since inserts spill
+/// into the DEFAULT partition once the cursor passes the top partition.
+///
+/// Rows found in the DEFAULT partition are reported with a system log row: the
+/// write rate outran the lookahead since the previous tick.
 pub fn spawn(
     service_provider: Arc<ServiceProvider>,
     settings: ChangelogPartitionSettings,
@@ -41,18 +46,39 @@ pub fn spawn(
             .await;
 
             match result {
-                Ok((_, Ok(PartitionTopUp::Created(created)))) => {
+                Ok((
+                    ctx,
+                    Ok(PartitionTopUp::Created {
+                        partitions,
+                        overflow_rows,
+                    }),
+                )) => {
                     escalation.reset();
-                    if created > 0 {
-                        log::info!("changelog partition task created {created} new partition(s)");
+                    if partitions > 0 {
+                        log::info!(
+                            "changelog partition task created {partitions} new partition(s)"
+                        );
+                    }
+                    if overflow_rows > 0 {
+                        report_overflow(&ctx.connection, overflow_rows, &partition_config);
                     }
                 }
-                Ok((ctx, Ok(PartitionTopUp::LockedOut { headroom, created }))) => {
+                Ok((
+                    ctx,
+                    Ok(PartitionTopUp::LockedOut {
+                        headroom,
+                        created,
+                        overflow_rows,
+                    }),
+                )) => {
                     log::warn!(
                         "changelog partition task: lock timeout while adding partitions \
                          ({created} created, {headroom} cursor values of headroom left); \
                          will retry next tick"
                     );
+                    if overflow_rows > 0 {
+                        report_overflow(&ctx.connection, overflow_rows, &partition_config);
+                    }
                     if escalation.record_lock_out(headroom) {
                         escalate(&ctx.connection, headroom);
                     }
@@ -100,8 +126,29 @@ impl Escalation {
 fn escalate(connection: &StorageConnection, headroom: i64) {
     let message = format!(
         "Changelog partition top-up locked out with {headroom} cursor values of headroom left; \
-         inserts will fail once the cursor passes the top partition"
+         inserts will fall into the DEFAULT partition once the cursor passes the top partition"
     );
+    write_system_log(connection, &message);
+}
+
+/// Rows were found in the DEFAULT partition: the write rate outran the
+/// lookahead since the last tick. The top-up moves them; this records it for
+/// the operator.
+fn report_overflow(
+    connection: &StorageConnection,
+    overflow_rows: i64,
+    config: &ChangelogPartitionConfig,
+) {
+    let message = format!(
+        "Changelog inserts outran the partition lookahead: {overflow_rows} row(s) found in the \
+         DEFAULT partition (partition_size {}, lookahead {}). \
+         Raise changelog_partition.lookahead or shorten changelog_partition.interval",
+        config.partition_size, config.lookahead
+    );
+    write_system_log(connection, &message);
+}
+
+fn write_system_log(connection: &StorageConnection, message: &str) {
     // `true`: log the ERROR line to console before inserting the row — the row
     // is itself a changelog insert, which is what may be failing here.
     if let Err(e) = system_log_entry(
@@ -109,7 +156,7 @@ fn escalate(connection: &StorageConnection, headroom: i64) {
         SystemLogType::DatabaseError,
         None,
         true,
-        SystemLogMessage::Message(&message),
+        SystemLogMessage::Message(message),
     ) {
         log::error!("changelog partition task: failed to write system log entry: {e:?}");
     }
