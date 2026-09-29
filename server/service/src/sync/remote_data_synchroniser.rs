@@ -114,8 +114,10 @@ impl RemoteDataSynchroniser {
 
         if !worker_running {
             if let Err(error) = self.sync_api_v5.post_initialise().await {
-                // Tolerate transient errors (connection/unknown) and "central busy" codes, then poll.
-                if !(error.is_connection() || error.is_unknown() || error.is_central_busy()) {
+                // Tolerate transient errors (connection/unknown/dropped response body) and
+                // "central busy" codes, then poll. Safe for a POST: this never re-sends it, it
+                // only moves on to polling for the outcome.
+                if !(error.is_transient() || error.is_central_busy()) {
                     return Err(error.into());
                 }
             }
@@ -254,6 +256,9 @@ impl RemoteDataSynchroniser {
         loop {
             // Retry while central is busy with another sync session for this site
             // (legacy central gates sync per-site); wait for idle then re-request.
+            // A response body cut off mid-read is retried with backoff - records stay queued
+            // centrally until acknowledged, so re-requesting returns the same batch.
+            let mut dropped_body_retries = DroppedBodyRetries::default();
             let sync_batch = loop {
                 match self.sync_api_v5.get_queued_records(batch_size).await {
                     Ok(batch) => break batch,
@@ -264,6 +269,14 @@ impl RemoteDataSynchroniser {
                                 CENTRAL_BUSY_TIMEOUT_SECONDS,
                             )
                             .await?;
+                    }
+                    Err(error) if error.is_dropped_response_body() => {
+                        if !dropped_body_retries
+                            .wait_before_retry("Pulling queued records", &error)
+                            .await
+                        {
+                            return Err(error.into());
+                        }
                     }
                     Err(error) => return Err(error.into()),
                 }
@@ -662,5 +675,64 @@ mod test {
             msupply_central_site_id: 1,
             sync_version: repository::SyncVersion::V5V6,
         }
+    }
+
+    /// Pull remote: a queued-records body cut off mid-read is re-requested, and the batch
+    /// served to the retry is saved and acknowledged.
+    #[actix_rt::test]
+    async fn test_pull_retries_dropped_response_body() {
+        use crate::sync::{
+            api::test_helpers::{set_central_server_site_id, ScriptedResponse, ScriptedServer},
+            sync_status::logger::SyncLogger,
+        };
+        use repository::{mock::MockDataInserts, test_db};
+
+        let (_, connection, _, _) = test_db::setup_all(
+            "remote_test_pull_retries_dropped_response_body",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let server = ScriptedServer::start(vec![
+            // GET queued_records, attempt 1: cut short.
+            ScriptedResponse::TruncatedBody {
+                content_length: 5000,
+                body: r#"{"queueLength": 1, "data": [{"syncOutId": "ID1", "tabl"#,
+            },
+            // GET queued_records, the retry: served in full.
+            ScriptedResponse::Complete(
+                r#"{
+                    "queueLength": 1,
+                    "data": [
+                        {
+                            "syncOutId": "ID1",
+                            "tableName": "test_table_1",
+                            "recordId": "record_from_retry",
+                            "action": "delete"
+                        }
+                    ]
+                }"#
+                .to_string(),
+            ),
+            // POST acknowledged_records.
+            ScriptedResponse::Complete(String::new()),
+            // GET queued_records: queue drained - ends the loop.
+            ScriptedResponse::Complete(r#"{ "queueLength": 0, "data": [] }"#.to_string()),
+        ]);
+
+        set_central_server_site_id(&connection);
+        let mut logger = SyncLogger::start(&connection).unwrap();
+        let result = synchroniser(server.url())
+            .pull(&connection, 100, &mut logger)
+            .await;
+
+        assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
+        let buffered = SyncBufferRepository::new(&connection)
+            .find_latest_by_record_id_slow_unindexed("record_from_retry")
+            .unwrap();
+        assert!(
+            buffered.is_some(),
+            "Batch from the retried request was not saved"
+        );
     }
 }

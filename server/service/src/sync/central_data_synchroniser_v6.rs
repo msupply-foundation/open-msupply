@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::{
-    api::{CommonSyncRecord, ParsingSyncRecordError, SyncApiSettings},
+    api::{CommonSyncRecord, DroppedBodyRetries, ParsingSyncRecordError, SyncApiSettings},
     api_v6::{
         SyncApiErrorV6, SyncApiErrorVariantV6, SyncApiV6, SyncApiV6CreatingError, SyncParsedErrorV6,
     },
@@ -26,6 +26,33 @@ use repository::{
     SyncBufferRepository,
 };
 use thiserror::Error;
+
+/// Run an idempotent v6 read, retrying it if the response body is cut off mid-read.
+///
+/// Only for reads that can be repeated as-is: each attempt re-requests the same cursor,
+/// which hasn't advanced. Pushes are deliberately not retried this way - central may have
+/// integrated the batch and only lost the acknowledgement.
+async fn with_dropped_body_retries<T, F, Fut>(
+    description: &str,
+    mut request: F,
+) -> Result<T, SyncApiErrorV6>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = Result<T, SyncApiErrorV6>>,
+{
+    let mut retries = DroppedBodyRetries::default();
+    loop {
+        match request().await {
+            Ok(result) => return Ok(result),
+            Err(error) if error.is_dropped_response_body() => {
+                if !retries.wait_before_retry(description, &error).await {
+                    return Err(error);
+                }
+            }
+            Err(error) => return Err(error),
+        }
+    }
+}
 
 #[derive(Error, Debug)]
 pub(crate) enum CentralPullErrorV6 {
@@ -107,15 +134,17 @@ impl SynchroniserV6 {
         loop {
             let start_cursor = cursor_controller.get(connection)?;
 
+            let api = &self.sync_api_v6;
             let SyncBatchV6 {
                 end_cursor,
                 total_records,
                 is_last_batch,
                 records,
-            } = self
-                .sync_api_v6
-                .pull(start_cursor, batch_size, is_initialised)
-                .await?;
+            } = with_dropped_body_retries(
+                &format!("Pulling v6 central records at cursor {}", start_cursor),
+                || api.pull(start_cursor, batch_size, is_initialised),
+            )
+            .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 
@@ -290,7 +319,10 @@ fn build_v6_push_filter(
 mod tests {
     use super::*;
     use crate::sync::{
-        api::SyncApiSettings,
+        api::{
+            test_helpers::{set_central_server_site_id, ScriptedResponse, ScriptedServer},
+            SyncApiSettings, SyncApiV5,
+        },
         api_v6::{SiteStatusResponseV6, SiteStatusV6},
         settings::SYNC_V6_VERSION,
     };
@@ -407,5 +439,96 @@ mod tests {
             then.status(200).body(site_status_body(false));
         });
         assert!(synchroniser.require_sync_api_unpaused().await.is_ok());
+    }
+
+    fn synchroniser(url: &str) -> SynchroniserV6 {
+        let settings = SyncApiV5::new_test(url, "", "", "site_id").settings;
+        SynchroniserV6::new(url, &settings, 1).unwrap()
+    }
+
+    fn truncated() -> ScriptedResponse {
+        ScriptedResponse::TruncatedBody {
+            content_length: 5000,
+            body: r#"{"data": {"end_cursor": 1, "total_rec"#,
+        }
+    }
+
+    /// The last batch, holding one delete record so it can be found in the sync buffer.
+    fn last_batch(record_id: &str) -> ScriptedResponse {
+        ScriptedResponse::Complete(format!(
+            r#"{{
+                "data": {{
+                    "end_cursor": 1,
+                    "total_records": 1,
+                    "records": [
+                        {{
+                            "cursor": 1,
+                            "record": {{
+                                "tableName": "test_table_1",
+                                "recordId": "{record_id}",
+                                "action": "delete"
+                            }}
+                        }}
+                    ],
+                    "is_last_batch": true
+                }}
+            }}"#
+        ))
+    }
+
+    fn is_buffered(connection: &StorageConnection, record_id: &str) -> bool {
+        SyncBufferRepository::new(connection)
+            .find_latest_by_record_id_slow_unindexed(record_id)
+            .unwrap()
+            .is_some()
+    }
+
+    /// Pull V6: a batch body cut off mid-read is re-requested from the same cursor.
+    #[actix_rt::test]
+    async fn test_pull_retries_dropped_response_body() {
+        let (_, connection, _, _) = setup_all(
+            "v6_test_pull_retries_dropped_response_body",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let server = ScriptedServer::start(vec![truncated(), last_batch("record_from_retry")]);
+        set_central_server_site_id(&connection);
+        let mut logger = SyncLogger::start(&connection).unwrap();
+        let result = synchroniser(server.url())
+            .pull(&connection, 100, true, &mut logger)
+            .await;
+
+        assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
+        assert!(
+            is_buffered(&connection, "record_from_retry"),
+            "Batch from the retried request was not saved"
+        );
+    }
+
+    /// A connection that keeps dropping gives up once the retry budget is spent.
+    #[actix_rt::test]
+    async fn test_pull_gives_up_after_dropped_body_retries() {
+        let (_, connection, _, _) = setup_all(
+            "v6_test_pull_gives_up_after_dropped_body_retries",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // The first attempt plus three retries. A fifth request would find the listener
+        // closed and fail to connect instead.
+        let server =
+            ScriptedServer::start(vec![truncated(), truncated(), truncated(), truncated()]);
+        set_central_server_site_id(&connection);
+        let mut logger = SyncLogger::start(&connection).unwrap();
+        let result = synchroniser(server.url())
+            .pull(&connection, 100, true, &mut logger)
+            .await;
+
+        assert!(
+            matches!(&result, Err(CentralPullErrorV6::SyncApiError(error)) if error.is_dropped_response_body()),
+            "Unexpected result: {:#?}",
+            result
+        );
     }
 }
