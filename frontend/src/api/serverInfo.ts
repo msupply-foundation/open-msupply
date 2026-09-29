@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js';
+import { parseBuildVersion } from '../appUpdate';
 import { graphqlFetch } from './graphql';
 import { IsCentralServer, ServerVersion } from './initialisation.generated';
 
@@ -23,6 +24,27 @@ const [serverVersion, setServerVersion] = createSignal<string | undefined>(
 );
 
 export { serverVersion };
+
+// Whether the server reports a version other than the running build's (issue
+// #574). While front end and server release on one version line, naming both
+// is noise — the version surfaces show a single "Version" line and only split
+// into Interface / Server when they genuinely disagree. Compared on the
+// release tag (parseBuildVersion drops the commit stamp), ignoring the tag's
+// leading "v" and case: a release build "v3.04.00 (2ae7bd2)" matches a server
+// "3.04.00". Unknown server version ⇒ no disagreement to show.
+const normaliseVersion = (version: string): string =>
+  version.trim().replace(/^v/i, '').toLowerCase();
+
+export const versionsMatch = (
+  buildVersion: string,
+  server: string | undefined
+): boolean =>
+  server === undefined ||
+  normaliseVersion(parseBuildVersion(buildVersion).tag) ===
+    normaliseVersion(server);
+
+export const serverVersionDiffers = (): boolean =>
+  !versionsMatch(APP_VERSION, serverVersion());
 
 export const fetchServerInfo = async (): Promise<void> => {
   const [role, version] = await Promise.all([

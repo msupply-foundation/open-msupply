@@ -11,7 +11,6 @@ import { t } from '../../../intl';
 import { localisedDateTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -19,6 +18,9 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import { LocationVolumeSelect } from '../../../domain/location';
 import { SelectReportModal } from '../../../domain/reports';
 import {
@@ -32,7 +34,7 @@ import { hasPermission } from '../../../store/storeContext';
 import { runInsertRepack } from '../stockApi';
 import { repackNewPacks, isWholePacks } from '../stockCalc';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
-import { repackPanelState } from './repackSelection';
+import { newRepackDraft, repackPanelState } from './repackSelection';
 import {
   RepacksByStockLine,
   type StockLineDetailFragment,
@@ -42,9 +44,10 @@ import {
 // The repack modal (spec/stock S5, FL6). Review this line's repack history and
 // create a repack (split N packs into a new line at a new pack size, optionally
 // a new location). Save is disabled until packs + new pack size are set;
-// fractional-pack / below-zero rejections surface as messages. A full repack
-// (all packs) offers navigation to the new line. Export/Print generates the
-// repack report for the selected/saved repack (owned by reporting).
+// fractional-pack / below-zero rejections surface as messages. A successful
+// save closes the modal; the caller offers the new line after a full repack.
+// Export/Print generates the repack report for the selected repack (owned by
+// reporting).
 //
 // The "created by a repack" source-batch note (spec/stock S5 header) is
 // omitted: finding the repack that CREATED this line is not directly queryable
@@ -58,8 +61,12 @@ export interface RepackModalProps {
   storeId: string;
   line: StockLineDetailFragment;
   onClose: () => void;
-  onRepacked: () => void;
-  onNavigateToLine: (stockLineId: string) => void;
+  /**
+   * A repack saved; the modal closes right after (spec OMS-REG-SMV-08.28).
+   * Given the new line's id when every available pack was repacked, so the
+   * caller can offer it (`.21`) over the screen the modal returns to.
+   */
+  onRepacked: (fullRepackNewLineId: string | undefined) => void;
 }
 
 export const RepackModal = (props: RepackModalProps): JSX.Element => (
@@ -69,7 +76,6 @@ export const RepackModal = (props: RepackModalProps): JSX.Element => (
       line={props.line}
       onClose={props.onClose}
       onRepacked={props.onRepacked}
-      onNavigateToLine={props.onNavigateToLine}
     />
   </Show>
 );
@@ -78,8 +84,7 @@ const RepackContent = (props: {
   storeId: string;
   line: StockLineDetailFragment;
   onClose: () => void;
-  onRepacked: () => void;
-  onNavigateToLine: (stockLineId: string) => void;
+  onRepacked: (fullRepackNewLineId: string | undefined) => void;
 }): JSX.Element => {
   const canRepack = () => hasPermission('CREATE_REPACK');
 
@@ -95,13 +100,12 @@ const RepackContent = (props: {
   } | null>(null);
   const [saving, setSaving] = createSignal(false);
   const [error, setError] = createSignal<string | undefined>();
-  // The repack invoice currently shown / just saved — enables Export/Print.
+  // The repack invoice currently shown — enables Export/Print.
   const [selectedInvoiceId, setSelectedInvoiceId] = createSignal<string>();
   const [printOpen, setPrintOpen] = createSignal(false);
-  // Full-repack navigation prompt: holds the new line id to move to.
-  const [fullRepackNewLineId, setFullRepackNewLineId] = createSignal<string>();
+  const packsField = createFocusTarget();
 
-  const [repacksData, { refetch }] = createResource(
+  const [repacksData] = createResource(
     () => props.line.id,
     async stockLineId => {
       const result = await graphqlFetch(RepacksByStockLine, {
@@ -172,14 +176,31 @@ const RepackContent = (props: {
     !exceedsAvailable() &&
     !saving();
 
+  // Starts filled in for the common case (spec `.27`), with focus on the pack
+  // count — the field most often changed, whose content focus selects so one
+  // keystroke replaces it (spec/keyboard KB-F3, KB-S1).
   const startNew = () => {
+    const draft = newRepackDraft(props.line);
     setCreating(true);
     setSelectedInvoiceId(undefined);
-    setNumberToRepack(undefined);
-    setNewPackSize(undefined);
-    setNewLocation(null);
+    setNumberToRepack(draft.numberOfPacks);
+    setNewPackSize(draft.newPackSize);
+    setNewLocation(draft.newLocation);
     setError(undefined);
+    packsField.focus();
   };
+
+  /*
+   * Alt+N — New (spec/keyboard KB-R2, AC-KB7). Registered after the screen
+   * beneath, so it shadows the stock line's own Alt+N while this modal is
+   * open. Inert where the New button is absent, mid-save, and under the print
+   * dialog, which would otherwise hide the new repack it starts.
+   */
+  createAddAction({
+    name: 'button.new',
+    run: startNew,
+    disabled: () => !canRepack() || saving() || printOpen(),
+  });
 
   const selectRepack = (row: RepackNode) => {
     setCreating(false);
@@ -204,15 +225,9 @@ const RepackContent = (props: {
       setError(outcome.message);
       return;
     }
-    // Success: reflect the new repack, refresh history + the underlying line.
-    setSelectedInvoiceId(outcome.data.invoice.id);
-    setCreating(false);
-    void refetch();
-    props.onRepacked();
-    if (isFull && outcome.data.newStockLineId) {
-      // All packs repacked — offer navigation to the new line (spec `.21`).
-      setFullRepackNewLineId(outcome.data.newStockLineId);
-    }
+    // Success closes the modal back to the stock line (spec `.28`).
+    props.onRepacked(isFull ? outcome.data.newStockLineId : undefined);
+    props.onClose();
   };
 
   // Cell rendering + widths from the shared presets (docs/CELL_TYPES.md): each
@@ -264,6 +279,7 @@ const RepackContent = (props: {
             <Button
               variant="secondary"
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="repack-new-button"
               onClick={startNew}
             >
@@ -374,6 +390,7 @@ const RepackContent = (props: {
                   </FieldRow>
                   <FieldRow label={t('label.packs-to-repack')}>
                     <NumberField
+                      ref={packsField.ref}
                       label={t('label.packs-to-repack')}
                       hideLabel
                       data-testid="repack-number-of-packs"
@@ -520,7 +537,7 @@ const RepackContent = (props: {
         </div>
       </Dialog>
 
-      {/* Export/Print the selected/saved repack (report owned by reporting). */}
+      {/* Export/Print the selected repack (report owned by reporting). */}
       <Show when={printOpen() && selectedInvoiceId()}>
         {invoiceId => (
           <SelectReportModal
@@ -530,18 +547,6 @@ const RepackContent = (props: {
           />
         )}
       </Show>
-
-      {/* Full repack → offer navigation to the new line (spec `.21`). */}
-      <ConfirmDialog
-        open={!!fullRepackNewLineId()}
-        title={t('heading.are-you-sure')}
-        message={t('messages.all-packs-repacked')}
-        onConfirm={() => {
-          const id = fullRepackNewLineId();
-          if (id) props.onNavigateToLine(id);
-        }}
-        onClose={() => setFullRepackNewLineId(undefined)}
-      />
     </>
   );
 };

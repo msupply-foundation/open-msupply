@@ -2,15 +2,17 @@ import { generateUUID } from '@/uuid';
 import { createMemo, createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '@/api/graphql';
-import { t, tPlural } from '@/intl';
+import { round, t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import {
   createFocusTarget,
   createFocusTargets,
 } from '@/ui/utils/createFocusTarget';
 import { createAction } from '@/ui/utils/keyActions';
+import { createDebounced } from '@/ui/utils/createDebounced';
 import { PLUS } from '@/ui/utils/shortcuts';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { Button } from '@/ui/elements/buttons/Button';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
@@ -33,20 +35,38 @@ import {
   type CardGroup,
 } from '@/ui/elements/table/DataTable';
 import { getNumberCell } from '@/ui/elements/table/tableHelpers';
+import { scrollCellIntoView } from '@/ui/elements/table/scrollCellIntoView';
 import { createTableConfig } from '@/api/createTableConfig';
 import {
   LocationVolumeSelect,
   type LocationWithVolume,
 } from '@/domain/location';
-import { ReasonSelect, reasonMatchesKind } from '@/domain/reasonOptions';
+import {
+  ReasonSelect,
+  adjustmentReasonRequired,
+  reasonMatchesKind,
+} from '@/domain/reasonOptions';
 import { ItemSearch } from '@/domain/item';
 import { VvmStatusSelect } from '@/domain/vvmStatus';
 import { NameSearch } from '@/domain/name';
 import { CampaignOrProgramSelect } from '@/domain/campaign';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
-import { defaultedPackSize, packSizeEditable } from '../lines/stocktakeLine';
-import { PlusCircleIcon, TrashIcon, CopyIcon } from '@/ui/icons';
+import {
+  awaitingReason,
+  defaultedPackSize,
+  differenceSize,
+  lineDifference,
+  packSizeEditable,
+  type CountLine,
+  type ReasonRequirement,
+} from '../lines/stocktakeLine';
+import {
+  AlertTriangleIcon,
+  PlusCircleIcon,
+  TrashIcon,
+  CopyIcon,
+} from '@/ui/icons';
 import {
   StockLinesByItem,
   StocktakeLines,
@@ -133,7 +153,7 @@ type DraftLine = Omit<StocktakeLineFragment, 'volumePerPack'> & {
 // (spec/stocktakes/rules.md §adjustment-reason rules). The reason itself stays
 // server-validated; this only narrows the choices to help the user.
 const adjustmentDirection = (
-  line: DraftLine
+  line: CountLine
 ): 'positive' | 'negative' | null => {
   const counted = line.countedNumberOfPacks;
   if (counted == null) return null;
@@ -142,6 +162,11 @@ const adjustmentDirection = (
   if (delta < 0) return 'negative';
   return null;
 };
+
+// How long a count's typing must pause before its difference and
+// awaiting-a-reason marking catch up (see typingCount) — the app's usual
+// keystroke debounce.
+const COUNT_SETTLE_MS = 500;
 
 // How many lines/stock lines to pull for one item (a single item never has many
 // batches — one page covers it).
@@ -335,6 +360,12 @@ interface StocktakeLineEditModalProps {
   storeId: string;
   stocktakeId: string;
   /**
+   * An initial (opening-balance) stocktake never requires a reason, so its
+   * lines never take the awaiting-a-reason marking (rules § adjustment-reason
+   * rules).
+   */
+  isInitialStocktake: boolean;
+  /**
    * The item this open STARTS on (a row click) → UPDATE mode. Omitted for "Add
    * item" → the modal opens in add mode (item-search state). The modal tracks
    * its own current item as the user advances with "OK & next".
@@ -386,6 +417,7 @@ export const StocktakeLineEditModal = (
         onClose={props.onClose}
         storeId={props.storeId}
         stocktakeId={props.stocktakeId}
+        isInitialStocktake={props.isInitialStocktake}
         // 'add' sentinel → no initial item (start in add mode); otherwise the
         // id.
         initialItemId={openKey === 'add' ? undefined : openKey}
@@ -403,6 +435,7 @@ interface StocktakeLineEditContentProps {
   onClose: () => void;
   storeId: string;
   stocktakeId: string;
+  isInitialStocktake: boolean;
   initialItemId?: string;
   initialLineId?: string;
   nextItem: ResolveNextItem;
@@ -421,8 +454,9 @@ const StocktakeLineEditContent = (
   // True while an item's data is being fetched (mount + item switch), so the
   // table shows a spinner instead of flashing its empty state.
   const [loadingLines, setLoadingLines] = createSignal(true);
-  const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
   // Per-line save errors (lineId → typename), same shape as the detail view.
+  // The footer's summary is derived from it (see footerSummary), so it falls as
+  // the user edits the flagged lines rather than standing until the next save.
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
   // The item currently being edited; undefined = add mode with no item picked
   // yet (the search state).
@@ -444,6 +478,12 @@ const StocktakeLineEditContent = (
   // row id — where a row-click open or an advance lands focus. The handle waits
   // for the row to attach, so no load gate is needed here.
   const batchFields = createFocusTargets();
+
+  // Each batch row's reason picker, addressed the same way — where a save the
+  // server refused for a missing reason lands (OMS-REG-INV-03.88). Focusing
+  // the picker opens its option list (the Combobox opens on focus), so the
+  // user lands ready to choose.
+  const reasonFields = createFocusTargets();
 
   // The add-mode item search. Named target, so entering the search state just
   // calls focus() — the handle waits for the control and defers the frame
@@ -470,6 +510,102 @@ const StocktakeLineEditContent = (
   const hideSnapshotStock = () => prefs().blindStocktake;
   const hideReason = () => prefs().blindStocktake;
 
+  // Which adjustment directions demand a reason on this stocktake — the
+  // server's "reason required" condition mirrored for display (rules §
+  // adjustment-reason rules): none on an initial or blind stocktake, otherwise
+  // a direction with an active adjustment reason configured. Reading the
+  // reason resource here arms its lazy fetch on open, non-suspending.
+  const reasonRequirement = createMemo((): ReasonRequirement =>
+    hideReason() || props.isInitialStocktake
+      ? { positive: false, negative: false }
+      : {
+          positive: adjustmentReasonRequired('positive'),
+          negative: adjustmentReasonRequired('negative'),
+        }
+  );
+
+  // While a count is being TYPED, its line's difference and awaiting-a-reason
+  // state hold what they showed before the burst (OMS-REG-INV-03.90): "9" on
+  // the way to "900" would otherwise flash "891 short", an amber row and a
+  // footer count for one keystroke. They catch up once typing pauses, or at
+  // Save. Only the presentation lags — the draft, the reason picker's
+  // direction and what Save sends all follow every keystroke.
+  const [typingCount, setTypingCount] = createSignal<{
+    id: string;
+    shown: number | null;
+  }>();
+  const settleCount = createDebounced(
+    () => setTypingCount(undefined),
+    COUNT_SETTLE_MS
+  );
+  // The count a line's difference and marking are drawn from.
+  const shownCount = (
+    line: DraftLine
+  ): CountLine & { reasonOption: DraftLine['reasonOption'] } => {
+    const typing = typingCount();
+    return {
+      snapshotNumberOfPacks: line.snapshotNumberOfPacks,
+      countedNumberOfPacks:
+        typing?.id === line.id ? typing.shown : line.countedNumberOfPacks,
+      reasonOption: line.reasonOption,
+    };
+  };
+
+  // A batch AWAITING A REASON (OMS-REG-INV-03.86): counted off its snapshot in
+  // a direction that demands one and holding none — or refused by the last
+  // save for exactly that, which covers any gap in the mirror above. A
+  // presentation state only: it marks the table row (a chip on a card), puts
+  // the warning under the reason field and counts in the footer; Save never
+  // gates on it.
+  const lineAwaitingReason = (line: DraftLine): boolean =>
+    line.countThisLine &&
+    (awaitingReason(shownCount(line), reasonRequirement()) ||
+      (lineErrors().get(line.id) === 'AdjustmentReasonNotProvided' &&
+        !line.reasonOption &&
+        !!lineDifference(line)));
+
+  // A difference's size for display, at the 2 dp a count is entered to — or
+  // "<0.01" for one finer than that, never "0" (see differenceSize).
+  const formatDifference = (difference: number): string => {
+    const { packs, belowPrecision } = differenceSize(difference);
+    return belowPrecision
+      ? t('messages.less-than', { value: round(0.01, 2) })
+      : round(packs, 2);
+  };
+
+  // The line's difference in words beneath its counted packs
+  // (OMS-REG-INV-03.85) — "3 short" / "2 over", nothing when level or
+  // uncounted. It justifies the reason being asked for and catches a mis-keyed
+  // count. Withheld under blind stocktake, with the snapshot it would reveal.
+  const differenceText = (line: DraftLine): string | undefined => {
+    const difference = lineDifference(shownCount(line));
+    if (hideSnapshotStock() || !line.countThisLine || !difference)
+      return undefined;
+    // Plural keys, like the reason warning below, so a locale can word the
+    // difference by number.
+    return tPlural(
+      difference < 0 ? 'messages.packs-short' : 'messages.packs-over',
+      differenceSize(difference).packs,
+      { count: formatDifference(difference) }
+    );
+  };
+
+  // The reason field's warning on a batch awaiting a reason: what to do, and
+  // the packs it explains ("Choose a reason for the 3 missing packs").
+  const reasonWarning = (line: DraftLine): string | undefined => {
+    if (!lineAwaitingReason(line)) return undefined;
+    const difference = lineDifference(shownCount(line)) ?? 0;
+    // Plural form chosen on the size as shown, so a 1.0000001 reads "the
+    // missing pack", not "the 1 missing packs".
+    return tPlural(
+      difference < 0
+        ? 'messages.reason-for-missing-packs'
+        : 'messages.reason-for-extra-packs',
+      differenceSize(difference).packs,
+      { count: formatDifference(difference) }
+    );
+  };
+
   // No item picked yet → the search state (Cancel-only footer, prompt in place
   // of the table, no Add batch / OK / OK & next).
   const noItemYet = () => currentItem() === undefined;
@@ -494,7 +630,19 @@ const StocktakeLineEditContent = (
   // still carry the tablet/phone case. The showCardToggle offers the flip to
   // cards on a wide screen, and setConfig persists that choice per user (#886)
   // — so this is only the default.
-  const tableConfig = createTableConfig({ tableId: 'stocktake-line-edit' });
+  //
+  // The count toggle and Batch are PINNED by default (OMS-REG-INV-03.89): a
+  // wide table scrolls sideways, and a reason cell or a later column is only
+  // meaningful next to the batch it belongs to. Pinning the leading column also
+  // freezes the row's awaiting-a-reason edge bar, which DataTable draws on the
+  // leading cell. A default only — a user's own pins (Columns popover) win, and
+  // "Reset table" returns here.
+  const tableConfig = createTableConfig({
+    tableId: 'stocktake-line-edit',
+    defaultConfig: {
+      base: { columnPinning: { left: ['countThisLine', 'batch'] } },
+    },
+  });
 
   // Seed the draft for one item. Replaces the store (reconcile by id) so no
   // rows from the previous item linger, and resets per-item UI. countByDefault:
@@ -513,7 +661,6 @@ const StocktakeLineEditContent = (
     setCurrentItem(item);
     coveredItemIds.add(item.id);
     setLineErrors(new Map());
-    setErrorMessage(undefined);
     setLoadingLines(true);
     const existing =
       knownExisting ??
@@ -584,7 +731,6 @@ const StocktakeLineEditContent = (
     setMode('add');
     setCurrentItem(undefined);
     setLineErrors(new Map());
-    setErrorMessage(undefined);
     setDraft(reconcile([], { key: 'id' }));
     itemSearch.focus();
   };
@@ -602,15 +748,8 @@ const StocktakeLineEditContent = (
   // The rows the table shows: the draft minus soft-deleted lines.
   const rows = (): DraftLine[] => draft.filter(line => !line.deleted);
 
-  // Edit ONE field of ONE line (fine-grained store write); clears the line's
-  // stale server error.
-  const update = <F extends keyof DraftLine>(
-    id: string,
-    field: F,
-    value: DraftLine[F]
-  ) => {
-    const index = draft.findIndex(line => line.id === id);
-    if (index >= 0) setDraft(index, field, value as never);
+  // Drop a line's stale server error, so the footer's count falls with it.
+  const clearLineError = (id: string) => {
     if (lineErrors().has(id)) {
       setLineErrors(prev => {
         const next = new Map(prev);
@@ -620,12 +759,31 @@ const StocktakeLineEditContent = (
     }
   };
 
+  // Edit ONE field of ONE line (fine-grained store write); clears the line's
+  // stale server error.
+  const update = <F extends keyof DraftLine>(
+    id: string,
+    field: F,
+    value: DraftLine[F]
+  ) => {
+    const index = draft.findIndex(line => line.id === id);
+    if (index >= 0) setDraft(index, field, value as never);
+    clearLineError(id);
+  };
+
   // Update a line's counted packs AND drop a now-mismatched reason: recounting
   // the other way (or back to the snapshot) can leave a reason that no longer
   // matches the new adjustment direction, which the picker would then hide. We
   // clear it so a stale, wrong-direction reason can't survive unseen (the
   // server would reject it as AdjustmentReasonNotValid anyway).
   const setCounted = (line: DraftLine, value: number | null) => {
+    // Hold this line's shown count at its pre-burst value until typing pauses
+    // (typingCount). A burst on another line settles that one first.
+    if (typingCount()?.id !== line.id) {
+      settleCount.flush();
+      setTypingCount({ id: line.id, shown: line.countedNumberOfPacks });
+    }
+    settleCount();
     update(line.id, 'countedNumberOfPacks', value);
     const direction = adjustmentDirection({
       ...line,
@@ -715,7 +873,8 @@ const StocktakeLineEditContent = (
   };
 
   // Soft-delete a row (isNew splices out; existing flagged deleted → sent as a
-  // delete on save).
+  // delete on save). A removed row takes its save error with it — nothing is
+  // left on screen to show it, so the footer must not keep counting it.
   const removeLine = (line: DraftLine) => {
     if (line.isNew) {
       setDraft(
@@ -728,6 +887,7 @@ const StocktakeLineEditContent = (
       const index = draft.findIndex(l => l.id === line.id);
       if (index >= 0) setDraft(index, 'deleted', true);
     }
+    clearLineError(line.id);
   };
 
   // Duplicate a row — clone into a fresh isNew draft (new id + blank count),
@@ -838,10 +998,12 @@ const StocktakeLineEditContent = (
   // Save (no client-side validation — the server decides; per-line errors
   // surface on failure). Returns whether it fully succeeded. On any commit we
   // notify the parent so it refetches the page (partial success still reflects
-  // the committed lines).
+  // the committed lines). The awaiting-a-reason marking never gates this call:
+  // a missing reason reaches the server and comes back as its rejection.
   const save = async (): Promise<boolean> => {
+    // A count typed right up to Save shows its final difference and marking.
+    settleCount.flush();
     setSaving(true);
-    setErrorMessage(undefined);
     const outcome = await runBatchStocktakeLines(props.storeId, buildBatch());
     setSaving(false);
     if (!outcome) return false; // transport/NodeError → global modal showed it
@@ -857,7 +1019,23 @@ const StocktakeLineEditContent = (
 
     if (errors.size > 0) {
       setLineErrors(new Map(errors));
-      setErrorMessage(tPlural('messages.line-errors', errors.size));
+      // Take the user to the problem rather than just blocking
+      // (OMS-REG-INV-03.88): the first batch, in the rows' order, refused for a
+      // missing reason — scrolled into view with its reason picker open.
+      const firstMissingReason = rows().find(
+        line => errors.get(line.id) === 'AdjustmentReasonNotProvided'
+      );
+      // Centred, rather than the handle's default nearest-edge scroll: a row
+      // landing on the bottom edge would hide the warning and the difference
+      // beneath its controls — the words that say why. By its CELL in table
+      // view, so a table scrolled past Reason brings the whole cell out from
+      // under the pinned Batch, header and warning too. Passed as the
+      // landing scroll, so it runs once, when the picker is attached.
+      if (firstMissingReason)
+        reasonFields.focus(firstMissingReason.id, {
+          scroll: el =>
+            scrollCellIntoView(el, { block: 'center', inline: 'nearest' }),
+        });
       return false; // keep the modal open on the failed lines
     }
     return true;
@@ -1032,6 +1210,10 @@ const StocktakeLineEditContent = (
             decimalLimit={2}
             disabled={!line.countThisLine}
             value={line.countedNumberOfPacks ?? undefined}
+            helperText={differenceText(line)}
+            // Leaving the field ends the typing burst: its difference and
+            // marking catch up at once rather than after the pause.
+            onFocusOut={() => settleCount.flush()}
             error={
               lineErrors().get(line.id) === 'StockLineReducedBelowZero'
                 ? t('error.reduced-below-zero')
@@ -1191,6 +1373,102 @@ const StocktakeLineEditContent = (
         );
       },
     },
+    // Reason (batch panel) — directly after Location (OMS-REG-INV-03.89), so in
+    // TABLE view the reason sits beside the count it explains instead of past
+    // the manufacturer/campaign columns and off the right edge. Omitted
+    // entirely under blind stocktake, since no reason is ever required (see
+    // hideReason above).
+    ...(hideReason()
+      ? []
+      : [
+          {
+            c: { id: 'inventoryAdjustmentReasonInput' },
+            header: () => t('label.reason'),
+            cardGroup: 'batch',
+            meta: {
+              cardWidth: { min: 12.5, max: 36, weight: 2 },
+              // Four of the twelve, filling the row Location leaves (8 + 4).
+              // Reason comes and goes per BATCH (hideOnCardWhen below), not per
+              // table, so it's the one field here that can change a card's
+              // packing while the modal is open. Sitting after Location, it
+              // takes Manufacture date's slot when it appears and pushes that
+              // date (usually empty) down a row — the rows ABOVE never move,
+              // which is what matters while the user is typing a count. On a
+              // vaccine item that row runs Reason + VVM + Manufacture date.
+              cardSpan: 4,
+              // The card shows Reason only on a batch that can actually take
+              // one: counted, and counted to something other than its
+              // snapshot. A level batch takes no reason at all (rules.md
+              // §reason rules — "a zero adjustment never requires a reason"),
+              // and an uncounted line has no direction yet, so the field is
+              // withdrawn rather than shown inert. It reappears once the count
+              // moves off the snapshot and typing pauses (shownCount), so it
+              // doesn't pop in and out on the way to a multi-digit count.
+              //
+              // Card-only. TABLE view keeps the column on every row (below:
+              // `disabled` when there is no direction) — a column is a
+              // property of the grid there, and blanking one row's cell is
+              // what keeps the rows aligned.
+              hideOnCardWhen: (line: DraftLine) =>
+                !line.countThisLine ||
+                adjustmentDirection(shownCount(line)) === null,
+            },
+            cell: info => {
+              const line = info.row.original;
+              // A reason of the wrong direction is an error — the value is
+              // wrong. A MISSING reason is not (OMS-REG-INV-03.86): it's a step
+              // still to take, so it shows as the warning below, from the
+              // moment the count moves off the snapshot rather than only after
+              // a refused save.
+              const error = () =>
+                lineErrors().get(line.id) === 'AdjustmentReasonNotValid'
+                  ? t('error.provide-valid-reason')
+                  : undefined;
+              // Offer only reasons valid for the line's adjustment direction.
+              // A zero-variance (or uncounted) line has no direction: the CARD
+              // drops the field entirely (meta.hideOnCardWhen above), and the
+              // TABLE — which keeps its columns row-invariant — shows it
+              // disabled. setCounted clears a now-mismatched reason when the
+              // count changes direction, so the fallback 'positive' kind is
+              // never read for a real selection.
+              const direction = () => adjustmentDirection(line);
+              return (
+                <ReasonSelect
+                  kind={direction() ?? 'positive'}
+                  label={t('label.reason')}
+                  hideLabel
+                  // The compact height its neighbours use. Without it the
+                  // picker takes the default 40px against their 36px and
+                  // stands a step taller than every field around it — the
+                  // failure its own `size` prop doc names.
+                  size="small"
+                  disabled={!line.countThisLine || direction() === null}
+                  value={line.reasonOption?.id}
+                  error={error()}
+                  errorTestId="stocktake-line-error"
+                  warning={reasonWarning(line)}
+                  // The same per-line hook as the error (e2e/TESTIDS.md: "e.g.
+                  // reason required") — the suites assert a missing reason's
+                  // message by it on both front ends.
+                  warningTestId="stocktake-line-error"
+                  focusTarget={{
+                    ref: reasonFields.ref(line.id),
+                    focus: () => reasonFields.focus(line.id),
+                    cancel: reasonFields.cancel,
+                  }}
+                  placeholder={t('label.select-reason')}
+                  onChange={r =>
+                    update(
+                      line.id,
+                      'reasonOption',
+                      r ? { id: r.id, type: r.type, reason: r.reason } : null
+                    )
+                  }
+                />
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]),
     // VVM status (batch panel) — a VvmStatusSelect editing the draft's
     // vvmStatus node. Gated on manageVvmStatusForStock AND the item being a
     // vaccine (spec S4: "only if manageVvmStatusForStock, vaccine items"),
@@ -1356,11 +1634,6 @@ const StocktakeLineEditContent = (
                       ? {
                           id: line.donorId,
                           name: line.donorName ?? '',
-                          code: '',
-                          isSupplier: false,
-                          isDonor: true,
-                          isOnHold: false,
-                          isStore: false,
                         }
                       : undefined
                   }
@@ -1432,11 +1705,6 @@ const StocktakeLineEditContent = (
                 ? {
                     id: line.manufacturer.id,
                     name: line.manufacturer.name,
-                    code: '',
-                    isSupplier: false,
-                    isDonor: false,
-                    isOnHold: false,
-                    isStore: false,
                   }
                 : undefined
             }
@@ -1452,84 +1720,6 @@ const StocktakeLineEditContent = (
         );
       },
     },
-    // Reason — omitted entirely under blind stocktake, since no reason is
-    // ever required (see hideReason above).
-    ...(hideReason()
-      ? []
-      : [
-          {
-            c: { id: 'inventoryAdjustmentReasonInput' },
-            header: () => t('label.reason'),
-            cardGroup: 'batch',
-            meta: {
-              cardWidth: { min: 12.5, max: 36, weight: 2 },
-              // A whole row of the ten when it appears. Reason comes and goes
-              // per BATCH (hideOnCardWhen below), not per table, so it's the one
-              // field here that can change a card's packing while the modal is
-              // open — a full row is the only span that leaves the rows above it
-              // untouched when it does.
-              cardSpan: 12,
-              // The card shows Reason only on a batch that can actually take
-              // one: counted, and counted to something other than its
-              // snapshot. A level batch takes no reason at all (rules.md
-              // §reason rules — "a zero adjustment never requires a reason"),
-              // and an uncounted line has no direction yet, so the field is
-              // withdrawn rather than shown inert. It reappears the moment the
-              // count moves off the snapshot, because the predicate reads the
-              // draft store.
-              //
-              // Card-only. TABLE view keeps the column on every row (below:
-              // `disabled` when there is no direction) — a column is a
-              // property of the grid there, and blanking one row's cell is
-              // what keeps the rows aligned.
-              hideOnCardWhen: (line: DraftLine) =>
-                !line.countThisLine || adjustmentDirection(line) === null,
-            },
-            cell: info => {
-              const line = info.row.original;
-              const error = () => {
-                const err = lineErrors().get(line.id);
-                if (err === 'AdjustmentReasonNotProvided')
-                  return t('error.provide-reason');
-                if (err === 'AdjustmentReasonNotValid')
-                  return t('error.provide-valid-reason');
-                return undefined;
-              };
-              // Offer only reasons valid for the line's adjustment direction.
-              // A zero-variance (or uncounted) line has no direction: the CARD
-              // drops the field entirely (meta.hideOnCardWhen above), and the
-              // TABLE — which keeps its columns row-invariant — shows it
-              // disabled. setCounted clears a now-mismatched reason when the
-              // count changes direction, so the fallback 'positive' kind is
-              // never read for a real selection.
-              const direction = () => adjustmentDirection(line);
-              return (
-                <ReasonSelect
-                  kind={direction() ?? 'positive'}
-                  label={t('label.reason')}
-                  hideLabel
-                  // The compact height its neighbours use. Without it the
-                  // picker takes the default 40px against their 36px and
-                  // stands a step taller than every field around it — the
-                  // failure its own `size` prop doc names.
-                  size="small"
-                  disabled={!line.countThisLine || direction() === null}
-                  value={line.reasonOption?.id}
-                  error={error()}
-                  errorTestId="stocktake-line-error"
-                  placeholder={t('label.select-reason')}
-                  onChange={r =>
-                    update(
-                      line.id,
-                      'reasonOption',
-                      r ? { id: r.id, type: r.type, reason: r.reason } : null
-                    )
-                  }
-                />
-              );
-            },
-          } satisfies Column<DraftLine, never, GroupKey>,
-        ]),
     // NO Note field, in either view. The line carries both `note` and
     // `comment`, and on the card they rendered as two identical free-text boxes
     // with nothing to tell them apart. They are not duplicates, which is the
@@ -1563,6 +1753,42 @@ const StocktakeLineEditContent = (
           />
         );
       },
+    },
+    // The CARD's awaiting-a-reason marker (OMS-REG-INV-03.86): a warning chip
+    // in the card's badge slot, ahead of the row actions. Cards can't take the
+    // table row's tint + edge bar, and a card's tone only tints a TEXT identity
+    // title (here the batch input) — toned card borders were dropped from the
+    // library on purpose, leaving the corner badges as the card-status
+    // vocabulary. Card-only: table view already marks the row, and the chip
+    // there would only repeat it past the scroll edge. Structural, so out of
+    // the Columns popover.
+    //
+    // Built by hand, NOT with getFlagCell (outbound's card-only "Not issued"
+    // chip), for two reasons that don't apply to that read-only table:
+    // - getFlagCell reads the column's accessor value, which TanStack caches
+    //   per row. This state follows the editable draft store, whose rows are
+    //   edited in place, so the flag would stick at its first value.
+    // - its hidden [data-flag] marker switches the card header to the
+    //   "title · statuses" layout (DataTable.module.css § STATUS flag
+    //   badges), so the row actions sharing this badge slot would jump out
+    //   of the corner every time a line started or stopped awaiting a reason.
+    {
+      c: { id: 'awaitingReason' },
+      header: () => t('label.needs-a-reason'),
+      meta: {
+        headerPosition: 'badge',
+        hideOnTable: true,
+        hideFromColumnSettings: true,
+      },
+      cell: info => (
+        <Show when={lineAwaitingReason(info.row.original)}>
+          <StatusBadge
+            label={t('label.needs-a-reason')}
+            tone="warning"
+            icon={<AlertTriangleIcon />}
+          />
+        </Show>
+      ),
     },
     {
       c: { id: 'actions' },
@@ -1599,7 +1825,28 @@ const StocktakeLineEditContent = (
     },
   ]);
 
-  const footerError = () => errorMessage();
+  // The footer banner (OMS-REG-INV-03.87). Save errors take it — every refused
+  // line EXCEPT a missing reason, which is not an error here — and otherwise it
+  // counts the batches still awaiting a reason, amber, from before the first
+  // Save. Both are derived, so each falls as the user fixes lines.
+  const footerSummary = ():
+    { severity: 'error' | 'warning'; message: string } | undefined => {
+    const errorCount = [...lineErrors().values()].filter(
+      error => error !== 'AdjustmentReasonNotProvided'
+    ).length;
+    if (errorCount > 0)
+      return {
+        severity: 'error',
+        message: tPlural('messages.line-errors', errorCount),
+      };
+    const awaitingCount = rows().filter(lineAwaitingReason).length;
+    if (awaitingCount > 0)
+      return {
+        severity: 'warning',
+        message: tPlural('messages.lines-need-reason', awaitingCount),
+      };
+    return undefined;
+  };
 
   // OK / OK & next show a loading state while the modal is busy — both while
   // SAVING and while the item's table content is being fetched (mount, item
@@ -1734,8 +1981,10 @@ const StocktakeLineEditContent = (
         </>
       }
       actionsLead={
-        <Show when={footerError()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+        <Show when={footerSummary()}>
+          {summary => (
+            <Alert severity={summary().severity}>{summary().message}</Alert>
+          )}
         </Show>
       }
       actions={
@@ -1794,6 +2043,23 @@ const StocktakeLineEditContent = (
           }
           controlsMount={tableControls()}
           emptyMessage={t('label.add-new-line')}
+          // Controls hold their line when a cell grows a message beneath it —
+          // the difference under a count, the warning under a reason — rather
+          // than the whole row's inputs shifting as one of them speaks up.
+          cellAlign="start"
+          // A batch awaiting a reason (OMS-REG-INV-03.86): the warning tint
+          // over the row and the bar down its leading edge — frozen with the
+          // pinned leading column, so it stays in view on horizontal scroll.
+          // Amber, not red: the count is usually right and the loss real;
+          // what's missing is the why. The reason field's warning states the
+          // same fact in words.
+          //
+          // No cardTone: a card's tone tints only a TEXT identity title, and
+          // this card's identity is the batch input, so it would paint
+          // nothing. Cards carry the state as the "Needs a reason" chip in
+          // their badge slot instead (the awaitingReason column).
+          rowTint={line => (lineAwaitingReason(line) ? 'warning' : undefined)}
+          rowAccent={line => (lineAwaitingReason(line) ? 'warning' : undefined)}
         />
       </Show>
     </Dialog>

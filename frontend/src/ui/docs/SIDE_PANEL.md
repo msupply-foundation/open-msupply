@@ -46,8 +46,8 @@ SidePanel label=… onClose=…                       ← <aside>, sticky header
 **Read-only value**
 
 ```tsx
-<FieldRow label={t('label.created')}>
-  <span>{localisedDate(node.createdDatetime)}</span>
+<FieldRow label={t('label.created')} readOnly valueTestId="created-value">
+  {localisedDate(node.createdDatetime)}
 </FieldRow>
 ```
 

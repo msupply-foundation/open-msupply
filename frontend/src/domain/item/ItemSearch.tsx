@@ -76,6 +76,11 @@ export interface ItemSearchProps {
    * .hasStockOnHand) — the stock-movement line editor's item search.
    */
   hasStockOnHand?: boolean;
+  /**
+   * Keep items barred from ordering (the store's `ignoreForOrders` flag) out
+   * of the results — the purchase-order line editor's chooser.
+   */
+  orderableOnly?: boolean;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
   /**
@@ -123,7 +128,8 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     () => props.excludeItemIds ?? [],
     PAGE_SIZE,
     () => props.hasStockOnHand,
-    () => props.masterListId
+    () => props.masterListId,
+    () => (props.orderableOnly ? false : undefined)
   );
 
   // itemId → already-on-document, filled page-by-page by the caller's

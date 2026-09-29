@@ -6,7 +6,6 @@ import {
   applicableRows,
   batches,
   buildTemplateCsv,
-  isCsvFileName,
   matchColumns,
   outcomeSucceeded,
   parseImportFile,
@@ -16,6 +15,9 @@ import {
   type PropertyDefinition,
   type RowOutcome,
 } from './propertyImport';
+import {
+  isCsvFileName,
+} from '@/domain/csvImport';
 
 // Anchors: spec/names/cases/OMS-REG-MNG-02 (the facility-property import).
 // In node the catalog isn't loaded, so t() falls back to its keys — the

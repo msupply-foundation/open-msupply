@@ -104,15 +104,8 @@ export default tseslint.config(
       '**/*.generated.ts',
       '**/*.css.d.ts',
       'codegen/**', // CommonJS (.cjs) with its own node:test suite
-      // CIV's backend half. It BUILDS here (vite/backendPluginBuild.ts) and
-      // is type-checked here (tsconfig.backend-plugins.json), but its source
-      // arrived from msupply-foundation/civ-plugins formatted to that repo's
-      // conventions; #417 carries bringing it under ESLint and Prettier,
-      // first reformat and all (plugins/civ/backend/README.md). Named rather
-      // than globbed as `plugins/*/backend/**`: backend halves written HERE —
-      // the reference plugin's and cook_islands' — are linted, below.
-      'plugins/civ/backend/**',
-      // A prebuilt bundle is a build artifact wherever it appears.
+      // A prebuilt bundle is a build artifact wherever it appears — it is
+      // packed verbatim, so it is output, not source.
       'plugins/*/backend/prebuilt/**',
     ],
   },
@@ -121,13 +114,13 @@ export default tseslint.config(
   // APIs unsupported by the minimum browser (browserslist in package.json —
   // Chromium 132, the WebView on the oldest Android 8.1 tablets deployed).
   // The example
-  // plugins (examples/) are the same: ordinary Solid components running in the
+  // plugins (plugins/examples/) are the same: ordinary Solid components running in the
   // host's runtime, so they answer to the same rules.
   {
-    files: ['src/**/*.{ts,tsx}', 'examples/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'plugins/examples/**/*.{ts,tsx}'],
     // The reference BACKEND plugin is not browser code — it has its own block
     // below rather than Solid, DOM globals and browser-compat rules.
-    ignores: ['examples/*/backend/**'],
+    ignores: ['plugins/examples/*/backend/**'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -220,28 +213,28 @@ export default tseslint.config(
   },
 
   /*
-   * The BACKEND halves written here — the reference plugin
-   * (examples/<code>/backend) and cook_islands' — which run in the server's
-   * BoaJS engine. No Solid, no DOM, and deliberately NO `globals.browser`:
-   * the only globals they have are the host functions the engine binds, which
-   * each plugin declares ambiently (its `host.d.ts`), so an accidental
-   * `document` or `window` should be an undefined-variable error rather than
-   * something the config quietly permits. `no-console` is absent
-   * for the same reason — there is no console in the engine, so a stray
-   * `console.log` is already an error here, and `log()` is the way out.
+   * Every BACKEND half — the reference plugin (plugins/examples/<code>/backend) and
+   * the country plugins' — which run in the server's BoaJS engine. No Solid,
+   * no DOM, and deliberately NO `globals.browser`: the only globals they have
+   * are the host functions the engine binds, so an accidental `document` or
+   * `window` should be an undefined-variable error rather than something the
+   * config quietly permits. `no-console` is absent for the same reason —
+   * there is no console in the engine, so a stray `console.log` is already an
+   * error here, and `log()` is the way out.
    *
-   * These are written in this repo and owned outright, so they answer to the
-   * shared rules. CIV's backend half builds here too, but stays lint-ignored
-   * above until #417 reformats the source it arrived with.
+   * Where those globals come from is the one thing that differs, and the
+   * rules do not care: cook_islands and the reference plugin declare them
+   * ambiently (`host.d.ts`), CIV imports `@common/types`. All of it is
+   * written and owned here, so all of it answers to the shared rules.
    */
   {
     files: [
-      'examples/*/backend/**/*.ts',
-      'plugins/cook_islands/backend/**/*.ts',
+      'plugins/examples/*/backend/**/*.ts',
+      'plugins/*/backend/**/*.ts',
       // The wire contract both halves import. Type-only, so it needs the TS
       // parser and nothing else — and it sits outside `src/`, the only plugin
       // path the app block covers.
-      'plugins/cook_islands/shared/**/*.ts',
+      'plugins/*/shared/**/*.ts',
     ],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
@@ -267,9 +260,9 @@ export default tseslint.config(
     files: [
       'src/**/*.{ts,tsx}',
       'plugins/*/src/**/*.{ts,tsx}',
-      'plugins/cook_islands/backend/**/*.ts',
-      'plugins/cook_islands/shared/**/*.ts',
-      'examples/**/*.{ts,tsx}',
+      'plugins/*/backend/**/*.ts',
+      'plugins/*/shared/**/*.ts',
+      'plugins/examples/**/*.{ts,tsx}',
       '*.config.{ts,js}',
       'scripts/**/*.mjs',
     ],

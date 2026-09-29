@@ -94,10 +94,10 @@ import {
 } from './InternalOrderToolbar';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { ExportPrintButton } from '@/domain/reports';
 import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
-import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
 import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
 import { DeleteLinesAction } from './actions/DeleteLinesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
@@ -1125,8 +1125,13 @@ const InternalOrderDetailView: Component = () => {
                       onApplied={() => void refetch()}
                     />
                     {/* Export/Print — a read, offered on every status (AC-PR1). */}
-                    <ExportPrintInternalOrderAction
-                      orderId={node().id}
+                    {/* Sub-context-less forms only: a program R&R form has
+                        its own surface (AC-PR2). No sort — the table's display
+                        sort never reaches generation. */}
+                    <ExportPrintButton
+                      context="INTERNAL_ORDER"
+                      extraFilter={{ subContext: { equalAnyOrNull: [] } }}
+                      dataId={node().id}
                       seedArgs={seedArgs()}
                     />
                     {/* More — reopens the side panel; shown only while closed. */}
