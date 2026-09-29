@@ -9,7 +9,7 @@ import {
   Show,
   type JSX,
 } from 'solid-js';
-import { t, tPlural } from '@/intl';
+import { measureWord, t, tPlural } from '@/intl';
 import { formatNumber } from '@/intl/formatNumber';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -35,7 +35,6 @@ import {
   fetchLineStats,
   figureInMode,
   modeToUnits,
-  modeWord,
   saveExistingLine,
   saveNewLine,
   unitsToMode,
@@ -186,6 +185,9 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   };
 
   const focusSupply = () => {
+    // A read-only requisition has nothing to type into, so it keeps the panel
+    // default (ui-standards › accessibility › keyboard).
+    if (!props.editable) return;
     // After the dialog's showModal() has parked focus on the panel — the same
     // one-frame deferral createFocusTarget applies (AC-LE1: focus Supply and
     // scroll it into view).
@@ -196,14 +198,15 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   };
 
   // Land the editor on a line — an existing line (edit) or an add-mode
-  // preview — seeding the draft from its stored values.
-  const seedLine = (editorLine: EditorLine, focus: boolean) => {
+  // preview — seeding the draft from its stored values, and landing the caret
+  // on Supply however the line was reached (AC-LE1).
+  const seedLine = (editorLine: EditorLine) => {
     setLine(editorLine);
     covered.add(editorLine.lineId);
     setDraft(draftFromLine(editorLine));
     setErrorMessage(undefined);
     setReasonFlagged(false);
-    if (focus) focusSupply();
+    focusSupply();
   };
 
   const pickItem = async (itemId: string) => {
@@ -212,7 +215,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     // the loaded line's isNew=false makes the save an update, not an insert.
     const existing = props.findLineForItem(itemId);
     if (existing) {
-      seedLine(editorLineFromLine(existing), false);
+      seedLine(editorLineFromLine(existing));
       return;
     }
     setLoading(true);
@@ -224,7 +227,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     );
     if (disposed) return;
     setLoading(false);
-    if (preview) seedLine(preview, false);
+    if (preview) seedLine(preview);
   };
 
   // Back to the empty add state (AC-LE7: switching items or returning
@@ -419,7 +422,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   // mode when exhausted where adding is offered, else closing.
   const advance = (fromLineId: string) => {
     const next = props.nextLine(fromLineId, covered);
-    if (next) seedLine(editorLineFromLine(next), true);
+    if (next) seedLine(editorLineFromLine(next));
     else if (props.canAdd) backToSearch();
     else props.onClose();
   };
@@ -450,12 +453,12 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     const count =
       unitsToMode(supplyUnits(), entryMode(), packSize()) === 1 ? 1 : 2;
     const options = [
-      { value: 'units', label: modeWord('units', unitName, count) },
+      { value: 'units', label: measureWord('units', unitName, count) },
     ];
     if (packSize() > 0)
       options.push({
         value: 'packs',
-        label: modeWord('packs', unitName, count),
+        label: measureWord('packs', unitName, count),
       });
     return options;
   });
@@ -486,7 +489,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         ? t('label.days')
         : rowProps.fixed === 'months'
           ? t('label.months')
-          : modeWord(entryMode(), current()?.unitName ?? null, shown());
+          : measureWord(entryMode(), current()?.unitName ?? null, shown());
     const shown = () => {
       if (rowProps.fixed) return Math.round(rowProps.units * 10) / 10;
       if (rowProps.onChange) {
@@ -684,7 +687,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         <FieldRow label={t('label.target-stock-population')}>
           <span class={styles.statValue}>
             {formatNumber(targetPopulationFigure())}{' '}
-            {modeWord(
+            {measureWord(
               entryMode(),
               current()?.unitName ?? null,
               targetPopulationFigure()

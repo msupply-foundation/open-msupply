@@ -133,7 +133,7 @@ export interface FilterGroup<C extends object> {
   onChange: (filter: C) => void;
 }
 
-interface FilterBarProps<
+export interface FilterBarProps<
   F extends object,
   C extends object = Record<string, never>,
 > {
@@ -526,7 +526,7 @@ const FiltersMenu = (props: {
  * once; a draft still pending at unmount is discarded, never applied
  * (flushing there would resurrect a chip the user just removed).
  */
-export const FilterTextInput = (props: {
+export interface FilterTextInputProps {
   value: string;
   onInput: (value: string) => void;
   placeholder?: string;
@@ -541,7 +541,9 @@ export const FilterTextInput = (props: {
    * (client-side sets).
    */
   debounceMs?: number;
-}) => {
+}
+
+export const FilterTextInput = (props: FilterTextInputProps) => {
   const chipFocus = useChipFocus();
   // undefined = no pending edit → the input shows the committed props.value.
   const [draft, setDraft] = createSignal<string>();
@@ -761,7 +763,7 @@ const NoOptions = () => (
  * A discrete choice, so `onChange` applies immediately — no debounce (spec:
  * ui-standards/inputs.md § Server-bound input).
  */
-export const FilterSelect = <V extends string>(props: {
+export interface FilterSelectProps<V extends string> {
   value: V | '';
   options: readonly { value: V | ''; label: string }[];
   onChange: (value: V | '') => void;
@@ -771,7 +773,9 @@ export const FilterSelect = <V extends string>(props: {
    * `filter-input-<key>`).
    */
   testId?: string;
-}) => {
+}
+
+export const FilterSelect = <V extends string>(props: FilterSelectProps<V>) => {
   const chipFocus = useChipFocus();
   const current = () => props.options.find(o => o.value === props.value);
   return (
@@ -976,7 +980,7 @@ export const FilterCheckbox = (props: {
 
 /** Inclusive range bounds on a filter key (shared by `DatetimeFilterInput`
  *  and `DateFilterInput`). */
-interface RangeBounds {
+export interface RangeBounds {
   afterOrEqualTo?: string | null;
   beforeOrEqualTo?: string | null;
 }
@@ -989,7 +993,7 @@ interface RangeBounds {
  * through. The value is the field's own wire bounds, so a vertical binds its
  * key directly.
  */
-export const FilterDateRange = (props: {
+export interface FilterDateRangeProps {
   value: RangeBounds | null | undefined;
   onChange: (value: RangeBounds | null) => void;
   /** The target field's wire scalar — governs conversion, not the UI. */
@@ -999,7 +1003,9 @@ export const FilterDateRange = (props: {
   /** `data-testid` for the trigger (FilterBar supplies
    *  `filter-input-<key>`). */
   testId?: string;
-}) => {
+}
+
+export const FilterDateRange = (props: FilterDateRangeProps) => {
   // The field's ONE focusable is its popover trigger — a button, so a
   // just-added chip OPENS its calendar rather than merely focusing it.
   const chipFocus = useChipFocus();

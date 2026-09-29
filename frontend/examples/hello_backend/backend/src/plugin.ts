@@ -25,12 +25,14 @@ type Output = {
 };
 
 /**
- * Project a statement's columns into the single `json_row` column the host's
- * `sql` insists on (see `host.d.ts`). Out of tree this is `sqlQuery` from
- * `@common/utils`; it is inlined here because the trap it hides is the single
- * most surprising thing about writing a backend plugin — without it the query
- * fails at runtime, inside the engine, with a Diesel error that names a column
- * you never wrote.
+ * Project a statement's columns into a single `json_row` column.
+ *
+ * The host no longer needs this: `sql` returns rows keyed by column (see
+ * `host.d.ts`), and it unwraps a `json_row` column if it finds one. Kept
+ * because that is what lets one bundle also run against a server from before
+ * the change, where a statement projecting anything else failed at runtime,
+ * inside the engine, with a Diesel error naming a column you never wrote. Out
+ * of tree this is `sqlQuery` from `@common/utils`, which does the same.
  *
  * The JSON function differs by dialect, which is what `sql_type()` is for.
  */

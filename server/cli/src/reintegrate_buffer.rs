@@ -69,6 +69,7 @@ pub fn reintegrate_buffer(
                 .clone()
                 .unwrap_or_default()
                 .to_migration_config(),
+            starting_database_version: None,
         };
         migrate(
             &connection_manager.connection().unwrap(),
