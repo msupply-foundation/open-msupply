@@ -65,7 +65,11 @@ blocking anything. Earlier Postgres versions take `ACCESS EXCLUSIVE` for the att
 is why the version floor exists. Do not reintroduce `PARTITION OF`.
 
 The attach also takes `ACCESS EXCLUSIVE` on the DEFAULT partition, to check it holds no rows in the
-new range. Only inserts routed to the DEFAULT, i.e. overflow inserts, wait on that.
+new range. Any query that reads the DEFAULT conflicts with that lock, including unbounded `cursor`
+reads and the cursor tracker's `max(cursor)`, since the DEFAULT can't be pruned for those. A
+transaction that has read `changelog` holds its lock on the DEFAULT until it ends, so the attach has
+to wait for it to finish, and any new reads of the DEFAULT have to wait for the attach, for up to
+the 500 ms `lock_timeout`.
 
 ## The top-up task
 
@@ -78,10 +82,11 @@ Runs every `interval`. Each tick:
    before it is attached. Postgres refuses to attach a range partition while the DEFAULT holds rows
    in that range.
 
-Every transaction runs under a 2 second `lock_timeout`. If it fires, that partition rolls back,
-earlier ones from the same tick stay, and the task retries next tick. A transaction that has
-written to the DEFAULT partition holds `ROW EXCLUSIVE` on it and so blocks the attach until it
-commits; inserts keep succeeding into the DEFAULT meanwhile.
+Each partition's transaction runs under a 500 ms `lock_timeout`, the initial read under 2 seconds.
+If a partition's timeout fires, that partition rolls back, earlier ones from the same tick stay, and
+the task retries next tick. A transaction that has written to the DEFAULT partition holds
+`ROW EXCLUSIVE` on it and so blocks the attach until it commits; inserts keep succeeding into the
+DEFAULT meanwhile.
 
 ## Settings
 
