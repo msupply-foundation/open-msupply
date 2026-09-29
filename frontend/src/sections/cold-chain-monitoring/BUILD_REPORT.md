@@ -18,7 +18,7 @@ One routed screen with three tabs, a popover and a modal over it, a file-chooser
 | T3 Log tab                           | `log/LogTab.tsx`                                                                                                                   |
 | S4 Fridge-sensor import              | `import/ImportFridgeTagAction.tsx` (+ `importFridgeTag.ts` — the REST upload)                                                      |
 | S5 Notification band                 | `notification/ColdChainNotification.tsx` (+ `notificationLogic.ts`, `notificationStore.ts`), mounted by `src/nav/ShellLayout.tsx`  |
-| Wire surface                         | `monitoring.graphql` → `monitoring.generated.ts` (codegen against the pinned `spec/schema.graphql`; no diff outside this vertical) |
+| Wire surface                         | `monitoring.graphql` → `monitoring.generated.ts` (codegen against the pinned `schema.graphql`; no diff outside this vertical) |
 | Route tree                           | `index.tsx` — one route, `cold-chain/monitoring`                                                                                   |
 
 Shared wiring, additive only: the route entry `'cold-chain/monitoring': coldChainMonitoringRoutes` in `src/App.tsx`; the band mounted above the page in `src/nav/ShellLayout.tsx`; two locale keys in `src/intl/locales/en/common.json` (below). The nav destination already existed in `src/nav/navConfig.ts` (`cold-chain/monitoring`, `vaccineModule` gate + `SENSOR_QUERY`) — untouched. The `/fridge-tag` dev proxy already existed in `vite.config.ts` — untouched.

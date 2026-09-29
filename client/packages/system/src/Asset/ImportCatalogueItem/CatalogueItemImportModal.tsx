@@ -87,7 +87,11 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const [activeStep, setActiveStep] = useState(0);
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({
+    isOpen,
+    onClose,
+    testId: 'import-catalogue-modal',
+  });
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
   const [importProgress, setImportProgress] = useState(0);
@@ -325,7 +329,11 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
           activeStep={activeStep}
           onClickStep={onClickStep}
         ></ClickableStepper>
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" data-testid="import-outcome">
+            {errorMessage}
+          </Alert>
+        ) : null}
         <TabContext value={currentTab}>
           <Grid container flex={1} flexDirection="column" gap={1}>
             <AssetItemUploadTab

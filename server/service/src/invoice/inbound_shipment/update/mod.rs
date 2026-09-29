@@ -1970,6 +1970,7 @@ mod test {
             "Line B total should be 220.0 (22.0 x 10 packs), got {}",
             line_b.total_before_tax
         );
+        assert_eq!(line_a.total_after_tax, line_a.total_before_tax);
 
         // ============================================================
         // Test 2: Idempotency - running again with same charges produces same result
