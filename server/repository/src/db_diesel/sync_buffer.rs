@@ -207,6 +207,8 @@ const MAX_BIND_PARAMS: usize = 32766;
 /// pull batch (e.g. remote_pull = 10000 → 120k params) would otherwise overflow
 /// a single insert.
 const INSERT_CHUNK_SIZE: usize = MAX_BIND_PARAMS / SYNC_BUFFER_COLUMNS;
+/// Cursor window per statement in `update_source_site_id`.
+const UPDATE_BATCH_SIZE: i32 = 10_000;
 
 impl From<SyncBufferRow> for SyncBufferRowInsert {
     fn from(row: SyncBufferRow) -> Self {
@@ -433,6 +435,50 @@ impl<'a> SyncBufferRepository<'a> {
         Ok(sync_buffer::table
             .order(sync_buffer::cursor.asc())
             .load(self.connection.lock().connection())?)
+    }
+
+    /// Rewrite one `source_site_id` to another, returning the number of rows changed.
+    /// Not a general purpose update: it exists for `repair_source_site_id`, which corrects the
+    /// `0` stamped by `repository/src/migrations/v3_00_00/rebuild_sync_buffer.rs` when it copied
+    /// rows into the new table and the central site id was unknown. Integration selects by
+    /// `source_site_id`, so a row left at `0` is never picked up.
+    ///
+    /// Covers integrated rows as well as pending ones. Nothing reads an integrated row's
+    /// `source_site_id` today, but the buffer is append-only and migrations do move rows back to
+    /// pending to be re-read (see the `reintegrate_*` fragments in
+    /// `repository/src/migrations/v3_00_00/`), which would make a row left at `0` invisible all
+    /// over again.
+    ///
+    /// Walks the table in cursor windows, one statement (and so one implicit transaction) per
+    /// window, so a buffer holding every record the site has ever received doesn't become a
+    /// single long-running statement.
+    pub fn update_source_site_id(&self, from: i32, to: i32) -> Result<usize, RepositoryError> {
+        let max_cursor: Option<i32> = sync_buffer::table
+            .select(diesel::dsl::max(sync_buffer::cursor))
+            .first(self.connection.lock().connection())?;
+        let max_cursor = max_cursor.unwrap_or(0);
+
+        let mut changed = 0;
+        let mut start = 0;
+
+        while start <= max_cursor {
+            let end = start.saturating_add(UPDATE_BATCH_SIZE - 1);
+            changed += diesel::update(
+                sync_buffer::table
+                    .filter(sync_buffer::cursor.between(start, end))
+                    .filter(sync_buffer::source_site_id.eq(from)),
+            )
+            .set(sync_buffer::source_site_id.eq(to))
+            .execute(self.connection.lock().connection())?;
+
+            // `end` saturates at the maximum cursor, so stop rather than wrapping past it
+            let Some(next) = end.checked_add(1) else {
+                break;
+            };
+            start = next;
+        }
+
+        Ok(changed)
     }
 }
 
@@ -810,5 +856,87 @@ mod test {
             .unwrap()
             .unwrap();
         assert_eq!(latest.cursor, pending[1].cursor);
+    }
+
+    /// `rebuild_sync_buffer` stamps `source_site_id = 0` when the central site id isn't known
+    /// (see `repair_source_site_id`). Integration selects by `source_site_id`, so those rows are
+    /// never picked up. Integrated rows are restamped too: migrations move rows back to pending
+    /// to be re-read, and a row left at `0` would be invisible all over again.
+    #[actix_rt::test]
+    async fn test_sync_buffer_update_source_site_id() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_sync_buffer_update_source_site_id",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        const CENTRAL_SITE_ID: i32 = 1;
+        let repo = SyncBufferRepository::new(&connection);
+
+        repo.insert_many(&[
+            // Backfilled, still pending - invisible to integration until restamped
+            SyncBufferRowInsert {
+                source_site_id: 0,
+                ..insert("pending_backfilled", "item")
+            },
+            // Backfilled and already integrated - restamped so a later re-flag still works
+            SyncBufferRowInsert {
+                source_site_id: 0,
+                ..insert("integrated_backfilled", "item")
+            },
+            // Pushed up by a remote site - must not be touched
+            SyncBufferRowInsert {
+                source_site_id: 7,
+                ..insert("from_other_site", "item")
+            },
+        ])
+        .unwrap();
+
+        let integrated_cursor = repo
+            .find_latest_by_record_id_slow_unindexed("integrated_backfilled")
+            .unwrap()
+            .unwrap()
+            .cursor;
+        repo.set_integration_result(
+            integrated_cursor,
+            Utc::now().naive_utc(),
+            IntegrationResult::Success,
+            None,
+        )
+        .unwrap();
+
+        let pending_for = |site_id: i32| -> Vec<String> {
+            SyncBufferRepository::new(&connection)
+                .pending_ordered_by_cursor(PendingQuery {
+                    source_site_id: site_id,
+                    sync_version: SyncVersion::V5V6,
+                    reference_id: None,
+                    table_name: "item",
+                    action: SyncAction::Upsert,
+                    direction: CursorDirection::Asc,
+                    limit: 100,
+                })
+                .unwrap()
+                .into_iter()
+                .map(|row| row.record_id)
+                .collect()
+        };
+
+        // Before: integration sees nothing for the central site
+        assert!(pending_for(CENTRAL_SITE_ID).is_empty());
+
+        assert_eq!(repo.update_source_site_id(0, CENTRAL_SITE_ID).unwrap(), 2);
+
+        // After: the pending row is visible, and the other site's row is untouched
+        assert_eq!(pending_for(CENTRAL_SITE_ID), vec!["pending_backfilled"]);
+        assert_eq!(pending_for(7), vec!["from_other_site"]);
+
+        // The integrated row was restamped but left integrated
+        let integrated = repo
+            .find_latest_by_record_id_slow_unindexed("integrated_backfilled")
+            .unwrap()
+            .unwrap();
+        assert_eq!(integrated.source_site_id, CENTRAL_SITE_ID);
+        assert!(integrated.is_integrated);
     }
 }
