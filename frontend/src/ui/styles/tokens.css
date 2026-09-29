@@ -462,6 +462,13 @@
   --measure-form: 58rem; /* ~928px — a comfortable two-column form */
   --measure-prose: 40rem; /* ~640px — single-column reading text */
   --measure-wide: 80rem; /* ~1280px — wide dashboards / dense forms */
+  /* The full-bleed sheet's ceiling (Dialog size="full"): the width the
+     sheet has on a standard 1512px laptop, so a big monitor gets the same box
+     rather than one stretched across the screen. */
+  --measure-sheet: 90rem; /* ~1440px */
+  /* One column of a multi-column form: FormColumn's default basis, and the
+     cap on a line editor's statistics column. */
+  --measure-form-column: 22rem; /* ~352px */
 
   /* --- Motion (durations) ----------------------------------------------
      EVERY transition/animation duration and delay in the app reads one of
