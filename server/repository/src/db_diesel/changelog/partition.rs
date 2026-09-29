@@ -2,35 +2,56 @@ use crate::{
     migrations::{helpers::max_sequence, ChangelogPartitionConfig},
     RepositoryError, StorageConnection,
 };
-use diesel::{prelude::*, sql_types::Text};
+use diesel::{
+    prelude::*,
+    sql_types::{BigInt, Nullable, Text},
+};
+
+/// Catch-all for rows above every range partition; the top-up moves them out.
+const DEFAULT_PARTITION: &str = "changelog_p_default";
 
 /// Outcome of one [`ensure_partition_lookahead`] call.
 #[derive(Debug, PartialEq, Eq)]
 pub enum PartitionTopUp {
-    /// Every partition needed to restore the lookahead was created
-    /// (`Created(0)` means headroom was already sufficient).
-    Created(usize),
-    /// The tick hit the 2 s lock timeout. `created` partitions were committed
+    /// Every partition needed was created (0 means headroom was already
+    /// sufficient). `overflow_rows`: rows found in the DEFAULT partition at the
+    /// start of the call, all now moved into range partitions.
+    Created {
+        partitions: usize,
+        overflow_rows: i64,
+    },
+    /// The tick hit a lock timeout. `created` partitions were committed
     /// before the one that timed out; `headroom` is how many cursor values
-    /// remain insertable above `max(cursor)`. Retry on the next tick.
-    LockedOut { headroom: i64, created: usize },
+    /// remain insertable above `max(cursor)`; `overflow_rows` as for
+    /// `Created`, not all moved yet. Retry on the next tick.
+    LockedOut {
+        headroom: i64,
+        created: usize,
+        overflow_rows: i64,
+    },
 }
 
-/// Create `changelog_p_<lower>` covering `[lower, upper)` and attach it to
-/// `changelog`.
-///
-/// Two statements on purpose: `CREATE TABLE … PARTITION OF` takes `ACCESS
-/// EXCLUSIVE` on `changelog` and blocks inserts. `INCLUDING ALL` copies the PK
-/// index for Postgres to adopt on attach; do not trim it.
-fn create_partition(
+/// Standalone table shaped like `changelog`, not yet attached. `INCLUDING ALL`
+/// copies the PK index for Postgres to adopt on attach; do not trim it.
+fn create_standalone_partition_table(
     connection: &StorageConnection,
     lower: i64,
-    upper: i64,
 ) -> Result<(), RepositoryError> {
     diesel::sql_query(format!(
         "CREATE TABLE changelog_p_{lower} (LIKE changelog INCLUDING ALL)"
     ))
     .execute(connection.lock().connection())?;
+    Ok(())
+}
+
+/// `ATTACH PARTITION` takes `SHARE UPDATE EXCLUSIVE` on `changelog` (Postgres
+/// 12+), so inserts are not blocked, and `ACCESS EXCLUSIVE` on the DEFAULT
+/// partition. `CREATE TABLE … PARTITION OF` would take `ACCESS EXCLUSIVE`.
+fn attach_range_partition(
+    connection: &StorageConnection,
+    lower: i64,
+    upper: i64,
+) -> Result<(), RepositoryError> {
     diesel::sql_query(format!(
         "ALTER TABLE changelog ATTACH PARTITION changelog_p_{lower} \
          FOR VALUES FROM ({lower}) TO ({upper})"
@@ -40,12 +61,14 @@ fn create_partition(
 }
 
 /// Ensure enough future cursor-range partitions exist on `changelog` to keep
-/// `config.lookahead` cursor records of empty headroom above `max(cursor)`.
+/// `config.lookahead` cursor records of empty headroom above `max(cursor)`,
+/// moving any rows spilled into the DEFAULT partition into range partitions.
 ///
-/// Each partition is created in its own transaction under a 2 s `lock_timeout`
+/// Each partition is created in its own transaction under a `lock_timeout`
 /// (the catalog reads too: `pg_get_expr` takes a read lock on each partition).
-/// A DDL timeout yields [`PartitionTopUp::LockedOut`]; a read timeout is an
-/// ordinary error.
+/// Spilled rows for a range are moved into its table before the attach, which
+/// Postgres refuses otherwise. A DDL timeout yields
+/// [`PartitionTopUp::LockedOut`]; a read timeout is an ordinary error.
 ///
 /// Postgres-only behaviour. Under SQLite the function returns immediately —
 /// SQLite has no partitions to top up.
@@ -54,14 +77,18 @@ pub fn ensure_partition_lookahead(
     config: &ChangelogPartitionConfig,
 ) -> Result<PartitionTopUp, RepositoryError> {
     if !cfg!(feature = "postgres") {
-        return Ok(PartitionTopUp::Created(0));
+        return Ok(PartitionTopUp::Created {
+            partitions: 0,
+            overflow_rows: 0,
+        });
     }
 
-    let (max_upper, current_max) = connection
+    let (max_upper, overflow_rows, current_max) = connection
         .transaction_sync(|connection| {
             set_lock_timeout(connection)?;
             Ok::<_, RepositoryError>((
                 max_partition_upper_bound(connection)?,
+                default_partition_stats(connection)?.count,
                 max_sequence(connection)?,
             ))
         })
@@ -71,48 +98,107 @@ pub fn ensure_partition_lookahead(
         // `changelog` isn't partitioned (pre-migration) or has no partitions —
         // should not reach this state. Should we panic or throw error instead? For now, just log and return.
         log::warn!("changelog partition lookahead: changelog table is not partitioned or has no partitions");
-        return Ok(PartitionTopUp::Created(0));
+        return Ok(PartitionTopUp::Created {
+            partitions: 0,
+            overflow_rows: 0,
+        });
     }
 
     let size = config.partition_size;
     let target_headroom = config.lookahead;
 
-    let mut created = 0;
-    let mut next_lower = max_upper;
-    // Create partitions until we have enough headroom above the current max cursor
-    while next_lower - current_max < target_headroom {
-        let next_upper = next_lower + size;
-        let result = connection.transaction_sync(|connection| {
-            set_lock_timeout(connection)?;
-            create_partition(connection, next_lower, next_upper)
+    // Nothing to do: skip the loop, which locks the DEFAULT.
+    if max_upper - current_max >= target_headroom && overflow_rows == 0 {
+        return Ok(PartitionTopUp::Created {
+            partitions: 0,
+            overflow_rows: 0,
         });
-        if let Err(error) = result {
-            let error = error.to_inner_error();
-            return if is_lock_timeout(&error) {
-                Ok(PartitionTopUp::LockedOut {
-                    headroom: next_lower - current_max,
-                    created,
-                })
-            } else {
-                Err(error)
-            };
-        }
-        log::info!(
-            "changelog partition created changelog_p_{} [{}..{})",
-            next_lower,
-            next_lower,
-            next_upper
-        );
-        next_lower = next_upper;
-        created += 1;
     }
 
-    Ok(PartitionTopUp::Created(created))
+    let mut created = 0;
+    let mut next_lower = max_upper;
+    loop {
+        let next_upper = next_lower + size;
+        let needs_headroom = next_lower - current_max < target_headroom;
+        let result = connection.transaction_sync(|connection| {
+            set_default_lock_timeout(connection)?;
+            // Attach takes this lock anyway; take it first so no row lands in
+            // the DEFAULT between the move and the attach.
+            diesel::sql_query(format!(
+                "LOCK TABLE {DEFAULT_PARTITION} IN ACCESS EXCLUSIVE MODE"
+            ))
+            .execute(connection.lock().connection())?;
+            let spilled_max = default_partition_stats(connection)?.max;
+            let range_spilled = spilled_max.map_or(false, |max| max >= next_lower);
+            if !range_spilled && !needs_headroom {
+                return Ok(None);
+            }
+
+            create_standalone_partition_table(connection, next_lower)?;
+            let moved = if range_spilled {
+                diesel::sql_query(format!(
+                    "WITH moved AS (\
+                        DELETE FROM {DEFAULT_PARTITION} \
+                        WHERE cursor >= {next_lower} AND cursor < {next_upper} RETURNING *\
+                     ) INSERT INTO changelog_p_{next_lower} SELECT * FROM moved"
+                ))
+                .execute(connection.lock().connection())?
+            } else {
+                0
+            };
+            attach_range_partition(connection, next_lower, next_upper)?;
+            Ok::<_, RepositoryError>(Some(moved))
+        });
+
+        match result {
+            Ok(Some(moved)) => {
+                log::info!(
+                    "changelog partition created changelog_p_{} [{}..{})",
+                    next_lower,
+                    next_lower,
+                    next_upper
+                );
+                if moved > 0 {
+                    log::warn!(
+                        "changelog partition: moved {moved} row(s) from {DEFAULT_PARTITION} \
+                         into changelog_p_{next_lower}"
+                    );
+                }
+                next_lower = next_upper;
+                created += 1;
+            }
+            Ok(None) => {
+                return Ok(PartitionTopUp::Created {
+                    partitions: created,
+                    overflow_rows,
+                });
+            }
+            Err(error) => {
+                let error = error.to_inner_error();
+                return if is_lock_timeout(&error) {
+                    Ok(PartitionTopUp::LockedOut {
+                        headroom: next_lower - current_max,
+                        created,
+                        overflow_rows,
+                    })
+                } else {
+                    Err(error)
+                };
+            }
+        }
+    }
 }
 
 /// `SET LOCAL`: the timeout ends with the current transaction.
 fn set_lock_timeout(connection: &StorageConnection) -> Result<(), RepositoryError> {
     diesel::sql_query("SET LOCAL lock_timeout = '2s'").execute(connection.lock().connection())?;
+    Ok(())
+}
+
+/// Shorter: reads of the DEFAULT queue behind a pending lock on it.
+fn set_default_lock_timeout(connection: &StorageConnection) -> Result<(), RepositoryError> {
+    diesel::sql_query("SET LOCAL lock_timeout = '500ms'")
+        .execute(connection.lock().connection())?;
     Ok(())
 }
 
@@ -161,9 +247,28 @@ fn max_partition_upper_bound(connection: &StorageConnection) -> Result<i64, Repo
     Ok(max_upper)
 }
 
+#[derive(QueryableByName)]
+struct DefaultPartitionStats {
+    #[diesel(sql_type = BigInt)]
+    count: i64,
+    #[diesel(sql_type = Nullable<BigInt>)]
+    max: Option<i64>,
+}
+
+/// Row count and highest cursor in the DEFAULT partition.
+fn default_partition_stats(
+    connection: &StorageConnection,
+) -> Result<DefaultPartitionStats, RepositoryError> {
+    let stats = diesel::sql_query(format!(
+        "SELECT count(*)::bigint AS count, max(cursor) AS max FROM {DEFAULT_PARTITION}"
+    ))
+    .get_result(connection.lock().connection())?;
+    Ok(stats)
+}
+
 /// Extract the upper bound `N` from a partition bound expression of the shape
 /// `FOR VALUES FROM ('<lower>') TO ('<upper>')`. Returns `None` if the input
-/// doesn't match or the number doesn't parse.
+/// doesn't match or the number doesn't parse (including the `DEFAULT` bound).
 fn parse_upper_bound(expr: &str) -> Option<i64> {
     let (_, after_to) = expr.rsplit_once("TO (")?;
     let (number, _) = after_to.split_once(')')?;
@@ -172,10 +277,13 @@ fn parse_upper_bound(expr: &str) -> Option<i64> {
 
 #[cfg(all(test, feature = "postgres"))]
 mod tests {
-    use super::{create_partition, ensure_partition_lookahead, parse_upper_bound, PartitionTopUp};
+    use super::{
+        attach_range_partition, create_standalone_partition_table, ensure_partition_lookahead,
+        parse_upper_bound, PartitionTopUp, DEFAULT_PARTITION,
+    };
     use crate::{
-        migrations::ChangelogPartitionConfig, mock::MockDataInserts, test_db, StorageConnection,
-        StorageConnectionManager,
+        migrations::ChangelogPartitionConfig, mock::MockDataInserts, test_db, ChangeLogInsertRow,
+        ChangelogRepository, ChangelogTableName, StorageConnection, StorageConnectionManager,
     };
     use diesel::{
         prelude::*,
@@ -263,23 +371,34 @@ mod tests {
         };
         let created = ensure_partition_lookahead(&connection, &config).unwrap();
 
-        assert_eq!(created, PartitionTopUp::Created(2));
+        assert_eq!(
+            created,
+            PartitionTopUp::Created {
+                partitions: 2,
+                overflow_rows: 0
+            }
+        );
         // p_1, p_3 (initial) + p_5, p_7 (created) = 4
-        assert_eq!(count_partitions(&connection), 4);
+        assert_eq!(count_range_partitions(&connection), 4);
     }
 
     /// Same tight starting layout but no rows. With size=2, lookahead=4:
     /// target_headroom = 4, actual = max_upper(5) - max_cursor(0) = 5, so
-    /// ensure_partition_lookahead is a no-op and creates nothing.
+    /// ensure_partition_lookahead is a no-op and creates nothing. A reader on
+    /// the DEFAULT must not cause a `LockedOut`.
     #[actix_rt::test]
     async fn test_ensure_partition_lookahead_noop_when_no_records() {
-        let (_, connection, _, _) = test_db::setup_all(
+        let (_, connection, connection_manager, _) = test_db::setup_all(
             "test_ensure_partition_lookahead_noop",
             MockDataInserts::none(),
         )
         .await;
 
         reset_to_tight_partition_layout(&connection);
+        let holder = hold_open_transaction(
+            &connection_manager,
+            "SELECT count(*) FROM changelog_p_default",
+        );
 
         let config = ChangelogPartitionConfig {
             partition_size: 2,
@@ -287,8 +406,15 @@ mod tests {
         };
         let created = ensure_partition_lookahead(&connection, &config).unwrap();
 
-        assert_eq!(created, PartitionTopUp::Created(0));
-        assert_eq!(count_partitions(&connection), 2);
+        assert_eq!(
+            created,
+            PartitionTopUp::Created {
+                partitions: 0,
+                overflow_rows: 0
+            }
+        );
+        holder.release();
+        assert_eq!(count_range_partitions(&connection), 2);
     }
 
     /// Records exist but the partition layout already has enough headroom on
@@ -332,8 +458,14 @@ mod tests {
         };
         let created = ensure_partition_lookahead(&connection, &config).unwrap();
 
-        assert_eq!(created, PartitionTopUp::Created(0));
-        assert_eq!(count_partitions(&connection), 4);
+        assert_eq!(
+            created,
+            PartitionTopUp::Created {
+                partitions: 0,
+                overflow_rows: 0
+            }
+        );
+        assert_eq!(count_range_partitions(&connection), 4);
     }
 
     /// The create-and-attach helper must leave the partition indistinguishable
@@ -346,7 +478,8 @@ mod tests {
             test_db::setup_all("create_partition_adopted_pk", MockDataInserts::none()).await;
 
         reset_to_tight_partition_layout(&connection);
-        create_partition(&connection, 5, 7).unwrap();
+        create_standalone_partition_table(&connection, 5).unwrap();
+        attach_range_partition(&connection, 5, 7).unwrap();
 
         // Bound is what we asked for.
         let bound: String = diesel::sql_query(
@@ -370,19 +503,150 @@ mod tests {
         diesel::sql_query("SELECT setval('changelog_cursor_seq', 4)")
             .execute(connection.lock().connection())
             .unwrap();
+        insert_row(&connection, "routes");
+        assert_eq!(partition_holding(&connection, "routes"), "changelog_p_5");
+    }
+
+    /// Cursors 5, 6 and 8 have spilled on a layout ending at 5. With size=2,
+    /// lookahead=4, sequence 8: [5,7) takes 5 and 6, [7,9) takes 8, then
+    /// [9,11) and [11,13) restore headroom. DEFAULT ends empty, cursors kept.
+    #[actix_rt::test]
+    async fn repair_moves_default_rows_into_range_partitions_then_tops_up() {
+        let (_, connection, _, _) =
+            test_db::setup_all("repair_moves_default_rows", MockDataInserts::none()).await;
+
+        reset_to_tight_partition_layout(&connection);
+        seed_four_rows(&connection);
+
         diesel::sql_query(
-            "INSERT INTO changelog (table_name, record_id, row_action) \
-             VALUES ('unit', 'routes', 'UPSERT')",
+            "INSERT INTO changelog (cursor, table_name, record_id, row_action) VALUES \
+                 (5, 'invoice', 'o5', 'UPSERT'), \
+                 (6, 'invoice', 'o6', 'UPSERT'), \
+                 (8, 'invoice', 'o8', 'DELETE')",
         )
         .execute(connection.lock().connection())
         .unwrap();
-        let landed_in: String = diesel::sql_query(
-            "SELECT tableoid::regclass::text AS value FROM changelog WHERE record_id = 'routes'",
+        diesel::sql_query("SELECT setval('changelog_cursor_seq', 8)")
+            .execute(connection.lock().connection())
+            .unwrap();
+        assert_eq!(default_partition_count(&connection), 3);
+
+        let config = ChangelogPartitionConfig {
+            partition_size: 2,
+            lookahead: 4,
+        };
+        let outcome = ensure_partition_lookahead(&connection, &config).unwrap();
+
+        assert_eq!(
+            outcome,
+            PartitionTopUp::Created {
+                partitions: 4,
+                overflow_rows: 3
+            }
+        );
+        assert_eq!(default_partition_count(&connection), 0);
+        // p_1, p_3 (initial) + p_5, p_7 (repair) + p_9, p_11 (top-up) = 6.
+        assert_eq!(count_range_partitions(&connection), 6);
+
+        assert_eq!(partition_holding(&connection, "o5"), "changelog_p_5");
+        assert_eq!(partition_holding(&connection, "o6"), "changelog_p_5");
+        assert_eq!(partition_holding(&connection, "o8"), "changelog_p_7");
+        assert_eq!(cursor_of(&connection, "o5"), 5);
+        assert_eq!(cursor_of(&connection, "o6"), 6);
+        assert_eq!(cursor_of(&connection, "o8"), 8);
+
+        // The repaired partitions are real partitions: PK legs adopted.
+        assert!(partition_pk_is_attached_to_parent(
+            &connection,
+            "changelog_p_5"
+        ));
+        assert!(partition_pk_is_attached_to_parent(
+            &connection,
+            "changelog_p_7"
+        ));
+
+        // Nothing lost overall: 4 seeded + 3 overflow.
+        let total: i64 = diesel::sql_query("SELECT count(*)::bigint AS value FROM changelog")
+            .get_result::<Bigint>(connection.lock().connection())
+            .unwrap()
+            .value;
+        assert_eq!(total, 7);
+    }
+
+    /// Cursors 5, 6 and 8 have spilled and something holds a lock that
+    /// conflicts with ATTACH PARTITION. The first range must give up at the
+    /// lock timeout and roll back: nothing attached, rows still in the DEFAULT.
+    /// Once released, the next call repairs and tops up.
+    #[actix_rt::test]
+    async fn repair_locked_out_rolls_back_range_then_completes_next_call() {
+        let (_, connection, connection_manager, _) =
+            test_db::setup_all("repair_locked_out_rolls_back", MockDataInserts::none()).await;
+
+        reset_to_tight_partition_layout(&connection);
+        seed_four_rows(&connection);
+        diesel::sql_query(
+            "INSERT INTO changelog (cursor, table_name, record_id, row_action) VALUES \
+                 (5, 'invoice', 'o5', 'UPSERT'), \
+                 (6, 'invoice', 'o6', 'UPSERT'), \
+                 (8, 'invoice', 'o8', 'DELETE')",
         )
-        .get_result::<TextValue>(connection.lock().connection())
+        .execute(connection.lock().connection())
+        .unwrap();
+        diesel::sql_query("SELECT setval('changelog_cursor_seq', 8)")
+            .execute(connection.lock().connection())
+            .unwrap();
+
+        let holder = hold_open_transaction(
+            &connection_manager,
+            "LOCK TABLE changelog IN SHARE UPDATE EXCLUSIVE MODE",
+        );
+
+        let config = ChangelogPartitionConfig {
+            partition_size: 2,
+            lookahead: 4,
+        };
+        let started = Instant::now();
+        let outcome = ensure_partition_lookahead(&connection, &config).unwrap();
+        let waited = started.elapsed();
+
+        // Top bound still 5, sequence 8. Rows found but none moved.
+        assert_eq!(
+            outcome,
+            PartitionTopUp::LockedOut {
+                headroom: -3,
+                created: 0,
+                overflow_rows: 3
+            }
+        );
+        assert!(
+            waited < Duration::from_secs(10),
+            "repair waited {:?}; lock_timeout did not fire",
+            waited
+        );
+        // The failed range's standalone table was rolled back with it.
+        assert_eq!(count_range_partitions(&connection), 2);
+        assert_eq!(default_partition_count(&connection), 3);
+        let orphan_tables: i64 = diesel::sql_query(
+            "SELECT count(*)::bigint AS value FROM pg_class \
+             WHERE relname = 'changelog_p_5' AND relkind = 'r'",
+        )
+        .get_result::<Bigint>(connection.lock().connection())
         .unwrap()
         .value;
-        assert_eq!(landed_in, "changelog_p_5");
+        assert_eq!(orphan_tables, 0);
+
+        holder.release();
+
+        let outcome = ensure_partition_lookahead(&connection, &config).unwrap();
+        assert_eq!(
+            outcome,
+            PartitionTopUp::Created {
+                partitions: 4,
+                overflow_rows: 3
+            }
+        );
+        assert_eq!(default_partition_count(&connection), 0);
+        assert_eq!(count_range_partitions(&connection), 6);
     }
 
     /// Another session holds an open transaction that has
@@ -433,7 +697,13 @@ mod tests {
         let top_up = run_with_timeout(move || {
             ensure_partition_lookahead(&top_up_connection, &config).unwrap()
         });
-        assert_eq!(top_up, PartitionTopUp::Created(1));
+        assert_eq!(
+            top_up,
+            PartitionTopUp::Created {
+                partitions: 1,
+                overflow_rows: 0
+            }
+        );
 
         // Session C: an ordinary insert while A is still open. Must not wait.
         let insert_connection = connection_manager.connection().unwrap();
@@ -447,7 +717,90 @@ mod tests {
         });
 
         holder.release();
-        assert_eq!(count_partitions(&connection), 3);
+        assert_eq!(count_range_partitions(&connection), 3);
+    }
+
+    /// An open transaction has inserted past the top partition: its row sits
+    /// uncommitted in the DEFAULT and it holds ROW EXCLUSIVE there, which
+    /// blocks the ACCESS EXCLUSIVE an attach needs. The top-up must report
+    /// `LockedOut` rather than wait, while inserts keep landing in the DEFAULT.
+    /// Once it commits, the next call repairs and tops up.
+    #[actix_rt::test]
+    async fn test_ensure_partition_lookahead_locked_out_by_open_overflow_transaction_then_repairs()
+    {
+        let (_, connection, connection_manager, _) = test_db::setup_all(
+            "test_ensure_partition_lookahead_locked_out_overflow",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        reset_to_tight_partition_layout(&connection);
+        seed_four_rows(&connection);
+
+        // Session A: takes cursor 5, which no range partition covers → DEFAULT.
+        let holder = hold_open_transaction(
+            &connection_manager,
+            "INSERT INTO changelog (table_name, record_id, row_action) \
+             VALUES ('unit', 'spilled', 'UPSERT')",
+        );
+
+        // Session B: another overflow insert while A is open. Must not fail
+        // or wait on A.
+        let insert_connection = connection_manager.connection().unwrap();
+        run_with_timeout(move || insert_row(&insert_connection, "spilled-too"));
+        assert_eq!(
+            partition_holding(&connection, "spilled-too"),
+            DEFAULT_PARTITION
+        );
+
+        let config = ChangelogPartitionConfig {
+            partition_size: 2,
+            lookahead: 4,
+        };
+        let started = Instant::now();
+        let outcome = ensure_partition_lookahead(&connection, &config).unwrap();
+        let waited = started.elapsed();
+
+        // Sequence is at 6 (two overflow inserts), top bound 5: headroom -1.
+        // Only B's row is committed and visible, so one overflow row is found.
+        assert_eq!(
+            outcome,
+            PartitionTopUp::LockedOut {
+                headroom: -1,
+                created: 0,
+                overflow_rows: 1
+            }
+        );
+        assert!(
+            waited < Duration::from_secs(10),
+            "top-up waited {:?}; lock_timeout did not fire",
+            waited
+        );
+        // Rolled back: nothing attached, nothing moved.
+        assert_eq!(count_range_partitions(&connection), 2);
+        assert_eq!(default_partition_count(&connection), 1);
+
+        holder.release();
+
+        // A committed: both spilled rows (5, 6) are visible in the DEFAULT.
+        assert_eq!(default_partition_count(&connection), 2);
+        let outcome = ensure_partition_lookahead(&connection, &config).unwrap();
+        // Repair: [5,7) takes both rows. Top-up: max_upper 7, sequence 6,
+        // headroom 1 → [7,9), [9,11).
+        assert_eq!(
+            outcome,
+            PartitionTopUp::Created {
+                partitions: 3,
+                overflow_rows: 2
+            }
+        );
+        assert_eq!(default_partition_count(&connection), 0);
+        assert_eq!(partition_holding(&connection, "spilled"), "changelog_p_5");
+        assert_eq!(
+            partition_holding(&connection, "spilled-too"),
+            "changelog_p_5"
+        );
+        assert_eq!(count_range_partitions(&connection), 5);
     }
 
     /// Something holds a lock that does conflict with ATTACH PARTITION (SHARE
@@ -485,26 +838,102 @@ mod tests {
             outcome,
             PartitionTopUp::LockedOut {
                 headroom: 1,
-                created: 0
+                created: 0,
+                overflow_rows: 0
             }
         );
-        // Bounded by the 2 s lock_timeout, not by the holder.
+        // Bounded by the lock_timeout, not by the holder.
         assert!(
             waited < Duration::from_secs(10),
             "top-up waited {:?}; lock_timeout did not fire",
             waited
         );
-        assert_eq!(count_partitions(&connection), 2);
+        assert_eq!(count_range_partitions(&connection), 2);
 
         holder.release();
 
         let outcome = ensure_partition_lookahead(&connection, &config).unwrap();
-        assert_eq!(outcome, PartitionTopUp::Created(2));
-        assert_eq!(count_partitions(&connection), 4);
+        assert_eq!(
+            outcome,
+            PartitionTopUp::Created {
+                partitions: 2,
+                overflow_rows: 0
+            }
+        );
+        assert_eq!(count_range_partitions(&connection), 4);
     }
 
-    /// Drop existing partitions, recreate two small ones [1,3), [3,5), and
-    /// reset the sequence so `max_sequence` matches the empty changelog.
+    /// A holds a read lock on the DEFAULT; B's top-up queues behind A; C's
+    /// tracked insert queues behind B, for no longer than the DEFAULT lock timeout.
+    #[actix_rt::test]
+    async fn test_tracked_insert_waits_behind_top_up_lock_request() {
+        let (_, connection, connection_manager, _) = test_db::setup_all(
+            "test_tracked_insert_waits_behind_top_up",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        reset_to_tight_partition_layout(&connection);
+        // Headroom 5 - 2 = 3 < 4; C's insert takes cursor 3, in [3,5).
+        diesel::sql_query(
+            "INSERT INTO changelog (cursor, table_name, record_id, row_action) VALUES \
+                 (1, 'invoice', 'r1', 'UPSERT'), \
+                 (2, 'invoice', 'r2', 'UPSERT')",
+        )
+        .execute(connection.lock().connection())
+        .unwrap();
+        diesel::sql_query("SELECT setval('changelog_cursor_seq', 2)")
+            .execute(connection.lock().connection())
+            .unwrap();
+
+        let holder =
+            hold_open_transaction(&connection_manager, "SELECT max(cursor) FROM changelog");
+
+        let config = ChangelogPartitionConfig {
+            partition_size: 2,
+            lookahead: 4,
+        };
+        let top_up_connection = connection_manager.connection().unwrap();
+        let top_up =
+            thread::spawn(move || ensure_partition_lookahead(&top_up_connection, &config).unwrap());
+        // Let B's lock request reach the queue before C starts.
+        thread::sleep(Duration::from_millis(200));
+
+        let insert_connection = connection_manager.connection().unwrap();
+        let waited = run_with_timeout(move || {
+            let started = Instant::now();
+            insert_connection
+                .transaction_sync(|connection| {
+                    ChangelogRepository::new(connection).insert(&ChangeLogInsertRow {
+                        table_name: ChangelogTableName::Invoice,
+                        record_id: "tracked".to_string(),
+                        ..Default::default()
+                    })
+                })
+                .unwrap();
+            started.elapsed()
+        });
+        // Twice the 500ms DEFAULT lock timeout, so a slow runner doesn't flake.
+        assert!(
+            waited < Duration::from_secs(1),
+            "tracked insert waited {:?}",
+            waited
+        );
+
+        assert_eq!(
+            top_up.join().unwrap(),
+            PartitionTopUp::LockedOut {
+                headroom: 3,
+                created: 0,
+                overflow_rows: 0
+            }
+        );
+        holder.release();
+    }
+
+    /// Drop existing partitions, recreate two small ones [1,3), [3,5) plus the
+    /// DEFAULT, and reset the sequence so `max_sequence` matches the empty
+    /// changelog.
     fn reset_to_tight_partition_layout(connection: &StorageConnection) {
         diesel::sql_query(
             r#"
@@ -534,17 +963,35 @@ mod tests {
         )
         .execute(connection.lock().connection())
         .unwrap();
+        // Same statement the 3.03.00 migration fragment uses.
+        diesel::sql_query(format!(
+            "CREATE TABLE {DEFAULT_PARTITION} PARTITION OF changelog DEFAULT"
+        ))
+        .execute(connection.lock().connection())
+        .unwrap();
 
         diesel::sql_query("SELECT setval('changelog_cursor_seq', 1, false)")
             .execute(connection.lock().connection())
             .unwrap();
     }
 
-    fn count_partitions(connection: &StorageConnection) -> i64 {
+    /// Range partitions only; the DEFAULT is always present in the tight layout.
+    fn count_range_partitions(connection: &StorageConnection) -> i64 {
         diesel::sql_query(
-            "SELECT count(*)::bigint AS value FROM pg_inherits \
-             WHERE inhparent = 'changelog'::regclass",
+            "SELECT count(*)::bigint AS value FROM pg_inherits i \
+             JOIN pg_class c ON c.oid = i.inhrelid \
+             WHERE i.inhparent = 'changelog'::regclass \
+               AND pg_get_expr(c.relpartbound, c.oid) <> 'DEFAULT'",
         )
+        .get_result::<Bigint>(connection.lock().connection())
+        .unwrap()
+        .value
+    }
+
+    fn default_partition_count(connection: &StorageConnection) -> i64 {
+        diesel::sql_query(format!(
+            "SELECT count(*)::bigint AS value FROM {DEFAULT_PARTITION}"
+        ))
         .get_result::<Bigint>(connection.lock().connection())
         .unwrap()
         .value
@@ -564,6 +1011,35 @@ mod tests {
         diesel::sql_query("SELECT setval('changelog_cursor_seq', 4)")
             .execute(connection.lock().connection())
             .unwrap();
+    }
+
+    /// Insert without an explicit cursor; routed by the next sequence value.
+    fn insert_row(connection: &StorageConnection, record_id: &str) {
+        diesel::sql_query(format!(
+            "INSERT INTO changelog (table_name, record_id, row_action) \
+             VALUES ('unit', '{record_id}', 'UPSERT')"
+        ))
+        .execute(connection.lock().connection())
+        .unwrap();
+    }
+
+    /// Which partition physically holds the row with this record_id.
+    fn partition_holding(connection: &StorageConnection, record_id: &str) -> String {
+        diesel::sql_query(format!(
+            "SELECT tableoid::regclass::text AS value FROM changelog WHERE record_id = '{record_id}'"
+        ))
+        .get_result::<TextValue>(connection.lock().connection())
+        .unwrap()
+        .value
+    }
+
+    fn cursor_of(connection: &StorageConnection, record_id: &str) -> i64 {
+        diesel::sql_query(format!(
+            "SELECT cursor AS value FROM changelog WHERE record_id = '{record_id}'"
+        ))
+        .get_result::<Bigint>(connection.lock().connection())
+        .unwrap()
+        .value
     }
 
     /// True if the partition's PK index is a child of `changelog_pkey`, i.e.

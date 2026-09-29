@@ -56,3 +56,8 @@ For some data tables it's not possible to have foreign records on the site, thus
 At the time of writing:
 * only central server synchronisation and shipment/requisition transfers are using changelog
 * name_id and store_id is only stored in changelog for `requisition, requisition_line, invoice and invoice_line`
+
+## Partitioning
+
+On Postgres the table is range-partitioned by `cursor`, with a DEFAULT partition catching
+overflow. See [partitioning](@/server/repository/db_diesel/changelog/partitioning/_index.md).
