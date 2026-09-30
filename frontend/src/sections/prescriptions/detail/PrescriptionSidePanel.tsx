@@ -329,6 +329,7 @@ export const PrescriptionSidePanel: Component<
           <Combobox<Diagnosis>
             label={t('heading.diagnosis')}
             hideLabel
+            inputTestId="diagnosis-select"
             items={gated(diagnoses) ?? []}
             loading={diagnoses.loading}
             itemToString={d => d.description}

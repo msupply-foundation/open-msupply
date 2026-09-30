@@ -94,6 +94,7 @@ export const CustomFieldInput = (props: {
             decimalLimit={numberField().integer ? 0 : 6}
             value={asNumber()}
             disabled={props.disabled}
+            data-testid={testId()}
             onChange={n => props.onChange(n ?? null)}
           />
         )}
@@ -105,6 +106,7 @@ export const CustomFieldInput = (props: {
           size={props.size}
           value={asText() || null}
           disabled={props.disabled}
+          testId={testId()}
           onChange={d => props.onChange(d)}
         />
       </Match>
