@@ -6,6 +6,7 @@ use repository::{
     InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRepository,
     InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyType, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, RequisitionStatus, RequisitionType,
+    RowActionType,
 };
 use util::constants::SYSTEM_USER_ID;
 
@@ -50,13 +51,12 @@ impl Processor for RequisitionAutoFinaliseProcessor {
             return Ok(None);
         }
 
+        // Rows are processed after the fact, so an invoice's earlier upsert rows can
+        // point at an invoice that has since been deleted. Nothing to finalise then.
         let invoice_row_repo = InvoiceRowRepository::new(connection);
-        let invoice = invoice_row_repo
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(ProcessorError::RecordNotFound(
-                "Invoice".to_string(),
-                changelog.record_id.clone(),
-            ))?;
+        let Some(invoice) = invoice_row_repo.find_one_by_id(&changelog.record_id)? else {
+            return Ok(None);
+        };
 
         if invoice.r#type != InvoiceType::OutboundShipment {
             return Ok(None);
@@ -76,7 +76,7 @@ impl Processor for RequisitionAutoFinaliseProcessor {
             .find_one_by_id(&requisition_id)?
             .ok_or(ProcessorError::RecordNotFound(
                 "Requisition".to_string(),
-                changelog.record_id.clone(),
+                requisition_id.clone(),
             ))?;
 
         if requisition.r#type != RequisitionType::Response {
@@ -174,6 +174,8 @@ impl Processor for RequisitionAutoFinaliseProcessor {
         Ok(ChangelogCondition::And(vec![
             ChangelogCondition::table_name::equal(ChangelogTableName::Invoice),
             ChangelogCondition::store_id::any(active_stores.store_ids()),
+            // Filter out deletes
+            ChangelogCondition::action::equal(RowActionType::Upsert),
         ]))
     }
 
