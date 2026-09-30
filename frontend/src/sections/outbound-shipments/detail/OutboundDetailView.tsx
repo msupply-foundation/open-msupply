@@ -92,6 +92,14 @@ import {
   OutboundLineEditModal,
   type LineEditItem,
 } from './edit-modal/OutboundLineEditModal';
+import { resolveIssueScan, type IssueScan } from './edit-modal/issueScan';
+import {
+  createScanControl,
+  ScanButton,
+  shownScanNotice,
+} from '@/domain/barcode';
+import { Toolbar } from '@/ui/layout/Header/Toolbar';
+import { Alert } from '@/ui/elements/feedback/Alert';
 import { ServiceChargesModal } from '../../../domain/invoice';
 import {
   fetchOutboundServiceCharges,
@@ -273,8 +281,18 @@ const OutboundDetailView: Component = () => {
   // open on:
   // - { item, lineId }: opened from a ROW click — update mode.
   // - {}: opened from "Add item" — add mode (item search focused).
-  type EditState = { item?: LineEditItem; lineId?: string } | undefined;
+  // - { scan }: opened by a scan — add mode, on the scanned item where the
+  //   code resolved (spec/barcode-scanning rules § Learning a code while
+  //   issuing).
+  type EditState =
+    { item?: LineEditItem; lineId?: string; scan?: IssueScan } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
+  // Every open goes through here: a stale learn-failure notice from an
+  // earlier scan describes a save the user has moved on from.
+  const openEditor = (state: NonNullable<EditState>) => {
+    setScanNotice(undefined);
+    setEditState(state);
+  };
   const [serviceOpen, setServiceOpen] = createSignal(false);
   // Customer-change rejection — shown on the lookup itself (controls › action
   // feedback: inline, keyed to its cause).
@@ -623,7 +641,7 @@ const OutboundDetailView: Component = () => {
   // all. The editor advances through the list itself via "OK & next"
   // (OMS-REG-DIST-03.32).
   const openRow = (line: Line) =>
-    setEditState({
+    openEditor({
       item: {
         id: line.item.id,
         code: line.item.code,
@@ -634,7 +652,7 @@ const OutboundDetailView: Component = () => {
       },
       lineId: line.id,
     });
-  const openAdd = () => setEditState({});
+  const openAdd = () => openEditor({});
 
   // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
   // the SCREEN, once, for the two controls that trigger it (the header button and
@@ -653,6 +671,45 @@ const OutboundDetailView: Component = () => {
       const current = data.latest;
       return !current || !isEditable(current.status);
     },
+  });
+
+  // Issuing by scanning (spec/barcode-scanning rules § Learning a code while
+  // issuing; ui-surface S3 page actions "Add from scanner"): a scan opens the
+  // line editor on the item its code means, or empty with a warning when it
+  // means nothing yet. The scanner arms on arrival and stays armed while the
+  // shipment is editable. Gated on `.state` for the same reason as Alt+N
+  // above — the control's `disabled` feeds Ctrl+S's palette entry.
+  const scanDisabled = () => {
+    if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+    const current = data.latest;
+    return !current || !isEditable(current.status);
+  };
+  // The line saved but its code was not learned (.48) — reported here, since
+  // the editor may already have closed. Cleared by the next scan, or the
+  // next time the editor opens.
+  const [scanNotice, setScanNotice] = createSignal<string>();
+  let resolvingScan = false;
+  const scan = createScanControl({
+    owner: 'outbound-shipment',
+    disabled: scanDisabled,
+    onScan: read => {
+      // One scan at a time, and none into an editor already open: the scan
+      // would replace the item the user is issuing. Dropped, not queued — and
+      // not `disabled`, which would disarm the scanner behind every edit.
+      if (resolvingScan || editState() != null) return;
+      resolvingScan = true;
+      setScanNotice(undefined);
+      void resolveIssueScan(params.storeId, read)
+        .then(result => {
+          if (result && editState() == null && !scanDisabled())
+            openEditor({ scan: result });
+        })
+        .finally(() => (resolvingScan = false));
+    },
+  });
+  const scanNoticeShown = shownScanNotice(scan, () => {
+    const text = scanNotice();
+    return text === undefined ? undefined : { severity: 'warning', text };
   });
 
   // "OK & next" (update mode) asks the parent for the next item to edit. We
@@ -1088,6 +1145,11 @@ const OutboundDetailView: Component = () => {
                       visible={current().status === 'NEW'}
                       onCommitted={onLineOpsCommitted}
                     />
+                    {/* Add from scanner (S3 page-action matrix) — editability-
+                        gated like Add item: hidden from SHIPPED onward. */}
+                    <Show when={editable()}>
+                      <ScanButton control={scan} />
+                    </Show>
                     {/* Export/Print — the reports vertical's record-screen
                         selector (reports S4), available at every status. A
                         self-contained action (static import), mirroring the
@@ -1109,6 +1171,20 @@ const OutboundDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
+                  {/* A scan's outcome, inline beside the action that took it
+                      — never a toast (controls › action feedback). */}
+                  <Show when={scanNoticeShown()}>
+                    {notice => (
+                      <Toolbar>
+                        <Alert
+                          severity={notice().severity}
+                          testId="scan-notice"
+                        >
+                          {notice().text}
+                        </Alert>
+                      </Toolbar>
+                    )}
+                  </Show>
                   {/* The header field cluster — never a hand-rolled <Toolbar>
                       + FieldRow (ui/docs/PAGES.md § header field cluster). The
                       line filters live in the DataTable's own toolbar below. */}
@@ -1338,6 +1414,8 @@ const OutboundDetailView: Component = () => {
                 currencyRate={current().currencyRate}
                 initialItem={editState()?.item}
                 initialLineId={editState()?.lineId}
+                scan={editState()?.scan}
+                onScanNotice={setScanNotice}
                 nextItem={nextItem}
                 onCommitted={onLineOpsCommitted}
               />

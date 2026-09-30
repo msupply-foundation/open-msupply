@@ -98,15 +98,22 @@ android {
 
 repositories {
     flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+        // The Honeywell SDK lives with the plugin that uses it, in the new
+        // shell (frontend/android/app/libs), compiled here the same way as
+        // the shared Java above.
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs', '../../../../frontend/android/app/libs'
     }
 }
 
-// Exclude the unbundled Play Services barcode scanning dependency
-// to avoid conflicts with the bundled version
-configurations.all {
-    exclude group: 'com.google.android.gms', module: 'play-services-mlkit-barcode-scanning'
-}
+// NOT excluding play-services-mlkit-barcode-scanning, although it looks like
+// the "unbundled" twin of the bundled library below. It is where MLKit's
+// barcode API lives (BarcodeScanning, BarcodeScannerOptions); the bundled
+// artifact only adds the model and its native library on top. Excluding it
+// (as this file once did "to avoid conflicts with the bundled version")
+// crashed every live camera scan — startScan(), used by the new front end —
+// with NoClassDefFoundError. Google Code Scanner (scan(), the old front end)
+// is a different artifact, which is why that went unnoticed. With both
+// present, MLKit uses the bundled model.
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')

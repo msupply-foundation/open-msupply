@@ -90,6 +90,11 @@ import {
 } from '../../../../domain/allocation';
 import { outboundShipmentPreferences } from '@/store/storeContext';
 import { issueWarningMessages } from './allocationWarnings';
+import {
+  learnIssueScan,
+  scannedBatchExclusions,
+  type IssueScan,
+} from './issueScan';
 
 // The line editor (spec S4): the SINGLE surface for issuing an item — set the
 // quantity to issue and distribute it across batches. The batch grid is the
@@ -276,6 +281,17 @@ interface OutboundLineEditModalProps {
   editable: boolean;
   /** A save committed — the view refetches the lines page. */
   onCommitted: () => void;
+  /**
+   * Opened by a scan (spec/barcode-scanning rules § Learning a code while
+   * issuing) — add mode, on the scan's item where the code resolved. The
+   * editor carries it until its first successful save, which learns the code.
+   */
+  scan?: IssueScan;
+  /**
+   * The line saved but the code could not be learned (.48). The editor may
+   * already be closing, so the view shows it, not the editor.
+   */
+  onScanNotice?: (message: string) => void;
 }
 
 // The parent-facing wrapper: mount the editor ONLY while open. `<Show keyed>`
@@ -362,6 +378,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // row), so the parent's next-item walk never offers one twice — across page
   // advances too. Seeded with each item as it loads; not reactive.
   const coveredItemIds = new Set<string>();
+  // The scan this editor was opened by, until the first save consumes it —
+  // a Save & next onto the next item must not learn the code against that
+  // one too. Read once: the content remounts on every open (the keyed Show
+  // above), so there is no later prop change to follow.
+  // eslint-disable-next-line solid/reactivity
+  const [scan, setScan] = createSignal<IssueScan | undefined>(props.scan);
+  // The item is locked in update mode, and on a scan-opened editor once it
+  // has an item — resolved by the scan, or chosen after an unknown one (.42,
+  // .43: "once an item is chosen the editor locks to it").
+  const itemLocked = () =>
+    mode() === 'update' || (scan() !== undefined && item() !== undefined);
   // The ITEM's supplier comment: one value for the whole batch set, written
   // onto every line of the item on save. Seeded from the draft and echoed back
   // untouched — the set-save OVERWRITES the column like every other line field
@@ -480,6 +507,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     nonAllocatableIds = new Set(
       sorted.filter(line => !rowHasAllocatableStock(line)).map(line => line.id)
     );
+    // A scanned batch narrows the issue to itself where the item holds it
+    // (.44/.45); the batches it rules out sink and disable with the
+    // non-allocatable ones, as in the old app.
+    scanExcludedIds = scannedBatchExclusions(sorted, scan()?.batch);
+    for (const id of scanExcludedIds) nonAllocatableIds.add(id);
     const ordered = [
       ...sorted.filter(line => !nonAllocatableIds.has(line.id)),
       ...sorted.filter(line => nonAllocatableIds.has(line.id)),
@@ -530,7 +562,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         ? focusLineId
         : undefined;
     };
-    const focusRow = rowId();
+    // A scan that narrowed to its batch lands on that batch's packs, as the
+    // old app does.
+    const scannedRow = () =>
+      scanExcludedIds.size > 0
+        ? sorted.find(line => !scanExcludedIds.has(line.id))?.id
+        : undefined;
+    const focusRow = rowId() ?? scannedRow();
     if (focusRow) batchFields.focus(focusRow);
     else issueField.focus();
     setLoadingLines(false);
@@ -575,6 +613,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // "OK & next" in add mode, or when an update walk runs out of items.
   const backToSearch = () => {
     setMode('add');
+    // Moving on to another item leaves the scan behind — it named this one.
+    setScan(undefined);
     setItem(undefined);
     setDraft(reconcile([], { key: 'id' }));
     setPlaceholderUnits(0);
@@ -589,8 +629,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   };
 
   onMount(() => {
-    if (props.initialItem)
-      void seedItem(props.initialItem, props.initialLineId);
+    const opening = props.initialItem ?? props.scan?.item;
+    if (opening) void seedItem(opening, props.initialLineId);
     else itemSearch.focus();
   });
 
@@ -617,6 +657,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // row's status differs from this (its change won't survive the set-save).
   let seededVvmIdById = new Map<string, string | null>();
   let nonAllocatableIds = new Set<string>();
+  // The batches a scanned batch rules out (a subset of nonAllocatableIds):
+  // unlike the rest, they may hold stock, so distribution must skip them too.
+  let scanExcludedIds = new Set<string>();
   const isBarred = (line: DraftLine): boolean =>
     barReasons(
       {
@@ -677,6 +720,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // app's canAutoAllocate contract).
   const willAutoAllocate = (line: DraftLine): boolean => {
     if (line.availablePacks <= 0) return false;
+    if (scanExcludedIds.has(line.id)) return false;
     if (lineAutoBarReasons(line).length > 0) return false;
     const lens = allocateIn();
     return lens.kind !== 'packs' || line.packSize === lens.size;
@@ -744,7 +788,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       draft.map(line => ({
         id: line.id,
         packSize: line.packSize,
-        availablePacks: line.availablePacks,
+        // Not a reported skip — staying out of the other batches is what
+        // the scan asked for.
+        availablePacks: scanExcludedIds.has(line.id) ? 0 : line.availablePacks,
         barred: lineAutoBarReasons(line),
       })),
       units,
@@ -901,7 +947,20 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     }
     if (result.kind !== 'success') return false;
     props.onCommitted();
+    learnScan(current.id);
     return true;
+  };
+
+  // Saving the line learns the scanned code (.46) — after the line, never
+  // instead of it: a failure is reported and the saved line stands (.48). A
+  // code already in the book is not re-saved (.47), and a scan with no code
+  // learns nothing. Either way the scan is spent: it named this item only.
+  const learnScan = (itemId: string) => {
+    const spent = scan();
+    setScan(undefined);
+    void learnIssueScan(props.storeId, spent, itemId, draft).then(notice => {
+      if (notice) props.onScanNotice?.(notice);
+    });
   };
 
   // Save guards (spec S4 § save), in the old app's precedence: a zero-packs
@@ -1643,7 +1702,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <ItemSearch
               label={t('label.item')}
               storeId={props.storeId}
-              disabled={updateMode() || saving()}
+              disabled={itemLocked() || saving()}
               focusTarget={itemSearch}
               value={item()?.id}
               selectedItem={item()}
@@ -1769,10 +1828,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       <Show
         when={item()}
         fallback={
-          <EmptyState
-            graphic={false}
-            message={t('messages.select-item-to-issue')}
-          />
+          <Stack gap="sm">
+            {/* A scan that resolved no item (.43): say so, then wait for the
+                pick like any add-mode open. */}
+            <Show when={scan() && !scan()?.item}>
+              <Alert severity="warning" testId="scan-no-matching-item">
+                {t('error.no-matching-item')}
+              </Alert>
+            </Show>
+            <EmptyState
+              graphic={false}
+              message={t('messages.select-item-to-issue')}
+            />
+          </Stack>
         }
       >
         {/* The working area: the batch grid and the advisories under it scroll

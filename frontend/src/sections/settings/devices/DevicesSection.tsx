@@ -2,7 +2,6 @@ import {
   createEffect,
   createResource,
   createSignal,
-  For,
   Show,
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
@@ -28,17 +27,10 @@ import {
   defaultLabelPrinterForm,
   type LabelPrinterForm,
 } from './labelPrinterForm';
-import {
-  availableScanners,
-  mockScannerEnabled,
-  scannerConnected,
-  scanningEnabled,
-  setMockScannerEnabled,
-} from './scanner';
+import { ScannerSources } from './ScannerSources';
 import { LabelPrinterSettings } from '../../../domain/labelPrinter';
 import { UpdateLabelPrinterSettings } from './labelPrinter.generated';
 import { HStack } from '../../../ui/layout/Stack/HStack';
-import styles from '../Settings.module.css';
 
 /*
  * Devices (spec/settings/ui-surface.md § Devices).
@@ -265,46 +257,15 @@ export const DevicesSection = () => {
       </FormSection>
 
       {/* Barcode scanner — Server Admin only, strictly stricter than the
-          label printer beside it (OMS-REG-SET-05.23). All state is local-device; nothing
-          here reaches the server (contract § Devices — barcode scanner). */}
+          label printer beside it (OMS-REG-SET-05.23). All state is
+          local-device; nothing here reaches the server (contract § Devices —
+          barcode scanner).
+
+          One row per input the app can drive, each with its own control,
+          rather than a stack of label/value rows restating "no scanner". */}
       <Show when={hasPermission('SERVER_ADMIN')}>
         <FormSection title={t('settings.barcode-scanner')} headingLevel="h3">
-          <FieldRow label={t('label.barcode-scanner-status')}>
-            <span data-testid="scanner-status">
-              {scanningEnabled()
-                ? t('label.barcode-scanner-enabled')
-                : t('label.barcode-scanner-disabled')}
-            </span>
-          </FieldRow>
-          <FieldRow label={t('label.barcode-scanner-connection-status')}>
-            <span data-testid="scanner-connection">
-              {scannerConnected()
-                ? t('label.barcode-scanner-connected')
-                : t('label.barcode-scanner-not-connected')}
-            </span>
-          </FieldRow>
-          <FieldRow label={t('label.barcode-scanner-available')}>
-            <Show
-              when={availableScanners().length > 0}
-              fallback={<span>{t('messages.no-scanners-available')}</span>}
-            >
-              <ul class={styles.scanResultList} data-testid="scanner-list">
-                <For each={availableScanners()}>{name => <li>{name}</li>}</For>
-              </ul>
-            </Show>
-          </FieldRow>
-          <HStack gap="sm">
-            <ToggleSwitch
-              label={t('settings.enable-mock-barcode-scanner')}
-              checked={mockScannerEnabled()}
-              onChange={setMockScannerEnabled}
-              testId="mock-scanner-toggle"
-            />
-            {/* Literal, non-localised pair — an i18n gap in the reference app
-              captured as-is by the spec (ui-surface § Devices); the
-              correctly-localised pair two rows above is deliberate contrast. */}
-            <span>{mockScannerEnabled() ? 'Enabled' : 'Disabled'}</span>
-          </HStack>
+          <ScannerSources />
           <HStack justify="end" gap="md">
             <Button
               variant="secondary"

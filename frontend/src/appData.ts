@@ -28,6 +28,20 @@ type AppData = {
   // scanner): remembered on this device, never sent to the server — a
   // testing aid tied to the machine, like the USB preference above.
   mockBarcodeScannerEnabled?: boolean;
+  // This device has a scanner configured to EMULATE A KEYBOARD — it types
+  // the barcode rather than sending data reports (spec/settings § Devices).
+  // Opted into rather than detected, because a wedge scanner is by
+  // construction indistinguishable from a keyboard, and the source it
+  // enables intercepts keystrokes app-wide while armed.
+  //
+  // Device-local, like the two above: it describes the hardware on this desk.
+  keyboardWedgeEnabled?: boolean;
+  // Which decoder the camera scans with (src/platform/barcodeSources/camera):
+  // MLKit's model bundled in the APK, or Google Code Scanner from Play
+  // services. Device-local like the two above — it is about what this device
+  // has (Play services, a connection for the one-time download), and it
+  // exists so the two can be compared on real hardware.
+  cameraEngine?: CameraEngine;
   // The last username to log in successfully on this device (spec/startup rules
   // § Authentication). Deliberately NOT keyed by user id, unlike the two
   // user-keyed entries above: it answers "who used this device last", which is
@@ -158,6 +172,29 @@ export const getMockBarcodeScannerEnabled = (): boolean =>
 
 export const setMockBarcodeScannerEnabled = (enabled: boolean): void => {
   writeAppData({ ...readAppData(), mockBarcodeScannerEnabled: enabled });
+};
+
+// Whether this device has a keyboard-emulation scanner (spec/settings §
+// Devices). Off by default: the source it enables intercepts keystrokes
+// app-wide while armed, so it is always opted into, never assumed.
+export const getKeyboardWedgeEnabled = (): boolean =>
+  readAppData().keyboardWedgeEnabled ?? false;
+
+export const setKeyboardWedgeEnabled = (enabled: boolean): void => {
+  writeAppData({ ...readAppData(), keyboardWedgeEnabled: enabled });
+};
+
+export type CameraEngine = 'bundled' | 'google';
+
+// The camera's decoder (see cameraEngine above). Google Code Scanner by
+// default: it is what the old front end uses, so an upgraded device keeps the
+// scanner it already has. Bundled stays one toggle away for devices without
+// Play services or a connection for the one-time download.
+export const getCameraEngine = (): CameraEngine =>
+  readAppData().cameraEngine ?? 'google';
+
+export const setCameraEngine = (engine: CameraEngine): void => {
+  writeAppData({ ...readAppData(), cameraEngine: engine });
 };
 
 // The username the login page prefills (spec/startup rules § Authentication).
