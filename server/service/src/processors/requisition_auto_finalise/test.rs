@@ -6,7 +6,7 @@ use repository::{
     KeyType, KeyValueStoreRepository, KeyValueStoreRow, NameRow, PreferenceRow,
     PreferenceRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
-    StoreRow,
+    StoreRow, SystemLogRowRepository, SystemLogType,
 };
 use util::uuid::uuid;
 
@@ -331,6 +331,82 @@ async fn test_requisition_auto_finalise() {
         requisition.status,
         RequisitionStatus::New,
         "Expected status to be New, auto finalise preference is disabled"
+    );
+}
+
+// The processor sees every invoice changelog row for the store, including the rows of
+// invoices deleted before it ran. Nothing is left to finalise, so none is an error.
+#[tokio::test]
+async fn test_requisition_auto_finalise_deleted_invoice() {
+    let site_id = 25;
+
+    let customer_name = NameRow {
+        id: uuid(),
+        ..Default::default()
+    };
+    let store_name = NameRow {
+        id: uuid(),
+        ..Default::default()
+    };
+    let store = StoreRow {
+        id: uuid(),
+        name_id: store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
+    let site_id_settings = KeyValueStoreRow {
+        id: KeyType::SettingsSyncSiteId,
+        value_int: Some(site_id),
+        ..Default::default()
+    };
+    let preference = PreferenceRow {
+        id: PrefKey::RequisitionAutoFinalise.to_string() + "_" + &store.id,
+        key: PrefKey::RequisitionAutoFinalise.to_string(),
+        value: "true".to_string(),
+        store_id: Some(store.id.clone()),
+    };
+
+    let ServiceTestContext {
+        service_context: ctx,
+        connection,
+        ..
+    } = setup_all_with_data_and_service_provider(
+        "requisition_auto_finalise_processor_deleted_invoice_test",
+        MockDataInserts::none().stores().names(),
+        MockData {
+            names: vec![customer_name.clone(), store_name],
+            stores: vec![store.clone()],
+            key_value_store_rows: vec![site_id_settings],
+            preferences: vec![preference],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    let draft = InvoiceRow {
+        id: uuid(),
+        store_id: store.id.clone(),
+        name_id: customer_name.id.clone(),
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::New,
+        ..Default::default()
+    };
+    let invoice_repo = InvoiceRowRepository::new(&connection);
+    invoice_repo.upsert_one(&draft).unwrap();
+    invoice_repo.delete(&draft.id).unwrap();
+
+    run_processor(&ctx).await;
+
+    let processor_errors: Vec<_> = SystemLogRowRepository::new(&connection)
+        .find_all()
+        .unwrap()
+        .into_iter()
+        .filter(|log| log.r#type == SystemLogType::ProcessorError)
+        .collect();
+    assert!(
+        processor_errors.is_empty(),
+        "Expected no processor errors for a deleted invoice, got {:?}",
+        processor_errors
     );
 }
 
