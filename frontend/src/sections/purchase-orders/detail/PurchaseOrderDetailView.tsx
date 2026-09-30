@@ -409,6 +409,12 @@ const PurchaseOrderDetailView: Component = () => {
   // here because the refusal names no cause (contract ⚠️), so a control left
   // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
+  // A line with no quantity — not yet ordered (spec S7) — on an order and a
+  // line that can still change. Sent orders and closed lines need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    !isDisabled() &&
+    line.status !== 'CLOSED' &&
+    line.requestedNumberOfUnits === 0;
 
   const refetchAll = () => {
     void refetchInfo();
@@ -874,27 +880,18 @@ const PurchaseOrderDetailView: Component = () => {
                   rowTone={line =>
                     blockedLines().includes(line.id) ? 'error' : undefined
                   }
-                  // A line with no quantity is a placeholder — not yet ordered
-                  // (spec S7) — and carries the unfinished-work marking: the
-                  // teal row tint plus a bar of the same colour down the
-                  // leading edge — the outbound and stocktake line tables'
-                  // marking, same tokens and CSS (#269). It replaces the
-                  // whole-row action-blue text, the colour row selection
-                  // already spends.
+                  // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
                   rowTint={line =>
-                    line.requestedNumberOfUnits === 0 ? 'unfinished' : undefined
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
                   }
                   rowAccent={line =>
-                    line.requestedNumberOfUnits === 0 ? 'unfinished' : undefined
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
                   }
-                  // Cards have neither a row background nor a leading edge, so
-                  // a placeholder card keeps the info tone on its title (the
-                  // teal is a graphic colour, below the text-contrast floor).
                   // Error wins when both hold.
                   cardTone={line =>
                     blockedLines().includes(line.id)
                       ? 'error'
-                      : line.requestedNumberOfUnits === 0
+                      : isOpenPlaceholder(line)
                         ? 'info'
                         : undefined
                   }

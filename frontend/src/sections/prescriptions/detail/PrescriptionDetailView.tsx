@@ -196,6 +196,10 @@ const PrescriptionDetailView: Component = () => {
 
   const status = () => asPrescriptionStatus(info()?.status ?? 'CANCELLED');
   const disabled = () => isReadOnly(status());
+  // A placeholder on a record that can still change: a VERIFIED record keeps
+  // its placeholders (rules › prescribed quantity), and they need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    !disabled() && isPlaceholderLine(line);
 
   // The rendered rows — dispensed lines, a cancellation reversal's returned
   // lines, and the prescribed-quantity placeholder (isRenderableLine);
@@ -707,25 +711,16 @@ const PrescriptionDetailView: Component = () => {
                 columns={columns()}
                 rows={rows()}
                 rowKey={line => line.id}
-                // The placeholder is a line awaiting an action — nothing is
-                // dispensed for the item yet (its own cells say so: no batch,
-                // zero packs, a prescribed quantity). It carries the
-                // unfinished-work marking: the teal row tint plus a bar of the
-                // same colour down the leading edge — the outbound and
-                // stocktake line tables' marking, same tokens and CSS (#269).
-                // It replaces the whole-row action-blue text, the colour row
-                // selection already spends.
+                // Placeholder rows — nothing dispensed yet, as their cells say
+                // (no batch, zero packs): CARD_TABLE_MODEL.md § rowAccent.
                 rowTint={line =>
-                  isPlaceholderLine(line) ? 'unfinished' : undefined
+                  isOpenPlaceholder(line) ? 'unfinished' : undefined
                 }
                 rowAccent={line =>
-                  isPlaceholderLine(line) ? 'unfinished' : undefined
+                  isOpenPlaceholder(line) ? 'unfinished' : undefined
                 }
-                // Cards have neither a row background nor a leading edge, so
-                // a placeholder card keeps the info tone on its title (the
-                // teal is a graphic colour, below the text-contrast floor).
                 cardTone={line =>
-                  isPlaceholderLine(line) ? 'info' : undefined
+                  isOpenPlaceholder(line) ? 'info' : undefined
                 }
                 loading={data.loading && !info()}
                 onRowClick={openRow}
