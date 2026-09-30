@@ -8,13 +8,15 @@ template = "docs/section.html"
 source = "code"
 +++
 
-# Playwright E2E Tests (not maintained)
+# Playwright E2E Tests (React front end — run on demand)
 
-The Playwright tests and hermetic runner under `client/playwright/` target the
-legacy client and are **no longer maintained** — don't extend them or rely on
-them. The deterministic e2e suites live in `frontend/e2e/` and target the new
-front end; see `frontend/e2e/README.md` in the repository for how to run them
-(`cd frontend && pnpm e2e:local <suite>`).
+The Playwright tests and hermetic runner under `client/playwright/` drive the
+React front end (`client/`). They are kept so they can be run when a check
+against the React front end is needed, but they are **not run routinely or
+actively maintained** — expect drift, and don't extend them. The deterministic
+e2e suites live in `frontend/e2e/` and target the Solid front end
+(`frontend/`); see `frontend/e2e/README.md` in the repository for how to run
+them (`cd frontend && pnpm e2e:local <suite>`).
 
 One file there is still used: `client/playwright/scripts/build-e2e-export.py`
 generates the e2e reference datafile in `server/data/e2e`, which the
