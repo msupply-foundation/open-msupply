@@ -49,6 +49,7 @@ const {
   learnedPackSize,
   resolveIssueScan,
   scannedBatchExclusions,
+  issueScanTarget,
 } = await import('./issueScan');
 
 const GS = '\u001d';
@@ -186,6 +187,31 @@ describe('resolveIssueScan', () => {
   it('a failed lookup resolves nothing', async () => {
     answers = { barcodeByGtin: { kind: 'unexpectedError' } };
     expect(await resolveIssueScan('store', readText(GTIN))).toBeUndefined();
+  });
+});
+
+describe('issueScanTarget', () => {
+  const at = (
+    resolving: boolean,
+    editorOpen: boolean,
+    editorWaiting: boolean
+  ) => issueScanTarget({ resolving, editorOpen, editorWaiting });
+
+  it('opens the editor with none open', () => {
+    expect(at(false, false, false)).toBe('open');
+  });
+
+  it('.167 hands the scan to an editor waiting for an item', () => {
+    expect(at(false, true, true)).toBe('editor');
+  });
+
+  it('drops a scan into an editor that already has an item', () => {
+    expect(at(false, true, false)).toBe('drop');
+  });
+
+  it('drops a scan while an earlier one is still resolving', () => {
+    expect(at(true, false, false)).toBe('drop');
+    expect(at(true, true, true)).toBe('drop');
   });
 });
 

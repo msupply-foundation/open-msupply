@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { t } from '../../../intl';
-import { refreshScanSources } from '../../../platform/barcodeScanner';
+import {
+  refreshScanSources,
+  startListening,
+  stopListening,
+} from '../../../platform/barcodeScanner';
 import { resetDesktopHidForTest } from '../../../platform/barcodeSources/desktopHid';
+import { setMockBarcodeScannerEnabled } from '../../../appData';
 import {
   scannerRowPairs,
   scannerRowPairsNatively,
@@ -26,9 +31,20 @@ const inDesktopApp = (status: { paired: typeof scanner | null; connected: boolea
   vi.stubGlobal('navigator', { hid: { getDevices: async () => [] } });
 };
 
+const stubLocalStorage = () => {
+  const store = new Map<string, string>();
+  vi.stubGlobal('localStorage', {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => store.clear(),
+  });
+};
+
 const row = (id: string) => scannerSourceRows().find(r => r.id === id);
 
 afterEach(async () => {
+  await stopListening();
   vi.unstubAllGlobals();
   resetDesktopHidForTest();
   await refreshScanSources();
@@ -55,11 +71,11 @@ describe('the desktop app USB scanner row', () => {
     expect(scannerRowPairsNatively('desktop-hid')).toBe(true);
   });
 
-  it('paired and plugged in: names the scanner', async () => {
+  it('paired and plugged in, nothing listening: available, naming the scanner', async () => {
     inDesktopApp({ paired: scanner, connected: true });
     await refreshScanSources();
     expect(row('desktop-hid')).toMatchObject({
-      state: 'active',
+      state: 'available',
       detail: 'Zebra DS2208',
     });
   });
@@ -82,6 +98,32 @@ describe('the desktop app USB scanner row', () => {
       detail: t('messages.scanner-detail-web-hid-desktop'),
     });
     expect(scannerRowPairs('web-hid')).toBe(false);
+  });
+});
+
+describe('In use needs something armed (SET-05.58)', () => {
+  it('reads Available — not In use — while no screen is listening', async () => {
+    stubLocalStorage();
+    setMockBarcodeScannerEnabled(true);
+    vi.stubGlobal('window', {});
+    await refreshScanSources();
+    expect(row('manual')?.state).toBe('available');
+    expect(scannerSourceRows().some(r => r.state === 'active')).toBe(false);
+    expect(scannerStateLabel('available')).toBe(t('label.scanner-state-ready'));
+  });
+
+  it('reads In use while a screen is listening on it, and not after it stops', async () => {
+    stubLocalStorage();
+    setMockBarcodeScannerEnabled(true);
+    vi.stubGlobal('window', {});
+    await refreshScanSources();
+    const handle = await startListening(() => undefined, { label: 'test' });
+    expect(handle.ok).toBe(true);
+    expect(row('manual')?.state).toBe('active');
+    expect(scannerStateLabel('active')).toBe(t('label.scanner-state-active'));
+    if (handle.ok) handle.dispose();
+    await stopListening();
+    expect(row('manual')?.state).toBe('available');
   });
 });
 

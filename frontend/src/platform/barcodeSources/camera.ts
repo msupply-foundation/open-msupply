@@ -81,9 +81,12 @@ export const setViewfinderRect = (rect: ViewfinderRect | undefined): void => {
 
 const [overlayOpen, setOverlayOpen] = createSignal(false);
 const [torchAvailable, setTorchAvailable] = createSignal(false);
+const [torchOn, setTorchOn] = createSignal(false);
 /** Whether the camera overlay is showing — CameraScanOverlay reads it. */
 export const cameraOverlayOpen = overlayOpen;
 export const cameraTorchAvailable = torchAvailable;
+/** Whether the torch is lit — the overlay's torch button shows it pressed. */
+export const cameraTorchOn = torchOn;
 
 /**
  * Frames the plugin requires a value to match in before it reports it at all
@@ -128,6 +131,7 @@ const finish = async (outcome: ScanOutcome): Promise<void> => {
   current.stop();
   setOverlayOpen(false);
   setTorchAvailable(false);
+  setTorchOn(false);
   setDetections([]);
   current.resolve(outcome);
   await Promise.all(
@@ -143,7 +147,10 @@ export const cancelCameraScan = (): void => {
 
 /** The overlay's torch button. */
 export const toggleCameraTorch = (): void => {
-  void plugin?.toggleTorch().catch(() => undefined);
+  void plugin
+    ?.toggleTorch()
+    .then(() => setTorchOn(on => !on))
+    .catch(() => undefined);
 };
 
 /** Ask for the camera, prompting only where Android will still prompt. */
@@ -366,4 +373,5 @@ export const resetCameraForTest = (): void => {
   setDetections([]);
   setOverlayOpen(false);
   setTorchAvailable(false);
+  setTorchOn(false);
 };

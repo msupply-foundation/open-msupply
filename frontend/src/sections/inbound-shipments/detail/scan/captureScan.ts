@@ -1,6 +1,6 @@
 // Receiving by scanning — the capture window's logic (spec/barcode-scanning
 // rules.md § Learning a code while receiving; ui-surface.md § S2; cases
-// OMS-REG-BAC-01.30–.41).
+// OMS-REG-BAC-01.30–.41, .102, .103, .108, .110).
 //
 // Pure: what a scan puts in the window, which line it matches, which message
 // the window shows, and what a save writes — to the shipment and to the book.
@@ -36,7 +36,10 @@ export type CaptureDraft = {
   manufactureDate: string | null;
   /** The code resolved to an item: the Item field is locked (.31). */
   itemLocked: boolean;
-  /** The resolved entry carried a pack size: Pack size is locked (.32). */
+  /**
+   * The resolved entry carried a pack size: Pack size is locked on it, and
+   * shows it (.32, .108).
+   */
   packSizeLocked: boolean;
   /**
    * The scan carried an item number — a label's `01`, or a retail barcode.
@@ -71,13 +74,26 @@ export type MatchableLine = {
 };
 
 /**
+ * A new line's pack size (.102, .108): the book's, else the label's, else the
+ * item's default — 1 only where the item has no default at all.
+ */
+export const packSizeFor = (
+  item: CaptureItem | undefined,
+  bookPackSize: number | undefined,
+  labelPackSize: number | undefined
+): number =>
+  bookPackSize ??
+  labelPackSize ??
+  (item && item.defaultPackSize > 0 ? item.defaultPackSize : 1);
+
+/**
  * The window a scan opens (.30–.33). Item and pack size come from the book
  * where the code resolved, and are locked there; batch, dates and quantity
  * come from the label and stay editable (.20).
  *
- * Pack size follows ui-surface S2's source column: the label's own, else the
- * resolved entry's, else 1. Where both carry one the field locks on the
- * entry's but shows the label's — `OMS-REG-BAC-01.62`, captured as found.
+ * Pack size follows packSizeFor: where the book and the label both carry one
+ * the field locks on the book's AND shows it (.108 — the current app's
+ * defect `.62`, fixed rather than reproduced).
  *
  * Every scan starts on an empty window (a scan-on saves and clears first),
  * so no item has been chosen before it: an unknown item number is always
@@ -108,7 +124,7 @@ export const draftFromScan = (
     item: resolved,
     batch: fields.batch ?? '',
     expiryDate: fields.expiryDate ?? null,
-    packSize: fields.packSize ?? entryPackSize ?? 1,
+    packSize: packSizeFor(resolved, entryPackSize, fields.packSize),
     quantity: fields.quantity ?? 0,
     manufactureDate: fields.manufactureDate ?? null,
     itemLocked: resolved !== undefined,
@@ -121,9 +137,9 @@ export const draftFromScan = (
 };
 
 /**
- * Pick an item by hand (unknown code, or no code). Pack size follows the
- * S2 source column — the label's, else the item's default — unless it is
- * locked by the book.
+ * Pick an item by hand (unknown code, or no code). Pack size follows
+ * packSizeFor — the label's, else the item's default — unless it is locked
+ * by the book.
  */
 export const chooseItem = (
   draft: CaptureDraft,
@@ -134,8 +150,7 @@ export const chooseItem = (
   item,
   packSize: draft.packSizeLocked
     ? draft.packSize
-    : (labelPackSize ??
-      (item && item.defaultPackSize > 0 ? item.defaultPackSize : 1)),
+    : packSizeFor(item, undefined, labelPackSize),
 });
 
 /**
@@ -178,38 +193,32 @@ export const borrowDates = (
     : draft;
 
 export type CaptureMessage =
-  | { severity: 'error'; key: 'messages.no-matching-barcode-and-no-gtin' }
-  | { severity: 'warning'; key: 'messages.no-matching-barcode-but-gtin-found' }
-  | { severity: 'warning'; key: 'messages.barcode-item-not-in-store' }
-  | { severity: 'info'; key: 'messages.batch-not-found' }
-  | {
-      severity: 'info';
-      key: 'messages.batch-already-exists';
-      numberOfPacks: number;
-    };
+  | { key: 'messages.receiving-no-product-code' }
+  | { key: 'messages.receiving-new-barcode' }
+  | { key: 'messages.receiving-item-not-in-store' }
+  | { key: 'messages.batch-not-found' }
+  | { key: 'messages.batch-already-exists'; numberOfPacks: number };
 
 /**
- * The window's one message (ui-surface S2 § The message). Until an item is
- * present it says whether the code can be learned (.33, .70) — or, for a
- * known code whose item this store cannot see, that it will not be changed;
- * once one is, whether saving adds to a line or creates one (.35, .36).
+ * The window's one message (ui-surface S2 § The message) — always
+ * information, never an error or a warning (.110): not knowing a code is a
+ * normal answer. Until an item is present it says whether the code can be
+ * learned (.33, .70) — or, for a known code whose item this store cannot
+ * see, that it will not be changed; once one is, whether saving adds to a
+ * line or creates one (.35, .36).
  */
 export const captureMessage = (
   draft: Pick<CaptureDraft, 'item' | 'itemNumber' | 'codeKnown'>,
   match: MatchableLine | undefined
 ): CaptureMessage => {
   if (!draft.item && draft.codeKnown)
-    return { severity: 'warning', key: 'messages.barcode-item-not-in-store' };
+    return { key: 'messages.receiving-item-not-in-store' };
   if (!draft.item)
     return draft.itemNumber
-      ? {
-          severity: 'warning',
-          key: 'messages.no-matching-barcode-but-gtin-found',
-        }
-      : { severity: 'error', key: 'messages.no-matching-barcode-and-no-gtin' };
-  if (!match) return { severity: 'info', key: 'messages.batch-not-found' };
+      ? { key: 'messages.receiving-new-barcode' }
+      : { key: 'messages.receiving-no-product-code' };
+  if (!match) return { key: 'messages.batch-not-found' };
   return {
-    severity: 'info',
     key: 'messages.batch-already-exists',
     numberOfPacks: match.numberOfPacks,
   };
@@ -235,6 +244,10 @@ export const saveRefusal = (
  * to the matched line, else an insert of a new line. The fields on screen
  * are what is written.
  *
+ * An update fills only the dates the line lacks (.103) — the line's own
+ * expiry and made-on date are never overwritten, and a date the window left
+ * blank is never sent as a clear.
+ *
  * A new line's prices follow the inbound rule for any new manual line
  * (OMS-REG-REPL-09.10/.11): cost and sell price prefill from the item's
  * default sell price at its default pack size, and are zero at any other
@@ -254,8 +267,12 @@ export const captureBatch = (
         {
           id: match.id,
           numberOfPacks: match.numberOfPacks + draft.quantity,
-          expiryDate: { value: draft.expiryDate },
-          manufactureDate: { value: draft.manufactureDate },
+          ...(!match.expiryDate && draft.expiryDate
+            ? { expiryDate: { value: draft.expiryDate } }
+            : {}),
+          ...(!match.manufactureDate && draft.manufactureDate
+            ? { manufactureDate: { value: draft.manufactureDate } }
+            : {}),
         },
       ],
     };

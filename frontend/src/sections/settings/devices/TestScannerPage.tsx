@@ -22,12 +22,14 @@ import { generateUUID } from '../../../uuid';
 import {
   activeSource,
   availableSources,
+  cancelScanOnce,
   refreshScanSources,
   scanOnce,
   scanOwner,
   sourceDisplayName,
   startListening,
   supportsContinuousScanning,
+  type ListenHandle,
   type RawScan,
   type ScanSourceId,
 } from '../../../platform/barcodeScanner';
@@ -237,12 +239,14 @@ const ScanEntryRow: Component<{
 
 const TestScannerPage: Component = () => {
   const params = useParams<{ storeId: string }>();
-  const [listening, setListening] = createSignal(false);
+  // Whoever armed the scanner last owns it; this is our claim on it.
+  const [handle, setHandle] = createSignal<
+    Extract<ListenHandle, { ok: true }> | undefined
+  >();
+  // Truthful: false the moment anything else takes the scanner.
+  const listening = () => handle()?.owns() === true;
   const [entries, setEntries] = createSignal<Entry[]>([]);
   const [referenceId, setReferenceId] = createSignal<string | undefined>();
-
-  // Whoever armed the scanner last owns it; this is our claim on it.
-  let dispose: (() => void) | undefined;
 
   const noScanner = () => availableSources().length === 0;
 
@@ -297,23 +301,26 @@ const TestScannerPage: Component = () => {
 
   // "Leaving a screen stops its scanning." The disposer is inert if something
   // else has since taken the scan, so this cannot disarm a screen that
-  // replaced us.
-  onCleanup(() => dispose?.());
+  // replaced us. A pending one-shot never outlives the page either.
+  onCleanup(() => {
+    handle()?.dispose();
+    cancelScanOnce();
+  });
 
   const toggleListening = async () => {
     if (listening()) {
-      dispose?.();
-      dispose = undefined;
-      setListening(false);
+      // A one-shot still pending from Scan once is settled too.
+      cancelScanOnce();
+      handle()?.dispose();
+      setHandle(undefined);
       return;
     }
-    const handle = await startListening(record, {
+    const result = await startListening(record, {
       label: 'test-scanner',
       onError: recordError,
     });
-    if (!handle.ok) return recordError({ message: handle.message });
-    dispose = handle.dispose;
-    setListening(true);
+    if (!result.ok) return recordError({ message: result.message });
+    setHandle(result);
   };
 
   const scanOnceNow = async () => {

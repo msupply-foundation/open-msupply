@@ -65,14 +65,20 @@ describe('draftFromScan', () => {
     expect(draft.packSizeLocked).toBe(true);
   });
 
-  it('.62 the label pack size is shown where the entry also carries one', () => {
+  it('.108 the locked pack size shows the book value, not the label value', () => {
     const draft = draftFromScan(
       read(`01${GTIN}3712${GS}10AB12`),
       known(24),
       item
     );
-    expect(draft.packSize).toBe(12);
+    expect(draft.packSize).toBe(24);
     expect(draft.packSizeLocked).toBe(true);
+  });
+
+  it(".102 a known code with no pack size in the book takes the item's default", () => {
+    const draft = draftFromScan(LABEL, known(null), item);
+    expect(draft.packSize).toBe(10);
+    expect(draft.packSizeLocked).toBe(false);
   });
 
   it('.33 an unrecognised item number leaves the item empty and is learnable', () => {
@@ -221,17 +227,17 @@ describe('borrowDates', () => {
 });
 
 describe('captureMessage', () => {
-  it('.70 no item number, no item: error', () => {
+  it('.70 .110 no item number, no item: says it identifies no product', () => {
     expect(
       captureMessage({ item: undefined, itemNumber: undefined, codeKnown: false }, undefined)
-        .severity
-    ).toBe('error');
+        .key
+    ).toBe('messages.receiving-no-product-code');
   });
 
-  it('.33 an unknown item number, no item: the learnable warning', () => {
+  it('.33 .110 an unknown item number, no item: a new barcode to remember', () => {
     expect(
       captureMessage({ item: undefined, itemNumber: GTIN, codeKnown: false }, undefined).key
-    ).toBe('messages.no-matching-barcode-but-gtin-found');
+    ).toBe('messages.receiving-new-barcode');
   });
 
   // The book is not a catalogue: the code is known, but its item is not
@@ -242,7 +248,7 @@ describe('captureMessage', () => {
         { item: undefined, itemNumber: GTIN, codeKnown: true },
         undefined
       )
-    ).toEqual({ severity: 'warning', key: 'messages.barcode-item-not-in-store' });
+    ).toEqual({ key: 'messages.receiving-item-not-in-store' });
   });
 
   it('.36 an item and no match: a new line will be created', () => {
@@ -258,7 +264,6 @@ describe('captureMessage', () => {
         { id: 'a', packSize: 10, numberOfPacks: 3 }
       )
     ).toEqual({
-      severity: 'info',
       key: 'messages.batch-already-exists',
       numberOfPacks: 3,
     });
@@ -313,7 +318,7 @@ describe('captureBatch', () => {
     });
   });
 
-  it('.35 adds the quantity to the matched line', () => {
+  it('.35 adds the quantity to the matched line, filling a date it lacks', () => {
     expect(
       captureBatch(
         draft,
@@ -326,9 +331,27 @@ describe('captureBatch', () => {
           id: 'a',
           numberOfPacks: 7,
           expiryDate: { value: '2027-12-31' },
-          manufactureDate: { value: null },
         },
       ],
+    });
+  });
+
+  it(".103 never overwrites the matched line's own dates", () => {
+    expect(
+      captureBatch(
+        { ...draft, manufactureDate: '2025-01-01' },
+        {
+          id: 'a',
+          batch: 'AB12',
+          packSize: 10,
+          numberOfPacks: 3,
+          expiryDate: '2028-06-30',
+          manufactureDate: '2024-06-01',
+        },
+        context
+      )
+    ).toEqual({
+      updateInboundShipmentLines: [{ id: 'a', numberOfPacks: 7 }],
     });
   });
 

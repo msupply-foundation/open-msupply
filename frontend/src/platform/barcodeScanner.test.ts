@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   activeSource,
   refreshScanSources,
+  cancelScanOnce,
   scanOnce,
   scanOwner,
   scannerAvailable,
@@ -344,6 +345,32 @@ describe('one-shot scans distinguish cancelled from failed', () => {
     await refreshScanSources();
     const result = await scanOnce();
     expect(result).toMatchObject({ ok: false, cancelled: false });
+  });
+
+  // A source that never settles its own one-shot (a streaming HID source
+  // with no read coming) must not hold its caller forever.
+  it('cancelScanOnce settles a one-shot the source never would, as cancelled', async () => {
+    let released = false;
+    const stuck: ScanSource = {
+      id: 'web-hid',
+      displayName: () => 'stuck',
+      continuous: false,
+      available: async () => true,
+      connected: () => true,
+      scanOnce: () => new Promise(() => {}),
+      listen: async () => ({ ok: false }),
+      release: async () => {
+        released = true;
+      },
+    };
+    setSourcesForTest([stuck]);
+    await refreshScanSources();
+    const pending = scanOnce();
+    cancelScanOnce();
+    expect(await pending).toEqual({ ok: false, cancelled: true });
+    expect(released).toBe(true);
+    setSourcesForTest();
+    await refreshScanSources();
   });
 
   // release() must settle a waiting caller: an unresolved promise here would

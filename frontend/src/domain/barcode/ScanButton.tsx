@@ -27,7 +27,7 @@ import styles from './ScanButton.module.css';
  */
 export const scanUnusableReason = (control: ScanControl): string | undefined =>
   control.disconnected() || control.armedElsewhere()
-    ? t('error.scanner-not-connected')
+    ? t('messages.scanner-not-connected-set-up')
     : undefined;
 
 /**

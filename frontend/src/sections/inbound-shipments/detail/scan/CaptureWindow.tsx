@@ -5,7 +5,7 @@
 // (./createCaptureWindow), which the detail view creates ONE of.
 
 import { Show } from 'solid-js';
-import { t } from '@/intl';
+import { t, tPlural } from '@/intl';
 import { ItemSearch } from '@/domain/item';
 import { activeSource } from '@/platform/barcodeScanner';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
@@ -29,12 +29,13 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
     if (!draft) return undefined;
     const refusal = c().refusal();
     if (refusal) return { severity: 'error' as const, text: refusal };
+    // Always information — not knowing a code is a normal answer (.110).
     const found = captureMessage(draft, c().match());
     return {
-      severity: found.severity,
+      severity: 'info' as const,
       text:
         found.key === 'messages.batch-already-exists'
-          ? t(found.key, { numberOfPacks: found.numberOfPacks })
+          ? tPlural(found.key, found.numberOfPacks)
           : t(found.key),
     };
   };
@@ -87,19 +88,10 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
         {draft => (
           <Stack gap="md">
             <Show when={diagnostic()}>
-              <Stack gap="sm">
-                <Text variant="body">
-                  <strong>{t('label.barcode')}:</strong>{' '}
-                  {shortContent(draft().content)}
-                </Text>
-                <Show when={draft().itemNumber}>
-                  {gtin => (
-                    <Text variant="body">
-                      <strong>{t('label.gtin')}:</strong> {gtin()}
-                    </Text>
-                  )}
-                </Show>
-              </Stack>
+              <Text variant="body">
+                <strong>{t('label.barcode')}:</strong>{' '}
+                {shortContent(draft().content)}
+              </Text>
             </Show>
             <Show when={!c().working() && message()}>
               {m => (

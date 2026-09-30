@@ -15,6 +15,7 @@ import {
   activeSource,
   allSourceIds,
   availableSources,
+  scanOwner,
   sourceDisplayName,
   type ScanSourceId,
 } from '../../../platform/barcodeScanner';
@@ -65,7 +66,7 @@ export const scannerStateLabel = (state: ScannerSourceState): string =>
   state === 'active'
     ? t('label.scanner-state-active')
     : state === 'available'
-      ? t('label.scanner-state-available')
+      ? t('label.scanner-state-ready')
       : state === 'disabled'
         ? t('label.scanner-state-disabled')
         : state === 'not-set-up'
@@ -159,9 +160,16 @@ const notAvailableState = (id: ScanSourceId): ScannerSourceState => {
   return 'unavailable';
 };
 
+/**
+ * `active` needs evidence that something is armed right now: a screen holds
+ * the scan, and this is the input credited with driving it. Without that
+ * check an input read as active on the Settings page itself, where nothing
+ * is armed at all (OMS-REG-SET-05.58). A one-scan-per-press camera is never
+ * armed, so it is never active between presses.
+ */
 export const scannerSourceRows = (): ScannerSourceRow[] => {
   const available = new Set(availableSources());
-  const driving = activeSource();
+  const driving = scanOwner() !== undefined ? activeSource() : undefined;
   return allSourceIds().map(id => {
     const state: ScannerSourceState = !available.has(id)
       ? notAvailableState(id)
@@ -191,10 +199,11 @@ export const scannerRowToggle = (
 /**
  * Whether this row offers pairing. Only the HID one does, and only where the
  * platform can reach USB at all — offering a chooser that cannot open is
- * worse than offering nothing.
+ * worse than offering nothing. Not in the desktop app, where browser USB
+ * stands down for the app's own.
  */
 export const scannerRowPairs = (id: ScanSourceId): boolean =>
-  id === 'web-hid' && hidSupported();
+  id === 'web-hid' && hidSupported() && !desktopHidSupported();
 
 /**
  * Whether this row offers the desktop app's pairing — by scan, or from a

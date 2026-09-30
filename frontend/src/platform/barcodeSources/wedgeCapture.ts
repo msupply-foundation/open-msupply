@@ -47,23 +47,60 @@ const replay = (text: string): void => {
 };
 
 /**
+ * What the focused field held when a run's first key arrived — before that
+ * key's default action, so before anything leaked.
+ */
+type LeakSnapshot = {
+  el: HTMLInputElement | HTMLTextAreaElement;
+  value: string;
+};
+
+/**
+ * The range to delete to take a leaked keystroke back out of a field, or
+ * undefined where nothing leaked. Pure, for tests.
+ *
+ * Only what the leak ACTUALLY inserted is removed. A field may refuse the
+ * key — a number field drops a letter or a `]` on input and restores its
+ * value — and then deleting "one character before the caret" would delete
+ * one of the user's own digits instead (spec/barcode-scanning/rules.md §
+ * Triggering a scan: "A keystroke the focused field refused is not taken back
+ * from it"). So the field must read exactly as it did before, plus what the
+ * leak put in just before the caret; anything else is left alone.
+ */
+export const leakToRemove = (
+  before: string,
+  now: string,
+  caret: number | null
+): { start: number; end: number } | undefined => {
+  const grown = now.length - before.length;
+  if (grown <= 0 || caret === null || caret < grown) return undefined;
+  const start = caret - grown;
+  if (now.slice(0, start) + now.slice(caret) !== before) return undefined;
+  return { start, end: caret };
+};
+
+/**
  * Remove the characters a scan leaked into the focused field before it was
  * recognised as a scan. Without this a barcode's first character lands in
  * whatever the user was filling in — during receiving that is the quantity
  * box, and scanning on SAVES the line, so the stray digit would be persisted.
  */
-const unleak = (count: number): void => {
+const unleak = (): void => {
+  const before = leak;
+  leak = undefined;
   const el = editableTarget();
-  if (!el || count <= 0) return;
-  const caret = el.selectionStart;
-  if (caret === null || caret < count) return;
-  el.setSelectionRange(caret - count, caret);
+  if (!before || el !== before.el) return;
+  const range = leakToRemove(before.value, el.value, el.selectionStart);
+  if (!range) return;
+  el.setSelectionRange(range.start, range.end);
   document.execCommand('delete');
 };
 
 // --- The armed listener ---------------------------------------------------
 
 let state: WedgeState = emptyWedgeState();
+/** The focused field as the open run's first (let-through) key found it. */
+let leak: LeakSnapshot | undefined;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let detach: (() => void) | undefined;
 
@@ -71,7 +108,7 @@ const act = (outcome: WedgeOutcome | undefined, handlers: ScanHandlers): void =>
   if (!outcome) return;
   switch (outcome.kind) {
     case 'barcode':
-      unleak(outcome.leakedChars);
+      unleak();
       // The key POSITIONS, unmapped: which characters they mean depends on
       // the layout the scanner emits against, and that belongs one layer up
       // (src/domain/barcode) where it can be configured per site rather
@@ -85,13 +122,14 @@ const act = (outcome: WedgeOutcome | undefined, handlers: ScanHandlers): void =>
       // has no maintenance surface). The keystrokes go with the failure —
       // the key that could not be placed is the only thing that explains it,
       // and is usually a separator spelled a way this app does not know yet.
-      unleak(1);
+      unleak();
       handlers.onError?.({
         message: t('error.unable-to-read-barcode'),
         raw: { kind: 'keystrokes', keys: outcome.keys },
       });
       return;
     case 'typing':
+      leak = undefined;
       replay(outcome.replay);
   }
 };
@@ -139,6 +177,18 @@ export const listenToKeyboardWedge = async (
       event.timeStamp,
       WEDGE_DEFAULTS
     );
+    // A run's first key is let through (wedgeDetect § Telling a scanner from
+    // a human) and may leak into the field. Note the field as it stands now,
+    // before that key lands, so a later unleak removes only what it put there.
+    if (step.completed) act(step.completed, handlers);
+    const opened =
+      !step.suppress && step.state.run !== undefined && step.state.run.keys.length === 1;
+    if (opened) {
+      const el = editableTarget();
+      leak = el ? { el, value: el.value } : undefined;
+    } else if (step.state.run === undefined) {
+      leak = undefined;
+    }
     state = step.state;
     if (step.suppress) {
       // preventDefault alone stops the character reaching the field, but
@@ -149,8 +199,6 @@ export const listenToKeyboardWedge = async (
       event.preventDefault();
       event.stopImmediatePropagation();
     }
-    act(step.completed, handlers);
-
     // An open run is closed by silence. Without this, the last scan of a
     // burst would sit in the buffer until the next keystroke — which on the
     // receiving screen might be minutes later, or never.
@@ -179,4 +227,5 @@ export const releaseKeyboardWedge = async (): Promise<void> => {
   // Anything half-captured is abandoned rather than reported: a partial run
   // at disarm time is not a barcode.
   state = emptyWedgeState();
+  leak = undefined;
 };

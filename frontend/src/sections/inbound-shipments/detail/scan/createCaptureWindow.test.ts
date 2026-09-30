@@ -225,7 +225,7 @@ describe('createCaptureWindow', () => {
     });
     expect(onSaved).toHaveBeenCalledOnce();
     expect(capture.draft()?.batch).toBe('CD34');
-    expect(capture.savedNotice()).toBe('Saved 🥳');
+    expect(capture.savedNotice()).toBe('Line saved');
     dispose();
   });
 
@@ -336,9 +336,34 @@ describe('createCaptureWindow', () => {
     await capture.receive(LABEL);
     expect(calls).toEqual([]);
     expect(capture.open()).toBe(false);
-    expect(onNotice).toHaveBeenCalledWith(
-      'Unable to scan, please close the item edit window modal to continue'
-    );
+    expect(onNotice).toHaveBeenCalledWith('Close the line editor to scan.');
+    dispose();
+  });
+
+  it("a scan arriving while the item's lines are still loading is dropped, not saved against no match", async () => {
+    // A label that carries a quantity, so scanning on would save it.
+    const COUNTED = scanOf(`01${GTIN}10AB12${GS}1727123130${'5'}`);
+    let linesArrive: (answer: typeof noLines) => void = () => undefined;
+    answers = {
+      barcodeByGtin: known,
+      itemsWithStock: item,
+      inboundShipmentLines: new Promise(resolve => {
+        linesArrive = resolve;
+      }) as unknown as GraphqlResult<unknown>,
+      batchInboundShipment: batchSaved,
+    };
+    const { capture, onSaved, dispose } = setup();
+    const first = capture.receive(COUNTED);
+    await vi.waitFor(() => expect(capture.draft()?.quantity).toBe(5));
+    expect(capture.working()).toBe(false);
+
+    await capture.receive(NEXT);
+    expect(operations()).not.toContain('batchInboundShipment');
+    expect(onSaved).not.toHaveBeenCalled();
+    expect(capture.draft()?.batch).toBe('AB12');
+
+    linesArrive(noLines);
+    await first;
     dispose();
   });
 

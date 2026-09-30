@@ -1,5 +1,6 @@
 import {
   createMemo,
+  createEffect,
   createSignal,
   For,
   Match,
@@ -94,6 +95,7 @@ import {
   learnIssueScan,
   scannedBatchExclusions,
   type IssueScan,
+  type IssueScanReceiver,
 } from './issueScan';
 
 // The line editor (spec S4): the SINGLE surface for issuing an item — set the
@@ -292,6 +294,13 @@ interface OutboundLineEditModalProps {
    * already be closing, so the view shows it, not the editor.
    */
   onScanNotice?: (message: string) => void;
+  /**
+   * While the editor waits for an item (add mode, nothing chosen — "Add
+   * item", or after Save & next), it takes a scan as its pick: the screen
+   * hands the resolved scan here instead of dropping it. Called with
+   * `undefined` once an item is chosen, while saving, and on close.
+   */
+  onScanReceiver?: (receiver: IssueScanReceiver | undefined) => void;
 }
 
 // The parent-facing wrapper: mount the editor ONLY while open. `<Show keyed>`
@@ -633,6 +642,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     if (opening) void seedItem(opening, props.initialLineId);
     else itemSearch.focus();
   });
+
+  // A scan while waiting for an item picks it, as the scan that opened the
+  // editor would have (spec/barcode-scanning rules § Learning a code while
+  // issuing): locked where the code resolved, else the no-match warning over
+  // the still-choosable picker. The scan is then this editor's to learn.
+  const receiveScan: IssueScanReceiver = next => {
+    setScan(next);
+    if (next.item) void seedItem(next.item);
+    else itemSearch.focus();
+  };
+  createEffect(() => {
+    const waiting = mode() === 'add' && item() === undefined && !saving();
+    props.onScanReceiver?.(waiting ? receiveScan : undefined);
+  });
+  onCleanup(() => props.onScanReceiver?.(undefined));
 
   // The shared barred-batch policy (spec/stock-allocation § barred batches,
   // AC-AL2/AL8), fed outbound's resolved preferences — the module owns no

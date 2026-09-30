@@ -37,6 +37,30 @@ export type IssueScan = {
   batch?: string;
 };
 
+/** How an open editor takes a scan while it is waiting for an item. */
+export type IssueScanReceiver = (scan: IssueScan) => void;
+
+/**
+ * Where a scan goes (.167): nowhere while an earlier one is still resolving,
+ * or into an editor that already has an item — the scan would replace the
+ * item the user is issuing; into an editor waiting for an item (after Add
+ * item or Save & next) as its pick; else it opens the editor. Asked when the
+ * scan lands, and again once it has resolved, since the editor may have
+ * opened, closed or taken an item meanwhile.
+ */
+export const issueScanTarget = (state: {
+  resolving: boolean;
+  editorOpen: boolean;
+  editorWaiting: boolean;
+}): 'drop' | 'editor' | 'open' =>
+  state.resolving
+    ? 'drop'
+    : !state.editorOpen
+      ? 'open'
+      : state.editorWaiting
+        ? 'editor'
+        : 'drop';
+
 /**
  * Look the scan up and resolve the item it names. Undefined when either
  * request failed — already reported globally, and nothing should open.
