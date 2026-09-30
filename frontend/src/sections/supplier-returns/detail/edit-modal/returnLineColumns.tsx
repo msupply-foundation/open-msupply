@@ -184,7 +184,7 @@ export const reasonColumns = (
     ...getCellDefinition('expiryDate'),
   },
   {
-    c: { id: 'returnReason' },
+    c: { id: 'returnReasonInput' },
     header: () => t('label.reason'),
     // No CELL_DEF key — the width holds the reason picker.
     size: remToPx(10),
