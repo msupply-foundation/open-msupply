@@ -239,7 +239,7 @@ pub fn ensure_partition_lookahead(
         return Ok(0);
     }
 
-    let max_upper = max_patrition_upper_bound(connection)?;
+    let max_upper = max_partition_upper_bound(connection)?;
 
     if max_upper == 0 {
         // `changelog` isn't partitioned (pre-migration) or has no partitions —
