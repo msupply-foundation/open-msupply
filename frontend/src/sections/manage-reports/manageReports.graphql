@@ -1,0 +1,99 @@
+# The report-administration catalogue (spec/manage-reports contract.md).
+#
+# `allReportVersions` is the register's ONLY read: every installed version of
+# every report, one row per version. There is no single-version query — a row
+# opens the editor on the row it already holds.
+#
+# `storeId` is required but AUTHORISES only. `create_filtered_query` applies no
+# store join, so the row set is server-wide and identical from every store
+# (contract.md ⚠️ wire trap). It must never be read as a scope.
+#
+# `sort` is a list but the resolver POPS it and applies only the LAST entry, so
+# exactly one entry ever travels (contract.md ⚠️ wire trap). `version` sorts as
+# TEXT, not as a version number — `2.9.1` orders above `2.17.3` — which is the
+# register's stated ordering, not a bug to correct client-side (rules.md § the
+# register).
+#
+# `ReportsResponse` carries a `QueryReportsError` member (FailedTranslation),
+# reachable only when a report's argument-schema translation fails. It is
+# selected so a translation failure is a handled read failure rather than an
+# unmatched union branch.
+query allReportVersions(
+  $storeId: String!
+  $userLanguage: String!
+  $filter: ReportFilterInput
+  $sort: [ReportSortInput!]
+  $page: PaginationInput
+) {
+  allReportVersions(
+    storeId: $storeId
+    userLanguage: $userLanguage
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    __typename
+    ... on ReportConnector {
+      totalCount
+      nodes {
+        id
+        name
+        code
+        version
+        isActive
+        isCustom
+      }
+    }
+    ... on QueryReportsError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Install every report in an already-transferred bundle (contract.md §
+# installing). The file reaches the server first over REST (POST /upload,
+# multipart field "files", responding { "file-id": … }) — that step is not
+# GraphQL and lives in reportInstall.ts.
+#
+# Returns the ids of every report row upserted. The reference client discards
+# this; the register reports what installed instead of a fixed message.
+#
+# `installUploadedReports` has NO typed errors: the resolver maps every service
+# error — a body that is not a bundle, a body that is not parseable, an unknown
+# file id — onto one untyped `Internal error` whose extensions.details is
+# "Invalid file" (contract.md § rejections). The caller opts into
+# returnGraphqlErrors so that rejection surfaces in the dialog instead of
+# tripping the global unexpected-error modal.
+#
+# Installing ALWAYS overwrites a version already present — `upsert_reports` is
+# called with overwrite hard-coded true, unlike the server-start install which
+# never overwrites (rules.md § replacement). Nothing on the wire can opt out.
+mutation installUploadedReports($fileId: String!) {
+  centralServer {
+    reports {
+      installUploadedReports(fileId: $fileId)
+    }
+  }
+}
+
+# Change one version's active state — the ENTIRE mutable surface of an
+# installed report (contract.md § activation). `UpdateReportInput` is
+# `{ id, isActive }`: no other field of a report is writable anywhere in the
+# schema, which is why the editor shows everything else read-only.
+#
+# Its one domain rejection — an id that is not an installed version — arrives
+# as an untyped top-level `Bad user input` with extensions.details "Report not
+# found", so the caller opts into returnGraphqlErrors.
+mutation updateReport($input: UpdateReportInput!) {
+  centralServer {
+    reports {
+      updateReport(input: $input) {
+        id
+        isActive
+      }
+    }
+  }
+}

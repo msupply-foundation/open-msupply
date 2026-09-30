@@ -1,0 +1,150 @@
+import { REPORT_UPLOAD_URL } from '@/config';
+import type { GraphqlResult } from '@/api/graphql';
+import type { InstallUploadedReportsResult } from './manageReports.generated';
+
+// Installing a report bundle (spec/manage-reports rules.md § installing,
+// contract.md § installing). Two steps, and BOTH must succeed before anything
+// is reported as installed: the file reaches the server over REST, then that
+// identified file is installed over GraphQL. A transferred-but-not-installed
+// file changes nothing (OMS-REG-MNG-06.23).
+//
+// Pure except for the fetch itself, so the outcome mapping is unit-testable
+// without a server.
+
+/** The transfer step's outcome. */
+export type UploadOutcome =
+  { kind: 'uploaded'; fileId: string } | { kind: 'failed'; message: string };
+
+/**
+ * Transfer one file and learn its server-side id.
+ *
+ * The response key is hyphenated — `file-id`, not `file_id` — because the
+ * Rust struct carries `#[serde(rename_all = "kebab-case")]` (contract.md §
+ * installing). Reading the snake_case name would silently yield undefined.
+ *
+ * The endpoint answers **HTTP 500** for "not logged in" rather than 401, so a
+ * status check must not read 401 as the signed-out signal (contract.md ⚠️).
+ * Any non-OK status is reported as a failed transfer; the session-expiry path
+ * is the GraphQL client's job, not this endpoint's.
+ */
+export const uploadReportFile = async (file: File): Promise<UploadOutcome> => {
+  const body = new FormData();
+  // Field name "files" — the server's multipart field, singular struct member
+  // notwithstanding.
+  body.append('files', file);
+  try {
+    const response = await fetch(REPORT_UPLOAD_URL, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+      body,
+    });
+    if (!response.ok)
+      return { kind: 'failed', message: `HTTP ${response.status}` };
+    const payload: unknown = await response.json();
+    const fileId = readFileId(payload);
+    return fileId
+      ? { kind: 'uploaded', fileId }
+      : { kind: 'failed', message: 'missing file-id' };
+  } catch (e) {
+    return {
+      kind: 'failed',
+      message: e instanceof Error ? e.message : String(e),
+    };
+  }
+};
+
+/** The upload response's single hyphenated key, read defensively. */
+export const readFileId = (payload: unknown): string | undefined => {
+  if (typeof payload !== 'object' || payload === null) return undefined;
+  const value = (payload as Record<string, unknown>)['file-id'];
+  return typeof value === 'string' && value !== '' ? value : undefined;
+};
+
+/** The install step's outcome, per file. */
+export type InstallOutcome =
+  | { kind: 'installed'; reportIds: string[] }
+  /**
+   * The server could not read the file, carrying its own words. The rejection
+   * is untyped and the three possible causes are indistinguishable, so the
+   * description is passed through rather than recognised
+   * (OMS-REG-MNG-06.26).
+   */
+  | { kind: 'rejected'; serverError: string }
+  /** Transport or an already-reported failure — the global modal owns it. */
+  | { kind: 'failed' };
+
+/**
+ * Map the install mutation's result.
+ *
+ * `installUploadedReports` has NO typed errors: a body that is not a bundle, a
+ * body that is not parseable, and an unknown file id all arrive as the SAME
+ * untyped `Internal error` (contract.md § rejections). They are therefore
+ * indistinguishable here by construction — one `rejected` outcome covers all
+ * three, and the dialog cannot tell the user which applied
+ * (OMS-REG-MNG-06.15).
+ */
+export const installOutcome = (
+  result: GraphqlResult<InstallUploadedReportsResult>
+): InstallOutcome => {
+  if (result.kind === 'success') {
+    return {
+      kind: 'installed',
+      reportIds: result.data.centralServer.reports.installUploadedReports,
+    };
+  }
+  // A GraphQL-level error the caller opted to receive: the only domain
+  // rejection this mutation has.
+  if (result.kind === 'graphqlError') {
+    const details = result.errors[0]?.extensions?.details;
+    return {
+      kind: 'rejected',
+      serverError:
+        typeof details === 'string' && details.length > 0
+          ? details
+          : (result.errors[0]?.message ?? 'UnknownError'),
+    };
+  }
+  return { kind: 'failed' };
+};
+
+/**
+ * The outcome of installing a whole selection, file by file.
+ *
+ * Each file is transferred and installed INDEPENDENTLY, so an earlier file's
+ * reports stay installed when a later one fails (rules.md § installing,
+ * OMS-REG-MNG-06.16). This records both halves so the dialog can say what
+ * arrived as well as what did not.
+ */
+export type BatchOutcome = {
+  /** Ids of every report installed across all files that succeeded. */
+  installedReportIds: string[];
+  /** Names of the files that failed, in the order supplied. */
+  failedFiles: string[];
+};
+
+export const emptyBatch = (): BatchOutcome => ({
+  installedReportIds: [],
+  failedFiles: [],
+});
+
+/** Fold one file's result into the running batch outcome. */
+export const addToBatch = (
+  batch: BatchOutcome,
+  fileName: string,
+  outcome: InstallOutcome
+): BatchOutcome =>
+  outcome.kind === 'installed'
+    ? {
+        ...batch,
+        installedReportIds: [...batch.installedReportIds, ...outcome.reportIds],
+      }
+    : { ...batch, failedFiles: [...batch.failedFiles, fileName] };
+
+/** Nothing at all arrived. */
+export const batchInstalledNothing = (batch: BatchOutcome): boolean =>
+  batch.installedReportIds.length === 0;
+
+/** Some arrived and some did not — the partial case worth reporting plainly. */
+export const batchIsPartial = (batch: BatchOutcome): boolean =>
+  batch.installedReportIds.length > 0 && batch.failedFiles.length > 0;

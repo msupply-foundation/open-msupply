@@ -44,6 +44,15 @@ export const FRIDGE_TAG_URL = '/fridge-tag';
 // (server/server/src/print/mod.rs → test_printer).
 export const PRINT_LABEL_TEST_URL = '/print/label-test';
 
+// Report-bundle transfer (spec/manage-reports/contract.md § installing): a
+// report bundle reaches the server over REST before the GraphQL install names
+// it — POST multipart, field "files", responding { "file-id": … } (hyphenated,
+// the Rust struct is kebab-cased). Shared with plugin upload, so a change here
+// reaches Manage › Plugins too. Answers HTTP 500 — not 401 — when not signed
+// in, so a status check must not read 401 as the signed-out signal. Proxied to
+// the backend in dev (see vite.config.ts).
+export const REPORT_UPLOAD_URL = '/upload';
+
 // Installed frontend-plugin bundles (spec/plugins/contract.md § discovery &
 // loading): the server serves each at `<this>/{path}`, where `path` is what
 // the discovery query reports, used verbatim. It is keyed on the plugin ROW
