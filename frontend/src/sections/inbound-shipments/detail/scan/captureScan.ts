@@ -154,6 +154,63 @@ export const chooseItem = (
 });
 
 /**
+ * Whether a scan onto the entry on screen saves it and starts the next (.37)
+ * rather than joining it (.186): only where the entry and the scan both
+ * carry an item number — box after box. Anything else is the rest of the
+ * same box, so a box printed with two barcodes, the product's and a batch
+ * and expiry label, composes one line in either order.
+ */
+export const scansOn = (entry: CaptureDraft, read: CaptureRead): boolean =>
+  entry.itemNumber !== undefined && itemNumber(read) !== undefined;
+
+/**
+ * A scan joining the entry on screen (.186–.189). Each value the scan's label
+ * supplies replaces the entry's; the rest — including anything the user typed
+ * — stays. Where the scan's code resolved an item, that item comes in, locked,
+ * with the book's pack size; otherwise the entry keeps its own. The scan's
+ * item number becomes the entry's where the entry had none, and is learned
+ * only if no item had been chosen before it (rules: "A code is learned only
+ * if the user had not already chosen an item before the scan").
+ *
+ * `next` is the scan's own draft (draftFromScan); `labelPackSize` the pack
+ * size the entry's labels stated so far.
+ */
+export const joinScan = (
+  entry: CaptureDraft,
+  next: CaptureDraft,
+  read: CaptureRead,
+  labelPackSize: number | undefined
+): CaptureDraft => {
+  const fields = labelFields(read);
+  const resolved = next.item;
+  const packSize = resolved
+    ? next.packSizeLocked
+      ? next.packSize
+      : packSizeFor(resolved, undefined, fields.packSize ?? labelPackSize)
+    : entry.packSizeLocked
+      ? entry.packSize
+      : (fields.packSize ?? entry.packSize);
+  const numbered = entry.itemNumber === undefined && next.itemNumber;
+  return {
+    item: resolved ?? entry.item,
+    batch: fields.batch ?? entry.batch,
+    expiryDate: fields.expiryDate ?? entry.expiryDate,
+    packSize,
+    quantity: fields.quantity ?? entry.quantity,
+    manufactureDate: fields.manufactureDate ?? entry.manufactureDate,
+    itemLocked: resolved ? true : entry.itemLocked,
+    packSizeLocked: resolved ? next.packSizeLocked : entry.packSizeLocked,
+    itemNumber: entry.itemNumber ?? next.itemNumber,
+    codeKnown: entry.codeKnown || next.codeKnown,
+    learnCode:
+      entry.item === undefined
+        ? (next.learnCode ?? entry.learnCode)
+        : entry.learnCode,
+    content: numbered ? next.content : entry.content,
+  };
+};
+
+/**
  * The line a draft adds to: same item, batch, pack size and expiry (.35,
  * .5). Made-on date is not part of the match. `lines` are the item's lines
  * on this shipment. An empty batch matches a line with none. A blank expiry

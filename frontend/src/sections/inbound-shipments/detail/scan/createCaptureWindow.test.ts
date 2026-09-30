@@ -367,6 +367,48 @@ describe('createCaptureWindow', () => {
     dispose();
   });
 
+  it('.186 a batch label onto an open entry fills it in and saves nothing', async () => {
+    answers = {
+      barcodeByGtin: known,
+      itemsWithStock: item,
+      inboundShipmentLines: noLines,
+    };
+    const { capture, onSaved, dispose } = setup();
+    await capture.receive(LABEL);
+    calls.length = 0;
+    await capture.receive(scanOf(`10CD34${GS}17280630${GS}306`));
+    expect(operations()).not.toContain('batchInboundShipment');
+    expect(onSaved).not.toHaveBeenCalled();
+    expect(capture.draft()).toMatchObject({
+      item: { id: 'item-1' },
+      batch: 'CD34',
+      expiryDate: '2028-06-30',
+      quantity: 6,
+    });
+    dispose();
+  });
+
+  it('.188 a product label onto an entry a batch label opened fills in its item', async () => {
+    answers = {
+      barcodeByGtin: known,
+      itemsWithStock: item,
+      inboundShipmentLines: noLines,
+    };
+    const { capture, onSaved, dispose } = setup();
+    await capture.receive(scanOf(`10CD34${GS}17280630${GS}306`));
+    expect(capture.draft()?.item).toBeUndefined();
+    await capture.receive(scanOf(`01${GTIN}`));
+    expect(operations()).not.toContain('batchInboundShipment');
+    expect(onSaved).not.toHaveBeenCalled();
+    expect(capture.draft()).toMatchObject({
+      item: { id: 'item-1' },
+      itemLocked: true,
+      batch: 'CD34',
+      quantity: 6,
+    });
+    dispose();
+  });
+
   it('.67 a label without an item number opens without a lookup', async () => {
     const { capture, dispose } = setup();
     await capture.receive(scanOf(`${GS}10AB12${GS}17271231`));

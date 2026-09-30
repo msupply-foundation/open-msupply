@@ -1,7 +1,8 @@
 // The capture window (spec/barcode-scanning ui-surface.md § S2; rules.md §
 // Learning a code while receiving): one scan becomes one received line, box
 // after box. Opened only by a scan; a scan arriving while it is open saves
-// what is on screen and loads the new one.
+// what is on screen and loads the new one where both carry an item number,
+// and otherwise joins the entry on screen — the rest of the same box (.186).
 //
 // The primitive half: the detail view creates ONE with createCaptureWindow,
 // hands `receive` to its scan control's onScan, and renders <CaptureWindow>
@@ -32,8 +33,10 @@ import {
   chooseItem,
   codeToLearn,
   draftFromScan,
+  joinScan,
   matchingLine,
   saveRefusal,
+  scansOn,
   type CaptureDraft,
   type CaptureItem,
   type CaptureRead,
@@ -65,9 +68,9 @@ export type CaptureWindowControl = ReturnType<typeof createCaptureWindow>;
 export const createCaptureWindow = (options: CaptureWindowOptions) => {
   const [open, setOpen] = createSignal(false);
   const [draft, setDraft] = createSignal<CaptureDraft>();
-  // The scan the window holds — the label's pack size is re-read from it
-  // when the user picks an item by hand.
-  let read: CaptureRead | undefined;
+  // The pack size the entry's labels stated, if any — used when the user
+  // picks an item by hand. A label joining the entry can state one too.
+  let labelPackSize: number | undefined;
   // The Item field's item's lines on this shipment, for the match (.35).
   const [itemLines, setItemLines] = createSignal<InboundLineFragment[]>([]);
   const [working, setWorking] = createSignal(false);
@@ -121,7 +124,7 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
   };
 
   const reset = () => {
-    read = undefined;
+    labelPackSize = undefined;
     linesFor = undefined;
     setDraft(undefined);
     setItemLines([]);
@@ -179,11 +182,14 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
     return undefined;
   };
 
-  /** Look the scan up and load it into the (now empty) window. */
-  const load = async (incoming: CaptureRead) => {
+  /**
+   * The scan's own draft: its code looked up and the item resolved. A failed
+   * lookup is already reported globally; the scan still opens, item
+   * unresolved and nothing to learn (draftFromScan). A scan with no code is
+   * not looked up at all.
+   */
+  const resolve = async (incoming: CaptureRead): Promise<CaptureDraft> => {
     setWorking(true);
-    // A failed lookup is already reported globally; the scan still opens,
-    // item unresolved and nothing to learn (draftFromScan).
     const lookup = await lookUpBarcode(options.storeId(), scanCode(incoming));
     let item: CaptureItem | undefined;
     if (lookup.kind === 'known') {
@@ -193,19 +199,49 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
       );
       if (resolved.kind === 'found') item = resolved.item;
     }
-    read = incoming;
-    setRefusal(undefined);
-    setDraft(draftFromScan(incoming, lookup, item));
-    setOpen(true);
     setWorking(false);
-    if (item) {
+    return draftFromScan(incoming, lookup, item);
+  };
+
+  /** Look the scan up and load it into the (now empty) window. */
+  const load = async (incoming: CaptureRead) => {
+    const loaded = await resolve(incoming);
+    labelPackSize = labelFields(incoming).packSize;
+    setRefusal(undefined);
+    setDraft(loaded);
+    setOpen(true);
+    if (loaded.item) {
       quantityField.focus();
-      await loadItemLines(item.id);
+      await loadItemLines(loaded.item.id);
     } else itemField.focus();
   };
 
-  /** Save on (if an entry is open), then load the scan. */
+  /**
+   * The scan joins the entry on screen (.186–.189): nothing is saved, the
+   * scan's values fill the entry, and the match follows the new item or
+   * batch.
+   */
+  const join = async (incoming: CaptureRead, entry: CaptureDraft) => {
+    const next = await resolve(incoming);
+    const current = draft() ?? entry;
+    const joined = joinScan(current, next, incoming, labelPackSize);
+    labelPackSize = labelFields(incoming).packSize ?? labelPackSize;
+    setRefusal(undefined);
+    setDraft(joined);
+    if (joined.item) quantityField.focus();
+    else itemField.focus();
+    if (joined.item?.id !== current.item?.id)
+      await loadItemLines(joined.item?.id);
+    else reborrow();
+  };
+
+  /** Save on or join the entry on screen (if one is open), else load. */
   const work = async (incoming: CaptureRead) => {
+    const entry = draft();
+    if (open() && entry && !scansOn(entry, incoming)) {
+      await join(incoming, entry);
+      return;
+    }
     if (open()) {
       // Scanning on saves first (.37); a refusal keeps the entry and drops
       // the incoming scan (.38, .39), as does any other failure.
@@ -249,7 +285,7 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
     const current = draft();
     if (!current) return;
     const item = option ?? undefined;
-    setDraft(chooseItem(current, item, read && labelFields(read).packSize));
+    setDraft(chooseItem(current, item, labelPackSize));
     void loadItemLines(item?.id);
     if (item) quantityField.focus();
   };
