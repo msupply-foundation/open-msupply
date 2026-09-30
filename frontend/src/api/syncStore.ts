@@ -23,10 +23,9 @@ import { invalidateCustomTranslations } from '../intl';
 // from spec — not baked in here.
 
 const [syncStatus, setSyncStatus] = createSignal<SyncStatusFragment>();
-// Records to push. Fed by the subscription (current-run remaining work) or, on
-// the polling fallback, by the query — which is a DIFFERENT derivation that
-// never drains on a current-generation site. Captured wire trap:
-// spec/sync-modal/contract.md § Records to push.
+// Records to push. Fed by the subscription or, on the polling fallback, by the
+// query — the same server value either way (spec/sync-modal/contract.md
+// § Records to push).
 const [pushQueueCount, setPushQueueCount] = createSignal<number>();
 // Whether the live channel is delivering; consumers poll only while it isn't.
 const [liveConnected, setLiveConnected] = createSignal(false);
