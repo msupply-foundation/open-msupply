@@ -1,4 +1,4 @@
-# open-msupply-frontend
+# open-mSupply front end (`frontend/`)
 
 A [SolidJS](https://www.solidjs.com/) frontend for [open mSupply](https://msupply.foundation/open-msupply/),
 built with Vite and typed end-to-end via GraphQL codegen. It talks to the
