@@ -36,6 +36,7 @@ export default defineConfig({
     include: [
       'src/**/*.test.ts',
       'vite/**/*.test.ts',
+      'scripts/**/*.test.mjs',
       'plugins/*/src/**/*.test.ts',
       // cook_islands' backend half and shared domain core, named rather than
       // globbed: civ's backend tests are jest-style and import `@common/*`,
