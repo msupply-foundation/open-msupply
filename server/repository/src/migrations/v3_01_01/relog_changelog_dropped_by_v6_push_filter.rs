@@ -1,8 +1,8 @@
-use crate::{db_diesel::changelog::ensure_partition_lookahead, migrations::*, StorageConnection};
+use crate::{migrations::*, RepositoryError, StorageConnection};
 use diesel::{
     dsl::{max, sql},
     prelude::*,
-    sql_types::{Bool, Integer, Nullable},
+    sql_types::{BigInt, Bool, Integer, Nullable, Text},
 };
 
 // Minimal local table definitions for the columns this migration reads and writes, as
@@ -218,6 +218,120 @@ fn is_standalone_central(connection: &StorageConnection) -> anyhow::Result<bool>
     ))
     .get_result(connection.lock().connection())?;
     Ok(is_standalone_central.unwrap_or(false))
+}
+
+// Copied verbatim from `db_diesel/changelog/partition.rs` and `migrations/helpers.rs` as
+// they were in 3.01.1, rather than calling the shared helpers. The shared
+// `ensure_partition_lookahead` keeps changing, and later versions expect tables that
+// later migrations create (e.g. the 3.03.1 DEFAULT partition), which do not exist yet
+// when this runs on a database upgrading from below 3.01.1. Do not edit.
+
+/// Ensure enough future cursor-range partitions exist on `changelog` to keep
+/// `config.lookahead` cursor records of empty headroom above `max(cursor)`.
+///
+/// Postgres-only behaviour. Under SQLite the function returns immediately —
+/// SQLite has no partitions to top up.
+pub fn ensure_partition_lookahead(
+    connection: &StorageConnection,
+    config: &ChangelogPartitionConfig,
+) -> Result<usize, RepositoryError> {
+    if !cfg!(feature = "postgres") {
+        return Ok(0);
+    }
+
+    let max_upper = max_patrition_upper_bound(connection)?;
+
+    if max_upper == 0 {
+        // `changelog` isn't partitioned (pre-migration) or has no partitions —
+        // should not reach this state. Should we panic or throw error instead? For now, just log and return.
+        log::warn!("changelog partition lookahead: changelog table is not partitioned or has no partitions");
+        return Ok(0);
+    }
+
+    let current_max = max_sequence(connection)?;
+
+    let size = config.partition_size;
+    let target_headroom = config.lookahead;
+
+    let mut created = 0;
+    let mut next_lower = max_upper;
+    // Create partitions until we have enough headroom above the current max cursor
+    while next_lower - current_max < target_headroom {
+        let next_upper = next_lower + size;
+        let sql = format!(
+            "CREATE TABLE changelog_p_{} PARTITION OF changelog \
+             FOR VALUES FROM ({}) TO ({})",
+            next_lower, next_lower, next_upper
+        );
+        diesel::sql_query(&sql).execute(connection.lock().connection())?;
+        log::info!(
+            "changelog partition created changelog_p_{} [{}..{})",
+            next_lower,
+            next_lower,
+            next_upper
+        );
+        next_lower = next_upper;
+        created += 1;
+    }
+
+    Ok(created)
+}
+
+/// Returns the highest cursor upper bound across `changelog`'s partitions, or
+/// 0 if `changelog` isn't partitioned. Each partition's bound expression is
+/// `FOR VALUES FROM ('<lower>') TO ('<upper>')`; we pull every expression then
+/// parse the `TO ('<upper>')` value in Rust.
+///
+/// Postgres-specific (uses `pg_inherits` / `pg_get_expr`). Only ever reached
+/// via `ensure_partition_lookahead`, which guards the postgres feature.
+fn max_partition_upper_bound(connection: &StorageConnection) -> Result<i64, RepositoryError> {
+    #[derive(QueryableByName)]
+    struct BoundExpr {
+        #[diesel(sql_type = Text)]
+        bound: String,
+    }
+
+    let bounds: Vec<BoundExpr> = diesel::sql_query(
+        r#"
+        SELECT pg_get_expr(c.relpartbound, c.oid) AS bound
+        FROM pg_inherits i
+        JOIN pg_class c ON c.oid = i.inhrelid
+        WHERE i.inhparent = 'changelog'::regclass
+        "#,
+    )
+    .get_results(connection.lock().connection())?;
+
+    let max_upper = bounds
+        .into_iter()
+        .filter_map(|b| parse_upper_bound(&b.bound))
+        .max()
+        .unwrap_or(0);
+
+    Ok(max_upper)
+}
+
+/// Extract the upper bound `N` from a partition bound expression of the shape
+/// `FOR VALUES FROM ('<lower>') TO ('<upper>')`. Returns `None` if the input
+/// doesn't match or the number doesn't parse.
+fn parse_upper_bound(expr: &str) -> Option<i64> {
+    let (_, after_to) = expr.rsplit_once("TO (")?;
+    let (number, _) = after_to.split_once(')')?;
+    number.trim().trim_matches('\'').parse().ok()
+}
+
+/// Highest allocated changelog cursor, read from the sequence so it includes
+/// values handed out by uncommitted `nextval` calls. Postgres-only.
+pub(crate) fn max_sequence(connection: &StorageConnection) -> Result<i64, RepositoryError> {
+    #[derive(QueryableByName)]
+    struct Bigint {
+        #[diesel(sql_type = BigInt)]
+        value: i64,
+    }
+    let row: Bigint = diesel::sql_query(
+        "SELECT COALESCE(pg_sequence_last_value('changelog_cursor_seq'), 0) AS value",
+    )
+    .get_result(connection.lock().connection())?;
+    Ok(row.value)
 }
 
 #[cfg(test)]
