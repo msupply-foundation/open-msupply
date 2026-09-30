@@ -1,8 +1,7 @@
 # e2e reference datafile
 
 Seed data for the deterministic Playwright suites (defined under
-`frontend/e2e/`; run against the legacy client with `yarn e2e:local` in
-`client/`).
+`frontend/e2e/`; run with `pnpm e2e:local <suite>` in `frontend/`).
 Restore it into a fresh database with:
 
 ```bash
@@ -146,4 +145,4 @@ after a sync-schema change. Small edits can be made directly to `export.json`
    ```
 
 5. Round-trip (`initialise-from-export -n e2e -r`) and run the stocktake
-   suite before committing the new export.
+   suite (`cd frontend && pnpm e2e:local stocktake-regression`) before committing the new export.
