@@ -100,19 +100,37 @@ impl StorageConnection {
             .map_err(RepositoryError::from)
     }
 
-    /// Queue a notification to be fired after the transaction commits.
+    /// Queue a notification to be fired after the transaction commits, or fire it now when
+    /// there is no transaction: the statement has already auto-committed, and nothing would
+    /// flush the queue for it later (the connection is usually dropped soon after).
+    ///
+    /// Takes the connection lock, so must not be called while holding it.
     pub fn notify(&self, notification: TransactionNotification) {
-        if self.on_commit.is_some() {
+        let Some(on_commit) = &self.on_commit else {
+            return;
+        };
+        // An unreadable level falls back to queueing.
+        let in_transaction = self
+            .lock()
+            .transaction_level::<RepositoryError>()
+            .map_or(true, |level| level > 0);
+        if in_transaction {
+            // unwrap is safe: write() only errors if the lock is poisoned, and the guard is
+            // only ever held for this insert and the take in flush_notifications, neither of
+            // which can panic.
             self.pending_notifications
                 .write()
                 .unwrap()
                 .insert(notification);
+        } else {
+            on_commit(&notification);
         }
     }
 
     /// Fire all pending notifications. Called after outermost transaction commits.
     fn flush_notifications(&self) {
         let notifications: HashSet<_> = {
+            // unwrap is safe: see notify — nothing that holds this guard can panic.
             let mut pending = self.pending_notifications.write().unwrap();
             std::mem::take(&mut *pending)
         };
@@ -410,5 +428,66 @@ mod connection_manager_tests {
                 .unwrap(),
             0
         );
+    }
+}
+
+#[cfg(test)]
+mod on_commit_test {
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
+
+    use crate::{
+        test_db, ActivityLogRow, ActivityLogRowRepository, ActivityLogType, RepositoryError,
+        TransactionError,
+    };
+
+    async fn setup(name: &str) -> (super::StorageConnectionManager, Arc<AtomicUsize>) {
+        let mut manager = test_db::setup(&test_db::get_test_db_settings(name)).await;
+        let fired = Arc::new(AtomicUsize::new(0));
+        let counter = fired.clone();
+        manager.set_on_commit(Arc::new(move |_| {
+            counter.fetch_add(1, Ordering::SeqCst);
+        }));
+        (manager, fired)
+    }
+
+    fn log_row() -> ActivityLogRow {
+        ActivityLogRow {
+            id: util::uuid::uuid(),
+            r#type: ActivityLogType::UserLoggedIn,
+            ..Default::default()
+        }
+    }
+
+    #[actix_rt::test]
+    async fn changelog_insert_in_transaction_fires_on_commit() {
+        let (manager, fired) = setup("on_commit_changelog_in_transaction").await;
+        let connection = manager.connection().unwrap();
+
+        let _: Result<_, TransactionError<RepositoryError>> = connection.transaction_sync(|con| {
+            ActivityLogRowRepository::new(con).insert_one(&log_row())?;
+            // Held until the commit, not fired on the insert.
+            assert_eq!(fired.load(Ordering::SeqCst), 0);
+            Ok(())
+        });
+
+        assert_eq!(fired.load(Ordering::SeqCst), 1);
+    }
+
+    // The shape of LoginService's UserLoggedIn entry: a changelog-writing
+    // insert on a context connection with no transaction around it.
+    #[actix_rt::test]
+    async fn changelog_insert_outside_transaction_fires_on_commit() {
+        let (manager, fired) = setup("on_commit_changelog_outside_transaction").await;
+        {
+            let connection = manager.connection().unwrap();
+            ActivityLogRowRepository::new(&connection)
+                .insert_one(&log_row())
+                .unwrap();
+        }
+
+        assert_eq!(fired.load(Ordering::SeqCst), 1);
     }
 }

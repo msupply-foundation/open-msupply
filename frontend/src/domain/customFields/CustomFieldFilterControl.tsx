@@ -48,6 +48,11 @@ export const CustomFieldFilterControl = (props: {
   const asDate = () => (props.value?.kind === 'date' ? props.value : undefined);
 
   const name = () => props.field.def.name;
+  // A two-input range stamps the FilterBar's `filter-input-<key>` as
+  // `<testId>-from` / `<testId>-to`, the same convention the built-in range
+  // filters follow (e2e/TESTIDS.md).
+  const bound = (end: 'from' | 'to') =>
+    props.testId ? `${props.testId}-${end}` : undefined;
 
   return (
     <Switch>
@@ -121,6 +126,7 @@ export const CustomFieldFilterControl = (props: {
               <FilterNumberInput
                 label={t('label.from')}
                 placeholder={t('label.from')}
+                testId={bound('from')}
                 decimalLimit={numberField().integer ? 0 : 6}
                 value={asNumber()?.min}
                 onChange={min =>
@@ -134,6 +140,7 @@ export const CustomFieldFilterControl = (props: {
               <FilterNumberInput
                 label={t('label.to')}
                 placeholder={t('label.to')}
+                testId={bound('to')}
                 decimalLimit={numberField().integer ? 0 : 6}
                 value={asNumber()?.max}
                 onChange={max =>
@@ -152,6 +159,7 @@ export const CustomFieldFilterControl = (props: {
           from={
             <FilterDate
               label={t('label.from')}
+              testId={bound('from')}
               value={asDate()?.from ?? ''}
               onInput={from =>
                 props.onChange(
@@ -163,6 +171,7 @@ export const CustomFieldFilterControl = (props: {
           to={
             <FilterDate
               label={t('label.to')}
+              testId={bound('to')}
               value={asDate()?.to ?? ''}
               onInput={to =>
                 props.onChange(
