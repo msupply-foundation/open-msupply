@@ -1269,21 +1269,13 @@ const InboundShipmentDetailView: Component = () => {
                   rowTone={line =>
                     lineErrors().has(line.id) ? 'error' : undefined
                   }
-                  // An untouched placeholder carries the unfinished-work
-                  // marking (AC-V3): the teal row tint plus a bar of the same
-                  // colour down the leading edge — the outbound and stocktake
-                  // line tables' marking, same tokens and CSS (#269). It
-                  // replaces the whole-row action-blue text, the colour row
-                  // selection already spends.
+                  // Placeholder rows (AC-V3): CARD_TABLE_MODEL.md § rowAccent.
                   rowTint={line =>
                     isPlaceholderLine(line) ? 'unfinished' : undefined
                   }
                   rowAccent={line =>
                     isPlaceholderLine(line) ? 'unfinished' : undefined
                   }
-                  // Cards have neither a row background nor a leading edge, so
-                  // a placeholder card keeps the info tone on its title (the
-                  // teal is a graphic colour, below the text-contrast floor).
                   // Error wins when both hold.
                   cardTone={line =>
                     lineErrors().has(line.id)

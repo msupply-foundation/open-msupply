@@ -234,6 +234,10 @@ const RequisitionDetailView: Component = () => {
     const node = info();
     return node ? isRequisitionEditable(node) : false;
   };
+  // A zero-supply placeholder (AC-V4) on a requisition that can still change:
+  // a Finalised one keeps its zero lines, and those need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    editable() && line.supplyQuantity === 0;
   // Adding a line (rules › line editing): an editable, non-program (a program
   // requisition's lines are fixed to its master list), non-transferred (the
   // customer's demand is not added to here) requisition.
@@ -1112,23 +1116,15 @@ const RequisitionDetailView: Component = () => {
                   // A row click opens the line editor on that line (AC-LE1);
                   // on a read-only requisition it opens all-disabled (AC-LE9).
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
-                  // Rows with a ZERO supply quantity are placeholders (AC-V4)
-                  // and carry the unfinished-work marking: the teal row tint
-                  // plus a bar of the same colour down the leading edge — the
-                  // outbound and stocktake line tables' marking, same tokens
-                  // and CSS (#269). It replaces the whole-row action-blue
-                  // text, the colour row selection already spends.
+                  // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
                   rowTint={line =>
-                    line.supplyQuantity === 0 ? 'unfinished' : undefined
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
                   }
                   rowAccent={line =>
-                    line.supplyQuantity === 0 ? 'unfinished' : undefined
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
                   }
-                  // Cards have neither a row background nor a leading edge, so
-                  // a placeholder card keeps the info tone on its title (the
-                  // teal is a graphic colour, below the text-contrast floor).
                   cardTone={line =>
-                    line.supplyQuantity === 0 ? 'info' : undefined
+                    isOpenPlaceholder(line) ? 'info' : undefined
                   }
                   emptyMessage={
                     (lineFilter().itemCodeOrName?.like ?? '').trim()
