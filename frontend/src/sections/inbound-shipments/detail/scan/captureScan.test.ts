@@ -7,8 +7,10 @@ import {
   chooseItem,
   codeToLearn,
   draftFromScan,
+  joinScan,
   matchingLine,
   saveRefusal,
+  scansOn,
   shortContent,
   type CaptureItem,
   type CaptureRead,
@@ -139,6 +141,137 @@ describe('draftFromScan', () => {
     const draft = draftFromScan(LABEL, { kind: 'failed' }, undefined);
     expect(draft.codeKnown).toBe(false);
     expect(draft.learnCode).toBeUndefined();
+  });
+});
+
+// A box printed with two barcodes: the product's, and a batch and expiry
+// label with no item number (.186–.189).
+const BATCH_LABEL = read(`10CD34${GS}17280630${GS}306`);
+
+describe('scansOn', () => {
+  const productEntry = draftFromScan(LABEL, known(null), item);
+  const labelEntry = draftFromScan(BATCH_LABEL, { kind: 'no-code' }, undefined);
+
+  it('.37 a second product label saves the entry and starts the next', () => {
+    expect(scansOn(productEntry, read(`01${GTIN}10EF56`))).toBe(true);
+    expect(scansOn(productEntry, read(RETAIL))).toBe(true);
+  });
+
+  it('.186 a batch label joins the entry a product label opened', () => {
+    expect(scansOn(productEntry, BATCH_LABEL)).toBe(false);
+  });
+
+  it('.189 a product label joins the entry a batch label opened', () => {
+    expect(scansOn(labelEntry, LABEL)).toBe(false);
+  });
+
+  it('a plain code joins rather than scanning on', () => {
+    expect(scansOn(productEntry, read('INTERNAL-7'))).toBe(false);
+  });
+});
+
+describe('joinScan', () => {
+  const labelDraft = (lookup: BarcodeLookup = { kind: 'no-code' }) =>
+    draftFromScan(BATCH_LABEL, lookup, undefined);
+
+  it(".186 a batch label fills the entry's batch, dates and quantity, keeping its item", () => {
+    const entry = draftFromScan(LABEL, known(24), item);
+    const joined = joinScan(entry, labelDraft(), BATCH_LABEL, undefined);
+    expect(joined).toMatchObject({
+      item,
+      itemLocked: true,
+      batch: 'CD34',
+      expiryDate: '2028-06-30',
+      quantity: 6,
+      packSize: 24,
+      packSizeLocked: true,
+      itemNumber: GTIN,
+      learnCode: undefined,
+    });
+  });
+
+  it('.187 a batch label keeps what it does not supply, including what was typed', () => {
+    const entry = {
+      ...draftFromScan(LABEL, known(null), item),
+      quantity: 3,
+      manufactureDate: '2026-01-01',
+    };
+    const label = read('(10)CD34');
+    const joined = joinScan(
+      entry,
+      draftFromScan(label, { kind: 'no-code' }, undefined),
+      label,
+      undefined
+    );
+    expect(joined).toMatchObject({
+      batch: 'CD34',
+      expiryDate: '2027-12-31',
+      quantity: 3,
+      manufactureDate: '2026-01-01',
+    });
+  });
+
+  it('.188 a known product label fills in the item on an entry a batch label opened', () => {
+    const entry = labelDraft();
+    const joined = joinScan(
+      entry,
+      draftFromScan(read(`01${GTIN}`), known(12), item),
+      read(`01${GTIN}`),
+      undefined
+    );
+    expect(joined).toMatchObject({
+      item,
+      itemLocked: true,
+      packSize: 12,
+      packSizeLocked: true,
+      batch: 'CD34',
+      expiryDate: '2028-06-30',
+      quantity: 6,
+      itemNumber: GTIN,
+    });
+  });
+
+  it('.189 an unknown product label onto an entry with no item is learnable', () => {
+    const entry = labelDraft();
+    const product = read(`01${GTIN}`);
+    const joined = joinScan(
+      entry,
+      draftFromScan(product, { kind: 'unknown' }, undefined),
+      product,
+      undefined
+    );
+    expect(joined).toMatchObject({
+      item: undefined,
+      itemNumber: GTIN,
+      learnCode: GTIN,
+      batch: 'CD34',
+    });
+  });
+
+  it('an unknown product label onto an item already chosen by hand is not learned', () => {
+    const entry = chooseItem(labelDraft(), item, undefined);
+    const product = read(`01${GTIN}`);
+    const joined = joinScan(
+      entry,
+      draftFromScan(product, { kind: 'unknown' }, undefined),
+      product,
+      undefined
+    );
+    expect(joined.item).toBe(item);
+    expect(joined.learnCode).toBeUndefined();
+  });
+
+  it("a resolved item without a book pack size takes the entry label's", () => {
+    const label = read(`10CD34${GS}3712`);
+    const entry = draftFromScan(label, { kind: 'no-code' }, undefined);
+    const joined = joinScan(
+      entry,
+      draftFromScan(read(`01${GTIN}`), known(null), item),
+      read(`01${GTIN}`),
+      12
+    );
+    expect(joined.packSize).toBe(12);
+    expect(joined.packSizeLocked).toBe(false);
   });
 });
 
