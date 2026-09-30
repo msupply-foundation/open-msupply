@@ -403,6 +403,19 @@ export { pluginData, CONFIGURATION_IDENTIFIER } from './pluginData';
 // secure-context-only (crashes on plain-HTTP LAN origins, #499), so the host's
 // generator is the sanctioned way for a plugin to mint one.
 export { generateUUID } from '../uuid';
+
+// ── Focus ───────────────────────────────────────────────────────────────────
+// Moving focus after an action is a ref-bound handle, never `autofocus` or a
+// DOM lookup (kdd/focus-targets). The same primitive the host's own line
+// editors use, so a plugin screen lands focus the way core does.
+export {
+  createFocusTarget,
+  createFocusTargets,
+} from '../ui/utils/createFocusTarget';
+export type {
+  FocusTarget,
+  KeyedFocusTargets,
+} from '../ui/utils/createFocusTarget';
 export type {
   PluginDataApi,
   PluginDataRecord,
