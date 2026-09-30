@@ -7,23 +7,17 @@
 #   scripts/e2e/run-e2e.sh stocktake-regression     # one suite
 #   scripts/e2e/run-e2e.sh stocktake-regression --headed
 #
-# What it does: builds the (sqlite) mSupply server + CLI from an
-# open-msupply checkout, restores a throwaway database from its committed
-# reference datafile (server/data/e2e), boots the server and this repo's
-# vite dev server (GraphQL proxied to the throwaway backend), waits for
-# both, runs the e2e/ Playwright suites with BASE_URL pointing at this
-# front end, tears everything down. Store-local data (stock) is arranged
-# by e2e/specs/data.setup.ts through the API.
+# What it does: builds the (sqlite) mSupply server + CLI from this repo's
+# server/, restores a throwaway database from its committed reference
+# datafile (server/data/e2e), boots the server and this front end's vite dev
+# server (GraphQL proxied to the throwaway backend), waits for both, runs the
+# e2e/ Playwright suites with BASE_URL pointing at this front end, tears
+# everything down. Store-local data (stock) is arranged by
+# e2e/specs/data.setup.ts through the API.
 #
-# The server + reference datafile come from a checkout that carries
-# `server/` (the suites live here). The front end and the server now share
-# ONE repository, and that is this one, so nothing needs setting; the
-# separate pre-merge `open-msupply` checkout stays accepted as a fallback,
-# and OMS_DIR overrides both.
-#
-# Whichever it resolves to needs three specific capabilities, each
-# preflighted below with its own message. A branch name is not the
-# requirement — any branch carrying all three works:
+# The server is always THIS checkout's server/ — the one guaranteed to match
+# the branch under test — unless OMS_DIR says otherwise. It needs three
+# specific capabilities, each preflighted below with its own message:
 #
 #   1. The e2e datafile export — server/data/e2e/{export.json,users.txt}.
 #   2. `remote_server_cli initialise-from-export --name --refresh`, the
@@ -36,8 +30,9 @@
 #      token leaves every UI step in the suites unauthenticated.
 #
 # Knobs (all optional):
-#   OMS_DIR           the checkout supplying server/ (default: this repo,
-#                     then a pre-merge ../open-msupply — see below)
+#   OMS_DIR           a checkout whose server/ to build instead of this one's
+#                     (e.g. to try these suites against another branch's
+#                     server)
 #   E2E_SERVER_PORT   backend port (discovery uses port+1)
 #   E2E_FE_PORT       front-end port
 #     When neither port is set, a free pair is picked automatically
@@ -53,41 +48,12 @@ DB_NAME="" # set once ports are known -> $OMS_DIR/server/<name>.sqlite (gitignor
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 FE_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
-OMS_DIR=${OMS_DIR:-}
-if [[ -z "$OMS_DIR" ]]; then
-  # Candidates in order; the first one carrying server/data/e2e wins.
-  #
-  # THIS REPO FIRST. The front end and the server share one repository now,
-  # so its own server/ is both the nearest and the only one guaranteed to
-  # match the branch under test. A separate pre-merge `open-msupply`
-  # checkout still works and is still tried — but it is no longer the
-  # default, because those have drifted: an out-of-date datafile shows up
-  # as the app redirecting away from a gated screen, which reads as a
-  # SUITE failure rather than the setup problem it is.
-  #
-  # The main-working-tree entries are for a git worktree that is sparse or
-  # nested (.worktrees/<name>) and so has no server/ or no sibling of its
-  # own — worktree runs need no OMS_DIR either way.
-  COMMON_DIR=$(git -C "$FE_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
-  MAIN_TREE=${COMMON_DIR:+$(dirname "$COMMON_DIR")}
-  for candidate in \
-    "$FE_DIR/.." \
-    ${MAIN_TREE:+"$MAIN_TREE"} \
-    "$FE_DIR/../../open-msupply" \
-    ${MAIN_TREE:+"$MAIN_TREE/../open-msupply"}; do
-    [[ -d "$candidate/server/data/e2e" ]] && OMS_DIR=$candidate && break
-  done
-  # Nothing matched: name the nearest candidate, so the error below points
-  # somewhere useful rather than at an empty string.
-  OMS_DIR=${OMS_DIR:-$FE_DIR/..}
-fi
+OMS_DIR=${OMS_DIR:-$FE_DIR/..}
 if [[ ! -d "$OMS_DIR/server/data/e2e" ]]; then
   echo "MISSING DEPENDENCY: the e2e datafile export." >&2
   echo "  Expected: $OMS_DIR/server/data/e2e/ (export.json + users.txt)" >&2
-  echo "  Neither this repo's own server/ nor a pre-merge ../open-msupply" >&2
-  echo "  checkout carries it — this working tree may be sparse, or on a" >&2
-  echo "  revision predating the e2e datafile. Set OMS_DIR to a checkout" >&2
-  echo "  that has server/data/e2e/." >&2
+  echo "  This checkout may predate the e2e datafile; if OMS_DIR is set, point" >&2
+  echo "  it at a checkout that has server/data/e2e/." >&2
   exit 1
 fi
 # Named separately from the directory: a checkout that HAS data/e2e but is
@@ -104,9 +70,9 @@ OMS_DIR=$(cd "$OMS_DIR" && pwd)
 SERVER_DIR="$OMS_DIR/server"
 # Stack logs get their own dir — Playwright wipes its outputDir
 # (e2e/test-results) at run start, which would eat logs written before it.
-# The per-port subdir is appended once ports are known: open-msupply's
-# harness writes flat files with these same names into e2e/stack-logs when
-# its FE_SUITES_DIR points here, and a concurrent run must not interleave.
+# The per-port subdir is appended once ports are known: the React front
+# end's harness (client/playwright) writes flat files with these same names
+# into e2e/stack-logs, and a concurrent run must not interleave.
 LOG_ROOT="$FE_DIR/e2e/stack-logs"
 
 # Neutralise any sync credentials in the developer's local.yaml. Empty core
@@ -237,7 +203,7 @@ if [[ -z "$SERVER_PORT" ]]; then
 fi
 
 # Per-run database + app-data dir, named by port, so concurrent runs
-# sharing one open-msupply checkout never touch each other's files.
+# sharing one OMS_DIR checkout never touch each other's files.
 DB_NAME=e2e_newfe_$SERVER_PORT
 LOG_DIR="$LOG_ROOT/$SERVER_PORT"
 mkdir -p "$LOG_DIR"
