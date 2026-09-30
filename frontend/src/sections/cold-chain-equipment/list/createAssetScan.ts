@@ -70,9 +70,10 @@ export const createAssetScan = (options: {
           case 'open':
             return options.onOpen(result.assetId);
           case 'not-found':
+            // Plain words, not the scanned content (OMS-REG-CCE-04.39).
             return setNotice({
               severity: 'error',
-              text: t('error.no-matching-asset', { id: result.content }),
+              text: t('error.no-equipment-for-barcode'),
             });
           case 'draft':
             // Creating from a scan is its own permission, checked client-side

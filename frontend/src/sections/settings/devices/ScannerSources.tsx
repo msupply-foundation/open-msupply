@@ -5,6 +5,7 @@ import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { Select } from '../../../ui/elements/selectors/Select';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { refreshScanSources } from '../../../platform/barcodeScanner';
 import { DesktopScannerPairing } from './DesktopScannerPairing';
 import {
   scannerRowPairs,
@@ -54,8 +55,14 @@ export const ScannerSources: Component<{ compact?: boolean }> = props => {
   const [offerAll, setOfferAll] = createSignal(false);
 
   // What the browser has already granted this origin — the paired scanner
-  // survives a reload, so the row can name it on arrival.
-  onMount(() => void refreshPairedScanners());
+  // survives a reload, so the row can name it on arrival. And whether each
+  // input is attached now: a scanner plugged back in is not announced by
+  // every input (the desktop app's native one is not), so the rows ask
+  // rather than show the last answer.
+  onMount(() => {
+    void refreshPairedScanners();
+    void refreshScanSources();
+  });
 
   const [notice, setNotice] = createSignal<string | undefined>();
 

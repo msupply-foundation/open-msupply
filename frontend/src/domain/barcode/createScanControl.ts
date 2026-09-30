@@ -12,8 +12,16 @@
 // shortcuts § CTRL_S): the binding is registered exactly where a scan
 // control exists, and is inert wherever that control is absent or disabled.
 
-import { createEffect, createSignal, onCleanup, type Accessor } from 'solid-js';
 import {
+  createEffect,
+  createSignal,
+  onCleanup,
+  onMount,
+  type Accessor,
+} from 'solid-js';
+import {
+  cancelScanOnce,
+  refreshScanSources,
   scanOnce,
   scanOwner,
   scannerAvailable,
@@ -64,7 +72,7 @@ export type ScanControl = {
   available: Accessor<boolean>;
   /**
    * A scanner exists but cannot be used right now — shown disabled with
-   * `error.scanner-not-connected` as the reason.
+   * `messages.scanner-not-connected-set-up` as the reason.
    */
   disconnected: Accessor<boolean>;
   /**
@@ -101,6 +109,7 @@ export const createScanControl = (options: ScanControlOptions): ScanControl => {
   const [busy, setBusy] = createSignal(false);
   const [notice, setNotice] = createSignal<string | undefined>(undefined);
   let disposed = false;
+  let scanning = false;
 
   const available = () => scannerAvailable();
   const disconnected = () => available() && !scannerConnected();
@@ -150,9 +159,11 @@ export const createScanControl = (options: ScanControlOptions): ScanControl => {
 
   const scanOne = async () => {
     setBusy(true);
+    scanning = true;
     const outcome = await scanOnce();
-    setBusy(false);
+    scanning = false;
     if (disposed) return;
+    setBusy(false);
     if (outcome.ok) return deliver(outcome.scan);
     // A scan the user cancelled is silent — cancelling is not a failure.
     if (outcome.cancelled) return;
@@ -177,16 +188,27 @@ export const createScanControl = (options: ScanControlOptions): ScanControl => {
     void arm();
   });
 
+  // A screen that needs the scanner and finds it "not connected" asks again
+  // rather than trusting the last answer: an input may not announce being
+  // plugged back in (the desktop app's native scanner does not), so the
+  // saved answer can be stale. A fresh answer that it is back arms through
+  // the effect above.
+  onMount(() => {
+    if (disconnected()) void refreshScanSources();
+  });
+
   // A screen that stops being editable stops scanning.
   createEffect(() => {
     if (screenDisabled() && listening()) disarm();
   });
 
   // "Leaving a screen stops its scanning." The disposer is inert once
-  // another screen has taken over, so this cannot disarm its replacement.
+  // another screen has taken over, so this cannot disarm its replacement. A
+  // one-off scan still open is cancelled rather than left to land nowhere.
   onCleanup(() => {
     disposed = true;
     handle()?.dispose();
+    if (scanning) cancelScanOnce();
   });
 
   const label = () =>

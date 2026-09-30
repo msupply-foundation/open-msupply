@@ -71,6 +71,8 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
   // The Item field's item's lines on this shipment, for the match (.35).
   const [itemLines, setItemLines] = createSignal<InboundLineFragment[]>([]);
   const [working, setWorking] = createSignal(false);
+  // A scan is being worked — looked up, loaded, or saved on.
+  let busy = false;
   // A refusal or a failed save — replaces the message until the next scan.
   const [refusal, setRefusal] = createSignal<string>();
   const saved = createFlash<string>();
@@ -202,14 +204,8 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
     } else itemField.focus();
   };
 
-  /** A scan, from the host screen's scan control. */
-  const receive = async (incoming: CaptureRead) => {
-    // One at a time: a scan landing mid-lookup or mid-save is dropped.
-    if (working()) return;
-    if (options.blocked()) {
-      options.onNotice(t('messages.scan-disabled-warning'));
-      return;
-    }
+  /** Save on (if an entry is open), then load the scan. */
+  const work = async (incoming: CaptureRead) => {
     if (open()) {
       // Scanning on saves first (.37); a refusal keeps the entry and drops
       // the incoming scan (.38, .39), as does any other failure.
@@ -222,6 +218,25 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
       reset();
     }
     await load(incoming);
+  };
+
+  /** A scan, from the host screen's scan control. */
+  const receive = async (incoming: CaptureRead) => {
+    // One at a time: a scan landing mid-lookup, mid-save, or while the
+    // item's lines are still loading is dropped. `working` alone is not
+    // enough — it clears before the lines arrive, and a scan in that gap
+    // would save against an empty match.
+    if (busy) return;
+    if (options.blocked()) {
+      options.onNotice(t('messages.close-line-editor-to-scan'));
+      return;
+    }
+    busy = true;
+    try {
+      await work(incoming);
+    } finally {
+      busy = false;
+    }
   };
 
   const confirm = async () => {

@@ -92,7 +92,12 @@ import {
   OutboundLineEditModal,
   type LineEditItem,
 } from './edit-modal/OutboundLineEditModal';
-import { resolveIssueScan, type IssueScan } from './edit-modal/issueScan';
+import {
+  issueScanTarget,
+  resolveIssueScan,
+  type IssueScan,
+  type IssueScanReceiver,
+} from './edit-modal/issueScan';
 import {
   createScanControl,
   ScanButton,
@@ -689,19 +694,32 @@ const OutboundDetailView: Component = () => {
   // next time the editor opens.
   const [scanNotice, setScanNotice] = createSignal<string>();
   let resolvingScan = false;
+  // The open editor, while it waits for an item. Not a signal: read only at
+  // the moment a scan lands, never tracked.
+  let scanReceiver: IssueScanReceiver | undefined;
+  const scanTarget = () =>
+    issueScanTarget({
+      resolving: resolvingScan,
+      editorOpen: editState() != null,
+      editorWaiting: scanReceiver !== undefined,
+    });
   const scan = createScanControl({
     owner: 'outbound-shipment',
     disabled: scanDisabled,
     onScan: read => {
-      // One scan at a time, and none into an editor already open: the scan
-      // would replace the item the user is issuing. Dropped, not queued — and
-      // not `disabled`, which would disarm the scanner behind every edit.
-      if (resolvingScan || editState() != null) return;
+      // One scan at a time, and none into an editor that already has an
+      // item (issueScanTarget). Dropped, not queued — and not `disabled`,
+      // which would disarm the scanner behind every edit.
+      if (scanTarget() === 'drop') return;
       resolvingScan = true;
       setScanNotice(undefined);
       void resolveIssueScan(params.storeId, read)
         .then(result => {
-          if (result && editState() == null && !scanDisabled())
+          resolvingScan = false;
+          if (!result) return;
+          const target = scanTarget();
+          if (target === 'editor') scanReceiver?.(result);
+          else if (target === 'open' && !scanDisabled())
             openEditor({ scan: result });
         })
         .finally(() => (resolvingScan = false));
@@ -1400,7 +1418,10 @@ const OutboundDetailView: Component = () => {
 
               <OutboundLineEditModal
                 open={editState() != null}
-                onClose={() => setEditState(undefined)}
+                onClose={() => {
+                  scanReceiver = undefined;
+                  setEditState(undefined);
+                }}
                 storeId={params.storeId}
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
@@ -1416,6 +1437,7 @@ const OutboundDetailView: Component = () => {
                 initialLineId={editState()?.lineId}
                 scan={editState()?.scan}
                 onScanNotice={setScanNotice}
+                onScanReceiver={receiver => (scanReceiver = receiver)}
                 nextItem={nextItem}
                 onCommitted={onLineOpsCommitted}
               />

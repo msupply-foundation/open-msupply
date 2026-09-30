@@ -6,6 +6,7 @@ import {
   cameraDetections,
   cameraOverlayOpen,
   cameraTorchAvailable,
+  cameraTorchOn,
   cancelCameraScan,
   setViewfinderRect,
   toggleCameraTorch,
@@ -31,6 +32,7 @@ const abbreviate = (value: string): string => {
 export const CameraScanOverlay = () => {
   let panel: HTMLDivElement | undefined;
   let viewfinder: HTMLDivElement | undefined;
+  let cancelButton: HTMLButtonElement | undefined;
 
   // The source only accepts a code whose centre is inside the viewfinder, so
   // it has to know where the viewfinder is — re-measured whenever the screen
@@ -64,8 +66,14 @@ export const CameraScanOverlay = () => {
     } catch {
       /* already in that state */
     }
-    // After the <Show> below has rendered the viewfinder.
-    if (open) requestAnimationFrame(measure);
+    // After the <Show> below has rendered the viewfinder. Focus goes to
+    // Cancel, the one way out, so a keyboard or switch user is not left on
+    // a control the hidden app still holds.
+    if (open)
+      requestAnimationFrame(() => {
+        measure();
+        cancelButton?.focus();
+      });
     else setViewfinderRect(undefined);
   });
 
@@ -100,7 +108,11 @@ export const CameraScanOverlay = () => {
                     .points.map(([x, y]) => `${x},${y}`)
                     .join(' ')}
                 />
-                <Show when={detection().points.length > 0}>
+                {/* The value, format and frame count are for whoever is
+                    tuning the decoder — never shipped to users. */}
+                <Show
+                  when={import.meta.env.DEV && detection().points.length > 0}
+                >
                   <text
                     x={Math.min(...detection().points.map(([x]) => x))}
                     y={Math.min(...detection().points.map(([, y]) => y)) - 8}
@@ -119,7 +131,9 @@ export const CameraScanOverlay = () => {
         </svg>
         <div class={styles.top}>
           <p class={styles.hint}>{t('messages.camera-scan-hint')}</p>
-          <p class={styles.legend}>{t('messages.camera-scan-legend')}</p>
+          <Show when={import.meta.env.DEV}>
+            <p class={styles.legend}>{t('messages.camera-scan-legend')}</p>
+          </Show>
         </div>
         <div ref={viewfinder} class={styles.viewfinder} aria-hidden="true" />
         <div class={styles.actions}>
@@ -127,6 +141,7 @@ export const CameraScanOverlay = () => {
             <Button
               variant="secondary"
               icon={<ZapIcon />}
+              aria-pressed={cameraTorchOn()}
               onClick={toggleCameraTorch}
               data-testid="camera-scan-torch"
             >
@@ -136,6 +151,7 @@ export const CameraScanOverlay = () => {
           <Button
             variant="secondary"
             icon={<CloseIcon />}
+            ref={cancelButton}
             onClick={cancelCameraScan}
             data-testid="camera-scan-cancel"
           >

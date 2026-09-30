@@ -324,6 +324,7 @@ export const startListening = async (
  * explicit stop and for teardown.
  */
 export const stopListening = async (): Promise<void> => {
+  cancelPending?.();
   ownerToken += 1;
   setHeldBy(ownerToken);
   setOwnerLabel(undefined);
@@ -339,20 +340,58 @@ const releaseActive = async (): Promise<void> => {
   );
 };
 
+/** Settles the one-shot in flight as cancelled, if there is one. */
+let cancelPending: (() => void) | undefined;
+
 /**
  * Ask for exactly one scan. Used by the field-level affordance, and by every
  * affordance on a source that cannot stay armed.
+ *
+ * Always cancellable: `cancelScanOnce()` (and `stopListening()`) settle it as
+ * cancelled whatever the source does, so a caller is never left waiting on a
+ * source that has no way to end its own wait.
  */
-export const scanOnce = async (): Promise<ScanOutcome> => {
+export const scanOnce = (): Promise<ScanOutcome> => {
   const source = active();
-  if (!source) return { ok: false, cancelled: false, message: 'no scanner available' };
-  try {
-    return await source.scanOnce();
-  } catch (e) {
-    return {
+  if (!source) {
+    return Promise.resolve({
       ok: false,
       cancelled: false,
-      message: messageOf(e),
-    };
+      message: 'no scanner available',
+    });
   }
+  // A second ask supersedes the first rather than queueing behind it.
+  cancelPending?.();
+  return new Promise<ScanOutcome>(resolve => {
+    let settled = false;
+    const settle = (outcome: ScanOutcome) => {
+      if (settled) return;
+      settled = true;
+      if (cancelPending === cancel) cancelPending = undefined;
+      resolve(outcome);
+    };
+    const cancel = () => {
+      settle({ ok: false, cancelled: true });
+      // Give the hardware back: closes a camera, drops a one-shot listener.
+      void source.release().catch(() => undefined);
+    };
+    cancelPending = cancel;
+    // Called synchronously, so a source's own UI (the manual prompt) is up
+    // by the time this returns.
+    let pending: Promise<ScanOutcome>;
+    try {
+      pending = source.scanOnce();
+    } catch (e) {
+      settle({ ok: false, cancelled: false, message: messageOf(e) });
+      return;
+    }
+    pending.then(settle, (e: unknown) =>
+      settle({ ok: false, cancelled: false, message: messageOf(e) })
+    );
+  });
+};
+
+/** Cancel the one-shot scan in flight, if any — silently, as a cancel. */
+export const cancelScanOnce = (): void => {
+  cancelPending?.();
 };

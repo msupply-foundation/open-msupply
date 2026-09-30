@@ -146,7 +146,8 @@ export const forgetDesktopHid = async (): Promise<void> => {
  * (src/index.tsx), one-way, like ./webHid.ts § watchHidDevices.
  *
  * The shell does not watch for a scanner being plugged back in (it would
- * have to poll), so that is picked up the next time a screen arms.
+ * have to poll), so that is picked up when a screen that needs the scanner
+ * opens and asks again (createScanControl), or the Devices screen opens.
  */
 export const watchDesktopHid = (onChange: () => void): void => {
   bridge()?.onChange(() => {
@@ -180,6 +181,12 @@ export const desktopHidSource: ScanSource = {
           onScan: scan => {
             void desktopHidSource.release();
             resolve({ ok: true, scan });
+          },
+          // A read that failed ends the wait too — without this a bad read
+          // left the one-shot waiting for good.
+          onError: failure => {
+            void desktopHidSource.release();
+            resolve({ ok: false, cancelled: false, message: failure.message });
           },
         })
         .then(result => {

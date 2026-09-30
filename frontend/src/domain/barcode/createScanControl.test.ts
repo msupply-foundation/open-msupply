@@ -143,6 +143,23 @@ describe('a scanner that is present but not connected', () => {
     expect(control.inert()).toBe(true);
     expect(control.listening()).toBe(false);
   });
+
+  it('asks again on arrival where the scanner reads as not connected', async () => {
+    connected = false;
+    await useSources([continuous]);
+    const available = vi.spyOn(continuous, 'available');
+    mount();
+    await settle();
+    expect(available).toHaveBeenCalledOnce();
+  });
+
+  it('trusts a connected scanner without asking again', async () => {
+    await useSources([continuous]);
+    const available = vi.spyOn(continuous, 'available');
+    mount();
+    await settle();
+    expect(available).not.toHaveBeenCalled();
+  });
 });
 
 describe('page mode, scanner can stay armed', () => {
@@ -288,6 +305,24 @@ describe('page mode, one scan per press', () => {
     nextOutcome = { ok: false, cancelled: false, message: 'camera busy' };
     await control.press();
     expect(control.notice()).toBe('Unable to scan barcode: camera busy');
+  });
+
+  it('a scan still open when the screen goes away is cancelled, not left waiting', async () => {
+    let release: (() => void) | undefined;
+    const slow: ScanSource = {
+      ...oneShot,
+      scanOnce: () => new Promise<ScanOutcome>(() => {}),
+      release: async () => release?.(),
+    };
+    const released = new Promise<void>(resolve => (release = resolve));
+    await useSources([slow]);
+    const { control } = mount();
+    const pending = control.press();
+    expect(control.busy()).toBe(true);
+    disposeRoot?.();
+    disposeRoot = undefined;
+    await pending;
+    await released;
   });
 });
 
