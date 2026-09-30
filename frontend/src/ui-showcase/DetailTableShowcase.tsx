@@ -163,7 +163,7 @@ const monthsFromNow = (months: number, day: number): string => {
 };
 
 // A deterministic ~50-line dataset exercising every cell type: numbers,
-// currency, dates, wrapping names, blank cells, placeholder (info-tone) rows,
+// currency, dates, wrapping names, blank cells, placeholder (teal-marked) rows,
 // and a couple of transfer-linked lines whose code reads in the error tone.
 const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
   const item = ITEMS[i % ITEMS.length];
@@ -252,7 +252,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
 });
 
 // A line the last bulk operation failed on — reads in the error tone (spec S8);
-// error wins over the placeholder info tone.
+// on a card, error wins over the placeholder info title.
 const ERROR_IDS = new Set(['line-4']);
 
 const sortValue = (l: Line, key: SortKey): string | number => {
@@ -756,9 +756,17 @@ export const DetailTableShowcase = () => {
                 unitName: line.item?.unitName ?? null,
               })
             }
-            // A failed-bulk-op line reads in the error tone; an untouched
-            // placeholder in the info tone. Error wins when both hold.
-            rowTone={line =>
+            // A failed-bulk-op line reads in the error tone.
+            rowTone={line => (ERROR_IDS.has(line.id) ? 'error' : undefined)}
+            // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
+            rowTint={line =>
+              isPlaceholderLine(line) ? 'unfinished' : undefined
+            }
+            rowAccent={line =>
+              isPlaceholderLine(line) ? 'unfinished' : undefined
+            }
+            // Error wins when both hold.
+            cardTone={line =>
               ERROR_IDS.has(line.id)
                 ? 'error'
                 : isPlaceholderLine(line)
