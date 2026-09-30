@@ -1,4 +1,4 @@
-import { formatNumber, getPlural, tPlural, type LocaleKey } from '@/intl';
+import { formatNumber, tPlural, type LocaleKey } from '@/intl';
 import type { PurchaseOrderStatus } from '../../purchaseOrderStatus';
 import type {
   InsertPurchaseOrderLineVariables,
@@ -335,14 +335,9 @@ export const insertInput = (
 
 // ─── The ordered-elsewhere figure ───────────────────────────────────────────
 
-/**
- * "12,000 tablets" — the item's unit pluralised for the count, falling back to
- * a bare "units" where the item has none (spec S10, OMS-FUN-PO-02.19).
- */
+/** The ordered-elsewhere figure: unit name, or "units" (OMS-FUN-PO-02.19). */
 export const orderedElsewhere = (
   units: number,
   unitName: string | null
 ): string =>
-  `${formatNumber(units)} ${
-    unitName ? getPlural(unitName, units) : tPlural('label.units-plural', units)
-  }`;
+  `${formatNumber(units)} ${unitName || tPlural('label.units-plural', units)}`;

@@ -25,9 +25,9 @@ Set by how the server loads the bundle
 - Host functions — `sql`, `log`, `use_graphql`, `fetch`, `get_store_preferences`
   and the rest — arrive as **globals**, not imports, and are bound **after** the
   module is evaluated. So a method may call them; module top-level code may
-<<<<<<< HEAD:frontend/examples/hello_backend/README.md
-  not. `src/host.d.ts` declares the ones this plugin uses; out of tree they come
-  typed from `@common/types`.
+  not. They come typed from `@common/types`, which this plugin imports for
+  `BackendPlugins` — in this repo that resolves to the server-generated
+  `backendCommon`, out of tree to the published package.
 - **`sql` returns rows keyed by column.** `[{ count: 42 }, …]`, for any SELECT
   — so a statement projects whatever columns it likes and reads them back by
   name. It was not always so: the host used to deserialise every row as
@@ -44,22 +44,6 @@ Set by how the server loads the bundle
   executor is `server/repository/src/db_diesel/report_query.rs`. **Never
   interpolate a value a caller sent** — that was open-msupply#687. The rules
   are below.
-=======
-  not. They come typed from `@common/types`, which this plugin imports for
-  `BackendPlugins` — in this repo that resolves to the server-generated
-  `backendCommon`, out of tree to the published package.
-- **`sql` does not return rows keyed by column.** The host deserialises each row
-  as `JsonRawRow { json_row }`, so the statement must project a single column of
-  that name holding a JSON object — and the JSON function differs by dialect
-  (`json_object` on sqlite, `json_build_object` on postgres, hence
-  `sql_type()`). Get it wrong and the query fails _inside the engine at
-  runtime_, with `DIESEL_DESERIALIZATION_ERROR ("Column `json_row` was not
-present in query")` — naming a column you never wrote. `jsonRows` in
-  `src/plugin.ts` does the wrapping; out of tree it is `sqlQuery` from
-  `@common/utils`. (The host carries a TODO to wrap it itself; until then it is
-  the caller's job.) This one is not theoretical — the first live run of this
-  plugin hit exactly that error.
->>>>>>> origin/develop:frontend/plugins/examples/hello_backend/README.md
 - Whatever a method returns must survive `JSON` round-tripping — it crosses back
   into Rust as JSON. A `throw` becomes a GraphQL error carrying the message.
 
@@ -75,7 +59,7 @@ before the host sees anything:
 
 - a `Date` anywhere a scalar goes, rendered for you;
 - an array, expanded into one parameter per element — write `item_id IN
-  $itemIds` with no brackets of your own. An empty array becomes `(NULL)`,
+$itemIds` with no brackets of your own. An empty array becomes `(NULL)`,
   which matches nothing. Mind the inverse: `x NOT IN (NULL)` is NULL, not
   true, so it matches nothing either — check for empty before building that
   branch.
