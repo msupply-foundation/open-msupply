@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphqlFetch } from './graphql';
 import { IsCentralServer, ServerVersion } from './initialisation.generated';
-import { fetchServerInfo, isCentralServer, serverVersion } from './serverInfo';
+import {
+  fetchServerInfo,
+  isCentralServer,
+  serverVersion,
+  versionsMatch,
+} from './serverInfo';
 
 // The startup server-info pass (spec/startup/rules.md § App version,
 // OMS-REG-LGN-01.19/.20): the version signal stays unknown when the probe fails
@@ -46,5 +51,22 @@ describe('fetchServerInfo', () => {
       {},
       { background: true }
     );
+  });
+});
+
+// Issue #574: one "Version" line unless front end and server disagree.
+describe('versionsMatch', () => {
+  it('a release build matches the server on its tag, ignoring the "v" and commit stamp', () => {
+    expect(versionsMatch('v3.04.00 (2ae7bd2)', '3.04.00')).toBe(true);
+    expect(versionsMatch('V3.00.00-rc', '3.00.00-RC')).toBe(true);
+  });
+
+  it('an unknown server version is no disagreement', () => {
+    expect(versionsMatch('v3.04.00 (2ae7bd2)', undefined)).toBe(true);
+  });
+
+  it('a different release, or a non-release build, differs', () => {
+    expect(versionsMatch('v3.04.00 (2ae7bd2)', '3.03.00')).toBe(false);
+    expect(versionsMatch('v3.04.00-5-g2ae7bd2', '3.04.00')).toBe(false);
   });
 });
