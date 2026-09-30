@@ -63,7 +63,7 @@ export const RequestLineEditModal: Component<
   const itemSearch = createFocusTarget();
   const quantityField = createFocusTarget();
 
-  // Where the dialog lands (AC-N7): a new line on the item search, an existing
+  // Where the dialog lands (OMS-REG-DIS-08.55, .57): a new line on the item search, an existing
   // one on Quantity. Past New there is nothing to type into, so the panel keeps
   // focus.
   const entryFocus = () =>
@@ -233,7 +233,7 @@ export const RequestLineEditModal: Component<
           onSelect={picked => {
             setItem(picked);
             // Quantity is the next entry point once the item is chosen, as it
-            // is in dispensing's line editor (AC-N7).
+            // is in dispensing's line editor (OMS-REG-DIS-08.56).
             if (picked) quantityField.focus();
           }}
         />
