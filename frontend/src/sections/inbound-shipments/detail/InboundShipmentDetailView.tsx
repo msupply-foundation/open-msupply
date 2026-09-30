@@ -110,6 +110,14 @@ import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
+import { CaptureWindow } from './scan/CaptureWindow';
+import { createCaptureWindow } from './scan/createCaptureWindow';
+import {
+  createScanControl,
+  ScanButton,
+  shownScanNotice,
+} from '@/domain/barcode';
+import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { showsInternalOrderContext } from './internalOrderContext';
 import { AddFromMasterListModal } from './modals/AddFromMasterListModal';
 import { AddFromInternalOrderModal } from './modals/AddFromInternalOrderModal';
@@ -509,6 +517,35 @@ const InboundShipmentDetailView: Component = () => {
     name: 'button.add-item',
     run: openAdd,
     disabled: () => !current() || isDisabled(),
+  });
+
+  // Receiving by scanning (spec/barcode-scanning rules § Learning a code while
+  // receiving; ui-surface S2): a scan opens the capture window, and each scan
+  // after that saves what it holds and loads the next box. The scanner arms on
+  // arrival; the action is disabled while the shipment is not editable (R1).
+  const [scanNotice, setScanNotice] = createSignal<string>();
+  const capture = createCaptureWindow({
+    storeId: () => params.storeId,
+    invoiceId: () => current()?.id ?? params.invoiceId,
+    isExternal,
+    // The same source-link rule the line editor's cost field follows.
+    costLocked: () => isExternal() || !!current()?.linkedShipment,
+    blocked: () =>
+      editState() != null || masterListOpen() || internalOrderOpen(),
+    onSaved: onLinesChanged,
+    onNotice: setScanNotice,
+  });
+  const scan = createScanControl({
+    owner: 'inbound-shipment',
+    disabled: () => !current() || isDisabled(),
+    onScan: read => {
+      setScanNotice(undefined);
+      void capture.receive(read);
+    },
+  });
+  const scanNoticeShown = shownScanNotice(scan, () => {
+    const text = scanNotice();
+    return text === undefined ? undefined : { severity: 'warning', text };
   });
 
   // "OK & next" (update mode): the next distinct item for the editor to
@@ -1080,6 +1117,9 @@ const InboundShipmentDetailView: Component = () => {
                         onAction={onAddAction}
                       />
                     </Show>
+                    {/* Scan — the shared page-action scan button (spec S3
+                        page actions; barcode-scanning R1). */}
+                    <ScanButton control={scan} />
                     <ExportPrintButton
                       context="INBOUND_SHIPMENT"
                       dataId={node().id}
@@ -1106,6 +1146,20 @@ const InboundShipmentDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
+                  {/* A scan's outcome, inline beside the action that took it
+                      — never a toast (controls › action feedback). */}
+                  <Show when={scanNoticeShown()}>
+                    {notice => (
+                      <Toolbar>
+                        <Alert
+                          severity={notice().severity}
+                          testId="scan-notice"
+                        >
+                          {notice().text}
+                        </Alert>
+                      </Toolbar>
+                    )}
+                  </Show>
                   {/* The header field cluster — never a hand-rolled <Toolbar>
                       (ui/docs/PAGES.md § header field cluster). The kind banner
                       (spec S3: manual shipments don't auto-advance; a
@@ -1384,6 +1438,7 @@ const InboundShipmentDetailView: Component = () => {
                 onSaved={onLinesChanged}
                 onRequestNext={nextItem}
               />
+              <CaptureWindow control={capture} />
               <AddFromMasterListModal
                 open={masterListOpen()}
                 onClose={() => setMasterListOpen(false)}

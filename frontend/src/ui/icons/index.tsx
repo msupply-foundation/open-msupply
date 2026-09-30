@@ -840,6 +840,19 @@ export const NothingHereIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Barcode scan: a barcode inside viewfinder corners — the scan affordances
+   (spec/barcode-scanning ui-surface § R1). Drawn in the Hugeicons stroke
+   style; the package isn't a dependency, so there is no glyph to copy. */
+export const ScanIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M3 8V6.5C3 4.567 4.567 3 6.5 3H8" />
+    <path d="M16 3H17.5C19.433 3 21 4.567 21 6.5V8" />
+    <path d="M21 16V17.5C21 19.433 19.433 21 17.5 21H16" />
+    <path d="M8 21H6.5C4.567 21 3 19.433 3 17.5V16" />
+    <path d="M7 8V16M10 8V16M13 8V13M13 15.5V16M16.5 8V16" />
+  </Stroke>
+);
+
 /*
  * The open-mSupply logo (MSupplyGuy). The FIGURE keeps its own brand gradient
  * (orange → red) exactly like the original; the JAR paints with `currentColor`,

@@ -26,6 +26,7 @@ import {
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
 import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
+import { HidScanner, PairedHidScanner } from './hidScanner/hidScanner';
 import https from 'https';
 import http from 'http';
 import defaultTranslations from '../../common/src/intl/locales/en/desktop.json';
@@ -49,6 +50,9 @@ const CLIENT_VERSION_KEY = 'client_version';
 const HARDWARE_ID_KEY = 'hardware_id';
 const BARCODE_SCANNER_DEVICE_KEY = 'barcode_scanner_device';
 const SCANNER_TYPE = 'scanner_type';
+// The new front end's paired scanner. Its own key, so pairing in one front
+// end never disturbs the other's.
+const HID_SCANNER_KEY = 'hid_scanner';
 const DEVICE_CLOSE_DELAY = 5000;
 const OMSUPPLY_BARCODE =
   '19,16,3,0,111,112,101,110,32,109,83,117,112,112,108,121,0,24,11';
@@ -567,6 +571,53 @@ const start = async (): Promise<void> => {
   ipcMain.handle(IPC_MESSAGES.GET_SCANNER_TYPE, async () =>
     store.get(SCANNER_TYPE, 'usb_serial')
   );
+
+  // The new front end's scanner (./hidScanner). Events go to whatever page
+  // the window is showing; a page that does not listen ignores them.
+  const hidScanner = new HidScanner(
+    { devices: () => HID.devices(), open: path => new HID.HID(path) },
+    {
+      get: () => {
+        const stored = store.get(HID_SCANNER_KEY, null);
+        if (!stored) return null;
+        try {
+          return JSON.parse(stored) as PairedHidScanner;
+        } catch {
+          return null;
+        }
+      },
+      set: scanner =>
+        store.set(HID_SCANNER_KEY, scanner ? JSON.stringify(scanner) : null),
+    },
+    {
+      report: bytes =>
+        window.webContents.send(IPC_MESSAGES.HID_SCANNER_REPORT, bytes),
+      changed: () => window.webContents.send(IPC_MESSAGES.HID_SCANNER_CHANGED),
+    }
+  );
+  ipcMain.handle(IPC_MESSAGES.HID_SCANNER_STATUS, () => hidScanner.status());
+  ipcMain.handle(IPC_MESSAGES.HID_SCANNER_CANDIDATES, () =>
+    hidScanner.candidates()
+  );
+  ipcMain.handle(IPC_MESSAGES.HID_SCANNER_PAIR, () => hidScanner.pair());
+  ipcMain.handle(IPC_MESSAGES.HID_SCANNER_PAIR_DEVICE, (_event, key: string) =>
+    hidScanner.pairDevice(key)
+  );
+  ipcMain.handle(IPC_MESSAGES.HID_SCANNER_CANCEL_PAIR, () =>
+    hidScanner.cancelPair()
+  );
+  ipcMain.handle(IPC_MESSAGES.HID_SCANNER_FORGET, () => hidScanner.forget());
+  ipcMain.handle(IPC_MESSAGES.HID_SCANNER_START, () => hidScanner.start());
+  ipcMain.handle(IPC_MESSAGES.HID_SCANNER_STOP, () => hidScanner.stop());
+  // A page navigating away (to another server, or back to discovery) must
+  // not leave the scanner held open by a screen that no longer exists.
+  window.webContents.on('did-start-navigation', details => {
+    if (details.isMainFrame && !details.isSameDocument) {
+      hidScanner.cancelPair();
+      hidScanner.stop();
+    }
+  });
+  window.on('closed', () => hidScanner.dispose());
 
   // not currently implemented in the desktop implementation
   ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
