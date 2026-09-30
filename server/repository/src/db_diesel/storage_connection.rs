@@ -115,6 +115,9 @@ impl StorageConnection {
             .transaction_level::<RepositoryError>()
             .map_or(true, |level| level > 0);
         if in_transaction {
+            // unwrap is safe: write() only errors if the lock is poisoned, and the guard is
+            // only ever held for this insert and the take in flush_notifications, neither of
+            // which can panic.
             self.pending_notifications
                 .write()
                 .unwrap()
@@ -127,6 +130,7 @@ impl StorageConnection {
     /// Fire all pending notifications. Called after outermost transaction commits.
     fn flush_notifications(&self) {
         let notifications: HashSet<_> = {
+            // unwrap is safe: see notify — nothing that holds this guard can panic.
             let mut pending = self.pending_notifications.write().unwrap();
             std::mem::take(&mut *pending)
         };
