@@ -86805,6 +86805,167 @@
   },
   {
    "cursor": 2453,
+   "record_id": "e2e_user_assetclerk",
+   "received_datetime": "2026-09-25T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_account",
+   "action": "Upsert",
+   "data": {
+    "email": null,
+    "first_name": null,
+    "hashed_password": "$2b$12$FnpR5IFWuSCsxapzYMkEWOzSVwwjFMvpzZDD1TwCvaH4mMaky0a16",
+    "id": "e2e_user_assetclerk",
+    "is_active": true,
+    "job_title": null,
+    "language": "English",
+    "last_name": null,
+    "last_successful_sync": null,
+    "phone_number": null,
+    "username": "assetclerk"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2454,
+   "record_id": "e2e_usj_assetclerk_gry",
+   "received_datetime": "2026-09-25T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_store_join",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_usj_assetclerk_gry",
+    "user_id": "e2e_user_assetclerk",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "is_default": true
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2455,
+   "record_id": "e2e_perm_assetclerk_StoreAccess",
+   "received_datetime": "2026-09-25T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_assetclerk_StoreAccess",
+    "user_id": "e2e_user_assetclerk",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "permission": "StoreAccess",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2456,
+   "record_id": "e2e_perm_assetclerk_AssetQuery",
+   "received_datetime": "2026-09-25T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_assetclerk_AssetQuery",
+    "user_id": "e2e_user_assetclerk",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "permission": "AssetQuery",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2457,
+   "record_id": "e2e_perm_assetclerk_AssetMutate",
+   "received_datetime": "2026-09-25T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_assetclerk_AssetMutate",
+    "user_id": "e2e_user_assetclerk",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "permission": "AssetMutate",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2458,
+   "record_id": "e2e_perm_assetclerk_AssetCatalogueItemMutate",
+   "received_datetime": "2026-09-25T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_assetclerk_AssetCatalogueItemMutate",
+    "user_id": "e2e_user_assetclerk",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "permission": "AssetCatalogueItemMutate",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2459,
    "record_id": "e2e_perm_admin_PrescriptionRequestQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -86830,7 +86991,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2454,
+   "cursor": 2460,
    "record_id": "e2e_perm_admin_PrescriptionRequestMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -86856,7 +87017,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2455,
+   "cursor": 2461,
    "record_id": "e2e_perm_limited_PrescriptionRequestQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -86882,7 +87043,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2456,
+   "cursor": 2462,
    "record_id": "e2e_perm_stockviewer_PrescriptionRequestQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -86908,7 +87069,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2457,
+   "cursor": 2463,
    "record_id": "e2e_perm_stockviewer_PrescriptionRequestMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -86934,7 +87095,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2458,
+   "cursor": 2464,
    "record_id": "prescription_request_weight",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -86961,7 +87122,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2459,
+   "cursor": 2465,
    "record_id": "prescription_request_weight__scope_prescription_request",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -86988,7 +87149,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2460,
+   "cursor": 2466,
    "record_id": "prescription_request_patient_unit",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87015,7 +87176,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2461,
+   "cursor": 2467,
    "record_id": "prescription_request_patient_unit__scope_prescription_request",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87042,7 +87203,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2462,
+   "cursor": 2468,
    "record_id": "prescription_request_occupation",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87069,7 +87230,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2463,
+   "cursor": 2469,
    "record_id": "prescription_request_occupation__scope_prescription_request",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87096,7 +87257,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2464,
+   "cursor": 2470,
    "record_id": "prescription_request_category",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87123,7 +87284,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2465,
+   "cursor": 2471,
    "record_id": "prescription_request_category__scope_prescription_request",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87150,7 +87311,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2466,
+   "cursor": 2472,
    "record_id": "prescription_request_category__pregnant",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87178,7 +87339,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2467,
+   "cursor": 2473,
    "record_id": "prescription_request_category__lactating",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87206,7 +87367,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2468,
+   "cursor": 2474,
    "record_id": "prescription_request_category__under_5",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87234,7 +87395,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2469,
+   "cursor": 2475,
    "record_id": "prescription_request_category__disabled",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87262,7 +87423,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2470,
+   "cursor": 2476,
    "record_id": "prescription_request_category__destitute",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87290,7 +87451,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2471,
+   "cursor": 2477,
    "record_id": "prescription_request_category__other",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87318,7 +87479,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2472,
+   "cursor": 2478,
    "record_id": "e2e_perm_nosend_PrescriptionQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87344,7 +87505,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2473,
+   "cursor": 2479,
    "record_id": "e2e_perm_nosend_PrescriptionMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,

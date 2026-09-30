@@ -1,0 +1,49 @@
+# The log-reasons list (spec/asset-catalogue S3): every live reason in one read
+# (no page), sorted by status — the only key the server has.
+# `storeId` is required and ignored (contract § log reasons).
+query assetLogReasons(
+  $storeId: String!
+  $filter: AssetLogReasonFilterInput
+  $sort: [AssetLogReasonSortInput!]
+) {
+  assetLogReasons(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on AssetLogReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        assetLogStatus
+        reason
+        commentsRequired
+      }
+    }
+  }
+}
+
+# Create / delete. Every real refusal of both is a top-level error; the union
+# error branches are never returned.
+mutation insertAssetLogReason($input: InsertAssetLogReasonInput!) {
+  centralServer {
+    logReason {
+      insertAssetLogReason(input: $input) {
+        __typename
+        ... on AssetLogReasonNode {
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation deleteLogReason($id: String!) {
+  centralServer {
+    logReason {
+      deleteLogReason(reasonId: $id) {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
