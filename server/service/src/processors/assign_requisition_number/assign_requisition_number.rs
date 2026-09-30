@@ -76,7 +76,7 @@ impl Processor for AssignRequisitionNumber {
         Ok(ChangelogCondition::And(vec![
             ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
             ChangelogCondition::store_id::any(active_stores.store_ids()),
-            // Filter out deletes
+            // Only upserts: a deleted record has nothing left to process
             ChangelogCondition::action::equal(RowActionType::Upsert),
         ]))
     }
