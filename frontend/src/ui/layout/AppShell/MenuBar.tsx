@@ -8,6 +8,7 @@ import {
 import { AppLogo } from '../../branding/AppLogo';
 import { t } from '../../../intl';
 import { NavFlyout, type FlyoutTarget } from './NavFlyout';
+import { isBetweenAnchorAndPanel } from './flyoutCorridor';
 import { type NavItem, type NavLeaf } from './navModel';
 import styles from './MenuBar.module.css';
 
@@ -80,8 +81,9 @@ interface RailFlyout {
   isOpen: (item: NavItem) => boolean;
 }
 
-/* Hover intent before a flyout opens, and the grace period before it closes —
-   long enough for the pointer to cross the gap to the panel. */
+/* Hover intent before a flyout opens, and the grace period before it closes.
+   The stretch between the icon and the panel does not run this down — the
+   close timer looks again while the pointer is there (scheduleClose). */
 const HOVER_DELAY = 110;
 const CLOSE_DELAY = 180;
 
@@ -428,6 +430,43 @@ export const MenuBar = (props: MenuBarProps) => {
   };
   onCleanup(clearTimers);
 
+  // Where the pointer is while a flyout is open, so the close timer can tell
+  // "on its way to the panel" from "gone" (#425). Tracked only while one is
+  // open, and reset with each, so a stale position never holds a panel open
+  // that the pointer never went near (a keyboard-opened one, say).
+  let pointerAt: { x: number; y: number } | undefined;
+  const trackPointer = (e: PointerEvent) => {
+    // Hover travel only. A finger drag fires pointermove too, but a finger is
+    // not hovering on its way anywhere — and the position it left behind
+    // would hold the flyout open past the next tap on the page.
+    if (e.pointerType === 'touch') return;
+    pointerAt = { x: e.clientX, y: e.clientY };
+  };
+  // Leaving the window is leaving the corridor: the last position inside it
+  // would otherwise hold the flyout open until the pointer came back.
+  const forgetPointer = (e: PointerEvent) => {
+    if (!e.relatedTarget) pointerAt = undefined;
+  };
+  createEffect(() => {
+    if (!flyout()) return;
+    pointerAt = undefined;
+    window.addEventListener('pointermove', trackPointer, { passive: true });
+    window.addEventListener('pointerout', forgetPointer, { passive: true });
+    onCleanup(() => {
+      window.removeEventListener('pointermove', trackPointer);
+      window.removeEventListener('pointerout', forgetPointer);
+    });
+  });
+  const betweenAnchorAndPanel = () => {
+    const anchor = flyout()?.anchor;
+    if (!anchor || !panel || !pointerAt) return false;
+    return isBetweenAnchorAndPanel(
+      anchor.getBoundingClientRect(),
+      panel.getBoundingClientRect(),
+      pointerAt
+    );
+  };
+
   const rail: RailFlyout = {
     // Only the docked rail collapses; the overlay always shows labels.
     collapsed: () => !props.isOverlay && props.nav.railCollapsed(),
@@ -456,6 +495,10 @@ export const MenuBar = (props: MenuBarProps) => {
         // Focus inside the panel keeps it open: a keyboard user has stepped in,
         // and the anchor's blur is what brought us here.
         if (panel?.contains(document.activeElement)) return;
+        // Still between the button and the panel: look again rather than
+        // close. Reaching the panel or another icon clears this timer; moving
+        // anywhere else lets the next look close it.
+        if (betweenAnchorAndPanel()) return rail.scheduleClose();
         setFlyout(undefined);
       }, CLOSE_DELAY);
     },
