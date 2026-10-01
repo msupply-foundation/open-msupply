@@ -120,11 +120,12 @@ export interface DialogProps {
    * measure keeps the box steady across a multi-step flow: the width belongs to
    * the dialog frame, so capping the CONTENT with a `ContentContainer` inside
    * would leave the frame (and its title + actions rows) at its old width with
-   * the body floating in the middle. Ignored in `size="large"`, whose working
-   * width is a rem number (see `widthRem`) rather than a content measure — a
-   * workbench is sized by the table it holds, not by reading comfort. If both
-   * are passed the rem number wins — it sets the custom property inline, which
-   * beats the preset's rule.
+   * the body floating in the middle. Also sets the working width of a
+   * `size="large"` card, overriding its 56rem default — the way to size a
+   * workbench whose content fits a measure. Ignored in `size="full"`, whose
+   * width is the sheet's own. If both this and `widthRem` are passed the rem
+   * number wins — it sets the custom property inline, which beats the preset's
+   * rule.
    *
    * A measure also opts the dialog into the shared **full-screen** treatment
    * below the narrow-viewport line (tablet portrait and phones, breakpoints.ts
@@ -164,17 +165,25 @@ export interface DialogProps {
    * tall space once content passes the ceiling, and both go full-screen below
    * the narrow-viewport line like a `width` measure. They differ in how far
    * they may GROW:
-   *  - `'large'` — a centred CARD: 56rem wide by default (`widthRem` for a
-   *    wider table), ceiling ~80vh so the scrim still frames it top and bottom.
-   *  - `'full'` — a SHEET: fills the viewport in both axes bar a 2rem gutter.
+   *  - `'large'` — a centred CARD: 56rem wide by default, or a `width`
+   *    measure (the internal-order line editor takes `wide`), or `widthRem`
+   *    for a bespoke width such as a wider table; ceiling ~80vh
+   *    so the scrim still frames it top and bottom. Mind that height cap when
+   *    picking a card over the sheet: tall content scrolls sooner (the
+   *    requisition editor tried a card and lost its stats tabs below the fold
+   *    on a landscape tablet, #617).
+   *  - `'full'` — a SHEET: fills the viewport bar a 2rem gutter in both axes,
+   *    up to a 90rem width ceiling (a laptop's sheet, so a large monitor gets
+   *    the same box rather than one spreading its content across the screen).
    *    For content no card width fits: a table too wide (the shipment and
    *    stocktake line editors run to ~20 columns, where narrowing hides columns
-   *    without removing any empty space), a region that caps itself wider than
-   *    a card's body (the internal-order editor's 64rem charts row, the
-   *    requisition editor's three-column figure grid), or a row count that
-   *    wants every row it can show before scrolling. Also the right choice for
-   *    a modal hosting a PLUGIN SLOT: what a deployment contributes there is
-   *    not ours to measure, so no card width is safe. `widthRem` is ignored.
+   *    without removing any empty space), a region wider than a card's body
+   *    that is also tall (the requisition editor's three-column figure grid),
+   *    or a row count that wants every row it can show before scrolling. The
+   *    default too for a modal hosting a PLUGIN SLOT: what a deployment
+   *    contributes there is not ours to measure. The internal-order editor's
+   *    card is the recorded exception (ui/docs/DESIGN_STANDARDS.md, #617).
+   *    `widthRem` is ignored.
    */
   size?: 'auto' | 'large' | 'full';
   /**
@@ -612,8 +621,9 @@ export const Dialog = (props: DialogProps) => {
       }}
       data-testid={props.testId}
       data-fullscreen={fullscreen() ? '' : undefined}
-      // The measure preset has nothing to say at either workbench size.
-      data-width={workbench() ? undefined : props.width}
+      // A measure sizes a default dialog or a `large` card; the `full` sheet
+      // has its own width.
+      data-width={props.size === 'full' ? undefined : props.width}
       style={{
         // Sets the working width in `large` too, overriding the .large class's
         // 56rem default (#771). In `full` it is inert: .bleed sets `width`

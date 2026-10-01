@@ -51,12 +51,26 @@
 }
 
 /* The DEFAULT working width for size="large" — #771's "~900px if the tables fit". A
-   caller whose table is column-heavy overrides it with widthRem, which lands inline on
-   the element and so beats this ("wider if the column set forces it"). Higher specificity
-   than .dialog's 30rem default; the data-width measures never collide, since Dialog omits
-   data-width entirely in large mode. */
+   caller overrides it with a content measure (`width`, below) or, for a bespoke width,
+   with widthRem, which lands inline on the element and so beats both. Higher specificity
+   than .dialog's 30rem default. */
 .dialog.large {
   --dialog-width: 56rem;
+}
+
+/* A measure on a `large` card. Three selectors, so they outrank the 56rem default
+   above; widthRem, being inline, still beats them. `full` never receives data-width
+   (Dialog.tsx), so these only ever size a card. */
+.dialog.large[data-width='prose'] {
+  --dialog-width: var(--measure-prose);
+}
+
+.dialog.large[data-width='form'] {
+  --dialog-width: var(--measure-form);
+}
+
+.dialog.large[data-width='wide'] {
+  --dialog-width: var(--measure-wide);
 }
 
 /* Large / "workbench" size (Dialog size="large") — for content-heavy modals like the
@@ -96,7 +110,15 @@
    top-left by fullscreen's margin:0, the whole 4rem gutter landed on the right/bottom
    edge (#918's tablet gap). */
 .dialog.large.bleed:not([data-fullscreen]) {
-  width: calc(100vw - 4rem);
+  /* A CEILING on the sheet (#617): as wide as the viewport allows, up to
+     --measure-sheet — the width this sheet has on a standard 1512px laptop — so
+     every screen from a laptop up sees the same box. A line table wider than
+     that (the outbound table is ~1766px) scrolls sideways inside it, as it
+     does on a laptop. A modal whose content is narrower can take a card
+     (`size="large"` with a `width` measure) — mind that a card also caps its
+     HEIGHT at 80vh. The reasoning and measurements are in
+     ui/docs/DESIGN_STANDARDS.md. */
+  width: min(calc(100vw - 4rem), var(--measure-sheet));
   max-block-size: calc(100vh - 4rem);
 }
 
