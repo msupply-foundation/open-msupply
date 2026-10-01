@@ -22,6 +22,9 @@
 //   RESULTS_DIR     (default .e2e-results)  — this run's report
 //   BASELINE_DIR    (default .e2e-baseline) — that branch's previous run
 //   BASELINE_RUN_ID (env, optional)         — links the header to that run
+//   SUMMARY_FILE    (env, optional)         — also write the verdict as JSON
+//                                             there, for the clues and issue
+//                                             steps (see nightly-lib.mjs)
 //
 // Both runs' when/at-what-commit provenance comes from the reports
 // themselves (stats.startTime + the config.metadata.commit stamped by
@@ -38,6 +41,7 @@
 // postgres image, say) would slot back into.
 
 import * as fs from 'fs';
+import { testsFromReport } from './nightly-lib.mjs';
 
 const resultsDir = process.env.RESULTS_DIR ?? '.e2e-results';
 const baselineDir = process.env.BASELINE_DIR ?? '.e2e-baseline';
@@ -52,40 +56,14 @@ const baselineRunId = process.env.BASELINE_RUN_ID;
 const legId = process.env.LEG_ID ?? 'develop';
 const LEGS = [{ id: legId, label: legId }];
 
-// tests: map of "file › describe › … › title" → { outcome, error }. The
-// describe chain matters: the same leaf title recurs across groups in one
-// file (e.g. "list view renders core controls"). commit/startTime/stats
-// carry the run's provenance, read from the report itself.
+// The test map comes from nightly-lib.mjs, so the clues and the tracking
+// issue match tests by exactly the keys classified here. commit/startTime/
+// stats carry the run's provenance, read from the report itself.
 const collect = path => {
   if (!fs.existsSync(path)) return null;
   const report = JSON.parse(fs.readFileSync(path, 'utf-8'));
-  const tests = new Map();
-  const walk = (suite, ancestors) => {
-    // The file-level suite's title is the file path itself — the spec's
-    // `file` field already carries it, so only real describe titles nest.
-    const chain =
-      suite.title && suite.title !== suite.file
-        ? [...ancestors, suite.title]
-        : ancestors;
-    for (const child of suite.suites ?? []) walk(child, chain);
-    for (const spec of suite.specs ?? []) {
-      for (const t of spec.tests ?? []) {
-        const lastRun = t.results?.[t.results.length - 1];
-        tests.set([spec.file, ...chain, spec.title].join(' › '), {
-          // expected | unexpected | flaky | skipped
-          outcome: t.status,
-          // First line only, ANSI color codes stripped — it lands in markdown.
-          error:
-            lastRun?.errors?.[0]?.message
-              ?.replace(/\u001b\[[0-9;]*m/g, '')
-              .split('\n')[0] ?? '',
-        });
-      }
-    }
-  };
-  for (const s of report.suites ?? []) walk(s, []);
   return {
-    tests,
+    tests: testsFromReport(report),
     commit: report.config?.metadata?.commit,
     startTime: report.stats?.startTime,
     stats: report.stats ?? {},
@@ -276,6 +254,27 @@ if (skippedNote)
   );
 
 const regressions = legs.reduce((n, l) => n + l.cats.regression.length, 0);
+if (process.env.SUMMARY_FILE) {
+  const [leg] = legs;
+  fs.writeFileSync(
+    process.env.SUMMARY_FILE,
+    JSON.stringify(
+      {
+        leg: leg.id,
+        commit: leg.run?.commit ?? null,
+        baselineCommit: leg.baseline?.commit ?? null,
+        baselineRunId: baselineRunId ?? null,
+        infra: missing.length > 0,
+        regressions: leg.cats.regression.map(({ key, t }) => ({
+          key,
+          error: t.error,
+        })),
+      },
+      null,
+      2
+    )
+  );
+}
 if (regressions || missing.length) {
   const parts = [
     regressions && `${regressions} regression(s)`,
