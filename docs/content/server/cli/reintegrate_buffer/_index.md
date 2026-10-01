@@ -121,7 +121,7 @@ scoped run can fail or produce incomplete data if a dependency wasn't already in
 | Flag | Description |
 | --- | --- |
 | `--source-site-id` | Integrate the V5/V6 buffer rows for this source site (default `1`). |
-| `--use-transaction` | Wrap integration in a transaction (outer batch + per-record sub-transactions) so the whole batch is atomic. Off by default for speed. Without it, a database that has synced must be in maintenance mode, otherwise the command refuses: processors, push and remote pulls could read a half-integrated batch. A replay database that has never synced is exempt. |
+| `--use-transaction` | Wrap integration in a transaction (outer batch, plus a nested transaction per write on Postgres) so the whole batch is atomic. Off by default for speed. Without it, a database that has synced must be in maintenance mode, otherwise the command refuses: processors, push and remote pulls could read a half-integrated batch. A replay database that has never synced is exempt. |
 | `--migrate` | Run pending database migrations before reintegrating. |
 | `--skip-buffer-reset` | Skip resetting the buffer's integration state — only retry rows that are still pending. |
 | `-e`, `--errors-only` | Only reintegrate records that previously errored — the reset clears integration state for rows with an `integration_error` (excluding deliberately-ignored rows, which also carry an error message) and leaves successful rows untouched. Errored rows are already integrated (not pending), so this needs a reset and therefore **conflicts with `--skip-buffer-reset`**. |
