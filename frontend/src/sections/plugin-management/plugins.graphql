@@ -1,0 +1,93 @@
+# Manage › Plugins (spec/plugin-management/contract.md). Every plugin read and
+# write sits under the `centralServer` wrapper; the screen is central-only by
+# its navigation gate, so a "Not a central server" answer is unexpected here.
+
+# One read, no arguments: every installed row of both kinds
+# (contract § reading the installed plugins). `hostRuntime` is null on a
+# backend row.
+query InstalledPlugins {
+  centralServer {
+    plugin {
+      installedPlugins {
+        totalCount
+        nodes {
+          id
+          code
+          version
+          kind
+          types
+          hostRuntime
+        }
+      }
+    }
+  }
+}
+
+# Installs a bundle already sent to POST /upload. `pluginInfo` is untyped JSON
+# the screen never reads: success is the call answering at all
+# (contract § install).
+mutation InstallUploadedPlugin($fileId: String!) {
+  centralServer {
+    plugins {
+      installUploadedPlugin(fileId: $fileId) {
+        pluginInfo
+      }
+    }
+  }
+}
+
+# Removes ONE row by id (contract § uninstalling plugins).
+mutation UninstallPlugin($id: String!) {
+  centralServer {
+    plugins {
+      uninstallPlugin(id: $id) {
+        id
+        code
+        kind
+      }
+    }
+  }
+}
+
+# The code's configuration record(s). The resolver adds rows of the signed-in
+# store beside the store-less one; the configuration is the store-less row
+# (contract § configuring a plugin).
+query PluginConfiguration($storeId: String!, $pluginCode: String!) {
+  pluginData(
+    storeId: $storeId
+    pluginCode: $pluginCode
+    filter: { dataIdentifier: { equalTo: "configuration" } }
+  ) {
+    ... on PluginDataConnector {
+      nodes {
+        id
+        storeId
+        data
+      }
+    }
+  }
+}
+
+# Creates the installation-wide record: `input.storeId` is left out, which is
+# what stores it with no store.
+mutation InsertPluginConfiguration(
+  $storeId: String!
+  $input: InsertPluginDataInput!
+) {
+  insertPluginData(storeId: $storeId, input: $input) {
+    ... on PluginDataNode {
+      id
+    }
+  }
+}
+
+mutation UpdatePluginConfiguration(
+  $storeId: String!
+  $input: UpdatePluginDataInput!
+) {
+  updatePluginData(storeId: $storeId, input: $input) {
+    ... on PluginDataNode {
+      id
+    }
+  }
+}

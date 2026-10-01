@@ -166,6 +166,14 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
   /**
+   * Which rows `onRowClick` applies to, where only some open anything — e.g.
+   * a plugin row opens its settings editor only when the plugin ships one
+   * (spec/plugin-management S1). A row this answers false for gets no pointer
+   * cue, no click and no Enter-to-open: it reads as the inert row it is.
+   * Omitted, every row is clickable whenever `onRowClick` is set.
+   */
+  rowClickable?: (row: T) => boolean;
+  /**
    * Arrow-key row navigation: `ArrowDown`/`ArrowUp` move a row highlight
    * (clamped at the ends, scrolled into view), `Enter` opens the highlighted
    * row through the SAME `onRowClick` a mouse click uses, `Escape` clears the
@@ -742,7 +750,8 @@ export function DataTable<T, K extends string, G extends string = never>(
       const row = table
         .getRowModel()
         .rows.find(candidate => candidate.id === key);
-      if (row) props.onRowClick?.(row.original);
+      if (row && (props.rowClickable?.(row.original) ?? true))
+        props.onRowClick?.(row.original);
     },
   });
 
@@ -1670,6 +1679,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         enableSelection={props.enableSelection ?? false}
                         selectionDisabled={props.selectionDisabled ?? false}
                         onRowClick={props.onRowClick}
+                        rowClickable={props.rowClickable}
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
@@ -1709,6 +1719,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             enableSelection={props.enableSelection ?? false}
                             selectionDisabled={props.selectionDisabled ?? false}
                             onRowClick={props.onRowClick}
+                            rowClickable={props.rowClickable}
                             rowState={props.rowState}
                             rowTone={props.rowTone}
                             rowTint={props.rowTint}

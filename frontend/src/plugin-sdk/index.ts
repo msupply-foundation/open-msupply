@@ -25,6 +25,8 @@ export { PLUGIN_API_VERSION, PLUGIN_API_MIN_SUPPORTED } from './apiVersion';
 // ── Slot API ────────────────────────────────────────────────────────────────
 export { definePlugin } from './definePlugin';
 export type {
+  ConfigurationEditorProps,
+  PluginConfiguration,
   PluginManifest,
   PluginDefinition,
   PluginModule,

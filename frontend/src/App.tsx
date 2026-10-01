@@ -69,6 +69,7 @@ import { customFieldsRoutes } from './sections/custom-fields';
 import { demographicsRoutes } from './sections/demographics';
 import { immunisationProgramsRoutes } from './sections/immunisation-programs';
 import { syncMessageRoutes } from './sections/sync-message';
+import { pluginManagementRoutes } from './sections/plugin-management';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -141,6 +142,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   // the program list and each program's course list, under Programs.
   'programs/immunisations': immunisationProgramsRoutes,
   'manage/sync-message': syncMessageRoutes,
+  'manage/plugins': pluginManagementRoutes,
   // The central server's facility register (spec/names S5) — the third list
   // over the name entity, under Manage rather than a store-scoped section.
   'manage/stores': facilityRegisterRoutes,

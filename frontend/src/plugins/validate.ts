@@ -441,6 +441,35 @@ export const validateLoadedModule = (
     }
   }
 
+  // The settings editor (sdk-contract § the configuration contribution): an
+  // object carrying an `Editor` component and a `defaultConfig` the host can
+  // store as JSON. A default that cannot serialise would seed an editor whose
+  // first Save fails, so it is refused here, by name, rather than there.
+  const configuration = candidate['configuration'];
+  if (configuration !== undefined) {
+    if (!isRecord(configuration)) {
+      return { kind: 'refused', message: 'configuration is not an object' };
+    }
+    if (typeof configuration['Editor'] !== 'function') {
+      return {
+        kind: 'refused',
+        message: 'configuration declares no Editor component',
+      };
+    }
+    let serialised: string | undefined;
+    try {
+      serialised = JSON.stringify(configuration['defaultConfig']);
+    } catch {
+      serialised = undefined;
+    }
+    if (serialised === undefined) {
+      return {
+        kind: 'refused',
+        message: 'configuration.defaultConfig is not JSON-serialisable',
+      };
+    }
+  }
+
   // Trusted-layer cast (kdd/type-safety): every field the contract depends on
   // has just been checked at runtime, which is exactly what the loader cannot
   // express in the type system about a module it did not build.
