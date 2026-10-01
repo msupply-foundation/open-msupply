@@ -5,14 +5,14 @@ import {
   onCleanup,
   type Accessor,
 } from 'solid-js';
+import { FLASH_MS } from '../../utils/createFlash';
 
 /**
- * How long a non-persistent message stays before clearing itself. Longer than
- * the shared FLASH_MS (2s), which is sized for a label on the control the user
- * is looking at ("Copied"): this chip is read away from where the user
- * clicked, and has to survive the glance back from the closing dialog.
+ * How long a non-persistent message stays before clearing itself: the shared
+ * flash duration, long enough to read a short confirmation and gone before it
+ * lingers.
  */
-export const MESSAGE_FLASH_MS = 5000;
+export const MESSAGE_FLASH_MS = FLASH_MS;
 
 /** One outcome for the footer to report. */
 export interface FooterMessage {
@@ -20,7 +20,7 @@ export interface FooterMessage {
   type: 'success' | 'error';
   /**
    * The words — for a success, the current app's save confirmation for the
-   * record ("Shipment saved 🥳", "Saved"); for an error, the refusal.
+   * record ("Shipment saved", "Saved"); for an error, the refusal.
    */
   text: string;
   /**
@@ -39,12 +39,6 @@ export interface FooterReport {
   shown: Accessor<FooterMessage | undefined>;
   /** The report has ended and the chip is playing its exit. */
   leaving: Accessor<boolean>;
-  /**
-   * Flips with every new report. A CSS one-shot keyed off the slot's state
-   * (the footer's wave) would otherwise not restart when one success replaces
-   * another, since the state it matches never changes.
-   */
-  replay: Accessor<boolean>;
   /**
    * The exit has played: remove the chip. Ignored unless it is `leaving`, so a
    * chip's entrance ending (or a report that replaced it) never removes it.
@@ -68,7 +62,6 @@ export const createFooterReport = (
 ): FooterReport => {
   const [shown, setShown] = createSignal<FooterMessage>();
   const [leaving, setLeaving] = createSignal(false);
-  const [replay, setReplay] = createSignal(false);
 
   let timer: ReturnType<typeof setTimeout> | undefined;
   const stopTimer = () => {
@@ -83,7 +76,6 @@ export const createFooterReport = (
       if (next) {
         setShown(next);
         setLeaving(false);
-        setReplay(r => !r);
         if (!next.persistent)
           timer = setTimeout(() => {
             timer = undefined;
@@ -96,7 +88,6 @@ export const createFooterReport = (
   return {
     shown,
     leaving,
-    replay,
     exited: () => {
       if (!leaving()) return;
       setShown(undefined);

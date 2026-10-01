@@ -81,7 +81,7 @@ export const ContentFooterShowcase = () => {
   const [outcome, setOutcome] = createSignal<FooterMessage>();
   const advance = () => {
     setStage(stage() + 1);
-    setOutcome({ type: 'success', text: 'Shipment saved 🥳' });
+    setOutcome({ type: 'success', text: 'Shipment saved' });
   };
   const [picked, setPicked] = createSignal<ReadonlySet<string>>(new Set());
   const toggle = (id: string) =>
@@ -147,11 +147,10 @@ export const ContentFooterShowcase = () => {
             save confirmation, clearing itself) and red for a refusal (
             <code>persistent</code>, staying until the next attempt, and opening
             its whole text on hover, focus or tap), in the bar's one flexible
-            slot beside the actions so nothing moves when it lands. As it lands,
-            one green wave travels along the whole bar. It is a polite live
-            region, so the outcome is announced as well as seen. The crumb that
-            just arrived plays its one-shot bloom (reduced motion: the colour
-            change only). Confirm through to Verified, then reset.
+            slot beside the actions so nothing moves when it lands. It is a
+            polite live region, so the outcome is announced as well as seen. The
+            crumb that just arrived plays its one-shot bloom (reduced motion:
+            the colour change only). Confirm through to Verified, then reset.
           </Lead>
           <PageFrame>
             <PageBody />
