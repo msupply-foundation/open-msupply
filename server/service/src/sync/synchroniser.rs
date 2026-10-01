@@ -618,10 +618,10 @@ impl<'a> SyncBufferIntegrator<'a> {
                 // Without it (maintenance mode, or initialising with
                 // `disable_integration_transaction`) each chunk commits on its own, instead of a
                 // WAL flush for every record and every buffer mark, which on Postgres made
-                // integration commit-bound. On Postgres each write (a row and its changelog row)
-                // is a savepoint inside it, so a failing write does not abort the chunk: its
-                // record is marked errored and the chunk carries on. The record's earlier writes
-                // are not undone with it (#847). A crash loses at most the chunk in progress, and
+                // integration commit-bound. A failing write does not abort the chunk: its record
+                // is marked errored and the chunk carries on. On Postgres each write (a row and
+                // its changelog row) is a savepoint inside it; SQLite only undoes the failing
+                // statement. Either way the record's earlier writes are not undone (#847). A crash loses at most the chunk in progress, and
                 // its buffer marks roll back with it, so those rows are pending again.
                 let mut batch_errors = 0;
                 for chunk in records.chunks(INTEGRATION_COMMIT_SIZE) {
