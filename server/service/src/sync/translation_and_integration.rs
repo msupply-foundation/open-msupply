@@ -245,7 +245,8 @@ pub(crate) fn integrate(
                 .map_err(|e| e.to_inner_error())?;
         } else {
             // For Sqlite, integrating without nested transaction is faster, especially if there are
-            // errors (see the bench_error_performance() test).
+            // errors (see the bench_error_performance() test). A failing statement is undone on
+            // its own, so as on Postgres the record's earlier writes stay (#847).
             integration_record.integrate(connection, *source_site_id)?;
         }
     }
