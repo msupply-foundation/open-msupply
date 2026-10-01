@@ -25,7 +25,7 @@
 | `.49`, `.50`, `.52` (what makes a code configurable)   | `src/plugins/registry.test.ts` › `configurationFor` |
 | — (a malformed configuration is refused)               | `src/plugins/validate.test.ts` › configuration      |
 
-**Owned by the e2e suite (next step), each verified by hand against the real backend during this build:**
+**Owned by the e2e suite** (`e2e/specs/plugin-management-regression.spec.ts`, green against the real backend; its header lists the anchors it leaves out and why):
 
 - **Screen behaviour:** `.8`, `.9`, `.14`, `.17`, `.19`, `.21`, `.23`, `.25`–`.28`, `.35`, `.36`, `.41`–`.43`, `.51`, `.53`, `.59`, `.60`, `.62`.
 - **Server-side outcomes:** `.18`, `.29`–`.34`, `.39`, `.47`, `.48`, and the case's Flows.
