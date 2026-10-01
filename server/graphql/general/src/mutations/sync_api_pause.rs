@@ -51,6 +51,9 @@ pub fn set_sync_api_paused_mutation(ctx: &Context<'_>, paused: bool) -> Result<S
                 SetSyncApiPausedError::NotACentralServer => {
                     StandardGraphqlError::BadUserInput("Not a central server".to_string())
                 }
+                SetSyncApiPausedError::HeldByMaintenanceMode => {
+                    StandardGraphqlError::BadUserInput("Held by maintenance mode".to_string())
+                }
                 SetSyncApiPausedError::DatabaseError(error) => {
                     StandardGraphqlError::InternalError(format!("{error:?}"))
                 }

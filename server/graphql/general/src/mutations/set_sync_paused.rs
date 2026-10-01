@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync::sync_pause::set_sync_paused as set_sync_paused_service,
+    sync::sync_pause::{set_sync_paused as set_sync_paused_service, SetSyncPausedError},
 };
 
 #[derive(SimpleObject)]
@@ -19,6 +19,7 @@ pub struct SyncPausedNode {
 /// its outbound sync to legacy central but not the sync API it serves to remotes (paused
 /// separately with `setSyncApiPaused`). The
 /// state persists across restarts and each change is written to the system log with the user.
+/// Resuming is refused while maintenance mode is on.
 pub fn set_sync_paused(ctx: &Context<'_>, paused: bool) -> Result<SyncPausedNode> {
     let user = validate_auth(
         ctx,
@@ -34,7 +35,17 @@ pub fn set_sync_paused(ctx: &Context<'_>, paused: bool) -> Result<SyncPausedNode
 
     let is_paused =
         set_sync_paused_service(service_provider, &service_context, &user.user_id, paused)
-            .map_err(StandardGraphqlError::from_debug)?;
+            .map_err(|error| {
+                let graphql_error = match error {
+                    SetSyncPausedError::HeldByMaintenanceMode => {
+                        StandardGraphqlError::BadUserInput("Held by maintenance mode".to_string())
+                    }
+                    SetSyncPausedError::DatabaseError(error) => {
+                        StandardGraphqlError::InternalError(format!("{error:?}"))
+                    }
+                };
+                graphql_error.extend()
+            })?;
 
     Ok(SyncPausedNode { is_paused })
 }

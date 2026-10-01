@@ -147,7 +147,9 @@ pub fn integration_uses_transaction(
 /// server admin).
 ///
 /// On: sets the sync, sync API and processor pauses and the mode flag in one transaction, then
-/// removes every non-admin session. The flag is written before the sweep, and login re-checks it
+/// removes every non-admin session. The pauses are written even when the mode is already on, so
+/// a repeated switch restores them. While the mode is on, the pause setters refuse to resume.
+/// The CLI override bypasses this and writes the flags directly. The flag is written before the sweep, and login re-checks it
 /// after creating a session (see [`is_locked_out`]), so a login racing the switch cannot leave a
 /// non-admin session behind.
 ///
@@ -174,10 +176,11 @@ pub fn set_maintenance_mode(
     let already_on = is_maintenance_mode(connection)?;
 
     if on {
+        // Written even when already on, so the pauses always match the mode.
+        connection
+            .transaction_sync(|connection| write_flags(connection, true))
+            .map_err(|error| error.to_inner_error())?;
         if !already_on {
-            connection
-                .transaction_sync(|connection| write_flags(connection, true))
-                .map_err(|error| error.to_inner_error())?;
             system_log_in_background(
                 service_provider.connection_manager.clone(),
                 SystemLogType::MaintenanceModeChanged,
@@ -312,9 +315,15 @@ mod test {
 
     use super::*;
     use crate::{
-        processors::pause::are_processors_paused,
+        processors::pause::{
+            are_processors_paused, set_processors_paused, SetProcessorsPausedError,
+        },
         session_store::SessionStore,
-        sync::{sync_api_pause::is_sync_api_paused, test_util_set_is_central_server},
+        sync::{
+            sync_api_pause::{is_sync_api_paused, set_sync_api_paused, SetSyncApiPausedError},
+            sync_pause::{set_sync_paused, SetSyncPausedError},
+            test_util_set_is_central_server,
+        },
         test_helpers::{setup_all_and_service_provider, wait_for_system_log_messages},
     };
 
@@ -472,6 +481,60 @@ mod test {
             admin.username
         )));
         assert!(logs[1].starts_with(&format!("Maintenance mode turned on by {}", admin.username)));
+    }
+
+    #[actix_rt::test]
+    async fn maintenance_mode_holds_the_pauses_against_resume() {
+        let test = setup_all_and_service_provider(
+            "maintenance_mode_holds_the_pauses_against_resume",
+            MockDataInserts::none().user_accounts(),
+        )
+        .await;
+        let service_provider = &test.service_provider;
+        let user_id = mock_user_account_a().id;
+        let ctx = service_provider
+            .context("".to_string(), user_id.clone())
+            .unwrap();
+        let connection = &ctx.connection;
+        let auth_data = auth_data();
+
+        test_util_set_is_central_server(true);
+        set_maintenance_mode(service_provider, &ctx, &auth_data, true).unwrap();
+
+        // Resuming any pause is refused while the mode is on; pausing again is fine.
+        assert_eq!(
+            set_sync_paused(service_provider, &ctx, &user_id, false),
+            Err(SetSyncPausedError::HeldByMaintenanceMode)
+        );
+        assert_eq!(
+            set_sync_api_paused(service_provider, &ctx, false),
+            Err(SetSyncApiPausedError::HeldByMaintenanceMode)
+        );
+        assert_eq!(
+            set_processors_paused(service_provider, &ctx, false),
+            Err(SetProcessorsPausedError::HeldByMaintenanceMode)
+        );
+        assert_eq!(set_sync_api_paused(service_provider, &ctx, true), Ok(true));
+        assert_eq!(flags(connection), [true; 4]);
+
+        // A pause cleared behind the service's back (e.g. directly in the database) is restored
+        // by turning the mode on again.
+        KeyValueStoreRepository::new(connection)
+            .set_bool(KeyType::SettingsProcessorsArePaused, Some(false))
+            .unwrap();
+        set_maintenance_mode(service_provider, &ctx, &auth_data, true).unwrap();
+        assert_eq!(flags(connection), [true; 4]);
+
+        // Released together with the mode.
+        set_maintenance_mode(service_provider, &ctx, &auth_data, false).unwrap();
+        assert_eq!(
+            set_sync_paused(service_provider, &ctx, &user_id, true),
+            Ok(true)
+        );
+        assert_eq!(
+            set_sync_paused(service_provider, &ctx, &user_id, false),
+            Ok(false)
+        );
     }
 
     #[actix_rt::test]

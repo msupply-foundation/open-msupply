@@ -18,6 +18,21 @@ use crate::{
     subscription::SubscriptionTrigger,
 };
 
+use super::maintenance_mode::is_maintenance_mode;
+
+#[derive(Debug, PartialEq)]
+pub enum SetSyncPausedError {
+    /// Maintenance mode holds the pause on; it is released with the mode.
+    HeldByMaintenanceMode,
+    DatabaseError(RepositoryError),
+}
+
+impl From<RepositoryError> for SetSyncPausedError {
+    fn from(error: RepositoryError) -> Self {
+        SetSyncPausedError::DatabaseError(error)
+    }
+}
+
 /// Whether the admin pause is set, for the sync and file sync drivers. They check this on every
 /// run or loop, so pausing live and restarting while paused behave the same (the key value store
 /// is cached, so it is cheap). A read failure is logged and treated as not paused. Callers apply
@@ -36,13 +51,18 @@ pub(crate) fn is_sync_paused(service_provider: &ServiceProvider) -> bool {
 }
 
 /// Set the pause flag, record who did it in the system log, and re-emit the sync info
-/// subscription so every open session's header updates. Returns the stored state.
+/// subscription so every open session's header updates. Returns the stored state. Resuming is
+/// refused while maintenance mode is on.
 pub fn set_sync_paused(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
     user_id: &str,
     paused: bool,
-) -> Result<bool, RepositoryError> {
+) -> Result<bool, SetSyncPausedError> {
+    if !paused && is_maintenance_mode(&ctx.connection)? {
+        return Err(SetSyncPausedError::HeldByMaintenanceMode);
+    }
+
     let already = service_provider.settings.is_sync_paused(ctx)?;
 
     if already != paused {
