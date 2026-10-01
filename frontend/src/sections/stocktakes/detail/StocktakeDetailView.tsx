@@ -1240,6 +1240,7 @@ const StocktakeDetailView: Component = () => {
                 onClose={() => setEditState(undefined)}
                 storeId={params.storeId}
                 stocktakeId={node().id}
+                isInitialStocktake={node().isInitialStocktake}
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 locations={locations()}

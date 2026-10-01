@@ -35,7 +35,13 @@ export const BareCheckbox = (props: BareCheckboxProps) => {
     'class',
   ]);
   return (
-    <span class={local.class ? `${styles.root} ${local.class}` : styles.root}>
+    <span
+      class={local.class ? `${styles.root} ${local.class}` : styles.root}
+      // A structural hook for hosts that place the box against other controls
+      // (a start-aligned DataTable row); CSS-module class names are hashed, so
+      // a host stylesheet can't name .root.
+      data-checkbox=""
+    >
       <input
         type="checkbox"
         class={styles.input}

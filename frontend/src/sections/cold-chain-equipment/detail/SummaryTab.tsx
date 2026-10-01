@@ -175,7 +175,9 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
               disabled={props.disabled || locked('serialNumber')}
               labelInfo={
                 locked('serialNumber') ? (
-                  <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
+                  <InfoTooltip
+                    text={t('tooltip.set-from-manufacturer-label')}
+                  />
                 ) : undefined
               }
               value={props.form.serialNumber}
@@ -218,7 +220,9 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                 disabled={props.disabled || locked('warrantyStart')}
                 labelInfo={
                   locked('warrantyStart') ? (
-                    <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
+                    <InfoTooltip
+                      text={t('tooltip.set-from-manufacturer-label')}
+                    />
                   ) : undefined
                 }
                 value={props.form.warrantyStart || null}
@@ -231,7 +235,9 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                 disabled={props.disabled || locked('warrantyEnd')}
                 labelInfo={
                   locked('warrantyEnd') ? (
-                    <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
+                    <InfoTooltip
+                      text={t('tooltip.set-from-manufacturer-label')}
+                    />
                   ) : undefined
                 }
                 value={props.form.warrantyEnd || null}

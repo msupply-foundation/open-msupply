@@ -1,4 +1,3 @@
-import type { LocaleKey } from '@/intl';
 import type { AssetRowFragment } from './equipment.generated';
 
 // Cold chain — Equipment (spec/cold-chain-equipment): the vertical's shared
@@ -36,30 +35,9 @@ export const COLD_ROOM_CATEGORY_ID = '7db32eb6-5929-4dd1-a5e9-01e36baa73ad';
 export const isColdRoom = (categoryId: string | null | undefined): boolean =>
   categoryId === COLD_ROOM_CATEGORY_ID;
 
-/**
- * The six functional statuses, in the order the status pickers offer them —
- * the order the reference app's own dropdown uses (ui-surface S5).
- */
-export const ASSET_STATUSES: readonly AssetStatus[] = [
-  'DECOMMISSIONED',
-  'FUNCTIONING',
-  'FUNCTIONING_BUT_NEEDS_ATTENTION',
-  'NOT_FUNCTIONING',
-  'NOT_IN_USE',
-  'UNSERVICEABLE',
-] as const;
-
-const STATUS_LABELS: Record<AssetStatus, LocaleKey> = {
-  DECOMMISSIONED: 'status.decommissioned',
-  FUNCTIONING: 'status.functioning',
-  FUNCTIONING_BUT_NEEDS_ATTENTION: 'status.functioning-but-needs-attention',
-  NOT_FUNCTIONING: 'status.not-functioning',
-  NOT_IN_USE: 'status.not-in-use',
-  UNSERVICEABLE: 'status.unserviceable',
-};
-
-export const statusLabelKey = (status: AssetStatus): LocaleKey =>
-  STATUS_LABELS[status];
+// The six functional statuses and their names are the Asset domain module's,
+// shared with the asset catalogue's log reasons (kdd/domain-modules).
+export { ASSET_STATUSES, statusLabelKey } from '@/domain/asset';
 
 /**
  * Each status's tone. Six statuses, three meanings: working, working-but-watch,

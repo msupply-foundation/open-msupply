@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   chargesTotal,
   finalCost,
-  lineCost,
   linePacks,
+  projectedLineCost,
 } from './purchaseOrderPricing';
 
 // spec/purchase-orders rules § pricing and totals. The figures in the first
@@ -11,7 +11,7 @@ import {
 // pack size 10 and an after-line-discount price of 6.00 give a subtotal of
 // 60.00; a 25% supplier discount gives 45.00 and an amount of 15.00.
 
-const line = (over: Partial<Parameters<typeof lineCost>[0]> = {}) => ({
+const line = (over: Partial<Parameters<typeof projectedLineCost>[0]> = {}) => ({
   requestedNumberOfUnits: 100,
   adjustedNumberOfUnits: null,
   requestedPackSize: 10,
@@ -19,18 +19,21 @@ const line = (over: Partial<Parameters<typeof lineCost>[0]> = {}) => ({
   ...over,
 });
 
-describe('a line’s packs and cost', () => {
+describe('a line’s packs', () => {
   it('divides the expected quantity by the pack size', () => {
     expect(linePacks(line())).toBe(10);
-    expect(lineCost(line())).toBe(60);
   });
 
   it('follows the adjusted quantity when there is one', () => {
-    expect(lineCost(line({ adjustedNumberOfUnits: 50 }))).toBe(30);
+    expect(linePacks(line({ adjustedNumberOfUnits: 50 }))).toBe(5);
   });
 
   it('takes an adjusted quantity of zero over the requested one', () => {
     expect(linePacks(line({ adjustedNumberOfUnits: 0 }))).toBe(0);
+  });
+
+  it('is zero at a pack size of zero, not an infinity', () => {
+    expect(linePacks(line({ requestedPackSize: 0 }))).toBe(0);
   });
 
   it('keeps a fractional pack count rather than rounding it up', () => {
@@ -39,18 +42,28 @@ describe('a line’s packs and cost', () => {
     ).toBeCloseTo(214.2857143, 6);
     expect(linePacks(line({ requestedNumberOfUnits: 2 }))).toBe(0.2);
   });
+});
+
+describe('OMS-FUN-PO-07.3 — a line’s cost', () => {
+  // A saved line's cost is the server's STORED `lineTotal`, which the table
+  // reads straight off the row (no function to test). What IS computed here is
+  // the editor's preview of what the server will store for an unsaved draft,
+  // on the server's own rule: packs × the after-discount pack price.
+  it('projects an unsaved draft’s cost as packs times the after-discount price', () => {
+    expect(projectedLineCost(line())).toBe(60);
+    expect(projectedLineCost(line({ adjustedNumberOfUnits: 50 }))).toBe(30);
+  });
 
   // A zero-pack-size line contributes NOTHING, whatever its quantity or price
   // (confirmed live: a 50-unit line at price 5 and pack size 0 left the order
-  // total unchanged). On the server the term is NULLIF'd away.
-  it('contributes nothing at a pack size of zero', () => {
+  // total unchanged). The server writes its total as 0.
+  it('projects nothing at a pack size of zero', () => {
     const zeroPack = line({
       requestedPackSize: 0,
       requestedNumberOfUnits: 50,
       pricePerPackAfterDiscount: 5,
     });
-    expect(linePacks(zeroPack)).toBe(0);
-    expect(lineCost(zeroPack)).toBe(0);
+    expect(projectedLineCost(zeroPack)).toBe(0);
   });
 });
 

@@ -5,7 +5,7 @@ import { submitStateAfter, type SubmitState } from './submitState';
 import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { getLastLoginUsername } from '../appData';
 import { recordPrefersOldUi } from '../preferredFrontend';
-import { serverVersion } from '../api/serverInfo';
+import { serverVersion, serverVersionDiffers } from '../api/serverInfo';
 import { createFocusTarget } from '../ui/utils/createFocusTarget';
 import { useIsCompact } from '../ui/utils/createMediaQuery';
 import { TextField } from '../ui/elements/inputs/TextField';
@@ -93,9 +93,10 @@ export const LoginPage: Component = () => {
     setSubmitState(submitStateAfter(result));
   };
 
-  // Spec (App version, OMS-REG-LGN-01.18/.20): the running build's version and
-  // — once the startup pass has fetched it, never as a placeholder — the
-  // server's, on one line at the bottom of the page's left half.
+  // Spec (App version, OMS-REG-LGN-01.18/.20): the running build's version on
+  // one line at the bottom of the page's left half — a single "Version" while
+  // it matches the server's (or the server's is not yet known), split into
+  // Interface / Server only once the startup pass finds they differ (#574).
   //
   // ONE element, rendered either in the hero or, below the compact breakpoint
   // where the hero doesn't render at all, in the panel. Never both, so
@@ -104,10 +105,17 @@ export const LoginPage: Component = () => {
   // breakpoint decides which element renders).
   const versionLine = (placement: string) => (
     <p class={`${styles.versionBar} ${placement}`} data-testid="login-version">
-      <span>
-        <strong>{t('label.version-interface')}</strong> {APP_VERSION}
-      </span>
-      <Show when={serverVersion()}>
+      <Show
+        when={serverVersionDiffers()}
+        fallback={
+          <span>
+            <strong>{t('label.version')}</strong> {APP_VERSION}
+          </span>
+        }
+      >
+        <span>
+          <strong>{t('label.version-interface')}</strong> {APP_VERSION}
+        </span>
         <span>
           <strong>{t('label.version-server')}</strong> {serverVersion()}
         </span>

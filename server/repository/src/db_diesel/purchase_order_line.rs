@@ -314,6 +314,22 @@ impl PurchaseOrderLineRow {
         self.adjusted_number_of_units
             .unwrap_or(self.requested_number_of_units)
     }
+
+    pub fn packs_for_units(&self, units: f64) -> f64 {
+        if self.requested_pack_size > 0.0 {
+            units / self.requested_pack_size
+        } else {
+            0.0
+        }
+    }
+
+    pub fn number_of_packs(&self) -> f64 {
+        self.packs_for_units(self.expected_number_of_units())
+    }
+
+    pub fn calculate_line_total(&self) -> f64 {
+        self.price_per_pack_after_discount * self.number_of_packs()
+    }
 }
 
 impl PurchaseOrderLine {
