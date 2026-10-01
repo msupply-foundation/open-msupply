@@ -272,6 +272,18 @@
   --qr-foreground: #000;
   --qr-background: #fff;
 
+  /* The camera-scan overlay (src/platform/CameraScanOverlay) draws over a
+     live camera image, not over the app, so it is theme-INVARIANT for the
+     same reason: light ink on a dark scrim reads over any scene. */
+  --camera-overlay-ink: #fff;
+  --camera-overlay-scrim: rgba(0, 0, 0, 0.55);
+  /* Its detection markers: the code taken, a code in the box (eligible),
+     and a code outside it (ignored). Line style carries the same meaning,
+     so colour never does it alone. */
+  --camera-mark-chosen: #22c55e;
+  --camera-mark-eligible: #facc15;
+  --camera-mark-ignored: rgba(255, 255, 255, 0.7);
+
   /* --- Spacing (4px base → rem) --------------------------------------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
