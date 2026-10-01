@@ -330,18 +330,10 @@ export class HidScanner {
       .filter(device => device.path !== undefined && isScannerInterface(device))
       .slice(0, MAX_PAIRING_OPEN);
     const opened: { device: Device; handle: HID }[] = [];
-    // TEMPORARY pairing diagnostics — remove once pairing is proven on hardware.
-    const tag = (d: Device) =>
-      `${nameOf(d)} [${d.vendorId.toString(16)}:${d.productId.toString(16)} if=${d.interface} page=${d.usagePage?.toString(16)} usage=${d.usage?.toString(16)} path=${d.path}]`;
-    console.log(
-      '[hid-pair] all devices:\n  ' + this.devices().map(tag).join('\n  ')
-    );
     for (const device of candidates) {
       try {
         opened.push({ device, handle: this.hid.open(device.path as string) });
-        console.log('[hid-pair] opened', tag(device));
-      } catch (e) {
-        console.log('[hid-pair] could not open', tag(device), String(e));
+      } catch {
         // The OS would not hand it over — a device in use elsewhere, or one
         // this user may not open. Not a scanner we can use either way.
       }
@@ -352,7 +344,6 @@ export class HidScanner {
 
     return new Promise<PairResult>(resolve => {
       const finish = (result: PairResult) => {
-        console.log('[hid-pair] finished', JSON.stringify(result));
         clearTimeout(timeout);
         this.pairing = undefined;
         opened.forEach(({ handle }) => closeQuietly(handle));
@@ -365,22 +356,8 @@ export class HidScanner {
       this.pairing = { cancel: () => finish({ ok: false, reason: 'cancelled' }) };
 
       for (const { device, handle } of opened) {
-        let reports = 0;
         handle.on('data', (data: unknown) => {
           const bytes = toBytes(data);
-          reports += 1;
-          if (reports <= 3 || reports % 100 === 0) {
-            console.log('[hid-pair] report', reports, 'from', tag(device),
-              bytes ? Array.from(bytes.slice(0, 24), b => b.toString(16).padStart(2, '0')).join(' ') : typeof data);
-          }
-          // Apple's interfaces chatter constantly; only log what could be text.
-          if (bytes && bytes.filter(b => b >= 0x20 && b < 0x7f).length >= 4) {
-            console.log(
-              '[hid-pair] report from',
-              tag(device),
-              Array.from(bytes, b => b.toString(16).padStart(2, '0')).join(' ')
-            );
-          }
           if (!bytes || !carriesPairingCode(bytes) || !this.pairing) return;
           const scanner = describe(device);
           this.store.set(scanner);
@@ -389,8 +366,7 @@ export class HidScanner {
         });
         // A device that errors while pairing (unplugged, or a read the OS
         // refuses) is simply not the scanner.
-        handle.on('error', (e: unknown) => {
-          console.log('[hid-pair] error from', tag(device), String(e));
+        handle.on('error', () => {
           closeQuietly(handle);
         });
       }
