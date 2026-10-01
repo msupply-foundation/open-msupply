@@ -16,6 +16,7 @@ import { homeCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { InsetPanel } from '../../../../ui/layout/InsetPanel/InsetPanel';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
@@ -470,29 +471,24 @@ const LineEditContent = (
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size={workingSize() ? 'full' : 'auto'}
-      // `full`, not `large` — but for a different reason than the shipment
-      // editors' column count. This one's CONTEXT CHARTS want the room: the
-      // charts region caps itself at 64rem so the pair sits side by side
-      // (.charts in the CSS module, matching the original app's layout), which
-      // a 56rem card can never give it — the body is ~53rem, so the two ~29rem
-      // charts stack and the whole editor reads cramped. `full` puts the cap
-      // back in reach; the region's own max-inline-size + auto margins keep it
-      // a centred block rather than letting it sprawl.
-      //
-      // The PLUGIN SLOT below the form settles it independently: what a
-      // deployment contributes there is not ours to measure (CIV's panel is a
-      // six-column table), so no card width is safe for every site.
-      //
-      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
-      // command-palette-shaped card at the standard create-modal width (the
-      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
-      // OWN the open suggestions list — the search takes initial focus and the
-      // combobox opens on focus, so the list is this state's resting face, and
-      // without the reserved height it would dangle past the card onto the
-      // scrim. The popup itself matches its trigger's width. The reserved
-      // height is likewise dropped once the latch flips.
-      widthRem={44}
+      size={workingSize() ? 'large' : 'auto'}
+      // A CARD at the wide content measure, not the full-bleed sheet: the
+      // three panels (22 + 22 + 28rem and two `lg` gaps, 76rem) fit inside
+      // it, centred, and a general order's two panels sit in the same box. A
+      // card also caps its HEIGHT at 80vh; this editor's content is short, so
+      // that costs it nothing on a landscape tablet (the requisition editor's
+      // does, so it stays a sheet). With a deployment's plugin panel below
+      // the form, it scrolls sooner than a sheet would.
+      width={workingSize() ? 'wide' : undefined}
+      // widthRem sizes the PRE-PICK state only: a command-palette-shaped card
+      // at the standard create-modal width (the CreateStocktake/
+      // CreateInternalOrder family), with a body tall enough to OWN the open
+      // suggestions list — the search takes initial focus and the combobox
+      // opens on focus, so the list is this state's resting face, and without
+      // the reserved height it would dangle past the card onto the scrim. The
+      // popup matches its trigger's width. Both are dropped once the latch
+      // flips, so the measure above takes over.
+      widthRem={workingSize() ? undefined : 44}
       minBodyHeightRem={28}
       testId="internal-order-line-edit-modal"
       // Untitled per spec S4 — the title stays as the accessible name only.
@@ -569,10 +565,17 @@ const LineEditContent = (
       <Show when={current()}>
         {editorLine => (
           <>
-            <div class={styles.panels}>
+            <HStack
+              wrap
+              justify="center"
+              align="start"
+              gap="lg"
+              class={styles.panels}
+            >
               {/* Left — the line's statistics (AC-LN19: every stock quantity in
-                the active entry mode; time quantities exempt). */}
-              <div class={styles.column}>
+                the active entry mode; time quantities exempt), on a recessed
+                inset panel like the edits (#617). */}
+              <InsetPanel gap="sm" class={styles.column}>
                 <Show when={editorLine().unitName}>
                   <StatRow
                     label={t('label.unit')}
@@ -632,11 +635,12 @@ const LineEditContent = (
                     caption={statCaption(editorLine().expiringUnits)}
                   />
                 </Show>
-              </div>
+              </InsetPanel>
 
-              {/* Middle — stock movements (extended gate only). */}
+              {/* Middle — stock movements (extended gate only), on its own
+                inset panel. */}
               <Show when={props.showExtended}>
-                <div class={styles.column}>
+                <InsetPanel gap="sm" class={styles.column}>
                   <StatRow
                     label={t('label.suggested')}
                     value={stat(editorLine().suggestedQuantity, true)}
@@ -667,11 +671,11 @@ const LineEditContent = (
                     label={t('label.days-out-of-stock')}
                     value={`${formatNumber(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
                   />
-                </div>
+                </InsetPanel>
               </Show>
 
               {/* Right — the edits, on a recessed inset panel. */}
-              <InsetPanel class={styles.edits}>
+              <InsetPanel gap="sm" class={styles.edits}>
                 {/* Suggested here only when the movements panel is absent. */}
                 <Show when={!props.showExtended}>
                   <StatRow
@@ -761,7 +765,7 @@ const LineEditContent = (
                   />
                 </FieldRow>
               </InsetPanel>
-            </div>
+            </HStack>
 
             {/* The plugin info-panel region (internal-orders ui-surface § S8 ›
               editor region): read-only decoration between the record panels
