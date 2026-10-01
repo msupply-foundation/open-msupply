@@ -11,6 +11,7 @@ import {
   MaintenanceMode as MaintenanceModeQuery,
   SetMaintenanceMode,
 } from './syncSettings.generated';
+import { createSaveOnToggle } from './saveOnToggle';
 
 type Failure =
   { kind: 'integration-incomplete'; pending: number } | { kind: 'failed' };
@@ -46,7 +47,6 @@ export const MaintenanceMode = (props: {
   const isOn = () => state()?.isOn ?? false;
   createEffect(() => props.onState(isOn()));
 
-  const [busy, setBusy] = createSignal(false);
   const [failure, setFailure] = createSignal<Failure>();
 
   // A run that just finished has integrated some or all of the buffer, so a
@@ -64,8 +64,9 @@ export const MaintenanceMode = (props: {
     )
   );
 
-  const toggle = async (on: boolean) => {
-    setBusy(true);
+  // A failed save reverts the switch (saveOnToggle). Every settled save lands
+  // in the resource before the flip is released, so it never flickers.
+  const { checked, busy, toggle } = createSaveOnToggle(isOn, async on => {
     setFailure(undefined);
     // `background`: this row owns its failure surface rather than the global
     // unexpected-error modal.
@@ -84,19 +85,18 @@ export const MaintenanceMode = (props: {
           kind: 'integration-incomplete',
           pending: payload.error.pendingIntegrationRecords,
         });
-        void refetch();
+        await refetch();
       }
     } else if (result.kind !== 'unauthenticated') {
       setFailure({ kind: 'failed' });
     }
-    setBusy(false);
-  };
+  });
 
   return (
     <Stack gap="sm">
       <ToggleSwitch
         label={t('label.maintenance-mode')}
-        checked={isOn()}
+        checked={checked()}
         onChange={on => void toggle(on)}
         disabled={busy() || stateData.state !== 'ready' || state() == null}
         variant="caution"
