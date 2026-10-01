@@ -20,6 +20,7 @@ import {
 import { createTableConfig } from '@/api/createTableConfig';
 import { CloseIcon, PlusCircleIcon, SettingsIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { remToPx } from '@/ui/utils/rem';
 import { InstalledPlugins } from './plugins.generated';
 import {
   rowKey,
@@ -87,6 +88,11 @@ const PluginsList: Component = () => {
       c: { key: 'code' },
       sortKey: 'code',
       header: () => t('label.code'),
+      // Capped, so one very long code ellipsises (full text on hover) instead
+      // of pushing Types and the Configure button out of view
+      // (PLG-20261001-F4). Wider than the shared `code` preset's ~9
+      // characters: plugin codes run to twenty and more.
+      maxSize: remToPx(16),
       // Card view: the code is the card's title.
       meta: { headerPosition: 'primary' },
     },
