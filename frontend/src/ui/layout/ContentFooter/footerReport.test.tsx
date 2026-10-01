@@ -116,17 +116,6 @@ describe('createFooterReport', () => {
     dispose();
   });
 
-  it('flips replay with every new report', () => {
-    const { report, setMessage, dispose } = setup();
-    const before = report.replay();
-    setMessage(saved());
-    const first = report.replay();
-    setMessage(saved());
-    expect(first).toBe(!before);
-    expect(report.replay()).toBe(before);
-    dispose();
-  });
-
   it('does nothing when cleared after the chip already went', () => {
     // A footer clears its message at the next attempt, long after the last
     // success cleared itself off the screen.

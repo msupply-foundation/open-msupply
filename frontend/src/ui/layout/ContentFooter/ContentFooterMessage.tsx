@@ -46,11 +46,6 @@ export interface ContentFooterMessageProps {
  * leave little more than its icon. A success needs no such reveal, since its
  * words are short, fixed and gone in seconds.
  *
- * When a success lands, the WHOLE bar answers it (ContentFooter's
- * `data-outcome` rule): one green wave travels along it. The chip alone is
- * small and sits still, and the bar is where the user's eye goes back to after
- * the dialog closes.
- *
  * The footer owns the words (which differ per vertical and per outcome) and
  * when to report; this owns how the report looks, how long it stays, and how it
  * comes and goes (the timing is createFooterReport's), so every footer's chip
@@ -72,16 +67,7 @@ export const ContentFooterMessage = (props: ContentFooterMessageProps) => {
   );
 
   return (
-    <div
-      class={styles.message}
-      role="status"
-      aria-live="polite"
-      // What the slot is showing — ContentFooter reads it to run its wave
-      // along the whole bar as a success lands; `data-replay` flips per report
-      // so the wave restarts when one success replaces another.
-      data-outcome={!report.leaving() ? report.shown()?.type : undefined}
-      data-replay={report.replay() ? '' : undefined}
-    >
+    <div class={styles.message} role="status" aria-live="polite">
       {/* Keyed: every new report is a new chip, so its entry replays. */}
       <Show when={report.shown()} keyed>
         {message => (
