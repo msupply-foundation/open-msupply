@@ -297,7 +297,8 @@ enum Action {
         /// Source site id whose records to integrate (V5/V6 buffer rows for this site).
         #[clap(short, long, default_value = "1")]
         source_site_id: i32,
-        /// Wrap integration in a transaction (outer batch + per-record sub-transactions).
+        /// Wrap integration in a transaction (outer batch, plus a nested transaction per write on
+        /// Postgres).
         /// Off by default for speed; turn on to integrate the whole batch atomically. Without it
         /// a database that has synced must be in maintenance mode.
         #[clap(short, long)]

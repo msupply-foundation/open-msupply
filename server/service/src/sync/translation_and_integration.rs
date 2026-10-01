@@ -232,9 +232,11 @@ pub(crate) fn integrate(
     for (source_site_id, integration_record) in integration_records.iter() {
         if cfg!(feature = "postgres") {
             // In Postgres the parent transaction fails when there is a DB error in any of the
-            // statements executed in the transaction. Thus, integrate every record in a nested
+            // statements executed in the transaction. Thus, integrate every write in a nested
             // transaction to catch potential errors (e.g. foreign key violations).
             // Note, this is not a problem in Sqlite.
+            // This nests each write, not the sync record: if a later write fails, the record's
+            // earlier writes stay (#847).
             connection
                 .transaction_sync_etc(
                     |sub_tx| integration_record.integrate(sub_tx, *source_site_id),
