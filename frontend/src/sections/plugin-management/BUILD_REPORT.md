@@ -1,6 +1,6 @@
 # Build report — plugin-management
 
-**Target stack:** SolidJS + Vite, composed from the shared component library in `src/ui/`, with roles resolved through `spec/ui-standards/components.md`. Built from `spec/plugin-management/` (reverse spec, `AC-*` anchors; not yet reconciled into cases). Route `manage/plugins`, registered in `sectionRoutes` (`src/App.tsx`).
+**Target stack:** SolidJS + Vite, composed from the shared component library in `src/ui/`, with roles resolved through `spec/ui-standards/components.md`. Built from `spec/plugin-management/` (reverse spec), anchored to the behaviours of its case `OMS-REG-MNG-07` (written `.n` below; the retired `AC-*` mapping is `spec/plugin-management/acceptance.md`). Route `manage/plugins`, registered in `sectionRoutes` (`src/App.tsx`).
 
 ## What was built
 
@@ -16,22 +16,21 @@
 
 ## Anchor coverage
 
-| Anchor                                        | Test                                                |
-| --------------------------------------------- | --------------------------------------------------- |
-| AC-L2, L3, L4, L5, L6, L7, L10                | `pluginRows.test.ts`                                |
-| AC-I2, I3, I14, I15; AC-A4 (client side)      | `bundleFile.test.ts`                                |
-| AC-I17 (orders an unreadable version)         | `pluginRows.test.ts`                                |
-| AC-C4, C5, C6, C7, C10                        | `configuration.test.ts`                             |
-| AC-U4, U5                                     | `uninstall.test.ts`                                 |
-| AC-C1, AC-C3 (what makes a code configurable) | `src/plugins/registry.test.ts` › `configurationFor` |
-| — (a malformed configuration is refused)      | `src/plugins/validate.test.ts` › configuration      |
+| Behaviours (`OMS-REG-MNG-07.n`)                        | Test                                                |
+| ------------------------------------------------------ | --------------------------------------------------- |
+| `.10`, `.11`, `.12`, `.13`, `.15`, `.16`, `.20`, `.40` | `pluginRows.test.ts`                                |
+| `.4` (client side), `.22`, `.24`, `.37`, `.38`         | `bundleFile.test.ts`                                |
+| `.54`, `.55`, `.56`, `.57`, `.58`, `.61`               | `configuration.test.ts`                             |
+| `.44`, `.45`, `.46`                                    | `uninstall.test.ts`                                 |
+| `.49`, `.50`, `.52` (what makes a code configurable)   | `src/plugins/registry.test.ts` › `configurationFor` |
+| — (a malformed configuration is refused)               | `src/plugins/validate.test.ts` › configuration      |
 
 **Owned by the e2e suite (next step), each verified by hand against the real backend during this build:**
 
-- **Screen behaviour:** AC-L1 (empty state), AC-L9 (inert row), AC-I1, AC-I5, AC-I6, AC-U1–U3, AC-C2, AC-C8, AC-C9, AC-C11 (the dashboard greeting reads the saved setting).
-- **Server-side outcomes:** AC-L8, AC-I7–I13, AC-I16, AC-U6, AC-U7, AC-F1, AC-F2.
+- **Screen behaviour:** `.8`, `.9`, `.14`, `.17`, `.19`, `.21`, `.23`, `.25`–`.28`, `.35`, `.36`, `.41`–`.43`, `.51`, `.53`, `.59`, `.60`, `.62`.
+- **Server-side outcomes:** `.18`, `.29`–`.34`, `.39`, `.47`, `.48`, and the case's Flows.
 
-**Wire/server-only:** AC-A1, A2, A3, A5, A6. These are refusals the screen never reaches, because the destination gate keeps it central-only and admin-only. They were confirmed on the wire while writing the spec (contract.md); the e2e suite can assert them with direct GraphQL.
+**Wire/server-only:** `.1`–`.3`, `.5`, `.6`; `.7` is navigation's gate. These are refusals the screen never reaches, because the destination gate keeps it central-only and admin-only. They were confirmed on the wire while writing the spec (contract.md); the e2e suite can assert them with direct GraphQL.
 
 **C2 real-backend leg:** no CI tooling yet. Every surface was driven headless against a central-pinned `develop` server (`:8186`, a copy of the e2e datafile) through vite `:3201`:
 

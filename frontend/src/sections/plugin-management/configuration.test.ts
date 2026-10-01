@@ -5,12 +5,12 @@ import {
   pickConfigurationRecord,
 } from './configuration';
 
-// spec/plugin-management/acceptance.md › configuring
+// spec/plugin-management/cases/OMS-REG-MNG-07 — configuring
 
 const DEFAULT = { greeting: 'Hello' };
 const STORE = 'store-a';
 
-describe('AC-C4 — nothing stored: the editor starts from the default', () => {
+describe('OMS-REG-MNG-07.54 — nothing stored: the editor starts from the default', () => {
   it('seeds the default and has no record to update', () => {
     expect(loadConfiguration(undefined, DEFAULT)).toEqual({
       recordId: undefined,
@@ -19,7 +19,7 @@ describe('AC-C4 — nothing stored: the editor starts from the default', () => {
   });
 });
 
-describe('AC-C5 — the first save creates one installation-wide record', () => {
+describe('OMS-REG-MNG-07.55 — the first save creates one installation-wide record', () => {
   it('inserts the whole value under the reserved identifier, with no store', () => {
     const write = configurationWrite(STORE, 'hello_world', undefined, {
       greeting: 'Kia ora',
@@ -38,7 +38,7 @@ describe('AC-C5 — the first save creates one installation-wide record', () => 
   });
 });
 
-describe('AC-C6 — a stored configuration opens, and a save updates that record', () => {
+describe('OMS-REG-MNG-07.56/.57 — a stored configuration opens, and a save updates that record', () => {
   it('seeds the stored value', () => {
     const record = { id: 'cfg-1', storeId: null, data: '{"greeting":"Hi"}' };
     expect(loadConfiguration(record, DEFAULT)).toEqual({
@@ -57,7 +57,7 @@ describe('AC-C6 — a stored configuration opens, and a save updates that record
   });
 });
 
-describe('AC-C7 — an unreadable stored value opens on the default', () => {
+describe('OMS-REG-MNG-07.58 — an unreadable stored value opens on the default', () => {
   it('seeds the default but keeps the record, so a save replaces it', () => {
     const record = { id: 'cfg-bad', storeId: null, data: '{not json' };
     expect(loadConfiguration(record, DEFAULT)).toEqual({
@@ -67,7 +67,7 @@ describe('AC-C7 — an unreadable stored value opens on the default', () => {
   });
 });
 
-describe('AC-C10 — the installation-wide record wins over a store-scoped one', () => {
+describe('OMS-REG-MNG-07.61 — the installation-wide record wins over a store-scoped one', () => {
   it('picks the store-less record', () => {
     const answer = {
       nodes: [

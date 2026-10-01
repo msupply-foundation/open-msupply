@@ -9,7 +9,7 @@ import {
   type PluginRow,
 } from './pluginRows';
 
-// spec/plugin-management/acceptance.md › the list
+// spec/plugin-management/cases/OMS-REG-MNG-07 — the list
 
 const row = (overrides: Partial<PluginRow>): PluginRow => ({
   id: 'frontend_x',
@@ -64,7 +64,7 @@ const serverOrder: PluginRow[] = [
 const codes = (rows: PluginRow[]) => rows.map(r => r.code);
 const ids = (rows: PluginRow[]) => rows.map(r => r.id);
 
-describe('AC-L2 — a backend and a frontend half of one code both show', () => {
+describe('OMS-REG-MNG-07.10 — a backend and a frontend half of one code both show', () => {
   it('reads the backend kind with a blank runtime, the frontend with its own', () => {
     const [backend, , frontend] = serverOrder;
     expect(kindLabel(backend!.kind)).toBe('Backend');
@@ -74,7 +74,7 @@ describe('AC-L2 — a backend and a frontend half of one code both show', () => 
   });
 });
 
-describe('AC-L3 — two runtimes of one code and version stay two rows', () => {
+describe('OMS-REG-MNG-07.11 — two runtimes of one code and version stay two rows', () => {
   it('keys them apart', () => {
     const react = row({ id: 'fe_react', hostRuntime: 'react' });
     const solid = row({ id: 'fe_solid', hostRuntime: 'solid' });
@@ -82,7 +82,7 @@ describe('AC-L3 — two runtimes of one code and version stay two rows', () => {
   });
 });
 
-describe('AC-L4 — with no sort the server order stands', () => {
+describe('OMS-REG-MNG-07.12 — with no sort the server order stands', () => {
   it('keeps every backend row first, then frontend, each by id', () => {
     expect(ids(sortRows(serverOrder, undefined, kindLabel))).toEqual(
       ids(serverOrder)
@@ -90,7 +90,7 @@ describe('AC-L4 — with no sort the server order stands', () => {
   });
 });
 
-describe('AC-L5 — versions sort part by part as numbers', () => {
+describe('OMS-REG-MNG-07.13 — versions sort part by part as numbers', () => {
   it('puts 2.9.0 before 2.10.0', () => {
     expect(compareVersions('2.9.0', '2.10.0')).toBeLessThan(0);
     const sorted = sortRows(
@@ -107,12 +107,12 @@ describe('AC-L5 — versions sort part by part as numbers', () => {
     ]);
   });
 
-  it('still orders an unreadable version, as text (AC-I17)', () => {
+  it('still orders an unreadable version, as text (OMS-REG-MNG-07.40)', () => {
     expect(() => compareVersions('abc', '1.0.0')).not.toThrow();
   });
 });
 
-describe('AC-L6 — code, kind and runtime sort either way', () => {
+describe('OMS-REG-MNG-07.15 — code, kind and runtime sort either way', () => {
   it('sorts by code ascending, then descending', () => {
     expect(
       codes(sortRows(serverOrder, { key: 'code', desc: false }, kindLabel))
@@ -165,7 +165,7 @@ describe('AC-L6 — code, kind and runtime sort either way', () => {
   });
 });
 
-describe('AC-L7 — types read comma-separated in the declared order', () => {
+describe('OMS-REG-MNG-07.16 — types read comma-separated in the declared order', () => {
   it('joins them', () => {
     expect(typesText(serverOrder[0]!)).toBe(
       'average_monthly_consumption, graphql_query'
@@ -173,7 +173,7 @@ describe('AC-L7 — types read comma-separated in the declared order', () => {
   });
 });
 
-describe('AC-L10 — a backend and a frontend plugin under one id select apart', () => {
+describe('OMS-REG-MNG-07.20 — a backend and a frontend plugin under one id select apart', () => {
   it('keys a row on kind and id', () => {
     const backend = row({ id: 'shared', kind: 'BACKEND', hostRuntime: null });
     const frontend = row({ id: 'shared', kind: 'FRONTEND' });
