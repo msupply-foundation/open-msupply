@@ -11,7 +11,7 @@
 | S2 import modal — template, upload checks, review, per-row run, refused rows                             | `import/ImportCatalogueModal.tsx`, `import/catalogueImport.ts`                                                                                |
 | S3 log-reasons list — status filter, status sort, selection + delete                                     | `reasons/LogReasonsList.tsx`, `reasons/logReasons.ts`                                                                                         |
 | S4 create log reason                                                                                     | `reasons/CreateLogReasonModal.tsx`                                                                                                            |
-| S5 confirmations and outcomes (both bulk deletes)                                                        | `DeleteSelectedAction.tsx`, `refusals.ts`                                                                                                     |
+| S5 confirmations and outcomes (both bulk deletes)                                                        | `domain/selection` (`DeleteSelectedAction.tsx`, `writeOutcome.ts`)                                                                            |
 | The write gates (central server + permission mirror)                                                     | `access.ts`                                                                                                                                   |
 
 Operations are the ones `contract.md` names, in `catalogue/catalogue.graphql`, `import/catalogueImport.graphql` and `reasons/logReasons.graphql`; `pnpm codegen` produced no drift outside the vertical.

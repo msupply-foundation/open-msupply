@@ -6,27 +6,44 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '@/ui/icons';
-import { deleteEach, type DeleteSummary, type WriteOutcome } from './refusals';
+import {
+  deleteEach,
+  type DeleteSummary,
+  type WriteOutcome,
+} from './writeOutcome';
 
-// The bulk Delete both lists share (spec/asset-catalogue S5): the footer
-// button, then a confirm → deleting → outcome dialog (kdd/action-modal).
+// The bulk Delete for a list whose records are deleted ONE CALL EACH (the
+// asset catalogue's items and log reasons, spec/asset-catalogue S5; Manage ›
+// Plugins, spec/plugin-management S4): the footer button, then a confirm →
+// deleting → outcome dialog (kdd/action-modal).
 //
-// Each selected record is deleted ON ITS OWN (rules § deleting catalogue
-// items): all deleted → the dialog closes and the list refreshes, closure
-// being the confirmation (ui-standards/controls § dialogs); any refused → the
-// dialog stays open on a summary of both counts and each refused record with
-// its reason, while the list behind it refreshes so the deleted rows leave.
+// A refusal of one record leaves the others: all deleted → the dialog closes
+// and the list refreshes, closure being the confirmation (ui-standards/controls
+// § dialogs); any refused → the dialog stays open on what was deleted (where
+// the caller words it) and each refused record with its reason, while the list
+// behind it refreshes so the deleted rows leave. A Forbidden goes to the
+// permission-denied modal and a transport failure stays global, as everywhere.
 
 export interface DeleteSelectedActionProps<R> {
   /** The selected records, read when the dialog opens. */
   selected: () => R[];
-  /** Refuse up front without the write's permissions (access.ts). */
-  guard: () => boolean;
+  /**
+   * Refuse up front without the write's permissions. Omit where the screen's
+   * own gate already guarantees them.
+   */
+  guard?: () => boolean;
   deleteOne: (record: R) => Promise<WriteOutcome>;
+  /**
+   * How many deletes are in flight at once (default: api/batches'
+   * WRITE_CONCURRENCY). 1 where two records can name the same server row.
+   */
+  batchSize?: number;
   /** How a refused record is named — its code, or its reason text. */
   nameOf: (record: R) => string;
-  confirmMessage: (count: number) => string;
-  deletedMessage: (count: number) => string;
+  /** The question, over the records snapshotted when the dialog opened. */
+  confirmMessage: (records: readonly R[]) => string;
+  /** The outcome's "N deleted" line. Omit for no such line. */
+  deletedMessage?: (count: number) => string;
   refusedMessage: (count: number) => string;
   /** Something was deleted — re-query the list. */
   onChanged: () => void;
@@ -50,7 +67,7 @@ export const DeleteSelectedAction = <R,>(
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={() => {
-          if (props.guard()) setOpen(true);
+          if (props.guard?.() ?? true) setOpen(true);
         }}
       >
         {t('button.delete-lines')}
@@ -78,7 +95,7 @@ const Body = <R,>(
   const run = async () => {
     if (phase().kind !== 'confirm') return;
     setPhase({ kind: 'deleting' });
-    const summary = await deleteEach(records, props.deleteOne);
+    const summary = await deleteEach(records, props.deleteOne, props.batchSize);
     if (summary.deleted.length > 0) props.onChanged();
     if (summary.forbidden) {
       // The server's refusal routes to the same modal as the up-front mirror.
@@ -113,11 +130,13 @@ const Body = <R,>(
         outcome() ? t('heading.cannot-do-that') : t('heading.are-you-sure')
       }
       description={
-        <Show when={outcome()} fallback={props.confirmMessage(records.length)}>
+        <Show when={outcome()} fallback={props.confirmMessage(records)}>
           {summary => (
             <Alert severity="error" testId="delete-outcome">
-              <Show when={summary().deleted.length > 0}>
-                <p>{props.deletedMessage(summary().deleted.length)}</p>
+              <Show when={summary().deleted.length > 0 && props.deletedMessage}>
+                {deletedMessage => (
+                  <p>{deletedMessage()(summary().deleted.length)}</p>
+                )}
               </Show>
               <p>{props.refusedMessage(summary().refused.length)}</p>
               <ul>

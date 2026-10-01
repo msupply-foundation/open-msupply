@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { setDictionaries, setLocale } from '@/intl/intl';
 import commonEn from '@/intl/locales/en/common.json';
-import { deleteEach, outcomeOf, refusalReason } from './refusals';
+import { deleteEach, outcomeOf, refusalReason } from '@/domain/selection';
 
 // The refusal copy is the behaviour, so a real dictionary is seeded (as
 // api/rejection.test.ts does) — without it `server-error.*` falls back to the

@@ -1,6 +1,7 @@
-// How this vertical sends many writes: a batch at a time, each batch in
-// parallel — the import's rows and a bulk delete's records alike, ten at a
-// time as the reference sends them (contract § bulk import).
+// Sending many writes: a batch at a time, each batch in parallel. Ten at a time
+// is how the reference app sends the asset-catalogue import's rows
+// (spec/asset-catalogue › contract § bulk import), and the default for a bulk
+// delete (domain/selection). A batch of one sends the writes one after another.
 
 export const WRITE_CONCURRENCY = 10;
 

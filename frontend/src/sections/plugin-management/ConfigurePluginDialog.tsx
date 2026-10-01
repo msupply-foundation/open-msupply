@@ -8,7 +8,12 @@ import {
   Switch,
   untrack,
 } from 'solid-js';
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
 import { rejectionFrom, type Rejection } from '@/api/rejection';
 import { t } from '@/intl';
 import { configurationFor } from '@/plugins/registry';
@@ -117,8 +122,12 @@ export const ConfigurePluginDialog = (props: {
       props.onClose();
       return;
     }
-    if (result.kind === 'graphqlError')
-      setRefusal(rejectionFrom(result.errors, ''));
+    if (result.kind === 'graphqlError') {
+      // A Forbidden goes to the permission-denied modal, as every other one.
+      if (isForbidden(result.errors))
+        reportPermissionDenied(missingPermissions(result.errors));
+      else setRefusal(rejectionFrom(result.errors, ''));
+    }
     // Edits stay; the busy state is released (OMS-REG-MNG-07.60).
     setSaving(false);
   };
@@ -175,19 +184,16 @@ export const ConfigurePluginDialog = (props: {
           />
         )}
       </Show>
-      <Switch>
+      {/* Until the read lands: the loading spinner. */}
+      <Switch fallback={<Spinner center />}>
         <Match when={!configuration}>
-          <Alert severity="error">
-            <span data-testid="configure-plugin-error">
-              {t('error.plugin-not-loaded', { code: props.pluginCode })}
-            </span>
+          <Alert severity="error" testId="configure-plugin-error">
+            {t('error.plugin-not-loaded', { code: props.pluginCode })}
           </Alert>
         </Match>
         <Match when={loaded()?.ok === false}>
-          <Alert severity="error">
-            <span data-testid="configure-plugin-error">
-              {t('error.unable-to-load-data')}
-            </span>
+          <Alert severity="error" testId="configure-plugin-error">
+            {t('error.unable-to-load-data')}
           </Alert>
         </Match>
         <Match when={seed()}>
@@ -199,9 +205,6 @@ export const ConfigurePluginDialog = (props: {
             })}
             errorFallback={t('error.plugin-unavailable')}
           />
-        </Match>
-        <Match when={true}>
-          <Spinner />
         </Match>
       </Switch>
     </Dialog>

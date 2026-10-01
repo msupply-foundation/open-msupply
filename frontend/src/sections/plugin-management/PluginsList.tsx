@@ -2,7 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
-import { t } from '@/intl';
+import { t, tPlural } from '@/intl';
 import { configurationFor } from '@/plugins/registry';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -17,11 +17,13 @@ import {
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
+import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
+import { DeleteSelectedAction, outcomeOf } from '@/domain/selection';
 import { CloseIcon, PlusCircleIcon, SettingsIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
 import { remToPx } from '@/ui/utils/rem';
-import { InstalledPlugins } from './plugins.generated';
+import { InstalledPlugins, UninstallPlugin } from './plugins.generated';
 import {
   rowKey,
   rowsForKeys,
@@ -34,7 +36,6 @@ import {
 } from './pluginRows';
 import { UploadPluginDialog } from './UploadPluginDialog';
 import { ConfigurePluginDialog } from './ConfigurePluginDialog';
-import { UninstallPluginsAction } from './UninstallPluginsAction';
 
 /*
  * S1 — Installed plugins (spec/plugin-management/ui-surface.md): the standard
@@ -50,6 +51,26 @@ type PluginsListState = { sort?: PluginSort };
 
 const kindLabel = (kind: PluginRow['kind']): string =>
   kind === 'BACKEND' ? t('label.backend') : t('label.frontend');
+
+// Each selected row is uninstalled by its own call (rules › uninstalling
+// plugins); every refusal of this write is a top-level GraphQL error.
+const uninstallOne = async (row: PluginRow) =>
+  outcomeOf(
+    await graphqlFetch(
+      UninstallPlugin,
+      { id: row.id },
+      { returnGraphqlErrors: true }
+    )
+  );
+
+// A refused row is named by code, version and runtime (ui-surface S4).
+const describeRow = (row: PluginRow): string =>
+  [row.code, row.version, runtimeText(row)].filter(Boolean).join(' · ');
+
+const confirmMessage = (rows: readonly PluginRow[]): string =>
+  rows.length === 1
+    ? t('messages.confirm-delete-plugin', { code: rows[0]?.code ?? '' })
+    : tPlural('messages.confirm-delete-plugins', rows.length);
 
 const PluginsList: Component = () => {
   const params = useParams<{ storeId: string }>();
@@ -88,13 +109,13 @@ const PluginsList: Component = () => {
       c: { key: 'code' },
       sortKey: 'code',
       header: () => t('label.code'),
+      // Card view: the code is the card's title.
+      ...getCellDefinition('code', { headerPosition: 'primary' }),
       // Capped, so one very long code ellipsises (full text on hover) instead
       // of pushing Types and the Configure button out of view
       // (PLG-20261001-F4). Wider than the shared `code` preset's ~9
       // characters: plugin codes run to twenty and more.
       maxSize: remToPx(16),
-      // Card view: the code is the card's title.
-      meta: { headerPosition: 'primary' },
     },
     {
       c: { key: 'version' },
@@ -121,8 +142,15 @@ const PluginsList: Component = () => {
       // row click takes (ui-surface S1 › layout).
       c: { id: 'configure' },
       header: () => '',
-      size: 56,
-      meta: { hideFromColumnSettings: true },
+      // One icon button plus the cell's padding; never grows.
+      size: remToPx(3.5),
+      maxSize: remToPx(3.5),
+      // Card view: the row action rides the card header's inline-end corner.
+      meta: {
+        headerPosition: 'badge',
+        align: 'right',
+        hideFromColumnSettings: true,
+      },
       cell: info => (
         <Show when={configurable(info.row.original)}>
           <IconButton
@@ -165,13 +193,19 @@ const PluginsList: Component = () => {
             <strong data-testid="selected-rows-count">
               {selectedKeys().length} {t('label.selected')}
             </strong>
-            <UninstallPluginsAction
+            {/* No guard: navigation's server-admin gate already holds. */}
+            <DeleteSelectedAction
               selected={selectedRows}
-              onUninstalled={() => {
-                setSelectedKeys([]);
-                void refetch();
-              }}
-              onPartlyUninstalled={() => void refetch()}
+              deleteOne={uninstallOne}
+              // One call at a time: the server addresses a row by id alone,
+              // and a backend and a frontend row can share one (contract ›
+              // uninstalling plugins).
+              batchSize={1}
+              nameOf={describeRow}
+              confirmMessage={confirmMessage}
+              refusedMessage={() => t('error.unable-to-delete-plugin')}
+              onChanged={() => void refetch()}
+              onDone={() => setSelectedKeys([])}
             />
             <ContentFooterActions>
               <Button

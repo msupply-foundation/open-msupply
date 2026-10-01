@@ -1,5 +1,10 @@
 import { createSignal, Show } from 'solid-js';
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
 import { rejectionFrom, type Rejection } from '@/api/rejection';
 import { formatFileSize, t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
@@ -8,6 +13,7 @@ import { Button } from '@/ui/elements/buttons/Button';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { UploadZone } from '@/ui/elements/inputs/UploadZone';
+import { Text } from '@/ui/elements/typography/Text';
 import type { FileRejection } from '@/ui/elements/inputs/uploadFiles';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { Stack } from '@/ui/layout/Stack/Stack';
@@ -94,10 +100,14 @@ export const UploadPluginDialog = (props: {
       return;
     }
     if (result.kind === 'graphqlError') {
-      setNotice({
-        kind: 'install',
-        rejection: rejectionFrom(result.errors, ''),
-      });
+      // A Forbidden goes to the permission-denied modal, as every other one.
+      if (isForbidden(result.errors))
+        reportPermissionDenied(missingPermissions(result.errors));
+      else
+        setNotice({
+          kind: 'install',
+          rejection: rejectionFrom(result.errors, ''),
+        });
     }
     // Any other failure surfaced globally; release the busy state either way.
     setRunning(false);
@@ -143,7 +153,7 @@ export const UploadPluginDialog = (props: {
       }
     >
       <Stack gap="md">
-        <p>{t('messages.plugin-upload-helper')}</p>
+        <Text>{t('messages.plugin-upload-helper')}</Text>
         <UploadZone
           accept={BUNDLE_ACCEPT}
           maxSize={MAX_BUNDLE_BYTES}
@@ -157,12 +167,13 @@ export const UploadPluginDialog = (props: {
           {chosen => (
             <HStack gap="sm" align="center">
               <FileIcon />
-              <span data-testid="upload-plugin-chosen-file">
+              <Text variant="bodySmall" data-testid="upload-plugin-chosen-file">
                 {chosen().name}
-              </span>
+              </Text>
               <IconButton
                 icon={<CloseIcon />}
                 label={t('button.remove-file')}
+                size="small"
                 disabled={running()}
                 data-testid="upload-plugin-remove-file"
                 onClick={() => setFile(undefined)}
@@ -176,10 +187,8 @@ export const UploadPluginDialog = (props: {
           {value => {
             if (value.kind === 'refused')
               return (
-                <Alert severity="error">
-                  <span data-testid="upload-plugin-error">
-                    {refusalText(value.rejection)}
-                  </span>
+                <Alert severity="error" testId="upload-plugin-error">
+                  {refusalText(value.rejection)}
                 </Alert>
               );
             if (value.kind === 'upload')
