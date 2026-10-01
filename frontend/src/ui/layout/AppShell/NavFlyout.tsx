@@ -81,8 +81,8 @@ export const NavFlyout = (props: {
     );
     // The panel's first row — the section heading, or a leaf's label — is
     // centred on the rail button, so it reads as level with the icon (#425).
-    // Lining up the two top edges instead left the row off-centre, since the
-    // panel's padding and the row's own padding differ from the button's.
+    // Matching top edges would leave the row off-centre, since the panel's
+    // padding and the row's own padding differ from the button's.
     // Layout offsets, not bounding boxes, for the same animation reason.
     const first = panel.firstElementChild as HTMLElement | null;
     const rowCentre = first

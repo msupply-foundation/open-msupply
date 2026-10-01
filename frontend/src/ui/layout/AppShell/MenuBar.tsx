@@ -8,6 +8,7 @@ import {
 import { AppLogo } from '../../branding/AppLogo';
 import { t } from '../../../intl';
 import { NavFlyout, type FlyoutTarget } from './NavFlyout';
+import { isBetweenAnchorAndPanel } from './flyoutCorridor';
 import { type NavItem, type NavLeaf } from './navModel';
 import styles from './MenuBar.module.css';
 
@@ -435,30 +436,34 @@ export const MenuBar = (props: MenuBarProps) => {
   // that the pointer never went near (a keyboard-opened one, say).
   let pointerAt: { x: number; y: number } | undefined;
   const trackPointer = (e: PointerEvent) => {
+    // Hover travel only. A finger drag fires pointermove too, but a finger is
+    // not hovering on its way anywhere — and the position it left behind
+    // would hold the flyout open past the next tap on the page.
+    if (e.pointerType === 'touch') return;
     pointerAt = { x: e.clientX, y: e.clientY };
+  };
+  // Leaving the window is leaving the corridor: the last position inside it
+  // would otherwise hold the flyout open until the pointer came back.
+  const forgetPointer = (e: PointerEvent) => {
+    if (!e.relatedTarget) pointerAt = undefined;
   };
   createEffect(() => {
     if (!flyout()) return;
     pointerAt = undefined;
     window.addEventListener('pointermove', trackPointer, { passive: true });
-    onCleanup(() => window.removeEventListener('pointermove', trackPointer));
+    window.addEventListener('pointerout', forgetPointer, { passive: true });
+    onCleanup(() => {
+      window.removeEventListener('pointermove', trackPointer);
+      window.removeEventListener('pointerout', forgetPointer);
+    });
   });
-  // The stretch between the rail button and the panel — the rail's own
-  // padding, its edge strip, and the gap past it — level with either of them.
-  // The pointer crossing it has left the button but not reached the panel, so
-  // without this a slow crossing, or a pause on the way, closed the flyout.
-  // The facing edges are min/max of the two boxes, so it holds in RTL too.
   const betweenAnchorAndPanel = () => {
     const anchor = flyout()?.anchor;
     if (!anchor || !panel || !pointerAt) return false;
-    const a = anchor.getBoundingClientRect();
-    const p = panel.getBoundingClientRect();
-    const { x, y } = pointerAt;
-    return (
-      x >= Math.min(a.right, p.right) &&
-      x <= Math.max(a.left, p.left) &&
-      y >= Math.min(a.top, p.top) &&
-      y <= Math.max(a.bottom, p.bottom)
+    return isBetweenAnchorAndPanel(
+      anchor.getBoundingClientRect(),
+      panel.getBoundingClientRect(),
+      pointerAt
     );
   };
 
