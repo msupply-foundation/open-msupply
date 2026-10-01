@@ -90,6 +90,11 @@
   flex: 1;
   min-block-size: 0;
   overflow: auto;
+
+  /* The pinned blocks' measured widths, set inline in table view (DataTable's
+     frozenWidths); 0 when nothing is pinned or in card view. */
+  --frozen-left: 0;
+  --frozen-right: 0;
 }
 
 /* fitContent (card view only): the table stops owning a scroll box and lays
@@ -1997,4 +2002,67 @@ tr[data-accent='error'] > :first-child::before {
 .root[data-cell-align='start'] .table tbody tr > .td,
 .root[data-cell-align='start'] .table tbody tr > .selectCell {
   vertical-align: top;
+}
+
+/* Top-aligned, a control SHORTER than the row's inputs would ride the top of
+   its cell — a checkbox, the row-selection box included — while the inputs
+   beside it centre on their own line. So a checkbox takes half the height
+   difference as block margin and lands on the same centre line. The line is
+   the small input height, which is what start-aligned editor tables use, with
+   the touch height under a coarse pointer, as the inputs themselves switch.
+   Table view only: a card header centres its own row. */
+.root[data-cell-align='start'] {
+  --cell-control-height: var(--input-height-sm);
+}
+
+@media (pointer: coarse) {
+  .root[data-cell-align='start'] {
+    --cell-control-height: var(--input-height-sm-touch);
+  }
+}
+
+.root[data-cell-align='start']
+  .tableScroll[data-view='table']
+  .table
+  tbody
+  tr
+  > :is(.td, .selectCell)
+  [data-checkbox] {
+  margin-block: calc((var(--cell-control-height) - var(--checkbox-size)) / 2);
+}
+
+/* Anything scrolled or focused into view inside an UNPINNED cell — the cell
+   itself or a focusable control in it — stops clear of the pinned columns
+   instead of under them. Scroll margin on those targets rather than scroll
+   padding on the box: padding would also treat the pinned cells' own controls
+   as hidden, and a Tab onto a row's select box would scroll the table back.
+   The controls are named rather than matched with `*`, which would test every
+   element on the page on each style recalculation. Last in the file for its
+   specificity. */
+.tableScroll :is(.td, .th):not([data-pinned]),
+.tableScroll
+  :is(.td, .th):not([data-pinned])
+  :is(input, button, select, textarea, a[href], [tabindex]) {
+  scroll-margin-left: var(--frozen-left);
+  scroll-margin-right: var(--frozen-right);
+}
+
+/* A field's message line under a control in a TABLE cell ([data-field-message]:
+   error / warning / helper). Cells don't wrap (white-space above), so a long
+   message ran on one line, widened its column to the cell cap and was then
+   cut off. Now every message line wraps within its field, and none widens
+   its column by its own length (`contain: inline-size`) — a helper such as
+   "3 short" never does. An error or warning instead makes its cell at least
+   16rem wide, so a sentence-long server message takes a few lines rather
+   than a column of single words beside a narrow number field. Table view
+   only: a card field has its own width and wraps already. */
+.tableScroll[data-view='table'] .td [data-field-message] {
+  white-space: normal;
+  contain: inline-size;
+}
+
+.tableScroll[data-view='table']
+  .td
+  :is([data-field-message='error'], [data-field-message='warning']) {
+  min-inline-size: 16rem;
 }

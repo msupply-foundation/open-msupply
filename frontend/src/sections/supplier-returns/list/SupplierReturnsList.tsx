@@ -536,6 +536,7 @@ const SupplierReturnsList: Component = () => {
         <Dialog
           open
           onClose={() => setDisabledNoticeOpen(false)}
+          testId="manual-returns-disabled-notice"
           title={t('button.new-return')}
           description={t('messages.manual-returns-preferences-disabled')}
           actions={

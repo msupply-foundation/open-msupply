@@ -44,6 +44,77 @@ const availableUnitsOf = (node: ItemNode): number =>
     0
   );
 
+/** What `lookUpItemById` found for an id. */
+export type ItemLookup =
+  | { kind: 'found'; item: ItemOption }
+  /** The id resolves to no item this store can see. */
+  | { kind: 'missing' }
+  /** The request failed — graphqlFetch has already reported it. */
+  | { kind: 'failed' };
+
+/**
+ * Resolve one item by id, telling a failed request apart from an id that
+ * resolves to nothing — for a caller that must act differently on each (a
+ * scan whose code is known, spec/barcode-scanning: a failed lookup opens
+ * nothing). Reuses the search operation with an id filter.
+ */
+export const lookUpItemById = async (
+  storeId: string,
+  id: string
+): Promise<ItemLookup> => {
+  const result = await graphqlFetch(ItemsWithStock, {
+    storeId,
+    filter: { id: { equalTo: id } },
+    page: { first: 1 },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const node = result.data.items.nodes[0];
+  if (!node) return { kind: 'missing' };
+  return {
+    kind: 'found',
+    item: {
+      id: node.id,
+      code: node.code,
+      name: node.name,
+      unitName: node.unitName,
+      availableUnits: availableUnitsOf(node),
+      isVaccine: node.isVaccine,
+      doses: node.doses,
+      defaultPackSize: node.defaultPackSize,
+      defaultSellPricePerPack:
+        node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+    },
+  };
+};
+
+/**
+ * Resolve one item by id — the label restore for a picker reopened with only a
+ * stored id (e.g. the report argument form re-opened from URL arguments,
+ * spec/reports S3). Undefined when the id doesn't resolve or the request
+ * failed (the picker just shows empty).
+ */
+export const fetchItemById = async (
+  storeId: string,
+  id: string
+): Promise<ItemOption | undefined> => {
+  const lookup = await lookUpItemById(storeId, id);
+  return lookup.kind === 'found' ? lookup.item : undefined;
+};
+
+/**
+ * Fold one already-on-document probe answer into the search's presence map
+ * (the option-row marker's backing state). Every probed id gets an explicit
+ * true/false — not just the hits — so re-probing an item whose lines were
+ * since deleted clears its stale mark instead of leaving it stuck true.
+ */
+export const presencePatch = (
+  probedIds: string[],
+  presentIds: string[]
+): Record<string, boolean> => {
+  const hits = new Set(presentIds);
+  return Object.fromEntries(probedIds.map(id => [id, hits.has(id)]));
+};
+
 /**
  * Fetch one page of stock items for the search selector: server-side filtered
  * by `search` (codeOrName) and excluding `excludeItemIds`. Returns the page's
@@ -61,52 +132,6 @@ const availableUnitsOf = (node: ItemNode): number =>
  * fetcher. excludeItemIds is an accessor (not a snapshot) so each fetch uses
  * the current exclusions without recreating the search primitive.
  */
-/**
- * Resolve one item by id — the label restore for a picker reopened with only a
- * stored id (e.g. the report argument form re-opened from URL arguments,
- * spec/reports S3). Reuses the search operation with an id filter; undefined
- * when the id doesn't resolve (the picker just shows empty).
- */
-export const fetchItemById = async (
-  storeId: string,
-  id: string
-): Promise<ItemOption | undefined> => {
-  const result = await graphqlFetch(ItemsWithStock, {
-    storeId,
-    filter: { id: { equalTo: id } },
-    page: { first: 1 },
-  });
-  if (result.kind !== 'success') return undefined;
-  const node = result.data.items.nodes[0];
-  if (!node) return undefined;
-  return {
-    id: node.id,
-    code: node.code,
-    name: node.name,
-    unitName: node.unitName,
-    availableUnits: availableUnitsOf(node),
-    isVaccine: node.isVaccine,
-    doses: node.doses,
-    defaultPackSize: node.defaultPackSize,
-    defaultSellPricePerPack:
-      node.itemStoreProperties?.defaultSellPricePerPack ?? 0,
-  };
-};
-
-/**
- * Fold one already-on-document probe answer into the search's presence map
- * (the option-row marker's backing state). Every probed id gets an explicit
- * true/false — not just the hits — so re-probing an item whose lines were
- * since deleted clears its stale mark instead of leaving it stuck true.
- */
-export const presencePatch = (
-  probedIds: string[],
-  presentIds: string[]
-): Record<string, boolean> => {
-  const hits = new Set(presentIds);
-  return Object.fromEntries(probedIds.map(id => [id, hits.has(id)]));
-};
-
 export const itemPageFetcher =
   (
     storeId: string,
