@@ -80,8 +80,9 @@ interface RailFlyout {
   isOpen: (item: NavItem) => boolean;
 }
 
-/* Hover intent before a flyout opens, and the grace period before it closes —
-   long enough for the pointer to cross the gap to the panel. */
+/* Hover intent before a flyout opens, and the grace period before it closes.
+   The stretch between the icon and the panel does not run this down — the
+   close timer looks again while the pointer is there (scheduleClose). */
 const HOVER_DELAY = 110;
 const CLOSE_DELAY = 180;
 
@@ -428,6 +429,39 @@ export const MenuBar = (props: MenuBarProps) => {
   };
   onCleanup(clearTimers);
 
+  // Where the pointer is while a flyout is open, so the close timer can tell
+  // "on its way to the panel" from "gone" (#425). Tracked only while one is
+  // open, and reset with each, so a stale position never holds a panel open
+  // that the pointer never went near (a keyboard-opened one, say).
+  let pointerAt: { x: number; y: number } | undefined;
+  const trackPointer = (e: PointerEvent) => {
+    pointerAt = { x: e.clientX, y: e.clientY };
+  };
+  createEffect(() => {
+    if (!flyout()) return;
+    pointerAt = undefined;
+    window.addEventListener('pointermove', trackPointer, { passive: true });
+    onCleanup(() => window.removeEventListener('pointermove', trackPointer));
+  });
+  // The stretch between the rail button and the panel — the rail's own
+  // padding, its edge strip, and the gap past it — level with either of them.
+  // The pointer crossing it has left the button but not reached the panel, so
+  // without this a slow crossing, or a pause on the way, closed the flyout.
+  // The facing edges are min/max of the two boxes, so it holds in RTL too.
+  const betweenAnchorAndPanel = () => {
+    const anchor = flyout()?.anchor;
+    if (!anchor || !panel || !pointerAt) return false;
+    const a = anchor.getBoundingClientRect();
+    const p = panel.getBoundingClientRect();
+    const { x, y } = pointerAt;
+    return (
+      x >= Math.min(a.right, p.right) &&
+      x <= Math.max(a.left, p.left) &&
+      y >= Math.min(a.top, p.top) &&
+      y <= Math.max(a.bottom, p.bottom)
+    );
+  };
+
   const rail: RailFlyout = {
     // Only the docked rail collapses; the overlay always shows labels.
     collapsed: () => !props.isOverlay && props.nav.railCollapsed(),
@@ -456,6 +490,10 @@ export const MenuBar = (props: MenuBarProps) => {
         // Focus inside the panel keeps it open: a keyboard user has stepped in,
         // and the anchor's blur is what brought us here.
         if (panel?.contains(document.activeElement)) return;
+        // Still between the button and the panel: look again rather than
+        // close. Reaching the panel or another icon clears this timer; moving
+        // anywhere else lets the next look close it.
+        if (betweenAnchorAndPanel()) return rail.scheduleClose();
         setFlyout(undefined);
       }, CLOSE_DELAY);
     },

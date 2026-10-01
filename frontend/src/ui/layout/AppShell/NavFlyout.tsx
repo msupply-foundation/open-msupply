@@ -21,7 +21,8 @@ export interface FlyoutTarget {
    that overhang, so a tall flyout — one pushed up the viewport by the clamp
    below — covered the toggle. 12 is exactly that overhang: any wider and the
    panel reads as detached from the rail, and the pointer has further to go to
-   reach it (#425). The gap itself is bridged — see .flyout::before. */
+   reach it (#425). Crossing it can't close the flyout: MenuBar's close timer
+   holds off while the pointer is between the button and the panel. */
 const GAP = 12;
 const EDGE = 8;
 
@@ -97,13 +98,6 @@ export const NavFlyout = (props: {
     );
     panel.style.left = `${Math.round(left)}px`;
     panel.style.top = `${Math.round(top)}px`;
-    // How far the panel stands off the rail, for the CSS bridge across it. It
-    // is GAP unless the viewport clamp above pushed the panel over.
-    const gap = rtl ? rail.left - (left + width) : left - rail.right;
-    panel.style.setProperty(
-      '--flyout-gap',
-      `${Math.max(0, Math.round(gap))}px`
-    );
   };
 
   // The panel content is inserted by render effects, which run before this
