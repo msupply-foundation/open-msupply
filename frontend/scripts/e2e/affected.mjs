@@ -4,18 +4,19 @@
  *
  *   pnpm e2e:affected                    # vs merge-base with origin/develop
  *   pnpm e2e:affected --base origin/v3.2 # another base
- *   pnpm e2e:affected --files a.ts b.rs  # explicit repo-relative paths
+ *   pnpm e2e:affected --files a.ts b.rs  # explicit paths (cwd- or repo-rel.)
  *   pnpm e2e:affected --run [-- <pw args>]   # run the selection locally
  *   pnpm e2e:affected --json             # machine-readable (CI)
  *   pnpm e2e:affected --list             # suite names only, one per line
- *   pnpm e2e:affected --check            # lint the map (part of `pnpm check`)
+ *   pnpm e2e:affected --check            # lint the config (in `pnpm check`)
  *
- * The map and the reasoning behind it live in e2e/affected.config.mjs. In
- * short: front-end changes are walked up the runtime import graph to the
- * screens that reach them; server changes are matched to the domains each
- * suite owns, plus one hop of `crate::<module>` references; anything the map
- * does not know runs smoke and is named, so the map gets extended rather
- * than silently selecting nothing.
+ * The small amount of configuration, and the reasoning behind what is
+ * derived instead, live in e2e/affected.config.mjs. In short: front-end
+ * changes are walked up the runtime import graph to the screens that reach
+ * them; server changes are followed through the GraphQL seam (service module
+ * → resolver → root field → front-end document → screen); anything neither
+ * can place runs smoke and is named, so the config gets extended rather than
+ * silently selecting nothing.
  *
  * "Changed" is everything a reviewer would see: committed since the
  * merge-base, staged, unstaged, and untracked — an agent asks this before it
@@ -24,7 +25,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import path, { matchesGlob } from 'node:path';
+import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const posix = path.posix;
@@ -33,30 +34,82 @@ const FE_DIR = path.resolve(SCRIPT_DIR, '../..');
 
 // --- Matching -----------------------------------------------------------
 
+// node:path's matchesGlob recompiles the pattern on every call — ~350 globs
+// × ~10k files made `--check` take 20s. Compile once; `*`, `**`, `?` only.
+const globCache = new Map();
+export const compileGlob = glob => {
+  let re = globCache.get(glob);
+  if (re) return re;
+  let src = '^';
+  for (let i = 0; i < glob.length; i++) {
+    const c = glob[i];
+    if (c === '*' && glob[i + 1] === '*') {
+      if (glob[i + 2] === '/') {
+        src += '(?:.*/)?';
+        i += 2;
+      } else {
+        src += '.*';
+        i += 1;
+      }
+    } else if (c === '*') src += '[^/]*';
+    else if (c === '?') src += '[^/]';
+    else src += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  }
+  re = new RegExp(`${src}$`);
+  globCache.set(glob, re);
+  return re;
+};
+export const matchesGlob = (file, glob) => compileGlob(glob).test(file);
 const matchesAny = (file, globs) => globs.some(g => matchesGlob(file, g));
 
-// A suite owns its spec file as well as its screens, so an edit to the spec
-// (or to a helper only it imports) selects it through the same graph walk.
-export const ownersOf = config => {
+// --- Owners: suites and uncovered sections, by convention -------------------
+
+const SPEC = /^frontend\/e2e\/specs\/([^/]+)\.spec\.ts$/;
+const SECTION = /^frontend\/src\/sections\/([^/]+)\//;
+const specNames = files =>
+  [...files]
+    .map(f => SPEC.exec(f)?.[1])
+    .filter(Boolean)
+    .sort();
+const sectionNames = files =>
+  [
+    ...new Set([...files].map(f => SECTION.exec(f)?.[1]).filter(Boolean)),
+  ].sort();
+
+/**
+ * `<name>-regression.spec.ts` owns `frontend/src/sections/<name>/**` unless
+ * config.overrides says otherwise. A suite also owns its spec file, so an
+ * edit to the spec (or to a helper only it imports) selects it through the
+ * same graph walk. A section no suite owns is an `uncovered` owner: the graph
+ * treats it as a boundary, so a change to items/ is reported as "no e2e
+ * coverage for items" rather than walking on up to the app shell.
+ */
+export const ownersOf = (config, files) => {
   const owners = [];
-  for (const [name, s] of Object.entries(config.suites)) {
+  for (const name of specNames(files)) {
+    const frontend = config.overrides[name] ?? [
+      `frontend/src/sections/${name.replace(/-regression$/, '')}/**`,
+    ];
     owners.push({
       name,
       kind: 'suite',
-      frontend: [...s.frontend, `frontend/e2e/specs/${name}.spec.ts`],
-      server: s.server,
+      frontend: [...frontend, `frontend/e2e/specs/${name}.spec.ts`],
     });
   }
-  for (const [name, s] of Object.entries(config.uncovered)) {
-    owners.push({ name, kind: 'uncovered', ...s });
+  for (const section of sectionNames(files)) {
+    const probe = `frontend/src/sections/${section}/index.tsx`;
+    if (!owners.some(o => matchesAny(probe, o.frontend)))
+      owners.push({
+        name: section,
+        kind: 'uncovered',
+        frontend: [`frontend/src/sections/${section}/**`],
+      });
   }
   return owners;
 };
 
 const frontendOwners = (owners, file) =>
   owners.filter(o => matchesAny(file, o.frontend));
-const serverOwners = (owners, file) =>
-  owners.filter(o => matchesAny(file, o.server));
 
 // --- Front-end import graph ----------------------------------------------
 
@@ -238,41 +291,395 @@ export const walkFrontend = (file, importers, owners, ignore) => {
   return { hits: [...hits.values()], shell };
 };
 
-// --- Server: one hop of module references ---------------------------------
+// --- Server: derived through the GraphQL seam -------------------------------
 
-const SERVICE_MODULE = /^server\/service\/src\/([a-z0-9_]+)(?:\.rs$|\/)/;
+const SERVICE_SRC = 'server/service/src/';
+const SERVICE_MODULE = /^server\/service\/src\/([a-z0-9_]+)/;
+const GRAPHQL_FILE = /^server\/graphql\/([^/]+)\/.*\.rs$/;
+const REPOSITORY_SRC = 'server/repository/src/';
+const RUST_TEST = /(^|\/)tests?\/|tests?\.rs$|_tests?\.rs$/;
 
 /**
- * For each service module, the files OUTSIDE it that name it directly —
- * `crate::<module>` inside the service crate, `service::<module>` from any
- * other crate (graphql, server, cli).
+ * Top-level segments after `<root>::` in Rust source — `crate::stock_line`,
+ * and every entry of a grouped `use crate::{ invoice::X, stock_line::{a, b} }`.
+ * Grouped imports are the common form (400+ files), so a plain
+ * `/crate::(\w+)/` misses most edges.
  */
-export const buildServiceReferrers = (files, read) => {
-  const referrers = new Map();
-  for (const f of files) {
-    if (!f.startsWith('server/') || !f.endsWith('.rs')) continue;
-    const own = SERVICE_MODULE.exec(f)?.[1];
-    const re = f.startsWith('server/service/src/')
-      ? /\bcrate::([a-z0-9_]+)/g
-      : /\bservice::([a-z0-9_]+)/g;
-    for (const [, mod] of read(f).matchAll(re)) {
-      if (mod === own) continue;
-      if (!referrers.has(mod)) referrers.set(mod, new Set());
-      referrers.get(mod).add(f);
+export const rustRefs = (src, root) => {
+  const out = new Set();
+  const re = new RegExp(`\\b${root}::(\\{|[A-Za-z_][A-Za-z0-9_]*)`, 'g');
+  for (const m of src.matchAll(re)) {
+    if (m[1] !== '{') {
+      out.add(m[1]);
+      continue;
+    }
+    let i = m.index + m[0].length;
+    let depth = 1;
+    let tok = '';
+    let atTop = true; // false once past a `::` or inside a nested group
+    while (i < src.length && depth) {
+      const c = src[i++];
+      if (c === '{') {
+        depth++;
+        continue;
+      }
+      if (c === '}') {
+        depth--;
+        if (depth === 1) atTop = true;
+        continue;
+      }
+      if (depth !== 1) continue;
+      if (/[A-Za-z0-9_]/.test(c)) {
+        if (atTop) tok += c;
+      } else {
+        if (tok) out.add(tok);
+        tok = '';
+        if (c === ':') atTop = false;
+        if (c === ',') atTop = true;
+      }
+    }
+    if (tok) out.add(tok);
+  }
+  out.delete('self');
+  out.delete('super');
+  return out;
+};
+
+const camel = s => s.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
+
+/** `async fn name(...) { body }` pairs in a Rust source, tests excluded. */
+const asyncFns = src => {
+  const out = [];
+  for (const m of src.matchAll(/\basync fn ([a-z_][a-z0-9_]*)\s*\(/g)) {
+    if (m[1].startsWith('test')) continue;
+    let i = m.index + m[0].length;
+    let depth = 1;
+    while (i < src.length && depth) {
+      const c = src[i++];
+      if (c === '(') depth++;
+      else if (c === ')') depth--;
+    }
+    while (i < src.length && src[i] !== '{' && src[i] !== ';') i++;
+    if (src[i] !== '{') continue;
+    const start = i;
+    depth = 0;
+    do {
+      const c = src[i++];
+      if (c === '{') depth++;
+      else if (c === '}') depth--;
+    } while (i < src.length && depth);
+    out.push({ name: m[1], body: src.slice(start, i) });
+  }
+  return out;
+};
+
+/**
+ * Everything the server side needs, built once from the tree:
+ *
+ *   service module ─(use service::m | service_provider.m_service)─▶ resolver
+ *   resolver ─(impl XQueries { async fn f })─▶ root field `f`
+ *   root field ◀─(query { f })─ frontend .graphql document
+ *   document ─(sibling .generated.ts, import graph)─▶ suites
+ *
+ * plus repository file ─(pub struct/enum/trait names it defines)─▶ service
+ * modules, and one hop of `crate::m` inside the service crate. Modules (and
+ * repository files) referenced by more than half of the resolvers (or
+ * service modules) are plumbing — `all`'s job, not an edge.
+ */
+export const buildServerIndex = (
+  gqlParse,
+  { config, files, read, importers, owners }
+) => {
+  const isCode = f => f.endsWith('.rs') && !RUST_TEST.test(f);
+  const moduleOf = f => SERVICE_MODULE.exec(f)?.[1];
+  const serviceFiles = [...files].filter(
+    f => f.startsWith(SERVICE_SRC) && isCode(f)
+  );
+  const serviceMods = new Set(serviceFiles.map(moduleOf));
+  const gqlFiles = [...files].filter(
+    f =>
+      GRAPHQL_FILE.test(f) &&
+      isCode(f) &&
+      !/^server\/graphql\/(core|types)\//.test(f)
+  );
+  const crateOf = f => GRAPHQL_FILE.exec(f)[1];
+
+  // repository: the public names each file defines
+  const repoFiles = [...files].filter(
+    f =>
+      f.startsWith(REPOSITORY_SRC) &&
+      isCode(f) &&
+      !matchesAny(f, config.all) &&
+      !matchesAny(f, config.ignore)
+  );
+  const repoByName = new Map();
+  for (const f of repoFiles) {
+    const seg = f
+      .slice(REPOSITORY_SRC.length)
+      .replace(/^db_diesel\//, '')
+      .replace(/\.rs$/, '')
+      .split('/')[0];
+    const names = [
+      seg,
+      ...[...read(f).matchAll(/\bpub (?:struct|enum|type|trait) (\w+)/g)].map(
+        m => m[1]
+      ),
+    ];
+    for (const n of names) {
+      if (!repoByName.has(n)) repoByName.set(n, new Set());
+      repoByName.get(n).add(f);
     }
   }
-  return referrers;
+  const repoFilesFor = refs => {
+    const out = new Set();
+    for (const n of refs) for (const f of repoByName.get(n) ?? []) out.add(f);
+    return out;
+  };
+
+  // service_provider.rs: `pub name_service: Box<dyn NameServiceTrait>` →
+  // the module that defines `pub trait NameServiceTrait`.
+  const traitToMod = new Map();
+  for (const f of serviceFiles)
+    for (const m of read(f).matchAll(/\bpub trait (\w+)/g))
+      traitToMod.set(m[1], moduleOf(f));
+  const providerField = new Map();
+  const provider = `${SERVICE_SRC}service_provider.rs`;
+  if (files.has(provider))
+    for (const m of read(provider).matchAll(/\bpub (\w+): Box<dyn (\w+)>/g))
+      if (traitToMod.has(m[2])) providerField.set(m[1], traitToMod.get(m[2]));
+  const serviceRefs = src => {
+    const out = new Set(
+      [...rustRefs(src, 'service')].filter(m => serviceMods.has(m))
+    );
+    for (const m of src.matchAll(/\.(\w+_service)\b/g))
+      if (providerField.has(m[1])) out.add(providerField.get(m[1]));
+    return out;
+  };
+
+  // inside the service crate: module → modules referencing crate::<it>;
+  // repository file → service modules using something it defines
+  const serviceHop = new Map();
+  const repoToService = new Map();
+  for (const f of serviceFiles) {
+    const own = moduleOf(f);
+    const src = read(f);
+    for (const m of rustRefs(src, 'crate')) {
+      if (m === own || !serviceMods.has(m)) continue;
+      if (!serviceHop.has(m)) serviceHop.set(m, new Set());
+      serviceHop.get(m).add(own);
+    }
+    for (const rf of repoFilesFor(rustRefs(src, 'repository'))) {
+      if (!repoToService.has(rf)) repoToService.set(rf, new Set());
+      repoToService.get(rf).add(own);
+    }
+  }
+
+  // resolvers: each file's service and repository references
+  const gqlService = new Map();
+  const gqlRepo = new Map();
+  for (const f of gqlFiles) {
+    const src = read(f);
+    gqlService.set(f, serviceRefs(src));
+    gqlRepo.set(f, repoFilesFor(rustRefs(src, 'repository')));
+  }
+
+  // plumbing: referenced by more than half of the resolvers / service modules
+  const plumbing = new Set();
+  const refCount = new Map();
+  for (const refs of gqlService.values())
+    for (const m of refs) refCount.set(m, (refCount.get(m) ?? 0) + 1);
+  for (const [m, n] of refCount) if (n > gqlFiles.length / 2) plumbing.add(m);
+  const plumbingRepo = new Set();
+  for (const [rf, mods] of repoToService)
+    if (mods.size > serviceMods.size / 2) plumbingRepo.add(rf);
+
+  // root fields: `async fn`s in files holding `impl XQueries/XMutations`,
+  // with the free functions the body calls resolved to the crate file that
+  // defines each (only when exactly one does — shared helper names such as
+  // `map_response` exist in every batch_mutations file).
+  const fnDefs = new Map(); // crate → name → Set(file)
+  for (const f of gqlFiles) {
+    const c = crateOf(f);
+    if (!fnDefs.has(c)) fnDefs.set(c, new Map());
+    for (const m of read(f).matchAll(
+      /\bpub (?:async )?fn ([a-z_][a-z0-9_]*)/g
+    )) {
+      if (!fnDefs.get(c).has(m[1])) fnDefs.get(c).set(m[1], new Set());
+      fnDefs.get(c).get(m[1]).add(f);
+    }
+  }
+  const fieldDeps = new Map(); // camelCase field → { svc, repo, files }
+  const fileFields = new Map(); // resolver file → fields it serves
+  const rootFileFields = new Map(); // root impl file → fields it defines
+  for (const f of gqlFiles) {
+    const src = read(f);
+    if (!/\bimpl \w+(Queries|Mutations|Subscriptions)\b/.test(src)) continue;
+    const crate = crateOf(f);
+    rootFileFields.set(f, new Set());
+    for (const { name, body } of asyncFns(src)) {
+      rootFileFields.get(f).add(camel(name));
+      const served = new Set();
+      // general is a grab-bag: its lib.rs's own imports say nothing about
+      // one field. Elsewhere the root file is the resolver.
+      if (crate !== 'general') served.add(f);
+      for (const m of body.matchAll(/\b([a-z_][a-z0-9_]*)\s*\(/g)) {
+        const defs = [...(fnDefs.get(crate).get(m[1]) ?? [])].filter(
+          d => d !== f
+        );
+        if (defs.length === 1) served.add(defs[0]);
+      }
+      const field = camel(name);
+      const dep = fieldDeps.get(field) ?? {
+        svc: new Set(),
+        repo: new Set(),
+        files: new Set(),
+      };
+      for (const sf of served) {
+        dep.files.add(sf);
+        for (const m of gqlService.get(sf))
+          if (!plumbing.has(m)) dep.svc.add(m);
+        for (const r of gqlRepo.get(sf))
+          if (!plumbingRepo.has(r)) dep.repo.add(r);
+        if (!fileFields.has(sf)) fileFields.set(sf, new Set());
+        fileFields.get(sf).add(field);
+      }
+      fieldDeps.set(field, dep);
+    }
+  }
+  const crateFiles = new Map();
+  for (const f of gqlFiles) {
+    if (!crateFiles.has(crateOf(f))) crateFiles.set(crateOf(f), []);
+    crateFiles.get(crateOf(f)).push(f);
+  }
+
+  // front-end documents: root field → suites that reach the document
+  const fieldSuites = new Map(); // field → Map(suite → distance)
+  const fieldUncovered = new Map();
+  const fieldShell = new Set();
+  for (const doc of files) {
+    if (!doc.endsWith('.graphql') || !doc.startsWith('frontend/src/')) continue;
+    const gen = doc.replace(/\.graphql$/, '.generated.ts');
+    if (!files.has(gen)) continue;
+    let ast;
+    try {
+      ast = gqlParse(read(doc));
+    } catch {
+      continue; // codegen will complain; not this script's job
+    }
+    const roots = new Set();
+    for (const def of ast.definitions) {
+      if (def.kind !== 'OperationDefinition') continue;
+      for (const sel of def.selectionSet.selections)
+        if (sel.kind === 'Field' && sel.name.value !== '__typename')
+          roots.add(sel.name.value);
+    }
+    const { hits, shell } = walkFrontend(gen, importers, owners, config.ignore);
+    for (const field of roots) {
+      if (!fieldSuites.has(field)) fieldSuites.set(field, new Map());
+      for (const h of hits) {
+        if (h.owner.kind === 'suite') {
+          const prev = fieldSuites.get(field).get(h.owner.name);
+          if (prev === undefined || h.distance < prev)
+            fieldSuites.get(field).set(h.owner.name, h.distance);
+        } else {
+          if (!fieldUncovered.has(field)) fieldUncovered.set(field, new Set());
+          fieldUncovered.get(field).add(h.owner.name);
+        }
+      }
+      if (shell) fieldShell.add(field);
+    }
+  }
+
+  // inverses
+  const svcFields = new Map();
+  const repoFields = new Map();
+  for (const [field, dep] of fieldDeps) {
+    for (const m of dep.svc) {
+      if (!svcFields.has(m)) svcFields.set(m, new Set());
+      svcFields.get(m).add(field);
+    }
+    for (const r of dep.repo) {
+      if (!repoFields.has(r)) repoFields.set(r, new Set());
+      repoFields.get(r).add(field);
+    }
+  }
+
+  const isPlumbing = file => {
+    const mod = moduleOf(file);
+    return (
+      (file.startsWith(SERVICE_SRC) && mod && plumbing.has(mod)) ||
+      plumbingRepo.has(file)
+    );
+  };
+
+  /** Fields a server file reaches, each at a distance. */
+  const fieldsOf = file => {
+    const fields = new Map();
+    const add = (set, d) => {
+      for (const f of set ?? [])
+        if (!fields.has(f) || fields.get(f) > d) fields.set(f, d);
+    };
+    // A service module's own fields, then the modules that reference
+    // crate::<it> — another domain, so beyond "near" (≤ 1): the module's own
+    // suites run locally, the referencing domains are the nightly's.
+    const addModule = (mod, d) => {
+      add(svcFields.get(mod), d);
+      for (const m of serviceHop.get(mod) ?? [])
+        if (!plumbing.has(m)) add(svcFields.get(m), d + 2);
+    };
+    const mod = moduleOf(file);
+    if (file.startsWith(SERVICE_SRC) && mod) {
+      addModule(mod, 0);
+    } else if (GRAPHQL_FILE.test(file)) {
+      if (rootFileFields.has(file)) add(rootFileFields.get(file), 0);
+      else if (fileFields.has(file)) add(fileFields.get(file), 0);
+      else
+        for (const g of crateFiles.get(crateOf(file)) ?? [])
+          add(fileFields.get(g), 0);
+    } else if (file.startsWith(REPOSITORY_SRC)) {
+      // Resolvers naming the type directly, then the services built on it —
+      // one hop, like a front-end importer.
+      add(repoFields.get(file), 0);
+      for (const m of repoToService.get(file) ?? []) addModule(m, 1);
+    } else return null;
+    return fields;
+  };
+
+  const classify = file => {
+    const fields = fieldsOf(file);
+    if (!fields) return null;
+    const suites = new Map();
+    const uncovered = new Set();
+    let shell = false;
+    for (const [field, d] of fields) {
+      for (const [s, fd] of fieldSuites.get(field) ?? []) {
+        const distance = d + fd;
+        if (!suites.has(s) || suites.get(s).distance > distance)
+          suites.set(s, { name: s, distance, chain: [file, field] });
+      }
+      for (const u of fieldUncovered.get(field) ?? []) uncovered.add(u);
+      if (fieldShell.has(field)) shell = true;
+    }
+    return {
+      fields: [...fields.keys()],
+      suites: [...suites.values()],
+      uncovered: [...uncovered],
+      shell,
+    };
+  };
+
+  return { classify, isPlumbing, plumbing, plumbingRepo };
 };
 
 // --- Classification -------------------------------------------------------
 
 /**
  * One changed path → how it is charged. Precedence (first match wins):
- * rules → ignore → all → import graph → suites' server globs → uncovered →
+ * rules → ignore → all → plumbing → import graph → server derivation →
  * unmapped. See e2e/affected.config.mjs.
  */
 export const classify = (file, ctx) => {
-  const { config, owners, importers, referrers, files } = ctx;
+  const { config, owners, importers, server, files } = ctx;
   const rule = config.rules.find(r => matchesAny(file, r.paths));
   if (rule)
     return {
@@ -284,6 +691,7 @@ export const classify = (file, ctx) => {
   // A scripts-only edit to a package.json changes no dependency and no build.
   if (ctx.scriptsOnly?.has(file)) return { file, via: 'ignore' };
   if (matchesAny(file, config.all)) return { file, via: 'all' };
+  if (server?.isPlumbing(file)) return { file, via: 'all', plumbing: true };
 
   if (inGraph(file)) {
     // A deleted file has no node: charge its own owners, and trust its
@@ -316,31 +724,16 @@ export const classify = (file, ctx) => {
     };
   }
 
-  if (file.startsWith('server/')) {
-    const direct = serverOwners(owners, file);
-    const suites = new Map(
-      direct
-        .filter(o => o.kind === 'suite')
-        .map(o => [o.name, { name: o.name, distance: 0 }])
-    );
-    const mod = SERVICE_MODULE.exec(file)?.[1];
-    for (const ref of (mod && referrers.get(mod)) ?? []) {
-      for (const o of serverOwners(owners, ref)) {
-        if (o.kind === 'suite' && !suites.has(o.name))
-          suites.set(o.name, { name: o.name, distance: 1, chain: [file, ref] });
-      }
-    }
-    const uncovered = direct
-      .filter(o => o.kind === 'uncovered')
-      .map(o => o.name);
-    if (suites.size || uncovered.length)
-      return { file, via: 'server', suites: [...suites.values()], uncovered };
+  if (file.startsWith('server/') && server) {
+    const r = server.classify(file);
+    if (r && (r.suites.length || r.uncovered.length || r.fields.length))
+      return { file, via: 'server', deleted: !files.has(file), ...r };
   }
   return { file, via: 'unmapped' };
 };
 
 /** Fold per-file results into one selection. */
-export const select = (results, config) => {
+export const select = (results, config, suiteNames) => {
   const suites = new Map();
   const charge = (s, reason) => {
     const prev = suites.get(s.name);
@@ -367,9 +760,8 @@ export const select = (results, config) => {
         suites.set(name, { name, distance: 0, reason: 'smoke' });
     }
   }
-  const allNames = Object.keys(config.suites);
   const selected = full
-    ? allNames.map(
+    ? suiteNames.map(
         n => suites.get(n) ?? { name: n, distance: 2, reason: 'full run' }
       )
     : [...suites.values()];
@@ -404,23 +796,24 @@ export const select = (results, config) => {
   };
 };
 
-// --- Map lint (--check) ---------------------------------------------------
+// --- Config lint (--check) --------------------------------------------------
 
 export const checkConfig = (config, files) => {
   const problems = [];
-  const owners = ownersOf(config);
-  const names = new Set(Object.keys(config.suites));
-
-  const specs = [...files]
-    .map(f => /^frontend\/e2e\/specs\/([^/]+)\.spec\.ts$/.exec(f)?.[1])
-    .filter(Boolean);
-  for (const s of specs)
-    if (!names.has(s))
-      problems.push(`spec ${s}.spec.ts has no entry in suites`);
-  for (const n of names)
-    if (!specs.includes(n)) problems.push(`suites.${n} names no spec file`);
-  for (const n of [...config.smoke, ...config.rules.flatMap(r => r.suites)]) {
+  const names = new Set(specNames(files));
+  for (const n of Object.keys(config.overrides))
+    if (!names.has(n)) problems.push(`overrides.${n} names no spec file`);
+  for (const n of [...config.smoke, ...config.rules.flatMap(r => r.suites)])
     if (!names.has(n)) problems.push(`'${n}' (smoke/rules) is not a suite`);
+
+  // Every suite owns something: its same-named section, or an override.
+  for (const n of names) {
+    if (n in config.overrides) continue;
+    const section = n.replace(/-regression$/, '');
+    if (!sectionNames(files).includes(section))
+      problems.push(
+        `${n} owns nothing: no frontend/src/sections/${section}/ — add it to 'overrides'`
+      );
   }
 
   // Every glob must match something now: a typo'd glob selects nothing,
@@ -428,44 +821,14 @@ export const checkConfig = (config, files) => {
   const globs = [
     ...config.all.map(g => ['all', g]),
     ...config.rules.flatMap(r => r.paths.map(g => ['rules', g])),
-    ...owners.flatMap(o => [...o.frontend, ...o.server].map(g => [o.name, g])),
-  ];
-  for (const [where, g] of globs) {
-    if (
-      !g.startsWith('frontend/e2e/specs/') &&
-      ![...files].some(f => matchesGlob(f, g))
-    )
-      problems.push(`${where}: '${g}' matches no file`);
-  }
-
-  // Every section and every server domain is placed somewhere on purpose. A
-  // directory counts as placed when any file in it is — a grab-bag crate like
-  // graphql/general is split across several suites, file by file.
-  const placed = f =>
-    matchesAny(f, config.ignore) ||
-    matchesAny(f, config.all) ||
-    config.rules.some(r => matchesAny(f, r.paths)) ||
-    owners.some(o => matchesAny(f, o.frontend) || matchesAny(f, o.server));
-  const topLevel = prefix => [
-    ...new Set(
-      [...files]
-        .filter(f => f.startsWith(prefix))
-        .map(f => prefix + f.slice(prefix.length).split('/')[0])
+    ...Object.entries(config.overrides).flatMap(([n, gs]) =>
+      gs.map(g => [n, g])
     ),
   ];
-  for (const entry of [
-    ...topLevel('frontend/src/sections/'),
-    ...topLevel('server/service/src/'),
-    ...topLevel('server/graphql/'),
-  ]) {
-    const under = files.has(entry)
-      ? [entry]
-      : [...files].filter(f => f.startsWith(`${entry}/`));
-    if (!under.some(placed))
-      problems.push(
-        `${entry} is owned by no suite — add it to a suite, or to 'uncovered'`
-      );
-  }
+  const list = [...files];
+  for (const [where, g] of globs)
+    if (!list.some(f => matchesGlob(f, g)))
+      problems.push(`${where}: '${g}' matches no file`);
   return problems;
 };
 
@@ -526,14 +889,29 @@ const scriptsOnlyPackageJsons = (root, base, changed) => {
   return out;
 };
 
-const loadTypeScript = () => {
+const load = name => {
   try {
-    return createRequire(path.join(FE_DIR, 'package.json'))('typescript');
+    return createRequire(path.join(FE_DIR, 'package.json'))(name);
   } catch {
     throw new Error(
-      'typescript is not installed — run `pnpm install` in frontend/'
+      `${name} is not installed — run \`pnpm install\` in frontend/`
     );
   }
+};
+
+/**
+ * `--files` paths as a person types them: relative to where they ran the
+ * command (pnpm scripts run in frontend/, so `src/x.ts` must mean
+ * frontend/src/x.ts), or already repo-relative. A path that no longer
+ * exists is cwd-relative too, unless it starts with a repo top-level entry
+ * (`server/…`), which only a repo-relative path would.
+ */
+export const repoRelative = (given, root, cwd) => {
+  if (path.isAbsolute(given)) return path.relative(root, given);
+  const fromCwd = path.relative(root, path.resolve(cwd, given));
+  if (existsSync(path.join(root, fromCwd))) return fromCwd;
+  const top = given.split('/')[0];
+  return existsSync(path.join(root, top)) ? given : fromCwd;
 };
 
 const parseArgs = argv => {
@@ -611,7 +989,7 @@ const report = (sel, meta) => {
   }
   if (sel.unmapped.length) {
     out.push(
-      '\nUnmapped — ran smoke only; place these in frontend/e2e/affected.config.mjs:'
+      '\nUnmapped — smoke only. Nothing reaches these; if a suite should, say so in frontend/e2e/affected.config.mjs:'
     );
     for (const f of sel.unmapped) out.push(`  ${f}`);
   }
@@ -629,7 +1007,7 @@ const main = async () => {
   const root = git(['rev-parse', '--show-toplevel'], FE_DIR).trim();
   const configPath = path.join(FE_DIR, 'e2e/affected.config.mjs');
   // e2e/ is kept out of the public mirror (.github/mirror/rules.txt); there
-  // is no map to lint and no suite to select, so `pnpm check` must not fail.
+  // is no config to lint and no suite to select, so `pnpm check` must not fail.
   if (!existsSync(configPath)) {
     console.log('e2e:affected: skipped — no e2e/ in this tree');
     return;
@@ -646,7 +1024,7 @@ const main = async () => {
       process.exit(1);
     }
     console.log(
-      `e2e:affected --check: ${Object.keys(config.suites).length} suites, map complete.`
+      `e2e:affected --check: ${specNames(files).length} suites, config complete.`
     );
     return;
   }
@@ -654,9 +1032,8 @@ const main = async () => {
   let changed, against;
   let scriptsOnly = new Set();
   if (opts.files) {
-    changed = opts.files.map(f =>
-      existsSync(f) ? path.relative(root, path.resolve(f)) : f
-    );
+    const cwd = process.env.INIT_CWD ?? process.cwd();
+    changed = opts.files.map(f => repoRelative(f, root, cwd));
     against = '(given with --files)';
   } else {
     const base = resolveBase(root, opts.base);
@@ -666,20 +1043,24 @@ const main = async () => {
   }
 
   const read = f => readFileSync(path.join(root, f), 'utf8');
-  const needsGraph = changed.some(inGraph);
-  const needsServer = changed.some(f => SERVICE_MODULE.test(f));
-  const ctx = {
-    config,
-    files,
-    scriptsOnly,
-    owners: ownersOf(config),
-    importers: needsGraph
-      ? buildImporters(loadTypeScript(), files, read)
-      : new Map(),
-    referrers: needsServer ? buildServiceReferrers(files, read) : new Map(),
-  };
+  const owners = ownersOf(config, files);
+  const needsServer = changed.some(f => f.startsWith('server/'));
+  const needsGraph = needsServer || changed.some(inGraph);
+  const importers = needsGraph
+    ? buildImporters(load('typescript'), files, read)
+    : new Map();
+  const server = needsServer
+    ? buildServerIndex(load('graphql').parse, {
+        config,
+        files,
+        read,
+        importers,
+        owners,
+      })
+    : null;
+  const ctx = { config, files, scriptsOnly, owners, importers, server };
   const results = changed.map(f => classify(f, ctx));
-  const sel = select(results, config);
+  const sel = select(results, config, specNames(files));
 
   if (opts.json) {
     console.log(JSON.stringify({ against, changed: results, ...sel }, null, 2));

@@ -1,18 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import ts from 'typescript';
+import { parse as gqlParse } from 'graphql';
 import {
   buildImporters,
-  buildServiceReferrers,
+  buildServerIndex,
   checkConfig,
   classify,
+  compileGlob,
   ownersOf,
   runtimeImports,
+  rustRefs,
   select,
 } from './affected.mjs';
 
-// A miniature repo: two verticals sharing a domain module through its index
-// barrel, a vertical with no suite, a shell-only component, and a server
-// crate with one cross-module reference.
+// A miniature repo. Front end: two verticals sharing a domain module through
+// its index barrel, a vertical with no suite, a shell-only component, and a
+// GraphQL document per vertical. Server: two service modules behind a
+// service_provider, one reached by `use service::`, the other only through
+// `service_provider.x_service`; a repository row type; one cross-module
+// `crate::` reference; and `auth`, which every resolver imports.
 const SOURCES = {
   'frontend/src/index.tsx': "import './App';",
   'frontend/src/App.tsx': [
@@ -29,18 +35,68 @@ const SOURCES = {
   'frontend/src/sections/stock/index.tsx': [
     "import { Modal } from '@/domain/invoice';",
     "import type { Invoice } from '@/domain/invoice/types';",
+    "import { StockLinesDocument } from './stock.generated';",
   ].join('\n'),
+  'frontend/src/sections/stock/stock.graphql':
+    'query stockLines { stockLines { nodes { id } } }',
+  'frontend/src/sections/stock/stock.generated.ts': '',
   'frontend/src/sections/stock/index.test.ts': "import '../items';",
-  'frontend/src/sections/outbound/index.tsx':
+  'frontend/src/sections/outbound/index.tsx': [
     "import { Modal, type X } from '@/domain/invoice';",
+    "import { InvoicesDocument } from './outbound.generated';",
+  ].join('\n'),
+  'frontend/src/sections/outbound/outbound.graphql':
+    'query invoices { __typename invoices { nodes { id } } }\nmutation insertOutbound { insertOutboundShipment { id } }',
+  'frontend/src/sections/outbound/outbound.generated.ts': '',
   'frontend/src/sections/items/index.tsx': "import { Chip } from '@/ui/Chip';",
   'frontend/e2e/helpers/stock.ts': 'export const h = 1;',
   'frontend/e2e/specs/stock-regression.spec.ts': "import '../helpers/stock';",
   'frontend/e2e/specs/outbound-regression.spec.ts': '',
   'frontend/e2e/specs/login-regression.spec.ts': '',
-  'server/service/src/stock_line/mod.rs': 'pub fn x() {}',
-  'server/service/src/invoice/mod.rs': 'use crate::stock_line::x;',
+  'server/service/src/service_provider.rs': [
+    'pub struct ServiceProvider {',
+    '  pub stock_line_service: Box<dyn StockLineServiceTrait>,',
+    '  pub invoice_service: Box<dyn InvoiceServiceTrait>,',
+    '}',
+  ].join('\n'),
+  'server/service/src/auth.rs': 'pub fn validate_auth() {}',
+  'server/service/src/stock_line/mod.rs':
+    'use repository::{StockLineRow, EqualFilter};\npub trait StockLineServiceTrait {}',
+  'server/service/src/invoice/mod.rs': [
+    'use crate::{',
+    '  auth::validate_auth,',
+    '  stock_line::{StockLineServiceTrait, x},',
+    '};',
+    'pub trait InvoiceServiceTrait {}',
+  ].join('\n'),
   'server/service/src/orphan.rs': '',
+  'server/graphql/stock_line/src/lib.rs': [
+    'use service::auth::validate_auth;',
+    'pub struct StockLineQueries;',
+    '#[Object]',
+    'impl StockLineQueries {',
+    "  pub async fn stock_lines(&self, ctx: &Context<'_>) -> R {",
+    '    ctx.service_provider().stock_line_service.q()',
+    '  }',
+    '}',
+  ].join('\n'),
+  'server/graphql/invoice/src/lib.rs': [
+    'use service::{auth::validate_auth, invoice::InvoiceFilter};',
+    'pub struct InvoiceQueries;',
+    '#[Object]',
+    'impl InvoiceQueries {',
+    '  pub async fn invoices(&self) -> R { get_invoices(ctx) }',
+    '  pub async fn insert_outbound_shipment(&self) -> R { insert(ctx) }',
+    '}',
+  ].join('\n'),
+  'server/graphql/invoice/src/queries.rs':
+    'use service::invoice_line::X;\npub fn get_invoices() {}',
+  'server/graphql/invoice/src/mutations.rs':
+    'use service::auth::validate_auth;\npub fn insert() {}',
+  'server/service/src/invoice_line/mod.rs': '',
+  'server/repository/src/db_diesel/stock_line_row.rs':
+    'pub struct StockLineRow;',
+  'server/repository/src/db_diesel/filter.rs': 'pub struct EqualFilter;',
   'server/repository/src/migrations/v2/mod.rs': '',
   'frontend/scripts/e2e/run-e2e.sh': '',
 };
@@ -56,32 +112,63 @@ const config = {
       suites: ['login-regression'],
     },
   ],
-  suites: {
-    'stock-regression': {
-      frontend: ['frontend/src/sections/stock/**'],
-      server: ['server/service/src/stock_line/**'],
-    },
-    'outbound-regression': {
-      frontend: ['frontend/src/sections/outbound/**'],
-      server: ['server/service/src/invoice/**'],
-    },
-    'login-regression': { frontend: [], server: [] },
-  },
-  uncovered: {
-    items: { frontend: ['frontend/src/sections/items/**'], server: [] },
-  },
+  overrides: { 'login-regression': [] },
 };
 
 const files = new Set(Object.keys(SOURCES));
 const read = f => SOURCES[f];
-const ctx = {
+const owners = ownersOf(config, files);
+const importers = buildImporters(ts, files, read);
+const server = buildServerIndex(gqlParse, {
   config,
   files,
-  owners: ownersOf(config),
-  importers: buildImporters(ts, files, read),
-  referrers: buildServiceReferrers(files, read),
-};
-const suitesOf = f => (classify(f, ctx).suites ?? []).map(s => s.name).sort();
+  read,
+  importers,
+  owners,
+});
+const ctx = { config, files, owners, importers, server };
+const suiteNames = [
+  'stock-regression',
+  'outbound-regression',
+  'login-regression',
+];
+const suitesOf = f =>
+  (classify(f, ctx).suites ?? []).map(s => [s.name, s.distance]).sort();
+
+describe('compileGlob', () => {
+  it('matches like node:path matchesGlob for *, ** and ?', () => {
+    const t = (g, f) => compileGlob(g).test(f);
+    expect(t('**/*.md', 'README.md')).toBe(true);
+    expect(t('**/*.md', 'a/b/README.md')).toBe(true);
+    expect(t('server/**/test_*.rs', 'server/x/test_a.rs')).toBe(true);
+    expect(t('server/**/test_*.rs', 'server/test_a.rs')).toBe(true);
+    expect(t('frontend/*.html', 'frontend/index.html')).toBe(true);
+    expect(t('frontend/*.html', 'frontend/a/index.html')).toBe(false);
+    expect(
+      t(
+        'frontend/src/sections/stock/**',
+        'frontend/src/sections/stocktakes/x.ts'
+      )
+    ).toBe(false);
+    expect(t('a.b', 'aXb')).toBe(false);
+  });
+});
+
+describe('ownersOf', () => {
+  it('owns sections by the spec-name convention, with overrides, and names the rest uncovered', () => {
+    expect(owners.map(o => [o.name, o.kind]).sort()).toEqual([
+      ['items', 'uncovered'],
+      ['login-regression', 'suite'],
+      ['outbound-regression', 'suite'],
+      ['stock-regression', 'suite'],
+    ]);
+    const stock = owners.find(o => o.name === 'stock-regression');
+    expect(stock.frontend).toEqual([
+      'frontend/src/sections/stock/**',
+      'frontend/e2e/specs/stock-regression.spec.ts',
+    ]);
+  });
+});
 
 describe('runtimeImports', () => {
   it('drops `import type` but keeps a mixed import', () => {
@@ -91,14 +178,20 @@ describe('runtimeImports', () => {
       read('frontend/src/sections/stock/index.tsx'),
       files
     );
-    expect([...stock]).toEqual(['frontend/src/domain/invoice/index.ts']);
+    expect([...stock]).toEqual([
+      'frontend/src/domain/invoice/index.ts',
+      'frontend/src/sections/stock/stock.generated.ts',
+    ]);
     const outbound = runtimeImports(
       ts,
       'frontend/src/sections/outbound/index.tsx',
       read('frontend/src/sections/outbound/index.tsx'),
       files
     );
-    expect([...outbound]).toEqual(['frontend/src/domain/invoice/index.ts']);
+    expect([...outbound]).toEqual([
+      'frontend/src/domain/invoice/index.ts',
+      'frontend/src/sections/outbound/outbound.generated.ts',
+    ]);
   });
 
   it('follows template dynamic imports as a prefix match', () => {
@@ -153,33 +246,87 @@ describe('classify — front end', () => {
 
   it('charges an e2e helper to the specs that import it', () => {
     expect(suitesOf('frontend/e2e/helpers/stock.ts')).toEqual([
-      'stock-regression',
+      ['stock-regression', 1],
     ]);
   });
 
   it('charges a deleted file to its own owner', () => {
     expect(suitesOf('frontend/src/sections/outbound/Gone.tsx')).toEqual([
-      'outbound-regression',
+      ['outbound-regression', 0],
     ]);
   });
 });
 
-describe('classify — server', () => {
-  it('charges a module to its suite and, one hop, to modules that reference it', () => {
-    const r = classify('server/service/src/stock_line/mod.rs', ctx);
-    expect(r.suites.map(s => [s.name, s.distance]).sort()).toEqual([
-      ['outbound-regression', 1],
+describe('rustRefs', () => {
+  it('reads plain and grouped paths, nested groups included', () => {
+    const src = [
+      'use crate::number::next;',
+      'use crate::{',
+      '  auth::{Resource, ResourceAccessRequest},',
+      '  invoice::validate::check,',
+      '  stock_line::{self, query::{a, b}},',
+      '  ListResult,',
+      '};',
+      'let x = crate::item::get();',
+    ].join('\n');
+    expect([...rustRefs(src, 'crate')].sort()).toEqual([
+      'ListResult',
+      'auth',
+      'invoice',
+      'item',
+      'number',
+      'stock_line',
+    ]);
+  });
+});
+
+describe('classify — server (derived)', () => {
+  it('treats a module every resolver imports as plumbing — a full run', () => {
+    expect(server.plumbing).toEqual(new Set(['auth']));
+    expect(classify('server/service/src/auth.rs', ctx).via).toBe('all');
+  });
+
+  it('reaches a suite through service_provider.<x>_service, and one crate:: hop further', () => {
+    // stock_line is reached by StockLineQueries via the provider field only;
+    // invoice references crate::stock_line in a grouped import.
+    expect(suitesOf('server/service/src/stock_line/query.rs')).toEqual([
+      ['outbound-regression', 2],
       ['stock-regression', 0],
     ]);
   });
 
-  it('does not propagate upward — invoice does not charge stock', () => {
+  it('reaches a suite through `use service::<module>`, and does not propagate upward', () => {
     expect(suitesOf('server/service/src/invoice/mod.rs')).toEqual([
-      'outbound-regression',
+      ['outbound-regression', 0],
     ]);
   });
 
-  it('reports what it cannot place', () => {
+  it('resolves a resolver that delegates by free-function name', () => {
+    // queries.rs is named by `get_invoices(ctx)` in the root impl.
+    expect(suitesOf('server/service/src/invoice_line/mod.rs')).toEqual([
+      ['outbound-regression', 0],
+    ]);
+    expect(suitesOf('server/graphql/invoice/src/queries.rs')).toEqual([
+      ['outbound-regression', 0],
+    ]);
+  });
+
+  it('charges a resolver file to the suites selecting its fields', () => {
+    expect(suitesOf('server/graphql/stock_line/src/lib.rs')).toEqual([
+      ['stock-regression', 0],
+    ]);
+  });
+
+  it('reaches a suite from a repository row type through the service that uses it', () => {
+    expect(
+      suitesOf('server/repository/src/db_diesel/stock_line_row.rs')
+    ).toEqual([
+      ['outbound-regression', 3],
+      ['stock-regression', 1],
+    ]);
+  });
+
+  it('reports what nothing reaches', () => {
     expect(classify('server/service/src/orphan.rs', ctx).via).toBe('unmapped');
   });
 });
@@ -195,7 +342,8 @@ describe('select', () => {
   const run = changed =>
     select(
       changed.map(f => classify(f, ctx)),
-      config
+      config,
+      suiteNames
     );
 
   it('selects nothing when only unobservable files changed', () => {
@@ -213,14 +361,32 @@ describe('select', () => {
     ]);
   });
 
-  it('goes broad past maxTargeted, and full on an `all` path', () => {
+  it('goes broad past maxTargeted, and full on an `all` path or plumbing', () => {
     expect(run(['frontend/src/domain/invoice/Modal.tsx']).tier).toBe('broad');
     const full = run(['server/repository/src/migrations/v2/mod.rs']);
     expect(full.tier).toBe('full');
-    expect(full.suites).toHaveLength(Object.keys(config.suites).length);
+    expect(full.suites).toHaveLength(suiteNames.length);
+    expect(run(['server/service/src/auth.rs']).tier).toBe('full');
   });
 
-  it('smoke-tests and names a path the map does not know', () => {
+  it('keeps the near set to distance ≤ 1 when broad', () => {
+    const sel = run([
+      'server/repository/src/db_diesel/stock_line_row.rs',
+      'frontend/src/domain/invoice/Modal.tsx',
+    ]);
+    expect(sel.tier).toBe('broad');
+    // outbound is near through Modal (1), not through the row type (3)
+    expect(sel.near.sort()).toEqual([
+      'login-regression',
+      'outbound-regression',
+      'stock-regression',
+    ]);
+    expect(run(['server/service/src/stock_line/query.rs']).near.sort()).toEqual(
+      ['login-regression', 'stock-regression']
+    );
+  });
+
+  it('smoke-tests and names a path nothing reaches', () => {
     const sel = run(['server/service/src/orphan.rs']);
     expect(sel.unmapped).toEqual(['server/service/src/orphan.rs']);
     expect(sel.suites.map(s => s.name)).toEqual(['login-regression']);
@@ -228,22 +394,17 @@ describe('select', () => {
 });
 
 describe('checkConfig', () => {
-  it('passes the miniature map', () => {
-    expect(checkConfig(config, files)).toEqual([
-      // orphan.rs is deliberately unplaced above.
-      "server/service/src/orphan.rs is owned by no suite — add it to a suite, or to 'uncovered'",
-    ]);
+  it('passes the miniature config', () => {
+    expect(checkConfig(config, files)).toEqual([]);
   });
 
-  it('catches a spec without an entry and a glob that matches nothing', () => {
+  it('catches a suite that owns nothing, an override naming no spec, and a glob matching nothing', () => {
     const broken = {
       ...config,
-      suites: {
-        ...config.suites,
-        'stock-regression': {
-          frontend: ['frontend/src/sections/stok/**'],
-          server: [],
-        },
+      overrides: {
+        ...config.overrides,
+        'gone-regression': [],
+        'stock-regression': ['frontend/src/sections/stok/**'],
       },
     };
     const withSpec = new Set([
@@ -251,8 +412,9 @@ describe('checkConfig', () => {
       'frontend/e2e/specs/new-regression.spec.ts',
     ]);
     const problems = checkConfig(broken, withSpec);
+    expect(problems).toContain('overrides.gone-regression names no spec file');
     expect(problems).toContain(
-      'spec new-regression.spec.ts has no entry in suites'
+      "new-regression owns nothing: no frontend/src/sections/new/ — add it to 'overrides'"
     );
     expect(problems).toContain(
       "stock-regression: 'frontend/src/sections/stok/**' matches no file"

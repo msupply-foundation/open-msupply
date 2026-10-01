@@ -29,6 +29,7 @@
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "e2e:local": "bash scripts/e2e/run-e2e.sh",
     "e2e:affected": "node scripts/e2e/affected.mjs",
+    "e2e:ui": "bash scripts/e2e/run-e2e.sh --ui",
     "dev-android": "./scripts/dev-android.sh",
     "worktree": "./scripts/worktree.sh",
     "build-android": "./scripts/build-android.sh",
