@@ -337,7 +337,12 @@ mod test {
         );
 
         // The clinician is the request's own field, set while it is still New
-        // — the hand-over takes no clinician of its own (issue #513).
+        // — the hand-over takes no clinician of its own (issue #513). The
+        // prescription date is set well in the past so the backdating
+        // assertion below has something to bite on: a date equal to the
+        // creation moment would still backdate (it precedes the dispensation's
+        // own creation), but only by milliseconds.
+        let prescribed_three_days_ago = Utc::now().naive_utc() - chrono::Duration::days(3);
         service_provider
             .prescription_request_service
             .update_prescription_request(
@@ -348,6 +353,7 @@ mod test {
                     clinician_id: Some(NullableUpdate {
                         value: Some(clinician_a().id),
                     }),
+                    prescription_datetime: Some(prescribed_three_days_ago),
                     ..Default::default()
                 },
             )
@@ -386,6 +392,13 @@ mod test {
             invoice.invoice_row.clinician_link_id,
             Some(clinician_a().id)
         );
+        // The prescription date stays on the request: the dispensation is NOT
+        // backdated to it (issue #931). A backdate would stamp every later
+        // status time and the stock ledger entry at the prescribing moment
+        // rather than when stock actually moved.
+        assert_eq!(updated.prescription_datetime, prescribed_three_days_ago);
+        assert_eq!(invoice.invoice_row.backdated_datetime, None);
+        assert!(invoice.invoice_row.created_datetime > prescribed_three_days_ago);
 
         // ...with one unallocated line carrying the prescribed quantity + directions
         let lines = InvoiceLineRowRepository::new(&ctx.connection)
