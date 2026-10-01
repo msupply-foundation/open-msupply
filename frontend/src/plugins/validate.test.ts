@@ -642,7 +642,7 @@ describe('validateLoadedModule — pages & nav sections', () => {
 });
 
 // The settings editor (spec/plugins/sdk-contract.md § the configuration
-// contribution; spec/plugin-management AC-C1 depends on a loaded one).
+// contribution; spec/plugin-management OMS-REG-MNG-07.49 depends on a loaded one).
 describe('validateLoadedModule — configuration', () => {
   const withConfiguration = (configuration: unknown) => ({
     ...wellFormed(),

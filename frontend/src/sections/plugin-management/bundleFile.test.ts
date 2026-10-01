@@ -7,8 +7,8 @@ import {
   uploadBundle,
 } from './bundleFile';
 
-// spec/plugin-management/acceptance.md › installing (the file choice) and
-// › access (the upload route)
+// spec/plugin-management/cases/OMS-REG-MNG-07 — installing (the file choice) and
+// access (the upload route)
 
 const fileLike = (name: string, size = 10) => ({
   name,
@@ -25,7 +25,7 @@ const choose = (...files: ReturnType<typeof fileLike>[]) => {
   return chooseBundle(accepted, rejected);
 };
 
-describe('AC-I2 — a file not named .json is refused', () => {
+describe('OMS-REG-MNG-07.22 — a file not named .json is refused', () => {
   it('refuses it as an invalid type', () => {
     const choice = choose(fileLike('plugin.txt'));
     expect(choice.kind).toBe('refused');
@@ -33,14 +33,14 @@ describe('AC-I2 — a file not named .json is refused', () => {
   });
 });
 
-describe('AC-I3 — .json in any letter case is accepted', () => {
+describe('OMS-REG-MNG-07.24 — .json in any letter case is accepted', () => {
   it('chooses BUNDLE.JSON', () => {
     const choice = choose({ name: 'BUNDLE.JSON', type: '', size: 10 });
     expect(choice.kind).toBe('chosen');
   });
 });
 
-describe('AC-I14 — a file over 50 MB is refused before sending', () => {
+describe('OMS-REG-MNG-07.37 — a file over 50 MB is refused before sending', () => {
   it('refuses 50 MB + 1 byte as too large, and chooses 50 MB exactly', () => {
     const over = choose(fileLike('big.json', MAX_BUNDLE_BYTES + 1));
     expect(over.kind === 'refused' && over.rejection.reason).toBe('size');
@@ -48,7 +48,7 @@ describe('AC-I14 — a file over 50 MB is refused before sending', () => {
   });
 });
 
-describe('AC-I15 — a drop of several files chooses none', () => {
+describe('OMS-REG-MNG-07.38 — a drop of several files chooses none', () => {
   it('chooses none for two bundles', () => {
     expect(choose(fileLike('a.json'), fileLike('b.json')).kind).toBe('none');
   });
@@ -74,7 +74,7 @@ describe('uploadBundle — the staged upload (contract › file upload)', () => 
     expect((init?.body as FormData).getAll('files')).toHaveLength(1);
   });
 
-  it('AC-A4 — an unauthenticated 500 is a failed upload named by its status', async () => {
+  it('OMS-REG-MNG-07.4 — an unauthenticated 500 is a failed upload named by its status', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(

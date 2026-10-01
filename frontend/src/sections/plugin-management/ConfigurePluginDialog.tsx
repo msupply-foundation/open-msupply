@@ -119,7 +119,7 @@ export const ConfigurePluginDialog = (props: {
     }
     if (result.kind === 'graphqlError')
       setRefusal(rejectionFrom(result.errors, ''));
-    // Edits stay; the busy state is released (AC-C9).
+    // Edits stay; the busy state is released (OMS-REG-MNG-07.60).
     setSaving(false);
   };
 

@@ -61,7 +61,7 @@ export const UploadPluginDialog = (props: {
           setFile(choice.file);
           setNotice(undefined);
         } else if (choice.kind === 'refused') {
-          // The chosen file, if any, stays (AC-I2).
+          // The chosen file, if any, stays (OMS-REG-MNG-07.23).
           setNotice({ kind: 'refused', rejection: choice.rejection });
         }
       });
@@ -116,7 +116,7 @@ export const UploadPluginDialog = (props: {
       open
       onClose={props.onClose}
       // Blocking while the upload and install run: the outcome is reported in
-      // this dialog, so it cannot be dismissed from under it (AC-I12).
+      // this dialog, so it cannot be dismissed from under it (OMS-REG-MNG-07.35).
       dismissable={!running()}
       title={t('title.upload-plugin')}
       width="prose"

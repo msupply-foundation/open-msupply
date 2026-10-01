@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { PluginRow } from './pluginRows';
 import { uninstallRows, type UninstallOne } from './uninstall';
 
-// spec/plugin-management/acceptance.md › uninstalling
+// spec/plugin-management/cases/OMS-REG-MNG-07 — uninstalling
 
 const row = (id: string, kind: PluginRow['kind'] = 'FRONTEND'): PluginRow => ({
   id,
@@ -13,7 +13,7 @@ const row = (id: string, kind: PluginRow['kind'] = 'FRONTEND'): PluginRow => ({
   hostRuntime: kind === 'BACKEND' ? null : 'solid',
 });
 
-describe('AC-U4 — every row uninstalled: nothing refused', () => {
+describe('OMS-REG-MNG-07.44 — every row uninstalled: nothing refused', () => {
   it('counts each one', async () => {
     const ok: UninstallOne = async () => ({ ok: true });
     expect(await uninstallRows([row('a'), row('b')], ok)).toEqual({
@@ -23,7 +23,7 @@ describe('AC-U4 — every row uninstalled: nothing refused', () => {
   });
 });
 
-describe('AC-U5 — a refused row does not stop the others', () => {
+describe('OMS-REG-MNG-07.45/.46 — a refused row does not stop the others', () => {
   it('uninstalls the rest and names the refused one with its reason', async () => {
     const gone = row('gone');
     const calls: string[] = [];
