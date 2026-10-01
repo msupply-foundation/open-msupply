@@ -23,7 +23,7 @@ import {
   toReasonInput,
   type ReasonDraft,
 } from './logReasons';
-import { outcomeOf } from '../refusals';
+import { outcomeOf } from '@/domain/selection';
 
 // Create log reason (spec/asset-catalogue S4): reason text, status, comments
 // required. OK stays disabled while the text is blank or only spaces; a

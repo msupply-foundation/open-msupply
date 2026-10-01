@@ -17,12 +17,10 @@ export const RefusalAlert = (props: {
   rejection?: Rejection;
   testId?: string;
 }) => (
-  <Alert severity="error">
-    <span data-testid={props.testId}>
-      {props.rejection?.message
-        ? `${props.step}: ${props.rejection.message}`
-        : props.step}
-    </span>
+  <Alert severity="error" testId={props.testId}>
+    {props.rejection?.message
+      ? `${props.step}: ${props.rejection.message}`
+      : props.step}
     <Show when={props.rejection?.detail}>
       {detail => <ErrorDetails detail={detail()} />}
     </Show>
