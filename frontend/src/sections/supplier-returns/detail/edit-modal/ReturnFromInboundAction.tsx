@@ -70,6 +70,7 @@ export const ReturnFromInboundAction: Component<
         <Dialog
           open
           onClose={() => setNoticeOpen(false)}
+          testId="cannot-return-shipment-notice"
           icon={<InfoIcon />}
           title={t('heading.cannot-do-that')}
           description={t('messages.cant-return-inbound')}
