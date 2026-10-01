@@ -10,10 +10,6 @@
   position: fixed;
   inset: auto;
   margin: 0;
-  /* The UA gives [popover] overflow:auto, which clips the ::before bridge
-     below to the panel's own box. Nothing here scrolls — the list is never
-     height-capped — so visible costs nothing. */
-  overflow: visible;
   min-inline-size: 12.5rem;
   max-inline-size: 17rem;
   padding: var(--space-1);
@@ -30,22 +26,6 @@
   /* A raised surface owns its own text weight — it must not inherit the bold
      of the active rail button that opened it. */
   font-weight: var(--weight-regular);
-}
-
-/* An invisible strip across the gap between the rail and the panel (#425). It
-   is part of the panel, so the pointer crossing it is already ON the panel and
-   the rail's close timer stands down — without it the gap was dead space, and
-   a slow move from the icon closed the flyout before it arrived. It reaches
-   back exactly to the rail's edge (NavFlyout writes --flyout-gap), no further:
-   past that edge it would sit over the rail's own edge toggle and swallow its
-   clicks. Positioned against the padding box, so the offset adds the 1px
-   border. Logical insets put it on the rail's side in RTL too. */
-.flyout::before {
-  content: '';
-  position: absolute;
-  inset-block: -1px;
-  inset-inline-start: calc(-1 * (var(--flyout-gap) + 1px));
-  inline-size: var(--flyout-gap);
 }
 
 /* The leaf variant is a bare label, so it wraps the text rather than holding a
