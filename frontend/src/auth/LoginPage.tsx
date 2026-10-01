@@ -1,4 +1,11 @@
-import { createResource, createSignal, onMount, Show } from 'solid-js';
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
 import { submitStateAfter, type SubmitState } from './submitState';
@@ -22,6 +29,8 @@ import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
 import { createDocumentTitle } from '../documentTitle';
 import styles from '../ui/styles/LoginInitLayout.module.css';
+
+const MAINTENANCE_RECHECK_MS = 30_000;
 
 // The login screen: the design-system Login (gradient hero + form panel,
 // recreated from the current app — see kdd/page-composition) composed with
@@ -73,15 +82,31 @@ export const LoginPage: Component = () => {
   // switch, who lands here on their next request. Unauthenticated; a failed
   // read shows nothing (a refused login still carries the server's message).
   // Gated so the read never suspends the page (kdd/solid-reactivity-pitfalls).
-  const [maintenanceData] = createResource(async () => {
-    const result = await graphqlFetch(
-      IsMaintenanceMode,
-      {},
-      { background: true }
-    );
-    return result.kind === 'success' && result.data.isMaintenanceMode;
-  });
+  const [maintenanceData, { refetch: refetchMaintenance }] = createResource(
+    async () => {
+      const result = await graphqlFetch(
+        IsMaintenanceMode,
+        {},
+        { background: true }
+      );
+      return result.kind === 'success' && result.data.isMaintenanceMode;
+    }
+  );
   const maintenanceMode = () => gated(maintenanceData) ?? false;
+
+  // While the notice shows, re-read the flag every so often and when the
+  // window regains focus, so a user waiting here sees it clear once the mode
+  // is turned off without reloading.
+  createEffect(() => {
+    if (!maintenanceMode()) return;
+    const recheck = () => void refetchMaintenance();
+    const timer = setInterval(recheck, MAINTENANCE_RECHECK_MS);
+    window.addEventListener('focus', recheck);
+    onCleanup(() => {
+      clearInterval(timer);
+      window.removeEventListener('focus', recheck);
+    });
+  });
 
   // Only decides WHERE the version line renders — see versionLine() below.
   const compact = useIsCompact();
