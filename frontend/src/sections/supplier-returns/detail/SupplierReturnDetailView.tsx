@@ -507,6 +507,7 @@ const SupplierReturnDetailView: Component = () => {
         fallback={
           <Dialog
             open
+            testId="return-not-found-notice"
             icon={<InfoIcon />}
             title={t('error.return-not-found')}
             description={t('messages.click-to-return-to-returns')}

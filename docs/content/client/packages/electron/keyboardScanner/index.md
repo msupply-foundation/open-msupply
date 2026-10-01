@@ -1,8 +1,8 @@
 +++
 title = "Keyboard Barcode Scanner"
 weight = 10
-sort_by = "weight"
-template = "docs/section.html"
+template = "docs/page.html"
+path = "client/packages/electron/keyboardScanner"
 
 [extra]
 source = "code"

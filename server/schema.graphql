@@ -6932,6 +6932,7 @@ type PurchaseOrderLineNode {
 	lineNumber: Int!
 	pricePerPackBeforeDiscount: Float!
 	pricePerPackAfterDiscount: Float!
+	lineTotal: Float!
 	comment: String
 	supplierItemCode: String
 	item: ItemNode!

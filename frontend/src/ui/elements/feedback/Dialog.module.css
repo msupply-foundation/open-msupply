@@ -12,6 +12,8 @@
      .body — a default on .body would shadow the inherited value. */
   --dialog-width: 30rem;
   --dialog-min-body-height: 0;
+  /* holdHeight's measured floor — set inline, read only under [data-hold-height]. */
+  --dialog-held-height: 0px;
 
   /* Fixed width (steady box), clamped down to the viewport on narrow screens. */
   width: min(var(--dialog-width), calc(100vw - 2rem));
@@ -471,4 +473,23 @@
   flex: 1;
   min-block-size: 0;
   max-block-size: none;
+}
+
+/* holdHeight: the height Dialog measured when the hold began, as a floor. Clamped to the
+   viewport cap itself, because min-block-size beats max-block-size — a viewport that shrinks
+   mid-hold must not push the box off screen. Two selectors, so it outranks .large's floor. */
+.dialog[data-hold-height] {
+  min-block-size: min(var(--dialog-held-height), calc(100vh - 2rem));
+}
+
+/* …and the panel fills the held box, as a workbench's does: a flex column so the footer stays
+   at the bottom where it was, instead of riding up with shorter content and leaving bare
+   <dialog> below it — which a click reads as the scrim. Scoped to [open], like .large[open]. */
+.dialog[data-hold-height][open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog[data-hold-height][open] .body {
+  flex: 1;
 }

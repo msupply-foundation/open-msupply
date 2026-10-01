@@ -301,13 +301,16 @@ export const Select = (props: SelectProps) => {
         when={props.error}
         fallback={
           <Show when={props.helperText}>
-            <KSelect.Description class={styles.helper}>
+            <KSelect.Description
+              class={styles.helper}
+              data-field-message="helper"
+            >
               {props.helperText}
             </KSelect.Description>
           </Show>
         }
       >
-        <KSelect.ErrorMessage class={styles.error}>
+        <KSelect.ErrorMessage class={styles.error} data-field-message="error">
           <AlertTriangleIcon class={styles.errorIcon} />
           {props.error}
         </KSelect.ErrorMessage>
