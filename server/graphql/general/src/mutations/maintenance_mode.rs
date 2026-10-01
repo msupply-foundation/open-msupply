@@ -91,6 +91,9 @@ pub fn set_processors_paused_mutation(
                 SetProcessorsPausedError::NotACentralServer => {
                     StandardGraphqlError::BadUserInput("Not a central server".to_string())
                 }
+                SetProcessorsPausedError::HeldByMaintenanceMode => {
+                    StandardGraphqlError::BadUserInput("Held by maintenance mode".to_string())
+                }
                 SetProcessorsPausedError::DatabaseError(error) => {
                     StandardGraphqlError::InternalError(format!("{error:?}"))
                 }

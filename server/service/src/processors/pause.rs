@@ -13,12 +13,14 @@ use repository::{
 use crate::{
     activity_log::system_log_in_background,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::CentralServerConfig,
+    sync::{maintenance_mode::is_maintenance_mode, CentralServerConfig},
 };
 
 #[derive(Debug, PartialEq)]
 pub enum SetProcessorsPausedError {
     NotACentralServer,
+    /// Maintenance mode holds the pause on; it is released with the mode.
+    HeldByMaintenanceMode,
     DatabaseError(RepositoryError),
 }
 
@@ -51,7 +53,7 @@ pub(crate) fn processors_paused_or_log(service_provider: &ServiceProvider) -> bo
 
 /// Persist the pause and record who changed it in the system log. On resume every processor is
 /// triggered once so work that arrived while paused is picked up. Permission is checked by the
-/// caller (graphql requires server admin).
+/// caller (graphql requires server admin). Resuming is refused while maintenance mode is on.
 ///
 /// The flag is committed on its own and the system log is written in the background, so the
 /// switch takes effect even while an integration holds `changelog` (see
@@ -63,6 +65,9 @@ pub fn set_processors_paused(
 ) -> Result<bool, SetProcessorsPausedError> {
     if !CentralServerConfig::is_central_server() {
         return Err(SetProcessorsPausedError::NotACentralServer);
+    }
+    if !paused && is_maintenance_mode(&ctx.connection)? {
+        return Err(SetProcessorsPausedError::HeldByMaintenanceMode);
     }
 
     if are_processors_paused(&ctx.connection)? != paused {

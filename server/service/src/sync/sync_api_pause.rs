@@ -13,11 +13,13 @@ use crate::{
     subscription::SubscriptionTrigger,
 };
 
-use super::CentralServerConfig;
+use super::{maintenance_mode::is_maintenance_mode, CentralServerConfig};
 
 #[derive(Debug, PartialEq)]
 pub enum SetSyncApiPausedError {
     NotACentralServer,
+    /// Maintenance mode holds the pause on; it is released with the mode.
+    HeldByMaintenanceMode,
     DatabaseError(RepositoryError),
 }
 
@@ -50,7 +52,8 @@ pub fn is_sync_api_paused(connection: &StorageConnection) -> Result<bool, Reposi
 
 /// Persist the pause state and record who changed it in the system log (setting it to its current
 /// value does neither), then re-emit the sync info subscription so every open session's sync modal
-/// updates. Permission is checked by the caller (graphql requires server admin).
+/// updates. Permission is checked by the caller (graphql requires server admin). Resuming is
+/// refused while maintenance mode is on.
 ///
 /// The flag is committed on its own and the system log is written in the background, so the
 /// switch takes effect even while an integration holds `changelog` (see
@@ -62,6 +65,9 @@ pub fn set_sync_api_paused(
 ) -> Result<bool, SetSyncApiPausedError> {
     if !CentralServerConfig::is_central_server() {
         return Err(SetSyncApiPausedError::NotACentralServer);
+    }
+    if !paused && is_maintenance_mode(&ctx.connection)? {
+        return Err(SetSyncApiPausedError::HeldByMaintenanceMode);
     }
 
     // Unchanged: nothing to write or log (as `set_sync_paused`)
