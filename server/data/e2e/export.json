@@ -86991,6 +86991,32 @@
    "is_integrated": false
   },
   {
+   "cursor": 2481,
+   "record_id": "e2e_perm_admin_PrescriptionRequestQuery_feat",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_admin_PrescriptionRequestQuery_feat",
+    "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "store_id": "e2e_feature_store",
+    "permission": "PrescriptionRequestQuery",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "e2e_feature_store",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
    "cursor": 2460,
    "record_id": "e2e_perm_admin_PrescriptionRequestMutate",
    "received_datetime": "2026-07-09T00:00:00",
