@@ -110,6 +110,12 @@ SYNC_OFF=(
 # than assume a remote-site stack.
 SERVER_ROLE_PIN=(APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER=true)
 
+# Access control is pinned ON for the same reason: a local.yaml with
+# `debug_no_access_control: true` makes every unauthenticated request run as
+# a "dummy_user" that has no account, so the app's startup `me` query fails
+# with an internal error and the login screen never renders.
+SERVER_ROLE_PIN+=(APP__SERVER__DEBUG_NO_ACCESS_CONTROL=false)
+
 SERVER_PID=""
 FE_PID=""
 cleanup() {

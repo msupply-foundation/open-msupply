@@ -208,6 +208,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
         <Dialog
           open
           onClose={() => setNoLinesBlocked(false)}
+          testId="status-blocked-notice"
           icon={<InfoIcon />}
           title={t('heading.cannot-do-that')}
           description={t('messages.no-lines')}
