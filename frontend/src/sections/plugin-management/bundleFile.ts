@@ -41,13 +41,33 @@ export const chooseBundle = <F extends FileLike>(
 };
 
 export type UploadResult =
-  { ok: true; fileId: string } | { ok: false; status: string };
+  | { ok: true; fileId: string }
+  | {
+      ok: false;
+      /** The status, then the server's own text when it sent a short one. */
+      status: string;
+      /** The session has ended — the caller asks the user to sign in again. */
+      signedOut: boolean;
+    };
+
+// The route's refusal of a request with no session: a 500 with this plain
+// text, not a 401 (contract › file upload, wire trap). A 401 is read the same
+// way, should the route ever answer one.
+const SIGNED_OUT_TEXT = 'You need to be logged in';
+
+// A reason worth showing: one short line of plain text. Anything longer, or
+// an HTML error page, is left out and the status stands alone.
+const shortReason = (text: string): string | undefined => {
+  const reason = text.trim();
+  return reason && reason.length <= 200 && !/[\n<]/.test(reason)
+    ? reason
+    : undefined;
+};
 
 /**
  * Stage the file on the server. Session-cookie auth, as every request this app
  * makes (same origin). Any non-200 is a failed upload described by its status
- * — an unauthenticated one is a 500 here, not a 401 (contract › file upload,
- * wire trap).
+ * and the server's short reason (contract › file upload).
  */
 export const uploadBundle = async (file: File): Promise<UploadResult> => {
   const formData = new FormData();
@@ -60,9 +80,14 @@ export const uploadBundle = async (file: File): Promise<UploadResult> => {
       body: formData,
     });
     if (!response.ok) {
+      const status = `${response.status} ${response.statusText}`.trim();
+      const reason = shortReason(await response.text().catch(() => ''));
       return {
         ok: false,
-        status: `${response.status} ${response.statusText}`.trim(),
+        status: reason ? `${status}: ${reason}` : status,
+        signedOut:
+          response.status === 401 ||
+          (response.status === 500 && reason === SIGNED_OUT_TEXT),
       };
     }
     const body: unknown = await response.json();
@@ -72,11 +97,16 @@ export const uploadBundle = async (file: File): Promise<UploadResult> => {
         : undefined;
     return typeof fileId === 'string' && fileId.length > 0
       ? { ok: true, fileId }
-      : { ok: false, status: `${response.status} — no file id` };
+      : {
+          ok: false,
+          status: `${response.status} — no file id`,
+          signedOut: false,
+        };
   } catch (error) {
     return {
       ok: false,
       status: error instanceof Error ? error.message : String(error),
+      signedOut: false,
     };
   }
 };

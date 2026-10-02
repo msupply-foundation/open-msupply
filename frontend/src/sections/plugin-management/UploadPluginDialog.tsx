@@ -6,6 +6,7 @@ import {
   reportPermissionDenied,
 } from '@/api/graphql';
 import { rejectionFrom, type Rejection } from '@/api/rejection';
+import { reportUnauthenticated } from '@/auth/authContext';
 import { formatFileSize, t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -84,6 +85,10 @@ export const UploadPluginDialog = (props: {
     const uploaded = await uploadBundle(chosen);
     if (!uploaded.ok) {
       setNotice({ kind: 'upload', status: uploaded.status });
+      // The upload is not a GraphQL call, so graphqlFetch never sees its
+      // session end: report it here, and the app's re-login modal opens over
+      // this dialog. The file stays chosen for the retry (OMS-REG-MNG-07.64).
+      if (uploaded.signedOut) reportUnauthenticated();
       setRunning(false);
       return;
     }
