@@ -96,12 +96,18 @@ export const ConfigurePluginDialog = (props: {
     setDraft(() => initial.value);
   });
 
+  // The editor threw and the neutral fallback stands in its place. Nothing
+  // editable is shown, so nothing is saved: the draft is still the seed, and
+  // saving it would store the default — or overwrite an unreadable record
+  // with it (OMS-REG-MNG-07.63).
+  const [editorFailed, setEditorFailed] = createSignal(false);
+
   const [saving, setSaving] = createSignal(false);
   const [refusal, setRefusal] = createSignal<Rejection>();
 
   const save = async () => {
     const initial = seed();
-    if (!initial || saving()) return;
+    if (!initial || saving() || editorFailed()) return;
     setSaving(true);
     setRefusal(undefined);
     const write = configurationWrite(
@@ -167,7 +173,7 @@ export const ConfigurePluginDialog = (props: {
           <Show when={configuration}>
             <DialogSaveButton
               data-testid="dialog-button-save"
-              disabled={!seed()}
+              disabled={!seed() || editorFailed()}
               loading={saving()}
               onClick={() => void save()}
             />
@@ -204,6 +210,7 @@ export const ConfigurePluginDialog = (props: {
               onChange: next => setDraft(() => next),
             })}
             errorFallback={t('error.plugin-unavailable')}
+            onError={() => setEditorFailed(true)}
           />
         </Match>
       </Switch>

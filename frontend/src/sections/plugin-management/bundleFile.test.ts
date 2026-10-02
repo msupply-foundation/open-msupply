@@ -74,20 +74,42 @@ describe('uploadBundle — the staged upload (contract › file upload)', () => 
     expect((init?.body as FormData).getAll('files')).toHaveLength(1);
   });
 
-  it('OMS-REG-MNG-07.4 — an unauthenticated 500 is a failed upload named by its status', async () => {
+  const answer = (body: string, status: number, statusText: string) =>
     vi.stubGlobal(
       'fetch',
-      vi.fn(
-        async () =>
-          new Response('You need to be logged in', {
-            status: 500,
-            statusText: 'Internal Server Error',
-          })
-      )
+      vi.fn(async () => new Response(body, { status, statusText }))
     );
+
+  it("OMS-REG-MNG-07.4, .64 — an unauthenticated 500 is a failed upload with the server's reason, read as signed out", async () => {
+    answer('You need to be logged in', 500, 'Internal Server Error');
+    expect(await uploadBundle(new File(['{}'], 'b.json'))).toEqual({
+      ok: false,
+      status: '500 Internal Server Error: You need to be logged in',
+      signedOut: true,
+    });
+  });
+
+  it('OMS-REG-MNG-07.64 — a 401 is read as signed out too', async () => {
+    answer('', 401, 'Unauthorized');
+    expect(await uploadBundle(new File(['{}'], 'b.json'))).toEqual({
+      ok: false,
+      status: '401 Unauthorized',
+      signedOut: true,
+    });
+  });
+
+  it('any other failure keeps the session, and a long or HTML body stays out of the message', async () => {
+    answer('<html><body>Bad gateway</body></html>', 502, 'Bad Gateway');
+    expect(await uploadBundle(new File(['{}'], 'b.json'))).toEqual({
+      ok: false,
+      status: '502 Bad Gateway',
+      signedOut: false,
+    });
+    answer('x'.repeat(201), 500, 'Internal Server Error');
     expect(await uploadBundle(new File(['{}'], 'b.json'))).toEqual({
       ok: false,
       status: '500 Internal Server Error',
+      signedOut: false,
     });
   });
 
