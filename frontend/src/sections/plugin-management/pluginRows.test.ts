@@ -1,13 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import { setDictionaries, setLocale } from '@/intl/intl';
+import commonEn from '@/intl/locales/en/common.json';
 import {
   compareVersions,
   rowKey,
   rowsForKeys,
   runtimeText,
-  sortRows,
+  orderPlugins,
   typesText,
+  uninstallOutcome,
   type PluginRow,
 } from './pluginRows';
+
+// The refusal copy is asserted, so the real dictionary is seeded.
+setDictionaries({ en: commonEn });
+setLocale('en');
 
 // spec/plugin-management/cases/OMS-REG-MNG-07 — the list
 
@@ -84,16 +91,22 @@ describe('OMS-REG-MNG-07.11 — two runtimes of one code and version stay two ro
 
 describe('OMS-REG-MNG-07.12 — with no sort the server order stands', () => {
   it('keeps every backend row first, then frontend, each by id', () => {
-    expect(ids(sortRows(serverOrder, undefined, kindLabel))).toEqual(
+    expect(ids(orderPlugins(serverOrder, undefined, kindLabel))).toEqual(
       ids(serverOrder)
     );
+  });
+
+  it('keeps it for a sort key the list does not know (a hand-edited address)', () => {
+    expect(
+      ids(orderPlugins(serverOrder, { key: 'bogus', desc: false }, kindLabel))
+    ).toEqual(ids(serverOrder));
   });
 });
 
 describe('OMS-REG-MNG-07.13 — versions sort part by part as numbers', () => {
   it('puts 2.9.0 before 2.10.0', () => {
     expect(compareVersions('2.9.0', '2.10.0')).toBeLessThan(0);
-    const sorted = sortRows(
+    const sorted = orderPlugins(
       serverOrder,
       { key: 'version', desc: false },
       kindLabel
@@ -115,7 +128,7 @@ describe('OMS-REG-MNG-07.13 — versions sort part by part as numbers', () => {
 describe('OMS-REG-MNG-07.15 — code, kind and runtime sort either way', () => {
   it('sorts by code ascending, then descending', () => {
     expect(
-      codes(sortRows(serverOrder, { key: 'code', desc: false }, kindLabel))
+      codes(orderPlugins(serverOrder, { key: 'code', desc: false }, kindLabel))
     ).toEqual([
       'afghanistan_plugins',
       'civ_plugins',
@@ -124,19 +137,29 @@ describe('OMS-REG-MNG-07.15 — code, kind and runtime sort either way', () => {
       'hello',
     ]);
     expect(
-      codes(sortRows(serverOrder, { key: 'code', desc: true }, kindLabel))[0]
+      codes(
+        orderPlugins(serverOrder, { key: 'code', desc: true }, kindLabel)
+      )[0]
     ).toBe('hello');
   });
 
   it('sorts by the kind as shown', () => {
-    const asc = sortRows(serverOrder, { key: 'kind', desc: false }, kindLabel);
+    const asc = orderPlugins(
+      serverOrder,
+      { key: 'kind', desc: false },
+      kindLabel
+    );
     expect(asc[0]!.kind).toBe('BACKEND');
-    const desc = sortRows(serverOrder, { key: 'kind', desc: true }, kindLabel);
+    const desc = orderPlugins(
+      serverOrder,
+      { key: 'kind', desc: true },
+      kindLabel
+    );
     expect(desc.at(-1)!.kind).toBe('BACKEND');
   });
 
   it('sorts by runtime, the blank backend runtime first ascending', () => {
-    const asc = sortRows(
+    const asc = orderPlugins(
       serverOrder,
       { key: 'runtime', desc: false },
       kindLabel
@@ -148,7 +171,7 @@ describe('OMS-REG-MNG-07.15 — code, kind and runtime sort either way', () => {
       'react',
       'solid',
     ]);
-    const desc = sortRows(
+    const desc = orderPlugins(
       serverOrder,
       { key: 'runtime', desc: true },
       kindLabel
@@ -157,7 +180,11 @@ describe('OMS-REG-MNG-07.15 — code, kind and runtime sort either way', () => {
   });
 
   it('keeps ties in the server order (a stable sort)', () => {
-    const asc = sortRows(serverOrder, { key: 'code', desc: false }, kindLabel);
+    const asc = orderPlugins(
+      serverOrder,
+      { key: 'code', desc: false },
+      kindLabel
+    );
     expect(ids(asc.filter(r => r.code === 'civ_plugins'))).toEqual([
       'backend_civ',
       'frontend_civ',
@@ -181,5 +208,34 @@ describe('OMS-REG-MNG-07.20 — a backend and a frontend plugin under one id sel
     expect(rowsForKeys([backend, frontend], [rowKey(frontend)])).toEqual([
       frontend,
     ]);
+  });
+});
+
+describe('OMS-REG-MNG-07.65 — uninstalling a frontend row whose id a backend row shares', () => {
+  const removed = (kind: PluginRow['kind']) =>
+    ({
+      kind: 'success',
+      data: {
+        centralServer: {
+          plugins: { uninstallPlugin: { id: 'shared', code: 'x', kind } },
+        },
+      },
+    }) as const;
+
+  it('is a refusal naming what the server removed instead', () => {
+    expect(uninstallOutcome({ kind: 'FRONTEND' }, removed('BACKEND'))).toEqual({
+      kind: 'refused',
+      reason:
+        'The backend plugin with the same id was uninstalled instead. This plugin is still installed.',
+    });
+  });
+
+  it('is a plain success when the server removed the row selected', () => {
+    expect(uninstallOutcome({ kind: 'FRONTEND' }, removed('FRONTEND'))).toEqual(
+      { kind: 'done' }
+    );
+    expect(uninstallOutcome({ kind: 'BACKEND' }, removed('BACKEND'))).toEqual({
+      kind: 'done',
+    });
   });
 });
