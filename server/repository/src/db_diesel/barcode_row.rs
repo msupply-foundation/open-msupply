@@ -8,20 +8,25 @@ use super::{
 use crate::diesel_macros::define_linked_tables;
 use crate::{ChangelogRepository, RowActionType};
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
+// A confirmed barcode: this barcode is for this item. Authored on central only and
+// synced to every site. Several rows may share a value, one per item. See
+// decisions/2026-09-30_barcodes.md.
 define_linked_tables! {
     view: barcode = "barcode_view",
     core: barcode_with_links = "barcode",
     struct: BarcodeRow,
     repo: BarcodeRowRepository,
     shared: {
-        gtin -> Text,
-        item_id -> Text,
+        value -> Text,
         pack_size -> Nullable<Double>,
-        parent_id -> Nullable<Text>,
+        deleted_datetime -> Nullable<Timestamp>,
     },
-    links: {},
+    links: {
+        item_link_id -> item_id,
+    },
     optional_links: {
         manufacturer_link_id -> manufacturer_id,
     }
@@ -32,6 +37,7 @@ use crate::db_diesel::name_row::name;
 joinable!(barcode -> item (item_id));
 joinable!(barcode -> invoice_line (id));
 joinable!(barcode -> name (manufacturer_id));
+joinable!(barcode_with_links -> item_link (item_link_id));
 joinable!(barcode_with_links -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(barcode, item_link);
 
@@ -39,13 +45,18 @@ allow_tables_to_appear_in_same_query!(barcode, item_link);
 #[diesel(table_name = barcode)]
 pub struct BarcodeRow {
     pub id: String,
-    pub gtin: String,
-    pub item_id: String,
+    /// The barcode in its standard form with its scheme, e.g. `gtin:09506682101352`
+    /// (`util::barcode`)
+    pub value: String,
     pub pack_size: Option<f64>,
-    pub parent_id: Option<String>,
-    // Resolved from name_link - must be last to match view column order
+    /// Set when central removes the barcode. A removed barcode doesn't match scans
+    /// and isn't confirmed again by stores agreeing on it.
+    pub deleted_datetime: Option<NaiveDateTime>,
+    // Resolved from link tables - must be last to match view column order
+    pub item_id: String,
     pub manufacturer_id: Option<String>,
 }
+
 pub struct BarcodeRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -74,18 +85,17 @@ impl<'a> BarcodeRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
-        let exists: bool = diesel::select(diesel::dsl::exists(
-            barcode::table.filter(barcode::id.eq(lookup_id)),
-        ))
-        .get_result(self.connection.lock().connection())?;
-        Ok(exists)
-    }
-
-    pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
+    /// The row for this barcode and item, removed or not
+    pub fn find_one_by_value_and_item(
+        &self,
+        value: &str,
+        item_id: &str,
+    ) -> Result<Option<BarcodeRow>, RepositoryError> {
         let result = barcode::table
+            .filter(barcode::value.eq(value))
             .filter(barcode::item_id.eq(item_id))
-            .get_results(self.connection.lock().connection())?;
+            .first(self.connection.lock().connection())
+            .optional()?;
         Ok(result)
     }
 

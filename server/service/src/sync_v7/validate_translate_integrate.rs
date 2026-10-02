@@ -157,6 +157,7 @@ fn translate_delete(
         | ChangelogTableName::AssetLogReason
         | ChangelogTableName::AssetProperty
         | ChangelogTableName::Barcode
+        | ChangelogTableName::BarcodeProposal
         | ChangelogTableName::BundledItem
         | ChangelogTableName::Campaign
         | ChangelogTableName::Clinician

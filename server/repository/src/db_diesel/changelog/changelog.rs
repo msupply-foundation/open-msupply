@@ -73,6 +73,7 @@ diesel_string_enum! {
         AssetProperty,
         BackendPlugin,
         Barcode,
+        BarcodeProposal,
         BundledItem,
         Campaign,
         Category,

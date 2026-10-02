@@ -3,10 +3,10 @@ use crate::BarcodeRow;
 pub fn barcode_a() -> BarcodeRow {
     BarcodeRow {
         id: String::from("barcode_a"),
-        gtin: String::from("0123456789"),
+        value: String::from("plain:0123456789"),
         item_id: String::from("item_a"),
         pack_size: Some(1.0),
-        parent_id: None,
+        deleted_datetime: None,
         manufacturer_id: Some(String::from("manufacturer_a")),
     }
 }
@@ -14,10 +14,10 @@ pub fn barcode_a() -> BarcodeRow {
 pub fn barcode_b() -> BarcodeRow {
     BarcodeRow {
         id: String::from("barcode_b"),
-        gtin: String::from("9876543210"),
+        value: String::from("plain:9876543210"),
         item_id: String::from("item_b"),
         pack_size: Some(1.0),
-        parent_id: None,
+        deleted_datetime: None,
         manufacturer_id: Some(String::from("manufacturer_a")),
     }
 }

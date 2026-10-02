@@ -1,8 +1,11 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_barcode_auto_confirm_processor_cursor_pg_enum;
 mod add_code_to_location_type;
 mod add_line_total_to_purchase_order_line;
+mod barcode_proposals;
+mod seed_barcode_auto_confirm_processor_cursor;
 
 pub(crate) struct V3_04_00;
 
@@ -19,6 +22,9 @@ impl Migration for V3_04_00 {
         vec![
             Box::new(add_code_to_location_type::Migrate),
             Box::new(add_line_total_to_purchase_order_line::Migrate),
+            Box::new(barcode_proposals::Migrate),
+            Box::new(add_barcode_auto_confirm_processor_cursor_pg_enum::Migrate),
+            Box::new(seed_barcode_auto_confirm_processor_cursor::Migrate),
         ]
     }
 }
@@ -124,5 +130,152 @@ mod test {
                 ("pol_zero_pack".to_string(), 0.0),
             ]
         );
+    }
+
+    table! {
+        barcode (id) {
+            id -> Text,
+            value -> Text,
+            item_link_id -> Text,
+            pack_size -> Nullable<Double>,
+        }
+    }
+
+    table! {
+        stock_line (id) {
+            id -> Text,
+            barcode -> Nullable<Text>,
+        }
+    }
+
+    table! {
+        changelog (cursor) {
+            cursor -> BigInt,
+            table_name -> Text,
+            record_id -> Text,
+        }
+    }
+
+    /// Existing barcodes stay confirmed barcodes in standard form, keeping their
+    /// ids. Ones that are the same barcode for the same item once in standard form
+    /// are merged, and their changelog entries dropped. Stock lines get the
+    /// barcode's value in place of its id.
+    #[actix_rt::test]
+    async fn migration_3_04_00_barcodes() {
+        let previous_version = V3_02_00.version();
+        let version = V3_04_00.version();
+
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: &format!("migration_{version}_barcodes"),
+            version: Some(previous_version.clone()),
+            ..Default::default()
+        })
+        .await;
+
+        run(&connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');");
+        run(
+            &connection,
+            "INSERT INTO name_link (id, name_id) VALUES ('store_name_link', 'store_name');",
+        );
+        run(&connection, "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name_link', 'STORE1', 1);");
+        for item in ["item_a", "item_b"] {
+            run(&connection, &format!("INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('{item}', '{item}', '{item}', 1.0, 'STOCK', '');"));
+            run(
+                &connection,
+                &format!("INSERT INTO item_link (id, item_id) VALUES ('{item}', '{item}');"),
+            );
+        }
+
+        // EAN-13 and its GTIN-14 form, for the same item: merged into "b1"
+        run(&connection, "INSERT INTO barcode (id, gtin, item_id, pack_size) VALUES ('b1', '9506682101352', 'item_a', 10);");
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id) VALUES ('b2', '09506682101352', 'item_a');",
+        );
+        // The same barcode for another item: kept
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id) VALUES ('b3', ' 09506682101352', 'item_b');",
+        );
+        // Not a GTIN: plain
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id) VALUES ('b4', 'ABC-1', 'item_b');",
+        );
+        // Blank: dropped
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id) VALUES ('b5', '  ', 'item_b');",
+        );
+        for id in ["b1", "b2", "b3", "b4", "b5"] {
+            run(&connection, &format!("INSERT INTO changelog (table_name, record_id, row_action) VALUES ('barcode', '{id}', 'UPSERT');"));
+        }
+        for (stock_line, barcode) in [("s1", "b2"), ("s2", "b4")] {
+            run(&connection, &format!("INSERT INTO stock_line (id, item_link_id, store_id, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold, barcode_id) VALUES ('{stock_line}', 'item_a', 'store_id', 1, 0, 0, 1, 1, false, '{barcode}');"));
+        }
+        run(&connection, "INSERT INTO stock_line (id, item_link_id, store_id, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold) VALUES ('s3', 'item_a', 'store_id', 1, 0, 0, 1, 1, false);");
+
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
+
+        let barcodes: Vec<(String, String, String, Option<f64>)> = barcode::table
+            .select((
+                barcode::id,
+                barcode::value,
+                barcode::item_link_id,
+                barcode::pack_size,
+            ))
+            .order(barcode::id.asc())
+            .load(connection.lock().connection())
+            .unwrap();
+        assert_eq!(
+            barcodes,
+            vec![
+                (
+                    "b1".to_string(),
+                    "gtin:09506682101352".to_string(),
+                    "item_a".to_string(),
+                    Some(10.0)
+                ),
+                (
+                    "b3".to_string(),
+                    "gtin:09506682101352".to_string(),
+                    "item_b".to_string(),
+                    None
+                ),
+                (
+                    "b4".to_string(),
+                    "plain:ABC-1".to_string(),
+                    "item_b".to_string(),
+                    None
+                ),
+            ]
+        );
+
+        let stock_lines: Vec<(String, Option<String>)> = stock_line::table
+            .select((stock_line::id, stock_line::barcode))
+            .order(stock_line::id.asc())
+            .load(connection.lock().connection())
+            .unwrap();
+        assert_eq!(
+            stock_lines,
+            vec![
+                ("s1".to_string(), Some("gtin:09506682101352".to_string())),
+                ("s2".to_string(), Some("plain:ABC-1".to_string())),
+                ("s3".to_string(), None),
+            ]
+        );
+
+        let mut changelog_ids: Vec<String> = changelog::table
+            .filter(changelog::table_name.eq("barcode"))
+            .select(changelog::record_id)
+            .load(connection.lock().connection())
+            .unwrap();
+        changelog_ids.sort();
+        assert_eq!(changelog_ids, vec!["b1", "b3", "b4"]);
     }
 }

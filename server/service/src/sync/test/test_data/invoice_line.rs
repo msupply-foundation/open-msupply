@@ -114,6 +114,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
             transfer_comment: Some("Only 2 packs left in stock".to_string()),
+            barcode: None,
         },
     )
 }
@@ -268,6 +269,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,
+            barcode: None,
         },
     )
 }
@@ -430,6 +432,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,
+            barcode: None,
         },
     )
 }
@@ -587,6 +590,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,
+            barcode: None,
         },
     )
 }
@@ -744,6 +748,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,
+            barcode: None,
         },
     )
 }
@@ -902,6 +907,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,
+            barcode: None,
         },
     )
 }
@@ -1059,6 +1065,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,
+            barcode: None,
         },
     )
 }
@@ -1215,6 +1222,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
             transfer_comment: None,
+            barcode: None,
         },
     )
 }

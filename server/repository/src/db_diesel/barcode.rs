@@ -17,9 +17,11 @@ pub struct Barcode {
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct BarcodeFilter {
     pub id: Option<EqualFilter<String>>,
-    pub gtin: Option<EqualFilter<String>>,
+    pub value: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub pack_size: Option<EqualFilter<f64>>,
+    /// `Some(false)` for barcodes central hasn't removed
+    pub is_deleted: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -71,11 +73,11 @@ impl<'a> BarcodeRepository<'a> {
                     apply_sort_no_case!(query, sort, barcode::id)
                 }
                 BarcodeSortField::Barcode => {
-                    apply_sort_no_case!(query, sort, barcode::gtin)
+                    apply_sort_no_case!(query, sort, barcode::value)
                 }
             }
         } else {
-            query = query.order(barcode::gtin.asc())
+            query = query.order(barcode::value.asc())
         }
 
         let result = query
@@ -95,9 +97,16 @@ fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedBarcodeQuery {
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, barcode::id);
-        apply_equal_filter!(query, filter.gtin, barcode::gtin);
+        apply_equal_filter!(query, filter.value, barcode::value);
         apply_equal_filter!(query, filter.item_id, barcode::item_id);
         apply_equal_filter!(query, filter.pack_size, barcode::pack_size);
+        if let Some(is_deleted) = filter.is_deleted {
+            query = if is_deleted {
+                query.filter(barcode::deleted_datetime.is_not_null())
+            } else {
+                query.filter(barcode::deleted_datetime.is_null())
+            };
+        }
     }
 
     query
@@ -120,8 +129,13 @@ impl BarcodeFilter {
         self
     }
 
-    pub fn gtin(mut self, filter: EqualFilter<String>) -> Self {
-        self.gtin = Some(filter);
+    pub fn value(mut self, filter: EqualFilter<String>) -> Self {
+        self.value = Some(filter);
+        self
+    }
+
+    pub fn is_deleted(mut self, is_deleted: bool) -> Self {
+        self.is_deleted = Some(is_deleted);
         self
     }
 

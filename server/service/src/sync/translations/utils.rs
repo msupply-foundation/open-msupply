@@ -5,12 +5,12 @@ use chrono::Utc;
 use repository::{
     system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     AssetCatalogueItemRowRepository, AssetCategoryRowRepository, AssetClassRowRepository,
-    AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, BarcodeRowRepository,
-    CampaignRowRepository, CategoryRowRepository, ChangelogRow, ClinicianLinkRowRepository,
-    ContextRowRepository, CurrencyRowRepository, DemographicRowRepository, DiagnosisRowRepository,
+    AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, CampaignRowRepository,
+    CategoryRowRepository, ChangelogRow, ClinicianLinkRowRepository, ContextRowRepository,
+    CurrencyRowRepository, DemographicRowRepository, DiagnosisRowRepository,
     FormSchemaRowRepository, IndicatorColumnRowRepository, IndicatorLineRowRepository,
     InsuranceProviderRowRepository, InvoiceLineRowRepository, InvoiceRowRepository,
-    ItemLinkRowRepository, ItemRowRepository, ItemVariantRowRepository, KeyValueStoreRepository,
+    ItemLinkRowRepository, ItemVariantRowRepository, KeyValueStoreRepository,
     LocationRowRepository, LocationTypeRowRepository, MasterListRowRepository,
     NameInsuranceJoinRowRepository, NameLinkRowRepository, NameTagRowRepository,
     PeriodRowRepository, PeriodScheduleRowRepository, ProgramIndicatorRowRepository,
@@ -242,7 +242,6 @@ pub(crate) enum FkField {
     AssetCategory,
     AssetClass,
     AssetLogReason,
-    Barcode,
     Campaign,
     Category,
     ClinicianLink,
@@ -256,7 +255,6 @@ pub(crate) enum FkField {
     InsuranceProvider,
     Invoice,
     InvoiceLine,
-    Item,
     ItemLink,
     ItemVariant,
     Location,
@@ -305,7 +303,6 @@ impl FkField {
             FkField::AssetLogReason => {
                 AssetLogReasonRowRepository::new(connection).check_exists_by_id(id)
             }
-            FkField::Barcode => BarcodeRowRepository::new(connection).check_exists_by_id(id),
             FkField::Campaign => CampaignRowRepository::new(connection).check_exists_by_id(id),
             FkField::Category => CategoryRowRepository::new(connection).check_exists_by_id(id),
             FkField::ClinicianLink => {
@@ -331,7 +328,6 @@ impl FkField {
             FkField::InvoiceLine => {
                 InvoiceLineRowRepository::new(connection).check_exists_by_id(id)
             }
-            FkField::Item => ItemRowRepository::new(connection).check_exists_by_id(id),
             FkField::ItemLink => ItemLinkRowRepository::new(connection).check_exists_by_id(id),
             FkField::ItemVariant => {
                 ItemVariantRowRepository::new(connection).check_exists_by_id(id)

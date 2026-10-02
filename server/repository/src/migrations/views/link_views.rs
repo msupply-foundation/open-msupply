@@ -30,6 +30,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS program_enrolment_view;
                 DROP VIEW IF EXISTS vaccination_view;
                 DROP VIEW IF EXISTS barcode_view;
+                DROP VIEW IF EXISTS barcode_proposal_view;
                 DROP VIEW IF EXISTS goods_received_view;  -- removed but keep drop for cleanup
                 DROP VIEW IF EXISTS goods_received_line_view;  -- removed but keep drop for cleanup
                 DROP VIEW IF EXISTS item_variant_view;
@@ -282,11 +283,26 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW barcode_view AS
                 SELECT
                     barcode.*,
+                    item_link.item_id as item_id,
                     manufacturer_link.name_id as manufacturer_id
                 FROM
                     barcode
+                JOIN
+                    item_link ON barcode.item_link_id = item_link.id
                 LEFT JOIN
                     name_link AS manufacturer_link ON barcode.manufacturer_link_id = manufacturer_link.id;
+
+                CREATE VIEW barcode_proposal_view AS
+                SELECT
+                    barcode_proposal.*,
+                    item_link.item_id as item_id,
+                    manufacturer_link.name_id as manufacturer_id
+                FROM
+                    barcode_proposal
+                JOIN
+                    item_link ON barcode_proposal.item_link_id = item_link.id
+                LEFT JOIN
+                    name_link AS manufacturer_link ON barcode_proposal.manufacturer_link_id = manufacturer_link.id;
 
                 CREATE VIEW item_variant_view AS
                 SELECT

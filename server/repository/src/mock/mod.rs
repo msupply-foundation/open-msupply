@@ -226,6 +226,7 @@ pub struct MockData {
     pub programs: Vec<ProgramRow>,
     pub program_order_types: Vec<ProgramRequisitionOrderTypeRow>,
     pub barcodes: Vec<BarcodeRow>,
+    pub barcode_proposals: Vec<BarcodeProposalRow>,
     pub clinicians: Vec<ClinicianRow>,
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
@@ -1324,6 +1325,10 @@ pub fn insert_mock_data(
                 let repo = BarcodeRowRepository::new(connection);
                 repo.upsert_one(row).unwrap();
             }
+            for row in &mock_data.barcode_proposals {
+                let repo = BarcodeProposalRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
         }
 
         if inserts.name_tag_joins {
@@ -1599,6 +1604,7 @@ impl MockData {
             mut master_list_name_joins,
             mut program_order_types,
             mut barcodes,
+            mut barcode_proposals,
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
@@ -1681,6 +1687,7 @@ impl MockData {
             .append(&mut master_list_name_joins);
         self.program_order_types.append(&mut program_order_types);
         self.barcodes.append(&mut barcodes);
+        self.barcode_proposals.append(&mut barcode_proposals);
         self.clinicians.append(&mut clinicians);
         self.clinician_store_joins
             .append(&mut clinician_store_joins);

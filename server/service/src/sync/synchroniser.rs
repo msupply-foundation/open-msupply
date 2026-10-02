@@ -435,6 +435,9 @@ pub(crate) fn run_post_sync_triggers(
 
     ctx.processors_trigger
         .trigger_processor(ProcessorType::MergeSyncMessage);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::BarcodeAutoConfirm);
 }
 
 /// Async wrapper around the synchronous `integrate_and_translate_sync_buffer`.

@@ -4,9 +4,9 @@ use super::{
 };
 
 use crate::{
-    db_diesel::barcode_row::barcode, db_diesel::changelog::changelog::RowOrId,
-    db_diesel::vvm_status::vvm_status_row::vvm_status, diesel_macros::define_linked_tables,
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
+    db_diesel::changelog::changelog::RowOrId, db_diesel::vvm_status::vvm_status_row::vvm_status,
+    diesel_macros::define_linked_tables, repository_error::RepositoryError, ChangelogSyncType,
+    Delete, SourceSiteId, Upsert,
 };
 use crate::{ChangelogRepository, RowActionType};
 
@@ -32,7 +32,7 @@ define_linked_tables! {
         expiry_date -> Nullable<Date>,
         on_hold -> Bool,
         note -> Nullable<Text>,
-        barcode_id -> Nullable<Text>,
+        barcode -> Nullable<Text>,
         item_variant_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
         campaign_id -> Nullable<Text>,
@@ -55,7 +55,6 @@ joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> item_variant (item_variant_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
-joinable!(stock_line -> barcode (barcode_id));
 joinable!(stock_line -> vvm_status (vvm_status_id));
 joinable!(stock_line -> campaign (campaign_id));
 joinable!(stock_line -> name (supplier_id));
@@ -76,7 +75,9 @@ pub struct StockLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
     pub note: Option<String>,
-    pub barcode_id: Option<String>,
+    /// The barcode the stock carries, in its standard form with its scheme
+    /// (`util::barcode`). Not necessarily a confirmed barcode.
+    pub barcode: Option<String>,
     pub item_variant_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub campaign_id: Option<String>,
