@@ -11,10 +11,8 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import { CheckIcon } from '../../../ui/icons';
 import { sendInternalOrder } from './internalOrderUpdate';
 import {
@@ -101,7 +99,7 @@ export const InternalOrderStatusFooter: Component<
   const [open, setOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [errorMessage, setErrorMessage] = createSignal<string>();
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
 
   const emptySend = () =>
     isEmptySend(props.node.lines.nodes, props.keepZeroLines);
@@ -146,7 +144,7 @@ export const InternalOrderStatusFooter: Component<
       props.onReasonsNotProvided([]);
       props.onSent(result.node);
       setOpen(false);
-      setOutcome({ type: 'success', text: t('messages.saved') });
+      saved.show(t('messages.saved'));
       return;
     }
     if (result.kind === 'error') {
@@ -168,7 +166,7 @@ export const InternalOrderStatusFooter: Component<
         steps={statusSteps(props.node)}
         current={currentStatusStep(props.node.status)}
       />
-      <ContentFooterMessage message={outcome()} />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
       <ContentFooterActions>
         {/* No Close here (D103): leaving the order is the breadcrumb's job, in
             the app bar, where every other screen puts it. */}

@@ -1,4 +1,4 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createEffect, createSignal, on, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import {
@@ -10,10 +10,9 @@ import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
@@ -67,7 +66,18 @@ export const InboundShipmentStatusFooter: Component<
 > = props => {
   const [holdConfirm, setHoldConfirm] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const [errorMessage, setErrorMessage] = createSignal<string>();
+  const saved = createFlash<string>();
+
+  // A refusal speaks for the record it was raised on. Some views keep this
+  // footer mounted while the route swaps in another record, so drop it then.
+  createEffect(
+    on(
+      () => props.node.id,
+      () => setErrorMessage(undefined),
+      { defer: true }
+    )
+  );
 
   const sourceLink = () => sourceLinkOf(props.node);
   // Every status surface is limited by the invoice-status-options preference
@@ -89,7 +99,8 @@ export const InboundShipmentStatusFooter: Component<
   const advance = async (status: string) => {
     if (busy()) return;
     setBusy(true);
-    setOutcome(undefined);
+    setErrorMessage(undefined);
+    saved.clear();
     const result = await updateInboundShipment(
       props.storeId,
       props.isExternal,
@@ -103,9 +114,8 @@ export const InboundShipmentStatusFooter: Component<
     setBusy(false);
     if (result.kind === 'saved') {
       props.onAdvanced(result.node);
-      setOutcome({ type: 'success', text: t('messages.shipment-saved') });
-    } else if (result.kind === 'error')
-      setOutcome({ type: 'error', text: result.message, persistent: true });
+      saved.show(t('messages.shipment-saved'));
+    } else if (result.kind === 'error') setErrorMessage(result.message);
   };
 
   const options = () =>
@@ -141,9 +151,19 @@ export const InboundShipmentStatusFooter: Component<
           reach it. */}
       <Pagination {...props.pagination} inBar />
 
-      {/* The outcome of an advance, at the control: a rejection (request
-          preserved) or the save confirmation's flash. */}
-      <ContentFooterMessage message={outcome()} />
+      {/* A rejected advance shows here, full width at the control, request
+          preserved. An error the user must act on is never shrunk to a chip;
+          it stays until the next attempt. */}
+      <Show when={errorMessage()}>
+        {message => (
+          <Alert severity="error" testId="status-error">
+            {message()}
+          </Alert>
+        )}
+      </Show>
+
+      {/* A committed advance flashes its save confirmation. */}
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>
         <Show when={!props.disabled && reachable().length > 0}>

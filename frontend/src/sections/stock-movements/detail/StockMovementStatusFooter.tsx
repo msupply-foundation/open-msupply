@@ -1,11 +1,9 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { Show, type Component } from 'solid-js';
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '@/ui/utils/createFlash';
 import { t } from '@/intl';
 import { StatusChangeAction } from './actions/StatusChangeAction';
 import { currentStep, isFinalised, statusSteps } from './stockMovementStatus';
@@ -32,11 +30,11 @@ export interface StockMovementStatusFooterProps {
 export const StockMovementStatusFooter: Component<
   StockMovementStatusFooterProps
 > = props => {
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
 
   const onApplied = (node: StockMovementInfoFragment) => {
     props.onAdvanced(node);
-    setOutcome({ type: 'success', text: t('messages.saved') });
+    saved.show(t('messages.saved'));
   };
 
   return (
@@ -46,7 +44,7 @@ export const StockMovementStatusFooter: Component<
         steps={statusSteps(props.node)}
         current={currentStep(props.node.status)}
       />
-      <ContentFooterMessage message={outcome()} />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
       <ContentFooterActions>
         <Show when={!isFinalised(props.node.status)}>
           <StatusChangeAction

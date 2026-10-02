@@ -39,9 +39,7 @@ export interface AlertProps {
    * fits, wrapping once it hits the container) for a page-header meta strip
    * carrying persistent, low-urgency context (read-only
    * / auto-created record, locked document) that shouldn't cost a content row.
-   * Not for errors or anything the user must act on — those keep full width —
-   * except in the content footer's message slot (ContentFooterMessage), where
-   * every outcome is the same one-line chip so the bar never grows.
+   * Not for errors or anything the user must act on — those keep full width.
    */
   compact?: boolean;
   /**

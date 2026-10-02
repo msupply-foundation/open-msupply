@@ -1,13 +1,10 @@
-import { createSignal } from 'solid-js';
 import type { Component } from 'solid-js';
 import { t } from '@/intl';
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '@/ui/utils/createFlash';
 import type { RnrFormNode } from './rnrFormUpdate';
 import { isFinalised } from '../list/rnrFormStatus';
 import { FinaliseRnrFormAction } from './actions/FinaliseRnrFormAction';
@@ -29,15 +26,14 @@ export const RnrFormStatusFooter: Component<{
   /** Flush edits, finalise, splice the result; resolves false on failure. */
   onFinalise: () => Promise<boolean>;
 }> = props => {
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
 
   const finalised = () => isFinalised(props.node.status);
 
   // The view's finalise, reporting a success in the message slot.
   const finalise = async (): Promise<boolean> => {
     const finalisedNow = await props.onFinalise();
-    if (finalisedNow)
-      setOutcome({ type: 'success', text: t('status.finalised') });
+    if (finalisedNow) saved.show(t('status.finalised'));
     return finalisedNow;
   };
 
@@ -55,7 +51,7 @@ export const RnrFormStatusFooter: Component<{
         steps={steps()}
         current={finalised() ? 1 : 0}
       />
-      <ContentFooterMessage message={outcome()} />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
       <ContentFooterActions>
         <FinaliseRnrFormAction
           node={props.node}

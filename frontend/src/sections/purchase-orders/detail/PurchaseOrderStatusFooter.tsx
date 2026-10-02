@@ -1,4 +1,4 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createEffect, createSignal, on, Show, type Component } from 'solid-js';
 import { t } from '@/intl';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
@@ -9,10 +9,8 @@ import {
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '@/ui/utils/createFlash';
 import { Button } from '@/ui/elements/buttons/Button';
 import { ArrowRightIcon } from '@/ui/icons';
 import { Stack } from '@/ui/layout/Stack/Stack';
@@ -75,7 +73,18 @@ export const PurchaseOrderStatusFooter: Component<
 > = props => {
   const [confirming, setConfirming] = createSignal<PurchaseOrderStatus>();
   const [busy, setBusy] = createSignal(false);
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const [errorMessage, setErrorMessage] = createSignal<string>();
+  const saved = createFlash<string>();
+
+  // A refusal speaks for the record it was raised on. Some views keep this
+  // footer mounted while the route swaps in another record, so drop it then.
+  createEffect(
+    on(
+      () => props.node.id,
+      () => setErrorMessage(undefined),
+      { defer: true }
+    )
+  );
 
   const status = () => props.node.status as PurchaseOrderStatus;
   const target = () => nextStatus(status(), props.authorisationRequired);
@@ -100,10 +109,11 @@ export const PurchaseOrderStatusFooter: Component<
     });
 
   const start = (to: PurchaseOrderStatus) => {
-    setOutcome(undefined);
+    setErrorMessage(undefined);
+    saved.clear();
     const declined = refusal(to);
     if (declined) {
-      setOutcome({ type: 'error', text: declined, persistent: true });
+      setErrorMessage(declined);
       return;
     }
     setConfirming(to);
@@ -117,11 +127,10 @@ export const PurchaseOrderStatusFooter: Component<
     setConfirming(undefined);
     if (!result.ok) {
       // No message = a transport failure, already up in the global modal.
-      if (result.message)
-        setOutcome({ type: 'error', text: result.message, persistent: true });
+      if (result.message) setErrorMessage(result.message);
       return;
     }
-    setOutcome({ type: 'success', text: t('messages.purchase-order-saved') });
+    saved.show(t('messages.purchase-order-saved'));
   };
 
   return (
@@ -136,13 +145,21 @@ export const PurchaseOrderStatusFooter: Component<
           cluster so a crowded bar wraps it whole rather than crushing it). */}
       <Pagination {...props.pagination} inBar />
 
-      {/* The outcome of a move, at the control. A declined or rejected move:
-          a blocked move names the offending items and the table marks those
+      {/* A declined or rejected move shows here, full width at the control.
+          A blocked move names the offending items and the table marks those
           lines; a finalise blocked by an unverified shipment names that
           instead — though its wording denies a delivered shipment exists,
-          which is the server's message, not ours (contract ⚠️). A move that
-          lands: the save confirmation's flash. */}
-      <ContentFooterMessage message={outcome()} />
+          which is the server's message, not ours (contract ⚠️). */}
+      <Show when={errorMessage()}>
+        {message => (
+          <Alert severity="error" testId="status-error">
+            {message()}
+          </Alert>
+        )}
+      </Show>
+
+      {/* A move that lands flashes its save confirmation. */}
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>
         <Show when={target()}>

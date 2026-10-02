@@ -5,10 +5,8 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import { StatusChangeAction } from './actions/StatusChangeAction';
 import { currentStep, filterByStatusPreference } from '@/domain/invoice';
 import { STATUS_FLOW, statusSteps } from './returnStatus';
@@ -48,7 +46,7 @@ export const SupplierReturnStatusFooter: Component<
   SupplierReturnStatusFooterProps
 > = props => {
   const [holdConfirm, setHoldConfirm] = createSignal(false);
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
 
   const holding = () => props.node.onHold;
   // The flow narrowed by the invoice-status-options preference (rules §
@@ -59,7 +57,7 @@ export const SupplierReturnStatusFooter: Component<
 
   const onApplied = (node: SupplierReturnInfoFragment) => {
     props.onAdvanced(node);
-    setOutcome({ type: 'success', text: t('messages.return-saved') });
+    saved.show(t('messages.return-saved'));
   };
 
   return (
@@ -82,7 +80,7 @@ export const SupplierReturnStatusFooter: Component<
         current={currentStep(STATUS_FLOW, offered(), props.node.status)}
       />
 
-      <ContentFooterMessage message={outcome()} />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       {/* One inline-end cluster: the Confirm-status split button alone. No
           Close beside it (D103) — leaving the return is the breadcrumb's job,

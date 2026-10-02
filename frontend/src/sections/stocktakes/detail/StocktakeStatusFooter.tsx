@@ -4,10 +4,8 @@ import { CheckboxButton } from '@/ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '@/ui/utils/createFlash';
 import {
   Pagination,
   type PaginationProps,
@@ -68,12 +66,12 @@ export const StocktakeStatusFooter: Component<
 > = props => {
   // Confirm-before-act, like OMS: toggling on-hold confirms first.
   const [holdConfirm, setHoldConfirm] = createSignal(false);
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
 
   // Finalise is the only status write (NEW → FINALISED).
   const onFinalised = (node: StocktakeInfoFragment) => {
     props.onFinalised(node);
-    setOutcome({ type: 'success', text: t('messages.saved') });
+    saved.show(t('messages.saved'));
   };
 
   const isFinalised = () => props.node.status === 'FINALISED';
@@ -119,7 +117,7 @@ export const StocktakeStatusFooter: Component<
           reach it. */}
       <Pagination {...props.pagination} inBar />
 
-      <ContentFooterMessage message={outcome()} />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       {/* Finalise — the status-change split button + its modals, self-contained (kdd/action-modal). */}
       <FinaliseAction
