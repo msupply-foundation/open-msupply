@@ -162,6 +162,7 @@ fn generate_line(
         item_variant_id,
         vvm_status_id,
         volume_per_pack,
+        barcode,
         ..
     }: StockLineRow,
 ) -> InvoiceLineRow {
@@ -220,6 +221,8 @@ fn generate_line(
             .as_ref()
             .map(|u| u.value.clone())
             .unwrap_or(existing_transfer_comment),
+        // Follows the stock line it issues. Copying a barcode never proposes one.
+        barcode,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

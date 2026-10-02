@@ -211,7 +211,8 @@ fn generate_stock_in_out_or_update(
             stock_line_id: Some(stock_line_row.id),
             item_id: item.id.clone(),
             stock_on_hold: stock_line_row.on_hold,
-            barcode: stock_line_row.barcode_id,
+            // Not a scanned barcode: the stock line keeps the one it has
+            barcode: None,
             // Default
             total_before_tax: None,
             tax_percentage: None,

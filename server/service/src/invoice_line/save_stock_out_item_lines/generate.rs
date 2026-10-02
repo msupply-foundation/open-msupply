@@ -42,6 +42,7 @@ pub fn generate(
         placeholder_quantity,
         prescribed_quantity: _,
         note: _,
+        barcode: _,
     }: SaveStockOutItemLines,
 ) -> Result<GenerateResult, SaveStockOutItemLinesError> {
     let stock_out_type = match invoice.r#type {

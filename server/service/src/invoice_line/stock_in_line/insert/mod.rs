@@ -4,7 +4,7 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, BarcodeRowRepository, InvoiceLine,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
     InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository,
 };
 
@@ -71,13 +71,8 @@ pub fn insert_stock_in_line(
                 invoice: invoice_user_update,
                 invoice_line,
                 stock_line,
-                barcode,
                 vvm_status_log,
             } = generate(connection, &ctx.user_id, input.clone(), item, invoice)?;
-
-            if let Some(barcode_row) = barcode {
-                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
-            }
 
             if let Some(stock_line_row) = stock_line {
                 StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
@@ -152,7 +147,7 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        barcode::{BarcodeFilter, BarcodeRepository},
+        barcode_proposal::{BarcodeProposalFilter, BarcodeProposalRepository},
         mock::{
             currency_b, mock_customer_return_a, mock_customer_return_a_invoice_line_a,
             mock_immunisation_program_a, mock_inbound_shipment_a, mock_inbound_shipment_c,
@@ -650,7 +645,8 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        let gtin = "new-gtin-123".to_string();
+        // Stored in standard form; no barcode or proposal is created
+        let scanned = " 9506682101352\n".to_string();
 
         insert_stock_in_line(
             &context,
@@ -660,7 +656,7 @@ mod test {
                 item_id: mock_item_a().id,
                 pack_size: 1.0,
                 number_of_packs: 1.0,
-                barcode: Some(gtin.clone()),
+                barcode: Some(scanned),
                 ..Default::default()
             },
             None,
@@ -688,15 +684,16 @@ mod test {
             expected.number_of_packs = 1.0;
             expected
         });
-
-        let barcode = BarcodeRepository::new(&connection)
-            .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(gtin.to_owned())))
-            .unwrap()
-            .pop()
-            .unwrap();
+        assert_eq!(inbound_line.barcode.as_deref(), Some("gtin:09506682101352"));
 
         let stock_line = stock_line_option.unwrap();
-        assert_eq!(stock_line.barcode_id, Some(barcode.barcode_row.id));
+        assert_eq!(stock_line.barcode.as_deref(), Some("gtin:09506682101352"));
+        assert_eq!(
+            BarcodeProposalRepository::new(&connection)
+                .query_by_filter(BarcodeProposalFilter::new())
+                .unwrap(),
+            vec![]
+        );
 
         // pack to one preference is set
         let pack_to_one = StorePreferenceRow {

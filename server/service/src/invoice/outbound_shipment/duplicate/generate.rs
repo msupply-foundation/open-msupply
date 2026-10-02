@@ -164,6 +164,7 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
             legacy_goods_received_line_id: None,
             // No requisition link on the copy, so no request to explain.
             transfer_comment: None,
+            barcode: None,
         };
     }
 
@@ -214,5 +215,6 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
         transfer_comment: None,
+        barcode: None,
     }
 }

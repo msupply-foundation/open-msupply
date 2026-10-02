@@ -210,6 +210,7 @@ fn generate_line(
         campaign_id,
         program_id,
         note: _,
+        barcode,
         ..
     }: StockLineRow,
     InvoiceRow {
@@ -281,6 +282,8 @@ fn generate_line(
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
         transfer_comment,
+        // The barcode of the stock it issues. Copying a barcode never proposes one.
+        barcode,
     })
 }
 

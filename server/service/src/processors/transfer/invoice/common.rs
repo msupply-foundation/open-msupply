@@ -82,6 +82,7 @@ pub(crate) fn generate_inbound_lines(
                     received_number_of_packs: _,
                     legacy_goods_received_line_id: _,
                     transfer_comment,
+                    barcode,
                 },
                 ItemRow {
                     id: item_id,
@@ -182,6 +183,8 @@ pub(crate) fn generate_inbound_lines(
                     legacy_goods_received_line_id: None,
                     // Travels with the line; read-only at the receiving store.
                     transfer_comment,
+                    // The box's barcode travels with it, onto the received stock
+                    barcode,
                 }
             },
         )
