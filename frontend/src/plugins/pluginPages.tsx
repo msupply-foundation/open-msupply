@@ -1,11 +1,20 @@
-import { ErrorBoundary, lazy, Suspense } from 'solid-js';
+import { ErrorBoundary, lazy, Show, Suspense } from 'solid-js';
+import { pageTrail } from './pageTrail';
+import { pageActions } from './pageActions';
+import { pageFooter } from './pageFooter';
+import { storeHref } from '../plugin-sdk/navigation';
 import type { Component } from 'solid-js';
 import { t, type LocaleKey } from '../intl';
 import { FileIcon, type IconProps } from '../ui/icons';
 import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
-import { upperNav, type NavItem, type NavLeaf } from '../ui/layout/AppShell/navModel';
+import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
+import {
+  upperNav,
+  type NavItem,
+  type NavLeaf,
+} from '../ui/layout/AppShell/navModel';
 import { anchorMerge, type AnchorDiagnostic } from './anchorMerge';
 import type { RouteAccess } from '../nav/navGates';
 import { namespacedPluginKey } from '../plugin-sdk/intl';
@@ -565,8 +574,47 @@ const pageComponent = (registered: RegisteredPage): Component => {
     <Page
       header={
         <Header>
-          <Breadcrumb crumbs={[{ label: t(labelKey) }]} />
+          {/* The page's crumb, then whatever trail the page sets below itself
+              (pageTrail.ts): with a trail the page's own crumb becomes the
+              parent link, so a record screen under a plugin list is left the
+              way a host record screen is. */}
+          <Breadcrumb
+            crumbs={[
+              {
+                label: t(labelKey),
+                to: pageTrail().length > 0 ? storeHref(page.path) : undefined,
+              },
+              ...pageTrail().map(crumb => ({
+                label: crumb.label,
+                to: crumb.path ? storeHref(crumb.path) : undefined,
+              })),
+            ]}
+          />
+          {/* The page's action cluster (pageActions.ts), top-end like a host
+              page's; a throwing cluster is contained like the body. */}
+          <Show when={pageActions()}>
+            {actions => (
+              <HeaderButtons>
+                <ErrorBoundary
+                  fallback={<p>{t('error.plugin-unavailable')}</p>}
+                >
+                  {actions()()}
+                </ErrorBoundary>
+              </HeaderButtons>
+            )}
+          </Show>
         </Header>
+      }
+      contentFooter={
+        /* The page's pinned action bar (pageFooter.ts), below the scrolling
+           body like a host detail screen's. */
+        <Show when={pageFooter()}>
+          {footer => (
+            <ErrorBoundary fallback={<p>{t('error.plugin-unavailable')}</p>}>
+              {footer()()}
+            </ErrorBoundary>
+          )}
+        </Show>
       }
     >
       {/* A throwing page is contained to its body — the frame, the menu and

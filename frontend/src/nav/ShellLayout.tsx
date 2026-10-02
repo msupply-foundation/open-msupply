@@ -7,7 +7,13 @@ import {
   Show,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import { Navigate, useLocation, useNavigate, useParams } from '@solidjs/router';
+import {
+  Navigate,
+  useBeforeLeave,
+  useLocation,
+  useNavigate,
+  useParams,
+} from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
@@ -34,6 +40,7 @@ import { createRegionDiagnostics } from '../plugins/diagnostics';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
 import { bindHostPathname } from './hostLocation';
 import { bindHostSearch } from './hostSearchParams';
+import { dispatchHostBeforeLeave } from './hostBeforeLeave';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
@@ -100,6 +107,22 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // the navigator bound above. Reactive: `location.search` is the router's own
   // signal, so a Back button re-renders the screen reading it.
   bindHostSearch(() => location.search);
+
+  // Route leaves, forwarded to the SDK's `onBeforeLeave` listeners (a plugin
+  // page's leave guard) — subscribed once here, where the router is, so a
+  // plugin never meets `@solidjs/router` (src/nav/hostBeforeLeave.ts).
+  useBeforeLeave(event =>
+    dispatchHostBeforeLeave({
+      toPathname:
+        typeof event.to === 'string' ? event.to.split(/[?#]/)[0] : undefined,
+      fromPathname: event.from.pathname,
+      get defaultPrevented() {
+        return event.defaultPrevented;
+      },
+      preventDefault: () => event.preventDefault(),
+      retry: force => event.retry(force),
+    })
+  );
 
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
   // → 'inventory/stocktakes'. The empty (store root) path is Home's own.

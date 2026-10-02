@@ -209,6 +209,66 @@ export type {
   IsoDateRange,
 } from '../ui/elements/inputs/DateRangeField';
 
+/*
+ * The Afghanistan Daily Tally's set (plugins/afghanistan ui-surface.md § S1–S7,
+ * the roles its Layout lines name — README § host obligations lists them as
+ * the kit gaps): the collapsible section group for its course cards and
+ * coverage groups; the icon-only button for the counter steppers; the
+ * mutually-exclusive choice for the session type; the row-status badge for
+ * _Draft_ and the count badge for a group's running total; the error detail
+ * disclosure for a failed submission; the loading spinner; the read-only
+ * labelled value for its tiles and stats; the vertical and horizontal stacks;
+ * the detail card for its summary tables; the action footer for Back /
+ * Continue / Submit; the standard Cancel button for its dialog; the typography
+ * role for its headings; the disclosure toggle for _Show all_ / _View
+ * details_. Each is eager because its step renders it from first paint, and
+ * each ships CSS of its own into the SDK chunk (measured:
+ * kdd/bundle-size-by-pr).
+ */
+export {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../ui/elements/accordion/Accordion';
+export type {
+  AccordionContentProps,
+  AccordionItemProps,
+  AccordionProps,
+  AccordionTriggerProps,
+} from '../ui/elements/accordion/Accordion';
+export { IconButton } from '../ui/elements/buttons/IconButton';
+export type { IconButtonProps } from '../ui/elements/buttons/IconButton';
+export { DisclosureToggle } from '../ui/elements/buttons/DisclosureToggle';
+export type { DisclosureToggleProps } from '../ui/elements/buttons/DisclosureToggle';
+export { CancelButton } from '../ui/elements/buttons/StandardButtons';
+export { RadioGroup } from '../ui/elements/inputs/RadioGroup';
+export type {
+  RadioGroupProps,
+  RadioOption,
+} from '../ui/elements/inputs/RadioGroup';
+export { Badge } from '../ui/elements/feedback/Badge';
+export type { BadgeProps } from '../ui/elements/feedback/Badge';
+export { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
+export type { ErrorDetailsProps } from '../ui/elements/feedback/ErrorDetails';
+export { Spinner } from '../ui/elements/feedback/Spinner';
+export { ProgressList } from '../ui/sync/ProgressList';
+export type { ProgressStep } from '../ui/sync/ProgressList';
+export type { SpinnerProps } from '../ui/elements/feedback/Spinner';
+export { LabelledValue } from '../ui/elements/typography/LabelledValue';
+export type { LabelledValueProps } from '../ui/elements/typography/LabelledValue';
+export { Text } from '../ui/elements/typography/Text';
+export type { TextProps } from '../ui/elements/typography/Text';
+export { Stack } from '../ui/layout/Stack/Stack';
+export type { StackProps } from '../ui/layout/Stack/Stack';
+export { HStack } from '../ui/layout/Stack/HStack';
+export type { HStackProps } from '../ui/layout/Stack/HStack';
+export { DetailCard } from '../ui/layout/Detail/DetailCard';
+export type { DetailCardProps } from '../ui/layout/Detail/DetailCard';
+export { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
+export type { ContentFooterProps } from '../ui/layout/ContentFooter/ContentFooter';
+export { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
+
 // ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
 /*
  * Heavy components load as their own host chunk on first render, never as
@@ -219,13 +279,18 @@ export type {
  * bar). The type re-exports are erased at build, so they add nothing eager.
  */
 export {
+  ConfirmDialog,
   DataTable,
+  Dialog,
   FilterBar,
   FilterDateRange,
   FilterSelect,
   FilterTextInput,
+  RecordLink,
   UnsavedChangesGuard,
 } from './lazyComponents';
+export type { DialogProps } from '../ui/elements/feedback/Dialog';
+export type { ConfirmDialogProps } from '../ui/elements/feedback/ConfirmDialog';
 export type { DataTableProps } from '../ui/elements/table/DataTable';
 export type {
   Filter,
@@ -319,6 +384,20 @@ export { CheckIcon } from '../ui/icons';
 // disclosure mirrors that look. Same bargain again: Select already pulls it
 // eagerly, so re-exporting costs nothing new.
 export { ChevronDownIcon } from '../ui/icons';
+/*
+ * The Afghanistan Daily Tally's icons (plugins/afghanistan ui-surface.md):
+ * the add icon on _New tally sheet_, the delete icon on _Discard draft_, the
+ * minus and plus of the counter control, the success check beside
+ * _Auto-allocated_, the forward arrow on Continue. All path data in the module
+ * that already ships — the same bargain as the entries above.
+ */
+export {
+  ArrowRightIcon,
+  CheckCircleIcon,
+  MinusCircleIcon,
+  PlusCircleIcon,
+  TrashIcon,
+} from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';
@@ -349,8 +428,17 @@ export type { PluginIntl, SupportedLocale } from './intl';
  * NOT here: a raw (path, filter) pair is the hand-encoding the named builders
  * exist to prevent.
  */
-export { storeHref, navigateTo, currentStorePath } from './navigation';
-export type { NavigateOptions } from './navigation';
+export {
+  storeHref,
+  navigateTo,
+  currentStorePath,
+  onBeforeLeave,
+  usePageTrail,
+  usePageActions,
+  usePageFooter,
+} from './navigation';
+export type { NavigateOptions, BeforeLeaveEvent } from './navigation';
+export type { RecordLinkProps } from './recordLink';
 export { usePageSearch } from './pageSearch';
 /*
  * Leaving a page with unsaved edits — the one piece of navigation a plugin
@@ -379,6 +467,7 @@ export {
   outOfStockItemsPath,
   dispensingListPath,
   prescriptionListPath,
+  prescriptionDetailPath,
   stockListPath,
   stocktakeListPath,
   stocktakeDetailPath,

@@ -82,6 +82,18 @@ export interface SlotContext {
    */
   storeMode: SlotStoreMode | undefined;
   storePreferences: SlotStorePreferences;
+  /**
+   * The entered store's code — the prefix of a record key a plugin derives
+   * per store (the Afghanistan Daily Tally's cohort patient code); undefined
+   * before the store guard resolves. Rides the login response's store list,
+   * so it costs no query.
+   */
+  storeCode: string | undefined;
+  /**
+   * The logged-in user's id, for a row a plugin attributes to its author;
+   * undefined before the session resolves.
+   */
+  userId: string | undefined;
 }
 
 // ── Contributions ───────────────────────────────────────────────────────────
@@ -482,7 +494,9 @@ export interface FormParticipation {
  * within a `PLUGIN_API_VERSION` major.
  */
 export interface PrescriptionPaymentView {
-  /** The prescription (invoice) id — the natural `relatedRecordId` for a row. */
+  /**
+   * The prescription (invoice) id — the natural `relatedRecordId` for a row.
+   */
   readonly id: string;
   /** The prescription's human-facing number. */
   readonly invoiceNumber: number;
