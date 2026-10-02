@@ -10,10 +10,8 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import {
   asPrescriptionStatus,
   hasDispensedLines,
@@ -62,7 +60,7 @@ export const PrescriptionStatusFooter: Component<
   const [rejection, setRejection] = createSignal<string>();
   const [noLinesOpen, setNoLinesOpen] = createSignal(false);
   const [paymentStatus, setPaymentStatus] = createSignal<ForwardStatus>();
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
 
   const status = () => asPrescriptionStatus(props.node.status);
   const options = () =>
@@ -162,7 +160,7 @@ export const PrescriptionStatusFooter: Component<
       // Only a WHOLE success flashes. A plugin after-save failure (above)
       // keeps the payment window open to report it; a success chip behind it
       // would contradict that.
-      setOutcome({ type: 'success', text: t('messages.prescription-saved') });
+      saved.show(t('messages.prescription-saved'));
       return;
     }
     setWorking(false);
@@ -188,7 +186,7 @@ export const PrescriptionStatusFooter: Component<
         current={statusIndex(status())}
       />
 
-      <ContentFooterMessage message={outcome()} />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>
         {/* No Close here (D103): leaving the prescription is the breadcrumb's

@@ -4,10 +4,9 @@ import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '../ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../ui/utils/createFlash';
+import { Alert } from '../ui/elements/feedback/Alert';
 import { Button } from '../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import {
@@ -78,10 +77,12 @@ const INBOUND_STEPS: StatusStep[] = [
 export const ContentFooterShowcase = () => {
   const [confirmSave, setConfirmSave] = createSignal(false);
   const [stage, setStage] = createSignal(0);
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
+  const [refusal, setRefusal] = createSignal<string>();
   const advance = () => {
+    setRefusal(undefined);
     setStage(stage() + 1);
-    setOutcome({ type: 'success', text: 'Shipment saved' });
+    saved.show('Shipment saved');
   };
   const [picked, setPicked] = createSignal<ReadonlySet<string>>(new Set());
   const toggle = (id: string) =>
@@ -143,20 +144,24 @@ export const ContentFooterShowcase = () => {
             A status change often removes the control that made it: the dialog
             closes and the status button hides at the status it just set.{' '}
             <code>&lt;ContentFooterMessage&gt;</code> is where the footer says
-            what happened instead — one compact chip, green for a success (the
-            save confirmation, clearing itself) and red for a refusal (
-            <code>persistent</code>, staying until the next attempt, and opening
-            its whole text on hover, focus or tap), in the bar's one flexible
-            slot beside the actions so nothing moves when it lands. It is a
-            polite live region, so the outcome is announced as well as seen. The
-            crumb that just arrived plays its one-shot bloom (reduced motion:
-            the colour change only). Confirm through to Verified, then reset.
+            what happened instead — a compact success chip carrying the save
+            confirmation, flashed with <code>createFlash</code> so it clears
+            itself, in the bar's one flexible slot beside the actions so nothing
+            moves when it lands. A refusal is not a chip: it keeps the
+            full-width error alert, which stays until the next attempt. The slot
+            is a polite live region, so the outcome is announced as well as
+            seen. The crumb that just arrived plays its one-shot bloom (reduced
+            motion: the colour change only). Confirm through to Verified, then
+            reset.
           </Lead>
           <PageFrame>
             <PageBody />
             <ContentFooter>
               <StatusIndicator steps={INBOUND_STEPS} current={stage()} />
-              <ContentFooterMessage message={outcome()} />
+              <Show when={refusal()}>
+                {message => <Alert severity="error">{message()}</Alert>}
+              </Show>
+              <ContentFooterMessage message={saved.value()} />
               <ContentFooterActions>
                 <Show
                   when={stage() < INBOUND_STEPS.length - 1}
@@ -164,7 +169,8 @@ export const ContentFooterShowcase = () => {
                     <Button
                       variant="secondary"
                       onClick={() => {
-                        setOutcome(undefined);
+                        saved.clear();
+                        setRefusal(undefined);
                         setStage(0);
                       }}
                     >
@@ -174,13 +180,12 @@ export const ContentFooterShowcase = () => {
                 >
                   <Button
                     variant="secondary"
-                    onClick={() =>
-                      setOutcome({
-                        type: 'error',
-                        text: 'This shipment is on hold. Remove the hold to change its status.',
-                        persistent: true,
-                      })
-                    }
+                    onClick={() => {
+                      saved.clear();
+                      setRefusal(
+                        'This shipment is on hold. Remove the hold to change its status.'
+                      );
+                    }}
                   >
                     Try while on hold
                   </Button>

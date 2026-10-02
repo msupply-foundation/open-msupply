@@ -10,10 +10,8 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '@/ui/utils/createFlash';
 import { ArrowRightIcon, PlusCircleIcon } from '@/ui/icons';
 import {
   createShipmentFromRequisition,
@@ -86,7 +84,7 @@ export const RequisitionStatusFooter: Component<
   const [raiseOpen, setRaiseOpen] = createSignal(false);
   const [raisePhase, setRaisePhase] = createSignal<RaisePhase>('confirm');
   const [errorMessage, setErrorMessage] = createSignal<string>();
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
 
   // The raise pre-check and the finalise warning count (contract › raising a
   // shipment): the lines with a positive remainder, server-computed.
@@ -175,7 +173,7 @@ export const RequisitionStatusFooter: Component<
       props.onReasonsNotProvided([]);
       props.onSaved(result.node);
       setFinaliseOpen(false);
-      setOutcome({ type: 'success', text: t('messages.saved') });
+      saved.show(t('messages.saved'));
       return;
     }
     if (result.kind === 'error') {
@@ -199,7 +197,7 @@ export const RequisitionStatusFooter: Component<
         steps={statusSteps(props.node)}
         current={currentStatusStep(props.node.status)}
       />
-      <ContentFooterMessage message={outcome()} />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
       <ContentFooterActions>
         {/* No Close here (D103): leaving the requisition is the breadcrumb's
             job, in the app bar, where every other screen puts it. */}

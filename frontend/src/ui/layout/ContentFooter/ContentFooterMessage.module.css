@@ -11,8 +11,7 @@
  * closes — rather than out beside the crumbs.
  *
  * The negative start margin takes back the column gap the bar puts before
- * this slot (ContentFooter.module.css: `gap: … var(--space-3)`, which it must
- * match). An empty slot is still a flex item, and without this it would add
+ * this slot (--content-footer-gap, which ContentFooter declares). An empty slot is still a flex item, and without this it would add
  * one gap to the line, so a crowded bar would wrap its actions sooner than it
  * did before the slot existed. The chip carrier puts the gap back inside
  * (below), so a chip filling the slot still keeps it from its neighbour.
@@ -23,32 +22,20 @@
   justify-content: flex-end;
   flex: 1 1 0;
   min-inline-size: 0;
-  margin-inline-start: calc(-1 * var(--space-3));
+  margin-inline-start: calc(-1 * var(--content-footer-gap));
 }
 
 /*
  * The chip's carrier: it rises in (a quarter-rem lift + fade) and sinks back
- * out the same way before ContentFooterMessage removes it. A flex box of its own with
- * no min-content floor, so the truncating chip inside can still shrink to the
- * slot.
+ * out the same way before ContentFooterMessage removes it. A flex box of its
+ * own with no min-content floor, so the truncating chip inside can still
+ * shrink to the slot.
  */
 .flash {
   display: flex;
   min-inline-size: 0;
-  margin-inline-start: var(--space-3);
+  margin-inline-start: var(--content-footer-gap);
   animation: flash-in var(--motion-base) ease-out;
-}
-
-/*
- * A refusal chip's trigger — the Popover's button, which opens the whole text.
- * It must shrink like the carrier for the chip inside to truncate, and takes
- * the Alert's own 10px radius so the focus ring follows the chip's outline.
- */
-.flash .reveal {
-  display: flex;
-  min-inline-size: 0;
-  max-inline-size: 100%;
-  border-radius: 10px;
 }
 
 .flash[data-leaving] {

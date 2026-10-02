@@ -4,10 +4,8 @@ import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import {
   Pagination,
   type PaginationProps,
@@ -66,7 +64,7 @@ export const OutboundStatusFooter: Component<
   OutboundStatusFooterProps
 > = props => {
   const [holdConfirm, setHoldConfirm] = createSignal(false);
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
 
   const editable = () => isEditable(props.node.status);
   const holding = () => props.node.onHold;
@@ -98,7 +96,7 @@ export const OutboundStatusFooter: Component<
   // release-and-confirm) come through here.
   const onSaved = (node: OutboundNode) => {
     props.onSaved(node);
-    setOutcome({ type: 'success', text: t('messages.shipment-saved') });
+    saved.show(t('messages.shipment-saved'));
   };
 
   return (
@@ -125,7 +123,7 @@ export const OutboundStatusFooter: Component<
         current={indicatorIndex()}
       />
 
-      <ContentFooterMessage message={outcome()} />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       {/* The status-change split button, which hides entirely when read-only
           (spec S3 § status footer). No Close beside it (D103): leaving the

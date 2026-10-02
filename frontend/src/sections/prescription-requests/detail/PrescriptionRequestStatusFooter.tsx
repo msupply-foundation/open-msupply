@@ -9,10 +9,8 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import {
-  ContentFooterMessage,
-  type FooterMessage,
-} from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import {
   asRequestStatus,
   isEditable,
@@ -53,7 +51,7 @@ export const PrescriptionRequestStatusFooter: Component<
   const [working, setWorking] = createSignal(false);
   const [rejection, setRejection] = createSignal<string>();
   const [noLinesOpen, setNoLinesOpen] = createSignal(false);
-  const [outcome, setOutcome] = createSignal<FooterMessage>();
+  const saved = createFlash<string>();
 
   const status = () => asRequestStatus(props.node.status);
 
@@ -93,7 +91,7 @@ export const PrescriptionRequestStatusFooter: Component<
     if (outcome.kind === 'saved') {
       closeDialogs();
       props.onSaved(outcome.node);
-      setOutcome({ type: 'success', text: t('messages.saved') });
+      saved.show(t('messages.saved'));
       return;
     }
     if (outcome.kind === 'rejected') {
@@ -113,7 +111,7 @@ export const PrescriptionRequestStatusFooter: Component<
         current={statusIndex(status())}
       />
 
-      <ContentFooterMessage message={outcome()} />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>
         {/* Hidden once past New — a permanently dead control is hidden. */}
