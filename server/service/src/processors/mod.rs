@@ -20,6 +20,7 @@ use general_processor::{process_records, ProcessorError};
 #[allow(dead_code, unused_imports)]
 mod assign_prescription_number;
 mod assign_requisition_number;
+mod barcode_auto_confirm;
 mod contact_form;
 mod general_processor;
 mod load_plugin;
