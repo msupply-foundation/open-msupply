@@ -2,7 +2,8 @@
 # Maintaining barcodes): its confirmed barcodes, and the proposals central hasn't
 # decided on — every store's on central, this site's elsewhere. Its own query
 # (kdd/state-management), independent of the itemDetail read, so a change
-# refetches only this tab — mirrors ancillaryItems.graphql.
+# refetches only this tab — mirrors ancillaryItems.graphql. The store's site
+# says which proposals this site made, so may withdraw.
 query itemBarcodes($storeId: String!, $itemId: String!) {
   itemBarcodes(storeId: $storeId, itemId: $itemId) {
     id
@@ -18,6 +19,16 @@ query itemBarcodes($storeId: String!, $itemId: String!) {
       id
       code
       storeName
+      siteId
+    }
+  }
+  store(id: $storeId) {
+    __typename
+    ... on StoreNode {
+      siteId
+    }
+    ... on NodeError {
+      __typename
     }
   }
 }

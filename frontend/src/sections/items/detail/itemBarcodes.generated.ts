@@ -22,10 +22,18 @@ export type ItemBarcodesResult = {
   id: string;
   code: string;
   storeName: string;
+  siteId: number;
 } | null;
 }>;
+  store: ({
+  __typename: "StoreNode";
+} & {
+  siteId: number;
+}) | ({
+  __typename: "NodeError";
+});
 };
 
 export const ItemBarcodes = {
-  query: "query itemBarcodes($storeId: String!, $itemId: String!) {\n  itemBarcodes(storeId: $storeId, itemId: $itemId) {\n    id\n    barcode\n    packSize\n    manufacturerName\n  }\n  itemBarcodeProposals(storeId: $storeId, itemId: $itemId) {\n    id\n    barcode\n    packSize\n    store {\n      id\n      code\n      storeName\n    }\n  }\n}",
+  query: "query itemBarcodes($storeId: String!, $itemId: String!) {\n  itemBarcodes(storeId: $storeId, itemId: $itemId) {\n    id\n    barcode\n    packSize\n    manufacturerName\n  }\n  itemBarcodeProposals(storeId: $storeId, itemId: $itemId) {\n    id\n    barcode\n    packSize\n    store {\n      id\n      code\n      storeName\n      siteId\n    }\n  }\n  store(id: $storeId) {\n    __typename\n    ... on StoreNode {\n      siteId\n    }\n    ... on NodeError {\n      __typename\n    }\n  }\n}",
 } as TypedDocument<ItemBarcodesResult, ItemBarcodesVariables>;

@@ -28,6 +28,25 @@ export const barcodeRows = (data: ItemBarcodesResult): BarcodeRow[] => [
   })),
 ];
 
+/** The site of the store the tab is open in, where the query read it. */
+export const thisSiteId = (data: ItemBarcodesResult): number | undefined =>
+  data.store.__typename === 'StoreNode' ? data.store.siteId : undefined;
+
+/**
+ * Whether the row is a proposal this site may withdraw: one made by a store on
+ * this site (rules § Learning a barcode). Away from central every listed
+ * proposal is; on central only its own stores' are — another site's proposal
+ * belongs to that site, and a delete from central would never reach it.
+ */
+export const canWithdraw = (
+  row: BarcodeRow,
+  isCentral: boolean,
+  siteId: number | undefined
+): boolean =>
+  row.status === 'proposed' &&
+  (!isCentral ||
+    (siteId !== undefined && row.barcode.store?.siteId === siteId));
+
 /** An item as the Move step names it. */
 export type NamedItem = { id: string; code: string; name: string };
 

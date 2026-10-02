@@ -29,7 +29,13 @@ import {
 } from '../../../domain/barcode';
 import { ItemBarcodes } from './itemBarcodes.generated';
 import { ItemBarcodeModal, type BarcodeEditorState } from './ItemBarcodeModal';
-import { barcodeRows, type BarcodeRow, type NamedItem } from './barcodeEdit';
+import {
+  barcodeRows,
+  canWithdraw,
+  thisSiteId,
+  type BarcodeRow,
+  type NamedItem,
+} from './barcodeEdit';
 
 // The Barcodes tab (spec/items/ui-surface.md S2 › Barcodes tab;
 // barcode-scanning rules § Maintaining barcodes): the item's confirmed
@@ -37,14 +43,16 @@ import { barcodeRows, type BarcodeRow, type NamedItem } from './barcodeEdit';
 // hasn't decided on — every store's on central, this site's elsewhere —
 // saying which store made each. Where the user may (`canManage`, rules §
 // Permissions): on central a proposal offers Confirm and a confirmed barcode
-// offers Remove and Move to another item…; elsewhere a proposal offers
-// Remove, which withdraws it (e.g. it picked the wrong item), and confirmed
-// barcodes are read-only. The page header offers Add barcode wherever the
-// user may: on central it confirms the barcode, elsewhere it proposes it. Add
-// and Move open ItemBarcodeModal, whose state the detail view owns (the Add
-// trigger is a page action, as on the Ancillary items tab); Remove asks
-// first. Removing never touches stock or shipments that already have the
-// barcode. Its own query, so a change refetches only this tab.
+// offers Remove and Move to another item…; elsewhere confirmed barcodes are
+// read-only. A proposal made on this site (on central, by one of its own
+// stores) also offers Remove, which withdraws it (e.g. it picked the wrong
+// item); another site's proposal is that site's to withdraw. The page header
+// offers Add barcode wherever the user may: on central it confirms the
+// barcode, elsewhere it proposes it. Add and Move open ItemBarcodeModal,
+// whose state the detail view owns (the Add trigger is a page action, as on
+// the Ancillary items tab); Remove asks first. Removing never touches stock
+// or shipments that already have the barcode. Its own query, so a change
+// refetches only this tab.
 
 // Room for a 14-digit code.
 const BARCODE_WIDTH_REM = 10;
@@ -67,14 +75,18 @@ export const ItemBarcodesPanel: Component<{
     async v => {
       const result = await graphqlFetch(ItemBarcodes, v);
       if (result.kind !== 'success') return undefined;
-      return barcodeRows(result.data);
+      return {
+        rows: barcodeRows(result.data),
+        siteId: thisSiteId(result.data),
+      };
     }
   );
 
   // Read WITHOUT suspending: this panel mounts when its TAB is opened, under
   // the already-open detail screen's <Suspense> (kdd/solid-reactivity-pitfalls
   // § no remounts on interaction).
-  const rows = (): BarcodeRow[] => gated(data) ?? [];
+  const rows = (): BarcodeRow[] => gated(data)?.rows ?? [];
+  const siteId = () => gated(data)?.siteId;
 
   const onSaved = () => void refetch();
 
@@ -172,8 +184,8 @@ export const ItemBarcodesPanel: Component<{
             </Button>
           );
           // Confirmed: central removes or moves it. Proposed: central confirms
-          // it; elsewhere the site withdraws its own (every proposal listed
-          // there is this site's).
+          // it, and this site may withdraw its own (canWithdraw) — on central
+          // only its own stores' proposals.
           return (
             <Switch>
               <Match when={row.status === 'confirmed' && props.isCentral}>
@@ -197,22 +209,29 @@ export const ItemBarcodesPanel: Component<{
                 </HStack>
               </Match>
               <Match when={row.status === 'proposed' && props.isCentral}>
-                <Button
-                  variant="ghost"
-                  size="small"
-                  data-testid="barcode-confirm-button"
-                  disabled={acting()}
-                  onClick={e => {
-                    e.stopPropagation();
-                    const id = row.barcode.id;
-                    const storeId = props.storeId;
-                    void act(() => confirmProposal(storeId, id));
-                  }}
-                >
-                  {t('button.confirm-barcode')}
-                </Button>
+                <HStack gap="sm">
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    data-testid="barcode-confirm-button"
+                    disabled={acting()}
+                    onClick={e => {
+                      e.stopPropagation();
+                      const id = row.barcode.id;
+                      const storeId = props.storeId;
+                      void act(() => confirmProposal(storeId, id));
+                    }}
+                  >
+                    {t('button.confirm-barcode')}
+                  </Button>
+                  <Show when={canWithdraw(row, true, siteId())}>
+                    {removeButton()}
+                  </Show>
+                </HStack>
               </Match>
-              <Match when={row.status === 'proposed'}>{removeButton()}</Match>
+              <Match when={canWithdraw(row, false, siteId())}>
+                {removeButton()}
+              </Match>
             </Switch>
           );
         },

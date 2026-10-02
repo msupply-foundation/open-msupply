@@ -4,6 +4,8 @@ import commonEn from '@/intl/locales/en/common.json';
 import {
   addInput,
   canManageBarcodes,
+  canWithdraw,
+  thisSiteId,
   EMPTY_DRAFT,
   isDraftValid,
   barcodeRows,
@@ -30,8 +32,9 @@ const proposal = {
   id: 'p1',
   barcode: '5012345678900',
   packSize: null,
-  store: { id: 'store-2', code: 'S2', storeName: 'Store two' },
+  store: { id: 'store-2', code: 'S2', storeName: 'Store two', siteId: 2 },
 };
+const thisStore = { __typename: 'StoreNode' as const, siteId: 1 };
 
 const RETAIL = '4006381333931'; // EAN-13, valid check digit
 
@@ -64,11 +67,51 @@ describe('rows — rules § Maintaining barcodes', () => {
       barcodeRows({
         itemBarcodes: [confirmed],
         itemBarcodeProposals: [proposal],
+        store: thisStore,
       })
     ).toEqual([
       { status: 'confirmed', barcode: confirmed },
       { status: 'proposed', barcode: proposal },
     ]);
+  });
+});
+
+describe('withdrawing a proposal — rules § Learning a barcode', () => {
+  const proposed = { status: 'proposed' as const, barcode: proposal };
+  const ownSite = {
+    status: 'proposed' as const,
+    barcode: { ...proposal, store: { ...proposal.store, siteId: 1 } },
+  };
+
+  it('reads the site of the store the tab is open in', () => {
+    const data = {
+      itemBarcodes: [],
+      itemBarcodeProposals: [],
+    };
+    expect(thisSiteId({ ...data, store: thisStore })).toBe(1);
+    expect(
+      thisSiteId({
+        ...data,
+        store: { __typename: 'NodeError' as const },
+      })
+    ).toBeUndefined();
+  });
+
+  it("away from central, every listed proposal is this site's", () => {
+    expect(canWithdraw(proposed, false, 1)).toBe(true);
+    expect(canWithdraw(proposed, false, undefined)).toBe(true);
+  });
+
+  it("on central, only proposals from central's own stores", () => {
+    expect(canWithdraw(ownSite, true, 1)).toBe(true);
+    expect(canWithdraw(proposed, true, 1)).toBe(false);
+    expect(canWithdraw(ownSite, true, undefined)).toBe(false);
+  });
+
+  it('never a confirmed barcode', () => {
+    const row = { status: 'confirmed' as const, barcode: confirmed };
+    expect(canWithdraw(row, false, 1)).toBe(false);
+    expect(canWithdraw(row, true, 1)).toBe(false);
   });
 });
 
