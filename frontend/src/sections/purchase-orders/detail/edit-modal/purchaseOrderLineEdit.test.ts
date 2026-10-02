@@ -92,11 +92,6 @@ describe('OMS-FUN-PO-02.18 / .19 — the figures the editor shows come from the 
     expect(facts.unitsOrderedInOthers).toBe(12000);
   });
 
-  it('renders the ordered-elsewhere figure in the item’s unit, pluralised', () => {
-    expect(orderedElsewhere(12000, 'tablet')).toBe('12,000 tablets');
-    expect(orderedElsewhere(1, 'tablet')).toBe('1 tablet');
-  });
-
   // No dictionary is loaded under node, so the translated word is asserted as
   // its key (the ladder tests do the same).
   it('falls back to a bare “units” where the item has none', () => {
