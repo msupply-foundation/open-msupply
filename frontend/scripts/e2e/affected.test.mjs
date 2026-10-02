@@ -7,6 +7,10 @@ import {
   checkConfig,
   classify,
   compileGlob,
+  diffSnapshots,
+  nextGreen,
+  planRun,
+  visibleTo,
   ownersOf,
   runtimeImports,
   rustRefs,
@@ -419,5 +423,94 @@ describe('checkConfig', () => {
     expect(problems).toContain(
       "stock-regression: 'frontend/src/sections/stok/**' matches no file"
     );
+  });
+});
+
+describe('green record', () => {
+  it('sees every file but ignored ones, with rules winning over ignore', () => {
+    const visible = visibleTo(config);
+    expect(visible('frontend/src/sections/stock/index.tsx')).toBe(true);
+    expect(visible('README.md')).toBe(false);
+    expect(visible('frontend/scripts/other.mjs')).toBe(false);
+    expect(visible('frontend/scripts/e2e/run-e2e.sh')).toBe(true);
+  });
+
+  it('diffs snapshots by content, additions and deletions included', () => {
+    expect(
+      diffSnapshots({ a: '1', b: '2', c: '3' }, { a: '1', b: '9', d: '4' })
+    ).toEqual(['b', 'c', 'd']);
+  });
+
+  const run = changed =>
+    new Set(
+      select(
+        changed.map(f => classify(f, ctx)),
+        config,
+        suiteNames
+      ).suites.map(s => s.name)
+    );
+  const runList = [
+    'stock-regression',
+    'outbound-regression',
+    'login-regression',
+  ];
+  const green = new Set(runList);
+
+  it('skips everything when nothing visible changed since a green run', () => {
+    expect(planRun({ runList, green, reached: run([]) })).toEqual({
+      run: [],
+      skip: runList,
+    });
+  });
+
+  it('re-runs only what the change since then reaches, plus smoke', () => {
+    const plan = planRun({
+      runList,
+      green,
+      reached: run(['frontend/src/sections/stock/index.tsx']),
+    });
+    expect(plan.run).toEqual(['stock-regression', 'login-regression']);
+    expect(plan.skip).toEqual(['outbound-regression']);
+  });
+
+  it('runs a suite that was never green even when nothing reaches it', () => {
+    const plan = planRun({
+      runList,
+      green: new Set(['stock-regression']),
+      reached: run([]),
+    });
+    expect(plan.run).toEqual(['outbound-regression', 'login-regression']);
+  });
+
+  it('re-runs everything after an `all` change since the green run', () => {
+    expect(
+      planRun({
+        runList,
+        green,
+        reached: run(['server/repository/src/migrations/v2/mod.rs']),
+      }).skip
+    ).toEqual([]);
+  });
+
+  it('keeps unreached suites green, adds what passed, drops what failed', () => {
+    const reached = new Set(['stock-regression', 'login-regression']);
+    expect(
+      [
+        ...nextGreen({
+          green,
+          reached,
+          ran: ['stock-regression', 'login-regression'],
+          passed: true,
+        }),
+      ].sort()
+    ).toEqual(['login-regression', 'outbound-regression', 'stock-regression']);
+    expect([
+      ...nextGreen({
+        green,
+        reached,
+        ran: ['stock-regression', 'login-regression'],
+        passed: false,
+      }),
+    ]).toEqual(['outbound-regression']);
   });
 });

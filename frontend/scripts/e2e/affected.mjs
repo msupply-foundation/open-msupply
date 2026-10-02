@@ -6,6 +6,7 @@
  *   pnpm e2e:affected --base origin/v3.2 # another base
  *   pnpm e2e:affected --files a.ts b.rs  # explicit paths (cwd- or repo-rel.)
  *   pnpm e2e:affected --run [-- <pw args>]   # run the selection locally
+ *   pnpm e2e:affected --run --force      # …without skipping known-green ones
  *   pnpm e2e:affected --json             # machine-readable (CI)
  *   pnpm e2e:affected --list             # suite names only, one per line
  *   pnpm e2e:affected --check            # lint the config (in `pnpm check`)
@@ -21,9 +22,16 @@
  * "Changed" is everything a reviewer would see: committed since the
  * merge-base, staged, unstaged, and untracked — an agent asks this before it
  * commits, not after.
+ *
+ * `--run` records which suites went green, against a snapshot of every file
+ * a suite can see (e2e/.affected-green.json, per worktree). The next `--run`
+ * skips a suite that was green and that nothing visible since reaches — so
+ * an agent's check before "done" is not repeated by pr-create, a docs-only
+ * commit costs nothing, and a one-line fix re-runs only what it touches.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -796,6 +804,50 @@ export const select = (results, config, suiteNames) => {
   };
 };
 
+// --- Green record: skip what already passed ---------------------------------
+
+/**
+ * A file is visible to the suites unless `ignore` says otherwise — `rules`
+ * win, as in classify (run-e2e.sh sits under the ignored frontend/scripts/).
+ */
+export const visibleTo = config => f =>
+  config.rules.some(r => matchesAny(f, r.paths)) ||
+  !matchesAny(f, config.ignore);
+
+/** Paths whose content differs between two {path: blob} snapshots. */
+export const diffSnapshots = (before, after) => {
+  const out = [];
+  for (const p of new Set([...Object.keys(before), ...Object.keys(after)]))
+    if (before[p] !== after[p]) out.push(p);
+  return out.sort();
+};
+
+/**
+ * Which of `runList` must run, given the suites green at the recorded
+ * snapshot and the suites the change since then reaches. A suite skips only
+ * when it was green AND nothing visible since reaches it — the same
+ * assumption the selection itself makes, applied to "since the last green
+ * run" instead of "since the base".
+ */
+export const planRun = ({ runList, green, reached }) => {
+  const skip = runList.filter(n => green.has(n) && !reached.has(n));
+  return { run: runList.filter(n => !skip.includes(n)), skip };
+};
+
+/**
+ * The green set after a run. Suites the change reached are no longer known
+ * green unless they just ran green; a red run clears every suite it ran
+ * (which of them failed is Playwright's to say, not ours).
+ */
+export const nextGreen = ({ green, reached, ran, passed }) => {
+  const out = new Set([...green].filter(n => !reached.has(n)));
+  for (const n of ran) {
+    if (passed) out.add(n);
+    else out.delete(n);
+  }
+  return out;
+};
+
 // --- Config lint (--check) --------------------------------------------------
 
 export const checkConfig = (config, files) => {
@@ -839,6 +891,8 @@ const git = (args, cwd) =>
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
+    // `ls-files -s` over the whole repo is a few MB — past the 1MB default.
+    maxBuffer: 256 * 1024 * 1024,
   });
 
 const lines = s => s.split('\n').filter(Boolean);
@@ -889,6 +943,51 @@ const scriptsOnlyPackageJsons = (root, base, changed) => {
   return out;
 };
 
+/**
+ * {path: blob id} for every visible file as it is on disk now: index blob
+ * ids for clean files, `git hash-object` for modified and untracked ones.
+ * ~10k files in well under a second.
+ */
+const snapshot = (root, visible) => {
+  const snap = {};
+  for (const entry of git(['ls-files', '-s', '-z'], root).split('\0')) {
+    const m = /^\d+ ([0-9a-f]+) \d\t(.+)$/s.exec(entry);
+    if (m && visible(m[2])) snap[m[2]] = m[1];
+  }
+  const dirty = [
+    ...lines(git(['diff', '--name-only', '--no-renames'], root)),
+    ...lines(git(['ls-files', '--others', '--exclude-standard'], root)),
+  ].filter(visible);
+  const present = dirty.filter(f => existsSync(path.join(root, f)));
+  for (const f of dirty) delete snap[f];
+  if (present.length) {
+    const ids = lines(
+      execFileSync('git', ['hash-object', '--stdin-paths'], {
+        cwd: root,
+        input: present.join('\n'),
+        encoding: 'utf8',
+      })
+    );
+    present.forEach((f, i) => (snap[f] = ids[i]));
+  }
+  return snap;
+};
+
+// Per worktree, gitignored (e2e/.gitignore).
+const GREEN_RECORD = path.join(FE_DIR, 'e2e/.affected-green.json');
+
+const readGreen = () => {
+  try {
+    const r = JSON.parse(readFileSync(GREEN_RECORD, 'utf8'));
+    return r.version === 1 ? r : null;
+  } catch {
+    return null;
+  }
+};
+
+const snapshotId = snap =>
+  createHash('sha256').update(JSON.stringify(snap)).digest('hex').slice(0, 10);
+
 const load = name => {
   try {
     return createRequire(path.join(FE_DIR, 'package.json'))(name);
@@ -923,6 +1022,7 @@ const parseArgs = argv => {
     list: false,
     check: false,
     runAll: false,
+    force: false,
     pw: [],
   };
   for (let i = 0; i < argv.length; i++) {
@@ -937,6 +1037,7 @@ const parseArgs = argv => {
         opts.files.push(argv[++i]);
     } else if (a === '--run') opts.run = true;
     else if (a === '--run-all') opts.run = opts.runAll = true;
+    else if (a === '--force') opts.force = true;
     else if (a === '--json') opts.json = true;
     else if (a === '--list') opts.list = true;
     else if (a === '--check') opts.check = true;
@@ -1042,10 +1143,24 @@ const main = async () => {
     against = `vs ${base.ref} (merge-base ${base.sha.slice(0, 10)}), including uncommitted`;
   }
 
+  // The green record applies only to a plain run of this tree against this
+  // checkout's server: --files is hypothetical, extra Playwright args
+  // (--grep, --ui) run a subset, OMS_DIR swaps the server.
+  const useRecord =
+    opts.run &&
+    !opts.files &&
+    !opts.pw.length &&
+    !process.env.OMS_DIR &&
+    !process.env.E2E_RUN_TAG;
+  const record = useRecord && !opts.force ? readGreen() : null;
+  const snap = useRecord ? snapshot(root, visibleTo(config)) : null;
+  const sinceGreen = record ? diffSnapshots(record.files, snap) : [];
+
   const read = f => readFileSync(path.join(root, f), 'utf8');
   const owners = ownersOf(config, files);
-  const needsServer = changed.some(f => f.startsWith('server/'));
-  const needsGraph = needsServer || changed.some(inGraph);
+  const touched = [...changed, ...sinceGreen];
+  const needsServer = touched.some(f => f.startsWith('server/'));
+  const needsGraph = needsServer || touched.some(inGraph);
   const importers = needsGraph
     ? buildImporters(load('typescript'), files, read)
     : new Map();
@@ -1077,8 +1192,48 @@ const main = async () => {
   }
 
   if (opts.run) {
-    const toRun = opts.runAll ? sel.suites.map(s => s.name) : sel.near;
-    if (!toRun.length) return;
+    const runList = opts.runAll ? sel.suites.map(s => s.name) : sel.near;
+    if (!runList.length) return;
+
+    // What the change since the last green run reaches, through the same
+    // selection (smoke included whenever anything visible changed).
+    const reached = new Set(
+      record
+        ? select(
+            sinceGreen.map(f => classify(f, ctx)),
+            config,
+            specNames(files)
+          ).suites.map(s => s.name)
+        : []
+    );
+    const green = new Set(record?.green ?? []);
+    const { run: toRun, skip } = planRun({ runList, green, reached });
+    if (skip.length)
+      console.log(
+        `\nAlready green at ${record.id}, and nothing visible since reaches them` +
+          ` (${sinceGreen.length} file(s) changed since): ${skip.join(' ')}` +
+          `\n  --force re-runs them.`
+      );
+    const save = (ran, passed) => {
+      if (!useRecord) return;
+      const g = nextGreen({ green, reached, ran, passed });
+      writeFileSync(
+        GREEN_RECORD,
+        JSON.stringify({
+          version: 1,
+          id: snapshotId(snap),
+          at: new Date().toISOString(),
+          green: [...g].sort(),
+          files: snap,
+        })
+      );
+    };
+    if (!toRun.length) {
+      console.log('Nothing to run.');
+      save([], true);
+      return;
+    }
+
     // Anchored on the directory so `login-regression` does not also match
     // `relogin-regression`.
     const filters = toRun.map(n => `specs/${n}\\.spec`);
@@ -1091,6 +1246,7 @@ const main = async () => {
         stdio: 'inherit',
       }
     );
+    save(toRun, r.status === 0);
     process.exit(r.status ?? 1);
   }
 };
