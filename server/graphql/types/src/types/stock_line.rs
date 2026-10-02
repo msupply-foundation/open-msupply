@@ -1,4 +1,5 @@
 use crate::types::{program_node::ProgramNode, program_order_type::ProgramOrderTypeNode};
+use util::barcode::display_barcode;
 
 use super::{
     CampaignNode, ItemNode, ItemVariantNode, LocationNode, NameNode, VVMStatusLogConnector,
@@ -118,8 +119,9 @@ impl StockLineNode {
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
+    /// The barcode the stock carries, as people read it, e.g. `9506682101352`
     pub async fn barcode(&self) -> Option<&str> {
-        self.stock_line.barcode()
+        self.stock_line.barcode().map(display_barcode)
     }
 
     pub async fn item_variant(&self) -> Option<ItemVariantNode> {

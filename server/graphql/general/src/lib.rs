@@ -2,6 +2,7 @@ pub mod campaign;
 pub mod custom_field;
 pub mod help_document;
 mod mutations;
+pub use mutations::barcode::BarcodeMutations;
 mod queries;
 mod subscriptions;
 mod sync_api_error;
@@ -22,12 +23,13 @@ use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput,
-    CustomFieldsResponse, DiagnosisNode, MasterListFilterInput, PeriodScheduleFilterInput,
-    PeriodScheduleRowResponse, StorePreferenceNode,
+    AbbreviationNode, BarcodeMatchNode, BarcodeNode, BarcodeProposalNode, CurrenciesResponse,
+    CurrencyFilterInput, CurrencySortInput, CustomFieldsResponse, DiagnosisNode,
+    MasterListFilterInput, PeriodScheduleFilterInput, PeriodScheduleRowResponse,
+    StorePreferenceNode,
 };
 use mutations::{
-    barcode::{insert_barcode, BarcodeInput},
+    barcode::{propose_barcode, ProposeBarcodeInput},
     common::SyncSettingsInput,
     display_settings::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
@@ -378,13 +380,37 @@ impl GeneralQueries {
         store_preferences(ctx, &store_id)
     }
 
-    pub async fn barcode_by_gtin(
+    /// Everything a scan of `barcode` (as scanned or typed) matches: confirmed
+    /// barcodes first, then proposals made on this site, one per item and only
+    /// for items visible in the store. Empty for a barcode nobody has mapped yet.
+    pub async fn barcode_matches(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        gtin: String,
-    ) -> Result<BarcodeResponse> {
-        barcode_by_gtin(ctx, store_id, gtin)
+        barcode: String,
+    ) -> Result<Vec<BarcodeMatchNode>> {
+        barcode_matches(ctx, store_id, barcode)
+    }
+
+    /// The item's confirmed barcodes
+    pub async fn item_barcodes(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        item_id: String,
+    ) -> Result<Vec<BarcodeNode>> {
+        item_barcodes(ctx, store_id, item_id)
+    }
+
+    /// Proposals for the item central hasn't confirmed or removed: every store's
+    /// on central, this site's elsewhere
+    pub async fn item_barcode_proposals(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        item_id: String,
+    ) -> Result<Vec<BarcodeProposalNode>> {
+        item_barcode_proposals(ctx, store_id, item_id)
     }
 
     pub async fn requisition_counts(
@@ -618,13 +644,15 @@ impl GeneralMutations {
         update_display_settings(ctx, input)
     }
 
-    pub async fn insert_barcode(
+    /// Records that a user picked an item for a barcode in this store, for central
+    /// to review. Call it when the line the scan opened is saved.
+    pub async fn propose_barcode(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: BarcodeInput,
-    ) -> Result<mutations::barcode::InsertResponse> {
-        insert_barcode(ctx, &store_id, input)
+        input: ProposeBarcodeInput,
+    ) -> Result<BarcodeMatchNode> {
+        propose_barcode(ctx, &store_id, input)
     }
 
     pub async fn update_log_level(

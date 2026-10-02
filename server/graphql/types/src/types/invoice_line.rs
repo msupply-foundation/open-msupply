@@ -1,4 +1,5 @@
 use crate::types::{program_node::ProgramNode, PurchaseOrderLineNode, VVMStatusNode};
+use util::barcode::display_barcode;
 
 use super::{
     CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
@@ -337,6 +338,12 @@ impl InvoiceLineNode {
     /// shipment: no inbound mutation input accepts it.
     pub async fn transfer_comment(&self) -> &Option<String> {
         &self.row().transfer_comment
+    }
+
+    /// The barcode scanned or entered for the line, or carried by the stock it
+    /// issues, as people read it. Not necessarily a confirmed barcode.
+    pub async fn barcode(&self) -> Option<&str> {
+        self.row().barcode.as_deref().map(display_barcode)
     }
 
     /// The line of the shipment's linked requisition carrying the same item.

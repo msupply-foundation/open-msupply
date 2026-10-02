@@ -801,16 +801,95 @@ type BackdatingNode {
 	maxDays: Int!
 }
 
-type BarcodeNode {
+type BarcodeMatchNode {
+	"""
+	The confirmed barcode's id, or the proposal's
+	"""
 	id: String!
-	gtin: String!
+	status: BarcodeStatusNode!
+	"""
+	The barcode in its standard form with its scheme
+	"""
+	value: String!
+	"""
+	The barcode as people read it
+	"""
+	barcode: String!
 	itemId: String!
-	manufacturerId: String
 	packSize: Float
-	parentId: String
+	manufacturerId: String
 }
 
-union BarcodeResponse = NodeError | BarcodeNode
+type BarcodeMutations {
+	"""
+	Adds a confirmed barcode for an item, or brings back a removed one
+	"""
+	insertBarcode(storeId: String!, input: InsertBarcodeInput!): BarcodeNode!
+	"""
+	Confirms a store's proposal, so the barcode reaches every site
+	"""
+	confirmBarcodeProposal(storeId: String!, id: String!): BarcodeNode!
+	"""
+	Changes a confirmed barcode's pack size, or moves it to another item
+	"""
+	updateBarcode(storeId: String!, input: UpdateBarcodeInput!): BarcodeNode!
+	"""
+	Removes a confirmed barcode everywhere. Stores proposing it again won't
+	confirm it; only adding it on central brings it back.
+	"""
+	deleteBarcode(storeId: String!, id: String!): DeleteResponse!
+}
+
+type BarcodeNode {
+	id: String!
+	"""
+	The barcode in its standard form with its scheme, e.g.
+	`gtin:09506682101352`. Matches the `barcode` of lines and stock lines.
+	"""
+	value: String!
+	"""
+	The barcode as people read it, e.g. `9506682101352`
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+	manufacturerName: String
+}
+
+type BarcodeProposalNode {
+	id: String!
+	"""
+	The barcode in its standard form with its scheme
+	"""
+	value: String!
+	"""
+	The barcode as people read it
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+	"""
+	The store that proposed it
+	"""
+	storeId: String!
+	store: StoreNode
+	userId: String!
+	createdDatetime: DateTime!
+	updatedDatetime: DateTime!
+}
+
+enum BarcodeStatusNode {
+	"""
+	Confirmed on central, shared by every site
+	"""
+	CONFIRMED
+	"""
+	Learned on this site, not confirmed yet
+	"""
+	PROPOSED
+}
 
 input BatchInboundShipmentInput {
 	insertInboundShipments: [InsertInboundShipmentInput!]
@@ -1182,6 +1261,7 @@ type CentralServerMutationNode {
 	demographic: DemographicMutations!
 	vaccineCourse: VaccineCourseMutations!
 	general: CentralGeneralMutations!
+	barcode: BarcodeMutations!
 	plugins: CentralPluginMutations!
 	preferences: PreferenceMutations!
 	campaign: CampaignMutations!
@@ -2505,6 +2585,10 @@ type DraftStockOutLineNode {
 	with no invoice line yet.
 	"""
 	transferComment: String
+	"""
+	The batch's stock line barcode, as people read it
+	"""
+	barcode: String
 	reasonOption: ReasonOptionNode
 }
 
@@ -3289,12 +3373,14 @@ union InsertAssetLogResponse = InsertAssetLogError | AssetLogNode
 union InsertAssetResponse = InsertAssetError | AssetNode
 
 input InsertBarcodeInput {
-	gtin: String!
+	"""
+	As scanned or typed; the server puts it in standard form
+	"""
+	barcode: String!
 	itemId: String!
 	packSize: Float
+	manufacturerId: String
 }
-
-union InsertBarcodeResponse = BarcodeNode
 
 input InsertClinicianInput {
 	id: String!
@@ -3535,6 +3621,11 @@ input InsertInboundShipmentLineInput {
 	shippedPackSize: Float
 	purchaseOrderLineId: String
 	reasonOptionId: String
+	"""
+	The barcode scanned or typed for the line, as read; recorded on the line
+	and its stock. Doesn't propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
@@ -4504,6 +4595,11 @@ type InvoiceLineNode {
 	shipment: no inbound mutation input accepts it.
 	"""
 	transferComment: String
+	"""
+	The barcode scanned or entered for the line, or carried by the stock it
+	issues, as people read it. Not necessarily a confirmed barcode.
+	"""
+	barcode: String
 	"""
 	The line of the shipment's linked requisition carrying the same item.
 	Null when the shipment has no requisition link, or the order has no line
@@ -5551,7 +5647,11 @@ type Mutations {
 	initialiseAsCentralServer(input: InitialiseAsCentralServerInputNode!): InitialiseAsCentralServerResponse!
 	manualSync(fetchPatientId: String): String!
 	updateDisplaySettings(input: DisplaySettingsInput!): UpdateDisplaySettingsResponse!
-	insertBarcode(storeId: String!, input: InsertBarcodeInput!): InsertBarcodeResponse!
+	"""
+	Records that a user picked an item for a barcode in this store, for central
+	to review. Call it when the line the scan opened is saved.
+	"""
+	proposeBarcode(storeId: String!, input: ProposeBarcodeInput!): BarcodeMatchNode!
 	updateLogLevel(storeId: String!, input: UpsertLogLevelInput!): UpsertLogLevelResponse!
 	updateLabelPrinterSettings(input: LabelPrinterSettingsInput!): UpdateLabelPrinterSettingsResponse!
 	updateNameProperties(storeId: String!, input: UpdateNamePropertiesInput!): UpdateNamePropertiesResponse!
@@ -6870,6 +6970,16 @@ enum PropertyNodeValueType {
 	DATE
 }
 
+input ProposeBarcodeInput {
+	"""
+	As scanned or typed; the server puts it in standard form
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
+}
+
 type PurchaseOrderConnector {
 	totalCount: Int!
 	nodes: [PurchaseOrderNode!]!
@@ -7391,7 +7501,21 @@ type Queries {
 		highStockThreshold: Float
 	): ItemCounts!
 	storePreferences(storeId: String!): StorePreferenceNode!
-	barcodeByGtin(storeId: String!, gtin: String!): BarcodeResponse!
+	"""
+	Everything a scan of `barcode` (as scanned or typed) matches: confirmed
+	barcodes first, then proposals made on this site, one per item and only
+	for items visible in the store. Empty for a barcode nobody has mapped yet.
+	"""
+	barcodeMatches(storeId: String!, barcode: String!): [BarcodeMatchNode!]!
+	"""
+	The item's confirmed barcodes
+	"""
+	itemBarcodes(storeId: String!, itemId: String!): [BarcodeNode!]!
+	"""
+	Proposals for the item central hasn't confirmed or removed: every store's
+	on central, this site's elsewhere
+	"""
+	itemBarcodeProposals(storeId: String!, itemId: String!): [BarcodeProposalNode!]!
 	requisitionCounts(storeId: String!): RequisitionCounts!
 	logFileNames: LogNode!
 	logContents(fileName: String): LogNode!
@@ -8502,6 +8626,12 @@ input SaveOutboundShipmentLinesInput {
 	itemId: String!
 	lines: [OutboundShipmentLineInput!]!
 	placeholderQuantity: Float
+	"""
+	The barcode scanned to issue the item, as read; recorded on the item's
+	saved lines, and on the stock they issue from where it has none. Doesn't
+	propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 input SavePrescriptionLinesInput {
@@ -8510,6 +8640,12 @@ input SavePrescriptionLinesInput {
 	lines: [PrescriptionLineInput!]!
 	prescribedQuantity: Float
 	note: String
+	"""
+	The barcode scanned to issue the item, as read; recorded on the item's
+	saved lines, and on the stock they issue from where it has none. Doesn't
+	propose a barcode (see `proposeBarcode`).
+	"""
+	barcode: String
 }
 
 type ScannedDataParseError {
@@ -8788,6 +8924,9 @@ type StockLineNode {
 	location: LocationNode
 	item: ItemNode!
 	supplierName: String
+	"""
+	The barcode the stock carries, as people read it, e.g. `9506682101352`
+	"""
 	barcode: String
 	itemVariant: ItemVariantNode
 	vvmStatus: VvmstatusNode
@@ -9687,6 +9826,15 @@ input UpdateAssetInput {
 
 union UpdateAssetResponse = UpdateAssetError | AssetNode
 
+input UpdateBarcodeInput {
+	id: String!
+	"""
+	Moves the barcode to another item
+	"""
+	itemId: String
+	packSize: NullableFloatUpdate
+}
+
 input UpdateContactTraceInput {
 	"""
 	The patient ID the contact belongs to
@@ -9906,6 +10054,12 @@ input UpdateInboundShipmentLineInput {
 	shippedPackSize: Float
 	status: InvoiceLineStatusType
 	reasonOptionId: NullableStringUpdate
+	"""
+	The barcode scanned or typed for the line, as read; recorded on the line
+	and its stock. An empty one clears it. Doesn't propose a barcode (see
+	`proposeBarcode`).
+	"""
+	barcode: String
 }
 
 union UpdateInboundShipmentLineResponse = UpdateInboundShipmentLineError | InvoiceLineNode
