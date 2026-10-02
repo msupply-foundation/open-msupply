@@ -481,6 +481,18 @@ export type {
   GraphqlFailure,
   GraphqlErrorItem,
 } from './graphql';
+/*
+ * The non-suspending resource read, the host's own canonical spelling of it
+ * (kdd/solid-reactivity-pitfalls › No remounts on interaction, checklist rule
+ * 2). A plugin screen reads most of its resources AFTER first paint — a step
+ * that opens, a filter that changes — and a direct `resource()` read there
+ * suspends the page's boundary and remounts the body, taking the draft's edit
+ * buffer and the focused field with it. `.latest` alone is not the fix: it
+ * suspends on the first pending read. One function, no weight, and the gate
+ * the KDD requires of every plugin, so it is the host's rather than each
+ * plugin's own near-miss.
+ */
+export { gated } from '../api/gated';
 
 // ── Data access — the backend bridge ────────────────────────────────────────
 export { pluginBridge, usePluginQuery } from './bridge';
