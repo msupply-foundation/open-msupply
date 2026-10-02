@@ -112,6 +112,11 @@ pub async fn start_server(
     // migrations the system log won't run.
     info!("{server_start_message}");
 
+    // RAISE OPEN FILE LIMIT
+    // Before the database pool and HTTP listeners exist, so every socket and handle the
+    // server opens runs under the raised limit. See util::open_file_limit.
+    util::raise_open_file_limit();
+
     // ON STARTUP OVERRIDE IS CENTRAL SERVER
     if settings.server.override_is_central_server {
         CentralServerConfig::set_is_central_server_on_startup();
@@ -376,6 +381,7 @@ pub async fn start_server(
     let changelog_dedup_settings = settings.changelog_dedup.clone().unwrap_or_default();
     let migration_config = MigrationConfig {
         changelog_partition: changelog_partition_settings.to_migration_config(),
+        starting_database_version: None,
     };
     let (version, messages) = match migrate(&connection, None, migration_config) {
         Ok(result) => result,
