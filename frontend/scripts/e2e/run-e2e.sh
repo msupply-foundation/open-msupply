@@ -183,7 +183,8 @@ server_source_key() {
     [[ -f "$OMS_DIR/$f" ]] && files+=("$f")
   done < <(git -C "$OMS_DIR" ls-files -z --cached --others --exclude-standard server)
   {
-    echo "host=$(uname -sm) profile=debug"
+    # rustc -V: an unpinned toolchain updated by rustup changes no file here.
+    echo "host=$(uname -sm) profile=debug rustc=$(cd "$SERVER_DIR" && rustc -V 2>/dev/null)"
     (cd "$OMS_DIR" && printf '%s\0' ${files[@]+"${files[@]}"} | xargs -0 shasum -a 256)
   } | shasum -a 256 | cut -c1-16
 }
