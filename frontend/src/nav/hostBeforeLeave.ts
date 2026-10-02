@@ -42,7 +42,28 @@ export const onHostBeforeLeave = (listener: HostLeaveListener): void => {
   onCleanup(() => listeners.delete(listener));
 };
 
-/** The shell's side: forward one router event to every listener. */
+/**
+ * The shell's side: forward one router event to every listener.
+ *
+ * A listener that throws is contained, like every other plugin callback the
+ * host invokes (spec/plugins/rules.md § error isolation): uncontained, the
+ * throw would propagate out of the router's `useBeforeLeave` handler and abort
+ * the host's own navigation, and the listeners after it would never run. If
+ * the thrower is also the one that held the navigation, the hold is released —
+ * it cannot be trusted to retry, and a held navigation nothing will ever
+ * replay leaves the app unable to move.
+ */
 export const dispatchHostBeforeLeave = (event: HostLeaveEvent): void => {
-  for (const listener of [...listeners]) listener(event);
+  for (const listener of [...listeners]) {
+    const heldBefore = event.defaultPrevented;
+    try {
+      listener(event);
+    } catch (thrown) {
+      console.error(
+        'onHostBeforeLeave: a route-leave listener threw and was ignored',
+        thrown
+      );
+      if (!heldBefore && event.defaultPrevented) event.retry(true);
+    }
+  }
 };
