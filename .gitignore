@@ -54,6 +54,9 @@ frontend/dist/
 frontend/dist-showcase/
 frontend/dist-prototypes/
 frontend/dist-ssr/
+# Per-checkout dev config, e.g. the .env.local vite reads (see frontend/vite.config.ts).
+# The frontend's own .gitignore had `*.local`; it was lost moving that file to the root.
+frontend/**/*.local
 frontend/dist-desktop/
 # staging tree the desktop packager copies (scripts/package-desktop.sh)
 frontend/dist-desktop-stage/
