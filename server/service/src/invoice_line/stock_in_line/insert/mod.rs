@@ -154,7 +154,7 @@ mod test {
     use repository::{
         barcode::{BarcodeFilter, BarcodeRepository},
         mock::{
-            mock_customer_return_a, mock_customer_return_a_invoice_line_a,
+            currency_b, mock_customer_return_a, mock_customer_return_a_invoice_line_a,
             mock_immunisation_program_a, mock_inbound_shipment_a, mock_inbound_shipment_c,
             mock_inbound_shipment_e, mock_item_a, mock_item_restricted_location_type_b,
             mock_location_with_restricted_location_type_a, mock_name_customer_a, mock_name_store_b,
@@ -1061,5 +1061,61 @@ mod test {
             .unwrap()
             .unwrap();
         assert_eq!(line.stock_line_id, None);
+    }
+
+    /// A line added by hand to a foreign-currency shipment carries its total in
+    /// the shipment's currency from the start — the local total at the
+    /// shipment's own rate — rather than a null the Financial tab reads as 0.
+    #[actix_rt::test]
+    async fn insert_stock_in_line_writes_foreign_currency_total() {
+        let invoice = InvoiceRow {
+            id: "foreign_currency_inbound".to_string(),
+            store_id: mock_store_b().id,
+            name_id: mock_name_store_b().id,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
+            currency_id: Some(currency_b().id),
+            currency_rate: 2.0,
+            ..Default::default()
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_stock_in_line_writes_foreign_currency_total",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        // 5 packs at 10.00 local = 50.00 local = 25.00 in the shipment's currency.
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "foreign_currency_line".to_string(),
+                invoice_id: invoice.id.clone(),
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                cost_price_per_pack: 10.0,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("foreign_currency_line")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.total_before_tax, 50.0);
+        assert_eq!(line.foreign_currency_price_before_tax, Some(25.0));
     }
 }

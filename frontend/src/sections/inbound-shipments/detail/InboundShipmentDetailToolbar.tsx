@@ -25,7 +25,7 @@ import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.gen
 export interface InboundShipmentDetailToolbarProps {
   storeId: string;
   node: InboundInfoFragment;
-  /** True once Verified (global edit lock). */
+  /** The shipment's edit lock (rules § editability). */
   disabled: boolean;
   edit: InboundFieldEdit;
   /** Store backdating gate + window (from inboundShipmentPreferences). */

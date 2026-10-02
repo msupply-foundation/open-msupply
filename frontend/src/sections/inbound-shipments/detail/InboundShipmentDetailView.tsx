@@ -97,6 +97,7 @@ import {
   canChangeStatus,
   hasSourceLink,
   isEditable,
+  actionsLocked,
   sourceLinkOf,
   supplierIsStore,
 } from './inboundShipmentStatus';
@@ -109,6 +110,14 @@ import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
+import { CaptureWindow } from './scan/CaptureWindow';
+import { createCaptureWindow } from './scan/createCaptureWindow';
+import {
+  createScanControl,
+  ScanButton,
+  shownScanNotice,
+} from '@/domain/barcode';
+import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { showsInternalOrderContext } from './internalOrderContext';
 import { AddFromMasterListModal } from './modals/AddFromMasterListModal';
 import { AddFromInternalOrderModal } from './modals/AddFromInternalOrderModal';
@@ -396,14 +405,18 @@ const InboundShipmentDetailView: Component = () => {
       !canMutateInboundScope(scope())
     );
   };
+  const isExternal = () => isExternalScope(scope());
   // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
   const isDisabled = () =>
     writeBlocked() || !isEditable(current()?.status ?? '');
+  // The line-selection actions close earlier on a PO-linked shipment — at
+  // Received (issue #873); its lines still open, and items are still added.
+  const bulkLocked = () =>
+    isDisabled() || actionsLocked(current()?.status ?? '', isExternal());
   // The status footer keeps its own, looser status rule — an advance has to
   // stay reachable at Shipped, which the edit gate closes.
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
-  const isExternal = () => isExternalScope(scope());
   // Whether the shipment carries a source link — see hasSourceLink's own
   // comment for the rule and why the PO half comes from the scope.
   const sourceLinked = () =>
@@ -504,6 +517,35 @@ const InboundShipmentDetailView: Component = () => {
     name: 'button.add-item',
     run: openAdd,
     disabled: () => !current() || isDisabled(),
+  });
+
+  // Receiving by scanning (spec/barcode-scanning rules § Learning a code while
+  // receiving; ui-surface S2): a scan opens the capture window, and each scan
+  // after that saves what it holds and loads the next box. The scanner arms on
+  // arrival; the action is disabled while the shipment is not editable (R1).
+  const [scanNotice, setScanNotice] = createSignal<string>();
+  const capture = createCaptureWindow({
+    storeId: () => params.storeId,
+    invoiceId: () => current()?.id ?? params.invoiceId,
+    isExternal,
+    // The same source-link rule the line editor's cost field follows.
+    costLocked: () => isExternal() || !!current()?.linkedShipment,
+    blocked: () =>
+      editState() != null || masterListOpen() || internalOrderOpen(),
+    onSaved: onLinesChanged,
+    onNotice: setScanNotice,
+  });
+  const scan = createScanControl({
+    owner: 'inbound-shipment',
+    disabled: () => !current() || isDisabled(),
+    onScan: read => {
+      setScanNotice(undefined);
+      void capture.receive(read);
+    },
+  });
+  const scanNoticeShown = shownScanNotice(scan, () => {
+    const text = scanNotice();
+    return text === undefined ? undefined : { severity: 'warning', text };
   });
 
   // "OK & next" (update mode): the next distinct item for the editor to
@@ -1075,6 +1117,9 @@ const InboundShipmentDetailView: Component = () => {
                         onAction={onAddAction}
                       />
                     </Show>
+                    {/* Scan — the shared page-action scan button (spec S3
+                        page actions; barcode-scanning R1). */}
+                    <ScanButton control={scan} />
                     <ExportPrintButton
                       context="INBOUND_SHIPMENT"
                       dataId={node().id}
@@ -1101,6 +1146,20 @@ const InboundShipmentDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
+                  {/* A scan's outcome, inline beside the action that took it
+                      — never a toast (controls › action feedback). */}
+                  <Show when={scanNoticeShown()}>
+                    {notice => (
+                      <Toolbar>
+                        <Alert
+                          severity={notice().severity}
+                          testId="scan-notice"
+                        >
+                          {notice().text}
+                        </Alert>
+                      </Toolbar>
+                    )}
+                  </Show>
                   {/* The header field cluster — never a hand-rolled <Toolbar>
                       (ui/docs/PAGES.md § header field cluster). The kind banner
                       (spec S3: manual shipments don't auto-advance; a
@@ -1168,7 +1227,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1176,7 +1235,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1184,7 +1243,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       locations={locations()}
                       locationsLoading={locationsData.loading}
                       requiredVolume={selectedVolume}
@@ -1195,7 +1254,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1210,7 +1269,7 @@ const InboundShipmentDetailView: Component = () => {
                         storeId={params.storeId}
                         isExternal={isExternal()}
                         selectedIds={selectedIds}
-                        disabled={isDisabled()}
+                        disabled={bulkLocked()}
                         onChanged={onLinesChanged}
                         onError={stampErrors}
                       />
@@ -1260,9 +1319,19 @@ const InboundShipmentDetailView: Component = () => {
                   onSort={onSort}
                   onRowClick={isDisabled() ? undefined : openRow}
                   // A line the last bulk op failed reads in the error tone
-                  // (spec S8 → per-line indicators); an untouched placeholder
-                  // reads in the info tone (AC-V3). Error wins when both hold.
+                  // (spec S8 → per-line indicators).
                   rowTone={line =>
+                    lineErrors().has(line.id) ? 'error' : undefined
+                  }
+                  // Placeholder rows (AC-V3): CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isPlaceholderLine(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isPlaceholderLine(line) ? 'unfinished' : undefined
+                  }
+                  // Error wins when both hold.
+                  cardTone={line =>
                     lineErrors().has(line.id)
                       ? 'error'
                       : isPlaceholderLine(line)
@@ -1379,6 +1448,7 @@ const InboundShipmentDetailView: Component = () => {
                 onSaved={onLinesChanged}
                 onRequestNext={nextItem}
               />
+              <CaptureWindow control={capture} />
               <AddFromMasterListModal
                 open={masterListOpen()}
                 onClose={() => setMasterListOpen(false)}

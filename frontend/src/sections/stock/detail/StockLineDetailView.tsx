@@ -33,7 +33,8 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { createAddAction } from '../../../ui/utils/keyActions';
+import { createAction, createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_R } from '../../../ui/utils/shortcuts';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -50,6 +51,13 @@ import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import {
+  barcodeFieldFill,
+  createScanControl,
+  ScanFieldButton,
+  ScanNotice,
+  scanUnusableReason,
+} from '../../../domain/barcode';
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
 import { totalVolume } from '../stockCalc';
@@ -111,9 +119,30 @@ const StockLineDetailView: Component = () => {
   const [discardOpen, setDiscardOpen] = createSignal(false);
   const [adjustOpen, setAdjustOpen] = createSignal(false);
   const [repackOpen, setRepackOpen] = createSignal(false);
+  // A full repack's new line, offered once the repack modal has closed (spec
+  // OMS-REG-SMV-08.21, .28).
+  const [repackedToLineId, setRepackedToLineId] = createSignal<string>();
   const [vvmEntry, setVvmEntry] = createSignal<
     { entry?: StockLineVvmLogFragment } | undefined
   >();
+
+  // The Barcode field's scan affordance (spec/stock S2; barcode-scanning
+  // rules § Setting a code on a stock line): a scan fills the code, batch and
+  // expiry into the draft, which saves like any other edit. Ctrl+S answers it
+  // too — but not behind one of this screen's dialogs, where the scan would
+  // land in a form the user cannot see.
+  const scanner = createScanControl({
+    owner: 'stock-line',
+    mode: 'field',
+    disabled: () =>
+      saving() ||
+      confirmSaveOpen() ||
+      discardOpen() ||
+      adjustOpen() ||
+      repackOpen() ||
+      vvmEntry() !== undefined,
+    onScan: scan => setEdit(barcodeFieldFill(scan)),
+  });
 
   // Fetch the line (there is no single-record query — filter stockLines by id).
   // A stocktake-LEVEL save writes back via mutate (no refetch); adjust/repack
@@ -294,6 +323,28 @@ const StockLineDetailView: Component = () => {
     },
   });
 
+  /*
+   * Alt+R — Repack (spec/keyboard KB-R1, OMS-REG-SMV-08.29). A SPECIFIC action,
+   * gated on this screen because this is the only place it exists (KB-R2's
+   * contrast). Always offered once the line has loaded, like the button, and
+   * inert while any of this screen's dialogs is up so it never stacks the
+   * repack modal on another. Gated on `.state`, as the add action above.
+   */
+  createAction({
+    name: 'button.repack',
+    shortcut: ALT_R,
+    run: () => setRepackOpen(true),
+    disabled: () =>
+      (data.state !== 'ready' && data.state !== 'refreshing') ||
+      !data.latest ||
+      adjustOpen() ||
+      repackOpen() ||
+      vvmEntry() !== undefined ||
+      repackedToLineId() !== undefined ||
+      confirmSaveOpen() ||
+      discardOpen(),
+  });
+
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     ...(showVvmTab() ? [{ value: 'vvm', label: t('label.vvm-status') }] : []),
@@ -343,6 +394,7 @@ const StockLineDetailView: Component = () => {
                     <Button
                       variant="secondary"
                       icon={<StockIcon />}
+                      shortcut={ALT_R}
                       data-testid="repack-button"
                       onClick={() => setRepackOpen(true)}
                     >
@@ -485,7 +537,14 @@ const StockLineDetailView: Component = () => {
                             onInput={e =>
                               setEdit('barcode', e.currentTarget.value)
                             }
+                            helperText={scanUnusableReason(scanner)}
+                            endAction={
+                              scanner.available() ? (
+                                <ScanFieldButton control={scanner} />
+                              ) : undefined
+                            }
                           />
+                          <ScanNotice control={scanner} />
                           <FormRow>
                             <DateField
                               label={t('label.expiry-date')}
@@ -715,15 +774,25 @@ const StockLineDetailView: Component = () => {
                 storeId={params.storeId}
                 line={l()}
                 onClose={() => setRepackOpen(false)}
-                onRepacked={afterQuantityChange}
-                onNavigateToLine={id => {
-                  // Close the repack modal before navigating — the detail route
-                  // component is reused across :stockLineId changes, so the
-                  // open signal would otherwise persist and leave a stale modal
-                  // over the new line (spec OMS-REG-SMV-08.21).
-                  setRepackOpen(false);
-                  navigate(`/${params.storeId}/inventory/stock/${id}`);
+                onRepacked={newLineId => {
+                  afterQuantityChange();
+                  setRepackedToLineId(newLineId);
                 }}
+              />
+              {/* Full repack → offer navigation to the new line (spec
+                  OMS-REG-SMV-08.21). OK navigates, then every close path clears
+                  the signal — the detail route component is reused across
+                  :stockLineId changes, so a signal left set would reopen this
+                  over the new line. */}
+              <ConfirmDialog
+                open={repackedToLineId() !== undefined}
+                title={t('heading.are-you-sure')}
+                message={t('messages.all-packs-repacked')}
+                onConfirm={() => {
+                  const id = repackedToLineId();
+                  if (id) navigate(`/${params.storeId}/inventory/stock/${id}`);
+                }}
+                onClose={() => setRepackedToLineId(undefined)}
               />
               <VvmStatusEntryModal
                 open={vvmEntry() !== undefined}

@@ -242,17 +242,16 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn update_cost_price(
-        &self,
-        record_id: &str,
-        new_cost_price_per_pack: f64,
-        new_sell_price_per_pack: f64,
-    ) -> Result<(), RepositoryError> {
+    pub fn update_cost_price(&self, line: &InvoiceLineRow) -> Result<(), RepositoryError> {
         diesel::update(invoice_line_with_links::table)
-            .filter(invoice_line_with_links::id.eq(record_id))
+            .filter(invoice_line_with_links::id.eq(&line.id))
             .set((
-                invoice_line_with_links::cost_price_per_pack.eq(new_cost_price_per_pack),
-                invoice_line_with_links::sell_price_per_pack.eq(new_sell_price_per_pack),
+                invoice_line_with_links::cost_price_per_pack.eq(line.cost_price_per_pack),
+                invoice_line_with_links::sell_price_per_pack.eq(line.sell_price_per_pack),
+                invoice_line_with_links::total_before_tax.eq(line.total_before_tax),
+                invoice_line_with_links::total_after_tax.eq(line.total_after_tax),
+                invoice_line_with_links::foreign_currency_price_before_tax
+                    .eq(line.foreign_currency_price_before_tax),
             ))
             .execute(self.connection.lock().connection())?;
         Ok(())

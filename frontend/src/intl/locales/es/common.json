@@ -1444,7 +1444,7 @@
   "messages.how-to-read-report": "¿Cómo leer este reporte?",
   "messages.how-to-read-stock-detail": "Este reporte tiene la misma información que la página de inventario, pero sin interactividad.",
   "messages.how-to-read-stock-status": "Descripción de estados: \n* Bajo inventario: el MOS es menor que el MOS mínimo (preferencia de almacén: umbral para bajo inventario)\n* Sobreabastecido: el MOS es mayor que el MOS máximo (preferencia de almacén: umbral para sobre inventario) \n* Agotado: el SOH es 0 y el AMC mayor a 0.\n* Bien abastecido: el MOS está entre el MOS mínimo y máximo\n* Sin consumo: el AMC es 0",
-  "messages.import-error": "Algunos o todos los activos no se importaron correctamente. Haz clic en exportar para descargar un archivo CSV con las filas que causaron un error. Las filas sin errores se habrán importado",
+  "messages.import-error-assets": "Algunos o todos los activos no se importaron correctamente. Haz clic en exportar para descargar un archivo CSV con las filas que causaron un error. Las filas sin errores se habrán importado",
   "messages.import-error-on-upload": "Error de importación al subir el archivo. Por favor, corrige los errores y vuelve a subirlo",
   "messages.import-generic": "Importación exitosa",
   "messages.import-warning-on-upload": "Advertencia: algunos valores no se pudieron analizar. Por favor, corrígelos o serán ignorados al subir",
