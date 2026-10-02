@@ -39,11 +39,9 @@
  *    Afghanistan plugin deep-links to the prescription it just created —
  *    kdd/plugin-loading/evidence/interface-audits/).
  */
-import { createEffect, onCleanup, type JSX } from 'solid-js';
+import { type JSX } from 'solid-js';
 import { hostNavigate } from '../nav/hostNavigate';
-import { setPageTrail } from '../plugins/pageTrail';
-import { setPageActions } from '../plugins/pageActions';
-import { setPageFooter } from '../plugins/pageFooter';
+import { pageActions, pageFooter, pageTrail } from '../plugins/pageSlots';
 import { hostPathname } from '../nav/hostLocation';
 import {
   routerBase,
@@ -146,27 +144,22 @@ export type { HostLeaveEvent as BeforeLeaveEvent } from '../nav/hostBeforeLeave'
  * page contribution › rendering): a page that owns paths below itself names
  * the screen it is showing, and the host frame renders the page's crumb as
  * the parent link with these after it. Reactive — pass an accessor; the trail
- * clears when the calling component is disposed. Must be called under an
+ * is given up when the calling component is disposed. Must be called under an
  * owner (a component body).
  */
 export const usePageTrail = (
   trail: () => readonly { label: string; path?: string }[]
-): void => {
-  createEffect(() => setPageTrail(trail()));
-  onCleanup(() => setPageTrail([]));
-};
+): void => pageTrail.use(trail);
 
 /**
  * A plugin page's header action cluster (sdk-contract § the page contribution
  * › rendering): the host frame renders it top-end beside the breadcrumb, where
  * every host page's actions sit. Pass a render function; it is evaluated in
- * the frame, so signals it reads stay live. Cleared when the calling component
- * is disposed. Must be called under an owner (a component body).
+ * the frame, so signals it reads stay live. Given up when the calling
+ * component is disposed. Must be called under an owner (a component body).
  */
-export const usePageActions = (actions: () => JSX.Element): void => {
-  setPageActions(() => actions);
-  onCleanup(() => setPageActions(undefined));
-};
+export const usePageActions = (actions: () => JSX.Element): void =>
+  pageActions.use(() => actions);
 
 /**
  * A plugin page's pinned action footer (sdk-contract § the page contribution
@@ -175,10 +168,8 @@ export const usePageActions = (actions: () => JSX.Element): void => {
  * a footer with sticky positioning, which stops behaving the moment the body
  * fits. Pass a render function; it is evaluated in the frame, so signals it
  * reads stay live, and a bar that exists only in some states renders nothing
- * in the others. Cleared when the calling component is disposed. Must be
+ * in the others. Given up when the calling component is disposed. Must be
  * called under an owner (a component body).
  */
-export const usePageFooter = (footer: () => JSX.Element): void => {
-  setPageFooter(() => footer);
-  onCleanup(() => setPageFooter(undefined));
-};
+export const usePageFooter = (footer: () => JSX.Element): void =>
+  pageFooter.use(() => footer);

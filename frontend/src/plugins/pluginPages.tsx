@@ -1,7 +1,5 @@
 import { ErrorBoundary, lazy, Show, Suspense } from 'solid-js';
-import { pageTrail } from './pageTrail';
-import { pageActions } from './pageActions';
-import { pageFooter } from './pageFooter';
+import { pageActions, pageFooter, pageTrail } from './pageSlots';
 import { storeHref } from '../plugin-sdk/navigation';
 import type { Component } from 'solid-js';
 import { t, type LocaleKey } from '../intl';
@@ -575,24 +573,27 @@ const pageComponent = (registered: RegisteredPage): Component => {
       header={
         <Header>
           {/* The page's crumb, then whatever trail the page sets below itself
-              (pageTrail.ts): with a trail the page's own crumb becomes the
+              (pageSlots.ts): with a trail the page's own crumb becomes the
               parent link, so a record screen under a plugin list is left the
               way a host record screen is. */}
           <Breadcrumb
             crumbs={[
               {
                 label: t(labelKey),
-                to: pageTrail().length > 0 ? storeHref(page.path) : undefined,
+                to:
+                  pageTrail.value().length > 0
+                    ? storeHref(page.path)
+                    : undefined,
               },
-              ...pageTrail().map(crumb => ({
+              ...pageTrail.value().map(crumb => ({
                 label: crumb.label,
                 to: crumb.path ? storeHref(crumb.path) : undefined,
               })),
             ]}
           />
-          {/* The page's action cluster (pageActions.ts), top-end like a host
+          {/* The page's action cluster (pageSlots.ts), top-end like a host
               page's; a throwing cluster is contained like the body. */}
-          <Show when={pageActions()}>
+          <Show when={pageActions.value()}>
             {actions => (
               <HeaderButtons>
                 <ErrorBoundary
@@ -606,9 +607,9 @@ const pageComponent = (registered: RegisteredPage): Component => {
         </Header>
       }
       contentFooter={
-        /* The page's pinned action bar (pageFooter.ts), below the scrolling
+        /* The page's pinned action bar (pageSlots.ts), below the scrolling
            body like a host detail screen's. */
-        <Show when={pageFooter()}>
+        <Show when={pageFooter.value()}>
           {footer => (
             <ErrorBoundary fallback={<p>{t('error.plugin-unavailable')}</p>}>
               {footer()()}
