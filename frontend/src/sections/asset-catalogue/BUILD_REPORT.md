@@ -26,23 +26,23 @@ Every screen was also driven live (headless Chromium) against a central-pinned s
 
 The anchors are the behaviours in `spec/asset-catalogue/cases/` (`OMS-REG-CAT-01`–`03`, `-09`); `acceptance.md` maps the retired `AC-*` ids onto them. Ids below drop the `OMS-REG-CAT-` prefix (`01.28` is `OMS-REG-CAT-01.28`). **e2e** = `e2e/specs/asset-catalogue-regression.spec.ts`, green on both front ends; **e2e (this FE)** = in that suite but skipped on the current app, which deliberately differs (named at each test); unit = colocated vitest.
 
-| Behaviours                                                      | Covered by                                                                                      |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `01.1`–`01.19`, `01.21`–`01.23`, `01.27`, `01.32`               | **e2e**                                                                                         |
-| `01.20`, `01.25`, `01.26`                                       | **e2e (this FE)** · `01.25`/`01.26` also `catalogue/catalogueList.test.ts`                      |
-| `01.24`, `01.28`–`01.31`                                        | out of scope — off the central server; the e2e harness pins central stack-wide                  |
-| `02.1`–`02.4`, `02.6`–`02.16`, `02.21`–`02.24`, `02.26`–`02.38` | **e2e** · the file rules also `import/catalogueImport.test.ts`                                  |
-| `02.17`, `02.18`, `02.25`, `02.39`                              | **e2e (this FE)** · `02.25`/`02.39` also `import/catalogueImport.test.ts`                       |
-| `02.19`                                                         | pending in its case (the shared export's empty-state notice — flags)                            |
-| `02.20`                                                         | out of scope — off the central server                                                           |
-| `03.1`–`03.14`, `03.17`–`03.20`, `03.22`–`03.25`, `03.32`       | **e2e** · `03.17`–`03.20` also `reasons/logReasons.test.ts`                                     |
-| `03.15`, `03.16`, `03.30`, `03.31`                              | **e2e (this FE)** · `03.30`/`03.31` also `access.test.ts`                                       |
-| `03.21`                                                         | out of scope for e2e (no refusal reachable from the editor on the harness) · `refusals.test.ts` |
-| `03.26`                                                         | out of scope — needs a datafile with no live reason                                             |
-| `03.27`–`03.29`, `03.33`                                        | out of scope — off the central server · `03.33`'s mapping in `refusals.test.ts`                 |
-| `09.1`–`09.5`, `09.7`–`09.11`, `09.14`                          | **e2e** · `09.4`/`09.5` also `refusals.test.ts`                                                 |
-| `09.6`, `09.12`, `09.13`                                        | **e2e (this FE)** · `09.12`/`09.13` also `access.test.ts`                                       |
-| `09.15`                                                         | out of scope — off the central server · mapping in `refusals.test.ts`                           |
+| Behaviours                                                      | Covered by                                                                                                           |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `01.1`–`01.19`, `01.21`–`01.23`, `01.27`, `01.32`               | **e2e**                                                                                                              |
+| `01.20`, `01.25`, `01.26`                                       | **e2e (this FE)** · `01.25`/`01.26` also `catalogue/catalogueList.test.ts`                                           |
+| `01.24`, `01.28`–`01.31`                                        | out of scope — off the central server; the e2e harness pins central stack-wide                                       |
+| `02.1`–`02.4`, `02.6`–`02.16`, `02.21`–`02.24`, `02.26`–`02.38` | **e2e** · the file rules also `import/catalogueImport.test.ts`                                                       |
+| `02.17`, `02.18`, `02.25`, `02.39`                              | **e2e (this FE)** · `02.25`/`02.39` also `import/catalogueImport.test.ts`                                            |
+| `02.19`                                                         | pending in its case (the shared export's empty-state notice — flags)                                                 |
+| `02.20`                                                         | out of scope — off the central server                                                                                |
+| `03.1`–`03.14`, `03.17`–`03.20`, `03.22`–`03.25`, `03.32`       | **e2e** · `03.17`–`03.20` also `reasons/logReasons.test.ts`                                                          |
+| `03.15`, `03.16`, `03.30`, `03.31`                              | **e2e (this FE)** · `03.30`/`03.31` also `access.test.ts`                                                            |
+| `03.21`                                                         | out of scope for e2e (no refusal reachable from the editor on the harness) · `domain/selection/writeOutcome.test.ts` |
+| `03.26`                                                         | out of scope — needs a datafile with no live reason                                                                  |
+| `03.27`–`03.29`, `03.33`                                        | out of scope — off the central server · `03.33`'s mapping in `domain/selection/writeOutcome.test.ts`                 |
+| `09.1`–`09.5`, `09.7`–`09.11`, `09.14`                          | **e2e** · `09.4`/`09.5` also `domain/selection/writeOutcome.test.ts`                                                 |
+| `09.6`, `09.12`, `09.13`                                        | **e2e (this FE)** · `09.12`/`09.13` also `access.test.ts`                                                            |
+| `09.15`                                                         | out of scope — off the central server · mapping in `domain/selection/writeOutcome.test.ts`                           |
 
 **C2 (real backend):** the e2e suite runs against a real server on both front ends; the colocated tests are logic only.
 

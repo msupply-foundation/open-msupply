@@ -14,11 +14,19 @@ import {
   missingPermissions,
   reportPermissionDenied,
 } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { rejectionFrom, type Rejection } from '@/api/rejection';
 import { t } from '@/intl';
 import { configurationFor } from '@/plugins/registry';
+import {
+  PluginDataInsert,
+  PluginDataList,
+  PluginDataUpdate,
+} from '@/plugin-sdk/pluginData.generated';
+import type { ConfigurationEditorProps } from '@/plugin-sdk/types';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
 import {
   CancelButton,
@@ -26,17 +34,12 @@ import {
 } from '@/ui/elements/buttons/StandardButtons';
 import { PluginSlotOutlet } from '@/ui/elements/plugins/PluginSlotOutlet';
 import {
-  InsertPluginConfiguration,
-  PluginConfiguration,
-  UpdatePluginConfiguration,
-} from './plugins.generated';
-import {
+  configurationRead,
   configurationWrite,
   loadConfiguration,
   pickConfigurationRecord,
   type LoadedConfiguration,
 } from './configuration';
-import { RefusalAlert } from './RefusalAlert';
 
 /*
  * S3 — Configure dialog (spec/plugin-management/ui-surface.md): a plugin's
@@ -49,8 +52,6 @@ import { RefusalAlert } from './RefusalAlert';
  * afresh and seeds a fresh draft.
  */
 
-type EditorProps = { value: unknown; onChange: (next: unknown) => void };
-
 export const ConfigurePluginDialog = (props: {
   storeId: string;
   pluginCode: string;
@@ -61,12 +62,12 @@ export const ConfigurePluginDialog = (props: {
   const configuration = untrack(() => configurationFor(props.pluginCode));
 
   // First fetched on an interaction (opening the dialog) under the list's
-  // already-open boundary, so it is read through `.state` only — never
+  // already-open boundary, so it is read through `gated` only — never
   // `stored()` — and can never suspend the list (CLAUDE.md anti-default).
   const [stored] = createResource(
-    () => ({ storeId: props.storeId, pluginCode: props.pluginCode }),
+    () => configurationRead(props.storeId, props.pluginCode),
     async variables => {
-      const result = await graphqlFetch(PluginConfiguration, variables, {
+      const result = await graphqlFetch(PluginDataList, variables, {
         returnGraphqlErrors: true,
       });
       return result.kind === 'success'
@@ -77,7 +78,7 @@ export const ConfigurePluginDialog = (props: {
         : { ok: false as const };
     }
   );
-  const loaded = () => (stored.state === 'ready' ? stored.latest : undefined);
+  const loaded = () => gated(stored);
 
   // The draft. Seeded ONCE, when the read lands — never re-seeded, so nothing
   // the read does later can overwrite edits.
@@ -118,10 +119,10 @@ export const ConfigurePluginDialog = (props: {
     );
     const result =
       write.kind === 'insert'
-        ? await graphqlFetch(InsertPluginConfiguration, write.variables, {
+        ? await graphqlFetch(PluginDataInsert, write.variables, {
             returnGraphqlErrors: true,
           })
-        : await graphqlFetch(UpdatePluginConfiguration, write.variables, {
+        : await graphqlFetch(PluginDataUpdate, write.variables, {
             returnGraphqlErrors: true,
           });
     if (result.kind === 'success') {
@@ -181,13 +182,18 @@ export const ConfigurePluginDialog = (props: {
         </>
       }
     >
+      {/* A refused save: the step, the server's reason, and a multi-line dump
+          behind the disclosure (ui-standards › controls § action feedback). */}
       <Show when={refusal()}>
         {rejection => (
-          <RefusalAlert
-            step={t('error.unable-to-save-plugin-config')}
-            rejection={rejection()}
-            testId="configure-plugin-error"
-          />
+          <Alert severity="error" testId="configure-plugin-error">
+            {[t('error.unable-to-save-plugin-config'), rejection().message]
+              .filter(Boolean)
+              .join(': ')}
+            <Show when={rejection().detail}>
+              {detail => <ErrorDetails detail={detail()} />}
+            </Show>
+          </Alert>
         )}
       </Show>
       {/* Until the read lands: the loading spinner. */}
@@ -203,7 +209,7 @@ export const ConfigurePluginDialog = (props: {
           </Alert>
         </Match>
         <Match when={seed()}>
-          <PluginSlotOutlet<EditorProps>
+          <PluginSlotOutlet<ConfigurationEditorProps>
             contributions={editor()}
             slotProps={() => ({
               value: draft(),

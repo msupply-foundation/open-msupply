@@ -1,3 +1,4 @@
+import { postFiles } from '@/api/postFiles';
 import { UPLOAD_URL } from '@/config';
 import type { FileLike, FileRejection } from '@/ui/elements/inputs/uploadFiles';
 
@@ -65,48 +66,37 @@ const shortReason = (text: string): string | undefined => {
 };
 
 /**
- * Stage the file on the server. Session-cookie auth, as every request this app
- * makes (same origin). Any non-200 is a failed upload described by its status
- * and the server's short reason (contract › file upload).
+ * Stage the file on the server, through the shared api/postFiles (session
+ * cookie, as every request this app makes). Any non-200 is a failed upload
+ * described by its status and the server's short reason (contract › file
+ * upload).
  */
 export const uploadBundle = async (file: File): Promise<UploadResult> => {
-  const formData = new FormData();
-  formData.append('files', file);
-  try {
-    const response = await fetch(UPLOAD_URL, {
-      method: 'POST',
-      headers: { Accept: 'application/json' },
-      credentials: 'same-origin',
-      body: formData,
-    });
-    if (!response.ok) {
-      const status = `${response.status} ${response.statusText}`.trim();
-      const reason = shortReason(await response.text().catch(() => ''));
-      return {
-        ok: false,
-        status: reason ? `${status}: ${reason}` : status,
-        signedOut:
-          response.status === 401 ||
-          (response.status === 500 && reason === SIGNED_OUT_TEXT),
-      };
-    }
-    const body: unknown = await response.json();
-    const fileId =
-      typeof body === 'object' && body !== null && 'file-id' in body
-        ? body['file-id']
-        : undefined;
-    return typeof fileId === 'string' && fileId.length > 0
-      ? { ok: true, fileId }
-      : {
-          ok: false,
-          status: `${response.status} — no file id`,
-          signedOut: false,
-        };
-  } catch (error) {
+  const sent = await postFiles(UPLOAD_URL, [file]);
+  if (sent.kind === 'unreachable')
+    return { ok: false, status: sent.message, signedOut: false };
+  const { response } = sent;
+  if (!response.ok) {
+    const status = `${response.status} ${response.statusText}`.trim();
+    const reason = shortReason(await response.text().catch(() => ''));
     return {
       ok: false,
-      status: error instanceof Error ? error.message : String(error),
-      signedOut: false,
+      status: reason ? `${status}: ${reason}` : status,
+      signedOut:
+        response.status === 401 ||
+        (response.status === 500 && reason === SIGNED_OUT_TEXT),
     };
   }
+  const body: unknown = await response.json().catch(() => undefined);
+  const fileId =
+    typeof body === 'object' && body !== null && 'file-id' in body
+      ? body['file-id']
+      : undefined;
+  return typeof fileId === 'string' && fileId.length > 0
+    ? { ok: true, fileId }
+    : {
+        ok: false,
+        status: `${response.status} — no file id`,
+        signedOut: false,
+      };
 };

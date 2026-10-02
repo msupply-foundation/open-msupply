@@ -10,6 +10,7 @@ import { reportUnauthenticated } from '@/auth/authContext';
 import { formatFileSize, t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
 import { Button } from '@/ui/elements/buttons/Button';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
@@ -26,7 +27,6 @@ import {
   MAX_BUNDLE_BYTES,
   uploadBundle,
 } from './bundleFile';
-import { RefusalAlert } from './RefusalAlert';
 
 /*
  * S2 — Upload dialog (spec/plugin-management/ui-surface.md): install ONE
@@ -51,31 +51,30 @@ export const UploadPluginDialog = (props: {
   const [notice, setNotice] = createSignal<Notice>();
   const [running, setRunning] = createSignal(false);
 
-  // The upload zone reports one pick or drop as two calls — refused files,
-  // then accepted ones — synchronously. They are gathered into ONE batch and
-  // decided once, because a drop of several files chooses none whatever they
-  // are (rules › installing a bundle), which neither call can tell alone.
-  let batch: { accepted: File[]; rejected: FileRejection<File>[] } | undefined;
-  const gather = (accepted: File[], rejected: FileRejection<File>[]): void => {
-    if (!batch) {
-      batch = { accepted: [], rejected: [] };
-      queueMicrotask(() => {
-        const current = batch;
-        batch = undefined;
-        if (!current) return;
-        const choice = chooseBundle(current.accepted, current.rejected);
-        if (choice.kind === 'chosen') {
-          setFile(choice.file);
-          setNotice(undefined);
-        } else if (choice.kind === 'refused') {
-          // The chosen file, if any, stays (OMS-REG-MNG-07.23).
-          setNotice({ kind: 'refused', rejection: choice.rejection });
-        }
-      });
+  // One pick or drop, decided as a whole: a drop of several files chooses
+  // none whatever they are (rules › installing a bundle), which is why the
+  // zone's combined `onPick` is used rather than its per-half callbacks.
+  const pick = (accepted: File[], rejected: FileRejection<File>[]): void => {
+    const choice = chooseBundle(accepted, rejected);
+    if (choice.kind === 'chosen') {
+      setFile(choice.file);
+      setNotice(undefined);
+    } else if (choice.kind === 'refused') {
+      // The chosen file, if any, stays (OMS-REG-MNG-07.23).
+      setNotice({ kind: 'refused', rejection: choice.rejection });
     }
-    batch.accepted.push(...accepted);
-    batch.rejected.push(...rejected);
   };
+
+  // A failed step's notice: the step, the server's reason, and a multi-line
+  // dump behind the disclosure (ui-standards › controls § action feedback).
+  const stepAlert = (step: string, rejection: Rejection) => (
+    <Alert severity="error" testId="upload-plugin-error">
+      {[step, rejection.message].filter(Boolean).join(': ')}
+      <Show when={rejection.detail}>
+        {detail => <ErrorDetails detail={detail()} />}
+      </Show>
+    </Alert>
+  );
 
   const install = async () => {
     const chosen = file();
@@ -165,8 +164,8 @@ export const UploadPluginDialog = (props: {
           multiple={false}
           disabled={running()}
           inputTestId="upload-plugin-file-input"
-          onFiles={files => gather(files, [])}
-          onRejected={rejected => gather([], rejected)}
+          testId="upload-plugin-drop-zone"
+          onPick={pick}
         />
         <Show when={file()}>
           {chosen => (
@@ -197,19 +196,12 @@ export const UploadPluginDialog = (props: {
                 </Alert>
               );
             if (value.kind === 'upload')
-              return (
-                <RefusalAlert
-                  step={t('error.unable-to-upload-plugin')}
-                  rejection={{ message: value.status }}
-                  testId="upload-plugin-error"
-                />
-              );
-            return (
-              <RefusalAlert
-                step={t('error.unable-to-install-plugin')}
-                rejection={value.rejection}
-                testId="upload-plugin-error"
-              />
+              return stepAlert(t('error.unable-to-upload-plugin'), {
+                message: value.status,
+              });
+            return stepAlert(
+              t('error.unable-to-install-plugin'),
+              value.rejection
             );
           }}
         </Show>

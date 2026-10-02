@@ -1,6 +1,7 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
+import { gated } from '@/api/gated';
 import { graphqlFetch } from '@/api/graphql';
 import { t, tPlural } from '@/intl';
 import { configurationFor } from '@/plugins/registry';
@@ -8,8 +9,6 @@ import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
-import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '@/ui/elements/buttons/Button';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
 import {
@@ -19,19 +18,21 @@ import {
 } from '@/ui/elements/table/DataTable';
 import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
-import { DeleteSelectedAction, outcomeOf } from '@/domain/selection';
-import { CloseIcon, PlusCircleIcon, SettingsIcon } from '@/ui/icons';
+import { DeleteSelectedAction } from '@/domain/selection';
+import { PlusCircleIcon, SettingsIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { ALT_N } from '@/ui/utils/shortcuts';
 import { remToPx } from '@/ui/utils/rem';
-import { InstalledPlugins, UninstallPlugin } from './plugins.generated';
+import { ManagedPlugins, UninstallPlugin } from './plugins.generated';
 import {
+  orderPlugins,
   rowKey,
   rowsForKeys,
   runtimeText,
-  sortRows,
   typesText,
+  uninstallOutcome,
   type PluginRow,
-  type PluginSort,
   type PluginSortKey,
 } from './pluginRows';
 import { UploadPluginDialog } from './UploadPluginDialog';
@@ -47,15 +48,17 @@ import { ConfigurePluginDialog } from './ConfigurePluginDialog';
  * this screen renders no gate of its own.
  */
 
-type PluginsListState = { sort?: PluginSort };
+type PluginsListState = { sort?: SortState<PluginSortKey> };
 
 const kindLabel = (kind: PluginRow['kind']): string =>
   kind === 'BACKEND' ? t('label.backend') : t('label.frontend');
 
 // Each selected row is uninstalled by its own call (rules › uninstalling
-// plugins); every refusal of this write is a top-level GraphQL error.
+// plugins), and read through uninstallOutcome — a shared id's wrong removal
+// included (OMS-REG-MNG-07.65).
 const uninstallOne = async (row: PluginRow) =>
-  outcomeOf(
+  uninstallOutcome(
+    row,
     await graphqlFetch(
       UninstallPlugin,
       { id: row.id },
@@ -80,19 +83,26 @@ const PluginsList: Component = () => {
   const [uploadOpen, setUploadOpen] = createSignal(false);
   const [configuring, setConfiguring] = createSignal<string>();
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2), declared once by
+  // the screen for the header button that triggers it.
+  createAddAction({
+    name: 'button.upload-plugin',
+    run: () => setUploadOpen(true),
+  });
+
   const tableConfig = createTableConfig({ tableId: 'plugins' });
 
-  // A first-load read with no live state to lose; `.latest` keeps it
-  // non-suspending all the same, so the table shows its own loading treatment
+  // Read through `gated`, which never suspends, so the first load shows the
+  // table's own loading treatment rather than the route's fallback
   // (kdd/solid-reactivity-pitfalls). Failures surface globally.
   const [data, { refetch }] = createResource(async () => {
-    const result = await graphqlFetch(InstalledPlugins, {});
+    const result = await graphqlFetch(ManagedPlugins, {});
     if (result.kind !== 'success') return undefined;
     return result.data.centralServer.plugin.installedPlugins.nodes;
   });
 
   const rows = createMemo(() =>
-    sortRows(data.latest ?? [], query().sort, kindLabel)
+    orderPlugins(gated(data) ?? [], query().sort, kindLabel)
   );
 
   // Configurable = this app LOADED a plugin of the code that ships an editor;
@@ -133,14 +143,16 @@ const PluginsList: Component = () => {
       header: () => t('label.runtime'),
     },
     {
+      // One line, truncated, with the full list on hover (ui-surface S1) —
+      // capped like Code, so a long list can't widen the column either.
       c: { accessor: typesText, id: 'types' },
       header: () => t('label.types'),
-      meta: { wrapLines: 2 },
+      maxSize: remToPx(24),
     },
     {
       // Headerless; the button is the keyboard route to the same action a
-      // row click takes (ui-surface S1 › layout).
-      c: { id: 'configure' },
+      // row click takes (ui-surface S1 › layout). `actions` per CELL_TYPES.
+      c: { id: 'actions' },
       header: () => '',
       // One icon button plus the cell's padding; never grows.
       size: remToPx(3.5),
@@ -179,6 +191,7 @@ const PluginsList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="upload-plugin-button"
               onClick={() => setUploadOpen(true)}
             >
@@ -186,38 +199,6 @@ const PluginsList: Component = () => {
             </Button>
           </HeaderButtons>
         </Header>
-      }
-      contentFooter={
-        <Show when={selectedKeys().length > 0}>
-          <ContentFooter testId="actions-footer">
-            <strong data-testid="selected-rows-count">
-              {selectedKeys().length} {t('label.selected')}
-            </strong>
-            {/* No guard: navigation's server-admin gate already holds. */}
-            <DeleteSelectedAction
-              selected={selectedRows}
-              deleteOne={uninstallOne}
-              // One call at a time: the server addresses a row by id alone,
-              // and a backend and a frontend row can share one (contract ›
-              // uninstalling plugins).
-              batchSize={1}
-              nameOf={describeRow}
-              confirmMessage={confirmMessage}
-              refusedMessage={() => t('error.unable-to-delete-plugin')}
-              onChanged={() => void refetch()}
-              onDone={() => setSelectedKeys([])}
-            />
-            <ContentFooterActions>
-              <Button
-                variant="secondary"
-                icon={<CloseIcon />}
-                onClick={() => setSelectedKeys([])}
-              >
-                {t('label.clear-selection')}
-              </Button>
-            </ContentFooterActions>
-          </ContentFooter>
-        </Show>
       }
     >
       <DataTable
@@ -233,6 +214,27 @@ const PluginsList: Component = () => {
         enableSelection
         selectedIds={selectedKeys()}
         onSelectionChange={setSelectedKeys}
+        selectionActions={
+          // No guard: navigation's server-admin gate already holds.
+          <DeleteSelectedAction
+            selected={selectedRows}
+            deleteOne={uninstallOne}
+            // One call at a time: the server addresses a row by id alone, and
+            // a backend and a frontend row can share one (contract ›
+            // uninstalling plugins).
+            batchSize={1}
+            nameOf={describeRow}
+            confirmMessage={confirmMessage}
+            refusedMessage={() => t('error.unable-to-delete-plugin')}
+            onChanged={() => void refetch()}
+            onDone={() => {
+              setSelectedKeys([]);
+              // A shared-id refusal still removed a row (the backend one), so
+              // the list reads again whatever the outcome said (.65).
+              void refetch();
+            }}
+          />
+        }
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
       />

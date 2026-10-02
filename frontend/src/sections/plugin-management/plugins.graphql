@@ -4,8 +4,9 @@
 
 # One read, no arguments: every installed row of both kinds
 # (contract § reading the installed plugins). `hostRuntime` is null on a
-# backend row.
-query InstalledPlugins {
+# backend row. Named apart from Settings › Support's own `InstalledPlugins`
+# read, so the two generated exports never collide.
+query ManagedPlugins {
   centralServer {
     plugin {
       installedPlugins {
@@ -49,45 +50,6 @@ mutation UninstallPlugin($id: String!) {
   }
 }
 
-# The code's configuration record(s). The resolver adds rows of the signed-in
-# store beside the store-less one; the configuration is the store-less row
-# (contract § configuring a plugin).
-query PluginConfiguration($storeId: String!, $pluginCode: String!) {
-  pluginData(
-    storeId: $storeId
-    pluginCode: $pluginCode
-    filter: { dataIdentifier: { equalTo: "configuration" } }
-  ) {
-    ... on PluginDataConnector {
-      nodes {
-        id
-        storeId
-        data
-      }
-    }
-  }
-}
-
-# Creates the installation-wide record: `input.storeId` is left out, which is
-# what stores it with no store.
-mutation InsertPluginConfiguration(
-  $storeId: String!
-  $input: InsertPluginDataInput!
-) {
-  insertPluginData(storeId: $storeId, input: $input) {
-    ... on PluginDataNode {
-      id
-    }
-  }
-}
-
-mutation UpdatePluginConfiguration(
-  $storeId: String!
-  $input: UpdatePluginDataInput!
-) {
-  updatePluginData(storeId: $storeId, input: $input) {
-    ... on PluginDataNode {
-      id
-    }
-  }
-}
+# The configuration record is read and written through the SDK's own
+# plugin-data operations (src/plugin-sdk/pluginData.graphql), under
+# CONFIGURATION_IDENTIFIER (contract § configuring a plugin).

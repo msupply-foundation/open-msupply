@@ -1,12 +1,12 @@
+import { FILES_FIELD, postFiles } from '@/api/postFiles';
 import { FRIDGE_TAG_URL } from '@/config';
 
 // The fridge-sensor file import (spec/cold-chain-monitoring rules › importing
 // a fridge-sensor file; contract › importing a fridge-sensor file). NOT
 // GraphQL: a multipart POST to the server's `/fridge-tag` route, authenticated
-// by the same-origin session cookie, following the sync-files upload
-// (src/domain/syncFiles.ts) and the help-document upload precedent. The
-// outcome classification is pure and unit-tested; the request is a thin
-// wrapper around fetch.
+// by the same-origin session cookie, sent through the shared api/postFiles
+// as every upload route is. The outcome classification is pure and
+// unit-tested; the request is a thin wrapper around it.
 
 /**
  * The route accepts plain-text and comma-separated files (rules). The chooser
@@ -16,7 +16,7 @@ import { FRIDGE_TAG_URL } from '@/config';
 export const ACCEPTED_FILE_TYPES = '.txt,.csv';
 
 /** The multipart field the route reads the file from. */
-export const FILE_FIELD = 'files';
+export const FILE_FIELD = FILES_FIELD;
 
 /** The upload URL for a store — `store-id` is the route's query parameter. */
 export const importUrl = (storeId: string): string =>
@@ -71,22 +71,10 @@ export const importFridgeTag = async (
   storeId: string,
   file: File
 ): Promise<ImportOutcome> => {
-  const body = new FormData();
-  body.append(FILE_FIELD, file, file.name);
-  let response: Response;
-  try {
-    response = await fetch(importUrl(storeId), {
-      method: 'POST',
-      headers: { Accept: 'application/json' },
-      credentials: 'same-origin',
-      body,
-    });
-  } catch (e) {
-    return {
-      kind: 'failed',
-      message: e instanceof Error ? e.message : String(e),
-    };
-  }
+  const sent = await postFiles(importUrl(storeId), [file]);
+  if (sent.kind === 'unreachable')
+    return { kind: 'failed', message: sent.message };
+  const { response } = sent;
   if (!response.ok) {
     const text = await response.text().catch(() => '');
     return { kind: 'failed', message: text || `HTTP ${response.status}` };

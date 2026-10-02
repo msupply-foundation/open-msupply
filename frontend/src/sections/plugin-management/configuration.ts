@@ -1,30 +1,45 @@
 import { generateUUID } from '@/uuid';
 import { CONFIGURATION_IDENTIFIER } from '@/plugin-sdk/pluginData';
 import type {
-  InsertPluginConfigurationVariables,
-  PluginConfigurationResult,
-  UpdatePluginConfigurationVariables,
-} from './plugins.generated';
+  PluginDataInsertVariables,
+  PluginDataListResult,
+  PluginDataListVariables,
+  PluginDataUpdateVariables,
+} from '@/plugin-sdk/pluginData.generated';
 
 /*
  * A plugin's configuration record (spec/plugin-management/rules.md ›
  * configuring a plugin; contract.md › configuring a plugin): one store-less
  * record per code under the reserved identifier, holding the whole value as
- * JSON. The host owns it — the plugin's editor only edits the value.
+ * JSON. The host owns it — the plugin's editor only edits the value. Read and
+ * written through the SDK's own plugin-data operations.
  */
 
-type PluginDataAnswer = PluginConfigurationResult['pluginData'];
-export type ConfigurationRecord = PluginDataAnswer['nodes'][number];
+// Only the fields the configuration reads: which record, whose store, what it
+// holds.
+export type ConfigurationRecord = Pick<
+  PluginDataListResult['pluginData']['nodes'][number],
+  'id' | 'storeId' | 'data'
+>;
+
+/** The read's variables: the code's records under the reserved identifier. */
+export const configurationRead = (
+  storeId: string,
+  pluginCode: string
+): PluginDataListVariables => ({
+  storeId,
+  pluginCode,
+  filter: { dataIdentifier: { equalTo: CONFIGURATION_IDENTIFIER } },
+});
 
 /**
  * The installation-wide record: the first store-less one. The read also
  * answers the signed-in store's own rows of the identifier, which are not the
  * configuration (contract › configuring a plugin).
  */
-export const pickConfigurationRecord = (
-  answer: PluginDataAnswer
-): ConfigurationRecord | undefined =>
-  answer.nodes.find(node => node.storeId === null);
+export const pickConfigurationRecord = <R extends ConfigurationRecord>(answer: {
+  nodes: readonly R[];
+}): R | undefined => answer.nodes.find(node => node.storeId === null);
 
 /** What the editor opens on, and which record a Save writes to. */
 export interface LoadedConfiguration {
@@ -52,8 +67,8 @@ export const loadConfiguration = (
 };
 
 export type ConfigurationWrite =
-  | { kind: 'insert'; variables: InsertPluginConfigurationVariables }
-  | { kind: 'update'; variables: UpdatePluginConfigurationVariables };
+  | { kind: 'insert'; variables: PluginDataInsertVariables }
+  | { kind: 'update'; variables: PluginDataUpdateVariables };
 
 /**
  * The write a Save sends: the whole value, serialised. `input.storeId` is left

@@ -765,13 +765,14 @@ export interface PluginNavSection {
 /**
  * What the host hands a configuration editor. `value` is the host's draft and
  * updates in place as the editor reports changes; the editor is never
- * remounted to receive one.
+ * remounted to receive one. A `type`, as every slot-props DTO here is, so it
+ * meets the host outlet's `Record<string, unknown>` bound.
  */
-export interface ConfigurationEditorProps<Config = unknown> {
+export type ConfigurationEditorProps<Config = unknown> = {
   readonly value: Config;
   /** Report the WHOLE new value — the host stores exactly what it is given. */
   readonly onChange: (next: Config) => void;
-}
+};
 
 /**
  * A plugin's settings editor. `Config` defaults to `unknown` for the same

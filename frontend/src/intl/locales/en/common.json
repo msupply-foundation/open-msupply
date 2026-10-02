@@ -623,6 +623,7 @@
   "error.plugin-invalid-file": "Invalid file type. Plugin bundles must be .json files.",
   "error.plugin-not-loaded": "Plugin not loaded: {{code}}",
   "error.plugin-payment-amount-outstanding": "Amount paid is less than the amount outstanding",
+  "error.plugin-shared-id-backend-removed": "The backend plugin with the same id was uninstalled instead. This plugin is still installed.",
   "error.plugin-unavailable": "Plugin unavailable",
   "error.position-unavailable": "Location information is unavailable.",
   "error.prescription-not-found": "Dispensing record not found.",

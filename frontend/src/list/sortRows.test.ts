@@ -24,6 +24,20 @@ describe('sortRows', () => {
     ).toEqual([3, 2, 1]);
   });
 
+  it('orders by the given comparator, in either direction', () => {
+    const versions = [{ v: '2.10.0' }, { v: '2.9.0' }];
+    const numeric = new Intl.Collator('en', { numeric: true });
+    const compare = (a: string | number, b: string | number) =>
+      numeric.compare(String(a), String(b));
+    const byV = (row: { v: string }) => row.v;
+    expect(
+      sortRows(versions, { key: 'v', desc: false }, byV, compare).map(r => r.v)
+    ).toEqual(['2.9.0', '2.10.0']);
+    expect(
+      sortRows(versions, { key: 'v', desc: true }, byV, compare).map(r => r.v)
+    ).toEqual(['2.10.0', '2.9.0']);
+  });
+
   it('returns a new array, leaving the input untouched', () => {
     const input = [...rows];
     const sorted = sortRows(input, { key: 'qty', desc: false }, value);
