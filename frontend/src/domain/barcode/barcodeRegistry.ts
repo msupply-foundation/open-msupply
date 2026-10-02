@@ -5,7 +5,8 @@
 // A confirmed barcode is central's and shared by every site; one barcode can be
 // confirmed for several items. A store learns a barcode by proposing it: a user
 // picked an item for it, and once the line the scan opened is saved the screen
-// calls `proposeBarcode`. Central reviews proposals on the item and confirms,
+// calls `proposeBarcode`; it can withdraw a proposal made on its site with
+// `withdrawProposal`. Central reviews proposals on the item and confirms,
 // moves or removes barcodes. WHEN to look up or propose is each consuming
 // screen's decision.
 
@@ -19,6 +20,7 @@ import {
   BarcodeMatches,
   ConfirmBarcodeProposal,
   DeleteBarcode,
+  DeleteBarcodeProposal,
   InsertBarcode,
   ProposeBarcode,
   UpdateBarcode,
@@ -140,6 +142,23 @@ export const proposeBarcode = async (
   );
   return changed(result);
 };
+
+/**
+ * Withdraw a proposal made by a store on this site, e.g. one that picked the
+ * wrong item: scans here stop matching it, and central stops reviewing it. A
+ * barcode already confirmed from it stays confirmed.
+ */
+export const withdrawProposal = async (
+  storeId: string,
+  id: string
+): Promise<BarcodeChange> =>
+  changed(
+    await graphqlFetch(
+      DeleteBarcodeProposal,
+      { storeId, id },
+      { returnGraphqlErrors: true }
+    )
+  );
 
 /** Central: confirm a barcode for an item, or bring back a removed one. */
 export const addBarcode = async (

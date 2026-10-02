@@ -29,6 +29,7 @@ export {
   proposeBarcode,
   removeBarcode,
   resolveMappings,
+  withdrawProposal,
   type BarcodeChange,
   type BarcodeFragment,
   type BarcodeLookup,

@@ -2607,6 +2607,7 @@
   "messages.confirm-ready-to-dispense": "This locks the prescription and creates a dispensing record for the pharmacy to fill. Continue?",
   "messages.confirm-reduce-lines-to-zero": "This will reduce the quantity of all selected stock lines to 0",
   "messages.confirm-release-hold-and-status-as": "This is on hold. Release the hold and confirm status as {{status}}?",
+  "messages.confirm-withdraw-barcode-proposal": "Remove barcode {{barcode}} from this item? Scans here stop suggesting this item for it, and central won't review it. Stock and shipments that already have it keep it.",
   "messages.confirm-remove-barcode": "Remove barcode {{barcode}} from this item? Stock and shipments that already have it keep it.",
   "messages.confirm-remove-item": "Are you sure?",
   "messages.confirm-save-generic": "Are you ready to save changes?",

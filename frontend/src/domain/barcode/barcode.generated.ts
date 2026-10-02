@@ -110,6 +110,21 @@ export const UpdateBarcode = {
   query: "mutation updateBarcode($storeId: String!, $input: UpdateBarcodeInput!) {\n  centralServer {\n    barcode {\n      updateBarcode(storeId: $storeId, input: $input) {\n        id\n      }\n    }\n  }\n}",
 } as TypedDocument<UpdateBarcodeResult, UpdateBarcodeVariables>;
 
+export type DeleteBarcodeProposalVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type DeleteBarcodeProposalResult = {
+  deleteBarcodeProposal: {
+  id: string;
+};
+};
+
+export const DeleteBarcodeProposal = {
+  query: "mutation deleteBarcodeProposal($storeId: String!, $id: String!) {\n  deleteBarcodeProposal(storeId: $storeId, id: $id) {\n    id\n  }\n}",
+} as TypedDocument<DeleteBarcodeProposalResult, DeleteBarcodeProposalVariables>;
+
 export type DeleteBarcodeVariables = {
   storeId: string;
   id: string;

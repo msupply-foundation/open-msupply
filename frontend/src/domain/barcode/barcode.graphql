@@ -67,6 +67,15 @@ mutation updateBarcode($storeId: String!, $input: UpdateBarcodeInput!) {
   }
 }
 
+# Withdraws a proposal made by a store on this site, e.g. one that picked the
+# wrong item. It stops matching scans here, and central stops reviewing it. Not
+# central only. ProposalDoesNotExist is a top-level GraphQL error.
+mutation deleteBarcodeProposal($storeId: String!, $id: String!) {
+  deleteBarcodeProposal(storeId: $storeId, id: $id) {
+    id
+  }
+}
+
 mutation deleteBarcode($storeId: String!, $id: String!) {
   centralServer {
     barcode {

@@ -54,6 +54,7 @@ const {
   proposeBarcode,
   removeBarcode,
   resolveMappings,
+  withdrawProposal,
 } = await import('./barcodeRegistry');
 
 const match = (
@@ -224,6 +225,20 @@ describe('central — rules § Maintaining barcodes', () => {
     expect(calls[0]?.variables).toEqual({
       storeId: 'store-1',
       input: { id: 'b1', itemId: 'item-2' },
+    });
+  });
+
+  it('withdraws a proposal made on this site', async () => {
+    answer = {
+      kind: 'success',
+      data: { deleteBarcodeProposal: { id: 'p1' } },
+    };
+    expect(await withdrawProposal('store-1', 'p1')).toEqual({
+      kind: 'saved',
+    });
+    expect(calls[0]).toMatchObject({
+      operation: 'deleteBarcodeProposal',
+      variables: { storeId: 'store-1', id: 'p1' },
     });
   });
 
