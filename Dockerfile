@@ -312,6 +312,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy only the compiled libfaketime from builder
 COPY --from=faketime-builder /usr/local/lib/faketime/libfaketime.so.1 /usr/local/lib/faketime/
 RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
+# By default libfaketime fakes the monotonic clock too, not just the wall clock.
+# FAKETIME only needs the wall clock (it sets the server's dates), and faking the
+# monotonic clock stalls timed waits in the server - PDF export hung waiting for
+# Chromium with "The event waited for never came", even with FAKETIME unset.
+# This keeps the monotonic clock real while FAKETIME still moves the date.
+# See issue #12289.
+ENV FAKETIME_DONT_FAKE_MONOTONIC=1
 
 # PDF report export renders HTML through headless Chromium. Install the headless
 # shell (chromium-headless-shell) — the GUI-less build, roughly half the installed
