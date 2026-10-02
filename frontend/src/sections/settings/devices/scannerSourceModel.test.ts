@@ -8,17 +8,20 @@ import {
 import { resetDesktopHidForTest } from '../../../platform/barcodeSources/desktopHid';
 import { setMockBarcodeScannerEnabled } from '../../../appData';
 import {
+  scannerInputName,
   scannerRowPairs,
   scannerRowPairsNatively,
   scannerSourceRows,
   scannerStateLabel,
 } from './scannerSourceModel';
 
-// The desktop app's USB scanner row (spec/settings/ui-surface.md § Devices;
-// rules § Devices — barcode scanner).
+// spec/settings/ui-surface.md § Devices; cases OMS-REG-SET-05.57–.60, .64.
 const scanner = { vendorId: 1, productId: 2, name: 'Zebra DS2208' };
 
-const inDesktopApp = (status: { paired: typeof scanner | null; connected: boolean }) => {
+const inDesktopApp = (status: {
+  paired: typeof scanner | null;
+  connected: boolean;
+}) => {
   vi.stubGlobal('window', {
     desktopHidScanner: {
       version: 1,
@@ -31,6 +34,8 @@ const inDesktopApp = (status: { paired: typeof scanner | null; connected: boolea
   vi.stubGlobal('navigator', { hid: { getDevices: async () => [] } });
 };
 
+// appData is localStorage-backed and absent under node: stub the global, not
+// the module (kdd/capacitor-plugins fork 4).
 const stubLocalStorage = () => {
   const store = new Map<string, string>();
   vi.stubGlobal('localStorage', {
@@ -42,30 +47,147 @@ const stubLocalStorage = () => {
 };
 
 const row = (id: string) => scannerSourceRows().find(r => r.id === id);
+const ids = () => scannerSourceRows().map(r => r.id);
 
 afterEach(async () => {
   await stopListening();
+  try {
+    setMockBarcodeScannerEnabled(false);
+  } catch {
+    /* no localStorage stubbed in this test */
+  }
   vi.unstubAllGlobals();
   resetDesktopHidForTest();
   await refreshScanSources();
 });
 
-describe('the desktop app USB scanner row', () => {
-  it('outside the desktop app, says so and offers no pairing', async () => {
+describe('one USB scanner row per platform (SET-05.57)', () => {
+  it('in a browser lists the browser USB row only, named "USB scanner"', async () => {
     vi.stubGlobal('window', {});
     await refreshScanSources();
-    expect(row('desktop-hid')).toMatchObject({
-      state: 'unavailable',
-      detail: t('messages.scanner-detail-desktop-hid-unsupported'),
-    });
-    expect(scannerRowPairsNatively('desktop-hid')).toBe(false);
+    expect(ids()).toContain('web-hid');
+    expect(ids()).not.toContain('desktop-hid');
+    expect(row('web-hid')?.name).toBe(t('label.scanner-input-usb'));
   });
 
-  it('unpaired: not set up, with both ways to pair offered', async () => {
+  it('in the desktop app lists its own USB row only, with the same name', async () => {
+    inDesktopApp({ paired: scanner, connected: true });
+    await refreshScanSources();
+    expect(ids()).toContain('desktop-hid');
+    expect(ids()).not.toContain('web-hid');
+    expect(row('desktop-hid')?.name).toBe(t('label.scanner-input-usb'));
+    expect(scannerRowPairs('web-hid')).toBe(false);
+  });
+
+  it('still lists inputs this device lacks', async () => {
+    vi.stubGlobal('window', {});
+    await refreshScanSources();
+    expect(ids()).toEqual(
+      expect.arrayContaining([
+        'manual',
+        'honeywell',
+        'keyboard-wedge',
+        'camera',
+      ])
+    );
+  });
+});
+
+describe('input names in the user’s words (SET-05.57, .64)', () => {
+  it('names every input plainly', () => {
+    expect(scannerInputName('honeywell')).toBe(
+      t('label.scanner-input-built-in')
+    );
+    expect(scannerInputName('web-hid')).toBe(t('label.scanner-input-usb'));
+    expect(scannerInputName('desktop-hid')).toBe(t('label.scanner-input-usb'));
+    expect(scannerInputName('keyboard-wedge')).toBe(
+      t('label.scanner-input-keyboard')
+    );
+    expect(scannerInputName('camera')).toBe(t('label.scanner-input-camera'));
+    expect(scannerInputName('manual')).toBe(t('label.barcode-scanner-manual'));
+  });
+});
+
+describe('In use needs something armed (SET-05.58)', () => {
+  it('reads Available — not In use — while no screen is listening', async () => {
+    stubLocalStorage();
+    setMockBarcodeScannerEnabled(true);
+    vi.stubGlobal('window', {});
+    await refreshScanSources();
+    expect(row('manual')?.state).toBe('available');
+    expect(scannerSourceRows().some(r => r.state === 'in-use')).toBe(false);
+    expect(scannerStateLabel('available')).toBe(t('label.scanner-state-ready'));
+  });
+
+  it('reads In use while a screen is listening on it, and not after it stops', async () => {
+    stubLocalStorage();
+    setMockBarcodeScannerEnabled(true);
+    vi.stubGlobal('window', {});
+    await refreshScanSources();
+    const handle = await startListening(() => undefined, { label: 'test' });
+    expect(handle.ok).toBe(true);
+    expect(row('manual')?.state).toBe('in-use');
+    expect(scannerStateLabel('in-use')).toBe(t('label.scanner-state-active'));
+    if (handle.ok) handle.dispose();
+    await stopListening();
+    expect(row('manual')?.state).toBe('available');
+  });
+});
+
+describe('Not connected and Off (SET-05.59, .60)', () => {
+  it('switched-off inputs read Off, with the keyboard row saying when to turn it on', async () => {
+    vi.stubGlobal('window', {});
+    await refreshScanSources();
+    expect(row('manual')?.state).toBe('off');
+    expect(row('keyboard-wedge')).toMatchObject({
+      state: 'off',
+      detail: t('messages.scanner-detail-keyboard'),
+    });
+    expect(scannerStateLabel('off')).toBe(t('label.scanner-state-off'));
+  });
+
+  it('absent inputs read Not connected, saying they are not on this device', async () => {
+    vi.stubGlobal('window', {});
+    await refreshScanSources();
+    expect(row('honeywell')).toMatchObject({
+      state: 'not-connected',
+      detail: t('messages.scanner-detail-not-on-device'),
+    });
+    expect(scannerStateLabel('not-connected')).toBe(
+      t('label.scanner-state-not-connected')
+    );
+  });
+
+  it('a browser USB row with nothing paired reads Not connected, saying so', async () => {
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('navigator', { hid: { getDevices: async () => [] } });
+    await refreshScanSources();
+    expect(row('web-hid')).toMatchObject({
+      state: 'not-connected',
+      detail: t('messages.scanner-detail-web-hid-unpaired'),
+    });
+    expect(scannerRowPairs('web-hid')).toBe(true);
+  });
+
+  it('a browser that cannot reach USB says so, and offers no pairing', async () => {
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('navigator', {});
+    await refreshScanSources();
+    expect(row('web-hid')).toMatchObject({
+      state: 'not-connected',
+      detail: t('messages.scanner-detail-web-hid-unsupported'),
+    });
+    expect(scannerRowPairs('web-hid')).toBe(false);
+  });
+});
+
+// The desktop app's USB scanner row (rules § Devices — barcode scanner).
+describe('the desktop app USB scanner row', () => {
+  it('unpaired: not connected, with both ways to pair offered', async () => {
     inDesktopApp({ paired: null, connected: false });
     await refreshScanSources();
     expect(row('desktop-hid')).toMatchObject({
-      state: 'not-set-up',
+      state: 'not-connected',
       detail: t('messages.scanner-detail-desktop-hid-unpaired'),
     });
     expect(scannerRowPairsNatively('desktop-hid')).toBe(true);
@@ -90,77 +212,9 @@ describe('the desktop app USB scanner row', () => {
     );
   });
 
-  it('stands the browser USB row down, saying why', async () => {
-    inDesktopApp({ paired: scanner, connected: true });
-    await refreshScanSources();
-    expect(row('web-hid')).toMatchObject({
-      state: 'unavailable',
-      detail: t('messages.scanner-detail-web-hid-desktop'),
-    });
-    expect(scannerRowPairs('web-hid')).toBe(false);
-  });
-});
-
-describe('In use needs something armed (SET-05.58)', () => {
-  it('reads Available — not In use — while no screen is listening', async () => {
-    stubLocalStorage();
-    setMockBarcodeScannerEnabled(true);
+  it('outside the desktop app offers no native pairing', async () => {
     vi.stubGlobal('window', {});
     await refreshScanSources();
-    expect(row('manual')?.state).toBe('available');
-    expect(scannerSourceRows().some(r => r.state === 'active')).toBe(false);
-    expect(scannerStateLabel('available')).toBe(t('label.scanner-state-ready'));
-  });
-
-  it('reads In use while a screen is listening on it, and not after it stops', async () => {
-    stubLocalStorage();
-    setMockBarcodeScannerEnabled(true);
-    vi.stubGlobal('window', {});
-    await refreshScanSources();
-    const handle = await startListening(() => undefined, { label: 'test' });
-    expect(handle.ok).toBe(true);
-    expect(row('manual')?.state).toBe('active');
-    expect(scannerStateLabel('active')).toBe(t('label.scanner-state-active'));
-    if (handle.ok) handle.dispose();
-    await stopListening();
-    expect(row('manual')?.state).toBe('available');
-  });
-});
-
-describe('the switched-on-here rows', () => {
-  // Switched off is a choice, not something missing (SET-05 .45).
-  it('read Disabled, not Not available, while switched off', async () => {
-    vi.stubGlobal('window', {});
-    await refreshScanSources();
-    expect(row('manual')?.state).toBe('disabled');
-    expect(row('keyboard-wedge')).toMatchObject({
-      state: 'disabled',
-      detail: t('messages.scanner-detail-wedge-off'),
-    });
-    expect(scannerStateLabel('disabled')).toBe(t('label.scanner-state-disabled'));
-  });
-});
-
-describe('the browser USB scanner row', () => {
-  // Reachable but unpaired is a step not yet taken, not something missing.
-  it('reads Not set up where the browser can reach USB but nothing is paired', async () => {
-    vi.stubGlobal('window', {});
-    vi.stubGlobal('navigator', { hid: { getDevices: async () => [] } });
-    await refreshScanSources();
-    expect(row('web-hid')).toMatchObject({
-      state: 'not-set-up',
-      detail: t('messages.scanner-detail-web-hid-unpaired'),
-    });
-    expect(scannerStateLabel('not-set-up')).toBe(t('label.scanner-state-not-set-up'));
-  });
-
-  it('reads Not available where the browser cannot reach USB at all', async () => {
-    vi.stubGlobal('window', {});
-    vi.stubGlobal('navigator', {});
-    await refreshScanSources();
-    expect(row('web-hid')).toMatchObject({
-      state: 'unavailable',
-      detail: t('messages.scanner-detail-web-hid-unsupported'),
-    });
+    expect(scannerRowPairsNatively('desktop-hid')).toBe(false);
   });
 });

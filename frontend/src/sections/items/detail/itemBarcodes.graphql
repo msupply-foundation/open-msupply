@@ -1,0 +1,23 @@
+# The item's barcodes (spec/items S2 › Barcodes tab; barcode-scanning rules §
+# Maintaining barcodes): its confirmed barcodes, and the proposals central hasn't
+# decided on — every store's on central, this site's elsewhere. Its own query
+# (kdd/state-management), independent of the itemDetail read, so a change
+# refetches only this tab — mirrors ancillaryItems.graphql.
+query itemBarcodes($storeId: String!, $itemId: String!) {
+  itemBarcodes(storeId: $storeId, itemId: $itemId) {
+    id
+    barcode
+    packSize
+    manufacturerName
+  }
+  itemBarcodeProposals(storeId: $storeId, itemId: $itemId) {
+    id
+    barcode
+    packSize
+    store {
+      id
+      code
+      storeName
+    }
+  }
+}

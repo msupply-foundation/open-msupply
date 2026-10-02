@@ -8,15 +8,24 @@ import {
   Switch,
   type Component,
 } from 'solid-js';
-import { useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../../../ui/elements/accordion/Accordion';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
+import { XCircleIcon } from '../../../ui/icons';
 import { localisedTime } from '../../../intl/formatDateTime';
 import { generateUUID } from '../../../uuid';
 import {
@@ -33,11 +42,15 @@ import {
   type RawScan,
   type ScanSourceId,
 } from '../../../platform/barcodeScanner';
-import { ScannerSources } from './ScannerSources';
+import { CameraEngineSelect, ScannerSources } from './ScannerSources';
 import {
+  createScanControl,
   readScan,
+  ScanButton,
   scanCharacters,
   scanCode,
+  ScanNotice,
+  ScanStatus,
   scanText,
   type ReadScan,
 } from '@/domain/barcode';
@@ -51,17 +64,31 @@ import {
   toHex,
   visualiseRaw,
 } from './scanDiagnostics';
+import { findItem, scanCheckOf, type ScanCheck } from './scanCheck';
+import { ScanCheckView } from './ScanCheckView';
 import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import styles from './TestScannerPage.module.css';
 
 /*
- * Test scanner — the verification surface for the whole hardware layer.
+ * Test scanner (spec/settings/ui-surface.md § S2) — open to any signed-in
+ * user (OMS-REG-SET-05.56). Two halves, for two different people:
  *
- * Nothing scanned here is recorded server-side; results accumulate locally
- * and Clear empties them without touching the scanner connection.
+ *  - THE TEST SECTION, for whoever is holding the scanner: scan anything and
+ *    read, in plain words, that the scanner works, which item the barcode
+ *    belongs to, what the label says and which input read it
+ *    (OMS-REG-SET-05.62–.66). Its trigger is the same scan control every
+ *    scanning screen uses, so on hardware it is listening on arrival and on
+ *    a camera-only device it is the Scan button that opens the camera —
+ *    never a Start listening that does nothing (.63).
+ *  - ADVANCED, closed on arrival, for support: the verification surface for
+ *    the whole hardware layer, unchanged in substance (.52–.55).
  *
- * Three things this screen does that a list of scanned strings cannot:
+ * Nothing scanned here is recorded server-side, and no barcode is learned;
+ * results accumulate locally and Clear empties them without touching the
+ * scanner connection.
+ *
+ * Three things Advanced does that a list of scanned strings cannot:
  *
  *  - NAMES THE INPUT each read came from. The sources are meant to be
  *    indistinguishable to the rest of the app, which makes this the one
@@ -239,11 +266,44 @@ const ScanEntryRow: Component<{
 
 const TestScannerPage: Component = () => {
   const params = useParams<{ storeId: string }>();
-  // Whoever armed the scanner last owns it; this is our claim on it.
+  const navigate = useNavigate();
+  const settingsPath = () => `/${params.storeId}/settings`;
+
+  // --- The test section ------------------------------------------------------
+
+  const [check, setCheck] = createSignal<ScanCheck | undefined>();
+  // Only the latest scan's lookup may land: a slower answer for an earlier
+  // scan must not overwrite the one on screen.
+  let checkSeq = 0;
+
+  const runCheck = async (
+    read: Exclude<ReadScan, { kind: 'unreadable' }>,
+    source: ScanSourceId | undefined
+  ) => {
+    const seq = ++checkSeq;
+    const first = scanCheckOf(read, source);
+    setCheck(first);
+    if (first.item.kind !== 'checking') return;
+    const item = await findItem(params.storeId, read);
+    if (seq === checkSeq) setCheck({ ...first, item });
+  };
+
+  // The same page-action scan control every scanning screen uses: listening
+  // on arrival where the input can stay armed, one scan per press (the
+  // camera) where it cannot. Its source is read at delivery — the platform
+  // credits whichever input produced the scan before handing it over.
+  const control = createScanControl({
+    owner: 'test-scanner',
+    onScan: read => void runCheck(read, activeSource()),
+  });
+
+  // --- Advanced: the diagnostic capture --------------------------------------
+
   const [handle, setHandle] = createSignal<
     Extract<ListenHandle, { ok: true }> | undefined
   >();
-  // Truthful: false the moment anything else takes the scanner.
+  // Truthful: false the moment anything else takes the scanner, including
+  // the test section's own control.
   const listening = () => handle()?.owns() === true;
   const [entries, setEntries] = createSignal<Entry[]>([]);
   const [referenceId, setReferenceId] = createSignal<string | undefined>();
@@ -255,7 +315,12 @@ const TestScannerPage: Component = () => {
       .filter(isScan)
       .find(e => e.id === referenceId());
 
-  const record = (raw: RawScan) =>
+  const record = (raw: RawScan) => {
+    const read = readScan(raw);
+    // Which input produced this read. Half of what a reference comparison is
+    // checking, so it is stamped on the read itself rather than only shown
+    // above — the strip changes, the history must not.
+    const source = activeSource();
     setEntries(prev => [
       {
         kind: 'scan',
@@ -266,15 +331,15 @@ const TestScannerPage: Component = () => {
         // written from (src/domain/barcode/scanText.ts).
         text: scanText(raw),
         raw,
-        read: readScan(raw),
-        // Which input produced this read. Half of what a reference
-        // comparison is checking, so it is stamped on the read itself rather
-        // than only shown above — the strip changes, the history must not.
-        source: activeSource(),
+        read,
+        source,
         at: new Date(),
       },
       ...prev,
     ]);
+    // A capture here answers the test section's question too.
+    if (read.kind !== 'unreadable') void runCheck(read, source);
+  };
 
   // A failed reading is an event in the same stream, not a banner that
   // replaces the history: its position between two good reads is the
@@ -301,7 +366,8 @@ const TestScannerPage: Component = () => {
 
   // "Leaving a screen stops its scanning." The disposer is inert if something
   // else has since taken the scan, so this cannot disarm a screen that
-  // replaced us. A pending one-shot never outlives the page either.
+  // replaced us. (The scan control releases its own.)
+  // A pending one-shot never outlives the page either.
   onCleanup(() => {
     handle()?.dispose();
     cancelScanOnce();
@@ -309,14 +375,16 @@ const TestScannerPage: Component = () => {
 
   const toggleListening = async () => {
     if (listening()) {
-      // A one-shot still pending from Scan once is settled too.
+      // The test section's control takes the scanner back by itself once
+      // nobody holds it (createScanControl § always listening). A one-shot
+      // still pending from Scan once is settled too.
       cancelScanOnce();
       handle()?.dispose();
       setHandle(undefined);
       return;
     }
     const result = await startListening(record, {
-      label: 'test-scanner',
+      label: 'test-scanner-advanced',
       onError: recordError,
     });
     if (!result.ok) return recordError({ message: result.message });
@@ -381,100 +449,165 @@ const TestScannerPage: Component = () => {
         <Header>
           <Breadcrumb
             crumbs={[
-              { label: t('settings'), to: `/${params.storeId}/settings` },
+              { label: t('settings'), to: settingsPath() },
               { label: t('label.barcode-scanner-test') },
             ]}
           />
         </Header>
       }
+      contentFooter={
+        // The same way out a detail screen offers (OMS-REG-SET-05.67).
+        <ContentFooter>
+          <ContentFooterActions>
+            <Button
+              variant="secondary"
+              icon={<XCircleIcon />}
+              data-testid="close-button"
+              onClick={() => navigate(settingsPath())}
+            >
+              {t('button.close')}
+            </Button>
+          </ContentFooterActions>
+        </ContentFooter>
+      }
     >
       <ContentContainer size="form" align="start">
         <Stack>
-          {/* Which inputs exist and which is driving — the same rows the
-              Devices section shows, without their controls. */}
-          <ScannerSources compact />
-
-          <div class={styles.controls}>
-            {/* Arming is offered only where the input can stay armed — a
-                camera can only ever be asked for one scan at a time. */}
-            <Show when={supportsContinuousScanning()}>
-              <Button
-                disabled={noScanner()}
-                onClick={() => void toggleListening()}
-                data-testid="scanner-start-listening"
-              >
-                {listening()
-                  ? t('button.stop-listening')
-                  : t('button.start-listening')}
-              </Button>
-            </Show>
-            <Button
-              variant="secondary"
-              disabled={noScanner()}
-              onClick={() => void scanOnceNow()}
-              data-testid="scanner-scan-once"
-            >
-              {t('button.scan-once')}
-            </Button>
-            <Button
-              variant="ghost"
-              disabled={entries().length === 0}
-              onClick={clear}
-              data-testid="scanner-clear-results"
-            >
-              {t('button.clear-results')}
-            </Button>
-
-            {/* Armed state sits WITH the control that changes it, not adrift
-                above it. */}
-            <StatusChip
-              label={
-                listening() ? t('messages.scanner-in-use') : t('label.inactive')
-              }
-              colour={
-                listening() ? 'var(--success-main)' : 'var(--text-secondary)'
-              }
-            />
-            {/* Scan routing made visible: one screen owns the scan at a time,
-                so a screen that finds itself deaf can see who took it. */}
-            <Show when={scanOwner() && !listening()}>
-              <span class={styles.hint} data-testid="scanner-owner">
-                {t('label.held-by')}: {scanOwner()}
-              </span>
-            </Show>
-          </div>
-
-          <FormSection title={t('heading.scan-results')}>
+          {/* The test section (OMS-REG-SET-05.62–.66). */}
+          <Stack gap="md" data-testid="scan-check">
             <Show
-              when={entries().length > 0}
+              when={!noScanner()}
               fallback={
                 <EmptyState
-                  message={
-                    noScanner()
-                      ? t('messages.no-barcode-scanner-available')
-                      : t('messages.no-scans-yet')
-                  }
+                  message={t('messages.no-barcode-scanner-available')}
                 />
               }
             >
-              <Show when={!reference()}>
-                <p class={styles.hint}>{t('messages.no-scan-reference')}</p>
-              </Show>
-              <ul class={styles.results} data-testid="scan-results">
-                <For each={entries()}>
-                  {entry => (
-                    <ScanEntryRow
-                      entry={entry}
-                      verdict={verdict(entry)}
-                      verdictText={verdictText(entry)}
-                      isReference={entry.id === referenceId()}
-                      onUseAsReference={() => setReferenceId(entry.id)}
-                    />
-                  )}
-                </For>
-              </ul>
+              <p>{t('messages.scan-to-test-scanner')}</p>
+              <div class={styles.controls}>
+                <ScanButton control={control} />
+                <ScanStatus control={control} />
+              </div>
+              <ScanNotice control={control} />
             </Show>
-          </FormSection>
+            <Show when={check()}>{c => <ScanCheckView check={c()} />}</Show>
+          </Stack>
+
+          {/* Advanced — closed on arrival (OMS-REG-SET-05.62). */}
+          <Accordion collapsible>
+            <AccordionItem value="advanced">
+              <AccordionTrigger as="h2">{t('label.advanced')}</AccordionTrigger>
+              <AccordionContent>
+                <Stack>
+                  <p class={styles.hint}>
+                    {t('messages.scanner-advanced-hint')}
+                  </p>
+
+                  {/* Which inputs exist and which is driving — the same rows
+                      the Devices section shows, without their controls. */}
+                  <ScannerSources compact />
+                  {/* The camera's decoder: a developer comparison, offered
+                      here rather than to every user (OMS-REG-SET-05.61). */}
+                  <Show when={availableSources().includes('camera')}>
+                    <CameraEngineSelect />
+                  </Show>
+
+                  <div class={styles.controls}>
+                    {/* Arming is offered only where the input can stay armed
+                        — a camera can only ever be asked for one scan at a
+                        time (OMS-REG-SET-05.55). */}
+                    <Show when={supportsContinuousScanning()}>
+                      <Button
+                        disabled={noScanner()}
+                        onClick={() => void toggleListening()}
+                        data-testid="scanner-start-listening"
+                      >
+                        {listening()
+                          ? t('button.stop-listening')
+                          : t('button.start-listening')}
+                      </Button>
+                    </Show>
+                    <Button
+                      variant="secondary"
+                      disabled={noScanner()}
+                      onClick={() => void scanOnceNow()}
+                      data-testid="scanner-scan-once"
+                    >
+                      {t('button.scan-once')}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      disabled={entries().length === 0}
+                      onClick={clear}
+                      data-testid="scanner-clear-results"
+                    >
+                      {t('button.clear-results')}
+                    </Button>
+
+                    {/* Armed state sits WITH the control that changes it, not
+                        adrift above it. */}
+                    <StatusChip
+                      label={
+                        listening()
+                          ? t('messages.scanner-in-use')
+                          : t('label.inactive')
+                      }
+                      colour={
+                        listening()
+                          ? 'var(--success-main)'
+                          : 'var(--text-secondary)'
+                      }
+                    />
+                    {/* Scan routing made visible: one screen owns the scan at
+                        a time, so a capture that finds itself deaf can see
+                        who took it. */}
+                    <Show when={scanOwner() && !listening()}>
+                      <span class={styles.hint} data-testid="scanner-owner">
+                        {t('label.held-by')}: {scanOwner()}
+                      </span>
+                    </Show>
+                  </div>
+
+                  <FormSection
+                    title={t('heading.scan-results')}
+                    headingLevel="h3"
+                  >
+                    <Show
+                      when={entries().length > 0}
+                      fallback={
+                        <EmptyState
+                          message={
+                            noScanner()
+                              ? t('messages.no-barcode-scanner-available')
+                              : t('messages.no-scans-yet')
+                          }
+                        />
+                      }
+                    >
+                      <Show when={!reference()}>
+                        <p class={styles.hint}>
+                          {t('messages.no-scan-reference')}
+                        </p>
+                      </Show>
+                      <ul class={styles.results} data-testid="scan-results">
+                        <For each={entries()}>
+                          {entry => (
+                            <ScanEntryRow
+                              entry={entry}
+                              verdict={verdict(entry)}
+                              verdictText={verdictText(entry)}
+                              isReference={entry.id === referenceId()}
+                              onUseAsReference={() => setReferenceId(entry.id)}
+                            />
+                          )}
+                        </For>
+                      </ul>
+                    </Show>
+                  </FormSection>
+                </Stack>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </Stack>
       </ContentContainer>
     </Page>

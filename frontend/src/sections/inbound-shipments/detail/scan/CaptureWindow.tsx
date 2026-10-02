@@ -25,10 +25,16 @@ import type { CaptureWindowControl } from './createCaptureWindow';
 export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
   const c = () => props.control;
   const message = () => {
-    const draft = c().draft();
-    if (!draft) return undefined;
     const refusal = c().refusal();
     if (refusal) return { severity: 'error' as const, text: refusal };
+    // Information too: an ordinary barcode is a normal thing to scan (.110).
+    if (c().unrecognised() !== undefined)
+      return {
+        severity: 'info' as const,
+        text: t('messages.receiving-barcode-not-recognised'),
+      };
+    const draft = c().draft();
+    if (!draft) return undefined;
     // Always information — not knowing a code is a normal answer (.110).
     const found = captureMessage(draft, c().match());
     return {
@@ -45,6 +51,8 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
   };
   // The diagnostic readout exists only to debug what manual input sent.
   const diagnostic = () => activeSource() === 'manual';
+  // The scan the readout shows: the last one, where it opened no entry.
+  const content = () => c().unrecognised() ?? c().draft()?.content;
 
   return (
     <Dialog
@@ -59,95 +67,104 @@ export const CaptureWindow = (props: { control: CaptureWindowControl }) => {
       enterConfirms={false}
       testId="scan-capture-window"
       actionsLead={
-        <Show when={c().savedNotice()}>
-          {text => (
-            <Alert severity="success" compact testId="scan-line-saved">
-              {text()}
-            </Alert>
-          )}
-        </Show>
+        <>
+          <Show when={c().savedNotice()}>
+            {text => (
+              <Alert severity="success" compact testId="scan-line-saved">
+                {text()}
+              </Alert>
+            )}
+          </Show>
+        </>
       }
       actions={
         <>
           <CancelButton onClick={() => c().close()} />
-          <Button
-            variant="primary"
-            icon={<CheckIcon />}
-            confirms="plain"
-            loading={c().working()}
-            disabled={!canConfirm() || c().working()}
-            data-testid="scan-capture-ok"
-            onClick={() => void c().confirm()}
-          >
-            {t('button.ok')}
-          </Button>
+          {/* Nothing to confirm while the window shows only the notice. */}
+          <Show when={c().draft()}>
+            <Button
+              variant="primary"
+              icon={<CheckIcon />}
+              confirms="plain"
+              loading={c().working()}
+              disabled={!canConfirm() || c().working()}
+              data-testid="scan-capture-ok"
+              onClick={() => void c().confirm()}
+            >
+              {t('button.ok')}
+            </Button>
+          </Show>
         </>
       }
     >
-      <Show when={c().draft()}>
-        {draft => (
-          <Stack gap="md">
-            <Show when={diagnostic()}>
-              <Text variant="body">
-                <strong>{t('label.barcode')}:</strong>{' '}
-                {shortContent(draft().content)}
-              </Text>
-            </Show>
-            <Show when={!c().working() && message()}>
-              {m => (
-                <Alert severity={m().severity} testId="scan-capture-message">
-                  {m().text}
-                </Alert>
-              )}
-            </Show>
-            {/* Label-above fields, one per line at full width
-                (kdd/form-layout), in the S2 field order. */}
-            <ItemSearch
-              label={t('label.item')}
-              storeId={c().storeId()}
-              value={draft().item?.id}
-              selectedItem={draft().item}
-              disabled={draft().itemLocked || c().working()}
-              focusTarget={c().itemField}
-              onSelect={option => c().pickItem(option)}
-            />
-            <TextField
-              label={t('label.batch')}
-              value={draft().batch}
-              disabled={c().working()}
-              onInput={e => c().update({ batch: e.currentTarget.value })}
-            />
-            <DateField
-              label={t('label.expiry-date')}
-              value={draft().expiryDate}
-              disabled={c().working()}
-              onChange={value => c().update({ expiryDate: value })}
-            />
-            <NumberField
-              label={t('label.pack-size')}
-              value={draft().packSize}
-              min={1}
-              disabled={draft().packSizeLocked || c().working()}
-              onChange={value => c().update({ packSize: value || 1 })}
-            />
-            <NumberField
-              ref={c().quantityField.ref}
-              label={t('label.quantity')}
-              value={draft().quantity}
-              min={0}
-              disabled={c().working()}
-              onChange={value => c().update({ quantity: value ?? 0 })}
-            />
-            <DateField
-              label={t('label.manufacture-date')}
-              value={draft().manufactureDate}
-              max={localTodayIso()}
-              disabled={c().working()}
-              onChange={value => c().update({ manufactureDate: value })}
-            />
-          </Stack>
-        )}
-      </Show>
+      <Stack gap="md">
+        <Show when={diagnostic() && content() !== undefined}>
+          <Text variant="body">
+            <strong>{t('label.barcode')}:</strong>{' '}
+            {shortContent(content() ?? '')}
+          </Text>
+        </Show>
+        <Show when={!c().working() && message()}>
+          {m => (
+            <Alert severity={m().severity} testId="scan-capture-message">
+              {m().text}
+            </Alert>
+          )}
+        </Show>
+        {/* The fields only for an entry: a scan neither known nor a product
+            code opens none (rules § Receiving by scanning). */}
+        <Show when={c().draft()}>
+          {draft => (
+            <>
+              {/* Label-above fields, one per line at full width
+                  (kdd/form-layout), in the S2 field order. */}
+              <ItemSearch
+                label={t('label.item')}
+                storeId={c().storeId()}
+                value={draft().item?.id}
+                selectedItem={draft().item}
+                disabled={draft().itemLocked || c().working()}
+                focusTarget={c().itemField}
+                onSelect={option => c().pickItem(option)}
+              />
+              <TextField
+                label={t('label.batch')}
+                value={draft().batch}
+                disabled={c().working()}
+                onInput={e => c().update({ batch: e.currentTarget.value })}
+              />
+              <DateField
+                label={t('label.expiry-date')}
+                value={draft().expiryDate}
+                disabled={c().working()}
+                onChange={value => c().update({ expiryDate: value })}
+              />
+              <NumberField
+                label={t('label.pack-size')}
+                value={draft().packSize}
+                min={1}
+                disabled={c().working()}
+                onChange={value => c().update({ packSize: value || 1 })}
+              />
+              <NumberField
+                ref={c().quantityField.ref}
+                label={t('label.quantity')}
+                value={draft().quantity}
+                min={0}
+                disabled={c().working()}
+                onChange={value => c().update({ quantity: value ?? 0 })}
+              />
+              <DateField
+                label={t('label.manufacture-date')}
+                value={draft().manufactureDate}
+                max={localTodayIso()}
+                disabled={c().working()}
+                onChange={value => c().update({ manufactureDate: value })}
+              />
+            </>
+          )}
+        </Show>
+      </Stack>
     </Dialog>
   );
 };

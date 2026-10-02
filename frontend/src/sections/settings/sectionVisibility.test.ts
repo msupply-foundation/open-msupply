@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  showBarcodeScannerRows,
   showPrintViaUsbRow,
   showThemeAndLogoRows,
   visibleSections,
@@ -11,11 +10,11 @@ const adminRemote = { serverAdmin: true, centralServer: false };
 const adminCentral = { serverAdmin: true, centralServer: true };
 const nonAdminCentral = { serverAdmin: false, centralServer: true };
 
-// OMS-REG-SET-01.14, -02.11, -03.14, -05.20, -05.23 — Section visibility by
+// OMS-REG-SET-01.14, -02.11, -03.14, -05.20, -05.56 — Section visibility by
 // permission: a signed-in non-Server-Admin sees Display settings (language
-// only) and the label-printer half of Devices; Synchronisation, Support, the
-// barcode-scanner half, and Configuration are not shown.
-describe('section visibility by permission (SET-01.14, -02.11, -03.14, -05.20, -05.23)', () => {
+// only) and all of Devices; Synchronisation, Support and Configuration are
+// not shown.
+describe('section visibility by permission (SET-01.14, -02.11, -03.14, -05.20, -05.56)', () => {
   it('shows only Display settings and Devices to a non-Server-Admin', () => {
     expect(visibleSections(nonAdmin)).toEqual(['display-settings', 'devices']);
   });
@@ -61,18 +60,13 @@ describe('Configuration requires central server AND Server Admin (SET-05.24)', (
   });
 });
 
-// OMS-REG-SET-05.23 — the barcode-scanner half of Devices is Server-Admin-only,
-// strictly stricter than the label printer beside it (which the visibility test
-// above shows to everyone via the Devices section — SET-05.20's visibility
-// half).
-describe('barcode-scanner rows are Server-Admin-only (SET-05.23)', () => {
-  it('hides the scanner rows from a non-Server-Admin while Devices stays visible', () => {
+// OMS-REG-SET-05.56 — the barcode-scanner half of Devices is for any
+// signed-in user: Devices is visible to a non-admin, and nothing inside it is
+// permission-gated any more (DevicesSection renders the scanner group
+// unconditionally — there is no scanner gate left to call).
+describe('barcode-scanner rows are for any signed-in user (SET-05.56)', () => {
+  it('shows Devices — scanner included — to a non-Server-Admin', () => {
     expect(visibleSections(nonAdmin)).toContain('devices');
-    expect(showBarcodeScannerRows(nonAdmin)).toBe(false);
-  });
-
-  it('shows the scanner rows to a Server Admin', () => {
-    expect(showBarcodeScannerRows(adminRemote)).toBe(true);
   });
 });
 

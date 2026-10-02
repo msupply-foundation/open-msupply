@@ -388,8 +388,9 @@ export const App: Component = () => {
       </Switch>
       {/* Manual barcode input (spec/settings § Devices — barcode scanner):
           mounted once for the whole app because any screen that scans can
-          raise it, and it must sit ABOVE an open capture window without
-          covering what that window just filled in. Renders nothing unless
+          raise it, and it must sit ABOVE the screen that is scanning (the
+          receiving strip, a line editor) without covering what a scan just
+          filled in. Renders nothing unless
           the manual source has opened the prompt. */}
       <ManualScanInput />
       {/* The camera scan's UI (platform/barcodeSources/camera.ts): the

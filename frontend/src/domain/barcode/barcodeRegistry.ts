@@ -1,33 +1,47 @@
-// The barcode registry — "the book" — as the app reads and writes it
-// (spec/barcode-scanning/rules.md § Looking a code up, § The book's key and
-// what a save does; wire in contract.md).
+// Barcodes as the app reads and writes them (spec/barcode-scanning/rules.md
+// § Looking a barcode up, § Learning a barcode; wire in contract.md;
+// decisions/2026-09-30_barcodes.md).
 //
-// Two calls, and nothing else: the schema has no list, no delete and no edit
-// (rules § The book has no maintenance surface). WHEN to look up or learn is
-// each consuming screen's decision — receiving, issuing and the stock line
-// each run a different part of the cycle — so none of that lives here.
+// A confirmed barcode is central's and shared by every site; one barcode can be
+// confirmed for several items. A store learns a barcode by proposing it: a user
+// picked an item for it, and once the line the scan opened is saved the screen
+// calls `proposeBarcode`. Central reviews proposals on the item and confirms,
+// moves or removes barcodes. WHEN to look up or propose is each consuming
+// screen's decision.
 
-import { describeErrors, graphqlFetch } from '@/api/graphql';
+import {
+  describeErrors,
+  graphqlFetch,
+  type GraphqlFailure,
+} from '@/api/graphql';
 import { t } from '@/intl';
 import {
-  BarcodeByGtin,
+  BarcodeMatches,
+  ConfirmBarcodeProposal,
+  DeleteBarcode,
   InsertBarcode,
+  ProposeBarcode,
+  UpdateBarcode,
   type BarcodeFragment,
-  type InsertBarcodeVariables,
 } from './barcode.generated';
 
 export type { BarcodeFragment };
 
 export type BarcodeLookup =
-  /** The code is in the book. */
+  /** The barcode matches one item. */
   | { kind: 'known'; barcode: BarcodeFragment }
   /**
-   * The code is not in the book — the normal first scan of a new product,
-   * never shown as a failure (rules § Looking a code up).
+   * The barcode matches several items: the user chooses (rules § Looking a
+   * barcode up). Confirmed barcodes come first.
+   */
+  | { kind: 'choose'; barcodes: BarcodeFragment[] }
+  /**
+   * No match to an item this store can see — the normal first scan of a new
+   * product, never shown as a failure.
    */
   | { kind: 'unknown' }
   /**
-   * There was no code to look up (readScan § scanCode: an empty scan, a
+   * There was no barcode to look up (readScan § scanCode: an empty scan, a
    * structured label without an item number). Nothing was sent.
    */
   | { kind: 'no-code' }
@@ -35,79 +49,46 @@ export type BarcodeLookup =
   | { kind: 'failed' };
 
 /**
- * Look a code up. Pass `scanCode(read)` straight in: `undefined` or `''` is
- * answered `no-code` without a request, because the server would match — and
- * return — an empty-coded row if one exists (contract § Looking a code up,
- * wire trap; OMS-REG-BAC-01.68).
- *
- * The match is exact, so the code is sent exactly as given — no trimming, no
- * re-padding a retail GTIN to 14 digits.
+ * What a barcode's matches mean for a scan: one item is used; several are a
+ * choice. The server sends one match per item, confirmed first.
+ */
+export const resolveMappings = (barcodes: BarcodeFragment[]): BarcodeLookup => {
+  if (barcodes.length === 0) return { kind: 'unknown' };
+  if (barcodes.length === 1) return { kind: 'known', barcode: barcodes[0]! };
+  return { kind: 'choose', barcodes };
+};
+
+/**
+ * Look a barcode up. Pass `scanCode(read)` straight in: `undefined` or `''` is
+ * answered `no-code` without a request. The barcode is sent as it was read; the
+ * server puts it in its standard form (a 13-digit product number matches its
+ * 14-digit form).
  */
 export const lookUpBarcode = async (
   storeId: string,
   code: string | undefined
 ): Promise<BarcodeLookup> => {
   if (code === undefined || code === '') return { kind: 'no-code' };
-  const result = await graphqlFetch(
-    BarcodeByGtin,
-    { storeId, gtin: code },
-    {
-      // A miss arrives as the NodeError branch (contract wire trap), so only
-      // an error OTHER than RecordNotFound is a real failure.
-      mapSuccessToError: data => {
-        const response = data.barcodeByGtin;
-        return response.__typename === 'NodeError' &&
-          response.error.__typename !== 'RecordNotFound'
-          ? response.error.description
-          : undefined;
-      },
-    }
-  );
+  const result = await graphqlFetch(BarcodeMatches, {
+    storeId,
+    barcode: code,
+  });
   if (result.kind !== 'success') return { kind: 'failed' };
-  const response = result.data.barcodeByGtin;
-  return response.__typename === 'BarcodeNode'
-    ? { kind: 'known', barcode: response }
-    : { kind: 'unknown' };
+  return resolveMappings(result.data.barcodeMatches);
 };
 
-export type BarcodeSave =
-  | { kind: 'saved'; barcode: BarcodeFragment }
-  /** Nothing to save — an empty code (see saveBarcode). */
+export type BarcodeChange =
+  | { kind: 'saved' }
+  /** Nothing to save — an empty barcode, or nothing new to learn. */
   | { kind: 'no-code' }
   /**
    * The server refused, or the request failed. `message` is the localised
    * "Unable to save the barcode for this item: …" notice (ui-surface §
-   * Notices). Never global: saving a code is always the by-product of a
-   * save the user actually asked for, which has already succeeded.
+   * Notices), for the screen to show beside what it saved.
    */
   | { kind: 'error'; message: string };
 
-/**
- * Teach the book a code: an upsert on the code, which re-points an existing
- * row to `itemId` silently (rules § The book's key). `packSize` overwrites
- * when given and is kept when omitted.
- *
- * An empty code is refused here rather than sent, because the server stores
- * it as a real row that every later empty lookup would then resolve
- * (contract wire trap).
- *
- * Every failure — including a user who may save the line but lacks the
- * permission to change the item catalogue (rules § Permissions) — comes back
- * as `error` for the screen to report beside the line it saved, not through
- * the global error or permission-denied modal.
- */
-export const saveBarcode = async (
-  storeId: string,
-  input: InsertBarcodeVariables['input']
-): Promise<BarcodeSave> => {
-  if (input.gtin === '') return { kind: 'no-code' };
-  const result = await graphqlFetch(
-    InsertBarcode,
-    { storeId, input },
-    { returnGraphqlErrors: true }
-  );
-  if (result.kind === 'success')
-    return { kind: 'saved', barcode: result.data.insertBarcode };
+const saveError = (result: GraphqlFailure): BarcodeChange => {
   const error =
     result.kind === 'graphqlError'
       ? describeErrors(result.errors)
@@ -117,3 +98,102 @@ export const saveBarcode = async (
     message: t('error.unable-to-save-barcode', { error }),
   };
 };
+
+const changed = (
+  result: { kind: 'success' } | GraphqlFailure
+): BarcodeChange =>
+  result.kind === 'success' ? { kind: 'saved' } : saveError(result);
+
+export type ProposeInput = {
+  /** As scanned or typed. */
+  barcode: string;
+  itemId: string;
+  packSize?: number;
+};
+
+/**
+ * Learn a barcode: a user picked `itemId` for it in this store. Call it once
+ * the line the scan opened is saved. Proposing the same barcode for the same item
+ * again updates the store's proposal, and the server does nothing for a
+ * barcode already confirmed for the item.
+ *
+ * Every failure comes back as `error` for the screen to report beside what it
+ * saved, not through the global error modal.
+ */
+export const proposeBarcode = async (
+  storeId: string,
+  input: ProposeInput
+): Promise<BarcodeChange> => {
+  const { barcode, itemId, packSize } = input;
+  if (barcode.trim() === '') return { kind: 'no-code' };
+  const result = await graphqlFetch(
+    ProposeBarcode,
+    {
+      storeId,
+      input: {
+        barcode,
+        itemId,
+        ...(packSize === undefined || packSize <= 0 ? {} : { packSize }),
+      },
+    },
+    { returnGraphqlErrors: true }
+  );
+  return changed(result);
+};
+
+/** Central: confirm a barcode for an item, or bring back a removed one. */
+export const addBarcode = async (
+  storeId: string,
+  input: { barcode: string; itemId: string; packSize?: number }
+): Promise<BarcodeChange> => {
+  if (input.barcode.trim() === '') return { kind: 'no-code' };
+  const result = await graphqlFetch(
+    InsertBarcode,
+    { storeId, input },
+    { returnGraphqlErrors: true }
+  );
+  return changed(result);
+};
+
+/** Central: confirm a store's proposal, so the barcode reaches every site. */
+export const confirmProposal = async (
+  storeId: string,
+  id: string
+): Promise<BarcodeChange> =>
+  changed(
+    await graphqlFetch(
+      ConfirmBarcodeProposal,
+      { storeId, id },
+      { returnGraphqlErrors: true }
+    )
+  );
+
+/** Central: move a confirmed barcode to another item. */
+export const moveBarcode = async (
+  storeId: string,
+  id: string,
+  itemId: string
+): Promise<BarcodeChange> =>
+  changed(
+    await graphqlFetch(
+      UpdateBarcode,
+      { storeId, input: { id, itemId } },
+      { returnGraphqlErrors: true }
+    )
+  );
+
+/**
+ * Central: remove a confirmed barcode everywhere. Lines that had the barcode
+ * keep it, and stores proposing it again won't confirm it.
+ */
+export const removeBarcode = async (
+  storeId: string,
+  id: string
+): Promise<BarcodeChange> =>
+  changed(
+    await graphqlFetch(
+      DeleteBarcode,
+      { storeId, id },
+      { returnGraphqlErrors: true }
+    )
+  );

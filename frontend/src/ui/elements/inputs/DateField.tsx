@@ -57,6 +57,12 @@ export interface DateFieldProps {
    * e2e/TESTIDS.md).
    */
   testId?: string;
+  /**
+   * Ref to the typed-entry text input — so an owner can move focus to the
+   * field (`ref={target.ref}` with ui/utils/createFocusTarget), as TextField
+   * and NumberField already allow.
+   */
+  ref?: (el: HTMLInputElement) => void;
 }
 
 /*
@@ -140,6 +146,7 @@ export const DateField = (props: DateFieldProps) => {
             id={id()}
             type="text"
             class={styles.dateInput}
+            ref={props.ref}
             data-testid={props.testId}
             value={text()}
             placeholder={formatPlaceholder(fmt())}

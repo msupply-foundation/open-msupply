@@ -4,48 +4,127 @@ import type { TypedDocument } from "../../api/graphql";
 
 export type BarcodeFragment = {
   id: string;
-  gtin: string;
+  status: "CONFIRMED" | "PROPOSED";
+  value: string;
+  barcode: string;
   itemId: string;
   packSize: number | null;
 };
 
-export type BarcodeByGtinVariables = {
+export type BarcodeMatchesVariables = {
   storeId: string;
-  gtin: string;
+  barcode: string;
 };
 
-export type BarcodeByGtinResult = {
-  barcodeByGtin: ({
-  __typename: "BarcodeNode";
-} & BarcodeFragment) | ({
-  __typename: "NodeError";
-} & {
-  error: {
-  __typename: "DatabaseError" | "RecordNotFound";
-  description: string;
-};
-});
+export type BarcodeMatchesResult = {
+  barcodeMatches: Array<BarcodeFragment>;
 };
 
-export const BarcodeByGtin = {
-  query: "query barcodeByGtin($storeId: String!, $gtin: String!) {\n  barcodeByGtin(storeId: $storeId, gtin: $gtin) {\n    __typename\n    ... on BarcodeNode {\n      ...Barcode\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment Barcode on BarcodeNode {\n  id\n  gtin\n  itemId\n  packSize\n}",
-} as TypedDocument<BarcodeByGtinResult, BarcodeByGtinVariables>;
+export const BarcodeMatches = {
+  query: "query barcodeMatches($storeId: String!, $barcode: String!) {\n  barcodeMatches(storeId: $storeId, barcode: $barcode) {\n    ...Barcode\n  }\n}\n\nfragment Barcode on BarcodeMatchNode {\n  id\n  status\n  value\n  barcode\n  itemId\n  packSize\n}",
+} as TypedDocument<BarcodeMatchesResult, BarcodeMatchesVariables>;
+
+export type ProposeBarcodeVariables = {
+  storeId: string;
+  input: {
+    barcode: string;
+    itemId: string;
+    packSize?: number | null;
+    manufacturerId?: string | null;
+  };
+};
+
+export type ProposeBarcodeResult = {
+  proposeBarcode: BarcodeFragment;
+};
+
+export const ProposeBarcode = {
+  query: "mutation proposeBarcode($storeId: String!, $input: ProposeBarcodeInput!) {\n  proposeBarcode(storeId: $storeId, input: $input) {\n    ...Barcode\n  }\n}\n\nfragment Barcode on BarcodeMatchNode {\n  id\n  status\n  value\n  barcode\n  itemId\n  packSize\n}",
+} as TypedDocument<ProposeBarcodeResult, ProposeBarcodeVariables>;
 
 export type InsertBarcodeVariables = {
   storeId: string;
   input: {
-    gtin: string;
+    barcode: string;
     itemId: string;
     packSize?: number | null;
+    manufacturerId?: string | null;
   };
 };
 
 export type InsertBarcodeResult = {
-  insertBarcode: ({
-  __typename: "BarcodeNode";
-} & BarcodeFragment);
+  centralServer: {
+  barcode: {
+  insertBarcode: {
+  id: string;
+};
+};
+};
 };
 
 export const InsertBarcode = {
-  query: "mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {\n  insertBarcode(storeId: $storeId, input: $input) {\n    __typename\n    ... on BarcodeNode {\n      ...Barcode\n    }\n  }\n}\n\nfragment Barcode on BarcodeNode {\n  id\n  gtin\n  itemId\n  packSize\n}",
+  query: "mutation insertBarcode($storeId: String!, $input: InsertConfirmedBarcodeInput!) {\n  centralServer {\n    barcode {\n      insertBarcode(storeId: $storeId, input: $input) {\n        id\n      }\n    }\n  }\n}",
 } as TypedDocument<InsertBarcodeResult, InsertBarcodeVariables>;
+
+export type ConfirmBarcodeProposalVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type ConfirmBarcodeProposalResult = {
+  centralServer: {
+  barcode: {
+  confirmBarcodeProposal: {
+  id: string;
+};
+};
+};
+};
+
+export const ConfirmBarcodeProposal = {
+  query: "mutation confirmBarcodeProposal($storeId: String!, $id: String!) {\n  centralServer {\n    barcode {\n      confirmBarcodeProposal(storeId: $storeId, id: $id) {\n        id\n      }\n    }\n  }\n}",
+} as TypedDocument<ConfirmBarcodeProposalResult, ConfirmBarcodeProposalVariables>;
+
+export type UpdateBarcodeVariables = {
+  storeId: string;
+  input: {
+    id: string;
+    itemId?: string | null;
+    packSize?: {
+    value?: number | null;
+  } | null;
+  };
+};
+
+export type UpdateBarcodeResult = {
+  centralServer: {
+  barcode: {
+  updateBarcode: {
+  id: string;
+};
+};
+};
+};
+
+export const UpdateBarcode = {
+  query: "mutation updateBarcode($storeId: String!, $input: UpdateBarcodeInput!) {\n  centralServer {\n    barcode {\n      updateBarcode(storeId: $storeId, input: $input) {\n        id\n      }\n    }\n  }\n}",
+} as TypedDocument<UpdateBarcodeResult, UpdateBarcodeVariables>;
+
+export type DeleteBarcodeVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type DeleteBarcodeResult = {
+  centralServer: {
+  barcode: {
+  deleteBarcode: {
+  id: string;
+};
+};
+};
+};
+
+export const DeleteBarcode = {
+  query: "mutation deleteBarcode($storeId: String!, $id: String!) {\n  centralServer {\n    barcode {\n      deleteBarcode(storeId: $storeId, id: $id) {\n        id\n      }\n    }\n  }\n}",
+} as TypedDocument<DeleteBarcodeResult, DeleteBarcodeVariables>;

@@ -38,12 +38,10 @@ export const visibleSections = (
 export const showThemeAndLogoRows = (access: SettingsAccess): boolean =>
   access.serverAdmin;
 
-// Within Devices: the label-printer half is for any signed-in user
-// (OMS-REG-SET-05.20 — deliberately NO Server Admin requirement); the
-// barcode-scanner half is Server Admin only, strictly stricter
-// (OMS-REG-SET-05.23).
-export const showBarcodeScannerRows = (access: SettingsAccess): boolean =>
-  access.serverAdmin;
+// Within Devices there is no permission gate at all: the label printer
+// (OMS-REG-SET-05.20 — deliberately NO Server Admin requirement) and the
+// barcode scanner (OMS-REG-SET-05.56 — device-local state only, so nothing
+// for a permission to protect) are both for any signed-in user.
 
 // Also within Devices, and gated on the platform rather than permission: the
 // Print via USB row is absent on Android (OMS-REG-SET-05.41). The USB route

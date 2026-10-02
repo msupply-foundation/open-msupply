@@ -3,6 +3,8 @@ import {
   allocateUnits,
   buildSaveInput,
   canSave,
+  draftAvailableUnits,
+  scanNarrowing,
   seedDraftLines,
   type DraftLine,
 } from './lineEditLogic';
@@ -12,6 +14,7 @@ const line = (over: Partial<DraftLine> & { id: string }): DraftLine => ({
   numberOfPacks: 0,
   packSize: 1,
   batch: null,
+  barcode: null,
   expiryDate: null,
   sellPricePerPack: 0,
   inStorePacks: 100,
@@ -22,6 +25,7 @@ const line = (over: Partial<DraftLine> & { id: string }): DraftLine => ({
   vvmStatus: null,
   barred: [],
   autoBarred: [],
+  scanExcluded: false,
   ...over,
 });
 
@@ -301,5 +305,68 @@ describe('canSave (ui-surface S4 — OK needs an item, a change, and a non-zero 
         prescribedQuantity: undefined,
       })
     ).toBe(true);
+  });
+});
+
+describe('scanned batch narrowing (spec/barcode-scanning rules § Learning a code while issuing)', () => {
+  it('.44 rules out every other batch where the item holds the scanned one', () => {
+    const lines = seedDraftLines(
+      [
+        line({ id: 'a', batch: 'A', expiryDate: '2030-01-01' }),
+        line({ id: 'b', batch: 'B', expiryDate: '2031-01-01' }),
+      ],
+      OPEN_PREFS,
+      TODAY,
+      { batch: 'B' }
+    );
+    expect(lines.map(l => [l.id, l.scanExcluded])).toEqual([
+      ['a', true],
+      ['b', false],
+    ]);
+    expect(scanNarrowing(lines)).toEqual({ batch: 'B', nothingLeft: false });
+    // Distribution falls onto the scanned batch even though FEFO would
+    // start with A, and A's stock is not counted as available.
+    const { packsById } = allocateUnits(lines, 5);
+    expect(packsById.get('a') ?? 0).toBe(0);
+    expect(packsById.get('b')).toBeGreaterThan(0);
+    expect(draftAvailableUnits(lines)).toBe(
+      lines[1].availablePacks * lines[1].packSize
+    );
+  });
+
+  it('.212 a batch the item does not hold leaves nothing, and says so', () => {
+    const lines = seedDraftLines(
+      [line({ id: 'a', batch: 'A' }), line({ id: 'b', batch: 'B' })],
+      OPEN_PREFS,
+      TODAY,
+      { batch: 'Z' }
+    );
+    expect(lines.every(l => l.scanExcluded)).toBe(true);
+    expect(scanNarrowing(lines)).toEqual({
+      batch: undefined,
+      nothingLeft: true,
+    });
+  });
+
+  it('never rules out a batch this record already draws from', () => {
+    const lines = seedDraftLines(
+      [
+        line({ id: 'a', batch: 'A', numberOfPacks: 2 }),
+        line({ id: 'b', batch: 'B' }),
+      ],
+      OPEN_PREFS,
+      TODAY,
+      { batch: 'B' }
+    );
+    expect(lines.find(l => l.id === 'a')?.scanExcluded).toBe(false);
+  });
+
+  it('no scanned batch narrows nothing', () => {
+    const lines = seedDraftLines(
+      [line({ id: 'a', batch: 'A' })],
+      OPEN_PREFS,
+      TODAY
+    );
+    expect(lines[0].scanExcluded).toBe(false);
   });
 });

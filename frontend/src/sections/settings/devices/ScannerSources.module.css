@@ -25,13 +25,12 @@
   background: var(--surface-raised);
 }
 
-.row[data-state='active'] {
+.row[data-state='in-use'] {
   border-color: var(--success-main);
 }
 
-.row[data-state='unavailable'],
-.row[data-state='disabled'],
-.row[data-state='not-set-up'] {
+.row[data-state='not-connected'],
+.row[data-state='off'] {
   /* Present but plainly not in play: dimmed as a group, never hidden. */
   opacity: 0.65;
 }
