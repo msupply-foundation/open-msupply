@@ -105,6 +105,7 @@ export type SaveOutboundItemLinesVariables = {
     transferComment?: string | null;
   }>;
     placeholderQuantity?: number | null;
+    barcode?: string | null;
   };
 };
 

@@ -29,7 +29,10 @@ use graphql_types::types::{
     StorePreferenceNode,
 };
 use mutations::{
-    barcode::{propose_barcode, ProposeBarcodeInput},
+    barcode::{
+        legacy_insert_barcode, propose_barcode, LegacyInsertBarcodeInput,
+        LegacyInsertBarcodeResponse, ProposeBarcodeInput,
+    },
     common::SyncSettingsInput,
     display_settings::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
@@ -392,6 +395,18 @@ impl GeneralQueries {
         barcode_matches(ctx, store_id, barcode)
     }
 
+    /// Deprecated: use `barcodeMatches`. Answers with the one item a scan of `gtin`
+    /// matches; RecordNotFound when it matches none, or several items.
+    #[graphql(deprecation = "Use `barcodeMatches`")]
+    pub async fn barcode_by_gtin(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        gtin: String,
+    ) -> Result<BarcodeResponse> {
+        barcode_by_gtin(ctx, store_id, gtin)
+    }
+
     /// The item's confirmed barcodes
     pub async fn item_barcodes(
         &self,
@@ -653,6 +668,18 @@ impl GeneralMutations {
         input: ProposeBarcodeInput,
     ) -> Result<BarcodeMatchNode> {
         propose_barcode(ctx, &store_id, input)
+    }
+
+    /// Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`
+    /// on central. Adds a confirmed barcode on central and proposes one elsewhere.
+    #[graphql(deprecation = "Use `proposeBarcode`")]
+    pub async fn insert_barcode(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: LegacyInsertBarcodeInput,
+    ) -> Result<LegacyInsertBarcodeResponse> {
+        legacy_insert_barcode(ctx, &store_id, input)
     }
 
     pub async fn update_log_level(

@@ -824,7 +824,7 @@ type BarcodeMutations {
 	"""
 	Adds a confirmed barcode for an item, or brings back a removed one
 	"""
-	insertBarcode(storeId: String!, input: InsertBarcodeInput!): BarcodeNode!
+	insertBarcode(storeId: String!, input: InsertConfirmedBarcodeInput!): BarcodeNode!
 	"""
 	Confirms a store's proposal, so the barcode reaches every site
 	"""
@@ -851,6 +851,10 @@ type BarcodeNode {
 	The barcode as people read it, e.g. `9506682101352`
 	"""
 	barcode: String!
+	"""
+	The barcode as people read it. Use `barcode`.
+	"""
+	gtin: String! @deprecated(reason: "Use `barcode`")
 	itemId: String!
 	packSize: Float
 	manufacturerId: String
@@ -879,6 +883,8 @@ type BarcodeProposalNode {
 	createdDatetime: DateTime!
 	updatedDatetime: DateTime!
 }
+
+union BarcodeResponse = NodeError | BarcodeNode
 
 enum BarcodeStatusNode {
 	"""
@@ -3372,15 +3378,16 @@ union InsertAssetLogResponse = InsertAssetLogError | AssetLogNode
 
 union InsertAssetResponse = InsertAssetError | AssetNode
 
+"""
+Deprecated: the input of the deprecated top-level `insertBarcode`
+"""
 input InsertBarcodeInput {
-	"""
-	As scanned or typed; the server puts it in standard form
-	"""
-	barcode: String!
+	gtin: String!
 	itemId: String!
 	packSize: Float
-	manufacturerId: String
 }
+
+union InsertBarcodeResponse = BarcodeNode
 
 input InsertClinicianInput {
 	id: String!
@@ -3390,6 +3397,16 @@ input InsertClinicianInput {
 	firstName: String
 	gender: GenderTypeNode
 	mobile: String
+}
+
+input InsertConfirmedBarcodeInput {
+	"""
+	As scanned or typed; the server puts it in standard form
+	"""
+	barcode: String!
+	itemId: String!
+	packSize: Float
+	manufacturerId: String
 }
 
 input InsertContactFormInput {
@@ -5652,6 +5669,11 @@ type Mutations {
 	to review. Call it when the line the scan opened is saved.
 	"""
 	proposeBarcode(storeId: String!, input: ProposeBarcodeInput!): BarcodeMatchNode!
+	"""
+	Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`
+	on central. Adds a confirmed barcode on central and proposes one elsewhere.
+	"""
+	insertBarcode(storeId: String!, input: InsertBarcodeInput!): InsertBarcodeResponse! @deprecated(reason: "Use `proposeBarcode`")
 	updateLogLevel(storeId: String!, input: UpsertLogLevelInput!): UpsertLogLevelResponse!
 	updateLabelPrinterSettings(input: LabelPrinterSettingsInput!): UpdateLabelPrinterSettingsResponse!
 	updateNameProperties(storeId: String!, input: UpdateNamePropertiesInput!): UpdateNamePropertiesResponse!
@@ -7507,6 +7529,11 @@ type Queries {
 	for items visible in the store. Empty for a barcode nobody has mapped yet.
 	"""
 	barcodeMatches(storeId: String!, barcode: String!): [BarcodeMatchNode!]!
+	"""
+	Deprecated: use `barcodeMatches`. Answers with the one item a scan of `gtin`
+	matches; RecordNotFound when it matches none, or several items.
+	"""
+	barcodeByGtin(storeId: String!, gtin: String!): BarcodeResponse! @deprecated(reason: "Use `barcodeMatches`")
 	"""
 	The item's confirmed barcodes
 	"""

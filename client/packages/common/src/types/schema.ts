@@ -926,17 +926,102 @@ export type BackdatingNode = {
   shipmentsEnabled: Scalars['Boolean']['output'];
 };
 
-export type BarcodeNode = {
-  __typename: 'BarcodeNode';
-  gtin: Scalars['String']['output'];
+export type BarcodeMatchNode = {
+  __typename: 'BarcodeMatchNode';
+  /** The barcode as people read it */
+  barcode: Scalars['String']['output'];
+  /** The confirmed barcode's id, or the proposal's */
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   manufacturerId?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
-  parentId?: Maybe<Scalars['String']['output']>;
+  status: BarcodeStatusNode;
+  /** The barcode in its standard form with its scheme */
+  value: Scalars['String']['output'];
+};
+
+export type BarcodeMutations = {
+  __typename: 'BarcodeMutations';
+  /** Confirms a store's proposal, so the barcode reaches every site */
+  confirmBarcodeProposal: BarcodeNode;
+  /**
+   * Removes a confirmed barcode everywhere. Stores proposing it again won't
+   * confirm it; only adding it on central brings it back.
+   */
+  deleteBarcode: DeleteResponse;
+  /** Adds a confirmed barcode for an item, or brings back a removed one */
+  insertBarcode: BarcodeNode;
+  /** Changes a confirmed barcode's pack size, or moves it to another item */
+  updateBarcode: BarcodeNode;
+};
+
+export type BarcodeMutationsConfirmBarcodeProposalArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type BarcodeMutationsDeleteBarcodeArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type BarcodeMutationsInsertBarcodeArgs = {
+  input: InsertConfirmedBarcodeInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type BarcodeMutationsUpdateBarcodeArgs = {
+  input: UpdateBarcodeInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type BarcodeNode = {
+  __typename: 'BarcodeNode';
+  /** The barcode as people read it, e.g. `9506682101352` */
+  barcode: Scalars['String']['output'];
+  /**
+   * The barcode as people read it. Use `barcode`.
+   * @deprecated Use `barcode`
+   */
+  gtin: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  manufacturerId?: Maybe<Scalars['String']['output']>;
+  manufacturerName?: Maybe<Scalars['String']['output']>;
+  packSize?: Maybe<Scalars['Float']['output']>;
+  /**
+   * The barcode in its standard form with its scheme, e.g.
+   * `gtin:09506682101352`. Matches the `barcode` of lines and stock lines.
+   */
+  value: Scalars['String']['output'];
+};
+
+export type BarcodeProposalNode = {
+  __typename: 'BarcodeProposalNode';
+  /** The barcode as people read it */
+  barcode: Scalars['String']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  manufacturerId?: Maybe<Scalars['String']['output']>;
+  packSize?: Maybe<Scalars['Float']['output']>;
+  store?: Maybe<StoreNode>;
+  /** The store that proposed it */
+  storeId: Scalars['String']['output'];
+  updatedDatetime: Scalars['DateTime']['output'];
+  userId: Scalars['String']['output'];
+  /** The barcode in its standard form with its scheme */
+  value: Scalars['String']['output'];
 };
 
 export type BarcodeResponse = BarcodeNode | NodeError;
+
+export enum BarcodeStatusNode {
+  /** Confirmed on central, shared by every site */
+  Confirmed = 'CONFIRMED',
+  /** Learned on this site, not confirmed yet */
+  Proposed = 'PROPOSED',
+}
 
 export type BatchInboundShipmentInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1547,6 +1632,7 @@ export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   ancillaryItem: AncillaryItemMutations;
   assetCatalogue: AssetCatalogueMutations;
+  barcode: BarcodeMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
   customField: CustomFieldMutations;
@@ -3028,6 +3114,8 @@ export type DraftStockOutItemData = {
 export type DraftStockOutLineNode = {
   __typename: 'DraftStockOutLineNode';
   availablePacks: Scalars['Float']['output'];
+  /** The batch's stock line barcode, as people read it */
+  barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
   campaign?: Maybe<CampaignNode>;
   donor?: Maybe<NameNode>;
@@ -3927,6 +4015,7 @@ export type InsertAssetLogResponse = AssetLogNode | InsertAssetLogError;
 
 export type InsertAssetResponse = AssetNode | InsertAssetError;
 
+/** Deprecated: the input of the deprecated top-level `insertBarcode` */
 export type InsertBarcodeInput = {
   gtin: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
@@ -3943,6 +4032,14 @@ export type InsertClinicianInput = {
   initials: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
   mobile?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InsertConfirmedBarcodeInput = {
+  /** As scanned or typed; the server puts it in standard form */
+  barcode: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertContactFormInput = {
@@ -4153,6 +4250,11 @@ export type InsertInboundShipmentLineFromInternalOrderLineResponseWithId = {
 };
 
 export type InsertInboundShipmentLineInput = {
+  /**
+   * The barcode scanned or typed for the line, as read; recorded on the line
+   * and its stock. Doesn't propose a barcode (see `proposeBarcode`).
+   */
+  barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
   campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
@@ -5179,6 +5281,11 @@ export type InvoiceLineFilterInput = {
 
 export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
+  /**
+   * The barcode scanned or entered for the line, or carried by the stock it
+   * issues, as people read it. Not necessarily a confirmed barcode.
+   */
+  barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
   campaign?: Maybe<CampaignNode>;
   costPricePerPack: Scalars['Float']['output'];
@@ -6270,6 +6377,11 @@ export type Mutations = {
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
+  /**
+   * Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`
+   * on central. Adds a confirmed barcode on central and proposes one elsewhere.
+   * @deprecated Use `proposeBarcode`
+   */
   insertBarcode: InsertBarcodeResponse;
   insertClinician: IdResponse;
   insertContactForm: InsertContactFormResponse;
@@ -6329,6 +6441,11 @@ export type Mutations = {
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  /**
+   * Records that a user picked an item for a barcode in this store, for central
+   * to review. Call it when the line the scan opened is saved.
+   */
+  proposeBarcode: BarcodeMatchNode;
   refreshAncillaryItems: RefreshAncillaryItemsResponse;
   responseAddFromMasterList: ResponseAddFromMasterListResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
@@ -6908,6 +7025,11 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MutationsProposeBarcodeArgs = {
+  input: ProposeBarcodeInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type MutationsRefreshAncillaryItemsArgs = {
@@ -7768,6 +7890,8 @@ export type PeriodConnector = {
 
 export type PeriodFilterInput = {
   endDate?: InputMaybe<DateFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  periodScheduleId?: InputMaybe<EqualFilterStringInput>;
   startDate?: InputMaybe<DateFilterInput>;
 };
 
@@ -7779,12 +7903,31 @@ export type PeriodNode = {
   startDate: Scalars['NaiveDate']['output'];
 };
 
+export type PeriodScheduleFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type PeriodScheduleNode = {
   __typename: 'PeriodScheduleNode';
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   periods: Array<SchedulePeriodNode>;
 };
+
+export type PeriodScheduleRowConnector = {
+  __typename: 'PeriodScheduleRowConnector';
+  nodes: Array<PeriodScheduleRowNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PeriodScheduleRowNode = {
+  __typename: 'PeriodScheduleRowNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type PeriodScheduleRowResponse = PeriodScheduleRowConnector;
 
 export type PeriodSchedulesConnector = {
   __typename: 'PeriodSchedulesConnector';
@@ -8003,6 +8146,13 @@ export type PrescriptionRequestConnector = {
 
 export type PrescriptionRequestFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  /**
+   * When the request was dispensed — set by the hand-over's status flip, so
+   * it is null on everything not yet dispensed. Window a "dispensed in
+   * period" count on THIS, never on `status`: a status advances, so a
+   * status-windowed figure falls as records progress.
+   */
+  dispensedDatetime?: InputMaybe<DatetimeFilterInput>;
   /**
    * Dynamic filter condition AST, currently supporting custom field
    * conditions on keys visible for the "prescription_request" scope, e.g.
@@ -8436,6 +8586,14 @@ export enum PropertyNodeValueType {
   String = 'STRING',
 }
 
+export type ProposeBarcodeInput = {
+  /** As scanned or typed; the server puts it in standard form */
+  barcode: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type PurchaseOrderConnector = {
   __typename: 'PurchaseOrderConnector';
   nodes: Array<PurchaseOrderNode>;
@@ -8451,6 +8609,7 @@ export type PurchaseOrderFilterInput = {
   confirmedDatetime?: InputMaybe<DatetimeFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  number?: InputMaybe<EqualFilterBigNumberInput>;
   requestedDeliveryDate?: InputMaybe<DateFilterInput>;
   sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
@@ -8471,6 +8630,7 @@ export type PurchaseOrderLineError = {
 export type PurchaseOrderLineFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -8488,8 +8648,10 @@ export type PurchaseOrderLineNode = {
   inTransitNumberOfUnits: Scalars['Float']['output'];
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
+  lineTotal: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
+  outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
@@ -8518,11 +8680,22 @@ export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
+  AdjustedNumberOfUnits = 'adjustedNumberOfUnits',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
+  ItemCode = 'itemCode',
   ItemName = 'itemName',
   LineNumber = 'lineNumber',
+  OutstandingNumberOfUnits = 'outstandingNumberOfUnits',
+  PurchaseOrderConfirmedDatetime = 'purchaseOrderConfirmedDatetime',
   PurchaseOrderNumber = 'purchaseOrderNumber',
+  ReceivedNumberOfUnits = 'receivedNumberOfUnits',
   RequestedDeliveryDate = 'requestedDeliveryDate',
+  RequestedNumberOfUnits = 'requestedNumberOfUnits',
+  RequestedPackSize = 'requestedPackSize',
+  ShippedNumberOfUnits = 'shippedNumberOfUnits',
+  Status = 'status',
+  SupplierName = 'supplierName',
+  Unit = 'unit',
 }
 
 export type PurchaseOrderLineSortInput = {
@@ -8600,9 +8773,16 @@ export enum PurchaseOrderNodeStatus {
 export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
 
 export enum PurchaseOrderSortFieldInput {
+  Comment = 'comment',
+  ConfirmedDatetime = 'confirmedDatetime',
   CreatedDatetime = 'createdDatetime',
+  CurrencyCode = 'currencyCode',
   Number = 'number',
+  OrderTotalAfterDiscount = 'orderTotalAfterDiscount',
+  RequestedDeliveryDate = 'requestedDeliveryDate',
+  SentDatetime = 'sentDatetime',
   Status = 'status',
+  Supplier = 'supplier',
   TargetMonths = 'targetMonths',
 }
 
@@ -8647,7 +8827,18 @@ export type Queries = {
    * the response body and as an HttpOnly session cookie. There is no separate refresh token.
    */
   authToken: AuthTokenResponse;
+  /**
+   * Deprecated: use `barcodeMatches`. Answers with the one item a scan of `gtin`
+   * matches; RecordNotFound when it matches none, or several items.
+   * @deprecated Use `barcodeMatches`
+   */
   barcodeByGtin: BarcodeResponse;
+  /**
+   * Everything a scan of `barcode` (as scanned or typed) matches: confirmed
+   * barcodes first, then proposals made on this site, one per item and only
+   * for items visible in the store. Empty for a barcode nobody has mapped yet.
+   */
+  barcodeMatches: Array<BarcodeMatchNode>;
   campaigns: CampaignsResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
@@ -8726,6 +8917,13 @@ export type Queries = {
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
   isCentralStandalone: Scalars['Boolean']['output'];
+  /**
+   * Proposals for the item central hasn't confirmed or removed: every store's
+   * on central, this site's elsewhere
+   */
+  itemBarcodeProposals: Array<BarcodeProposalNode>;
+  /** The item's confirmed barcodes */
+  itemBarcodes: Array<BarcodeNode>;
   itemCounts: ItemCounts;
   itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
@@ -8766,6 +8964,7 @@ export type Queries = {
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
+  periodSchedules: PeriodScheduleRowResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
@@ -8950,6 +9149,11 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesBarcodeByGtinArgs = {
   gtin: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesBarcodeMatchesArgs = {
+  barcode: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -9198,6 +9402,16 @@ export type QueriesInvoicesArgs = {
   type?: InputMaybe<Array<InvoiceTypeInput>>;
 };
 
+export type QueriesItemBarcodeProposalsArgs = {
+  itemId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesItemBarcodesArgs = {
+  itemId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesItemCountsArgs = {
   highStockThreshold?: InputMaybe<Scalars['Float']['input']>;
   lowStockThreshold?: InputMaybe<Scalars['Float']['input']>;
@@ -9298,6 +9512,11 @@ export type QueriesPatientsArgs = {
   filter?: InputMaybe<PatientFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<PatientSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPeriodSchedulesArgs = {
+  filter?: InputMaybe<PeriodScheduleFilterInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -10429,6 +10648,12 @@ export type RnRFormSortInput = {
 export type RnRFormsResponse = RnRFormConnector;
 
 export type SaveOutboundShipmentLinesInput = {
+  /**
+   * The barcode scanned to issue the item, as read; recorded on the item's
+   * saved lines, and on the stock they issue from where it has none. Doesn't
+   * propose a barcode (see `proposeBarcode`).
+   */
+  barcode?: InputMaybe<Scalars['String']['input']>;
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   lines: Array<OutboundShipmentLineInput>;
@@ -10436,6 +10661,12 @@ export type SaveOutboundShipmentLinesInput = {
 };
 
 export type SavePrescriptionLinesInput = {
+  /**
+   * The barcode scanned to issue the item, as read; recorded on the item's
+   * saved lines, and on the stock they issue from where it has none. Doesn't
+   * propose a barcode (see `proposeBarcode`).
+   */
+  barcode?: InputMaybe<Scalars['String']['input']>;
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   lines: Array<PrescriptionLineInput>;
@@ -10718,6 +10949,7 @@ export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface &
 export type StockLineNode = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: Scalars['Float']['output'];
+  /** The barcode the stock carries, as people read it, e.g. `9506682101352` */
   barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
   campaign?: Maybe<CampaignNode>;
@@ -11715,6 +11947,13 @@ export type UpdateAssetInput = {
 
 export type UpdateAssetResponse = AssetNode | UpdateAssetError;
 
+export type UpdateBarcodeInput = {
+  id: Scalars['String']['input'];
+  /** Moves the barcode to another item */
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  packSize?: InputMaybe<NullableFloatUpdate>;
+};
+
 export type UpdateContactTraceInput = {
   /** Contact trace document data */
   data: Scalars['JSON']['input'];
@@ -11904,6 +12143,12 @@ export type UpdateInboundShipmentLineErrorInterface = {
 };
 
 export type UpdateInboundShipmentLineInput = {
+  /**
+   * The barcode scanned or typed for the line, as read; recorded on the line
+   * and its stock. An empty one clears it. Doesn't propose a barcode (see
+   * `proposeBarcode`).
+   */
+  barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
   campaignId?: InputMaybe<NullableStringUpdate>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;

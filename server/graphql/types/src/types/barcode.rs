@@ -31,6 +31,12 @@ impl BarcodeNode {
         display_barcode(&self.row().value)
     }
 
+    /// The barcode as people read it. Use `barcode`.
+    #[graphql(deprecation = "Use `barcode`")]
+    pub async fn gtin(&self) -> &str {
+        display_barcode(&self.row().value)
+    }
+
     pub async fn item_id(&self) -> &str {
         &self.row().item_id
     }
@@ -54,6 +60,32 @@ impl BarcodeNode {
 impl BarcodeNode {
     pub fn from_domain(barcode: Barcode) -> BarcodeNode {
         BarcodeNode { barcode }
+    }
+
+    /// For the deprecated `barcodeByGtin` and `insertBarcode`, which answer with a
+    /// `BarcodeNode` whatever matched: a proposal comes back under its own id.
+    pub fn from_match(barcode_match: BarcodeMatch) -> BarcodeNode {
+        let BarcodeMatch {
+            id,
+            value,
+            item_id,
+            pack_size,
+            manufacturer_id,
+            status: _,
+        } = barcode_match;
+        BarcodeNode {
+            barcode: Barcode {
+                barcode_row: BarcodeRow {
+                    id,
+                    value,
+                    item_id,
+                    pack_size,
+                    manufacturer_id,
+                    deleted_datetime: None,
+                },
+                manufacturer_name_row: None,
+            },
+        }
     }
 
     pub fn row(&self) -> &BarcodeRow {
@@ -181,6 +213,10 @@ impl BarcodeMatchNode {
 impl BarcodeMatchNode {
     pub fn from_domain(barcode_match: BarcodeMatch) -> BarcodeMatchNode {
         BarcodeMatchNode { barcode_match }
+    }
+
+    pub fn into_domain(self) -> BarcodeMatch {
+        self.barcode_match
     }
 }
 

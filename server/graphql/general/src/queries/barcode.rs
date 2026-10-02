@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
+    simple_generic_errors::{NodeError, NodeErrorInterface},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -75,4 +76,35 @@ pub fn item_barcode_proposals(
         .into_iter()
         .map(BarcodeProposalNode::from_domain)
         .collect())
+}
+
+#[derive(Union)]
+pub enum BarcodeResponse {
+    Error(NodeError),
+    Response(BarcodeNode),
+}
+
+/// Deprecated: kept for clients that predate `barcodeMatches`. A scan that matches
+/// one item answers with it; one that matches none, or several items, is
+/// RecordNotFound so the client asks which item it is.
+pub fn barcode_by_gtin(
+    ctx: &Context<'_>,
+    store_id: String,
+    gtin: String,
+) -> Result<BarcodeResponse> {
+    let service_context = service_context(ctx, &store_id)?;
+    let mut matches = ctx
+        .service_provider()
+        .barcode_service
+        .barcode_matches(&service_context, &gtin)
+        .map_err(StandardGraphqlError::from_repository_error)?;
+    let response = match (matches.pop(), matches.is_empty()) {
+        (Some(barcode_match), true) => {
+            BarcodeResponse::Response(BarcodeNode::from_match(barcode_match))
+        }
+        _ => BarcodeResponse::Error(NodeError {
+            error: NodeErrorInterface::record_not_found(),
+        }),
+    };
+    Ok(response)
 }

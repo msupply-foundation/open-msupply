@@ -12,6 +12,7 @@ use service::{
         ProposeBarcodeInput as ServiceProposeInput, UpdateBarcodeInput as ServiceUpdateInput,
     },
     service_provider::ServiceContext,
+    sync::CentralServerConfig,
     NullableUpdate,
 };
 
@@ -84,8 +85,67 @@ pub fn propose_barcode(
     }
 }
 
+/// Deprecated: the input of the deprecated top-level `insertBarcode`
 #[derive(InputObject)]
-pub struct InsertBarcodeInput {
+#[graphql(name = "InsertBarcodeInput")]
+pub struct LegacyInsertBarcodeInput {
+    pub gtin: String,
+    pub item_id: String,
+    pub pack_size: Option<f64>,
+}
+
+#[derive(Union)]
+#[graphql(name = "InsertBarcodeResponse")]
+pub enum LegacyInsertBarcodeResponse {
+    Response(BarcodeNode),
+}
+
+/// Deprecated: kept for clients that predate `proposeBarcode`. On central it adds a
+/// confirmed barcode, as it used to; elsewhere it proposes one. Errors are
+/// top-level GraphQL errors.
+pub fn legacy_insert_barcode(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: LegacyInsertBarcodeInput,
+) -> Result<LegacyInsertBarcodeResponse> {
+    let LegacyInsertBarcodeInput {
+        gtin,
+        item_id,
+        pack_size,
+    } = input;
+    if CentralServerConfig::is_central_server() {
+        let service_context = service_context(ctx, store_id, Resource::MutateItems)?;
+        let barcode = map_manage_result(ctx.service_provider().barcode_service.insert_barcode(
+            &service_context,
+            ServiceInsertInput {
+                barcode: gtin,
+                item_id,
+                pack_size,
+                manufacturer_id: None,
+            },
+        ))?;
+        return Ok(LegacyInsertBarcodeResponse::Response(
+            BarcodeNode::from_domain(barcode),
+        ));
+    }
+
+    let barcode_match = propose_barcode(
+        ctx,
+        store_id,
+        ProposeBarcodeInput {
+            barcode: gtin,
+            item_id,
+            pack_size,
+            manufacturer_id: None,
+        },
+    )?;
+    Ok(LegacyInsertBarcodeResponse::Response(
+        BarcodeNode::from_match(barcode_match.into_domain()),
+    ))
+}
+
+#[derive(InputObject)]
+pub struct InsertConfirmedBarcodeInput {
     /// As scanned or typed; the server puts it in standard form
     pub barcode: String,
     pub item_id: String,
@@ -112,10 +172,10 @@ impl BarcodeMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: InsertBarcodeInput,
+        input: InsertConfirmedBarcodeInput,
     ) -> Result<BarcodeNode> {
         let service_context = service_context(ctx, &store_id, Resource::MutateItems)?;
-        let InsertBarcodeInput {
+        let InsertConfirmedBarcodeInput {
             barcode,
             item_id,
             pack_size,
