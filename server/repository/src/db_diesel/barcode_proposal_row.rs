@@ -1,7 +1,7 @@
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
 use crate::{
-    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
 
@@ -13,7 +13,8 @@ use diesel::prelude::*;
 // A barcode a store has learned: a user picked this item for this barcode. Authored
 // by the store's own site and synced up to central, where it's reviewed; it isn't
 // sent to other sites. One row per store, barcode and item: proposing the same thing
-// again updates the row. See decisions/2026-09-30_barcodes.md.
+// again updates the row. A store withdrawing its proposal deletes the row; the
+// delete syncs up too. See decisions/2026-09-30_barcodes.md.
 define_linked_tables! {
     view: barcode_proposal = "barcode_proposal_view",
     core: barcode_proposal_with_links = "barcode_proposal",
@@ -78,6 +79,23 @@ impl<'a> BarcodeProposalRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
+    /// Withdraws the proposal. Nothing about it needs remembering, so the row goes.
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        // Before the delete: the changelog reads the row for its store
+        let changelog = BarcodeProposalRow::generate_changelog(
+            RowOrId::Id(id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
+        diesel::delete(
+            barcode_proposal_with_links::table.filter(barcode_proposal_with_links::id.eq(id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<BarcodeProposalRow>, RepositoryError> {
         let result = barcode_proposal::table
             .filter(barcode_proposal::id.eq(id))
@@ -109,6 +127,42 @@ impl<'a> BarcodeProposalRowRepository<'a> {
         Ok(barcode_proposal::table
             .filter(barcode_proposal::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct BarcodeProposalRowDelete(pub String);
+impl Delete for BarcodeProposalRowDelete {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                BarcodeProposalRow::generate_changelog(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        diesel::delete(
+            barcode_proposal_with_links::table.filter(barcode_proposal_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            BarcodeProposalRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }
 

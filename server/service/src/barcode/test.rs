@@ -234,6 +234,59 @@ async fn propose_errors() {
     );
 }
 
+/// A store withdraws a proposal made on its site: it stops matching, and
+/// proposing again makes a new one. Another site's proposal can't be withdrawn.
+#[actix_rt::test]
+async fn withdraw_a_proposal() {
+    let (connection, service_provider) = setup(
+        "barcode_withdraw_a_proposal",
+        MockData {
+            barcode_proposals: vec![
+                proposal("on_site", &store_a2().id, &mock_item_a().id, None),
+                proposal("other_site", &mock_store_b().id, &mock_item_a().id, None),
+            ],
+            ..Default::default()
+        },
+    )
+    .await;
+    let service = &service_provider.barcode_service;
+    let ctx = service_provider
+        .context(mock_store_a().id, mock_user_account_a().id)
+        .unwrap();
+    let repo = BarcodeProposalRowRepository::new(&connection);
+
+    assert_eq!(
+        service.delete_barcode_proposal(&ctx, "other_site"),
+        Err(DeleteBarcodeProposalError::ProposalDoesNotExist)
+    );
+    assert!(repo.find_one_by_id("other_site").unwrap().is_some());
+    assert_eq!(
+        service.delete_barcode_proposal(&ctx, "not_a_proposal"),
+        Err(DeleteBarcodeProposalError::ProposalDoesNotExist)
+    );
+
+    // Made by another store on this site
+    assert_eq!(
+        service.delete_barcode_proposal(&ctx, "on_site"),
+        Ok("on_site".to_string())
+    );
+    assert_eq!(repo.find_one_by_id("on_site").unwrap(), None);
+    assert_eq!(service.barcode_matches(&ctx, SCANNED).unwrap(), vec![]);
+
+    let again = service
+        .propose_barcode(
+            &ctx,
+            ProposeBarcodeInput {
+                barcode: SCANNED.to_string(),
+                item_id: mock_item_a().id,
+                pack_size: None,
+                manufacturer_id: None,
+            },
+        )
+        .unwrap();
+    assert_ne!(again.id, "on_site");
+}
+
 /// Only central confirms, moves and removes barcodes. Removing keeps the row;
 /// adding the barcode again brings it back.
 #[actix_rt::test]

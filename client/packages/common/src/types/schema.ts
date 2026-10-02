@@ -6341,6 +6341,11 @@ export type Mutations = {
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
   deleteAsset: DeleteAssetResponse;
+  /**
+   * Withdraws a proposal made by a store on this site. It stops matching scans
+   * here, and central stops reviewing it.
+   */
+  deleteBarcodeProposal: DeleteResponse;
   deleteCustomerReturn: DeleteCustomerReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentExternal: DeleteInboundShipmentResponse;
@@ -6605,6 +6610,11 @@ export type MutationsCreateRequisitionShipmentArgs = {
 
 export type MutationsDeleteAssetArgs = {
   assetId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteBarcodeProposalArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 

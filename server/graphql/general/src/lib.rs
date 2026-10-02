@@ -24,13 +24,13 @@ use service::sync::CentralServerConfig;
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
     AbbreviationNode, BarcodeMatchNode, BarcodeNode, BarcodeProposalNode, CurrenciesResponse,
-    CurrencyFilterInput, CurrencySortInput, CustomFieldsResponse, DiagnosisNode,
+    CurrencyFilterInput, CurrencySortInput, CustomFieldsResponse, DeleteResponse, DiagnosisNode,
     MasterListFilterInput, PeriodScheduleFilterInput, PeriodScheduleRowResponse,
     StorePreferenceNode,
 };
 use mutations::{
     barcode::{
-        legacy_insert_barcode, propose_barcode, LegacyInsertBarcodeInput,
+        delete_barcode_proposal, legacy_insert_barcode, propose_barcode, LegacyInsertBarcodeInput,
         LegacyInsertBarcodeResponse, ProposeBarcodeInput,
     },
     common::SyncSettingsInput,
@@ -668,6 +668,17 @@ impl GeneralMutations {
         input: ProposeBarcodeInput,
     ) -> Result<BarcodeMatchNode> {
         propose_barcode(ctx, &store_id, input)
+    }
+
+    /// Withdraws a proposal made by a store on this site. It stops matching scans
+    /// here, and central stops reviewing it.
+    pub async fn delete_barcode_proposal(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<DeleteResponse> {
+        delete_barcode_proposal(ctx, &store_id, &id)
     }
 
     /// Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`

@@ -97,6 +97,7 @@ fn translate_delete(
         ChangelogTableName::AssetInternalLocation => Box::new(AssetInternalLocationRowDelete(id)),
         ChangelogTableName::BackendPlugin => Box::new(BackendPluginRowDelete(id)),
         ChangelogTableName::ClinicianStoreJoin => Box::new(ClinicianStoreJoinRowDelete(id)),
+        ChangelogTableName::BarcodeProposal => Box::new(BarcodeProposalRowDelete(id)),
         ChangelogTableName::Contact => Box::new(ContactRowDelete(id)),
         ChangelogTableName::Diagnosis => Box::new(DiagnosisRowDelete(id)),
         ChangelogTableName::FormSchema => Box::new(FormSchemaRowDelete(id)),
@@ -157,7 +158,6 @@ fn translate_delete(
         | ChangelogTableName::AssetLogReason
         | ChangelogTableName::AssetProperty
         | ChangelogTableName::Barcode
-        | ChangelogTableName::BarcodeProposal
         | ChangelogTableName::BundledItem
         | ChangelogTableName::Campaign
         | ChangelogTableName::Clinician
@@ -750,6 +750,57 @@ mod test {
         assert_eq!(result, Some(IntegrationResult::Ignored));
         let (result, _) = buffer_result(&connection, 2);
         assert_eq!(result, Some(IntegrationResult::Success));
+    }
+
+    #[actix_rt::test]
+    async fn integrate_barcode_proposal_delete_on_central() {
+        // A store withdrawing its proposal pushes a delete; central removes it.
+        let connection = setup(
+            "integrate_barcode_proposal_delete_on_central",
+            MockDataInserts::none().names().stores().units().items(),
+        )
+        .await;
+        let proposal = BarcodeProposalRow {
+            id: "proposal".to_string(),
+            value: "gtin:09506682101352".to_string(),
+            item_id: repository::mock::mock_item_a().id,
+            store_id: mock_store_a().id,
+            user_id: mock_user_account_a().id,
+            ..Default::default()
+        };
+        BarcodeProposalRowRepository::new(&connection)
+            ._upsert(&proposal)
+            .unwrap();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "barcode_proposal".to_string(),
+                store_id: Some(mock_store_a().id),
+                ..buffer_row("proposal", SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        validate_translate_integrate(
+            &connection,
+            None,
+            SOURCE_SITE_ID,
+            None,
+            SyncContext::Central {
+                source_site_active_store_ids: vec![mock_store_a().id],
+                is_multi_device: false,
+            },
+            true,
+        )
+        .unwrap();
+
+        assert_eq!(
+            BarcodeProposalRowRepository::new(&connection)
+                .find_one_by_id("proposal")
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
     }
 
     #[actix_rt::test]

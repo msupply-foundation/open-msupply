@@ -5670,6 +5670,11 @@ type Mutations {
 	"""
 	proposeBarcode(storeId: String!, input: ProposeBarcodeInput!): BarcodeMatchNode!
 	"""
+	Withdraws a proposal made by a store on this site. It stops matching scans
+	here, and central stops reviewing it.
+	"""
+	deleteBarcodeProposal(storeId: String!, id: String!): DeleteResponse!
+	"""
 	Deprecated: use `proposeBarcode`, or `centralServer.barcode.insertBarcode`
 	on central. Adds a confirmed barcode on central and proposes one elsewhere.
 	"""

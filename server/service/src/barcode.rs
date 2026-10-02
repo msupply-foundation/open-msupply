@@ -115,6 +115,19 @@ pub enum ManageBarcodeError {
     DatabaseError(RepositoryError),
 }
 
+#[derive(Debug, PartialEq)]
+pub enum DeleteBarcodeProposalError {
+    /// No proposal with this id was made on this site
+    ProposalDoesNotExist,
+    DatabaseError(RepositoryError),
+}
+
+impl From<RepositoryError> for DeleteBarcodeProposalError {
+    fn from(error: RepositoryError) -> Self {
+        DeleteBarcodeProposalError::DatabaseError(error)
+    }
+}
+
 impl From<RepositoryError> for ProposeBarcodeError {
     fn from(error: RepositoryError) -> Self {
         ProposeBarcodeError::DatabaseError(error)
@@ -290,6 +303,31 @@ pub trait BarcodeServiceTrait: Sync + Send {
         ctx.processors_trigger
             .trigger_processor(ProcessorType::BarcodeAutoConfirm);
         Ok(result)
+    }
+
+    /// Withdraws a proposal made by a store on this site, e.g. one that picked the
+    /// wrong item. It stops matching here, and the delete syncs up so central stops
+    /// reviewing it and auto-confirm stops counting it. A barcode already confirmed
+    /// from it stays confirmed. Proposing it again makes a new proposal.
+    fn delete_barcode_proposal(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+    ) -> Result<String, DeleteBarcodeProposalError> {
+        ctx.connection
+            .transaction_sync(|connection| {
+                let on_this_site = site_proposals(connection, &ctx.store_id)?
+                    .id(EqualFilter::equal_to(id.to_string()));
+                if BarcodeProposalRepository::new(connection)
+                    .query_by_filter(on_this_site)?
+                    .is_empty()
+                {
+                    return Err(DeleteBarcodeProposalError::ProposalDoesNotExist);
+                }
+                BarcodeProposalRowRepository::new(connection).delete(id)?;
+                Ok(id.to_string())
+            })
+            .map_err(|error| error.to_inner_error())
     }
 
     /// Central adds a confirmed barcode, or brings back a removed one. Adding one

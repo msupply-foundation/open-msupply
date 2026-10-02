@@ -8,8 +8,9 @@ use graphql_types::types::{BarcodeMatchNode, BarcodeNode, DeleteResponse};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     barcode::{
-        InsertBarcodeInput as ServiceInsertInput, ManageBarcodeError, ProposeBarcodeError,
-        ProposeBarcodeInput as ServiceProposeInput, UpdateBarcodeInput as ServiceUpdateInput,
+        DeleteBarcodeProposalError, InsertBarcodeInput as ServiceInsertInput, ManageBarcodeError,
+        ProposeBarcodeError, ProposeBarcodeInput as ServiceProposeInput,
+        UpdateBarcodeInput as ServiceUpdateInput,
     },
     service_provider::ServiceContext,
     sync::CentralServerConfig,
@@ -77,6 +78,35 @@ pub fn propose_barcode(
                     StandardGraphqlError::BadUserInput(formatted)
                 }
                 ProposeBarcodeError::DatabaseError(_) => {
+                    StandardGraphqlError::InternalError(formatted)
+                }
+            };
+            Err(graphql_error.extend())
+        }
+    }
+}
+
+/// Withdraws a proposal made by a store on this site, e.g. one that picked the
+/// wrong item. Same access as proposing. ProposalDoesNotExist is a top-level error.
+pub fn delete_barcode_proposal(
+    ctx: &Context<'_>,
+    store_id: &str,
+    id: &str,
+) -> Result<DeleteResponse> {
+    let service_context = service_context(ctx, store_id, Resource::QueryItems)?;
+    match ctx
+        .service_provider()
+        .barcode_service
+        .delete_barcode_proposal(&service_context, id)
+    {
+        Ok(id) => Ok(DeleteResponse(id)),
+        Err(error) => {
+            let formatted = format!("{error:#?}");
+            let graphql_error = match error {
+                DeleteBarcodeProposalError::ProposalDoesNotExist => {
+                    StandardGraphqlError::BadUserInput(formatted)
+                }
+                DeleteBarcodeProposalError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted)
                 }
             };
