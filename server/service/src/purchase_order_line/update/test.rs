@@ -351,4 +351,84 @@ mod update {
 
         assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineUpdated);
     }
+
+    /// The stored total is recomputed on every update from the merged figures:
+    /// the adjusted quantity takes precedence over the requested one, a price
+    /// change moves it, and a zero pack size zeroes it.
+    #[actix_rt::test]
+    async fn update_purchase_order_line_recomputes_line_total() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_purchase_order_line_recomputes_line_total",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id.clone(), "".to_string())
+            .unwrap();
+        let service = service_provider.purchase_order_line_service;
+        let repo = PurchaseOrderLineRowRepository::new(&context.connection);
+        let line_total = || {
+            repo.find_one_by_id("po_line_total")
+                .unwrap()
+                .unwrap()
+                .line_total
+        };
+
+        // 100 units at pack size 5 = 20 packs, at 6.00 = 120.00
+        service
+            .insert_purchase_order_line(
+                &context,
+                InsertPurchaseOrderLineInput {
+                    id: "po_line_total".to_string(),
+                    purchase_order_id: mock_purchase_order_a().id,
+                    // Not an item the mock order already carries, so the final
+                    // move to a zero pack size doesn't collide with an existing
+                    // item/pack-size combination.
+                    item_id_or_code: mock_item_d().id.to_string(),
+                    requested_pack_size: Some(5.0),
+                    requested_number_of_units: Some(100.0),
+                    price_per_pack_after_discount: Some(6.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(line_total(), 120.0);
+
+        let update = |input: UpdatePurchaseOrderLineInput| {
+            service
+                .update_purchase_order_line(
+                    &context,
+                    &mock_store_a().id,
+                    UpdatePurchaseOrderLineInput {
+                        id: "po_line_total".to_string(),
+                        ..input
+                    },
+                    None,
+                )
+                .unwrap();
+        };
+
+        // The adjusted quantity takes precedence: 50 units = 10 packs at 6.00
+        update(UpdatePurchaseOrderLineInput {
+            adjusted_number_of_units: Some(50.0),
+            ..Default::default()
+        });
+        assert_eq!(line_total(), 60.0);
+
+        // A price change moves it: 10 packs at 8.00
+        update(UpdatePurchaseOrderLineInput {
+            price_per_pack_after_discount: Some(8.0),
+            ..Default::default()
+        });
+        assert_eq!(line_total(), 80.0);
+
+        // A zero pack size zeroes it rather than dividing by zero
+        update(UpdatePurchaseOrderLineInput {
+            requested_pack_size: Some(0.0),
+            ..Default::default()
+        });
+        assert_eq!(line_total(), 0.0);
+    }
 }

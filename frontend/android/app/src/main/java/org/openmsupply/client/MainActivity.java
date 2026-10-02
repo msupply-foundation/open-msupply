@@ -51,6 +51,7 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
         registerPlugin(PrintPlugin.class);
         registerPlugin(ReadLogPlugin.class);
         registerPlugin(DiscoveryHostPlugin.class);
+        registerPlugin(HoneywellScannerPlugin.class);
 
         super.onCreate(savedInstanceState);
 

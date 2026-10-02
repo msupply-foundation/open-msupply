@@ -33,6 +33,7 @@ mod query {
                 name: "Fridge 2-8°C".to_string(),
                 min_temperature: 2.0,
                 max_temperature: 8.0,
+                code: "Fridge 2-8°C".to_string(),
             })
             .unwrap();
         location_type_repo
@@ -41,6 +42,7 @@ mod query {
                 name: "Freezer".to_string(),
                 min_temperature: -25.0,
                 max_temperature: -15.0,
+                code: "Freezer".to_string(),
             })
             .unwrap();
 

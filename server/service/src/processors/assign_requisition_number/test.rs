@@ -1,7 +1,7 @@
 use repository::{
     mock::{MockData, MockDataInserts},
     KeyType, KeyValueStoreRow, NameRow, RequisitionRow, RequisitionRowRepository, RequisitionType,
-    StoreRow,
+    StoreRow, SystemLogRowRepository, SystemLogType,
 };
 use util::uuid::uuid;
 
@@ -100,5 +100,78 @@ async fn assigns_requisition_number_to_response_requisitions() {
     assert_eq!(
         re_queried_response.requisition_number,
         updated_response.requisition_number
+    );
+}
+
+/// The processor sees every requisition changelog row for the store, including the rows
+/// of requisitions deleted before it ran. Nothing is left to number, so none is an error.
+#[tokio::test]
+async fn deleted_requisition_is_not_an_error() {
+    let site_id = 25;
+
+    let customer_name = NameRow {
+        id: uuid(),
+        ..Default::default()
+    };
+    let store_name = NameRow {
+        id: uuid(),
+        ..Default::default()
+    };
+    let store = StoreRow {
+        id: uuid(),
+        name_id: store_name.id.clone(),
+        site_id,
+        ..Default::default()
+    };
+    let site_id_settings = KeyValueStoreRow {
+        id: KeyType::SettingsSyncSiteId,
+        value_int: Some(site_id),
+        ..Default::default()
+    };
+
+    let ServiceTestContext {
+        service_provider, ..
+    } = setup_all_with_data_and_service_provider(
+        "assign_requisition_number_deleted_requisition",
+        MockDataInserts::none().stores().names(),
+        MockData {
+            names: vec![customer_name.clone(), store_name],
+            stores: vec![store.clone()],
+            key_value_store_rows: vec![site_id_settings],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    let ctx = service_provider.basic_context().unwrap();
+
+    let draft = RequisitionRow {
+        id: uuid(),
+        requisition_number: -1,
+        name_id: customer_name.id,
+        store_id: store.id,
+        r#type: RequisitionType::Response,
+        ..Default::default()
+    };
+    let repo = RequisitionRowRepository::new(&ctx.connection);
+    repo.upsert_one(&draft).unwrap();
+    repo.delete(&draft.id).unwrap();
+
+    ctx.processors_trigger
+        .general_processor
+        .try_send(ProcessorType::AssignRequisitionNumber)
+        .unwrap();
+    ctx.processors_trigger.await_events_processed().await;
+
+    let processor_errors: Vec<_> = SystemLogRowRepository::new(&ctx.connection)
+        .find_all()
+        .unwrap()
+        .into_iter()
+        .filter(|log| log.r#type == SystemLogType::ProcessorError)
+        .collect();
+    assert!(
+        processor_errors.is_empty(),
+        "Expected no processor errors for a deleted requisition, got {:?}",
+        processor_errors
     );
 }

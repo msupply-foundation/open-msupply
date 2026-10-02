@@ -8,7 +8,7 @@ import {
 } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
-import { isCentralServer } from '../../api/serverInfo';
+import { AppVersionRow } from '../../nav/AppVersionRow';
 import { locale, t } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
@@ -19,7 +19,6 @@ import { Stack } from '../../ui/layout/Stack/Stack';
 import { FormSection } from '../../ui/layout/Form/FormSection';
 import { Text } from '../../ui/elements/typography/Text';
 import { Select } from '../../ui/elements/selectors/Select';
-import { FieldRow } from '../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { TextArea } from '../../ui/elements/inputs/TextArea';
 import { Button } from '../../ui/elements/buttons/Button';
@@ -135,26 +134,14 @@ const HelpPage: Component = () => {
           <HeaderButtons>
             {/* App-bar end area (spec/help S1 § App bar): the labelled build
                 version — the shared utility-page treatment, chrome
-                OMS-REG-FTR-02.11 — and, on a central server, the
-                central-server marker. Site/server identity rows are the
-                Android host's only (ui-surface § App bar); on web the site
-                name renders solely in the Settings header. Read-only text, no
-                controls. A plain grouping div so the FieldRows block-stack
+                OMS-REG-FTR-02.11. The central-server marker is left to the
+                bottom bar to save room (issue #574). Site/server identity rows
+                are the Android host's only (ui-surface § App bar). Read-only
+                text, no controls. A plain grouping div so the FieldRows block-stack
                 flush (they are flex children of HeaderButtons otherwise),
                 matching the Settings header's server-info column. */}
             <div>
-              <FieldRow label={t('label.app-version')}>
-                <Text variant="body" as="span" data-testid="app-version">
-                  {APP_VERSION}
-                </Text>
-              </FieldRow>
-              {/* Central-server line: a FieldRow label with no value, reusing
-                  the same label styling as the rows above. */}
-              <Show when={isCentralServer()}>
-                <FieldRow label={t('label.central-server')} labelWidth="auto">
-                  {null}
-                </FieldRow>
-              </Show>
+              <AppVersionRow />
             </div>
           </HeaderButtons>
         </Header>

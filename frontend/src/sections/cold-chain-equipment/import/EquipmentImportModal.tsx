@@ -258,7 +258,7 @@ export const EquipmentImportModal: Component<
     }
     // A failed run stays open on Review, showing exactly the rows that failed
     // with the reason each was refused (OMS-REG-CCE-07.10).
-    setImportError(t('messages.import-error'));
+    setImportError(t('messages.import-error-assets'));
     setRows(failures);
     setStep('review');
   };
@@ -506,7 +506,7 @@ export const EquipmentImportModal: Component<
             onClick={() => void runImport()}
             data-testid="dialog-button-ok"
           >
-            {t('button.ok-and-next')}
+            {t('button.import')}
           </Button>
         </>
       }

@@ -120,6 +120,8 @@ all lanes, which is safe because sccache is content-addressed. `/cache/target` i
 workflow: cargo takes an exclusive lock on a target dir, so lanes sharing one
 would serialise on the lock and thrash each other's fingerprints.
 
+`/cache/pnpm` is created by the e2e nightly itself (`frontend-e2e-nightly.yaml`): the pnpm store and npm's cache for the suite install, which runs in a container. Shared across lanes, which is safe because both are content-addressed. It only grows on dependency bumps; `rm -rf /cache/pnpm` is always safe and just costs the next run a full download.
+
 ## Install the runner, once per lane
 
 > Registering each lane by hand, as this section describes, is the simpler thing

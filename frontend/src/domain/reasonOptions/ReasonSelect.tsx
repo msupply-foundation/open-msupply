@@ -46,6 +46,25 @@ export const reasonsOfKind = (kind: ReasonKind): ReasonOption[] =>
   reasonOptionsResource.noSuspense().filter(r => KIND_TYPES[kind].has(r.type));
 
 /**
+ * Whether the server will DEMAND a reason for a stocktake adjustment in this
+ * direction: true when an active plain adjustment reason of that direction
+ * exists. Narrower than `reasonsOfKind('negative')` on purpose — the server's
+ * "reason required" check consults only positive/negative-adjustment reasons,
+ * never vaccine wastage (spec/stocktakes/contract.md § adjustment-reason
+ * rules), so a store with wastage reasons alone never requires one. The
+ * initial/blind-stocktake exemptions are the caller's to add.
+ */
+export const adjustmentReasonRequired = (
+  direction: 'positive' | 'negative'
+): boolean => {
+  const type =
+    direction === 'positive'
+      ? 'POSITIVE_INVENTORY_ADJUSTMENT'
+      : 'NEGATIVE_INVENTORY_ADJUSTMENT';
+  return reasonOptionsResource.noSuspense().some(r => r.type === type);
+};
+
+/**
  * Whether a reason option is valid for a kind — the single source of truth for
  * the kind→types mapping, exported so callers can drop a now-mismatched reason
  * when the adjustment direction changes (e.g. a stocktake line recounted the
@@ -71,10 +90,14 @@ export interface ReasonSelectProps {
   hideLabel?: boolean;
   disabled?: boolean;
   error?: string;
+  /** Advisory warning line — forwarded to the Combobox (error displaces it). */
+  warning?: string;
   /** Marks the field required — passed through to the Combobox's label. */
   required?: boolean;
   /** `data-testid` for the error message — forwarded to the Combobox. */
   errorTestId?: string;
+  /** `data-testid` for the warning message — forwarded to the Combobox. */
+  warningTestId?: string;
   /** `data-testid` for the text input — forwarded to the Combobox. */
   inputTestId?: string;
   placeholder?: string;
@@ -113,8 +136,10 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
     value={props.value}
     disabled={props.disabled}
     error={props.error}
+    warning={props.warning}
     required={props.required}
     errorTestId={props.errorTestId}
+    warningTestId={props.warningTestId}
     inputTestId={props.inputTestId}
     placeholder={props.placeholder}
     width={props.width}

@@ -19,7 +19,7 @@
  *
  * Run via `pnpm check`.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { matchesGlob } from 'node:path';
 
@@ -79,12 +79,20 @@ const codegenGlobs = () => {
 // Playwright collects `testDir` with its default testMatch. testDir is
 // relative to the config file, which lives in e2e/.
 const playwrightGlobs = () => {
-  const src = stripComments(read('e2e/playwright.config.ts'));
+  const src = stripComments(read(PLAYWRIGHT_CONFIG));
   const m = /\btestDir:\s*['"]([^'"]+)['"]/.exec(src);
   if (!m) throw new Error('e2e/playwright.config.ts: could not find `testDir`');
   const dir = `e2e/${m[1].replace(/^\.\//, '').replace(/\/$/, '')}`;
   return [`${dir}/**/*.@(spec|test).?(c|m)[jt]s?(x)`];
 };
+
+// e2e/ and every workflow but the docs deploy are kept out of the public
+// mirror (.github/mirror/rules.txt). There, the Playwright runner has no config
+// and no test files to own, and there is no CI to be wired into — so both parts
+// skip rather than fail, or `pnpm check` could never pass in the public repo.
+// The mirror machinery is itself unpublished, so its absence marks the mirror.
+const PLAYWRIGHT_CONFIG = 'e2e/playwright.config.ts';
+const IN_MIRROR = !existsSync('../.github/mirror/rules.txt');
 
 const RUNNERS = [
   {
@@ -107,7 +115,7 @@ const RUNNERS = [
       step: /^[ \t]*run:[ \t]*pnpm test:codegen[ \t]*$/m,
     },
   },
-  {
+  existsSync(PLAYWRIGHT_CONFIG) && {
     name: 'Playwright (`pnpm e2e`)',
     globs: playwrightGlobs(),
     // The nightly reaches Playwright neither through the `pnpm e2e` alias nor
@@ -128,7 +136,12 @@ const RUNNERS = [
       step: /playwright test --config e2e\/playwright\.config\.ts/,
     },
   },
-];
+].filter(Boolean);
+if (!existsSync(PLAYWRIGHT_CONFIG)) {
+  console.log(
+    `check-test-runners: Playwright skipped — no ${PLAYWRIGHT_CONFIG} in this tree`
+  );
+}
 
 // Files no runner collects ON PURPOSE. Each needs a reason, so that "nothing
 // runs this" is a decision on the record rather than the default.
@@ -164,7 +177,12 @@ if (unmatched.length) {
 
 // --- Wired into CI ------------------------------------------------------
 
-for (const { name, ci } of RUNNERS) {
+if (IN_MIRROR) {
+  console.log(
+    'check-test-runners: CI wiring skipped — no .github/mirror/ in this tree, so its workflows are not either'
+  );
+}
+for (const { name, ci } of IN_MIRROR ? [] : RUNNERS) {
   let workflow;
   try {
     workflow = read(`../.github/workflows/${ci.workflow}`);

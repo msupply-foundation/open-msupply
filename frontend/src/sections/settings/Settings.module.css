@@ -41,11 +41,6 @@
   color: var(--text-secondary);
 }
 
-.scanResultList {
-  margin: 0;
-  padding-inline-start: var(--space-5);
-}
-
 /* Server-info block (issue #500): the QR beside the FieldRow label:value
  * details (server URL / site / version / central-server). The only bespoke
  * class in the block — a horizontal arrangement (QR beside the details column)

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   discountPercentage,
   draftFromLine,
-  draftPacks,
   factsFromLine,
   insertInput,
   lineChanges,
@@ -18,7 +17,7 @@ import {
   showsAdjustedUnits,
   type LineDraft,
 } from './purchaseOrderLineEdit';
-import { lineCost } from '../purchaseOrderPricing';
+import { linePacks, projectedLineCost } from '../purchaseOrderPricing';
 import type { PurchaseOrderDetailLineFragment } from '../purchaseOrderDetail.generated';
 
 // Anchors: spec/purchase-orders/cases/OMS-FUN-PO-02 (the line editor),
@@ -44,6 +43,8 @@ const line = (
   shippedNumberOfUnits: 0,
   pricePerPackBeforeDiscount: 8,
   pricePerPackAfterDiscount: 6,
+  // The stored total: 10 packs at 6.00, as the server wrote it.
+  lineTotal: 60,
   requestedDeliveryDate: '2026-10-01',
   expectedDeliveryDate: null,
   supplierItemCode: null,
@@ -104,12 +105,13 @@ describe('OMS-FUN-PO-02.18 / .19 — the figures the editor shows come from the 
 });
 
 describe('OMS-FUN-PO-07.4 — packs are units over pack size', () => {
+  // The editor shows a draft's packs on the same rule as the table's column.
   it('shows the requested quantity in packs', () => {
-    expect(draftPacks(draft())).toBe(10);
+    expect(linePacks(draft())).toBe(10);
   });
 
   it('shows the adjusted quantity once there is one', () => {
-    expect(draftPacks(draft({ adjustedNumberOfUnits: 50 }))).toBe(5);
+    expect(linePacks(draft({ adjustedNumberOfUnits: 50 }))).toBe(5);
   });
 });
 
@@ -332,10 +334,13 @@ describe('OMS-FUN-PO-02.14 / OMS-FUN-PO-07.2 — the three prices settle', () =>
   });
 });
 
-describe('OMS-FUN-PO-07.3 — the line’s total cost', () => {
-  it('is the after-discount price times the packs authored', () => {
-    expect(lineCost(draft())).toBe(60);
-    expect(lineCost(draft({ adjustedNumberOfUnits: 50 }))).toBe(30);
+describe('OMS-FUN-PO-07.3 — the editor previews the line’s total cost', () => {
+  // The editor previews what the server will STORE on save — its own rule,
+  // the after-discount price times the packs authored. A saved line's row
+  // then reads the stored figure (`lineTotal`) rather than recomputing it.
+  it('previews the after-discount price times the packs authored', () => {
+    expect(projectedLineCost(draft())).toBe(60);
+    expect(projectedLineCost(draft({ adjustedNumberOfUnits: 50 }))).toBe(30);
   });
 });
 

@@ -9,6 +9,16 @@ describe("convert_data end-to-end", () => {
     expect(result).toEqual(outputData);
   });
 
+  it("filters lines by the queried master list item ids", () => {
+    // input.json has lines for item-1 and item-2, and masterListItems holds
+    // item-1 only
+    const result = convert_data({
+      ...(inputData as any),
+      arguments: { ...inputData.arguments, masterListId: "ml-1" },
+    });
+    expect(result.data.lines.map((line) => line.item.id)).toEqual(["item-1"]);
+  });
+
   it("returns empty lines for empty invoices", () => {
     const emptyInput = {
       data: {
@@ -44,7 +54,11 @@ describe("convert_data end-to-end", () => {
       data: {
         invoices: { nodes: [] },
         stocktakes: { nodes: [] },
-        store: { id: "store-1", storeName: "My Test Store" },
+        store: {
+          __typename: "StoreNode",
+          id: "store-1",
+          storeName: "My Test Store",
+        },
       },
       arguments: {},
     };

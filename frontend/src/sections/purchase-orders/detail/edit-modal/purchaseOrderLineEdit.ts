@@ -114,13 +114,6 @@ export const newLineDraft = (
 // ─── Quantities ─────────────────────────────────────────────────────────────
 
 /**
- * The packs the editor shows: the expected quantity over the pack size, on the
- * same rule the table's column and the order's totals use (OMS-FUN-PO-07.4).
- */
-export const draftPacks = (draft: LineDraft): number =>
-  linePacks({ ...draft, pricePerPackAfterDiscount: 0 });
-
-/**
  * Which quantity a units figure writes (OMS-FUN-PO-02.12): both, equal, while
  * drafting; the adjusted one alone from Ready for sending.
  */
@@ -148,7 +141,7 @@ export const packSizeEntered = (
   packSize: number
 ): Partial<LineDraft> => ({
   requestedPackSize: packSize,
-  ...quantityPatch(status, draftPacks(draft) * packSize),
+  ...quantityPatch(status, linePacks(draft) * packSize),
 });
 
 /**

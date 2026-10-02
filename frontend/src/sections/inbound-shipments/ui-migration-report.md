@@ -237,7 +237,7 @@ Neither changes behaviour; both are the spec contradicting itself or naming the 
 
 Found by the dimension-11 durability check; the **spec wins**, so these are implementation gaps, but they are behaviour/content, and migration "changes UI composition only":
 
-- **Scan** — spec S3 lists a barcode-assisted line-entry page action, in the header cluster between Add item and Report/print. Not implemented.
+- ✅ **Scan** — spec S3 lists a barcode-assisted line-entry page action, in the header cluster between Add item and Report/print. Implemented as the shared page-action scan button opening the capture window ([barcode-scanning › S2](../../../spec/barcode-scanning/ui-surface.md#s2--capture-window)).
 - **Upload document** — spec S3 (and TESTIDS:241) list it as the Add-item split button's fourth option. Not offered.
 - **Line table columns 17/18** — spec says **Cost per unit** (weighted-average, summed) and **Price per pack**; the implementation shows **Pack cost price** / **Pack sell price**. A derivation difference, not a composition one.
 - **Line-table row grouping** — spec S3: "a manual/external shipment groups rows by item code; a PO-linked shipment groups by PO line number", and the Financial tab groups by PO line. Blocked on **LIB-1**.

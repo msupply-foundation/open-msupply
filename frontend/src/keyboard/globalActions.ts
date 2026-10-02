@@ -116,6 +116,12 @@ export const createGlobalActions = (handlers: GlobalActionHandlers): void => {
         topmost.hidePopover();
         return;
       }
+      // An open modal dialog owns Escape through its own close request, so a
+      // press that reached this rung came from OUTSIDE it — focus dropped to
+      // <body> when a focused control inside was disabled or removed. The
+      // ladder stops here, whatever the browser or however focus moved: the
+      // screen under a modal never navigates away beneath it.
+      if (document.querySelector('dialog:modal')) return;
       if (handlers.exitFullScreen()) return;
       handlers.navigateUp();
     },

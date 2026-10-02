@@ -1,24 +1,33 @@
 /* Renders in the (wide) line-editor modal, so give it a modal-like width —
    that keeps the month axis physically roomy even when its percentage width
-   shrinks under a large stock-on-hand. */
+   shrinks under a large stock-on-hand. Centred in whatever holds it, under a
+   centred heading. */
 .stockDist {
   width: 100%;
   max-width: 46rem;
+  margin-inline: auto;
   font-size: 0.75rem;
 }
 
 .calcError {
-  margin: 0;
-  max-width: 28rem;
+  inline-size: fit-content;
+  max-inline-size: 28rem;
+  margin: 0 auto;
   font-size: var(--text-sm);
   color: var(--error-main);
 }
 
 /* The month-marker axis above the bars: 0 → target months, each cell a month
-   of consumption; its width shrinks when stock exceeds the target. Cells clip
-   horizontally so a label never bleeds into its neighbour, but their content
-   WRAPS so the numbers stay fully readable; equal-height cells keep the
-   baseline (cell bottom border) straight. */
+   of consumption; its width shrinks when stock exceeds the target. A cell is
+   never narrower than its number, so the numbers always read side by side on
+   one line — in a sliver axis (stock far above target) the cells outgrow the
+   axis's share of the row rather than stack the digits. A long target (24
+   months) can do the same at full width, running the axis past the chart's
+   edge, as the original's cells do. The rest of a label
+   wraps anywhere and clips, so it never bleeds into its neighbour;
+   equal-height cells keep the baseline (cell bottom border) straight. When
+   the cells are too narrow for any text (numbersOnly), they shrink to the one
+   line their numbers need. */
 .monthAxis {
   display: flex;
   align-items: stretch;
@@ -45,7 +54,8 @@
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
-  min-width: 0;
+  /* Only the number sets this: every other run of text wraps anywhere. */
+  min-width: min-content;
   /* A FIXED height (not min-height) so a sliver-width cell whose label wraps
      is clipped by overflow, never growing the row (the original caps it too);
      the tooltip carries the full text. */
@@ -57,17 +67,29 @@
   border-block-end: 1px solid var(--gray-dark);
 }
 
+.numbersOnly .monthCell {
+  height: auto;
+}
+
+/* A marker label gives way to the number beneath it: it shrinks and clips
+   first, so it can never push the number out of the cell. */
 .monthAdditional {
+  min-height: 0;
+  overflow: hidden;
   color: var(--primary-main);
   line-height: 1.2;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .monthValue {
   margin-block-start: auto;
   color: var(--gray-dark);
   line-height: 1.2;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.monthNumber {
+  white-space: nowrap;
 }
 
 /* The value bars (stock on hand, suggested order) proportioned to target. */
@@ -79,8 +101,10 @@
 
 .divider {
   flex: 0 0 auto;
+  align-self: stretch;
   width: 1px;
-  height: 2.8rem;
+  /* Stretches with the row, so it reaches the foot of a label that wraps. */
+  min-height: 2.8rem;
   background: var(--gray-dark);
 }
 
@@ -108,12 +132,23 @@
   color: var(--primary-contrast);
 }
 
+/* Wraps onto more lines in a narrow bar rather than truncating; the row, and
+   its dividers, grow to fit. */
 .valueLabel {
   padding-block-start: var(--space-2);
   padding-inline-end: 0.6rem;
   text-align: end;
   color: var(--text-body);
-  white-space: nowrap;
+  overflow-wrap: break-word;
+}
+
+/* Text the chart has no room to show, kept for screen readers (the hover
+   title isn't reachable by keyboard, touch or most screen readers). */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

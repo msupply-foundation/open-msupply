@@ -1,5 +1,5 @@
 // rem ↔ px conversion against the LIVE root font-size. The root font-size
-// isn't fixed — index.css sets it to 100% (16px) normally but 85% (~13.6px) on
+// isn't fixed — index.css sets it to 100% (16px) normally but 95% (~15.2px) on
 // compact — so `1rem` in px depends on the viewport, and we must read it at
 // runtime rather than assume 16. We store column sizes in rem (so they scale
 // with the root like everything else, per the rem-not-px sizing rule) while

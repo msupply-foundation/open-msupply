@@ -151,10 +151,11 @@ export const ALT_L = shortcut({ alt: true, code: 'KeyL', tier: 'global' });
  * the status control and its selection. — PrescriptionStatusFooter
  */
 export const ALT_V = shortcut({ alt: true, code: 'KeyV', tier: 'global' });
+/** Open the repack modal. Stock line detail only. — StockLineDetailView */
+export const ALT_R = shortcut({ alt: true, code: 'KeyR', tier: 'global' });
 /**
- * Scan a barcode. NOT YET REGISTERED — its creation site is the scanner
- * control, which does not exist yet; it belongs in the helper that owns that
- * control, the way createSidePanelOpen owns Alt+M (KB-R2).
+ * Scan a barcode, wherever a scanner control is present and enabled.
+ * — createScanControl (domain/barcode)
  */
 export const CTRL_S = shortcut({ ctrl: true, code: 'KeyS', tier: 'global' });
 /**

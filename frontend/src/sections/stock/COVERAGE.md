@@ -5,7 +5,7 @@ Maps every behaviour in [`spec/stock/cases/`](../../../spec/stock/cases/) to whe
 Tiers:
 
 - **unit** — a colocated `vitest` test (node env) over the pure client-side logic the screen computes (previews, error mapping, derivations, CSV, picker narrowing). Named here.
-- **e2e** — a behavioural outcome the server enforces; belongs in the deterministic Playwright suites under [`e2e/`](../../../e2e/README.md), exercised against the **real backend** (contract C2). **Not authored yet** — this is the remaining test work, tracked as step 4 of [`spec/stock/TESTING-PLAN.md`](../../../spec/stock/TESTING-PLAN.md).
+- **e2e** — a behavioural outcome the server enforces; belongs in the deterministic Playwright suites under [`e2e/`](../../../e2e/README.md), exercised against the **real backend** (contract C2). The suite is [`e2e/specs/stock-regression.spec.ts`](../../../e2e/specs/stock-regression.spec.ts); the e2e rows below predate it and have not been re-marked against it yet (history: the archived [testing plan](../../../spec/stock/archive/TESTING-PLAN.md)).
 - **ui** — a static surface/gating/state assertion, verified against the running implementation (contract C4) — a11y tree + presence; scriptable in `e2e/`.
 - **exempt** — out of scope, with the reason stated (C1 requires these be named, never silently dropped).
 
@@ -135,7 +135,7 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.3` negative ledger entry (original)              | e2e            | `ledger`                                                                              |
 | `.4` positive ledger entry (new)                   | e2e            | `ledger`                                                                              |
 | `.5` net balance unchanged                         | e2e            | `ledger`                                                                              |
-| `.21` navigation offered after a full repack       | ui             | full-repack `ConfirmDialog` + navigate (`RepackModal`)                                |
+| `.21` navigation offered after a full repack       | ui             | full-repack `ConfirmDialog` + navigate (`StockLineDetailView`)                        |
 | `.6` remainder stays at the original size          | e2e            | `insertRepack`                                                                        |
 | `.7` new line holds the repacked packs             | **unit** + e2e | `stockCalc.test.ts` (`repackNewPacks`)                                                |
 | `.8` total units unchanged                         | e2e            | server split                                                                          |
@@ -155,7 +155,10 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.23` New location is volume-aware                 | **unit** + ui  | `domain/location/volume.test.ts`; `requiredVolume` = the volume leaving the original  |
 | `.24` selected repack marked and read-only         | **unit** + ui  | `detail/repackSelection.test.ts` (`repackPanelState`)                                 |
 | `.25` print acts on the selection, else prompts    | **unit** + ui  | `detail/repackSelection.test.ts` (the print gate)                                     |
-| `.26` a saved repack stays selected                | **unit** + ui  | `detail/repackSelection.test.ts` (the post-save window)                               |
+| `.27` a new repack starts filled in                | **unit** + ui  | `detail/repackSelection.test.ts` (`newRepackDraft`)                                   |
+| `.28` saving closes the repack flow                | ui             | `RepackModal` save → `onClose`                                                        |
+| `.29` `Alt+R` opens the repack flow                | ui             | `ALT_R` action (`StockLineDetailView`)                                                |
+| `.30` `Alt+N` starts a new repack                  | ui             | `createAddAction` (`RepackModal`)                                                     |
 
 ## OMS-REG-INV-06 — VVM Status Management on Stock Lines
 
@@ -188,10 +191,10 @@ Counts overlap — a behaviour verified at two tiers is listed under both. Total
 
 ## Notes / deferrals
 
-- **The e2e rows are the remaining test work**: authoring `e2e/specs/stock-regression.spec.ts` against the running app and the real backend, per the test-id contract. Sequenced in [`spec/stock/TESTING-PLAN.md`](../../../spec/stock/TESTING-PLAN.md).
+- **The e2e rows need re-marking**: `e2e/specs/stock-regression.spec.ts` now exists and runs in the nightly, but these rows were written before it — check each against its `covers` annotations. The plan that sequenced this work is [archived](../../../spec/stock/archive/TESTING-PLAN.md).
 - **Grouped-by-item view** — deferred to a future iteration; no behaviour exists for it, and the retired `AC-L5` holds the reservation ([acceptance mapping](../../../spec/stock/acceptance.md)).
 - **Campaign/program field** (S2/S3) is built on the shared `CampaignOrProgramSelect` (`src/domain/campaign`) — one mutually-exclusive choice over the two wire fields, both nullable-update wrappers sent together on S2 saves. (The live backend's `StockLineFilterInput` still lacks `campaignId` — a list-filter drift from the pinned schema, not a field concern.) No behaviour asserts the mutual exclusion; it is carried as a gap probe in [`exploratory/workflows/stock.md`](../../../exploratory/workflows/stock.md).
-- **Barcode scan affordance** (S2) is omitted — scanner discovery is owned by [`android/`](../../../spec/android) and unavailable on web; the barcode text field is present.
+- **Barcode scan affordance** (S2, and the new-stock form) is the shared field scan affordance ([barcode-scanning › R1](../../../spec/barcode-scanning/ui-surface.md#the-field-scan-affordance)); what a scan fills and what saving the code does are anchored to `OMS-REG-BAC-01.49`–`.54`, not counted here.
 - **Repack "created-by" source-batch note** (S5) is omitted — not directly queryable.
 - **Item-name → catalogue link** (S2 identity header and the S4 adjust modal's context card) is a `RecordLink` to the item's catalogue record. No behaviour asserts it — it is an affordance, stated in [`ui-surface.md`](../../../spec/stock/ui-surface.md) like S2's own header link.
 - **Item-variant selection** in the new-stock flow has no behaviour; carried as a gap probe in the exploratory workflow.

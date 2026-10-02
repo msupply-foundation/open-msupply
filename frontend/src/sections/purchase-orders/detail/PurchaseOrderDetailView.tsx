@@ -30,6 +30,7 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  type CellFragment,
   getCellDefinition,
   getCurrencyCell,
   getDateCell,
@@ -100,7 +101,8 @@ import {
   isOpenToChange,
 } from './purchaseOrderLadder';
 import { formatCurrency } from '@/intl/currency';
-import { linePacks, lineCost } from './purchaseOrderPricing';
+import { formatNumber } from '@/intl/formatNumber';
+import { linePacks } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
 import {
   PurchaseOrderLineEditModal,
@@ -165,6 +167,11 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   onOrder: false,
   requestedDeliveryDate: false,
   expectedDeliveryDate: false,
+};
+
+const exactQuantity: CellFragment<Line>['cell'] = info => {
+  const value = info.getValue<number | null | undefined>();
+  return value == null ? '' : formatNumber(value);
 };
 
 const PurchaseOrderDetailView: Component = () => {
@@ -402,6 +409,12 @@ const PurchaseOrderDetailView: Component = () => {
   // here because the refusal names no cause (contract ⚠️), so a control left
   // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
+  // A line with no quantity — not yet ordered (spec S7) — on an order and a
+  // line that can still change. Sent orders and closed lines need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    !isDisabled() &&
+    line.status !== 'CLOSED' &&
+    line.requestedNumberOfUnits === 0;
 
   const refetchAll = () => {
     void refetchInfo();
@@ -586,6 +599,7 @@ const PurchaseOrderDetailView: Component = () => {
       c: { accessor: line => linePacks(line), id: 'numPacks' },
       header: () => t('label.order-quantity-in-packs'),
       ...getCellDefinition('numberOfPacks'),
+      cell: exactQuantity,
     },
     {
       c: { key: 'requestedPackSize' },
@@ -605,6 +619,7 @@ const PurchaseOrderDetailView: Component = () => {
       header: () =>
         t('label.order-quantity-in-unit', { unit: t('label.units') }),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(8),
     },
     {
@@ -614,6 +629,7 @@ const PurchaseOrderDetailView: Component = () => {
       sortKey: 'adjustedNumberOfUnits',
       header: () => t('label.adjusted-units'),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(8),
     },
     {
@@ -622,6 +638,7 @@ const PurchaseOrderDetailView: Component = () => {
       sortKey: 'shippedNumberOfUnits',
       header: () => t('label.shipped-units'),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(8),
     },
     {
@@ -640,18 +657,19 @@ const PurchaseOrderDetailView: Component = () => {
       c: { accessor: line => line.unitsOrderedInOthers, id: 'onOrder' },
       header: () => t('label.on-order'),
       ...getNumberCell(),
+      cell: exactQuantity,
       size: remToPx(7),
     },
     {
-      // Packs × the after-line-discount pack price, at the order currency's
-      // precision. Its footer sums the rows ON SCREEN — the page, which is
-      // what a paginated table can total; the order's whole subtotal is the
-      // side panel's Subtotal row.
-      c: { accessor: line => lineCost(line), id: 'lineCost' },
+      // The line's STORED total, as the server wrote it — never re-multiplied
+      // here (rules § pricing and totals). Its footer sums the rows ON SCREEN
+      // — the page, which is what a paginated table can total; the order's
+      // whole subtotal is the side panel's Subtotal row.
+      c: { accessor: line => line.lineTotal, id: 'lineCost' },
       header: () => t('label.line-cost'),
       ...getCurrencyCell(undefined, () => info()?.currency?.code),
       footer: () =>
-        money(rows().reduce((sum, line) => sum + lineCost(line), 0)),
+        money(rows().reduce((sum, line) => sum + line.lineTotal, 0)),
     },
     {
       c: { key: 'requestedDeliveryDate' },
@@ -858,13 +876,22 @@ const PurchaseOrderDetailView: Component = () => {
                     line.status === 'CLOSED' ? 'disabled' : undefined
                   }
                   // A line named by a blocked state move reads in the error
-                  // tone so it can be found and removed (spec S18); a line
-                  // with no quantity reads as a placeholder — not yet ordered
-                  // (spec S7). Error wins when both hold.
+                  // tone so it can be found and removed (spec S18).
                   rowTone={line =>
+                    blockedLines().includes(line.id) ? 'error' : undefined
+                  }
+                  // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  // Error wins when both hold.
+                  cardTone={line =>
                     blockedLines().includes(line.id)
                       ? 'error'
-                      : line.requestedNumberOfUnits === 0
+                      : isOpenPlaceholder(line)
                         ? 'info'
                         : undefined
                   }

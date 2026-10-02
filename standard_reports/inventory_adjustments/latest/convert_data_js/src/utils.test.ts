@@ -11,7 +11,6 @@ const createInvoiceLine = (overrides = {}) => ({
     id: "item-1",
     code: "ABC123",
     name: "Paracetamol 500mg",
-    masterLists: [{ id: "ml-1", name: "Essential" }],
   },
   location: { id: "loc-1", code: "A1", name: "Shelf A1" },
   ...overrides,
@@ -206,7 +205,7 @@ describe("processLines", () => {
       expect(result).toHaveLength(1);
     });
 
-    it("filters by location, master list, and reason", () => {
+    it("filters by location and reason", () => {
       const invoice = createInvoice({ id: "inv-99" });
       expect(processLines([invoice], [], { locationId: "loc-1" })).toHaveLength(
         1
@@ -215,11 +214,35 @@ describe("processLines", () => {
         processLines([invoice], [], { locationId: "loc-999" })
       ).toHaveLength(0);
       expect(
-        processLines([invoice], [], { masterListId: "ml-1" })
-      ).toHaveLength(1);
-      expect(
         processLines([invoice], [], { reasonOptionId: "reason-1" })
       ).toHaveLength(1);
+    });
+
+    it("filters by master list on the queried master list item ids", () => {
+      const invoice = createInvoice({ id: "inv-99" }); // item-1
+      expect(
+        processLines(
+          [invoice],
+          [],
+          { masterListId: "ml-1" },
+          new Set(["item-1", "item-2"])
+        )
+      ).toHaveLength(1);
+      expect(
+        processLines(
+          [invoice],
+          [],
+          { masterListId: "ml-1" },
+          new Set(["item-2"])
+        )
+      ).toHaveLength(0);
+    });
+
+    it("ignores master list item ids when no master list is chosen", () => {
+      const invoice = createInvoice({ id: "inv-99" }); // item-1
+      expect(processLines([invoice], [], {}, new Set(["item-2"]))).toHaveLength(
+        1
+      );
     });
   });
 
@@ -231,7 +254,7 @@ describe("processLines", () => {
           lines: {
             nodes: [
               createInvoiceLine({
-                item: { code: "ZZZ", name: "Z", masterLists: [] },
+                item: { code: "ZZZ", name: "Z" },
               }),
             ],
           },
@@ -241,7 +264,7 @@ describe("processLines", () => {
           lines: {
             nodes: [
               createInvoiceLine({
-                item: { code: "AAA", name: "A", masterLists: [] },
+                item: { code: "AAA", name: "A" },
               }),
             ],
           },
