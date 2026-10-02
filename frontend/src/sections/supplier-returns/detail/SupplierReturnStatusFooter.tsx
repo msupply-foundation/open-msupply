@@ -5,6 +5,8 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import { StatusChangeAction } from './actions/StatusChangeAction';
 import { currentStep, filterByStatusPreference } from '@/domain/invoice';
 import { STATUS_FLOW, statusSteps } from './returnStatus';
@@ -20,6 +22,10 @@ import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generate
 // stays available while the return is editable, confirms before flipping, and
 // the messages flip with direction. It hides once the return is read-only
 // (D39).
+//
+// A status change that lands is reported in the bar's message slot, as a
+// flash of the save confirmation (spec/ui-standards/controls.md § action
+// feedback) — the split button is gone at Shipped.
 
 export interface SupplierReturnStatusFooterProps {
   storeId: string;
@@ -40,6 +46,7 @@ export const SupplierReturnStatusFooter: Component<
   SupplierReturnStatusFooterProps
 > = props => {
   const [holdConfirm, setHoldConfirm] = createSignal(false);
+  const saved = createFlash<string>();
 
   const holding = () => props.node.onHold;
   // The flow narrowed by the invoice-status-options preference (rules §
@@ -47,6 +54,11 @@ export const SupplierReturnStatusFooter: Component<
   // included earlier stage.
   const offered = () =>
     filterByStatusPreference(STATUS_FLOW, props.statusOptions);
+
+  const onApplied = (node: SupplierReturnInfoFragment) => {
+    props.onAdvanced(node);
+    saved.show(t('messages.return-saved'));
+  };
 
   return (
     <ContentFooter>
@@ -63,9 +75,12 @@ export const SupplierReturnStatusFooter: Component<
       </Show>
 
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(offered(), props.node)}
         current={currentStep(STATUS_FLOW, offered(), props.node.status)}
       />
+
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       {/* One inline-end cluster: the Confirm-status split button alone. No
           Close beside it (D103) — leaving the return is the breadcrumb's job,
@@ -76,7 +91,7 @@ export const SupplierReturnStatusFooter: Component<
           node={props.node}
           hasLines={props.hasLines}
           statusOptions={props.statusOptions}
-          onApplied={props.onAdvanced}
+          onApplied={onApplied}
         />
       </ContentFooterActions>
 
