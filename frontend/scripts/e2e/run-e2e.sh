@@ -40,7 +40,25 @@
 #     several worktrees can run concurrently against one shared OMS_DIR
 #     without coordinating ports by hand.
 #   KEEP_SERVER=1     leave the server + FE running after the tests
+#   E2E_PLUGIN_PROFILE  run a plugin profile instead of the default suites:
+#                     builds that profile's plugin bundle (pnpm build:plugins),
+#                     installs it into THIS run's throwaway database through
+#                     the real install path, restarts the server so it starts
+#                     with the plugin bound, and runs only
+#                     e2e/specs/plugins/<profile>/ (playwright.config.ts picks
+#                     the project from the same variable). A profile is a
+#                     plugin directory name: plugins/<profile>/, whose
+#                     package.json `name` is the plugin code. Profiles are
+#                     listed in e2e/README.md, not here — this script names
+#                     no deployment.
+#                     Its own run, never mixed with the default suites: a
+#                     plugin can change the host app for every store on the
+#                     site (a dashboard replaced, a column added), so the
+#                     default suites must never see one installed.
 set -euo pipefail
+
+PLUGIN_PROFILE=${E2E_PLUGIN_PROFILE:-}
+PLUGIN_CODE=""
 
 SERVER_PORT=${E2E_SERVER_PORT:-}
 FE_PORT=${E2E_FE_PORT:-}
@@ -48,6 +66,20 @@ DB_NAME="" # set once ports are known -> $OMS_DIR/server/<name>.sqlite (gitignor
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 FE_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
+# Resolve a plugin profile up front, before any build: an unknown one is a
+# typo, and should cost nothing.
+if [[ -n "$PLUGIN_PROFILE" ]]; then
+  PLUGIN_MANIFEST="$FE_DIR/plugins/$PLUGIN_PROFILE/package.json"
+  if [[ "$PLUGIN_PROFILE" == */* || ! -f "$PLUGIN_MANIFEST" ]]; then
+    echo "Unknown E2E_PLUGIN_PROFILE '$PLUGIN_PROFILE': no plugins/$PLUGIN_PROFILE/package.json" >&2
+    exit 1
+  fi
+  if [[ ! -d "$FE_DIR/e2e/specs/plugins/$PLUGIN_PROFILE" ]]; then
+    echo "E2E_PLUGIN_PROFILE '$PLUGIN_PROFILE' has no suites (e2e/specs/plugins/$PLUGIN_PROFILE/)" >&2
+    exit 1
+  fi
+  PLUGIN_CODE=$(node -p "require(process.argv[1]).name" "$PLUGIN_MANIFEST")
+fi
 OMS_DIR=${OMS_DIR:-$FE_DIR/..}
 if [[ ! -d "$OMS_DIR/server/data/e2e" ]]; then
   echo "MISSING DEPENDENCY: the e2e datafile export." >&2
@@ -226,31 +258,51 @@ rm -f "$SERVER_DIR/$DB_NAME".sqlite*
   exit 1
 }
 
-echo "Starting server on :$SERVER_PORT"
-(cd "$SERVER_DIR" && exec env \
-  APP__DATABASE__DATABASE_NAME="$DB_NAME" \
-  APP__SERVER__PORT="$SERVER_PORT" \
-  APP__SERVER__BASE_DIR=app_data/"$DB_NAME" \
-  APP__LOGGING__MODE=Console \
-  "${SYNC_OFF[@]}" "${SERVER_ROLE_PIN[@]}" \
-  "$BIN_DIR/remote_server" > "$LOG_DIR/e2e-server.log" 2>&1) &
-SERVER_PID=$!
+# A function because a plugin profile boots the server twice (see below).
+# Appends to the log so the first boot's output survives the second.
+start_server() {
+  echo "Starting server on :$SERVER_PORT"
+  (cd "$SERVER_DIR" && exec env \
+    APP__DATABASE__DATABASE_NAME="$DB_NAME" \
+    APP__SERVER__PORT="$SERVER_PORT" \
+    APP__SERVER__BASE_DIR=app_data/"$DB_NAME" \
+    APP__LOGGING__MODE=Console \
+    "${SYNC_OFF[@]}" "${SERVER_ROLE_PIN[@]}" \
+    "$BIN_DIR/remote_server" >> "$LOG_DIR/e2e-server.log" 2>&1) &
+  SERVER_PID=$!
 
-echo -n "Waiting for server"
-for _ in $(seq 1 30); do
-  STATUS=$(curl -s -m 2 "http://localhost:$SERVER_PORT/graphql" \
-    -H 'Content-Type: application/json' \
-    -d '{"query":"query { initialisationStatus { status } }"}' \
-    | grep -o INITIALISED || true)
-  [[ "$STATUS" == "INITIALISED" ]] && echo " — ready" && break
-  echo -n "."
-  sleep 2
-done
-if [[ "${STATUS:-}" != "INITIALISED" ]]; then
-  echo; echo "Server failed to start:" >&2
-  tail -20 "$LOG_DIR/e2e-server.log" >&2
-  exit 1
-fi
+  echo -n "Waiting for server"
+  STATUS=""
+  for _ in $(seq 1 30); do
+    STATUS=$(curl -s -m 2 "http://localhost:$SERVER_PORT/graphql" \
+      -H 'Content-Type: application/json' \
+      -d '{"query":"query { initialisationStatus { status } }"}' \
+      | grep -o INITIALISED || true)
+    [[ "$STATUS" == "INITIALISED" ]] && echo " — ready" && break
+    echo -n "."
+    sleep 2
+  done
+  if [[ "$STATUS" != "INITIALISED" ]]; then
+    echo; echo "Server failed to start:" >&2
+    tail -20 "$LOG_DIR/e2e-server.log" >&2
+    exit 1
+  fi
+}
+
+stop_server() {
+  kill "$SERVER_PID" 2>/dev/null || true
+  # Same escalation as cleanup(): the server sometimes ignores a plain TERM.
+  for _ in $(seq 1 10); do
+    port_free "$SERVER_PORT" && break
+    sleep 1
+  done
+  kill -9 "$SERVER_PID" 2>/dev/null || true
+  lsof -ti tcp:"$SERVER_PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
+  SERVER_PID=""
+}
+
+: > "$LOG_DIR/e2e-server.log"
+start_server
 
 # Dependency 3: cookie-session auth. This front end authenticates every
 # request with the session cookie alone (credentials: 'same-origin', no
@@ -284,6 +336,61 @@ if ! grep -qi '^set-cookie:' <<<"$AUTH_RESPONSE"; then
   exit 1
 fi
 
+# Plugin profile: install the profile's bundle the way a deployment does —
+# the built bundle through the CLI's install command, against this run's own
+# server (pinned central above, which is what exposes the install mutation) —
+# never the dev loop's OMS_PLUGIN_DIRS, which skips discovery, the content
+# hash and the cache, the very path a deployment takes.
+#
+# Then restart. The install mutation already asks the server to load the
+# plugin, but asynchronously; a fresh boot binds every installed plugin —
+# frontend serving cache and backend (schedule) plugins alike — before it
+# answers, so the suite starts against a settled server. Discovery is then
+# asked for the code, so a bundle that installed but cannot be offered to
+# this front end (wrong host runtime, a version this server gates out) fails
+# here, by name, rather than as a navigator that never appears.
+if [[ -n "$PLUGIN_PROFILE" ]]; then
+  BUNDLE="$FE_DIR/dist/bundles/$PLUGIN_CODE.json"
+  echo "Building plugin bundles (profile: $PLUGIN_PROFILE)"
+  (cd "$FE_DIR" && pnpm build:plugins > "$LOG_DIR/e2e-plugin-build.log" 2>&1) || {
+    echo "pnpm build:plugins failed:" >&2
+    tail -20 "$LOG_DIR/e2e-plugin-build.log" >&2
+    exit 1
+  }
+  if [[ ! -f "$BUNDLE" ]]; then
+    echo "Plugin build produced no $BUNDLE" >&2
+    exit 1
+  fi
+
+  echo "Installing $PLUGIN_CODE"
+  # From SERVER_DIR, like the restore: the CLI loads the server's
+  # configuration/ relative to its working directory before it does anything.
+  (cd "$SERVER_DIR" && env "${SYNC_OFF[@]}" "${SERVER_ROLE_PIN[@]}" \
+    "$BIN_DIR/remote_server_cli" install-plugin-bundle -p "$BUNDLE" \
+    --url "http://localhost:$SERVER_PORT" \
+    --username "$PROBE_USER" --password "$PROBE_PASS" \
+    > "$LOG_DIR/e2e-plugin-install.log" 2>&1) || {
+    echo "install-plugin-bundle failed:" >&2
+    tail -20 "$LOG_DIR/e2e-plugin-install.log" >&2
+    exit 1
+  }
+
+  echo "Restarting server so it boots with $PLUGIN_CODE bound"
+  stop_server
+  start_server
+
+  DISCOVERED=$(curl -s -m 5 "http://localhost:$SERVER_PORT/graphql" \
+    -H 'Content-Type: application/json' \
+    -d '{"query":"query { frontendPluginMetadata(hostRuntime: \"solid\") { code } }"}' \
+    || true)
+  if ! grep -q "\"code\":\"$PLUGIN_CODE\"" <<<"$DISCOVERED"; then
+    echo "INSTALLED BUT NOT DISCOVERED: $PLUGIN_CODE" >&2
+    echo "  The server does not offer it to this front end (hostRuntime solid)." >&2
+    echo "  Discovery said: ${DISCOVERED:-(no response)}" >&2
+    exit 1
+  fi
+fi
+
 echo "Starting front end on :$FE_PORT"
 (cd "$FE_DIR" && exec env \
   DEV_SERVER_PORT="$FE_PORT" \
@@ -308,5 +415,6 @@ cd "$FE_DIR"
 # ${arr[@]+...} keeps empty-array expansion safe under bash 3.2's `set -u`.
 BASE_URL="http://localhost:$FE_PORT" \
 API_URL="http://localhost:$SERVER_PORT" \
+E2E_PLUGIN_PROFILE="$PLUGIN_PROFILE" \
   pnpm exec playwright test --config e2e/playwright.config.ts \
   "$@" ${WORKERS[@]+"${WORKERS[@]}"}

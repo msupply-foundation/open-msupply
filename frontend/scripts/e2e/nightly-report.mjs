@@ -17,8 +17,12 @@
 //                    job; policy: quarantine-or-fix same day).
 //
 // Usage: node scripts/e2e/nightly-report.mjs
-// Each dir holds one <dir>/e2e-report-<leg>/results.json.
+// Each dir holds one <dir>/e2e-report-<leg>/results.json per leg.
 //   LEG_ID          (default develop)       — the branch key under test
+//   LEG_IDS         (default LEG_ID)        — every leg's artifact suffix,
+//                                             comma-separated: the branch key
+//                                             itself plus <key>-plugin-<p>
+//                                             per plugin profile
 //   RESULTS_DIR     (default .e2e-results)  — this run's report
 //   BASELINE_DIR    (default .e2e-baseline) — that branch's previous run
 //   BASELINE_RUN_ID (env, optional)         — links the header to that run
@@ -35,13 +39,18 @@
 //                            test result and must not become a baseline.
 //   Otherwise exit 1 iff regressions were found.
 //
-// One leg, because one run tests one tag and so one branch. Still written
-// over a LIST: it was two when the front ends lived in separate
-// repositories, and the shape costs nothing and is what a second stack (a
-// postgres image, say) would slot back into.
+// One run tests one tag and so one branch, but on several STACKS: the
+// default suites, plus one per plugin profile (frontend/e2e/README.md §
+// Plugin profiles). Each stack is a leg with its own results.json, and they
+// are classified together into ONE report — one verdict, one tracking issue
+// per branch — because a plugin leg usually goes red for a core reason (a
+// host change breaking the plugin contract), and that belongs where core's
+// own regressions are read. Each leg still compares only against its own
+// file in the baseline run: their test keys overlap (the setup tests run in
+// every leg), so a leg is never compared against another leg's results.
 
 import * as fs from 'fs';
-import { testsFromReport } from './nightly-lib.mjs';
+import { legKey, testsFromReport } from './nightly-lib.mjs';
 
 const resultsDir = process.env.RESULTS_DIR ?? '.e2e-results';
 const baselineDir = process.env.BASELINE_DIR ?? '.e2e-baseline';
@@ -54,7 +63,17 @@ const baselineRunId = process.env.BASELINE_RUN_ID;
 // become develop's baseline. Changing how it is derived orphans every
 // existing baseline for that branch.
 const legId = process.env.LEG_ID ?? 'develop';
-const LEGS = [{ id: legId, label: legId }];
+// A plugin leg's id is `<branch key>-plugin-<profile>`; its label drops the
+// branch (already in the heading), and is null-keyed as `qualifier` for the
+// default leg so its test keys stay bare (nightly-lib legKey).
+const LEGS = (process.env.LEG_IDS ?? legId)
+  .split(',')
+  .map(id => id.trim())
+  .filter(Boolean)
+  .map(id => {
+    const qualifier = id === legId ? null : id.replace(`${legId}-`, '');
+    return { id, label: qualifier ?? legId, qualifier };
+  });
 
 // The test map comes from nightly-lib.mjs, so the clues and the tracking
 // issue match tests by exactly the keys classified here. commit/startTime/
@@ -140,7 +159,7 @@ const cell = (leg, key) => {
 
 console.log(`## Deterministic e2e — \`${legId}\`\n`);
 
-console.log('| Branch | Run | ✅ | ❌ | ⚠️ flaky | ⏭ skipped |');
+console.log('| Stack | Run | ✅ | ❌ | ⚠️ flaky | ⏭ skipped |');
 console.log('| --- | --- | --- | --- | --- | --- |');
 for (const leg of legs) {
   const s = leg.run?.stats ?? {};
@@ -210,7 +229,9 @@ for (const leg of legs) {
     `### ❌ ${leg.label} — regressions, passed in the baseline, failing now (${leg.cats.regression.length})\n`
   );
   for (const { key, t } of leg.cats.regression)
-    console.log(`- \`${key}\`${t.error ? ` — ${t.error}` : ''}`);
+    console.log(
+      `- \`${legKey(leg.qualifier, key)}\`${t.error ? ` — ${t.error}` : ''}`
+    );
   console.log('');
 }
 
@@ -255,6 +276,8 @@ if (skippedNote)
 
 const regressions = legs.reduce((n, l) => n + l.cats.regression.length, 0);
 if (process.env.SUMMARY_FILE) {
+  // Provenance from the default leg: every leg tests the same tag, so the
+  // same commit, and its baseline is the run the others' came from too.
   const [leg] = legs;
   fs.writeFileSync(
     process.env.SUMMARY_FILE,
@@ -265,10 +288,12 @@ if (process.env.SUMMARY_FILE) {
         baselineCommit: leg.baseline?.commit ?? null,
         baselineRunId: baselineRunId ?? null,
         infra: missing.length > 0,
-        regressions: leg.cats.regression.map(({ key, t }) => ({
-          key,
-          error: t.error,
-        })),
+        regressions: legs.flatMap(l =>
+          l.cats.regression.map(({ key, t }) => ({
+            key: legKey(l.qualifier, key),
+            error: t.error,
+          }))
+        ),
       },
       null,
       2
