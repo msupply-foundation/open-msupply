@@ -92,10 +92,10 @@ import { RequisitionLineEditModal } from './edit-modal/RequisitionLineEditModal'
 // The requisition detail view (spec/requisitions S2): view, header edits
 // (customer reference / comment / colour), the side panel (S5), the Documents
 // and Log tabs, Export/Print (reports S4), line selection + bulk delete
-// (AC-LD1–LD4), the master-list add (AC-ML1–ML2), the Supply requested
-// auto-populate (rules § auto-populating), and navigation/not-found. The line
-// editor (S4), Create shipment, and the finalise action live in their own
-// modules (edit-modal/, RequisitionStatusFooter).
+// (OMS-REG-DIST-06.36–.39), the master-list add (OMS-FUN-DIS-03.19–.21), the
+// Supply requested auto-populate (rules § auto-populating), and
+// navigation/not-found. The line editor (S4), Create shipment, and the finalise
+// action live in their own modules (edit-modal/, RequisitionStatusFooter).
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -161,8 +161,8 @@ const RequisitionDetailView: Component = () => {
     desc: false,
   });
   // A header save's whole-record rejection (rules › header edits), and the
-  // lines a reasons rejection named — their Reason cells flag (AC-H4) until a
-  // save succeeds.
+  // lines a reasons rejection named — their Reason cells flag
+  // (OMS-REG-DIST-06.19) until a save succeeds.
   const [headerError, setHeaderError] = createSignal<string>();
   const [reasonFlaggedIds, setReasonFlaggedIds] = createSignal<Set<string>>(
     new Set()
@@ -283,8 +283,8 @@ const RequisitionDetailView: Component = () => {
       prev ? applySavedIndicatorValue(prev, valueId, value) : prev
     );
   const indicatorNodes = () => gated(indicators) ?? [];
-  // Indicators tab gate (spec S2 § tabs, AC-V5): a non-emergency program
-  // requisition of a store-backed customer whose program defines ≥1
+  // Indicators tab gate (spec S2 § tabs, OMS-REG-DIST-06.13): a non-emergency
+  // program requisition of a store-backed customer whose program defines ≥1
   // indicator.
   const showIndicators = () =>
     isProgram() &&
@@ -336,9 +336,9 @@ const RequisitionDetailView: Component = () => {
     },
   });
 
-  // Add from master list (spec S2 § page actions, AC-ML1): the S7 picker, a
-  // pending choice awaiting its are-you-sure confirmation, and a rejection's
-  // fixed-copy notice.
+  // Add from master list (spec S2 § page actions, OMS-FUN-DIS-03.19): the S7
+  // picker, a pending choice awaiting its are-you-sure confirmation, and a
+  // rejection's fixed-copy notice.
   const [addChoice, setAddChoice] = createSignal('item');
   const [masterListPickerOpen, setMasterListPickerOpen] = createSignal(false);
   const [pendingMasterList, setPendingMasterList] = createSignal<{
@@ -354,9 +354,9 @@ const RequisitionDetailView: Component = () => {
     else setEditorLine({ mode: 'add' });
   };
 
-  // The confirmed bulk add (AC-ML1): add, then re-read the line list so the
-  // table reflects it; a rejection replaces the confirmation with its fixed
-  // copy (AC-ML2).
+  // The confirmed bulk add (OMS-FUN-DIS-03.20): add, then re-read the line
+  // list so the table reflects it; a rejection replaces the confirmation with
+  // its fixed copy (OMS-FUN-DIS-03.21).
   const confirmAddFromMasterList = async () => {
     const list = pendingMasterList();
     const node = info();
@@ -371,10 +371,10 @@ const RequisitionDetailView: Component = () => {
     else if (result.kind === 'error') setMasterListError(result.message);
   };
 
-  // Line-table row selection (AC-LD1). Owned by the page (like sort/filter);
-  // a non-empty selection swaps the status footer for the bulk-action bar
-  // (spec S2 § footer). Checkboxes are always offered — on a blocked
-  // requisition the Delete click explains instead (AC-LD2).
+  // Line-table row selection (OMS-REG-DIST-06.36). Owned by the page (like
+  // sort/filter); a non-empty selection swaps the status footer for the
+  // bulk-action bar (spec S2 § footer). Checkboxes are always offered — on a
+  // blocked requisition the Delete click explains instead (OMS-REG-DIST-06.37).
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The standing states the UI mirrors without a server call (rules ›
   // deleting lines): not editable-by-status first, then transfer-linked.
@@ -385,11 +385,11 @@ const RequisitionDetailView: Component = () => {
         ? 'transferred'
         : undefined;
 
-  // Save & next's walk (AC-LE5): the next line after the current one in the
-  // table's current sort/filter order, skipping ones already visited this
-  // run. The client-side table holds every line (the server-paginated walk
-  // collapses to a plain scan here — see the interim note above), so no page
-  // advance is needed.
+  // Save & next's walk (OMS-REG-DIST-06.30/.31): the next line after the
+  // current one in the table's current sort/filter order, skipping ones already
+  // visited this run. The client-side table holds every line (the
+  // server-paginated walk collapses to a plain scan here — see the interim note
+  // above), so no page advance is needed.
   const resolveNextLine = (
     currentLineId: string,
     covered: Set<string>
@@ -402,7 +402,7 @@ const RequisitionDetailView: Component = () => {
   };
 
   // The requisition's existing line for an item (add mode loads it rather
-  // than duplicating — D60, AC-LE3).
+  // than duplicating — D60, OMS-REG-DIST-06.27).
   const findLineForItem = (itemId: string): Line | undefined =>
     info()?.lines.nodes.find(line => line.itemId === itemId);
 
@@ -419,8 +419,8 @@ const RequisitionDetailView: Component = () => {
 
   // Header-level save (updateResponseRequisition), spliced back wholesale on
   // success. A rejection surfaces inline beneath the toolbar and — for the
-  // reasons guard — flags the offending lines' Reason cells (AC-H4), keeping
-  // the entered value in the buffer.
+  // reasons guard — flags the offending lines' Reason cells
+  // (OMS-REG-DIST-06.19), keeping the entered value in the buffer.
   const saveField = async (patch: Record<string, unknown>): Promise<void> => {
     const node = info();
     if (!node) return;
@@ -773,7 +773,7 @@ const RequisitionDetailView: Component = () => {
       ...getCellDefinition('supplyQuantity'),
     },
     // Reason — the line's variance reason; extended gate. Flagged when a
-    // header save was rejected for a missing reason (AC-H4).
+    // header save was rejected for a missing reason (OMS-REG-DIST-06.19).
     ...(showExtended()
       ? ([
           {
@@ -1068,8 +1068,9 @@ const RequisitionDetailView: Component = () => {
                     </strong>
                     {/* On a read-only or transfer-linked requisition the click
                       explains why it can't proceed rather than confirming
-                      (AC-LD2). onDeleted clears the selection (unmounting this
-                      bar) and re-reads the line list (AC-LD1). */}
+                      (OMS-REG-DIST-06.37). onDeleted clears the selection
+                      (unmounting this bar) and re-reads the line list
+                      (OMS-REG-DIST-06.36). */}
                     <DeleteRequisitionLinesAction
                       storeId={params.storeId}
                       selectedIds={selectedIds}
@@ -1109,11 +1110,13 @@ const RequisitionDetailView: Component = () => {
                   loading={data.loading}
                   sort={sort()}
                   onSort={(key, desc) => setSort({ key, desc })}
-                  // A row click opens the line editor on that line (AC-LE1);
-                  // on a read-only requisition it opens all-disabled (AC-LE9).
+                  // A row click opens the line editor on that line
+                  // (OMS-REG-DIST-06.24); on a read-only requisition it opens
+                  // all-disabled (OMS-REG-DIST-06.35).
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
                   // Rows with a ZERO supply quantity read in the info tone —
-                  // visually de-emphasised as placeholders (AC-V4).
+                  // visually de-emphasised as placeholders
+                  // (OMS-REG-DIST-06.12).
                   rowTone={line =>
                     line.supplyQuantity === 0 ? 'info' : undefined
                   }
@@ -1123,8 +1126,8 @@ const RequisitionDetailView: Component = () => {
                       : t('error.no-requisition-items')
                   }
                   // The empty line table offers the single-item add inline
-                  // (AC-V7) — withheld when a line can't be added (read-only,
-                  // program, or transfer-linked).
+                  // (OMS-REG-DIST-06.15) — withheld when a line can't be added
+                  // (read-only, program, or transfer-linked).
                   empty={
                     canAdd() ? (
                       <Button
@@ -1153,7 +1156,8 @@ const RequisitionDetailView: Component = () => {
                   // (spec S2 § line table): checkbox-only — the row click
                   // stays bound to the editor. Always offered, on every
                   // standing state: a blocked delete explains on click
-                  // (AC-LD2) rather than withholding the affordance.
+                  // (OMS-REG-DIST-06.37) rather than withholding the
+                  // affordance.
                   enableSelection
                   selectedIds={selectedIds()}
                   onSelectionChange={setSelectedIds}
@@ -1163,8 +1167,8 @@ const RequisitionDetailView: Component = () => {
                 <RequisitionDocumentsTab node={node()} />
               </TabPanel>
               <TabPanel value="log">
-                {/* The shared activity-log surface; oldest first per AC-LG1
-                    (spec S2 § Log tab). */}
+                {/* The shared activity-log surface; oldest first per
+                    OMS-REG-DIST-06.42 (spec S2 § Log tab). */}
                 <ActivityLogPanel
                   storeId={params.storeId}
                   recordId={node().id}
@@ -1175,7 +1179,7 @@ const RequisitionDetailView: Component = () => {
                 <TabPanel value="indicators">
                   {/* The shared indicators surface — no customer breakdown on
                       the response side, on any store configuration (rules ›
-                      indicator values, AC-IN1). */}
+                      indicator values, OMS-REG-DIST-06.44). */}
                   <ProgramIndicatorsTab
                     storeId={params.storeId}
                     nodes={indicatorNodes()}
@@ -1216,7 +1220,7 @@ const RequisitionDetailView: Component = () => {
 
               {/* Add from master list (S2 § page actions): the shared picker,
                 then an are-you-sure confirmation — only on OK are the lines
-                added (AC-ML1) — then the bulk add. */}
+                added (OMS-FUN-DIS-03.19) — then the bulk add. */}
               <MasterListPickerModal
                 open={masterListPickerOpen()}
                 onClose={() => setMasterListPickerOpen(false)}
@@ -1235,8 +1239,9 @@ const RequisitionDetailView: Component = () => {
                   onClose={() => setPendingMasterList(undefined)}
                 />
               </Show>
-              {/* A rejection's fixed copy (AC-ML2): not-found under its own
-                message, anything else under the generic cannot-add copy. */}
+              {/* A rejection's fixed copy (OMS-FUN-DIS-03.21): not-found under
+                its own message, anything else under the generic cannot-add
+                copy. */}
               <Show when={masterListError()}>
                 {message => (
                   <ConfirmDialog
