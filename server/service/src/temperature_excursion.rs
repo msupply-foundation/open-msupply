@@ -90,7 +90,7 @@ mod test {
         TemperatureLogFilter, TemperatureLogRow,
     };
 
-    use chrono::{Days, NaiveTime, Utc};
+    use chrono::{Duration, Timelike, Utc};
     use rand::seq::SliceRandom;
 
     use crate::temperature_excursion::temperature_excursions;
@@ -144,33 +144,34 @@ mod test {
         let s2 = &sensor2.id;
 
         let l1 = Some(&location.id);
-        let today = Utc::now().naive_utc();
-        let start_date_time = today.checked_sub_days(Days::new(30)).unwrap();
+        // Whole seconds so the datetimes round-trip through the database unchanged
+        let now = Utc::now().naive_utc().with_nanosecond(0).unwrap();
+        let start_date_time = now - Duration::days(30);
 
+        // Log times are offsets (in minutes) before `now`, rather than fixed
+        // clock times on a past calendar day, so the durations do not depend
+        // on the time of day the test runs.
+        let day = 24 * 60;
         // Sensor 1 (S1)
         let mut temperature_logs: Vec<TemperatureLogRow> = vec![
-            ("log_1".to_string(), 40, (23, 59, 49), 30.0, s1, None), // Not in period
-            ("log_2".to_string(), 10, (10, 59, 50), 26.0, s1, None), // (S1 no location, over temp)
-            ("log_3".to_string(), 10, (11, 59, 55), 5.0, s1, None), // (S1 no location, returned to within range)
-            ("log_4".to_string(), 9, (23, 59, 56), 20.0, s1, l1),   // (S1-L1)
-            ("log_5".to_string(), 1, (23, 56, 3), 40.0, s1, l1),    // (S1-L1, too short)
-            ("log_6".to_string(), 8, (2, 00, 7), 30.0, s1, None),   // (S1 no location)
-            ("log_7".to_string(), 8, (3, 00, 8), 31.5, s1, None), // (S1 no location, excursion, too hot)
-            ("log_8".to_string(), 7, (12, 00, 00), -20.0, s2, None), // (S2-L1)
-            ("log_9".to_string(), 7, (12, 6, 00), -30.0, s2, None), // (S2-L1, too cold)
+            ("log_1".to_string(), 40 * day, 30.0, s1, None), // Not in period
+            ("log_2".to_string(), 10 * day + 120, 26.0, s1, None), // (S1 no location, over temp)
+            ("log_3".to_string(), 10 * day + 60, 5.0, s1, None), // (S1 no location, returned to within range)
+            ("log_4".to_string(), 9 * day, 20.0, s1, l1),        // (S1-L1)
+            ("log_5".to_string(), 12 * 60, 40.0, s1, l1), // (S1-L1, too short: under one day)
+            ("log_6".to_string(), 8 * day + 120, 30.0, s1, None), // (S1 no location)
+            ("log_7".to_string(), 8 * day + 60, 31.5, s1, None), // (S1 no location, excursion, too hot)
+            ("log_8".to_string(), 7 * day + 12, -20.0, s2, None), // (S2-L1)
+            ("log_9".to_string(), 7 * day + 6, -30.0, s2, None), // (S2-L1, too cold)
         ]
         .into_iter()
         .map(
-            |(id, days_ago, time, temperature, sensor_id, location)| TemperatureLogRow {
+            |(id, minutes_ago, temperature, sensor_id, location)| TemperatureLogRow {
                 id,
                 temperature,
                 sensor_id: sensor_id.clone(),
                 store_id: store.id.clone(),
-                datetime: today
-                    .checked_sub_days(Days::new(days_ago))
-                    .unwrap()
-                    .date()
-                    .and_time(NaiveTime::from_hms_opt(time.0, time.1, time.2).unwrap()),
+                datetime: now - Duration::minutes(minutes_ago),
                 location_id: location.map(ToString::to_string),
                 ..Default::default()
             },
@@ -206,44 +207,47 @@ mod test {
             .unwrap();
         let result = temperature_excursions(log_data).unwrap();
 
-        // resetting `today` : when the test is run as part of a suite, it can take almost a second to get to this point
-        // which means the durations are not correct
-        let today = Utc::now().naive_utc();
-        let datetime1 = today
-            .checked_sub_days(Days::new(8))
-            .unwrap()
-            .date()
-            .and_time(NaiveTime::from_hms_opt(2, 00, 7).unwrap());
-        let duration1 = today.and_utc().timestamp() - datetime1.and_utc().timestamp();
-        let datetime2 = today
-            .checked_sub_days(Days::new(7))
-            .unwrap()
-            .date()
-            .and_time(NaiveTime::from_hms_opt(12, 00, 00).unwrap());
-        let duration2 = today.and_utc().timestamp() - datetime2.and_utc().timestamp();
+        let expected = vec![
+            TemperatureExcursion {
+                id: "log_6".to_string(),
+                datetime: now - Duration::minutes(8 * day + 120),
+                temperature: 30.0,
+                location_id: None,
+                duration: 0,
+                store_id: "store".to_string(),
+                sensor_id: sensor1.id.clone(),
+            },
+            TemperatureExcursion {
+                id: "log_8".to_string(),
+                datetime: now - Duration::minutes(7 * day + 12),
+                temperature: -20.0,
+                location_id: None,
+                duration: 0,
+                store_id: "store".to_string(),
+                sensor_id: sensor2.id.clone(),
+            },
+        ];
 
+        // Duration is measured from the moment `excursions` ran, which may be a
+        // second or two after `now`, so check it separately with a tolerance
+        for (actual, expected) in result.iter().zip(expected.iter()) {
+            let expected_duration = (now - expected.datetime).num_seconds();
+            assert!(
+                (actual.duration - expected_duration).abs() <= 5,
+                "{}: duration {} not within 5s of {}",
+                actual.id,
+                actual.duration,
+                expected_duration
+            );
+        }
+
+        let without_duration = |e: &TemperatureExcursion| TemperatureExcursion {
+            duration: 0,
+            ..e.clone()
+        };
         assert_eq!(
-            result,
-            vec![
-                TemperatureExcursion {
-                    id: "log_6".to_string(),
-                    datetime: datetime1,
-                    temperature: 30.0,
-                    location_id: None,
-                    duration: duration1,
-                    store_id: "store".to_string(),
-                    sensor_id: sensor1.id.clone(),
-                },
-                TemperatureExcursion {
-                    id: "log_8".to_string(),
-                    datetime: datetime2,
-                    temperature: -20.0,
-                    location_id: None,
-                    duration: duration2,
-                    store_id: "store".to_string(),
-                    sensor_id: sensor2.id.clone(),
-                },
-            ],
+            result.iter().map(without_duration).collect::<Vec<_>>(),
+            expected
         );
     }
 }
