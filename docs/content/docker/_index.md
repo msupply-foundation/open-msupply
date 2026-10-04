@@ -393,7 +393,7 @@ docker run -e LOAD_REFERENCE_FILE=reference1 -e SHOULD_REFRESH_DATES=true \
   -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
 ```
 
-`FAKETIME` pins the server clock to a specific date/time. This does **not** affect dates generated in the front end (e.g. cold-chain default filters, dashboard date ranges):
+`FAKETIME` pins the server clock to a specific date/time. This does **not** affect dates generated in the front end (e.g. cold-chain default filters, dashboard date ranges). Only the wall clock is faked: the image sets `FAKETIME_DONT_FAKE_MONOTONIC=1` so timeouts keep real time (faking the monotonic clock breaks PDF export):
 
 ```bash
 docker run -e LOAD_REFERENCE_FILE=reference1 -e FAKETIME="@2023-05-20 11:30:00" \

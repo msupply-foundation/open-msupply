@@ -254,7 +254,7 @@ export const ProgramIndicatorsTab: Component<{
                             <IndicatorCellInput
                               storeId={props.storeId}
                               cell={cell}
-                              disabled={!props.editable || !entry().isActive}
+                              disabled={!props.editable || !cell.isActive}
                               autofocus={index() === 0}
                               onSaved={props.onSaved}
                             />
@@ -272,7 +272,7 @@ export const ProgramIndicatorsTab: Component<{
                               <IndicatorCellInput
                                 storeId={props.storeId}
                                 cell={cell}
-                                disabled={!props.editable || !entry().isActive}
+                                disabled={!props.editable || !cell.isActive}
                                 autofocus={false}
                                 onSaved={props.onSaved}
                               />
