@@ -394,10 +394,15 @@
   }
 }
 
+/* A fade and a short rise, with no scale. Chrome paints the dialog's content
+   while the animation runs, and from a scale it keeps paint made at that
+   fractional size afterwards: a 1px line at a fractional offset (a table
+   frame's top or bottom edge) came out shifted or dropped until the content
+   remounted (#984). A translate alone settles exactly as no animation would. */
 @keyframes content-in {
   from {
     opacity: 0;
-    transform: translateY(0.25rem) scale(0.97);
+    transform: translateY(0.25rem);
   }
 
   to {
