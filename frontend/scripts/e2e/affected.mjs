@@ -766,8 +766,10 @@ export const select = (results, config, suiteNames) => {
     }
   }
   if (exercised) {
+    // Smoke is always at distance 0 — near, so it runs locally on every tier
+    // — even when a server change also reaches it at some distance.
     for (const name of config.smoke) {
-      if (!suites.has(name))
+      if (!(suites.get(name)?.distance === 0))
         suites.set(name, { name, distance: 0, reason: 'smoke' });
     }
   }

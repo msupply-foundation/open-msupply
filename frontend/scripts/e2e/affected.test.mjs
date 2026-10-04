@@ -514,3 +514,30 @@ describe('green record', () => {
     ]).toEqual(['outbound-regression']);
   });
 });
+
+describe('smoke', () => {
+  it('stays near even when a change also reaches a smoke suite far off', () => {
+    // A server change can reach login through the derivation at distance
+    // 3+; that must not push the always-run smoke suite out of the near set.
+    const far = {
+      file: 'server/service/src/x.rs',
+      via: 'server',
+      suites: [
+        { name: 'login-regression', distance: 3 },
+        ...['a', 'b', 'c'].map(n => ({ name: `${n}-regression`, distance: 2 })),
+      ],
+    };
+    const sel = select([far], config, [
+      ...suiteNames,
+      'a-regression',
+      'b-regression',
+      'c-regression',
+    ]);
+    expect(sel.tier).toBe('broad');
+    expect(sel.near).toEqual(['login-regression']);
+    expect(sel.suites.find(s => s.name === 'login-regression')).toMatchObject({
+      distance: 0,
+      reason: 'smoke',
+    });
+  });
+});
