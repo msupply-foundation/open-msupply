@@ -7,6 +7,9 @@
  *   pnpm e2e:affected --files a.ts b.rs  # explicit paths (cwd- or repo-rel.)
  *   pnpm e2e:affected --run [-- <pw args>]   # run the selection locally
  *   pnpm e2e:affected --run --force      # …without skipping known-green ones
+ *   pnpm e2e:affected --status           # which still need a run (exit 3 if any)
+ *   node scripts/e2e/affected.mjs --push-hook  # the same, as a warn-only
+ *                                        # PreToolUse hook (.claude/settings.json)
  *   pnpm e2e:affected --json             # machine-readable (CI)
  *   pnpm e2e:affected --list             # suite names only, one per line
  *   pnpm e2e:affected --check            # lint the config (in `pnpm check`)
@@ -1023,6 +1026,8 @@ const parseArgs = argv => {
     check: false,
     runAll: false,
     force: false,
+    status: false,
+    pushHook: false,
     pw: [],
   };
   for (let i = 0; i < argv.length; i++) {
@@ -1038,6 +1043,8 @@ const parseArgs = argv => {
     } else if (a === '--run') opts.run = true;
     else if (a === '--run-all') opts.run = opts.runAll = true;
     else if (a === '--force') opts.force = true;
+    else if (a === '--status') opts.status = true;
+    else if (a === '--push-hook') opts.status = opts.pushHook = true;
     else if (a === '--json') opts.json = true;
     else if (a === '--list') opts.list = true;
     else if (a === '--check') opts.check = true;
@@ -1110,7 +1117,8 @@ const main = async () => {
   // e2e/ is kept out of the public mirror (.github/mirror/rules.txt); there
   // is no config to lint and no suite to select, so `pnpm check` must not fail.
   if (!existsSync(configPath)) {
-    console.log('e2e:affected: skipped — no e2e/ in this tree');
+    if (!opts.pushHook)
+      console.log('e2e:affected: skipped — no e2e/ in this tree');
     return;
   }
   const config = await import(pathToFileURL(configPath).href);
@@ -1147,7 +1155,7 @@ const main = async () => {
   // checkout's server: --files is hypothetical, extra Playwright args
   // (--grep, --ui) run a subset, OMS_DIR swaps the server.
   const useRecord =
-    opts.run &&
+    (opts.run || opts.status) &&
     !opts.files &&
     !opts.pw.length &&
     !process.env.OMS_DIR &&
@@ -1177,6 +1185,49 @@ const main = async () => {
   const results = changed.map(f => classify(f, ctx));
   const sel = select(results, config, specNames(files));
 
+  // What a `--run` would run, and what it would skip as already green: the
+  // change since the last green run goes through the same selection (smoke
+  // included whenever anything visible changed).
+  const runList = opts.runAll ? sel.suites.map(s => s.name) : sel.near;
+  const reached = new Set(
+    record
+      ? select(
+          sinceGreen.map(f => classify(f, ctx)),
+          config,
+          specNames(files)
+        ).suites.map(s => s.name)
+      : []
+  );
+  const green = new Set(record?.green ?? []);
+  const { run: toRun, skip } = planRun({ runList, green, reached });
+
+  if (opts.status) {
+    // Nothing printed and exit 0 when every suite at risk is already green;
+    // otherwise name them and exit 3 (2 is a PreToolUse hook's "block").
+    if (!toRun.length) return;
+    const line =
+      `${toRun.length} e2e suite(s) at risk have not passed since the last change: ` +
+      toRun.join(' ');
+    if (opts.pushHook) {
+      console.log(
+        JSON.stringify({
+          systemMessage: `⚠ e2e:affected — ${line}. Pushing anyway (warning only).`,
+          hookSpecificOutput: {
+            hookEventName: 'PreToolUse',
+            additionalContext:
+              `e2e:affected: ${line}. This push is not blocked. Unless the user ` +
+              'said to skip e2e, run `cd frontend && pnpm e2e:affected --run` ' +
+              '(it skips suites already green) and, if this branch has a PR, ' +
+              're-fetch its body and update only the 🤖 e2e line with the result.',
+          },
+        })
+      );
+      return;
+    }
+    console.log(line);
+    process.exit(3);
+  }
+
   if (opts.json) {
     console.log(JSON.stringify({ against, changed: results, ...sel }, null, 2));
   } else if (opts.list) {
@@ -1192,22 +1243,7 @@ const main = async () => {
   }
 
   if (opts.run) {
-    const runList = opts.runAll ? sel.suites.map(s => s.name) : sel.near;
     if (!runList.length) return;
-
-    // What the change since the last green run reaches, through the same
-    // selection (smoke included whenever anything visible changed).
-    const reached = new Set(
-      record
-        ? select(
-            sinceGreen.map(f => classify(f, ctx)),
-            config,
-            specNames(files)
-          ).suites.map(s => s.name)
-        : []
-    );
-    const green = new Set(record?.green ?? []);
-    const { run: toRun, skip } = planRun({ runList, green, reached });
     if (skip.length)
       console.log(
         `\nAlready green at ${record.id}, and nothing visible since reaches them` +
@@ -1256,6 +1292,9 @@ if (
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
   main().catch(e => {
+    // As a push hook, a failure must stay silent and exit 0: a PreToolUse
+    // hook exiting 2 would block the push, and this hook only ever warns.
+    if (process.argv.includes('--push-hook')) process.exit(0);
     console.error(`e2e:affected: ${e.message}`);
     process.exit(2);
   });
