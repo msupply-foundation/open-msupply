@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { setDictionaries, setLocale } from '@/intl/intl';
 import commonEn from '@/intl/locales/en/common.json';
+import { deleteEach } from '@/domain/selection';
 import {
   compareVersions,
   rowKey,
@@ -8,6 +9,7 @@ import {
   runtimeText,
   orderPlugins,
   typesText,
+  uninstallOrder,
   uninstallOutcome,
   type PluginRow,
 } from './pluginRows';
@@ -237,5 +239,63 @@ describe('OMS-REG-MNG-07.65 — uninstalling a frontend row whose id a backend r
     expect(uninstallOutcome({ kind: 'BACKEND' }, removed('BACKEND'))).toEqual({
       kind: 'done',
     });
+  });
+});
+
+describe('OMS-REG-MNG-07.66 — both rows of a shared id selected, in any list order', () => {
+  // The server, as the contract has it: one row per kind, and an uninstall by
+  // id removes the backend row first (contract › uninstalling plugins).
+  const server = () => {
+    const held = new Set<PluginRow['kind']>(['BACKEND', 'FRONTEND']);
+    const uninstall = (row: Pick<PluginRow, 'kind'>) => {
+      const removed = held.has('BACKEND') ? 'BACKEND' : 'FRONTEND';
+      held.delete(removed);
+      return uninstallOutcome(row, {
+        kind: 'success',
+        data: {
+          centralServer: {
+            plugins: {
+              uninstallPlugin: { id: 'shared', code: 'x', kind: removed },
+            },
+          },
+        },
+      });
+    };
+    return { held, uninstall };
+  };
+  const backend = { kind: 'BACKEND' as const, name: 'backend' };
+  const frontend = { kind: 'FRONTEND' as const, name: 'frontend' };
+
+  it('puts backend rows first, keeping each kind in list order', () => {
+    expect(uninstallOrder([frontend, backend]).map(r => r.name)).toEqual([
+      'backend',
+      'frontend',
+    ]);
+  });
+
+  it('uninstalls both, and neither reads as refused, when the frontend row is listed first', async () => {
+    const { held, uninstall } = server();
+    const summary = await deleteEach(
+      uninstallOrder([frontend, backend]),
+      async row => uninstall(row),
+      1
+    );
+    expect(summary.deleted.map(r => r.name)).toEqual(['backend', 'frontend']);
+    expect(summary.refused).toEqual([]);
+    expect(held.size).toBe(0);
+  });
+
+  it('(without the order, both would read as refused though both are gone)', async () => {
+    const { held, uninstall } = server();
+    const summary = await deleteEach(
+      [frontend, backend],
+      async row => uninstall(row),
+      1
+    );
+    expect(summary.refused.map(r => r.record.name)).toEqual([
+      'frontend',
+      'backend',
+    ]);
+    expect(held.size).toBe(0);
   });
 });

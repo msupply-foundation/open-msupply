@@ -113,3 +113,19 @@ export const uninstallOutcome = (
   result.data.centralServer.plugins.uninstallPlugin.kind !== row.kind
     ? { kind: 'refused', reason: t('error.plugin-shared-id-backend-removed') }
     : outcomeOf(result);
+
+/**
+ * The order selected rows are uninstalled in: every backend row first, then
+ * the rest, each kind in list order — whatever the list's sort. The server
+ * looks among backend plugins first, so with both rows of a shared id
+ * selected, the backend row's call removes the backend plugin and the
+ * frontend row's call then removes the frontend one. In the other order each
+ * call would remove the other row, and both would read as refused
+ * (OMS-REG-MNG-07.66).
+ */
+export const uninstallOrder = <R extends Pick<PluginRow, 'kind'>>(
+  rows: readonly R[]
+): R[] => [
+  ...rows.filter(row => row.kind === 'BACKEND'),
+  ...rows.filter(row => row.kind !== 'BACKEND'),
+];

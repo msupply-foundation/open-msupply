@@ -21,6 +21,7 @@
 | ------------------------------------------------------ | --------------------------------------------------- |
 | `.10`, `.11`, `.12`, `.13`, `.15`, `.16`, `.20`, `.40` | `pluginRows.test.ts`                                |
 | `.65` (the shared-id uninstall reads as a refusal)     | `pluginRows.test.ts` › `uninstallOutcome`           |
+| `.66` (backend rows uninstall first)                   | `pluginRows.test.ts` › `uninstallOrder`             |
 | `.4` (client side), `.22`, `.24`, `.37`, `.38`, `.64`  | `bundleFile.test.ts`                                |
 | `.54`, `.55`, `.56`, `.57`, `.58`, `.61`               | `configuration.test.ts`                             |
 | — (rows sharing an id are uninstalled one at a time)   | `src/domain/selection/writeOutcome.test.ts`         |
@@ -30,7 +31,7 @@
 
 **Owned by the e2e suite** (`e2e/specs/plugin-management-regression.spec.ts`, green against the real backend; its header lists the anchors it leaves out and why):
 
-- **Screen behaviour:** `.8`, `.9`, `.14`, `.17`, `.19`, `.21`, `.23`, `.25`–`.28`, `.35`, `.36`, `.41`–`.46`, `.51`, `.53`, `.59`, `.60`, `.62`–`.65`.
+- **Screen behaviour:** `.8`, `.9`, `.14`, `.17`, `.19`, `.21`, `.23`, `.25`–`.28`, `.35`, `.36`, `.41`–`.46`, `.51`, `.53`, `.59`, `.60`, `.62`–`.66`.
 - **Server-side outcomes:** `.18`, `.29`–`.34`, `.39`, `.47`, `.48`, and the case's Flows.
 
 **Wire/server-only:** `.1`–`.3`, `.5`, `.6`; `.7` is navigation's gate. These are refusals the screen never reaches, because the destination gate keeps it central-only and admin-only. They were confirmed on the wire while writing the spec (contract.md); the e2e suite can assert them with direct GraphQL.
