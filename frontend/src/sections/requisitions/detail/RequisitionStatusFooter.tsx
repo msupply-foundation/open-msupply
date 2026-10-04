@@ -10,6 +10,8 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '@/ui/utils/createFlash';
 import { ArrowRightIcon, PlusCircleIcon } from '@/ui/icons';
 import {
   createShipmentFromRequisition,
@@ -37,7 +39,11 @@ import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 // otherwise; the save is an order-level save carrying the whole-record
 // validation of any header edit (rules › finalising), so a reasons rejection
 // flags the offending lines' Reason cells. Failures surface inline in the
-// open dialog, never a toast (S6).
+// open dialog, never a toast (S6). A finalise that lands closes the dialog and
+// hides the split button, so the bar's message slot flashes the save
+// confirmation (spec/ui-standards/controls.md § action feedback). Create
+// shipment needs no flash: it navigates to the new shipment, which is the
+// result.
 
 // The finalise dialog's phases; the raise dialog's cover its three
 // client-side refusals too.
@@ -78,6 +84,7 @@ export const RequisitionStatusFooter: Component<
   const [raiseOpen, setRaiseOpen] = createSignal(false);
   const [raisePhase, setRaisePhase] = createSignal<RaisePhase>('confirm');
   const [errorMessage, setErrorMessage] = createSignal<string>();
+  const saved = createFlash<string>();
 
   // The raise pre-check and the finalise warning count (contract › raising a
   // shipment): the lines with a positive remainder, server-computed.
@@ -166,6 +173,7 @@ export const RequisitionStatusFooter: Component<
       props.onReasonsNotProvided([]);
       props.onSaved(result.node);
       setFinaliseOpen(false);
+      saved.show(t('messages.saved'));
       return;
     }
     if (result.kind === 'error') {
@@ -185,9 +193,11 @@ export const RequisitionStatusFooter: Component<
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(props.node)}
         current={currentStatusStep(props.node.status)}
       />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
       <ContentFooterActions>
         {/* No Close here (D103): leaving the requisition is the breadcrumb's
             job, in the app bar, where every other screen puts it. */}

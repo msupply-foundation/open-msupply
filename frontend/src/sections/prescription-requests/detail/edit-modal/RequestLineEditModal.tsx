@@ -59,6 +59,16 @@ export const RequestLineEditModal: Component<
   RequestLineEditModalProps
 > = props => {
   const [item, setItem] = createSignal<ItemOption | null>(null);
+
+  const itemSearch = createFocusTarget();
+  const quantityField = createFocusTarget();
+
+  // Where the dialog lands (OMS-REG-DIS-08.55, .57): a new line on the item search, an existing
+  // one on Quantity. Past New there is nothing to type into, so the panel keeps
+  // focus.
+  const entryFocus = () =>
+    !props.line ? itemSearch : props.readOnly ? undefined : quantityField;
+
   // The editable fields seed from the line being edited. A signal initialiser
   // reads props ONCE and outside any tracking scope, so it would not notice a
   // different line arriving — today the parent mounts this keyed and it never
@@ -74,6 +84,7 @@ export const RequestLineEditModal: Component<
       line => {
         setQuantity(line?.numberOfUnits);
         setNote(line?.note ?? '');
+        entryFocus()?.focus();
       },
       { defer: true }
     )
@@ -81,8 +92,6 @@ export const RequestLineEditModal: Component<
   const [abbrevEntry, setAbbrevEntry] = createSignal('');
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
-
-  const itemSearch = createFocusTarget();
 
   // The configured abbreviations (AC-N3) — fetched once per open.
   const [abbrevData] = createResource(async () => {
@@ -167,7 +176,7 @@ export const RequestLineEditModal: Component<
     <Dialog
       open
       onClose={props.onClose}
-      initialFocus={props.line ? undefined : itemSearch}
+      initialFocus={entryFocus()}
       title={props.line ? (props.line.item?.name ?? '') : t('button.add-item')}
       testId="request-line-edit-modal"
       actionsLead={
@@ -221,7 +230,12 @@ export const RequestLineEditModal: Component<
           // The whole of the store's catalogue: the prescriber's side carries
           // no program to narrow it by (issue #514). Dispensing still scopes
           // its own line editor to the prescription's program.
-          onSelect={setItem}
+          onSelect={picked => {
+            setItem(picked);
+            // Quantity is the next entry point once the item is chosen, as it
+            // is in dispensing's line editor (OMS-REG-DIS-08.56).
+            if (picked) quantityField.focus();
+          }}
         />
       </Show>
       {/* Advisory stock on hand (AC-N4): informs, never blocks — an
@@ -249,6 +263,7 @@ export const RequestLineEditModal: Component<
       <NumberField
         label={t('label.quantity')}
         data-testid="quantity-field"
+        ref={quantityField.ref}
         value={quantity()}
         min={0}
         disabled={props.readOnly}

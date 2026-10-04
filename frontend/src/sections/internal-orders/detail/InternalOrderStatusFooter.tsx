@@ -11,6 +11,8 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import { CheckIcon } from '../../../ui/icons';
 import { sendInternalOrder } from './internalOrderUpdate';
 import {
@@ -37,7 +39,10 @@ import type { InternalOrderInfoFragment } from './internalOrderDetail.generated'
 // (graphqlFetch default). Where the store requires supplier authorisation and
 // the order carries no comment, the send stamps a generated approval note
 // identifying the sender (AC-S7, buildSendAutoComment) on the same save; the
-// server neither writes nor requires it (contract › lifecycle).
+// server neither writes nor requires it (contract › lifecycle). A send that
+// lands closes the dialog and hides the button, so the bar's message slot
+// flashes the save confirmation (spec/ui-standards/controls.md § action
+// feedback).
 type Phase = 'confirm' | 'empty' | 'sending' | 'error';
 
 // AC-S7: the send auto-comment. When the store requires supplier authorisation
@@ -94,6 +99,7 @@ export const InternalOrderStatusFooter: Component<
   const [open, setOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [errorMessage, setErrorMessage] = createSignal<string>();
+  const saved = createFlash<string>();
 
   const emptySend = () =>
     isEmptySend(props.node.lines.nodes, props.keepZeroLines);
@@ -138,6 +144,7 @@ export const InternalOrderStatusFooter: Component<
       props.onReasonsNotProvided([]);
       props.onSent(result.node);
       setOpen(false);
+      saved.show(t('messages.saved'));
       return;
     }
     if (result.kind === 'error') {
@@ -155,9 +162,11 @@ export const InternalOrderStatusFooter: Component<
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(props.node)}
         current={currentStatusStep(props.node.status)}
       />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
       <ContentFooterActions>
         {/* No Close here (D103): leaving the order is the breadcrumb's job, in
             the app bar, where every other screen puts it. */}

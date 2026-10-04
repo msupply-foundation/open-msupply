@@ -2,7 +2,6 @@ import { generateUUID } from '../../../../uuid';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, type LocaleKey } from '../../../../intl';
 import { localIsoDaysAgo } from '../../../../ui/elements/inputs/dateTimeConvert';
-import { warningSuppressed } from '@/plugins/warningSuppression';
 import {
   InsertInternalOrder,
   InsertProgramInternalOrder,
@@ -115,22 +114,19 @@ const recentStocktakeIsInsufficient = async (
 };
 
 // The whole gate decision, shared by every New-order entry point (the
-// internal-orders list and the dashboard's Order more): the warning shows only
-// when recent stocktakes are insufficient AND no installed plugin's
-// warning-suppression contribution suppresses the store-wide warning with its
-// own item-level measure (rules › creation, OMS-REG-REPL-04.86/.87). The two
-// reads run in parallel, the suppression winning, so a suppressed store never
-// sees the warning however short its stocktakes fall. Called only when the
-// preference is enabled; never rejects (the consult isolates plugin failures
-// and a failed stocktake read answers false).
+// internal-orders list and the dashboard's Order more): the warning shows when
+// recent stocktakes are insufficient (rules › creation, OMS-REG-REPL-04.45).
+// Called only when the preference is enabled; never rejects (a failed
+// stocktake read answers false).
+//
+// No plugin suppression is consulted. The Cook Islands helper used to stand
+// this warning down where a counting cycle was in force, deferring to its own
+// per-item measure on the order (#505) — that measure came from a spec section
+// that was never a real requirement and has been withdrawn, so there is
+// nothing to defer to and this warning is every store's only measure again
+// (#822). The `host.warningSuppression` slot itself remains in the SDK.
 export const recentStocktakeGateShows = async (
   storeId: string,
   maxAge: number,
   minItems: number
-): Promise<boolean> => {
-  const [suppressed, insufficient] = await Promise.all([
-    warningSuppressed('internalOrders.recentStocktake'),
-    recentStocktakeIsInsufficient(storeId, maxAge, minItems),
-  ]);
-  return insufficient && !suppressed;
-};
+): Promise<boolean> => recentStocktakeIsInsufficient(storeId, maxAge, minItems);

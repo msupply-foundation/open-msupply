@@ -207,7 +207,9 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for matching rows: 'info' for lines awaiting an action
-   * (placeholder / uncounted lines), 'warning' for a line needing attention
+   * (in practice via cardTone, on a placeholder card's title — table rows mark
+   * placeholder / uncounted lines with rowTint + rowAccent 'unfinished', never
+   * text colour), 'warning' for a line needing attention
    * before it can proceed (a held batch on an outbound line), 'error' for a
    * line in an error state (expired stock; a server-refused bulk line).
    * Stamps data-tone on the row, mapped to palette tokens in CSS: table view

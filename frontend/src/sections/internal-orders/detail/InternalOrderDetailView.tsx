@@ -390,6 +390,10 @@ const InternalOrderDetailView: Component = () => {
     const node = info();
     return node ? isOrderEditable(node) : false;
   };
+  // A placeholder (requested 0) on an order that can still change: a Sent
+  // order may keep its zero lines, and those need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    editable() && line.requestedQuantity === 0;
   const isProgram = () => !!info()?.program;
   const orderInPacks = () => prefs()?.orderInPacks ?? false;
   // The Add-item affordance / add mode (AC-LN1): a Draft general order whose
@@ -1285,11 +1289,15 @@ const InternalOrderDetailView: Component = () => {
                   // A row click opens the line editor on that line (AC-LN11);
                   // on a read-only order it opens with every control disabled.
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
-                  // Placeholder lines (requested 0) read in the info tone —
-                  // whole-row blue text, de-emphasising them (ui-surface S3
-                  // line table), matching outbound's placeholder lines.
-                  rowTone={line =>
-                    line.requestedQuantity === 0 ? 'info' : undefined
+                  // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  cardTone={line =>
+                    isOpenPlaceholder(line) ? 'info' : undefined
                   }
                   emptyMessage={
                     (lineFilter().itemCodeOrName?.like ?? '').trim() ||
