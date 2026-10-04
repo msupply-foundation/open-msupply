@@ -5597,6 +5597,11 @@ type Mutations {
 	insertEncounter(storeId: String!, input: InsertEncounterInput!): InsertEncounterResponse!
 	updateEncounter(storeId: String!, input: UpdateEncounterInput!): UpdateEncounterResponse!
 	allocateProgramNumber(storeId: String!, input: AllocateProgramNumberInput!): AllocateProgramNumberResponse!
+	"""
+	Allocate the next patient code number for the store. Requires only the
+	patient-mutate permission — see allocate_patient_number (#268).
+	"""
+	allocatePatientNumber(storeId: String!): NumberNode!
 	insertContactTrace(storeId: String!, input: InsertContactTraceInput!): InsertContactTraceResponse!
 	updateContactTrace(storeId: String!, input: UpdateContactTraceInput!): UpdateContactTraceResponse!
 	insertRnrForm(storeId: String!, input: InsertRnRFormInput!): InsertRnRFormResponse!

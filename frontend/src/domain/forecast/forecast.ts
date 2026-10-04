@@ -6,8 +6,8 @@ import { formatNumber, round } from '../../intl/formatNumber';
 // (RequisitionLineNode.vaccineCourses) and the calculation-display arithmetic
 // over it. The surface is specced at internal-orders (S4, AC-PF7); the
 // requisitions vertical shows the same display on a transferred forecast line
-// (spec/requisitions § forecast context, AC-LE13). The client parses and
-// renders this; it never writes or recomputes it.
+// (spec/requisitions § forecast context, OMS-REG-DIST-05.35). The client
+// parses and renders this; it never writes or recomputes it.
 
 // One course-and-demographic group of a line's stored population forecast —
 // the shape the server serialises (contract › Population-based forecasting).

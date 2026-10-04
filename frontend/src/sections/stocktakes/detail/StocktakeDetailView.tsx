@@ -1161,15 +1161,7 @@ const StocktakeDetailView: Component = () => {
                   // down one edge rather than reading every Counted cell. These
                   // are the lines trimmed on finalise. Flat table, so a
                   // leaf-row predicate is enough (no grouped parents to
-                  // propagate to).
-                  //
-                  // This replaces the earlier whole-row action-blue TEXT tone:
-                  // blue text is the colour row SELECTION already spends, it
-                  // recoloured every value in the row (so a counted-looking
-                  // number and a missing one differed only in hue), and it left
-                  // the at-a-glance channel — the row background — unused. The
-                  // shared marking is the outbound line table's, same tokens
-                  // and same CSS (kdd/ui-styling; --marking-unfinished).
+                  // propagate to). See CARD_TABLE_MODEL.md § rowAccent.
                   rowTint={line =>
                     isUncounted(line) ? 'unfinished' : undefined
                   }

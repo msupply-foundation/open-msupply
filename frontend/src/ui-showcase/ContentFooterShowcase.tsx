@@ -4,6 +4,9 @@ import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../ui/utils/createFlash';
+import { Alert } from '../ui/elements/feedback/Alert';
 import { Button } from '../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import {
@@ -14,7 +17,12 @@ import {
   CancelButton,
   SaveButton,
 } from '../ui/elements/buttons/StandardButtons';
-import { CopyIcon, MinusCircleIcon, TrashIcon } from '../ui/icons';
+import {
+  ArrowRightIcon,
+  CopyIcon,
+  MinusCircleIcon,
+  TrashIcon,
+} from '../ui/icons';
 import { Lead, PageBody, PageFrame } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './ContentFooterShowcase.module.css';
@@ -44,6 +52,11 @@ export const contentFooterMetadata: PageMetadata = {
       searchTerms: ['save', 'cancel', 'status', 'history', 'actions'],
     },
     {
+      id: 'content-footer-message',
+      title: 'Message slot — a step that completed',
+      searchTerms: ['success', 'flash', 'status', 'outcome', 'feedback'],
+    },
+    {
       id: 'content-footer-contextual',
       title: 'Contextual content',
       searchTerms: ['context', 'conditional', 'two'],
@@ -51,8 +64,26 @@ export const contentFooterMetadata: PageMetadata = {
   ],
 };
 
+// The message-slot demo's flow: each confirm moves one stage on and flashes
+// the save confirmation. The last stage hides the button, as a real footer
+// does.
+const INBOUND_STEPS: StatusStep[] = [
+  { label: 'New' },
+  { label: 'Delivered' },
+  { label: 'Received' },
+  { label: 'Verified' },
+];
+
 export const ContentFooterShowcase = () => {
   const [confirmSave, setConfirmSave] = createSignal(false);
+  const [stage, setStage] = createSignal(0);
+  const saved = createFlash<string>();
+  const [refusal, setRefusal] = createSignal<string>();
+  const advance = () => {
+    setRefusal(undefined);
+    setStage(stage() + 1);
+    saved.show('Shipment saved');
+  };
   const [picked, setPicked] = createSignal<ReadonlySet<string>>(new Set());
   const toggle = (id: string) =>
     setPicked(prev => {
@@ -100,6 +131,68 @@ export const ContentFooterShowcase = () => {
                   message="Save changes to this shipment?"
                   onConfirm={() => {}}
                 />
+              </ContentFooterActions>
+            </ContentFooter>
+          </PageFrame>
+        </DashboardCard>
+
+        <DashboardCard
+          id="content-footer-message"
+          title="Message slot — a step that completed"
+        >
+          <Lead>
+            A status change often removes the control that made it: the dialog
+            closes and the status button hides at the status it just set.{' '}
+            <code>&lt;ContentFooterMessage&gt;</code> is where the footer says
+            what happened instead — a compact success chip carrying the save
+            confirmation, flashed with <code>createFlash</code> so it clears
+            itself, in the bar's one flexible slot beside the actions so nothing
+            moves when it lands. A refusal is not a chip: it keeps the
+            full-width error alert, which stays until the next attempt. The slot
+            is a polite live region, so the outcome is announced as well as
+            seen. The crumb that just arrived plays its one-shot bloom (reduced
+            motion: the colour change only). Confirm through to Verified, then
+            reset.
+          </Lead>
+          <PageFrame>
+            <PageBody />
+            <ContentFooter>
+              <StatusIndicator steps={INBOUND_STEPS} current={stage()} />
+              <Show when={refusal()}>
+                {message => <Alert severity="error">{message()}</Alert>}
+              </Show>
+              <ContentFooterMessage message={saved.value()} />
+              <ContentFooterActions>
+                <Show
+                  when={stage() < INBOUND_STEPS.length - 1}
+                  fallback={
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        saved.clear();
+                        setRefusal(undefined);
+                        setStage(0);
+                      }}
+                    >
+                      Reset
+                    </Button>
+                  }
+                >
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      saved.clear();
+                      setRefusal(
+                        'This shipment is on hold. Remove the hold to change its status.'
+                      );
+                    }}
+                  >
+                    Try while on hold
+                  </Button>
+                  <Button icon={<ArrowRightIcon />} onClick={advance}>
+                    Confirm {INBOUND_STEPS[stage() + 1]?.label}
+                  </Button>
+                </Show>
               </ContentFooterActions>
             </ContentFooter>
           </PageFrame>

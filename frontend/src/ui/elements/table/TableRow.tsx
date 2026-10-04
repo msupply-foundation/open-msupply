@@ -97,9 +97,10 @@ export function TableRow<T>(props: {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for this row: 'info' for records awaiting an action
-   * (placeholder / uncounted lines), 'warning' for a record needing attention
-   * before it can proceed (a held batch), 'error' for a line the server
-   * refused (a failed bulk operation). Stamps data-tone, styled in CSS.
+   * (placeholder / uncounted lines take rowTint + rowAccent 'unfinished'
+   * instead — see DataTable's prop doc), 'warning' for a record needing
+   * attention before it can proceed (a held batch), 'error' for a line the
+   * server refused (a failed bulk operation). Stamps data-tone, styled in CSS.
    * Semantic names only, mapped to palette tokens by the CSS — never colours.
    */
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;

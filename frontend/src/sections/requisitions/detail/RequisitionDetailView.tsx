@@ -234,6 +234,11 @@ const RequisitionDetailView: Component = () => {
     const node = info();
     return node ? isRequisitionEditable(node) : false;
   };
+  // A zero-supply placeholder (OMS-REG-DIST-06.12) on a requisition that can
+  // still change: a Finalised one keeps its zero lines, and those need no more
+  // work.
+  const isOpenPlaceholder = (line: Line) =>
+    editable() && line.supplyQuantity === 0;
   // Adding a line (rules › line editing): an editable, non-program (a program
   // requisition's lines are fixed to its master list), non-transferred (the
   // customer's demand is not added to here) requisition.
@@ -1114,11 +1119,16 @@ const RequisitionDetailView: Component = () => {
                   // (OMS-REG-DIST-06.24); on a read-only requisition it opens
                   // all-disabled (OMS-REG-DIST-06.35).
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
-                  // Rows with a ZERO supply quantity read in the info tone —
-                  // visually de-emphasised as placeholders
-                  // (OMS-REG-DIST-06.12).
-                  rowTone={line =>
-                    line.supplyQuantity === 0 ? 'info' : undefined
+                  // Placeholder rows (OMS-REG-DIST-06.12): see
+                  // CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  cardTone={line =>
+                    isOpenPlaceholder(line) ? 'info' : undefined
                   }
                   emptyMessage={
                     (lineFilter().itemCodeOrName?.like ?? '').trim()

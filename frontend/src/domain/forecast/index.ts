@@ -2,7 +2,7 @@
 // per-course breakdown's type + parser, the calculation-display arithmetic,
 // and the collapsible per-course display both requisition verticals show on a
 // forecast-carrying line. Specced at internal-orders (S4, AC-PF7); consumed
-// by requisitions on transferred forecast lines (AC-LE13).
+// by requisitions on transferred forecast lines (OMS-REG-DIST-05.35).
 export {
   parseVaccineCourses,
   forecastSteps,

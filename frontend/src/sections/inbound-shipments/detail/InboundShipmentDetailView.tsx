@@ -1319,9 +1319,19 @@ const InboundShipmentDetailView: Component = () => {
                   onSort={onSort}
                   onRowClick={isDisabled() ? undefined : openRow}
                   // A line the last bulk op failed reads in the error tone
-                  // (spec S8 → per-line indicators); an untouched placeholder
-                  // reads in the info tone (AC-V3). Error wins when both hold.
+                  // (spec S8 → per-line indicators).
                   rowTone={line =>
+                    lineErrors().has(line.id) ? 'error' : undefined
+                  }
+                  // Placeholder rows (AC-V3): CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isPlaceholderLine(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isPlaceholderLine(line) ? 'unfinished' : undefined
+                  }
+                  // Error wins when both hold.
+                  cardTone={line =>
                     lineErrors().has(line.id)
                       ? 'error'
                       : isPlaceholderLine(line)

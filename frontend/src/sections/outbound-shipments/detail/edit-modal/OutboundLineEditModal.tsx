@@ -12,7 +12,7 @@ import {
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
-import { getPlural, t } from '../../../../intl';
+import { t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -1431,7 +1431,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: () =>
         dosesView()
           ? t('label.pack-quantity-issued')
-          : t('label.units-issued', { unit: getPlural(unitName(), 2) }),
+          : t('label.units-issued', { unit: unitName() }),
       cardGroup: 'batch',
       meta: { align: 'right' },
       // No CELL_DEF key — the "{unit} issued" header is the binding constraint.
@@ -1763,9 +1763,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 label={t('label.units')}
                 value={allocateInValue()}
                 options={[
-                  // The unit option reads as a category — always plural
-                  // ("Vials"), the old app's getPlural(unit, 2).
-                  { value: 'units', label: getPlural(unitName(), 2) },
+                  { value: 'units', label: unitName() },
                   // The doses lens (AC-AL7): vaccine items under the
                   // manage-vaccines-in-doses preference only.
                   ...(prefs().manageVaccinesInDoses && item()?.isVaccine
@@ -1800,10 +1798,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     than a labelled input, and the row's end-alignment would
                     otherwise drop its label below theirs. */}
                 <span class={styles.availableValue}>
-                  {/* Unit name pluralised to the count (old-app parity —
-                      English only; getPlural passes other languages through). */}
-                  {formatNumber(availableUnits())}{' '}
-                  {getPlural(unitName(), availableUnits())}
+                  {formatNumber(availableUnits())} {unitName()}
                 </span>
               </LabelledValue>
             </div>
@@ -1902,6 +1897,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               emptyMessage={t('messages.no-stock-available')}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
+              configIsDefault={tableConfig.isConfigDefault()}
+              onSaveGlobalDefault={
+                tableConfig.canSaveGlobalDefault()
+                  ? tableConfig.saveGlobalTableConfig
+                  : undefined
+              }
             />
           </div>
 

@@ -10,7 +10,7 @@ import { forecastSteps, type VaccineCourse } from './forecast';
 import styles from './ForecastCalculationDisplay.module.css';
 
 // The population-forecast calculation display (spec/internal-orders S4,
-// AC-PF7; shown by requisitions on a transferred forecast line, AC-LE13):
+// AC-PF7; shown by requisitions on a transferred forecast line, OMS-REG-DIST-05.35):
 // where the store shows population-based forecasting and the edited line
 // carries a forecast, this stands in for the ordinary context charts — the
 // per-course arithmetic the server captured

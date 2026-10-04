@@ -3,6 +3,8 @@ import { t } from '@/intl';
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '@/ui/utils/createFlash';
 import type { RnrFormNode } from './rnrFormUpdate';
 import { isFinalised } from '../list/rnrFormStatus';
 import { FinaliseRnrFormAction } from './actions/FinaliseRnrFormAction';
@@ -11,6 +13,9 @@ import { FinaliseRnrFormAction } from './actions/FinaliseRnrFormAction';
 // Draft → Finalised lifecycle indicator and the Finalise action (its confirm
 // machine lives in detail/actions/). No Close (D103): leaving the form is the
 // breadcrumb's job, in the app bar, where every other screen puts it.
+// A finalise that lands hides the action, so the bar's message slot flashes
+// the current app's confirmation (spec/ui-standards/controls.md § action
+// feedback).
 
 export const RnrFormStatusFooter: Component<{
   node: RnrFormNode;
@@ -21,8 +26,16 @@ export const RnrFormStatusFooter: Component<{
   /** Flush edits, finalise, splice the result; resolves false on failure. */
   onFinalise: () => Promise<boolean>;
 }> = props => {
+  const saved = createFlash<string>();
 
   const finalised = () => isFinalised(props.node.status);
+
+  // The view's finalise, reporting a success in the message slot.
+  const finalise = async (): Promise<boolean> => {
+    const finalisedNow = await props.onFinalise();
+    if (finalisedNow) saved.show(t('status.finalised'));
+    return finalisedNow;
+  };
 
   // Draft carries its reached-at datetime for the history popover; the schema
   // exposes no finalised stamp, so that step legitimately stays undated.
@@ -33,13 +46,18 @@ export const RnrFormStatusFooter: Component<{
 
   return (
     <ContentFooter>
-      <StatusIndicator steps={steps()} current={finalised() ? 1 : 0} />
+      <StatusIndicator
+        recordId={props.node.id}
+        steps={steps()}
+        current={finalised() ? 1 : 0}
+      />
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
       <ContentFooterActions>
         <FinaliseRnrFormAction
           node={props.node}
           hasErrorLines={props.hasErrorLines}
           onShowFirstError={props.onShowFirstError}
-          onFinalise={props.onFinalise}
+          onFinalise={finalise}
         />
       </ContentFooterActions>
     </ContentFooter>

@@ -409,6 +409,12 @@ const PurchaseOrderDetailView: Component = () => {
   // here because the refusal names no cause (contract ⚠️), so a control left
   // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
+  // A line with no quantity — not yet ordered (spec S7) — on an order and a
+  // line that can still change. Sent orders and closed lines need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    !isDisabled() &&
+    line.status !== 'CLOSED' &&
+    line.requestedNumberOfUnits === 0;
 
   const refetchAll = () => {
     void refetchInfo();
@@ -870,13 +876,22 @@ const PurchaseOrderDetailView: Component = () => {
                     line.status === 'CLOSED' ? 'disabled' : undefined
                   }
                   // A line named by a blocked state move reads in the error
-                  // tone so it can be found and removed (spec S18); a line
-                  // with no quantity reads as a placeholder — not yet ordered
-                  // (spec S7). Error wins when both hold.
+                  // tone so it can be found and removed (spec S18).
                   rowTone={line =>
+                    blockedLines().includes(line.id) ? 'error' : undefined
+                  }
+                  // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  // Error wins when both hold.
+                  cardTone={line =>
                     blockedLines().includes(line.id)
                       ? 'error'
-                      : line.requestedNumberOfUnits === 0
+                      : isOpenPlaceholder(line)
                         ? 'info'
                         : undefined
                   }

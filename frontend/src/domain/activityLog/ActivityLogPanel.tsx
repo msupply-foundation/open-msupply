@@ -131,9 +131,9 @@ export const ActivityLogPanel: Component<{
   /**
    * Row order, by datetime. The consuming vertical's spec decides:
    * items/patients mandate most-recent-first (the default),
-   * requisitions/internal-orders mandate oldest-first (AC-LG1 / AC-AL1 —
-   * matching the real OMS ActivityLogList, which sends no sort and gets the
-   * server's datetime-ascending default).
+   * requisitions/internal-orders mandate oldest-first (OMS-REG-DIST-06.42 /
+   * AC-AL1 — matching the real OMS ActivityLogList, which sends no sort and
+   * gets the server's datetime-ascending default).
    */
   order?: 'newest-first' | 'oldest-first';
 }> = props => {
