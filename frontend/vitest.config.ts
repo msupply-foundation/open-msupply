@@ -36,6 +36,8 @@ export default defineConfig({
     include: [
       'src/**/*.test.ts',
       'vite/**/*.test.ts',
+      // The e2e scripts' own tests: the nightly workflow's helpers
+      // (nightly-lib.mjs) and e2e:affected (affected.mjs).
       'scripts/**/*.test.mjs',
       'plugins/*/src/**/*.test.ts',
       // cook_islands' backend half and shared domain core, named rather than

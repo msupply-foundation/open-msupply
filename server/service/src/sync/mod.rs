@@ -11,6 +11,7 @@ pub mod file_sync_driver;
 pub mod file_synchroniser;
 mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
+pub(crate) mod repair_source_site_id;
 pub mod settings;
 pub mod site_auth;
 pub mod sync_buffer;

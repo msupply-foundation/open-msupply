@@ -1,0 +1,40 @@
+# The barcode registry — "the book" (spec/barcode-scanning/contract.md).
+# One installation-wide set of code → item rows. `storeId` only authorises; it
+# never narrows the answer (contract § Looking a code up, wire trap).
+
+fragment Barcode on BarcodeNode {
+  id
+  gtin
+  itemId
+  packSize
+}
+
+# A miss is the NodeError branch carrying RecordNotFound — the normal first
+# scan of a new product, not a failure (contract wire trap). barcodeRegistry.ts
+# discriminates it.
+query barcodeByGtin($storeId: String!, $gtin: String!) {
+  barcodeByGtin(storeId: $storeId, gtin: $gtin) {
+    __typename
+    ... on BarcodeNode {
+      ...Barcode
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# An upsert despite the name: saving a known code rewrites its row. The
+# response union has no error member — the one rejection (InvalidItem) is a
+# top-level GraphQL error (contract wire trap).
+mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
+  insertBarcode(storeId: $storeId, input: $input) {
+    __typename
+    ... on BarcodeNode {
+      ...Barcode
+    }
+  }
+}

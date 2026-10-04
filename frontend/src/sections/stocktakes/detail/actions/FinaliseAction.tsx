@@ -41,11 +41,13 @@ export interface FinaliseActionProps {
 //
 // The confirm dialog is inline (not via a shared ActionModal) so the whole
 // flow is readable in one place (kdd/explicit-composition). On success
-// onApplied merges the saved node and the dialog CLOSES — closure is the
-// confirmation, and the FINALISED status now showing in the footer is the
-// visible result (spec/ui-standards/controls.md § dialogs, D22; § action
-// feedback, D21). On a rejection onError stamps the offending lines (rows show
-// them), the error phase shows the server's translated message and offers
+// onApplied merges the saved node and the dialog CLOSES (spec/ui-standards/
+// controls.md § dialogs, D22). Closure alone is too quiet — the split button
+// hides at FINALISED too — so the footer that hosts this action flashes the
+// save confirmation in its message slot (§ action feedback; kdd/action-modal
+// Update 3), and the arriving crumb plays its one-shot motion. On a rejection
+// onError stamps the offending lines (rows show them), the error phase shows
+// the server's translated message and offers
 // "Show error lines" (onShowErrors) when the rejection carries line ids. A
 // transport failure is silent (handled globally) → just closes.
 //
@@ -113,7 +115,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
     if (result.kind === 'failed') return close();
     if (result.kind === 'saved') {
       props.onApplied(result.node);
-      return close(); // success closes — the FINALISED status IS the confirmation
+      return close(); // success closes — the footer reports it (onApplied)
     }
     props.onError(result.lineIds); // stamp so the rows show the mismatch
     setErrorMessage(result.message); // the server's translated rejection text
