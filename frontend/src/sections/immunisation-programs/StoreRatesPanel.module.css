@@ -1,0 +1,38 @@
+/*
+ * The per-store rates tab body (StoreRatesPanel.tsx). The tab panel is a flex
+ * column with the dialog's remaining height; this takes all of it, so the
+ * store table (Table `fill`) gets what is left under the search and scrolls
+ * its rows there, a page at a time.
+ */
+.panel {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+/* A rate field in its end-aligned (numeric) cell. The cell's `text-align: end`
+   moves text, not the field's box, so the compact input would sit at the
+   cell's start, away from its end-aligned heading. Pushed to the end here, it
+   lines up under the heading. Held at the compact width: its column shrinks to
+   fit (`.rateColumn`), which would otherwise squeeze the box to its heading's
+   width, a little different for each rate. */
+.rate {
+  inline-size: var(--input-max-compact);
+  margin-inline-start: auto;
+  align-items: flex-end;
+}
+
+/* The two rate columns shrink to their content (the field and its heading), so
+   the spare width goes to the Store column rather than opening a gap between
+   the two rates. */
+.rateColumn {
+  inline-size: 1%;
+  white-space: nowrap;
+}
+
+/* A store row's cells take the dose table's block padding (DataTable's
+   comfortable cell padding), so the two tables of the editor share one row
+   rhythm instead of the inputs here sitting tight against the row dividers.
+   Doubled to outrank the Table shell's own `.table td` padding. */
+.storeRow.storeRow > td {
+  padding-block: var(--space-3);
+}
