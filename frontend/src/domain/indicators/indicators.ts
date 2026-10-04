@@ -24,6 +24,9 @@ export type IndicatorCell = {
   label: string;
   type: 'NUMBER' | 'STRING';
   value: string;
+  /** The cell's own source line is active — an inactive line freezes only
+   *  its own cells, even when merged with an active line of the same code. */
+  isActive: boolean;
 };
 
 // One customer-breakdown row for a line (AC-I10): a supplied customer store,
@@ -43,6 +46,9 @@ export type IndicatorEntry = {
   code: string;
   name: string;
   lineNumber: number;
+  /** Every displayed cell's source line is active — NOT one line's status: a
+   *  merged entry can mix an active and an inactive line of the same code.
+   *  False shows the inactive-line notice; each cell freezes on its own flag. */
   isActive: boolean;
   cells: IndicatorCell[];
   customerRows: IndicatorCustomerRow[];
@@ -78,7 +84,9 @@ const effectiveType = (
 // indicators ordered alphabetically by code (so the first's columns lead),
 // lines grouped by code, columns combined; a cell with no stored value is
 // dropped, and a line with no stored cell is absent. Entries order by line
-// number.
+// number. Only source lines with a stored cell take part: an inactive line
+// sharing its code with an active one seeds nothing on a new order, and must
+// not lend the entry its name or inactive status.
 export const mergeIndicatorLines = (
   nodes: readonly IndicatorNode[]
 ): IndicatorEntry[] => {
@@ -95,9 +103,11 @@ export const mergeIndicatorLines = (
 
   const entries: IndicatorEntry[] = [];
   for (const [code, sources] of byCode) {
+    const populated = sources.filter(lc => lc.columns.some(c => c.value));
+    if (populated.length === 0) continue; // a line with no stored cell is absent
     const cells: IndicatorCell[] = [];
     const customerRows: IndicatorCustomerRow[] = [];
-    for (const lc of sources) {
+    for (const lc of populated) {
       for (const column of [...lc.columns].sort(
         (a, b) => a.columnNumber - b.columnNumber
       )) {
@@ -108,6 +118,7 @@ export const mergeIndicatorLines = (
           label: cellLabel(column.name),
           type: effectiveType(column.valueType, lc.line.valueType),
           value: column.value.value,
+          isActive: lc.line.isActive,
         });
       }
       for (const info of lc.customerIndicatorInfo)
@@ -120,13 +131,12 @@ export const mergeIndicatorLines = (
           ),
         });
     }
-    if (cells.length === 0) continue; // a line with no stored cell is absent
-    const first = sources[0].line;
+    const lead = (populated.find(lc => lc.line.isActive) ?? populated[0]).line;
     entries.push({
       code,
-      name: first.name,
-      lineNumber: first.lineNumber,
-      isActive: sources.every(source => source.line.isActive),
+      name: lead.name,
+      lineNumber: lead.lineNumber,
+      isActive: cells.every(cell => cell.isActive),
       cells,
       customerRows,
     });
