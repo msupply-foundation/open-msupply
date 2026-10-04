@@ -216,8 +216,8 @@
   white-space: nowrap;
 }
 
-/* The volume block (AC-LE12): plain guidance lines; the no-capacity message
-   reads bold in the error tone. */
+/* The volume block (OMS-REG-DIST-05.34): plain guidance lines; the no-capacity
+   message reads bold in the error tone. */
 .volumeLine {
   margin: 0;
   font-size: var(--text-sm);

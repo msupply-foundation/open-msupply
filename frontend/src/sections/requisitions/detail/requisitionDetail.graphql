@@ -53,7 +53,8 @@ fragment RequisitionDetailLine on RequisitionLineNode {
   # The customer's population forecast, copied by the transfer (context only —
   # never written from this side; rules › forecast context). Gated client-side
   # on displayPopulationBasedForecasting + a non-null, non-zero total;
-  # vaccineCourses is the calculation display's per-course JSON (AC-LE13).
+  # vaccineCourses is the calculation display's per-course JSON
+  # (OMS-REG-DIST-05.35).
   forecastTotalUnits
   forecastTotalDoses
   vaccineCourses
@@ -233,14 +234,15 @@ mutation updateRequisition(
   }
 }
 
-# The master-list bulk add (AC-ML1; spec S2 § page actions → the shared
-# domain/masterList picker): one line per stock item on the chosen list not
-# already on the requisition, all quantities zero — idempotent, skip-by-item.
-# Success returns the requisition's ENTIRE line set (the client refetches
-# regardless, so only the outcome is needed here). The only typed rejection is
-# MasterListNotFoundForThisStore (AC-ML2 — also fires for another store's or a
-# program list); cannot-edit arrives as a plain GraphQL error on this mutation
-# (contract wire trap), surfacing through the global failure modal.
+# The master-list bulk add (OMS-FUN-DIS-03.20; spec S2 § page actions → the
+# shared domain/masterList picker): one line per stock item on the chosen list
+# not already on the requisition, all quantities zero — idempotent,
+# skip-by-item. Success returns the requisition's ENTIRE line set (the client
+# refetches regardless, so only the outcome is needed here). The only typed
+# rejection is MasterListNotFoundForThisStore (OMS-FUN-DIS-03.21 — also fires
+# for another store's or a program list); cannot-edit arrives as a plain GraphQL
+# error on this mutation (contract wire trap), surfacing through the global
+# failure modal.
 mutation addRequisitionFromMasterList(
   $storeId: String!
   $input: ResponseAddFromMasterListInput!

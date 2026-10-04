@@ -114,11 +114,12 @@ mutation updateRequisitionLine(
   }
 }
 
-# DELETE (AC-LD1): remove the selected lines in one batch. The batch is ATOMIC
-# — any member error rolls the whole batch back, so nothing is removed on a
-# partial failure (AC-LD3). A validating member still reports DeleteResponse on
-# a rolled-back batch (contract › deletion wire trap), so the caller judges the
-# batch by whether ANY member errored, never a member's own response.
+# DELETE (OMS-REG-DIST-06.36): remove the selected lines in one batch. The batch
+# is ATOMIC — any member error rolls the whole batch back, so nothing is removed
+# on a partial failure (OMS-REG-DIST-06.38). A validating member still reports
+# DeleteResponse on a rolled-back batch (contract › deletion wire trap), so the
+# caller judges the batch by whether ANY member errored, never a member's own
+# response.
 mutation deleteRequisitionLines(
   $storeId: String!
   $ids: [DeleteResponseRequisitionLineInput!]!

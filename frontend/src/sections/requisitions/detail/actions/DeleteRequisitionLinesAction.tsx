@@ -9,10 +9,10 @@ import { TrashIcon } from '@/ui/icons';
 import { DeleteRequisitionLines } from '../edit-modal/requisitionLineEdit.generated';
 
 /**
- * The two standing states the UI mirrors WITHOUT a server call (AC-LD2):
- * not editable-by-status (Finalised / approval-blocked / disabled store) and
- * transfer-linked (the customer's ask is not deleted here). Every other guard
- * is the server's (rules › deleting lines).
+ * The two standing states the UI mirrors WITHOUT a server call
+ * (OMS-REG-DIST-06.37): not editable-by-status (Finalised / approval-blocked /
+ * disabled store) and transfer-linked (the customer's ask is not deleted
+ * here). Every other guard is the server's (rules › deleting lines).
  */
 export type DeleteLinesBlock = 'not-editable' | 'transferred';
 
@@ -23,25 +23,27 @@ export interface DeleteRequisitionLinesActionProps {
   /**
    * The standing block in force, if any — picked when the dialog opens. The
    * button stays clickable regardless; when set, the click surfaces the
-   * explanation instead of a confirmation and nothing is submitted (AC-LD2).
+   * explanation instead of a confirmation and nothing is submitted
+   * (OMS-REG-DIST-06.37).
    */
   blocked: () => DeleteLinesBlock | undefined;
   /**
    * Deletion succeeded — the detail clears its selection and refetches so the
-   * removed rows disappear (AC-LD1).
+   * removed rows disappear (OMS-REG-DIST-06.36).
    */
   onDeleted: () => void;
 }
 
-// The requisition detail line delete (spec S2 § footer, AC-LD1–LD3): a footer
-// button + a blocked | confirm → deleting → error dialog, mirroring the
-// internal-order detail's DeleteLinesAction (same atomic batch, same
-// active-and-explaining treatment of a blocked selection). On a read-only or
-// transfer-linked requisition the click opens the dialog already explaining
-// why it can't proceed — each block under its own message, no server call
-// (AC-LD2) — never a silently dead click. The batch is ATOMIC: any member
-// error rolls the whole batch back and nothing is removed (AC-LD3), so on
-// error we show the mapped reason with just a Cancel, keeping the selection.
+// The requisition detail line delete (spec S2 § footer,
+// OMS-REG-DIST-06.36–.38): a footer button + a blocked | confirm → deleting →
+// error dialog, mirroring the internal-order detail's DeleteLinesAction (same
+// atomic batch, same active-and-explaining treatment of a blocked selection).
+// On a read-only or transfer-linked requisition the click opens the dialog
+// already explaining why it can't proceed — each block under its own message,
+// no server call (OMS-REG-DIST-06.37) — never a silently dead click. The batch
+// is ATOMIC: any member error rolls the whole batch back and nothing is removed
+// (OMS-REG-DIST-06.38), so on error we show the mapped reason with just a
+// Cancel, keeping the selection.
 //
 // No success phase: a clean delete CLOSES the dialog — closure is the
 // confirmation and the rows gone behind it are the visible result
@@ -49,8 +51,8 @@ export interface DeleteRequisitionLinesActionProps {
 type Phase = 'blocked' | 'confirm' | 'deleting' | 'error';
 
 // The typed rejections → their catalog messages (spec S6). The shipment guard
-// names its cause (AC-LD3); anything unmapped falls back to the server's own
-// description.
+// names its cause (OMS-REG-DIST-06.38); anything unmapped falls back to the
+// server's own description.
 const errorMessage = (typename: string, description: string): string =>
   typename === 'CannotDeleteLineLinkedToShipment'
     ? t('message.cannot-delete-line-linked-to-shipment')
@@ -150,8 +152,9 @@ const Body = (
         <Switch
           fallback={tPlural('messages.confirm-delete-requisition-lines', count)}
         >
-          {/* Blocked: explain the standing state and never submit (AC-LD2) —
-              read-only and transfer-linked each under their own message. */}
+          {/* Blocked: explain the standing state and never submit
+              (OMS-REG-DIST-06.37) — read-only and transfer-linked each under
+              their own message. */}
           <Match when={phase() === 'blocked'}>
             <Alert severity="warning">
               {block === 'transferred'

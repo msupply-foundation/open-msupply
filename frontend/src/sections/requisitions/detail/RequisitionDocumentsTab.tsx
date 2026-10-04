@@ -3,15 +3,15 @@ import { DocumentUploadPanel } from '@/ui/elements/display/DocumentUploadPanel';
 import { syncFileUrl } from '@/domain/syncFiles';
 import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 
-// The detail "Documents" tab (spec/requisitions S2 § Documents tab; AC-DT1/2):
-// the record-documents panel's LIST HALF ALONE — the response side reads the
-// customer's paperwork, it does not author its own, so there is NO upload zone
-// on any status and no remove affordance in practice (rules › documents). A
-// transferred requisition lists the customer's internal-order documents
-// grouped with any of the requisition's own; each file opens through its OWN
-// record's path (node.recordId — a transferred document serves under the
-// LINKED internal order's path and 404s under this requisition's, contract ›
-// documents).
+// The detail "Documents" tab (spec/requisitions S2 § Documents tab;
+// OMS-REG-DIST-06.40/.41): the record-documents panel's LIST HALF ALONE — the
+// response side reads the customer's paperwork, it does not author its own, so
+// there is NO upload zone on any status and no remove affordance in practice
+// (rules › documents). A transferred requisition lists the customer's
+// internal-order documents grouped with any of the requisition's own; each file
+// opens through its OWN record's path (node.recordId — a transferred document
+// serves under the LINKED internal order's path and 404s under this
+// requisition's, contract › documents).
 const TABLE_NAME = 'requisition';
 
 export const RequisitionDocumentsTab: Component<{
