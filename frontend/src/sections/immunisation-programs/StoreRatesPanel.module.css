@@ -3,10 +3,16 @@
  * column with the dialog's remaining height; this takes all of it, so the
  * store table (Table `fill`) gets what is left under the search and scrolls
  * its rows there, a page at a time.
+ *
+ * Size-contained, so the rows add nothing to the dialog's own height: the
+ * editor holds the height Course details had (Dialog `holdHeight`) and this
+ * fills exactly that, instead of a page of rows stretching the dialog to the
+ * screen and moving its title, tabs and footer at every tab switch (#984).
  */
 .panel {
   flex: 1 1 auto;
   min-block-size: 0;
+  contain: size;
 }
 
 /* A rate field in its end-aligned (numeric) cell. The cell's `text-align: end`

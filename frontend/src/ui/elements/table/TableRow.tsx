@@ -30,6 +30,11 @@ const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
 const cellMono = <T,>(cell: TanCell<T, unknown>): boolean =>
   cell.column.columnDef.meta?.mono ?? false;
 
+// The control-line convention: a short cell in a start-aligned editor table
+// centres on the row's inputs (meta.controlLine; the CSS is DataTable's).
+const cellControlLine = <T,>(cell: TanCell<T, unknown>): boolean =>
+  cell.column.columnDef.meta?.controlLine ?? false;
+
 // A column's real growth cap in px (delivered as max-width), or undefined.
 // TanStack merges its default maxSize (Number.MAX_SAFE_INTEGER) into every
 // columnDef, so only a value below that sentinel counts as an actual cap.
@@ -256,7 +261,16 @@ export function TableRow<T>(props: {
                   leaf value (a column's custom `cell` overrides). renderTemplate, not
                   TanStack's flexRender: the latter untracks the call, freezing every
                   locale-derived value (numbers, dates, money) until a reload. */}
-              {renderTemplate(cell.column.columnDef.cell, cell.getContext())}
+              {cellControlLine(cell) ? (
+                <span class={styles.controlLine}>
+                  {renderTemplate(
+                    cell.column.columnDef.cell,
+                    cell.getContext()
+                  )}
+                </span>
+              ) : (
+                renderTemplate(cell.column.columnDef.cell, cell.getContext())
+              )}
             </td>
           </Show>
         )}

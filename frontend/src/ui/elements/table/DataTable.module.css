@@ -2031,6 +2031,18 @@ tr[data-accent='error'] > :first-child::before {
   margin-block: calc((var(--cell-control-height) - var(--checkbox-size)) / 2);
 }
 
+/* The same line for content the table can't size itself — a row number, an
+   icon button — in a column that opts in (meta.controlLine, which wraps the
+   cell's content in this box). One control tall and centring what it holds, it
+   puts that content on the inputs' line however the row grows beneath them.
+   Inline, so the cell's own text-align still places it across the cell. */
+.root[data-cell-align='start'] .tableScroll[data-view='table'] .controlLine {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--cell-control-height);
+  vertical-align: top;
+}
+
 /* Anything scrolled or focused into view inside an UNPINNED cell — the cell
    itself or a focusable control in it — stops clear of the pinned columns
    instead of under them. Scroll margin on those targets rather than scroll

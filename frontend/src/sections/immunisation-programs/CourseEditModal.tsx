@@ -74,7 +74,6 @@ import {
   type ValidationItem,
 } from './courseEditor';
 import { StoreRatesPanel } from './StoreRatesPanel';
-import styles from './CourseEditModal.module.css';
 
 // S3 — the course editor (spec/immunisation-programs ui-surface S3; rules §
 // the editor). ONE dialog for create and edit: the same whole-course write,
@@ -429,11 +428,12 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     {
       c: { id: 'doseNumber' },
       header: () => t('label.dose-number'),
-      meta: { align: 'right', hideFromColumnSettings: true },
+      // controlLine: centred on the row's inputs rather than riding the top
+      // of the start-aligned cell.
+      meta: { align: 'right', hideFromColumnSettings: true, controlLine: true },
       size: remToPx(5),
-      // The row's position in schedule order (rules § doses), centred on the
-      // row's inputs rather than riding the top of the start-aligned cell.
-      cell: info => <span class={styles.doseNumber}>{info.row.index + 1}</span>,
+      // The row's position in schedule order (rules § doses).
+      cell: info => info.row.index + 1,
     },
     {
       c: { key: 'label' },
@@ -523,20 +523,24 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     {
       c: { id: 'delete' },
       header: () => t('label.delete'),
-      meta: { align: 'center', hideFromColumnSettings: true },
-      size: remToPx(4),
       // Centred on the row's inputs, like the dose number.
+      meta: {
+        align: 'center',
+        hideFromColumnSettings: true,
+        controlLine: true,
+      },
+      size: remToPx(4),
+      // Bordered, as a table row's action (IconButton).
       cell: info => (
-        <span class={styles.doseDelete}>
-          <IconButton
-            icon={<TrashIcon />}
-            label={t('label.delete')}
-            variant="danger"
-            size="small"
-            disabled={saving()}
-            onClick={() => removeDose(info.row.original.id)}
-          />
-        </span>
+        <IconButton
+          bordered
+          icon={<TrashIcon />}
+          label={t('label.delete')}
+          variant="danger"
+          size="small"
+          disabled={saving()}
+          onClick={() => removeDose(info.row.original.id)}
+        />
       ),
     },
   ];
@@ -560,9 +564,12 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
       // Blocking while the save is in flight: no Escape exit until it resolves.
       dismissable={!saving()}
       onClose={props.onClose}
-      // The store rates are three short columns, lost in the course details'
-      // width: that tab takes the next measure down.
-      width={tab() === 'store-rates' ? 'form' : 'wide'}
+      // One steady box across the tabs (components › modal dialog): the
+      // width stays put, and the store rates hold the height Course details
+      // had — their table scrolls inside it rather than stretching the
+      // dialog to the screen, so the title, tabs and footer never move.
+      width="wide"
+      holdHeight={tab() === 'store-rates'}
       // The server's refusal sits above the actions, with the draft kept for
       // correction and retry (S3 § states).
       footer={
@@ -617,12 +624,13 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
               <Stack>
                 {/* Two groups side by side, so no field runs the dialog's
                     full width (#984); they stack once the dialog is too
-                    narrow for both. Each sits in a grey inset panel.
-                    Top-level groups of a dialog whose title holds the h2:
-                    rank h3, treatment `group`. */}
-                <FormColumns class={styles.groups}>
+                    narrow for both. Each sits in a grey inset panel, the
+                    two ending level (`stretch`). Top-level groups of a
+                    dialog whose title holds the h2: rank h3, treatment
+                    `group`. */}
+                <FormColumns stretch>
                   <FormColumn>
-                    <InsetPanel class={styles.panel}>
+                    <InsetPanel>
                       <FormSection
                         title={t('heading.course')}
                         headingLevel="h3"
@@ -655,7 +663,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
                     </InsetPanel>
                   </FormColumn>
                   <FormColumn>
-                    <InsetPanel class={styles.panel}>
+                    <InsetPanel>
                       <FormSection
                         title={t('heading.forecasting')}
                         headingLevel="h3"

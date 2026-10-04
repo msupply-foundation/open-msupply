@@ -22,6 +22,7 @@ A component isn't done until every doc/surface that indexes it is updated. Miss 
 - **`HStack` full sweep** — ~40 inline `flex` / `flex-direction: column` sites remain (only OutboundSidePanel + the Settings clusters are swapped so far). Folds into the full component-replacement pass; the enforcement guard is tracked in #639.
 - **`DateField` adoption** — 2 `TextField type="date"` bypasses (`customer-returns/detail/edit-modal/returnLineColumns.tsx`, `stocktakes/list/CreateStocktakeModal.tsx`) → `DateField`. The narrow footprint is already covered by its `compact` width preset (there is no `width="date"` gap).
 - **`RecordLink`** — visual verification outstanding.
+- **`meta.controlLine`** (DataTable) — the stocktake line editor's row actions are 1.75rem icon buttons in a top-aligned (`cellAlign="start"`) table of 2.25rem inputs, so they ride the top of their cells; opting the column in centres them on the inputs' line, as the vaccine course editor's dose number and delete button are (#984).
 
 ### Design decisions to surface (KDD-governed — flag, don't silently refactor)
 
@@ -30,6 +31,7 @@ A component isn't done until every doc/surface that indexes it is updated. Miss 
 - **`BulkDeleteButton(mutation, label)`** — was `SelectionActionModal`, deliberately inlined (`kdd/action-modal`); a narrow wrapper could reclaim ~4–5 atomic-batch deletes.
 - **`ExportPrintButton` (4×) / `HoldToggle` (4×)** — trivial wrappers, borderline vs explicit-composition.
 - **Library `ErrorBoundary` / `GenericErrorFallback` / `DataError`** — reference-parity, low urgency; the app has an app-level `UnexpectedErrorModal` only.
+- **`Table` shell gaps, met by the vaccine course editor's Rates per store tab** (#984) — a numeric (`data-numeric`) cell end-aligns text but not a field inside it; there is no density option, so its rows sit tighter than a DataTable's; and nothing shrinks a column to its content. `StoreRatesPanel.module.css` patches all three locally. Underneath: that table is a filtered, server-paged set — a `DataTable` role by the registry — on `Table` only because `DataTable` cannot page on scroll (`onReachEnd`).
 - **Action-bearing header banner slot** — a standing-context row beneath the `HeaderToolbar` field cluster that carries **controls** (details popover, an apply action, inline error), which the alert chip slot may not hold (a compact alert is never actionable). Registered as a ⛔ role in the registry (App bar — action-bearing standing-context banner); sole consumer meanwhile composes its own `Toolbar` row (the internal-orders ancillary banner). Build when a second vertical needs one (operator ruling, 2026-07-31).
 
 ### Reference-parity primitives — adopt when a real consumer appears, don't pre-build
