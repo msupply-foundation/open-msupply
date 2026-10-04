@@ -31,6 +31,7 @@ import {
   rowsForKeys,
   runtimeText,
   typesText,
+  uninstallOrder,
   uninstallOutcome,
   type PluginRow,
   type PluginSortKey,
@@ -217,7 +218,8 @@ const PluginsList: Component = () => {
         selectionActions={
           // No guard: navigation's server-admin gate already holds.
           <DeleteSelectedAction
-            selected={selectedRows}
+            // Backend rows first, whatever the sort (OMS-REG-MNG-07.66).
+            selected={() => uninstallOrder(selectedRows())}
             deleteOne={uninstallOne}
             // One call at a time: the server addresses a row by id alone, and
             // a backend and a frontend row can share one (contract ›
