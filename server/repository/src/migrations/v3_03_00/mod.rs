@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod add_changelog_default_partition;
 mod add_database_error_to_system_log_type_enum;
 mod add_settings_sync_is_paused_key_type;
+mod add_store_name_link_id_index;
 mod add_sync_api_pause_pg_enums;
 mod add_sync_pause_changed_system_log_type;
 
@@ -22,6 +23,7 @@ impl Migration for V3_03_00 {
         vec![
             Box::new(add_database_error_to_system_log_type_enum::Migrate),
             Box::new(add_changelog_default_partition::Migrate),
+            Box::new(add_store_name_link_id_index::Migrate),
             Box::new(add_settings_sync_is_paused_key_type::Migrate),
             Box::new(add_sync_pause_changed_system_log_type::Migrate),
             Box::new(add_sync_api_pause_pg_enums::Migrate),
