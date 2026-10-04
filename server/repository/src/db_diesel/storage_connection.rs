@@ -317,18 +317,28 @@ fn map_begin_transaction_error<T>(
 #[derive(Clone)]
 pub struct StorageConnectionManager {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
+    /// What the pool was opened with: the sqlite file path, or the postgres URL. Kept so
+    /// that code needing a connection outside the pool (`ReadOnlySql` on sqlite) opens the
+    /// same database the pool did.
+    database_url: String,
     on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
     /// Shared with every `StorageConnection` produced by this manager.
     changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
 }
 
 impl StorageConnectionManager {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
+    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>, database_url: String) -> Self {
         StorageConnectionManager {
             pool,
+            database_url,
             on_commit: None,
             changelog_cursor_tracker: ChangelogCursorTracker::new(),
         }
+    }
+
+    /// The sqlite file path or postgres URL the pool was opened with.
+    pub fn database_url(&self) -> &str {
+        &self.database_url
     }
 
     pub fn set_on_commit(&mut self, callback: Arc<dyn Fn(&TransactionNotification) + Send + Sync>) {

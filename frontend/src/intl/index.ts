@@ -54,6 +54,6 @@ export {
   currentLanguageName,
   languageOptions,
   getLocalisedFullName,
-  getPlural,
   translateServerError,
 } from './intlUtils';
+export { measureWord, type MeasureMode } from './measureWord';

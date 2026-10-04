@@ -1,3 +1,4 @@
+use crate::diesel::RunQueryDsl;
 use crate::migrations::*;
 
 pub(crate) struct Migrate;
@@ -26,12 +27,33 @@ impl MigrationFragment for Migrate {
         // it is true. Every row that exists when this runs is a React
         // module-federation bundle, so `react` describes it exactly. That is
         // also why there is no separate backfill statement.
-        sql!(
-            connection,
-            r#"
-                ALTER TABLE frontend_plugin ADD COLUMN host_runtime TEXT NOT NULL DEFAULT 'react';
-            "#
-        )?;
+        //
+        // Guarded because this fragment first shipped under 3.0.0 (v3.01.00 only) and
+        // databases that ran it there will meet it again here under 3.1.1.
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TABLE frontend_plugin ADD COLUMN IF NOT EXISTS host_runtime TEXT NOT NULL DEFAULT 'react';
+                "#
+            )?;
+        } else {
+            use crate::diesel_helper_types::Count;
+
+            let column_exists: Count = diesel::sql_query(
+                "SELECT COUNT(*) as count FROM pragma_table_info('frontend_plugin') WHERE name = 'host_runtime'",
+            )
+            .get_result(connection.lock().connection())?;
+
+            if column_exists.count == 0 {
+                sql!(
+                    connection,
+                    r#"
+                        ALTER TABLE frontend_plugin ADD COLUMN host_runtime TEXT NOT NULL DEFAULT 'react';
+                    "#
+                )?;
+            }
+        }
 
         Ok(())
     }

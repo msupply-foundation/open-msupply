@@ -1286,6 +1286,79 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
     assert_eq!(rows_after.rows[0].record_id, "clinician_in_flight");
 }
 
+/// `compatibility_query` (used by plugin processors) must respect the same
+/// in-flight clamp as `query`. Otherwise a row committed *after* an in-flight
+/// one, but with a higher cursor, is returned first; the processor advances
+/// past the in-flight row's cursor and never sees it once it commits.
+///
+/// Postgres-only for the same reason as `test_max_cursor_clamped_by_in_flight_tx`.
+#[cfg(feature = "postgres")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_compatibility_query_clamped_by_in_flight_tx() {
+    use crate::{
+        ClinicianRow, ClinicianRowRepository, ClinicianRowRepositoryTrait, RepositoryError,
+        TransactionError,
+    };
+
+    let (_, _, manager, _) = setup_all(
+        "test_compatibility_query_clamped_by_in_flight_tx",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    let clinician = |id: &str| ClinicianRow {
+        id: id.to_string(),
+        code: id.to_string(),
+        last_name: id.to_string(),
+        initials: "C".to_string(),
+        is_active: true,
+        ..Default::default()
+    };
+
+    let observer = manager.connection().unwrap();
+    let cursor_before = ChangelogRepository::new(&observer).max_cursor().unwrap();
+
+    let (registered_tx, registered_rx) = std::sync::mpsc::channel::<()>();
+    let (release_tx, release_rx) = std::sync::mpsc::channel::<()>();
+
+    let manager_for_tx = manager.clone();
+    let slow_tx = tokio::task::spawn_blocking(move || {
+        let conn = manager_for_tx.connection().unwrap();
+        let _: Result<(), TransactionError<RepositoryError>> =
+            conn.transaction_sync(|con| -> Result<(), RepositoryError> {
+                ClinicianRowRepository::new(con).upsert_one(&clinician("clinician_in_flight"))?;
+                registered_tx.send(()).unwrap();
+                release_rx.recv().unwrap();
+                Ok(())
+            });
+    });
+
+    registered_rx.recv().unwrap();
+
+    // Commit a later row (higher cursor) while the slow tx is still open.
+    ClinicianRowRepository::new(&observer)
+        .upsert_one(&clinician("clinician_committed"))
+        .unwrap();
+
+    let rows_during = ChangelogRepository::new(&observer)
+        .compatibility_query(cursor_before, 100, None)
+        .unwrap();
+    assert!(
+        rows_during.is_empty(),
+        "expected no rows past clamp while in-flight tx open, got {:?}",
+        rows_during.iter().map(|r| &r.record_id).collect::<Vec<_>>()
+    );
+
+    release_tx.send(()).unwrap();
+    slow_tx.await.unwrap();
+
+    let rows_after = ChangelogRepository::new(&observer)
+        .compatibility_query(cursor_before, 100, None)
+        .unwrap();
+    let ids: Vec<_> = rows_after.iter().map(|r| r.record_id.as_str()).collect();
+    assert_eq!(ids, vec!["clinician_in_flight", "clinician_committed"]);
+}
+
 /// Windowed changelog dedup (postgres-only). Verifies:
 /// - within a window, only the newest row per (table_name, record_id, row_action) survives;
 /// - UPSERT and DELETE for the same record survive separately (row_action in the key);
@@ -1422,4 +1495,131 @@ async fn test_changelog_dedupe_windowed() {
         !dedup_test_relation_exists(&connection, "index_changelog_dedup"),
         "index_changelog_dedup should be dropped"
     );
+}
+
+/// The v3_00_00 backfills stamp `source_site_id = 0` when the central site id isn't known
+/// (see `repair_source_site_id`). `0` is not a real site id, so the legacy push reads those
+/// rows as locally authored and sends central reference data upward. Pins both halves: that
+/// the filter does select a `0` row, and that restamping takes it back out.
+#[actix_rt::test]
+async fn test_update_source_site_id_removes_rows_from_legacy_push() {
+    let (_, connection, _, _) = setup_all(
+        "test_update_source_site_id_removes_rows_from_legacy_push",
+        MockDataInserts::none(),
+    )
+    .await;
+    delete_all_changelog(&connection);
+
+    fn insert_changelog_with_source_site_id(
+        connection: &StorageConnection,
+        cursor: i64,
+        record_id: &str,
+        source_site_id: Option<i32>,
+    ) {
+        #[derive(Insertable)]
+        #[diesel(table_name = changelog_with_links)]
+        struct TestChangelogInsert<'a> {
+            cursor: i64,
+            table_name: ChangelogTableName,
+            record_id: &'a str,
+            row_action: RowActionType,
+            source_site_id: Option<i32>,
+        }
+
+        diesel::insert_into(changelog_with_links::table)
+            .values(&TestChangelogInsert {
+                cursor,
+                table_name: ChangelogTableName::Item,
+                record_id,
+                row_action: RowActionType::Upsert,
+                source_site_id,
+            })
+            .execute(connection.lock().connection())
+            .unwrap();
+    }
+
+    fn source_site_ids_by_record(connection: &StorageConnection) -> Vec<(String, Option<i32>)> {
+        ChangelogRepository::new(connection)
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| (row.record_id, row.source_site_id))
+            .collect()
+    }
+
+    const CENTRAL_SITE_ID: i32 = 1;
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(
+            KeyType::SettingsSyncCentralServerSiteId,
+            Some(CENTRAL_SITE_ID),
+        )
+        .unwrap();
+
+    // A backfilled item row (0), one already stamped as central, and one from another site.
+    // Cursors span more than one update window, so the batching is covered too.
+    insert_changelog_with_source_site_id(&connection, 1, "item_backfilled", Some(0));
+    insert_changelog_with_source_site_id(
+        &connection,
+        2,
+        "item_from_central",
+        Some(CENTRAL_SITE_ID),
+    );
+    insert_changelog_with_source_site_id(&connection, 3, "item_from_other_site", Some(7));
+    insert_changelog_with_source_site_id(&connection, 25_000, "item_backfilled_late", Some(0));
+
+    let repo = ChangelogRepository::new(&connection);
+    let pushed = |connection: &StorageConnection| -> Vec<String> {
+        ChangelogRepository::new(connection)
+            .query(
+                ChangelogFilter::all_data_for_legacy_central(connection).unwrap(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| row.record_id)
+            .collect()
+    };
+
+    // Before: both 0 rows are selected for the push, alongside the genuinely foreign row.
+    assert_eq!(
+        pushed(&connection),
+        vec![
+            "item_backfilled".to_string(),
+            "item_from_other_site".to_string(),
+            "item_backfilled_late".to_string(),
+        ]
+    );
+
+    assert_eq!(repo.update_source_site_id(0, CENTRAL_SITE_ID).unwrap(), 2);
+
+    // After: only the row from another site, which is data this site really does relay.
+    assert_eq!(
+        pushed(&connection),
+        vec!["item_from_other_site".to_string()]
+    );
+
+    // And nothing else moved.
+    assert_eq!(
+        source_site_ids_by_record(&connection),
+        vec![
+            ("item_backfilled".to_string(), Some(CENTRAL_SITE_ID)),
+            ("item_from_central".to_string(), Some(CENTRAL_SITE_ID)),
+            ("item_from_other_site".to_string(), Some(7)),
+            ("item_backfilled_late".to_string(), Some(CENTRAL_SITE_ID)),
+        ]
+    );
+
+    // Idempotent: a second pass has nothing to do.
+    assert_eq!(repo.update_source_site_id(0, CENTRAL_SITE_ID).unwrap(), 0);
 }

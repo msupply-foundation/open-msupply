@@ -360,8 +360,9 @@
 }
 
 /* Semantic row tones — data-tone stamped by TableRow when the page's rowTone
-   predicate matches. 'info' = the action-blue text the current app gives rows
-   awaiting an action (e.g. outbound's placeholder lines). Colour on the cells
+   predicate matches. 'info' = action-blue text for a row awaiting an action.
+   Placeholder / uncounted lines don't use it: they take the 'unfinished'
+   tint + accent below (CARD_TABLE_MODEL.md § rowAccent). Colour on the cells
    so plain text follows; richer cell content (chips, swatches) keeps its own
    colours. */
 tr[data-tone='info'] > .td {
