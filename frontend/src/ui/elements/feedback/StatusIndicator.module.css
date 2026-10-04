@@ -63,6 +63,48 @@
   font-weight: var(--weight-bold);
 }
 
+/* ARRIVAL — the stage a status change has just moved the record onto plays
+   once: a brand-tinted bloom behind its label, fading out as the label's
+   colour carries it from not-yet-reached grey to the current accent. The
+   component clears data-arrived when the animation ends, so it never replays
+   on a later render. Timed by --motion-sweep (the sync stepper's one-shot
+   sheen): reduced motion zeroes it, which leaves only the colour change. */
+.step[data-arrived] .label {
+  position: relative;
+  isolation: isolate; /* keeps the bloom's negative z-index behind the text */
+  animation: step-arrive-colour var(--motion-sweep) ease-out;
+}
+
+.step[data-arrived] .label::before {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
+  z-index: -1;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--primary-main) 30%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: step-arrive-bloom var(--motion-sweep) ease-out;
+}
+
+@keyframes step-arrive-colour {
+  from {
+    color: var(--gray-light);
+  }
+}
+
+@keyframes step-arrive-bloom {
+  from {
+    opacity: 1;
+    transform: scale(0.6);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
 /* ---- History popover: a vertical timeline of dots + labels + dates ---- */
 
 .history {

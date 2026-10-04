@@ -41,3 +41,6 @@ pub use sql_types::*;
 
 mod iter;
 pub use iter::*;
+
+pub mod open_file_limit;
+pub use open_file_limit::raise_open_file_limit;

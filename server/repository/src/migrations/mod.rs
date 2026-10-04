@@ -48,6 +48,7 @@ mod v2_20_00;
 mod v2_21_00;
 mod v2_21_01;
 mod v3_00_00;
+mod v3_01_01;
 mod v3_02_00;
 mod v3_04_00;
 mod version;
@@ -107,6 +108,11 @@ impl Default for ChangelogPartitionConfig {
 #[derive(Clone, Debug, Default)]
 pub struct MigrationConfig {
     pub changelog_partition: ChangelogPartitionConfig,
+    /// Database version before this run of the migration runner started, set by the
+    /// runner itself (callers pass `None`). Lets a fragment reason about the history
+    /// of a database rather than only its state at the fragment's own version, which
+    /// by then has been shaped by every earlier fragment in the same run.
+    pub starting_database_version: Option<Version>,
 }
 
 pub(crate) trait Migration {
@@ -225,6 +231,7 @@ pub fn migrate(
         Box::new(v2_21_00::V2_21_00),
         Box::new(v2_21_01::V2_21_01),
         Box::new(v3_00_00::V3_00_00),
+        Box::new(v3_01_01::V3_01_01),
         Box::new(v3_02_00::V3_02_00),
         Box::new(v3_04_00::V3_04_00),
     ];
@@ -249,6 +256,10 @@ pub fn migrate(
 
     // Rust migrations
     let starting_database_version = get_database_version(connection);
+    let config = MigrationConfig {
+        starting_database_version: Some(starting_database_version.clone()),
+        ..config
+    };
 
     if starting_database_version < migrations[0].version() {
         log::error!(

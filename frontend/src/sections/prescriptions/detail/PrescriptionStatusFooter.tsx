@@ -10,6 +10,8 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import {
   asPrescriptionStatus,
   hasDispensedLines,
@@ -34,7 +36,10 @@ import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated'
 // confirmation warns when zero-quantity rows will be removed (AC-S5); with
 // insurance providers configured and a charged total the payment window
 // opens instead (AC-Y1). A typed rejection surfaces in the same dialog as a
-// blocking notice — never a toast (S7, D21).
+// blocking notice — never a toast (S7, D21). A change that lands closes the
+// dialog, so the bar's message slot flashes the save confirmation
+// (spec/ui-standards/controls.md § action feedback) — the split button is gone
+// at Verified.
 
 export interface PrescriptionStatusFooterProps {
   storeId: string;
@@ -55,6 +60,7 @@ export const PrescriptionStatusFooter: Component<
   const [rejection, setRejection] = createSignal<string>();
   const [noLinesOpen, setNoLinesOpen] = createSignal(false);
   const [paymentStatus, setPaymentStatus] = createSignal<ForwardStatus>();
+  const saved = createFlash<string>();
 
   const status = () => asPrescriptionStatus(props.node.status);
   const options = () =>
@@ -151,6 +157,10 @@ export const PrescriptionStatusFooter: Component<
       }
       closeDialogs();
       props.onSaved(outcome.node);
+      // Only a WHOLE success flashes. A plugin after-save failure (above)
+      // keeps the payment window open to report it; a success chip behind it
+      // would contradict that.
+      saved.show(t('messages.prescription-saved'));
       return;
     }
     setWorking(false);
@@ -171,9 +181,12 @@ export const PrescriptionStatusFooter: Component<
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(props.node)}
         current={statusIndex(status())}
       />
+
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>
         {/* No Close here (D103): leaving the prescription is the breadcrumb's

@@ -109,7 +109,14 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    if store_preference.extra_fields_in_requisition && requisition_row.program_id.is_some() {
+    // Only for a requisition this store made: a transferred one carries the
+    // customer's requested quantities, so the variance is theirs to explain
+    // (the same rule guards the finalise in
+    // requisition/response_requisition/update.rs, #712).
+    if store_preference.extra_fields_in_requisition
+        && requisition_row.program_id.is_some()
+        && requisition_row.linked_requisition_id.is_none()
+    {
         let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
             ReasonOptionFilter::new()
                 .r#type(ReasonOptionType::equal_to(
@@ -201,9 +208,10 @@ mod test {
     use repository::{
         mock::{
             mock_finalised_request_requisition_line, mock_new_response_program_requisition,
-            mock_new_response_requisition_test, mock_requisition_variance_reason_option,
-            mock_response_program_requisition, mock_sent_request_requisition_line, mock_store_a,
-            mock_store_b, mock_user_account_b, MockDataInserts,
+            mock_new_response_requisition_test, mock_request_program_requisition,
+            mock_requisition_variance_reason_option, mock_response_program_requisition,
+            mock_sent_request_requisition_line, mock_store_a, mock_store_b, mock_user_account_b,
+            MockDataInserts,
         },
         test_db::setup_all,
         EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
@@ -417,5 +425,65 @@ mod test {
                 ..mock_new_response_program_requisition().lines[0].clone()
             }
         )
+    }
+
+    #[actix_rt::test]
+    async fn update_response_requisition_line_transferred_needs_no_reason() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_response_requisition_line_transferred_needs_no_reason",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_b().id)
+            .unwrap();
+        let service = service_provider.requisition_line_service;
+
+        // The store keeps the extra requisition fields and variance reasons
+        // exist, so a requisition of its own making would be refused here.
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&StorePreferenceRow {
+                id: mock_store_a().id,
+                extra_fields_in_requisition: true,
+                ..Default::default()
+            })
+            .unwrap();
+
+        // This one came from the customer's internal order.
+        RequisitionRowRepository::new(&connection)
+            .upsert_one(&RequisitionRow {
+                linked_requisition_id: Some(mock_request_program_requisition().id),
+                ..mock_new_response_program_requisition().requisition
+            })
+            .unwrap();
+
+        // A supply-only edit still sends the whole draft, so the requested
+        // quantity rides along and used to trip the guard on a line that
+        // arrived with an unreasoned variance.
+        let line = mock_new_response_program_requisition().lines[0].clone();
+        service
+            .update_response_requisition_line(
+                &context,
+                UpdateResponseRequisitionLine {
+                    id: line.id.clone(),
+                    supply_quantity: Some(5.0),
+                    requested_quantity: Some(line.requested_quantity),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            RequisitionLineRowRepository::new(&connection)
+                .find_one_by_id(&line.id)
+                .unwrap()
+                .unwrap(),
+            RequisitionLineRow {
+                supply_quantity: 5.0,
+                ..line
+            }
+        );
     }
 }
