@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_changelog_default_partition;
 mod add_database_error_to_system_log_type_enum;
+mod add_store_name_link_id_index;
 
 pub(crate) struct V3_03_00;
 
@@ -19,6 +20,7 @@ impl Migration for V3_03_00 {
         vec![
             Box::new(add_database_error_to_system_log_type_enum::Migrate),
             Box::new(add_changelog_default_partition::Migrate),
+            Box::new(add_store_name_link_id_index::Migrate),
         ]
     }
 }
