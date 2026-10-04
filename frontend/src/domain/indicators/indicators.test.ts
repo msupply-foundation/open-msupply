@@ -29,7 +29,9 @@ const node = (
   id: string,
   code: string,
   columns: Columns,
-  lineValueType: 'NUMBER' | 'STRING' | null = 'NUMBER'
+  lineValueType: 'NUMBER' | 'STRING' | null = 'NUMBER',
+  isActive = true,
+  lineCode = code
 ): IndicatorNode => ({
   id,
   code,
@@ -37,11 +39,11 @@ const node = (
     {
       line: {
         id: `${id}-line`,
-        code,
-        name: `${code} name`,
+        code: lineCode,
+        name: `${id} line name`,
         lineNumber: 1,
         valueType: lineValueType,
-        isActive: true,
+        isActive,
       },
       columns,
       customerIndicatorInfo: [],
@@ -102,6 +104,50 @@ describe('mergeIndicatorLines', () => {
       'first',
       'later',
     ]);
+  });
+});
+
+describe('mergeIndicatorLines — inactive same-coded lines', () => {
+  // HIV sorts first, so its line would lead the merged entry.
+  const hiv = (valueId: string | null) =>
+    node('hiv', 'HIV', [column('c1', 'Value', valueId)], 'NUMBER', false, 'L');
+  const regimen = node(
+    'regimen',
+    'REGIMEN',
+    [column('c2', 'Count', 'v2')],
+    'NUMBER',
+    true,
+    'L'
+  );
+
+  it('ignores an inactive line with no stored cell', () => {
+    const [entry, ...rest] = mergeIndicatorLines([regimen, hiv(null)]);
+    expect(rest).toHaveLength(0);
+    expect(entry.isActive).toBe(true);
+    expect(entry.name).toBe('regimen line name');
+    expect(entry.cells.map(cell => [cell.columnId, cell.isActive])).toEqual([
+      ['c2', true],
+    ]);
+  });
+
+  it('freezes only the inactive line’s cells when both have values', () => {
+    const [entry] = mergeIndicatorLines([regimen, hiv('v1')]);
+    expect(entry.isActive).toBe(false); // the notice shows
+    expect(entry.name).toBe('regimen line name');
+    expect(entry.cells.map(cell => [cell.columnId, cell.isActive])).toEqual([
+      ['c1', false],
+      ['c2', true],
+    ]);
+  });
+
+  it('keeps a lone inactive line that has values, frozen', () => {
+    const [entry] = mergeIndicatorLines([hiv('v1')]);
+    expect(entry.isActive).toBe(false);
+    expect(entry.cells.every(cell => !cell.isActive)).toBe(true);
+  });
+
+  it('drops a lone inactive line with no stored cell', () => {
+    expect(mergeIndicatorLines([hiv(null)])).toEqual([]);
   });
 });
 

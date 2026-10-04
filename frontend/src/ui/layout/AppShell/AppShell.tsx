@@ -9,7 +9,6 @@ import { Dynamic } from 'solid-js/web';
 import {
   HomeIcon,
   CentralIcon,
-  RefreshIcon,
   type IconProps,
 } from '../../icons';
 import { useIsNavOverlay, useIsRailWide } from '../../utils/createMediaQuery';
@@ -104,17 +103,6 @@ export interface AppShellProps {
   jobTitle?: string | null;
   /** Explicit logout, from the user menu (spec: user menu / logout). */
   onLogout: () => void;
-  /**
-   * The server is serving a newer front-end bundle than the running build
-   * (spec/chrome § update prompt) — shows the bottom bar's "new version
-   * available" cell. Derived by the host's update watch (src/appUpdate.ts).
-   */
-  updateAvailable?: boolean;
-  /**
-   * Activating the update cell. The host owns what follows (confirm, then
-   * reload) — without it the cell never renders, so it is never a dead button.
-   */
-  onUpdateClick?: () => void;
   /**
    * The store's custom bottom-bar colour (spec/chrome § bottom bar) — the raw
    * store-custom-colour preference value. A parseable hex colour replaces the
@@ -318,8 +306,7 @@ export const AppShell = (props: AppShellProps) => {
               {/* Bottom bar (spec chrome › bottom bar), left to right: the
                 store selector (opens the store-switch modal — spec SL-6 / D14)
                 and the signed-in user beside it, a spacer, then the inline-end
-                cluster — the update prompt, the central-server marker, and the
-                sync status last. Identity on one side, site/system state on the
+                cluster — the central-server marker, and the sync status last. Identity on one side, site/system state on the
                 other; the language selector left the bar entirely and now lives
                 in Settings › Display. The store name is shown as text, so the
                 store colour is never the sole active-store indicator (colour
@@ -355,25 +342,6 @@ export const AppShell = (props: AppShellProps) => {
                     onLogout={props.onLogout}
                   />
                   <span class={styles.footerSpacer} aria-hidden="true" />
-                  {/* Update prompt (spec/chrome § update prompt,
-                    OMS-REG-FTR-02.14): a quiet, persistent cell while the
-                    served bundle differs from the running build; activating it
-                    hands off to the host, which confirms before reloading. Its
-                    divider goes with it, and is dropped when the sync cell
-                    follows it directly in error: that cell's red start bar is
-                    the edge then, and a hairline beside it would only double
-                    it (issue #519). */}
-                  <Show when={props.updateAvailable && props.onUpdateClick}>
-                    <FooterCell
-                      icon={RefreshIcon}
-                      label={t('label.new-version-available')}
-                      onClick={props.onUpdateClick}
-                      testId="footer-update-available"
-                    />
-                    <Show when={props.isCentralServer || !syncError()}>
-                      <span class={styles.footerDivider} aria-hidden="true" />
-                    </Show>
-                  </Show>
                   {/* Central-server marker: only on a central server.
                     Immediately before the sync cell — both describe the SITE
                     rather than the session, and which role this server plays is

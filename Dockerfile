@@ -265,6 +265,12 @@ RUN --mount=type=cache,id=yarn,target=/root/.yarn/berry/cache,sharing=locked \
     && cd client \
     && NODE_OPTIONS="--max_old_space_size=4096" yarn build:old-ui
 # New FE, served at /
+# The displayed interface version (vite.config.ts § appVersion) comes from
+# RELEASE_VERSION or else `git describe` - and .git is not in the build
+# context, so without this arg the image shows the bare package.json 0.0.0.
+# Declared here, after the old UI build, so a new tag does not invalidate that
+# layer. Build args are visible to RUN as environment variables.
+ARG RELEASE_VERSION
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store,sharing=locked \
     cd frontend && corepack pnpm install --frozen-lockfile && corepack pnpm build
 
@@ -306,6 +312,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy only the compiled libfaketime from builder
 COPY --from=faketime-builder /usr/local/lib/faketime/libfaketime.so.1 /usr/local/lib/faketime/
 RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
+# By default libfaketime fakes the monotonic clock too, not just the wall clock.
+# FAKETIME only needs the wall clock (it sets the server's dates), and faking the
+# monotonic clock stalls timed waits in the server - PDF export hung waiting for
+# Chromium with "The event waited for never came", even with FAKETIME unset.
+# This keeps the monotonic clock real while FAKETIME still moves the date.
+# See issue #12289.
+ENV FAKETIME_DONT_FAKE_MONOTONIC=1
 
 # PDF report export renders HTML through headless Chromium. Install the headless
 # shell (chromium-headless-shell) — the GUI-less build, roughly half the installed
@@ -391,18 +404,20 @@ EXPOSE 3003
 FROM postgres AS postgres-dev
 WORKDIR /usr/src/omsupply
 COPY client/.nvmrc .nvmrc
-COPY client client
 
 RUN apt-get update && apt-get install -y curl rsync git && \
     NODE_MAJOR=$(sed 's/^v//' .nvmrc | cut -d. -f1) && \
     curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
     apt-get install -y nodejs && \
-    npm install -g yarn && \
+    corepack enable && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-COPY package.json .
 
-WORKDIR /usr/src/omsupply/client
-RUN yarn && yarn cache clean
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY client client
+COPY standard_reports standard_reports
+COPY standard_forms standard_forms
+
+RUN yarn install --immutable && yarn cache clean
 
 RUN echo 'export NODE_OPTIONS="--max-old-space-size=8192"' >> ~/.bashrc
 
