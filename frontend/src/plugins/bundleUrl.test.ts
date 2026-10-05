@@ -8,7 +8,7 @@ describe('pluginBundleUrl', () => {
     );
   });
 
-  it('changes only when the hash changes (AC-PLUG-C1/C2)', () => {
+  it('changes only when the hash changes (OMS-REG-PLG-01.8/.9)', () => {
     const path = 'hello_world/hello_world.js';
     // Same bytes, same URL — an immutable-cache hit, no refetch.
     expect(pluginBundleUrl(path, 'aaa')).toBe(pluginBundleUrl(path, 'aaa'));

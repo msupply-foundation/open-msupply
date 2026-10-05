@@ -7,7 +7,7 @@ import type {
 
 /*
  * The pages contribution's host machinery (spec/plugins/rules.md § pages &
- * navigation; AC-PLUG-P1/P2; the mechanism behind OMS-REG-PLG-CK-02.1/.2).
+ * navigation; OMS-REG-PLG-04.1–.5; the mechanism behind OMS-REG-PLG-CK-02.1/.2).
  *
  * The slot context is the one mocked edge: these tests drive the session facts
  * (store mode, permissions) directly, and everything between them and the
@@ -187,11 +187,7 @@ describe('the store-context withhold (capability-class, OMS-REG-PLG-CK-02.1/.2)'
   });
 
   it('does not render a group none of whose pages is offered', () => {
-    register(
-      'ck',
-      [page({ when: () => false })],
-      [navSection()]
-    );
+    register('ck', [page({ when: () => false })], [navSection()]);
     expect(pluginNavItems()).toEqual([]);
     expect(mergeUpperNav([...upperNav]).items.map(item => item.id)).toEqual(
       upperNav.map(item => item.id)
@@ -239,7 +235,7 @@ describe('gate containment (rules § error isolation)', () => {
   });
 });
 
-describe('the permission gate (AC-PLUG-P1: one condition, two doors)', () => {
+describe('the permission gate (OMS-REG-PLG-04.1/.2/.3: one condition, two doors)', () => {
   const gated = () =>
     register('ck', [page({ permissions: ['STOCKTAKE_QUERY'] })]);
 
@@ -495,9 +491,9 @@ describe('menu placement (anchors)', () => {
     expect(diagnostics).toEqual([]);
     // The host item is a fresh object (its children changed) but stable
     // across reads, so the menu never remounts the section.
-    expect(mergeUpperNav(allHosts()).items.find(i => i.id === 'inventory')).toBe(
-      merged
-    );
+    expect(
+      mergeUpperNav(allHosts()).items.find(i => i.id === 'inventory')
+    ).toBe(merged);
   });
 
   it('degrades a bad child anchor inside a host section to the end, reported', () => {
@@ -515,7 +511,7 @@ describe('menu placement (anchors)', () => {
   });
 });
 
-describe('routes and lazy loading (AC-PLUG-P2)', () => {
+describe('routes and lazy loading (OMS-REG-PLG-04.4/.5)', () => {
   it('generates one route per page without invoking any page loader', () => {
     const loader = vi.fn(load);
     register('ck', [page({ load: loader })]);

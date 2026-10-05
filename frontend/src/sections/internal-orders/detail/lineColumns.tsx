@@ -133,7 +133,7 @@ const parseWidth = (width: string | undefined): number | undefined => {
  *
  * Identity is `${pluginCode}.${contributionId}` — namespaced, so two plugins
  * contributing `total` can never collide, and the id a user's persisted column
- * config stores stays that plugin's alone (AC-PLUG-K5).
+ * config stores stays that plugin's alone (OMS-REG-PLG-02.8/.9).
  */
 const toHostColumn = <Row,>(
   contribution: LineColumnContribution,
@@ -143,7 +143,7 @@ const toHostColumn = <Row,>(
 ): Column<Row, string> => {
   // Header text resolves through the plugin's own namespace, on every header
   // render — so a locale switch retranslates it like any host header, and a
-  // missing key renders the key itself rather than blank (AC-PLUG-I1).
+  // missing key renders the key itself rather than blank (OMS-REG-PLG-04.14).
   const intl = pluginIntl(contribution.pluginCode);
   const size = parseWidth(contribution.width);
   const entries = batch.data.get(id);
@@ -166,7 +166,7 @@ const toHostColumn = <Row,>(
         : {}),
     },
     ...(size !== undefined ? { size } : {}),
-    // Sortability follows the declaration (AC-PLUG-K7): the sortKey is the
+    // Sortability follows the declaration (OMS-REG-PLG-02.10): the sortKey is the
     // column's namespaced id, so the table offers its standard sort control
     // and the view resolves the active key back to this contribution's
     // sortValue (sortLinesByContribution below).
@@ -176,7 +176,7 @@ const toHostColumn = <Row,>(
   if (contribution.value !== undefined) {
     const value = contribution.value;
     // A throwing value function is contained like a throwing component
-    // (AC-PLUG-E1) — the cell goes blank, the table keeps working, and the
+    // (OMS-REG-PLG-02.20) — the cell goes blank, the table keeps working, and the
     // failure is named ONCE per column build rather than once per row.
     let reported = false;
     return {
@@ -222,7 +222,10 @@ const toHostColumn = <Row,>(
             } catch (error) {
               if (!sortReported) {
                 sortReported = true;
-                console.error(`[plugins] ${id}: column sortValue failed`, error);
+                console.error(
+                  `[plugins] ${id}: column sortValue failed`,
+                  error
+                );
               }
               return '';
             }
@@ -232,7 +235,7 @@ const toHostColumn = <Row,>(
     ...fragment,
     ...base,
     // Its own error boundary keeps a throwing cell to that cell — the row, the
-    // column, and the rest of the table keep rendering (AC-PLUG-E1).
+    // column, and the rest of the table keep rendering (OMS-REG-PLG-02.20).
     c: identity,
     cell: info => {
       const view = toView(info.row.original);
@@ -258,10 +261,10 @@ const toHostColumn = <Row,>(
  *
  * Placement is id-anchored against the published ids: anchor position, then
  * contribution `order`, then contribution `id` — identical on every reload and
- * independent of which bundle loaded first (AC-PLUG-K1). A contribution whose
+ * independent of which bundle loaded first (OMS-REG-PLG-02.1). A contribution whose
  * anchor names no RENDERED column — an id that does not exist, or one a
  * preference gate currently hides — is placed at the table's end and reported
- * (AC-PLUG-K2).
+ * (OMS-REG-PLG-02.3).
  *
  * An empty contribution set returns the host columns unchanged, so a table with
  * no plugins installed is byte-identical to one built without this merge
@@ -304,7 +307,7 @@ export const mergeLineColumns = <Row, K extends string>(
 // ── The contributed sort ────────────────────────────────────────────────────
 
 /**
- * Order rows by a contribution's declared sort value (AC-PLUG-K7,
+ * Order rows by a contribution's declared sort value (OMS-REG-PLG-02.10,
  * sdk-contract § the column slot): numbers compare numerically, strings by
  * locale, and a `null`/`undefined` value sorts LAST in either direction — the
  * contract's "no value sorts last", which no sentinel can give a

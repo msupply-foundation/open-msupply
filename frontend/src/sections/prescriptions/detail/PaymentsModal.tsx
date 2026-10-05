@@ -74,7 +74,7 @@ export interface PaymentsModalProps {
    * the save counts as complete (spec/plugins/rules.md § form participation).
    * It resolves to a message when a plugin's post-save work failed, and
    * `undefined` when everything landed — so a veto or a rejected status change
-   * leaves no plugin data behind (AC-PLUG-F2), and a plugin write that fails
+   * leaves no plugin data behind (OMS-REG-PLG-03.3), and a plugin write that fails
    * after a successful host write is reported rather than lost.
    */
   onConfirm: (
@@ -180,7 +180,7 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
 
     /*
      * Validity gates the save (spec/plugins/rules.md § form participation:
-     * "gate validity — blocking save with a per-field message"; AC-PLUG-F1).
+     * "gate validity — blocking save with a per-field message"; OMS-REG-PLG-03.1).
      * Checked BEFORE the veto handlers, so a contribution that reports invalid
      * blocks the save whether or not it also registered a veto — which is what
      * makes `setValidity` a real gate rather than a signal the host ignores.

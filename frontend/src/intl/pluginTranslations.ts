@@ -13,7 +13,7 @@ import type { FlatDict, SupportedLocale } from './locales';
  * custom-translation refresh. A separate layer survives both.
  *
  * The layer sits UNDER the host dictionaries in `intl.ts`, which is what gives
- * AC-PLUG-I2 for free: a server custom translation for a plugin's namespaced
+ * OMS-REG-PLG-04.15 for free: a server custom translation for a plugin's namespaced
  * key arrives in the host dictionary and therefore wins.
  */
 
@@ -33,7 +33,7 @@ export { pluginDictionaries };
  * still resolves under any locale — the merge in `intl.ts` layers the English
  * plugin catalogue beneath the active-locale one, the same ladder host strings
  * use, so an untranslated plugin key falls back to English and then to the
- * namespaced key itself (AC-PLUG-I1).
+ * namespaced key itself (OMS-REG-PLG-04.14).
  */
 export const registerPluginTranslations = (
   code: string,

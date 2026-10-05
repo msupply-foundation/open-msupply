@@ -26,7 +26,7 @@ import { slotContext } from './slotContext';
  * stable and keeps mounted contributions alive.
  *
  * `when` sees session facts only, so a hidden contribution costs nothing: it
- * never renders, and never gets the chance to fetch (AC-PLUG-K3).
+ * never renders, and never gets the chance to fetch (OMS-REG-PLG-02.4).
  */
 export const visibleContributions = <S extends SlotId>(
   slot: S,

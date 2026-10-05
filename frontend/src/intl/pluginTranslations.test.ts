@@ -6,7 +6,7 @@ import {
 } from './pluginTranslations';
 
 // The plugin dictionary layer (spec/plugins/rules.md § internationalisation,
-// AC-PLUG-I1/I2). Keys are namespaced by plugin code — what `pluginIntl(code)`
+// OMS-REG-PLG-04.13/.14/.15). Keys are namespaced by plugin code — what `pluginIntl(code)`
 // looks up — so these tests translate through the host's own `t()` with the
 // namespaced key, exactly as a contribution does.
 const key = (namespaced: string) => t(namespaced as never);
@@ -23,7 +23,7 @@ describe('registerPluginTranslations', () => {
     expect(key('civ_plugins:amc')).toBe('AMC');
   });
 
-  it('renders the namespaced key itself when unregistered (AC-PLUG-I1)', () => {
+  it('renders the namespaced key itself when unregistered (OMS-REG-PLG-04.14)', () => {
     expect(key('civ_plugins:amc')).toBe('civ_plugins:amc');
     registerPluginTranslations('civ_plugins', { en: { amc: 'AMC' } });
     expect(key('civ_plugins:nope')).toBe('civ_plugins:nope');
@@ -53,7 +53,7 @@ describe('registerPluginTranslations', () => {
     expect(key('beta:label')).toBe('Beta');
   });
 
-  it('lets a host/custom entry for the same namespaced key WIN (AC-PLUG-I2)', () => {
+  it('lets a host/custom entry for the same namespaced key WIN (OMS-REG-PLG-04.15)', () => {
     // A server custom translation arrives in the HOST dictionary; the plugin
     // layer sits beneath it, so the server's string is what renders.
     registerPluginTranslations('civ_plugins', { en: { amc: 'AMC' } });

@@ -14,7 +14,7 @@ import { FRONTEND_PLUGINS_URL } from '../config';
  * The hash rides as `?v=` — the ONLY cache-invalidation mechanism, because the
  * server serves plugin bundles `immutable` (a file name never changes when the
  * bytes do). Same bytes ⇒ same URL ⇒ cache hit; new bytes ⇒ new hash ⇒ new URL
- * ⇒ refetch (AC-PLUG-C1/C2).
+ * ⇒ refetch (OMS-REG-PLG-01.8/.9).
  *
  * Deliberately origin-absolute, not `BASE_URL`-prefixed: the server mounts
  * `/frontend_plugins` at its own root regardless of where the app bundle is

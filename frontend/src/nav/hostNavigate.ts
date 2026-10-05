@@ -86,7 +86,7 @@ type RouterNavigate = (
  * `<a href>` does: the router's own anchor handler navigates with
  * `resolve: false` (@solidjs/router dist/data/events.js), which is what makes
  * `navigateTo` and `storeHref` the same destination by construction
- * (AC-PLUG-P4).
+ * (OMS-REG-PLG-04.9).
  */
 export const routerHostNavigate =
   (navigate: RouterNavigate): HostNavigate =>
@@ -111,8 +111,7 @@ const atDocumentHref = (href: string): boolean => {
   const target = new URL(href, 'http://unused-base');
   return (
     target.pathname.replace(/\/+$/, '') ===
-      location.pathname.replace(/\/+$/, '') &&
-    target.search === location.search
+      location.pathname.replace(/\/+$/, '') && target.search === location.search
   );
 };
 

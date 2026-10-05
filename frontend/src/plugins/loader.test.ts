@@ -101,7 +101,7 @@ describe('loadPlugins', () => {
     expect(order).toEqual(['translations', 'register']);
   });
 
-  it('continues with no plugins when discovery fails (AC-PLUG-L3)', async () => {
+  it('continues with no plugins when discovery fails (OMS-REG-PLG-01.3)', async () => {
     const { deps, registered, diagnostics } = harness({
       fetchMetadata: () => Promise.resolve(undefined),
     });
@@ -140,7 +140,7 @@ describe('loadPlugins', () => {
     expect(diagnostics[0]?.message).toContain('404');
   });
 
-  it('names a refused plugin and loads its sibling (AC-PLUG-V1)', async () => {
+  it('names a refused plugin and loads its sibling (OMS-REG-PLG-01.10/.11)', async () => {
     const { deps, registered, diagnostics } = harness({
       fetchMetadata: () =>
         Promise.resolve([entry('api_too_new'), entry('hello_world')]),
