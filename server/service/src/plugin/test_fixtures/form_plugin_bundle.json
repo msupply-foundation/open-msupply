@@ -29,6 +29,7 @@
           "category": "Encounter",
           "name": "Demo follow-up",
           "program_key": "demo",
+          "legacy_ui_schema": { "type": "VerticalLayout", "elements": [] },
           "versions": [
             { "id": "demo_program_DemoEncounter_v1_bbbbbbbbbbbb", "json_schema": { "type": "object", "title": "v1" } },
             { "id": "demo_program_DemoEncounter_v2_cccccccccccc", "json_schema": { "type": "object", "title": "v2" } }

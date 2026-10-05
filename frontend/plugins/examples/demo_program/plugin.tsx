@@ -14,6 +14,11 @@
  * the archived v1 form, which the host shows read-only for encounters
  * recorded under v1 until the user presses Edit.
  *
+ * `HIVCareCovid19Encounter` is a deployed type the plugin took over, with
+ * its deployment's schema as v1 and an additive v2: its contribution lists
+ * the versions and nothing else, since an additive change needs no migration
+ * and its earlier documents open in the current form.
+ *
  * The "Record follow-up" trigger sits on the header of patients enrolled in
  * the program and opens a new `DemoEncounter` in the host's modal, the same
  * encounter form the encounter's own screen shows.
@@ -35,6 +40,8 @@ import { DemoEncounterForm } from './forms/DemoEncounter/form';
 import { DemoEncounterV1Form } from './forms/DemoEncounter/v1Form';
 import { migrations as encounterMigrations } from './forms/DemoEncounter/migrations';
 import { versions as encounterVersions } from './forms/DemoEncounter/versions';
+import { Covid19EncounterForm } from './forms/HIVCareCovid19Encounter/form';
+import { versions as covid19EncounterVersions } from './forms/HIVCareCovid19Encounter/versions';
 
 export default definePlugin({
   manifest: {
@@ -75,6 +82,13 @@ export default definePlugin({
       migrations: encounterMigrations,
       archived: { 1: DemoEncounterV1Form },
     },
+    {
+      slot: 'encounter.form',
+      id: 'covid19-encounter-form',
+      documentType: 'HIVCareCovid19Encounter',
+      Component: Covid19EncounterForm,
+      versions: covid19EncounterVersions,
+    },
   ],
   translations: {
     en: {
@@ -84,6 +98,7 @@ export default definePlugin({
       'documentType.Patient': 'Patient',
       'documentType.DemoProgramEnrolment': 'Demo Program',
       'documentType.DemoEncounter': 'Demo follow-up',
+      'documentType.HIVCareCovid19Encounter': 'HIV Care Covid19 Encounter',
 
       // The patient form, and the trigger on the patient screen.
       'group.patient-details': 'Patient details',
@@ -146,6 +161,16 @@ export default definePlugin({
       'regimen.LEGACY_TRIAL': 'Legacy trial',
       'field.adherence': 'Adherence notes',
       'kept.adherence': 'Adherence notes',
+
+      // The COVID-19 vaccination encounter, taken over from a deployment.
+      'group.covid-services': 'COVID-19 vaccination services',
+      'field.offered-vaccination': 'Client offered vaccination',
+      'field.declined': 'Declined',
+      'field.reason-for-decline': 'Reason for decline',
+      'group.covid-event': 'COVID-19 vaccination event',
+      'field.vaccination-date': 'Vaccination date',
+      'field.manufacturer': 'Manufacturer',
+      'field.batch-number': 'Batch number',
     },
   },
 });

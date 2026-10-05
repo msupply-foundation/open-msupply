@@ -7,7 +7,11 @@
       "name": "Patient",
       "dir": "Patient",
       "versions": [
-        { "file": "v1.json", "source": "type.ts", "type": "DemoPatient" }
+        {
+          "file": "v1.json",
+          "source": "type.ts",
+          "type": "DemoPatient"
+        }
       ]
     },
     {
@@ -31,10 +35,37 @@
       "programKey": "demo",
       "dir": "DemoEncounter",
       "versions": [
-        { "file": "v1.json", "source": "v1.ts", "type": "DemoEncounterV1" },
-        { "file": "v2.json", "source": "type.ts", "type": "DemoEncounter" }
+        {
+          "file": "v1.json",
+          "source": "v1.ts",
+          "type": "DemoEncounterV1"
+        },
+        {
+          "file": "v2.json",
+          "source": "type.ts",
+          "type": "DemoEncounter"
+        }
       ],
       "events": "events.json"
+    },
+    {
+      "documentType": "HIVCareCovid19Encounter",
+      "category": "Encounter",
+      "name": "HIV Care Covid19 Encounter",
+      "programKey": "demo",
+      "dir": "HIVCareCovid19Encounter",
+      "legacyUiSchema": "legacy-ui.json",
+      "versions": [
+        {
+          "file": "v1.json",
+          "id": "9c53b7fb-6ba7-47aa-a773-0b071270feca"
+        },
+        {
+          "file": "v2.json",
+          "source": "type.ts",
+          "type": "Covid19Encounter"
+        }
+      ]
     }
   ]
 }

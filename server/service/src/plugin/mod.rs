@@ -457,12 +457,19 @@ pub trait PluginServiceTrait: Sync + Send {
                 let backend_repo = BackendPluginRowRepository::new(connection);
                 let frontend_repo = FrontendPluginRowRepository::new(connection);
 
+                // A row already installed as it is in the bundle is not written
+                // again: every write records a changelog row, and sync would
+                // re-send the whole base64 bundle to every site.
                 for row in plugin_bundle.backend_plugins.clone() {
-                    backend_repo.upsert_one(row.clone())?;
+                    if backend_repo.find_one_by_id(&row.id)?.as_ref() != Some(&row) {
+                        backend_repo.upsert_one(row)?;
+                    }
                 }
 
                 for row in plugin_bundle.frontend_plugins.clone() {
-                    frontend_repo.upsert_one(row.clone())?;
+                    if frontend_repo.find_one_by_id(&row.id)?.as_ref() != Some(&row) {
+                        frontend_repo.upsert_one(row)?;
+                    }
                 }
 
                 Ok(InstalledPluginBundle {
@@ -853,6 +860,81 @@ mod test {
                 .unwrap(),
             None
         );
+    }
+
+    /// Re-installing a bundle exactly as installed writes nothing anywhere, so
+    /// sync has nothing to send on: not the schemas or registry entries, and not
+    /// the plugin's own row with its base64 files.
+    #[actix_rt::test]
+    async fn reinstalling_an_unchanged_bundle_writes_nothing() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            settings,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "reinstalling_an_unchanged_bundle_writes_nothing",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_lists()
+                .contexts()
+                .programs(),
+            MockData::default(),
+        )
+        .await;
+        let file_service = StaticFileService::new(&settings.server.base_dir).unwrap();
+        let install = |name: &str| {
+            let file = file_service
+                .store_file(
+                    name,
+                    StaticFileCategory::Temporary,
+                    include_str!("test_fixtures/form_plugin_bundle.json").as_bytes(),
+                )
+                .unwrap();
+            service_provider
+                .plugin_service
+                .install_uploaded_plugin(
+                    &service_context,
+                    &settings,
+                    UploadedFile { file_id: file.id },
+                    FormInstallOptions {
+                        programs: [("demo".to_string(), "program_a".to_string())].into(),
+                        ..Default::default()
+                    },
+                )
+                .unwrap()
+        };
+
+        install("first_install");
+        assert_eq!(
+            FormSchemaRowRepository::new(&connection)
+                .find_one_by_id("demo_program_DemoEncounter_v2_cccccccccccc")
+                .unwrap()
+                .unwrap()
+                .ui_schema,
+            serde_json::json!({ "type": "VerticalLayout", "elements": [] })
+        );
+
+        let changelog = ChangelogRepository::new(&connection);
+        let cursor = changelog.max_cursor().unwrap();
+        install("second_install");
+
+        let written = changelog
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: i64::MAX,
+                },
+            )
+            .unwrap()
+            .rows;
+        assert!(written.is_empty(), "{:?}", written);
     }
 
     #[actix_rt::test]

@@ -370,7 +370,8 @@ const checkMigrations = async (
     // An additive hop carries the data unchanged, so it must validate as it
     // is against the next version. (The last hop is checked below.)
     let carried: unknown = data;
-    for (let at = version; at < current - 1;) {
+    let at = version;
+    while (at < current - 1) {
       const step = host.nextStep(steps, at, current);
       if (step) {
         const target = host.stepTarget(step);
@@ -391,7 +392,16 @@ const checkMigrations = async (
 
     const migrated = host.applyMigrations(data, version, current, steps)?.data;
     const errors = validate(host, schemas[current - 1], migrated);
-    if (errors) {
+    const lastHopAdditive =
+      at === current - 1 && !host.nextStep(steps, at, current);
+    if (errors && lastHopAdditive) {
+      problems.push(
+        `${fixture}: v${at} → v${current} has no migration step, so the ` +
+          `document must validate unchanged against v${current} ` +
+          `(${currentFile}), and it does not: ${errors} — the change is not ` +
+          `additive, so add a step from v${at} to ${file}`
+      );
+    } else if (errors) {
       problems.push(
         `${fixture}: migrated from v${version} to v${current}, it does not ` +
           `validate against v${current} (${currentFile}): ${errors} — fix ` +

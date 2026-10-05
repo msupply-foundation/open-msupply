@@ -39,7 +39,7 @@ const BESIDE_FIELD: JSX.CSSProperties = {
 };
 
 /*
- * The enrolment ID and its Generate button: PNG's IdGenerator control
+ * The enrolment ID and its Generate button: the old UI's IdGenerator control
  * (store part + counter part, manual entry allowed) as plain code. Generating
  * into an empty field runs at once; replacing an ID the user can see asks
  * first, since it discards that ID and spends a counter value that is never

@@ -55,11 +55,19 @@ pub struct DocumentTypeDeclaration {
     pub versions: Vec<SchemaVersion>,
     /// Program event rules, in the server's existing event config format.
     pub config: Option<DocumentRegistryConfig>,
+    /// The JSON Forms UI schema the old client draws this type's form from,
+    /// carried while any site still runs the old client and deleted from the
+    /// plugin when the last one goes. Install writes it to every version it
+    /// adds and to the current version, which is the one the old client reads.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_ui_schema: Option<serde_json::Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct SchemaVersion {
-    /// A content hash, so an unchanged schema keeps its id across re-packs.
+    /// A content hash, so an unchanged schema keeps its id across re-packs; or,
+    /// for a version a deployment already held before the plugin took the type
+    /// over, that deployment's own id, so documents pinned to it stay pinned.
     pub id: String,
     pub json_schema: serde_json::Value,
 }
@@ -94,9 +102,11 @@ pub struct InstalledDocumentType {
     pub context_id: String,
     pub form_schema_id: String,
     pub outcome: RegistryOutcome,
-    /// Schema versions this install added; versions already present are left
-    /// untouched.
+    /// Schema versions this install added; versions already present keep
+    /// their schema.
     pub schemas_added: usize,
+    /// Versions already present whose legacy UI schema this install replaced.
+    pub ui_schemas_updated: usize,
 }
 
 #[derive(Error, Debug, PartialEq)]
@@ -187,8 +197,8 @@ pub enum FormPluginInstallError {
         count: i64,
     },
     #[error(
-        "Schema {0} is already installed with different content; a schema id is a content hash, \
-         so the bundle is inconsistent"
+        "Schema {0} is already installed with different content; a published schema version \
+         never changes, so the bundle must carry it exactly as installed"
     )]
     SchemaIdConflict(String),
     #[error("Could not serialise the event config of {0}")]
@@ -399,7 +409,7 @@ fn install_document_type(
         }
     }
 
-    let schemas_added = install_schema_versions(connection, &declaration.versions)?;
+    let (schemas_added, ui_schemas_updated) = install_schema_versions(connection, declaration)?;
 
     // Checked non-empty in validate_declarations.
     let current_schema_id = declaration.versions.last().unwrap().id.clone();
@@ -451,6 +461,7 @@ fn install_document_type(
         form_schema_id: current_schema_id,
         outcome,
         schemas_added,
+        ui_schemas_updated,
     })
 }
 
@@ -507,31 +518,54 @@ fn existing_entry(
     }
 }
 
-/// Adds each version not yet installed. An installed version is left as it is,
-/// so a re-install writes no changelog row for it and keeps any legacy UI
-/// schema stored with it.
+/// Adds each version not yet installed, with the type's legacy UI schema, and
+/// returns how many it added and how many installed versions' UI schemas it
+/// replaced. An installed version keeps its schema; only the current one's UI
+/// schema is brought in line, because the old client draws the form from the
+/// registry's current version alone. Nothing is written for a version already
+/// as declared, so re-installing an unchanged bundle writes no changelog row,
+/// and a type that declares no legacy UI schema leaves the stored ones as they
+/// are (a taken-over version keeps the one its deployment gave it).
 fn install_schema_versions(
     connection: &StorageConnection,
-    versions: &[SchemaVersion],
-) -> Result<usize, FormPluginInstallError> {
+    declaration: &DocumentTypeDeclaration,
+) -> Result<(usize, usize), FormPluginInstallError> {
     let repo = FormSchemaRowRepository::new(connection);
-    let mut added = 0;
-    for version in versions {
+    let legacy_ui_schema = declaration.legacy_ui_schema.as_ref();
+    // Checked non-empty in validate_declarations.
+    let current_id = &declaration.versions.last().unwrap().id;
+    let (mut added, mut ui_updated) = (0, 0);
+    for version in &declaration.versions {
         match repo.find_one_by_id(&version.id)? {
-            Some(installed) if installed.json_schema == version.json_schema => {}
-            Some(_) => return Err(FormPluginInstallError::SchemaIdConflict(version.id.clone())),
+            Some(installed) if installed.json_schema != version.json_schema => {
+                return Err(FormPluginInstallError::SchemaIdConflict(version.id.clone()))
+            }
+            Some(installed) => {
+                let replace = legacy_ui_schema.filter(|ui_schema| {
+                    version.id == *current_id && installed.ui_schema != **ui_schema
+                });
+                if let Some(ui_schema) = replace {
+                    repo.upsert_one(&FormSchemaJson {
+                        ui_schema: ui_schema.clone(),
+                        ..installed
+                    })?;
+                    ui_updated += 1;
+                }
+            }
             None => {
                 repo.upsert_one(&FormSchemaJson {
                     id: version.id.clone(),
                     r#type: FORM_SCHEMA_TYPE.to_string(),
                     json_schema: version.json_schema.clone(),
-                    ui_schema: serde_json::json!({}),
+                    ui_schema: legacy_ui_schema
+                        .cloned()
+                        .unwrap_or_else(|| serde_json::json!({})),
                 })?;
                 added += 1;
             }
         }
     }
-    Ok(added)
+    Ok((added, ui_updated))
 }
 
 #[cfg(test)]
@@ -542,7 +576,8 @@ mod test {
     use repository::{
         mock::{context_program_a, MockDataInserts},
         test_db::setup_all,
-        Document, DocumentRegistryCategory, DocumentRegistryConfig, DocumentRegistryRow,
+        ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, Document,
+        DocumentRegistryCategory, DocumentRegistryConfig, DocumentRegistryRow,
         DocumentRegistryRowRepository, DocumentRepository, DocumentStatus, FormSchemaJson,
         FormSchemaRowRepository, StorageConnection,
     };
@@ -576,6 +611,7 @@ mod test {
             program_key: program_key.map(str::to_string),
             versions: (1..=versions).map(|n| version(document_type, n)).collect(),
             config: None,
+            legacy_ui_schema: None,
         }
     }
 
@@ -687,6 +723,38 @@ mod test {
         rows.pop().unwrap()
     }
 
+    fn ui_schema(connection: &StorageConnection, schema_id: &str) -> serde_json::Value {
+        FormSchemaRowRepository::new(connection)
+            .find_one_by_id(schema_id)
+            .unwrap()
+            .unwrap()
+            .ui_schema
+    }
+
+    /// The rows written since `cursor`, as sync would send them on.
+    fn written_since(
+        connection: &StorageConnection,
+        cursor: u64,
+    ) -> Vec<(ChangelogTableName, String)> {
+        ChangelogRepository::new(connection)
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: i64::MAX,
+                },
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| (row.table_name, row.record_id))
+            .collect()
+    }
+
+    fn max_cursor(connection: &StorageConnection) -> u64 {
+        ChangelogRepository::new(connection).max_cursor().unwrap()
+    }
+
     #[actix_rt::test]
     async fn first_install_writes_every_version_and_entry() {
         let connection = setup("form_plugin_first_install").await;
@@ -766,16 +834,198 @@ mod test {
         .unwrap();
 
         // No --program: the key keeps the program it is bound to.
+        let cursor = max_cursor(&connection);
         let installed =
             install_form_plugins(&connection, &[sidecar], &FormInstallOptions::default()).unwrap();
 
         assert!(installed
             .iter()
-            .all(|i| i.outcome == RegistryOutcome::Unchanged && i.schemas_added == 0));
+            .all(|i| i.outcome == RegistryOutcome::Unchanged
+                && i.schemas_added == 0
+                && i.ui_schemas_updated == 0));
         assert_eq!(
             entry(&connection, "DemoEncounter").context_id,
             context_program_a().id
         );
+        // Nothing for sync to send on.
+        assert_eq!(written_since(&connection, cursor), vec![]);
+    }
+
+    #[actix_rt::test]
+    async fn the_legacy_ui_schema_goes_on_every_version_added() {
+        let connection = setup("form_plugin_legacy_ui_added").await;
+        let layout = json!({ "type": "VerticalLayout", "elements": [] });
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types[2].legacy_ui_schema = Some(layout.clone());
+        install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &options(&[("demo", "program_a")], &[]),
+        )
+        .unwrap();
+
+        assert_eq!(
+            ui_schema(&connection, "demo_program_DemoEncounter_v1_hash"),
+            layout
+        );
+        assert_eq!(
+            ui_schema(&connection, "demo_program_DemoEncounter_v2_hash"),
+            layout
+        );
+        // A type with none gets the empty UI schema.
+        assert_eq!(
+            ui_schema(&connection, "demo_program_Patient_v1_hash"),
+            json!({})
+        );
+
+        // A later version gets it too; the versions already holding it are not
+        // written again.
+        sidecar.document_types[2]
+            .versions
+            .push(version("DemoEncounter", 3));
+        let installed =
+            install_form_plugins(&connection, &[sidecar], &FormInstallOptions::default()).unwrap();
+        assert_eq!(
+            (installed[2].schemas_added, installed[2].ui_schemas_updated),
+            (1, 0)
+        );
+        assert_eq!(
+            ui_schema(&connection, "demo_program_DemoEncounter_v3_hash"),
+            layout
+        );
+    }
+
+    /// A deployment's type taken over with its pre-plugin schema as the
+    /// plugin's v1: that row, its id and its UI schema stay exactly as the
+    /// deployment had them, and the plugin's next version carries the same UI
+    /// schema to the old client.
+    #[actix_rt::test]
+    async fn a_take_over_keeps_the_deployed_version_and_its_ui_schema() {
+        let connection = setup("form_plugin_legacy_take_over").await;
+        insert_unowned_entry(
+            &connection,
+            "deployed_entry",
+            "LegacyEncounter",
+            DocumentRegistryCategory::Encounter,
+            &context_program_a().id,
+        );
+        let deployed = FormSchemaRowRepository::new(&connection)
+            .find_one_by_id("deployed_entry_schema")
+            .unwrap()
+            .unwrap();
+        let mut legacy = declaration(
+            "LegacyEncounter",
+            DocumentRegistryCategory::Encounter,
+            Some("demo"),
+            0,
+        );
+        legacy.versions = vec![SchemaVersion {
+            id: deployed.id.clone(),
+            json_schema: deployed.json_schema.clone(),
+        }];
+        legacy.legacy_ui_schema = Some(deployed.ui_schema.clone());
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types.push(legacy);
+
+        let cursor = max_cursor(&connection);
+        let installed = install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &options(&[("demo", "program_a")], &["LegacyEncounter"]),
+        )
+        .unwrap();
+
+        let taken_over = &installed[3];
+        assert_eq!(
+            (
+                taken_over.outcome,
+                taken_over.schemas_added,
+                taken_over.ui_schemas_updated
+            ),
+            (RegistryOutcome::TakenOver, 0, 0)
+        );
+        // Only the registry entry changed hands; the deployed schema row was not
+        // written at all.
+        let written = written_since(&connection, cursor);
+        assert!(written.contains(&(
+            ChangelogTableName::DocumentRegistry,
+            "deployed_entry".to_string()
+        )));
+        assert!(!written.contains(&(ChangelogTableName::FormSchema, deployed.id.clone())));
+        assert_eq!(
+            entry(&connection, "LegacyEncounter").form_schema_id,
+            Some(deployed.id.clone())
+        );
+
+        // The plugin's v2 carries the deployed UI schema, and v1 is untouched.
+        sidecar.document_types[3]
+            .versions
+            .push(version("LegacyEncounter", 2));
+        install_form_plugins(&connection, &[sidecar], &FormInstallOptions::default()).unwrap();
+        assert_eq!(
+            ui_schema(&connection, "demo_program_LegacyEncounter_v2_hash"),
+            deployed.ui_schema
+        );
+        assert_eq!(
+            FormSchemaRowRepository::new(&connection)
+                .find_one_by_id(&deployed.id)
+                .unwrap(),
+            Some(deployed)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn a_changed_legacy_ui_schema_replaces_only_the_current_versions() {
+        let connection = setup("form_plugin_legacy_ui_changed").await;
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types[2].legacy_ui_schema = Some(json!({ "type": "VerticalLayout" }));
+        install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &options(&[("demo", "program_a")], &[]),
+        )
+        .unwrap();
+
+        let fixed = json!({ "type": "VerticalLayout", "elements": [] });
+        sidecar.document_types[2].legacy_ui_schema = Some(fixed.clone());
+        let installed =
+            install_form_plugins(&connection, &[sidecar], &FormInstallOptions::default()).unwrap();
+
+        assert_eq!(installed[2].outcome, RegistryOutcome::Unchanged);
+        assert_eq!(installed[2].ui_schemas_updated, 1);
+        assert_eq!(
+            ui_schema(&connection, "demo_program_DemoEncounter_v2_hash"),
+            fixed
+        );
+        assert_eq!(
+            ui_schema(&connection, "demo_program_DemoEncounter_v1_hash"),
+            json!({ "type": "VerticalLayout" })
+        );
+    }
+
+    /// A plugin that has dropped its legacy UI schema (the last old-UI site is
+    /// gone) leaves the stored ones as they are.
+    #[actix_rt::test]
+    async fn no_legacy_ui_schema_leaves_the_stored_one() {
+        let connection = setup("form_plugin_legacy_ui_dropped").await;
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types[2].legacy_ui_schema = Some(json!({ "type": "VerticalLayout" }));
+        install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &options(&[("demo", "program_a")], &[]),
+        )
+        .unwrap();
+
+        sidecar.document_types[2].legacy_ui_schema = None;
+        let cursor = max_cursor(&connection);
+        install_form_plugins(&connection, &[sidecar], &FormInstallOptions::default()).unwrap();
+
+        assert_eq!(
+            ui_schema(&connection, "demo_program_DemoEncounter_v2_hash"),
+            json!({ "type": "VerticalLayout" })
+        );
+        assert_eq!(written_since(&connection, cursor), vec![]);
     }
 
     #[actix_rt::test]

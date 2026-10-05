@@ -35,6 +35,8 @@ import {
  *   forms/<dir>/v1.ts           an archived type, where one is kept
  *   forms/<dir>/versions.ts     every version's id, generated
  *   forms/<dir>/events.json     the type's event rules, optional
+ *   forms/<dir>/legacy-ui.json  the type's JSON Forms UI schema for sites still
+ *                               on the old client, where one is declared
  *   forms/<dir>/migrations.ts   the migration steps between versions
  *   forms/<dir>/fixtures/v1.json, ...  a document per earlier version
  *
@@ -81,6 +83,13 @@ export interface SchemaVersionDeclaration {
   source?: string;
   /** The exported interface or type alias in `source`. */
   type?: string;
+  /**
+   * The id a deployment already holds this version under, for a type the
+   * plugin takes over: its documents are pinned to that id, so the version
+   * keeps it. Only at the front of `versions`; every later version gets the
+   * build's content-hash id (`schemaVersionId`).
+   */
+  id?: string;
 }
 
 export interface DocumentTypeDeclaration {
@@ -96,6 +105,14 @@ export interface DocumentTypeDeclaration {
   versions: SchemaVersionDeclaration[];
   /** The event rules file, relative to the type's directory. */
   events?: string;
+  /**
+   * The JSON Forms UI schema the old client draws this type's form from,
+   * relative to the type's directory: the deployment's own, carried unchanged
+   * while any site still runs the old client and deleted when the last one
+   * goes. Install writes it to the versions it adds and to the current one.
+   * Nothing in this frontend or the plugin's code reads it.
+   */
+  legacyUiSchema?: string;
 }
 
 export interface FormsDeclaration {
@@ -118,6 +135,7 @@ export interface FormDocumentTypeRow {
   program_key: string | null;
   versions: FormSchemaVersionRow[];
   config: { events: unknown[] } | null;
+  legacy_ui_schema?: Record<string, unknown>;
 }
 
 export interface FormPluginRow {
@@ -149,8 +167,9 @@ const DOCUMENT_TYPE_KEYS = new Set([
   'dir',
   'versions',
   'events',
+  'legacyUiSchema',
 ]);
-const VERSION_KEYS = new Set(['file', 'source', 'type']);
+const VERSION_KEYS = new Set(['file', 'source', 'type', 'id']);
 
 // An unknown key is refused rather than ignored: a misspelt `programKey`
 // would otherwise read as "no program key" and fail far from the typo.
@@ -175,7 +194,7 @@ const parseVersion = (
     return undefined;
   }
   unknownKeys(raw, VERSION_KEYS, where, problems);
-  const { file, source, type } = raw;
+  const { file, source, type, id } = raw;
   if (!isNonEmptyString(file) || !file.endsWith('.json')) {
     problems.push(`${where}: "file" must name a .json file`);
     return undefined;
@@ -194,10 +213,14 @@ const parseVersion = (
   if (type !== undefined && !isNonEmptyString(type)) {
     problems.push(`${where}: "type" must be a non-empty string`);
   }
+  if (id !== undefined && !isNonEmptyString(id)) {
+    problems.push(`${where}: "id" must be a non-empty string`);
+  }
   return {
     file,
     ...(isNonEmptyString(source) ? { source } : {}),
     ...(isNonEmptyString(type) ? { type } : {}),
+    ...(isNonEmptyString(id) ? { id } : {}),
   };
 };
 
@@ -212,8 +235,16 @@ const parseDocumentType = (
     return undefined;
   }
   unknownKeys(raw, DOCUMENT_TYPE_KEYS, where, problems);
-  const { documentType, category, name, programKey, dir, versions, events } =
-    raw;
+  const {
+    documentType,
+    category,
+    name,
+    programKey,
+    dir,
+    versions,
+    events,
+    legacyUiSchema,
+  } = raw;
   if (!isNonEmptyString(documentType)) {
     problems.push(`${where}: "documentType" must be a non-empty string`);
     return undefined;
@@ -271,6 +302,16 @@ const parseDocumentType = (
   } else if (events !== undefined && !isContainedPath(events)) {
     problems.push(`${at}: "events" must stay inside the type's directory`);
   }
+  if (
+    legacyUiSchema !== undefined &&
+    (!isNonEmptyString(legacyUiSchema) || !legacyUiSchema.endsWith('.json'))
+  ) {
+    problems.push(`${at}: "legacyUiSchema" must name a .json file`);
+  } else if (legacyUiSchema !== undefined && !isContainedPath(legacyUiSchema)) {
+    problems.push(
+      `${at}: "legacyUiSchema" must stay inside the type's directory`
+    );
+  }
   if (!Array.isArray(versions) || versions.length === 0) {
     problems.push(`${at}: "versions" must list at least one version`);
     return undefined;
@@ -282,6 +323,23 @@ const parseDocumentType = (
   files.forEach((file, i) => {
     if (file !== undefined && files.indexOf(file) !== i) {
       problems.push(`${at}: version file "${file}" is listed twice`);
+    }
+  });
+  /*
+   * A declared id is a taken-over version a deployment already holds, so
+   * declared ids come first: once the plugin publishes a version of its own,
+   * every later one is the build's.
+   */
+  const declaredIds = parsed.map(version => version?.id);
+  declaredIds.forEach((id, i) => {
+    if (id !== undefined && declaredIds.slice(0, i).includes(undefined)) {
+      problems.push(
+        `${at} versions[${i}]: "id" is only for the deployment's versions at ` +
+          'the front of the list, before any version the plugin published'
+      );
+    }
+    if (id !== undefined && declaredIds.indexOf(id) !== i) {
+      problems.push(`${at}: version id "${id}" is listed twice`);
     }
   });
   const current = parsed.at(-1);
@@ -301,6 +359,7 @@ const parseDocumentType = (
       (version): version is SchemaVersionDeclaration => version !== undefined
     ),
     ...(isNonEmptyString(events) ? { events } : {}),
+    ...(isNonEmptyString(legacyUiSchema) ? { legacyUiSchema } : {}),
   };
 };
 
@@ -437,6 +496,20 @@ export const schemaVersionId = (
     .slice(0, 12);
   return `${pluginCode}_${documentType}_v${position}_${hash}`;
 };
+
+/**
+ * The id of a type's version at `index`: the one the declaration gives it,
+ * for a taken-over version, else the content hash. What the pack writes and
+ * `versions.ts` lists.
+ */
+export const versionId = (
+  pluginCode: string,
+  entry: DocumentTypeDeclaration,
+  index: number,
+  schema: unknown
+): string =>
+  entry.versions[index]?.id ??
+  schemaVersionId(pluginCode, entry.documentType, index + 1, schema);
 
 // ── Type to schema ──────────────────────────────────────────────────────────
 
@@ -684,9 +757,7 @@ export const emitFormSchemas = async (
     for (const [i, text] of texts.entries()) {
       try {
         const schema: unknown = JSON.parse(text as string);
-        ids.push(
-          schemaVersionId(pluginCode, entry.documentType, i + 1, schema)
-        );
+        ids.push(versionId(pluginCode, entry, i, schema));
       } catch {
         result.problems.push(
           `${join(dir, entry.versions[i].file)}: not readable as JSON`
@@ -798,10 +869,31 @@ const readEventRules = (path: string, problems: string[]): unknown[] => {
   return rules;
 };
 
+/*
+ * Packed as written: the old client's JSON Forms reads it, and nothing here
+ * does, so it is checked only for being a JSON object.
+ */
+const readLegacyUiSchema = (
+  path: string,
+  problems: string[]
+): Record<string, unknown> | undefined => {
+  if (!existsSync(path)) {
+    problems.push(`${path}: legacy UI schema file not found`);
+    return undefined;
+  }
+  const uiSchema = readJson(path);
+  if (!isRecord(uiSchema)) {
+    problems.push(`${path}: a legacy UI schema must be a JSON object`);
+    return undefined;
+  }
+  return uiSchema;
+};
+
 /**
  * The bundle's `form_plugins` entry for one plugin. Reads every version
- * file and the event rules, and fails naming every missing or malformed
- * file rather than packing a bundle the install would refuse.
+ * file, the event rules and the legacy UI schema, and fails naming every
+ * missing or malformed file rather than packing a bundle the install would
+ * refuse.
  */
 export const packFormPlugin = (
   pluginCode: string,
@@ -826,11 +918,14 @@ export const packFormPlugin = (
         }
         return [
           {
-            id: schemaVersionId(pluginCode, entry.documentType, i + 1, schema),
+            id: versionId(pluginCode, entry, i, schema),
             json_schema: schema,
           },
         ];
       });
+      const legacyUiSchema = entry.legacyUiSchema
+        ? readLegacyUiSchema(join(dir, entry.legacyUiSchema), problems)
+        : undefined;
       return {
         document_type: entry.documentType,
         category: entry.category,
@@ -840,6 +935,7 @@ export const packFormPlugin = (
         config: entry.events
           ? { events: readEventRules(join(dir, entry.events), problems) }
           : null,
+        ...(legacyUiSchema ? { legacy_ui_schema: legacyUiSchema } : {}),
       };
     }
   );

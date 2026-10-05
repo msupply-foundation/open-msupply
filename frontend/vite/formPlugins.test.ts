@@ -109,7 +109,16 @@ describe('parseFormsDeclaration', () => {
       ['Patient', 'Patient', undefined, 1],
       ['DemoProgramEnrolment', 'ProgramEnrolment', 'demo', 1],
       ['DemoEncounter', 'Encounter', 'demo', 2],
+      ['HIVCareCovid19Encounter', 'Encounter', 'demo', 2],
     ]);
+    // The taken-over type: its v1 under the deployment's id, and the
+    // deployment's UI schema for the old client.
+    const covid = declaration?.documentTypes.at(-1);
+    expect(covid?.versions.map(version => version.id)).toEqual([
+      '9c53b7fb-6ba7-47aa-a773-0b071270feca',
+      undefined,
+    ]);
+    expect(covid?.legacyUiSchema).toBe('legacy-ui.json');
   });
 
   it('defaults a type directory to its document type', () => {
@@ -188,6 +197,52 @@ describe('parseFormsDeclaration', () => {
     ).toThrow(/document type "Visit" is declared twice/);
   });
 
+  it("accepts a deployment's ids at the front of the versions only", () => {
+    const taken = (versions: unknown[]) =>
+      parseFormsDeclaration(
+        {
+          programKeys: ['demo'],
+          documentTypes: [{ ...encounterEntry, versions }],
+        },
+        'forms.json'
+      );
+    expect(
+      taken([
+        { file: 'v1.json', id: 'deployed-a' },
+        { file: 'v2.json', id: 'deployed-b' },
+        { file: 'v3.json', source: 'type.ts', type: 'Visit' },
+      ]).documentTypes[0].versions.map(version => version.id)
+    ).toEqual(['deployed-a', 'deployed-b', undefined]);
+    expect(() =>
+      taken([
+        { file: 'v1.json' },
+        { file: 'v2.json', source: 'type.ts', type: 'Visit', id: 'late' },
+      ])
+    ).toThrow(/versions\[1\]: "id" is only for the deployment's versions/);
+    expect(() =>
+      taken([
+        { file: 'v1.json', id: 'same' },
+        { file: 'v2.json', source: 'type.ts', type: 'Visit', id: 'same' },
+      ])
+    ).toThrow(/version id "same" is listed twice/);
+  });
+
+  it('refuses a legacy UI schema that is not a .json file in the type directory', () => {
+    const withUi = (legacyUiSchema: unknown) => () =>
+      parseFormsDeclaration(
+        {
+          programKeys: ['demo'],
+          documentTypes: [{ ...encounterEntry, legacyUiSchema }],
+        },
+        'forms.json'
+      );
+    expect(withUi('legacy-ui.json')().documentTypes[0].legacyUiSchema).toBe(
+      'legacy-ui.json'
+    );
+    expect(withUi('legacy-ui.yaml')).toThrow(/must name a \.json file/);
+    expect(withUi('../legacy-ui.json')).toThrow(/must stay inside/);
+  });
+
   it('names every problem at once', () => {
     expect(() =>
       parseFormsDeclaration(
@@ -259,6 +314,79 @@ describe('packFormPlugin', () => {
     ]);
     expect(visit.versions[1].json_schema).toEqual({ ...schema, title: 'v2' });
     expect(visit.config).toEqual({ events: rules });
+  });
+
+  it("packs a taken-over version under the deployment's id, and the legacy UI schema", () => {
+    const takenOver = parseFormsDeclaration(
+      {
+        programKeys: ['demo'],
+        documentTypes: [
+          {
+            ...encounterEntry,
+            legacyUiSchema: 'legacy-ui.json',
+            versions: [
+              { file: 'v1.json', id: 'deployed-uuid' },
+              { file: 'v2.json', source: 'type.ts', type: 'Visit' },
+            ],
+          },
+        ],
+      },
+      'forms.json'
+    );
+    const uiSchema = { type: 'Categorization', elements: [] };
+    const dir = fixture({
+      'forms/Visit/v1.json': schema,
+      'forms/Visit/v2.json': { ...schema, title: 'v2' },
+      'forms/Visit/legacy-ui.json': uiSchema,
+    });
+    const [visit] = packFormPlugin(
+      'demo_program',
+      dir,
+      takenOver
+    ).document_types;
+    expect(visit.versions.map(version => version.id)).toEqual([
+      'deployed-uuid',
+      schemaVersionId('demo_program', 'Visit', 2, { ...schema, title: 'v2' }),
+    ]);
+    expect(visit.legacy_ui_schema).toEqual(uiSchema);
+
+    // A type without one packs no key at all, so the server keeps what it has.
+    const [, plain] = packFormPlugin(
+      'demo_program',
+      fixture({
+        'forms/Patient/v1.json': schema,
+        'forms/Visit/v1.json': schema,
+        'forms/Visit/v2.json': schema,
+        'forms/Visit/events.json': rules,
+      }),
+      declaration
+    ).document_types;
+    expect('legacy_ui_schema' in plain).toBe(false);
+  });
+
+  it('fails naming a missing or malformed legacy UI schema', () => {
+    const withUi = parseFormsDeclaration(
+      {
+        programKeys: ['demo'],
+        documentTypes: [
+          { ...encounterEntry, legacyUiSchema: 'legacy-ui.json' },
+        ],
+      },
+      'forms.json'
+    );
+    expect(() =>
+      packFormPlugin('p', fixture({ 'forms/Visit/v1.json': schema }), withUi)
+    ).toThrow(/legacy-ui\.json: legacy UI schema file not found/);
+    expect(() =>
+      packFormPlugin(
+        'p',
+        fixture({
+          'forms/Visit/v1.json': schema,
+          'forms/Visit/legacy-ui.json': [],
+        }),
+        withUi
+      )
+    ).toThrow(/a legacy UI schema must be a JSON object/);
   });
 
   it('fails naming each missing version file', () => {
@@ -380,6 +508,33 @@ describe('emitFormSchemas', () => {
       .exec(text)?.[1]
       .match(/[\w]+_v\d_[0-9a-f]{12}/g);
     expect(listed).toEqual(ids);
+  });
+
+  it("lists a taken-over version under the deployment's id", async () => {
+    const dir = fixture({ 'forms/Visit/type.ts': visitType('nextVisit') });
+    const declaration = parseFormsDeclaration(
+      {
+        programKeys: ['demo'],
+        documentTypes: [
+          {
+            ...encounterEntry,
+            versions: [
+              {
+                file: 'v1.json',
+                source: 'type.ts',
+                type: 'Visit',
+                id: '6c1f4a52-3e0b-4d8e-9b7a-2f5d1c8e9a40',
+              },
+            ],
+          },
+        ],
+      },
+      'forms.json'
+    );
+    expect((await emit(dir, declaration, false)).problems).toEqual([]);
+    expect(
+      readFileSync(join(dir, 'forms/Visit/versions.ts'), 'utf8')
+    ).toContain('6c1f4a52-3e0b-4d8e-9b7a-2f5d1c8e9a40');
   });
 
   it('check names a stale or missing versions.ts, and emit rewrites it', async () => {

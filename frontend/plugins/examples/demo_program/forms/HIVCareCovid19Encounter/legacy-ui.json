@@ -1,0 +1,49 @@
+{
+  "type": "Categorization",
+  "options": {
+    "variant": "tab"
+  },
+  "elements": [
+    {
+      "type": "Category",
+      "label": "COVID-19 Vaccination Services",
+      "options": { "icon": "document" },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/extension/properties/clientOfferedVaccination"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/extension/properties/declined"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/extension/properties/reasonForDecline",
+          "rule": {
+            "effect": "ENABLE",
+            "condition": {
+              "scope": "#/properties/extension/properties/declined",
+              "schema": { "const": true }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Category",
+      "label": "COVID-19 Vaccination Event",
+      "options": { "icon": "injection" },
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/extension/properties/vaccinationDate"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/extension/properties/manufacturer"
+        }
+      ]
+    }
+  ]
+}

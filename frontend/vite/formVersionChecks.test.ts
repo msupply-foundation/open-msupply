@@ -292,6 +292,43 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
     ]);
   });
 
+  it('names a last hop with no step that is not additive', async () => {
+    const v2Required = {
+      ...v1,
+      properties: {
+        ...v1.properties,
+        extension: {
+          type: 'object',
+          properties: {
+            demo: {
+              ...v1.properties.extension.properties.demo,
+              required: ['weightKg'],
+            },
+          },
+        },
+      },
+    };
+    const dir = fixture({
+      'forms/Visit/v1.json': v1,
+      'forms/Visit/v2.json': v2Required,
+      'forms/Visit/fixtures/v1.json': {
+        extension: { demo: { regimen: 'FIRST_LINE' } },
+      },
+    });
+    const declaration = declare({
+      versions: [
+        { file: 'v1.json' },
+        { file: 'v2.json', source: 'type.ts', type: 'Visit' },
+      ],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      `${visit(dir, 'fixtures/v1.json')}: v1 → v2 has no migration step, so ` +
+        'the document must validate unchanged against v2 (v2.json), and it ' +
+        'does not: extension.demo.weightKg (required) — the change is not ' +
+        `additive, so add a step from v1 to ${visit(dir, 'migrations.ts')}`,
+    ]);
+  });
+
   it('refuses a step outside the versions, before walking the chain', async () => {
     const dir = fixture({
       'forms/Visit/v1.json': v1,
