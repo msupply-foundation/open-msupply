@@ -2,8 +2,9 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists, query::get_requisition,
-        request_requisition::default_target_months_of_stock,
+        common::check_requisition_row_exists,
+        query::get_requisition,
+        request_requisition::{default_target_months_of_stock, fixed_target_months_of_stock},
     },
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
@@ -23,7 +24,8 @@ pub struct InsertRequestRequisition {
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     /// Target months of stock; None takes the store's default
-    /// ([`default_target_months_of_stock`])
+    /// ([`default_target_months_of_stock`]). Ignored where the store fixes the target
+    /// ([`fixed_target_months_of_stock`])
     pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: f64,
     pub expected_delivery_date: Option<NaiveDate>,
@@ -138,9 +140,14 @@ fn generate(
         comment,
         expected_delivery_date,
         their_reference,
-        max_months_of_stock: match max_months_of_stock {
-            Some(months) => months,
-            None => default_target_months_of_stock(connection, store_id)?,
+        // A target the store fixes ignores the one sent (e.g. the old UI's 1 month)
+        max_months_of_stock: match (
+            fixed_target_months_of_stock(connection, store_id)?,
+            max_months_of_stock,
+        ) {
+            (Some(interval), _) => interval.total_months(),
+            (None, Some(months)) => months,
+            (None, None) => default_target_months_of_stock(connection, store_id)?,
         },
         min_months_of_stock,
         // Default

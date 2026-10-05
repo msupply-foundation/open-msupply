@@ -1,6 +1,6 @@
-//! A store's restocking horizon: the supply interval and safety buffer on its facility
-//! record (the store name's `properties`). It is a general internal order's default target
-//! months of stock, and the [`CanChangeTargetMonthsOfStock`] preference can fix the target
+//! A store's supply interval and safety buffer, from its facility record (the store name's
+//! `properties`). Their sum is a general internal order's default target months of stock,
+//! and the [`CanChangeTargetMonthsOfStock`] preference can fix the target
 //! to it.
 
 use crate::preference::{CanChangeTargetMonthsOfStock, Preference};
@@ -13,20 +13,21 @@ use serde_json::{Map, Value};
 pub const DEFAULT_TARGET_MONTHS_OF_STOCK: f64 = 1.0;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SupplyHorizon {
+pub struct SupplyIntervalAndBuffer {
     pub supply_interval_months: f64,
     /// Zero when the facility record carries none
     pub safety_buffer_months: f64,
 }
 
-impl SupplyHorizon {
-    pub fn months(&self) -> f64 {
+impl SupplyIntervalAndBuffer {
+    /// Supply interval + safety buffer
+    pub fn total_months(&self) -> f64 {
         self.supply_interval_months + self.safety_buffer_months
     }
 
     /// None without a supply interval.
     fn from_properties(properties: &Map<String, Value>) -> Option<Self> {
-        Some(SupplyHorizon {
+        Some(SupplyIntervalAndBuffer {
             supply_interval_months: properties.get("supply_interval")?.as_f64()?,
             safety_buffer_months: properties
                 .get("buffer_stock")
@@ -63,53 +64,56 @@ pub(crate) fn store_properties(
     )
 }
 
-/// The store's horizon, None when its facility record carries no supply interval.
-pub fn store_supply_horizon(
+/// The store's supply interval and safety buffer, None when its facility record carries no
+/// supply interval.
+pub fn store_supply_interval_and_buffer(
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<Option<SupplyHorizon>, RepositoryError> {
-    Ok(SupplyHorizon::from_properties(&store_properties(
+) -> Result<Option<SupplyIntervalAndBuffer>, RepositoryError> {
+    Ok(SupplyIntervalAndBuffer::from_properties(&store_properties(
         connection, store_id,
     )?))
 }
 
-/// The horizon of the name `name_id` (e.g. a customer ordering from `store_id`).
-pub fn name_supply_horizon(
+/// The supply interval and safety buffer of the name `name_id` (e.g. a customer ordering
+/// from `store_id`).
+pub fn name_supply_interval_and_buffer(
     connection: &StorageConnection,
     store_id: &str,
     name_id: &str,
-) -> Result<Option<SupplyHorizon>, RepositoryError> {
-    Ok(SupplyHorizon::from_properties(&name_properties(
+) -> Result<Option<SupplyIntervalAndBuffer>, RepositoryError> {
+    Ok(SupplyIntervalAndBuffer::from_properties(&name_properties(
         connection,
         store_id,
         NameFilter::new().id(EqualFilter::equal_to(name_id.to_string())),
     )?))
 }
 
-/// A new general order's target months: the store's horizon, else
+/// A new general order's target months: the store's supply interval + safety buffer, else
 /// [`DEFAULT_TARGET_MONTHS_OF_STOCK`].
 pub fn default_target_months_of_stock(
     connection: &StorageConnection,
     store_id: &str,
 ) -> Result<f64, RepositoryError> {
-    Ok(store_supply_horizon(connection, store_id)?
-        .map(|horizon| horizon.months())
+    Ok(store_supply_interval_and_buffer(connection, store_id)?
+        .map(|interval| interval.total_months())
         .unwrap_or(DEFAULT_TARGET_MONTHS_OF_STOCK))
 }
 
-/// The horizon a general order's target is fixed to: the store's, when it has one and the
+/// The supply interval and safety buffer a general order's target is fixed to: the store's,
+/// when it has a supply interval and the
 /// [`CanChangeTargetMonthsOfStock`] preference is off. None when the target can change.
 pub fn fixed_target_months_of_stock(
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<Option<SupplyHorizon>, RepositoryError> {
+) -> Result<Option<SupplyIntervalAndBuffer>, RepositoryError> {
     let can_change = CanChangeTargetMonthsOfStock
         .load(connection, Some(store_id.to_string()))
         .unwrap_or(true);
     if can_change {
         return Ok(None);
     }
-    store_supply_horizon(connection, store_id)
+    store_supply_interval_and_buffer(connection, store_id)
 }
 
 #[cfg(test)]
@@ -131,9 +135,9 @@ mod test {
     };
 
     #[actix_rt::test]
-    async fn general_order_target_months_follow_the_store_horizon() {
+    async fn general_order_target_months_follow_the_store_supply_interval() {
         let (_, connection, connection_manager, _) = setup_all(
-            "general_order_target_months_follow_the_store_horizon",
+            "general_order_target_months_follow_the_store_supply_interval",
             MockDataInserts::all(),
         )
         .await;
@@ -168,7 +172,7 @@ mod test {
                 .update_request_requisition(
                     &context,
                     UpdateRequestRequisition {
-                        id: "with_horizon".to_string(),
+                        id: "with_supply_interval".to_string(),
                         max_months_of_stock: max,
                         min_months_of_stock: min,
                         ..Default::default()
@@ -179,11 +183,11 @@ mod test {
 
         // No supply interval: 1 month
         set_properties(None);
-        assert_eq!(insert("no_horizon", None), 1.0);
+        assert_eq!(insert("no_supply_interval", None), 1.0);
 
         // A supply interval and buffer: their sum, whatever it is; a given target wins
         set_properties(Some(r#"{"supply_interval": 3, "buffer_stock": 0.5}"#));
-        assert_eq!(insert("with_horizon", None), 3.5);
+        assert_eq!(insert("with_supply_interval", None), 3.5);
         assert_eq!(insert("given_target", Some(2.0)), 2.0);
         // No buffer counts as zero
         set_properties(Some(r#"{"supply_interval": 7}"#));
@@ -209,6 +213,10 @@ mod test {
         );
         assert_eq!(update(Some(4.0), Some(1.0)), Ok(4.0));
         assert_eq!(update(None, Some(2.0)), Ok(4.0));
+        // and a new order takes the store's supply interval + safety buffer, whatever
+        // target is sent
+        assert_eq!(insert("fixed_given_target", Some(1.0)), 3.5);
+        assert_eq!(insert("fixed_no_target", None), 3.5);
 
         // Off on a store with no supply interval: the target changes
         set_properties(None);

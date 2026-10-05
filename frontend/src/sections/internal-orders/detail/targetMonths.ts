@@ -5,16 +5,20 @@ import type { InternalOrderInfoFragment } from './internalOrderDetail.generated'
 
 // The header's months-of-stock decisions (spec/internal-orders rules › target
 // months of stock; ui-surface S3 § toolbar): which months the two selects
-// offer, when the store fixes the target to its supply horizon, and whether the
-// order's target is that horizon (so the forecast caption can name it).
+// offer, when the store fixes the target to its supply interval + safety
+// buffer, and whether the order's target is that sum (so the forecast caption
+// can name it).
 
-type SupplyHorizon = NonNullable<InternalOrderInfoFragment['supplyHorizon']>;
+type SupplyIntervalAndBuffer = NonNullable<
+  InternalOrderInfoFragment['supplyIntervalAndBuffer']
+>;
 
 // The standard choices, 1…6 months (label.number-months).
 export const MONTH_VALUES = [1, 2, 3, 4, 5, 6];
 
 // Months as a select label: "1 month" / "3.5 months", the count in the active
-// locale's number format (a store horizon may be fractional).
+// locale's number format (a store's supply interval + safety buffer may be
+// fractional).
 const monthsLabel = (months: number): string =>
   tPlural('label.number-months', months, {
     count: formatNumber(months, { maximumFractionDigits: 2 }),
@@ -22,9 +26,10 @@ const monthsLabel = (months: number): string =>
 
 /**
  * The target select's options: 1…6 months, plus the order's own target where
- * it is none of those — a store horizon such as 3.5 or 7 months (OMS-REG-REPL-
- * 17.16) — in numeric order. A target below the reorder threshold can't be
- * chosen (a UI-only guard; the server accepts any values).
+ * it is none of those — a store's supply interval + safety buffer such as 3.5
+ * or 7 months (OMS-REG-REPL-17.16) — in numeric order. A target below the
+ * reorder threshold can't be chosen (a UI-only guard; the server accepts any
+ * values).
  */
 export const targetMonthOptions = (
   target: number,
@@ -55,54 +60,59 @@ export const thresholdMonthOptions = (target: number): SelectOption[] => [
 ];
 
 /**
- * The store's horizon when it FIXES this order's target (OMS-REG-REPL-17.18):
- * the changing-target-months preference is off (it is on unless set — pass the
- * raw read, undefined while unresolved) on a store with a supply interval, and
- * the order is a general one (a program order's thresholds are its order
- * type's, locked anyway). Undefined → the target is changeable as usual.
+ * The store's supply interval and safety buffer when they FIX this order's
+ * target (OMS-REG-REPL-17.18): the changing-target-months preference is off
+ * (it is on unless set — pass the raw read, undefined while unresolved) on a
+ * store with a supply interval, and the order is a general one (a program
+ * order's thresholds are its order type's, locked anyway). Undefined → the
+ * target is changeable as usual.
  */
-export const storeFixedHorizon = (args: {
+export const storeFixedIntervalAndBuffer = (args: {
   canChangeTargetMonths: boolean | undefined;
-  supplyHorizon: InternalOrderInfoFragment['supplyHorizon'];
+  supplyIntervalAndBuffer: InternalOrderInfoFragment['supplyIntervalAndBuffer'];
   isProgram: boolean;
-}): SupplyHorizon | undefined =>
+}): SupplyIntervalAndBuffer | undefined =>
   args.canChangeTargetMonths === false && !args.isProgram
-    ? (args.supplyHorizon ?? undefined)
+    ? (args.supplyIntervalAndBuffer ?? undefined)
     : undefined;
 
-// Months compared to a hundredth: the horizon is a float sum, the stored
+// Months compared to a hundredth: interval + buffer is a float sum, the stored
 // target a float, and neither carries more precision than the store's setup.
 const sameMonths = (a: number, b: number) => Math.abs(a - b) < 0.005;
 
 /**
- * The store horizon the order's target came from, if it did (OMS-REG-REPL-
- * 17.17): a general order on a store with a supply interval whose target is
- * exactly that interval + safety buffer. Undefined otherwise — a program
- * order, a store with no interval, or a target since changed.
+ * The store's supply interval and safety buffer the order's target came from,
+ * if it did (OMS-REG-REPL-17.17): a general order on a store with a supply
+ * interval whose target is exactly that interval + safety buffer. Undefined
+ * otherwise — a program order, a store with no interval, or a target since
+ * changed.
  */
-export const horizonBehindTarget = (
+export const intervalAndBufferBehindTarget = (
   node: Pick<
     InternalOrderInfoFragment,
-    'maxMonthsOfStock' | 'supplyHorizon' | 'program'
+    'maxMonthsOfStock' | 'supplyIntervalAndBuffer' | 'program'
   >
-): SupplyHorizon | undefined => {
-  const horizon = node.supplyHorizon;
-  if (!horizon || node.program) return undefined;
+): SupplyIntervalAndBuffer | undefined => {
+  const intervalAndBuffer = node.supplyIntervalAndBuffer;
+  if (!intervalAndBuffer || node.program) return undefined;
   return sameMonths(
     node.maxMonthsOfStock,
-    horizon.supplyIntervalMonths + horizon.safetyBufferMonths
+    intervalAndBuffer.supplyIntervalMonths +
+      intervalAndBuffer.safetyBufferMonths
   )
-    ? horizon
+    ? intervalAndBuffer
     : undefined;
 };
 
 /** The locked target's tooltip, naming the interval and buffer that set it. */
-export const targetSetByStoreMessage = (horizon: SupplyHorizon): string =>
+export const targetSetByStoreMessage = (
+  intervalAndBuffer: SupplyIntervalAndBuffer
+): string =>
   t('messages.target-mos-set-by-store', {
-    supplyInterval: formatNumber(horizon.supplyIntervalMonths, {
+    supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths, {
       maximumFractionDigits: 2,
     }),
-    safetyBuffer: formatNumber(horizon.safetyBufferMonths, {
+    safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths, {
       maximumFractionDigits: 2,
     }),
   });

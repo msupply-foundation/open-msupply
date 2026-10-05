@@ -25,7 +25,7 @@ import {
 } from './forecast';
 import type {
   ForecastLineFragment,
-  SupplyHorizonFragment,
+  SupplyIntervalAndBufferFragment,
 } from './forecast.generated';
 import styles from './ForecastBlock.module.css';
 
@@ -37,14 +37,20 @@ import styles from './ForecastBlock.module.css';
 
 export interface ForecastBlockProps {
   line: ForecastLineFragment;
-  /** The requisition's target months (max months of stock). */
-  targetMonths: number;
   /**
-   * The store horizon those target months came from, if they did — the
-   * target-stock caption then shows them as supply interval + safety buffer
-   * (spec S4 › the forecast, OMS-REG-REPL-17.17). Omitted → months alone.
+   * The requisition's target months (max months of stock). Undefined while
+   * not yet known (a read still loading) — the target stock then shows
+   * without its monthly demand × target months caption, rather than a
+   * placeholder "× 0 months".
    */
-  targetHorizon?: SupplyHorizonFragment;
+  targetMonths: number | undefined;
+  /**
+   * The store's supply interval and safety buffer those target months came
+   * from, if they did — the target-stock caption then shows them as supply
+   * interval + safety buffer (spec S4 › the forecast, OMS-REG-REPL-17.17).
+   * Omitted → months alone.
+   */
+  targetIntervalAndBuffer?: SupplyIntervalAndBufferFragment;
   /**
    * A stock quantity (units) in the editor's active entry mode, with its
    * measure word — so monthly demand and target stock re-express like the
@@ -266,11 +272,15 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
       <FigureRow
         label={t('label.target-stock')}
         value={quantity(props.line.targetStock)}
-        caption={targetStockCaption(
-          monthlyDemand(),
-          props.targetMonths,
-          props.targetHorizon
-        )}
+        caption={
+          props.targetMonths === undefined
+            ? undefined
+            : targetStockCaption(
+                monthlyDemand(),
+                props.targetMonths,
+                props.targetIntervalAndBuffer
+              )
+        }
         testId="forecast-target-stock"
       />
     </FormSection>

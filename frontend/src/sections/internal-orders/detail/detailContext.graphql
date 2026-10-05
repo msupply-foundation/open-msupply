@@ -17,8 +17,9 @@
 # - preferences.canCreateInternalOrderFromARequisition → the side panel's
 #   "Created from requisition" related-document row (AC-RD2, display-only).
 # - preferences.canChangeTargetMonthsOfStock (off, with the order's supply
-#   horizon, on a general order) → the target select locked to the store's
-#   horizon (rules › target months of stock). Read `?? true`: it is on unless
+#   interval and safety buffer, on a general order) → the target select locked
+#   to the store's supply interval + safety buffer (rules › target months of
+#   stock). Read `?? true`: it is on unless
 #   set.
 # - storePreferences.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised →
 #   the empty-send guard: where the store keeps zero-requested lines, an

@@ -25,7 +25,9 @@ pub struct InsertInput {
     pub their_reference: Option<String>,
     pub comment: Option<String>,
     /// Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
-    /// facility record carries no supply interval
+    /// facility record carries no supply interval. Ignored, the store's supply interval +
+    /// safety buffer taken instead, where the store's `canChangeTargetMonthsOfStock`
+    /// preference is off and it has a supply interval
     pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: f64,
     /// Defaults to 2 weeks from now

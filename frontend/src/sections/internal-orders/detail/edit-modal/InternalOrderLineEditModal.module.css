@@ -112,6 +112,16 @@
   text-align: center;
 }
 
+/* The stock-evolution chart's note while the draft previews another method —
+   muted, centred under its heading, and no wider than the chart. */
+.chartNote {
+  margin: 0 0 var(--space-2);
+  max-inline-size: 29rem;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
 /* Each chart is a fixed-width SVG; the section sizes to it (never stretched)
    so the pair sits centred with a gap, matching the original. The heading and
    chart stack centred within it. */

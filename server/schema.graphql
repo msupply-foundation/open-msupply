@@ -4035,7 +4035,9 @@ input InsertRequestRequisitionInput {
 	comment: String
 	"""
 	Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
-	facility record carries no supply interval
+	facility record carries no supply interval. Ignored, the store's supply interval +
+	safety buffer taken instead, where the store's `canChangeTargetMonthsOfStock`
+	preference is off and it has a supply interval
 	"""
 	maxMonthsOfStock: Float
 	minMonthsOfStock: Float!
@@ -8402,11 +8404,11 @@ type RequisitionNode {
 	"""
 	minMonthsOfStock: Float!
 	"""
-	The ordering store's restocking horizon (its facility record's supply interval and
-	safety buffer) as it stands now, null when it carries no supply interval. A general
+	The ordering store's supply interval and safety buffer (from its facility record) as
+	they stand now, null when it carries no supply interval. A general
 	order's default target months of stock.
 	"""
-	supplyHorizon: SupplyHorizonNode
+	supplyIntervalAndBuffer: SupplyIntervalAndBufferNode
 	documents: SyncFileReferenceConnector!
 	lines: RequisitionLineConnector!
 	"""
@@ -9448,7 +9450,7 @@ type SupplierReturnLineNode {
 	reasonOption: ReasonOptionNode
 }
 
-type SupplyHorizonNode {
+type SupplyIntervalAndBufferNode {
 	supplyIntervalMonths: Float!
 	"""
 	Zero when the facility record carries none

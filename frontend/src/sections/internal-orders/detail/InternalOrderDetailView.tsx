@@ -92,7 +92,7 @@ import {
   InternalOrderToolbar,
   type HeaderEditFields,
 } from './InternalOrderToolbar';
-import { horizonBehindTarget } from './targetMonths';
+import { intervalAndBufferBehindTarget } from './targetMonths';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { ExportPrintButton } from '@/domain/reports';
@@ -215,9 +215,9 @@ const InternalOrderDetailView: Component = () => {
     desc: false,
   });
   const [supplierError, setSupplierError] = createSignal<string>();
-  // A refused target change (the store fixes it to its horizon, OMS-REG-REPL-
-  // 17.18) — shown as an error notice beneath the header cluster until the
-  // next target change.
+  // A refused target change (the store fixes it to its supply interval +
+  // safety buffer, OMS-REG-REPL-17.18) — shown as an error notice beneath the
+  // header cluster until the next target change.
   const [targetError, setTargetError] = createSignal<string>();
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   // The line editor (S4): closed, open in add mode (undefined line), or open on
@@ -731,7 +731,9 @@ const InternalOrderDetailView: Component = () => {
     {
       c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
       sortKey: 'mos',
-      header: () => t('label.months-of-stock'),
+      // Stock ÷ the line's FORECAST monthly demand, so headed as such beside
+      // the measured AMC column (#12082); the published column id stays `mos`.
+      header: () => t('label.months-of-stock-forecast-demand'),
       ...getCellDefinition('mos'),
     },
     {
@@ -1389,7 +1391,7 @@ const InternalOrderDetailView: Component = () => {
                 requisitionId={node().id}
                 minMonths={node().minMonthsOfStock}
                 maxMonths={node().maxMonthsOfStock}
-                targetHorizon={horizonBehindTarget(node())}
+                targetIntervalAndBuffer={intervalAndBufferBehindTarget(node())}
                 editable={editable()}
                 canAdd={canAddLines()}
                 showDoses={showDoses()}

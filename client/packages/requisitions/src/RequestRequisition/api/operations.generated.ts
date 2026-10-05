@@ -781,6 +781,10 @@ export type UpdateRequestMutation = {
     | {
         __typename: 'UpdateRequestRequisitionError';
         error:
+          | {
+              __typename: 'CannotChangeTargetMonthsOfStock';
+              description: string;
+            }
           | { __typename: 'CannotEditRequisition'; description: string }
           | {
               __typename: 'OrderingTooManyItems';

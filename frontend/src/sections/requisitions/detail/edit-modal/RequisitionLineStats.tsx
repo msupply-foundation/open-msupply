@@ -380,9 +380,11 @@ export const RequisitionLineStats: Component<{
               {forecast => (
                 <ForecastBlock
                   line={forecast()}
-                  targetMonths={
-                    props.stats?.requestStoreStats.maxMonthsOfStock ?? 0
-                  }
+                  // The response requisition's own target months — what the
+                  // line's targetStock resolves from (requestStoreStats reads
+                  // the line's requisition). Undefined while the stats load:
+                  // the caption waits rather than reading "× 0 months".
+                  targetMonths={props.stats?.requestStoreStats.maxMonthsOfStock}
                   formatQuantity={(units, fractionDigits) => {
                     const figure = roundTo(
                       unitsToMode(units, props.entryMode, props.packSize),

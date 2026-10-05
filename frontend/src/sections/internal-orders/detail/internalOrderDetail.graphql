@@ -122,7 +122,7 @@ fragment InternalOrderInfo on RequisitionNode {
   # of stock), null where its facility record carries no supply interval: it
   # explains a target the store fixes (the target select's lock tooltip) and
   # one it set (the forecast's target-months caption, OMS-REG-REPL-17.17).
-  supplyHorizon {
+  supplyIntervalAndBuffer {
     supplyIntervalMonths
     safetyBufferMonths
   }
@@ -243,9 +243,10 @@ mutation updateInternalOrder(
         ... on OrderingTooManyItems {
           maxItemsInEmergencyOrder
         }
-        # A target change on a store that fixes it to its supply horizon (rules ›
-        # target months of stock) — selected so the header save can tell it
-        # from a supplier rejection by its typed __typename.
+        # A target change on a store that fixes it to its supply interval +
+        # safety buffer (rules › target months of stock) — selected so the
+        # header save can tell it from a supplier rejection by its typed
+        # __typename.
         ... on CannotChangeTargetMonthsOfStock {
           description
         }

@@ -74,7 +74,7 @@ const order = (
   destinationCustomer: null,
   minMonthsOfStock: 1,
   maxMonthsOfStock: 3,
-  supplyHorizon: null,
+  supplyIntervalAndBuffer: null,
   program: { id: 'prog-1', name: 'Malaria' },
   orderType: 'Monthly',
   period: { id: 'period-1', name: 'Jun 2025' },

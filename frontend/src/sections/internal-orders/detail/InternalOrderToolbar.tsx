@@ -10,7 +10,7 @@ import { NameSearch, type NameSeed } from '../../../domain/name';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 import {
-  storeFixedHorizon,
+  storeFixedIntervalAndBuffer,
   targetMonthOptions,
   targetSetByStoreMessage,
   thresholdMonthOptions,
@@ -78,16 +78,17 @@ export const InternalOrderToolbar: Component<
   // Supplier + MOS are locked on a program order even while Draft (AC-H3), and
   // on any non-editable order.
   const fieldsLocked = () => !props.editable || props.isProgram;
-  // The store fixes a general order's target to its supply horizon when the
-  // changing-target-months preference is off on a store with a supply interval
-  // (OMS-REG-REPL-17.18) — the target only; the threshold stays changeable.
+  // The store fixes a general order's target to its supply interval + safety
+  // buffer when the changing-target-months preference is off on a store with
+  // a supply interval (OMS-REG-REPL-17.18) — the target only; the threshold
+  // stays changeable.
   // Only explained where the target would otherwise be editable.
-  const fixedHorizon = () =>
+  const fixedIntervalAndBuffer = () =>
     fieldsLocked()
       ? undefined
-      : storeFixedHorizon({
+      : storeFixedIntervalAndBuffer({
           canChangeTargetMonths: props.canChangeTargetMonths,
-          supplyHorizon: props.node.supplyHorizon,
+          supplyIntervalAndBuffer: props.node.supplyIntervalAndBuffer,
           isProgram: props.isProgram,
         });
 
@@ -277,16 +278,16 @@ export const InternalOrderToolbar: Component<
           testId="max-months-of-stock-select"
           options={targetOptions()}
           value={targetValue()}
-          disabled={fieldsLocked() || fixedHorizon() != null}
+          disabled={fieldsLocked() || fixedIntervalAndBuffer() != null}
           // Where the store fixes the target, a tooltip on the label names
           // the supply interval and safety buffer that set it (spec S3 §
           // toolbar) — on the label, as the inbound received date's reason,
           // since a disabled trigger takes no hover.
           labelInfo={
-            <Show when={fixedHorizon()}>
-              {horizon => (
+            <Show when={fixedIntervalAndBuffer()}>
+              {intervalAndBuffer => (
                 <InfoTooltip
-                  text={targetSetByStoreMessage(horizon())}
+                  text={targetSetByStoreMessage(intervalAndBuffer())}
                   triggerTestId="max-months-of-stock-locked-info"
                 />
               )}

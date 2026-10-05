@@ -18,10 +18,11 @@ import { AddInternalOrderFromMasterList } from './edit-modal/masterList.generate
 //   supplier / destination / MOS thresholds). On an editable Draft these don't
 //   produce a domain error the user must act on EXCEPT a supplier change, whose
 //   typed rejections come back for inline display on the lookup (contract ›
-//   header fields), and a target change the store fixes to its supply horizon
-//   (CannotChangeTargetMonthsOfStock — reachable only past the locked select,
-//   e.g. the preference turned off while the order was open). Anything else is
-//   promoted to the global unexpected-error modal (graphqlFetch's default).
+//   header fields), and a target change the store fixes to its supply
+//   interval + safety buffer (CannotChangeTargetMonthsOfStock — reachable only
+//   past the locked select, e.g. the preference turned off while the order was
+//   open). Anything else is promoted to the global unexpected-error modal
+//   (graphqlFetch's default).
 //
 // - sendInternalOrder — the send (status = SENT). Its user-facing refusals are
 //   TYPED members of the update error union (contract › lifecycle / emergency
@@ -66,8 +67,8 @@ export const saveInternalOrderFields = async (
   if (response.__typename === 'RequisitionNode')
     return { kind: 'saved', node: response };
   const error = response.error;
-  // The store fixes a general order's target to its horizon (rules › target
-  // months of stock, OMS-REG-REPL-17.18).
+  // The store fixes a general order's target to its supply interval + safety
+  // buffer (rules › target months of stock, OMS-REG-REPL-17.18).
   if (error.__typename === 'CannotChangeTargetMonthsOfStock')
     return {
       kind: 'error',

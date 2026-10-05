@@ -61,7 +61,7 @@ import {
 import {
   ForecastBlock,
   type ForecastMethod,
-  type SupplyHorizonFragment,
+  type SupplyIntervalAndBufferFragment,
 } from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
 
@@ -80,11 +80,11 @@ export interface InternalOrderLineEditModalProps {
   minMonths: number;
   maxMonths: number;
   /**
-   * The store horizon the order's target came from, if it did — the
-   * forecast's target months then show the supply interval and safety buffer
-   * that make them up (OMS-REG-REPL-17.17).
+   * The store's supply interval and safety buffer the order's target came
+   * from, if it did — the forecast's target months then show the supply
+   * interval and safety buffer that make them up (OMS-REG-REPL-17.17).
    */
-  targetHorizon?: SupplyHorizonFragment;
+  targetIntervalAndBuffer?: SupplyIntervalAndBufferFragment;
   /** Read-only order → every control disabled (reads still shown). */
   editable: boolean;
   /** General order → add mode reachable; program orders can't add (AC-LN1). */
@@ -192,12 +192,27 @@ const LineEditContent = (
   // NON-suspending (the `.state` gate) — the resource first-fetches on the
   // interaction of opening/advancing, so a direct read would remount the modal
   // (kdd/solid-reactivity-pitfalls § no remounts).
-  const chartKey = () => {
-    const editorLine = line();
-    return editorLine && !editorLine.isNew
-      ? { storeId: props.storeId, lineId: editorLine.lineId }
-      : false;
-  };
+  // Keyed on the stable inputs only, compared by value: every setLine — a
+  // draft method preview included — hands the editor a new line object, and a
+  // key object rebuilt from it would otherwise refetch the chart each time.
+  type ChartKey = { storeId: string; lineId: string } | false;
+  const chartKey = createMemo<ChartKey>(
+    () => {
+      const editorLine = line();
+      return editorLine && !editorLine.isNew
+        ? { storeId: props.storeId, lineId: editorLine.lineId }
+        : false;
+    },
+    false,
+    {
+      equals: (prev, next) =>
+        prev === next ||
+        (prev !== false &&
+          next !== false &&
+          prev.storeId === next.storeId &&
+          prev.lineId === next.lineId),
+    }
+  );
   const [chart] = createResource(chartKey, async variables => {
     const result = await graphqlFetch(RequisitionLineChart, variables);
     if (result.kind !== 'success') return undefined;
@@ -208,6 +223,17 @@ const LineEditContent = (
   // The history/evolution pair shows only when the server returned series (an
   // order with no expected-delivery-date returns both null — then only the
   // target-quantity breakdown shows, spec S4 § charts).
+  // The draft previews a method other than the saved line's — the stock
+  // evolution series, projected server-side from the stored forecast, then
+  // lags the draft until it is saved.
+  const previewsOtherMethod = () => {
+    const editorLine = line();
+    return (
+      !!editorLine &&
+      !editorLine.isNew &&
+      editorLine.forecast.forecastMethod !== editorLine.ownForecastMethod
+    );
+  };
   const hasSeries = () => {
     const data = chartData();
     return !!(
@@ -647,8 +673,10 @@ const LineEditContent = (
                   value={stat(editorLine().averageMonthlyConsumption, true)}
                   caption={statCaption(editorLine().averageMonthlyConsumption)}
                 />
+                {/* Stock ÷ the line's forecast monthly demand — labelled so
+                  beside the measured AMC/AMD above (#12082). */}
                 <StatRow
-                  label={t('label.months-of-stock')}
+                  label={t('label.months-of-stock-forecast-demand')}
                   value={`${editorLine().monthsOfStock.toFixed(1)} ${t('label.months')}`}
                 />
                 <Show when={props.showExtended}>
@@ -814,7 +842,7 @@ const LineEditContent = (
             <ForecastBlock
               line={editorLine().forecast}
               targetMonths={props.maxMonths}
-              targetHorizon={props.targetHorizon}
+              targetIntervalAndBuffer={props.targetIntervalAndBuffer}
               formatQuantity={forecastQuantity}
               options={editorLine().forecastMethodOptions}
               ownMethod={editorLine().ownForecastMethod}
@@ -858,6 +886,15 @@ const LineEditContent = (
                       <h3 class={styles.chartHeading}>
                         {t('heading.stock-evolution')}
                       </h3>
+                      {/* The server projects the SAVED line's forecast; while
+                        the draft previews another method the chart can't
+                        follow it, so it says whose demand it draws (spec S4 ›
+                        context charts). */}
+                      <Show when={previewsOtherMethod()}>
+                        <p class={styles.chartNote}>
+                          {t('messages.stock-evolution-saved-method')}
+                        </p>
+                      </Show>
                       <StockEvolutionChart
                         data={data().stockEvolution?.nodes ?? []}
                       />

@@ -22,6 +22,6 @@ export {
 } from './forecast';
 export type {
   ForecastLineFragment,
-  SupplyHorizonFragment,
+  SupplyIntervalAndBufferFragment,
 } from './forecast.generated';
 export { ForecastBlock, type ForecastBlockProps } from './ForecastBlock';

@@ -25,20 +25,11 @@ pub struct RequisitionLineOmsFields {
     pub location_type_id: Option<String>,
     // The legacy forecast shape: only a Population line carries it. Converted to and from
     // the line's forecast method, monthly demand and breakdown by `forecast_from_legacy`
-    // and `forecast_to_legacy`.
+    // and `forecast_to_legacy`. Legacy sync serves only sites older than 3.0, so the
+    // current forecast shape is never sent.
     pub forecast_total_units: Option<f64>,
     pub forecast_total_doses: Option<f64>,
     pub vaccine_courses: Option<String>,
-    // The current forecast, so a line relayed back through legacy central (e.g. on
-    // re-initialisation) keeps what the legacy shape can't carry: an Ancillary-ratio
-    // line's method and breakdown, a Population line's population served. Preferred over
-    // the legacy fields on pull; sites older than 3.04 ignore them.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub forecast_method: Option<ForecastMethod>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub forecast_monthly_consumption: Option<f64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub forecast_data: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -140,28 +131,16 @@ impl SyncTranslation for RequisitionLineTranslation {
 
         let (price_per_unit, available_volume, location_type_id, forecast) =
             if let Some(oms_fields) = data.oms_fields {
-                let forecast = match (
-                    oms_fields.forecast_method,
-                    oms_fields.forecast_monthly_consumption,
-                ) {
-                    // Sent by a 3.04+ site
-                    (Some(method), Some(monthly_consumption)) => {
-                        (method, monthly_consumption, oms_fields.forecast_data)
-                    }
-                    // Sent by an older site: only the legacy shape
-                    _ => {
-                        let forecast = forecast_from_legacy(
-                            &LegacyForecast {
-                                forecast_total_units: oms_fields.forecast_total_units,
-                                forecast_total_doses: oms_fields.forecast_total_doses,
-                                vaccine_courses: oms_fields.vaccine_courses,
-                            },
-                            average_monthly_consumption,
-                        );
-                        let forecast_data = forecast.data_json();
-                        (forecast.method, forecast.monthly_consumption, forecast_data)
-                    }
-                };
+                let forecast = forecast_from_legacy(
+                    &LegacyForecast {
+                        forecast_total_units: oms_fields.forecast_total_units,
+                        forecast_total_doses: oms_fields.forecast_total_doses,
+                        vaccine_courses: oms_fields.vaccine_courses,
+                    },
+                    average_monthly_consumption,
+                );
+                let forecast_data = forecast.data_json();
+                let forecast = (forecast.method, forecast.monthly_consumption, forecast_data);
                 (
                     oms_fields.price_per_unit,
                     oms_fields.available_volume,
@@ -262,7 +241,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             available_volume,
             location_type_id,
             forecast_method,
-            forecast_monthly_consumption,
+            forecast_monthly_consumption: _,
             forecast_data,
         } = requisition_line_row;
 
@@ -321,9 +300,6 @@ impl SyncTranslation for RequisitionLineTranslation {
             forecast_total_units,
             forecast_total_doses,
             vaccine_courses,
-            forecast_method: Some(forecast_method),
-            forecast_monthly_consumption: Some(forecast_monthly_consumption),
-            forecast_data,
         });
 
         let legacy_row = LegacyRequisitionLineRow {
@@ -548,17 +524,17 @@ mod tests {
         assert_eq!(fk_errors.len(), 2, "got {fk_errors:?}");
     }
 
-    /// A line pushed to legacy central and pulled back (e.g. on re-initialisation) keeps
-    /// its forecast; one pushed by an older site, with only the legacy shape, converts.
+    /// Legacy central only carries the legacy forecast shape: a Population line goes out
+    /// spread over the order's target months and converts back on pull.
     #[actix_rt::test]
-    async fn test_requisition_line_forecast_round_trips_through_legacy_central() {
+    async fn test_requisition_line_forecast_uses_legacy_shape_on_legacy_central() {
         use repository::{
             AncillaryRatioForecast, AncillaryRatioPrincipal, ForecastData, PopulationForecast,
             PopulationForecastCourse, RequisitionLineRowRepository,
         };
 
         let (_, connection, _, _) = setup_all(
-            "test_requisition_line_forecast_round_trips_through_legacy_central",
+            "test_requisition_line_forecast_uses_legacy_shape_on_legacy_central",
             MockDataInserts::all(),
         )
         .await;
@@ -615,7 +591,7 @@ mod tests {
         };
 
         let translator = RequisitionLineTranslation;
-        let round_trip = |line: &RequisitionLineRow, strip_current: bool| {
+        let round_trip = |line: &RequisitionLineRow| {
             RequisitionLineRowRepository::new(&connection)
                 .upsert_one(line)
                 .unwrap();
@@ -634,18 +610,7 @@ mod tests {
             else {
                 panic!("expected a push record");
             };
-            let mut data = pushed[0].record.record_data.clone();
-            if strip_current {
-                // As an older site sends it
-                let oms_fields = data["oms_fields"].as_object_mut().unwrap();
-                for key in [
-                    "forecast_method",
-                    "forecast_monthly_consumption",
-                    "forecast_data",
-                ] {
-                    oms_fields.remove(key);
-                }
-            }
+            let data = pushed[0].record.record_data.clone();
             let pulled = translator
                 .try_translate_from_upsert_sync_record(
                     &connection,
@@ -662,19 +627,22 @@ mod tests {
             (pushed[0].record.record_data.clone(), pulled)
         };
 
-        // Pushed with both shapes: the legacy one over the order's target months
-        let (pushed, _) = round_trip(&population, false);
+        // Pushed in the legacy shape only, over the order's target months
+        let (pushed, pulled) = round_trip(&population);
         assert_eq!(pushed["oms_fields"]["forecast_total_units"], json!(100.0));
-        assert_eq!(pushed["oms_fields"]["forecast_method"], json!("Population"));
-
-        // Pulled back: the current shape wins, so nothing is lost
-        for line in [&population, &ancillary] {
-            let (_, pulled) = round_trip(line, false);
-            assert_eq!(pulled, PullTranslateResult::upsert(line.clone()));
+        for key in [
+            "forecast_method",
+            "forecast_monthly_consumption",
+            "forecast_data",
+        ] {
+            assert!(
+                pushed["oms_fields"].get(key).is_none(),
+                "{} sent to legacy central",
+                key
+            );
         }
 
-        // From an older site: a Population line converts, without its population served
-        let (_, pulled) = round_trip(&population, true);
+        // Pulled back, a Population line converts without its population served
         let Some(ForecastData::Population(mut forecast)) = ForecastData::for_method(
             &population.forecast_method,
             population.forecast_data.as_deref(),
@@ -691,7 +659,8 @@ mod tests {
         );
 
         // An Ancillary-ratio line has no legacy form, so it becomes AMC
-        let (_, pulled) = round_trip(&ancillary, true);
+        let (pushed, pulled) = round_trip(&ancillary);
+        assert_eq!(pushed["oms_fields"]["vaccine_courses"], json!(null));
         assert_eq!(
             pulled,
             PullTranslateResult::upsert(RequisitionLineRow {

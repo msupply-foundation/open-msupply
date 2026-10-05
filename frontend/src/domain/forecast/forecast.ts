@@ -1,9 +1,9 @@
-import { t } from '../../intl';
+import { t, tPlural } from '../../intl';
 import { formatNumber, round } from '../../intl/formatNumber';
 import type {
   ForecastLineFragment,
   ForecastMethodOptionFragment,
-  SupplyHorizonFragment,
+  SupplyIntervalAndBufferFragment,
 } from './forecast.generated';
 
 // The shared forecast module (kdd/domain-modules): a requisition line's stored
@@ -116,20 +116,25 @@ export const principalItemLabel = (
 
 /**
  * The target-stock step's caption: monthly demand × target months. Where the
- * target came from the store's horizon, the months show the supply interval
- * and safety buffer that make them up (spec S4 › the forecast, OMS-REG-REPL-
- * 17.17) — "120 units × 3.5 months (supply interval 3 + safety buffer 0.5)".
+ * target came from the store's supply interval + safety buffer, the months
+ * show the supply interval and safety buffer that make them up (spec S4 › the
+ * forecast, OMS-REG-REPL-17.17) — "120 units × 3.5 months (supply interval 3
+ * + safety buffer 0.5)".
  */
 export const targetStockCaption = (
   monthlyDemand: string,
   targetMonths: number,
-  horizon?: SupplyHorizonFragment
+  intervalAndBuffer?: SupplyIntervalAndBufferFragment
 ): string => {
-  const step = `${monthlyDemand} × ${formatNumber(targetMonths)} ${t('label.months')}`;
-  if (!horizon) return step;
+  // Plural-aware, so a one-month target reads "1 month".
+  const months = tPlural('label.number-months', targetMonths, {
+    count: formatNumber(targetMonths),
+  });
+  const step = `${monthlyDemand} × ${months}`;
+  if (!intervalAndBuffer) return step;
   const makeup = t('label.supply-interval-plus-buffer', {
-    supplyInterval: formatNumber(horizon.supplyIntervalMonths),
-    safetyBuffer: formatNumber(horizon.safetyBufferMonths),
+    supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths),
+    safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths),
   });
   return `${step} (${makeup})`;
 };

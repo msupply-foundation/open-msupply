@@ -32,5 +32,5 @@ pub use self::insert_request_from_response_requisition::*;
 mod forecast;
 pub use self::forecast::*;
 
-mod supply_horizon;
-pub use self::supply_horizon::*;
+mod supply_interval_and_buffer;
+pub use self::supply_interval_and_buffer::*;

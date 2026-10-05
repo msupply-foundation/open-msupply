@@ -2,11 +2,14 @@ import { afterAll, beforeAll, describe, it, expect } from 'vitest';
 import { setDictionaries, setLocale } from '../../intl/intl';
 import commonEn from '../../intl/locales/en/common.json';
 import {
+  FORECAST_METHODS,
   ancillaryRatio,
   courseTitle,
+  forecastMethodLabel,
   populationSteps,
   principalItemLabel,
   targetStockCaption,
+  unavailableReasonMessage,
   type AncillaryRatioPrincipal,
   type PopulationCourse,
 } from './forecast';
@@ -85,7 +88,7 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
   });
 });
 
-describe('OMS-REG-REPL-17.17 — target months from the store horizon show its make-up', () => {
+describe("OMS-REG-REPL-17.17 — target months from the store's supply interval + safety buffer show their make-up", () => {
   beforeAll(() => {
     setDictionaries({ en: commonEn });
     setLocale('en');
@@ -96,12 +99,47 @@ describe('OMS-REG-REPL-17.17 — target months from the store horizon show its m
     expect(targetStockCaption('120 units', 2)).toBe('120 units × 2 months');
   });
 
-  it('names the supply interval and safety buffer behind a horizon target', () => {
+  it('reads a one-month target in the singular', () => {
+    expect(targetStockCaption('120 units', 1)).toBe('120 units × 1 month');
+  });
+
+  it('names the supply interval and safety buffer behind a supply-interval-and-buffer target', () => {
     expect(
       targetStockCaption('120 units', 3.5, {
         supplyIntervalMonths: 3,
         safetyBufferMonths: 0.5,
       })
     ).toBe('120 units × 3.5 months (supply interval 3 + safety buffer 0.5)');
+  });
+});
+
+describe('OMS-REG-REPL-17.5 — the method select names each method and why one is unavailable', () => {
+  beforeAll(() => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+  });
+  afterAll(() => setDictionaries({}));
+
+  it('labels the three methods in select order', () => {
+    expect(FORECAST_METHODS.map(forecastMethodLabel)).toEqual([
+      'AMC',
+      'Population',
+      'Ancillary ratio',
+    ]);
+  });
+
+  it('gives each unavailable reason its own message', () => {
+    expect(unavailableReasonMessage('POPULATION_PREFERENCE_OFF')).toBe(
+      commonEn['messages.forecast-method-unavailable-population-preference']
+    );
+    expect(unavailableReasonMessage('NO_POPULATION_SERVED')).toBe(
+      commonEn['messages.forecast-method-unavailable-no-population-served']
+    );
+    expect(unavailableReasonMessage('NO_VACCINE_COURSE')).toBe(
+      commonEn['messages.forecast-method-unavailable-no-vaccine-course']
+    );
+    expect(unavailableReasonMessage('NO_PRINCIPAL_ON_ORDER')).toBe(
+      commonEn['messages.forecast-method-unavailable-no-principal']
+    );
   });
 });

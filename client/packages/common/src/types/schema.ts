@@ -1338,6 +1338,12 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotChangeTargetMonthsOfStock =
+  UpdateRequestRequisitionErrorInterface & {
+    __typename: 'CannotChangeTargetMonthsOfStock';
+    description: Scalars['String']['output'];
+  };
+
 export type CannotDeleteCentralSite = DeleteSiteErrorInterface & {
   __typename: 'CannotDeleteCentralSite';
   description: Scalars['String']['output'];
@@ -4684,7 +4690,13 @@ export type InsertRequestRequisitionInput = {
   /** Defaults to 2 weeks from now */
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  maxMonthsOfStock: Scalars['Float']['input'];
+  /**
+   * Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
+   * facility record carries no supply interval. Ignored, the store's supply interval +
+   * safety buffer taken instead, where the store's `canChangeTargetMonthsOfStock`
+   * preference is off and it has a supply interval
+   */
+  maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock: Scalars['Float']['input'];
   otherPartyId: Scalars['String']['input'];
   theirReference?: InputMaybe<Scalars['String']['input']>;
@@ -7993,6 +8005,7 @@ export enum PreferenceKey {
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   Backdating = 'backdating',
   BlindStocktake = 'blindStocktake',
+  CanChangeTargetMonthsOfStock = 'canChangeTargetMonthsOfStock',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
@@ -8071,6 +8084,7 @@ export type PreferencesNode = {
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
   blindStocktake: Scalars['Boolean']['output'];
+  canChangeTargetMonthsOfStock: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
@@ -10382,6 +10396,12 @@ export type RequisitionNode = {
    */
   shipments: InvoiceConnector;
   status: RequisitionNodeStatus;
+  /**
+   * The ordering store's supply interval and safety buffer (from its facility record) as
+   * they stand now, null when it carries no supply interval. A general
+   * order's default target months of stock.
+   */
+  supplyIntervalAndBuffer?: Maybe<SupplyIntervalAndBufferNode>;
   theirReference?: Maybe<Scalars['String']['output']>;
   type: RequisitionNodeType;
   /**
@@ -11455,6 +11475,13 @@ export type SupplierReturnLineNode = {
   reasonId?: Maybe<Scalars['String']['output']>;
   reasonOption?: Maybe<ReasonOptionNode>;
   stockLineId: Scalars['String']['output'];
+};
+
+export type SupplyIntervalAndBufferNode = {
+  __typename: 'SupplyIntervalAndBufferNode';
+  /** Zero when the facility record carries none */
+  safetyBufferMonths: Scalars['Float']['output'];
+  supplyIntervalMonths: Scalars['Float']['output'];
 };
 
 export type SupplyRequestedQuantityError = {
@@ -13236,6 +13263,7 @@ export type UpsertPreferencesInput = {
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   backdating?: InputMaybe<BackdatingInput>;
   blindStocktake?: InputMaybe<Array<BoolStorePrefInput>>;
+  canChangeTargetMonthsOfStock?: InputMaybe<Array<BoolStorePrefInput>>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;

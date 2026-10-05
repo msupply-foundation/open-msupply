@@ -3,8 +3,9 @@
 //! `vaccine_courses`) that sites older than 3.04 read and write.
 //!
 //! The database holds only the current shape. The legacy shape exists at the sync
-//! boundary (the V5 translator, V7 outgoing and incoming translation) and in the 3.04
-//! migration, all of which convert through the two functions here.
+//! boundary (the V5 translator, V7 outgoing and incoming translation), all of which
+//! convert through the two functions here. The 3.04 migration keeps its own copy of the
+//! legacy → current conversion, so changing these never changes what it does.
 
 use serde::{Deserialize, Serialize};
 
@@ -111,22 +112,63 @@ pub struct LegacyForecast {
 
 /// One course in the legacy `vaccine_courses` JSON. Its figures cover a supply period:
 /// `supply_period_months + buffer_stock_months`.
+///
+/// Only the forecast totals and the supply interval are required. The descriptive fields
+/// default when missing or null: rows copied from the forecasting plugin's data (v2.17)
+/// may lack some, and a 100% wastage rate serialised its infinite figures as null.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LegacyCourse {
     /// "Course name (demographic)", the parentheses empty without a demographic
+    #[serde(default, deserialize_with = "null_as_default")]
     pub course_title: String,
+    #[serde(default, deserialize_with = "null_as_default")]
     pub number_of_doses: i32,
+    #[serde(default, deserialize_with = "null_as_default")]
     pub coverage_rate: f64,
+    #[serde(default, deserialize_with = "null_as_default")]
     pub target_population: f64,
+    #[serde(default, deserialize_with = "null_as_default")]
     pub wastage_rate: f64,
+    #[serde(default, deserialize_with = "null_as_default")]
     pub loss_factor: f64,
+    #[serde(default, deserialize_with = "null_as_default")]
     pub annual_target_doses: f64,
+    #[serde(default, deserialize_with = "null_as_default")]
     pub buffer_stock_months: f64,
     pub supply_period_months: f64,
+    #[serde(default, deserialize_with = "null_as_default")]
     pub doses_per_unit: i32,
     pub forecast_doses: f64,
     pub forecast_units: f64,
+}
+
+fn null_as_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Default + Deserialize<'de>,
+{
+    Ok(Option::<T>::deserialize(deserializer)?.unwrap_or_default())
+}
+
+/// The readable courses of a legacy `vaccine_courses` JSON array. An unreadable course is
+/// skipped (and logged), not the whole line.
+pub fn legacy_courses(json: &str) -> Vec<LegacyCourse> {
+    let courses: Vec<serde_json::Value> = match serde_json::from_str(json) {
+        Ok(courses) => courses,
+        Err(e) => {
+            log::warn!("Unreadable vaccine_courses ({e}): {json}");
+            return vec![];
+        }
+    };
+    courses
+        .into_iter()
+        .filter_map(|course| {
+            serde_json::from_value(course.clone())
+                .inspect_err(|e| log::warn!("Unreadable vaccine course ({e}), skipped: {course}"))
+                .ok()
+        })
+        .collect()
 }
 
 /// A line's forecast in the current shape.
@@ -162,13 +204,7 @@ pub fn forecast_from_legacy(
         .vaccine_courses
         .as_deref()
         .filter(|json| !json.is_empty())
-        .and_then(|json| {
-            serde_json::from_str(json)
-                .inspect_err(|e| {
-                    log::warn!("Unreadable vaccine_courses ({e}), read as an AMC line: {json}")
-                })
-                .ok()
-        })
+        .map(legacy_courses)
         .unwrap_or_default();
 
     if courses.is_empty() {
@@ -275,7 +311,12 @@ fn split_course_title(title: &str) -> (String, Option<String>) {
 mod tests {
     use super::*;
 
-    fn legacy_course(title: &str, horizon: (f64, f64), units: f64, doses: f64) -> LegacyCourse {
+    fn legacy_course(
+        title: &str,
+        (supply_interval, buffer): (f64, f64),
+        units: f64,
+        doses: f64,
+    ) -> LegacyCourse {
         LegacyCourse {
             course_title: title.to_string(),
             number_of_doses: 3,
@@ -284,8 +325,8 @@ mod tests {
             wastage_rate: 10.0,
             loss_factor: 1.0 / 0.9,
             annual_target_doses: 6666.666666666667,
-            supply_period_months: horizon.0,
-            buffer_stock_months: horizon.1,
+            supply_period_months: supply_interval,
+            buffer_stock_months: buffer,
             doses_per_unit: 2,
             forecast_doses: doses,
             forecast_units: units,
@@ -309,7 +350,7 @@ mod tests {
         let forecast = forecast_from_legacy(&legacy, 7.0);
         assert_eq!(forecast.method, ForecastMethod::Population);
         assert_eq!(forecast.monthly_consumption, 300.0);
-        // Monthly demand × the old horizon reproduces the old total
+        // Monthly demand × the old supply interval + buffer reproduces the old total
         assert_eq!(
             forecast.monthly_consumption * 5.0,
             legacy.forecast_total_units.unwrap()
@@ -343,6 +384,34 @@ mod tests {
         assert_eq!(amc(None), LineForecast::amc(12.0));
         assert_eq!(amc(Some("[]")), LineForecast::amc(12.0));
         assert_eq!(amc(Some("course1,course2")), LineForecast::amc(12.0));
+    }
+
+    #[test]
+    fn legacy_courses_read_leniently() {
+        // Descriptive fields missing (wastageRate, courseTitle) or null (a 100% wastage
+        // rate's infinite figures) still read; a course missing its totals is skipped
+        let json = r#"[
+            {"numberOfDoses": 2, "lossFactor": null, "annualTargetDoses": null,
+             "supplyPeriodMonths": 3, "bufferStockMonths": 1,
+             "forecastDoses": 800, "forecastUnits": 400},
+            {"courseTitle": "Broken (Kids)", "supplyPeriodMonths": 3,
+             "forecastDoses": null, "forecastUnits": null}
+        ]"#;
+        let forecast = forecast_from_legacy(
+            &LegacyForecast {
+                vaccine_courses: Some(json.to_string()),
+                ..Default::default()
+            },
+            12.0,
+        );
+        assert_eq!(forecast.method, ForecastMethod::Population);
+        assert_eq!(forecast.monthly_consumption, 100.0);
+        let Some(ForecastData::Population(population)) = forecast.data else {
+            panic!("expected a population breakdown");
+        };
+        assert_eq!(population.courses.len(), 1);
+        assert_eq!(population.courses[0].wastage_rate, 0.0);
+        assert_eq!(population.courses[0].loss_factor, 0.0);
     }
 
     #[test]

@@ -301,7 +301,7 @@ impl GeneralQueries {
         store_id: String,
         input: RequisitionLineForecastPreviewInput,
     ) -> Result<requisition_line_forecast_preview::PreviewResponse> {
-        requisition_line_forecast_preview::forecast_preview(ctx, &store_id, input)
+        requisition_line_forecast_preview::forecast_preview(ctx, &store_id, input).await
     }
 
     pub async fn activity_logs(

@@ -10,8 +10,8 @@ use crate::{
 use repository::{
     ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
     mock::{
-        mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_request_draft_requisition,
-        mock_store_a, MockData, MockDataInserts,
+        mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_e, mock_item_f, mock_item_g,
+        mock_request_draft_requisition, mock_store_a, MockData, MockDataInserts,
     },
     test_db::setup_all_with_data,
     ForecastData, ForecastMethod, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
@@ -300,6 +300,71 @@ async fn forecast_principal_arrives() {
     let mut expected = vec![a, d];
     expected.sort();
     assert_eq!(principals, expected);
+}
+
+#[actix_rt::test]
+async fn forecast_ancillary_cycle() {
+    let (a, b) = (mock_item_a().id, mock_item_b().id);
+    // a → b and b → a, each at 1 : 2. Upsert rejects a cycle, but links arriving by sync
+    // aren't checked
+    let setup = Setup::new(
+        "forecast_ancillary_cycle",
+        vec![link(&a, &b, 1.0, 2.0), link(&b, &a, 1.0, 2.0)],
+    )
+    .await;
+
+    setup.add(&a);
+    setup.set_demand(&a, 10.0);
+    assert_eq!(setup.add(&b).forecast_monthly_consumption, 20.0);
+
+    // a follows b, and b follows a once more; the walk stops where it meets a again,
+    // rather than feeding the cycle until a round limit
+    setup
+        .change_method(&a, ForecastMethod::AncillaryRatio)
+        .unwrap();
+    assert_eq!(setup.line(&a).forecast_monthly_consumption, 40.0);
+    assert_eq!(setup.line(&b).forecast_monthly_consumption, 80.0);
+}
+
+#[actix_rt::test]
+async fn forecast_ancillary_max_depth() {
+    let items: Vec<String> = vec![
+        mock_item_a(),
+        mock_item_b(),
+        mock_item_c(),
+        mock_item_d(),
+        mock_item_e(),
+        mock_item_f(),
+        mock_item_g(),
+    ]
+    .into_iter()
+    .map(|item| item.id)
+    .collect();
+    // a → b → c → d → e → f → g, each at 1 : 1: six links, one more than the ancillary
+    // refresh follows
+    let links = items
+        .windows(2)
+        .map(|pair| link(&pair[0], &pair[1], 1.0, 1.0))
+        .collect();
+    let setup = Setup::new("forecast_ancillary_max_depth", links).await;
+
+    setup.add(&items[0]);
+    setup.set_demand(&items[0], 1000.0);
+    for item_id in &items[1..] {
+        let line = setup.add(item_id);
+        assert_eq!(line.forecast_method, ForecastMethod::AncillaryRatio);
+        assert_eq!(line.forecast_monthly_consumption, 1000.0);
+    }
+
+    // a leaves: b takes its default and the change walks five links down, to f; g, six
+    // links from a, is left as it was
+    setup.delete(&items[0]);
+    let b_demand = setup.line(&items[1]).forecast_monthly_consumption;
+    assert_ne!(b_demand, 1000.0);
+    for item_id in &items[2..6] {
+        assert_eq!(setup.line(item_id).forecast_monthly_consumption, b_demand);
+    }
+    assert_eq!(setup.line(&items[6]).forecast_monthly_consumption, 1000.0);
 }
 
 /// The forecast fields a preview and a save must agree on

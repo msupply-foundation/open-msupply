@@ -24,11 +24,12 @@ export type CreateResult =
   | { kind: 'failed' };
 
 // General create (AC-C2): sends only id + otherPartyId with the default
-// reorder threshold, leaving the target to the server's store-horizon
-// default. The picker offers only visible, store-backed suppliers, so the
-// typed supplier rejections are unreachable (contract wire trap) and any
-// non-success falls through to the generic mutation path (the global
-// unexpected-error modal) — hence no returnGraphqlErrors here.
+// reorder threshold, leaving the target to the server's default (the
+// store's supply interval + safety buffer). The picker offers only visible,
+// store-backed suppliers, so the typed supplier rejections are unreachable
+// (contract wire trap) and any non-success falls through to the generic
+// mutation path (the global unexpected-error modal) — hence no
+// returnGraphqlErrors here.
 export const createGeneralOrder = async (
   storeId: string,
   supplierId: string

@@ -4,7 +4,7 @@ use util::{f64_approx_eq, EPSILON};
 
 /// Max number of edges we'll follow when chasing ancillary chains. Matches the
 /// cap enforced on insert so this is defensive — real chains can't exceed it.
-const MAX_ANCILLARY_DEPTH: u32 = 5;
+pub const MAX_ANCILLARY_DEPTH: u32 = 5;
 
 /// Whether a requisition has missing or stale ancillary lines.
 ///

@@ -10,9 +10,8 @@ use crate::{
 
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ForecastMethod, ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError,
-    RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
-    StorageConnection,
+    ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Default)]
@@ -160,17 +159,6 @@ fn generate(
         option_id: updated_option_id,
     }: UpdateResponseRequisitionLine,
 ) -> (Option<RequisitionRow>, RequisitionLineRow) {
-    let average_monthly_consumption = if existing_requisition_row.linked_requisition_id.is_none() {
-        updated_average_monthly_consumption.unwrap_or(existing.average_monthly_consumption)
-    } else {
-        existing.average_monthly_consumption
-    };
-    // An AMC line's monthly demand is its AMC
-    let forecast_monthly_consumption = match existing.forecast_method {
-        ForecastMethod::Amc => average_monthly_consumption,
-        _ => existing.forecast_monthly_consumption,
-    };
-
     let requisition_line_row = RequisitionLineRow {
         supply_quantity: updated_supply_quantity.unwrap_or(existing.supply_quantity),
         comment: updated_comment.or(existing.comment),
@@ -179,8 +167,11 @@ fn generate(
         } else {
             existing.available_stock_on_hand
         },
-        average_monthly_consumption,
-        forecast_monthly_consumption,
+        average_monthly_consumption: if existing_requisition_row.linked_requisition_id.is_none() {
+            updated_average_monthly_consumption.unwrap_or(existing.average_monthly_consumption)
+        } else {
+            existing.average_monthly_consumption
+        },
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
         initial_stock_on_hand_units: updated_initial_stock_on_hand
             .unwrap_or(existing.initial_stock_on_hand_units),

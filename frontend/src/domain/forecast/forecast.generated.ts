@@ -50,7 +50,7 @@ export type ForecastMethodOptionFragment = {
   unavailableReason: "POPULATION_PREFERENCE_OFF" | "NO_POPULATION_SERVED" | "NO_VACCINE_COURSE" | "NO_PRINCIPAL_ON_ORDER" | null;
 };
 
-export type SupplyHorizonFragment = {
+export type SupplyIntervalAndBufferFragment = {
   supplyIntervalMonths: number;
   safetyBufferMonths: number;
 };

@@ -13,7 +13,9 @@ use graphql_core::{
 };
 use repository::{requisition_row::RequisitionRow, ApprovalStatusType, NameRow, Requisition};
 use service::{
-    requisition::request_requisition::{name_supply_horizon, store_supply_horizon, SupplyHorizon},
+    requisition::request_requisition::{
+        name_supply_interval_and_buffer, store_supply_interval_and_buffer, SupplyIntervalAndBuffer,
+    },
     requisition_line::ancillary_items::{AncillaryDelta, AncillaryState},
     ListResult,
 };
@@ -24,19 +26,20 @@ use super::{
 };
 use crate::types::SyncFileReferenceConnector;
 
-/// A store's restocking horizon: its target months of stock are the sum
-pub struct SupplyHorizonNode {
-    horizon: SupplyHorizon,
+/// A store's supply interval and safety buffer: their sum is its general orders' default
+/// target months of stock
+pub struct SupplyIntervalAndBufferNode {
+    interval: SupplyIntervalAndBuffer,
 }
 
 #[Object]
-impl SupplyHorizonNode {
+impl SupplyIntervalAndBufferNode {
     pub async fn supply_interval_months(&self) -> f64 {
-        self.horizon.supply_interval_months
+        self.interval.supply_interval_months
     }
     /// Zero when the facility record carries none
     pub async fn safety_buffer_months(&self) -> f64 {
-        self.horizon.safety_buffer_months
+        self.interval.safety_buffer_months
     }
 }
 
@@ -346,24 +349,29 @@ impl RequisitionNode {
         &self.row().min_months_of_stock
     }
 
-    /// The ordering store's restocking horizon (its facility record's supply interval and
-    /// safety buffer) as it stands now, null when it carries no supply interval. A general
+    /// The ordering store's supply interval and safety buffer (from its facility record) as
+    /// they stand now, null when it carries no supply interval. A general
     /// order's default target months of stock.
-    pub async fn supply_horizon(&self, ctx: &Context<'_>) -> Result<Option<SupplyHorizonNode>> {
+    pub async fn supply_interval_and_buffer(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<SupplyIntervalAndBufferNode>> {
         use repository::RequisitionType;
         let connection = ctx.service_provider().basic_context()?.connection;
         let row = self.row();
-        let horizon = match row.r#type {
-            RequisitionType::Request => store_supply_horizon(&connection, &row.store_id),
+        let interval = match row.r#type {
+            RequisitionType::Request => {
+                store_supply_interval_and_buffer(&connection, &row.store_id)
+            }
             // The customer orders
             RequisitionType::Response => {
-                name_supply_horizon(&connection, &row.store_id, &row.name_id)
+                name_supply_interval_and_buffer(&connection, &row.store_id, &row.name_id)
             }
             // Legacy types, not internal orders
             RequisitionType::Imprest | RequisitionType::StockHistory => Ok(None),
         }
         .map_err(|e| StandardGraphqlError::from_debug(&e))?;
-        Ok(horizon.map(|horizon| SupplyHorizonNode { horizon }))
+        Ok(interval.map(|interval| SupplyIntervalAndBufferNode { interval }))
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {

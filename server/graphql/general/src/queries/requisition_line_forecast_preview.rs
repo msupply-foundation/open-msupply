@@ -1,8 +1,8 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
 };
 use graphql_types::types::{
     ForecastMethodNode, ForecastMethodNotAvailable, RequisitionLineForecastPreviewNode,
@@ -10,9 +10,10 @@ use graphql_types::types::{
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition_line::request_requisition_line::{
-        RequisitionLineForecastPreviewError as ServiceError,
+        RequisitionLineForecastPreview, RequisitionLineForecastPreviewError as ServiceError,
         RequisitionLineForecastPreviewInput as ServiceInput,
     },
+    service_provider::ServiceProvider,
 };
 
 #[derive(InputObject)]
@@ -45,7 +46,7 @@ pub enum PreviewResponse {
     Error(PreviewError),
 }
 
-pub fn forecast_preview(
+pub async fn forecast_preview(
     ctx: &Context<'_>,
     store_id: &str,
     input: RequisitionLineForecastPreviewInput,
@@ -59,13 +60,25 @@ pub fn forecast_preview(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let store_id = store_id.to_string();
+    let input = input.to_domain();
 
-    let result = match service_provider
-        .requisition_line_service
-        .get_requisition_line_forecast_preview(&service_context, input.to_domain())
-    {
+    // Runs on the blocking pool: previewing a new item generates its line, which may invoke a
+    // transform plugin (#11949). The ServiceContext is built inside the closure so nothing
+    // non-`Send` crosses the boundary.
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<RequisitionLineForecastPreview, ServiceError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            Ok(service_provider
+                .requisition_line_service
+                .get_requisition_line_forecast_preview(&service_context, input))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let result = match result {
         Ok(preview) => {
             PreviewResponse::Response(RequisitionLineForecastPreviewNode::from_domain(preview))
         }
@@ -109,7 +122,7 @@ fn map_error(error: ServiceError) -> Result<PreviewErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreRequisition => Forbidden(formatted_error),
+        ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
         ServiceError::PluginError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
