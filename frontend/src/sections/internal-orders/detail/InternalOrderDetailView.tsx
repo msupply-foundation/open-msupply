@@ -571,7 +571,7 @@ const InternalOrderDetailView: Component = () => {
   };
 
   // The active sort's contribution, where the key names a contributed column
-  // that declares one (AC-PLUG-K7) — the merge put its namespaced id in
+  // that declares one (OMS-REG-PLG-02.10) — the merge put its namespaced id in
   // `sortKey`, so the table hands the same id back through `onSort`.
   const sortContribution = () =>
     lineColumnContributions().find(
@@ -928,7 +928,7 @@ const InternalOrderDetailView: Component = () => {
   // unrelated update (kdd/solid-reactivity-pitfalls). `visibleContributions`
   // also applies each contribution's `when` gate, so a contribution hidden by
   // the session context never reaches the merge — and therefore never gets a
-  // loader run (AC-PLUG-K3).
+  // loader run (OMS-REG-PLG-02.4).
   const lineColumnContributions = createMemo(() =>
     visibleContributions('internalOrderLine.column')
   );
@@ -950,7 +950,7 @@ const InternalOrderDetailView: Component = () => {
   // the contributed sort reads what they load, so the batch cannot follow it.
   const lineViews = createMemo(() => filteredLines().map(toLineView));
 
-  // The batched per-page column data (AC-PLUG-K4): one loader call per
+  // The batched per-page column data (OMS-REG-PLG-02.5): one loader call per
   // contribution per rendered set of rows, never per cell. The resource key
   // is the MEMBERSHIP — the unsorted row-id list plus the contributing ids —
   // so re-reading the same lines (a header save splicing the node back, a
@@ -1355,7 +1355,7 @@ const InternalOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                {/* The shared activity-log surface; oldest first per AC-AL1
+                {/* The shared activity-log surface; oldest first per OMS-REG-REPL-15.1
                     (spec S3 § Log tab). */}
                 <ActivityLogPanel
                   storeId={params.storeId}

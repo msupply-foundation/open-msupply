@@ -222,7 +222,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string>();
   // The allocate-in lens: units, or doses for a vaccine item under the
-  // preference (AC-AL7 via stock-allocation; prescriptions has no pack lens).
+  // preference (OMS-REG-SMV-11.19/.20 via stock-allocation; prescriptions has no pack lens).
   const [lens, setLens] = createSignal<'units' | 'doses'>('units');
 
   // The item's draft grid + info, fetched when an item is chosen — nothing
@@ -316,7 +316,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   let pendingAllocator: 'issue' | 'prescribed' | undefined;
 
   // Distribute FEFO with partial packs (AC-A1); callers hand in UNITS — the
-  // lens converts at the field boundary (AC-AL7/.63). Runs DEBOUNCED behind
+  // lens converts at the field boundary (OMS-REG-SMV-11.19/.20, DIS-03.63). Runs DEBOUNCED behind
   // both quantity fields (the current app's AutoAllocate fields — their
   // #2727/#3532: distributing per keystroke rewrites the entry under the
   // user's fingers). Once the entry settles, the issue field snaps to what
@@ -392,7 +392,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   // A manual per-row entry, clamped 0…available (AC-I5 — the client is the
   // only negative guard, and auto-pick raises the stakes). Its reports
-  // REPLACE the distribution's (AC-AL13): the split-pack warning when the
+  // REPLACE the distribution's (OMS-REG-SMV-11.33/.34): the split-pack warning when the
   // entry leaves a fractional pack (.58) — and, via onRowClamped below, the
   // applied quantity when the entry was adjusted (.19).
   const setRowPacks = (id: string, value: number | undefined) => {
@@ -903,9 +903,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   end={
                     <>
                       {t('label.available')}: {formatNumber(availableInLens())}{' '}
-                      {dosesMode()
-                        ? t('label.doses')
-                        : unitName()}
+                      {dosesMode() ? t('label.doses') : unitName()}
                     </>
                   }
                 >
