@@ -1355,7 +1355,7 @@ const InternalOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                {/* The shared activity-log surface; oldest first per AC-AL1
+                {/* The shared activity-log surface; oldest first per OMS-REG-REPL-15.1
                     (spec S3 § Log tab). */}
                 <ActivityLogPanel
                   storeId={params.storeId}
