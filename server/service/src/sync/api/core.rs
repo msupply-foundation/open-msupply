@@ -271,7 +271,8 @@ const DROPPED_BODY_RETRY_DELAYS_SECONDS: [u64; 3] = if cfg!(test) { [0, 0, 0] } 
 /// handling the request, so re-sending it can't overlap work still running server-side.
 /// Connect errors, timeouts and request-phase drops are left to `with_retries_opts` and its
 /// per-endpoint policy - retrying them again here would overlap sync v5's in-flight
-/// requests, and multiply sync v6's existing attempts.
+/// requests, and multiply sync v6's existing attempts. Sync v7 also passes a body that
+/// stalls past the idle timeout (see `RequestError::BodyCutOff` in `sync_v7::api`).
 ///
 /// Create one per batch: the budget then resets after every successful read, so a long
 /// pull isn't capped globally - only a persistently broken connection gives up.

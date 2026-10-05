@@ -137,9 +137,9 @@ impl SyncApiV7 {
     }
 
     /// POST `input` to `route`. `with_retries` re-sends it if the connection fails before a
-    /// response arrives, and if the connection drops part-way through the response body, the
-    /// same request is sent again under the `DroppedBodyRetries` policy shared with sync
-    /// v5/v6. Only use this for requests that are safe to send twice.
+    /// response arrives, and if the response body is cut off (the connection drops, or stalls
+    /// past the idle timeout), the same request is sent again under the `DroppedBodyRetries`
+    /// policy shared with sync v5/v6. Only use this for requests that are safe to send twice.
     ///
     /// The budget is per call, so a pull gets a fresh one for every batch - only a
     /// persistently broken connection gives up.
@@ -152,7 +152,7 @@ impl SyncApiV7 {
         let mut retries = DroppedBodyRetries::default();
         loop {
             match self.attempt(route, &input).await {
-                Err(RequestError::DroppedBody { error, .. })
+                Err(RequestError::BodyCutOff { error, .. })
                     if retries.wait_before_retry(&description, &error).await => {}
                 result => return result.map_err(SyncError::from),
             }
@@ -188,10 +188,17 @@ impl SyncApiV7 {
 }
 
 enum RequestError {
-    /// The connection dropped part-way through the response body (reset, incomplete
-    /// message). Nothing was parsed - the body never arrived in full - so this is a
-    /// transport failure, and a read can be re-sent.
-    DroppedBody {
+    /// The response body never arrived in full. Nothing was parsed, so this is a transport
+    /// failure, and a read can be re-sent. Either:
+    /// - the connection ended part-way through (reset, abort, early EOF) - including Android
+    ///   closing its sockets when it drops a network, and a TLS close without `close_notify`
+    ///   (see `util::chain_contains_transient_drop`), or
+    /// - the body timed out: TCP keepalive gave up on a path that went silent (about 30s), or,
+    ///   on a connection still alive but sending nothing, the 5-minute idle read timeout.
+    ///
+    /// Unlike sync v5, a timeout is re-sent too. Body bytes only stream once central has
+    /// finished handling the request, so a re-send can't overlap work still running there.
+    BodyCutOff {
         url: String,
         error: ParsingResponseError,
     },
@@ -208,7 +215,7 @@ impl From<RequestError> for SyncError {
     fn from(error: RequestError) -> Self {
         match error {
             // A connection problem, so report it as one rather than `Other`.
-            RequestError::DroppedBody { url, error } => SyncError::ConnectionError {
+            RequestError::BodyCutOff { url, error } => SyncError::ConnectionError {
                 url,
                 e: format_error(&error),
             },
@@ -269,10 +276,18 @@ async fn response_or_err<T: DeserializeOwned>(
                 format_error(&error),
             );
             return Err(match error {
-                ParsingResponseError::ConnectionDropped(_) => RequestError::DroppedBody {
+                // `from_body_read_error` keeps timeouts out of `ConnectionDropped` for v5's
+                // sake. v7 re-sends those too - see `RequestError::BodyCutOff`.
+                ParsingResponseError::ConnectionDropped(_) => RequestError::BodyCutOff {
                     url: url.to_string(),
                     error,
                 },
+                ParsingResponseError::CannotGetTextResponse(ref source) if source.is_timeout() => {
+                    RequestError::BodyCutOff {
+                        url: url.to_string(),
+                        error,
+                    }
+                }
                 other => SyncError::Other(format_error(&other)).into(),
             });
         }
@@ -362,6 +377,38 @@ mod tests {
             "Unexpected result: {:#?}",
             result.err()
         );
+    }
+
+    /// A body that stalls past the idle timeout is re-sent like a dropped one, rather than
+    /// failing as `Other`. Calls `response_or_err` directly with a short idle timeout, since
+    /// `with_retries` uses the real 5-minute one.
+    #[actix_rt::test]
+    async fn stalled_response_body_is_cut_off() {
+        let server = ScriptedServer::start(vec![ScriptedResponse::StalledBody {
+            content_length: 1000,
+            body: r#"{"Ok": {"siteId": 1, "cen"#,
+            hold: std::time::Duration::from_secs(5),
+        }]);
+        let url: reqwest::Url = server.url().parse().unwrap();
+        let response = reqwest::Client::builder()
+            .read_timeout(std::time::Duration::from_millis(200))
+            .build()
+            .unwrap()
+            .post(url.clone())
+            .send()
+            .await;
+
+        let result = response_or_err::<ApiResponse<status::Output>>(response, url).await;
+
+        match result {
+            Err(RequestError::BodyCutOff { error, .. }) => assert!(
+                matches!(&error, ParsingResponseError::CannotGetTextResponse(source) if source.is_timeout()),
+                "Expected an idle timeout, got {:#?}",
+                error
+            ),
+            Err(RequestError::Sync(error)) => panic!("Expected BodyCutOff, got {:#?}", error),
+            Ok(_) => panic!("Expected BodyCutOff, got Ok"),
+        }
     }
 
     fn from_authorization(authorization: Option<&str>) -> Result<Common, SyncError> {

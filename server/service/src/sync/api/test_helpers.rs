@@ -3,6 +3,7 @@ use std::{
     io::{Read, Write},
     net::TcpListener,
     thread,
+    time::Duration,
 };
 
 /// Pulls stamp buffered rows with the central server's site id, and refuse to run without it.
@@ -25,6 +26,13 @@ pub(crate) enum ScriptedResponse {
     /// Read the request, then drop the socket without replying - the client sees the
     /// connection die before any response arrives.
     CloseBeforeResponse,
+    /// As `TruncatedBody`, but hold the socket open for `hold` before dropping it - the
+    /// client sees the body stall, and gives up first if its idle timeout is shorter.
+    StalledBody {
+        content_length: usize,
+        body: &'static str,
+        hold: Duration,
+    },
 }
 
 /// A minimal HTTP server that replies to each connection with the next scripted response.
@@ -80,6 +88,23 @@ impl ScriptedServer {
                         let _ = stream.flush();
                     }
                     ScriptedResponse::CloseBeforeResponse => drop(stream),
+                    ScriptedResponse::StalledBody {
+                        content_length,
+                        body,
+                        hold,
+                    } => {
+                        let _ = write!(
+                            stream,
+                            "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}",
+                            content_length, body
+                        );
+                        let _ = stream.flush();
+                        // Hold it on its own thread, so later responses aren't delayed.
+                        thread::spawn(move || {
+                            thread::sleep(hold);
+                            drop(stream);
+                        });
+                    }
                 }
             }
         });
