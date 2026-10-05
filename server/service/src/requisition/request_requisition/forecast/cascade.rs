@@ -47,7 +47,7 @@ pub fn recompute_ancillary_dependants(
     let mut changed: HashSet<String> = changed_item_ids.into_iter().collect();
     let mut updated: Vec<String> = Vec::new();
 
-    for _ in 0..MAX_ROUNDS {
+    for round in 1..=MAX_ROUNDS {
         let mut next = HashSet::new();
 
         for line in lines.iter_mut() {
@@ -60,7 +60,7 @@ pub fn recompute_ancillary_dependants(
             }
 
             let forecast = match inputs.unavailable_reason(
-                ForecastMethod::AncillaryRatio,
+                &ForecastMethod::AncillaryRatio,
                 &line.item_id,
                 &order,
             ) {
@@ -89,6 +89,13 @@ pub fn recompute_ancillary_dependants(
 
         if next.is_empty() {
             break;
+        }
+        if round == MAX_ROUNDS {
+            log::warn!(
+                "Ancillary-ratio lines on requisition {} still changing after {MAX_ROUNDS} \
+                 rounds, left as they are: {next:?}",
+                requisition.id
+            );
         }
         changed = next;
     }

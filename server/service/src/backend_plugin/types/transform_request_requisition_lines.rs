@@ -1,6 +1,6 @@
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
 use plugin_provider::{call_plugin, PluginResult};
-use repository::{PluginDataRow, PluginType, RequisitionLineRow, RequisitionRow};
+use repository::{ForecastMethod, PluginDataRow, PluginType, RequisitionLineRow, RequisitionRow};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -65,6 +65,14 @@ impl PluginInstance {
             )?;
             lines = result.transformed_lines;
             plugin_data.extend(result.plugin_data.unwrap_or_default());
+        }
+
+        // An AMC line's monthly demand is its AMC, which a plugin may have replaced (e.g.
+        // CIV's). The plugin's suggested quantity is left as it set it.
+        for line in lines.iter_mut() {
+            if line.forecast_method == ForecastMethod::Amc {
+                line.forecast_monthly_consumption = line.average_monthly_consumption;
+            }
         }
 
         Ok((lines, plugin_data))

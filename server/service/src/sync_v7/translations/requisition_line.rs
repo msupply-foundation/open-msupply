@@ -5,8 +5,8 @@
 
 use repository::{
     forecast_from_legacy, forecast_to_legacy, migrations::Version, syncv7::SyncError,
-    syncv7::SyncRecordSerializeError, ChangeLogInsertRow, ChangelogRow, LegacyForecast,
-    RequisitionLineRow, RequisitionRowRepository, StorageConnection, Upsert,
+    syncv7::SyncRecordSerializeError, ChangeLogInsertRow, ChangelogRow, ChangelogTableName,
+    LegacyForecast, RequisitionLineRow, RequisitionRowRepository, StorageConnection, Upsert,
 };
 use serde_json::Value;
 
@@ -39,8 +39,11 @@ pub(crate) fn translate_outgoing_requisition_line(
 ) -> Result<Vec<SyncRecordV7>, SyncError> {
     let target_months = RequisitionRowRepository::new(connection)
         .find_one_by_id(&line.requisition_id)?
-        .map(|requisition| requisition.max_months_of_stock)
-        .unwrap_or_default();
+        .ok_or_else(|| SyncError::RecordNotFound {
+            id: line.requisition_id.clone(),
+            table: ChangelogTableName::Requisition,
+        })?
+        .max_months_of_stock;
     let legacy = forecast_to_legacy(
         &line.forecast_method,
         line.forecast_data.as_deref(),
@@ -97,7 +100,7 @@ fn requisition_line_from_json(
             }
             fields.insert(
                 "forecast_method".to_string(),
-                serde_json::to_value(forecast.method).map_err(to_error)?,
+                serde_json::to_value(&forecast.method).map_err(to_error)?,
             );
             fields.insert(
                 "forecast_monthly_consumption".to_string(),

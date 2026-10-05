@@ -1,6 +1,6 @@
 import { For, Match, Show, Switch, type JSX } from 'solid-js';
-import { t } from '../../intl';
-import { formatNumber } from '../../intl/formatNumber';
+import { measureWord, t } from '../../intl';
+import { formatNumber, roundTo } from '../../intl/formatNumber';
 import {
   Accordion,
   AccordionItem,
@@ -18,6 +18,7 @@ import {
   populationSteps,
   principalItemLabel,
   unavailableReasonMessage,
+  type AncillaryRatioPrincipal,
   type ForecastMethod,
   type ForecastMethodOption,
 } from './forecast';
@@ -37,15 +38,26 @@ export interface ForecastBlockProps {
   /**
    * A stock quantity (units) in the editor's active entry mode, with its
    * measure word — so monthly demand and target stock re-express like the
-   * panels' figures (AC-LN19). `roundUp` as for AMC.
+   * panels' figures (AC-LN19). Rounded to up to `fractionDigits` places:
+   * the block's figures keep two, so monthly demand × target months visibly
+   * makes target stock.
    */
-  formatQuantity: (units: number, roundUp?: boolean) => string;
+  formatQuantity: (units: number, fractionDigits: number) => string;
   /**
    * The method select's options. Omitted → the read-only form: the method as
    * text, no select.
    */
   options?: readonly ForecastMethodOption[];
-  /** Picking a method saves it (rules › choosing a method). */
+  /**
+   * The method the line has, before any draft change — it stays selectable
+   * even once unavailable, so a draft can move away from it and back.
+   * Defaults to the shown line's method.
+   */
+  ownMethod?: ForecastMethod;
+  /**
+   * Picking a method makes it the draft's; it is saved with the draft
+   * (rules › choosing a method).
+   */
   onMethodChange?: (method: ForecastMethod) => void;
   /** The select disabled — a read-only order, or a change in flight. */
   disabled?: boolean;
@@ -90,9 +102,14 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
     FORECAST_METHODS.map(method => {
       const option = props.options?.find(o => o.method === method);
       // The line's own method stays selectable even once unavailable: a line
-      // keeps the method it has (rules › captured at line creation).
+      // keeps the method it has (rules › captured at line creation) — the
+      // stored one, not the draft's, so previewing away from it doesn't lock
+      // the draft out of returning to it.
+      const ownMethod = props.ownMethod ?? props.line.forecastMethod;
       const unavailable =
-        method !== props.line.forecastMethod && option?.isAvailable === false;
+        method !== ownMethod &&
+        method !== props.line.forecastMethod &&
+        option?.isAvailable === false;
       return {
         value: method,
         label: forecastMethodLabel(method),
@@ -104,8 +121,22 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
       };
     });
 
-  const monthlyDemand = () =>
-    props.formatQuantity(props.line.forecastMonthlyConsumption, true);
+  // Monthly demand and target stock to the same two places, so the caption's
+  // arithmetic reads true (a whole-number demand rounded up would not).
+  const FRACTION_DIGITS = 2;
+  const quantity = (units: number) =>
+    props.formatQuantity(units, FRACTION_DIGITS);
+  const monthlyDemand = () => quantity(props.line.forecastMonthlyConsumption);
+
+  // A principal's own monthly demand, in its own units: the entry mode's packs
+  // and doses are the ancillary item's, not the principal's.
+  const principalDemand = (principal: AncillaryRatioPrincipal) => {
+    const figure = roundTo(
+      principal.principalMonthlyConsumption,
+      FRACTION_DIGITS
+    );
+    return `${formatNumber(figure)} ${measureWord('units', principal.item?.unitName ?? null, figure)}`;
+  };
 
   return (
     <FormSection
@@ -206,8 +237,8 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
               {principal => (
                 <FigureRow
                   label={principalItemLabel(principal)}
-                  value={props.formatQuantity(principal.monthlyConsumption)}
-                  caption={`${props.formatQuantity(principal.principalMonthlyConsumption)} × ${ancillaryRatio(principal)}`}
+                  value={quantity(principal.monthlyConsumption)}
+                  caption={`${principalDemand(principal)} × ${ancillaryRatio(principal)}`}
                   testId="forecast-principal"
                 />
               )}
@@ -224,7 +255,7 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
       {/* The step into stock, the same for every method. */}
       <FigureRow
         label={t('label.target-stock')}
-        value={props.formatQuantity(props.line.targetStock)}
+        value={quantity(props.line.targetStock)}
         caption={`${monthlyDemand()} × ${formatNumber(props.targetMonths)} ${t('label.months')}`}
         testId="forecast-target-stock"
       />

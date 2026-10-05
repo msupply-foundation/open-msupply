@@ -123,6 +123,9 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
                 forecast_total_doses: None,
                 forecast_total_units: None,
                 vaccine_courses: None,
+                forecast_method: Some(ForecastMethod::Amc),
+                forecast_monthly_consumption: Some(3.0 * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30),
+                forecast_data: None,
             }),
         }),
     }
@@ -255,6 +258,9 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
                 forecast_total_doses: None,
                 forecast_total_units: None,
                 vaccine_courses: None,
+                forecast_method: Some(ForecastMethod::Amc),
+                forecast_monthly_consumption: Some(3.0 * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30),
+                forecast_data: None,
             }),
         }),
     }

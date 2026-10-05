@@ -1,6 +1,9 @@
 import { t } from '../../intl';
 import { formatNumber, round } from '../../intl/formatNumber';
-import type { ForecastLineFragment } from './forecast.generated';
+import type {
+  ForecastLineFragment,
+  ForecastMethodOptionFragment,
+} from './forecast.generated';
 
 // The shared forecast module (kdd/domain-modules): a requisition line's stored
 // forecast — its method, monthly demand, and breakdown — and the arithmetic the
@@ -21,22 +24,16 @@ export type AncillaryRatioPrincipal = Extract<
   { __typename: 'AncillaryRatioForecastNode' }
 >['principals'][number];
 
+/** One entry of a line's forecastMethodOptions. */
+export type ForecastMethodOption = ForecastMethodOptionFragment;
+
 /**
  * Why a method can't be chosen — the schema's
  * ForecastMethodUnavailableReasonNode.
  */
-export type ForecastMethodUnavailableReason =
-  | 'POPULATION_PREFERENCE_OFF'
-  | 'NO_POPULATION_SERVED'
-  | 'NO_VACCINE_COURSE'
-  | 'NO_PRINCIPAL_ON_ORDER';
-
-/** One entry of a line's forecastMethodOptions. */
-export type ForecastMethodOption = {
-  method: ForecastMethod;
-  isAvailable: boolean;
-  unavailableReason: ForecastMethodUnavailableReason | null;
-};
+export type ForecastMethodUnavailableReason = NonNullable<
+  ForecastMethodOption['unavailableReason']
+>;
 
 /** The methods in the order the select offers them. */
 export const FORECAST_METHODS: readonly ForecastMethod[] = [

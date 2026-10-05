@@ -3,8 +3,8 @@ use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::{loader::ItemLoader, ContextExt};
 use repository::{
-    AncillaryRatioForecast, AncillaryRatioPrincipal, ForecastData, PopulationForecast,
-    PopulationForecastCourse,
+    AncillaryRatioForecast, AncillaryRatioPrincipal, ForecastData, ForecastMethod,
+    PopulationForecast, PopulationForecastCourse,
 };
 use service::{
     requisition::request_requisition::{ForecastMethodOption, ForecastMethodUnavailableReason},
@@ -13,7 +13,6 @@ use service::{
 
 /// Where a requisition line's monthly demand comes from.
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-#[graphql(remote = "repository::ForecastMethod")]
 pub enum ForecastMethodNode {
     /// The line's average monthly consumption
     Amc,
@@ -21,6 +20,28 @@ pub enum ForecastMethodNode {
     Population,
     /// The order's principal lines' monthly demand × the configured ancillary ratios
     AncillaryRatio,
+}
+
+impl From<&ForecastMethod> for ForecastMethodNode {
+    fn from(method: &ForecastMethod) -> Self {
+        match method {
+            ForecastMethod::Amc => ForecastMethodNode::Amc,
+            ForecastMethod::Population => ForecastMethodNode::Population,
+            ForecastMethod::AncillaryRatio => ForecastMethodNode::AncillaryRatio,
+            // A newer site's method, which this version forecasts as AMC
+            ForecastMethod::Other(_) => ForecastMethodNode::Amc,
+        }
+    }
+}
+
+impl From<ForecastMethodNode> for ForecastMethod {
+    fn from(method: ForecastMethodNode) -> Self {
+        match method {
+            ForecastMethodNode::Amc => ForecastMethod::Amc,
+            ForecastMethodNode::Population => ForecastMethod::Population,
+            ForecastMethodNode::AncillaryRatio => ForecastMethod::AncillaryRatio,
+        }
+    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -52,7 +73,7 @@ impl ForecastMethodOptionNode {
         }: ForecastMethodOption,
     ) -> Self {
         ForecastMethodOptionNode {
-            method: method.into(),
+            method: (&method).into(),
             is_available: unavailable_reason.is_none(),
             unavailable_reason: unavailable_reason.map(ForecastMethodUnavailableReason::into),
         }
@@ -85,7 +106,7 @@ pub struct RequisitionLineForecastPreviewNode {
 #[Object]
 impl RequisitionLineForecastPreviewNode {
     pub async fn forecast_method(&self) -> ForecastMethodNode {
-        self.preview.line.forecast_method.into()
+        (&self.preview.line.forecast_method).into()
     }
 
     pub async fn forecast_monthly_consumption(&self) -> f64 {
@@ -93,13 +114,10 @@ impl RequisitionLineForecastPreviewNode {
     }
 
     pub async fn forecast_breakdown(&self) -> ForecastBreakdownNode {
+        let line = &self.preview.line;
         ForecastBreakdownNode::from_domain(
-            self.preview
-                .line
-                .forecast_data
-                .as_deref()
-                .and_then(ForecastData::from_json),
-            self.preview.line.forecast_monthly_consumption,
+            ForecastData::for_method(&line.forecast_method, line.forecast_data.as_deref()),
+            line.forecast_monthly_consumption,
         )
     }
 

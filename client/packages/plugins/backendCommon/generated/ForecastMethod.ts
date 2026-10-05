@@ -3,4 +3,4 @@
 /**
  * Where a requisition line's monthly demand comes from.
  */
-export type ForecastMethod = 'amc' | 'population' | 'ancillary_ratio';
+export type ForecastMethod = 'Amc' | 'Population' | 'AncillaryRatio' | string;

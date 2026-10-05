@@ -119,8 +119,8 @@ fn validate(
 
     // A method change computes the line's new forecast; choosing its current method changes
     // nothing, so a line keeps a method that has since become unavailable
-    let new_forecast = match input.forecast_method {
-        Some(method) if method != requisition_line_row.forecast_method => {
+    let new_forecast = match &input.forecast_method {
+        Some(method) if *method != requisition_line_row.forecast_method => {
             let order_lines: Vec<RequisitionLineRow> = RequisitionLineRepository::new(connection)
                 .query_by_filter(
                     RequisitionLineFilter::new()
@@ -137,7 +137,7 @@ fn validate(
                 return Err(OutError::ForecastMethodNotAvailable(reason));
             }
             Some(inputs.forecast(
-                method,
+                method.clone(),
                 item_id,
                 requisition_line_row.average_monthly_consumption,
                 &order,

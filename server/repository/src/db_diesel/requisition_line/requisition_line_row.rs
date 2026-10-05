@@ -55,9 +55,10 @@ define_linked_tables! {
 }
 
 diesel_string_enum! {
-    #[derive(Clone, Copy, Eq, Hash, TS, strum::EnumIter)]
+    db_case = snake_case;
+    // No `ts(rename_all)`: plugins see the serde (wire) form, the variant name
+    #[derive(Clone, Eq, Hash, TS)]
     #[strum(serialize_all = "snake_case")]
-    #[ts(rename_all = "snake_case")]
     /// Where a requisition line's monthly demand comes from.
     pub enum ForecastMethod {
         /// The line's average monthly consumption
@@ -67,7 +68,21 @@ diesel_string_enum! {
         Population,
         /// The order's principal lines' monthly demand × the configured ancillary ratios
         AncillaryRatio,
+        /// A method from a newer site (e.g. a plugin's) this version doesn't know. Kept
+        /// as-is so the line still syncs; its forecast is left alone.
+        #[strum(default, transparent)]
+        #[ts(untagged)]
+        Other(String),
     }
+}
+
+impl ForecastMethod {
+    /// The methods this version can forecast with.
+    pub const KNOWN: [ForecastMethod; 3] = [
+        ForecastMethod::Amc,
+        ForecastMethod::Population,
+        ForecastMethod::AncillaryRatio,
+    ];
 }
 
 joinable!(requisition_line -> item (item_id));

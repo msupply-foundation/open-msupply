@@ -11,7 +11,7 @@ import {
 import { graphqlFetch } from '../../../../api/graphql';
 import { gated } from '../../../../api/gated';
 import { measureWord, t, tPlural } from '../../../../intl';
-import { formatNumber } from '../../../../intl/formatNumber';
+import { formatNumber, roundTo } from '../../../../intl/formatNumber';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -320,6 +320,16 @@ const LineEditContent = (
   // inflected for the figure it suffixes ("1 pack" / "61 packs").
   const stat = (units: number, roundUp = false): string => {
     const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
+    return `${formatNumber(figure)} ${measureWord(entryMode(), current()?.unitName ?? null, figure)}`;
+  };
+
+  // A forecast figure (units) in the active mode, to up to `fractionDigits`
+  // places — the forecast block keeps its arithmetic's fractions.
+  const forecastQuantity = (units: number, fractionDigits: number): string => {
+    const figure = roundTo(
+      unitsToMode(units, entryMode(), packSize(), doses()),
+      fractionDigits
+    );
     return `${formatNumber(figure)} ${measureWord(entryMode(), current()?.unitName ?? null, figure)}`;
   };
 
@@ -797,8 +807,9 @@ const LineEditContent = (
             <ForecastBlock
               line={editorLine().forecast}
               targetMonths={props.maxMonths}
-              formatQuantity={stat}
+              formatQuantity={forecastQuantity}
               options={editorLine().forecastMethodOptions}
+              ownMethod={editorLine().ownForecastMethod}
               disabled={disabled() || saving() || previewingMethod()}
               onMethodChange={method => void onMethodChange(method)}
               testId="line-forecast"
@@ -821,6 +832,7 @@ const LineEditContent = (
                   suggestedQuantity={editorLine().suggestedQuantity}
                   thresholdMonths={props.minMonths}
                   targetMonths={props.maxMonths}
+                  zeroMonthlyMessage={t('error.monthly-demand-is-zero')}
                 />
               </div>
               <Show when={hasSeries() && chartData()}>

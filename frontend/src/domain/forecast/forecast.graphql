@@ -37,6 +37,7 @@ fragment ForecastLine on RequisitionLineNode {
         item {
           code
           name
+          unitName
         }
         principalMonthlyConsumption
         itemQuantity
@@ -45,4 +46,12 @@ fragment ForecastLine on RequisitionLineNode {
       }
     }
   }
+}
+
+# One entry of a line's forecastMethodOptions — the editor's method select. Like
+# ForecastLine, each vertical repeats the selection; ForecastBlock takes this type.
+fragment ForecastMethodOption on ForecastMethodOptionNode {
+  method
+  isAvailable
+  unavailableReason
 }

@@ -305,7 +305,7 @@ async fn forecast_principal_arrives() {
 /// The forecast fields a preview and a save must agree on
 fn forecast_of(line: &RequisitionLineRow) -> (ForecastMethod, f64, Option<String>, f64) {
     (
-        line.forecast_method,
+        line.forecast_method.clone(),
         line.forecast_monthly_consumption,
         line.forecast_data.clone(),
         line.suggested_quantity,

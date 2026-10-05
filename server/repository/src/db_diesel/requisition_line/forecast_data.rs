@@ -73,7 +73,30 @@ impl ForecastData {
     }
 
     pub fn from_json(json: &str) -> Option<Self> {
-        serde_json::from_str(json).ok()
+        serde_json::from_str(json)
+            .inspect_err(|e| log::warn!("Unreadable forecast_data ({e}): {json}"))
+            .ok()
+    }
+
+    /// The breakdown stored for a line with `method`: None for an AMC (or unknown) line,
+    /// or when the stored breakdown is missing or belongs to another method.
+    pub fn for_method(method: &ForecastMethod, json: Option<&str>) -> Option<Self> {
+        let data = match method {
+            ForecastMethod::Population | ForecastMethod::AncillaryRatio => {
+                json.and_then(Self::from_json)
+            }
+            ForecastMethod::Amc | ForecastMethod::Other(_) => return None,
+        };
+        match (method, data) {
+            (ForecastMethod::Population, Some(data @ ForecastData::Population(_)))
+            | (ForecastMethod::AncillaryRatio, Some(data @ ForecastData::AncillaryRatio(_))) => {
+                Some(data)
+            }
+            (method, _) => {
+                log::warn!("A {method} line has no {method} forecast_data: {json:?}");
+                None
+            }
+        }
     }
 }
 
@@ -138,7 +161,14 @@ pub fn forecast_from_legacy(
     let courses: Vec<LegacyCourse> = legacy
         .vaccine_courses
         .as_deref()
-        .and_then(|json| serde_json::from_str(json).ok())
+        .filter(|json| !json.is_empty())
+        .and_then(|json| {
+            serde_json::from_str(json)
+                .inspect_err(|e| {
+                    log::warn!("Unreadable vaccine_courses ({e}), read as an AMC line: {json}")
+                })
+                .ok()
+        })
         .unwrap_or_default();
 
     if courses.is_empty() {
@@ -184,16 +214,19 @@ pub fn forecast_from_legacy(
 }
 
 /// Current → legacy. Only a Population line has a legacy form; its supply period is the
-/// requisition's target months, with no buffer.
+/// requisition's target months, with no buffer. With no target months there is no supply
+/// period to spread the forecast over, so it has none.
 pub fn forecast_to_legacy(
     method: &ForecastMethod,
     forecast_data: Option<&str>,
     target_months: f64,
 ) -> LegacyForecast {
-    let Some(ForecastData::Population(population)) = (match method {
-        ForecastMethod::Population => forecast_data.and_then(ForecastData::from_json),
-        _ => None,
-    }) else {
+    if target_months <= 0.0 {
+        return LegacyForecast::default();
+    }
+    let Some(ForecastData::Population(population)) =
+        ForecastData::for_method(method, forecast_data)
+    else {
         return LegacyForecast::default();
     };
 

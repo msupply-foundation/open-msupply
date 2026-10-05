@@ -84,6 +84,7 @@ fragment RequisitionDetailLine on RequisitionLineNode {
         item {
           code
           name
+          unitName
         }
         principalMonthlyConsumption
         itemQuantity

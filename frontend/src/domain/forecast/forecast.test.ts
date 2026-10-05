@@ -65,7 +65,7 @@ describe('courseTitle', () => {
 describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () => {
   const principal: AncillaryRatioPrincipal = {
     itemId: 'vaccine',
-    item: { code: 'VAC1', name: 'Vaccine' },
+    item: { code: 'VAC1', name: 'Vaccine', unitName: 'Vial' },
     principalMonthlyConsumption: 100,
     itemQuantity: 100,
     ancillaryQuantity: 1,

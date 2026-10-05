@@ -117,7 +117,18 @@ impl CoveringCourses {
 
 fn course_forecast(group: &CourseGroup, population_served: f64) -> PopulationForecastCourse {
     let target_population = population_served * (group.population_percentage / 100.0);
-    let loss_factor = 1.0 / (1.0 - group.wastage_rate / 100.0);
+    // Nothing validates a configured wastage rate; outside [0, 100) it has no meaningful
+    // loss factor (100% divides by zero, above it turns demand negative), so it's ignored
+    let loss_factor = if (0.0..100.0).contains(&group.wastage_rate) {
+        1.0 / (1.0 - group.wastage_rate / 100.0)
+    } else {
+        log::warn!(
+            "Ignoring wastage rate {}% on course {}",
+            group.wastage_rate,
+            group.course_name
+        );
+        1.0
+    };
     let number_of_doses = group.dose_labels.len() as i32;
     let annual_target_doses =
         target_population * number_of_doses as f64 * (group.coverage_rate / 100.0) * loss_factor;
@@ -212,5 +223,25 @@ mod tests {
         let courses =
             CoveringCourses::load(&connection, "store_a", &["item_a".to_string()]).unwrap();
         assert!(!courses.covers("item_a"));
+    }
+
+    #[test]
+    fn wastage_outside_0_to_100_is_ignored() {
+        let group = |wastage_rate: f64| CourseGroup {
+            course_name: "Course".to_string(),
+            demographic_name: None,
+            coverage_rate: 100.0,
+            wastage_rate,
+            population_percentage: 100.0,
+            vaccine_doses: 1,
+            dose_labels: HashSet::from(["Dose 1".to_string()]),
+        };
+
+        assert_eq!(course_forecast(&group(50.0), 1200.0).loss_factor, 2.0);
+        for wastage_rate in [100.0, 150.0, -10.0] {
+            let course = course_forecast(&group(wastage_rate), 1200.0);
+            assert_eq!(course.loss_factor, 1.0);
+            assert_eq!(course.monthly_units, 100.0);
+        }
     }
 }

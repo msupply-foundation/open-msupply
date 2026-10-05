@@ -112,7 +112,7 @@ pub fn get_requisition_line_forecast_preview(
     if let Some(method) = input.forecast_method {
         // Choosing the line's own method changes nothing, as for a method change
         if method != line.forecast_method {
-            if let Some(reason) = inputs.unavailable_reason(method, &input.item_id, &order) {
+            if let Some(reason) = inputs.unavailable_reason(&method, &input.item_id, &order) {
                 return Err(OutError::ForecastMethodNotAvailable(reason));
             }
             let forecast = inputs.forecast(

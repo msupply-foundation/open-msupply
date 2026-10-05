@@ -60,6 +60,12 @@ export type EditorLine = {
    * the save sends.
    */
   forecast: ForecastLineFragment;
+  /**
+   * The line's own method, before any draft change: the stored line's, or the
+   * one a new item's insert would give it. It stays selectable even when no
+   * longer available (rules › choosing a method).
+   */
+  ownForecastMethod: ForecastMethod;
   forecastMethodOptions: ForecastMethodOption[];
   pricePerUnit: number | null;
   // Extended movements (edit mode on a customer-statistics program order).
@@ -274,6 +280,7 @@ export const buildAddPreview = async (
       reasonId: null,
       reason: null,
       isNew: true,
+      ownForecastMethod: forecast.preview.forecastMethod,
     },
     forecast.preview
   );
@@ -302,6 +309,7 @@ export const editorLineFromLine = (
   suggestedQuantity: line.suggestedQuantity,
   monthlyDemand: line.forecastMonthlyConsumption,
   forecast: line,
+  ownForecastMethod: line.forecastMethod,
   forecastMethodOptions: line.forecastMethodOptions,
   pricePerUnit: line.pricePerUnit,
   initialStockOnHandUnits: line.initialStockOnHandUnits,

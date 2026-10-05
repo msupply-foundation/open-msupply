@@ -16,9 +16,8 @@
 # statistics, forecast and suggestion from the forecast preview below — the line
 # the insert would create, so the first save reproduces it.
 
-# One item's current figures for the add-mode statistics preview. `stats`
-# triggers the AMC calculation — acceptable for a single picked item (contrast
-# item.graphql's search, which sums availableBatches to avoid it).
+# One item's details for the add-mode draft. Its statistics come from the
+# forecast preview below (the line the insert would create), not from here.
 query internalOrderItemStats($storeId: String!, $itemId: String!) {
   items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
     ... on ItemConnector {
@@ -31,11 +30,6 @@ query internalOrderItemStats($storeId: String!, $itemId: String!) {
         defaultPackSize
         doses
         isVaccine
-        stats(storeId: $storeId) {
-          averageMonthlyConsumption
-          availableStockOnHand
-          availableMonthsOfStockOnHand
-        }
       }
     }
   }
@@ -177,6 +171,7 @@ query internalOrderLineForecastPreview(
             item {
               code
               name
+              unitName
             }
             principalMonthlyConsumption
             itemQuantity

@@ -108,6 +108,12 @@ export const TargetQuantityBreakdown = (props: {
   thresholdMonths: number;
   /** Target months (max). */
   targetMonths: number;
+  /**
+   * The cannot-calculate reason when the monthly figure is zero. Defaults to
+   * the AMC wording; a caller charting another monthly demand (a forecast
+   * method's) passes its own.
+   */
+  zeroMonthlyMessage?: string;
 }) => {
   const amc = () => props.averageMonthlyConsumption;
   const soh = () => props.availableStockOnHand;
@@ -176,7 +182,7 @@ export const TargetQuantityBreakdown = (props: {
         <p class={styles.calcError} role="status">
           {t('error.unable-to-calculate')}:{' '}
           {amc() <= 0
-            ? t('error.amc-is-zero')
+            ? (props.zeroMonthlyMessage ?? t('error.amc-is-zero'))
             : t('error.soh-and-suggested-quantity-are-zero')}
         </p>
       }

@@ -34,6 +34,7 @@ export type ForecastLineFragment = {
   item: {
   code: string;
   name: string;
+  unitName: string | null;
 } | null;
   principalMonthlyConsumption: number;
   itemQuantity: number;
@@ -41,4 +42,10 @@ export type ForecastLineFragment = {
   monthlyConsumption: number;
 }>;
 });
+};
+
+export type ForecastMethodOptionFragment = {
+  method: "AMC" | "POPULATION" | "ANCILLARY_RATIO";
+  isAvailable: boolean;
+  unavailableReason: "POPULATION_PREFERENCE_OFF" | "NO_POPULATION_SERVED" | "NO_VACCINE_COURSE" | "NO_PRINCIPAL_ON_ORDER" | null;
 };

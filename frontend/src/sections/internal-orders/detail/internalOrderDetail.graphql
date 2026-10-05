@@ -70,6 +70,7 @@ fragment InternalOrderLine on RequisitionLineNode {
         item {
           code
           name
+          unitName
         }
         principalMonthlyConsumption
         itemQuantity

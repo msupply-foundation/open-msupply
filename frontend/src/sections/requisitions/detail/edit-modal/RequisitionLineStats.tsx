@@ -1,11 +1,12 @@
 import { For, Show, type Component, type JSX } from 'solid-js';
 import { measureWord, t } from '@/intl';
-import { formatNumber, round } from '@/intl/formatNumber';
+import { formatNumber, round, roundTo } from '@/intl/formatNumber';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import { InfoIcon } from '@/ui/icons';
 import { ForecastBlock, type ForecastLineFragment } from '@/domain/forecast';
 import {
   figureInMode,
+  unitsToMode,
   type EntryMode,
   type LineStats,
 } from './requisitionLineEdit';
@@ -382,9 +383,13 @@ export const RequisitionLineStats: Component<{
                   targetMonths={
                     props.stats?.requestStoreStats.maxMonthsOfStock ?? 0
                   }
-                  formatQuantity={units =>
-                    `${formatNumber(q(units))} ${measureWord(props.entryMode, props.unitName, q(units))}`
-                  }
+                  formatQuantity={(units, fractionDigits) => {
+                    const figure = roundTo(
+                      unitsToMode(units, props.entryMode, props.packSize),
+                      fractionDigits
+                    );
+                    return `${formatNumber(figure)} ${measureWord(props.entryMode, props.unitName, figure)}`;
+                  }}
                   testId="customer-forecast"
                 />
               )}

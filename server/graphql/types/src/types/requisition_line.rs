@@ -375,7 +375,7 @@ impl RequisitionLineNode {
 
     /// Where the line's monthly demand comes from
     pub async fn forecast_method(&self) -> ForecastMethodNode {
-        self.row().forecast_method.into()
+        (&self.row().forecast_method).into()
     }
 
     /// The line's monthly demand in units: what its suggested quantity, months of stock and
@@ -386,12 +386,10 @@ impl RequisitionLineNode {
 
     /// The inputs and steps behind the line's monthly demand
     pub async fn forecast_breakdown(&self) -> ForecastBreakdownNode {
+        let row = self.row();
         ForecastBreakdownNode::from_domain(
-            self.row()
-                .forecast_data
-                .as_deref()
-                .and_then(ForecastData::from_json),
-            self.row().forecast_monthly_consumption,
+            ForecastData::for_method(&row.forecast_method, row.forecast_data.as_deref()),
+            row.forecast_monthly_consumption,
         )
     }
 

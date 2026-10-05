@@ -27,7 +27,6 @@ use repository::{
 };
 use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
-use strum::IntoEnumIterator;
 
 /// Why a method can't be chosen for a line.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -117,13 +116,14 @@ impl ForecastInputs {
 
     pub fn unavailable_reason(
         &self,
-        method: ForecastMethod,
+        method: &ForecastMethod,
         item_id: &str,
         order: &OrderDemand,
     ) -> Option<ForecastMethodUnavailableReason> {
         use ForecastMethodUnavailableReason as Reason;
         match method {
-            ForecastMethod::Amc => None,
+            // An unknown method can't be chosen (it isn't offered); it forecasts as AMC
+            ForecastMethod::Amc | ForecastMethod::Other(_) => None,
             ForecastMethod::Population if !self.population_preference => {
                 Some(Reason::PopulationPreferenceOff)
             }
@@ -144,9 +144,10 @@ impl ForecastInputs {
 
     /// Every method, an unavailable one with its reason.
     pub fn options(&self, item_id: &str, order: &OrderDemand) -> Vec<ForecastMethodOption> {
-        ForecastMethod::iter()
+        ForecastMethod::KNOWN
+            .iter()
             .map(|method| ForecastMethodOption {
-                method,
+                method: method.clone(),
                 unavailable_reason: self.unavailable_reason(method, item_id, order),
             })
             .collect()
@@ -161,7 +162,9 @@ impl ForecastInputs {
         order: &OrderDemand,
     ) -> LineForecast {
         match method {
-            ForecastMethod::Amc => LineForecast::amc(average_monthly_consumption),
+            ForecastMethod::Amc | ForecastMethod::Other(_) => {
+                LineForecast::amc(average_monthly_consumption)
+            }
             ForecastMethod::Population => {
                 let forecast = self
                     .courses
@@ -203,8 +206,8 @@ impl ForecastInputs {
     pub fn default_method(&self, item_id: &str, order: &OrderDemand) -> ForecastMethod {
         [ForecastMethod::AncillaryRatio, ForecastMethod::Population]
             .iter()
-            .copied()
-            .find(|method| self.unavailable_reason(*method, item_id, order).is_none())
+            .find(|method| self.unavailable_reason(method, item_id, order).is_none())
+            .cloned()
             .unwrap_or(ForecastMethod::Amc)
     }
 
