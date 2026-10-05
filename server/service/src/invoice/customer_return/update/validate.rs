@@ -35,12 +35,11 @@ pub fn validate(
         return Err(NotACustomerReturn);
     }
 
-    if let Some(properties) = &patch.custom_fields {
-        if let Some(problem) =
+    if let Some(properties) = &patch.custom_fields
+        && let Some(problem) =
             check_invoice_custom_fields_patch(connection, &return_row.r#type, properties)?
-        {
-            return Err(problem.into());
-        }
+    {
+        return Err(problem.into());
     }
 
     // Status check

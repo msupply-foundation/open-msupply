@@ -229,10 +229,9 @@ fn validate(
         .contact
         .as_ref()
         .and_then(|c| c.id.as_ref())
+        && !validate_patient_exists(ctx, patient_id)?
     {
-        if !validate_patient_exists(ctx, patient_id)? {
-            return Err(UpsertContactTraceError::InvalidContactPatientId);
-        }
+        return Err(UpsertContactTraceError::InvalidContactPatientId);
     }
 
     Ok(ValidationResult {

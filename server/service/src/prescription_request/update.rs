@@ -108,31 +108,31 @@ pub fn update_prescription_request(
                     CommonPrescriptionRequestError::DatabaseError(e) => DatabaseError(e),
                 })?;
 
-            if let Some(patient_id) = &input.patient_id {
-                if check_patient_exists(connection, patient_id)?.is_none() {
-                    return Err(PatientDoesNotExist);
-                }
+            if let Some(patient_id) = &input.patient_id
+                && check_patient_exists(connection, patient_id)?.is_none()
+            {
+                return Err(PatientDoesNotExist);
             }
             // Only a patch that names one gets checked; clearing it (a
             // NullableUpdate holding None) has nothing to look up.
-            if let Some(clinician_id) = input.clinician_id.as_ref().and_then(|u| u.value.as_ref()) {
-                if !check_clinician_exists(connection, clinician_id)? {
-                    return Err(ClinicianDoesNotExist);
-                }
+            if let Some(clinician_id) = input.clinician_id.as_ref().and_then(|u| u.value.as_ref())
+                && !check_clinician_exists(connection, clinician_id)?
+            {
+                return Err(ClinicianDoesNotExist);
             }
-            if let Some(diagnosis_id) = input.diagnosis_id.as_ref().and_then(|u| u.value.as_ref()) {
-                if !check_diagnosis_exists(connection, diagnosis_id)? {
-                    return Err(DiagnosisDoesNotExist);
-                }
+            if let Some(diagnosis_id) = input.diagnosis_id.as_ref().and_then(|u| u.value.as_ref())
+                && !check_diagnosis_exists(connection, diagnosis_id)?
+            {
+                return Err(DiagnosisDoesNotExist);
             }
-            if let Some(patch) = &input.custom_fields {
-                if let Some(problem) = check_custom_fields_patch(
+            if let Some(patch) = &input.custom_fields
+                && let Some(problem) = check_custom_fields_patch(
                     connection,
                     PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE,
                     patch,
-                )? {
-                    return Err(problem.into());
-                }
+                )?
+            {
+                return Err(problem.into());
             }
 
             let UpdatePrescriptionRequest {

@@ -91,23 +91,20 @@ pub fn insert_vaccination(
 
             // If can_skip_dose is enabled and we're not already doing backfill,
             // create "Not given" vaccinations for any missing previous doses
-            if !input.create_not_given_records_for_skipped_doses {
-                if let Ok(vaccine_course_dose) =
+            if !input.create_not_given_records_for_skipped_doses
+                && let Ok(vaccine_course_dose) =
                     check_vaccine_course_dose_exists(&input.vaccine_course_dose_id, connection)
-                {
-                    if let Some(vaccine_course_dose) = vaccine_course_dose {
-                        if vaccine_course_dose.vaccine_course_row.can_skip_dose {
-                            create_missing_not_given_vaccinations(
-                                ctx,
-                                store_id,
-                                &vaccine_course_dose.vaccine_course_row.id,
-                                &input.vaccine_course_dose_id,
-                                &program_enrolment,
-                                &input,
-                            )?;
-                        }
-                    }
-                }
+                && let Some(vaccine_course_dose) = vaccine_course_dose
+                && vaccine_course_dose.vaccine_course_row.can_skip_dose
+            {
+                create_missing_not_given_vaccinations(
+                    ctx,
+                    store_id,
+                    &vaccine_course_dose.vaccine_course_row.id,
+                    &input.vaccine_course_dose_id,
+                    &program_enrolment,
+                    &input,
+                )?;
             }
 
             // If it was `Given`, create a prescription

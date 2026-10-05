@@ -74,12 +74,12 @@ impl MigrationFragment for Migrate {
                     .first::<Option<String>>(connection.lock().connection())
                     .optional()?;
 
-                if let Some(existing_donor_id) = current_link_donor_id {
-                    if existing_donor_id.is_none() {
-                        diesel::update(stock_line::table.filter(stock_line::id.eq(&stock_line_id)))
-                            .set(stock_line::donor_link_id.eq(sync_donor_id))
-                            .execute(connection.lock().connection())?;
-                    }
+                if let Some(existing_donor_id) = current_link_donor_id
+                    && existing_donor_id.is_none()
+                {
+                    diesel::update(stock_line::table.filter(stock_line::id.eq(&stock_line_id)))
+                        .set(stock_line::donor_link_id.eq(sync_donor_id))
+                        .execute(connection.lock().connection())?;
                 }
             }
         }
@@ -117,14 +117,14 @@ impl MigrationFragment for Migrate {
                     .first::<Option<String>>(connection.lock().connection())
                     .optional()?;
 
-                if let Some(existing_donor_id) = current_link_donor_id {
-                    if existing_donor_id.is_none() {
-                        diesel::update(
-                            invoice_line::table.filter(invoice_line::id.eq(&invoice_line_id)),
-                        )
-                        .set(invoice_line::donor_link_id.eq(sync_donor_id))
-                        .execute(connection.lock().connection())?;
-                    }
+                if let Some(existing_donor_id) = current_link_donor_id
+                    && existing_donor_id.is_none()
+                {
+                    diesel::update(
+                        invoice_line::table.filter(invoice_line::id.eq(&invoice_line_id)),
+                    )
+                    .set(invoice_line::donor_link_id.eq(sync_donor_id))
+                    .execute(connection.lock().connection())?;
                 }
             }
         }

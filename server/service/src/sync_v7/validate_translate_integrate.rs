@@ -416,26 +416,25 @@ fn validate_translate_integrate_inner<'a>(
 
             total -= 1;
 
-            if let Some(logger) = logger.as_mut() {
-                if total / PROGRESS_INTERVAL <= last_progress {
-                    logger.progress(total)?;
-                    last_progress -= 1;
-                }
+            if let Some(logger) = logger.as_mut()
+                && total / PROGRESS_INTERVAL <= last_progress
+            {
+                logger.progress(total)?;
+                last_progress -= 1;
             }
         }
 
         // Refresh active stores after any Store batch (upsert or delete)
         // so downstream Remote records validate against fresh state.
         // Central path doesn't need refresh — Store rows are Central records
-        if had_store_records {
-            if let SyncContext::Remote {
+        if had_store_records
+            && let SyncContext::Remote {
                 is_initialising: _,
                 is_multi_device: _,
                 active_stores,
             } = &mut sync_context
-            {
-                *active_stores = ActiveStoresOnSite::get(connection).unwrap();
-            }
+        {
+            *active_stores = ActiveStoresOnSite::get(connection).unwrap();
         }
 
         Ok(())

@@ -314,27 +314,27 @@ fn log_stock_changes(
             new.batch,
         )?;
     }
-    if let Some(cost_price_per_pack) = new.cost_price_per_pack {
-        if existing.cost_price_per_pack != cost_price_per_pack {
-            activity_log_entry(
-                ctx,
-                ActivityLogType::StockCostPriceChange,
-                Some(existing.id.to_string()),
-                Some(existing.cost_price_per_pack.to_string()),
-                Some(cost_price_per_pack.to_string()),
-            )?;
-        }
+    if let Some(cost_price_per_pack) = new.cost_price_per_pack
+        && existing.cost_price_per_pack != cost_price_per_pack
+    {
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockCostPriceChange,
+            Some(existing.id.to_string()),
+            Some(existing.cost_price_per_pack.to_string()),
+            Some(cost_price_per_pack.to_string()),
+        )?;
     }
-    if let Some(sell_price_per_pack) = new.sell_price_per_pack {
-        if existing.sell_price_per_pack != sell_price_per_pack {
-            activity_log_entry(
-                ctx,
-                ActivityLogType::StockSellPriceChange,
-                Some(existing.id.to_string()),
-                Some(existing.sell_price_per_pack.to_string()),
-                Some(sell_price_per_pack.to_string()),
-            )?;
-        }
+    if let Some(sell_price_per_pack) = new.sell_price_per_pack
+        && existing.sell_price_per_pack != sell_price_per_pack
+    {
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockSellPriceChange,
+            Some(existing.id.to_string()),
+            Some(existing.sell_price_per_pack.to_string()),
+            Some(sell_price_per_pack.to_string()),
+        )?;
     }
     if existing.expiry_date != new.expiry_date {
         let previous_expiry_date = if let Some(expiry_date) = existing.expiry_date {

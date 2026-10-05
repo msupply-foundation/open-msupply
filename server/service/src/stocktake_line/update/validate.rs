@@ -50,10 +50,9 @@ pub fn validate(
     if let Some(NullableUpdate {
         value: Some(manufacture_date),
     }) = &input.manufacture_date
+        && !check_date_is_not_in_future(manufacture_date)
     {
-        if !check_date_is_not_in_future(manufacture_date) {
-            return Err(CannotSetManufactureDateInFuture);
-        }
+        return Err(CannotSetManufactureDateInFuture);
     }
 
     let stock_line = match &stocktake_line_row.stock_line_id {
@@ -101,10 +100,9 @@ pub fn validate(
     if let Some(NullableUpdate {
         value: Some(vvm_status_id),
     }) = &input.vvm_status_id
+        && check_vvm_status_exists(connection, vvm_status_id)?.is_none()
     {
-        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
-            return Err(VvmStatusDoesNotExist);
-        }
+        return Err(VvmStatusDoesNotExist);
     }
 
     let stocktake_reduction_amount =
@@ -176,19 +174,17 @@ pub fn validate(
     if let Some(NullableUpdate {
         value: Some(campaign_id),
     }) = &input.campaign_id
+        && !check_campaign_exists_including_deleted(connection, campaign_id)?
     {
-        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
-            return Err(CampaignDoesNotExist);
-        }
+        return Err(CampaignDoesNotExist);
     }
 
     if let Some(NullableUpdate {
         value: Some(program_id),
     }) = &input.program_id
+        && check_program_exists(connection, program_id)?.is_none()
     {
-        if check_program_exists(connection, program_id)?.is_none() {
-            return Err(ProgramDoesNotExist);
-        }
+        return Err(ProgramDoesNotExist);
     }
 
     Ok(stocktake_line)

@@ -110,23 +110,23 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         }
 
         // 6.
-        if outbound_invoice.invoice_row.status == InvoiceStatus::Picked {
-            if let Some(picked_date) = outbound_invoice.invoice_row.picked_datetime {
-                let pref_months = PreventTransfersMonthsBeforeInitialisation {}
-                    .load(&ctx.connection, None)
-                    .map_err(|e| RepositoryError::DBError {
-                        msg: e.to_string(),
-                        extra: "".to_string(),
-                    })?;
-                if pref_months > 0
-                    && get_first_initialisation_finished_datetime(&ctx.connection)?
-                        .and_then(|initialisation_date| {
-                            initialisation_date.checked_sub_months(Months::new(pref_months as u32))
-                        })
-                        .is_some_and(|cutoff_date| picked_date < cutoff_date)
-                {
-                    return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
-                }
+        if outbound_invoice.invoice_row.status == InvoiceStatus::Picked
+            && let Some(picked_date) = outbound_invoice.invoice_row.picked_datetime
+        {
+            let pref_months = PreventTransfersMonthsBeforeInitialisation {}
+                .load(&ctx.connection, None)
+                .map_err(|e| RepositoryError::DBError {
+                    msg: e.to_string(),
+                    extra: "".to_string(),
+                })?;
+            if pref_months > 0
+                && get_first_initialisation_finished_datetime(&ctx.connection)?
+                    .and_then(|initialisation_date| {
+                        initialisation_date.checked_sub_months(Months::new(pref_months as u32))
+                    })
+                    .is_some_and(|cutoff_date| picked_date < cutoff_date)
+            {
+                return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
             }
         }
 

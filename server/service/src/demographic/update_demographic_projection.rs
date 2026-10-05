@@ -74,12 +74,10 @@ pub fn validate(
             }
         };
 
-    if let Some(base_year) = input.base_year {
-        if !check_base_year_unique(base_year, &input.id, connection)? {
-            return Err(
-                UpdateDemographicProjectionError::DemographicProjectionBaseYearAlreadyExists,
-            );
-        }
+    if let Some(base_year) = input.base_year
+        && !check_base_year_unique(base_year, &input.id, connection)?
+    {
+        return Err(UpdateDemographicProjectionError::DemographicProjectionBaseYearAlreadyExists);
     }
 
     Ok(demographic_projection_row)

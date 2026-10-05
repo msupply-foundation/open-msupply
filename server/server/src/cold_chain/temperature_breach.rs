@@ -84,10 +84,10 @@ fn validate_input(breaches: &[TemperatureBreach]) -> bool {
 }
 
 fn validate_breach(breach: &TemperatureBreach) -> bool {
-    if let Some(end_unix_timestamp) = breach.end_unix_timestamp {
-        if end_unix_timestamp < 0 {
-            return false;
-        }
+    if let Some(end_unix_timestamp) = breach.end_unix_timestamp
+        && end_unix_timestamp < 0
+    {
+        return false;
     }
 
     if breach.start_unix_timestamp < 0 {

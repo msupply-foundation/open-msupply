@@ -91,10 +91,10 @@ pub fn get_repacks_by_stock_line(
             .clone();
 
         // Skip invoice if 'repacked to' stock line is same as the queried stock line
-        if let Some(stock_line_id_to) = &invoice_line_to.invoice_line_row.stock_line_id {
-            if stock_line_id_to == stock_line_id {
-                continue;
-            }
+        if let Some(stock_line_id_to) = &invoice_line_to.invoice_line_row.stock_line_id
+            && stock_line_id_to == stock_line_id
+        {
+            continue;
         }
 
         repacks.push(Repack {

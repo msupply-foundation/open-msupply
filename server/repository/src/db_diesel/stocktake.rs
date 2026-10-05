@@ -151,10 +151,10 @@ fn create_filtered_query(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery
         apply_string_filter!(query, comment, stocktake::comment);
         apply_string_filter!(query, description, stocktake::description);
 
-        if let Some(value) = status {
-            if let Some(eq) = value.equal_to {
-                query = query.filter(stocktake::status.eq(eq));
-            }
+        if let Some(value) = status
+            && let Some(eq) = value.equal_to
+        {
+            query = query.filter(stocktake::status.eq(eq));
         }
 
         apply_date_time_filter!(query, created_datetime, stocktake::created_datetime);

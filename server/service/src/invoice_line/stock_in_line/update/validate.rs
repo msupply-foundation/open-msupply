@@ -56,10 +56,9 @@ pub fn validate(
     if let Some(NullableUpdate {
         value: Some(manufacture_date),
     }) = &input.manufacture_date
+        && !check_date_is_not_in_future(manufacture_date)
     {
-        if !check_date_is_not_in_future(manufacture_date) {
-            return Err(CannotSetManufactureDateInFuture);
-        }
+        return Err(CannotSetManufactureDateInFuture);
     }
 
     let item = check_item_option(&input.item_id, connection)?;
@@ -70,10 +69,10 @@ pub fn validate(
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
     }
-    if let Some(inbound_type) = inbound_shipment_type {
-        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
-            return Err(WrongInboundShipmentType);
-        }
+    if let Some(inbound_type) = inbound_shipment_type
+        && !inbound_type.matches_input(invoice.purchase_order_id.is_some())
+    {
+        return Err(WrongInboundShipmentType);
     }
     if !check_invoice_lines_are_editable(&invoice) {
         return Err(CannotEditFinalised);
@@ -96,29 +95,26 @@ pub fn validate(
             return Err(LocationDoesNotExist);
         }
 
-        if let Some(item_restricted_type) = &line.item_row.restricted_location_type_id {
-            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
-            {
-                return Err(IncorrectLocationType);
-            }
+        if let Some(item_restricted_type) = &line.item_row.restricted_location_type_id
+            && !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+        {
+            return Err(IncorrectLocationType);
         }
     }
     if let Some(NullableUpdate {
         value: Some(item_variant_id),
     }) = &input.item_variant_id
+        && check_item_variant_exists(connection, item_variant_id)?.is_none()
     {
-        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-            return Err(ItemVariantDoesNotExist);
-        }
+        return Err(ItemVariantDoesNotExist);
     }
 
     if let Some(NullableUpdate {
         value: Some(vvm_status_id),
     }) = &input.vvm_status_id
+        && check_vvm_status_exists(connection, vvm_status_id)?.is_none()
     {
-        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
-            return Err(VVMStatusDoesNotExist);
-        }
+        return Err(VVMStatusDoesNotExist);
     }
 
     if !check_line_belongs_to_invoice(line_row, &invoice) {
@@ -128,10 +124,9 @@ pub fn validate(
     if let Some(NullableUpdate {
         value: Some(program_id),
     }) = &input.program_id
+        && check_program_exists(connection, program_id)?.is_none()
     {
-        if check_program_exists(connection, program_id)?.is_none() {
-            return Err(ProgramDoesNotExist);
-        }
+        return Err(ProgramDoesNotExist);
     }
 
     if let Some(NullableUpdate {
@@ -161,21 +156,19 @@ pub fn validate(
     if let Some(NullableUpdate {
         value: Some(campaign_id),
     }) = &input.campaign_id
+        && !check_campaign_exists_including_deleted(connection, campaign_id)?
     {
-        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
-            return Err(CampaignDoesNotExist);
-        }
+        return Err(CampaignDoesNotExist);
     }
 
     // Cost price is read-only for PO-linked shipments and auto-generated transfer shipments.
     // Use epsilon comparison to allow unchanged values that may have drifted
     // through floating point serialization (Rust f64 → JSON → JS Number → JSON → f64).
-    if let Some(new_cost_price) = input.cost_price_per_pack {
-        if (invoice.linked_invoice_id.is_some() || invoice.purchase_order_id.is_some())
-            && !f64_approx_eq(new_cost_price, line_row.cost_price_per_pack)
-        {
-            return Err(CannotEditCostPrice);
-        }
+    if let Some(new_cost_price) = input.cost_price_per_pack
+        && (invoice.linked_invoice_id.is_some() || invoice.purchase_order_id.is_some())
+        && !f64_approx_eq(new_cost_price, line_row.cost_price_per_pack)
+    {
+        return Err(CannotEditCostPrice);
     }
 
     if let Some(NullableUpdate {

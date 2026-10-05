@@ -128,10 +128,10 @@ pub fn validate(
         return Err(InsertAssetLogError::CommentRequiredForReason);
     }
 
-    if let Some(log_datetime) = &input.log_datetime {
-        if *log_datetime > Utc::now() {
-            return Err(InsertAssetLogError::LogDatetimeInFuture);
-        }
+    if let Some(log_datetime) = &input.log_datetime
+        && *log_datetime > Utc::now()
+    {
+        return Err(InsertAssetLogError::LogDatetimeInFuture);
     }
 
     Ok(())

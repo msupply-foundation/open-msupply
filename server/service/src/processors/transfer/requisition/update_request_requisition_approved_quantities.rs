@@ -51,10 +51,10 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             None => return Ok(RequisitionTransferOutput::NoLinkedRequisition),
         };
         // 4.
-        if let Some(approval_status) = request_requisition.requisition_row.approval_status.clone() {
-            if approval_status.is_approved() {
-                return Ok(RequisitionTransferOutput::RequestAlreadyApproved);
-            }
+        if let Some(approval_status) = request_requisition.requisition_row.approval_status.clone()
+            && approval_status.is_approved()
+        {
+            return Ok(RequisitionTransferOutput::RequestAlreadyApproved);
         };
         // 5.
         let approval_status = match response_requisition.requisition_row.approval_status.clone() {

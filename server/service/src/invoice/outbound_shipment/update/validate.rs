@@ -41,12 +41,11 @@ pub fn validate(
         return Err(NotAnOutboundShipment);
     }
 
-    if let Some(properties) = &patch.custom_fields {
-        if let Some(problem) =
+    if let Some(properties) = &patch.custom_fields
+        && let Some(problem) =
             check_invoice_custom_fields_patch(connection, &invoice.r#type, properties)?
-        {
-            return Err(problem.into());
-        }
+    {
+        return Err(problem.into());
     }
 
     if patch.currency_id.is_some()
@@ -59,10 +58,9 @@ pub fn validate(
     if let Some(NullableUpdate {
         value: Some(shipping_method_id),
     }) = &patch.shipping_method_id
+        && !check_shipping_method_exists(connection, shipping_method_id)?
     {
-        if !check_shipping_method_exists(connection, shipping_method_id)? {
-            return Err(ShippingMethodDoesNotExist);
-        }
+        return Err(ShippingMethodDoesNotExist);
     }
 
     // Backdating validation: preference enabled, only New outbound shipments, no lines, not future, max days

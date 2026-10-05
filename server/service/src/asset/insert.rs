@@ -103,10 +103,10 @@ pub fn insert_asset(
                 };
 
                 // Check if the asset is in a store that is active before creating locations
-                if let Some(store_id) = new_asset.store_id.clone() {
-                    if active_store_ids.contains(&store_id) {
-                        create_asset_locations(connection, &new_asset, store_id)?;
-                    }
+                if let Some(store_id) = new_asset.store_id.clone()
+                    && active_store_ids.contains(&store_id)
+                {
+                    create_asset_locations(connection, &new_asset, store_id)?;
                 }
             }
 
@@ -224,26 +224,22 @@ fn get_storage_properties(
 ) -> Result<serde_json::Map<String, serde_json::Value>, RepositoryError> {
     let mut properties = serde_json::Map::new();
 
-    if let Some(catalogue_item_id) = &asset.catalogue_item_id {
-        if let Some(catalogue_item) =
+    if let Some(catalogue_item_id) = &asset.catalogue_item_id
+        && let Some(catalogue_item) =
             AssetCatalogueItemRowRepository::new(connection).find_one_by_id(catalogue_item_id)?
-        {
-            if let Some(catalogue_properties) = catalogue_item.properties {
-                if let Ok(parsed) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(
-                    &catalogue_properties,
-                ) {
-                    properties.extend(parsed);
-                }
-            }
-        }
+        && let Some(catalogue_properties) = catalogue_item.properties
+        && let Ok(parsed) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(
+            &catalogue_properties,
+        )
+    {
+        properties.extend(parsed);
     }
 
-    if let Some(asset_properties) = &asset.properties {
-        if let Ok(parsed) =
+    if let Some(asset_properties) = &asset.properties
+        && let Ok(parsed) =
             serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(asset_properties)
-        {
-            properties.extend(parsed);
-        }
+    {
+        properties.extend(parsed);
     }
 
     Ok(properties)
@@ -258,20 +254,19 @@ pub fn validate(
     }
 
     // Check asset number is unique (on this site)
-    if let Some(asset_number) = &input.asset_number {
-        if !check_asset_number_exists(connection, asset_number, None)?.is_empty() {
-            return Err(InsertAssetError::AssetNumberAlreadyExists);
-        }
+    if let Some(asset_number) = &input.asset_number
+        && !check_asset_number_exists(connection, asset_number, None)?.is_empty()
+    {
+        return Err(InsertAssetError::AssetNumberAlreadyExists);
     }
 
     // Check the serial number is unique (if present)
-    if let Some(serial_number) = &input.serial_number {
-        if AssetRepository::new(connection)
+    if let Some(serial_number) = &input.serial_number
+        && AssetRepository::new(connection)
             .query_one(AssetFilter::new().serial_number(StringFilter::equal_to(serial_number)))?
             .is_some()
-        {
-            return Err(InsertAssetError::SerialNumberAlreadyExists);
-        }
+    {
+        return Err(InsertAssetError::SerialNumberAlreadyExists);
     }
 
     Ok(())

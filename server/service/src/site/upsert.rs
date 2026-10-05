@@ -56,10 +56,9 @@ fn validate(
 
     if let Some(other) =
         SiteRowRepository::new(connection).find_one_by_name_case_insensitive(input.name.trim())?
+        && other.id != input.id
     {
-        if other.id != input.id {
-            return Err(UpsertSiteError::DuplicateSiteName);
-        }
+        return Err(UpsertSiteError::DuplicateSiteName);
     }
 
     match (&input.password, existing) {

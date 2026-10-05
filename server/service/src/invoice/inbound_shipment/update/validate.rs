@@ -42,12 +42,11 @@ pub fn validate(
         return Err(WrongInboundShipmentType);
     }
 
-    if let Some(properties) = &patch.custom_fields {
-        if let Some(problem) =
+    if let Some(properties) = &patch.custom_fields
+        && let Some(problem) =
             check_invoice_custom_fields_patch(connection, &invoice.r#type, properties)?
-        {
-            return Err(problem.into());
-        }
+    {
+        return Err(problem.into());
     }
 
     // Status check
@@ -93,10 +92,10 @@ pub fn validate(
         }
 
         // Can only move the date earlier, never forward
-        if let Some(current_received) = invoice.received_datetime {
-            if received_datetime.naive_utc() >= current_received {
-                return Err(CannotMoveReceivedDateForward);
-            }
+        if let Some(current_received) = invoice.received_datetime
+            && received_datetime.naive_utc() >= current_received
+        {
+            return Err(CannotMoveReceivedDateForward);
         }
 
         // Check maximum backdating days preference
@@ -109,10 +108,10 @@ pub fn validate(
     }
 
     // Currency rate must be positive if provided
-    if let Some(rate) = patch.currency_rate {
-        if rate <= 0.0 {
-            return Err(CurrencyRateMustBePositive);
-        }
+    if let Some(rate) = patch.currency_rate
+        && rate <= 0.0
+    {
+        return Err(CurrencyRateMustBePositive);
     }
 
     // Other party check

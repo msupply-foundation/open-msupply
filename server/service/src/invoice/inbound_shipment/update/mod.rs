@@ -135,11 +135,11 @@ pub fn update_inbound_shipment(
                 }
             }
 
-            if update_invoice.status == InvoiceStatus::Verified {
-                if let Some(movements) = location_movements {
-                    for movement in movements {
-                        LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
-                    }
+            if update_invoice.status == InvoiceStatus::Verified
+                && let Some(movements) = location_movements
+            {
+                for movement in movements {
+                    LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                 }
             }
 

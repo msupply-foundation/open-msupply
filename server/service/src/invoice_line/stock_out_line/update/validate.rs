@@ -51,13 +51,12 @@ pub fn validate(
     // set_prescribed_quantity. Neither front end sends the field on this path
     // at all — they write it through set_prescribed_quantity — so this closes
     // the wire, not a flow.
-    if let Some(prescribed_quantity) = input.prescribed_quantity {
-        if is_generated_dispensation(&invoice)
-            && prescriber_prescribed_quantity(connection, &invoice, &line_row.item_id)?
-                != Some(prescribed_quantity)
-        {
-            return Err(CannotChangePrescribedQuantity);
-        }
+    if let Some(prescribed_quantity) = input.prescribed_quantity
+        && is_generated_dispensation(&invoice)
+        && prescriber_prescribed_quantity(connection, &invoice, &line_row.item_id)?
+            != Some(prescribed_quantity)
+    {
+        return Err(CannotChangePrescribedQuantity);
     }
 
     let existing_stock = check_existing_stock_line(
@@ -105,10 +104,10 @@ pub fn validate(
         }
     })?;
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
-        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
-            return Err(VVMStatusDoesNotExist);
-        }
+    if let Some(vvm_status_id) = &input.vvm_status_id
+        && check_vvm_status_exists(connection, vvm_status_id)?.is_none()
+    {
+        return Err(VVMStatusDoesNotExist);
     }
 
     if let Some(NullableUpdate {

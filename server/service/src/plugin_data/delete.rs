@@ -34,12 +34,12 @@ fn validate(ctx: &ServiceContext, id: &str) -> Result<PluginDataRow, DeletePlugi
         ));
     }
 
-    if let Some(store_id) = &plugin_data.store_id {
-        if &ctx.store_id != store_id {
-            return Err(DeletePluginDataError::InternalError(
-                "Store ID doesn't match logged in store_id".to_string(),
-            ));
-        }
+    if let Some(store_id) = &plugin_data.store_id
+        && &ctx.store_id != store_id
+    {
+        return Err(DeletePluginDataError::InternalError(
+            "Store ID doesn't match logged in store_id".to_string(),
+        ));
     }
 
     Ok(plugin_data)

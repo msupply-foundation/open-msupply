@@ -104,10 +104,10 @@ async fn request_and_set_site_auth_v5(
     info!("Requesting site info (v5)");
     let site_info = sync_api_v5.get_site_info().await?;
 
-    if let Some(site_uuid) = repo.get_string(KeyType::SettingsSyncSiteUuid)? {
-        if site_uuid != site_info.id {
-            return Err(Error::SiteUUIDIsBeingChanged(site_uuid, site_info.id));
-        }
+    if let Some(site_uuid) = repo.get_string(KeyType::SettingsSyncSiteUuid)?
+        && site_uuid != site_info.id
+    {
+        return Err(Error::SiteUUIDIsBeingChanged(site_uuid, site_info.id));
     }
 
     repo.set_string(KeyType::SettingsSyncSiteUuid, Some(site_info.id.clone()))?;

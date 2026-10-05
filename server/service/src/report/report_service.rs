@@ -588,19 +588,19 @@ fn resolve_report_definition(
             "Invalid template reference: {template}"
         )));
     }
-    if let Some(header) = fully_loaded_report.index.header.clone() {
-        if !templates.contains_key(&header) {
-            return Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid template header reference: {header}"
-            )));
-        }
+    if let Some(header) = fully_loaded_report.index.header.clone()
+        && !templates.contains_key(&header)
+    {
+        return Err(ReportError::InvalidReportDefinition(format!(
+            "Invalid template header reference: {header}"
+        )));
     }
-    if let Some(footer) = fully_loaded_report.index.footer.clone() {
-        if !templates.contains_key(&footer) {
-            return Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid template footer reference: {footer}"
-            )));
-        }
+    if let Some(footer) = fully_loaded_report.index.footer.clone()
+        && !templates.contains_key(&footer)
+    {
+        return Err(ReportError::InvalidReportDefinition(format!(
+            "Invalid template footer reference: {footer}"
+        )));
     }
     let query_entry = fully_loaded_report
         .index

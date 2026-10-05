@@ -114,10 +114,9 @@ fn validate(
     if let Some(NullableUpdate {
         value: Some(manufacture_date),
     }) = &input.manufacture_date
+        && !check_date_is_not_in_future(manufacture_date)
     {
-        if !check_date_is_not_in_future(manufacture_date) {
-            return Err(CannotSetManufactureDateInFuture);
-        }
+        return Err(CannotSetManufactureDateInFuture);
     }
 
     if let Some(NullableUpdate {
@@ -128,21 +127,19 @@ fn validate(
             return Err(LocationDoesNotExist);
         }
 
-        if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id {
-            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
-            {
-                return Err(IncorrectLocationType);
-            }
+        if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id
+            && !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+        {
+            return Err(IncorrectLocationType);
         }
     }
 
     if let Some(NullableUpdate {
         value: Some(item_variant_id),
     }) = &input.item_variant_id
+        && check_item_variant_exists(connection, item_variant_id)?.is_none()
     {
-        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-            return Err(ItemVariantDoesNotExist);
-        }
+        return Err(ItemVariantDoesNotExist);
     }
 
     if let Some(NullableUpdate {

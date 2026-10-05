@@ -32,10 +32,9 @@ impl Loader<String> for ItemCategoryLoader {
             for ic in &item_categories {
                 if let Some(row) =
                     category_repo.find_one_by_id(&ic.item_category_join_row.category_id)?
+                    && row.deleted_datetime.is_none()
                 {
-                    if row.deleted_datetime.is_none() {
-                        categories.push(row);
-                    }
+                    categories.push(row);
                 }
             }
 

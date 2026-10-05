@@ -84,12 +84,12 @@ fn validate(ctx: &ServiceContext, input: &InsertPluginData) -> Result<(), Insert
         ));
     }
 
-    if let Some(store_id) = &input.store_id {
-        if &ctx.store_id != store_id {
-            return Err(InsertPluginDataError::InternalError(
-                "Store ID doesn't match logged in store_id".to_string(),
-            ));
-        }
+    if let Some(store_id) = &input.store_id
+        && &ctx.store_id != store_id
+    {
+        return Err(InsertPluginDataError::InternalError(
+            "Store ID doesn't match logged in store_id".to_string(),
+        ));
     }
 
     Ok(())

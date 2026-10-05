@@ -45,10 +45,10 @@ pub fn validate(
         return Err(CostPricePerPackBelowZero);
     }
 
-    if let Some(manufacture_date) = &input.manufacture_date {
-        if !check_date_is_not_in_future(manufacture_date) {
-            return Err(CannotSetManufactureDateInFuture);
-        }
+    if let Some(manufacture_date) = &input.manufacture_date
+        && !check_date_is_not_in_future(manufacture_date)
+    {
+        return Err(CannotSetManufactureDateInFuture);
     }
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
@@ -60,24 +60,23 @@ pub fn validate(
         if !check_location_exists(connection, store_id, location)? {
             return Err(LocationDoesNotExist);
         }
-        if let Some(item_restricted_type) = &item.restricted_location_type_id {
-            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
-            {
-                return Err(IncorrectLocationType);
-            }
+        if let Some(item_restricted_type) = &item.restricted_location_type_id
+            && !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+        {
+            return Err(IncorrectLocationType);
         }
     }
 
-    if let Some(item_variant_id) = &input.item_variant_id {
-        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-            return Err(ItemVariantDoesNotExist);
-        }
+    if let Some(item_variant_id) = &input.item_variant_id
+        && check_item_variant_exists(connection, item_variant_id)?.is_none()
+    {
+        return Err(ItemVariantDoesNotExist);
     }
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
-        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
-            return Err(VVMStatusDoesNotExist);
-        }
+    if let Some(vvm_status_id) = &input.vvm_status_id
+        && check_vvm_status_exists(connection, vvm_status_id)?.is_none()
+    {
+        return Err(VVMStatusDoesNotExist);
     }
 
     let invoice =
@@ -89,10 +88,10 @@ pub fn validate(
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
     }
-    if let Some(inbound_type) = inbound_shipment_type {
-        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
-            return Err(WrongInboundShipmentType);
-        }
+    if let Some(inbound_type) = inbound_shipment_type
+        && !inbound_type.matches_input(invoice.purchase_order_id.is_some())
+    {
+        return Err(WrongInboundShipmentType);
     }
     if !check_invoice_lines_are_editable(&invoice) {
         return Err(CannotEditFinalised);
@@ -139,10 +138,10 @@ pub fn validate(
         };
     };
 
-    if let Some(program_id) = &input.program_id {
-        if check_program_exists(connection, program_id)?.is_none() {
-            return Err(ProgramDoesNotExist);
-        }
+    if let Some(program_id) = &input.program_id
+        && check_program_exists(connection, program_id)?.is_none()
+    {
+        return Err(ProgramDoesNotExist);
     }
 
     // External inbound shipments (with purchase_order_id) require a purchase_order_line_id

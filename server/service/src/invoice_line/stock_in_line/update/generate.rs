@@ -122,10 +122,9 @@ fn get_batch_to_delete_id(
     if let (Some(new_item), Some(stock_line_id)) = (
         new_item_option,
         &current_line.invoice_line_row.stock_line_id,
-    ) {
-        if new_item.id != current_line.item_row.id {
-            return Some(stock_line_id.clone());
-        }
+    ) && new_item.id != current_line.item_row.id
+    {
+        return Some(stock_line_id.clone());
     }
     None
 }

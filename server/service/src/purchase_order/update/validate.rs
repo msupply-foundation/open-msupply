@@ -78,14 +78,13 @@ pub fn validate(
     }
 
     // Only wanna check if status has been updated
-    if input.status.is_some() {
-        if let Some(non_orderable_items) =
+    if input.status.is_some()
+        && let Some(non_orderable_items) =
             check_items_orderable(connection, store_id, purchase_order_lines)?
-        {
-            return Err(UpdatePurchaseOrderError::ItemsCannotBeOrdered(
-                non_orderable_items,
-            ));
-        }
+    {
+        return Err(UpdatePurchaseOrderError::ItemsCannotBeOrdered(
+            non_orderable_items,
+        ));
     }
 
     Ok((purchase_order, None))
@@ -125,10 +124,10 @@ fn check_items_orderable(
         let item_store_join =
             item_store_join_repo.find_one_by_item_and_store_id(item_id, store_id)?;
 
-        if let Some(item_store_join) = item_store_join {
-            if item_store_join.ignore_for_orders {
-                non_orderable_items.push(line.clone());
-            }
+        if let Some(item_store_join) = item_store_join
+            && item_store_join.ignore_for_orders
+        {
+            non_orderable_items.push(line.clone());
         }
     }
 

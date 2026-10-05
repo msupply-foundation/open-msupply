@@ -182,12 +182,13 @@ impl FileSyncDriver {
 
             // If not stopped or paused and we have a central server URL to upload to
             // (file bytes only ever transfer remote ↔ central, never on central itself)
-            if !stopped && !paused {
-                if let Some(url) = file_sync_central_url(&service_provider) {
-                    files_to_upload = self
-                        .sync(&url, service_provider.clone(), self.pause_rx.clone())
-                        .await;
-                }
+            if !stopped
+                && !paused
+                && let Some(url) = file_sync_central_url(&service_provider)
+            {
+                files_to_upload = self
+                    .sync(&url, service_provider.clone(), self.pause_rx.clone())
+                    .await;
             }
         }
     }

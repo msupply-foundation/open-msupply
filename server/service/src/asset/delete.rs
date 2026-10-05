@@ -55,10 +55,11 @@ pub fn validate(
         None => return Err(DeleteAssetError::AssetDoesNotExist),
     };
 
-    if let Some(store_id) = &asset_row.store_id {
-        if ctx_store_id != store_id && !CentralServerConfig::is_central_server() {
-            return Err(DeleteAssetError::AssetDoesNotBelongToCurrentStore);
-        }
+    if let Some(store_id) = &asset_row.store_id
+        && ctx_store_id != store_id
+        && !CentralServerConfig::is_central_server()
+    {
+        return Err(DeleteAssetError::AssetDoesNotBelongToCurrentStore);
     }
 
     Ok(())

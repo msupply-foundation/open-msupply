@@ -51,10 +51,10 @@ pub fn validate(
     let item_store = ItemStoreJoinRowRepository::new(connection)
         .find_one_by_item_and_store_id(&item.id, store_id)?;
 
-    if let Some(item_store_join) = item_store {
-        if item_store_join.ignore_for_orders {
-            return Err(InsertPurchaseOrderLineError::ItemCannotBeOrdered);
-        }
+    if let Some(item_store_join) = item_store
+        && item_store_join.ignore_for_orders
+    {
+        return Err(InsertPurchaseOrderLineError::ItemCannotBeOrdered);
     }
 
     // check if pack size and item id combination already exists

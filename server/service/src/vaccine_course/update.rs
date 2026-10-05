@@ -173,10 +173,10 @@ pub fn validate(
         None => return Err(UpdateVaccineCourseError::VaccineCourseDoesNotExist),
     };
 
-    if let Some(demographic_id) = &input.demographic_id {
-        if check_demographic_exists(demographic_id, connection)?.is_none() {
-            return Err(UpdateVaccineCourseError::DemographicDoesNotExist);
-        }
+    if let Some(demographic_id) = &input.demographic_id
+        && check_demographic_exists(demographic_id, connection)?.is_none()
+    {
+        return Err(UpdateVaccineCourseError::DemographicDoesNotExist);
     }
 
     let name = match &(input.name) {

@@ -92,10 +92,10 @@ pub fn validate(
         )?
     }
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
-        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
-            return Err(VVMStatusDoesNotExist);
-        }
+    if let Some(vvm_status_id) = &input.vvm_status_id
+        && check_vvm_status_exists(connection, vvm_status_id)?.is_none()
+    {
+        return Err(VVMStatusDoesNotExist);
     }
 
     // If there's only a tiny bit left in stock after this, we'll adjust the invoice to take the last of the stock

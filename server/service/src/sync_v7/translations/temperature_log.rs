@@ -33,13 +33,12 @@ pub(crate) fn translate_temperature_log(
 
     if let Some(existing_id) = TemperatureLogRowRepository::new(connection)
         .find_id_by_sensor_and_datetime(&row.sensor_id, row.datetime)?
+        && existing_id != row.id
     {
-        if existing_id != row.id {
-            // A different device already recorded this reading — collapse onto
-            // the existing row by upserting under its id.
-            row.id = existing_id.clone();
-            changelog_insert.record_id = existing_id;
-        }
+        // A different device already recorded this reading — collapse onto
+        // the existing row by upserting under its id.
+        row.id = existing_id.clone();
+        changelog_insert.record_id = existing_id;
     }
 
     Ok(vec![(Box::new(row) as Box<dyn Upsert>, changelog_insert)])

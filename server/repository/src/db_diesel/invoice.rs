@@ -326,24 +326,24 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             query = query.filter(invoice::purchase_order_id.eq_any(po_subquery));
         }
 
-        if let Some(linked_order_number) = linked_order_number {
-            if let Some(number) = linked_order_number.equal_to {
-                let po_subquery = purchase_order::table
-                    .select(purchase_order::id.nullable())
-                    .filter(purchase_order::purchase_order_number.eq(number))
-                    .into_boxed();
+        if let Some(linked_order_number) = linked_order_number
+            && let Some(number) = linked_order_number.equal_to
+        {
+            let po_subquery = purchase_order::table
+                .select(purchase_order::id.nullable())
+                .filter(purchase_order::purchase_order_number.eq(number))
+                .into_boxed();
 
-                let req_subquery = requisition::table
-                    .select(requisition::id.nullable())
-                    .filter(requisition::requisition_number.eq(number))
-                    .into_boxed();
+            let req_subquery = requisition::table
+                .select(requisition::id.nullable())
+                .filter(requisition::requisition_number.eq(number))
+                .into_boxed();
 
-                query = query.filter(
-                    invoice::purchase_order_id
-                        .eq_any(po_subquery)
-                        .or(invoice::requisition_id.eq_any(req_subquery)),
-                );
-            }
+            query = query.filter(
+                invoice::purchase_order_id
+                    .eq_any(po_subquery)
+                    .or(invoice::requisition_id.eq_any(req_subquery)),
+            );
         }
 
         apply_string_filter!(query, comment, invoice::comment);

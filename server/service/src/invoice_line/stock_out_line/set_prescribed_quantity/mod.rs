@@ -65,10 +65,11 @@ pub fn set_prescribed_quantity(
                 .find(|line| line.invoice_line_row.r#type == InvoiceLineType::UnallocatedStock);
 
             // Remove the unallocated line if a proper allocated line exists.
-            if existing_lines.len() > 1 && has_prescribed_quantity_or_stock_line {
-                if let Some(unallocated_line) = unallocated_line {
-                    invoice_line_row_repo.delete(&unallocated_line.invoice_line_row.id)?;
-                }
+            if existing_lines.len() > 1
+                && has_prescribed_quantity_or_stock_line
+                && let Some(unallocated_line) = unallocated_line
+            {
+                invoice_line_row_repo.delete(&unallocated_line.invoice_line_row.id)?;
             }
 
             // Find the line with a prescribed quantity

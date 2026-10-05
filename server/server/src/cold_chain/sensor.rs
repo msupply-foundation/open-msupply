@@ -111,10 +111,10 @@ fn validate_sensor(sensor: &Sensor) -> Result<(), String> {
             sensor.id
         ));
     }
-    if let Some(log_delay) = sensor.log_delay {
-        if log_delay < 0 {
-            return Err(format!(" {}: Log delay must be positive", sensor.id));
-        }
+    if let Some(log_delay) = sensor.log_delay
+        && log_delay < 0
+    {
+        return Err(format!(" {}: Log delay must be positive", sensor.id));
     }
 
     Ok(())

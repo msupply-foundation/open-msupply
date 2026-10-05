@@ -57,10 +57,10 @@ pub fn upsert_prescription_request_line(
             })?;
 
             let repo = PrescriptionRequestLineRowRepository::new(connection);
-            if let Some(existing_line) = repo.find_one_by_id(&input.id)? {
-                if existing_line.prescription_request_id != input.prescription_request_id {
-                    return Err(LineBelongsToAnotherPrescriptionRequest);
-                }
+            if let Some(existing_line) = repo.find_one_by_id(&input.id)?
+                && existing_line.prescription_request_id != input.prescription_request_id
+            {
+                return Err(LineBelongsToAnotherPrescriptionRequest);
             }
 
             check_item(connection, &input.item_id)?;

@@ -34,12 +34,11 @@ pub fn delete_stock_in_line(
                 validate(&input, &ctx.store_id, connection, inbound_shipment_type)?;
             let delete_batch_id_option = line.stock_line_id.clone();
 
-            if let Some(batch_id) = &delete_batch_id_option {
-                if let Some(existing_log_id) =
+            if let Some(batch_id) = &delete_batch_id_option
+                && let Some(existing_log_id) =
                     get_existing_vvm_status_log_id(connection, batch_id, &line.id)?
-                {
-                    VVMStatusLogRowRepository::new(connection).delete(&existing_log_id)?;
-                }
+            {
+                VVMStatusLogRowRepository::new(connection).delete(&existing_log_id)?;
             }
 
             InvoiceLineRowRepository::new(connection).delete(&line.id)?;

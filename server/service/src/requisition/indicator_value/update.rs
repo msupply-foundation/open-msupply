@@ -79,11 +79,10 @@ fn validate(
 
     if let Some(IndicatorValueType::Number) =
         indicator_value_type(&indicator_line, &indicator_column)
+        && input.value.parse::<f64>().is_err()
     {
-        if input.value.parse::<f64>().is_err() {
-            return Err(OutError::ValueTypeNotCorrect);
-        };
-    }
+        return Err(OutError::ValueTypeNotCorrect);
+    };
 
     Ok(indicator_value_row)
 }

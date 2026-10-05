@@ -128,15 +128,14 @@ impl SyncTranslation for CategoryTranslation {
         // Parallel customFields path — central-only. Soft-delete the matching
         // option (by re-upserting it with `deleted_datetime` set) so the option
         // set tracks 4D category removals and the read dataloader filters it out.
-        if CentralServerConfig::is_central_server() {
-            if let Some(option) =
+        if CentralServerConfig::is_central_server()
+            && let Some(option) =
                 CustomFieldOptionRowRepository::new(connection).find_one_by_id(&record_id)?
-            {
-                operations.push(IntegrationOperation::upsert(CustomFieldOptionRow {
-                    deleted_datetime: Some(Utc::now().naive_utc()),
-                    ..option
-                }));
-            }
+        {
+            operations.push(IntegrationOperation::upsert(CustomFieldOptionRow {
+                deleted_datetime: Some(Utc::now().naive_utc()),
+                ..option
+            }));
         }
 
         Ok(PullTranslateResult::IntegrationOperations(operations))

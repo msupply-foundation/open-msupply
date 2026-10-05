@@ -450,10 +450,10 @@ pub async fn start_server(
     // central after its first sync — never fires here. Runs after the YAML
     // bootstrap above so a just-initialised standalone central is seeded on the
     // same boot. Idempotent and change-aware, so repeating it costs nothing.
-    if CentralServerConfig::is_standalone_central() {
-        if let Err(e) = seed_builtin_custom_fields(&connection) {
-            log::error!("Failed to seed builtin custom fields: {}", format_error(&e));
-        }
+    if CentralServerConfig::is_standalone_central()
+        && let Err(e) = seed_builtin_custom_fields(&connection)
+    {
+        log::error!("Failed to seed builtin custom fields: {}", format_error(&e));
     }
 
     StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();

@@ -65,12 +65,12 @@ fn validate(
     }
 
     // A store may only modify its own rows.
-    if let Some(store_id) = &plugin_data.store_id {
-        if &ctx.store_id != store_id {
-            return Err(UpdatePluginDataError::InternalError(
-                "Store ID doesn't match logged in store_id".to_string(),
-            ));
-        }
+    if let Some(store_id) = &plugin_data.store_id
+        && &ctx.store_id != store_id
+    {
+        return Err(UpdatePluginDataError::InternalError(
+            "Store ID doesn't match logged in store_id".to_string(),
+        ));
     }
 
     if input.related_record_id != plugin_data.related_record_id {

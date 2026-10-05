@@ -109,10 +109,10 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
 
         apply_equal_filter!(query, id, campaign::id);
 
-        if let Some(name_filter) = name {
-            if let Some(name_to_match) = name_filter.equal_to {
-                query = query.filter(lower(campaign::name).eq(lower(name_to_match)))
-            }
+        if let Some(name_filter) = name
+            && let Some(name_to_match) = name_filter.equal_to
+        {
+            query = query.filter(lower(campaign::name).eq(lower(name_to_match)))
         }
     }
 

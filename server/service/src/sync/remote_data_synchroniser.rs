@@ -112,14 +112,12 @@ impl RemoteDataSynchroniser {
             SiteStatusCodeV5::InitialisationInProgress
         );
 
-        if !worker_running {
-            if let Err(error) = self.sync_api_v5.post_initialise().await {
-                // Tolerate transient errors (connection/unknown/dropped response body) and
-                // "central busy" codes, then poll. Safe for a POST: this never re-sends it, it
-                // only moves on to polling for the outcome.
-                if !(error.is_transient() || error.is_central_busy()) {
-                    return Err(error.into());
-                }
+        if !worker_running && let Err(error) = self.sync_api_v5.post_initialise().await {
+            // Tolerate transient errors (connection/unknown/dropped response body) and
+            // "central busy" codes, then poll. Safe for a POST: this never re-sends it, it
+            // only moves on to polling for the outcome.
+            if !(error.is_transient() || error.is_central_busy()) {
+                return Err(error.into());
             }
         }
         self.wait_for_initialisation(

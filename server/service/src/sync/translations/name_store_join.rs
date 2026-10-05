@@ -84,15 +84,15 @@ impl SyncTranslation for NameStoreJoinTranslation {
 
         // in mSupply the inactive flag is used for soft-deletes.
         // given that we don't handle soft deletes, translate to a hard-delete
-        if let Some(inactive) = data.inactive {
-            if inactive {
-                if !NameStoreJoinRepository::new(connection).check_exists_by_id(&data.id)? {
-                    return Ok(PullTranslateResult::Ignored(
-                        "Is inactive and not found".to_string(),
-                    ));
-                }
-                return self.try_translate_from_delete_sync_record(connection, sync_record);
+        if let Some(inactive) = data.inactive
+            && inactive
+        {
+            if !NameStoreJoinRepository::new(connection).check_exists_by_id(&data.id)? {
+                return Ok(PullTranslateResult::Ignored(
+                    "Is inactive and not found".to_string(),
+                ));
             }
+            return self.try_translate_from_delete_sync_record(connection, sync_record);
         }
 
         let name = match NameRowRepository::new(connection).find_one_by_id(&data.name_id)? {
@@ -227,22 +227,21 @@ impl SyncTranslation for NameStoreJoinTranslation {
         // store (issue #12365): deleting it would stop the patient syncing to the
         // site that holds those prescriptions, breaking FK integration there.
         // In the future this should mark the join inactive instead
-        if CentralServerConfig::is_central_server() {
-            if let Some(join) =
+        if CentralServerConfig::is_central_server()
+            && let Some(join) =
                 NameStoreJoinRepository::new(connection).find_one_by_id(&sync_record.record_id)?
-            {
-                let prescription_count = InvoiceRepository::new(connection).count(Some(
-                    InvoiceFilter::new()
-                        .name_id(EqualFilter::equal_to(join.name_id))
-                        .store_id(EqualFilter::equal_to(join.store_id))
-                        .r#type(InvoiceType::Prescription.equal_to()),
-                ))?;
+        {
+            let prescription_count = InvoiceRepository::new(connection).count(Some(
+                InvoiceFilter::new()
+                    .name_id(EqualFilter::equal_to(join.name_id))
+                    .store_id(EqualFilter::equal_to(join.store_id))
+                    .r#type(InvoiceType::Prescription.equal_to()),
+            ))?;
 
-                if prescription_count > 0 {
-                    return Ok(PullTranslateResult::Ignored(
-                        "Not deleted, name has prescriptions in store".to_string(),
-                    ));
-                }
+            if prescription_count > 0 {
+                return Ok(PullTranslateResult::Ignored(
+                    "Not deleted, name has prescriptions in store".to_string(),
+                ));
             }
         }
 

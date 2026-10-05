@@ -50,15 +50,15 @@ pub fn insert_prescription_request(
             if check_patient_exists(connection, &input.patient_id)?.is_none() {
                 return Err(PatientDoesNotExist);
             }
-            if let Some(clinician_id) = &input.clinician_id {
-                if !check_clinician_exists(connection, clinician_id)? {
-                    return Err(ClinicianDoesNotExist);
-                }
+            if let Some(clinician_id) = &input.clinician_id
+                && !check_clinician_exists(connection, clinician_id)?
+            {
+                return Err(ClinicianDoesNotExist);
             }
-            if let Some(diagnosis_id) = &input.diagnosis_id {
-                if !check_diagnosis_exists(connection, diagnosis_id)? {
-                    return Err(DiagnosisDoesNotExist);
-                }
+            if let Some(diagnosis_id) = &input.diagnosis_id
+                && !check_diagnosis_exists(connection, diagnosis_id)?
+            {
+                return Err(DiagnosisDoesNotExist);
             }
             let current_datetime = Utc::now().naive_utc();
             let row = PrescriptionRequestRow {

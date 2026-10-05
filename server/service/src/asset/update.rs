@@ -97,30 +97,28 @@ pub fn validate(
     // Check the serial number is unique only if it's being changed
     // This allows updates to assets with duplicate serial numbers (from CSV import/sync)
     // while preventing new duplicates from being created
-    if let Some(serial_number_update) = &input.serial_number {
-        if let Some(new_serial_number) = &serial_number_update.value {
-            // Only validate if the serial number is actually changing
-            if asset_row.serial_number.as_ref() != Some(new_serial_number) {
-                if AssetRepository::new(connection)
-                    .query_one(
-                        AssetFilter::new()
-                            .id(EqualFilter::not_equal_to(asset_row.id.to_string()))
-                            .serial_number(StringFilter::equal_to(new_serial_number)),
-                    )?
-                    .is_some()
-                {
-                    return Err(UpdateAssetError::SerialNumberAlreadyExists);
-                }
-            }
+    if let Some(serial_number_update) = &input.serial_number
+        && let Some(new_serial_number) = &serial_number_update.value
+    {
+        // Only validate if the serial number is actually changing
+        if asset_row.serial_number.as_ref() != Some(new_serial_number)
+            && AssetRepository::new(connection)
+                .query_one(
+                    AssetFilter::new()
+                        .id(EqualFilter::not_equal_to(asset_row.id.to_string()))
+                        .serial_number(StringFilter::equal_to(new_serial_number)),
+                )?
+                .is_some()
+        {
+            return Err(UpdateAssetError::SerialNumberAlreadyExists);
         }
     }
 
     // Check asset number is unique (on this site)
-    if let Some(asset_number) = &input.asset_number {
-        if !check_asset_number_exists(connection, asset_number, Some(input.id.clone()))?.is_empty()
-        {
-            return Err(UpdateAssetError::AssetNumberAlreadyExists);
-        }
+    if let Some(asset_number) = &input.asset_number
+        && !check_asset_number_exists(connection, asset_number, Some(input.id.clone()))?.is_empty()
+    {
+        return Err(UpdateAssetError::AssetNumberAlreadyExists);
     }
 
     if let Some(location_ids) = &input.location_ids {

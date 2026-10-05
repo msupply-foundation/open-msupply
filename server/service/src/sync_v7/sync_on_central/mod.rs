@@ -416,15 +416,15 @@ pub async fn pull(
         // A pull batch with nothing remaining means the remote has fully caught
         // up: record last_sync (and first_sync on the initial sync). Best-effort.
         // #11784
-        if batch.remaining == 0 {
-            if let Err(e) = crate::site::sync_metadata::record_site_full_pull(
+        if batch.remaining == 0
+            && let Err(e) = crate::site::sync_metadata::record_site_full_pull(
                 &ctx.connection,
                 site.id,
                 input.is_initialising,
                 Utc::now().naive_utc(),
-            ) {
-                log::warn!("Failed to record last_sync for site {}: {:?}", site.id, e);
-            }
+            )
+        {
+            log::warn!("Failed to record last_sync for site {}: {:?}", site.id, e);
         }
 
         Ok(batch)

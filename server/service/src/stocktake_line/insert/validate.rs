@@ -50,16 +50,16 @@ pub fn validate(
         return Err(StocktakeIsLocked);
     }
 
-    if let Some(manufacture_date) = &input.manufacture_date {
-        if !check_date_is_not_in_future(manufacture_date) {
-            return Err(CannotSetManufactureDateInFuture);
-        }
+    if let Some(manufacture_date) = &input.manufacture_date
+        && !check_date_is_not_in_future(manufacture_date)
+    {
+        return Err(CannotSetManufactureDateInFuture);
     }
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
-        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
-            return Err(VvmStatusDoesNotExist);
-        }
+    if let Some(vvm_status_id) = &input.vvm_status_id
+        && check_vvm_status_exists(connection, vvm_status_id)?.is_none()
+    {
+        return Err(VvmStatusDoesNotExist);
     }
 
     let stock_line = if let Some(stock_line_id) = &input.stock_line_id {
@@ -77,14 +77,14 @@ pub fn validate(
     } else {
         None
     };
-    if let Some(stock_line) = &stock_line {
-        if !check_stock_line_is_unique(
+    if let Some(stock_line) = &stock_line
+        && !check_stock_line_is_unique(
             connection,
             &input.stocktake_id,
             &stock_line.stock_line_row.id,
-        )? {
-            return Err(StockLineAlreadyExistsInStocktake);
-        }
+        )?
+    {
+        return Err(StockLineAlreadyExistsInStocktake);
     }
 
     let item_id = check_stock_line_xor_item(&stock_line, input)
@@ -158,11 +158,9 @@ pub fn validate(
 
     if let (Some(counted_number_of_packs), Some(stock_line)) =
         (input.counted_number_of_packs, stock_line.clone())
+        && check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
     {
-        if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
-        {
-            return Err(StockLineReducedBelowZero(stock_line));
-        }
+        return Err(StockLineReducedBelowZero(stock_line));
     }
 
     if let Some(manufacturer_id) = &input.manufacturer_id {
@@ -190,16 +188,16 @@ pub fn validate(
         };
     };
 
-    if let Some(campaign_id) = &input.campaign_id {
-        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
-            return Err(InsertStocktakeLineError::CampaignDoesNotExist);
-        }
+    if let Some(campaign_id) = &input.campaign_id
+        && !check_campaign_exists_including_deleted(connection, campaign_id)?
+    {
+        return Err(InsertStocktakeLineError::CampaignDoesNotExist);
     }
 
-    if let Some(program_id) = &input.program_id {
-        if check_program_exists(connection, program_id)?.is_none() {
-            return Err(InsertStocktakeLineError::ProgramDoesNotExist);
-        }
+    if let Some(program_id) = &input.program_id
+        && check_program_exists(connection, program_id)?.is_none()
+    {
+        return Err(InsertStocktakeLineError::ProgramDoesNotExist);
     }
 
     Ok(GenerateResult {

@@ -37,10 +37,10 @@ pub fn validate_line_movement(
             CommonStockLineError::DatabaseError(error) => DatabaseError(error),
         })?;
 
-    if let Some(source_location) = &stock_line.location_row {
-        if source_location.on_hold {
-            return Err(SourceLocationOnHold(source_location.id.clone()));
-        }
+    if let Some(source_location) = &stock_line.location_row
+        && source_location.on_hold
+    {
+        return Err(SourceLocationOnHold(source_location.id.clone()));
     }
 
     if movement.number_of_packs < 1.0 {
@@ -64,10 +64,10 @@ pub fn validate_line_movement(
         if destination.on_hold {
             return Err(DestinationLocationOnHold(destination.id.clone()));
         }
-        if let Some(restricted_type) = &stock_line.item_row.restricted_location_type_id {
-            if destination.location_type_id.as_ref() != Some(restricted_type) {
-                return Err(IncorrectLocationType);
-            }
+        if let Some(restricted_type) = &stock_line.item_row.restricted_location_type_id
+            && destination.location_type_id.as_ref() != Some(restricted_type)
+        {
+            return Err(IncorrectLocationType);
         }
     }
 

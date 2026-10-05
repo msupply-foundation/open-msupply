@@ -686,16 +686,15 @@ impl SyncTranslation for InvoiceTranslation {
         // Inactive user aren't always synced from mSupply
         // To avoid referential issues we'll create a blank placeholder user
         // If the user is synced later the record will be updated to the correct data
-        if let Some(user_id) = &result.user_id {
-            if UserAccountRowRepository::new(connection)
+        if let Some(user_id) = &result.user_id
+            && UserAccountRowRepository::new(connection)
                 .find_one_by_id(user_id)?
                 .is_none()
-            {
-                UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
-                    id: user_id.clone(),
-                    ..Default::default()
-                })?;
-            }
+        {
+            UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
+                id: user_id.clone(),
+                ..Default::default()
+            })?;
         }
 
         let mut operations = Vec::new();

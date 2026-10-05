@@ -26,10 +26,10 @@ pub fn validate(
         return Err(InvoiceAlreadyExists);
     }
 
-    if let Some(purchase_order_id) = &input.purchase_order_id {
-        if check_purchase_order_exists(purchase_order_id, connection)?.is_none() {
-            return Err(PurchaseOrderDoesNotExist);
-        }
+    if let Some(purchase_order_id) = &input.purchase_order_id
+        && check_purchase_order_exists(purchase_order_id, connection)?.is_none()
+    {
+        return Err(PurchaseOrderDoesNotExist);
     }
 
     let store_pref = get_store_preferences(connection, store_id)?;
