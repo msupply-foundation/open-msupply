@@ -17,7 +17,7 @@ import { validateLoadedModule } from './validate';
  * Discovery → import → validate → register translations → register
  * contributions, per plugin, with EVERY step of every plugin inside its own
  * try/catch. That is the whole design: a plugin cannot fail the app, and it
- * cannot fail a sibling (AC-PLUG-L3). `Promise.allSettled` over the per-plugin
+ * cannot fail a sibling (OMS-REG-PLG-01.4). `Promise.allSettled` over the per-plugin
  * pipeline means a rejected import is a data point, not a control-flow event.
  *
  * `loadPlugins` takes every effect it performs as a dependency so the pipeline

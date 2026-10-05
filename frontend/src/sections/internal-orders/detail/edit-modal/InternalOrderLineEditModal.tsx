@@ -402,7 +402,7 @@ const LineEditContent = (
   // line being edited and its order, as the SDK's published DTOs. ONE memo, so
   // the pair's identity changes only when the line or the order does — and
   // never a remount: advancing with Save & next writes the `line` signal, so
-  // the mounted contributions read a new DTO in place (AC-PLUG-N2).
+  // the mounted contributions read a new DTO in place (OMS-REG-PLG-02.14).
   const infoPanelSlotProps = createMemo<
     InternalOrderLineInfoPanelProps | undefined
   >(() => {
@@ -761,9 +761,9 @@ const LineEditContent = (
               above and the charts below. No wrapper, no heading, no border — an
               invisible seam, so with nothing contributing the editor is
               byte-identical to one built without it (spec/plugins § S1,
-              AC-PLUG-N1). The non-keyed Show hands the outlet the props pair as
+              OMS-REG-PLG-02.12). The non-keyed Show hands the outlet the props pair as
               an ACCESSOR: a new line flows into the live contributions rather
-              than replacing them (AC-PLUG-N2). */}
+              than replacing them (OMS-REG-PLG-02.14). */}
             <Show when={infoPanelSlotProps()}>
               {slotProps => (
                 <PluginSlotOutlet

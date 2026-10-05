@@ -63,7 +63,7 @@ export const demoPluginWidgetContributions: PluginRegionContribution[] = [
  *
  * Its point is the mount counter: switching records must change the facts
  * WITHOUT the mount count moving, because the host may never remount a
- * contribution to give it new props (plugins AC-PLUG-N2).
+ * contribution to give it new props (OMS-REG-PLG-02.14).
  */
 export type DemoPanelRecord = {
   readonly code: string;

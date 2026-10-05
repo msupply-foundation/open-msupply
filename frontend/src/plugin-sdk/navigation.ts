@@ -4,7 +4,7 @@
  * record pages, so plugins never hardcode host routes").
  *
  * This is the route/link half: everything a contribution needs to reach a host
- * screen (AC-PLUG-P3/P4). The typed deep-link builders are the other half
+ * screen (OMS-REG-PLG-04.6/.9). The typed deep-link builders are the other half
  * (./deepLinks.ts): each returns a store-relative path — the store belongs to
  * the host on this surface, which is the whole point of it — so its output is
  * exactly what these two functions take.

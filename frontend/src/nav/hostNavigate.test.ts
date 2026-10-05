@@ -133,7 +133,7 @@ describe('hostNavigate', () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it('recognizes the shown URL through the browser\'s percent-encoding', () => {
+  it("recognizes the shown URL through the browser's percent-encoding", () => {
     // After a document navigation the browser reports `location` in encoded
     // form (`"` as `%22`), while the module-scope caller re-runs and produces
     // the same RAW href. A string comparison would miss the match on every
@@ -174,7 +174,7 @@ describe('hostNavigate', () => {
 /*
  * The seam ShellLayout binds — the half neither suite covered while the
  * adapter was an inline lambda there, and the half a nested mount depends on
- * (AC-PLUG-P3/P4).
+ * (OMS-REG-PLG-04.6/.9).
  *
  * `resolve: false` is the whole content of the adapter, and dropping it fails
  * ONLY on a nested mount: the router would resolve an already-resolved href
