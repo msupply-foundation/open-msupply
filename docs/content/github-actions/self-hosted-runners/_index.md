@@ -253,7 +253,7 @@ Error: missing field `source_site_id` at line 11 column 3
 unnoticed. Fixing `reference1` is a one-line `#[serde(default)]` plus a
 re-export, and is a server change rather than a CI one.
 
-**Three labels carry a deployment's whole record**, so there is nothing to keep
+**A few labels carry a deployment's whole record**, so there is nothing to keep
 in step with it and no settings page to configure per deployment:
 
 | label | |
@@ -261,16 +261,17 @@ in step with it and no settings page to configure per deployment:
 | `oms.branch` | the branch it follows, so a push to that branch updates it. Empty means pinned to a tag or a commit, and no push will touch it. |
 | `oms.expires` | when `docker-expire.yaml` may reap it, or `never` |
 | `oms.profile` | `release` or `debug`, so an auto-update rebuilds it the same way it was built before |
+| `oms.central` | whether it is a central server, so a redeploy cannot quietly demote it |
+| `oms.actor` | who asked for the last deploy, for the dashboard. Informational; nothing reads it back. |
 
-`docker-named-deployment.yaml` reads all three back off the containers, which is
-why its planning job runs on this box rather than a GitHub-hosted runner. A push
+The plan job in `docker-named-deployment.yaml` reads them back off the
+containers, which is why it runs on this box rather than a GitHub-hosted runner. A push
 carries no inputs, so the deployment itself is the only place those answers can
 come from.
 
-They are written by `docker/compose.deploy.yaml` **as of the ref being
-deployed**, not by whatever is on the default branch — so a deployment following
-a branch that predates a label will not carry it, and will keep taking the
-default until that branch has the change.
+They are written by `docker/compose.deploy.yaml` **as of the commit whose workflow is running**, not the commit being deployed: develop's copy for a dispatch, the pushed commit's for a push, the merge commit's for a preview. So a deployment following a branch that predates a label will not carry it until that branch merges develop, but anything dispatched from the form or the dashboard gets develop's labels.
+
+Older release images get overrides layered on top — `docker/compose.deploy.pre-*.yaml` — picked from a hardcoded version table (`deployContract` in `.github/scripts/deploy-plan.js`; the table is spelled out in `docs/content/docker`). Deploy any release or RC tag from v2.17.03 on by name and it runs (earlier ones only published sqlite images, which this pipeline does not run); a *branch* older than v3.04 cannot be built by this pipeline, so use its tags. Which sample dataset loads on which version, and which can be central, is not checked by the workflows — the deployments dashboard knows, and offers only what works.
 
 **`docker-expire.yaml` sweeps expired deployments daily**, reading the
 `oms.expires` label off each container. Its job summary lists everything
@@ -278,18 +279,14 @@ currently deployed and when each expires — the quickest answer to "what is
 running on this box", since the Environments page shows what *was* deployed
 rather than what is still up. Run it with `dry_run` to see what it would reap.
 
-Teardown also deletes the deployment's GitHub environment, which needs
-**Administration: write** — a scope `GITHUB_TOKEN` does not have. It uses the
-same `tmf-ci-bot` App as the JIT runner config above rather than a PAT, so
-nothing new needs provisioning; if the App lacks that permission the teardown
-still succeeds and the empty environment simply lingers in settings.
+Teardown marks the deployment's GitHub deployments **inactive**, which clears the "Active" badge and the dead link, using `deployments: write` on `GITHUB_TOKEN`. It does not delete the environment itself — that needs Administration: write — so the empty environment row lingers in settings. See the teardown job in `docker-pr-preview.yaml` for the reasoning.
 
 ### Setting up the deploy box's reverse proxy
 
 **One-off, by hand, and deliberately not owned by CI.** The proxy fronts every
-deployment on the box, so a bad config takes all of them down at once — and
-`docker-deploy.yaml` checks out the *pull request's* ref, so a CI-owned proxy
-would let one PR break every other deployment.
+deployment on the box, so a bad config takes all of them down at once. A
+CI-owned proxy would be rolled out by whichever deploy happened to run next,
+rather than by someone choosing to change it and watching.
 
 Its two files live in **`proxy/`, beside this page**, not in `docker/`:
 everything in `docker/` is an input to a workflow, and these are steps in this
@@ -446,6 +443,120 @@ needs everything in the list.
 
 The only rule either way: a lane somewhere must carry each label, or the
 matching jobs queue for ever with no error.
+
+### The deployments dashboard
+
+**One-off, by hand, like the proxy above, and for the same reason.** It fronts every deployment at once, so changing it should be someone's deliberate act rather than a side effect of the next deploy.
+
+It does two jobs. It answers *my pull request merged, is it up yet?* by showing, for every deployment on the box, the commit that is actually running, its subject line, how far behind its branch it is, and whether a deploy is in flight right now. And it lets QA and product **start, extend, reseed and remove servers themselves**, without the GitHub dispatch form.
+
+| file, in `dashboard/` beside this page | |
+|---|---|
+| `compose.dashboard.yaml` | the two containers, the shared volume and the edge network |
+| `snapshot.mjs` | reads the docker socket, writes one JSON file |
+| `web.mjs` | signs people in with GitHub, serves them the JSON with GitHub's view of each deployment added, and turns a click into a workflow dispatch |
+| `index.html` | the page |
+
+Reference copies, like the proxy's — the box's own are authoritative.
+
+Like everything behind the proxy, it is reachable from the office network and the VPN only — and on top of that, **it shows nothing until you sign in with GitHub**, and only to accounts that can see this repository.
+
+#### Two containers, and why the split matters
+
+`snapshot` has the docker socket and no listener. `dashboard` has a listener and no docker socket. They share one named volume holding one JSON file.
+
+That split is the whole security design, and it is not optional: **anything holding `/var/run/docker.sock` has root on the box.** Mounting it `:ro` restricts the socket *file*, not the API behind it, so it buys nothing. Because the serving container never has it, there is no request path at all from a browser to the daemon, even on a trusted network.
+
+`snapshot` also never talks to GitHub, so it runs with `network_mode: none`: the container that holds root on the box has no network to reach anything with. Everything GitHub knows is looked up by `dashboard`.
+
+#### It needs no proxy configuration
+
+The Caddyfile already routes the first label of the hostname to a container of that name on port 8000, and that is a pure function — so a container named `dashboard` on `oms-edge` is served at `dashboard.<DEPLOY_DOMAIN>` with no route added and nothing reloaded. Two things follow:
+
+- **The listener must be on 8000.** The proxy dials `<name>:8000` for everything; a dashboard on `:80` is a 502 on a container that is plainly up.
+- **The box's own services are reserved names.** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action — a teardown is `docker compose -p <name> down -v`, so tearing down `oms-proxy` would take every deployment off the air. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
+
+#### Standing it up
+
+Copy all four files into a directory of their own — they must stay together, because the compose file mounts `./snapshot.mjs`, `./web.mjs` and `./index.html` relative to itself:
+
+```bash
+mkdir -p ~/docker-compose/dashboard && cd ~/docker-compose/dashboard   # + the four files
+cat > .env <<'EOF'
+DEPLOY_DOMAIN=preview.example.com
+GITHUB_REPOSITORY=msupply-foundation/open-msupply-internal
+GITHUB_CLIENT_ID=Iv23li...
+GITHUB_CLIENT_SECRET=...
+DASHBOARD_URL=https://dashboard.preview.example.com
+EOF
+chmod 600 .env
+docker compose -f compose.dashboard.yaml up -d
+```
+
+Then open `https://dashboard.<DEPLOY_DOMAIN>`.
+
+`DEPLOY_DOMAIN` is only used to build the links to each deployment, and must match the proxy's copy and the repository variable.
+
+**There is no token on the box.** Everything the dashboard asks GitHub — commit subjects, "3 commits behind", "deploying now", and the dispatches behind the buttons — is asked with the token of the person signed in. People sign in through a GitHub App; without `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` nobody can, and the page shows nothing. The client secret is the one credential in `.env`, and on its own it cannot read or change anything: it only completes a sign-in that a person started and approved.
+
+Create the App once, under the organisation (**Settings → Developer settings → GitHub Apps → New GitHub App**):
+
+- **Callback URL:** `https://dashboard.<DEPLOY_DOMAIN>/auth/callback`, and the same as `DASHBOARD_URL` in `.env`. GitHub refuses a sign-in whose callback the App does not list, so a mismatch fails loudly. Add `http://localhost:8000/auth/callback` too if you want to try it locally.
+- **Expire user authorization tokens:** on (the default). Tokens last 8 hours, so people sign in again once a working day.
+- **Webhook:** off. **Where can it be installed:** only this account.
+- **Repository permissions:** `Actions: Read and write` for the buttons; `Contents: Read-only` for commit subjects and "commits behind"; `Deployments: Read-only` for "deploying now"; `Metadata: Read-only`, which GitHub adds itself. Nothing else.
+- Then **Install App** on the organisation, for this repository only, and **Generate a new client secret**. The Client ID and that secret go in `.env`.
+
+A signed-in person's token can do only what the App is allowed *and* they are allowed. It cannot touch anything outside this repository, unlike an OAuth App token, which would carry the whole `repo` scope.
+
+**Who gets in.** Any GitHub account can authorize an App, so being signed in proves nothing by itself: after sign-in, `web.mjs` asks GitHub for the repository with the new token, and refuses the session if GitHub will not show it. Read access shows the page; write access adds the buttons. A read-only person sees no buttons, and if they tried anyway GitHub would refuse the dispatch.
+
+**Whose API budget.** The lookups run on a clock (`ENRICH_SECONDS`, default 60) with whichever signed-in viewer's request happens to start the round, and the results are cached and shown to everyone signed in — all of whom have read access to the same repository, so nobody sees anything they could not. A round is a few dozen calls against that person's 5000/hour, and when nobody has the page open nothing calls GitHub at all. `TICK_SECONDS` and `DF_SECONDS` move `snapshot`'s two docker clocks.
+
+#### Where its answers come from
+
+Every field is read off the container, which is the whole reason this is cheap to run — nothing new is recorded anywhere, and there is no state to reconcile or lose:
+
+| on the page | from |
+|---|---|
+| name, URL | the container name, which is also the compose project and the hostname's first label |
+| commit | the image tag — `imageRef` in `.github/scripts/deploy-plan.js` builds it as `<name>-<sha7>-<db>-<arch>` |
+| follows, profile, central, expires | the `oms.*` labels — see `docker/compose.deploy.yaml` |
+| deployed *n* minutes ago | the container's creation time; a redeploy recreates it, so this is when it last deployed |
+| disk | `/system/df`, summed over the `<project>_*` volumes |
+| commit subject, commits behind | the GitHub API, as the signed-in viewer |
+| deploying now / last deploy failed | GitHub's deployment records, which `docker-deploy.yaml` already creates via its `environment:` key |
+
+"By …" is the `oms.actor` label — whoever clicked, pushed or dispatched, as GitHub knows them — and falls back to the commit's author on deployments from before that label existed.
+
+#### How the buttons work
+
+A button does not deploy anything. It asks `web.mjs` to **dispatch the workflow that already owns the action** — `docker-named-deployment.yaml` or `docker-pr-preview.yaml` — on `develop`, with the same inputs the GitHub form takes. So a click is an ordinary run: it has a log, it creates the GitHub deployment record that turns the card's pill to "deploying…", and it can do nothing the form could not.
+
+That keeps one writer. A deployment's configuration is re-derived from its labels on every deploy, so a second thing writing to containers is how those would drift. Docker labels are also immutable on a running container — there is no `docker container update --label` — so even "extend the expiry" is a redeploy. Every button passes `keep` for the server type and the build, so extending or reseeding a central or debug server leaves it as it was.
+
+| button | dispatches |
+|---|---|
+| **New server** | `docker-named-deployment.yaml`, `action: deploy`. The form asks *what do you want to test?* — a release, an open pull request, the latest develop, or a branch, tag or commit by name — and turns the answer into the `ref` (a pull request deploys its branch, so it follows the PR). It suggests a name from that, never one already in use, and refuses `pr-<n>` and `dashboard`. It then asks how the server should start: **with example data** (`dataset: default`; ready to log in to, but seeding turns sync off for good) or **empty, ready to sync** (`dataset: none`), and — only for an empty one, since it only matters to something that syncs — whether it runs as a remote site or the central server. The role shows what an existing server already is and is sent as `keep` unless someone changes it, so redeploying a central server cannot demote it. The build is always sent explicitly: `release` for a tag, so it uses the published image, and `debug` for anything that has to be built, unless *More options* says otherwise. Which example dataset is under *More options* too. |
+| **Extend 7 days** | the same, at whatever the server is running now — its branch, tag or commit — with `days: 7` |
+| **Reseed** | `action: reseed`, keeping the current expiry |
+| **Remove** | `action: teardown`; for a preview, `docker-pr-preview.yaml` with `action: teardown` |
+
+**Who clicked is GitHub's answer, not the page's.** The run is started with the signed-in person's own token, so GitHub shows them as the one who ran it, and `docker-deploy.yaml` records `github.triggering_actor` as `oms.actor` — there is no input to put anyone else's name there. `docker logs dashboard` also has a line per dispatch, with the GitHub login.
+
+Sessions are held in memory in `web.mjs`, and the token never reaches the browser, which only gets an opaque `HttpOnly` cookie. Recreating the container signs everyone out; that is the whole cost of keeping no store.
+
+**Other web pages cannot drive it.** Being signed in does not mean any page a colleague has open can post as them. The session cookie is `SameSite=Lax`, so a cross-site POST does not carry it, and independently `web.mjs` requires a custom header, which a cross-site form cannot send and a cross-site `fetch` cannot send without a preflight that the server never answers.
+
+#### Editing it
+
+`snapshot.mjs`, `web.mjs` and `index.html` are all single-*file* bind mounts, and docker binds a file by inode — so editing in place needs a recreate, not a restart. Exactly the same trap as the live `proxy.Caddyfile`:
+
+```bash
+docker compose -f compose.dashboard.yaml up -d --force-recreate
+```
+
+The page itself is only re-fetched by the browser, so a change to `index.html` needs no more than a reload once the container has been recreated.
 
 ## systemd template
 

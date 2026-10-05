@@ -1,0 +1,1278 @@
+<!doctype html>
+<!--
+  The deployments dashboard.
+
+  One file, no build step, no dependencies and no CDN - the deploy box is not
+  required to have egress to the internet for this page to render, and a
+  dashboard that breaks when a CDN does is worse than no dashboard.
+
+  It shows nothing until you sign in with GitHub. Then it polls
+  `api/deployments` - snapshot.mjs's view of the containers, with what GitHub
+  knows about each added by web.mjs using your own token. Its buttons do not change anything themselves: each one asks web.mjs to
+  dispatch the workflow that already owns that action, on `develop`, as the person
+  signed in - so a click here is an ordinary run with its own log, under their
+  own name. See the note above `dispatch()`. With read-only access to the
+  repository there are no buttons.
+
+  The page is organised around one question, because it is the one people
+  actually open it for: "I just merged; is it up yet?" That is why the commit
+  and its subject line are the largest thing in each row, why the freshness pill
+  sits at the end of the same line rather than in a column further right, and
+  why `develop` is pinned to the top.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>omSupply deployments</title>
+<!-- Inline so the page stays a single file with no second request, and so a
+     pinned tab is identifiable at a glance. Currentcolor-free: a favicon is
+     rendered outside the page, where the theme variables do not reach. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%2322c55e'/%3E%3C/svg%3E">
+<style>
+  /* Palette deliberately shared with the proxy's "Nothing deployed here" page,
+     which is the other thing a person lands on while looking for a deployment.
+     Two pages about the same subject should not look like two products. */
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f4f5;
+    --card: #ffffff;
+    --text: #18181b;
+    --muted: #71717a;
+    --line: #e4e4e7;
+    --chip: #f4f4f5;
+    --good: #15803d;
+    --good-bg: #dcfce7;
+    --warn: #b45309;
+    --warn-bg: #fef3c7;
+    --bad: #b91c1c;
+    --bad-bg: #fee2e2;
+    --busy: #1d4ed8;
+    --busy-bg: #dbeafe;
+    /* mSupply orange - the app's own primary (client/packages/common/src/styles/theme.ts),
+       so the page reads as part of the same product. Interactive things only:
+       the status colours above keep their meanings. */
+    --accent: #e95c30;
+    --accent-text: #c43c11;
+    --accent-bg: #fdece6;
+    --on-accent: #ffffff;
+    --dim: #52525b;
+    --dim-bg: #f4f4f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #18181b;
+      --card: #212124;
+      --text: #e4e4e7;
+      --muted: #a1a1aa;
+      --line: #2f2f33;
+      --chip: #27272a;
+      --good: #4ade80;
+      --good-bg: #14321f;
+      --warn: #fbbf24;
+      --warn-bg: #3a2c0a;
+      --bad: #f87171;
+      --bad-bg: #3d1616;
+      --busy: #60a5fa;
+      --busy-bg: #14263f;
+      /* The theme's lighter orange, and dark text on it, to keep the contrast. */
+      --accent: #ed7d59;
+      --accent-text: #ed7d59;
+      --accent-bg: #3a2018;
+      --on-accent: #18181b;
+      --dim: #a1a1aa;
+      --dim-bg: #27272a;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  /* The script shows and hides things with the `hidden` attribute, and the
+     browser's own `[hidden] { display: none }` loses to any rule that sets
+     `display` - `#who { display: flex }` would keep "signed in as" on screen
+     for someone who is not. */
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    padding: 0 1rem env(safe-area-inset-bottom, 0px);
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 62rem; margin: 0 auto; padding: 2rem 0 4rem; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  a { color: inherit; }
+
+  header { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: baseline; margin-bottom: 1.25rem; }
+  h1 { font-size: 1.35rem; margin: 0; letter-spacing: -.01em; }
+  .domain { color: var(--muted); font-size: .85rem; }
+  .spacer { flex: 1 1 auto; }
+  .updated { color: var(--muted); font-size: .8rem; white-space: nowrap; }
+
+  #filter {
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: .6rem .75rem;
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    background: var(--card);
+    color: var(--text);
+    font: inherit;
+  }
+  #filter:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  .banner {
+    margin-bottom: 1rem; padding: .6rem .8rem; border-radius: .5rem;
+    font-size: .85rem; background: var(--warn-bg); color: var(--warn);
+  }
+  .banner.bad { background: var(--bad-bg); color: var(--bad); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: .6rem;
+    padding: .85rem 1rem;
+    margin-bottom: .6rem;
+  }
+
+  /* Line 1 - identity */
+  .top { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+  .dot { width: .6rem; height: .6rem; border-radius: 50%; flex: none; background: var(--muted); }
+  .dot.good { background: var(--good); }
+  .dot.warn { background: var(--warn); }
+  .dot.bad { background: var(--bad); }
+  .dot.busy { background: var(--busy); }
+  .name { font-size: 1.05rem; font-weight: 600; text-decoration: none; letter-spacing: -.01em; }
+  .name:hover { text-decoration: underline; }
+  .tag {
+    font-size: .7rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
+    padding: .12rem .4rem; border-radius: .25rem; background: var(--chip); color: var(--muted);
+  }
+  .tag.central { background: var(--busy-bg); color: var(--busy); }
+  .tag.debug { background: var(--warn-bg); color: var(--warn); }
+
+  /* Line 2 - the commit. The reason the page exists, so it gets the room. */
+  .commit {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem;
+    margin: .55rem 0 .35rem;
+  }
+  .sha {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .85rem; font-weight: 600;
+    padding: .15rem .4rem; border-radius: .25rem;
+    background: var(--chip); text-decoration: none; flex: none;
+  }
+  .sha:hover { text-decoration: underline; }
+  .subject { font-size: .95rem; min-width: 0; overflow-wrap: anywhere; }
+  .subject.none { color: var(--muted); font-style: italic; }
+  .pill {
+    font-size: .75rem; font-weight: 600; padding: .15rem .5rem; border-radius: 1rem;
+    text-decoration: none; white-space: nowrap; flex: none;
+  }
+  .pill.good { background: var(--good-bg); color: var(--good); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .pill.busy { background: var(--busy-bg); color: var(--busy); }
+  .pill.dim { background: var(--dim-bg); color: var(--dim); }
+  /* The one animated thing on the page, and only while something is genuinely
+     in flight - it is the state a person is waiting on. */
+  .pill.busy { animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  @media (prefers-reduced-motion: reduce) { .pill.busy { animation: none; } }
+
+  /* Line 3 - everything else, deliberately quiet */
+  .meta { color: var(--muted); font-size: .8rem; display: flex; flex-wrap: wrap; gap: .1rem .5rem; }
+  .meta a { color: var(--muted); }
+  .meta .sep { opacity: .45; }
+
+  .empty { color: var(--muted); text-align: center; padding: 3rem 0; }
+
+  /* Actions. Quiet by default - the page is still mostly for reading - and only
+     present for someone signed in with write access. */
+  button, .btn {
+    font: inherit; font-size: .8rem; font-weight: 600;
+    padding: .3rem .65rem; border-radius: .4rem; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); color: var(--text);
+  }
+  button:hover { border-color: var(--muted); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button:disabled { opacity: .5; cursor: progress; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  button.danger { color: var(--bad); }
+  .buttons { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+
+  #who { display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--muted); }
+  a.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  #gate p { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; }
+  #who strong { color: var(--text); font-weight: 600; }
+  a.btn { text-decoration: none; display: inline-block; }
+  a.btn:hover { border-color: var(--muted); }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: .6rem;
+    padding: 1rem; margin-bottom: 1rem;
+  }
+  .panel h2 { font-size: 1rem; margin: 0 0 .75rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .75rem 1rem; }
+  label.field { display: flex; flex-direction: column; gap: .25rem; font-size: .8rem; font-weight: 600; }
+  label.field small { font-weight: 400; color: var(--muted); }
+  input[type=text], input[type=number], select {
+    font: inherit; font-size: .9rem; padding: .4rem .55rem; border-radius: .4rem;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text); min-width: 0;
+  }
+  .panel .buttons { margin-top: 1rem; }
+
+  /* The new-server form. Big targets and plain words: it is for people who do
+     not live in git, and the first thing it asks is what they want to test. */
+  .formhead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+  .formhead h2 { margin: 0; }
+  fieldset.step { border: 0; padding: 0; margin: 0 0 1.4rem; min-width: 0; }
+  fieldset.step legend { display: flex; align-items: center; gap: .5rem; padding: 0; margin-bottom: .6rem; font-weight: 600; font-size: .95rem; }
+  .num {
+    display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; flex: none;
+    border-radius: 50%; background: var(--accent-bg); color: var(--accent-text); font-size: .75rem;
+  }
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .5rem; margin-bottom: .75rem; }
+  .choice {
+    position: relative; display: flex; flex-direction: column; gap: .2rem; cursor: pointer;
+    padding: .7rem .8rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--bg);
+  }
+  .choice:hover { border-color: var(--muted); }
+  .choice strong { font-size: .9rem; }
+  .choice small { color: var(--muted); font-size: .78rem; line-height: 1.35; }
+  .choice.unavailable { opacity: .45; cursor: not-allowed; }
+  .choice:has(input:checked) { border-color: var(--accent); background: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); }
+  .choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Visually hidden, still focusable and still a real radio for the keyboard. */
+  .choice input, .chips input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+  .pick select, .pick input, #newForm input[name=name] { width: 100%; }
+  .pick select[size] { margin-top: .4rem; padding: .25rem; }
+  .pick select[size] option { padding: .3rem .35rem; border-radius: .25rem; }
+  input[type=search] {
+    font: inherit; font-size: .9rem; padding: .4rem .55rem; border-radius: .4rem;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text); min-width: 0;
+  }
+  .note { min-height: 1.3em; margin-top: .35rem; font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+  /* The data step's note is often blank; reserving its line leaves a hole. */
+  #dataNote:empty { display: none; }
+  .note.good { color: var(--good); }
+  .note.warn { color: var(--warn); }
+  .note.bad { color: var(--bad); }
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .chips label { position: relative; cursor: pointer; }
+  .chips span {
+    display: inline-block; padding: .35rem .8rem; border: 1px solid var(--line); border-radius: 1rem;
+    background: var(--bg); font-size: .85rem;
+  }
+  .chips label:hover span { border-color: var(--muted); }
+  .chips input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .chips input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .choices.two { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  .role { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .75rem; font-size: .85rem; color: var(--muted); }
+  details.more { margin: -.4rem 0 1.2rem; font-size: .85rem; }
+  details.more summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+  details.more .grid { margin-top: .75rem; }
+  .formfoot { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  .summary { flex: 1 1 18rem; margin: 0; font-size: .9rem; }
+  button.big { font-size: .95rem; padding: .55rem 1.1rem; }
+  /* A server that has been asked for but has no container yet. */
+  .card.starting { border-style: dashed; }
+
+  /* What a click did, in the page rather than floating over it. Kept until
+     dismissed, so a result is never missed while looking elsewhere. */
+  .banner.good { background: var(--good-bg); color: var(--good); }
+  .banner.notice { display: flex; align-items: baseline; gap: .75rem; }
+  .banner.notice .text { flex: 1; }
+  .banner.notice a { color: inherit; font-weight: 600; }
+  .banner.notice .dismiss {
+    background: none; border: 0; padding: 0 .2rem; color: inherit;
+    font-size: 1.1rem; line-height: 1; cursor: pointer; opacity: .7;
+  }
+  .banner.notice .dismiss:hover { opacity: 1; }
+  footer { color: var(--muted); font-size: .78rem; margin-top: 1.5rem; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>omSupply deployments</h1>
+    <span class="domain" id="domain"></span>
+    <span class="spacer"></span>
+    <!-- Signed out: a link to GitHub's sign-in. Signed in: who, and a way out.
+         Hidden entirely when web.mjs has no GitHub App to sign in through. -->
+    <a id="signIn" class="btn" href="auth/login" hidden>Sign in with GitHub</a>
+    <span id="who" hidden>signed in as <strong id="whoName"></strong> <button id="signOut" type="button">Sign out</button></span>
+    <button id="newToggle" class="primary" hidden>New server</button>
+    <span class="updated" id="updated">loading…</span>
+  </header>
+
+  <!-- A named deployment, by dispatch. It asks "what do you want to test?" in
+       the words QA and product use, and works the git-shaped inputs - the ref,
+       a name that is a DNS label - out from the answer. The rest of
+       docker-named-deployment.yaml's form is under "More options" with that
+       form's defaults, so the two cannot mean different things. -->
+  <form id="newForm" class="panel" hidden autocomplete="off" novalidate>
+    <div class="formhead">
+      <h2>Start a test server</h2>
+      <button type="button" id="newCancel">Cancel</button>
+    </div>
+
+    <fieldset class="step">
+      <legend><span class="num">1</span> What do you want to test?</legend>
+      <div class="choices">
+        <label class="choice"><input type="radio" name="source" value="release" checked>
+          <strong>A release</strong><small>A published version, like v3.04.00. Stays exactly as it is.</small></label>
+        <label class="choice"><input type="radio" name="source" value="pr">
+          <strong>A pull request</strong><small>Work in progress. Updates itself whenever the pull request does.</small></label>
+        <label class="choice"><input type="radio" name="source" value="develop">
+          <strong>Latest develop</strong><small>Everything merged so far. Updates itself on every merge.</small></label>
+        <label class="choice"><input type="radio" name="source" value="other">
+          <strong>Something else</strong><small>A branch, tag or commit, by name.</small></label>
+      </div>
+      <div class="pick" data-for="release">
+        <label class="field">Version
+          <input id="tagFilter" type="search" placeholder="Search versions, e.g. 3.04 or RC" spellcheck="false">
+        </label>
+        <select name="release" size="6" aria-label="Version"><option value="" disabled>loading…</option></select>
+      </div>
+      <div class="pick" data-for="pr" hidden>
+        <label class="field">Pull request
+          <input id="prFilter" type="search" placeholder="Search by number, title, author or branch" spellcheck="false">
+        </label>
+        <select name="pr" size="6" aria-label="Pull request"><option value="" disabled>loading…</option></select>
+        <div class="note">Nothing to configure? Add the <code>deploy</code> label to the pull request instead, for its standard preview.</div>
+      </div>
+      <div class="pick" data-for="other" hidden>
+        <label class="field">Branch, tag or commit
+          <input name="ref" type="text" placeholder="e.g. fe/692-android-open-document" spellcheck="false" autocapitalize="off">
+          <small>A branch updates the server on every push to it. A tag or a commit stays put.</small>
+        </label>
+      </div>
+    </fieldset>
+
+    <!-- The data question, promoted out of "More options" because it is the
+         one that decides whether the server can sync at all: seeding from a
+         sample dataset turns sync off for good. The server's role is only
+         asked for an empty server: it only matters to something that syncs. -->
+    <fieldset class="step">
+      <legend><span class="num">2</span> How should it start?</legend>
+      <div class="choices two">
+        <label class="choice"><input type="radio" name="data" value="example" checked>
+          <strong>With example data</strong><small>Ready straight away, with sample stores, items and users to log in with. It cannot sync with anything.</small></label>
+        <label class="choice"><input type="radio" name="data" value="empty">
+          <strong>Empty, ready to sync</strong><small>No data and no users. When you first open it, it asks for the details to sync with your mSupply or Open mSupply central server.</small></label>
+      </div>
+      <div class="role" id="role" hidden>
+        <span>It runs as</span>
+        <div class="chips">
+          <label><input type="radio" name="role" value="remote" checked><span>A remote site</span></label>
+          <label><input type="radio" name="role" value="central"><span>The central server</span></label>
+        </div>
+      </div>
+      <div id="dataNote" class="note" aria-live="polite"></div>
+    </fieldset>
+
+    <fieldset class="step">
+      <legend><span class="num">3</span> Name it</legend>
+      <input name="name" type="text" aria-label="Server name" spellcheck="false" autocapitalize="off" maxlength="32">
+      <div id="nameNote" class="note" aria-live="polite"></div>
+    </fieldset>
+
+    <fieldset class="step">
+      <legend><span class="num">4</span> How long do you need it?</legend>
+      <div class="chips">
+        <label><input type="radio" name="days" value="1"><span>1 day</span></label>
+        <label><input type="radio" name="days" value="3"><span>3 days</span></label>
+        <label><input type="radio" name="days" value="7" checked><span>1 week</span></label>
+        <label><input type="radio" name="days" value="14"><span>2 weeks</span></label>
+        <label><input type="radio" name="days" value="30"><span>30 days</span></label>
+        <label><input type="radio" name="days" value="0"><span>Until I remove it</span></label>
+      </div>
+    </fieldset>
+
+    <details class="more">
+      <summary>More options</summary>
+      <div class="grid">
+        <label class="field">Which example data
+          <select name="dataset">
+            <option value="default" selected>Automatic - the one that loads on the version</option>
+            <option value="e2e">e2e - v3.01 and later</option>
+            <option value="reference1">reference1 - before v3.00</option>
+          </select>
+          <small>Only with example data.</small>
+        </label>
+        <label class="field">Build
+          <select name="profile">
+            <option value="auto" selected>Automatic - release for a release, debug for anything that needs building</option>
+            <option value="release">Release - slow to build, what ships</option>
+            <option value="debug">Debug - quick to build, slower to run</option>
+          </select>
+          <small>A release is already built, so it starts in minutes. Asking for debug builds it from scratch instead.</small>
+        </label>
+      </div>
+    </details>
+
+    <div class="formfoot">
+      <p id="summary" class="summary" aria-live="polite"></p>
+      <button type="submit" class="primary big">Start server</button>
+    </div>
+  </form>
+
+  <!-- Everything below the header needs a sign-in; this is what shows instead. -->
+  <div id="gate" class="panel" hidden>
+    <h2>Sign in to see what is deployed</h2>
+    <p id="gateText">This dashboard uses your GitHub account to look up deployments and to start servers, so it only works signed in.</p>
+    <a class="btn primary" href="auth/login">Sign in with GitHub</a>
+  </div>
+
+  <input id="filter" type="search" placeholder="Filter by name, branch, commit, PR number or commit message…  (press /)" autocomplete="off" spellcheck="false">
+
+  <!-- Results of clicks. Separate from #banners, which render() rebuilds on
+       every refresh and would wipe these. -->
+  <div id="notices" aria-live="polite"></div>
+  <div id="banners"></div>
+  <div id="list"></div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+};
+
+let snapshot = null;
+let filter = '';
+// From web.mjs: whether anyone can sign in, who has, and whether they may
+// change things or only look.
+let config = { signIn: false, user: null, canWrite: false, repo: null };
+const canAct = () => Boolean(config.user && config.canWrite);
+// Deployments with a dispatch request on its way, so their buttons stay
+// disabled across the once-a-second re-render.
+const pending = new Set();
+
+// --- formatting -------------------------------------------------------------
+
+function ago(iso) {
+  if (!iso) return null;
+  const s = (Date.now() - Date.parse(iso)) / 1000;
+  if (!isFinite(s)) return null;
+  if (s < 45) return 'just now';
+  let v = s / 60, label = 'minute';
+  for (const [step, next] of [[60, 'hour'], [24, 'day'], [7, 'week']]) {
+    if (v < step) break;
+    v /= step; label = next;
+  }
+  const n = Math.round(v);
+  return `${n} ${label}${n === 1 ? '' : 's'} ago`;
+}
+
+function until(iso) {
+  const ms = Date.parse(iso) - Date.now();
+  if (!isFinite(ms)) return null;
+  const days = ms / 86400000;
+  if (days >= 2) return `expires in ${Math.round(days)} days`;
+  if (ms > 0) return `expires in ${Math.max(1, Math.round(ms / 3600000))}h`;
+  return 'expired, awaiting sweep';
+}
+
+function bytes(n) {
+  if (typeof n !== 'number') return null;
+  const u = ['B', 'kB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  while (n >= 1000 && i < u.length - 1) { n /= 1000; i++; }
+  return `${n < 10 && i > 0 ? n.toFixed(1) : Math.round(n)} ${u[i]}`;
+}
+
+const short = sha => (sha || '').slice(0, 7);
+
+// --- the two judgements the page makes --------------------------------------
+
+/** Is the container itself alive and well? */
+function dotTone(d) {
+  if (d.state !== 'running') return 'bad';
+  if (d.health === 'unhealthy') return 'warn';
+  if (d.health === 'starting') return 'busy';
+  return 'good';
+}
+
+/**
+ * Is what is RUNNING the thing you are looking for?
+ *
+ * Ordered by what displaces what. A deploy in flight outranks everything
+ * because it is about to change the answer; a failed deploy outranks the
+ * commit distance because "3 commits behind" is misleading when the truth is
+ * "it tried to catch up and could not".
+ */
+function freshness(d) {
+  const dep = d.deploy;
+  if (dep?.inFlight) {
+    return { tone: 'busy', text: `deploying ${short(dep.sha)}…`, url: dep.runUrl };
+  }
+  // `dep.sha` is the full 40; `d.sha` is the 7 recovered from the image tag.
+  const attemptIsRunning = dep && dep.sha && d.sha && dep.sha.startsWith(d.sha);
+  if (dep && (dep.state === 'failure' || dep.state === 'error') && !attemptIsRunning) {
+    return { tone: 'bad', text: 'last deploy failed', url: dep.runUrl };
+  }
+  if (!d.branch) return { tone: 'dim', text: 'pinned', url: null };
+  if (d.behind === 0) return { tone: 'good', text: `up to date with ${d.branch}`, url: null };
+  if (typeof d.behind === 'number' && d.behind > 0) {
+    return {
+      tone: 'warn',
+      text: `${d.behind} commit${d.behind === 1 ? '' : 's'} behind ${d.branch}`,
+      url: d.compareUrl,
+    };
+  }
+  return { tone: 'dim', text: `follows ${d.branch}`, url: null };
+}
+
+/**
+ * Links out to GitHub. The buttons that change things are in `buttons()`.
+ * There is no link to the workflow form for people without them: the only
+ * people without buttons are read-only, and the form would refuse them too.
+ */
+function actions(d, repo) {
+  if (!repo) return [];
+  const out = [];
+  if (d.kind === 'preview') out.push(['pull request', `https://github.com/${repo}/pull/${d.pr}`]);
+  out.push(['history', `https://github.com/${repo}/deployments/${encodeURIComponent(d.name)}`]);
+  return out;
+}
+
+// --- dispatching -------------------------------------------------------------
+
+/**
+ * Ask web.mjs to start a workflow run. It dispatches on `develop`, so the run uses
+ * develop's deploy logic whatever the deployment is built from.
+ *
+ * The page does not wait for the deploy: the run takes minutes, and the
+ * snapshot already reports it - GitHub's deployment record goes in_progress,
+ * and the card's pill turns to "deploying…" within a minute.
+ */
+async function dispatch(kind, body, button, key = body.name || `pr-${body.pr}`) {
+  if (button) button.disabled = true;
+  pending.add(key);
+  try {
+    const res = await fetch(`api/${kind}`, {
+      method: 'POST',
+      // The custom header is what web.mjs uses to tell this page from any
+      // other page in the same browser - see the header of web.mjs.
+      headers: { 'content-type': 'application/json', 'x-dashboard': '1' },
+      // No name: web.mjs dispatches with the signed-in person's own token, so
+      // GitHub already knows who this is.
+      body: JSON.stringify(body),
+    });
+    const out = await res.json().catch(() => ({}));
+    // Signed out underneath us - the session expired, or the server restarted.
+    // Put the sign-in back rather than leave buttons that can only fail.
+    if (res.status === 401) signedOut();
+    if (!res.ok) throw new Error(out.error || `HTTP ${res.status}`);
+    const verb = { reseed: 'Reseeding', teardown: 'Removing' }[body.action] || 'Deploying';
+    notify(`${verb} ${key}.`, false, out.runUrl);
+    return out;
+  } catch (e) {
+    notify(e.message, true);
+    return null;
+  } finally {
+    pending.delete(key);
+    if (button) button.disabled = false;
+    render();
+  }
+}
+
+function notify(text, bad, url) {
+  const n = el('div', `banner notice ${bad ? 'bad' : 'good'}`);
+  if (bad) n.setAttribute('role', 'alert');
+  const body = el('span', 'text', text);
+  if (url) {
+    body.append(' ');
+    const a = el('a', null, 'Watch the run');
+    a.href = url; a.target = '_blank'; a.rel = 'noreferrer';
+    body.append(a);
+  }
+  const x = el('button', 'dismiss', '×');
+  x.type = 'button';
+  x.setAttribute('aria-label', 'Dismiss');
+  x.addEventListener('click', () => n.remove());
+  n.append(body, x);
+  // Newest first, and only the newest few; a burst of clicks should not push
+  // the deployments off the screen.
+  $('notices').prepend(n);
+  while ($('notices').children.length > 3) $('notices').lastChild.remove();
+}
+
+/** What to redeploy a named deployment FROM, read off what it is running now. */
+function currentRef(d) {
+  return d.branch || d.release || d.sha || null;
+}
+
+/**
+ * Days to pass so a redeploy leaves the expiry where it is - `days` is from
+ * now, and a reseed should not quietly extend or shorten a server's life.
+ */
+function remainingDays(d) {
+  if (!d.expires || d.expires === 'never') return 0;
+  const days = Math.ceil((Date.parse(d.expires) - Date.now()) / 86400000);
+  return Math.min(30, Math.max(1, days || 1));
+}
+
+// --- what an old release can do ---------------------------------------------
+//
+// Which sample datasets load, and whether it can be a central server, by
+// version. Kept here rather than in the workflows on purpose: they only need
+// to know how to RUN an old image (its compose files - see "Older images" in
+// .github/scripts/deploy-plan.js) and pass everything else through as asked.
+// This page is what offers the choices, so it is what knows which ones work.
+//
+//   datasets  Measured by seeding the published images. `reference1` stopped
+//             loading at 3.00, when SyncBufferRow.source_site_id became a
+//             required field the 2023 export does not have; `e2e` arrived in
+//             3.01. So: reference1 before 3.00, nothing in 3.00.x, e2e after.
+//   central   override_is_central_server arrived in 2.9. Older servers ignore
+//             it rather than failing, so they would quietly run as a remote.
+//   2.17.03   The first release with a postgres image, which is all the
+//             workflows deploy. The 2.16 line only ever published sqlite.
+//
+// Anything that is not a release - a branch, a PR, develop - is current, and
+// can do everything.
+
+const versionOf = ref => {
+  const m = /^v?(\d+)\.(\d+)\.\d+/.exec(ref || '');
+  return m ? [Number(m[1]), Number(m[2])] : null;
+};
+const before = (v, [major, minor]) => Boolean(v) && (v[0] < major || (v[0] === major && v[1] < minor));
+
+/** The sample datasets that load on this ref - empty when none does. */
+function datasetsFor(ref) {
+  const v = versionOf(ref);
+  if (before(v, [3, 0])) return ['reference1'];
+  if (before(v, [3, 1])) return [];
+  return ['e2e'];
+}
+
+/**
+ * What to send as `dataset` for "with example data": the one that loads, or
+ * `default` for anything current - which the workflow resolves to the
+ * repository's DEPLOY_REFERENCE_FILE. Null when no example data loads at all.
+ */
+function exampleDataFor(ref) {
+  const loads = datasetsFor(ref);
+  if (!loads.length) return null;
+  return loads[0] === 'e2e' ? 'default' : loads[0];
+}
+
+const canBeCentral = ref => !before(versionOf(ref), [2, 9]);
+const isPublishedVersion = tag => {
+  const m = /^v?(\d+)\.(\d+)\.(\d+)/.exec(tag || '');
+  if (!m) return false;
+  const [major, minor, patch] = m.slice(1).map(Number);
+  return major > 2 || (major === 2 && (minor > 17 || (minor === 17 && patch >= 3)));
+};
+
+function buttons(d) {
+  if (!canAct()) return null;
+  const row = el('div', 'buttons');
+  const add = (label, cls, fn) => {
+    const b = el('button', cls, label);
+    b.type = 'button';
+    b.disabled = pending.has(d.name);
+    b.addEventListener('click', () => fn(b));
+    row.append(b);
+  };
+
+  if (d.kind === 'preview') {
+    add('Reseed', null, b => {
+      if (confirm(`Wipe ${d.name}'s data and start again from the sample data?`)) {
+        dispatch('preview', { pr: d.pr, action: 'reseed' }, b);
+      }
+    });
+    add('Remove', 'danger', b => {
+      if (confirm(`Delete ${d.name} and its data? Re-adding the deploy label brings it back, with a fresh database.`)) {
+        dispatch('preview', { pr: d.pr, action: 'teardown' }, b);
+      }
+    });
+    return row;
+  }
+
+  const ref = currentRef(d);
+  // Everything a redeploy keeps as it is. `keep` is the workflow's own word
+  // for "whatever this deployment already is", which is what makes these
+  // buttons safe to press on a central server or a debug build.
+  // `dataset` only matters to Reseed - a redeploy of an existing server does
+  // not seed - but it is the one that loads on what the server runs.
+  const reseedWith = exampleDataFor(d.release || ref);
+  const same = { name: d.name, ref, central: 'keep', profile: 'keep', dataset: reseedWith || 'default' };
+  if (ref && d.expires && d.expires !== 'never') {
+    add('Extend 7 days', null, b => dispatch('named', { ...same, action: 'deploy', days: 7 }, b));
+  }
+  // No Reseed where no sample data loads (3.00.x): there is nothing to start
+  // again from.
+  if (ref && reseedWith) {
+    add('Reseed', null, b => {
+      if (confirm(`Wipe ${d.name}'s data and start again from the sample data?`)) {
+        dispatch('named', { ...same, action: 'reseed', days: remainingDays(d) }, b);
+      }
+    });
+  }
+  add('Remove', 'danger', b => {
+    if (confirm(`Delete ${d.name} and its data? This cannot be undone.`)) {
+      dispatch('named', { name: d.name, action: 'teardown' }, b);
+    }
+  });
+  return row;
+}
+
+// --- rendering --------------------------------------------------------------
+
+function matches(d, q) {
+  if (!q) return true;
+  return [d.name, d.branch, d.sha, d.release, d.commit?.subject, d.commit?.author, d.profile, d.pr]
+    .filter(Boolean).join(' ').toLowerCase().includes(q);
+}
+
+// name -> { ref, label, at, runUrl }, for servers started from the form.
+const starting = new Map();
+// Long enough for a build from scratch; after that, a run that failed before
+// making a container would otherwise leave its placeholder up for ever.
+const STARTING_FOR = 45 * 60_000;
+
+function startingCard(name, s) {
+  const c = el('div', 'card starting');
+  const top = el('div', 'top');
+  top.append(el('span', 'dot busy'), el('span', 'name', name));
+  c.append(top);
+  const commit = el('div', 'commit');
+  commit.append(el('span', 'subject', s.label));
+  commit.append(el('span', 'pill busy', 'starting…'));
+  c.append(commit);
+  const meta = el('div', 'meta');
+  meta.append(el('span', null, `asked for ${ago(new Date(s.at).toISOString())} by you`));
+  if (s.runUrl) {
+    meta.append(el('span', 'sep', '·'));
+    const a = el('a', null, 'watch it build');
+    a.href = s.runUrl; a.target = '_blank'; a.rel = 'noreferrer';
+    meta.append(a);
+  }
+  c.append(meta);
+  return c;
+}
+
+function card(d, repo) {
+  const c = el('div', 'card');
+
+  const top = el('div', 'top');
+  top.append(el('span', `dot ${dotTone(d)}`));
+  const name = el('a', 'name', d.name);
+  if (d.url) { name.href = d.url; name.rel = 'noreferrer'; }
+  top.append(name);
+  if (d.central) top.append(el('span', 'tag central', 'central'));
+  if (d.profile === 'debug') top.append(el('span', 'tag debug', 'debug'));
+  if (d.state !== 'running') top.append(el('span', 'tag', d.status || d.state));
+  else if (d.health === 'unhealthy' || d.health === 'starting') top.append(el('span', 'tag', d.health));
+  c.append(top);
+
+  // The commit line.
+  const commit = el('div', 'commit');
+  if (d.sha) {
+    const sha = el('a', 'sha', short(d.sha));
+    if (repo) { sha.href = d.commit?.url || `https://github.com/${repo}/commit/${d.sha}`; sha.rel = 'noreferrer'; }
+    commit.append(sha);
+  } else if (d.release) {
+    commit.append(el('span', 'sha', d.release));
+  } else {
+    commit.append(el('span', 'sha', '?'));
+  }
+
+  if (d.commit?.subject) {
+    commit.append(el('span', 'subject', d.commit.subject));
+  } else if (d.release) {
+    commit.append(el('span', 'subject none', 'release build, pinned'));
+  } else {
+    commit.append(el('span', 'subject none',
+      snapshot?.enrichedAt ? 'commit not found in this repository' : 'looking up the commit…'));
+  }
+
+  const f = freshness(d);
+  const pill = f.url ? el('a', `pill ${f.tone}`, f.text) : el('span', `pill ${f.tone}`, f.text);
+  if (f.url) { pill.href = f.url; pill.rel = 'noreferrer'; }
+  commit.append(pill);
+  c.append(commit);
+
+  // Everything else.
+  const meta = el('div', 'meta');
+  const bits = [];
+  bits.push(`deployed ${ago(d.createdAt)}`);
+  // Who deployed it before who wrote the commit: on a dashboard of servers,
+  // "whose is this?" means the person who started it.
+  if (d.actor) bits.push(`by ${d.actor}`);
+  else if (d.commit?.author) bits.push(`by ${d.commit.author}`);
+  if (d.expires && d.expires !== 'never') { const u = until(d.expires); if (u) bits.push(u); }
+  if (typeof d.bytes === 'number') bits.push(bytes(d.bytes));
+
+  bits.forEach((b, i) => {
+    if (i) meta.append(el('span', 'sep', '·'));
+    meta.append(el('span', null, b));
+  });
+  for (const [label, href] of actions(d, repo)) {
+    meta.append(el('span', 'sep', '·'));
+    const a = el('a', null, label);
+    a.href = href; a.rel = 'noreferrer';
+    meta.append(a);
+  }
+  c.append(meta);
+  const b = buttons(d);
+  if (b) c.append(b);
+  return c;
+}
+
+// The whole list is rebuilt on every render, which is once a second so the
+// relative times tick. Two moments when that must wait: mid-click, because a
+// press that starts on one button and ends on its replacement is not a click
+// at all; and while a keyboard user has focus in the list, because rebuilding
+// drops it back to the top of the page.
+let pressing = false;
+document.addEventListener('pointerdown', () => { pressing = true; }, true);
+// After the click event, which fires after pointerup.
+document.addEventListener('pointerup', () => setTimeout(() => { pressing = false; }), true);
+
+function render() {
+  const focused = document.activeElement;
+  if (pressing || ($('list').contains(focused) && focused.matches(':focus-visible'))) return;
+  const list = $('list');
+  const banners = $('banners');
+  list.replaceChildren();
+  banners.replaceChildren();
+
+  if (!config.user) return;
+  if (!snapshot) {
+    list.append(el('div', 'empty', 'Waiting for the first snapshot…'));
+    return;
+  }
+
+  $('domain').textContent = snapshot.domain ? `*.${snapshot.domain}` : '';
+  $('updated').textContent = `updated ${ago(snapshot.generatedAt) || 'just now'}`;
+
+  // A snapshot more than four ticks old means the snapshot container is not
+  // running. Everything below it is still true, but it is no longer NOW, and a
+  // page that does not say so is worse than one that is plainly broken.
+  const staleAfter = (snapshot.tickSeconds || 15) * 4 * 1000;
+  if (Date.now() - Date.parse(snapshot.generatedAt) > staleAfter) {
+    banners.append(el('div', 'banner bad',
+      `This list last refreshed ${ago(snapshot.generatedAt)}, so it may be out of date. The part of the dashboard that watches the servers (the snapshot container) has stopped - ask whoever looks after the deploy box.`));
+  }
+  for (const e of snapshot.errors || []) banners.append(el('div', 'banner', e));
+
+  const q = filter.trim().toLowerCase();
+  const shown = snapshot.deployments.filter(d => matches(d, q));
+
+  // Servers asked for from the form that have no container yet - so a click
+  // visibly did something in the minutes before the deploy creates one.
+  for (const [name, s] of starting) {
+    if (snapshot.deployments.some(d => d.name === name) || Date.now() - s.at > STARTING_FOR) starting.delete(name);
+    else if (matches({ name, branch: s.ref }, q)) list.append(startingCard(name, s));
+  }
+
+  if (!shown.length && !starting.size) {
+    list.append(el('div', 'empty',
+      snapshot.deployments.length ? 'Nothing matches that filter.' : 'Nothing is deployed on this box.'));
+  } else {
+    for (const d of shown) list.append(card(d, snapshot.repo));
+  }
+
+  const n = snapshot.deployments.length;
+  const parts = [`${n} deployment${n === 1 ? '' : 's'}`];
+  if (q) parts.push(`${shown.length} shown`);
+  if (snapshot.enrichedAt) parts.push(`commits checked ${ago(snapshot.enrichedAt)}`);
+  $('footer').textContent = parts.join(' · ');
+}
+
+// --- loop -------------------------------------------------------------------
+
+async function poll() {
+  if (!config.user) return;
+  try {
+    // Cache-busted as well as no-store: a conditional request that 304s on a
+    // file rewritten every 15 seconds is a stale dashboard.
+    const res = await fetch(`api/deployments?t=${Date.now()}`, { cache: 'no-store' });
+    // The session ended - expired, or the server restarted. Back to the gate.
+    if (res.status === 401) signedOut();
+    else if (res.ok) snapshot = await res.json();
+  } catch { /* keep the last good snapshot; the staleness banner covers it */ }
+  render();
+}
+
+$('filter').addEventListener('input', e => { filter = e.target.value; render(); });
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== $('filter')) { e.preventDefault(); $('filter').focus(); }
+  if (e.key === 'Escape' && document.activeElement === $('filter')) { $('filter').value = ''; filter = ''; render(); }
+});
+
+// --- the form ---------------------------------------------------------------
+
+function showAccount() {
+  const signedIn = Boolean(config.user);
+  $('signIn').hidden = !config.signIn || signedIn;
+  $('who').hidden = !signedIn;
+  $('whoName').textContent = config.user ? `${config.user}${config.canWrite ? '' : ' (read only)'}` : '';
+  $('newToggle').hidden = !canAct();
+  if (!canAct()) $('newForm').hidden = true;
+  // Nothing about the deployments is shown signed out - not even the list.
+  $('gate').hidden = signedIn;
+  if (!config.signIn) {
+    $('gateText').textContent = 'This dashboard has no GitHub App configured, so nobody can sign in. See the runbook.';
+    $('gate').querySelector('a').hidden = true;
+  }
+  for (const id of ['filter', 'banners', 'list', 'footer']) $(id).hidden = !signedIn;
+  $('updated').hidden = !signedIn;
+}
+
+function signedOut() {
+  config.user = null;
+  config.canWrite = false;
+  snapshot = null;
+  showAccount();
+}
+
+$('signOut').addEventListener('click', async () => {
+  try {
+    await fetch('auth/logout', { method: 'POST', headers: { 'x-dashboard': '1' } });
+  } catch { /* signed out locally either way */ }
+  signedOut();
+  render();
+});
+
+// --- the new-server form ----------------------------------------------------
+//
+// Everything git-shaped is worked out from "what do you want to test?": the
+// ref to deploy, and a name - which has to be a DNS label - suggested from it
+// and kept clear of servers that already exist, so the default never lands on
+// someone else's server and its data. Typing a name of your own stops the
+// suggestions, and the note under it says what that name will do.
+
+const form = $('newForm');
+let tags = [];
+let pulls = [];
+let choicesAt = 0;
+let nameTouched = false;
+// Like the name: once someone picks the role, the form stops choosing it.
+let roleTouched = false;
+// Set when the form moved "how should it start" to empty because no example
+// data loads on the pick - so it can move it back, without overriding a choice.
+let forcedEmpty = false;
+
+// The same rules as deploy-plan.js's slugify and NAME, and web.mjs's RESERVED.
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  .slice(0, 32).replace(/-+$/g, '');
+const NAME_OK = /^[a-z0-9][a-z0-9-]{0,30}[a-z0-9]$/;
+const reserved = n => /^pr-\d+$/.test(n) || n === 'dashboard';
+const existing = n => Boolean(snapshot?.deployments.some(d => d.name === n)) || starting.has(n);
+
+/** Newest first, and a release before its own release candidates. */
+function byVersion(a, b) {
+  const key = t => {
+    const m = /^v(\d+)\.(\d+)\.(\d+)(.*)$/.exec(t);
+    return m ? [+m[1], +m[2], +m[3], m[4] ? 0 : 1, m[4]] : [-1, 0, 0, 0, t];
+  };
+  const x = key(a), y = key(b);
+  for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i] ? 1 : -1;
+  return 0;
+}
+
+/** What the form would deploy right now, or null if it is not chosen yet. */
+function choice() {
+  const f = form.elements;
+  switch (f.source.value) {
+    case 'release':
+      return f.release.value ? { ref: f.release.value, label: f.release.value, suggest: f.release.value } : null;
+    case 'pr': {
+      const p = pulls.find(p => String(p.number) === f.pr.value);
+      return p ? { ref: p.branch, label: `#${p.number} ${p.title}`, suggest: p.branch, follows: true } : null;
+    }
+    case 'develop':
+      return { ref: 'develop', label: 'the latest develop', suggest: `${config.user}-develop`, follows: true };
+    default: {
+      const r = f.ref.value.trim();
+      return r ? { ref: r, label: r, suggest: r } : null;
+    }
+  }
+}
+
+function freeName(base) {
+  let b = slug(base);
+  if (b.length < 2) b = 'test-server';
+  if (reserved(b)) b = slug(`test-${b}`);
+  if (!existing(b)) return b;
+  for (let i = 2; ; i++) {
+    const n = `${b.slice(0, 31 - String(i).length).replace(/-+$/, '')}-${i}`;
+    if (!existing(n)) return n;
+  }
+}
+
+// A tag has a published release image; anything else has to be built.
+const isTag = ref => tags.includes(ref);
+
+/**
+ * The build to ask for. Always explicit from this form - never `keep` - because
+ * "start this" is a fresh choice: `keep` would carry a debug build over onto a
+ * release and build it from scratch instead of using its published image.
+ */
+function profileFor(c) {
+  const chosen = form.elements.profile.value;
+  if (chosen !== 'auto') return chosen;
+  return isTag(c.ref) ? 'release' : 'debug';
+}
+
+const urlOf = n => (snapshot?.domain ? `https://${n}.${snapshot.domain}` : n);
+
+/** The one place the form is brought up to date - on every change to it. */
+function updateForm() {
+  const f = form.elements;
+  for (const p of form.querySelectorAll('.pick')) p.hidden = p.dataset.for !== f.source.value;
+
+  const c = choice();
+  if (!nameTouched) f.name.value = c ? freeName(c.suggest) : '';
+
+  const n = f.name.value.trim();
+  const current = snapshot?.deployments.find(d => d.name === n);
+  // Until someone chooses, the role shows what the server already is - so the
+  // form never quietly turns an existing central server into a remote site.
+  if (!roleTouched) f.role.value = current?.central ? 'central' : 'remote';
+  // Example data only where some loads. Where none does the form starts it
+  // empty instead, and switches back if what is picked changes again.
+  const exampleData = c ? exampleDataFor(c.ref) : 'default';
+  const exampleTile = form.querySelector('input[name=data][value=example]');
+  exampleTile.disabled = !exampleData;
+  exampleTile.closest('.choice').classList.toggle('unavailable', !exampleData);
+  if (!exampleData && f.data.value === 'example') { f.data.value = 'empty'; forcedEmpty = true; }
+  if (exampleData && forcedEmpty) { f.data.value = 'example'; forcedEmpty = false; }
+  const empty = f.data.value === 'empty';
+  $('role').hidden = !empty;
+  f.dataset.disabled = empty;
+  const note = $('nameNote');
+  let ok = false;
+  if (!n) {
+    note.className = 'note';
+    note.textContent = 'Becomes its web address.';
+  } else if (!NAME_OK.test(n)) {
+    note.className = 'note bad';
+    note.textContent = 'Use 2 to 32 lower-case letters, digits and hyphens, starting and ending with a letter or digit.';
+  } else if (reserved(n)) {
+    note.className = 'note bad';
+    note.textContent = 'That name is reserved: pr-<number> is a pull request\'s own preview. Pick another.';
+  } else if (existing(n)) {
+    ok = true;
+    note.className = 'note warn';
+    note.textContent = `${n} already exists. Starting will switch it to this and keep its data.`;
+  } else {
+    ok = true;
+    note.className = 'note good';
+    note.textContent = `New server at ${urlOf(n)}`;
+  }
+
+  const dataNote = $('dataNote');
+  const central = empty && f.role.value === 'central';
+  const explicit = !empty && f.dataset.value !== 'default' ? f.dataset.value : null;
+  let roleOk = true;
+  if (central && c && !canBeCentral(c.ref)) {
+    roleOk = false;
+    dataNote.className = 'note bad';
+    dataNote.textContent = `${c.ref} is older than v2.9, which is the first version that can be a central server.`;
+  } else if (c && !exampleData && !current) {
+    dataNote.className = 'note';
+    dataNote.textContent = `No example data loads on ${c.ref}, so it starts empty.`;
+  } else if (c && explicit && !datasetsFor(c.ref).includes(explicit)) {
+    dataNote.className = 'note warn';
+    dataNote.textContent = `${explicit} does not load on ${c.ref}, so it would fail to start. ` +
+      `Leave "Which example data" on automatic.`;
+  } else if (current) {
+    dataNote.className = 'note';
+    dataNote.textContent = `${n} already has its data, so this choice only takes effect if you reseed it.`;
+  } else {
+    dataNote.className = 'note';
+    dataNote.textContent = central
+      ? 'The central server is the one other sites sync to, with central-only features turned on.'
+      : '';
+  }
+
+  const days = Number(f.days.value);
+  const until = days
+    ? `It is removed automatically on ${new Date(Date.now() + days * 86400000)
+      .toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}.`
+    : 'It stays until someone removes it.';
+  $('summary').textContent = !c
+    ? { release: 'Pick a version.', pr: 'Pick a pull request.', other: 'Type a branch, tag or commit.' }[f.source.value]
+    : `Starts ${c.label}${c.follows ? ', and keeps it up to date,' : ''}${ok ? ` at ${urlOf(n)}` : ''}, ` +
+      `${empty ? 'empty and ready to sync' : 'with example data'}` +
+      `${central ? ', as the central server' : ''}. ` +
+      `${until} ${c && profileFor(c) === 'release' && isTag(c.ref)
+        ? 'Usually ready in a few minutes.'
+        : 'Usually ready in a few minutes if it has been built before, up to 20 if not.'}`;
+
+  form.querySelector('button[type=submit]').disabled = !(c && ok && roleOk);
+}
+
+/**
+ * The version list, filtered by the search box. Over a thousand tags, so it is
+ * grouped by what people are most likely to want: releases, then release
+ * candidates, then everything else (nightly `-develop-` builds, one-off test
+ * tags). Whatever is selected stays selected while it is still shown;
+ * otherwise the newest release or release candidate shown is, so typing
+ * "3.04" is enough on its own - but never a nightly or a test tag, which
+ * nobody should land on without picking it.
+ *
+ * A number is matched from the start of the version and up to a whole part,
+ * without leading zeros: the tags are spelled both ways - v3.02.01 and v3.2.0
+ * - so "3.04" and "3.4" both find either, and neither finds v2.3.4 or v3.40.
+ * Anything else - "rc", "windows" - is matched anywhere in the tag.
+ */
+const looseVersion = s => s.toLowerCase().replace(/^v/, '').replace(/(^|\.)0+(?=\d)/g, '$1');
+function tagMatches(tag, query) {
+  if (!query) return true;
+  const t = looseVersion(tag);
+  if (/^\d+(\.\d+)*\.?$/.test(query)) {
+    const q = looseVersion(query);
+    return t.startsWith(q) && (q.endsWith('.') || !/\d/.test(t[q.length] || ''));
+  }
+  return t.includes(query.toLowerCase());
+}
+
+function fillReleases() {
+  const sel = form.elements.release;
+  const keep = sel.value;
+  const q = $('tagFilter').value.trim().replace(/^v/i, '');
+  const shown = tags.filter(t => tagMatches(t, q));
+  const finals = shown.filter(t => /^v\d+\.\d+\.\d+$/.test(t));
+  const rcs = shown.filter(t => !finals.includes(t) && /-rc/i.test(t));
+  const others = shown.filter(t => !finals.includes(t) && !rcs.includes(t));
+  const group = (label, list) => {
+    const g = el('optgroup');
+    g.label = label;
+    g.append(...list.map(t => { const o = el('option', null, t); o.value = t; return o; }));
+    return g;
+  };
+  sel.replaceChildren();
+  if (finals.length) sel.append(group('Releases', finals));
+  if (rcs.length) sel.append(group('Release candidates', rcs));
+  if (others.length) sel.append(group('Nightly and test builds', others));
+  if (!shown.length) {
+    const o = el('option', null, tags.length ? 'Nothing matches.' : 'No releases found.');
+    o.disabled = true;
+    sel.append(o);
+  }
+  sel.value = shown.includes(keep) ? keep : (finals[0] || rcs[0] || '');
+}
+
+function fillPulls() {
+  const sel = form.elements.pr;
+  const keep = sel.value;
+  const q = $('prFilter').value.trim().toLowerCase().replace(/^#/, '');
+  const shown = pulls.filter(p => !q || [p.number, p.title, p.author, p.branch].join(' ').toLowerCase().includes(q));
+  sel.replaceChildren(...shown.map(p => {
+    const o = el('option', null, `#${p.number}  ${p.title}${p.author ? ` - ${p.author}` : ''}${p.draft ? ' (draft)' : ''}`);
+    o.value = p.number;
+    o.title = p.branch;
+    return o;
+  }));
+  if (!shown.length) {
+    const o = el('option', null, pulls.length ? 'Nothing matches.' : 'No open pull requests.');
+    o.disabled = true;
+    sel.append(o);
+  }
+  sel.value = keep;
+}
+
+/** Releases and open pull requests, fetched when the form opens - not on page load. */
+async function loadChoices() {
+  if (Date.now() - choicesAt < 60_000) return;
+  choicesAt = Date.now();
+  const get = async path => { try { return await (await fetch(path, { cache: 'no-store' })).json(); } catch { return {}; } };
+  const [t, p] = await Promise.all([get('api/tags'), get('api/pulls')]);
+  // Nothing before 2.17.03 has a postgres image to deploy.
+  tags = (t.tags || []).filter(isPublishedVersion).sort(byVersion);
+  pulls = p.pulls || [];
+  fillReleases();
+  fillPulls();
+  updateForm();
+}
+
+function openForm() {
+  form.hidden = false;
+  $('newToggle').hidden = true;
+  updateForm();
+  loadChoices();
+  form.querySelector('input[name=source]:checked').focus();
+}
+
+function closeForm() {
+  form.hidden = true;
+  $('newToggle').hidden = !canAct();
+  form.reset();
+  $('prFilter').value = '';
+  $('tagFilter').value = '';
+  nameTouched = false;
+  roleTouched = false;
+  forcedEmpty = false;
+  fillPulls();
+  fillReleases();
+}
+
+$('newToggle').addEventListener('click', openForm);
+$('newCancel').addEventListener('click', closeForm);
+form.addEventListener('keydown', e => { if (e.key === 'Escape') closeForm(); });
+form.addEventListener('change', updateForm);
+form.addEventListener('input', e => {
+  // A name typed by hand is kept; clearing it brings the suggestions back.
+  if (e.target.name === 'name') nameTouched = e.target.value.trim() !== '';
+  if (e.target.id === 'prFilter') fillPulls();
+  if (e.target.id === 'tagFilter') fillReleases();
+  updateForm();
+});
+form.addEventListener('click', e => {
+  if (e.target.name === 'role') roleTouched = true;
+  // Someone choosing for themselves overrides the form's own switch.
+  if (e.target.name === 'data') forcedEmpty = false;
+});
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = form.elements;
+  const c = choice();
+  const name = f.name.value.trim();
+  if (!c || !name) return;
+  const out = await dispatch('named', {
+    action: 'deploy',
+    name,
+    ref: c.ref,
+    days: Number(f.days.value),
+    dataset: f.data.value === 'empty' ? 'none'
+      : f.dataset.value === 'default' ? (exampleDataFor(c.ref) || 'none') : f.dataset.value,
+    // `keep` unless someone chose: see roleTouched. Never for example data,
+    // where it makes no difference.
+    central: f.data.value === 'empty' && roleTouched ? f.role.value : 'keep',
+    profile: profileFor(c),
+  }, e.submitter);
+  if (out) {
+    starting.set(name, { ref: c.ref, label: c.label, at: Date.now(), runUrl: out.runUrl });
+    closeForm();
+    render();
+  }
+});
+
+async function loadConfig() {
+  try {
+    const res = await fetch('api/config', { cache: 'no-store' });
+    if (res.ok) config = await res.json();
+  } catch { /* stays signed out */ }
+  showAccount();
+}
+
+loadConfig().then(poll);
+setInterval(poll, 5000);
+// Re-render without refetching, so the relative times keep ticking.
+setInterval(render, 1000);
+</script>
+</body>
+</html>
