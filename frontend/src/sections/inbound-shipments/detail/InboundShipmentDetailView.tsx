@@ -1003,7 +1003,7 @@ const InboundShipmentDetailView: Component = () => {
                 // meaningful total — blank (null → empty currency cell) rather
                 // than a zero amount (AC-V3).
                 accessor: line =>
-                  isPlaceholderLine(line) ? null : line.totalAfterTax,
+                  isPlaceholderLine(line) ? null : line.totalBeforeTax,
                 id: 'total',
               },
               header: () => t('label.total'),
