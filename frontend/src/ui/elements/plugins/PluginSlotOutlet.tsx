@@ -79,18 +79,18 @@ const bindSlotProps = <P extends Record<string, unknown>>(
  * 1. NO REMOUNT ON A PROP CHANGE. Contributions are constructed once, with
  *    getter-bound props (above), so stepping through lines with Save & next
  *    updates the panel IN PLACE — keeping its signals, its resources, and
- *    (critically) the open <dialog> around it (AC-PLUG-N2,
+ *    (critically) the open <dialog> around it (OMS-REG-PLG-02.14,
  *    kdd/solid-reactivity-pitfalls § no remounts on interaction). The `<For>`
  *    is reference-keyed on the contribution objects, which is why the caller
  *    must hand over a memoised array.
  * 2. NO SEAM. No wrapper element, no heading, no border: each contribution
  *    becomes a direct child of the surrounding region and adopts its geometry,
  *    so an empty contribution set renders nothing and reserves no space
- *    (AC-PLUG-N1).
+ *    (OMS-REG-PLG-02.12).
  * 3. ISOLATION. Each contribution is constructed INSIDE its own error boundary,
  *    so one that throws — while rendering or on any later update — is replaced
  *    by a neutral line of text in its own place only, and every sibling keeps
- *    working (AC-PLUG-E1). The fallback is bare text rather than an element for
+ *    working (OMS-REG-PLG-02.20). The fallback is bare text rather than an element for
  *    the same reason there is no wrapper: the region imposes no box of its own
  *    (a contributed table cell fails the same way — see the line table's
  *    `mergeLineColumns`).

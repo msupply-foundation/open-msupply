@@ -11,11 +11,11 @@
 //
 // Surviving over-allocation is always smaller than every pack size still
 // allocated — though the fill is greedy, not an exhaustive search, so it may
-// miss a whole-pack combination that lands exactly (AC-AL3) — and the
+// miss a whole-pack combination that lands exactly (OMS-REG-SMV-11.9–.11) — and the
 // shortfall (what the consumer maps to its
 // remainder concept, e.g. outbound's placeholder) plus every barred category
 // passed over while holding stock are reported. Pure: the consuming editor
-// owns its draft store; this owns the arithmetic so AC-AL1/AL3/AL4's client
+// owns its draft store; this owns the arithmetic so OMS-REG-SMV-11.1/.9–.11/.13's client
 // face is testable in isolation.
 //
 // The `partialPacks` option is the prescriptions variant
@@ -24,7 +24,7 @@
 // is never over-allocation (passes 2–3 never run), and a shortfall only
 // narrows (no placeholder concept).
 //
-// `requiredPackSize` is the packs lens (AC-AL11): distribution fills ONLY
+// `requiredPackSize` is the packs lens (OMS-REG-SMV-11.21): distribution fills ONLY
 // batches of the selected pack size; others are ineligible without being a
 // reported skip (staying out of a differently-sized batch is what the lens
 // asks for, not stock passed over).
@@ -52,16 +52,16 @@ export type Distribution = {
    * — e.g. outbound's placeholder).
    */
   shortfallUnits: number;
-  /** Units issued beyond the request (whole-pack rounding, AC-AL3). */
+  /** Units issued beyond the request (whole-pack rounding, OMS-REG-SMV-11.11). */
   overAllocatedUnits: number;
   /**
    * The barred categories passed over on batches that held available stock
-   * (AC-AL2 — each reported skip category). Empty when nothing was skipped.
+   * (OMS-REG-SMV-11.7 — each reported skip category). Empty when nothing was skipped.
    */
   skippedReasons: ReadonlySet<BarReason>;
   /**
    * Units short of rounding every fractional take up to whole packs — the
-   * partial-pack warning's gap (AC-AL12): 0 in whole-pack mode; under
+   * partial-pack warning's gap (OMS-REG-SMV-11.32): 0 in whole-pack mode; under
    * `partialPacks`, > 0 when the allocation split a pack.
    */
   wholePackGapUnits: number;
@@ -77,7 +77,7 @@ export const distributeIssue = (
 ): Distribution => {
   const packsById = new Map<string, number>();
   // Non-finite requests (NaN/Infinity from unparsed input) distribute
-  // nothing, exactly like a negative request (AC-AL6).
+  // nothing, exactly like a negative request (OMS-REG-SMV-11.18).
   let remaining = Number.isFinite(requestedUnits)
     ? Math.max(0, requestedUnits)
     : 0;
@@ -156,7 +156,7 @@ export const distributeIssue = (
     remaining = -excess;
   }
 
-  // The gap to whole packs (AC-AL12): only fractional takes contribute. The
+  // The gap to whole packs (OMS-REG-SMV-11.32): only fractional takes contribute. The
   // sum is rounded to kill float dust (0.7 packs of 10 must gap exactly 3 —
   // the figure surfaces to the user).
   let wholePackGapUnits = 0;

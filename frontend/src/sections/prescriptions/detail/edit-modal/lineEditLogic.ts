@@ -24,12 +24,12 @@ type ServerDraftLine = NonNullable<
 >['draftLines'][number];
 
 export interface DraftLine extends ServerDraftLine {
-  /** The pref-gated ISSUE bar (manual entry / row display — AC-AL8/AL9). */
+  /** The pref-gated ISSUE bar (manual entry / row display — OMS-REG-SMV-11.26/.31). */
   barred: readonly BarReason[];
   /**
    * The stricter AUTO bar (stock-allocation § barred batches › never
    * auto-allocated): expired / unusable-VVM stock is never distributed to,
-   * preference or not (AC-AL2/AL10).
+   * preference or not (OMS-REG-SMV-11.4–.6/.28).
    */
   autoBarred: readonly BarReason[];
 }
@@ -39,7 +39,7 @@ export interface DraftLine extends ServerDraftLine {
  * surface's visible-but-disabled rule (spec/prescriptions/rules.md §
  * allocation, .60): a held batch, or one in a held location, is absent from
  * the grid — UNLESS it already carries an allocation on this prescription
- * and still has stock. That row stays (judged as seeded, AC-AL14) and
+ * and still has stock. That row stays (judged as seeded, OMS-REG-SMV-11.35/.36) and
  * barReasons' matching exception keeps it manually editable.
  */
 const showLine = (line: ServerDraftLine): boolean =>
@@ -70,7 +70,7 @@ export const seedDraftLines = (
 
 /**
  * Units available across usable rows. Held stock never counts — the editable
- * held-with-allocation exception row (AC-AL14) only adjusts what it already
+ * held-with-allocation exception row (OMS-REG-SMV-11.35/.36) only adjusts what it already
  * holds, so its availability is excluded alongside the barred rows'.
  */
 export const draftAvailableUnits = (lines: readonly DraftLine[]): number =>
@@ -90,7 +90,7 @@ export const draftAvailableUnits = (lines: readonly DraftLine[]): number =>
  * never over-allocated; a shortfall only narrows and is reported — AC-A1).
  * Returns the new per-row packs, the shortfall for its dedicated banner, and
  * the other distribution reports (stock-allocation § reporting): barred stock
- * passed over (AC-AL2 — .59) and the split-pack warning (AC-AL12 — .58).
+ * passed over (OMS-REG-SMV-11.7 — DIS-03.59) and the split-pack warning (OMS-REG-SMV-11.32 — DIS-03.58).
  */
 export const allocateUnits = (
   lines: readonly DraftLine[],
@@ -101,7 +101,7 @@ export const allocateUnits = (
   warnings: IssueWarning[];
 } => {
   // Distribution filters on the AUTO bar — expired/unusable-VVM stock is
-  // never auto-dispensed even with the issue prefs off (AC-AL10).
+  // never auto-dispensed even with the issue prefs off (OMS-REG-SMV-11.5/.28).
   const distribution = distributeIssue(
     lines.map(line => ({ ...line, barred: line.autoBarred })),
     requestedUnits,
@@ -118,7 +118,7 @@ export const allocateUnits = (
     // The shortfall is surfaced as the modal's own banner, so not re-reported
     // here (reportShortfall: false). On-hold pass-overs are never reported
     // (rules § allocation — held stock is hidden, .60): only the editable
-    // held-with-allocation exception row (AC-AL14) can produce one, and its
+    // held-with-allocation exception row (OMS-REG-SMV-11.35/.36) can produce one, and its
     // hold is already visible on the row itself.
     warnings: deriveIssueWarnings(distribution, {
       reportShortfall: false,

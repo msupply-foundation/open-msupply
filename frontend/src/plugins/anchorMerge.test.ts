@@ -6,8 +6,8 @@ import {
 } from './anchorMerge';
 
 // The shared anchored merge (spec/plugins/rules.md § contributions;
-// sdk-contract § the column slot). Behaviours cited from AC-PLUG-K1 (anchored
-// placement, reload-stable order) and AC-PLUG-K2 (missing anchor degrades
+// sdk-contract § the column slot). Behaviours cited from OMS-REG-PLG-02.1 (anchored
+// placement, reload-stable order) and OMS-REG-PLG-02.3 (missing anchor degrades
 // visibly). The two host surfaces that delegate here keep their own suites —
 // spec/dashboard OMS-REG-DB-02 (regions.test.ts) and
 // OMS-REG-REPL-16 (lineColumns.test.ts) — so this one covers the ordering
@@ -45,7 +45,7 @@ describe('anchorMerge — no contributions', () => {
   });
 });
 
-describe('anchorMerge — placement (AC-PLUG-K1)', () => {
+describe('anchorMerge — placement (OMS-REG-PLG-02.1)', () => {
   it('places a contribution before / after its anchor, else at the end', () => {
     const merged = anchorMerge(hosts('a', 'b', 'c'), [
       contribution('after-a', { anchor: { after: 'a' } }),
@@ -87,7 +87,7 @@ describe('anchorMerge — placement (AC-PLUG-K1)', () => {
     ];
     const expected = ids(anchorMerge(hostItems, contribs));
     // All 120 permutations of five contributions — placement can never depend
-    // on which bundle finished loading first (AC-PLUG-K1).
+    // on which bundle finished loading first (OMS-REG-PLG-02.1).
     const permute = <T>(items: T[]): T[][] =>
       items.length <= 1
         ? [items]
@@ -114,7 +114,7 @@ describe('anchorMerge — placement (AC-PLUG-K1)', () => {
   });
 });
 
-describe('anchorMerge — degradation (AC-PLUG-K2)', () => {
+describe('anchorMerge — degradation (OMS-REG-PLG-02.3)', () => {
   it('falls to the end with a diagnostic when the anchor does not exist', () => {
     const merged = anchorMerge(hosts('a', 'b'), [
       contribution('orphan', { anchor: { after: 'ghost' } }),

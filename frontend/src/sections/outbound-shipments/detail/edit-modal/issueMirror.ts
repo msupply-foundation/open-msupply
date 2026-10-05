@@ -1,4 +1,4 @@
-// The Issue field's mirror of a manual per-batch edit (AC-AL16,
+// The Issue field's mirror of a manual per-batch edit (OMS-REG-SMV-11.24/.25,
 // OMS-REG-DIST-03.40): the grid's new requested total — issued units +
 // placeholder, the same total the field seeds with (D61) — re-expressed in
 // the current allocate-in lens. Display-only by construction: the caller

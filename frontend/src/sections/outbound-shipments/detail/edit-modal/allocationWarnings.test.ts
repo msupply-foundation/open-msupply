@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest';
 import type { IssueWarning } from '../../../../domain/allocation';
 import { issueWarningMessages } from './allocationWarnings';
 
-describe('issueWarningMessages (AC-AL2/AL3)', () => {
-  it('surfaces over-allocation as total-vs-requested (AC-AL3)', () => {
+describe('issueWarningMessages (OMS-REG-SMV-11.7/.11)', () => {
+  it('surfaces over-allocation as total-vs-requested (OMS-REG-SMV-11.11)', () => {
     const derived: IssueWarning[] = [{ kind: 'over-allocated', units: 5 }];
     expect(issueWarningMessages(derived, 10)).toEqual([
       { key: 'messages.over-allocated', quantity: 15, issueQuantity: 10 },
     ]);
   });
 
-  it('reports every skipped category, reusing the ported label tokens (AC-AL2)', () => {
+  it('reports every skipped category, reusing the ported label tokens (OMS-REG-SMV-11.7)', () => {
     const derived: IssueWarning[] = [
       {
         kind: 'skipped-barred',

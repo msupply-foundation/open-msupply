@@ -268,7 +268,7 @@ export interface ColumnDeclaration<Row, Data = unknown> {
   loadData?: (rows: readonly Row[]) => Promise<Map<string, Data>>;
   /**
    * Declares the column sortable (sdk-contract § the column slot,
-   * AC-PLUG-K7): the value the host orders rows by when the user sorts on
+   * OMS-REG-PLG-02.10): the value the host orders rows by when the user sorts on
    * it, evaluated over the table's FULL row set — `data` is that row's
    * `loadData` entry, loaded for the whole set. Numbers compare numerically,
    * strings by locale; a `null`/`undefined` value sorts last in either
@@ -695,7 +695,7 @@ export interface PluginPage {
   labelKey: PluginLocaleKey;
   /**
    * Loads the page's BODY component: called on first navigation to the page,
-   * never at startup (AC-PLUG-P2), behind the host's route-level pending
+   * never at startup (OMS-REG-PLG-04.4/.5), behind the host's route-level pending
    * boundary — `load: () => import('./CountPage')`. The host supplies the app
    * frame and page frame (header, breadcrumb, the menu); the component owns
    * only the body, receives no props, and fetches its own data through the
@@ -714,7 +714,7 @@ export interface PluginPage {
   /**
    * The permissions this page requires — ALL of them, as
    * {@link SlotContext.permissions}' own server names. The permission-class
-   * gate, and the one condition behind both doors (AC-PLUG-P1): without them
+   * gate, and the one condition behind both doors (OMS-REG-PLG-04.1): without them
    * the entries are absent, and the page's URL shows the host's no-permission
    * notice in place of the screen. Composed with its plugin nav section's,
    * where the page is placed in one.

@@ -18,7 +18,7 @@ import {
 
 // The line table's plugin column region (internal-orders ui-surface § S8).
 // Behaviours cited from OMS-REG-REPL-16 (this vertical's slot-region case) and
-// the plugin criteria they realise: AC-PLUG-K1 (anchored, reload-stable
+// the plugin criteria they realise: OMS-REG-PLG-02.1 (anchored, reload-stable
 // placement), K2 (missing anchor degrades visibly), K4 (batched data), K5
 // (namespaced column identity), I1 (namespaced translation).
 
@@ -86,7 +86,7 @@ describe('mergeLineColumns — no contributions (OMS-REG-REPL-16.1)', () => {
   });
 });
 
-describe('mergeLineColumns — placement (OMS-REG-REPL-16.2, AC-PLUG-K1)', () => {
+describe('mergeLineColumns — placement (OMS-REG-REPL-16.2, OMS-REG-PLG-02.1)', () => {
   it('places a contributed column after its anchor', () => {
     const merged = mergeLineColumns(
       hostColumns('amc', 'mos', 'requested'),
@@ -131,7 +131,7 @@ describe('mergeLineColumns — placement (OMS-REG-REPL-16.2, AC-PLUG-K1)', () =>
   });
 });
 
-describe('mergeLineColumns — identity (AC-PLUG-K5)', () => {
+describe('mergeLineColumns — identity (OMS-REG-PLG-02.8)', () => {
   it('namespaces the merged id with the plugin code', () => {
     const merged = mergeLineColumns(
       hostColumns('amc'),
@@ -151,7 +151,7 @@ describe('mergeLineColumns — identity (AC-PLUG-K5)', () => {
   });
 });
 
-describe('mergeLineColumns — a hidden or absent anchor (OMS-REG-REPL-16.3, AC-PLUG-K2)', () => {
+describe('mergeLineColumns — a hidden or absent anchor (OMS-REG-REPL-16.3, OMS-REG-PLG-02.3)', () => {
   it('falls to the table end with a diagnostic when the anchor does not exist', () => {
     const merged = mergeLineColumns(
       hostColumns('amc', 'mos'),
@@ -208,7 +208,7 @@ describe('mergeLineColumns — a hidden or absent anchor (OMS-REG-REPL-16.3, AC-
 });
 
 describe('mergeLineColumns — presentation', () => {
-  it('translates the header in the plugin`s own namespace (AC-PLUG-I1)', () => {
+  it('translates the header in the plugin`s own namespace (OMS-REG-PLG-04.13)', () => {
     registerPluginTranslations('demo_plugin', {
       en: { 'label.total': 'Total in stock' },
     });
@@ -297,7 +297,7 @@ describe('mergeLineColumns — presentation', () => {
     expect(merged.columns[1]!.sortKey).toBeUndefined();
   });
 
-  it('is sortable under its namespaced id where the contribution declares a sortValue (OMS-REG-REPL-16.12, AC-PLUG-K7)', () => {
+  it('is sortable under its namespaced id where the contribution declares a sortValue (OMS-REG-REPL-16.12, OMS-REG-PLG-02.10)', () => {
     const merged = mergeLineColumns(
       hostColumns('amc'),
       [contribution({ id: 'total', sortValue: () => 1 })],
@@ -334,7 +334,7 @@ describe('mergeLineColumns — presentation', () => {
   });
 });
 
-describe('mergeLineColumns — batched data (AC-PLUG-K4)', () => {
+describe('mergeLineColumns — batched data (OMS-REG-PLG-02.5)', () => {
   const batch = (entries: [string, number][]): LineColumnBatch => ({
     data: new Map([['demo_plugin.total', new Map<string, unknown>(entries)]]),
     loading: false,
@@ -397,7 +397,7 @@ describe('mergeLineColumns — batched data (AC-PLUG-K4)', () => {
   });
 });
 
-describe('mergeLineColumns — containment (AC-PLUG-E1)', () => {
+describe('mergeLineColumns — containment (OMS-REG-PLG-02.20)', () => {
   it('blanks a throwing value function rather than failing the table', () => {
     const merged = mergeLineColumns(
       hostColumns('amc'),
@@ -417,7 +417,7 @@ describe('mergeLineColumns — containment (AC-PLUG-E1)', () => {
   });
 });
 
-describe('sortLinesByContribution — the declared sort (OMS-REG-REPL-16.12, AC-PLUG-K7)', () => {
+describe('sortLinesByContribution — the declared sort (OMS-REG-REPL-16.12, OMS-REG-PLG-02.10)', () => {
   const rows: Row[] = [
     { id: 'a', value: 3 },
     { id: 'b', value: 1 },
