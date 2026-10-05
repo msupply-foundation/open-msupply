@@ -312,7 +312,11 @@ export const StockMovementLineEditModal: Component<
       title={isUpdate() ? t('heading.edit-line') : t('heading.add-line')}
       actionsLead={
         <Show when={error()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+          {message => (
+            <Alert severity="error" testId="stock-movement-line-error">
+              {message()}
+            </Alert>
+          )}
         </Show>
       }
       actions={
@@ -419,6 +423,7 @@ export const StockMovementLineEditModal: Component<
               <LocationVolumeSelect
                 label={t('label.destination-location')}
                 hideLabel
+                inputTestId="stock-movement-destination-input"
                 focusTarget={destinationFocus}
                 locations={destinationOptions()}
                 loading={props.locationsLoading()}

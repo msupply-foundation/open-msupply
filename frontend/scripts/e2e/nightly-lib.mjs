@@ -45,8 +45,24 @@ export const testsFromReport = report => {
   return tests;
 };
 
+/**
+ * A test key as the report, the clues and the tracking issue name it across a
+ * branch's LEGS (the default suites, plus one per plugin profile — see the
+ * workflow's plan job). The default leg's keys stay bare, so every issue and
+ * every history written before plugin legs existed still matches; another
+ * leg's are prefixed with that leg's label, `[plugin-cook_islands] …`. The
+ * prefix is not decoration: the setup tests run in every leg under the same
+ * key, so without it a regression could not say which stack it came from, and
+ * its history would be read from the wrong leg's reports.
+ */
+export const legKey = (leg, key) => (leg ? `[${leg}] ${key}` : key);
+export const splitLegKey = qualified => {
+  const m = /^\[([a-z0-9_-]+)\] (.*)$/s.exec(qualified);
+  return m ? { leg: m[1], key: m[2] } : { leg: null, key: qualified };
+};
+
 /** The spec file a test key belongs to (its first segment). */
-export const specFileOf = key => key.split(' › ')[0];
+export const specFileOf = key => splitLegKey(key).key.split(' › ')[0];
 
 /**
  * One file out of an artifact zip, as the GitHub API serves it. Read through
@@ -414,7 +430,14 @@ export const gatherClues = async ({
 }) => {
   const regressions = summary?.regressions ?? [];
   if (!regressions.length) return '';
-  const wanted = `e2e-report-${key}`;
+  // Each regression's history comes from ITS leg's reports: the default
+  // leg's artifact is e2e-report-<branch>, another leg's
+  // e2e-report-<branch>-<leg> (legKey above).
+  const artifactOf = qualified => {
+    const { leg } = splitLegKey(qualified);
+    return leg ? `e2e-report-${key}-${leg}` : `e2e-report-${key}`;
+  };
+  const wanted = new Set(regressions.map(r => artifactOf(r.key)));
 
   // History: this branch's previous runs, any conclusion — green nights are
   // exactly what tells a flaky test from a broken one.
@@ -427,9 +450,9 @@ export const gatherClues = async ({
       status: 'completed',
       per_page: 100,
     });
-    const found = [];
+    const found = new Map([...wanted].map(name => [name, []]));
     for (const run of data.workflow_runs) {
-      if (found.length >= historyRuns) break;
+      if ([...found.values()].every(f => f.length >= historyRuns)) break;
       if (run.id === currentRunId) continue;
       const arts = await github.rest.actions.listWorkflowRunArtifacts({
         owner,
@@ -437,26 +460,31 @@ export const gatherClues = async ({
         run_id: run.id,
         per_page: 100,
       });
-      const art = arts.data.artifacts.find(
-        a => a.name === wanted && !a.expired
-      );
-      if (!art) continue;
-      const zip = await github.rest.actions.downloadArtifact({
-        owner,
-        repo,
-        artifact_id: art.id,
-        archive_format: 'zip',
-      });
-      const json = readZipEntry(zip.data, 'results.json');
-      if (!json) continue;
-      found.push(testsFromReport(JSON.parse(json.toString('utf8'))));
+      for (const [name, list] of found) {
+        if (list.length >= historyRuns) continue;
+        const art = arts.data.artifacts.find(
+          a => a.name === name && !a.expired
+        );
+        if (!art) continue;
+        const zip = await github.rest.actions.downloadArtifact({
+          owner,
+          repo,
+          artifact_id: art.id,
+          archive_format: 'zip',
+        });
+        const json = readZipEntry(zip.data, 'results.json');
+        if (!json) continue;
+        list.push(testsFromReport(JSON.parse(json.toString('utf8'))));
+      }
     }
-    found.reverse(); // oldest first
-    for (const r of regressions)
+    for (const list of found.values()) list.reverse(); // oldest first
+    for (const r of regressions) {
+      const testKey = splitLegKey(r.key).key;
       history.set(
         r.key,
-        found.map(tests => tests.get(r.key)?.outcome)
+        found.get(artifactOf(r.key)).map(tests => tests.get(testKey)?.outcome)
       );
+    }
   } catch (e) {
     log(`history skipped: ${e.message}`);
   }
