@@ -34,8 +34,12 @@ export const languageOptions = SUPPORTED_LOCALES.map(value => ({
 /** Whether the active locale is right-to-left (drives document.dir). */
 export const isRtl = (): boolean => isRtlLocale(locale());
 
+/** Endonym of one language — its own name, whatever the active locale. */
+export const languageName = (code: SupportedLocale): string =>
+  LANGUAGE_ENDONYM[code];
+
 /** Endonym of the active language. */
-export const currentLanguageName = (): string => LANGUAGE_ENDONYM[locale()];
+export const currentLanguageName = (): string => languageName(locale());
 
 /**
  * A person's full name for the active locale. All supported languages currently
