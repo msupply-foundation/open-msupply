@@ -18,7 +18,7 @@ use repository::{
 };
 use repository::{EqualFilter, ItemType};
 
-use super::generate_requisition_lines;
+use super::{generate_requisition_lines, recompute_ancillary_dependants};
 
 #[derive(Debug, PartialEq)]
 pub struct AddFromMasterList {
@@ -63,9 +63,20 @@ pub fn add_from_master_list(
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 
+            let new_item_ids = new_requisition_line_rows
+                .iter()
+                .map(|row| row.item_id.clone())
+                .collect();
             for requisition_line_row in new_requisition_line_rows {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
             }
+            // A new line can be a principal of existing Ancillary-ratio lines
+            recompute_ancillary_dependants(
+                connection,
+                &ctx.store_id,
+                &requisition_row,
+                new_item_ids,
+            )?;
 
             match RequisitionLineRepository::new(connection).query_by_filter(
                 RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(

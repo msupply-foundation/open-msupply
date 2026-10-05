@@ -123,3 +123,73 @@ mutation updateInternalOrderLine(
     }
   }
 }
+
+# FORECAST METHOD (rules › choosing a method): saves on selection, apart from the
+# draft. The response carries the recomputed forecast and suggestion — the same
+# selection as domain/forecast's ForecastLine fragment — so the editor updates in
+# place; the parent refetches the table for the line's Ancillary-ratio
+# dependants.
+mutation changeInternalOrderLineForecastMethod(
+  $storeId: String!
+  $input: UpdateRequestRequisitionLineInput!
+) {
+  updateRequestRequisitionLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineNode {
+      id
+      suggestedQuantity
+      forecastMethod
+      forecastMonthlyConsumption
+      targetStock
+      forecastBreakdown {
+        __typename
+        ... on AmcForecastNode {
+          averageMonthlyConsumption
+        }
+        ... on PopulationForecastNode {
+          populationServed
+          courses {
+            courseName
+            demographicName
+            numberOfDoses
+            coverageRate
+            wastageRate
+            targetPopulation
+            lossFactor
+            annualTargetDoses
+            dosesPerUnit
+            monthlyDoses
+            monthlyUnits
+          }
+        }
+        ... on AncillaryRatioForecastNode {
+          principals {
+            itemId
+            item {
+              code
+              name
+            }
+            principalMonthlyConsumption
+            itemQuantity
+            ancillaryQuantity
+            monthlyConsumption
+          }
+        }
+      }
+      forecastMethodOptions {
+        method
+        isAvailable
+        unavailableReason
+      }
+    }
+    ... on UpdateRequestRequisitionLineError {
+      error {
+        __typename
+        description
+        ... on ForecastMethodNotAvailable {
+          unavailableReason
+        }
+      }
+    }
+  }
+}

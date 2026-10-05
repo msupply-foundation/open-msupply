@@ -4,7 +4,10 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::{generic_errors::RequisitionReasonNotProvided, types::RequisitionLineNode};
+use graphql_types::{
+    generic_errors::RequisitionReasonNotProvided,
+    types::{ForecastMethodNode, ForecastMethodUnavailableReasonNode, RequisitionLineNode},
+};
 use repository::RequisitionLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -21,6 +24,25 @@ pub struct UpdateInput {
     pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
     pub option_id: Option<String>,
+    /// Changing the method recomputes the line's monthly demand, breakdown and suggested
+    /// quantity, and those of the Ancillary-ratio lines it feeds; the requested quantity
+    /// is untouched
+    pub forecast_method: Option<ForecastMethodNode>,
+}
+
+pub struct ForecastMethodNotAvailable {
+    pub unavailable_reason: ForecastMethodUnavailableReasonNode,
+}
+
+#[Object]
+impl ForecastMethodNotAvailable {
+    pub async fn description(&self) -> &str {
+        "Forecast method not available"
+    }
+
+    pub async fn unavailable_reason(&self) -> ForecastMethodUnavailableReasonNode {
+        self.unavailable_reason
+    }
 }
 
 #[derive(Interface)]
@@ -31,6 +53,7 @@ pub enum UpdateErrorInterface {
     ReasonNotProvided(RequisitionReasonNotProvided),
     RequisitionDoesNotExist(ForeignKeyError),
     CannotEditRequisition(CannotEditRequisition),
+    ForecastMethodNotAvailable(ForecastMethodNotAvailable),
 }
 
 #[derive(SimpleObject)]
@@ -85,6 +108,7 @@ impl UpdateInput {
             requested_quantity,
             comment,
             option_id,
+            forecast_method,
         } = self;
 
         ServiceInput {
@@ -92,6 +116,7 @@ impl UpdateInput {
             requested_quantity,
             comment,
             option_id,
+            forecast_method: forecast_method.map(ForecastMethodNode::into),
         }
     }
 }
@@ -120,6 +145,13 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 RequisitionReasonNotProvided::from_domain(line),
             ));
         }
+        ServiceError::ForecastMethodNotAvailable(reason) => {
+            return Ok(UpdateErrorInterface::ForecastMethodNotAvailable(
+                ForecastMethodNotAvailable {
+                    unavailable_reason: reason.into(),
+                },
+            ));
+        }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
@@ -142,10 +174,11 @@ mod test {
             mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
             MockDataInserts,
         },
-        RequisitionLine, StorageConnectionManager,
+        ForecastMethod, RequisitionLine, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
+        requisition::request_requisition::ForecastMethodUnavailableReason,
         requisition_line::{
             request_requisition_line::{
                 UpdateRequestRequisitionLine as ServiceInput,
@@ -252,6 +285,45 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
+        // ForecastMethodNotAvailable
+        let test_service = TestService(Box::new(|_| {
+            Err(ServiceError::ForecastMethodNotAvailable(
+                ForecastMethodUnavailableReason::NoPrincipalOnOrder,
+            ))
+        }));
+        let forecast_mutation = r#"
+        mutation ($input: UpdateRequestRequisitionLineInput!, $storeId: String) {
+            updateRequestRequisitionLine(storeId: $storeId, input: $input) {
+              ... on UpdateRequestRequisitionLineError {
+                error {
+                  __typename
+                  ... on ForecastMethodNotAvailable {
+                    unavailableReason
+                  }
+                }
+              }
+            }
+          }
+        "#;
+
+        let expected = json!({
+            "updateRequestRequisitionLine": {
+              "error": {
+                "__typename": "ForecastMethodNotAvailable",
+                "unavailableReason": "NO_PRINCIPAL_ON_ORDER"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            forecast_mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
         // CannotEditRequisition
         let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditRequisition)));
 
@@ -339,7 +411,8 @@ mod test {
                     id: "update line id input".to_string(),
                     requested_quantity: Some(1.0),
                     comment: Some("comment".to_string()),
-                    option_id: None
+                    option_id: None,
+                    forecast_method: Some(ForecastMethod::AncillaryRatio),
                 }
             );
             Ok(RequisitionLine {
@@ -353,7 +426,8 @@ mod test {
           "input": {
             "id": "update line id input",
             "requestedQuantity": 1,
-            "comment": "comment"
+            "comment": "comment",
+            "forecastMethod": "ANCILLARY_RATIO"
           },
           "storeId": "store_a"
         });

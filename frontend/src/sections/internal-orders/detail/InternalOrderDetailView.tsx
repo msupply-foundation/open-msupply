@@ -347,8 +347,6 @@ const InternalOrderDetailView: Component = () => {
   const indicatorNodes = () => gated(indicators) ?? [];
   const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   const showPricing = () => prefs()?.showIndicativePriceInRequisitions ?? false;
-  const showForecast = () =>
-    prefs()?.displayPopulationBasedForecasting ?? false;
   const showExcess = () => prefs()?.warningForExcessRequest ?? false;
   const showDestination = () =>
     prefs()?.selectDestinationStoreForAnInternalOrder ?? false;
@@ -511,8 +509,9 @@ const InternalOrderDetailView: Component = () => {
   // The one MOS formula, shared with the SDK line view (pluginViews) so the
   // figure a plugin reads is the figure this column shows.
   const mos = (line: Line) => lineMonthsOfStock(line);
-  const targetStock = (line: Line) =>
-    line.averageMonthlyConsumption * (info()?.maxMonthsOfStock ?? 0);
+  // Target months × the line's monthly demand, whatever its forecast method
+  // (resolved server-side).
+  const targetStock = (line: Line) => line.targetStock;
   const isExcess = (line: Line) =>
     showExcess() && line.requestedQuantity - line.suggestedQuantity >= 1;
 
@@ -561,10 +560,11 @@ const InternalOrderDetailView: Component = () => {
       );
     if (lineFilter().hideOverMinimum === true) {
       const months = monthsThreshold(node);
+      // Stock against the threshold months of the line's monthly demand.
       lines = lines.filter(
         l =>
-          l.availableStockOnHand < l.averageMonthlyConsumption * months ||
-          (l.availableStockOnHand === 0 && l.averageMonthlyConsumption === 0)
+          l.availableStockOnHand < l.forecastMonthlyConsumption * months ||
+          (l.availableStockOnHand === 0 && l.forecastMonthlyConsumption === 0)
       );
     }
     return lines;
@@ -733,21 +733,6 @@ const InternalOrderDetailView: Component = () => {
       header: () => t('label.target-stock'),
       ...getCellDefinition('targetStock'),
     },
-    // Target stock (population) — gated on the forecasting preference; the
-    // stored forecast rounded up, zero on a forecast-less line.
-    ...(showForecast()
-      ? ([
-          {
-            c: {
-              accessor: line =>
-                numWithDoses(line, Math.ceil(line.forecastTotalUnits ?? 0)),
-              id: COL.targetStockPopulation,
-            },
-            header: () => t('label.target-stock-population'),
-            ...getCellDefinition('targetStockPopulation'),
-          },
-        ] satisfies Column<Line, SortKey>[])
-      : []),
     {
       c: {
         accessor: line => numWithDoses(line, line.suggestedQuantity),
@@ -1388,7 +1373,6 @@ const InternalOrderDetailView: Component = () => {
                 canAdd={canAddLines()}
                 showDoses={showDoses()}
                 showPricing={showPricing()}
-                showForecast={showForecast()}
                 showExcess={showExcess()}
                 showExtended={showExtended()}
                 orderInPacks={orderInPacks()}

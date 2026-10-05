@@ -77,7 +77,6 @@ export interface RequisitionLineEditModalProps {
   finalised: boolean;
   // Preference gates (spec S4).
   showDoses: boolean;
-  showForecast: boolean;
   showExcess: boolean;
   /** An existing line → edit mode; omitted → add mode. */
   initialLine?: RequisitionDetailLineFragment;
@@ -340,15 +339,16 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   // extra-fields requisition; AMC is editable only under extra-fields.
   const showCustomerConsumption = () => props.transferred || props.showExtended;
 
-  // Target stock (population): the forecasting preference AND a forecast-
-  // carrying line (contract: non-null, non-zero forecastTotalUnits). The
-  // figure rounds to the NEAREST whole unit — not up (spec S4 § read-only
-  // figures), so it bypasses FigureRow's ceil.
-  const showTargetPopulation = () =>
-    props.showForecast && !!current()?.forecastTotalUnits;
-  const targetPopulationFigure = () =>
+  // The customer's forecast — its target stock among the supply-side rows and
+  // its method and breakdown on the Customer tab — shows on a transfer-linked
+  // line, whatever the forecasting preference (OMS-REG-DIST-05.37/.38). The
+  // target stock rounds to the NEAREST whole unit — not up (spec S4 §
+  // read-only figures), so it bypasses FigureRow's ceil.
+  const customerForecast = () =>
+    props.transferred ? (current()?.forecast ?? null) : null;
+  const customerTargetFigure = () =>
     Math.round(
-      unitsToMode(current()?.forecastTotalUnits ?? 0, entryMode(), packSize())
+      unitsToMode(customerForecast()?.targetStock ?? 0, entryMode(), packSize())
     );
 
   // The dose-equivalent caption under the Supply entry (spec S4 § supply
@@ -666,7 +666,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   );
 
   // Beneath the supply panel: the customer's consumption context (gated), the
-  // forecast total (gated), then the comment.
+  // customer's target stock (transfer-linked), then the comment.
   const SupplyContext = (): JSX.Element => (
     <>
       <Show when={showCustomerConsumption()}>
@@ -686,17 +686,17 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           fixed="months"
         />
       </Show>
-      <Show when={showTargetPopulation()}>
+      <Show when={customerForecast()}>
         {/* Never editable — plain text, not a disabled input (ui-standards ›
             detail-views § never-editable fields). Rounds to NEAREST (spec S4
             § read-only figures), so it bypasses FigureRow's ceil. */}
-        <FieldRow label={t('label.target-stock-population')}>
-          <span class={styles.statValue}>
-            {formatNumber(targetPopulationFigure())}{' '}
+        <FieldRow label={t('label.customer-target-stock')}>
+          <span class={styles.statValue} data-testid="customer-target-stock">
+            {formatNumber(customerTargetFigure())}{' '}
             {measureWord(
               entryMode(),
               current()?.unitName ?? null,
-              targetPopulationFigure()
+              customerTargetFigure()
             )}
           </span>
         </FieldRow>
@@ -913,16 +913,14 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         </div>
 
         {/* The two read-only stats tabs (spec S4 § stats tabs): My store ·
-            Customer, with the volume block and the forecast calculation
-            display. */}
+            Customer, with the customer's forecast and the volume block. */}
         <RequisitionLineStats
           stats={statsNode()}
           entryMode={entryMode()}
           packSize={packSize()}
           unitName={current()?.unitName ?? null}
           finalised={props.finalised}
-          showForecast={props.showForecast}
-          courses={current()?.vaccineCourses ?? []}
+          forecast={customerForecast()}
           volume={
             volumeSnapshot()
               ? {

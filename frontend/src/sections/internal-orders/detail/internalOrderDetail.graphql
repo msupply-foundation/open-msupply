@@ -36,13 +36,55 @@ fragment InternalOrderLine on RequisitionLineNode {
   expiringUnits
   daysOutOfStock
   pricePerUnit
-  # Population forecast (captured at line creation under
-  # displayPopulationBasedForecasting; null on a forecast-less line). The totals
-  # back the Target stock (population) surfaces; vaccineCourses is the per-course
-  # breakdown JSON the line editor parses for its calculation display (AC-PF7).
-  forecastTotalUnits
-  forecastTotalDoses
-  vaccineCourses
+  # The line's forecast (rules › forecasting): the same selection as
+  # domain/forecast's ForecastLine fragment, which the editor's forecast block
+  # takes. Monthly demand backs the MOS column, the over-minimum filter, and the
+  # target-stock column (targetStock = target months × monthly demand).
+  forecastMethod
+  forecastMonthlyConsumption
+  targetStock
+  forecastBreakdown {
+    __typename
+    ... on AmcForecastNode {
+      averageMonthlyConsumption
+    }
+    ... on PopulationForecastNode {
+      populationServed
+      courses {
+        courseName
+        demographicName
+        numberOfDoses
+        coverageRate
+        wastageRate
+        targetPopulation
+        lossFactor
+        annualTargetDoses
+        dosesPerUnit
+        monthlyDoses
+        monthlyUnits
+      }
+    }
+    ... on AncillaryRatioForecastNode {
+      principals {
+        itemId
+        item {
+          code
+          name
+        }
+        principalMonthlyConsumption
+        itemQuantity
+        ancillaryQuantity
+        monthlyConsumption
+      }
+    }
+  }
+  # Every method, an unavailable one with its reason — the editor's method
+  # select. Batched server-side per order, so the whole line set costs one read.
+  forecastMethodOptions {
+    method
+    isAvailable
+    unavailableReason
+  }
   optionId
   reason {
     reason

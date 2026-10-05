@@ -6,7 +6,8 @@ use util::uuid::uuid;
 
 use crate::{
     requisition::{
-        common::check_requisition_row_exists, request_requisition::generate_requisition_lines,
+        common::check_requisition_row_exists,
+        request_requisition::{generate_requisition_lines, recompute_ancillary_dependants},
     },
     service_provider::ServiceContext,
     PluginOrRepositoryError,
@@ -94,10 +95,18 @@ pub fn refresh_ancillary_items(
                         &requisition_row,
                         &plan.to_add,
                     )?;
+                    let new_item_ids = new_lines.iter().map(|row| row.item_id.clone()).collect();
                     for row in new_lines {
                         repo.upsert_one(&row)?;
                         changed.push(row);
                     }
+                    // An added line can be a principal of existing Ancillary-ratio lines
+                    recompute_ancillary_dependants(
+                        connection,
+                        &ctx.store_id,
+                        &requisition_row,
+                        new_item_ids,
+                    )?;
                 }
                 RefreshAncillaryAction::Update => {
                     for delta in plan.to_update {

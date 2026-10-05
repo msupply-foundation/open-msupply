@@ -4,6 +4,7 @@ import {
   InternalOrderItemStats,
   AddInternalOrderLine,
   UpdateInternalOrderLine,
+  ChangeInternalOrderLineForecastMethod,
 } from './internalOrderLineEdit.generated';
 import type { InternalOrderLineFragment } from '../internalOrderDetail.generated';
 
@@ -15,10 +16,15 @@ import type { InternalOrderLineFragment } from '../internalOrderDetail.generated
 // only re-expresses the display.
 export type EntryMode = 'units' | 'packs' | 'doses';
 
-// The population-forecast breakdown (VaccineCourse, parseVaccineCourses,
-// forecastSteps) is the shared module at src/domain/forecast — both
-// requisition verticals' editors consume it.
-import { parseVaccineCourses, type VaccineCourse } from '../../../../domain/forecast';
+// The forecast (its type, the method options, and the block that shows them)
+// is the shared module at src/domain/forecast — both requisition verticals'
+// editors consume it.
+import {
+  unavailableReasonMessage,
+  type ForecastLineFragment,
+  type ForecastMethod,
+  type ForecastMethodOption,
+} from '../../../../domain/forecast';
 
 // The editor's working line — the same shape whether it comes from an existing
 // line (edit mode: the stored figures) or an add-mode item preview (the item's
@@ -40,15 +46,17 @@ export type EditorLine = {
   // Statistics (units).
   availableStockOnHand: number;
   averageMonthlyConsumption: number;
+  /** Stock on hand ÷ the line's monthly demand. */
   monthsOfStock: number;
   suggestedQuantity: number;
-  forecastTotalUnits: number | null;
-  forecastTotalDoses: number | null;
   /**
-   * The forecast's per-course breakdown (AC-PF7); empty on a forecast-less
-   * line.
+   * The line's monthly demand — its forecast's, or the item's AMC on an
+   * add-mode draft, whose forecast is the server's to capture at save.
    */
-  vaccineCourses: VaccineCourse[];
+  monthlyDemand: number;
+  /** The stored forecast (rules › forecasting); null on an unsaved draft. */
+  forecast: ForecastLineFragment | null;
+  forecastMethodOptions: ForecastMethodOption[];
   pricePerUnit: number | null;
   // Extended movements (edit mode on a customer-statistics program order).
   initialStockOnHandUnits: number;
@@ -136,8 +144,8 @@ export const defaultEntryMode = (
 // when months-of-stock exceeds the reorder threshold (the target months stand
 // in when the threshold is Not set); otherwise (target − months of stock) ×
 // AMC, rounded up. The real suggestion is the server's, taken at save; this is
-// the draft preview only. (The population-forecast override, AC-PF4, is not
-// previewed — a forecast is captured server-side at line creation.)
+// the draft preview only, from the item's AMC: the line's forecast — which may
+// take another method — is captured server-side when the line is created.
 export const previewSuggestion = (
   amc: number,
   monthsOfStock: number,
@@ -190,9 +198,9 @@ export const buildAddPreview = async (
       minMonths,
       maxMonths
     ),
-    forecastTotalUnits: null,
-    forecastTotalDoses: null,
-    vaccineCourses: [],
+    monthlyDemand: stats.averageMonthlyConsumption,
+    forecast: null,
+    forecastMethodOptions: [],
     pricePerUnit: null,
     initialStockOnHandUnits: 0,
     incomingUnits: 0,
@@ -210,7 +218,8 @@ export const buildAddPreview = async (
 };
 
 // An existing line → the editor's working shape (edit mode). Months of stock is
-// derived from the stored figures the same way the line table derives it.
+// derived from the stored figures the same way the line table derives it: stock
+// on hand ÷ the line's monthly demand.
 export const editorLineFromLine = (
   line: InternalOrderLineFragment
 ): EditorLine => ({
@@ -225,13 +234,13 @@ export const editorLineFromLine = (
   availableStockOnHand: line.availableStockOnHand,
   averageMonthlyConsumption: line.averageMonthlyConsumption,
   monthsOfStock:
-    line.averageMonthlyConsumption > 0
-      ? line.availableStockOnHand / line.averageMonthlyConsumption
+    line.forecastMonthlyConsumption > 0
+      ? line.availableStockOnHand / line.forecastMonthlyConsumption
       : 0,
   suggestedQuantity: line.suggestedQuantity,
-  forecastTotalUnits: line.forecastTotalUnits,
-  forecastTotalDoses: line.forecastTotalDoses,
-  vaccineCourses: parseVaccineCourses(line.vaccineCourses),
+  monthlyDemand: line.forecastMonthlyConsumption,
+  forecast: line,
+  forecastMethodOptions: line.forecastMethodOptions,
   pricePerUnit: line.pricePerUnit,
   initialStockOnHandUnits: line.initialStockOnHandUnits,
   incomingUnits: line.incomingUnits,
@@ -349,5 +358,53 @@ export const saveExistingLine = async (
       response.error.__typename,
       response.error.description
     ),
+  };
+};
+
+// --- Forecast method (rules › choosing a method) ----------------------------
+
+export type ChangeForecastMethodResult =
+  | { kind: 'changed'; line: EditorLine }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
+
+// A method change saves on selection, apart from the editor's draft: the server
+// recomputes the line's forecast and suggestion (and its Ancillary-ratio
+// dependants'), leaving the requested quantity alone. The changed figures merge
+// into the editor's line; the draft's own fields are the caller's and
+// untouched.
+export const changeForecastMethod = async (
+  storeId: string,
+  line: EditorLine,
+  method: ForecastMethod
+): Promise<ChangeForecastMethodResult> => {
+  const result = await graphqlFetch(ChangeInternalOrderLineForecastMethod, {
+    storeId,
+    input: { id: line.lineId, forecastMethod: method },
+  });
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const response = result.data.updateRequestRequisitionLine;
+  if (response.__typename === 'RequisitionLineNode')
+    return {
+      kind: 'changed',
+      line: {
+        ...line,
+        suggestedQuantity: response.suggestedQuantity,
+        monthlyDemand: response.forecastMonthlyConsumption,
+        monthsOfStock:
+          response.forecastMonthlyConsumption > 0
+            ? line.availableStockOnHand / response.forecastMonthlyConsumption
+            : 0,
+        forecast: response,
+        forecastMethodOptions: response.forecastMethodOptions,
+      },
+    };
+  const { error } = response;
+  return {
+    kind: 'error',
+    message:
+      error.__typename === 'ForecastMethodNotAvailable'
+        ? unavailableReasonMessage(error.unavailableReason)
+        : mapUpdateError(error.__typename, error.description),
   };
 };

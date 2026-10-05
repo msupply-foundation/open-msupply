@@ -6,9 +6,10 @@ use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_f
 
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
-    RequisitionLineRow, RequisitionLineRowDelete, RequisitionRepository, RnRFormLineFilter,
-    RnRFormLineRepository, Row, StorageConnection, SyncBufferRow,
+    forecast_from_legacy, forecast_to_legacy, ChangelogRow, ChangelogTableName, EqualFilter,
+    ItemLinkRowRepository, LegacyForecast, RequisitionFilter, RequisitionLineRow,
+    RequisitionLineRowDelete, RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -22,6 +23,9 @@ pub struct RequisitionLineOmsFields {
     pub price_per_unit: Option<f64>,
     pub available_volume: Option<f64>,
     pub location_type_id: Option<String>,
+    // The legacy forecast shape: only a Population line carries it. Converted to and from
+    // the line's forecast method, monthly demand and breakdown by `forecast_from_legacy`
+    // and `forecast_to_legacy`.
     pub forecast_total_units: Option<f64>,
     pub forecast_total_doses: Option<f64>,
     pub vaccine_courses: Option<String>,
@@ -121,25 +125,25 @@ impl SyncTranslation for RequisitionLineTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyRequisitionLineRow>()?;
 
-        let (
-            price_per_unit,
-            available_volume,
-            location_type_id,
-            forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
-        ) = if let Some(oms_fields) = data.oms_fields {
-            (
-                oms_fields.price_per_unit,
-                oms_fields.available_volume,
-                oms_fields.location_type_id,
-                oms_fields.forecast_total_units,
-                oms_fields.forecast_total_doses,
-                oms_fields.vaccine_courses,
-            )
-        } else {
-            (None, None, None, None, None, None)
-        };
+        let (price_per_unit, available_volume, location_type_id, legacy_forecast) =
+            if let Some(oms_fields) = data.oms_fields {
+                (
+                    oms_fields.price_per_unit,
+                    oms_fields.available_volume,
+                    oms_fields.location_type_id,
+                    LegacyForecast {
+                        forecast_total_units: oms_fields.forecast_total_units,
+                        forecast_total_doses: oms_fields.forecast_total_doses,
+                        vaccine_courses: oms_fields.vaccine_courses,
+                    },
+                )
+            } else {
+                (None, None, None, LegacyForecast::default())
+            };
+
+        let average_monthly_consumption =
+            (data.daily_usage * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30).ceil();
+        let forecast = forecast_from_legacy(&legacy_forecast, average_monthly_consumption);
 
         let fk_check = fk_checker.with_table(connection, "requisition_line", &data.ID);
         let check_fk = fk_checker.with_table_required(connection, "requisition_line", &data.ID);
@@ -157,9 +161,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
             available_stock_on_hand: data.stock_on_hand,
-            average_monthly_consumption: (data.daily_usage
-                * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30)
-                .ceil(),
+            average_monthly_consumption,
             comment: data.comment,
             snapshot_datetime: data.snapshot_datetime,
             approved_quantity: data.approved_quantity,
@@ -176,9 +178,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
-            forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
+            forecast_data: forecast.data_json(),
+            forecast_method: forecast.method,
+            forecast_monthly_consumption: forecast.monthly_consumption,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -230,9 +232,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
-            forecast_total_units,
-            forecast_total_doses,
-            vaccine_courses,
+            forecast_method,
+            forecast_monthly_consumption: _,
+            forecast_data,
         } = requisition_line_row;
 
         // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
@@ -243,13 +245,28 @@ impl SyncTranslation for RequisitionLineTranslation {
             ))?
             .item_id;
 
-        let is_program_requisition = RequisitionRepository::new(connection)
+        let requisition = RequisitionRepository::new(connection)
             .query_by_filter(
                 RequisitionFilter::new().id(EqualFilter::equal_to(requisition_id.to_string())),
             )?
-            .pop()
+            .pop();
+        let is_program_requisition = requisition
+            .as_ref()
             .map(|requisition| requisition.program.is_some())
             .unwrap_or(false);
+
+        // A Population line is sent with its forecast spread over the order's target months
+        let LegacyForecast {
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
+        } = forecast_to_legacy(
+            &forecast_method,
+            forecast_data.as_deref(),
+            requisition
+                .map(|requisition| requisition.requisition_row.max_months_of_stock)
+                .unwrap_or_default(),
+        );
 
         let prev_stock_balance = if is_program_requisition {
             initial_stock_on_hand_units

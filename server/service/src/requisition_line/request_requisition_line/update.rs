@@ -1,6 +1,12 @@
 use crate::{
     location::query::get_available_volume_by_location_type,
-    requisition::common::check_requisition_row_exists,
+    requisition::{
+        common::check_requisition_row_exists,
+        request_requisition::{
+            apply_forecast, order_demand, recompute_ancillary_dependants, ForecastInputs,
+            ForecastMethodUnavailableReason,
+        },
+    },
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
@@ -9,8 +15,10 @@ use crate::{
 
 use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
-    ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
-    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
+    EqualFilter, ForecastMethod, LineForecast, ReasonOptionFilter, ReasonOptionRepository,
+    ReasonOptionType, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -19,6 +27,9 @@ pub struct UpdateRequestRequisitionLine {
     pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
     pub option_id: Option<String>,
+    /// Changing the method recomputes the line's forecast and suggested quantity, and the
+    /// Ancillary-ratio lines it feeds
+    pub forecast_method: Option<ForecastMethod>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,6 +42,7 @@ pub enum UpdateRequestRequisitionLineError {
     UpdatedRequisitionLineDoesNotExist,
     RequisitionDoesNotExist,
     ReasonNotProvided(RequisitionLine),
+    ForecastMethodNotAvailable(ForecastMethodUnavailableReason),
     DatabaseError(RepositoryError),
 }
 
@@ -43,11 +55,28 @@ pub fn update_request_requisition_line(
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let updated_requisition_line_row = generate(ctx, requisition_row, input)?;
+            let (requisition_line_row, requisition_row, new_forecast) =
+                validate(connection, &ctx.store_id, &input)?;
+            let method_changed = new_forecast.is_some();
+            let updated_requisition_line_row = generate(
+                ctx,
+                requisition_line_row,
+                &requisition_row,
+                new_forecast,
+                input,
+            )?;
 
             RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
+
+            if method_changed {
+                recompute_ancillary_dependants(
+                    connection,
+                    &ctx.store_id,
+                    &requisition_row,
+                    vec![updated_requisition_line_row.item_id.clone()],
+                )?;
+            }
 
             get_requisition_line(ctx, &updated_requisition_line_row.id)
                 .map_err(OutError::DatabaseError)?
@@ -61,7 +90,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateRequestRequisitionLine,
-) -> Result<RequisitionLineRow, OutError> {
+) -> Result<(RequisitionLineRow, RequisitionRow, Option<LineForecast>), OutError> {
     let requisition_line = check_requisition_line_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?;
     let requisition_line_row = requisition_line.clone().requisition_line_row;
@@ -108,19 +137,56 @@ fn validate(
         }
     }
 
-    Ok(requisition_line_row)
+    // A method change computes the line's new forecast; choosing its current method changes
+    // nothing, so a line keeps a method that has since become unavailable
+    let new_forecast = match input.forecast_method {
+        Some(method) if method != requisition_line_row.forecast_method => {
+            let order_lines: Vec<RequisitionLineRow> = RequisitionLineRepository::new(connection)
+                .query_by_filter(
+                    RequisitionLineFilter::new()
+                        .requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
+                )?
+                .into_iter()
+                .map(|line| line.requisition_line_row)
+                .collect();
+            let order = order_demand(&order_lines);
+            let item_id = &requisition_line_row.item_id;
+            let inputs = ForecastInputs::load(connection, store_id, &[item_id.clone()])?;
+
+            if let Some(reason) = inputs.unavailable_reason(method, item_id, &order) {
+                return Err(OutError::ForecastMethodNotAvailable(reason));
+            }
+            Some(inputs.forecast(
+                method,
+                item_id,
+                requisition_line_row.average_monthly_consumption,
+                &order,
+            ))
+        }
+        _ => None,
+    };
+
+    Ok((requisition_line_row, requisition_row, new_forecast))
 }
 
 fn generate(
     ctx: &ServiceContext,
     existing: RequisitionLineRow,
+    requisition_row: &RequisitionRow,
+    new_forecast: Option<LineForecast>,
     UpdateRequestRequisitionLine {
         id: _,
         requested_quantity: updated_requested_quantity,
         comment: updated_comment,
         option_id,
+        forecast_method: _,
     }: UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, RepositoryError> {
+    let mut existing = existing;
+    if let Some(forecast) = new_forecast {
+        apply_forecast(&mut existing, forecast, requisition_row);
+    }
+
     let available_volume_by_type = get_available_volume_by_location_type(
         &ctx.connection,
         &ctx.store_id,
@@ -307,6 +373,7 @@ mod test {
                     requested_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
                     option_id: None,
+                    forecast_method: None,
                 },
             )
             .unwrap();

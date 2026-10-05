@@ -3,10 +3,7 @@ import { measureWord, t } from '@/intl';
 import { formatNumber, round } from '@/intl/formatNumber';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import { InfoIcon } from '@/ui/icons';
-import {
-  ForecastCalculationDisplay,
-  type VaccineCourse,
-} from '@/domain/forecast';
+import { ForecastBlock, type ForecastLineFragment } from '@/domain/forecast';
 import {
   figureInMode,
   type EntryMode,
@@ -16,8 +13,9 @@ import styles from './RequisitionLineStats.module.css';
 
 // The line editor's two read-only stats tabs (spec S4 § stats tabs): My store
 // — the proportional stacked our-stock / requested bars — and Customer — the
-// target-quantity breakdown (or the population-forecast calculation display,
-// OMS-REG-DIST-05.35) with the volume block beneath (OMS-REG-DIST-05.34).
+// target-quantity breakdown, the customer's forecast beneath it on a
+// transfer-linked line (OMS-REG-DIST-05.37), and the volume block beneath both
+// (OMS-REG-DIST-05.34).
 // Every quantity displays re-expressed in the active representation, rounded UP
 // to a whole number (the figure rows' rounding), and swapping the
 // representation recalculates the bars. Both summaries come from a server read
@@ -55,11 +53,10 @@ export const RequisitionLineStats: Component<{
   /** Withholds the other-stores legend row (spec S4 § stats tabs). */
   finalised: boolean;
   /**
-   * The forecast calculation display stands in for the breakdown
-   * (OMS-REG-DIST-05.35).
+   * The customer's forecast, shown read-only beneath the breakdown — on a
+   * transfer-linked line only (OMS-REG-DIST-05.37); null otherwise.
    */
-  showForecast: boolean;
-  courses: VaccineCourse[];
+  forecast: ForecastLineFragment | null;
   /**
    * The volume block's live figures (OMS-REG-DIST-05.34); null on a
    * snapshot-less line.
@@ -215,8 +212,7 @@ export const RequisitionLineStats: Component<{
     const suggested = () => q(s()?.suggestedQuantity ?? 0);
     const maxMonths = () => s()?.maxMonthsOfStock ?? 0;
     const target = () => maxMonths() * amc();
-    const canCalculate = () =>
-      amc() > 0 && !(soh() === 0 && suggested() === 0);
+    const canCalculate = () => amc() > 0 && !(soh() === 0 && suggested() === 0);
     // The axis shrinks when stock exceeds the target, else spans the row.
     const axisWidth = () =>
       soh() > target() ? Math.round((100 * target()) / soh()) : 100;
@@ -229,9 +225,7 @@ export const RequisitionLineStats: Component<{
     const monthCount = (m: number) => (showText() ? fullCount(m) : '');
     const monthText = (m: number) => `${monthNumber(m)}${monthCount(m)}`;
     const barFlex = (value: number) =>
-      target() === 0
-        ? 0
-        : Math.min(Math.round((100 * value) / target()), 100);
+      target() === 0 ? 0 : Math.min(Math.round((100 * value) / target()), 100);
     // A bar's number or label shows only when the bar is wide enough for it.
     const valueClass = (value: number) =>
       barFlex(value) > MIN_BAR_WIDTH_FOR_VALUE
@@ -327,8 +321,8 @@ export const RequisitionLineStats: Component<{
     );
   };
 
-  // The volume block (OMS-REG-DIST-05.34), beneath the breakdown — or the
-  // forecast display — on a line carrying the customer's volume snapshot.
+  // The volume block (OMS-REG-DIST-05.34), beneath the breakdown and the
+  // forecast, on a line carrying the customer's volume snapshot.
   // Guidance only: the live item volume at the typed supply, then the remaining
   // capacity or the bold no-capacity message.
   const VolumeBlock = (): JSX.Element => {
@@ -380,11 +374,20 @@ export const RequisitionLineStats: Component<{
         </TabPanel>
         <TabPanel value="customer">
           <div class={styles.panelBody}>
-            <Show
-              when={props.showForecast && props.courses.length > 0}
-              fallback={<TargetBreakdown />}
-            >
-              <ForecastCalculationDisplay courses={props.courses} />
+            <TargetBreakdown />
+            <Show when={props.forecast}>
+              {forecast => (
+                <ForecastBlock
+                  line={forecast()}
+                  targetMonths={
+                    props.stats?.requestStoreStats.maxMonthsOfStock ?? 0
+                  }
+                  formatQuantity={units =>
+                    `${formatNumber(q(units))} ${measureWord(props.entryMode, props.unitName, q(units))}`
+                  }
+                  testId="customer-forecast"
+                />
+              )}
             </Show>
             <Show when={props.volume}>
               <VolumeBlock />

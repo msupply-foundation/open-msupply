@@ -1,4 +1,5 @@
 pub mod invoice_line;
+pub mod requisition_line;
 pub mod store;
 pub mod sync_file_reference;
 pub mod temperature_log;
@@ -6,6 +7,7 @@ pub mod temperature_log;
 use repository::{migrations::Version, syncv7::SyncError, ChangelogRow, Row, StorageConnection};
 
 use crate::sync_v7::{serde::serialize, sync::SyncRecordV7};
+use requisition_line::{receiver_needs_legacy_forecast, translate_outgoing_requisition_line};
 
 /// What outgoing translations know about a batch being sent.
 pub struct SendContext<'a> {
@@ -20,19 +22,22 @@ pub struct SendContext<'a> {
 /// the typed row and may leave it out or add others; `SyncBatchV7::generate` tops
 /// the batch back up.
 pub(crate) fn translate_outgoing(
-    _context: &SendContext,
+    context: &SendContext,
     changelog: &ChangelogRow,
     row: Row,
 ) -> Result<Vec<SyncRecordV7>, SyncError> {
     match row {
         // Special cases go here by row type, each calling its table's module
+        Row::RequisitionLine(line) if receiver_needs_legacy_forecast(context.receiver_version) => {
+            translate_outgoing_requisition_line(context.connection, changelog, line)
+        }
 
         // Test only: lets `SyncBatchV7`'s tests leave records out and add others
         #[cfg(test)]
         Row::Unit(unit) if unit.id.starts_with("left_out") => Ok(vec![]),
         #[cfg(test)]
         Row::Unit(unit)
-            if unit.id.starts_with("remote_only") && _context.receiver_version.is_none() =>
+            if unit.id.starts_with("remote_only") && context.receiver_version.is_none() =>
         {
             Ok(vec![])
         }

@@ -96,6 +96,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
                 suggested_quantity: 3.0,
                 available_stock_on_hand: 1.0,
                 average_monthly_consumption: 10.0,
+                forecast_monthly_consumption: 10.0,
                 item_name: mock_item_a().name,
                 ..Default::default()
             },
@@ -107,6 +108,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
                 suggested_quantity: 3.0,
                 available_stock_on_hand: 1.0,
                 average_monthly_consumption: 10.0,
+                forecast_monthly_consumption: 10.0,
                 item_name: mock_item_b().name,
                 ..Default::default()
             },
@@ -157,6 +159,7 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
             suggested_quantity: 15.0,
             available_stock_on_hand: 1.0,
             average_monthly_consumption: 10.0,
+            forecast_monthly_consumption: 10.0,
             ..Default::default()
         }],
     }

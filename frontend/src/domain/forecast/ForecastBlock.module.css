@@ -1,7 +1,11 @@
-/* The population-forecast calculation display (spec/internal-orders S4, AC-PF7):
-   the bold heading over one collapsible section per course group. Sits in the
-   charts region, so it caps and centres the same way. */
-.container {
+/* The forecast block (spec/internal-orders S4 › the forecast): the bold heading
+   over the method, the method's breakdown, and the step into stock. Full-width
+   between the editor's panels and its context charts, capped and centred like
+   the charts region. */
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   inline-size: 100%;
   max-inline-size: 56rem;
   margin-block-start: var(--space-4);
@@ -10,13 +14,27 @@
 }
 
 .heading {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-1);
   font-size: var(--text-md);
   font-weight: var(--weight-bold);
   color: var(--text-body);
 }
 
-/* Each course's three steps, stacked with a comfortable gap. */
+/* A figure and its muted caption, right-aligned at the row's end. */
+.figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  inline-size: 100%;
+  text-align: end;
+}
+
+.caption {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* Each course's two steps, stacked with a comfortable gap. */
 .steps {
   display: flex;
   flex-direction: column;
@@ -42,7 +60,7 @@
   color: var(--text-body);
 }
 
-/* The line's stored figures substituted in — muted. */
+/* The line's figures substituted in — muted. */
 .substitution {
   color: var(--text-secondary);
 }

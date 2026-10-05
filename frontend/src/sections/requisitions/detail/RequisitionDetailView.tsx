@@ -248,8 +248,6 @@ const RequisitionDetailView: Component = () => {
   const showApprovedFigure = () =>
     (storePrefs()?.responseRequisitionRequiresAuthorisation ?? false) &&
     info()?.approvalStatus === 'APPROVED';
-  const showForecast = () =>
-    prefs()?.displayPopulationBasedForecasting ?? false;
 
   // The Indicators tab's data (definitions + this period's values), keyed to
   // the CUSTOMER's reporting identity — the store's record of the customer's
@@ -1214,7 +1212,6 @@ const RequisitionDetailView: Component = () => {
                 showApproved={showApprovedFigure()}
                 finalised={node().status === 'FINALISED'}
                 showDoses={showDoses()}
-                showForecast={showForecast()}
                 showExcess={showExcess()}
                 initialLine={editorInitialLine()}
                 nextLine={resolveNextLine}

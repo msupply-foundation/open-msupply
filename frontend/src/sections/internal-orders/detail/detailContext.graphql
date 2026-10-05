@@ -9,8 +9,6 @@
 #   annotations on unit-quantity columns.
 # - preferences.showIndicativePriceInRequisitions → the two indicative-price
 #   columns.
-# - preferences.displayPopulationBasedForecasting → the Target stock
-#   (population) column.
 # - preferences.warningForExcessRequest → the excess-request cue on Requested.
 # - storePreferences.requestRequisitionRequiresAuthorisation → the approval
 #   columns (AC-S6).
@@ -26,7 +24,6 @@ query internalOrderDetailContext($storeId: String!) {
     selectDestinationStoreForAnInternalOrder
     manageVaccinesInDoses
     showIndicativePriceInRequisitions
-    displayPopulationBasedForecasting
     warningForExcessRequest
     canCreateInternalOrderFromARequisition
     # The line editor's default entry mode (AC-LN18): packs where the store

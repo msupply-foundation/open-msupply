@@ -1,6 +1,6 @@
 use crate::db_diesel::item_row::item;
 use crate::db_diesel::requisition_row::requisition;
-use crate::diesel_macros::define_linked_tables;
+use crate::diesel_macros::{define_linked_tables, diesel_string_enum};
 use crate::repository_error::RepositoryError;
 use crate::{ItemLinkRowRepository, StorageConnection};
 use diesel::prelude::*;
@@ -42,15 +42,31 @@ define_linked_tables! {
         expiring_units -> Double,
         days_out_of_stock -> Double,
         option_id -> Nullable<Text>,
-        // Population forecasting fields
-        forecast_total_units -> Nullable<Double>,
-        forecast_total_doses -> Nullable<Double>,
-        vaccine_courses -> Nullable<Text>,
+        // Forecasting fields
+        forecast_method -> Text,
+        forecast_monthly_consumption -> Double,
+        forecast_data -> Nullable<Text>,
     },
     links: {
         item_link_id -> item_id,
     },
     optional_links: {
+    }
+}
+
+diesel_string_enum! {
+    #[derive(Clone, Copy, Eq, Hash, TS, strum::EnumIter)]
+    #[strum(serialize_all = "snake_case")]
+    #[ts(rename_all = "snake_case")]
+    /// Where a requisition line's monthly demand comes from.
+    pub enum ForecastMethod {
+        /// The line's average monthly consumption
+        #[default]
+        Amc,
+        /// The vaccine courses covering the item, for the store's population served
+        Population,
+        /// The order's principal lines' monthly demand × the configured ancillary ratios
+        AncillaryRatio,
     }
 }
 
@@ -84,10 +100,14 @@ pub struct RequisitionLineRow {
     pub expiring_units: f64,
     pub days_out_of_stock: f64,
     pub option_id: Option<String>,
-    // Population forecasting fields
-    pub forecast_total_units: Option<f64>,
-    pub forecast_total_doses: Option<f64>,
-    pub vaccine_courses: Option<String>,
+    // Forecasting fields
+    pub forecast_method: ForecastMethod,
+    /// The method's monthly demand, in units. Equals `average_monthly_consumption` on an
+    /// `amc` line.
+    pub forecast_monthly_consumption: f64,
+    /// The method's breakdown as JSON, keyed by method (see the service's `forecast`
+    /// module). Holds no months-of-stock figure: the requisition's thresholds supply those.
+    pub forecast_data: Option<String>,
     // Resolved from item_link - must be last to match view column order.
     // Serialized as `item_link_id` to preserve the backend plugin JSON contract
     // (e.g. TransformRequestRequisitionLines) after the #11668 item_link rename.

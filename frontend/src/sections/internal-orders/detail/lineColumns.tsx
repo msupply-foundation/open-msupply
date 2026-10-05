@@ -56,7 +56,6 @@ export const INTERNAL_ORDER_LINE_COLUMNS = {
   amc: 'amc',
   mos: 'mos',
   targetStock: 'targetStock',
-  targetStockPopulation: 'targetStockPopulation',
   suggested: 'suggested',
   requested: 'requested',
   pricePerUnit: 'pricePerUnit',
@@ -222,7 +221,10 @@ const toHostColumn = <Row,>(
             } catch (error) {
               if (!sortReported) {
                 sortReported = true;
-                console.error(`[plugins] ${id}: column sortValue failed`, error);
+                console.error(
+                  `[plugins] ${id}: column sortValue failed`,
+                  error
+                );
               }
               return '';
             }

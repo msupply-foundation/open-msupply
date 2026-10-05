@@ -1,11 +1,15 @@
 use crate::{
-    requisition::common::check_requisition_row_exists,
-    requisition_line::common::check_requisition_line_exists, service_provider::ServiceContext,
+    requisition::{
+        common::check_requisition_row_exists, request_requisition::recompute_ancillary_dependants,
+    },
+    requisition_line::common::check_requisition_line_exists,
+    service_provider::ServiceContext,
     validate::check_other_party_store_is_disabled,
 };
 use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
-    RepositoryError, RequisitionLineRowRepository, StorageConnection,
+    RepositoryError, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -32,11 +36,19 @@ pub fn delete_request_requisition_line(
 ) -> Result<String, OutError> {
     ctx.connection
         .transaction_sync(|connection| {
-            validate(connection, &ctx.store_id, &input)?;
+            let (requisition_line_row, requisition_row) =
+                validate(connection, &ctx.store_id, &input)?;
 
-            RequisitionLineRowRepository::new(connection)
-                .delete(&input.id)
-                .map_err(OutError::DatabaseError)
+            RequisitionLineRowRepository::new(connection).delete(&input.id)?;
+
+            // The Ancillary-ratio lines this line fed recompute without it
+            recompute_ancillary_dependants(
+                connection,
+                &ctx.store_id,
+                &requisition_row,
+                vec![requisition_line_row.item_id],
+            )?;
+            Ok::<(), OutError>(())
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(input.id)
@@ -46,7 +58,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &DeleteRequestRequisitionLine,
-) -> Result<(), OutError> {
+) -> Result<(RequisitionLineRow, RequisitionRow), OutError> {
     let requisition_line_row = check_requisition_line_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?
         .requisition_line_row;
@@ -71,7 +83,7 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    Ok(())
+    Ok((requisition_line_row, requisition_row))
 }
 
 impl From<RepositoryError> for DeleteRequestRequisitionLineError {
