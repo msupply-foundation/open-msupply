@@ -162,7 +162,10 @@ export { DateField } from '../ui/elements/inputs/DateField';
 export type { DateFieldProps } from '../ui/elements/inputs/DateField';
 export { FieldRow } from '../ui/elements/inputs/FieldRow';
 export { Select } from '../ui/elements/selectors/Select';
-export type { SelectOption } from '../ui/elements/selectors/Select';
+export type {
+  SelectOption,
+  SelectProps,
+} from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
 export { FormSection } from '../ui/layout/Form/FormSection';
@@ -270,6 +273,50 @@ export type { DetailCardProps } from '../ui/layout/Detail/DetailCard';
 export { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
 export type { ContentFooterProps } from '../ui/layout/ContentFooter/ContentFooter';
 export { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
+
+/*
+ * The Afghanistan configuration editor's own set (plugins/afghanistan
+ * ui-surface.md § S8 — the five roles it names and no other audited surface
+ * does, plus the reorderable list its Dose order tab needed built):
+ * page-level tabs, the checkbox of the dose matrix, the multi-select of a
+ * summary table's columns, and the two lookups — the item catalogue (async,
+ * server-paginated) and the adjustment reason (a local set). The plugin owns
+ * each lookup's query and option row; the registry deliberately has no
+ * component per data set (spec/ui-standards/components.md § selects &
+ * lookups).
+ *
+ * EAGER, against the lazy-wrapper default below, because of where this surface
+ * renders: the editor is the body of the host's Configure dialog, and its tab
+ * panels mount when a tab is activated — an interaction. A lazy component
+ * first mounted there would suspend the dialog's boundary and remount it,
+ * detaching the open `<dialog>` and taking the half-typed configuration with
+ * it (kdd/solid-reactivity-pitfalls › No remounts on interaction). The same
+ * reason Dialog itself is safe to make lazy — it mounts only while open — makes
+ * a tab panel's contents unsafe. Kobalte is already in this barrel's eager
+ * graph (Select, Accordion), so what is new is each component's own module and
+ * stylesheet (measured: kdd/bundle-size-by-pr).
+ */
+export { Tabs, TabList, TabPanel } from '../ui/elements/tabs/Tabs';
+export type { TabDef } from '../ui/elements/tabs/Tabs';
+// The BARE checkbox, not the labelled field: a matrix cell's box is named by
+// `aria-label`, the same way the host's own DataTable renders it in a
+// selection cell (see BareCheckbox's composition note). It is also the lighter
+// of the pair — `Checkbox` is this plus label and error chrome.
+export { BareCheckbox } from '../ui/elements/inputs/BareCheckbox';
+export type { BareCheckboxProps } from '../ui/elements/inputs/BareCheckbox';
+export { MultiSelect } from '../ui/elements/selectors/MultiSelect';
+export type { MultiSelectProps } from '../ui/elements/selectors/MultiSelect';
+export { Combobox } from '../ui/elements/selectors/Combobox';
+export type { ComboboxProps } from '../ui/elements/selectors/Combobox';
+export { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
+export type { AsyncComboboxProps } from '../ui/elements/selectors/AsyncCombobox';
+export type { Page } from '../ui/utils/createPaginatedSearch';
+export { ReorderableList } from '../ui/elements/inputs/ReorderableList';
+export type {
+  ReorderableItem,
+  ReorderableListLabels,
+  ReorderableListProps,
+} from '../ui/elements/inputs/ReorderableList';
 
 // ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
 /*
@@ -400,6 +447,9 @@ export {
   PlusCircleIcon,
   TrashIcon,
 } from '../ui/icons';
+// The configuration editor's import/export pair (ui-surface § S8): the upload
+// icon is already above, with the Cook Islands tiles; this is its counterpart.
+export { DownloadIcon } from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';
@@ -409,6 +459,9 @@ export {
   pluginIntl,
   locale,
   isRtl,
+  // The host's endonym for a locale: a plugin naming a language must not keep
+  // its own catalogue of language names (./intl.ts).
+  languageName,
   formatNumber,
   round,
   roundTo,
@@ -506,6 +559,15 @@ export { pluginData, CONFIGURATION_IDENTIFIER } from './pluginData';
 // secure-context-only (crashes on plain-HTTP LAN origins, #499), so the host's
 // generator is the sanctioned way for a plugin to mint one.
 export { generateUUID } from '../uuid';
+
+// ── Files out of the app ────────────────────────────────────────────────────
+/*
+ * The configuration editor's _Download JSON_ (plugins/afghanistan ui-surface §
+ * S8). One async function; its platform graph loads on the first save, so this
+ * costs nothing eager (see ./files.ts for why a plugin must not hand-roll it).
+ */
+export { saveFile } from './files';
+export type { SaveFileResult } from './files';
 
 // ── Focus ───────────────────────────────────────────────────────────────────
 // Moving focus after an action is a ref-bound handle, never `autofocus` or a
