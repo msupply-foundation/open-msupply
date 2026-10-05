@@ -161,6 +161,7 @@ export const InboundShipmentDetailToolbar: Component<
 
       <DateField
         label={t('label.received')}
+        testId="received-date-field"
         size="small"
         value={draftReceivedDay() ?? utcToLocalDay(props.node.receivedDatetime)}
         disabled={!receivedDateEditable()}

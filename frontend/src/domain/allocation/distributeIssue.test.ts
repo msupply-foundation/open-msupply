@@ -3,8 +3,8 @@ import { distributeIssue, type DistributableLine } from './distributeIssue';
 import type { BarReason } from './policy';
 
 // The shared client-side FEFO distribution (spec/stock-allocation). Each test
-// cites the acceptance criterion it exercises
-// (spec/stock-allocation/acceptance.md); server-side allocation twins are
+// cites the behaviour it exercises (spec/stock-allocation/cases/
+// OMS-REG-SMV-11); server-side allocation twins are
 // exercised by the shared e2e suites against the real backend.
 
 const line = (
@@ -15,9 +15,9 @@ const line = (
 ): DistributableLine => ({ id, packSize, availablePacks, barred });
 
 describe('distributeIssue', () => {
-  // AC-AL1 — FEFO order: packs are issued from the earliest-expiry batch
+  // OMS-REG-SMV-11.1 — FEFO order: packs are issued from the earliest-expiry batch
   // first (the input is FEFO-ordered; distribution consumes it front to back).
-  it('AC-AL1: fills earlier batches before later ones', () => {
+  it('OMS-REG-SMV-11.1: fills earlier batches before later ones', () => {
     const result = distributeIssue(
       [line('first', 1, 5), line('second', 1, 5)],
       7
@@ -27,9 +27,9 @@ describe('distributeIssue', () => {
     expect(result.shortfallUnits).toBe(0);
   });
 
-  // AC-AL3 — whole packs only: a fractional need rounds UP to a whole pack;
+  // OMS-REG-SMV-11.9–.11 — whole packs only: a fractional need rounds UP to a whole pack;
   // over-allocation (< 1 pack) is reported.
-  it('AC-AL3: rounds a fractional pack need up and reports over-allocation', () => {
+  it('OMS-REG-SMV-11.9–.11: rounds a fractional pack need up and reports over-allocation', () => {
     const result = distributeIssue([line('a', 10, 5)], 25);
     expect(result.packsById.get('a')).toBe(3); // 30 units, not 2.5 packs
     expect(result.overAllocatedUnits).toBe(5);
@@ -56,17 +56,17 @@ describe('distributeIssue', () => {
     }
   });
 
-  // AC-AL4 — shortfall: less stock than requested issues what exists and
+  // OMS-REG-SMV-11.13 — shortfall: less stock than requested issues what exists and
   // reports the remainder (the consumer's remainder concept).
-  it('AC-AL4: shortfall beyond available stock is reported', () => {
+  it('OMS-REG-SMV-11.13: shortfall beyond available stock is reported', () => {
     const result = distributeIssue([line('a', 2, 3)], 10);
     expect(result.packsById.get('a')).toBe(3);
     expect(result.shortfallUnits).toBe(4);
   });
 
-  // AC-AL2 — unusable stock is never issued from and EACH skip category that
+  // OMS-REG-SMV-11.4–.7 — unusable stock is never issued from and EACH skip category that
   // applied is reported (barReasons in policy.ts maps the conditions).
-  it('AC-AL2: barred batches are skipped and each category reported', () => {
+  it('OMS-REG-SMV-11.4–.7: barred batches are skipped and each category reported', () => {
     const result = distributeIssue(
       [
         line('held', 1, 10, ['on-hold']),
@@ -94,10 +94,10 @@ describe('distributeIssue', () => {
     expect(result.skippedReasons.size).toBe(0);
   });
 
-  // AC-AL6 — the client never produces a negative, non-finite, or
+  // OMS-REG-SMV-11.15–.18 — the client never produces a negative, non-finite, or
   // beyond-available issue: requests are clamped at zero and every take is
   // capped at availablePacks.
-  it('AC-AL6: never issues negative, non-finite, or beyond availability', () => {
+  it('OMS-REG-SMV-11.15–.18: never issues negative, non-finite, or beyond availability', () => {
     const negative = distributeIssue([line('a', 1, 5)], -3);
     expect(negative.packsById.get('a')).toBe(0);
     expect(negative.shortfallUnits).toBe(0);
@@ -168,7 +168,7 @@ describe('distributeIssue with partialPacks (prescriptions AC-A1)', () => {
 // The old app's allocateQuantities scenarios (ported from
 // client/packages/invoices/src/StockOut/allocateQuantities.test.ts): the
 // three-pass exact-quantity bias — round down, round up, trim from the back.
-describe('distributeIssue exact-quantity bias (AC-AL3)', () => {
+describe('distributeIssue exact-quantity bias (OMS-REG-SMV-11.9–.11)', () => {
   it('skips a large pack size in the first pass to avoid over-allocating', () => {
     // 7 from [5×1, 5×10, 10×1] → 5 + 0 (pack of 10 skipped) + 2, exact.
     const result = distributeIssue(
@@ -245,7 +245,7 @@ describe('distributeIssue exact-quantity bias (AC-AL3)', () => {
   });
 });
 
-describe('distributeIssue under the packs lens (AC-AL11)', () => {
+describe('distributeIssue under the packs lens (OMS-REG-SMV-11.21)', () => {
   it('fills only batches of the required pack size, without a skip report', () => {
     // 3 packs of 10 (30 units) from [10×5, 10×10] → only the size-10 batch.
     const result = distributeIssue([line('a', 5, 10), line('b', 10, 10)], 30, {
@@ -266,7 +266,7 @@ describe('distributeIssue under the packs lens (AC-AL11)', () => {
   });
 });
 
-describe('distributeIssue partial-pack gap (AC-AL12)', () => {
+describe('distributeIssue partial-pack gap (OMS-REG-SMV-11.32)', () => {
   it('reports the units short of whole packs when a pack was split', () => {
     // 7 units from [10×5] partial → 0.7 packs; whole-pack gap = 3 units.
     const result = distributeIssue([line('a', 10, 5)], 7, {
@@ -301,9 +301,13 @@ describe('distributeIssue partial-pack float dust (an exactly-covered request re
   });
 
   it('never micro-allocates dust from the next FEFO batch', () => {
-    const result = distributeIssue([line('a', 7, 1000), line('b', 7, 1000)], 61, {
-      partialPacks: true,
-    });
+    const result = distributeIssue(
+      [line('a', 7, 1000), line('b', 7, 1000)],
+      61,
+      {
+        partialPacks: true,
+      }
+    );
     expect(result.packsById.get('b')).toBe(0);
   });
 
