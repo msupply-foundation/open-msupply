@@ -17,8 +17,8 @@ pub struct SendContext<'a> {
 
 /// Outgoing counterpart of `serde::deserialize`'s special cases: the records a
 /// changelog row is sent as, shaped for the site receiving it. A translation gets
-/// the typed row and may leave it out or add others; `SyncBatchV7::generate` tops
-/// the batch back up.
+/// the typed row, or the delete, and may leave it out or add others;
+/// `SyncBatchV7::generate` tops the batch back up.
 pub(crate) fn translate_outgoing(
     _context: &SendContext,
     row_or_delete: RowOrDelete,

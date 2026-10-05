@@ -117,25 +117,21 @@ impl SyncBatchV7 {
         let mut records = Vec::new();
         let mut cursor = cursor;
         loop {
-            // A full batch's worth of rows each time, even when topping up, so a
-            // translation leaving out many records doesn't mean many small queries
             let QueryWithData {
                 rows,
                 max_cursor,
-                mut last_cursor_in_batch,
-                mut remaining,
-            } = repo.query_with_data(filter.clone(), CursorAndLimit { cursor, limit })?;
+                last_cursor_in_batch,
+                remaining,
+            } = repo.query_with_data(
+                filter.clone(),
+                CursorAndLimit {
+                    cursor,
+                    limit: limit - records.len() as i64,
+                },
+            )?;
 
             for row in rows {
-                let row_cursor = row.changelog().cursor as u64;
                 records.extend(translate(context, row)?);
-                if records.len() as i64 >= limit {
-                    // The batch is full: end it at this row, and the next one
-                    // carries on from here
-                    last_cursor_in_batch = row_cursor;
-                    remaining = max_cursor.saturating_sub(row_cursor);
-                    break;
-                }
             }
 
             if records.len() as i64 >= limit || remaining == 0 {
@@ -689,14 +685,26 @@ mod test {
             Ok(records.iter().cloned().chain(copies).collect())
         };
 
-        // A batch may overfill, ending at the row that fills it; nothing is cut
-        // off to fit it
+        // A batch may overfill; nothing is cut off to fit it
         assert_eq!(
             pull_all(&context, 3, double),
             vec![
-                vec!["unit_1", "unit_1_copy", "unit_2", "unit_2_copy"],
-                vec!["unit_3", "unit_3_copy", "unit_4", "unit_4_copy"],
-                vec!["unit_5", "unit_5_copy", "unit_6", "unit_6_copy"],
+                vec![
+                    "unit_1",
+                    "unit_1_copy",
+                    "unit_2",
+                    "unit_2_copy",
+                    "unit_3",
+                    "unit_3_copy"
+                ],
+                vec![
+                    "unit_4",
+                    "unit_4_copy",
+                    "unit_5",
+                    "unit_5_copy",
+                    "unit_6",
+                    "unit_6_copy"
+                ],
                 vec![],
             ]
         );
