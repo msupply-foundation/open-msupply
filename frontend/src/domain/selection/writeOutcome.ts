@@ -6,16 +6,16 @@ import {
   type GraphqlResult,
 } from '@/api/graphql';
 import { rejectionFrom } from '@/api/rejection';
-import { mapInBatches } from './batches';
+import { mapInBatches, WRITE_CONCURRENCY } from '@/api/batches';
 
-// The writes here refuse through TOP-LEVEL GraphQL errors, not the unions their
-// schema declares (spec/asset-catalogue › contract § deleting catalogue items,
-// § log reasons): the item delete answers `AssetCatalogueItemInUse` /
-// `AssetCatalogueItemDoesNotExist`, the reason writes `ReasonDoesNotExist` /
-// `AssetLogReasonAlreadyExists`, and the `centralServer` wrapper
-// `Not a central server` — each in `extensions.details`. So the writes are sent
-// with `returnGraphqlErrors` and read here, where a refusal becomes the reason
-// shown beside the refused record.
+// For writes that refuse through TOP-LEVEL GraphQL errors, not a response
+// union: the asset-catalogue deletes and reason writes (spec/asset-catalogue ›
+// contract § deleting catalogue items, § log reasons) and the plugin install,
+// uninstall and settings writes (spec/plugin-management › contract), plus the
+// `centralServer` wrapper's `Not a central server` — each in
+// `extensions.details`. So the writes are sent with `returnGraphqlErrors` and
+// read here, where a refusal becomes the reason shown beside the refused
+// record.
 
 /** What one write came back as. */
 export type WriteOutcome =
@@ -53,7 +53,7 @@ export const outcomeOf = <T>(result: GraphqlResult<T>): WriteOutcome => {
 };
 
 /** A bulk delete's result: each selected record deleted ON ITS OWN, so a
- *  refusal of one leaves the others (rules § deleting catalogue items). */
+ *  refusal of one leaves the others. */
 export interface DeleteSummary<R> {
   deleted: R[];
   refused: { record: R; reason: string }[];
@@ -63,12 +63,15 @@ export interface DeleteSummary<R> {
   failed: boolean;
 }
 
+/** Delete each record on its own, `batchSize` at a time (api/batches). Pass
+ *  1 where two records can name the same server row, so their calls never
+ *  overlap. */
 export const deleteEach = async <R>(
   records: readonly R[],
-  deleteOne: (record: R) => Promise<WriteOutcome>
+  deleteOne: (record: R) => Promise<WriteOutcome>,
+  batchSize = WRITE_CONCURRENCY
 ): Promise<DeleteSummary<R>> => {
-  // A batch at a time, as the import sends its rows.
-  const outcomes = await mapInBatches(records, deleteOne);
+  const outcomes = await mapInBatches(records, deleteOne, undefined, batchSize);
   const summary: DeleteSummary<R> = { deleted: [], refused: [], failed: false };
   outcomes.forEach((outcome, index) => {
     const record = records[index]!;
