@@ -101,17 +101,20 @@ export type AddInternalOrderLineResult = {
 }) | ({
   __typename: "UpdateRequestRequisitionLineError";
 } & {
-  error: {
-  __typename: "CannotEditRequisition" | "ForecastMethodNotAvailable" | "ForeignKeyError" | "RecordNotFound" | "RequisitionReasonNotProvided";
+  error: ({
+  __typename: "ForecastMethodNotAvailable";
+} & {
+  unavailableReason: "POPULATION_PREFERENCE_OFF" | "NO_POPULATION_SERVED" | "NO_VACCINE_COURSE" | "NO_PRINCIPAL_ON_ORDER";
+} & {
   description: string;
-};
+});
 });
 }> | null;
 };
 };
 
 export const AddInternalOrderLine = {
-  query: "mutation addInternalOrderLine($storeId: String!, $input: BatchRequestRequisitionInput!) {\n  batchRequestRequisition(storeId: $storeId, input: $input) {\n    insertRequestRequisitionLines {\n      id\n      response {\n        __typename\n      }\n    }\n    updateRequestRequisitionLines {\n      id\n      response {\n        __typename\n        ... on RequisitionLineNode {\n          id\n        }\n        ... on UpdateRequestRequisitionLineError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "mutation addInternalOrderLine($storeId: String!, $input: BatchRequestRequisitionInput!) {\n  batchRequestRequisition(storeId: $storeId, input: $input) {\n    insertRequestRequisitionLines {\n      id\n      response {\n        __typename\n      }\n    }\n    updateRequestRequisitionLines {\n      id\n      response {\n        __typename\n        ... on RequisitionLineNode {\n          id\n        }\n        ... on UpdateRequestRequisitionLineError {\n          error {\n            __typename\n            description\n            ... on ForecastMethodNotAvailable {\n              unavailableReason\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<AddInternalOrderLineResult, AddInternalOrderLineVariables>;
 
 export type DeleteInternalOrderLinesVariables = {
@@ -164,34 +167,36 @@ export type UpdateInternalOrderLineResult = {
 }) | ({
   __typename: "UpdateRequestRequisitionLineError";
 } & {
-  error: {
-  __typename: "CannotEditRequisition" | "ForecastMethodNotAvailable" | "ForeignKeyError" | "RecordNotFound" | "RequisitionReasonNotProvided";
+  error: ({
+  __typename: "ForecastMethodNotAvailable";
+} & {
+  unavailableReason: "POPULATION_PREFERENCE_OFF" | "NO_POPULATION_SERVED" | "NO_VACCINE_COURSE" | "NO_PRINCIPAL_ON_ORDER";
+} & {
   description: string;
-};
+});
 });
 };
 
 export const UpdateInternalOrderLine = {
-  query: "mutation updateInternalOrderLine($storeId: String!, $input: UpdateRequestRequisitionLineInput!) {\n  updateRequestRequisitionLine(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineNode {\n      id\n    }\n    ... on UpdateRequestRequisitionLineError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+  query: "mutation updateInternalOrderLine($storeId: String!, $input: UpdateRequestRequisitionLineInput!) {\n  updateRequestRequisitionLine(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineNode {\n      id\n    }\n    ... on UpdateRequestRequisitionLineError {\n      error {\n        __typename\n        description\n        ... on ForecastMethodNotAvailable {\n          unavailableReason\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<UpdateInternalOrderLineResult, UpdateInternalOrderLineVariables>;
 
-export type ChangeInternalOrderLineForecastMethodVariables = {
+export type InternalOrderLineForecastPreviewVariables = {
   storeId: string;
   input: {
-    id: string;
-    requestedQuantity?: number | null;
-    comment?: string | null;
-    optionId?: string | null;
+    requisitionId: string;
+    itemId: string;
     forecastMethod?: "AMC" | "POPULATION" | "ANCILLARY_RATIO" | null;
   };
 };
 
-export type ChangeInternalOrderLineForecastMethodResult = {
-  updateRequestRequisitionLine: ({
-  __typename: "RequisitionLineNode";
+export type InternalOrderLineForecastPreviewResult = {
+  requisitionLineForecastPreview: ({
+  __typename: "RequisitionLineForecastPreviewNode";
 } & {
-  id: string;
   suggestedQuantity: number;
+  averageMonthlyConsumption: number;
+  availableStockOnHand: number;
   forecastMethod: "AMC" | "POPULATION" | "ANCILLARY_RATIO";
   forecastMonthlyConsumption: number;
   targetStock: number;
@@ -237,7 +242,7 @@ export type ChangeInternalOrderLineForecastMethodResult = {
   unavailableReason: "POPULATION_PREFERENCE_OFF" | "NO_POPULATION_SERVED" | "NO_VACCINE_COURSE" | "NO_PRINCIPAL_ON_ORDER" | null;
 }>;
 }) | ({
-  __typename: "UpdateRequestRequisitionLineError";
+  __typename: "RequisitionLineForecastPreviewError";
 } & {
   error: ({
   __typename: "ForecastMethodNotAvailable";
@@ -249,6 +254,6 @@ export type ChangeInternalOrderLineForecastMethodResult = {
 });
 };
 
-export const ChangeInternalOrderLineForecastMethod = {
-  query: "mutation changeInternalOrderLineForecastMethod($storeId: String!, $input: UpdateRequestRequisitionLineInput!) {\n  updateRequestRequisitionLine(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineNode {\n      id\n      suggestedQuantity\n      forecastMethod\n      forecastMonthlyConsumption\n      targetStock\n      forecastBreakdown {\n        __typename\n        ... on AmcForecastNode {\n          averageMonthlyConsumption\n        }\n        ... on PopulationForecastNode {\n          populationServed\n          courses {\n            courseName\n            demographicName\n            numberOfDoses\n            coverageRate\n            wastageRate\n            targetPopulation\n            lossFactor\n            annualTargetDoses\n            dosesPerUnit\n            monthlyDoses\n            monthlyUnits\n          }\n        }\n        ... on AncillaryRatioForecastNode {\n          principals {\n            itemId\n            item {\n              code\n              name\n            }\n            principalMonthlyConsumption\n            itemQuantity\n            ancillaryQuantity\n            monthlyConsumption\n          }\n        }\n      }\n      forecastMethodOptions {\n        method\n        isAvailable\n        unavailableReason\n      }\n    }\n    ... on UpdateRequestRequisitionLineError {\n      error {\n        __typename\n        description\n        ... on ForecastMethodNotAvailable {\n          unavailableReason\n        }\n      }\n    }\n  }\n}",
-} as TypedDocument<ChangeInternalOrderLineForecastMethodResult, ChangeInternalOrderLineForecastMethodVariables>;
+export const InternalOrderLineForecastPreview = {
+  query: "query internalOrderLineForecastPreview($storeId: String!, $input: RequisitionLineForecastPreviewInput!) {\n  requisitionLineForecastPreview(storeId: $storeId, input: $input) {\n    __typename\n    ... on RequisitionLineForecastPreviewNode {\n      suggestedQuantity\n      averageMonthlyConsumption\n      availableStockOnHand\n      forecastMethod\n      forecastMonthlyConsumption\n      targetStock\n      forecastBreakdown {\n        __typename\n        ... on AmcForecastNode {\n          averageMonthlyConsumption\n        }\n        ... on PopulationForecastNode {\n          populationServed\n          courses {\n            courseName\n            demographicName\n            numberOfDoses\n            coverageRate\n            wastageRate\n            targetPopulation\n            lossFactor\n            annualTargetDoses\n            dosesPerUnit\n            monthlyDoses\n            monthlyUnits\n          }\n        }\n        ... on AncillaryRatioForecastNode {\n          principals {\n            itemId\n            item {\n              code\n              name\n            }\n            principalMonthlyConsumption\n            itemQuantity\n            ancillaryQuantity\n            monthlyConsumption\n          }\n        }\n      }\n      forecastMethodOptions {\n        method\n        isAvailable\n        unavailableReason\n      }\n    }\n    ... on RequisitionLineForecastPreviewError {\n      error {\n        __typename\n        description\n        ... on ForecastMethodNotAvailable {\n          unavailableReason\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<InternalOrderLineForecastPreviewResult, InternalOrderLineForecastPreviewVariables>;

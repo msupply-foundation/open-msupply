@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use graphql_types::{
     generic_errors::RequisitionReasonNotProvided,
-    types::{ForecastMethodNode, ForecastMethodUnavailableReasonNode, RequisitionLineNode},
+    types::{ForecastMethodNode, ForecastMethodNotAvailable, RequisitionLineNode},
 };
 use repository::RequisitionLine;
 use service::{
@@ -28,21 +28,6 @@ pub struct UpdateInput {
     /// quantity, and those of the Ancillary-ratio lines it feeds; the requested quantity
     /// is untouched
     pub forecast_method: Option<ForecastMethodNode>,
-}
-
-pub struct ForecastMethodNotAvailable {
-    pub unavailable_reason: ForecastMethodUnavailableReasonNode,
-}
-
-#[Object]
-impl ForecastMethodNotAvailable {
-    pub async fn description(&self) -> &str {
-        "Forecast method not available"
-    }
-
-    pub async fn unavailable_reason(&self) -> ForecastMethodUnavailableReasonNode {
-        self.unavailable_reason
-    }
 }
 
 #[derive(Interface)]

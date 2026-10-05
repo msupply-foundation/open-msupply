@@ -62,6 +62,7 @@ use queries::{
     insurance_providers::{insurance_providers, InsuranceProvidersResponse},
     migration_status::{migration_status, MigrationStatusNode},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
+    requisition_line_forecast_preview::RequisitionLineForecastPreviewInput,
     shipping_method::{get_shipping_methods, ShippingMethodFilterInput, ShippingMethodsResponse},
     sync_settings::{sync_settings, SyncSettingsNode},
 };
@@ -289,6 +290,18 @@ impl GeneralQueries {
             consumption_options_input,
             stock_evolution_options_input,
         )
+    }
+
+    /// An item's request line as the line editor's draft would save it, under a chosen
+    /// forecast method, without saving anything: the line already on the order, or the one
+    /// adding the item would create
+    pub async fn requisition_line_forecast_preview(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: RequisitionLineForecastPreviewInput,
+    ) -> Result<requisition_line_forecast_preview::PreviewResponse> {
+        requisition_line_forecast_preview::forecast_preview(ctx, &store_id, input)
     }
 
     pub async fn activity_logs(

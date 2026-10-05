@@ -54,7 +54,7 @@ import {
   statInMode,
   saveNewLine,
   saveExistingLine,
-  changeForecastMethod,
+  previewForecastMethod,
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
@@ -152,9 +152,9 @@ const LineEditContent = (
   const [comment, setComment] = createSignal('');
   const [reasonId, setReasonId] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
-  // A forecast-method change in flight — it saves on selection, apart from the
-  // draft (rules › choosing a method).
-  const [changingMethod, setChangingMethod] = createSignal(false);
+  // A draft method change's preview in flight (rules › choosing a method) —
+  // Save waits for it, so the method it sends is the one the editor shows.
+  const [previewingMethod, setPreviewingMethod] = createSignal(false);
   const [advancing, setAdvancing] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
@@ -244,9 +244,8 @@ const LineEditContent = (
     setErrorMessage(undefined);
     const preview = await buildAddPreview(
       props.storeId,
+      props.requisitionId,
       itemId,
-      props.minMonths,
-      props.maxMonths,
       generateUUID()
     );
     if (disposed) return;
@@ -376,27 +375,29 @@ const LineEditContent = (
     return false;
   };
 
-  // Picking a method saves it at once: the line's forecast and suggestion come
-  // back recomputed and merge into the editor's line, leaving the draft's
-  // quantity, comment and reason as typed. The table refetches for the line's
-  // Ancillary-ratio dependants.
+  // Picking a method is a draft edit (rules › choosing a method): the line is
+  // re-previewed under it — forecast and suggestion recomputed as the save will
+  // recompute them — leaving the draft's quantity, comment and reason as typed.
+  // Nothing is saved until Save; Cancel discards it with the rest of the draft.
   const onMethodChange = async (method: ForecastMethod) => {
     const editorLine = current();
-    if (!editorLine || editorLine.isNew) return;
-    setChangingMethod(true);
+    if (!editorLine) return;
+    setPreviewingMethod(true);
     setErrorMessage(undefined);
-    const result = await changeForecastMethod(
+    const result = await previewForecastMethod(
       props.storeId,
+      props.requisitionId,
       editorLine,
       method
     );
     if (disposed) return;
-    setChangingMethod(false);
-    if (result.kind === 'changed') {
-      setLine(result.line);
-      props.onCommitted();
-    } else if (result.kind === 'error') setErrorMessage(result.message);
-    else setErrorMessage(t('error.cant-save'));
+    setPreviewingMethod(false);
+    // The editor moved on (another item, or Save & next) while it was in
+    // flight: the preview is for a line no longer shown.
+    if (current()?.lineId !== editorLine.lineId) return;
+    if (result.kind === 'previewed') setLine(result.line);
+    else if (result.kind === 'error') setErrorMessage(result.message);
+    else setErrorMessage(t('error.unable-to-load-data'));
   };
 
   const onOk = () =>
@@ -536,7 +537,9 @@ const LineEditContent = (
           />
           <DialogSaveButton
             data-testid="dialog-button-ok"
-            disabled={!current() || saving() || !props.editable}
+            disabled={
+              !current() || saving() || previewingMethod() || !props.editable
+            }
             loading={saving()}
             onClick={onOk}
           />
@@ -545,6 +548,7 @@ const LineEditContent = (
           <Show when={current() && props.editable}>
             <SaveAndNextButton
               data-testid="dialog-button-next-and-ok"
+              disabled={previewingMethod()}
               loading={saving() || advancing()}
               onClick={onOkNext}
             />
@@ -786,23 +790,19 @@ const LineEditContent = (
               )}
             </Show>
 
-            {/* Below — the line's forecast (spec S4 › the forecast): its
+            {/* Below — the draft's forecast (spec S4 › the forecast): its
               method, the breakdown behind its monthly demand, and the step into
-              stock. An unsaved add-mode draft has none until its first save
-              captures it. */}
-            <Show when={editorLine().forecast}>
-              {forecast => (
-                <ForecastBlock
-                  line={forecast()}
-                  targetMonths={props.maxMonths}
-                  formatQuantity={stat}
-                  options={editorLine().forecastMethodOptions}
-                  disabled={disabled() || saving() || changingMethod()}
-                  onMethodChange={method => void onMethodChange(method)}
-                  testId="line-forecast"
-                />
-              )}
-            </Show>
+              stock — the stored line's, or the server's preview of the line the
+              draft would save (an add-mode draft, or a method change). */}
+            <ForecastBlock
+              line={editorLine().forecast}
+              targetMonths={props.maxMonths}
+              formatQuantity={stat}
+              options={editorLine().forecastMethodOptions}
+              disabled={disabled() || saving() || previewingMethod()}
+              onMethodChange={method => void onMethodChange(method)}
+              testId="line-forecast"
+            />
 
             {/* Then the read-only context charts, on every line whatever its
               forecast method: the target-quantity breakdown (client-side from

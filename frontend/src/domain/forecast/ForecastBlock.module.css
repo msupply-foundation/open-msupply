@@ -1,23 +1,13 @@
-/* The forecast block (spec/internal-orders S4 › the forecast): the bold heading
-   over the method, the method's breakdown, and the step into stock. Full-width
-   between the editor's panels and its context charts, capped and centred like
-   the charts region. */
+/* The forecast block (spec/internal-orders S4 › the forecast): a FormSection —
+   the ruled group heading over the method, the method's breakdown, and the step
+   into stock; FormSection owns the stacking. Full-width between the editor's
+   panels and its context charts, capped and centred like the charts region. */
 .block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
   inline-size: 100%;
   max-inline-size: 56rem;
   margin-block-start: var(--space-4);
   margin-inline: auto;
   padding: var(--space-2) var(--space-4);
-}
-
-.heading {
-  margin: 0 0 var(--space-1);
-  font-size: var(--text-md);
-  font-weight: var(--weight-bold);
-  color: var(--text-body);
 }
 
 /* A figure and its muted caption, right-aligned at the row's end. */

@@ -5,10 +5,12 @@ use self::{
     },
     query::get_requisition_lines,
     request_requisition_line::{
-        delete_request_requisition_line, insert_request_requisition_line,
-        update_request_requisition_line, DeleteRequestRequisitionLine,
-        DeleteRequestRequisitionLineError, InsertRequestRequisitionLine,
-        InsertRequestRequisitionLineError, UpdateRequestRequisitionLine,
+        delete_request_requisition_line, get_requisition_line_forecast_preview,
+        insert_request_requisition_line, update_request_requisition_line,
+        DeleteRequestRequisitionLine, DeleteRequestRequisitionLineError,
+        InsertRequestRequisitionLine, InsertRequestRequisitionLineError,
+        RequisitionLineForecastPreview, RequisitionLineForecastPreviewError,
+        RequisitionLineForecastPreviewInput, UpdateRequestRequisitionLine,
         UpdateRequestRequisitionLineError,
     },
     response_line_stats::{
@@ -66,6 +68,14 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         input: UpdateRequestRequisitionLine,
     ) -> Result<RequisitionLine, UpdateRequestRequisitionLineError> {
         update_request_requisition_line(ctx, input)
+    }
+
+    fn get_requisition_line_forecast_preview(
+        &self,
+        ctx: &ServiceContext,
+        input: RequisitionLineForecastPreviewInput,
+    ) -> Result<RequisitionLineForecastPreview, RequisitionLineForecastPreviewError> {
+        get_requisition_line_forecast_preview(ctx, input)
     }
 
     fn delete_request_requisition_line(

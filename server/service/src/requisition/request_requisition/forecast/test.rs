@@ -1,8 +1,9 @@
 use crate::{
     requisition::request_requisition::{suggested_quantity, ForecastMethodUnavailableReason},
     requisition_line::request_requisition_line::{
-        DeleteRequestRequisitionLine, InsertRequestRequisitionLine, UpdateRequestRequisitionLine,
-        UpdateRequestRequisitionLineError,
+        DeleteRequestRequisitionLine, InsertRequestRequisitionLine, RequisitionLineForecastPreview,
+        RequisitionLineForecastPreviewError, RequisitionLineForecastPreviewInput,
+        UpdateRequestRequisitionLine, UpdateRequestRequisitionLineError,
     },
     service_provider::{ServiceContext, ServiceProvider},
 };
@@ -125,6 +126,29 @@ impl Setup {
                 },
             )
             .map(|_| ())
+    }
+
+    fn preview(
+        &self,
+        item_id: &str,
+        method: Option<ForecastMethod>,
+    ) -> Result<RequisitionLineForecastPreview, RequisitionLineForecastPreviewError> {
+        self.service_provider
+            .requisition_line_service
+            .get_requisition_line_forecast_preview(
+                &self.context(),
+                RequisitionLineForecastPreviewInput {
+                    requisition_id: requisition().id,
+                    item_id: item_id.to_string(),
+                    forecast_method: method,
+                },
+            )
+    }
+
+    fn find_line(&self, item_id: &str) -> Option<RequisitionLineRow> {
+        RequisitionLineRowRepository::new(&self.connection)
+            .find_one_by_id(&format!("line_{item_id}"))
+            .unwrap()
     }
 
     fn delete(&self, item_id: &str) {
@@ -276,4 +300,72 @@ async fn forecast_principal_arrives() {
     let mut expected = vec![a, d];
     expected.sort();
     assert_eq!(principals, expected);
+}
+
+/// The forecast fields a preview and a save must agree on
+fn forecast_of(line: &RequisitionLineRow) -> (ForecastMethod, f64, Option<String>, f64) {
+    (
+        line.forecast_method,
+        line.forecast_monthly_consumption,
+        line.forecast_data.clone(),
+        line.suggested_quantity,
+    )
+}
+
+#[actix_rt::test]
+async fn forecast_preview_matches_save() {
+    let (a, b) = (mock_item_a().id, mock_item_b().id);
+    // a → b at 100 : 10
+    let setup = Setup::new(
+        "forecast_preview_matches_save",
+        vec![link(&a, &b, 100.0, 10.0)],
+    )
+    .await;
+    setup.add(&a);
+    setup.set_demand(&a, 50.0);
+
+    // A new item previews the line its insert would create, and creates nothing
+    let preview = setup.preview(&b, None).unwrap();
+    assert_eq!(preview.line.forecast_method, ForecastMethod::AncillaryRatio);
+    assert_eq!(preview.line.forecast_monthly_consumption, 5.0);
+    assert_eq!(
+        preview.max_months_of_stock,
+        requisition().max_months_of_stock
+    );
+    assert!(preview
+        .forecast_method_options
+        .iter()
+        .all(|option| option.method == ForecastMethod::Population
+            || option.unavailable_reason.is_none()));
+    assert_eq!(setup.find_line(&b), None);
+
+    // Another method on the new item, as a method change would apply it
+    let amc_preview = setup.preview(&b, Some(ForecastMethod::Amc)).unwrap();
+    assert_eq!(amc_preview.line.forecast_method, ForecastMethod::Amc);
+    assert_eq!(
+        amc_preview.line.forecast_monthly_consumption,
+        amc_preview.line.average_monthly_consumption
+    );
+
+    // Saving reproduces the default preview
+    let line_b = setup.add(&b);
+    assert_eq!(forecast_of(&line_b), forecast_of(&preview.line));
+
+    // An existing line previews from its stored line, and is left as it was
+    setup.set_demand(&b, 7.0);
+    let before = setup.line(&b);
+    let amc_preview = setup.preview(&b, Some(ForecastMethod::Amc)).unwrap();
+    assert_eq!(setup.line(&b), before);
+    setup.change_method(&b, ForecastMethod::Amc).unwrap();
+    assert_eq!(forecast_of(&setup.line(&b)), forecast_of(&amc_preview.line));
+
+    // An unavailable method is rejected, as for a method change
+    assert_eq!(
+        setup.preview(&a, Some(ForecastMethod::AncillaryRatio)),
+        Err(
+            RequisitionLineForecastPreviewError::ForecastMethodNotAvailable(
+                ForecastMethodUnavailableReason::NoPrincipalOnOrder
+            )
+        )
+    );
 }

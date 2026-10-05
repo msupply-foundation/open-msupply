@@ -6,8 +6,9 @@ use repository::{
     AncillaryRatioForecast, AncillaryRatioPrincipal, ForecastData, PopulationForecast,
     PopulationForecastCourse,
 };
-use service::requisition::request_requisition::{
-    ForecastMethodOption, ForecastMethodUnavailableReason,
+use service::{
+    requisition::request_requisition::{ForecastMethodOption, ForecastMethodUnavailableReason},
+    requisition_line::request_requisition_line::RequisitionLineForecastPreview,
 };
 
 /// Where a requisition line's monthly demand comes from.
@@ -55,6 +56,83 @@ impl ForecastMethodOptionNode {
             is_available: unavailable_reason.is_none(),
             unavailable_reason: unavailable_reason.map(ForecastMethodUnavailableReason::into),
         }
+    }
+}
+
+/// A method that can't be chosen for the line, with why.
+pub struct ForecastMethodNotAvailable {
+    pub unavailable_reason: ForecastMethodUnavailableReasonNode,
+}
+
+#[Object]
+impl ForecastMethodNotAvailable {
+    pub async fn description(&self) -> &str {
+        "Forecast method not available"
+    }
+
+    pub async fn unavailable_reason(&self) -> ForecastMethodUnavailableReasonNode {
+        self.unavailable_reason
+    }
+}
+
+/// An item's request line as the line editor's draft would save it, never persisted: its
+/// forecast, method options and suggestion. The forecast fields match
+/// `RequisitionLineNode`'s.
+pub struct RequisitionLineForecastPreviewNode {
+    preview: RequisitionLineForecastPreview,
+}
+
+#[Object]
+impl RequisitionLineForecastPreviewNode {
+    pub async fn forecast_method(&self) -> ForecastMethodNode {
+        self.preview.line.forecast_method.into()
+    }
+
+    pub async fn forecast_monthly_consumption(&self) -> f64 {
+        self.preview.line.forecast_monthly_consumption
+    }
+
+    pub async fn forecast_breakdown(&self) -> ForecastBreakdownNode {
+        ForecastBreakdownNode::from_domain(
+            self.preview
+                .line
+                .forecast_data
+                .as_deref()
+                .and_then(ForecastData::from_json),
+            self.preview.line.forecast_monthly_consumption,
+        )
+    }
+
+    pub async fn forecast_method_options(&self) -> Vec<ForecastMethodOptionNode> {
+        self.preview
+            .forecast_method_options
+            .iter()
+            .cloned()
+            .map(ForecastMethodOptionNode::from_domain)
+            .collect()
+    }
+
+    /// The requisition's target months × the monthly demand
+    pub async fn target_stock(&self) -> f64 {
+        self.preview.max_months_of_stock * self.preview.line.forecast_monthly_consumption
+    }
+
+    pub async fn suggested_quantity(&self) -> f64 {
+        self.preview.line.suggested_quantity
+    }
+
+    pub async fn average_monthly_consumption(&self) -> f64 {
+        self.preview.line.average_monthly_consumption
+    }
+
+    pub async fn available_stock_on_hand(&self) -> f64 {
+        self.preview.line.available_stock_on_hand
+    }
+}
+
+impl RequisitionLineForecastPreviewNode {
+    pub fn from_domain(preview: RequisitionLineForecastPreview) -> Self {
+        RequisitionLineForecastPreviewNode { preview }
     }
 }
 

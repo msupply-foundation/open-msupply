@@ -3,7 +3,8 @@ use crate::{
     requisition::{
         common::check_requisition_row_exists,
         request_requisition::{
-            apply_forecast, order_demand, recompute_ancillary_dependants, ForecastInputs,
+            apply_forecast, order_demand, recompute_ancillary_dependants,
+            suggested_quantity as request_suggested_quantity, ForecastInputs,
             ForecastMethodUnavailableReason,
         },
     },
@@ -116,27 +117,6 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
-    if store_preference.use_consumption_and_stock_from_customers_for_internal_orders
-        && requisition_row.program_id.is_some()
-    {
-        let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
-            ReasonOptionFilter::new()
-                .r#type(ReasonOptionType::equal_to(
-                    &ReasonOptionType::RequisitionLineVariance,
-                ))
-                .is_active(true),
-        )?;
-
-        if !reason_options.is_empty()
-            && input
-                .requested_quantity
-                .is_some_and(|requested| requested != requisition_line_row.suggested_quantity)
-            && input.option_id.is_none()
-        {
-            return Err(OutError::ReasonNotProvided(requisition_line));
-        }
-    }
-
     // A method change computes the line's new forecast; choosing its current method changes
     // nothing, so a line keeps a method that has since become unavailable
     let new_forecast = match input.forecast_method {
@@ -165,6 +145,40 @@ fn validate(
         }
         _ => None,
     };
+
+    // A reason explains a departure from the suggestion the update leaves: the one a
+    // method change in the same update recomputes, else the stored one
+    let suggested_quantity = new_forecast
+        .as_ref()
+        .map(|forecast| {
+            request_suggested_quantity(
+                &requisition_row,
+                forecast.monthly_consumption,
+                requisition_line_row.available_stock_on_hand,
+            )
+        })
+        .unwrap_or(requisition_line_row.suggested_quantity);
+
+    if store_preference.use_consumption_and_stock_from_customers_for_internal_orders
+        && requisition_row.program_id.is_some()
+    {
+        let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
+            ReasonOptionFilter::new()
+                .r#type(ReasonOptionType::equal_to(
+                    &ReasonOptionType::RequisitionLineVariance,
+                ))
+                .is_active(true),
+        )?;
+
+        if !reason_options.is_empty()
+            && input
+                .requested_quantity
+                .is_some_and(|requested| requested != suggested_quantity)
+            && input.option_id.is_none()
+        {
+            return Err(OutError::ReasonNotProvided(requisition_line));
+        }
+    }
 
     Ok((requisition_line_row, requisition_row, new_forecast))
 }

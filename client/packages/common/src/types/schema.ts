@@ -3535,11 +3535,12 @@ export enum ForecastMethodNode {
 }
 
 export type ForecastMethodNotAvailable =
-  UpdateRequestRequisitionLineErrorInterface & {
-    __typename: 'ForecastMethodNotAvailable';
-    description: Scalars['String']['output'];
-    unavailableReason: ForecastMethodUnavailableReasonNode;
-  };
+  RequisitionLineForecastPreviewErrorInterface &
+    UpdateRequestRequisitionLineErrorInterface & {
+      __typename: 'ForecastMethodNotAvailable';
+      description: Scalars['String']['output'];
+      unavailableReason: ForecastMethodUnavailableReasonNode;
+    };
 
 export type ForecastMethodOptionNode = {
   __typename: 'ForecastMethodOptionNode';
@@ -8959,6 +8960,12 @@ export type Queries = {
   requisitionByNumber: RequisitionResponse;
   requisitionCounts: RequisitionCounts;
   requisitionLineChart: RequisitionLineChartResponse;
+  /**
+   * An item's request line as the line editor's draft would save it, under a chosen
+   * forecast method, without saving anything: the line already on the order, or the one
+   * adding the item would create
+   */
+  requisitionLineForecastPreview: RequisitionLineForecastPreviewResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   /** @deprecated Since 2.8.0. Use reason_options instead */
@@ -9627,6 +9634,11 @@ export type QueriesRequisitionLineChartArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesRequisitionLineForecastPreviewArgs = {
+  input: RequisitionLineForecastPreviewInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesRequisitionsArgs = {
   filter?: InputMaybe<RequisitionFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -9906,6 +9918,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteSupplierReturnErrorInterface &
   NodeErrorInterface &
   RequisitionLineChartErrorInterface &
+  RequisitionLineForecastPreviewErrorInterface &
   RequisitionLineStatsErrorInterface &
   ScannedDataParseErrorInterface &
   SupplyRequestedQuantityErrorInterface &
@@ -10176,6 +10189,42 @@ export type RequisitionLineConnector = {
   nodes: Array<RequisitionLineNode>;
   totalCount: Scalars['Int']['output'];
 };
+
+export type RequisitionLineForecastPreviewError = {
+  __typename: 'RequisitionLineForecastPreviewError';
+  error: RequisitionLineForecastPreviewErrorInterface;
+};
+
+export type RequisitionLineForecastPreviewErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type RequisitionLineForecastPreviewInput = {
+  /**
+   * Null keeps the line's own method: an existing line's stored one, or the default a
+   * new line would take
+   */
+  forecastMethod?: InputMaybe<ForecastMethodNode>;
+  itemId: Scalars['String']['input'];
+  requisitionId: Scalars['String']['input'];
+};
+
+export type RequisitionLineForecastPreviewNode = {
+  __typename: 'RequisitionLineForecastPreviewNode';
+  availableStockOnHand: Scalars['Float']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
+  forecastBreakdown: ForecastBreakdownNode;
+  forecastMethod: ForecastMethodNode;
+  forecastMethodOptions: Array<ForecastMethodOptionNode>;
+  forecastMonthlyConsumption: Scalars['Float']['output'];
+  suggestedQuantity: Scalars['Float']['output'];
+  /** The requisition's target months × the monthly demand */
+  targetStock: Scalars['Float']['output'];
+};
+
+export type RequisitionLineForecastPreviewResponse =
+  | RequisitionLineForecastPreviewError
+  | RequisitionLineForecastPreviewNode;
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';

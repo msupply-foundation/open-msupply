@@ -8,11 +8,13 @@
 #    id ties the two phases.
 #  · EDIT — updateRequestRequisitionLine carries the changed fields; the reason
 #    is cleared server-side when the quantity returns to the suggestion (D30).
+# Both carry the draft's forecast method in the update; the server recomputes
+# the line only when it differs from the stored one (rules › choosing a method).
 #
-# ADD mode previews the item's statistics from a live read BEFORE any line
-# exists (AC-LN3 — a reload before the first save finds nothing): the item's
-# current stock/consumption figures, from which the client previews the
-# suggestion. The real snapshot + suggestion are the server's, taken at save.
+# ADD mode previews the line BEFORE it exists (AC-LN3 — a reload before the
+# first save finds nothing): the item's details from a live read, and the line's
+# statistics, forecast and suggestion from the forecast preview below — the line
+# the insert would create, so the first save reproduces it.
 
 # One item's current figures for the add-mode statistics preview. `stats`
 # triggers the AMC calculation — acceptable for a single picked item (contrast
@@ -64,6 +66,9 @@ mutation addInternalOrderLine(
           error {
             __typename
             description
+            ... on ForecastMethodNotAvailable {
+              unavailableReason
+            }
           }
         }
       }
@@ -119,25 +124,29 @@ mutation updateInternalOrderLine(
       error {
         __typename
         description
+        ... on ForecastMethodNotAvailable {
+          unavailableReason
+        }
       }
     }
   }
 }
 
-# FORECAST METHOD (rules › choosing a method): saves on selection, apart from the
-# draft. The response carries the recomputed forecast and suggestion — the same
-# selection as domain/forecast's ForecastLine fragment — so the editor updates in
-# place; the parent refetches the table for the line's Ancillary-ratio
-# dependants.
-mutation changeInternalOrderLineForecastMethod(
+# FORECAST PREVIEW (rules › choosing a method): the draft's line under a method,
+# saving nothing — the stored line for an item on the order, else the line its
+# insert would create. Null `forecastMethod` keeps the line's own. The forecast
+# fields are the same selection as domain/forecast's ForecastLine fragment, so
+# the editor shows the draft's forecast as it shows a saved one.
+query internalOrderLineForecastPreview(
   $storeId: String!
-  $input: UpdateRequestRequisitionLineInput!
+  $input: RequisitionLineForecastPreviewInput!
 ) {
-  updateRequestRequisitionLine(storeId: $storeId, input: $input) {
+  requisitionLineForecastPreview(storeId: $storeId, input: $input) {
     __typename
-    ... on RequisitionLineNode {
-      id
+    ... on RequisitionLineForecastPreviewNode {
       suggestedQuantity
+      averageMonthlyConsumption
+      availableStockOnHand
       forecastMethod
       forecastMonthlyConsumption
       targetStock
@@ -182,7 +191,7 @@ mutation changeInternalOrderLineForecastMethod(
         unavailableReason
       }
     }
-    ... on UpdateRequestRequisitionLineError {
+    ... on RequisitionLineForecastPreviewError {
       error {
         __typename
         description

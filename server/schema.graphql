@@ -2962,7 +2962,7 @@ enum ForecastMethodNode {
 	ANCILLARY_RATIO
 }
 
-type ForecastMethodNotAvailable implements UpdateRequestRequisitionLineErrorInterface {
+type ForecastMethodNotAvailable implements RequisitionLineForecastPreviewErrorInterface & UpdateRequestRequisitionLineErrorInterface {
 	description: String!
 	unavailableReason: ForecastMethodUnavailableReasonNode!
 }
@@ -7459,6 +7459,12 @@ type Queries {
 		daysTillExpired: Int
 	): StockCounts!
 	requisitionLineChart(storeId: String!, requestRequisitionLineId: String!, consumptionOptionsInput: ConsumptionOptionsInput, stockEvolutionOptionsInput: StockEvolutionOptionsInput): RequisitionLineChartResponse!
+	"""
+	An item's request line as the line editor's draft would save it, under a chosen
+	forecast method, without saving anything: the line already on the order, or the one
+	adding the item would create
+	"""
+	requisitionLineForecastPreview(storeId: String!, input: RequisitionLineForecastPreviewInput!): RequisitionLineForecastPreviewResponse!
 	activityLogs(		storeId: String!,
 		"""
 		Pagination option (first and offset)
@@ -7964,7 +7970,7 @@ type RecordBelongsToAnotherStore implements UpdateLocationErrorInterface & Delet
 	description: String!
 }
 
-type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
+type RecordNotFound implements NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineForecastPreviewErrorInterface & RequisitionLineStatsErrorInterface & ScannedDataParseErrorInterface & UpdateErrorInterface & UpdateNameErrorInterface & DeleteErrorInterface & UpdateInboundShipmentErrorInterface & DeleteInboundShipmentErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & UpdatePrescriptionErrorInterface & DeletePrescriptionErrorInterface & UpdateReturnOtherPartyErrorInterface & DeleteSupplierReturnErrorInterface & DeleteCustomerReturnErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & UpdateLocationErrorInterface & DeleteLocationErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteRequestRequisitionLineErrorInterface & UpdateRequestRequisitionErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteResponseRequisitionLineErrorInterface & DeleteResponseRequisitionErrorInterface & UseSuggestedQuantityErrorInterface & AddFromMasterListErrorInterface & UpdateResponseRequisitionErrorInterface & SupplyRequestedQuantityErrorInterface & CreateRequisitionShipmentErrorInterface & UpdateIndicatorValueErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UpdateNamePropertiesErrorInterface & UpdateSensorErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCampaignErrorInterface & DeleteHelpDocumentErrorInterface & UpdateAssetErrorInterface & DeleteAssetErrorInterface & AddToPurchaseOrderFromMasterListErrorInterface & DeletePurchaseOrderErrorInterface & DeletePurchaseOrderLineInterface {
 	description: String!
 }
 
@@ -8196,6 +8202,40 @@ type RequisitionLineConnector {
 	totalCount: Int!
 	nodes: [RequisitionLineNode!]!
 }
+
+type RequisitionLineForecastPreviewError {
+	error: RequisitionLineForecastPreviewErrorInterface!
+}
+
+interface RequisitionLineForecastPreviewErrorInterface {
+	description: String!
+}
+
+input RequisitionLineForecastPreviewInput {
+	requisitionId: String!
+	itemId: String!
+	"""
+	Null keeps the line's own method: an existing line's stored one, or the default a
+	new line would take
+	"""
+	forecastMethod: ForecastMethodNode
+}
+
+type RequisitionLineForecastPreviewNode {
+	forecastMethod: ForecastMethodNode!
+	forecastMonthlyConsumption: Float!
+	forecastBreakdown: ForecastBreakdownNode!
+	forecastMethodOptions: [ForecastMethodOptionNode!]!
+	"""
+	The requisition's target months × the monthly demand
+	"""
+	targetStock: Float!
+	suggestedQuantity: Float!
+	averageMonthlyConsumption: Float!
+	availableStockOnHand: Float!
+}
+
+union RequisitionLineForecastPreviewResponse = RequisitionLineForecastPreviewNode | RequisitionLineForecastPreviewError
 
 type RequisitionLineNode {
 	id: String!

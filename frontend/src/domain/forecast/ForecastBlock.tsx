@@ -9,6 +9,7 @@ import {
 } from '../../ui/elements/accordion/Accordion';
 import { FieldRow } from '../../ui/elements/inputs/FieldRow';
 import { Select } from '../../ui/elements/selectors/Select';
+import { FormSection } from '../../ui/layout/Form/FormSection';
 import {
   FORECAST_METHODS,
   ancillaryRatio,
@@ -107,9 +108,13 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
     props.formatQuantity(props.line.forecastMonthlyConsumption, true);
 
   return (
-    <section class={styles.block} data-testid={props.testId}>
-      <h3 class={styles.heading}>{t('heading.forecast')}</h3>
-
+    <FormSection
+      title={t('heading.forecast')}
+      headingLevel="h3"
+      heading="group"
+      class={styles.block}
+      data-testid={props.testId}
+    >
       <Show
         when={props.options}
         fallback={
@@ -155,7 +160,7 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
               </Show>
               {/* Independent sections — each course opens on its own, all
                 collapsed to start. */}
-              <Accordion multiple>
+              <Accordion multiple variant="card">
                 <For each={population().courses}>
                   {(course, index) => {
                     // Re-derived on read so the figures re-format if the
@@ -223,6 +228,6 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
         caption={`${monthlyDemand()} × ${formatNumber(props.targetMonths)} ${t('label.months')}`}
         testId="forecast-target-stock"
       />
-    </section>
+    </FormSection>
   );
 };
