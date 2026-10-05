@@ -7,6 +7,7 @@ import { FormColumn } from '../ui/layout/Form/FormColumn';
 import { FormSection } from '../ui/layout/Form/FormSection';
 import { FormRow } from '../ui/layout/Form/FormRow';
 import { FormRowItem } from '../ui/layout/Form/FormRowItem';
+import { InsetPanel } from '../ui/layout/InsetPanel/InsetPanel';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import {
@@ -107,6 +108,11 @@ export const formLayoutMetadata: PageMetadata = {
       searchTerms: ['column', 'two column', 'stacks'],
     },
     {
+      id: 'form-layout-boxed',
+      title: 'Boxed groups',
+      searchTerms: ['inset', 'panel', 'boxed', 'stretch', 'equal height'],
+    },
+    {
       id: 'form-layout-section',
       title: 'FormSection',
       searchTerms: ['section', 'group', 'titled', 'fieldset'],
@@ -203,6 +209,47 @@ export const FormLayoutShowcase = () => (
       </DashboardCard>
 
       <DashboardCard
+        id="form-layout-boxed"
+        title="Boxed groups — FormColumns stretch + InsetPanel"
+      >
+        <Lead>
+          Where a form's few groups sit side by side in a surface that has no
+          cards of its own — a dialog — each group can be boxed: a{' '}
+          <code>FormSection</code> inside an <code>InsetPanel</code>, the
+          heading inside the box. <code>FormColumns stretch</code> gives the
+          columns on one line a shared height and grows each column's last block
+          into it, so the shorter box ends level with its neighbour instead of
+          stopping short. Squeeze the panel: once the columns wrap to a single
+          stack, each box keeps its content height. The vaccine course editor's
+          Course and Forecasting groups are built this way.
+        </Lead>
+        <FormColumns stretch>
+          <FormColumn>
+            <InsetPanel>
+              <FormSection title="Course" headingLevel="h3" heading="group">
+                <TextField label="Course name" required />
+              </FormSection>
+            </InsetPanel>
+          </FormColumn>
+          <FormColumn>
+            <InsetPanel>
+              <FormSection
+                title="Forecasting"
+                headingLevel="h3"
+                heading="group"
+              >
+                <TextField label="Target demographic" />
+                <FormRow>
+                  <TextField label="Coverage rate" />
+                  <TextField label="Wastage rate" />
+                </FormRow>
+              </FormSection>
+            </InsetPanel>
+          </FormColumn>
+        </FormColumns>
+      </DashboardCard>
+
+      <DashboardCard
         id="form-layout-section"
         title="FormSection — the titled group"
       >
@@ -232,10 +279,7 @@ export const FormLayoutShowcase = () => (
         <FormPreview>
           <FormSection title="Batch & Dates">
             <TextField label="Batch number" />
-            <TextField
-              label="Barcode"
-              placeholder="Scan or enter barcode"
-            />
+            <TextField label="Barcode" placeholder="Scan or enter barcode" />
           </FormSection>
         </FormPreview>
         <Note>
@@ -309,16 +353,15 @@ export const FormLayoutShowcase = () => (
           can never use more room wants. <code>minWidth</code> is that floor
           (overriding <code>minItemWidth</code> for this slot alone), and it
           also decides who gives up width as the row narrows, and the floors'
-          sum is the wrap point: keep a row's
-          floors summing to no more than the unweighted row's would —{' '}
-          <code>10rem</code> inherited + <code>7rem</code> + <code>9rem</code> ={' '}
-          <code>26rem</code> here, against three × <code>10rem</code> — or the
-          row wraps <em>earlier</em> than it used to and the form grows a line.
-          Opt-in per item, as <code>FormRow</code> is per row: anything left
-          unwrapped keeps the equal share, and most rows want exactly that. The
-          header field cluster — a patient name beside a formatted date — is
-          where a weight earns its keep, demoed on the{' '}
-          <a href="#/showcase/header">Header page</a>.
+          sum is the wrap point: keep a row's floors summing to no more than the
+          unweighted row's would — <code>10rem</code> inherited +{' '}
+          <code>7rem</code> + <code>9rem</code> = <code>26rem</code> here,
+          against three × <code>10rem</code> — or the row wraps <em>earlier</em>{' '}
+          than it used to and the form grows a line. Opt-in per item, as{' '}
+          <code>FormRow</code> is per row: anything left unwrapped keeps the
+          equal share, and most rows want exactly that. The header field cluster
+          — a patient name beside a formatted date — is where a weight earns its
+          keep, demoed on the <a href="#/showcase/header">Header page</a>.
         </Lead>
         <FormPreview>
           <FormSection title="Batch & Expiry">

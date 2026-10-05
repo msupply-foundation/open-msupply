@@ -261,16 +261,20 @@ export function TableRow<T>(props: {
                   leaf value (a column's custom `cell` overrides). renderTemplate, not
                   TanStack's flexRender: the latter untracks the call, freezing every
                   locale-derived value (numbers, dates, money) until a reload. */}
-              {cellControlLine(cell) ? (
+              <Show
+                when={cellControlLine(cell)}
+                fallback={renderTemplate(
+                  cell.column.columnDef.cell,
+                  cell.getContext()
+                )}
+              >
                 <span class={styles.controlLine}>
                   {renderTemplate(
                     cell.column.columnDef.cell,
                     cell.getContext()
                   )}
                 </span>
-              ) : (
-                renderTemplate(cell.column.columnDef.cell, cell.getContext())
-              )}
+              </Show>
             </td>
           </Show>
         )}

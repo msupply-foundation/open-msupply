@@ -37,9 +37,8 @@
 
 /* Placement of the control in the label row: centred on the label's FIRST
    line (half the difference between that line and the box), so a wrapped
-   label keeps the box beside its opening words. Computed rather than a fixed
-   nudge: the old 1px suited a taller line, and against today's ~18.2px one it
-   sat the box a pixel low, its bottom edge well under the text (#984). */
+   label keeps the box beside its opening words. Computed from the box size and
+   the line height, so it stays centred if either changes (#984). */
 .control {
   margin-block-start: calc(
     (var(--text-sm) * var(--checkbox-label-line) - var(--checkbox-size)) / 2

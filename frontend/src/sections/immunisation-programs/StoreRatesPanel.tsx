@@ -21,9 +21,8 @@ import styles from './StoreRatesPanel.module.css';
 // S3a — the per-store rates tab (spec/immunisation-programs ui-surface S3a;
 // rules § per-store rates): for any store on the SERVER, an overriding
 // wastage and/or coverage rate for the course being edited. The editor's
-// second tab, not a dialog over it (#984). Its edits go straight into the
-// course draft like every other field: the course's Save writes them, Cancel
-// drops them with the rest.
+// second tab (#984). Its edits go straight into the course draft like every
+// other field: the course's Save writes them, Cancel drops them with the rest.
 
 export interface StoreRatesPanelProps {
   /** The course draft's overrides. */
@@ -84,14 +83,15 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
           label={t('heading.configure-rates-per-store')}
           fill
           onReachEnd={stores.loadMore}
+          density="comfortable"
         >
           <thead>
             <tr>
               <th>{t('label.store')}</th>
-              <th data-numeric class={styles.rateColumn}>
+              <th data-numeric data-control>
                 {t('label.wastage-rate')}
               </th>
-              <th data-numeric class={styles.rateColumn}>
+              <th data-numeric data-control>
                 {t('label.coverage-rate')}
               </th>
             </tr>
@@ -99,15 +99,13 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
           <tbody>
             <For each={stores.items()}>
               {store => (
-                <tr class={styles.storeRow} data-testid="store-rate-row">
+                <tr data-testid="store-rate-row">
                   <td>{store.storeName}</td>
-                  <td data-numeric>
+                  <td data-control>
                     <NumberField
                       label={`${store.storeName} ${t('label.wastage-rate')}`}
                       hideLabel
                       size="small"
-                      width="compact"
-                      class={styles.rate}
                       endAdornment="%"
                       min={0}
                       max={MAX_WASTAGE_RATE}
@@ -120,13 +118,11 @@ export const StoreRatesPanel: Component<StoreRatesPanelProps> = props => {
                       }
                     />
                   </td>
-                  <td data-numeric>
+                  <td data-control>
                     <NumberField
                       label={`${store.storeName} ${t('label.coverage-rate')}`}
                       hideLabel
                       size="small"
-                      width="compact"
-                      class={styles.rate}
                       endAdornment="%"
                       min={0}
                       decimalLimit={1}

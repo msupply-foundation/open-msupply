@@ -230,10 +230,10 @@
    self-scrolling child like the DataTable, which fills the panel exactly.
 
    `:not(dialog *)` for the same reason as the frame rule above: a tabbed modal
-   mounted in the body subtree is a DOM descendant of .bodyFill, and this made
-   ITS panel a scroller too — one with no ring room at its edges, so a table
-   flush with the panel's bottom lost its bottom border to the clip (#984). A
-   dialog's tabs scroll in the dialog's own scroll region instead. */
+   mounted in the body subtree is a DOM descendant of .bodyFill, and without it
+   the modal's panel becomes a scroller too — one with no ring room at its
+   edges, so a table flush with the panel's bottom loses its bottom border to
+   the clip (#984). A dialog's tabs scroll in the dialog's own scroll region. */
 .bodyFill [role='tabpanel']:not(dialog *) {
   display: flex;
   flex-direction: column;

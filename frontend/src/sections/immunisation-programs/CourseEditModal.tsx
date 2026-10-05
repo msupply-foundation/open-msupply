@@ -324,7 +324,8 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
   };
 
   // ─── Tabs: course details · rates per store (S3, S3a) ─────────────────
-  // The per-store rates are a tab of the editor, not a dialog over it (#984).
+  // The per-store rates are the editor's second tab, edited in the draft
+  // like every other field (#984).
   const [tab, setTab] = createSignal<EditorTab>('details');
 
   // ─── The dose table (S3 § dose table) ────────────────────────────────
