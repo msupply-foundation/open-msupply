@@ -451,16 +451,16 @@ The Settings popover also carries a bold **"Settings"** heading and a leading ic
 
 **Where it doesn't fit, and why we deviate.** #771 anticipated this in the same sentence that set the figure: _"a centred card at a fixed width (~900px if the tables fit, **wider if the stocktake column set forces it**)"_. All six line editors take it — and far enough past it that no card width fits, so they take the new `size="full"` rather than a bigger number:
 
-| Line editor       | What wants the width               | Size                        |
-| ----------------- | ---------------------------------- | --------------------------- |
-| Inbound shipment  | 21-column line table               | **`full`** (`100vw - 4rem`) |
-| Outbound shipment | 20-column line table               | **`full`**                  |
-| Stocktake         | 20-column line table               | **`full`**                  |
-| Internal order    | context charts, a 64rem region     | **`full`**                  |
-| Requisition       | 3-column figure grid, ~50rem basis | **`full`**                  |
-| Prescription      | fits a card — takes `full` anyway  | **`full`**                  |
+| Line editor       | What wants the width               | Size                                                  |
+| ----------------- | ---------------------------------- | ----------------------------------------------------- |
+| Inbound shipment  | 21-column line table               | **`full`** (`100vw - 4rem`; 90rem ceiling since #617) |
+| Outbound shipment | 20-column line table               | **`full`**                                            |
+| Stocktake         | 20-column line table               | **`full`**                                            |
+| Internal order    | context charts, a 64rem region     | ~~`full`~~ → **`wide` card** (80rem, #617)            |
+| Requisition       | 3-column figure grid, ~50rem basis | **`full`** (a card was tried and reverted, #617)      |
+| Prescription      | fits a card — takes `full` anyway  | **`full`**                                            |
 
-The internal-order and requisition editors got there without a wide table at all, which is the more useful half of this entry:
+The internal-order and requisition editors got there without a wide table at all, which is the more useful half of this entry. (#617 later moved the internal-order editor to a sized card and tried the same for the requisition, which went back to the sheet; see the entry at the foot of this ledger.)
 
 - **Internal order** — a **charts region** (target-quantity breakdown + the consumption / stock-evolution pair) capping itself at `64rem` so the pair sits side by side, matching the original app. A 56rem card gives a ~53rem body, so the cap is unreachable and the charts stack.
 - **Requisition** — a **figure grid** whose `.column` is `flex: 1 1 16rem`, three columns wide on an extra-fields program requisition: ~50rem of basis before gaps, so in a ~53rem body every column sits pinned at its floor with a labelled figure and its measure word squeezed into 16rem.
@@ -494,3 +494,45 @@ Note the columns are only reachable via the card ⇄ table toggle (#886); the th
 **Mechanism.** `size` gains a third value. `full` is `large` plus a width override — Dialog puts both classes on the element, so the flex column, the height band and the body rules live once, and `.dialog.large.bleed` sets `width: calc(100vw - 4rem)` outright. Below the navOverlay line (1024px) `data-fullscreen` takes over for both, as before. `widthRem` also now sets the working width in `large` (it used to be ignored there), which is the knob for a table that wants a bigger card rather than the full viewport; it stays inert at `full`, where the five editors use it for their pre-pick search card only.
 
 **Open.** This is a width decision, not a column-fit one — 21 columns still won't all fit at 1448px, so a desktop table view still scrolls horizontally. The lasting fix is fewer default columns in the table view, not a wider box.
+
+### Field rows in a wide modal — cap the columns, then the sheet _(issue #617, 2026-09-22)_
+
+**The report.** On a 34" monitor the internal-order and requisition line editors read as two disconnected halves: _"the labels and inputs are so far from each other that it is hard to relate the two"_ (#617), and _"what is the Default pack size doing??"_ for a caption left floating above its panel.
+
+**What it actually is.** Not, at root, a modal-width bug. `FieldRow`'s label track is FIXED (the dialog body sets `--field-row-label: min(10rem, 40%)`) and its control track is `1fr` — so every extra rem of a wide modal goes into the control track, and a value that right-aligns at the row's inline-end (a read-only figure, a boxed number) is pushed away from its label by exactly that much. At 1748px the internal-order editor's columns are ~534px each and the figures sit ~370px from the labels. Nothing is wrong at 1448px, which is why it landed.
+
+**No shared row cap — tried, and dropped.** The obvious shared fix is a ceiling on `FieldRow` itself, so no labelled row grows past the 28rem it has in the default 30rem dialog. It was built three times and taken out each time. On every dialog, it left the 44rem create modals' selects ~13rem short of the edge. On `large` + `full`, it cut the stock-movement line editor's Item row from 848px to 448px. On `full` alone, it broke the prescription line editor at every desktop width, laptops included: the Directions section's Abbreviation row (a 10rem entry plus the item-directions select) had ~17rem left for both, so the select wrapped under the entry and the Directions box shrank from 1228px to 276px. And once the two named editors capped their own columns (below), the row cap fixed nothing, because their rows were already narrower than 28rem. A shared rule can't tell a row whose value drifts away from its label from a row that is wide on purpose (a select, a free-text box), so the cap lives where the layout is known: in each editor's columns.
+
+**Narrowing the modals — declined first, then taken.** That was the first suggestion on the issue, and at first it was declined in favour of a later comment's _"limiting the width of those columns rather than the modal, as this is less impact and a smaller test footprint"_, and capping `full` looked like undoing the deviation recorded above. Bounding a **column** came first and stands on its own. It doesn't run into the standing rule in [components › modals](../../../spec/ui-standards/components.md#menus-popovers--modals), which bars faking a narrow dialog by capping its content, not bounding a column inside a wide one. But columns alone still left the sheet spreading its content across a big monitor, so the sheet got its ceiling after all (below), and the internal-order editor moved to a sized card.
+
+**Per-editor: cap the columns.** Both named editors cap their COLUMNS and centre the group, and both put their statistics/consumption columns on the same recessed inset panel their edits column already used — the background the issue asked for, so the two halves read as two groups:
+
+| Editor         | Columns                                     | Group width                                                     |
+| -------------- | ------------------------------------------- | --------------------------------------------------------------- |
+| Internal order | 22rem stats · 22rem movements · 28rem edits | 76rem — about the 1200px the React client capped this editor at |
+| Requisition    | 26rem × 2 or 3                              | 82rem at three columns                                          |
+
+22rem is not invented either: it is `FormColumn`'s `--form-column-min`, the house form-column width. The requisition's captions (default pack size, doses per unit) move **inside** the first column's panel under a hairline, which is the answer to "what is it doing?"; its extra-fields consumption column gains a panel so all three columns read alike. The internal-order movements panel's highlighted **Suggested** row retints one step up the group scale (`--bg-group-main`) — it used to take the inset panel's own fill, which stops being a highlight once the column has that fill.
+
+**Sized cards: kept for the internal order, reverted for the requisition.** With the columns capped, each editor had a measurable content width (76rem and 82rem), so each can take a `size="large"` card sized to it with a `width` measure instead of the sheet — the internal order's is `wide` (80rem) — no empty frame on a big monitor. What decides it is HEIGHT: **a card stops at 80vh**, 54–81px short of the sheet's `100vh - 4rem` on a landscape tablet. An A/B against the editors as they were before #617, on emulated tablets (2026-09-24), split the two:
+
+- **Requisition — reverted to `full`.** At 1280×800 and on an iPad Pro 11 its My store / Customer stats tabs dropped below the fold, where the pre-#617 sheet shows them.
+- **Internal order — kept as a card.** Its content is short: on every emulated tablet it measured the same as before #617. The cost is with a deployment's plugin panel below the form (CIV's six-column table): the editor scrolls sooner than the sheet would — ~116px less in view at 1512×900, ~103px on an iPad in landscape. The pre-#617 sheet scrolls there too, so it is more scrolling rather than new scrolling.
+
+So one line editor is a card and five are sheets. #771 put the prescription editor on `full` "on consistency alone"; this is a knowing exception to that, taken because the card reads better on a large monitor and costs nothing without a plugin panel.
+
+**And `full` itself gets a ceiling — 90rem.** Sizing the two measurable editors left the other `full` callers still unbounded, which the outbound editor showed plainly: at 3024px its Add-item modal was a ~2960px box holding three full-width batch cards that simply spread out inside it. Same defect as the columns, one level up. `.dialog.large.bleed` is now `width: min(calc(100vw - 4rem), var(--measure-sheet))` (90rem), reaching every `full` caller — every line editor that takes the sheet, and both returns-from-shipment modals — without editing any of them.
+
+**90rem (1440px) is the laptop's sheet.** On a standard 1512px laptop the sheet was already `100vw - 4rem` = 1448px. So the rule is: _a big monitor gets the laptop's sheet, and no wider_. Every screen from a laptop up now sees the same box; only smaller screens clamp it further. The laptop itself moves by 8px.
+
+**It went through 115rem first, and that is worth keeping on the record.** 115rem (1840px) was measured against the widest content any `full` modal holds — the outbound line table, **1766px natural width** at 14 columns — so that no table view would lose a column it showed on a big monitor. It did that, but it left the **card view** (the default, and what people actually see) spread thin: three batch cards 1840px wide, their seven fields a long way apart. The trade taken: the table view now scrolls sideways inside the sheet on every screen. It already did on every laptop (it overflows at 1680, 1512, 1400, 1280 …), so this is no new behaviour — just no longer an exception for large monitors. The #771 entry above argues against narrowing a sheet to a CARD width (~900px), where columns vanish outright; 1440px is not that.
+
+**So the width rule lives in one place, with one knowing exception.** The sheet's ceiling bounds every line editor that takes the sheet, and a modal whose own content is narrower can ask for a card with `size="large"` + a `width` measure (`widthRem` for a bespoke width) — minding that a card also caps HEIGHT, which is what kept the requisition a sheet and let the internal order be a card. The question the #771 entry asks — _does this modal hold something that genuinely needs the space?_ — is unchanged.
+
+**On the library's own primitives (#896 review).** The widths are tokens, not copies: the sheet's ceiling is `--measure-sheet`, a statistics column is capped at `--measure-form-column` (FormColumn's default basis too), and the internal-order card is `--measure-wide` — `size="large"` now takes a `width` measure — rather than a rem number summed from the column caps, gaps and body padding. The column rows are `HStack` (`wrap`, centred, `gap="lg"`) and the requisition's columns `Stack`, instead of hand-rolled flex rules. `InsetPanel` gained a `head` slot (the requisition's pack-size captions, above the panel's own divider) and a `gap` prop in the Stack presets, so no section CSS resets a panel's internals.
+
+**Portrait tablets: the panels' label track now yields.** The same A/B showed the internal-order editor on an iPad in portrait clipping its statistics values at the panel edge. With its three panels squeezed to their ~14rem basis on one row, a FIXED 9.5rem label track (`InsetPanel`'s) plus the panel's padding left the values ~30px. `InsetPanel` now uses `min(9.5rem, 40%)` — the rule the dialog body already applies to its own track — so on a narrow panel the labels wrap instead of the values clipping. The `min()` only bites below ~24rem of row. Measured against the pre-#617 layout: at desktop widths the only panels that narrow are the internal-order editor's 22rem statistics panels (9.5 → 8rem, labels still on one line); on a phone the stocktake create form's filter labels narrow (144 → 118px) and _Items expiring before_ wraps, which is the rule doing its job. It also clears the edits panel's clipping, which was already there before #617 at that width.
+
+**Still open from the same issue.** The 60vh FLOOR is viewport-relative with no ceiling, so on a 1428px-tall monitor a short line lands in an 857px box — the same class of problem as the width, in the other axis, and untouched here because #771 records that floor as its own deliberate win.
+
+**Also open, from the same issue.** Whether the other modals stretch the same way (asked on the issue) — the sheet's ceiling answers it for every `full` caller automatically, but it doesn't reach a `large` card, so the ten in the section above (and the stock-movement editor, which postdates that list) still want the eyeball pass #261 tracks. Drag-to-resize handles were raised and deferred to their own issue.
