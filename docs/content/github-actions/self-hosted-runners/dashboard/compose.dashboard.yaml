@@ -102,6 +102,9 @@ services:
       DASHBOARD_URL: ${DASHBOARD_URL:-}
       # How often GitHub is re-read while someone has the page open.
       ENRICH_SECONDS: ${ENRICH_SECONDS:-60}
+      # The branch the buttons dispatch the workflows on. develop, except while
+      # trying out a workflow change from its branch before it merges.
+      DISPATCH_REF: ${DISPATCH_REF:-develop}
     volumes:
       # Single-file bind mounts, so editing either needs
       # `up -d --force-recreate`, as for snapshot.mjs.
