@@ -53,13 +53,13 @@ Non-release tags are typically created automatically by the nightly build proces
 
 The build itself is defined once, in `docker-image.yaml`, which has no triggers of its own — it is called by `docker-release.yaml` (tags), `docker-named-deployment.yaml` (develop, release candidates and QA deployments) and `docker-pr-preview.yaml` (per-PR previews). Each caller passes a matrix, a version, and whether it wants floating aliases and dev images; the shared build has no idea which one called it.
 
-The *deploy* is defined once in the same way, in `docker-deploy.yaml`: pull an immutable tag, `docker compose up --wait`, prove the deployment answers through the reverse proxy, and report to a GitHub environment. `docker-named-deployment.yaml` and `docker-pr-preview.yaml` both call it, so every deployment — develop, an RC, a QA server, a PR preview — comes up through identical code.
+The _deploy_ is defined once in the same way, in `docker-deploy.yaml`: pull an immutable tag, `docker compose up --wait`, prove the deployment answers through the reverse proxy, and report to a GitHub environment. `docker-named-deployment.yaml` and `docker-pr-preview.yaml` both call it, so every deployment — develop, an RC, a QA server, a PR preview — comes up through identical code.
 
 1. **Classify** (`docker-release.yaml`) — decides from the tag whether it is a release or a nightly, and produces the variant matrix and floating alias prefix. `docker-named-deployment.yaml` has an equivalent `plan` job that names the deployment, resolves the ref to a commit and decides whether a build is needed at all.
 2. **Image** (1, 2 or 4 parallel jobs) — one `docker buildx build` per (db, arch). Everything is compiled inside the Dockerfile: the server, the old UI, and the new frontend. Release tags additionally build the `-dev` images.
    - **amd64** builds run natively on the runner
    - **arm64** builds cross-compile — the Dockerfile pins its compile stages to `$BUILDPLATFORM`, so `rustc` never runs emulated (release tags only)
-3. **Deploy** (`docker-named-deployment.yaml`, `docker-pr-preview.yaml`) — brings that deployment up on the new image, by calling `docker-deploy.yaml`. No part of a tag build ever deploys: pushing `v2.8.0` publishes images and stops. Standing a server up *on* a release tag is a separate, deliberate act — a named deployment with `ref: v2.8.0`, which finds the images already built.
+3. **Deploy** (`docker-named-deployment.yaml`, `docker-pr-preview.yaml`) — brings that deployment up on the new image, by calling `docker-deploy.yaml`. No part of a tag build ever deploys: pushing `v2.8.0` publishes images and stops. Standing a server up _on_ a release tag is a separate, deliberate act — a named deployment with `ref: v2.8.0`, which finds the images already built.
 4. **Trigger plugin tests** (`docker-release.yaml`) — runs the downstream plugin test suite against the new dev images (release tags only)
 
 Both callers share the build cache. BuildKit keys on the build's content, not on the workflow that invoked it, so a develop merge warms what the nightly tag needs.
@@ -72,16 +72,16 @@ Everything publishes to `msupplyfoundation/omsupply`. Deployment builds (`docker
 
 Images are pushed to `msupplyfoundation/omsupply` with the naming convention:
 
-| Tag                          | Example                     | When built / repointed             |
-| ---------------------------- | --------------------------- | ---------------------------------- |
-| `v{version}-{db}-{arch}`     | `v2.8.0-sqlite-amd64`       | All tags                           |
-| `v{version}-{db}-{arch}-dev` | `v2.8.0-sqlite-amd64-dev`   | Release tags only                  |
-| `latest[-{db}]`              | `latest`, `latest-postgres` | Repointed on every release tag     |
-| `latest-develop[-{db}]`      | `latest-develop`            | Repointed on every develop nightly |
-| `latest-rc[-{db}]`           | `latest-rc-postgres`        | Repointed on every RC nightly      |
-| `pr-{number}-{sha}-{db}-{arch}` | `pr-470-abc1234-postgres-amd64` | Every push to a PR labelled `deploy` |
-| `{name}-{sha}-{db}-{arch}` | `develop-abc1234-postgres-amd64`, `vaccine-flow-abc1234-postgres-amd64` | Every named deployment, unless that tag already exists |
-| `…-{db}-{arch}-debug` | `pr-470-abc1234-postgres-amd64-debug` | Any build of the `debug` profile — every preview, and a named deployment that asked for it |
+| Tag                             | Example                                                                 | When built / repointed                                                                     |
+| ------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `v{version}-{db}-{arch}`        | `v2.8.0-sqlite-amd64`                                                   | All tags                                                                                   |
+| `v{version}-{db}-{arch}-dev`    | `v2.8.0-sqlite-amd64-dev`                                               | Release tags only                                                                          |
+| `latest[-{db}]`                 | `latest`, `latest-postgres`                                             | Repointed on every release tag                                                             |
+| `latest-develop[-{db}]`         | `latest-develop`                                                        | Repointed on every develop nightly                                                         |
+| `latest-rc[-{db}]`              | `latest-rc-postgres`                                                    | Repointed on every RC nightly                                                              |
+| `pr-{number}-{sha}-{db}-{arch}` | `pr-470-abc1234-postgres-amd64`                                         | Every push to a PR labelled `deploy`                                                       |
+| `{name}-{sha}-{db}-{arch}`      | `develop-abc1234-postgres-amd64`, `vaccine-flow-abc1234-postgres-amd64` | Every named deployment, unless that tag already exists                                     |
+| `…-{db}-{arch}-debug`           | `pr-470-abc1234-postgres-amd64-debug`                                   | Any build of the `debug` profile — every preview, and a named deployment that asked for it |
 
 Dev images (which include Node/Yarn and the client source for frontend development) are only built for amd64 on release tags.
 
@@ -91,12 +91,12 @@ The `latest*` floating tags always point at **amd64** images, and the bare tags 
 
 Every deployment — develop, a release candidate, a QA server, a PR preview — is reached at `https://<name>.<DEPLOY_DOMAIN>`, and **the name is the only key**. It is at once the GitHub environment, the compose project, the container name and the first label of the hostname:
 
-| deployment | hostname | container |
-|---|---|---|
-| develop | `develop.<DEPLOY_DOMAIN>` | `develop` |
-| release candidate `v3.01.00-RC` | `v3-01-00-rc.<DEPLOY_DOMAIN>` | `v3-01-00-rc` |
+| deployment                       | hostname                       | container      |
+| -------------------------------- | ------------------------------ | -------------- |
+| develop                          | `develop.<DEPLOY_DOMAIN>`      | `develop`      |
+| release candidate `v3.01.00-RC`  | `v3-01-00-rc.<DEPLOY_DOMAIN>`  | `v3-01-00-rc`  |
 | ad-hoc deployment `vaccine-flow` | `vaccine-flow.<DEPLOY_DOMAIN>` | `vaccine-flow` |
-| preview of PR 470 | `pr-470.<DEPLOY_DOMAIN>` | `pr-470` |
+| preview of PR 470                | `pr-470.<DEPLOY_DOMAIN>`       | `pr-470`       |
 
 Nothing publishes a host port. A reverse proxy on the deploy box maps the first label of the hostname straight to a container name, which means it holds **one static route** for every deployment: no per-deployment config, no reloads, and a link that is known before the build starts. See the [self-hosted runners](../github-actions/self-hosted-runners/) page for how it is set up.
 
@@ -106,14 +106,14 @@ Because compose namespaces volumes by project, and the project is the name, no t
 
 Run the **Docker named deployment** workflow to get a server of your own. Nothing here needs command-line access — it is a form in the Actions tab.
 
-| field | what to put in it |
-|---|---|
-| `name` | A name for your server, e.g. `vaccine-flow`. This becomes its web address: `vaccine-flow.<DEPLOY_DOMAIN>`. Anything is accepted and tidied into a valid address, so `Vaccine Flow` works too. |
-| `ref` | What to put on it, and what it then tracks: a **branch** keeps updating as people push to it; a **release tag** or a **commit** freezes it. Leave blank if you are removing a server. |
-| `days` | How many days to keep it, up to 30. `0` gives a permanent server. Ignored by `teardown`. |
-| `action` | `deploy` creates it, or updates an existing one and keeps its data. `reseed` wipes its data and starts again from the sample dataset. `teardown` deletes it and its data. |
-| `central` | `keep` (the default) leaves it as whatever it already is. `central` makes it a central server, `remote` makes it an ordinary site. A choice rather than a tick-box on purpose: a box that defaults to off is read on every redeploy, so extending an expiry would have quietly demoted a central server. |
-| `dataset` | What goes in its database, **on a first deploy or a `reseed` only** — after that the database has its own history and this is not consulted. `default` uses whatever the repository is set to, `e2e` and `reference1` are the sample datasets, and `none` leaves it empty. |
+| field     | what to put in it                                                                                                                                                                                                                                                                                                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`    | A name for your server, e.g. `vaccine-flow`. This becomes its web address: `vaccine-flow.<DEPLOY_DOMAIN>`. Anything is accepted and tidied into a valid address, so `Vaccine Flow` works too.                                                                                                                                                                                              |
+| `ref`     | What to put on it, and what it then tracks: a **branch** keeps updating as people push to it; a **release tag** or a **commit** freezes it. Leave blank if you are removing a server.                                                                                                                                                                                                      |
+| `days`    | How many days to keep it, up to 30. `0` gives a permanent server. Ignored by `teardown`.                                                                                                                                                                                                                                                                                                   |
+| `action`  | `deploy` creates it, or updates an existing one and keeps its data. `reseed` wipes its data and starts again from the sample dataset. `teardown` deletes it and its data.                                                                                                                                                                                                                  |
+| `central` | `keep` (the default) leaves it as whatever it already is. `central` makes it a central server, `remote` makes it an ordinary site. A choice rather than a tick-box on purpose: a box that defaults to off is read on every redeploy, so extending an expiry would have quietly demoted a central server.                                                                                   |
+| `dataset` | What goes in its database, **on a first deploy or a `reseed` only** — after that the database has its own history and this is not consulted. `default` uses whatever the repository is set to, `e2e` and `reference1` are the sample datasets, and `none` leaves it empty.                                                                                                                 |
 | `profile` | `keep` (the default) reuses whatever this deployment was built with last time, so extending an expiry does not quietly change it — `release` for a brand new one. `release` is what ships. `debug` compiles in a fraction of the time but runs slower: good for trying a feature out, no use for judging performance. Whatever you pick sticks, for pushes and for later dispatches alike. |
 
 The workflow reports the address in its summary, and the server is usually ready in about twenty minutes — or about one if the commit has been built before, or if you gave it a release tag.
@@ -126,21 +126,21 @@ The workflow reports the address in its summary, and the server is usually ready
 
 `days` is capped at 30 because the nightly tag cleanup sweeps non-release tags at 30 days, and a deployment that outlived its own image tag could not be redeployed.
 
-`docker-expire.yaml` sweeps expired deployments daily. Its job summary lists everything currently deployed and when each expires, which is the quickest answer to "what is running right now" — the Environments page shows what *was* deployed, not what is still up.
+`docker-expire.yaml` sweeps expired deployments daily. Its job summary lists everything currently deployed and when each expires, which is the quickest answer to "what is running right now" — the Environments page shows what _was_ deployed, not what is still up.
 
 A deployment tracks the ref you gave it. Deploy from a branch and every push to that branch updates it; deploy from a tag or a commit and it is frozen. That is how `develop` works — it is simply the deployment named after the develop branch, with no expiry — and it is equally how a server following `feature/foo` works.
 
-| deployed from | what happens on a push |
-|---|---|
-| `develop` | updated on every merge to develop |
+| deployed from | what happens on a push               |
+| ------------- | ------------------------------------ |
+| `develop`     | updated on every merge to develop    |
 | `v3.01.00-RC` | updated on every push to that branch |
 | `feature/foo` | updated on every push to that branch |
-| `v2.8.0` | nothing — frozen |
-| a commit sha | nothing — frozen |
+| `v2.8.0`      | nothing — frozen                     |
+| a commit sha  | nothing — frozen                     |
 
 The branch a deployment follows is **recorded on it**, so its name and its branch are free to differ — `vaccine-flow` can follow `feature/foo`. Pinning is simply the absence of that record: deploy from a tag or a commit and there is nothing for a push to match.
 
-One branch, one deployment. Two deployments following the same branch would each need their own image and their own deploy, so it says so and stops rather than updating one and leaving the other behind — point the extras at a tag to freeze them. Two *different* RC branches are fine and get a server each.
+One branch, one deployment. Two deployments following the same branch would each need their own image and their own deploy, so it says so and stops rather than updating one and leaving the other behind — point the extras at a tag to freeze them. Two _different_ RC branches are fine and get a server each.
 
 A deployment's whole record is four labels on its container — the branch it follows, when it expires, how it was built, and whether it is a central server — so there is nothing to configure per deployment and nothing to keep in step. Each one exists because a push carries no form to read, so a redeploy that had to guess would guess wrong in a way nothing announced.
 
@@ -149,7 +149,7 @@ A deployment's whole record is four labels on its container — the branch it fo
 Two consequences worth knowing:
 
 - **A ref has to contain this deployment machinery for a deployment of it to work.** Until it is on every branch you care about, deploy a ref that has it.
-- **An older ref can collide with an existing deployment.** If the hardcoded name in that older compose file belongs to a deployment that is already up, the deploy lands on *that* project — its container and its volumes — regardless of the name on the form.
+- **An older ref can collide with an existing deployment.** If the hardcoded name in that older compose file belongs to a deployment that is already up, the deploy lands on _that_ project — its container and its volumes — regardless of the name on the form.
 
 **An auto-update changes the image and nothing else.** A push has no form to read, so the deployment keeps the expiry it already had and rebuilds with the profile it was already built with — the clock does not move and `debug` does not silently become `release`.
 
@@ -183,10 +183,10 @@ Preview images are swept from Docker Hub after 7 days rather than the usual 30 �
 
 ### Known gap: a paired central and remote
 
-A pair like `develop-central` and `develop-remote` deploys today and needs nothing special — two names are two names, and because each deployment gets its *own* hardware id they are distinguishable to a central server. Two things are missing:
+A pair like `develop-central` and `develop-remote` deploys today and needs nothing special — two names are two names, and because each deployment gets its _own_ hardware id they are distinguishable to a central server. Two things are missing:
 
 - **One branch auto-updates one deployment.** Names are free — a pair can be called anything — but both halves of a pair built from `develop` would carry `oms.branch=develop`, and the push path stops rather than guess between two matches. So a pair from a single branch needs one half pinned to a commit, or redeployed by hand, until this fans out per deployment.
-- **Seeding and sync are mutually exclusive**, so the remote half has to be deployed with `dataset: none` and initialise *through* sync instead. That is now reachable from the form, but it is only half the answer: initialising through sync needs sync credentials, which nothing here supplies, and the central may need `standalone_store_name`/`standalone_admin_*` to bootstrap with no upstream of its own.
+- **Seeding and sync are mutually exclusive**, so the remote half has to be deployed with `dataset: none` and initialise _through_ sync instead. That is now reachable from the form, but it is only half the answer: initialising through sync needs sync credentials, which nothing here supplies, and the central may need `standalone_store_name`/`standalone_admin_*` to bootstrap with no upstream of its own.
 
 That is a different first-deploy path from every other deployment here and has not been established against a real image yet. It blocks nothing: the pair works now as two independent seeded servers.
 
@@ -228,10 +228,10 @@ Floating tags are amd64-only. Nightly develop builds may include schema migratio
 
 A separate `cleanup-docker-tags.yaml` workflow runs nightly to remove old non-release images from Docker Hub. Release images and the floating `latest*` tags are always kept. Everything else is swept on one of two clocks:
 
-| tags | swept after | why |
-|---|---|---|
-| per-PR previews, `pr-<number>-<sha>` | 7 days | one tag per push, and a tag is dead as soon as the next push supersedes it |
-| every other non-release tag, including named deployments | 30 days | also the reason `days` is capped at 30 — a deployment cannot outlive its own image tag |
+| tags                                                     | swept after | why                                                                                    |
+| -------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| per-PR previews, `pr-<number>-<sha>`                     | 7 days      | one tag per push, and a tag is dead as soon as the next push supersedes it             |
+| every other non-release tag, including named deployments | 30 days     | also the reason `days` is capped at 30 — a deployment cannot outlive its own image tag |
 
 Both are configurable. A variant marker (`-dev`, `-debug`) is stripped before the release check and before the preview match, so a debug build stays in the same retention class as its release equivalent.
 
@@ -291,12 +291,12 @@ yarn dockerise
 
 ### Targets
 
-| `--target`     | contents |
-| -------------- | -------- |
-| `sqlite`       | SQLite server. The default if `--target` is omitted |
+| `--target`     | contents                                                       |
+| -------------- | -------------------------------------------------------------- |
+| `sqlite`       | SQLite server. The default if `--target` is omitted            |
 | `postgres`     | Postgres server, with a Postgres instance bundled in the image |
-| `dev`          | `sqlite` plus Node, Yarn and the client source |
-| `postgres-dev` | `postgres` plus the same |
+| `dev`          | `sqlite` plus Node, Yarn and the client source                 |
+| `postgres-dev` | `postgres` plus the same                                       |
 
 BuildKit only runs the stages a target needs, so `--target sqlite` never
 compiles the Postgres binaries.
@@ -325,17 +325,17 @@ with `debug` — and compare the two summaries. The two tags differ by the
 trailing `-debug`, so neither overwrites the other.
 
 The one thing worth knowing before reading those numbers is the baseline. A
-*stripped release* `remote_server` is already large, because `rust-embed` bakes
+_stripped release_ `remote_server` is already large, because `rust-embed` bakes
 both frontends, the locales and the standard reports and forms into it:
 
-| image                                       | `remote_server` | `remote_server_cli` |
-| ------------------------------------------- | --------------- | ------------------- |
-| `latest-develop-postgres` (amd64)           | 386 MB          | 110 MB              |
-| `3.01.01-2026-09-02-sqlite-arm64`           | 316 MB          | 86 MB               |
+| image                             | `remote_server` | `remote_server_cli` |
+| --------------------------------- | --------------- | ------------------- |
+| `latest-develop-postgres` (amd64) | 386 MB          | 110 MB              |
+| `3.01.01-2026-09-02-sqlite-arm64` | 316 MB          | 86 MB               |
 
 So roughly 300MB of that is embedded assets, which is the same in either
 profile. Debug adds unoptimised code and DWARF on top of that floor rather than
-multiplying it, so expect the *ratio* to be less alarming than the raw delta.
+multiplying it, so expect the _ratio_ to be less alarming than the raw delta.
 If size turns out to be the binding constraint rather than build time,
 `debug = "line-tables-only"` on `[profile.dev]` keeps usable backtraces for a
 fraction of the debug info.
@@ -346,7 +346,7 @@ fraction of the debug info.
 docker buildx build --platform linux/arm64 --target postgres -t <tag> .
 ```
 
-The compile stages are pinned to the *build* platform and cross-compile to the
+The compile stages are pinned to the _build_ platform and cross-compile to the
 target, so `rustc` runs natively rather than under emulation. Do **not** add
 QEMU to work around this - it is what the pinning exists to avoid, and it makes
 the build several times slower.
@@ -360,7 +360,6 @@ change reaches. To force a genuinely cold build:
 ```bash
 docker builder prune --filter type=exec.cachemount
 ```
-
 
 ## Running the images
 

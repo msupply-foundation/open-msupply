@@ -8,16 +8,20 @@
  * what the greeting proves: its counter is reactive, and its text re-renders on
  * a locale switch, from a module the host never built.
  */
-import { createSignal, onCleanup } from 'solid-js';
+import { createResource, createSignal, onCleanup } from 'solid-js';
 import {
+  CONFIGURATION_IDENTIFIER,
   InfoTooltip,
   PLUGIN_API_VERSION,
   Table,
+  TextField,
   definePlugin,
   formatNumber,
   navigateTo,
+  pluginData,
   pluginIntl,
   storeHref,
+  type ConfigurationEditorProps,
   type InternalOrderLineInfoPanelProps,
 } from '@openmsupply/plugin-sdk';
 
@@ -43,11 +47,71 @@ const intl = pluginIntl(CODE);
  * theme (sdk-contract § styling: bespoke styles self-contained, host tokens
  * MAY be consumed — never host class names).
  */
+/*
+ * The CONFIGURATION contribution (plugins sdk-contract § the configuration
+ * contribution): one setting, the greeting below, edited in Manage › Plugins.
+ * The host owns the record — it seeds the editor, holds the draft and saves the
+ * whole value — so the editor is a plain controlled form, and the stat reads
+ * what was saved.
+ *
+ * The value arrives as `unknown` on purpose: the stored record is installation
+ * data that may predate this build, so it is narrowed, never trusted.
+ */
+type HelloConfig = { greeting: string };
+
+const DEFAULT_CONFIG: HelloConfig = { greeting: '' };
+
+const asConfig = (value: unknown): HelloConfig =>
+  typeof value === 'object' &&
+  value !== null &&
+  'greeting' in value &&
+  typeof value.greeting === 'string'
+    ? { greeting: value.greeting }
+    : DEFAULT_CONFIG;
+
+const GreetingSettings = (props: ConfigurationEditorProps) => (
+  <TextField
+    label={intl.t('settings.greeting')}
+    helperText={intl.t('settings.greeting-help')}
+    value={asConfig(props.value).greeting}
+    data-testid="hello-world-settings-greeting"
+    onInput={event =>
+      props.onChange({
+        ...asConfig(props.value),
+        greeting: event.currentTarget.value,
+      })
+    }
+  />
+);
+
+// The saved greeting: the installation-wide record (no store), read afresh on
+// every mount — the plugin-data surface caches nothing, so a save is seen at
+// the next read with no reload.
+const readGreeting = async (): Promise<string> => {
+  const result = await pluginData(CODE).list({
+    filter: { dataIdentifier: { equalTo: CONFIGURATION_IDENTIFIER } },
+  });
+  if (result.kind !== 'success') return '';
+  const record = result.data.nodes.find(node => node.storeId === null);
+  if (!record) return '';
+  try {
+    return asConfig(JSON.parse(record.data)).greeting;
+  } catch {
+    return '';
+  }
+};
+
 const Greeting = () => {
   const [clicks, setClicks] = createSignal(0);
+  // Read through `.state`, never `configured()`: a direct read would suspend
+  // the dashboard around this stat while the record loads.
+  const [configured] = createResource(readGreeting);
+  const greeting = () =>
+    (configured.state === 'ready' ? configured.latest : '') ||
+    intl.t('greeting');
   return (
     <div>
-      <p>{intl.t('greeting')}</p>
+      <p data-testid="hello-world-greeting">{greeting()}</p>
       <button type="button" onClick={() => setClicks(count => count + 1)}>
         {intl.t('clicks', { count: formatNumber(clicks()) })}
       </button>{' '}
@@ -286,6 +350,7 @@ export default definePlugin({
     version: '1.0.0',
     pluginApiVersion: PLUGIN_API_VERSION,
   },
+  configuration: { defaultConfig: DEFAULT_CONFIG, Editor: GreetingSettings },
   // Two catalogues, because one locale cannot prove anything: switching the
   // app's language must re-render this plugin's text, and only a plugin sharing
   // the host's ONE Solid instance can be re-rendered by the host's locale
@@ -294,6 +359,9 @@ export default definePlugin({
     en: {
       greeting: 'Hello from a plugin',
       clicks: 'Clicked {{count}} times',
+      'settings.greeting': 'Greeting',
+      'settings.greeting-help':
+        'Shown on the dashboard in place of the default greeting. Leave blank for the default.',
       loading: '…',
       'nav.stock': 'Stock (link)',
       'nav.items': 'Items (from code)',
@@ -328,6 +396,9 @@ export default definePlugin({
     fr: {
       greeting: 'Bonjour depuis un plugin',
       clicks: 'Cliqué {{count}} fois',
+      'settings.greeting': 'Message d’accueil',
+      'settings.greeting-help':
+        'Affiché sur le tableau de bord à la place du message par défaut. Laisser vide pour le message par défaut.',
       loading: '…',
       'nav.stock': 'Stock (lien)',
       'nav.items': 'Articles (depuis le code)',

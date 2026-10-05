@@ -9,7 +9,7 @@ import {
   Show,
   type JSX,
 } from 'solid-js';
-import { t, tPlural } from '@/intl';
+import { measureWord, t, tPlural } from '@/intl';
 import { formatNumber } from '@/intl/formatNumber';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -35,7 +35,6 @@ import {
   fetchLineStats,
   figureInMode,
   modeToUnits,
-  modeWord,
   saveExistingLine,
   saveNewLine,
   unitsToMode,
@@ -63,7 +62,7 @@ export interface RequisitionLineEditModalProps {
   canAdd: boolean;
   /**
    * Transfer-linked → only Supply and the comment editable; the customer's
-   * demand figures are their record (AC-LE10).
+   * demand figures are their record (OMS-REG-DIST-05.32).
    */
   transferred: boolean;
   /** Extra-fields program requisition → the three-column layout + Reason. */
@@ -93,7 +92,7 @@ export interface RequisitionLineEditModalProps {
   ) => RequisitionDetailLineFragment | undefined;
   /**
    * The requisition's existing line for an item, if any — add mode loads it
-   * for editing rather than starting a duplicate (D60, AC-LE3).
+   * for editing rather than starting a duplicate (D60, OMS-REG-DIST-06.27).
    */
   findLineForItem: (
     itemId: string
@@ -165,7 +164,8 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   const [advancing, setAdvancing] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
-  // A reasons rejection flags the Reason field (AC-LE8) until the next save.
+  // A reasons rejection flags the Reason field (OMS-REG-DIST-06.34) until the
+  // next save.
   const [reasonFlagged, setReasonFlagged] = createSignal(false);
   // Items stepped through this run, so the walk never offers one twice.
   const covered = new Set<string>();
@@ -173,7 +173,8 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   // The add-mode item search — where focus lands on an add-mode open and
   // whenever the editor returns to the empty add state.
   const itemSearch = createFocusTarget();
-  // The Supply field — where focus lands on an edit-mode open (AC-LE1).
+  // The Supply field — where focus lands on an edit-mode open
+  // (OMS-REG-DIST-06.24).
   let supplyInput: HTMLInputElement | undefined;
 
   let disposed = false;
@@ -186,9 +187,12 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   };
 
   const focusSupply = () => {
+    // A read-only requisition has nothing to type into, so it keeps the panel
+    // default (ui-standards › accessibility › keyboard).
+    if (!props.editable) return;
     // After the dialog's showModal() has parked focus on the panel — the same
-    // one-frame deferral createFocusTarget applies (AC-LE1: focus Supply and
-    // scroll it into view).
+    // one-frame deferral createFocusTarget applies (OMS-REG-DIST-06.24: focus
+    // Supply and scroll it into view).
     requestAnimationFrame(() => {
       supplyInput?.focus();
       supplyInput?.scrollIntoView({ block: 'center' });
@@ -196,23 +200,25 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   };
 
   // Land the editor on a line — an existing line (edit) or an add-mode
-  // preview — seeding the draft from its stored values.
-  const seedLine = (editorLine: EditorLine, focus: boolean) => {
+  // preview — seeding the draft from its stored values, and landing the caret
+  // on Supply however the line was reached (OMS-REG-DIST-06.24, .47).
+  const seedLine = (editorLine: EditorLine) => {
     setLine(editorLine);
     covered.add(editorLine.lineId);
     setDraft(draftFromLine(editorLine));
     setErrorMessage(undefined);
     setReasonFlagged(false);
-    if (focus) focusSupply();
+    focusSupply();
   };
 
   const pickItem = async (itemId: string) => {
     // An item already on the requisition loads its EXISTING line to edit — no
-    // duplicate (D60, AC-LE3). The picker stays live (mode stays 'add'), but
-    // the loaded line's isNew=false makes the save an update, not an insert.
+    // duplicate (D60, OMS-REG-DIST-06.27). The picker stays live (mode stays
+    // 'add'), but the loaded line's isNew=false makes the save an update, not
+    // an insert.
     const existing = props.findLineForItem(itemId);
     if (existing) {
-      seedLine(editorLineFromLine(existing), false);
+      seedLine(editorLineFromLine(existing));
       return;
     }
     setLoading(true);
@@ -224,12 +230,12 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     );
     if (disposed) return;
     setLoading(false);
-    if (preview) seedLine(preview, false);
+    if (preview) seedLine(preview);
   };
 
-  // Back to the empty add state (AC-LE7: switching items or returning
-  // discards any unsaved draft with nothing created). Focus returns to the
-  // item search, as on an add-mode open.
+  // Back to the empty add state (OMS-REG-DIST-06.33: switching items or
+  // returning discards any unsaved draft with nothing created). Focus returns
+  // to the item search, as on an add-mode open.
   const backToSearch = () => {
     itemSearch.focus();
     setMode('add');
@@ -242,8 +248,8 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   onMount(() => {
     if (props.initialLine) {
       // The signal initializers seeded the line/draft; the walk still needs
-      // the opened line marked visited (AC-LE5 — never offered twice), and
-      // focus lands on Supply (AC-LE1).
+      // the opened line marked visited (OMS-REG-DIST-06.30 — never offered
+      // twice), and focus lands on Supply (OMS-REG-DIST-06.24).
       covered.add(props.initialLine.id);
       focusSupply();
     } else itemSearch.focus();
@@ -251,7 +257,8 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
 
   const updateMode = () => mode() === 'update';
   const disabled = () => !props.editable || saving();
-  // The transferred lock (AC-LE10): the demand side is the customer's record.
+  // The transferred lock (OMS-REG-DIST-05.32): the demand side is the
+  // customer's record.
   const demandDisabled = () => disabled() || props.transferred;
 
   const current = () => line();
@@ -288,9 +295,9 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
   });
   const statsNode = () => gated(stats);
 
-  // The customer's volume snapshot (AC-LE12): the live item volume at the
-  // supply as typed, and whether the capacity is spent — driving the Customer
-  // tab's volume block and the warning banner beneath the item header.
+  // The customer's volume snapshot (OMS-REG-DIST-05.34): the live item volume
+  // at the supply as typed, and whether the capacity is spent — driving the
+  // Customer tab's volume block and the warning banner beneath the item header.
   const volumeSnapshot = () => current()?.availableVolumeAtLocationType ?? null;
   const itemVolume = () =>
     (volumeSnapshot()?.itemVolumePerUnit ?? 0) * (draft()?.supplyQuantity ?? 0);
@@ -414,12 +421,13 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
       if (ok) props.onClose();
     });
 
-  // Save & next (AC-LE5/LE6): save, then continue. Add mode reopens the empty
-  // picker; edit mode advances the walk (skipping covered), dropping into add
-  // mode when exhausted where adding is offered, else closing.
+  // Save & next (OMS-REG-DIST-06.30/.32): save, then continue. Add mode
+  // reopens the empty picker; edit mode advances the walk (skipping covered),
+  // dropping into add mode when exhausted where adding is offered, else
+  // closing.
   const advance = (fromLineId: string) => {
     const next = props.nextLine(fromLineId, covered);
-    if (next) seedLine(editorLineFromLine(next), true);
+    if (next) seedLine(editorLineFromLine(next));
     else if (props.canAdd) backToSearch();
     else props.onClose();
   };
@@ -431,7 +439,8 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
       // Save the current line, then walk — the internal-order editor's shape.
       // A read-only requisition has nothing to write, so Save & next is purely
       // the walk there (advances without saving); an editable line always
-      // persists, including a fresh zero-quantity placeholder (AC-LE2).
+      // persists, including a fresh zero-quantity placeholder
+      // (OMS-REG-DIST-06.26).
       const ok = props.editable ? await save() : true;
       setAdvancing(false);
       if (!ok || !editorLine) return;
@@ -450,12 +459,12 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     const count =
       unitsToMode(supplyUnits(), entryMode(), packSize()) === 1 ? 1 : 2;
     const options = [
-      { value: 'units', label: modeWord('units', unitName, count) },
+      { value: 'units', label: measureWord('units', unitName, count) },
     ];
     if (packSize() > 0)
       options.push({
         value: 'packs',
-        label: modeWord('packs', unitName, count),
+        label: measureWord('packs', unitName, count),
       });
     return options;
   });
@@ -486,7 +495,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         ? t('label.days')
         : rowProps.fixed === 'months'
           ? t('label.months')
-          : modeWord(entryMode(), current()?.unitName ?? null, shown());
+          : measureWord(entryMode(), current()?.unitName ?? null, shown());
     const shown = () => {
       if (rowProps.fixed) return Math.round(rowProps.units * 10) / 10;
       if (rowProps.onChange) {
@@ -684,7 +693,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         <FieldRow label={t('label.target-stock-population')}>
           <span class={styles.statValue}>
             {formatNumber(targetPopulationFigure())}{' '}
-            {modeWord(
+            {measureWord(
               entryMode(),
               current()?.unitName ?? null,
               targetPopulationFigure()
@@ -750,9 +759,9 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           {/* Save — enabled whenever a line is loaded and the requisition is
               editable (the internal-order editor's rule), so a freshly picked
               item saves as a zero-quantity placeholder without a prior edit
-              (AC-LE2). Disabled only with no line, mid-save, or read-only.
-              Save & next stays available on a read-only requisition as the
-              walk affordance (spec S4 § layout › footer). */}
+              (OMS-REG-DIST-06.26). Disabled only with no line, mid-save, or
+              read-only. Save & next stays available on a read-only requisition
+              as the walk affordance (spec S4 § layout › footer). */}
           <DialogSaveButton
             data-testid="dialog-button-ok"
             disabled={!current() || saving() || !props.editable}
@@ -804,8 +813,8 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         />
       </Show>
 
-      {/* The no-capacity warning beneath the item header (AC-LE12): shown
-          while the typed supply spends the customer's storage capacity —
+      {/* The no-capacity warning beneath the item header (OMS-REG-DIST-05.34):
+          shown while the typed supply spends the customer's storage capacity —
           guidance only, the save is never blocked. */}
       <Show when={volumeSpent()}>
         <Alert severity="warning" testId="volume-full-warning">

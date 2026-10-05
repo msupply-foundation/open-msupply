@@ -26,14 +26,12 @@ export interface SyncStatusProps {
    */
   detail?: string;
   /**
-   * How loudly the cell reads. It picks the GLYPH, not a colour: the bar's
-   * ground is store data — brand orange on a central server, an arbitrary hex
-   * wherever a store sets one — so no colour drawn on it can be held to a
-   * contrast ratio, and a hue that lands near the store's own simply
-   * disappears. Text and glyph keep the bar's own contrast-checked content
-   * colour at every tone, and the escalation shows as a different mark — which
-   * also satisfies colour independence outright rather than leaning on the
-   * label to carry it.
+   * How loudly the cell reads. Every escalation changes the GLYPH, so the
+   * ladder stays readable without colour. Error alone also takes colour (issue
+   * #519): the cell takes the default bar ground, with a red bar at its start,
+   * a red label and a red-filled mark. The ground is what makes the red safe:
+   * the bar's own colour is store data, which no hue could be held against
+   * (see SyncStatus.module.css).
    */
   tone: 'neutral' | 'warning' | 'error';
   /**
@@ -81,7 +79,8 @@ export interface SyncStatusProps {
  * is what a failed run means.
  *
  * Escalation is a change of SHAPE — that is what keeps the ladder readable
- * without colour, on a bar whose own colour is not ours to predict.
+ * without colour. The error mark is additionally filled red in CSS (via
+ * `toneMark`), but the shape still carries the state on its own.
  */
 const toneIcon = {
   warning: AlertTriangleIcon,
@@ -138,6 +137,7 @@ export const SyncStatus = (props: SyncStatusProps) => (
           <Match when={props.tone !== 'neutral'}>
             <Dynamic
               component={toneIcon[props.tone === 'error' ? 'error' : 'warning']}
+              class={styles.toneMark}
             />
           </Match>
         </Switch>
