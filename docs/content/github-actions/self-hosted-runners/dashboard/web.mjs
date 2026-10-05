@@ -88,12 +88,10 @@ const PUBLIC_URL = DOMAIN ? `https://dashboard.${DOMAIN}` : '';
 // their logic lives now - see docker-named-deployment.yaml - and a dispatch on
 // any other branch would run that branch's copy of the trigger file.
 const DISPATCH_REF = process.env.DISPATCH_REF || 'develop';
-// How often GitHub is re-read for the deployments, while someone is looking.
-const ENRICH_EVERY = Number(process.env.ENRICH_SECONDS || 60) * 1000;
-// How often the in-progress workflow runs are re-read. Faster than the commit
-// lookups, because "is something happening to my server right now" is the
-// question someone watching the page is waiting on. Two calls a round.
-const RUNS_EVERY = Number(process.env.RUNS_SECONDS || 15) * 1000;
+// How often the workflow runs are re-read while someone has the page open. Two
+// calls a round, and free while nothing has changed - see ghRead. Everything
+// else GitHub knows is re-read only when a run says it moved.
+const GITHUB_EVERY = Number(process.env.GITHUB_SECONDS || 15) * 1000;
 
 const CAN_SIGN_IN = Boolean(CLIENT_ID && CLIENT_SECRET && REPO);
 
@@ -192,6 +190,7 @@ async function gh(path, init, token) {
       'x-github-api-version': '2022-11-28',
       'user-agent': 'oms-deployment-dashboard',
       ...(init.body ? { 'content-type': 'application/json' } : {}),
+      ...init.headers,
     },
     signal: AbortSignal.timeout(20_000),
   });
@@ -294,41 +293,60 @@ async function openPulls(token) {
 // What GitHub knows about each deployment
 // ---------------------------------------------------------------------------
 //
-// Moved here from snapshot.mjs, so that it runs with a viewer's token rather
-// than one kept on the box. `token` is threaded through to every call: it is
-// whoever's request happened to start this round.
+// Every change to a deployment is a run of one of the two workflows - a deploy,
+// a reseed, a teardown, or a push to the branch it follows - so the run list is
+// the one thing polled, and everything else is re-asked only when a run says it
+// moved. Each request also carries the ETag from last time: GitHub answers an
+// unchanged resource with a 304, which does not count against the rate limit,
+// so a quiet box costs next to nothing however long the page is open.
+//
+// `token` is threaded through to every call: it is whoever's request happened
+// to start this round, and it is their budget being spent.
 
-// Commit metadata is immutable, so its cache never expires - which matters more
-// than it looks: `develop` holds one sha for as long as nothing merges, so the
-// steady state costs no commit lookups at all. The other two describe a moving
-// target and are re-read on the enrichment clock.
-const commitCache = new Map();
-const headCache = new Map();
-const compareCache = new Map();
+// path -> { etag, body }, for conditional requests. Bounded: the paths are a
+// handful of runs lists plus a few per deployment, so this only trims a box
+// that churns through many previews.
+const conditional = new Map();
+const CONDITIONAL_MAX = 500;
 
 /** A GET that answers null rather than throwing: every caller has a blank to show instead. */
 async function ghRead(path, token) {
   if (!token || !REPO) return null;
+  const held = conditional.get(path);
   let res;
   try {
-    res = await gh(path, {}, token);
+    res = await gh(path, held ? { headers: { 'if-none-match': held.etag } } : {}, token);
   } catch (e) {
     log(`github ${path} failed: ${e.message}`);
     return null;
   }
 
-  // A 404 is an ordinary answer here, not a failure: a deployment that has
-  // never had a GitHub deployment record, or a branch that has since been
-  // deleted out from under a deployment still following it.
+  // Unchanged since last time, and free.
+  if (res.status === 304 && held) return held.body;
+  // A 404 is an ordinary answer here, not a failure: a branch that has since
+  // been deleted out from under a deployment still following it.
   if (res.status === 404) return null;
   if (!res.ok) {
     log(`github ${path} -> ${res.status}`);
     return null;
   }
-  return res.json();
+  const body = await res.json();
+  const etag = res.headers.get('etag');
+  if (etag) {
+    conditional.delete(path);
+    conditional.set(path, { etag, body });
+    if (conditional.size > CONDITIONAL_MAX) conditional.delete(conditional.keys().next().value);
+  }
+  return body;
 }
 
-const fresh = (entry, ttl) => entry && Date.now() - entry.at < ttl;
+// Commit metadata and the distance between two commits never change, so both
+// are cached for good. A branch head does change, and is re-read when a push
+// run says it has, or after BRANCH_RECHECK in case a push was missed.
+const commitCache = new Map();
+const compareCache = new Map();
+const headCache = new Map();
+const BRANCH_RECHECK = 10 * 60_000;
 
 async function commitMeta(sha, token) {
   if (commitCache.has(sha)) return commitCache.get(sha);
@@ -343,14 +361,14 @@ async function commitMeta(sha, token) {
     url: data.html_url,
   };
   // Cache the miss too, so a sha that is not in the repo (a force-pushed branch,
-  // a deployment older than a history rewrite) is not re-asked every minute.
+  // a deployment older than a history rewrite) is not re-asked every round.
   commitCache.set(sha, meta);
   return meta;
 }
 
 async function branchHead(branch, token) {
   const hit = headCache.get(branch);
-  if (fresh(hit, ENRICH_EVERY)) return hit.sha;
+  if (hit && Date.now() - hit.at < BRANCH_RECHECK) return hit.sha;
   const data = await ghRead(`/repos/${REPO}/commits/${encodeURIComponent(branch)}`, token);
   const sha = data?.sha || null;
   headCache.set(branch, { sha, at: Date.now() });
@@ -362,70 +380,31 @@ async function branchHead(branch, token) {
  *
  * `compare/base...head` reports `ahead_by` as the commits in head that are not
  * in base, so with the deployed commit as base that number IS how far behind
- * the deployment is. Keyed on the pair, so it is re-asked only when one of them
- * moves - which is the point: on a quiet afternoon this costs nothing.
+ * the deployment is. A fixed pair always has the same answer.
  */
 async function behindBy(deployed, head, token) {
   if (!deployed || !head) return null;
   if (deployed === head || head.startsWith(deployed)) return { behind: 0, url: null };
   const key = `${deployed}...${head}`;
-  const hit = compareCache.get(key);
-  if (fresh(hit, ENRICH_EVERY)) return hit.value;
+  if (compareCache.has(key)) return compareCache.get(key);
   const data = await ghRead(`/repos/${REPO}/compare/${key}`, token);
   const value = data ? { behind: data.ahead_by, url: data.html_url } : null;
-  compareCache.set(key, { value, at: Date.now() });
+  // Only an answer is cached; a failed read is asked again next round.
+  if (value) compareCache.set(key, value);
   return value;
 }
 
 /**
- * Whether a deploy is in flight for this deployment, and for which commit.
- *
- * This is the question the page exists to answer - "my PR merged, is it up
- * yet?" - and it is answerable only because docker-deploy.yaml already declares
- * `environment: ${{ inputs.environment }}`, which makes GitHub keep a
- * deployment record per environment name. The environment name is the container
- * name, so the join needs nothing invented.
- *
- * Two calls: the newest record, then its newest status. GitHub marks superseded
- * records `inactive` on its own, so the newest record is always the live one.
- */
-async function deployState(name, token) {
-  const records = await ghRead(
-    `/repos/${REPO}/deployments?environment=${encodeURIComponent(name)}&per_page=1`,
-    token,
-  );
-  const record = records?.[0];
-  if (!record) return null;
-  const statuses = await ghRead(`/repos/${REPO}/deployments/${record.id}/statuses?per_page=1`, token);
-  const status = statuses?.[0];
-  return {
-    sha: record.sha,
-    at: status?.created_at || record.created_at,
-    state: status?.state || 'unknown',
-    inFlight: status?.state === 'in_progress' || status?.state === 'queued',
-    // `log_url` is the workflow run; `target_url` is the environment URL.
-    runUrl: status?.log_url || null,
-  };
-}
-
-/**
- * Everything GitHub knows about a deployment, held between enrichment ticks.
- *
- * This exists because the two clocks differ: docker is re-read every 15s and
- * GitHub every 60s, so three ticks in four have no fresh GitHub answer. Without
- * somewhere to keep the last one, those ticks publish nulls and the page's
- * GitHub-derived fields blink out - and the field that blinks is `deploy`,
- * which carries "deploying now". Losing THAT for 45 seconds at a time is
- * losing the one thing a person watching this page is watching it for.
+ * Everything GitHub knows about a deployment, held between rounds, so a round
+ * that has not got to a deployment yet - or a GitHub blip - does not blank it.
  */
 const enriched = new Map();
 
 async function enrich(deployments, token) {
   for (const d of deployments) {
-    // Sequential, deliberately. A dozen deployments is a handful of requests and
-    // the loop has a whole tick to finish in; firing them all at once is how a
-    // secondary-rate-limit lands, which costs far more than the latency saved.
-    const e = { sha: d.sha, commit: null, branchHead: null, behind: null, compareUrl: null, deploy: null };
+    // Sequential, deliberately: firing them all at once is how a secondary rate
+    // limit lands. Almost every call here is a cache hit anyway.
+    const e = { sha: d.sha, commit: null, branchHead: null, behind: null, compareUrl: null };
     if (d.sha) e.commit = await commitMeta(d.sha, token);
     if (d.branch) {
       e.branchHead = await branchHead(d.branch, token);
@@ -433,76 +412,24 @@ async function enrich(deployments, token) {
       e.behind = cmp?.behind ?? null;
       e.compareUrl = cmp?.url ?? null;
     }
-    e.deploy = await deployState(d.name, token);
     enriched.set(d.name, e);
   }
 
   // Forget deployments that have gone, so a box that churns previews does not
-  // grow this map without bound.
+  // grow these maps without bound.
   const live = new Set(deployments.map(d => d.name));
   for (const name of enriched.keys()) if (!live.has(name)) enriched.delete(name);
-}
-
-/**
- * Merge the held enrichment onto a freshly read container list.
- *
- * The `sha` guard is the important line. If a redeploy landed between
- * enrichment ticks the container is on a new commit, and the held commit
- * message and "behind" count describe the OLD one - so they are dropped rather
- * than shown. A blank for a few seconds is a much better answer than the
- * previous commit's subject to "which commit is on this?".
- *
- * `deploy` is not guarded, because it is keyed on the environment rather than
- * on a commit and stays true across a redeploy.
- */
-function applyEnrichment(list) {
-  for (const d of list) {
-    const e = enriched.get(d.name);
-    if (!e) continue;
-    if (e.sha === d.sha) {
-      d.commit = e.commit;
-      d.behind = e.behind;
-      d.compareUrl = e.compareUrl;
-      d.branchHead = e.branchHead;
-    }
-    d.deploy = e.deploy;
-  }
-}
-
-let enriching = null;
-let lastEnrich = 0;
-// Held between rounds so a GitHub blip does not blank the columns it fills; the
-// page shows the enrichment's own age rather than pretending it is current.
-let enrichedAt = null;
-
-/**
- * Start a round of enrichment with this viewer's token, if one is due and none
- * is running. Not awaited: a dozen deployments is a few seconds of sequential
- * calls, and the page should not wait on them - it shows what is held, and the
- * next poll picks up the rest.
- */
-function maybeEnrich(list, token) {
-  if (enriching || Date.now() - lastEnrich < ENRICH_EVERY) return;
-  // Advanced before the round, so a GitHub outage is retried on the clock
-  // rather than on every poll from every open tab.
-  lastEnrich = Date.now();
-  enriching = enrich(list, token)
-    .then(() => { enrichedAt = new Date().toISOString(); })
-    .catch(e => log(`github enrichment failed: ${e.message}`))
-    .finally(() => { enriching = null; });
+  const followed = new Set(deployments.map(d => d.branch).filter(Boolean));
+  for (const branch of headCache.keys()) if (!followed.has(branch)) headCache.delete(branch);
 }
 
 // ---------------------------------------------------------------------------
-// What is happening right now
+// The runs
 // ---------------------------------------------------------------------------
 //
-// Every deploy, reseed and teardown - from a button, GitHub's form, a push or a
-// pull request label - is a run of one of the two workflows below, and it
-// exists from the moment it is dispatched. Unlike a GitHub deployment record,
-// which only appears once the deploy job starts (twenty minutes into a build),
-// or a container, which a brand-new server does not have yet. So the page
-// learns what is in flight from the runs, and both workflows name their runs
-// for exactly this: see their `run-name`.
+// Both workflows name their runs after what they are for (see their
+// `run-name`), from the moment they are dispatched - well before a deploy job,
+// a GitHub deployment record or a container exists.
 
 // What a preview run was asked to do. Which one actually happens the plan
 // decides, but the event says what was asked for. A push to the pull request
@@ -513,6 +440,12 @@ const PREVIEW_ACTIONS = {
 };
 // The label preview runs care about, as in docker-pr-preview.yaml.
 const PREVIEW_LABEL = 'deploy';
+// A run that has not finished. `waiting`, `requested` and `pending` are rare
+// here but are not finished either.
+const UNFINISHED = new Set(['queued', 'in_progress', 'waiting', 'requested', 'pending']);
+// How many recent runs of each workflow are read. Enough to hold the latest
+// finished run of every active deployment on a busy day.
+const RUNS_PER_WORKFLOW = 50;
 
 /**
  * What a run is for, from its name, or null when it is not one of ours - a run
@@ -545,43 +478,112 @@ export function parseRunName(title) {
   return null;
 }
 
-// Held between rounds, like the enrichment, so a GitHub blip does not make
-// every in-flight run blink out.
+// Held between rounds, so a GitHub blip does not make every in-flight run
+// blink out. `runs` is what is in flight; `lastRun` is the newest finished run
+// per deployment name or followed branch, for "last deploy failed".
 let runs = [];
-let runsAt = null;
-let refreshingRuns = null;
-let lastRuns = 0;
+let lastRun = new Map();
+// The newest push run seen per branch, so a new one can mark the branch head
+// stale - that is how "N commits behind" learns a branch moved.
+const pushSeen = new Map();
 
 async function readRuns(token) {
-  const found = [];
-  for (const status of ['queued', 'in_progress']) {
-    const page = await ghRead(`/repos/${REPO}/actions/runs?status=${status}&per_page=100`, token);
-    // Any failed read keeps the last answer rather than publishing a partial one.
-    if (!page) return null;
+  const unfinished = [];
+  const finished = new Map();
+  for (const file of Object.values(WORKFLOWS)) {
+    const page = await ghRead(
+      `/repos/${REPO}/actions/workflows/${file}/runs?per_page=${RUNS_PER_WORKFLOW}`, token);
+    // A failed read keeps the last answer rather than publishing half of one.
+    if (!page) return false;
     for (const r of page.workflow_runs || []) {
-      if (!Object.values(WORKFLOWS).some(w => String(r.path || '').includes(w))) continue;
-      const what = parseRunName(r.display_title);
+      // A push is matched by the branch it was pushed to, which GitHub records
+      // whatever the run is titled - so this works for pushes from branches
+      // whose workflow predates `run-name` too.
+      const what = r.event === 'push' && r.head_branch
+        ? { action: 'update', branch: r.head_branch }
+        : parseRunName(r.display_title);
       if (!what) continue;
-      found.push({
+
+      if (what.branch && r.event === 'push') {
+        const seen = pushSeen.get(what.branch);
+        if (seen !== undefined && r.id > seen) headCache.delete(what.branch);
+        if (seen === undefined || r.id > seen) pushSeen.set(what.branch, r.id);
+      }
+
+      const run = {
         ...what,
-        status,
+        status: r.status,
+        conclusion: r.conclusion,
         runUrl: r.html_url,
         startedAt: r.run_started_at || r.created_at,
+        finishedAt: UNFINISHED.has(r.status) ? null : r.updated_at,
         actor: r.triggering_actor?.login || r.actor?.login || null,
-      });
+      };
+      if (UNFINISHED.has(r.status)) {
+        unfinished.push(run);
+      } else {
+        // Runs come newest first, so the first finished one per key wins.
+        const key = what.name ? `name:${what.name}` : `branch:${what.branch}`;
+        if (!finished.has(key)) finished.set(key, run);
+      }
     }
   }
   // Newest first, so the page can take the first match for a deployment.
-  return found.sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
+  runs = unfinished.sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
+  lastRun = finished;
+  return true;
 }
 
-function maybeRefreshRuns(token) {
-  if (refreshingRuns || Date.now() - lastRuns < RUNS_EVERY) return;
-  lastRuns = Date.now();
-  refreshingRuns = readRuns(token)
-    .then(r => { if (r) { runs = r; runsAt = new Date().toISOString(); } })
-    .catch(e => log(`reading workflow runs failed: ${e.message}`))
-    .finally(() => { refreshingRuns = null; });
+/**
+ * Merge the held enrichment and the newest finished run onto a freshly read
+ * container list.
+ *
+ * The `sha` guard is the important line. If a redeploy landed between rounds
+ * the container is on a new commit, and the held commit message and "behind"
+ * count describe the OLD one - so they are dropped rather than shown. A blank
+ * for a few seconds is a much better answer than the previous commit's subject
+ * to "which commit is on this?".
+ */
+function applyEnrichment(list) {
+  for (const d of list) {
+    const e = enriched.get(d.name);
+    if (e && e.sha === d.sha) {
+      d.commit = e.commit;
+      d.behind = e.behind;
+      d.compareUrl = e.compareUrl;
+      d.branchHead = e.branchHead;
+    }
+    // A dispatch or preview run for this name, or a push to the branch it
+    // follows - whichever finished last.
+    const byName = lastRun.get(`name:${d.name}`);
+    const byBranch = d.branch ? lastRun.get(`branch:${d.branch}`) : null;
+    d.lastRun = [byName, byBranch].filter(Boolean)
+      .sort((a, b) => String(b.finishedAt).localeCompare(String(a.finishedAt)))[0] || null;
+  }
+}
+
+let refreshing = null;
+let lastRefresh = 0;
+// When the last round finished. The page shows it rather than pretending what
+// it holds is current.
+let enrichedAt = null;
+
+/**
+ * Start a round with this viewer's token, if one is due and none is running:
+ * the runs first, since they say which branches moved, then the deployments.
+ * Not awaited - the page shows what is held, and the next poll picks up the
+ * rest.
+ */
+function maybeRefresh(list, token) {
+  if (refreshing || Date.now() - lastRefresh < GITHUB_EVERY) return;
+  // Advanced before the round, so a GitHub outage is retried on the clock
+  // rather than on every poll from every open tab.
+  lastRefresh = Date.now();
+  refreshing = readRuns(token)
+    .then(() => enrich(list, token))
+    .then(() => { enrichedAt = new Date().toISOString(); })
+    .catch(e => log(`github refresh failed: ${e.message}`))
+    .finally(() => { refreshing = null; });
 }
 
 // ---------------------------------------------------------------------------
@@ -772,10 +774,9 @@ async function handle(req, res) {
     } catch {
       return send(res, 404, { error: 'no snapshot yet' });
     }
-    maybeEnrich(snapshot.deployments, s.token);
-    maybeRefreshRuns(s.token);
+    maybeRefresh(snapshot.deployments, s.token);
     applyEnrichment(snapshot.deployments);
-    return send(res, 200, { ...snapshot, repo: REPO, enrichedAt, runs, runsAt });
+    return send(res, 200, { ...snapshot, repo: REPO, enrichedAt, runs });
   }
   if (req.method === 'GET' && url.pathname === '/api/tags') {
     const s = sessionOf(req);

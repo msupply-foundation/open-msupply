@@ -263,7 +263,7 @@ Its files are in **`dashboard/` beside this page** (reference copies). How it wo
 
 - **Callback URL:** `https://dashboard.<DEPLOY_DOMAIN>/auth/callback` (add `http://localhost:8000/auth/callback` to try it locally)
 - **Webhook:** off. **Installable:** only this account. Leave token expiry on.
-- **Repository permissions:** Actions read & write, Contents read, Deployments read. Nothing else.
+- **Repository permissions:** Actions read & write (the runs, and the buttons), Contents read (commit subjects, "behind"). Nothing else.
 - **Install** it on the organisation for this repository only, and **generate a client secret**.
 
 **2. Stand it up** — all four files in one directory:

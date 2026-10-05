@@ -101,8 +101,10 @@ services:
       # App's callback URL must be. The same value the proxy and the
       # repository variable hold.
       DEPLOY_DOMAIN: ${DEPLOY_DOMAIN:?set DEPLOY_DOMAIN in .env}
-      # How often GitHub is re-read while someone has the page open.
-      ENRICH_SECONDS: ${ENRICH_SECONDS:-60}
+      # How often the workflow runs are re-read while someone has the page open.
+      # Free while nothing changes (conditional requests); everything else is
+      # re-read only when a run says it moved.
+      GITHUB_SECONDS: ${GITHUB_SECONDS:-15}
       # The branch the buttons dispatch the workflows on. develop, except while
       # trying out a workflow change from its branch before it merges.
       DISPATCH_REF: ${DISPATCH_REF:-develop}

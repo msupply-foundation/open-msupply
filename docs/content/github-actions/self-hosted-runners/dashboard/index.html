@@ -509,10 +509,7 @@ function dotTone(d) {
  * "it tried to catch up and could not".
  */
 function freshness(d) {
-  const dep = d.deploy;
-  // A run for this deployment, from the moment it was dispatched - see
-  // runFor. Ahead of the deployment record, which only appears once the
-  // deploy job starts, twenty minutes into a build.
+  // A run for this deployment, from the moment it was dispatched - see runFor.
   const run = runFor(d);
   if (run) {
     const verb = run.action === 'update' ? `updating to the latest ${d.branch || 'commit'}` : RUN_VERBS[run.action];
@@ -521,14 +518,17 @@ function freshness(d) {
   // Docker restarting it over and over: the server exits as soon as it starts,
   // usually a migration that cannot run on this database. Its logs say which;
   // a reseed is the usual cure on a test server.
-  if (d.state === 'restarting') return { tone: 'bad', text: 'keeps crashing - try Reseed', url: dep?.runUrl || null };
-  if (dep?.inFlight) {
-    return { tone: 'busy', text: `deploying ${short(dep.sha)}…`, url: dep.runUrl };
-  }
-  // `dep.sha` is the full 40; `d.sha` is the 7 recovered from the image tag.
-  const attemptIsRunning = dep && dep.sha && d.sha && dep.sha.startsWith(d.sha);
-  if (dep && (dep.state === 'failure' || dep.state === 'error') && !attemptIsRunning) {
-    return { tone: 'bad', text: 'last deploy failed', url: dep.runUrl };
+  const last = d.lastRun;
+  if (d.state === 'restarting') return { tone: 'bad', text: 'keeps crashing - try Reseed', url: last?.runUrl || null };
+  // The newest finished run for it failed, and nothing has been deployed since:
+  // a container created after the run finished means a later run succeeded.
+  // `cancelled` is not a failure - a newer run superseding an older one is how
+  // every burst of pushes ends.
+  const failedSince = last && (last.conclusion === 'failure' || last.conclusion === 'timed_out')
+    && Date.parse(last.finishedAt) > Date.parse(d.createdAt);
+  if (failedSince) {
+    const what = { update: 'update', reseed: 'reseed', teardown: 'removal' }[last.action] || 'deploy';
+    return { tone: 'bad', text: `last ${what} failed`, url: last.runUrl };
   }
   if (!d.branch) return { tone: 'dim', text: 'pinned', url: null };
   if (d.behind === 0) return { tone: 'good', text: `up to date with ${d.branch}`, url: null };
@@ -561,9 +561,9 @@ function actions(d, repo) {
  * Ask web.mjs to start a workflow run. It dispatches on `develop`, so the run uses
  * develop's deploy logic whatever the deployment is built from.
  *
- * The page does not wait for the deploy: the run takes minutes, and the
- * snapshot already reports it - GitHub's deployment record goes in_progress,
- * and the card's pill turns to "deploying…" within a minute.
+ * The page does not wait for the deploy: the run takes minutes, and web.mjs
+ * sees the run itself within a few seconds, which turns the card's pill to
+ * "deploying…" (or puts up a placeholder card for a new server).
  */
 async function dispatch(kind, body, button, key = body.name || `pr-${body.pr}`) {
   if (button) button.disabled = true;
