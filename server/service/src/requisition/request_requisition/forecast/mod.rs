@@ -22,10 +22,10 @@ use repository::{
     ancillary_item_row::AncillaryItemRow,
     requisition_row::RequisitionType,
     AncillaryRatioForecast, AncillaryRatioPrincipal, EqualFilter, ForecastData, ForecastMethod,
-    LineForecast, NameFilter, NameRepository, RepositoryError, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRow, RequisitionRow, StorageConnection, StoreFilter,
+    LineForecast, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionLineRow, RequisitionRow, StorageConnection,
 };
-use serde_json::{Map, Value};
+use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 
 /// Why a method can't be chosen for a line.
@@ -297,18 +297,7 @@ fn population_served(
     connection: &StorageConnection,
     store_id: &str,
 ) -> Result<Option<f64>, RepositoryError> {
-    let store_properties: Map<String, Value> = NameRepository::new(connection)
-        .query_by_filter(
-            store_id,
-            NameFilter::new()
-                .store(StoreFilter::new().id(EqualFilter::equal_to(store_id.to_string()))),
-        )?
-        .pop()
-        .and_then(|name| name.properties)
-        .and_then(|json| serde_json::from_str(&json).ok())
-        .unwrap_or_default();
-
-    Ok(store_properties
+    Ok(super::store_properties(connection, store_id)?
         .get("population_served")
         .and_then(Value::as_f64))
 }

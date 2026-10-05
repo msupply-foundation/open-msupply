@@ -13,6 +13,7 @@ use graphql_core::{
 };
 use repository::{requisition_row::RequisitionRow, ApprovalStatusType, NameRow, Requisition};
 use service::{
+    requisition::request_requisition::{name_supply_horizon, store_supply_horizon, SupplyHorizon},
     requisition_line::ancillary_items::{AncillaryDelta, AncillaryState},
     ListResult,
 };
@@ -22,6 +23,22 @@ use super::{
     RequisitionLineConnector, UserNode,
 };
 use crate::types::SyncFileReferenceConnector;
+
+/// A store's restocking horizon: its target months of stock are the sum
+pub struct SupplyHorizonNode {
+    horizon: SupplyHorizon,
+}
+
+#[Object]
+impl SupplyHorizonNode {
+    pub async fn supply_interval_months(&self) -> f64 {
+        self.horizon.supply_interval_months
+    }
+    /// Zero when the facility record carries none
+    pub async fn safety_buffer_months(&self) -> f64 {
+        self.horizon.safety_buffer_months
+    }
+}
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::db_diesel::requisition::requisition_row::RequisitionType")]
@@ -327,6 +344,26 @@ impl RequisitionNode {
     /// Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
     pub async fn min_months_of_stock(&self) -> &f64 {
         &self.row().min_months_of_stock
+    }
+
+    /// The ordering store's restocking horizon (its facility record's supply interval and
+    /// safety buffer) as it stands now, null when it carries no supply interval. A general
+    /// order's default target months of stock.
+    pub async fn supply_horizon(&self, ctx: &Context<'_>) -> Result<Option<SupplyHorizonNode>> {
+        use repository::RequisitionType;
+        let connection = ctx.service_provider().basic_context()?.connection;
+        let row = self.row();
+        let horizon = match row.r#type {
+            RequisitionType::Request => store_supply_horizon(&connection, &row.store_id),
+            // The customer orders
+            RequisitionType::Response => {
+                name_supply_horizon(&connection, &row.store_id, &row.name_id)
+            }
+            // Legacy types, not internal orders
+            RequisitionType::Imprest | RequisitionType::StockHistory => Ok(None),
+        }
+        .map_err(|e| StandardGraphqlError::from_debug(&e))?;
+        Ok(horizon.map(|horizon| SupplyHorizonNode { horizon }))
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {

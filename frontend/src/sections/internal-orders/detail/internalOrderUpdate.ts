@@ -18,8 +18,10 @@ import { AddInternalOrderFromMasterList } from './edit-modal/masterList.generate
 //   supplier / destination / MOS thresholds). On an editable Draft these don't
 //   produce a domain error the user must act on EXCEPT a supplier change, whose
 //   typed rejections come back for inline display on the lookup (contract ›
-//   header fields). Anything else is promoted to the global unexpected-error
-//   modal (graphqlFetch's default).
+//   header fields), and a target change the store fixes to its supply horizon
+//   (CannotChangeTargetMonthsOfStock — reachable only past the locked select,
+//   e.g. the preference turned off while the order was open). Anything else is
+//   promoted to the global unexpected-error modal (graphqlFetch's default).
 //
 // - sendInternalOrder — the send (status = SENT). Its user-facing refusals are
 //   TYPED members of the update error union (contract › lifecycle / emergency
@@ -46,7 +48,12 @@ const SUPPLIER_ERROR_KEYS: Record<string, LocaleKey> = {
 
 export type SaveFieldsResult =
   | { kind: 'saved'; node: InternalOrderInfoFragment }
-  | { kind: 'error'; message: string }
+  | {
+      kind: 'error';
+      /** Which header field the rejection belongs to, for where it shows. */
+      field: 'supplier' | 'target';
+      message: string;
+    }
   | { kind: 'failed' };
 
 export const saveInternalOrderFields = async (
@@ -58,10 +65,20 @@ export const saveInternalOrderFields = async (
   const response = result.data.updateRequestRequisition;
   if (response.__typename === 'RequisitionNode')
     return { kind: 'saved', node: response };
-  const key = SUPPLIER_ERROR_KEYS[response.error.__typename];
+  const error = response.error;
+  // The store fixes a general order's target to its horizon (rules › target
+  // months of stock, OMS-REG-REPL-17.18).
+  if (error.__typename === 'CannotChangeTargetMonthsOfStock')
+    return {
+      kind: 'error',
+      field: 'target',
+      message: t('error.cannot-change-target-months'),
+    };
+  const key = SUPPLIER_ERROR_KEYS[error.__typename];
   return {
     kind: 'error',
-    message: key ? t(key) : response.error.description,
+    field: 'supplier',
+    message: key ? t(key) : error.description,
   };
 };
 
@@ -137,9 +154,7 @@ export const sendInternalOrder = async (
 // The batch is all-or-nothing; a per-member "success" can survive a rollback
 // (contract wire trap), so judge only by whether any member errored.
 export type DeleteResult =
-  | { kind: 'deleted' }
-  | { kind: 'error'; message: string }
-  | { kind: 'failed' };
+  { kind: 'deleted' } | { kind: 'error'; message: string } | { kind: 'failed' };
 
 export const deleteInternalOrder = async (
   storeId: string,
@@ -178,9 +193,7 @@ export const deleteInternalOrder = async (
 type RefreshAction = RefreshAncillaryItemsVariables['input']['action'];
 
 export type RefreshResult =
-  | { kind: 'done' }
-  | { kind: 'error'; message: string }
-  | { kind: 'failed' };
+  { kind: 'done' } | { kind: 'error'; message: string } | { kind: 'failed' };
 
 export const refreshAncillaryItems = async (
   storeId: string,
@@ -221,7 +234,8 @@ export const addInternalOrderFromMasterList = async (
   });
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.addFromMasterList;
-  if (response.__typename === 'RequisitionLineConnector') return { kind: 'done' };
+  if (response.__typename === 'RequisitionLineConnector')
+    return { kind: 'done' };
   return { kind: 'error', message: response.error.description };
 };
 
@@ -243,7 +257,8 @@ export const useSuggestedQuantities = async (
   });
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.useSuggestedQuantity;
-  if (response.__typename === 'RequisitionLineConnector') return { kind: 'done' };
+  if (response.__typename === 'RequisitionLineConnector')
+    return { kind: 'done' };
   return {
     kind: 'error',
     message:

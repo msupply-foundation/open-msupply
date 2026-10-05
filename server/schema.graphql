@@ -1075,6 +1075,10 @@ type CannotChangeStatusOfInvoiceOnHold implements UpdateErrorInterface & UpdateI
 	description: String!
 }
 
+type CannotChangeTargetMonthsOfStock implements UpdateRequestRequisitionErrorInterface {
+	description: String!
+}
+
 type CannotDeleteCentralSite implements DeleteSiteErrorInterface {
 	description: String!
 }
@@ -4029,7 +4033,11 @@ input InsertRequestRequisitionInput {
 	colour: String
 	theirReference: String
 	comment: String
-	maxMonthsOfStock: Float!
+	"""
+	Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
+	facility record carries no supply interval
+	"""
+	maxMonthsOfStock: Float
 	minMonthsOfStock: Float!
 	"""
 	Defaults to 2 weeks from now
@@ -6448,6 +6456,7 @@ enum PreferenceKey {
 	warningForExcessRequest
 	canCreateInternalOrderFromARequisition
 	selectDestinationStoreForAnInternalOrder
+	canChangeTargetMonthsOfStock
 	externalInboundShipmentLinesMustBeAuthorised
 	numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
 	numberOfMonthsThresholdToShowLowStockAlertsForProducts
@@ -6524,6 +6533,7 @@ type PreferencesNode {
 	inboundShipmentAutoVerify: Boolean!
 	canCreateInternalOrderFromARequisition: Boolean!
 	selectDestinationStoreForAnInternalOrder: Boolean!
+	canChangeTargetMonthsOfStock: Boolean!
 	externalInboundShipmentLinesMustBeAuthorised: Boolean!
 	numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Int!
 	numberOfMonthsThresholdToShowLowStockAlertsForProducts: Float!
@@ -8391,6 +8401,12 @@ type RequisitionNode {
 	Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
 	"""
 	minMonthsOfStock: Float!
+	"""
+	The ordering store's restocking horizon (its facility record's supply interval and
+	safety buffer) as it stands now, null when it carries no supply interval. A general
+	order's default target months of stock.
+	"""
+	supplyHorizon: SupplyHorizonNode
 	documents: SyncFileReferenceConnector!
 	lines: RequisitionLineConnector!
 	"""
@@ -9430,6 +9446,14 @@ type SupplierReturnLineNode {
 	packSize: Float!
 	onHold: Boolean!
 	reasonOption: ReasonOptionNode
+}
+
+type SupplyHorizonNode {
+	supplyIntervalMonths: Float!
+	"""
+	Zero when the facility record carries none
+	"""
+	safetyBufferMonths: Float!
 }
 
 type SupplyRequestedQuantityError {
@@ -11121,6 +11145,7 @@ input UpsertPreferencesInput {
 	inboundShipmentAutoVerify: [BoolStorePrefInput!]
 	canCreateInternalOrderFromARequisition: [BoolStorePrefInput!]
 	selectDestinationStoreForAnInternalOrder: [BoolStorePrefInput!]
+	canChangeTargetMonthsOfStock: [BoolStorePrefInput!]
 	externalInboundShipmentLinesMustBeAuthorised: [BoolStorePrefInput!]
 	numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: [IntegerStorePrefInput!]
 	numberOfMonthsThresholdToShowLowStockAlertsForProducts: [FloatStorePrefInput!]

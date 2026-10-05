@@ -50,6 +50,9 @@ pub enum UpdateRequestRequisitionError {
     CannotEditRequisition,
     NotARequestRequisition,
     CannotEditProgramRequisitionInformation,
+    /// The store fixes a general order's target months to its horizon
+    /// ([`CanChangeTargetMonthsOfStock`](crate::preference::CanChangeTargetMonthsOfStock))
+    CannotChangeTargetMonthsOfStock,
     // Name validation
     OtherPartyNotASupplier,
     OtherPartyNotVisible,

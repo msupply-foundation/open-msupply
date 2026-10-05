@@ -53,6 +53,7 @@ pub struct UpsertPreferences {
     pub inbound_shipment_auto_verify: Option<Vec<StorePrefUpdate<bool>>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
+    pub can_change_target_months_of_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<StorePrefUpdate<bool>>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<StorePrefUpdate<i32>>>,
@@ -113,6 +114,7 @@ pub fn upsert_preferences(
             can_create_internal_order_from_a_requisition_input,
         select_destination_store_for_an_internal_order:
             select_destination_store_for_an_internal_order_input,
+        can_change_target_months_of_stock: can_change_target_months_of_stock_input,
         external_inbound_shipment_lines_must_be_authorised:
             external_inbound_shipment_lines_must_be_authorised_input,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -167,6 +169,7 @@ pub fn upsert_preferences(
         warning_for_excess_request,
         can_create_internal_order_from_a_requisition,
         select_destination_store_for_an_internal_order,
+        can_change_target_months_of_stock,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
         number_of_months_threshold_to_show_low_stock_alerts_for_products,
         number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -324,6 +327,10 @@ pub fn upsert_preferences(
                     select_destination_store_for_an_internal_order,
                     inputs,
                 )?;
+            }
+
+            if let Some(inputs) = can_change_target_months_of_stock_input {
+                upsert_store_input(connection, can_change_target_months_of_stock, inputs)?;
             }
 
             if let Some(input) = external_inbound_shipment_lines_must_be_authorised_input {

@@ -61,6 +61,7 @@ import {
 import {
   ForecastBlock,
   type ForecastMethod,
+  type SupplyHorizonFragment,
 } from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
 
@@ -78,6 +79,12 @@ export interface InternalOrderLineEditModalProps {
   requisitionId: string;
   minMonths: number;
   maxMonths: number;
+  /**
+   * The store horizon the order's target came from, if it did — the
+   * forecast's target months then show the supply interval and safety buffer
+   * that make them up (OMS-REG-REPL-17.17).
+   */
+  targetHorizon?: SupplyHorizonFragment;
   /** Read-only order → every control disabled (reads still shown). */
   editable: boolean;
   /** General order → add mode reachable; program orders can't add (AC-LN1). */
@@ -807,6 +814,7 @@ const LineEditContent = (
             <ForecastBlock
               line={editorLine().forecast}
               targetMonths={props.maxMonths}
+              targetHorizon={props.targetHorizon}
               formatQuantity={forecastQuantity}
               options={editorLine().forecastMethodOptions}
               ownMethod={editorLine().ownForecastMethod}

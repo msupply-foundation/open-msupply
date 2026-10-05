@@ -57,7 +57,8 @@ query recentStocktakeItems($storeId: String!, $onOrAfter: NaiveDate) {
 }
 
 # General create (AC-C2): the modal sends only id + otherPartyId and hard-codes
-# the default thresholds (reorder 0, target 1); the resolver defaults the
+# the reorder threshold (0); the target is omitted so the server defaults it to
+# the store's supply interval + safety buffer, else 1; the resolver defaults the
 # expected delivery date to +2 weeks and creates no lines. On success the new
 # order's id is used to navigate to its detail screen; the typed supplier errors
 # are unreachable from the store-backed-supplier picker (contract wire trap).

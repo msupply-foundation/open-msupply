@@ -1,9 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { afterAll, beforeAll, describe, it, expect } from 'vitest';
+import { setDictionaries, setLocale } from '../../intl/intl';
+import commonEn from '../../intl/locales/en/common.json';
 import {
   ancillaryRatio,
   courseTitle,
   populationSteps,
   principalItemLabel,
+  targetStockCaption,
   type AncillaryRatioPrincipal,
   type PopulationCourse,
 } from './forecast';
@@ -79,5 +82,26 @@ describe('OMS-REG-REPL-17.13 — each principal shows its item and ratio', () =>
   it('names the principal item by code and name, else its id', () => {
     expect(principalItemLabel(principal)).toBe('VAC1 Vaccine');
     expect(principalItemLabel({ ...principal, item: null })).toBe('vaccine');
+  });
+});
+
+describe('OMS-REG-REPL-17.17 — target months from the store horizon show its make-up', () => {
+  beforeAll(() => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+  });
+  afterAll(() => setDictionaries({}));
+
+  it('reads monthly demand × target months', () => {
+    expect(targetStockCaption('120 units', 2)).toBe('120 units × 2 months');
+  });
+
+  it('names the supply interval and safety buffer behind a horizon target', () => {
+    expect(
+      targetStockCaption('120 units', 3.5, {
+        supplyIntervalMonths: 3,
+        safetyBufferMonths: 0.5,
+      })
+    ).toBe('120 units × 3.5 months (supply interval 3 + safety buffer 0.5)');
   });
 });

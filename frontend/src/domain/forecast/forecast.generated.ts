@@ -49,3 +49,8 @@ export type ForecastMethodOptionFragment = {
   isAvailable: boolean;
   unavailableReason: "POPULATION_PREFERENCE_OFF" | "NO_POPULATION_SERVED" | "NO_VACCINE_COURSE" | "NO_PRINCIPAL_ON_ORDER" | null;
 };
+
+export type SupplyHorizonFragment = {
+  supplyIntervalMonths: number;
+  safetyBufferMonths: number;
+};

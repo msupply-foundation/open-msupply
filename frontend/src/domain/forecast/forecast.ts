@@ -3,6 +3,7 @@ import { formatNumber, round } from '../../intl/formatNumber';
 import type {
   ForecastLineFragment,
   ForecastMethodOptionFragment,
+  SupplyHorizonFragment,
 } from './forecast.generated';
 
 // The shared forecast module (kdd/domain-modules): a requisition line's stored
@@ -112,3 +113,23 @@ export const principalItemLabel = (
   principal.item
     ? `${principal.item.code} ${principal.item.name}`
     : principal.itemId;
+
+/**
+ * The target-stock step's caption: monthly demand × target months. Where the
+ * target came from the store's horizon, the months show the supply interval
+ * and safety buffer that make them up (spec S4 › the forecast, OMS-REG-REPL-
+ * 17.17) — "120 units × 3.5 months (supply interval 3 + safety buffer 0.5)".
+ */
+export const targetStockCaption = (
+  monthlyDemand: string,
+  targetMonths: number,
+  horizon?: SupplyHorizonFragment
+): string => {
+  const step = `${monthlyDemand} × ${formatNumber(targetMonths)} ${t('label.months')}`;
+  if (!horizon) return step;
+  const makeup = t('label.supply-interval-plus-buffer', {
+    supplyInterval: formatNumber(horizon.supplyIntervalMonths),
+    safetyBuffer: formatNumber(horizon.safetyBufferMonths),
+  });
+  return `${step} (${makeup})`;
+};

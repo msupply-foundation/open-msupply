@@ -180,6 +180,10 @@ impl PreferencesNode {
         )
     }
 
+    pub async fn can_change_target_months_of_stock(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.can_change_target_months_of_stock)
+    }
+
     pub async fn external_inbound_shipment_lines_must_be_authorised(&self) -> Result<bool> {
         self.load_preference(
             &self
@@ -332,6 +336,7 @@ pub enum PreferenceKey {
     WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
+    CanChangeTargetMonthsOfStock,
     ExternalInboundShipmentLinesMustBeAuthorised,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,

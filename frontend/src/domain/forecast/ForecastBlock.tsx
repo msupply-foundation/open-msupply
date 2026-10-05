@@ -17,12 +17,16 @@ import {
   forecastMethodLabel,
   populationSteps,
   principalItemLabel,
+  targetStockCaption,
   unavailableReasonMessage,
   type AncillaryRatioPrincipal,
   type ForecastMethod,
   type ForecastMethodOption,
 } from './forecast';
-import type { ForecastLineFragment } from './forecast.generated';
+import type {
+  ForecastLineFragment,
+  SupplyHorizonFragment,
+} from './forecast.generated';
 import styles from './ForecastBlock.module.css';
 
 // The forecast block (spec/internal-orders S4 › the forecast): a line's method,
@@ -35,6 +39,12 @@ export interface ForecastBlockProps {
   line: ForecastLineFragment;
   /** The requisition's target months (max months of stock). */
   targetMonths: number;
+  /**
+   * The store horizon those target months came from, if they did — the
+   * target-stock caption then shows them as supply interval + safety buffer
+   * (spec S4 › the forecast, OMS-REG-REPL-17.17). Omitted → months alone.
+   */
+  targetHorizon?: SupplyHorizonFragment;
   /**
    * A stock quantity (units) in the editor's active entry mode, with its
    * measure word — so monthly demand and target stock re-express like the
@@ -256,7 +266,11 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
       <FigureRow
         label={t('label.target-stock')}
         value={quantity(props.line.targetStock)}
-        caption={`${monthlyDemand()} × ${formatNumber(props.targetMonths)} ${t('label.months')}`}
+        caption={targetStockCaption(
+          monthlyDemand(),
+          props.targetMonths,
+          props.targetHorizon
+        )}
         testId="forecast-target-stock"
       />
     </FormSection>

@@ -31,3 +31,6 @@ pub use self::insert_request_from_response_requisition::*;
 
 mod forecast;
 pub use self::forecast::*;
+
+mod supply_horizon;
+pub use self::supply_horizon::*;

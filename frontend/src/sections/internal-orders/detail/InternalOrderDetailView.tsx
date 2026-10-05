@@ -92,6 +92,7 @@ import {
   InternalOrderToolbar,
   type HeaderEditFields,
 } from './InternalOrderToolbar';
+import { horizonBehindTarget } from './targetMonths';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { ExportPrintButton } from '@/domain/reports';
@@ -214,6 +215,10 @@ const InternalOrderDetailView: Component = () => {
     desc: false,
   });
   const [supplierError, setSupplierError] = createSignal<string>();
+  // A refused target change (the store fixes it to its horizon, OMS-REG-REPL-
+  // 17.18) — shown as an error notice beneath the header cluster until the
+  // next target change.
+  const [targetError, setTargetError] = createSignal<string>();
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   // The line editor (S4): closed, open in add mode (undefined line), or open on
   // an existing line (edit mode). One signal drives both.
@@ -485,7 +490,10 @@ const InternalOrderDetailView: Component = () => {
       ...patch,
     });
     if (result.kind === 'saved') mutate(() => result.node);
-    if (result.kind === 'error') setSupplierError(result.message);
+    if (result.kind === 'error') {
+      if (result.field === 'target') setTargetError(result.message);
+      else setSupplierError(result.message);
+    }
   };
 
   const changeSupplier = (supplierId: string) => {
@@ -495,9 +503,11 @@ const InternalOrderDetailView: Component = () => {
   const changeDestination = (customerId: string | null) =>
     void saveField({ destinationCustomerId: { value: customerId } });
   const changeThreshold = (months: number) =>
-    void saveField({ minMonthsOfStock: months });
-  const changeTarget = (months: number) =>
-    void saveField({ maxMonthsOfStock: months });
+    saveField({ minMonthsOfStock: months });
+  const changeTarget = (months: number) => {
+    setTargetError(undefined);
+    return saveField({ maxMonthsOfStock: months });
+  };
 
   const onSent = (node: InternalOrderInfoFragment) => mutate(() => node);
 
@@ -1161,6 +1171,13 @@ const InternalOrderDetailView: Component = () => {
                             {t('info.cannot-edit-program-requisition')}
                           </Alert>
                         </Show>
+                        <Show when={targetError()}>
+                          {message => (
+                            <Alert severity="error" compact>
+                              {message()}
+                            </Alert>
+                          )}
+                        </Show>
                       </>
                     }
                   >
@@ -1170,6 +1187,9 @@ const InternalOrderDetailView: Component = () => {
                       editable={editable()}
                       isProgram={isProgram()}
                       showDestination={showDestination()}
+                      canChangeTargetMonths={
+                        prefs()?.canChangeTargetMonthsOfStock
+                      }
                       edit={edit}
                       onChangeSupplier={changeSupplier}
                       supplierError={supplierError()}
@@ -1369,6 +1389,7 @@ const InternalOrderDetailView: Component = () => {
                 requisitionId={node().id}
                 minMonths={node().minMonthsOfStock}
                 maxMonths={node().maxMonthsOfStock}
+                targetHorizon={horizonBehindTarget(node())}
                 editable={editable()}
                 canAdd={canAddLines()}
                 showDoses={showDoses()}

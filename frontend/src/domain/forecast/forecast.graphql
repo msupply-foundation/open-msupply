@@ -55,3 +55,13 @@ fragment ForecastMethodOption on ForecastMethodOptionNode {
   isAvailable
   unavailableReason
 }
+
+# The ordering store's supply horizon (spec/internal-orders › target months of
+# stock): its supply interval plus safety buffer, the default — and, with the
+# changing-target-months preference off, the fixed — target of a general order.
+# A vertical repeats this selection on its RequisitionNode (see ForecastLine
+# above); ForecastBlock takes this fragment's type for its target-months caption.
+fragment SupplyHorizon on SupplyHorizonNode {
+  supplyIntervalMonths
+  safetyBufferMonths
+}

@@ -158,7 +158,7 @@ export const StoreEditorModal = (props: {
   );
   const definitions = () => gated(definitionsData) ?? [];
 
-  // The store's 23 preference descriptions — served in display order, with a
+  // The store's 24 preference descriptions — served in display order, with a
   // fabricated default standing in for any unset preference (contract § The
   // store editor). Same interaction-opened read as the two above, so the same
   // non-suspending gate.

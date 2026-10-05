@@ -24,7 +24,9 @@ pub struct InsertInput {
     pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    pub max_months_of_stock: f64,
+    /// Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
+    /// facility record carries no supply interval
+    pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: f64,
     /// Defaults to 2 weeks from now
     pub expected_delivery_date: Option<NaiveDate>,
@@ -321,7 +323,7 @@ mod test {
                     colour: Some("colour input".to_string()),
                     their_reference: Some("reference input".to_string()),
                     comment: Some("comment input".to_string()),
-                    max_months_of_stock: 1.0,
+                    max_months_of_stock: Some(1.0),
                     min_months_of_stock: 2.0,
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap())
                 }

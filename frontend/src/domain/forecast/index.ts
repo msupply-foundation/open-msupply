@@ -11,6 +11,7 @@ export {
   populationSteps,
   ancillaryRatio,
   principalItemLabel,
+  targetStockCaption,
   type ForecastMethod,
   type ForecastMethodOption,
   type ForecastMethodUnavailableReason,
@@ -19,5 +20,8 @@ export {
   type PopulationCourse,
   type AncillaryRatioPrincipal,
 } from './forecast';
-export type { ForecastLineFragment } from './forecast.generated';
+export type {
+  ForecastLineFragment,
+  SupplyHorizonFragment,
+} from './forecast.generated';
 export { ForecastBlock, type ForecastBlockProps } from './ForecastBlock';

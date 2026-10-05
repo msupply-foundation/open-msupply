@@ -42,6 +42,8 @@ pub mod can_create_internal_order_from_a_requisition;
 pub use can_create_internal_order_from_a_requisition::*;
 pub mod select_destination_store_for_an_internal_order;
 pub use select_destination_store_for_an_internal_order::*;
+pub mod can_change_target_months_of_stock;
+pub use can_change_target_months_of_stock::*;
 pub mod number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products;
 pub use number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products::*;
 pub mod number_of_months_threshold_to_show_low_stock_alerts_for_products;
@@ -123,6 +125,7 @@ pub struct PreferenceProvider {
     pub disable_manual_returns: DisableManualReturns,
     pub can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
     pub select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+    pub can_change_target_months_of_stock: CanChangeTargetMonthsOfStock,
     pub external_inbound_shipment_lines_must_be_authorised:
         ExternalInboundShipmentLinesMustBeAuthorised,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
@@ -179,6 +182,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         inbound_shipment_auto_verify: InboundShipmentAutoVerify,
         can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
         select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+        can_change_target_months_of_stock: CanChangeTargetMonthsOfStock,
         external_inbound_shipment_lines_must_be_authorised:
             ExternalInboundShipmentLinesMustBeAuthorised,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:

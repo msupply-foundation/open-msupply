@@ -22,7 +22,7 @@ The Population method is available for a line when:
 - the store's facility record has a **Population Served**, and
 - at least one **vaccine course** covers the item.
 
-A course without a demographic targets the whole population. The store's supply interval and safety buffer are not inputs.
+A course without a demographic targets the whole population. The store's supply interval and safety buffer are not inputs: they set a general order's default target months instead (see below).
 
 > **Quick Setup**: You can quickly configure the store properties by navigating to: **Settings → Configuration → Initialize store properties for population-based forecasting**
 
@@ -53,4 +53,4 @@ The engine computes one contribution per covering course-and-demographic, then s
 
 **Monthly Units** = `Monthly Doses ÷ Doses per Unit`
 
-The line's monthly demand is the sum of its courses' monthly units. Its target stock is `monthly demand × the requisition's target months`, and its suggested quantity tops stock up to that target, as for every other method.
+The line's monthly demand is the sum of its courses' monthly units. Its target stock is `monthly demand × the requisition's target months`, and its suggested quantity tops stock up to that target, as for every other method. A general order's target months default to the store's supply interval + safety buffer (1 month without a supply interval), and the `canChangeTargetMonthsOfStock` store preference can fix them there.

@@ -36,7 +36,7 @@ export type AddInternalOrderLineVariables = {
     colour?: string | null;
     theirReference?: string | null;
     comment?: string | null;
-    maxMonthsOfStock: number;
+    maxMonthsOfStock?: number | null;
     minMonthsOfStock: number;
     expectedDeliveryDate?: string | null;
   }> | null;

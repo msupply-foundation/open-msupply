@@ -1,7 +1,10 @@
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
-    requisition::{common::check_requisition_row_exists, query::get_requisition},
+    requisition::{
+        common::check_requisition_row_exists, query::get_requisition,
+        request_requisition::default_target_months_of_stock,
+    },
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
@@ -19,7 +22,9 @@ pub struct InsertRequestRequisition {
     pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    pub max_months_of_stock: f64,
+    /// Target months of stock; None takes the store's default
+    /// ([`default_target_months_of_stock`])
+    pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: f64,
     pub expected_delivery_date: Option<NaiveDate>,
 }
@@ -133,7 +138,10 @@ fn generate(
         comment,
         expected_delivery_date,
         their_reference,
-        max_months_of_stock,
+        max_months_of_stock: match max_months_of_stock {
+            Some(months) => months,
+            None => default_target_months_of_stock(connection, store_id)?,
+        },
         min_months_of_stock,
         // Default
         sent_datetime: None,
@@ -289,7 +297,7 @@ mod test_insert {
                     colour: Some("new colour".to_string()),
                     their_reference: Some("new their_reference".to_string()),
                     comment: Some("new comment".to_string()),
-                    max_months_of_stock: 1.0,
+                    max_months_of_stock: Some(1.0),
                     min_months_of_stock: 0.5,
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
                 },
