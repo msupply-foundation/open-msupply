@@ -73,6 +73,8 @@ export function TableRow<T>(props: {
   /** Render the row's selection checkbox disabled (see DataTable's prop). */
   selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
+  /** Whether `onRowClick` applies to this row (see DataTable's prop). */
+  rowClickable?: (row: T) => boolean;
   /**
    * Keyboard row navigation (spec/keyboard KB-N1). When set, this row can take
    * the keyboard highlight: the arrows move real DOM focus onto it and `Enter`
@@ -97,9 +99,10 @@ export function TableRow<T>(props: {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for this row: 'info' for records awaiting an action
-   * (placeholder / uncounted lines), 'warning' for a record needing attention
-   * before it can proceed (a held batch), 'error' for a line the server
-   * refused (a failed bulk operation). Stamps data-tone, styled in CSS.
+   * (placeholder / uncounted lines take rowTint + rowAccent 'unfinished'
+   * instead — see DataTable's prop doc), 'warning' for a record needing
+   * attention before it can proceed (a held batch), 'error' for a line the
+   * server refused (a failed bulk operation). Stamps data-tone, styled in CSS.
    * Semantic names only, mapped to palette tokens by the CSS — never colours.
    */
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
@@ -144,13 +147,16 @@ export function TableRow<T>(props: {
    */
   cellVisible: (cell: TanCell<T, unknown>) => boolean;
 }): JSX.Element {
+  const clickable = () =>
+    props.onRowClick !== undefined &&
+    (props.rowClickable?.(props.row.original) ?? true);
   return (
     <tr
       data-testid="table-row"
       // The row's key (TanStack getRowId = the table's rowKey), so a caller can
       // address a specific row in the DOM (e.g. scroll it into view).
       data-row-key={props.row.id}
-      class={props.onRowClick ? styles.rowClickable : undefined}
+      class={clickable() ? styles.rowClickable : undefined}
       data-row-state={
         !props.row.getIsGrouped()
           ? props.rowState?.(props.row.original)
@@ -193,7 +199,9 @@ export function TableRow<T>(props: {
       onFocus={event => {
         if (isKeyboardFocus(event)) props.rowFocus?.onFocus();
       }}
-      onClick={() => props.onRowClick?.(props.row.original)}
+      onClick={() => {
+        if (clickable()) props.onRowClick?.(props.row.original);
+      }}
     >
       <Show when={props.enableSelection}>
         <td

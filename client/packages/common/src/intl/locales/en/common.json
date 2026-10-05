@@ -2646,6 +2646,7 @@
   "preference.daysInMonth": "Days in a month",
   "preference.disableManualReturns": "Disable manual returns",
   "preference.displayPopulationBasedForecasting": "Display population based forecasting",
+  "preference.doNotPrintPlaceholderLineLabels": "Do not print labels for placeholder (zero quantity) dispensing record lines",
   "preference.expiredStockIssueThreshold": "Expired stock issue threshold (days)",
   "preference.expiredStockPreventIssue": "Prevent issuing expired stock",
   "preference.externalInboundShipmentLinesMustBeAuthorised": "Inbound shipment (external) lines must be authorised",
@@ -3036,6 +3037,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "preference.doNotPrintPlaceholderLineLabels": "Do not print labels for placeholder (zero quantity) dispensing record lines"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
