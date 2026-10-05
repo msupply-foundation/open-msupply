@@ -192,6 +192,17 @@ guard the nav entry and direct navigation with **one** condition (AC-PLUG-P1):
 without the permission the entry is absent and the URL shows the host's
 no-permission notice in place of the screen.
 
+### The configuration editor
+
+`configuration: { defaultConfig, Editor }` is the plugin's settings editor
+([sdk-contract § the configuration contribution](../../../spec/plugins/sdk-contract.md#the-configuration-contribution-specified-in-full)).
+Manage › Plugins shows it on the central server once this plugin is installed and loaded, and saves the
+whole value as one installation-wide `configuration` record. The editor here is one field, a greeting; the
+dashboard stat reads the saved record and shows it in place of the default. Two things it demonstrates:
+
+- the value arrives as `unknown` — `asConfig` narrows it, because a stored record may predate the build;
+- the stat reads through `.state`, never the resource directly, so the dashboard never suspends around it.
+
 ## Navigation
 
 Two primitives, both over a path **below the store root**, spelled as the

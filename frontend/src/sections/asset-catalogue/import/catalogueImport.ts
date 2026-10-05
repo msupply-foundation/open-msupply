@@ -1,7 +1,7 @@
 import { t, type LocaleKey } from '@/intl';
 import { toCsv } from '@/domain/reportFiles';
 import { parseImportDate, parseImportNumber } from '@/domain/csvImport';
-import { mapInBatches, WRITE_CONCURRENCY } from '../batches';
+import { mapInBatches, WRITE_CONCURRENCY } from '@/api/batches';
 import type {
   AssetPropertiesResult,
   InsertAssetCatalogueItemResult,

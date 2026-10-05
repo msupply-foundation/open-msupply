@@ -227,6 +227,9 @@ const NavSection = (props: {
                 <button
                   type="button"
                   class={styles.navButton}
+                  // Keyed by its route, as the flyout's rows are
+                  // (e2e/TESTIDS.md › nav-<destination>).
+                  data-testid={`nav-${leaf.id}`}
                   data-selected={
                     leaf.id === props.selectedId ? 'true' : undefined
                   }

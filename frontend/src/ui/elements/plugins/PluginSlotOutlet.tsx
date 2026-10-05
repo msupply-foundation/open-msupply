@@ -32,6 +32,12 @@ export interface PluginSlotOutletProps<P extends Record<string, unknown>> {
   slotProps: Accessor<P>;
   /** Shown in place of a contribution that threw, already translated. */
   errorFallback: string;
+  /**
+   * Told when a contribution throws and its fallback replaces it — for a host
+   * whose own controls depend on the contribution working (the configure
+   * dialog withholds Save: spec/plugin-management S3).
+   */
+  onError?: (contributionId: string) => void;
 }
 
 /**
@@ -100,6 +106,7 @@ export const PluginSlotOutlet = <P extends Record<string, unknown>>(
             `[plugins] ${contribution.id}: contribution failed to render`,
             error
           );
+          props.onError?.(contribution.id);
           return props.errorFallback;
         }}
       >

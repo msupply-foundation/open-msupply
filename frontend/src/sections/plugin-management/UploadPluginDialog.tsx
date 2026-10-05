@@ -1,0 +1,211 @@
+import { createSignal, Show } from 'solid-js';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
+import { rejectionFrom, type Rejection } from '@/api/rejection';
+import { reportUnauthenticated } from '@/auth/authContext';
+import { formatFileSize, t } from '@/intl';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
+import { Button } from '@/ui/elements/buttons/Button';
+import { IconButton } from '@/ui/elements/buttons/IconButton';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { UploadZone } from '@/ui/elements/inputs/UploadZone';
+import { Text } from '@/ui/elements/typography/Text';
+import type { FileRejection } from '@/ui/elements/inputs/uploadFiles';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import { CloseIcon, FileIcon } from '@/ui/icons';
+import { InstallUploadedPlugin } from './plugins.generated';
+import {
+  BUNDLE_ACCEPT,
+  chooseBundle,
+  MAX_BUNDLE_BYTES,
+  uploadBundle,
+} from './bundleFile';
+
+/*
+ * S2 — Upload dialog (spec/plugin-management/ui-surface.md): install ONE
+ * bundle file. Upload then install, seen by the user as one step; the dialog
+ * holds until the outcome is known (rules › installing a bundle).
+ *
+ * Mounted only while open (the list gates it), so every open starts with no
+ * file chosen and no notice.
+ */
+
+type Notice =
+  | { kind: 'refused'; rejection: FileRejection<File> }
+  | { kind: 'upload'; status: string }
+  | { kind: 'install'; rejection: Rejection };
+
+export const UploadPluginDialog = (props: {
+  onClose: () => void;
+  /** An install was attempted — the list reads again, whatever the outcome. */
+  onAttempted: () => void;
+}) => {
+  const [file, setFile] = createSignal<File>();
+  const [notice, setNotice] = createSignal<Notice>();
+  const [running, setRunning] = createSignal(false);
+
+  // One pick or drop, decided as a whole: a drop of several files chooses
+  // none whatever they are (rules › installing a bundle), which is why the
+  // zone's combined `onPick` is used rather than its per-half callbacks.
+  const pick = (accepted: File[], rejected: FileRejection<File>[]): void => {
+    const choice = chooseBundle(accepted, rejected);
+    if (choice.kind === 'chosen') {
+      setFile(choice.file);
+      setNotice(undefined);
+    } else if (choice.kind === 'refused') {
+      // The chosen file, if any, stays (OMS-REG-MNG-07.23).
+      setNotice({ kind: 'refused', rejection: choice.rejection });
+    }
+  };
+
+  // A failed step's notice: the step, the server's reason, and a multi-line
+  // dump behind the disclosure (ui-standards › controls § action feedback).
+  const stepAlert = (step: string, rejection: Rejection) => (
+    <Alert severity="error" testId="upload-plugin-error">
+      {[step, rejection.message].filter(Boolean).join(': ')}
+      <Show when={rejection.detail}>
+        {detail => <ErrorDetails detail={detail()} />}
+      </Show>
+    </Alert>
+  );
+
+  const install = async () => {
+    const chosen = file();
+    if (!chosen || running()) return;
+    setRunning(true);
+    setNotice(undefined);
+    const uploaded = await uploadBundle(chosen);
+    if (!uploaded.ok) {
+      setNotice({ kind: 'upload', status: uploaded.status });
+      // The upload is not a GraphQL call, so graphqlFetch never sees its
+      // session end: report it here, and the app's re-login modal opens over
+      // this dialog. The file stays chosen for the retry (OMS-REG-MNG-07.64).
+      if (uploaded.signedOut) reportUnauthenticated();
+      setRunning(false);
+      return;
+    }
+    const result = await graphqlFetch(
+      InstallUploadedPlugin,
+      { fileId: uploaded.fileId },
+      { returnGraphqlErrors: true }
+    );
+    props.onAttempted();
+    if (result.kind === 'success') {
+      // Closing is the confirmation; the list's new rows are the result
+      // (ui-standards › controls § dialogs).
+      props.onClose();
+      return;
+    }
+    if (result.kind === 'graphqlError') {
+      // A Forbidden goes to the permission-denied modal, as every other one.
+      if (isForbidden(result.errors))
+        reportPermissionDenied(missingPermissions(result.errors));
+      else
+        setNotice({
+          kind: 'install',
+          rejection: rejectionFrom(result.errors, ''),
+        });
+    }
+    // Any other failure surfaced globally; release the busy state either way.
+    setRunning(false);
+  };
+
+  const refusalText = (rejection: FileRejection<File>): string =>
+    rejection.reason === 'size'
+      ? t('error.file-exceeds-size-limit', {
+          filename: rejection.file.name,
+          maxSize: formatFileSize(MAX_BUNDLE_BYTES),
+        })
+      : t('error.plugin-invalid-file');
+
+  return (
+    <Dialog
+      open
+      onClose={props.onClose}
+      // Blocking while the upload and install run: the outcome is reported in
+      // this dialog, so it cannot be dismissed from under it (OMS-REG-MNG-07.35).
+      dismissable={!running()}
+      title={t('title.upload-plugin')}
+      width="prose"
+      testId="upload-plugin-dialog"
+      actions={
+        <>
+          <Show when={!running()}>
+            <CancelButton
+              data-testid="dialog-button-cancel"
+              onClick={props.onClose}
+            />
+          </Show>
+          <Button
+            variant="primary"
+            confirms="plain"
+            data-testid="dialog-button-ok"
+            disabled={!file()}
+            loading={running()}
+            onClick={() => void install()}
+          >
+            {t('button.upload-plugin')}
+          </Button>
+        </>
+      }
+    >
+      <Stack gap="md">
+        <Text>{t('messages.plugin-upload-helper')}</Text>
+        <UploadZone
+          accept={BUNDLE_ACCEPT}
+          maxSize={MAX_BUNDLE_BYTES}
+          multiple={false}
+          disabled={running()}
+          inputTestId="upload-plugin-file-input"
+          testId="upload-plugin-drop-zone"
+          onPick={pick}
+        />
+        <Show when={file()}>
+          {chosen => (
+            <HStack gap="sm" align="center">
+              <FileIcon />
+              <Text variant="bodySmall" data-testid="upload-plugin-chosen-file">
+                {chosen().name}
+              </Text>
+              <IconButton
+                icon={<CloseIcon />}
+                label={t('button.remove-file')}
+                size="small"
+                disabled={running()}
+                data-testid="upload-plugin-remove-file"
+                onClick={() => setFile(undefined)}
+              />
+            </HStack>
+          )}
+        </Show>
+        {/* Keyed: each notice is its own object, so a second refusal of
+            another kind re-renders rather than keeping the first one's body. */}
+        <Show when={notice()} keyed>
+          {value => {
+            if (value.kind === 'refused')
+              return (
+                <Alert severity="error" testId="upload-plugin-error">
+                  {refusalText(value.rejection)}
+                </Alert>
+              );
+            if (value.kind === 'upload')
+              return stepAlert(t('error.unable-to-upload-plugin'), {
+                message: value.status,
+              });
+            return stepAlert(
+              t('error.unable-to-install-plugin'),
+              value.rejection
+            );
+          }}
+        </Show>
+      </Stack>
+    </Dialog>
+  );
+};

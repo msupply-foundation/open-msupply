@@ -45,7 +45,8 @@ type Props = { readonly value: string };
 // would.
 const mount = (
   contributions: readonly PluginSlotContribution<Props>[],
-  slotProps: Accessor<Props>
+  slotProps: Accessor<Props>,
+  onError?: (contributionId: string) => void
 ) => {
   let render!: () => unknown[];
   const dispose = createRoot(disposeRoot => {
@@ -53,6 +54,7 @@ const mount = (
       contributions,
       slotProps,
       errorFallback: 'Plugin unavailable',
+      onError,
     }) as unknown as () => (() => unknown)[];
     render = () => (region() ?? []).map(entry => entry());
     // The first resolve is the region's initial render.
@@ -166,6 +168,28 @@ describe('PluginSlotOutlet', () => {
     expect(seen).toEqual(['line-1', 'line-2']);
     expect(mounts).toBe(1);
 
+    dispose();
+    errors.mockRestore();
+  });
+
+  it('tells the host which contribution fell back, and only that one (OMS-REG-MNG-07.63)', () => {
+    // The configure dialog withholds Save on this report; a sibling that
+    // renders must not trip it.
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const Boom = () => {
+      throw new Error('deliberate');
+    };
+    const Good = () => null;
+    const failed: string[] = [];
+    const { dispose } = mount(
+      [
+        { id: 'p.boom', Component: Boom },
+        { id: 'p.good', Component: Good },
+      ],
+      () => ({ value: 'a' }),
+      id => failed.push(id)
+    );
+    expect(failed).toEqual(['p.boom']);
     dispose();
     errors.mockRestore();
   });

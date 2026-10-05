@@ -640,3 +640,63 @@ describe('validateLoadedModule — pages & nav sections', () => {
     );
   });
 });
+
+// The settings editor (spec/plugins/sdk-contract.md § the configuration
+// contribution; spec/plugin-management OMS-REG-MNG-07.49 depends on a loaded one).
+describe('validateLoadedModule — configuration', () => {
+  const withConfiguration = (configuration: unknown) => ({
+    ...wellFormed(),
+    configuration,
+  });
+
+  it('accepts an Editor with a JSON-serialisable default', () => {
+    const verdict = validateLoadedModule(
+      'demo',
+      asModule(
+        withConfiguration({
+          defaultConfig: { greeting: 'hi' },
+          Editor: Component,
+        })
+      )
+    );
+    expect(verdict.kind).toBe('ok');
+  });
+
+  it('accepts a bundle that declares no configuration', () => {
+    expect(validateLoadedModule('demo', asModule(wellFormed())).kind).toBe(
+      'ok'
+    );
+  });
+
+  it('refuses a configuration that is not an object', () => {
+    expect(
+      refusal(validateLoadedModule('demo', asModule(withConfiguration('x'))))
+    ).toBe('configuration is not an object');
+  });
+
+  it('refuses a configuration with no Editor component', () => {
+    expect(
+      refusal(
+        validateLoadedModule(
+          'demo',
+          asModule(withConfiguration({ defaultConfig: {} }))
+        )
+      )
+    ).toBe('configuration declares no Editor component');
+  });
+
+  it('refuses a default the host could never store', () => {
+    const circular: Record<string, unknown> = {};
+    circular['self'] = circular;
+    for (const defaultConfig of [undefined, circular, () => 1]) {
+      expect(
+        refusal(
+          validateLoadedModule(
+            'demo',
+            asModule(withConfiguration({ defaultConfig, Editor: Component }))
+          )
+        )
+      ).toBe('configuration.defaultConfig is not JSON-serialisable');
+    }
+  });
+});

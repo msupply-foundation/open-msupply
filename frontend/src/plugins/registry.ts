@@ -2,6 +2,7 @@ import { createSignal } from 'solid-js';
 import type {
   AnyContribution,
   DashboardPieceId,
+  PluginConfiguration,
   PluginModule,
   PluginNavSection,
   PluginPage,
@@ -183,6 +184,18 @@ export const registeredNavSections = (): readonly RegisteredNavSection[] => {
   navSectionsResult = found;
   return found;
 };
+
+/**
+ * The settings editor a loaded plugin of this code ships, if any
+ * (sdk-contract § the configuration contribution) — what makes a code
+ * configurable in Manage › Plugins (spec/plugin-management rules › configuring
+ * a plugin). Settled by what LOADED, so a plugin installed during the session
+ * has none until the app reloads. Reactive.
+ */
+export const configurationFor = (
+  code: string
+): PluginConfiguration | undefined =>
+  plugins().find(plugin => plugin.code === code)?.module.configuration;
 
 /**
  * The built-in dashboard pieces the loaded plugins ask to hide, by published id

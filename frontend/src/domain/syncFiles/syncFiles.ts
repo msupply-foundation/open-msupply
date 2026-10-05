@@ -1,3 +1,4 @@
+import { postFiles } from '../../api/postFiles';
 import { SYNC_FILES_URL } from '../../config';
 
 // The sync-file store: per-record document attachments behind a REST endpoint
@@ -18,21 +19,11 @@ export const uploadSyncFiles = async (
   recordId: string,
   files: File[]
 ): Promise<SyncFileResult> => {
-  const formData = new FormData();
-  for (const file of files) formData.append('files', file);
-  try {
-    const response = await fetch(base(tableName, recordId), {
-      method: 'POST',
-      headers: { Accept: 'application/json' },
-      credentials: 'same-origin',
-      body: formData,
-    });
-    return response.ok
-      ? { ok: true }
-      : { ok: false, message: `HTTP ${response.status}` };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : String(e) };
-  }
+  const sent = await postFiles(base(tableName, recordId), files);
+  if (sent.kind === 'unreachable') return { ok: false, message: sent.message };
+  return sent.response.ok
+    ? { ok: true }
+    : { ok: false, message: `HTTP ${sent.response.status}` };
 };
 
 export const deleteSyncFile = async (
