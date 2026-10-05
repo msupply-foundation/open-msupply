@@ -43,8 +43,9 @@
 #   E2E_PLUGIN_PROFILE  run a plugin profile instead of the default suites:
 #                     builds that profile's plugin bundle (pnpm build:plugins),
 #                     installs it into THIS run's throwaway database through
-#                     the real install path, restarts the server so it starts
-#                     with the plugin bound, and runs only
+#                     the real install path, waits for discovery to offer
+#                     it (no restart — the same path as the nightly), and
+#                     runs only
 #                     e2e/specs/plugins/<profile>/ (playwright.config.ts picks
 #                     the project from the same variable). A profile is a
 #                     plugin directory name: plugins/<profile>/, whose
@@ -258,51 +259,31 @@ rm -f "$SERVER_DIR/$DB_NAME".sqlite*
   exit 1
 }
 
-# A function because a plugin profile boots the server twice (see below).
-# Appends to the log so the first boot's output survives the second.
-start_server() {
-  echo "Starting server on :$SERVER_PORT"
-  (cd "$SERVER_DIR" && exec env \
-    APP__DATABASE__DATABASE_NAME="$DB_NAME" \
-    APP__SERVER__PORT="$SERVER_PORT" \
-    APP__SERVER__BASE_DIR=app_data/"$DB_NAME" \
-    APP__LOGGING__MODE=Console \
-    "${SYNC_OFF[@]}" "${SERVER_ROLE_PIN[@]}" \
-    "$BIN_DIR/remote_server" >> "$LOG_DIR/e2e-server.log" 2>&1) &
-  SERVER_PID=$!
+echo "Starting server on :$SERVER_PORT"
+(cd "$SERVER_DIR" && exec env \
+  APP__DATABASE__DATABASE_NAME="$DB_NAME" \
+  APP__SERVER__PORT="$SERVER_PORT" \
+  APP__SERVER__BASE_DIR=app_data/"$DB_NAME" \
+  APP__LOGGING__MODE=Console \
+  "${SYNC_OFF[@]}" "${SERVER_ROLE_PIN[@]}" \
+  "$BIN_DIR/remote_server" > "$LOG_DIR/e2e-server.log" 2>&1) &
+SERVER_PID=$!
 
-  echo -n "Waiting for server"
-  STATUS=""
-  for _ in $(seq 1 30); do
-    STATUS=$(curl -s -m 2 "http://localhost:$SERVER_PORT/graphql" \
-      -H 'Content-Type: application/json' \
-      -d '{"query":"query { initialisationStatus { status } }"}' \
-      | grep -o INITIALISED || true)
-    [[ "$STATUS" == "INITIALISED" ]] && echo " — ready" && break
-    echo -n "."
-    sleep 2
-  done
-  if [[ "$STATUS" != "INITIALISED" ]]; then
-    echo; echo "Server failed to start:" >&2
-    tail -20 "$LOG_DIR/e2e-server.log" >&2
-    exit 1
-  fi
-}
-
-stop_server() {
-  kill "$SERVER_PID" 2>/dev/null || true
-  # Same escalation as cleanup(): the server sometimes ignores a plain TERM.
-  for _ in $(seq 1 10); do
-    port_free "$SERVER_PORT" && break
-    sleep 1
-  done
-  kill -9 "$SERVER_PID" 2>/dev/null || true
-  lsof -ti tcp:"$SERVER_PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
-  SERVER_PID=""
-}
-
-: > "$LOG_DIR/e2e-server.log"
-start_server
+echo -n "Waiting for server"
+for _ in $(seq 1 30); do
+  STATUS=$(curl -s -m 2 "http://localhost:$SERVER_PORT/graphql" \
+    -H 'Content-Type: application/json' \
+    -d '{"query":"query { initialisationStatus { status } }"}' \
+    | grep -o INITIALISED || true)
+  [[ "$STATUS" == "INITIALISED" ]] && echo " — ready" && break
+  echo -n "."
+  sleep 2
+done
+if [[ "${STATUS:-}" != "INITIALISED" ]]; then
+  echo; echo "Server failed to start:" >&2
+  tail -20 "$LOG_DIR/e2e-server.log" >&2
+  exit 1
+fi
 
 # Dependency 3: cookie-session auth. This front end authenticates every
 # request with the session cookie alone (credentials: 'same-origin', no
@@ -342,13 +323,15 @@ fi
 # never the dev loop's OMS_PLUGIN_DIRS, which skips discovery, the content
 # hash and the cache, the very path a deployment takes.
 #
-# Then restart. The install mutation already asks the server to load the
-# plugin, but asynchronously; a fresh boot binds every installed plugin —
-# frontend serving cache and backend (schedule) plugins alike — before it
-# answers, so the suite starts against a settled server. Discovery is then
-# asked for the code, so a bundle that installed but cannot be offered to
-# this front end (wrong host runtime, a version this server gates out) fails
-# here, by name, rather than as a navigator that never appears.
+# No restart, the same as the nightly (which cannot restart: the image
+# reloads the datafile on every boot). The install mutation runs the
+# server's LoadPlugin processor, which binds the backend half and rebuilds
+# the frontend serving cache, so the plugin goes live in place; this waits
+# for discovery to offer it. Kept identical to the workflow's "Install the
+# plugin profile" step, so a local run tests the path CI depends on. A
+# bundle that installed but cannot be offered to this front end (wrong host
+# runtime, a version this server gates out) fails here, by name, rather than
+# as a navigator that never appears.
 if [[ -n "$PLUGIN_PROFILE" ]]; then
   BUNDLE="$FE_DIR/dist/bundles/$PLUGIN_CODE.json"
   echo "Building plugin bundles (profile: $PLUGIN_PROFILE)"
@@ -375,20 +358,26 @@ if [[ -n "$PLUGIN_PROFILE" ]]; then
     exit 1
   }
 
-  echo "Restarting server so it boots with $PLUGIN_CODE bound"
-  stop_server
-  start_server
-
-  DISCOVERED=$(curl -s -m 5 "http://localhost:$SERVER_PORT/graphql" \
-    -H 'Content-Type: application/json' \
-    -d '{"query":"query { frontendPluginMetadata(hostRuntime: \"solid\") { code } }"}' \
-    || true)
+  echo -n "Waiting for discovery to offer $PLUGIN_CODE"
+  DISCOVERED=""
+  for _ in $(seq 1 30); do
+    DISCOVERED=$(curl -s -m 2 "http://localhost:$SERVER_PORT/graphql" \
+      -H 'Content-Type: application/json' \
+      -d '{"query":"query { frontendPluginMetadata(hostRuntime: \"solid\") { code } }"}' \
+      || true)
+    grep -q "\"code\":\"$PLUGIN_CODE\"" <<<"$DISCOVERED" && break
+    echo -n "."
+    sleep 2
+  done
   if ! grep -q "\"code\":\"$PLUGIN_CODE\"" <<<"$DISCOVERED"; then
+    echo
     echo "INSTALLED BUT NOT DISCOVERED: $PLUGIN_CODE" >&2
-    echo "  The server does not offer it to this front end (hostRuntime solid)." >&2
+    echo "  The server never offered it to this front end (hostRuntime solid)." >&2
     echo "  Discovery said: ${DISCOVERED:-(no response)}" >&2
+    tail -20 "$LOG_DIR/e2e-server.log" >&2
     exit 1
   fi
+  echo " — ready"
 fi
 
 echo "Starting front end on :$FE_PORT"
