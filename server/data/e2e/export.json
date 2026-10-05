@@ -87610,6 +87610,192 @@
   },
   {
    "cursor": 2483,
+   "record_id": "prescription_request_ward",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "custom_field",
+   "action": "Upsert",
+   "data": {
+    "id": "prescription_request_ward",
+    "key": "prescription_request_ward",
+    "name": "Ward",
+    "value_type": "TEXT",
+    "kind": "BUILTIN",
+    "deleted_datetime": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2484,
+   "record_id": "prescription_request_ward__scope_prescription_request",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "custom_field_scope",
+   "action": "Upsert",
+   "data": {
+    "id": "prescription_request_ward__scope_prescription_request",
+    "custom_field_id": "prescription_request_ward",
+    "scope": "prescription_request",
+    "display_mode": "HIDDEN",
+    "sort_order": "5",
+    "deleted_datetime": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2485,
+   "record_id": "prescription_request_category__retired",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "custom_field_option",
+   "action": "Upsert",
+   "data": {
+    "id": "prescription_request_category__retired",
+    "custom_field_id": "prescription_request_category",
+    "key": "retired",
+    "name": "Retired category",
+    "parent_option_id": null,
+    "sort_order": "7",
+    "deleted_datetime": "2026-01-15T00:00:00"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2486,
+   "record_id": "e2e_diagnosis_1",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "diagnosis",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_diagnosis_1",
+    "code": "E2E-ICD-01",
+    "description": "E2E Test Diagnosis One",
+    "notes": null,
+    "valid_till": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2487,
+   "record_id": "e2e_diagnosis_2",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "diagnosis",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_diagnosis_2",
+    "code": "E2E-ICD-02",
+    "description": "E2E Test Diagnosis Two",
+    "notes": null,
+    "valid_till": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2488,
+   "record_id": "e2e_perm_admin_feat_PrescriptionRequestQuery",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_admin_feat_PrescriptionRequestQuery",
+    "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "store_id": "e2e_feature_store",
+    "permission": "PrescriptionRequestQuery",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2489,
+   "record_id": "e2e_perm_admin_feat_PrescriptionRequestMutate",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_admin_feat_PrescriptionRequestMutate",
+    "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "store_id": "e2e_feature_store",
+    "permission": "PrescriptionRequestMutate",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2490,
    "record_id": "e2e_inbound_store_name",
    "received_datetime": "2026-07-08T22:09:59.722998",
    "integration_started_datetime": null,
@@ -87665,7 +87851,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2484,
+   "cursor": 2491,
    "record_id": "e2e_inbound_store",
    "received_datetime": "2026-07-08T22:09:59.94637",
    "integration_started_datetime": null,
@@ -87693,7 +87879,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2485,
+   "cursor": 2492,
    "record_id": "e2e_inbound_store",
    "received_datetime": "2026-07-08T22:09:59.991185",
    "integration_started_datetime": null,
@@ -87733,7 +87919,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2486,
+   "cursor": 2493,
    "record_id": "e2e_pref_einb_use_procurement_functionality",
    "received_datetime": "2026-07-08T22:09:59.991185",
    "integration_started_datetime": null,
@@ -87758,7 +87944,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2487,
+   "cursor": 2494,
    "record_id": "e2e_pref_einb_external_inbound_shipment_lines_must_be_authorised",
    "received_datetime": "2026-07-08T22:09:59.991185",
    "integration_started_datetime": null,
@@ -87783,7 +87969,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2488,
+   "cursor": 2495,
    "record_id": "e2e_pref_einb_invoice_status_options",
    "received_datetime": "2026-07-08T22:09:59.991185",
    "integration_started_datetime": null,
@@ -87808,7 +87994,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2489,
+   "cursor": 2496,
    "record_id": "e2e_usj_admin_einb",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87833,7 +88019,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2490,
+   "cursor": 2497,
    "record_id": "e2e_perm_admin_einb_ServerAdmin",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87859,7 +88045,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2491,
+   "cursor": 2498,
    "record_id": "e2e_perm_admin_einb_StoreAccess",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87885,7 +88071,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2492,
+   "cursor": 2499,
    "record_id": "e2e_perm_admin_einb_LocationMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87911,7 +88097,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2493,
+   "cursor": 2500,
    "record_id": "e2e_perm_admin_einb_SensorMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87937,7 +88123,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2494,
+   "cursor": 2501,
    "record_id": "e2e_perm_admin_einb_SensorQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87963,7 +88149,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2495,
+   "cursor": 2502,
    "record_id": "e2e_perm_admin_einb_TemperatureBreachQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -87989,7 +88175,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2496,
+   "cursor": 2503,
    "record_id": "e2e_perm_admin_einb_TemperatureLogQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88015,7 +88201,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2497,
+   "cursor": 2504,
    "record_id": "e2e_perm_admin_einb_StockLineQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88041,7 +88227,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2498,
+   "cursor": 2505,
    "record_id": "e2e_perm_admin_einb_StockLineMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88067,7 +88253,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2499,
+   "cursor": 2506,
    "record_id": "e2e_perm_admin_einb_CreateRepack",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88093,7 +88279,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2500,
+   "cursor": 2507,
    "record_id": "e2e_perm_admin_einb_StocktakeQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88119,7 +88305,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2501,
+   "cursor": 2508,
    "record_id": "e2e_perm_admin_einb_StocktakeMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88145,7 +88331,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2502,
+   "cursor": 2509,
    "record_id": "e2e_perm_admin_einb_InventoryAdjustmentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88171,7 +88357,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2503,
+   "cursor": 2510,
    "record_id": "e2e_perm_admin_einb_RequisitionQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88197,7 +88383,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2504,
+   "cursor": 2511,
    "record_id": "e2e_perm_admin_einb_RequisitionMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88223,7 +88409,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2505,
+   "cursor": 2512,
    "record_id": "e2e_perm_admin_einb_RequisitionSend",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88249,7 +88435,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2506,
+   "cursor": 2513,
    "record_id": "e2e_perm_admin_einb_RequisitionCreateOutboundShipment",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88275,7 +88461,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2507,
+   "cursor": 2514,
    "record_id": "e2e_perm_admin_einb_RnrFormQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88301,7 +88487,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2508,
+   "cursor": 2515,
    "record_id": "e2e_perm_admin_einb_RnrFormMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88327,7 +88513,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2509,
+   "cursor": 2516,
    "record_id": "e2e_perm_admin_einb_OutboundShipmentQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88353,7 +88539,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2510,
+   "cursor": 2517,
    "record_id": "e2e_perm_admin_einb_OutboundShipmentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88379,7 +88565,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2511,
+   "cursor": 2518,
    "record_id": "e2e_perm_admin_einb_InboundShipmentQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88405,7 +88591,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2512,
+   "cursor": 2519,
    "record_id": "e2e_perm_admin_einb_InboundShipmentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88431,7 +88617,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2513,
+   "cursor": 2520,
    "record_id": "e2e_perm_admin_einb_InboundShipmentVerify",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88457,7 +88643,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2514,
+   "cursor": 2521,
    "record_id": "e2e_perm_admin_einb_SupplierReturnQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88483,7 +88669,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2515,
+   "cursor": 2522,
    "record_id": "e2e_perm_admin_einb_SupplierReturnMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88509,7 +88695,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2516,
+   "cursor": 2523,
    "record_id": "e2e_perm_admin_einb_CustomerReturnQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88535,7 +88721,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2517,
+   "cursor": 2524,
    "record_id": "e2e_perm_admin_einb_CustomerReturnMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88561,7 +88747,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2518,
+   "cursor": 2525,
    "record_id": "e2e_perm_admin_einb_PrescriptionQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88587,7 +88773,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2519,
+   "cursor": 2526,
    "record_id": "e2e_perm_admin_einb_PrescriptionMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88613,7 +88799,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2520,
+   "cursor": 2527,
    "record_id": "e2e_perm_admin_einb_CancelFinalisedInvoices",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88639,7 +88825,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2521,
+   "cursor": 2528,
    "record_id": "e2e_perm_admin_einb_PurchaseOrderQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88665,7 +88851,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2522,
+   "cursor": 2529,
    "record_id": "e2e_perm_admin_einb_PurchaseOrderMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88691,7 +88877,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2523,
+   "cursor": 2530,
    "record_id": "e2e_perm_admin_einb_PurchaseOrderAuthorise",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88717,7 +88903,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2524,
+   "cursor": 2531,
    "record_id": "e2e_perm_admin_einb_PurchaseOrderFinalise",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88743,7 +88929,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2525,
+   "cursor": 2532,
    "record_id": "e2e_perm_admin_einb_InboundShipmentExternalQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88769,7 +88955,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2526,
+   "cursor": 2533,
    "record_id": "e2e_perm_admin_einb_InboundShipmentExternalMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88795,7 +88981,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2527,
+   "cursor": 2534,
    "record_id": "e2e_perm_admin_einb_InboundShipmentExternalVerify",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88821,7 +89007,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2528,
+   "cursor": 2535,
    "record_id": "e2e_perm_admin_einb_InboundShipmentExternalAuthorise",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88847,7 +89033,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2529,
+   "cursor": 2536,
    "record_id": "e2e_perm_admin_einb_Report",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88873,7 +89059,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2530,
+   "cursor": 2537,
    "record_id": "e2e_perm_admin_einb_LogQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88899,7 +89085,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2531,
+   "cursor": 2538,
    "record_id": "e2e_perm_admin_einb_ItemMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88925,7 +89111,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2532,
+   "cursor": 2539,
    "record_id": "e2e_perm_admin_einb_ItemNamesCodesAndUnitsMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88951,7 +89137,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2533,
+   "cursor": 2540,
    "record_id": "e2e_perm_admin_einb_PatientQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -88977,7 +89163,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2534,
+   "cursor": 2541,
    "record_id": "e2e_perm_admin_einb_PatientMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89003,7 +89189,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2535,
+   "cursor": 2542,
    "record_id": "e2e_perm_admin_einb_DocumentQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89029,7 +89215,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2536,
+   "cursor": 2543,
    "record_id": "e2e_perm_admin_einb_DocumentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89055,7 +89241,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2537,
+   "cursor": 2544,
    "record_id": "e2e_perm_admin_einb_ColdChainApi",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89081,7 +89267,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2538,
+   "cursor": 2545,
    "record_id": "e2e_perm_admin_einb_AssetQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89107,7 +89293,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2539,
+   "cursor": 2546,
    "record_id": "e2e_perm_admin_einb_AssetMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89133,7 +89319,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2540,
+   "cursor": 2547,
    "record_id": "e2e_perm_admin_einb_AssetMutateViaDataMatrix",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89159,7 +89345,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2541,
+   "cursor": 2548,
    "record_id": "e2e_perm_admin_einb_AssetCatalogueItemMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89185,7 +89371,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2542,
+   "cursor": 2549,
    "record_id": "e2e_perm_admin_einb_AssetStatusMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89211,7 +89397,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2543,
+   "cursor": 2550,
    "record_id": "e2e_perm_admin_einb_NamePropertiesMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89237,7 +89423,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2544,
+   "cursor": 2551,
    "record_id": "e2e_perm_admin_einb_EditCentralData",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89263,7 +89449,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2545,
+   "cursor": 2552,
    "record_id": "e2e_perm_admin_einb_ViewAndEditVvmStatus",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89289,7 +89475,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2546,
+   "cursor": 2553,
    "record_id": "e2e_perm_admin_einb_MutateClinician",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89315,7 +89501,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2547,
+   "cursor": 2554,
    "record_id": "e2e_perm_admin_PrescriptionRequestQuery_feat",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -89341,7 +89527,59 @@
    "is_integrated": false
   },
   {
-   "cursor": 2548,
+   "cursor": 2555,
+   "record_id": "e2e_perm_admin_einb_PrescriptionRequestQuery",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_admin_einb_PrescriptionRequestQuery",
+    "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "store_id": "e2e_inbound_store",
+    "permission": "PrescriptionRequestQuery",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2556,
+   "record_id": "e2e_perm_admin_einb_PrescriptionRequestMutate",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_admin_einb_PrescriptionRequestMutate",
+    "user_id": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "store_id": "e2e_inbound_store",
+    "permission": "PrescriptionRequestMutate",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2557,
    "record_id": "e2e_mlnj_einb_0",
    "received_datetime": "2026-07-08T22:09:59.850728",
    "integration_started_datetime": null,
@@ -89365,7 +89603,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2549,
+   "cursor": 2558,
    "record_id": "e2e_mlnj_einb_1",
    "received_datetime": "2026-07-08T22:09:59.850733",
    "integration_started_datetime": null,
@@ -89389,7 +89627,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2550,
+   "cursor": 2559,
    "record_id": "e2e_nsj_einb_0",
    "received_datetime": "2026-07-08T22:09:59.723009",
    "integration_started_datetime": null,
@@ -89415,7 +89653,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2551,
+   "cursor": 2560,
    "record_id": "e2e_nsj_einb_1",
    "received_datetime": "2026-07-08T22:09:59.723009",
    "integration_started_datetime": null,
@@ -89441,7 +89679,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2552,
+   "cursor": 2561,
    "record_id": "e2e_nsj_einb_2",
    "received_datetime": "2026-07-08T22:09:59.723009",
    "integration_started_datetime": null,
@@ -89467,7 +89705,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2553,
+   "cursor": 2562,
    "record_id": "e2e_nsj_einb_3",
    "received_datetime": "2026-07-08T22:09:59.723009",
    "integration_started_datetime": null,
@@ -89493,7 +89731,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2554,
+   "cursor": 2563,
    "record_id": "e2e_nsj_einb_4",
    "received_datetime": "2026-07-08T22:09:59.72301",
    "integration_started_datetime": null,
@@ -89519,7 +89757,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2555,
+   "cursor": 2564,
    "record_id": "e2e_nsj_einb_5",
    "received_datetime": "2026-07-08T22:09:59.72301",
    "integration_started_datetime": null,
@@ -89545,7 +89783,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2556,
+   "cursor": 2565,
    "record_id": "e2e_nsj_gry_name_at_einb",
    "received_datetime": "2026-07-29T00:00:00",
    "integration_started_datetime": null,
@@ -89571,7 +89809,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2557,
+   "cursor": 2566,
    "record_id": "e2e_nsj_einb_name_at_gry",
    "received_datetime": "2026-07-29T00:00:00",
    "integration_started_datetime": null,
@@ -89597,7 +89835,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2558,
+   "cursor": 2567,
    "record_id": "e2e_nsj_feat_storeless",
    "received_datetime": "2026-07-08T22:09:59.723009",
    "integration_started_datetime": null,
@@ -89623,7 +89861,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2559,
+   "cursor": 2568,
    "record_id": "e2e_isj_gry_039710",
    "received_datetime": "2026-07-08T22:09:59.723009",
    "integration_started_datetime": null,

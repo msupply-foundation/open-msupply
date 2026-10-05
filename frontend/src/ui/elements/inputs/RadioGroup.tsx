@@ -18,7 +18,7 @@ export interface RadioOption {
   testId?: string;
 }
 
-interface RadioGroupProps {
+export interface RadioGroupProps {
   /** Group label — a <legend> for the fieldset (visually a small heading). */
   label?: string;
   /**
