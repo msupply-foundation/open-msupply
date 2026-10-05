@@ -3,7 +3,7 @@ pub mod store;
 pub mod sync_file_reference;
 pub mod temperature_log;
 
-use repository::{migrations::Version, syncv7::SyncError, ChangelogRow, Row, StorageConnection};
+use repository::{migrations::Version, syncv7::SyncError, RowOrDelete, StorageConnection};
 
 use crate::sync_v7::{serde::serialize, sync::SyncRecordV7};
 
@@ -21,40 +21,15 @@ pub struct SendContext<'a> {
 /// the batch back up.
 pub(crate) fn translate_outgoing(
     _context: &SendContext,
-    changelog: &ChangelogRow,
-    row: Row,
+    row_or_delete: RowOrDelete,
 ) -> Result<Vec<SyncRecordV7>, SyncError> {
-    match row {
+    match row_or_delete {
         // Special cases go here by row type, each calling its table's module
 
-        // Test only: lets `SyncBatchV7`'s tests leave records out and add others
-        #[cfg(test)]
-        Row::Unit(unit) if unit.id.starts_with("left_out") => Ok(vec![]),
-        #[cfg(test)]
-        Row::Unit(unit)
-            if unit.id.starts_with("remote_only") && _context.receiver_version.is_none() =>
-        {
-            Ok(vec![])
-        }
-        #[cfg(test)]
-        Row::Unit(unit) if unit.id.starts_with("doubled") => {
-            let record = SyncRecordV7::upsert(changelog, serialize(&Row::Unit(unit))?);
-            let copy = SyncRecordV7 {
-                record_id: format!("{}_copy", record.record_id),
-                ..record.clone()
-            };
-            Ok(vec![record, copy])
-        }
-
         // Basic
-        row => Ok(vec![SyncRecordV7::upsert(changelog, serialize(&row)?)]),
+        RowOrDelete::Row { changelog, row } => {
+            Ok(vec![SyncRecordV7::upsert(changelog, serialize(&row)?)])
+        }
+        RowOrDelete::Delete { changelog } => Ok(vec![SyncRecordV7::delete(changelog)]),
     }
-}
-
-/// `translate_outgoing` for a deleted record, which has no row.
-pub(crate) fn translate_outgoing_delete(
-    _context: &SendContext,
-    changelog: &ChangelogRow,
-) -> Result<Vec<SyncRecordV7>, SyncError> {
-    Ok(vec![SyncRecordV7::delete(changelog)])
 }

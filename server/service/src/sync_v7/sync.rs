@@ -5,10 +5,10 @@ use log::info;
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    AppVersion, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogTableName,
-    CursorAndLimit, KeyType, KeyValueStoreRepository, QueryWithData, RowActionType,
-    StorageConnection, SyncAction, SyncBufferRepository, SyncBufferRowInsert, SyncRecordData,
-    SyncVersion,
+    AppVersion, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow,
+    ChangelogTableName, CursorAndLimit, KeyType, KeyValueStoreRepository, QueryWithData,
+    RowActionType, RowOrDelete, StorageConnection, SyncAction, SyncBufferRepository,
+    SyncBufferRowInsert, SyncRecordData, SyncVersion,
 };
 use serde::{Deserialize, Serialize};
 use util::format_error;
@@ -25,10 +25,9 @@ use crate::{
     sync_v7::{
         api::{self, Common, SyncApiV7},
         get_current_site_id,
-        prepare::prepare,
         sync_logger::{SyncLogger, SyncLoggerHandle, SyncStep},
         sync_request::{SyncRequest, SyncRequestStep},
-        translations::SendContext,
+        translations::{translate_outgoing, SendContext},
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
@@ -50,6 +49,31 @@ pub struct SyncRecordV7 {
     pub patient_id: Option<String>,
 }
 
+impl SyncRecordV7 {
+    /// `changelog`'s record, sent as `data`.
+    pub(crate) fn upsert(changelog: ChangelogRow, data: serde_json::Value) -> Self {
+        Self::new(changelog, RowActionType::Upsert, data)
+    }
+
+    /// `changelog`'s record, sent as deleted.
+    pub(crate) fn delete(changelog: ChangelogRow) -> Self {
+        Self::new(changelog, RowActionType::Delete, serde_json::Value::Null)
+    }
+
+    fn new(changelog: ChangelogRow, action: RowActionType, data: serde_json::Value) -> Self {
+        SyncRecordV7 {
+            cursor: changelog.cursor,
+            record_id: changelog.record_id,
+            table_name: changelog.table_name,
+            action,
+            data,
+            store_id: changelog.store_id,
+            transfer_store_id: changelog.transfer_store_id,
+            patient_id: changelog.patient_id,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncBatchV7 {
@@ -61,16 +85,30 @@ pub struct SyncBatchV7 {
 }
 
 impl SyncBatchV7 {
-    /// Up to `batch_size` records, each changelog row put through `prepare` and so
-    /// its outgoing translation. Outgoing translations may leave records out, so this
+    /// Up to `batch_size` records, each changelog row put through
+    /// `translate_outgoing`. Outgoing translations may leave records out, so this
     /// tops the batch up: a batch is short only when nothing remains, because
     /// remotes stop pulling on the first short batch. One that adds records may
     /// overfill it slightly.
+    ///
+    /// `query_with_data` tops up its own rows when changelogs collapse or point at
+    /// missing rows; this second loop tops up the records left after translation.
     pub fn generate(
         context: &SendContext,
         filter: ChangelogCondition::Inner,
         cursor: i64,
         batch_size: Option<u32>,
+    ) -> Result<SyncBatchV7, SyncError> {
+        Self::generate_with(context, filter, cursor, batch_size, translate_outgoing)
+    }
+
+    /// `generate` with the outgoing translation passed in.
+    fn generate_with(
+        context: &SendContext,
+        filter: ChangelogCondition::Inner,
+        cursor: i64,
+        batch_size: Option<u32>,
+        translate: impl Fn(&SendContext, RowOrDelete) -> Result<Vec<SyncRecordV7>, SyncError>,
     ) -> Result<SyncBatchV7, SyncError> {
         let site_id = get_current_site_id(context.connection)?;
         let repo = ChangelogRepository::new(context.connection);
@@ -93,7 +131,7 @@ impl SyncBatchV7 {
             )?;
 
             for row in rows {
-                records.extend(prepare(context, row)?);
+                records.extend(translate(context, row)?);
             }
 
             if records.len() as i64 >= limit || remaining == 0 {
@@ -502,6 +540,8 @@ impl<'a> SyncV7<'a> {
 
 #[cfg(test)]
 mod test {
+    use std::cell::RefCell;
+
     use repository::{
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
@@ -510,11 +550,10 @@ mod test {
 
     use super::*;
 
-    // Units whose ids start with `left_out`, `remote_only` or `doubled` are
-    // translated by test-only cases in `translate_outgoing`.
+    const UNITS: [&str; 6] = ["unit_1", "unit_2", "unit_3", "unit_4", "unit_5", "unit_6"];
 
-    /// A site whose only unit changelog rows are for `ids`, in that order.
-    async fn setup(db_name: &str, ids: &[&str]) -> StorageConnection {
+    /// A site whose only unit changelog rows are for `UNITS`, in that order.
+    async fn setup(db_name: &str) -> StorageConnection {
         let (_, connection, _, _) = setup_all_with_data(
             db_name,
             MockDataInserts::none().key_value_store_rows(),
@@ -529,7 +568,7 @@ mod test {
         )
         .await;
         let repo = UnitRowRepository::new(&connection);
-        for id in ids {
+        for id in UNITS {
             repo.upsert_one(&UnitRow {
                 id: id.to_string(),
                 name: id.to_string(),
@@ -552,11 +591,17 @@ mod test {
     /// Pulls every unit the way a remote does: from cursor 0, continuing from each
     /// batch's last cursor, stopping at the first short batch. The record ids of each
     /// batch pulled.
-    fn pull_all(context: &SendContext, batch_size: u32) -> Vec<Vec<String>> {
+    fn pull_all(
+        context: &SendContext,
+        batch_size: u32,
+        translate: impl Fn(&SendContext, RowOrDelete) -> Result<Vec<SyncRecordV7>, SyncError>,
+    ) -> Vec<Vec<String>> {
         let mut cursor = 0;
         let mut batches = Vec::new();
         loop {
-            let batch = SyncBatchV7::generate(context, units(), cursor, Some(batch_size)).unwrap();
+            let batch =
+                SyncBatchV7::generate_with(context, units(), cursor, Some(batch_size), &translate)
+                    .unwrap();
             cursor = batch.last_cursor_in_batch as i64;
             let short = batch.records.len() < batch_size as usize;
             batches.push(ids(&batch));
@@ -568,18 +613,14 @@ mod test {
 
     #[actix_rt::test]
     async fn records_pass_through_unchanged() {
-        let connection = setup(
-            "sync_v7_batch_pass_through",
-            &["unit_1", "unit_2", "unit_3", "unit_4", "unit_5", "unit_6"],
-        )
-        .await;
+        let connection = setup("sync_v7_batch_pass_through").await;
         let context = SendContext {
             connection: &connection,
             receiver_version: None,
         };
 
         assert_eq!(
-            pull_all(&context, 2),
+            pull_all(&context, 2, translate_outgoing),
             vec![
                 vec!["unit_1", "unit_2"],
                 vec!["unit_3", "unit_4"],
@@ -591,44 +632,36 @@ mod test {
 
     #[actix_rt::test]
     async fn batches_stay_full_when_records_are_left_out() {
-        let connection = setup(
-            "sync_v7_batch_left_out",
-            &[
-                "kept_1",
-                "left_out_2",
-                "kept_3",
-                "left_out_4",
-                "kept_5",
-                "left_out_6",
-            ],
-        )
-        .await;
+        let connection = setup("sync_v7_batch_left_out").await;
         let context = SendContext {
             connection: &connection,
             receiver_version: None,
         };
+        let leave_out_even = |context: &SendContext, row: RowOrDelete| {
+            if ["unit_2", "unit_4", "unit_6"].contains(&row.changelog().record_id.as_str()) {
+                return Ok(vec![]);
+            }
+            translate_outgoing(context, row)
+        };
 
-        // Without topping up, the first batch would hold only kept_1, and being
+        // Without topping up, the first batch would hold only unit_1, and being
         // short it would end the pull.
         assert_eq!(
-            pull_all(&context, 2),
-            vec![vec!["kept_1", "kept_3"], vec!["kept_5"]]
+            pull_all(&context, 2, leave_out_even),
+            vec![vec!["unit_1", "unit_3"], vec!["unit_5"]]
         );
     }
 
     #[actix_rt::test]
     async fn batch_ends_when_every_record_is_left_out() {
-        let connection = setup(
-            "sync_v7_batch_all_left_out",
-            &["left_out_1", "left_out_2", "left_out_3"],
-        )
-        .await;
+        let connection = setup("sync_v7_batch_all_left_out").await;
         let context = SendContext {
             connection: &connection,
             receiver_version: None,
         };
 
-        let batch = SyncBatchV7::generate(&context, units(), 0, Some(2)).unwrap();
+        let batch =
+            SyncBatchV7::generate_with(&context, units(), 0, Some(2), |_, _| Ok(vec![])).unwrap();
 
         assert!(batch.records.is_empty());
         assert_eq!(batch.remaining, 0);
@@ -638,42 +671,39 @@ mod test {
 
     #[actix_rt::test]
     async fn records_added_by_a_translation_are_kept() {
-        let connection = setup(
-            "sync_v7_batch_added",
-            &[
-                "doubled_1",
-                "doubled_2",
-                "doubled_3",
-                "doubled_4",
-                "doubled_5",
-                "doubled_6",
-            ],
-        )
-        .await;
+        let connection = setup("sync_v7_batch_added").await;
         let context = SendContext {
             connection: &connection,
             receiver_version: None,
         };
+        let double = |context: &SendContext, row: RowOrDelete| {
+            let records = translate_outgoing(context, row)?;
+            let copies = records.iter().map(|record| SyncRecordV7 {
+                record_id: format!("{}_copy", record.record_id),
+                ..record.clone()
+            });
+            Ok(records.iter().cloned().chain(copies).collect())
+        };
 
         // A batch may overfill; nothing is cut off to fit it
         assert_eq!(
-            pull_all(&context, 3),
+            pull_all(&context, 3, double),
             vec![
                 vec![
-                    "doubled_1",
-                    "doubled_1_copy",
-                    "doubled_2",
-                    "doubled_2_copy",
-                    "doubled_3",
-                    "doubled_3_copy"
+                    "unit_1",
+                    "unit_1_copy",
+                    "unit_2",
+                    "unit_2_copy",
+                    "unit_3",
+                    "unit_3_copy"
                 ],
                 vec![
-                    "doubled_4",
-                    "doubled_4_copy",
-                    "doubled_5",
-                    "doubled_5_copy",
-                    "doubled_6",
-                    "doubled_6_copy"
+                    "unit_4",
+                    "unit_4_copy",
+                    "unit_5",
+                    "unit_5_copy",
+                    "unit_6",
+                    "unit_6_copy"
                 ],
                 vec![],
             ]
@@ -682,17 +712,27 @@ mod test {
 
     #[actix_rt::test]
     async fn translation_gets_the_send_context() {
-        let connection = setup("sync_v7_batch_send_context", &["remote_only_1"]).await;
+        let connection = setup("sync_v7_batch_send_context").await;
         let version = Version::from_str("3.04.00");
-        let sent_to = |receiver_version: Option<&Version>| {
-            let context = SendContext {
-                connection: &connection,
-                receiver_version,
-            };
-            ids(&SyncBatchV7::generate(&context, units(), 0, None).unwrap())
+        let context = SendContext {
+            connection: &connection,
+            receiver_version: Some(&version),
         };
+        let seen = RefCell::new(Vec::new());
 
-        assert_eq!(sent_to(Some(&version)), vec!["remote_only_1"]);
-        assert!(sent_to(None).is_empty());
+        SyncBatchV7::generate_with(&context, units(), 0, None, |context, row| {
+            seen.borrow_mut().push((
+                row.changelog().record_id.clone(),
+                context.receiver_version.cloned(),
+            ));
+            Ok(vec![])
+        })
+        .unwrap();
+
+        let expected: Vec<_> = UNITS
+            .iter()
+            .map(|id| (id.to_string(), Some(version.clone())))
+            .collect();
+        assert_eq!(seen.into_inner(), expected);
     }
 }
