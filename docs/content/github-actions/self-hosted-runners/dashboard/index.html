@@ -149,6 +149,7 @@
   }
   .tag.central { background: var(--busy-bg); color: var(--busy); }
   .tag.debug { background: var(--warn-bg); color: var(--warn); }
+  .tag.bad { background: var(--bad-bg); color: var(--bad); }
 
   /* Line 2 - the commit. The reason the page exists, so it gets the room. */
   .commit {
@@ -509,6 +510,18 @@ function dotTone(d) {
  */
 function freshness(d) {
   const dep = d.deploy;
+  // A run for this deployment, from the moment it was dispatched - see
+  // runFor. Ahead of the deployment record, which only appears once the
+  // deploy job starts, twenty minutes into a build.
+  const run = runFor(d);
+  if (run) {
+    const verb = run.action === 'update' ? `updating to the latest ${d.branch || 'commit'}` : RUN_VERBS[run.action];
+    return { tone: 'busy', text: `${verb}${run.status === 'queued' ? ' (queued)' : ''}…`, url: run.runUrl };
+  }
+  // Docker restarting it over and over: the server exits as soon as it starts,
+  // usually a migration that cannot run on this database. Its logs say which;
+  // a reseed is the usual cure on a test server.
+  if (d.state === 'restarting') return { tone: 'bad', text: 'keeps crashing - try Reseed', url: dep?.runUrl || null };
   if (dep?.inFlight) {
     return { tone: 'busy', text: `deploying ${short(dep.sha)}…`, url: dep.runUrl };
   }
@@ -733,26 +746,40 @@ function matches(d, q) {
     .filter(Boolean).join(' ').toLowerCase().includes(q);
 }
 
-// name -> { ref, label, at, runUrl }, for servers started from the form.
+const RUN_VERBS = { deploy: 'deploying', reseed: 'reseeding', teardown: 'removing' };
+
+/**
+ * The newest in-flight run for this deployment, or null. web.mjs reads them off
+ * GitHub every few seconds; a push is matched by the branch the deployment
+ * follows, everything else by name.
+ */
+function runFor(d) {
+  return (snapshot?.runs || []).find(r =>
+    (r.name && r.name === d.name) || (r.branch && d.branch && r.branch === d.branch)) || null;
+}
+
+// name -> { ref, label, at, runUrl }, for servers started from the form. Only
+// bridges the few seconds until web.mjs sees the run itself.
 const starting = new Map();
 // Long enough for a build from scratch; after that, a run that failed before
 // making a container would otherwise leave its placeholder up for ever.
 const STARTING_FOR = 45 * 60_000;
 
+/** A server that has been asked for and has no container yet. */
 function startingCard(name, s) {
   const c = el('div', 'card starting');
   const top = el('div', 'top');
   top.append(el('span', 'dot busy'), el('span', 'name', name));
   c.append(top);
   const commit = el('div', 'commit');
-  commit.append(el('span', 'subject', s.label));
-  commit.append(el('span', 'pill busy', 'starting…'));
+  if (s.label) commit.append(el('span', 'subject', s.label));
+  commit.append(el('span', 'pill busy', s.queued ? 'queued…' : 'starting…'));
   c.append(commit);
   const meta = el('div', 'meta');
-  meta.append(el('span', null, `asked for ${ago(new Date(s.at).toISOString())} by you`));
+  meta.append(el('span', null, `asked for ${ago(new Date(s.at).toISOString())} by ${s.actor || 'you'}`));
   if (s.runUrl) {
     meta.append(el('span', 'sep', '·'));
-    const a = el('a', null, 'watch it build');
+    const a = el('a', null, 'watch the run');
     a.href = s.runUrl; a.target = '_blank'; a.rel = 'noreferrer';
     meta.append(a);
   }
@@ -770,7 +797,11 @@ function card(d, repo) {
   top.append(name);
   if (d.central) top.append(el('span', 'tag central', 'central'));
   if (d.profile === 'debug') top.append(el('span', 'tag debug', 'debug'));
-  if (d.state !== 'running') top.append(el('span', 'tag', d.status || d.state));
+  if (d.state === 'restarting') {
+    const t = el('span', 'tag bad', 'crash-looping');
+    t.title = d.status || '';
+    top.append(t);
+  } else if (d.state !== 'running') top.append(el('span', 'tag', d.status || d.state));
   else if (d.health === 'unhealthy' || d.health === 'starting') top.append(el('span', 'tag', d.health));
   c.append(top);
 
@@ -868,14 +899,32 @@ function render() {
   const q = filter.trim().toLowerCase();
   const shown = snapshot.deployments.filter(d => matches(d, q));
 
-  // Servers asked for from the form that have no container yet - so a click
-  // visibly did something in the minutes before the deploy creates one.
+  // Servers asked for that have no container yet - by anyone, from anywhere,
+  // because they come from the in-flight runs. Clicks from this tab cover the
+  // seconds before web.mjs has seen the run.
+  const exists = name => snapshot.deployments.some(d => d.name === name);
+  const pendingCards = new Map();
+  const running = new Set((snapshot.runs || []).map(r => r.name).filter(Boolean));
   for (const [name, s] of starting) {
-    if (snapshot.deployments.some(d => d.name === name) || Date.now() - s.at > STARTING_FOR) starting.delete(name);
-    else if (matches({ name, branch: s.ref }, q)) list.append(startingCard(name, s));
+    // Gone once its container exists - or once its run has been seen and has
+    // finished without making one, which is a failed run, not a slow one.
+    if (exists(name) || (s.sawRun && !running.has(name)) || Date.now() - s.at > STARTING_FOR) starting.delete(name);
+    else pendingCards.set(name, s);
+  }
+  for (const r of [...(snapshot.runs || [])].reverse()) {
+    if (!r.name || r.action !== 'deploy' || exists(r.name)) continue;
+    const mine = starting.get(r.name);
+    if (mine) mine.sawRun = true;
+    pendingCards.set(r.name, {
+      label: mine?.label || '', ref: mine?.ref, at: Date.parse(r.startedAt) || Date.now(),
+      runUrl: r.runUrl, actor: r.actor, queued: r.status === 'queued',
+    });
+  }
+  for (const [name, s] of pendingCards) {
+    if (matches({ name, branch: s.ref }, q)) list.append(startingCard(name, s));
   }
 
-  if (!shown.length && !starting.size) {
+  if (!shown.length && !pendingCards.size) {
     list.append(el('div', 'empty',
       snapshot.deployments.length ? 'Nothing matches that filter.' : 'Nothing is deployed on this box.'));
   } else {

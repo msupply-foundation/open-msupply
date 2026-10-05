@@ -90,6 +90,10 @@ const PUBLIC_URL = DOMAIN ? `https://dashboard.${DOMAIN}` : '';
 const DISPATCH_REF = process.env.DISPATCH_REF || 'develop';
 // How often GitHub is re-read for the deployments, while someone is looking.
 const ENRICH_EVERY = Number(process.env.ENRICH_SECONDS || 60) * 1000;
+// How often the in-progress workflow runs are re-read. Faster than the commit
+// lookups, because "is something happening to my server right now" is the
+// question someone watching the page is waiting on. Two calls a round.
+const RUNS_EVERY = Number(process.env.RUNS_SECONDS || 15) * 1000;
 
 const CAN_SIGN_IN = Boolean(CLIENT_ID && CLIENT_SECRET && REPO);
 
@@ -489,6 +493,98 @@ function maybeEnrich(list, token) {
 }
 
 // ---------------------------------------------------------------------------
+// What is happening right now
+// ---------------------------------------------------------------------------
+//
+// Every deploy, reseed and teardown - from a button, GitHub's form, a push or a
+// pull request label - is a run of one of the two workflows below, and it
+// exists from the moment it is dispatched. Unlike a GitHub deployment record,
+// which only appears once the deploy job starts (twenty minutes into a build),
+// or a container, which a brand-new server does not have yet. So the page
+// learns what is in flight from the runs, and both workflows name their runs
+// for exactly this: see their `run-name`.
+
+// What a preview run was asked to do. Which one actually happens the plan
+// decides, but the event says what was asked for. A push to the pull request
+// is an `update`: it only means something for a preview that already exists.
+const PREVIEW_ACTIONS = {
+  deploy: 'deploy', reseed: 'reseed', teardown: 'teardown', closed: 'teardown',
+  opened: 'update', reopened: 'update', synchronize: 'update',
+};
+// The label preview runs care about, as in docker-pr-preview.yaml.
+const PREVIEW_LABEL = 'deploy';
+
+/**
+ * What a run is for, from its name, or null when it is not one of ours - a run
+ * from a branch whose workflow predates `run-name` is titled with its commit
+ * message, and is simply not shown.
+ *
+ *   `deploy vaccine-flow`, `reseed develop`, `teardown v3-02`  a dispatch
+ *   `push develop`                                            a push, matched by branch
+ *   `labeled pr-470 deploy`, `teardown pr-470`                a preview; any
+ *                                                             other label is
+ *                                                             not ours
+ */
+export function parseRunName(title) {
+  const t = String(title || '').trim();
+  let m = /^(deploy|reseed|teardown) ([a-z0-9][a-z0-9-]*)$/.exec(t);
+  if (m) return { action: m[1], name: m[2] };
+  m = /^([a-z_]+) pr-(\d+)(?: (\S+))?$/.exec(t);
+  if (m) {
+    const [, event, pr, label] = m;
+    const name = `pr-${pr}`;
+    if (event === 'labeled' || event === 'unlabeled') {
+      if (label !== PREVIEW_LABEL) return null;
+      return { action: event === 'labeled' ? 'deploy' : 'teardown', name };
+    }
+    if (PREVIEW_ACTIONS[event]) return { action: PREVIEW_ACTIONS[event], name };
+    return null;
+  }
+  m = /^push (\S+)$/.exec(t);
+  if (m) return { action: 'update', branch: m[1] };
+  return null;
+}
+
+// Held between rounds, like the enrichment, so a GitHub blip does not make
+// every in-flight run blink out.
+let runs = [];
+let runsAt = null;
+let refreshingRuns = null;
+let lastRuns = 0;
+
+async function readRuns(token) {
+  const found = [];
+  for (const status of ['queued', 'in_progress']) {
+    const page = await ghRead(`/repos/${REPO}/actions/runs?status=${status}&per_page=100`, token);
+    // Any failed read keeps the last answer rather than publishing a partial one.
+    if (!page) return null;
+    for (const r of page.workflow_runs || []) {
+      if (!Object.values(WORKFLOWS).some(w => String(r.path || '').includes(w))) continue;
+      const what = parseRunName(r.display_title);
+      if (!what) continue;
+      found.push({
+        ...what,
+        status,
+        runUrl: r.html_url,
+        startedAt: r.run_started_at || r.created_at,
+        actor: r.triggering_actor?.login || r.actor?.login || null,
+      });
+    }
+  }
+  // Newest first, so the page can take the first match for a deployment.
+  return found.sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
+}
+
+function maybeRefreshRuns(token) {
+  if (refreshingRuns || Date.now() - lastRuns < RUNS_EVERY) return;
+  lastRuns = Date.now();
+  refreshingRuns = readRuns(token)
+    .then(r => { if (r) { runs = r; runsAt = new Date().toISOString(); } })
+    .catch(e => log(`reading workflow runs failed: ${e.message}`))
+    .finally(() => { refreshingRuns = null; });
+}
+
+// ---------------------------------------------------------------------------
 // Sign-in
 // ---------------------------------------------------------------------------
 //
@@ -677,8 +773,9 @@ async function handle(req, res) {
       return send(res, 404, { error: 'no snapshot yet' });
     }
     maybeEnrich(snapshot.deployments, s.token);
+    maybeRefreshRuns(s.token);
     applyEnrichment(snapshot.deployments);
-    return send(res, 200, { ...snapshot, repo: REPO, enrichedAt });
+    return send(res, 200, { ...snapshot, repo: REPO, enrichedAt, runs, runsAt });
   }
   if (req.method === 'GET' && url.pathname === '/api/tags') {
     const s = sessionOf(req);
