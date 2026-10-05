@@ -28,7 +28,7 @@ export interface AllocateLinesActionProps {
   onCommitted: () => void;
 }
 
-// "Allocate placeholder lines" (spec S3 § bulk line actions, AC-AL1–AL5 +
+// "Allocate placeholder lines" (spec S3 § bulk line actions, OMS-REG-SMV-11.1–.14 +
 // OMS-REG-DIST-03.8): auto-allocation per selected placeholder — FEFO
 // server-side. Outcomes are classified per line exactly as the current app does
 // (fully allocated / partial / failed, with the skip reasons that applied) and
@@ -134,7 +134,7 @@ export const AllocateLinesAction: Component<
       // Classify like the current app: placeholder deleted → fully allocated;
       // otherwise some stock moved (insert, or updates beyond the placeholder
       // itself) → partial; nothing moved → failed. Skip categories become the
-      // reasons list on the partial/failed report line (AC-AL2).
+      // reasons list on the partial/failed report line (OMS-REG-SMV-11.7).
       if (response.deletes.some(deleted => deleted.id === line.id)) {
         allocated++;
       } else {
