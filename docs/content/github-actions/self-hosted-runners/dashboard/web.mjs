@@ -75,12 +75,15 @@ const WEB = (process.env.GITHUB_WEB || 'https://github.com').replace(/\/$/, '');
 // nobody can sign in, so the page shows nothing.
 const CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
 const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
-// This page's own address, for the sign-in callback. Must match a callback URL
-// registered on the App. Worked out from the request when unset, which is right
-// behind the proxy (Caddy passes Host and sets X-Forwarded-Proto) - but GitHub
-// refuses any callback the App does not list, so setting it is mostly a way to
-// make a mismatch obvious.
-const PUBLIC_URL = (process.env.DASHBOARD_URL || '').replace(/\/$/, '');
+// This page's own address, for the sign-in callback, which must match the one
+// registered on the App. Always https://dashboard.<DEPLOY_DOMAIN> on the box -
+// and it has to be stated rather than read off the request: the edge proxy
+// terminates TLS and forwards plain http, and the box's Caddy does not trust
+// the edge's forwarded headers, so the request says `http` and GitHub would
+// refuse the callback. Worked out from the request only when DEPLOY_DOMAIN is
+// unset, which is trying it out on localhost.
+const DOMAIN = process.env.DEPLOY_DOMAIN || '';
+const PUBLIC_URL = DOMAIN ? `https://dashboard.${DOMAIN}` : '';
 // The branch the workflows are dispatched on. `develop` because that is where
 // their logic lives now - see docker-named-deployment.yaml - and a dispatch on
 // any other branch would run that branch's copy of the trigger file.

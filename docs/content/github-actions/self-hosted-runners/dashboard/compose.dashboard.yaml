@@ -97,9 +97,10 @@ services:
       # without these nobody can sign in and the page shows nothing.
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
-      # https://dashboard.<DEPLOY_DOMAIN>, matching the App's callback URL. Worked
-      # out from the request if unset, which is right behind the proxy.
-      DASHBOARD_URL: ${DASHBOARD_URL:-}
+      # Its own address is https://dashboard.<DEPLOY_DOMAIN>, which is what the
+      # App's callback URL must be. The same value the proxy and the
+      # repository variable hold.
+      DEPLOY_DOMAIN: ${DEPLOY_DOMAIN:?set DEPLOY_DOMAIN in .env}
       # How often GitHub is re-read while someone has the page open.
       ENRICH_SECONDS: ${ENRICH_SECONDS:-60}
       # The branch the buttons dispatch the workflows on. develop, except while

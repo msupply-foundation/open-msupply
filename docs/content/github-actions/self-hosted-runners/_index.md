@@ -275,7 +275,6 @@ DEPLOY_DOMAIN=preview.example.com
 GITHUB_REPOSITORY=msupply-foundation/open-msupply-internal
 GITHUB_CLIENT_ID=Iv23li...
 GITHUB_CLIENT_SECRET=...
-DASHBOARD_URL=https://dashboard.preview.example.com
 EOF
 chmod 600 .env
 docker compose -f compose.dashboard.yaml up -d
