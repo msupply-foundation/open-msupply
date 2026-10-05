@@ -8,8 +8,11 @@ import {
   classify,
   compileGlob,
   diffSnapshots,
+  effectiveConfig,
   nextGreen,
   planRun,
+  profileSuites,
+  runGroups,
   visibleTo,
   ownersOf,
   runtimeImports,
@@ -539,5 +542,87 @@ describe('smoke', () => {
       distance: 0,
       reason: 'smoke',
     });
+  });
+});
+
+describe('plugin profiles', () => {
+  // A plugin with a profile (specs/plugins/<p>/), one without, and the SDK
+  // the plugin imports.
+  const P = {
+    'frontend/src/index.tsx': "import './plugins/loader';",
+    'frontend/src/plugins/loader.ts': "import '../plugin-sdk';",
+    'frontend/src/plugin-sdk/index.ts': "import { x } from './api';",
+    'frontend/src/plugin-sdk/api.ts': 'export const x = 1;',
+    'frontend/plugins/island/package.json': '{}',
+    'frontend/plugins/island/src/nav.tsx':
+      "import { x } from '@openmsupply/plugin-sdk';",
+    'frontend/plugins/other/package.json': '{}',
+    'frontend/plugins/other/src/a.tsx':
+      "import { x } from '@openmsupply/plugin-sdk';",
+    'frontend/e2e/specs/login-regression.spec.ts': '',
+    'frontend/e2e/specs/plugins/island/island-regression.spec.ts': '',
+  };
+  const pfiles = new Set(Object.keys(P));
+  const raw = { ...config, overrides: { 'login-regression': [] } };
+  const pconfig = effectiveConfig(raw, pfiles);
+  const powners = ownersOf(pconfig, pfiles);
+  const pctx = {
+    config: pconfig,
+    files: pfiles,
+    owners: powners,
+    importers: buildImporters(ts, pfiles, f => P[f]),
+    server: null,
+  };
+  const reach = f =>
+    (classify(f, pctx).suites ?? []).map(s => [s.name, s.distance]);
+
+  it('finds a profile suite only where its plugin exists', () => {
+    expect(profileSuites(pfiles)).toEqual([
+      {
+        name: 'island-regression',
+        profile: 'island',
+        spec: 'frontend/e2e/specs/plugins/island/island-regression.spec.ts',
+      },
+    ]);
+    const orphan = new Set([
+      ...pfiles,
+      'frontend/e2e/specs/plugins/gone/gone-regression.spec.ts',
+    ]);
+    expect(profileSuites(orphan).map(s => s.name)).toEqual([
+      'island-regression',
+    ]);
+    expect(checkConfig(raw, orphan)).toContain(
+      'specs/plugins/gone/ has no plugin: frontend/plugins/gone/package.json is missing'
+    );
+  });
+
+  it('charges the plugin, the loader, and the SDK (through the plugin) to its suite', () => {
+    expect(reach('frontend/plugins/island/src/nav.tsx')).toEqual([
+      ['island-regression', 0],
+    ]);
+    expect(reach('frontend/src/plugins/loader.ts')).toEqual([
+      ['island-regression', 0],
+    ]);
+    expect(reach('frontend/src/plugin-sdk/api.ts')).toEqual([
+      ['island-regression', 1],
+    ]);
+  });
+
+  it('ignores a plugin no profile loads', () => {
+    expect(classify('frontend/plugins/other/src/a.tsx', pctx).via).toBe(
+      'ignore'
+    );
+  });
+
+  it('runs the default suites first, then each profile on its own stack', () => {
+    expect(
+      runGroups(
+        ['island-regression', 'login-regression', 'stock-regression'],
+        profileSuites(pfiles)
+      )
+    ).toEqual([
+      { profile: null, names: ['login-regression', 'stock-regression'] },
+      { profile: 'island', names: ['island-regression'] },
+    ]);
   });
 });

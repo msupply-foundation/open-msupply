@@ -7,9 +7,10 @@
  *   pnpm e2e:affected --files a.ts b.rs  # explicit paths (cwd- or repo-rel.)
  *   pnpm e2e:affected --run [-- <pw args>]   # run the selection locally
  *   pnpm e2e:affected --run --force      # …without skipping known-green ones
- *   pnpm e2e:affected --status           # which still need a run (exit 3 if any)
- *   node scripts/e2e/affected.mjs --push-hook  # the same, as a warn-only
- *                                        # PreToolUse hook (.claude/settings.json)
+ *   pnpm e2e:affected --status           # which still need a run (exit 3)
+ *   node scripts/e2e/affected.mjs --push-hook
+ *                                        # the same, as a warn-only PreToolUse
+ *                                        # hook (.claude/settings.json)
  *   pnpm e2e:affected --json             # machine-readable (CI)
  *   pnpm e2e:affected --list             # suite names only, one per line
  *   pnpm e2e:affected --check            # lint the config (in `pnpm check`)
@@ -87,6 +88,44 @@ const sectionNames = files =>
     ...new Set([...files].map(f => SECTION.exec(f)?.[1]).filter(Boolean)),
   ].sort();
 
+// Plugin profiles (e2e/README.md § Plugin profiles): a suite under
+// specs/plugins/<profile>/ runs on its own stack with that plugin installed,
+// never on the default one. A profile counts only when
+// plugins/<profile>/package.json exists — the nightly's rule.
+const PROFILE_SPEC =
+  /^frontend\/e2e\/specs\/plugins\/([^/]+)\/([^/]+)\.spec\.ts$/;
+export const profileSuites = files =>
+  [...files]
+    .map(f => PROFILE_SPEC.exec(f))
+    .filter(Boolean)
+    .map(([spec, profile, name]) => ({ name, profile, spec }))
+    .filter(s => files.has(`frontend/plugins/${s.profile}/package.json`))
+    .sort((a, b) => a.name.localeCompare(b.name));
+const allSuiteNames = files =>
+  [...specNames(files), ...profileSuites(files).map(s => s.name)].sort();
+const PLUGIN_DIR = /^frontend\/plugins\/([^/]+)\//;
+
+/**
+ * The config as selection uses it: a plugin with no profile is ignored —
+ * no stack loads it, so no suite can observe it. Adding a profile is just
+ * its specs/plugins/<profile>/ directory; nothing to list here.
+ */
+export const effectiveConfig = (config, files) => {
+  const profiles = new Set(profileSuites(files).map(s => s.profile));
+  const unloaded = new Set(
+    [...files]
+      .map(f => PLUGIN_DIR.exec(f)?.[1])
+      .filter(d => d && !profiles.has(d))
+  );
+  return {
+    ...config,
+    ignore: [
+      ...config.ignore,
+      ...[...unloaded].map(d => `frontend/plugins/${d}/**`),
+    ],
+  };
+};
+
 /**
  * `<name>-regression.spec.ts` owns `frontend/src/sections/<name>/**` unless
  * config.overrides says otherwise. A suite also owns its spec file, so an
@@ -107,6 +146,19 @@ export const ownersOf = (config, files) => {
       frontend: [...frontend, `frontend/e2e/specs/${name}.spec.ts`],
     });
   }
+  // A profile suite owns its plugin and the host's plugin loader; a change to
+  // the SDK reaches it through the plugin's own imports.
+  for (const s of profileSuites(files))
+    owners.push({
+      name: s.name,
+      kind: 'suite',
+      profile: s.profile,
+      frontend: [
+        `frontend/plugins/${s.profile}/**`,
+        'frontend/src/plugins/**',
+        s.spec,
+      ],
+    });
   for (const section of sectionNames(files)) {
     const probe = `frontend/src/sections/${section}/index.tsx`;
     if (!owners.some(o => matchesAny(probe, o.frontend)))
@@ -127,7 +179,9 @@ const frontendOwners = (owners, file) =>
 const CODE = /\.(tsx?|jsx?|mjs|cjs)$/;
 const RESOLVE_EXTS = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json'];
 const inGraph = f =>
-  f.startsWith('frontend/src/') || f.startsWith('frontend/e2e/');
+  f.startsWith('frontend/src/') ||
+  f.startsWith('frontend/e2e/') ||
+  f.startsWith('frontend/plugins/');
 
 /**
  * Resolve an import specifier to a repo-relative file in `files`, or null for
@@ -853,6 +907,24 @@ export const nextGreen = ({ green, reached, ran, passed }) => {
   return out;
 };
 
+/**
+ * Split suites to run into one run per stack: the default suites first,
+ * then each plugin profile (which needs its plugin installed, so can never
+ * share the default stack).
+ */
+export const runGroups = (names, profiles) => {
+  const profileOf = new Map(profiles.map(s => [s.name, s.profile]));
+  const groups = new Map();
+  for (const n of names) {
+    const p = profileOf.get(n) ?? null;
+    if (!groups.has(p)) groups.set(p, []);
+    groups.get(p).push(n);
+  }
+  return [...groups]
+    .sort(([a], [b]) => (a === null ? -1 : b === null ? 1 : a.localeCompare(b)))
+    .map(([profile, ns]) => ({ profile, names: ns }));
+};
+
 // --- Config lint (--check) --------------------------------------------------
 
 export const checkConfig = (config, files) => {
@@ -861,7 +933,19 @@ export const checkConfig = (config, files) => {
   for (const n of Object.keys(config.overrides))
     if (!names.has(n)) problems.push(`overrides.${n} names no spec file`);
   for (const n of [...config.smoke, ...config.rules.flatMap(r => r.suites)])
-    if (!names.has(n)) problems.push(`'${n}' (smoke/rules) is not a suite`);
+    if (!names.has(n) && !profileSuites(files).some(s => s.name === n))
+      problems.push(`'${n}' (smoke/rules) is not a suite`);
+
+  // A profile directory needs its plugin — the nightly fails on one too.
+  for (const profile of new Set(
+    [...files]
+      .map(f => /^frontend\/e2e\/specs\/plugins\/([^/]+)\//.exec(f)?.[1])
+      .filter(Boolean)
+  ))
+    if (!files.has(`frontend/plugins/${profile}/package.json`))
+      problems.push(
+        `specs/plugins/${profile}/ has no plugin: frontend/plugins/${profile}/package.json is missing`
+      );
 
   // Every suite owns something: its same-named section, or an override.
   for (const n of names) {
@@ -1123,11 +1207,12 @@ const main = async () => {
       console.log('e2e:affected: skipped — no e2e/ in this tree');
     return;
   }
-  const config = await import(pathToFileURL(configPath).href);
+  const rawConfig = await import(pathToFileURL(configPath).href);
   const files = trackedFiles(root);
+  const config = effectiveConfig(rawConfig, files);
 
   if (opts.check) {
-    const problems = checkConfig(config, files);
+    const problems = checkConfig(rawConfig, files);
     if (problems.length) {
       console.error(
         `e2e:affected --check: ${problems.length} problem(s) in e2e/affected.config.mjs:\n  ${problems.join('\n  ')}`
@@ -1135,7 +1220,7 @@ const main = async () => {
       process.exit(1);
     }
     console.log(
-      `e2e:affected --check: ${specNames(files).length} suites, config complete.`
+      `e2e:affected --check: ${allSuiteNames(files).length} suites, config complete.`
     );
     return;
   }
@@ -1185,7 +1270,7 @@ const main = async () => {
     : null;
   const ctx = { config, files, scriptsOnly, owners, importers, server };
   const results = changed.map(f => classify(f, ctx));
-  const sel = select(results, config, specNames(files));
+  const sel = select(results, config, allSuiteNames(files));
 
   // What a `--run` would run, and what it would skip as already green: the
   // change since the last green run goes through the same selection (smoke
@@ -1196,7 +1281,7 @@ const main = async () => {
       ? select(
           sinceGreen.map(f => classify(f, ctx)),
           config,
-          specNames(files)
+          allSuiteNames(files)
         ).suites.map(s => s.name)
       : []
   );
@@ -1252,9 +1337,13 @@ const main = async () => {
           ` (${sinceGreen.length} file(s) changed since): ${skip.join(' ')}` +
           `\n  --force re-runs them.`
       );
-    const save = (ran, passed) => {
+    // One run per stack: the default suites, then each plugin profile on its
+    // own stack with that plugin installed. `outcomes` is what each run did.
+    const save = outcomes => {
       if (!useRecord) return;
-      const g = nextGreen({ green, reached, ran, passed });
+      let g = nextGreen({ green, reached, ran: [], passed: true });
+      for (const { names, passed } of outcomes)
+        g = nextGreen({ green: g, reached: new Set(), ran: names, passed });
       writeFileSync(
         GREEN_RECORD,
         JSON.stringify({
@@ -1268,24 +1357,39 @@ const main = async () => {
     };
     if (!toRun.length) {
       console.log('Nothing to run.');
-      save([], true);
+      save([]);
       return;
     }
 
-    // Anchored on the directory so `login-regression` does not also match
-    // `relogin-regression`.
-    const filters = toRun.map(n => `specs/${n}\\.spec`);
-    console.log(`\nRunning ${toRun.length} suite(s): ${toRun.join(' ')}\n`);
-    const r = spawnSync(
-      'bash',
-      [path.join(SCRIPT_DIR, 'run-e2e.sh'), ...filters, ...opts.pw],
-      {
-        cwd: FE_DIR,
-        stdio: 'inherit',
-      }
-    );
-    save(toRun, r.status === 0);
-    process.exit(r.status ?? 1);
+    const outcomes = [];
+    let status = 0;
+    // A profile is named only for its own run, never inherited by the default.
+    const { E2E_PLUGIN_PROFILE: _, ...baseEnv } = process.env;
+    for (const { profile, names } of runGroups(toRun, profileSuites(files))) {
+      // Anchored on the directory so `login-regression` does not also match
+      // `relogin-regression`.
+      const filters = names.map(n =>
+        profile ? `specs/plugins/${profile}/${n}\\.spec` : `specs/${n}\\.spec`
+      );
+      console.log(
+        `\nRunning ${names.length} suite(s)` +
+          (profile ? ` on the ${profile} plugin profile's own stack` : '') +
+          `: ${names.join(' ')}\n`
+      );
+      const r = spawnSync(
+        'bash',
+        [path.join(SCRIPT_DIR, 'run-e2e.sh'), ...filters, ...opts.pw],
+        {
+          cwd: FE_DIR,
+          stdio: 'inherit',
+          env: profile ? { ...baseEnv, E2E_PLUGIN_PROFILE: profile } : baseEnv,
+        }
+      );
+      outcomes.push({ names, passed: r.status === 0 });
+      if (r.status !== 0) status = r.status ?? 1;
+    }
+    save(outcomes);
+    process.exit(status);
   }
 };
 
