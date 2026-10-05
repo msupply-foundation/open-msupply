@@ -1,17 +1,17 @@
 use super::{
+    LocationRow, NameRow, ReasonOptionRow, StockLineRow, StocktakeLineRow, StorageConnection,
     item_row::item, location_row::location, name_row::name, reason_option_row::reason_option,
-    stock_line_row::stock_line, stocktake_line_row::stocktake_line, LocationRow, NameRow,
-    ReasonOptionRow, StockLineRow, StocktakeLineRow, StorageConnection,
+    stock_line_row::stock_line, stocktake_line_row::stocktake_line,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
+    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
+    StringFilter,
     diesel_macros::{
         apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
     },
-    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
-    StringFilter,
 };
 
 #[derive(Clone, Default)]

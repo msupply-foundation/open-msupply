@@ -8,13 +8,13 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
-    translations::{name::NameTranslation, store::StoreTranslation},
     CentralServerConfig,
+    translations::{name::NameTranslation, store::StoreTranslation},
 };
 
 use super::{
-    utils::skip_name_relay_to_legacy, FkField, IntegrationOperation, PullTranslateResult,
-    PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType, utils::skip_name_relay_to_legacy,
 };
 
 #[allow(non_snake_case)]
@@ -102,7 +102,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
                     "Failed to get name '{}' for name_store_join '{}'",
                     data.name_id,
                     data.id
-                ))
+                ));
             }
         };
 
@@ -262,9 +262,9 @@ mod tests {
         translations::ToSyncRecordTranslationType,
     };
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        CursorAndLimit, FilterBuilder, InvoiceRow, InvoiceRowRepository, RowOrDelete, SyncAction,
-        SyncRecordData,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, InvoiceRow,
+        InvoiceRowRepository, RowOrDelete, SyncAction, SyncRecordData, mock::MockDataInserts,
+        test_db::setup_all,
     };
     use serde_json::json;
 

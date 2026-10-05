@@ -6,10 +6,10 @@ use repository::{
 };
 
 use crate::{
+    NullableUpdate,
     preference::{AuthorisePurchaseOrder, Preference},
     purchase_order::update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
-    NullableUpdate,
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 
 pub fn validate(

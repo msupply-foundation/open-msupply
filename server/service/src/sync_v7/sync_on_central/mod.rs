@@ -5,11 +5,11 @@ use std::{
 
 use chrono::Utc;
 use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
     ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
     RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
     StorageConnection, SyncBufferRepository, SyncVersion,
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
 };
 use thiserror::Error;
 use util::format_error;
@@ -20,20 +20,19 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     static_files::{StaticFile, StaticFileService},
     sync::{
+        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
         api::{SyncApiSettings, SyncApiV5},
         settings::SYNC_V5_VERSION,
-        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
     sync_v7::{
         api::{
-            download_file,
+            Common, download_file,
             get_token::{GetTokenInput, GetTokenOutput},
             patient_data_for_site, patient_search, pull, push,
             status::{self},
-            Common,
         },
-        sync::{sync_record_to_buffer_row, SyncBatchV7},
-        validate_translate_integrate::{validate_translate_integrate, SyncContext},
+        sync::{SyncBatchV7, sync_record_to_buffer_row},
+        validate_translate_integrate::{SyncContext, validate_translate_integrate},
     },
 };
 
@@ -667,12 +666,12 @@ mod tests {
     use super::*;
     use crate::{
         sync::{synchroniser_driver::SyncTrigger, test_util_set_is_central_server},
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
     use httpmock::MockServer;
     use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
-        KeyValueStoreRepository, SyncVersion,
+        KeyType, KeyValueStoreRepository, SyncVersion, migrations::Version, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     const SITE_NAME: &str = "test_site";

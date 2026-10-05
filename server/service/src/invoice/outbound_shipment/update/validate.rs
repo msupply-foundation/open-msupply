@@ -1,14 +1,14 @@
-use super::{backdated_datetime_change, UpdateOutboundShipment, UpdateOutboundShipmentError};
+use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, backdated_datetime_change};
+use crate::NullableUpdate;
 use crate::common::check_shipping_method_exists;
 use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
-    check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_status_change, check_store, custom_fields::check_invoice_custom_fields_patch,
-    InvoiceRowStatusError,
+    InvoiceRowStatusError, check_invoice_exists, check_invoice_is_editable, check_invoice_status,
+    check_invoice_type, check_status_change, check_store,
+    custom_fields::check_invoice_custom_fields_patch,
 };
-use crate::preference::{preferences::Backdating, Preference};
+use crate::preference::{Preference, preferences::Backdating};
 use crate::validate::{check_other_party_store_is_disabled, get_other_party};
-use crate::NullableUpdate;
 use chrono::{Duration, Utc};
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,

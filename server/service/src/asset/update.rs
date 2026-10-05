@@ -7,16 +7,16 @@ use super::{
     },
 };
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
-    SingleRecordError,
+    NullableUpdate, SingleRecordError, activity_log::activity_log_entry,
+    service_provider::ServiceContext,
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
     assets::{
         asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 #[derive(PartialEq, Debug)]

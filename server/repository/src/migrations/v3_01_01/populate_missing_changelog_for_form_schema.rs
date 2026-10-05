@@ -50,7 +50,7 @@ mod tests {
         migrations::{v2_18_00::V2_18_00, v3_01_01::V3_01_01, *},
         test_db::*,
     };
-    use diesel::{connection::SimpleConnection, prelude::*, RunQueryDsl};
+    use diesel::{RunQueryDsl, connection::SimpleConnection, prelude::*};
 
     // Minimal changelog columns needed for verification.
     // The test runs the full sequence through v3_00_00, which includes the

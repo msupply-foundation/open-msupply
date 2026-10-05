@@ -1,4 +1,4 @@
-use crate::{migrations::*, RepositoryError, StorageConnection};
+use crate::{RepositoryError, StorageConnection, migrations::*};
 use diesel::{
     dsl::{max, sql},
     prelude::*,
@@ -244,7 +244,9 @@ pub fn ensure_partition_lookahead(
     if max_upper == 0 {
         // `changelog` isn't partitioned (pre-migration) or has no partitions —
         // should not reach this state. Should we panic or throw error instead? For now, just log and return.
-        log::warn!("changelog partition lookahead: changelog table is not partitioned or has no partitions");
+        log::warn!(
+            "changelog partition lookahead: changelog table is not partitioned or has no partitions"
+        );
         return Ok(0);
     }
 

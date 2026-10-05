@@ -114,7 +114,7 @@ impl From<RepositoryError> for InsertPrescriptionRequestError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{clinician_a, mock_patient, MockDataInserts},
+        mock::{MockDataInserts, clinician_a, mock_patient},
         test_db::setup_all,
     };
     use util::uuid::uuid;

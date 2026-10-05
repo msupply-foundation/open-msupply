@@ -7,15 +7,15 @@ use diesel::r2d2::{ConnectionManager, Pool};
 use util::lock_file;
 
 use crate::{
-    database_settings::{DatabaseSettings, SqliteConnectionOptions},
-    migrations::{migrate, MigrationConfig, Version},
-    mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     DBBackendConnection, StorageConnectionManager,
+    database_settings::{DatabaseSettings, SqliteConnectionOptions},
+    migrations::{MigrationConfig, Version, migrate},
+    mock::{MockDataCollection, MockDataInserts, all_mock_data, insert_all_mock_data},
 };
 
 use super::constants::{
-    env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_POSTGRES,
-    TEMPLATE_MARKER_FILE_SQLITE, TEST_OUTPUT_DIR,
+    TEMPLATE_MARKER_FILE_POSTGRES, TEMPLATE_MARKER_FILE_SQLITE, TEST_OUTPUT_DIR,
+    env_msupply_no_test_db_template, find_workspace_root,
 };
 
 pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {

@@ -1,5 +1,5 @@
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 use repository::{
     ActivityLogType, DemographicProjectionRow, DemographicProjectionRowRepository, RepositoryError,
@@ -70,7 +70,7 @@ pub fn validate(
         match check_demographic_projection_exists(&input.id, connection)? {
             Some(demographic_projection_row) => demographic_projection_row,
             None => {
-                return Err(UpdateDemographicProjectionError::DemographicProjectionDoesNotExist)
+                return Err(UpdateDemographicProjectionError::DemographicProjectionDoesNotExist);
             }
         };
 

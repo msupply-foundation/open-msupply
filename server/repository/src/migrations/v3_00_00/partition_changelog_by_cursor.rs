@@ -1,6 +1,6 @@
 use crate::{
-    migrations::{helpers::max_sequence, sql, MigrationConfig, MigrationFragment},
     StorageConnection,
+    migrations::{MigrationConfig, MigrationFragment, helpers::max_sequence, sql},
 };
 
 pub(crate) struct Migrate;
@@ -139,7 +139,7 @@ fn create_future_partitions(
 #[cfg(all(test, feature = "postgres"))]
 mod tests {
     use crate::{
-        migrations::{v2_18_00::V2_18_00, ChangelogPartitionConfig, *},
+        migrations::{ChangelogPartitionConfig, v2_18_00::V2_18_00, *},
         test_db::*,
     };
     use diesel::{prelude::*, sql_types::BigInt};

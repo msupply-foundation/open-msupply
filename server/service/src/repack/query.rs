@@ -117,19 +117,19 @@ pub fn get_repacks_by_stock_line(
 #[cfg(test)]
 mod test {
     use crate::{
-        repack::{query::Repack, InsertRepack},
+        repack::{InsertRepack, query::Repack},
         service_provider::ServiceProvider,
     };
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            currency_a, mock_item_a, mock_location_1, mock_location_on_hold, mock_store_a,
-            mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
         InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
         StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, currency_a, mock_item_a, mock_location_1,
+            mock_location_on_hold, mock_store_a, mock_user_account_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]

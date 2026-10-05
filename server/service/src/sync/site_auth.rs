@@ -2,17 +2,17 @@ use super::api::{SyncApiError, SyncApiV5CreatingError};
 use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        api::SyncApiV5,
-        settings::{SyncSettings, SYNC_V5_VERSION},
         CentralServerConfig,
+        api::SyncApiV5,
+        settings::{SYNC_V5_VERSION, SyncSettings},
     },
-    sync_v7::api::get_token::{get_token, GetTokenInput},
+    sync_v7::api::get_token::{GetTokenInput, get_token},
 };
 use async_trait::async_trait;
 use log::info;
 use repository::{
-    migrations::Version, syncv7::SyncError, KeyType, KeyValueStoreRepository, RepositoryError,
-    SyncVersion,
+    KeyType, KeyValueStoreRepository, RepositoryError, SyncVersion, migrations::Version,
+    syncv7::SyncError,
 };
 use thiserror::Error;
 use util::format_error;

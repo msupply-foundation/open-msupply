@@ -69,10 +69,10 @@ pub(crate) fn repair_source_site_id(
 #[cfg(test)]
 mod tests {
     use repository::{
-        mock::MockDataInserts, system_log_row::SystemLogRowRepository, test_db::setup_all,
         ChangeLogInsertRow, ChangelogCondition, ChangelogRepository, ChangelogTableName,
         CursorAndLimit, RowActionType, StorageConnection, SyncAction, SyncBufferRepository,
-        SyncBufferRowInsert, SyncRecordData,
+        SyncBufferRowInsert, SyncRecordData, mock::MockDataInserts,
+        system_log_row::SystemLogRowRepository, test_db::setup_all,
     };
     use util::datetime_now;
 

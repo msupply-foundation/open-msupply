@@ -3,12 +3,12 @@ use std::time::{Duration, SystemTime};
 use chrono::Utc;
 use log::info;
 use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
     AppVersion, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogTableName,
     CursorAndLimit, KeyType, KeyValueStoreRepository, QueryWithData, RowActionType,
     StorageConnection, SyncAction, SyncBufferRepository, SyncBufferRowInsert, SyncRecordData,
     SyncVersion,
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
 };
 use serde::{Deserialize, Serialize};
 use util::format_error;
@@ -17,10 +17,10 @@ use crate::{
     cursor_controller::CursorController,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
+        ActiveStoresOnSite,
         settings::{BatchSize, SyncSettings},
         site_auth::{RequestAndSetSiteAuthError, SiteAuthService, SiteAuthTrait},
         synchroniser::run_post_sync_triggers,
-        ActiveStoresOnSite,
     },
     sync_v7::{
         api::{self, Common, SyncApiV7},
@@ -28,7 +28,7 @@ use crate::{
         prepare::prepare,
         sync_logger::{SyncLogger, SyncLoggerHandle, SyncStep},
         sync_request::{SyncRequest, SyncRequestStep},
-        validate_translate_integrate::{validate_translate_integrate, SyncContext},
+        validate_translate_integrate::{SyncContext, validate_translate_integrate},
     },
 };
 
@@ -401,7 +401,10 @@ impl<'a> SyncV7<'a> {
             let batch_last_cursor = batch.last_cursor_in_batch;
             logger.progress((max_cursor - batch_last_cursor) as i64)?;
 
-            info!("Pulled {record_count} batch last cursor {batch_last_cursor} cursor {cursor} max cursor {}", batch.max_cursor);
+            info!(
+                "Pulled {record_count} batch last cursor {batch_last_cursor} cursor {cursor} max cursor {}",
+                batch.max_cursor
+            );
 
             // V7 pull: records arrive without an originating app_version (it isn't
             // carried through the central server), so app_version is None here.

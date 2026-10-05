@@ -2,8 +2,8 @@ use chrono::Utc;
 use repository::{InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow, StorageConnection};
 
 use crate::invoice::{
-    common::{generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine},
-    stock_effect::{stock_effects, StockEffect},
+    common::{InvoiceLineHasNoStockLine, generate_batches_total_number_of_packs_update},
+    stock_effect::{StockEffect, stock_effects},
 };
 
 use super::{UpdateSupplierReturn, UpdateSupplierReturnError, UpdateSupplierReturnStatus};

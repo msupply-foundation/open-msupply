@@ -1,12 +1,12 @@
 use super::{
-    user_permission_row::user_permission, DBType, PermissionType, StorageConnection,
-    UserPermissionRow,
+    DBType, PermissionType, StorageConnection, UserPermissionRow,
+    user_permission_row::user_permission,
 };
+use crate::{EqualFilter, Pagination, Sort};
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
 };
-use crate::{EqualFilter, Pagination, Sort};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 

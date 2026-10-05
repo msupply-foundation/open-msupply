@@ -1,8 +1,8 @@
 use async_graphql::*;
 
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -11,7 +11,7 @@ use service::{
 
 use crate::{
     queries::sync_settings::SyncSettingsNode,
-    sync_api_error::{map_request_auth_error, SyncErrorEither, SyncErrorNode},
+    sync_api_error::{SyncErrorEither, SyncErrorNode, map_request_auth_error},
     sync_v7::sync_api_error::SyncErrorV7Node,
 };
 

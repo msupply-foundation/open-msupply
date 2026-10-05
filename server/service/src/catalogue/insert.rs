@@ -1,10 +1,10 @@
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
     asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemRepository},
     asset_catalogue_item_row::{AssetCatalogueItemRow, AssetCatalogueItemRowRepository},
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 use super::query_catalogue_item::get_asset_catalogue_item;

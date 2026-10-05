@@ -1,6 +1,6 @@
 use repository::{
-    syncv7::SyncRecordSerializeError, ChangeLogInsertRow, StorageConnection, TemperatureLogRow,
-    TemperatureLogRowRepository, Upsert,
+    ChangeLogInsertRow, StorageConnection, TemperatureLogRow, TemperatureLogRowRepository, Upsert,
+    syncv7::SyncRecordSerializeError,
 };
 
 use crate::sync_v7::serde::DeserializeResult;
@@ -50,9 +50,9 @@ mod test {
     use super::*;
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_sensor_1, MockDataInserts},
-        test_db::setup_all,
         ChangelogTableName, RowActionType, TemperatureBreachRow, TemperatureBreachRowRepository,
+        mock::{MockDataInserts, mock_sensor_1},
+        test_db::setup_all,
     };
 
     const SENSOR_ID: &str = "sensor_1";

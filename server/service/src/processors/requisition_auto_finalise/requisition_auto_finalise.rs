@@ -15,7 +15,7 @@ use crate::{
     preference::{Preference, RequisitionAutoFinalise},
     processors::general_processor::{Processor, ProcessorError},
     requisition::response_requisition::{
-        update_response_requisition, UpdateResponseRequisition, UpdateResponseRequisitionStatus,
+        UpdateResponseRequisition, UpdateResponseRequisitionStatus, update_response_requisition,
     },
     service_provider::{ServiceContext, ServiceProvider},
     sync::ActiveStoresOnSite,

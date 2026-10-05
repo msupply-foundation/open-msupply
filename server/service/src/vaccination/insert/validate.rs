@@ -1,5 +1,5 @@
 use crate::{
-    common::{check_stock_line_exists, CommonStockLineError},
+    common::{CommonStockLineError, check_stock_line_exists},
     invoice_line::validate::check_item_exists,
     name::validate::check_name_exists,
     vaccination::validate::{

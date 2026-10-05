@@ -6,7 +6,7 @@ use crate::types::{
 };
 use async_graphql::*;
 use repository::StorageConnection;
-use service::preference::{preferences::PreferenceProvider, Preference, PreferenceDescription};
+use service::preference::{Preference, PreferenceDescription, preferences::PreferenceProvider};
 
 pub struct PreferencesNode {
     pub connection: StorageConnection,

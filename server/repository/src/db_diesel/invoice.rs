@@ -1,18 +1,19 @@
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician, invoice_line_row::invoice_line,
-    invoice_row::invoice, name_row::name, purchase_order_row::purchase_order,
-    requisition::requisition_row::requisition, store_row::store, ClinicianRow, DBType, InvoiceRow,
-    InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection, StoreRow,
+    ClinicianRow, DBType, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError,
+    StorageConnection, StoreRow, clinician_link_row::clinician_link, clinician_row::clinician,
+    invoice_line_row::invoice_line, invoice_row::invoice, name_row::name,
+    purchase_order_row::purchase_order, requisition::requisition_row::requisition,
+    store_row::store,
 };
 
 use crate::{
+    ClinicianLinkRow,
     diesel_extensions::datetime_coalesce,
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_equal_or_filter, apply_sort,
         apply_sort_no_case, apply_string_filter,
     },
     dynamic_query_filter::create_condition,
-    ClinicianLinkRow,
 };
 
 use strum::IntoEnumIterator;

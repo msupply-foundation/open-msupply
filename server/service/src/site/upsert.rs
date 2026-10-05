@@ -1,5 +1,5 @@
 use crate::service_provider::ServiceContext;
-use bcrypt::{hash, DEFAULT_COST};
+use bcrypt::{DEFAULT_COST, hash};
 use repository::{RepositoryError, SiteRow, SiteRowRepository, StorageConnection};
 
 #[derive(PartialEq, Debug)]
@@ -125,7 +125,7 @@ fn generate(
 
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all, SiteRowRepository};
+    use repository::{SiteRowRepository, mock::MockDataInserts, test_db::setup_all};
 
     use crate::service_provider::ServiceProvider;
 

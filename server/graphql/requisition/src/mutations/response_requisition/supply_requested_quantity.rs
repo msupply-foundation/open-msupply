@@ -1,9 +1,9 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, RecordNotFound},
-    standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError,
     ContextExt,
+    simple_generic_errors::{CannotEditRequisition, RecordNotFound},
+    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::validate_auth,
 };
 use graphql_types::types::RequisitionLineConnector;
 use service::{
@@ -89,12 +89,12 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::CannotEditRequisition => {
             return Ok(DeleteErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
@@ -113,20 +113,20 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
-            MockDataInserts,
-        },
         RequisitionLine, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_request_draft_requisition,
+            mock_sent_request_requisition_line,
+        },
     };
     use serde_json::json;
     use service::{
         requisition::{
+            RequisitionServiceTrait,
             response_requisition::{
                 SupplyRequestedQuantity as ServiceInput,
                 SupplyRequestedQuantityError as ServiceError,
             },
-            RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

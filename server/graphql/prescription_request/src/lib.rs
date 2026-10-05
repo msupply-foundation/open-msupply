@@ -6,14 +6,14 @@ pub mod queries;
 pub mod types;
 
 use mutations::{
-    batch_prescription_request, delete_prescription_request, delete_prescription_request_line,
-    insert_prescription_request, update_prescription_request, upsert_prescription_request_line,
     BatchInput, BatchResponse, DeleteLineResponse, DeleteResponse, InsertInput, InsertResponse,
-    UpdateInput, UpdateResponse, UpsertLineInput, UpsertLineResponse,
+    UpdateInput, UpdateResponse, UpsertLineInput, UpsertLineResponse, batch_prescription_request,
+    delete_prescription_request, delete_prescription_request_line, insert_prescription_request,
+    update_prescription_request, upsert_prescription_request_line,
 };
 use queries::{
-    get_prescription_request, get_prescription_requests, PrescriptionRequestFilterInput,
-    PrescriptionRequestResponse, PrescriptionRequestSortInput, PrescriptionRequestsResponse,
+    PrescriptionRequestFilterInput, PrescriptionRequestResponse, PrescriptionRequestSortInput,
+    PrescriptionRequestsResponse, get_prescription_request, get_prescription_requests,
 };
 
 #[derive(Default, Clone)]

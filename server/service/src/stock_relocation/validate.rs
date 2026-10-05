@@ -1,4 +1,4 @@
-use crate::common::{check_stock_line_exists, CommonStockLineError};
+use crate::common::{CommonStockLineError, check_stock_line_exists};
 use repository::{LocationRowRepository, RepositoryError, StockLine, StorageConnection};
 use util::EPSILON;
 

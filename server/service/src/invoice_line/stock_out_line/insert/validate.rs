@@ -3,11 +3,10 @@ use crate::{
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
-        invoice_backdated_date,
+        LocationIsOnHoldError, check_batch_exists, check_batch_on_hold, check_existing_stock_line,
+        check_location_on_hold, invoice_backdated_date,
         stock_out_line::adjust_for_residual_packs,
         validate::{check_line_exists, check_number_of_packs},
-        LocationIsOnHoldError,
     },
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
     validate::check_other_party_store_is_disabled,

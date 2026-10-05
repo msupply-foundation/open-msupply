@@ -29,7 +29,7 @@ impl MigrationFragment for Migrate {
 #[cfg(all(test, feature = "postgres"))]
 mod tests {
     use crate::{
-        migrations::{v3_02_00::V3_02_00, Migration, MigrationFragment},
+        migrations::{Migration, MigrationFragment, v3_02_00::V3_02_00},
         test_db::*,
     };
     use diesel::prelude::*;

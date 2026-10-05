@@ -3,22 +3,22 @@ use chrono::NaiveDate;
 use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditPurchaseOrder;
 use graphql_core::{
-    standard_graphql_error::{
-        validate_auth,
-        StandardGraphqlError::{BadUserInput, InternalError},
-    },
     ContextExt,
+    standard_graphql_error::{
+        StandardGraphqlError::{BadUserInput, InternalError},
+        validate_auth,
+    },
 };
 use graphql_types::generic_errors::ItemCannotBeOrdered;
 use graphql_types::types::{IdResponse, PurchaseOrderLineStatusNode};
 use repository::PurchaseOrderLine;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     purchase_order_line::update::{
         UpdatePurchaseOrderLineInput as ServiceInput,
         UpdatePurchaseOrderLineInputError as ServiceError,
     },
-    NullableUpdate,
 };
 
 use crate::mutations::errors::{
@@ -171,50 +171,50 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::PurchaseOrderLineNotFound => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::PurchaseOrderLineNotFound(PurchaseOrderLineNotFound),
-            }))
+            }));
         }
         ServiceError::UpdatedLineDoesNotExist => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::UpdatedLineDoesNotExist(UpdatedLineDoesNotExist),
-            }))
+            }));
         }
         ServiceError::PurchaseOrderDoesNotExist => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::PurchaseOrderDoesNotExist(PurchaseOrderDoesNotExist),
-            }))
+            }));
         }
         ServiceError::CannotEditRequestedQuantity => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::CannotEditRequestedQuantity(
                     CannotEditRequestedQuantity,
                 ),
-            }))
+            }));
         }
         ServiceError::CannotEditAdjustedQuantity => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::CannotEditAdjustedQuantity(
                     CannotEditAdjustedQuantity,
                 ),
-            }))
+            }));
         }
         ServiceError::CannotEditQuantityBelowReceived => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::CannotEditQuantityBelowReceived(
                     CannotEditQuantityBelowReceived,
                 ),
-            }))
+            }));
         }
         ServiceError::CannotEditPurchaseOrder => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::CannotEditPurchaseOrder(CannotEditPurchaseOrder),
-            }))
+            }));
         }
         ServiceError::ItemCannotBeOrdered(line) => {
             return Ok(UpdateResponse::Error(UpdatePurchaseOrderLineError {
                 error: PurchaseOrderLineError::ItemCannotBeOrdered(
                     ItemCannotBeOrdered::from_domain(line),
                 ),
-            }))
+            }));
         }
         // TODO return these as structured errors? Or leave as is
         ServiceError::PackSizeCodeCombinationExists(_pack_size_code_combination) => {

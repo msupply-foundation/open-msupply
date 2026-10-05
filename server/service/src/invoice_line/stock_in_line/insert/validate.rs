@@ -1,7 +1,7 @@
 use crate::common::check_program_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
-    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
+    NullableUpdate, check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
     invoice::{
         check_invoice_exists, check_invoice_lines_are_editable, check_invoice_type, check_store,
@@ -14,10 +14,9 @@ use crate::{
         },
     },
     validate::{
-        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
-        CheckOtherPartyType, OtherPartyErrors,
+        CheckOtherPartyType, OtherPartyErrors, check_date_is_not_in_future, check_other_party,
+        check_other_party_store_is_disabled,
     },
-    NullableUpdate,
 };
 use repository::{InvoiceRow, ItemRow, PurchaseOrderLineRowRepository, StorageConnection};
 
@@ -55,7 +54,7 @@ pub fn validate(
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
 
     if let Some(NullableUpdate {
-        value: Some(ref location),
+        value: Some(location),
     }) = &input.location
     {
         if !check_location_exists(connection, store_id, location)? {
@@ -113,7 +112,7 @@ pub fn validate(
                 OtherPartyErrors::OtherPartyNotVisible => {} // Invisible donors are allowed as it's possible to have a stock in from a donor that is not visible
                 OtherPartyErrors::TypeMismatched => return Err(SelectedDonorPartyIsNotADonor),
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    return Err(DatabaseError(repository_error))
+                    return Err(DatabaseError(repository_error));
                 }
             },
         };
@@ -134,7 +133,7 @@ pub fn validate(
                 OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    return Err(DatabaseError(repository_error))
+                    return Err(DatabaseError(repository_error));
                 }
             },
         };

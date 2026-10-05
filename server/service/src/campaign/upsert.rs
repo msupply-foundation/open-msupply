@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
 use repository::{
+    EqualFilter, RepositoryError, StorageConnection, StringFilter,
     campaign::campaign::{Campaign, CampaignFilter, CampaignRepository},
     campaign::campaign_row::{CampaignRow, CampaignRowRepository},
-    EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 use crate::service_provider::ServiceContext;

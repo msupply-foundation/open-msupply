@@ -3,7 +3,7 @@ use crate::sync::CentralServerConfig;
 use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use repository::assets::asset_internal_location_row::AssetInternalLocationRowRepository;
 use repository::{
-    assets::asset_row::AssetRowRepository, ActivityLogType, RepositoryError, StorageConnection,
+    ActivityLogType, RepositoryError, StorageConnection, assets::asset_row::AssetRowRepository,
 };
 
 #[derive(PartialEq, Debug)]

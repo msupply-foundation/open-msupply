@@ -1,9 +1,9 @@
 use crate::{
-    invoice::common::generate_invoice_user_id_update, service_provider::ServiceContext, WithDBError,
+    WithDBError, invoice::common::generate_invoice_user_id_update, service_provider::ServiceContext,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLineRowRepository,
-    InvoiceRowRepository, RepositoryError, StockLineRowRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod validate;
@@ -12,7 +12,7 @@ use validate::validate;
 
 use crate::invoice::inbound_shipment::InboundShipmentType;
 
-use super::{get_existing_vvm_status_log_id, StockInType};
+use super::{StockInType, get_existing_vvm_status_log_id};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteStockInLine {
@@ -97,24 +97,24 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceStatus, InvoiceType, PreferenceRow, StockLineRow, StockLineRowRepository,
         mock::{
-            mock_customer_return_a, mock_customer_return_a_invoice_line_a,
-            mock_customer_return_a_invoice_line_b, mock_item_a, mock_name_store_b,
-            mock_purchase_order_a, mock_store_a, mock_store_b,
+            MockData, MockDataInserts, mock_customer_return_a,
+            mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
+            mock_item_a, mock_name_store_b, mock_purchase_order_a, mock_store_a, mock_store_b,
             mock_supplier_return_b_invoice_line_a, mock_transferred_inbound_shipment_a,
             mock_transferred_inbound_shipment_a_line_b, mock_user_account_a, mock_vaccine_item_a,
-            mock_vvm_status_a, MockData, MockDataInserts,
+            mock_vvm_status_a,
         },
         test_db::setup_all_with_data,
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
-        InvoiceStatus, InvoiceType, PreferenceRow, StockLineRow, StockLineRowRepository,
     };
 
     use crate::{
         invoice_line::stock_in_line::{
-            delete::DeleteStockInLine, delete_stock_in_line, insert_stock_in_line,
             DeleteStockInLineError as ServiceError, InsertStockInLine, StockInType,
+            delete::DeleteStockInLine, delete_stock_in_line, insert_stock_in_line,
         },
         service_provider::ServiceProvider,
     };

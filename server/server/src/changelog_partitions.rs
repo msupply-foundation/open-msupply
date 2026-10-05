@@ -1,8 +1,8 @@
 use repository::{
-    migrations::ChangelogPartitionConfig, PartitionTopUp, StorageConnection, SystemLogType,
+    PartitionTopUp, StorageConnection, SystemLogType, migrations::ChangelogPartitionConfig,
 };
 use service::{
-    activity_log::{system_log_entry, SystemLogMessage},
+    activity_log::{SystemLogMessage, system_log_entry},
     service_provider::ServiceProvider,
     settings::ChangelogPartitionSettings,
 };

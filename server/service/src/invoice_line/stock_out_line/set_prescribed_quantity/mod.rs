@@ -139,13 +139,13 @@ fn update_prescribed_quantity(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_item_a, mock_item_b, mock_prescription_picked, mock_stock_line_a,
-            mock_stock_line_b, mock_store_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
         InvoiceLineRowRepository, InvoiceLineType,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_prescription_picked,
+            mock_stock_line_a, mock_stock_line_b, mock_store_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{

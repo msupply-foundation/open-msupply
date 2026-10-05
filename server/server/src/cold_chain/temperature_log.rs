@@ -1,7 +1,7 @@
 use actix_web::{
+    HttpRequest, HttpResponse,
     http::header,
     web::{self, Data},
-    HttpRequest, HttpResponse,
 };
 use anyhow::Context;
 use chrono::DateTime;
@@ -10,12 +10,12 @@ use mime_guess::mime;
 use repository::RepositoryError;
 use service::cold_chain::insert_temperature_breach::InsertTemperatureBreach;
 use service::{
+    SingleRecordError,
     auth_data::AuthData,
     cold_chain::{
         insert_temperature_log::InsertTemperatureLog, update_temperature_log::UpdateTemperatureLog,
     },
     service_provider::{ServiceContext, ServiceProvider},
-    SingleRecordError,
 };
 use util::constants::SYSTEM_USER_ID;
 
@@ -190,7 +190,7 @@ fn upsert_temperature_log(
                 "Unable to get temperature log for id '{}'. {:#?}",
                 id.clone(),
                 e
-            ))
+            ));
         }
     };
 

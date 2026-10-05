@@ -1,4 +1,5 @@
 use repository::{
+    EqualFilter, RepositoryError, StorageConnection, StringFilter,
     asset::{Asset, AssetFilter, AssetRepository},
     asset_internal_location::{AssetInternalLocationFilter, AssetInternalLocationRepository},
     asset_internal_location_row::AssetInternalLocationRow,
@@ -10,7 +11,6 @@ use repository::{
         asset_row::{AssetRow, AssetRowRepository},
     },
     location::{LocationFilter, LocationRepository},
-    EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 use super::update::UpdateAssetError;

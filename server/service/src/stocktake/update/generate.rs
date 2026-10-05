@@ -1,15 +1,16 @@
 use chrono::Utc;
 use repository::{
-    location_movement::{LocationMovementFilter, LocationMovementRepository},
-    vvm_status::vvm_status_log_row::VVMStatusLogRow,
     ActivityLogType, CurrencyFilter, CurrencyRepository, DatetimeFilter, EqualFilter, InvoiceRow,
     InvoiceStatus, InvoiceType, LocationMovementRow, NameRowRepository, NumberRowType,
     RepositoryError, StockLineRow, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StocktakeRow, StocktakeStatus, StorageConnection,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, uuid::uuid};
 
 use crate::{
+    NullableUpdate,
     activity_log::activity_log_entry,
     invoice::inventory_adjustment::UpdateInventoryAdjustmentReason,
     invoice_line::{
@@ -18,7 +19,6 @@ use crate::{
     },
     number::next_number,
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 
 use super::{UpdateStocktake, UpdateStocktakeError};

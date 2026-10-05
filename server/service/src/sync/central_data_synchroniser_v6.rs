@@ -3,9 +3,9 @@ use std::time::{Duration, SystemTime};
 use crate::{
     cursor_controller::CursorController,
     sync::{
+        ActiveStoresOnSite, GetActiveStoresOnSiteError,
         api_v6::{SyncBatchV6, SyncRecordV6},
         sync_status::logger::SyncStepProgress,
-        ActiveStoresOnSite, GetActiveStoresOnSiteError,
     },
 };
 
@@ -14,7 +14,7 @@ use super::{
     api_v6::{SyncApiErrorV6, SyncApiV6, SyncApiV6CreatingError},
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
-        translate_rows_to_sync_records, PushTranslationError, ToSyncRecordTranslationType,
+        PushTranslationError, ToSyncRecordTranslationType, translate_rows_to_sync_records,
     },
 };
 
@@ -300,13 +300,13 @@ fn build_v6_push_filter(
 mod tests {
     use super::*;
     use crate::sync::api::{
-        test_helpers::{set_central_server_site_id, ScriptedResponse, ScriptedServer},
         SyncApiV5,
+        test_helpers::{ScriptedResponse, ScriptedServer, set_central_server_site_id},
     };
     use repository::{
-        mock::{mock_store_a, mock_store_b, MockDataInserts},
-        test_db::setup_all,
         ChangeLogInsertRow, ChangelogTableName, RowActionType,
+        mock::{MockDataInserts, mock_store_a, mock_store_b},
+        test_db::setup_all,
     };
 
     /// Local edits are stamped with this site's id (SourceSiteId::CurrentSiteId),

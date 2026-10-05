@@ -1240,7 +1240,7 @@ impl From<RepositoryError> for AuthError {
 mod validate_resource_permissions_test {
     use repository::{PermissionType, UserPermissionRow};
 
-    use super::{validate_resource_permissions, PermissionDSL, Resource, ResourceAccessRequest};
+    use super::{PermissionDSL, Resource, ResourceAccessRequest, validate_resource_permissions};
 
     #[actix_rt::test]
     async fn test_validate_resource_permissions() {
@@ -1493,7 +1493,7 @@ mod validate_resource_permissions_test {
 mod allocate_patient_number_test {
     use repository::{PermissionType, UserPermissionRow};
 
-    use super::{all_permissions, validate_resource_permissions, Resource, ResourceAccessRequest};
+    use super::{Resource, ResourceAccessRequest, all_permissions, validate_resource_permissions};
 
     fn permission(permission: PermissionType) -> UserPermissionRow {
         UserPermissionRow {
@@ -1535,19 +1535,23 @@ mod allocate_patient_number_test {
 
         // Store access plus patient-mutate is enough — no document/program
         // permission of any kind.
-        assert!(validate(&[
-            permission(PermissionType::StoreAccess),
-            permission(PermissionType::PatientMutate),
-        ])
-        .is_ok());
+        assert!(
+            validate(&[
+                permission(PermissionType::StoreAccess),
+                permission(PermissionType::PatientMutate),
+            ])
+            .is_ok()
+        );
 
         // ... and patient-mutate is genuinely required: the document-mutate
         // that used to gate this does not stand in for it.
-        assert!(validate(&[
-            permission(PermissionType::StoreAccess),
-            permission(PermissionType::DocumentMutate),
-        ])
-        .is_err());
+        assert!(
+            validate(&[
+                permission(PermissionType::StoreAccess),
+                permission(PermissionType::DocumentMutate),
+            ])
+            .is_err()
+        );
 
         // Store access is still required, as for every other store resource.
         assert!(validate(&[permission(PermissionType::PatientMutate)]).is_err());
@@ -1561,9 +1565,9 @@ mod permission_validation_test {
     use super::*;
     use crate::{service_provider::ServiceProvider, session_store::SessionStore};
     use repository::{
-        mock::{mock_user_account_a, MockData, MockDataInserts},
-        test_db::{setup_all, setup_all_with_data},
         NameRow, StoreRow, UserAccountRow, UserPermissionRowRepository,
+        mock::{MockData, MockDataInserts, mock_user_account_a},
+        test_db::{setup_all, setup_all_with_data},
     };
 
     #[actix_rt::test]
@@ -1593,19 +1597,21 @@ mod permission_validation_test {
         service.resource_permissions.clear();
 
         // validate user doesn't has access without resource -> permissions mapping
-        assert!(service
-            .validate(
-                &context,
-                &auth_data,
-                &Some(token.to_owned()),
-                &None,
-                &ResourceAccessRequest {
-                    resource: Resource::QueryStocktake,
-                    store_id: None,
-                    require_central_standalone: false,
-                }
-            )
-            .is_err());
+        assert!(
+            service
+                .validate(
+                    &context,
+                    &auth_data,
+                    &Some(token.to_owned()),
+                    &None,
+                    &ResourceAccessRequest {
+                        resource: Resource::QueryStocktake,
+                        store_id: None,
+                        require_central_standalone: false,
+                    }
+                )
+                .is_err()
+        );
 
         service.resource_permissions.insert(
             Resource::QueryStocktake,
@@ -1616,19 +1622,21 @@ mod permission_validation_test {
         );
 
         // validate user doesn't has access
-        assert!(service
-            .validate(
-                &context,
-                &auth_data,
-                &Some(token.to_owned()),
-                &None,
-                &ResourceAccessRequest {
-                    resource: Resource::QueryStocktake,
-                    store_id: None,
-                    require_central_standalone: false,
-                }
-            )
-            .is_err());
+        assert!(
+            service
+                .validate(
+                    &context,
+                    &auth_data,
+                    &Some(token.to_owned()),
+                    &None,
+                    &ResourceAccessRequest {
+                        resource: Resource::QueryStocktake,
+                        store_id: None,
+                        require_central_standalone: false,
+                    }
+                )
+                .is_err()
+        );
 
         // validate user can't log in with wrong permission
         permission_repo
@@ -1640,19 +1648,21 @@ mod permission_validation_test {
                 context_id: None,
             })
             .unwrap();
-        assert!(service
-            .validate(
-                &context,
-                &auth_data,
-                &Some(token.to_owned()),
-                &None,
-                &ResourceAccessRequest {
-                    resource: Resource::QueryStocktake,
-                    store_id: Some("store_a".to_string()),
-                    require_central_standalone: false,
-                }
-            )
-            .is_err());
+        assert!(
+            service
+                .validate(
+                    &context,
+                    &auth_data,
+                    &Some(token.to_owned()),
+                    &None,
+                    &ResourceAccessRequest {
+                        resource: Resource::QueryStocktake,
+                        store_id: Some("store_a".to_string()),
+                        require_central_standalone: false,
+                    }
+                )
+                .is_err()
+        );
 
         // validate user can't log in with right permission but wrong store
         permission_repo
@@ -1664,34 +1674,38 @@ mod permission_validation_test {
                 context_id: None,
             })
             .unwrap();
-        assert!(service
-            .validate(
-                &context,
-                &auth_data,
-                &Some(token.to_owned()),
-                &None,
-                &ResourceAccessRequest {
-                    resource: Resource::QueryStocktake,
-                    store_id: Some("store_b".to_string()),
-                    require_central_standalone: false,
-                }
-            )
-            .is_err());
+        assert!(
+            service
+                .validate(
+                    &context,
+                    &auth_data,
+                    &Some(token.to_owned()),
+                    &None,
+                    &ResourceAccessRequest {
+                        resource: Resource::QueryStocktake,
+                        store_id: Some("store_b".to_string()),
+                        require_central_standalone: false,
+                    }
+                )
+                .is_err()
+        );
 
         // validate user can log in with right permission and right store
-        assert!(service
-            .validate(
-                &context,
-                &auth_data,
-                &Some(token.to_owned()),
-                &None,
-                &ResourceAccessRequest {
-                    resource: Resource::QueryStocktake,
-                    store_id: Some("store_a".to_string()),
-                    require_central_standalone: false,
-                }
-            )
-            .is_err());
+        assert!(
+            service
+                .validate(
+                    &context,
+                    &auth_data,
+                    &Some(token.to_owned()),
+                    &None,
+                    &ResourceAccessRequest {
+                        resource: Resource::QueryStocktake,
+                        store_id: Some("store_a".to_string()),
+                        require_central_standalone: false,
+                    }
+                )
+                .is_err()
+        );
     }
 
     #[actix_rt::test]
@@ -1772,39 +1786,43 @@ mod permission_validation_test {
 
         let token = auth_data.session_store.write().unwrap().create(&user().id);
 
-        assert!(service_provider
-            .validation_service
-            .validate(
-                &context,
-                &auth_data,
-                &Some(token),
-                &None,
-                &ResourceAccessRequest {
-                    resource: Resource::MutateRequisition,
-                    store_id: Some(store().id),
-                    require_central_standalone: false,
-                }
-            )
-            .is_ok());
+        assert!(
+            service_provider
+                .validation_service
+                .validate(
+                    &context,
+                    &auth_data,
+                    &Some(token),
+                    &None,
+                    &ResourceAccessRequest {
+                        resource: Resource::MutateRequisition,
+                        store_id: Some(store().id),
+                        require_central_standalone: false,
+                    }
+                )
+                .is_ok()
+        );
 
         let token = auth_data
             .session_store
             .write()
             .unwrap()
             .create(&user_without_permission().id);
-        assert!(service_provider
-            .validation_service
-            .validate(
-                &context,
-                &auth_data,
-                &Some(token),
-                &None,
-                &ResourceAccessRequest {
-                    resource: Resource::MutateRequisition,
-                    store_id: Some(store().id),
-                    require_central_standalone: false,
-                }
-            )
-            .is_err());
+        assert!(
+            service_provider
+                .validation_service
+                .validate(
+                    &context,
+                    &auth_data,
+                    &Some(token),
+                    &None,
+                    &ResourceAccessRequest {
+                        resource: Resource::MutateRequisition,
+                        store_id: Some(store().id),
+                        require_central_standalone: false,
+                    }
+                )
+                .is_err()
+        );
     }
 }

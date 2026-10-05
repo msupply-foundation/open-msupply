@@ -3,8 +3,8 @@ pub mod query;
 pub mod refresh;
 
 pub use compute::{AncillaryDelta, AncillaryPlan, AncillaryState};
-pub use query::{get_ancillary_plan, GetAncillaryPlanError};
+pub use query::{GetAncillaryPlanError, get_ancillary_plan};
 pub use refresh::{
-    refresh_ancillary_items, RefreshAncillaryAction, RefreshAncillaryItems,
-    RefreshAncillaryItemsError,
+    RefreshAncillaryAction, RefreshAncillaryItems, RefreshAncillaryItemsError,
+    refresh_ancillary_items,
 };

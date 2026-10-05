@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod issue_at_cost_price_tests {
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, InvoiceRow, InvoiceType, PreferenceRow,
-        PreferenceRowRepository, StorageConnection,
+        InvoiceRow, InvoiceType, PreferenceRow, PreferenceRowRepository, StorageConnection,
+        mock::MockDataInserts, test_db::setup_all,
     };
 
     use crate::{

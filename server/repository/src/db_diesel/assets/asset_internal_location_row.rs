@@ -1,10 +1,10 @@
 use super::asset_internal_location_row::asset_internal_location::dsl::*;
 
-use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::Delete;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
 use serde::Deserialize;

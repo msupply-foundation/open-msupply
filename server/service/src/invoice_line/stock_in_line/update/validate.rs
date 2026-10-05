@@ -1,6 +1,7 @@
 use crate::common::check_program_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
+    NullableUpdate,
     campaign::check_campaign_exists_including_deleted,
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
@@ -15,10 +16,9 @@ use crate::{
         },
     },
     validate::{
-        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
-        CheckOtherPartyType, OtherPartyErrors,
+        CheckOtherPartyType, OtherPartyErrors, check_date_is_not_in_future, check_other_party,
+        check_other_party_store_is_disabled,
     },
-    NullableUpdate,
 };
 use repository::{
     InvoiceLine, InvoiceRow, ItemRow, ReasonOptionRowRepository, ReasonOptionType,
@@ -89,7 +89,7 @@ pub fn validate(
         return Err(BatchIsReserved);
     }
     if let Some(NullableUpdate {
-        value: Some(ref location),
+        value: Some(location),
     }) = &input.location
     {
         if !check_location_exists(connection, store_id, location)? {
@@ -152,7 +152,7 @@ pub fn validate(
                 OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    return Err(DatabaseError(repository_error))
+                    return Err(DatabaseError(repository_error));
                 }
             },
         };

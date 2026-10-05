@@ -1,16 +1,16 @@
 use super::{
-    contact_trace_row::contact_trace_name_link_view, document::document, program_row::program,
-    StorageConnection,
+    StorageConnection, contact_trace_row::contact_trace_name_link_view, document::document,
+    program_row::program,
 };
 
 use crate::{
+    DBType, DateFilter, DatetimeFilter, DocumentRow, EqualFilter, GenderType, Pagination,
+    ProgramRow, RepositoryError, Sort, StringFilter,
     contact_trace_row::ContactTraceRow,
     diesel_macros::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
         apply_sort_no_case, apply_string_filter,
     },
-    DBType, DateFilter, DatetimeFilter, DocumentRow, EqualFilter, GenderType, Pagination,
-    ProgramRow, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};

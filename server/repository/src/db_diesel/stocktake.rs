@@ -1,15 +1,15 @@
 use super::{
-    stocktake_line_row::stocktake_line, stocktake_row::stocktake, StocktakeRow, StocktakeStatus,
-    StorageConnection,
+    StocktakeRow, StocktakeStatus, StorageConnection, stocktake_line_row::stocktake_line,
+    stocktake_row::stocktake,
 };
 
 use crate::{
+    DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
+    StocktakeLineFilter, StocktakeLineRepository, StringFilter,
     diesel_macros::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
         apply_sort_no_case, apply_string_filter,
     },
-    DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
-    StocktakeLineFilter, StocktakeLineRepository, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};

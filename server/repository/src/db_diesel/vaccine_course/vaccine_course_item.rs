@@ -1,4 +1,4 @@
-use super::vaccine_course_item_row::{vaccine_course_item, VaccineCourseItemRow};
+use super::vaccine_course_item_row::{VaccineCourseItemRow, vaccine_course_item};
 
 use diesel::{
     helper_types::{InnerJoin, IntoBoxed},
@@ -6,8 +6,8 @@ use diesel::{
 };
 
 use crate::{
-    db_diesel::item_row::item, diesel_macros::apply_equal_filter,
-    repository_error::RepositoryError, DBType, EqualFilter, ItemRow, StorageConnection,
+    DBType, EqualFilter, ItemRow, StorageConnection, db_diesel::item_row::item,
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError,
 };
 
 type VaccineCourseItemJoin = (VaccineCourseItemRow, ItemRow);

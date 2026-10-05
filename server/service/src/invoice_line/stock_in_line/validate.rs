@@ -1,7 +1,7 @@
 use repository::{
-    vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
     EqualFilter, InvoiceLineRow, RepositoryError, StockLineRow, StockLineRowRepository,
     StorageConnection,
+    vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
 };
 
 pub fn check_pack_size(pack_size_option: Option<f64>) -> bool {

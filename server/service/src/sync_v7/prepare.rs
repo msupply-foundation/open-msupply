@@ -1,4 +1,4 @@
-use repository::{syncv7::SyncError, RowActionType, RowOrDelete};
+use repository::{RowActionType, RowOrDelete, syncv7::SyncError};
 
 use super::serde::serialize;
 use crate::sync_v7::sync::SyncRecordV7;

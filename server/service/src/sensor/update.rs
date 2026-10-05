@@ -3,8 +3,8 @@ use super::{
     validate::check_sensor_exists,
 };
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
-    SingleRecordError,
+    NullableUpdate, SingleRecordError, activity_log::activity_log_entry,
+    service_provider::ServiceContext,
 };
 
 use repository::{

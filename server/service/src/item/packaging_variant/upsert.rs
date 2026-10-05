@@ -1,9 +1,9 @@
 use repository::{
+    ActivityLogType, RepositoryError, StorageConnection,
     item_variant::{
         item_variant_row::ItemVariantRow,
         packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
     },
-    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 use crate::{

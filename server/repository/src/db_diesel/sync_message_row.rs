@@ -1,6 +1,6 @@
 use super::{
-    name_row::name, store_row::store, ChangelogRepository, RowActionType, RowOrId,
-    StorageConnection,
+    ChangelogRepository, RowActionType, RowOrId, StorageConnection, name_row::name,
+    store_row::store,
 };
 use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 use ts_rs::TS;
@@ -160,8 +160,8 @@ mod tests {
     use util::assert_variant;
 
     use crate::{
-        mock::{mock_store_a, MockDataInserts},
-        test_db::{setup_test, SetupOption, SetupResult},
+        mock::{MockDataInserts, mock_store_a},
+        test_db::{SetupOption, SetupResult, setup_test},
     };
 
     use super::*;

@@ -13,24 +13,23 @@ use crate::{
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
 use chrono::{NaiveDateTime, Utc};
-use graphql_core::loader::{get_loaders, LoaderRegistry};
+use graphql_core::loader::{LoaderRegistry, get_loaders};
 
 use graphql::{
-    attach_discovery_graphql_schema, attach_graphql_schema, GraphSchemaData, GraphqlSchema,
-    OperationalStatus, PluginExecuteGraphql,
+    GraphSchemaData, GraphqlSchema, OperationalStatus, PluginExecuteGraphql,
+    attach_discovery_graphql_schema, attach_graphql_schema,
 };
 use log::info;
 use repository::{
-    get_storage_connection_manager,
-    migrations::{migrate, MigrationConfig},
+    StorageConnection, get_storage_connection_manager,
+    migrations::{MigrationConfig, migrate},
     system_log_row::SystemLogType,
-    StorageConnection,
 };
 
 use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
     activity_log::{
-        add_migration_results_to_system_log, system_log, system_log_entry, SystemLogMessage,
+        SystemLogMessage, add_migration_results_to_system_log, system_log, system_log_entry,
     },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
@@ -40,19 +39,19 @@ use service::{
     processors::Processors,
     service_provider::ServiceProvider,
     session_store::SessionStore,
-    settings::{is_develop, ServerSettings, Settings},
+    settings::{ServerSettings, Settings, is_develop},
     standalone_central::InitialiseAsCentralServerInput,
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
     sync::{
+        CentralServerConfig,
         file_sync_driver::FileSyncDriver,
         sync_status::status::InitialisationStatus,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
-        CentralServerConfig,
     },
 };
 
-use actix_web::{web, web::Data, App, HttpServer};
+use actix_web::{App, HttpServer, web, web::Data};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Instant;
 use util::format_error;
@@ -284,7 +283,9 @@ pub async fn start_server(
             DiscoveryMode::Enabled => true,
             DiscoveryMode::Auto => {
                 if is_develop() {
-                    log::warn!("DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on");
+                    log::warn!(
+                        "DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on"
+                    );
                     false
                 } else {
                     true

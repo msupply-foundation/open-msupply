@@ -4,7 +4,7 @@ use repository::{
     PluginDataRowRepository, RepositoryError,
 };
 
-use crate::{service_provider::ServiceContext, sync::CentralServerConfig, WithDBError};
+use crate::{WithDBError, service_provider::ServiceContext, sync::CentralServerConfig};
 
 #[derive(Debug, PartialEq)]
 pub enum UpdatePluginDataError {
@@ -142,9 +142,9 @@ where
 mod test {
     use crate::{plugin_data::UpdatePluginData, service_provider::ServiceProvider};
     use repository::{
-        mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         PluginDataRow,
+        mock::{MockData, MockDataInserts, mock_store_a, mock_user_account_a},
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]
@@ -210,7 +210,7 @@ mod test {
     #[actix_rt::test]
     async fn update_plugin_data_wrong_store() {
         use crate::plugin_data::UpdatePluginDataError;
-        use repository::{mock::mock_store_b, PluginDataRowRepository};
+        use repository::{PluginDataRowRepository, mock::mock_store_b};
 
         // Row owned by store B.
         fn plugin_data_donor() -> PluginDataRow {

@@ -1,19 +1,19 @@
 use super::{InsertStockOutLine, InsertStockOutLineError};
 use crate::{
     invoice::common::{
-        calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
-        GenerateVVMStatusLogInput,
+        GenerateVVMStatusLogInput, calculate_foreign_currency_total, calculate_total_after_tax,
+        generate_vvm_status_log,
     },
     invoice_line::StockOutType,
     pricing::{
         calculate_sell_price::{calculate_sell_price, issue_at_cost_price},
-        item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup},
+        item_price::{ItemPrice, ItemPriceLookup, get_pricing_for_items},
     },
     service_provider::ServiceContext,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLineRow, InvoiceLineType, InvoiceRow,
-    InvoiceStatus, ItemRow, RepositoryError, StockLine, StockLineRow, StorageConnection,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError,
+    StockLine, StockLineRow, StorageConnection, vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 use util::uuid::uuid;
 

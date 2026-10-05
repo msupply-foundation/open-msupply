@@ -1,7 +1,7 @@
 use repository::{
-    requisition_row::RequisitionType, ActivityLogType, EqualFilter, RepositoryError,
-    RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, RepositoryError, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, StorageConnection, requisition_row::RequisitionType,
 };
 
 use crate::{

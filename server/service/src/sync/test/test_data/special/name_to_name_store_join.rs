@@ -1,11 +1,11 @@
 use repository::{
-    mock::MockData, sync_buffer::SyncRecordData, NameRow, NameStoreJoinRow, StoreRow, SyncBufferRow,
+    NameRow, NameStoreJoinRow, StoreRow, SyncBufferRow, mock::MockData, sync_buffer::SyncRecordData,
 };
 use serde_json::json;
 
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
-    translations::{name_store_join::LegacyNameStoreJoinRow, PullTranslateResult},
+    translations::{PullTranslateResult, name_store_join::LegacyNameStoreJoinRow},
 };
 
 const TABLE_NAME: &str = "name_store_join";

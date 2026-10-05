@@ -9,18 +9,18 @@ use super::{
     },
 };
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 use chrono::{NaiveDate, Utc};
 
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
     asset_log_row::{AssetLogStatus, AssetLogType},
     assets::{
         asset_log::AssetLogFilter,
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::AssetRowRepository,
     },
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 

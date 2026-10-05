@@ -2,7 +2,7 @@ use crate::invoice::check_invoice_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::purchase_order::validate::check_purchase_order_exists;
 use crate::store_preference::get_store_preferences;
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party};
 use repository::{
     EqualFilter, Name, RepositoryError, Requisition, RequisitionFilter, RequisitionRepository,
 };

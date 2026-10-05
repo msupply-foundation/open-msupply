@@ -1,15 +1,15 @@
 #[cfg(test)]
 mod query_catalogue_item {
 
+    use repository::{EqualFilter, PaginationOption, Sort};
     use repository::{
+        StringFilter,
         assets::asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemSortField},
         mock::MockDataInserts,
         test_db::setup_all,
-        StringFilter,
     };
-    use repository::{EqualFilter, PaginationOption, Sort};
 
-    use crate::{service_provider::ServiceProvider, ListError};
+    use crate::{ListError, service_provider::ServiceProvider};
 
     // note - no mocks required because data is created in migration V1_08_00
 

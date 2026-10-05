@@ -3,11 +3,12 @@ use super::{
     validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
 };
 use crate::{
-    activity_log::activity_log_entry, demographic::validate::check_demographic_exists,
-    nullable_update, service_provider::ServiceContext,
-    vaccine_course::validate::check_vaccine_course_exists, NullableUpdate, SingleRecordError,
+    NullableUpdate, SingleRecordError, activity_log::activity_log_entry,
+    demographic::validate::check_demographic_exists, nullable_update,
+    service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
 };
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
     vaccine_course::{
         vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
@@ -21,7 +22,6 @@ use repository::{
             VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
         },
     },
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
 };
 
 #[derive(PartialEq, Debug)]

@@ -1,26 +1,26 @@
 use crate::{
     activity_log::activity_log_entry,
     invoice::{
-        insert_prescription, update_prescription, InsertPrescriptionError, UpdatePrescriptionError,
+        InsertPrescriptionError, UpdatePrescriptionError, insert_prescription, update_prescription,
     },
-    invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
+    invoice_line::stock_out_line::{InsertStockOutLineError, insert_stock_out_line},
     service_provider::ServiceContext,
     vaccination::validate::check_vaccine_course_dose_exists,
 };
 
 use chrono::NaiveDate;
 use repository::{
-    vaccination::{VaccinationFilter, VaccinationRepository},
-    vaccine_course::vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
     ActivityLogType, EqualFilter, ProgramEnrolmentRow, RepositoryError, Vaccination,
     VaccinationRowRepository,
+    vaccination::{VaccinationFilter, VaccinationRepository},
+    vaccine_course::vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
 };
 use util::uuid::uuid;
 
 mod generate;
 mod validate;
 
-use generate::{generate, GenerateInput, GenerateResult};
+use generate::{GenerateInput, GenerateResult, generate};
 use validate::validate;
 
 use super::{generate::CreatePrescription, query::get_vaccination};
@@ -232,11 +232,10 @@ fn create_missing_not_given_vaccinations(
 #[cfg(test)]
 mod insert {
     use repository::mock::{
-        mock_encounter_a, mock_immunisation_encounter_a, mock_name_1, mock_patient_b,
-        mock_program_a, mock_stock_line_b, mock_stock_line_vaccine_item_a, mock_store_a,
-        mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_a,
-        mock_vaccine_course_a_dose_b, mock_vaccine_course_a_dose_c, mock_vaccine_item_a, MockData,
-        MockDataInserts,
+        MockData, MockDataInserts, mock_encounter_a, mock_immunisation_encounter_a, mock_name_1,
+        mock_patient_b, mock_program_a, mock_stock_line_b, mock_stock_line_vaccine_item_a,
+        mock_store_a, mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_a,
+        mock_vaccine_course_a_dose_b, mock_vaccine_course_a_dose_c, mock_vaccine_item_a,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::{

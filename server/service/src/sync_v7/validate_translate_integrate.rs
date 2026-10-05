@@ -1,15 +1,15 @@
 use crate::{
     sync::{
+        ActiveStoresOnSite,
         sync_buffer::{
             write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success,
         },
-        ActiveStoresOnSite,
     },
     sync_v7::{serde::deserialize, sync_logger::SyncLogger},
 };
 
 use super::validate::*;
-use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
+use repository::syncv7::{INTEGRATION_ORDER, SyncRecordSerializeError};
 use repository::*;
 use std::collections::{HashMap, HashSet};
 use thiserror::Error;
@@ -580,7 +580,7 @@ mod test {
     use super::*;
     use crate::sync::ActiveStoresOnSite;
     use repository::{
-        mock::{mock_store_a, mock_user_account_a, MockDataInserts},
+        mock::{MockDataInserts, mock_store_a, mock_user_account_a},
         test_db::setup_all,
     };
 
@@ -768,10 +768,12 @@ mod test {
 
         integrate(&connection, None);
 
-        assert!(UnitRowRepository::new(&connection)
-            .find_one_by_id("u1")
-            .unwrap()
-            .is_some());
+        assert!(
+            UnitRowRepository::new(&connection)
+                .find_one_by_id("u1")
+                .unwrap()
+                .is_some()
+        );
         let (result, _) = buffer_result(&connection, 1);
         assert_eq!(result, Some(IntegrationResult::Success));
         let (result, _) = buffer_result(&connection, 2);
@@ -809,10 +811,12 @@ mod test {
         integrate(&connection, Some("ref-1"));
         let (result, _) = buffer_result(&connection, 2);
         assert_eq!(result, Some(IntegrationResult::Success));
-        assert!(UnitRowRepository::new(&connection)
-            .find_one_by_id("u1")
-            .unwrap()
-            .is_some());
+        assert!(
+            UnitRowRepository::new(&connection)
+                .find_one_by_id("u1")
+                .unwrap()
+                .is_some()
+        );
     }
 
     #[actix_rt::test]
@@ -849,10 +853,12 @@ mod test {
 
         integrate(&connection, None);
 
-        assert!(UserPermissionRowRepository::new(&connection)
-            .find_one_by_id("perm1")
-            .unwrap()
-            .is_some());
+        assert!(
+            UserPermissionRowRepository::new(&connection)
+                .find_one_by_id("perm1")
+                .unwrap()
+                .is_some()
+        );
         let (result, error) = buffer_result(&connection, 1);
         assert_eq!(result, Some(IntegrationResult::Ignored));
         assert!(error.unwrap().contains("Superseded"));

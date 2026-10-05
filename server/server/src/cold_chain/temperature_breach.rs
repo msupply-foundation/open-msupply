@@ -1,9 +1,9 @@
 use std::convert::TryInto;
 
 use actix_web::{
+    HttpRequest, HttpResponse,
     http::header,
     web::{self, Data},
-    HttpRequest, HttpResponse,
 };
 use anyhow::Context;
 use chrono::DateTime;
@@ -11,13 +11,13 @@ use log::error;
 use mime_guess::mime;
 use repository::{RepositoryError, TemperatureBreachType};
 use service::{
+    SingleRecordError,
     auth_data::AuthData,
     cold_chain::{
         insert_temperature_breach::InsertTemperatureBreach,
         update_temperature_breach::UpdateTemperatureBreach,
     },
     service_provider::{ServiceContext, ServiceProvider},
-    SingleRecordError,
 };
 use util::constants::SYSTEM_USER_ID;
 
@@ -199,7 +199,7 @@ fn upsert_temperature_breach(
                 "Unable to get temperature breach for id '{}'. {:#?}",
                 id.clone(),
                 e
-            ))
+            ));
         }
     };
 

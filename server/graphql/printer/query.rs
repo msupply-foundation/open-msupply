@@ -1,13 +1,13 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     simple_generic_errors::NodeError,
     standard_graphql_error::validate_auth,
-    ContextExt,
 };
 use graphql_types::types::{PrinterConnector, PrinterNode};
 
-use repository::{printer::PrinterFilter, EqualFilter, StringFilter};
+use repository::{EqualFilter, StringFilter, printer::PrinterFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]

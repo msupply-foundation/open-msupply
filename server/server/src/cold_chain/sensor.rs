@@ -1,17 +1,17 @@
 use actix_web::{
+    HttpRequest, HttpResponse,
     http::header,
     web::{self, Data},
-    HttpRequest, HttpResponse,
 };
 use log::error;
 use mime_guess::mime;
 use regex::Regex;
-use repository::{get_sensor_type, RepositoryError};
+use repository::{RepositoryError, get_sensor_type};
 use service::{
+    SingleRecordError,
     auth_data::AuthData,
     sensor::{insert::InsertSensor, update::UpdateSensor},
     service_provider::{ServiceContext, ServiceProvider},
-    SingleRecordError,
 };
 use util::constants::SYSTEM_USER_ID;
 
@@ -48,7 +48,7 @@ pub async fn put_sensors(
         Err(error) => {
             return HttpResponse::BadRequest().body(format!(
                 "The following sensors failed validation: \n{error}"
-            ))
+            ));
         }
     };
 

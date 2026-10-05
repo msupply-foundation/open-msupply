@@ -6,18 +6,18 @@ use super::{
 };
 use crate::sync::ActiveStoresOnSite;
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
+    ActivityLogType, LocationRow, LocationRowRepository, LocationTypeFilter,
+    LocationTypeRepository, RepositoryError, StorageConnection, StringFilter,
     asset_catalogue_item_row::AssetCatalogueItemRowRepository,
     assets::{
         asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
     migrations::constants::COLD_CHAIN_EQUIPMENT_UUID,
-    ActivityLogType, LocationRow, LocationRowRepository, LocationTypeFilter,
-    LocationTypeRepository, RepositoryError, StorageConnection, StringFilter,
 };
 use util::uuid::uuid;
 

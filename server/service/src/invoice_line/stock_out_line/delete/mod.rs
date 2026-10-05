@@ -3,8 +3,8 @@ use crate::{
     invoice_line::stock_in_line::get_existing_vvm_status_log_id, service_provider::ServiceContext,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLineRowRepository,
-    InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
+    StockLineRowRepository, vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod validate;
@@ -86,20 +86,20 @@ impl From<RepositoryError> for DeleteStockOutLineError {
 mod test {
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_b_invoice_lines,
-            mock_outbound_shipment_c_invoice_lines, mock_outbound_shipment_no_lines, mock_store_a,
-            mock_store_b, mock_store_c, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
         StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_outbound_shipment_a_invoice_lines,
+            mock_outbound_shipment_b_invoice_lines, mock_outbound_shipment_c_invoice_lines,
+            mock_outbound_shipment_no_lines, mock_store_a, mock_store_b, mock_store_c,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     use crate::{
         invoice_line::stock_out_line::{
-            delete::{DeleteStockOutLine, DeleteStockOutLineError as ServiceError},
             StockOutType,
+            delete::{DeleteStockOutLine, DeleteStockOutLineError as ServiceError},
         },
         service_provider::ServiceProvider,
     };

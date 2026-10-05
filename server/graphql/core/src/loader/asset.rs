@@ -1,10 +1,10 @@
+use repository::EqualFilter;
 use repository::asset_internal_location::{
     AssetInternalLocationFilter, AssetInternalLocationRepository,
 };
-use repository::EqualFilter;
 use repository::{
-    asset::{Asset, AssetFilter, AssetRepository},
     RepositoryError, StorageConnectionManager,
+    asset::{Asset, AssetFilter, AssetRepository},
 };
 
 use async_graphql::dataloader::*;
@@ -63,8 +63,8 @@ mod tests {
             AssetInternalLocationRow, AssetInternalLocationRowRepository,
         },
         mock::{
-            mock_asset_a, mock_asset_b, mock_location_1, mock_location_2, mock_location_3,
-            MockDataInserts,
+            MockDataInserts, mock_asset_a, mock_asset_b, mock_location_1, mock_location_2,
+            mock_location_3,
         },
         test_db,
     };

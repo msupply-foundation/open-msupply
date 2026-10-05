@@ -218,7 +218,7 @@ fn validate(
         None => {
             return Err(UpsertContactTraceError::InternalError(
                 "Missing program".to_string(),
-            ))
+            ));
         }
     };
 
@@ -247,11 +247,11 @@ fn validate(
 mod test {
     use chrono::{DateTime, Timelike, Utc};
     use repository::{
-        contact_trace::{ContactTraceFilter, ContactTraceRepository},
-        mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
-        test_db::setup_all,
         DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository,
         FormSchemaRowRepository, StringFilter,
+        contact_trace::{ContactTraceFilter, ContactTraceRepository},
+        mock::{MockDataInserts, context_program_a, mock_form_schema_empty},
+        test_db::setup_all,
     };
     use serde_json::json;
     use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
@@ -262,7 +262,7 @@ mod test {
                 contact_trace_schema::{RelatedPerson, SchemaContactTrace},
                 upsert::UpsertContactTrace,
             },
-            patient::{test::mock_patient_1, UpdateProgramPatient},
+            patient::{UpdateProgramPatient, test::mock_patient_1},
         },
         service_provider::ServiceProvider,
     };

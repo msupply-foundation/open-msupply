@@ -3,7 +3,7 @@ use crate::{
     purchase_order_line::insert::{
         InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput, PackSizeCodeCombination,
     },
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 use repository::{
     EqualFilter, ItemRow, ItemRowRepository, ItemStoreJoinRowRepository,
@@ -89,18 +89,18 @@ pub fn validate(
             Ok(_) => {}
             Err(e) => match e {
                 OtherPartyErrors::OtherPartyDoesNotExist => {
-                    return Err(InsertPurchaseOrderLineError::OtherPartyDoesNotExist {})
+                    return Err(InsertPurchaseOrderLineError::OtherPartyDoesNotExist {});
                 }
                 // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
                 // an item variant) or inherited from stock without being visible in this store
                 OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => {
-                    return Err(InsertPurchaseOrderLineError::OtherPartyNotAManufacturer)
+                    return Err(InsertPurchaseOrderLineError::OtherPartyNotAManufacturer);
                 }
                 OtherPartyErrors::DatabaseError(repository_error) => {
                     return Err(InsertPurchaseOrderLineError::DatabaseError(
                         repository_error,
-                    ))
+                    ));
                 }
             },
         };

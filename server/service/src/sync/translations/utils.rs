@@ -3,7 +3,6 @@ use std::collections::HashSet;
 
 use chrono::Utc;
 use repository::{
-    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     AssetCatalogueItemRowRepository, AssetCategoryRowRepository, AssetClassRowRepository,
     AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, BarcodeRowRepository,
     CampaignRowRepository, CategoryRowRepository, ChangelogRow, ClinicianLinkRowRepository,
@@ -21,6 +20,7 @@ use repository::{
     StorageConnection, StoreRowRepository, SyncVersion, TemperatureBreachRowRepository,
     UnitRowRepository, VVMStatusRowRepository, VaccineCourseDoseRowRepository,
     VaccineCourseRowRepository, WarningRowRepository,
+    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
 };
 use util::uuid::uuid;
 
@@ -424,7 +424,7 @@ impl FkChecker {
         connection: &'a StorageConnection,
         record_table: &'a str,
         record_id: &str,
-    ) -> impl Fn(Option<String>, &str, FkField) -> Result<Option<String>, RepositoryError> + 'a
+    ) -> impl Fn(Option<String>, &str, FkField) -> Result<Option<String>, RepositoryError> + 'a + use<'a>
     {
         let record_id = record_id.to_string();
         move |fk_id, fk_field_name, fk_field| {
@@ -451,7 +451,7 @@ impl FkChecker {
         connection: &'a StorageConnection,
         record_table: &'a str,
         record_id: &str,
-    ) -> impl Fn(String, &str, FkField) -> anyhow::Result<String> + 'a {
+    ) -> impl Fn(String, &str, FkField) -> anyhow::Result<String> + 'a + use<'a> {
         let record_id = record_id.to_string();
         move |fk_id, fk_field_name, fk_field| {
             self.check_fk(

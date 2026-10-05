@@ -1,19 +1,19 @@
 use super::{
+    StorageConnection,
     clinician_link_row::clinician_link,
     clinician_row::clinician,
     encounter_row::encounter::{self},
     name_row::name,
     program_row::program,
-    StorageConnection,
 };
 
 use crate::{
+    ClinicianLinkRow, ClinicianRow, DBType, DatetimeFilter, EncounterRow, EncounterStatus,
+    EqualFilter, NameRow, Pagination, PatientFilter, PatientRepository, ProgramEnrolmentFilter,
+    ProgramEnrolmentRepository, ProgramRow, RepositoryError, Sort, StringFilter,
     db_diesel::program_enrolment_row::program_enrolment,
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
-    latest_document, ClinicianLinkRow, ClinicianRow, DBType, DatetimeFilter, EncounterRow,
-    EncounterStatus, EqualFilter, NameRow, Pagination, PatientFilter, PatientRepository,
-    ProgramEnrolmentFilter, ProgramEnrolmentRepository, ProgramRow, RepositoryError, Sort,
-    StringFilter,
+    latest_document,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};

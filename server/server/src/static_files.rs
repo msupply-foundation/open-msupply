@@ -1,19 +1,19 @@
 use std::io::ErrorKind;
 
 use actix_files as fs;
-use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::MultipartForm;
+use actix_multipart::form::tempfile::TempFile;
 
 use actix_web::error::InternalError;
-use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;
+use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::web::Data;
-use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse};
+use actix_web::{Error, HttpRequest, HttpResponse, delete, get, guard, post, web};
 
 use fs::NamedFile;
+use repository::SyncFileDirection;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
-use repository::SyncFileDirection;
 use repository::{
     EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
 };
@@ -26,9 +26,9 @@ use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::StaticFile;
 use service::static_files::{InvalidFilePath, StaticFileCategory, StaticFileService};
+use service::sync::CentralServerConfig;
 use service::sync::file_sync_driver::{file_sync_central_url, get_sync_settings};
 use service::sync::file_synchroniser::{self, FileSynchroniser};
-use service::sync::CentralServerConfig;
 use service::usize_to_i32;
 use std::sync::Arc;
 use thiserror::Error;
@@ -471,7 +471,7 @@ mod test {
     /// request must be refused rather than treating the file id as the access control.
     #[actix_rt::test]
     async fn files_requires_authentication() {
-        use actix_web::{test, web::Data, App};
+        use actix_web::{App, test, web::Data};
         use service::auth_data::AuthData;
         use std::sync::{Arc, RwLock};
 

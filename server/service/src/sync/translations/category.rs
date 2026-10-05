@@ -1,13 +1,13 @@
 use chrono::Utc;
 use repository::{
-    category_row::{CategoryRow, CategoryRowDelete},
     CustomFieldOptionRow, CustomFieldOptionRowRepository, StorageConnection, SyncBufferRow,
+    category_row::{CategoryRow, CategoryRowDelete},
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
 
-use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
+use crate::sync::central_mapping_custom_fields::keys;
 
 use super::{IntegrationOperation, PullTranslateResult, SyncTranslation};
 
@@ -146,7 +146,7 @@ impl SyncTranslation for CategoryTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all, SyncAction, SyncRecordData};
+    use repository::{SyncAction, SyncRecordData, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn test_item_category_translation() {

@@ -1,16 +1,16 @@
 use crate::sync::translations::special::merge::MergeSyncMessageBody;
 use chrono::Utc;
 use repository::{
-    mock::{MockData, MockDataInserts},
     ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, FilterBuilder,
     NameLinkRow, NameLinkRowRepository, SyncMessageRow, SyncMessageRowRepository,
     SyncMessageRowStatus, SyncMessageRowType,
+    mock::{MockData, MockDataInserts},
 };
 use util::uuid::uuid;
 
 use crate::{
     processors::ProcessorType,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 /// A NameMerge sync_message row produced by central must be replayed by the

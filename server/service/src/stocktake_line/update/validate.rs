@@ -1,7 +1,8 @@
 use crate::{
+    NullableUpdate,
     campaign::check_campaign_exists_including_deleted,
     check_location_exists, check_location_type_is_valid, check_vvm_status_exists,
-    common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
+    common::{CommonStockLineError, check_program_exists, check_stock_line_exists},
     preference::{BlindStocktake, Preference, PreferenceError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
@@ -10,10 +11,9 @@ use crate::{
         check_stocktake_line_exist, stocktake_reduction_amount,
     },
     validate::{
-        check_date_is_not_in_future, check_other_party, check_store_id_matches,
-        CheckOtherPartyType, OtherPartyErrors,
+        CheckOtherPartyType, OtherPartyErrors, check_date_is_not_in_future, check_other_party,
+        check_store_id_matches,
     },
-    NullableUpdate,
 };
 use repository::{RepositoryError, StocktakeLine, StorageConnection};
 
@@ -60,7 +60,7 @@ pub fn validate(
         Some(stock_line_id) => match check_stock_line_exists(connection, store_id, stock_line_id) {
             Ok(stock_line) => Some(stock_line),
             Err(CommonStockLineError::DatabaseError(RepositoryError::NotFound)) => {
-                return Err(StockLineDoesNotExist)
+                return Err(StockLineDoesNotExist);
             }
             Err(CommonStockLineError::StockLineDoesNotBelongToStore) => return Err(InvalidStore),
             Err(CommonStockLineError::DatabaseError(error)) => return Err(DatabaseError(error)),
@@ -69,7 +69,7 @@ pub fn validate(
     };
 
     if let Some(NullableUpdate {
-        value: Some(ref location),
+        value: Some(location),
     }) = &input.location
     {
         if !check_location_exists(connection, store_id, location)? {
@@ -150,7 +150,7 @@ pub fn validate(
     }
 
     if let Some(NullableUpdate {
-        value: Some(ref manufacturer_id),
+        value: Some(manufacturer_id),
     }) = &input.manufacturer_id
     {
         match check_other_party(
@@ -167,14 +167,14 @@ pub fn validate(
                 OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    return Err(DatabaseError(repository_error))
+                    return Err(DatabaseError(repository_error));
                 }
             },
         };
     };
 
     if let Some(NullableUpdate {
-        value: Some(ref campaign_id),
+        value: Some(campaign_id),
     }) = &input.campaign_id
     {
         if !check_campaign_exists_including_deleted(connection, campaign_id)? {
@@ -183,7 +183,7 @@ pub fn validate(
     }
 
     if let Some(NullableUpdate {
-        value: Some(ref program_id),
+        value: Some(program_id),
     }) = &input.program_id
     {
         if check_program_exists(connection, program_id)?.is_none() {

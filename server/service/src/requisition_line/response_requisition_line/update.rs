@@ -9,9 +9,9 @@ use crate::{
 };
 
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
     RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
 
 #[derive(Debug, PartialEq, Default)]
@@ -206,17 +206,17 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            mock_finalised_request_requisition_line, mock_new_response_program_requisition,
-            mock_new_response_requisition_test, mock_request_program_requisition,
-            mock_requisition_variance_reason_option, mock_response_program_requisition,
-            mock_sent_request_requisition_line, mock_store_a, mock_store_b, mock_user_account_b,
-            MockDataInserts,
-        },
-        test_db::setup_all,
         EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
         RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorePreferenceRow,
         StorePreferenceRowRepository,
+        mock::{
+            MockDataInserts, mock_finalised_request_requisition_line,
+            mock_new_response_program_requisition, mock_new_response_requisition_test,
+            mock_request_program_requisition, mock_requisition_variance_reason_option,
+            mock_response_program_requisition, mock_sent_request_requisition_line, mock_store_a,
+            mock_store_b, mock_user_account_b,
+        },
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

@@ -2,8 +2,8 @@ use base64::prelude::*;
 use chrono::{DateTime, Utc};
 use log::error;
 use repository::{
-    migrations::Version, EqualFilter, Pagination, PaginationOption, Report, ReportFilter,
-    ReportMetaData, ReportRepository, ReportRowRepository, ReportSort, RepositoryError,
+    EqualFilter, Pagination, PaginationOption, Report, ReportFilter, ReportMetaData,
+    ReportRepository, ReportRowRepository, ReportSort, RepositoryError, migrations::Version,
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -14,14 +14,14 @@ use thiserror::Error;
 use util::{format_error, sanitize_filename, uuid::uuid};
 
 use crate::{
-    boajs::{call_method, BoaJsError},
+    ListError, ListResult, UploadedFile,
+    boajs::{BoaJsError, call_method},
     get_pagination_or_default, i64_to_u32,
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     settings::Settings,
     standard_reports::{ReportsData, StandardReports},
     static_files::{StaticFileCategory, StaticFileService},
-    ListError, ListResult, UploadedFile,
 };
 
 use super::{
@@ -821,8 +821,8 @@ fn resources_from_resolved_template(
         .entries
         .iter()
         .filter_map(|(name, entry)| match entry {
-            ReportDefinitionEntry::Resource(ref resource) => Some((name.clone(), resource.clone())),
-            ReportDefinitionEntry::Manifest(ref manifest) => {
+            ReportDefinitionEntry::Resource(resource) => Some((name.clone(), resource.clone())),
+            ReportDefinitionEntry::Manifest(manifest) => {
                 let Ok(value) = serde_json::to_value(manifest) else {
                     // should not happen
                     return None;
@@ -855,7 +855,7 @@ fn load_report_definition(
             return Err(ReportError::ReportDefinitionNotFound {
                 report_id: report_id.to_string(),
                 msg: "Can't find root report".to_string(),
-            })
+            });
         }
     };
     let def = serde_json::from_str::<ReportDefinition>(&row.template).map_err(|err| {
@@ -925,7 +925,7 @@ mod report_service_test {
     use std::collections::BTreeMap;
 
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ContextType, ReportRow, ReportRowRepository,
+        ContextType, ReportRow, ReportRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
 
     use crate::{
@@ -1058,7 +1058,7 @@ mod report_generation_test {
     use crate::{
         report::{
             definition::{ReportOutputType, TeraTemplate},
-            report_service::{generate_report, ResolvedReportDefinition},
+            report_service::{ResolvedReportDefinition, generate_report},
         },
         service_provider::ServiceProvider,
     };
@@ -1130,8 +1130,8 @@ mod report_generation_test {
 mod report_filter_test {
     use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
     use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, ReportFilter,
-        ReportRepository, StringFilter,
+        ReportFilter, ReportRepository, StringFilter, migrations::Version, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     // adding tests to generate reports

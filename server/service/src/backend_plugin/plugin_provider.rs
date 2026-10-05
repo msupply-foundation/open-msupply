@@ -1,12 +1,12 @@
 use std::sync::{Arc, RwLock};
 
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 
 use repository::{
-    migrations::Version, BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes,
-    PluginVariantType,
+    BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes, PluginVariantType,
+    migrations::Version,
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 use crate::boajs::{self, BoaJsError};

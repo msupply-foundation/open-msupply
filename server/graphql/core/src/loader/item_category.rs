@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use async_graphql::dataloader::Loader;
 use repository::{
+    EqualFilter, RepositoryError, StorageConnectionManager,
     category_row::{CategoryRow, CategoryRowRepository},
     item_category::ItemCategoryFilter,
     item_category::ItemCategoryRepository,
-    EqualFilter, RepositoryError, StorageConnectionManager,
 };
 
 pub struct ItemCategoryLoader {
