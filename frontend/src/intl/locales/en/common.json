@@ -1470,6 +1470,7 @@
   "label.general-population": "General population",
   "label.generate": "Generate",
   "label.global-preference": "Global preference",
+  "label.go-to-step": "Go to {{label}}",
   "label.gps-coordinates": "GPS coordinates",
   "label.green": "Green",
   "label.grey": "Grey",

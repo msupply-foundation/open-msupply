@@ -40,6 +40,11 @@ export interface ProgressStep {
    * label is translated, so identifying one step needs an id of its own.
    */
   testId?: string;
+  /**
+   * The rail may jump to this step: its marker becomes a button calling
+   * `onStepSelect`.
+   */
+  navigable?: boolean;
 }
 
 // Compact elapsed label, the current app's decomposition: exact seconds under
@@ -83,6 +88,12 @@ const stepStatus = (state: StepState, errored: boolean): string => {
  * `variant` picks the tone (primary = brand, the sync modal; secondary = the
  * initialisation screen) — semantic, never colour-named.
  *
+ * Display-only unless a consumer marks steps `navigable` and passes
+ * `onStepSelect` — a wizard rail, whose markers are then buttons (the role's
+ * second consumer family; ui/docs/ADDING_A_COMPONENT.md, closed
+ * `WizardStepper`). The consumer owns which steps those are, so a gate it
+ * holds is never restated here.
+ *
  * Steps always run in order, so anything before the furthest-started step is
  * complete — even if its own `finished` timestamp never came back (e.g. a
  * push with nothing to send). Deriving completion from progression keeps the
@@ -117,6 +128,8 @@ export const ProgressList = (props: {
   error?: boolean;
   /** `data-testid` for the list element (locale-stable test hook). */
   testId?: string;
+  /** Pressed a navigable step's marker — a wizard rail's move. */
+  onStepSelect?: (index: number) => void;
 }) => {
   // The furthest-started step: everything before it is completed, whatever
   // its own finished flag says.
@@ -224,6 +237,21 @@ export const ProgressList = (props: {
               </Show>
             </span>
           );
+          // A navigable step's circle IS the button, and never a popover's
+          // too: a wizard's steps carry no count.
+          const markerControl = () =>
+            step().navigable === true && props.onStepSelect ? (
+              <button
+                type="button"
+                class={styles.navButton}
+                aria-label={t('label.go-to-step', { label: step().label })}
+                onClick={() => props.onStepSelect?.(index)}
+              >
+                {marker()}
+              </button>
+            ) : (
+              marker()
+            );
           return (
             <li
               class={styles.step}
@@ -234,7 +262,7 @@ export const ProgressList = (props: {
             >
               <Show
                 when={state() === 'completed' && (count() || elapsed())}
-                fallback={marker()}
+                fallback={markerControl()}
               >
                 <Popover
                   openOnHover
