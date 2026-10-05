@@ -145,7 +145,7 @@ export const InternalOrderToolbar: Component<
       message: t('messages.changing-max-mos'),
     });
   };
-  // Every dialog close path (Cancel, scrim, Escape, AND the OK button, which
+  // Every dialog close path (Cancel, Escape, AND the OK button, which
   // fires onClose right after onConfirm). confirmMos clears `pendingMos` before
   // that onClose runs, so a still-set pending here means the user CANCELLED —
   // revert the display overrides to the stored values. After a confirm, pending

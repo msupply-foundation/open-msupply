@@ -29,18 +29,28 @@ import styles from './Dialog.module.css';
 export interface DialogProps {
   open: boolean;
   /**
-   * Fired on every close path — Escape, scrim click, or an action button
-   * calling it. The parent owns `open`; the dialog never closes itself
-   * without reporting here.
+   * Fired on every close path — Escape, the corner close, a scrim click where
+   * `scrimDismiss` allows one, or an action button calling it. The parent owns
+   * `open`; the dialog never closes itself without reporting here.
    */
   onClose: () => void;
   /**
-   * `false` makes the dialog blocking: Escape is swallowed and scrim clicks
-   * ignored, so the only ways out are the actions (or the flow resolving
-   * `open`). For the modals a user must answer — re-login, store selection,
-   * the unexpected-error modal. Default: dismissable.
+   * `false` makes the dialog blocking: Escape is swallowed, so the only ways
+   * out are the actions (or the flow resolving `open`). For the modals a user
+   * must answer — re-login, store selection, the unexpected-error modal.
+   * Default: dismissable.
    */
   dismissable?: boolean;
+  /**
+   * `true` lets a click on the scrim (the dimmed page around the dialog) close
+   * it, through the same onClose path as Escape. Off by default: one stray
+   * click beside an editor would throw away everything typed into it (#1002),
+   * so a dialog closes by Escape, Cancel or its corner close (ui-standards ›
+   * controls § dialogs). Only for an overlay that holds nothing to lose and
+   * reads as a light popup over the page — the command palette. Ignored when
+   * `dismissable` is false.
+   */
+  scrimDismiss?: boolean;
   /**
    * The dialog heading. A string is rendered as the <h2> AND used as the
    * accessible name (aria-labelledby). A JSX element (e.g. an inline selector)
@@ -63,7 +73,7 @@ export interface DialogProps {
   /**
    * Renders an icon-only close button pinned to the dialog's top corner (an
    * explicit dismiss affordance for informational dialogs, e.g. the sync
-   * modal). Closes via the same onClose path as Escape/scrim. Ignored when
+   * modal). Closes via the same onClose path as Escape. Ignored when
    * `dismissable` is false — a blocking dialog offers no dismiss affordance.
    */
   closeButton?: boolean;
@@ -192,7 +202,7 @@ export interface DialogProps {
    * so the content floats directly over the scrim. For an overlay whose own
    * children already carry surfaces (the command palette: a text field and an
    * option list, nothing behind them). Everything else <Dialog> gives stays:
-   * top layer, inert page, Escape, focus restore, scrim-click dismiss.
+   * top layer, inert page, Escape, focus restore.
    */
   chromeless?: boolean;
   /**
@@ -365,9 +375,10 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
  * close, Escape (`cancel` event), role=dialog + aria-modal, and ::backdrop.
  * The prototype's other objection — "imperative to drive from React" — doesn't
  * apply in Solid: one createEffect maps the `open` prop onto
- * showModal()/close(). We hand-roll the two small gaps: scrim-click dismiss
- * (the native `closedby="any"` is still limited-availability) and a one-line
- * scroll lock in the CSS.
+ * showModal()/close(). We hand-roll the two small gaps: the opt-in
+ * scrim-click dismiss (`scrimDismiss`; the native `closedby="any"` is still
+ * limited-availability) and a one-line scroll lock in the CSS. By default a
+ * scrim click does nothing, which is the platform's own default for a modal.
  *
  * Usage pattern: keep `open` state in the component that owns the action,
  * render this declaratively next to it. For confirmations use <ConfirmDialog>.
@@ -719,10 +730,10 @@ export const Dialog = (props: DialogProps) => {
       // Native close paths (Escape now; browser `closedby` UI later) land
       // here — report them so the parent's `open` stays the source of truth.
       onClose={() => props.open && props.onClose()}
-      // Scrim-click dismiss. An event whose target is the <dialog> itself hit
-      // the ::backdrop: the inner .body covers the dialog box completely (the
-      // dialog has zero padding for exactly this reason), so content clicks
-      // can't match.
+      // Scrim-click dismiss, for a dialog that opts in (`scrimDismiss`). An
+      // event whose target is the <dialog> itself hit the ::backdrop: the
+      // inner .body covers the dialog box completely (the dialog has zero
+      // padding for exactly this reason), so content clicks can't match.
       //
       // The dismiss must land on `click`, and NOT on pointerdown/pointerup —
       // both of those close the dialog mid-gesture, and on touch that
@@ -749,7 +760,12 @@ export const Dialog = (props: DialogProps) => {
       onClick={event => {
         const fromScrim = scrimGesture;
         scrimGesture = false;
-        if (fromScrim && event.target === dialog && props.dismissable !== false)
+        if (
+          fromScrim &&
+          event.target === dialog &&
+          props.scrimDismiss === true &&
+          props.dismissable !== false
+        )
           props.onClose();
       }}
     >

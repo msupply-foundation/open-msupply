@@ -174,6 +174,9 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
       // their own surface, so the palette floats as those two boxes over the
       // dimmed page rather than sitting on a card.
       chromeless
+      // A light popup with nothing to lose, so a click beside it closes it —
+      // the one dialog that keeps scrim-click dismiss (Dialog › scrimDismiss).
+      scrimDismiss
       widthRem={34}
       testId="command-palette"
     >
