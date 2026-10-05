@@ -163,12 +163,13 @@ done
 
 ### Lane roles
 
-Two roles, and a lane carries exactly one:
+Three roles, and a lane carries exactly one:
 
-| label | what runs there |
-|---|---|
-| `build` | the image build and its planning job — CPU-bound, ~19 minutes cold |
-| `deploy` | `docker compose up` for one deployment — about a minute |
+| label | lane | what runs there |
+|---|---|---|
+| `build` | `actions-runner-1` … `-4` | the image build and its planning job — CPU-bound, ~19 minutes cold |
+| `deploy` | `actions-runner-deploy` | `docker compose up` for one deployment — about a minute — and every plan and teardown job of the deployment workflows |
+| `e2e` | `actions-runner-e2e` | the nightly front-end e2e suite (`frontend-e2e-nightly.yaml`), which asks for `x64` as well |
 
 They are separate because the deploy job must land on the machine hosting the
 deployments, and that is a different box. Nothing in the deploy job assumes a
@@ -311,7 +312,7 @@ describe it.
 
    ```bash
    docker network create oms-edge
-   mkdir -p ~/docker-compose/proxy && cd ~/docker-compose/proxy   # + the two files
+   mkdir -p ~/proxy && cd ~/proxy   # + the two files
    echo "DEPLOY_DOMAIN=preview.example.com" > .env
    docker compose -f compose.proxy.yaml up -d
    ```
@@ -422,12 +423,45 @@ Two things follow from them sharing a daemon right now:
 
 **The deploy lane is a one-off, done by hand on the deploy box.** One lane is
 usually enough — the job is a one-minute `docker compose up` — so the
-lane-scaling machinery below is not worth carrying there. Unpack a runner as in
-the next section, register it once with `deploy` in place of `build`, and give
-it the same systemd unit:
+lane-scaling machinery below is not worth carrying there. Unpack a runner into
+`~/actions-runner-deploy` as in the next section and register it once with
+`deploy` in place of `build`:
 
 ```bash
 --labels self-hosted,Linux,"$(uname -m)",deploy
+```
+
+It gets a unit of its own rather than an instance of the template, because it
+should not share the build lanes' memory cap — it is the lane that tears a
+stack down when the box is full:
+
+```bash
+sudo tee /etc/systemd/system/actions-runner-deploy.service >/dev/null <<EOF
+[Unit]
+Description=GitHub Actions runner deploy
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=$USER
+Group=$(id -gn)
+WorkingDirectory=$HOME/actions-runner-deploy
+ExecStart=$HOME/actions-runner-deploy/run.sh
+Restart=always
+RestartSec=5
+# The same stop behaviour as the template - see "systemd template" below.
+Environment=RUNNER_MANUALLY_TRAP_SIG=1
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=5min
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable --now actions-runner-deploy
 ```
 
 **A second deploy lane is safe**, which it was not before. Deployments used to
@@ -481,7 +515,7 @@ The Caddyfile already routes the first label of the hostname to a container of t
 Copy all four files into a directory of their own — they must stay together, because the compose file mounts `./snapshot.mjs`, `./web.mjs` and `./index.html` relative to itself:
 
 ```bash
-mkdir -p ~/docker-compose/dashboard && cd ~/docker-compose/dashboard   # + the four files
+mkdir -p ~/dashboard && cd ~/dashboard   # + the four files
 cat > .env <<'EOF'
 DEPLOY_DOMAIN=preview.example.com
 GITHUB_REPOSITORY=msupply-foundation/open-msupply-internal
@@ -582,10 +616,16 @@ WorkingDirectory=$HOME/actions-runner-%i
 ExecStart=$HOME/actions-runner-%i/run.sh
 Restart=always
 RestartSec=5
-# The agent needs to finish the job it is holding before exiting, or the run
-# is marked failed rather than requeued.
-KillMode=process
-KillSignal=SIGTERM
+# A build lane is capped so that one cold build cannot starve the deployments
+# and the other lanes on the same box: past this, the kernel reclaims from the
+# lane rather than from the rest of the machine.
+MemoryHigh=10G
+# Stopping: run.sh traps SIGTERM and passes it to the runner, which finishes
+# (or cancels) the job it holds rather than dying mid-job and leaving the run
+# marked failed. `mixed` sends that SIGTERM to run.sh alone, and only SIGKILLs
+# whatever is left in the unit after TimeoutStopSec.
+Environment=RUNNER_MANUALLY_TRAP_SIG=1
+KillMode=mixed
 TimeoutStopSec=5min
 
 [Install]
@@ -682,8 +722,11 @@ ExecStart=$HOME/actions-runner-run-jit.sh %i
 # Exits after every job by design, so this is the normal path, not recovery.
 Restart=always
 RestartSec=5
-KillMode=process
-KillSignal=SIGTERM
+MemoryHigh=10G
+# As in the template above. The wrapper `exec`s run.sh, so run.sh is the
+# process that receives the SIGTERM.
+Environment=RUNNER_MANUALLY_TRAP_SIG=1
+KillMode=mixed
 TimeoutStopSec=5min
 
 [Install]
