@@ -4,13 +4,17 @@ import { crc32, deflateRawSync } from 'node:zlib';
 import {
   cluesMarkdown,
   earlierIssuesFor,
+  gatherClues,
   historyLine,
+  legKey,
   planIssue,
   readZipEntry,
   regressedKeysInBody,
   relatedCommits,
   setFromBody,
   setMarker,
+  specFileOf,
+  splitLegKey,
   syncTrackingIssue,
   testsFromReport,
 } from './nightly-lib.mjs';
@@ -428,5 +432,94 @@ describe('cluesMarkdown', () => {
       earlier: new Map(),
     });
     expect(md).toContain('No commit in the range touches this spec');
+  });
+});
+
+describe('leg-qualified keys', () => {
+  it('leaves the default leg bare and prefixes any other', () => {
+    expect(legKey(null, 'auth.setup.ts › Auth')).toBe('auth.setup.ts › Auth');
+    expect(legKey('plugin-cook_islands', 'auth.setup.ts › Auth')).toBe(
+      '[plugin-cook_islands] auth.setup.ts › Auth'
+    );
+  });
+  it('splits a qualified key back, and passes a bare one through', () => {
+    expect(splitLegKey('[plugin-cook_islands] a.spec.ts › t')).toEqual({
+      leg: 'plugin-cook_islands',
+      key: 'a.spec.ts › t',
+    });
+    expect(splitLegKey('a.spec.ts › t')).toEqual({
+      leg: null,
+      key: 'a.spec.ts › t',
+    });
+  });
+  it('finds the spec file under the leg prefix', () => {
+    expect(
+      specFileOf('[plugin-cook_islands] plugins/cook_islands/ck.spec.ts › gate')
+    ).toBe('plugins/cook_islands/ck.spec.ts');
+  });
+});
+
+describe('gatherClues', () => {
+  // One previous run carrying both legs' reports, in which the SAME setup
+  // test passed on the default leg and failed on the plugin leg — so a
+  // history read from the wrong leg's report reads the wrong outcome.
+  const report = status => ({
+    suites: [
+      {
+        title: 'auth.setup.ts',
+        file: 'auth.setup.ts',
+        specs: [{ title: 'Auth', file: 'auth.setup.ts', tests: [{ status }] }],
+      },
+    ],
+  });
+  const artifacts = {
+    'e2e-report-develop': report('expected'),
+    'e2e-report-develop-plugin-cook_islands': report('unexpected'),
+  };
+  const ids = Object.keys(artifacts);
+  const github = {
+    rest: {
+      actions: {
+        listWorkflowRuns: async () => ({
+          data: { workflow_runs: [{ id: 1 }, { id: 2 }] },
+        }),
+        listWorkflowRunArtifacts: async ({ run_id }) => ({
+          data: {
+            artifacts:
+              run_id === 1
+                ? ids.map((name, id) => ({ id, name, expired: false }))
+                : [],
+          },
+        }),
+        downloadArtifact: async ({ artifact_id }) => ({
+          data: streamedZip({
+            'results.json': JSON.stringify(artifacts[ids[artifact_id]]),
+          }),
+        }),
+      },
+      repos: {},
+      issues: { listForRepo: async () => ({ data: [] }) },
+    },
+    paginate: async () => [],
+  };
+
+  it("reads each regression's history from its own leg's report", async () => {
+    const md = await gatherClues({
+      github,
+      owner: 'o',
+      repo: 'r',
+      key: 'develop',
+      currentRunId: 2,
+      summary: {
+        regressions: [
+          { key: 'auth.setup.ts › Auth' },
+          { key: '[plugin-cook_islands] auth.setup.ts › Auth' },
+        ],
+      },
+      serverUrl: 'https://gh',
+    });
+    const [, bare, plugin] = md.split(/\*\*`/);
+    expect(bare).toContain('first failure in this window');
+    expect(plugin).toContain('has failed before');
   });
 });
