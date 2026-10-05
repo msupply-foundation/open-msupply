@@ -126,7 +126,7 @@ export const recordPagePathCollisions = (): void => {
  *                landing screen.
  *   permissions  permission-class — the function exists, this user lacks it,
  *                so the entries are absent and a page URL shows the
- *                no-permission notice in place of the screen (AC-PLUG-P1: the
+ *                no-permission notice in place of the screen (OMS-REG-PLG-04.1/.2: the
  *                one condition behind both doors).
  *
  * A page placed in one of its plugin's own nav sections composes the section's
@@ -550,7 +550,7 @@ const pageComponent = (registered: RegisteredPage): Component => {
   const cached = pageComponentCache.get(page);
   if (cached) return cached;
   // The lazy() call is what defers the plugin's page code to first navigation
-  // (AC-PLUG-P2): `load` is not invoked here, only when the route first
+  // (OMS-REG-PLG-04.4/.5): `load` is not invoked here, only when the route first
   // renders, behind the Suspense boundary below (sdk-contract § code
   // splitting). A rejected load evicts the cache entry: lazy() memoises the
   // import promise, so without the eviction one transient network failure
@@ -636,7 +636,7 @@ const pageComponent = (registered: RegisteredPage): Component => {
  * One route per plugin page, ready for the router (App.tsx). UNGATED, like the
  * host's own generated routes: the gate is ShellLayout's reactive routeAccess
  * verdict, which blocks or denies BEFORE the route's component renders, so
- * registering a route is not offering it (AC-PLUG-P1's second door).
+ * registering a route is not offering it (OMS-REG-PLG-04.2, the second door).
  */
 export const pluginPageRoutes = (): {
   path: string;

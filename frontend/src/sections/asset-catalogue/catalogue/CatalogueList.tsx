@@ -40,9 +40,8 @@ import { nextSelection, type CatalogueSelection } from './selection';
 import type { CatalogueRow } from './catalogueToCsv';
 import { ExportCatalogueAction } from './actions/ExportCatalogueAction';
 import { ImportCatalogueModal } from '../import/ImportCatalogueModal';
-import { DeleteSelectedAction } from '../DeleteSelectedAction';
 import { CATALOGUE_WRITE, guardWrite, writesOffered } from '../access';
-import { outcomeOf } from '../refusals';
+import { DeleteSelectedAction, outcomeOf } from '@/domain/selection';
 
 // Catalogue › Assets — the catalogue list (spec/asset-catalogue S1), on the
 // standard list screen (ui-standards/list-views): URL-backed filter / sort /
@@ -243,8 +242,8 @@ const CatalogueList: Component = () => {
               guard={() => guardWrite(CATALOGUE_WRITE)}
               deleteOne={deleteOne}
               nameOf={item => item.code}
-              confirmMessage={count =>
-                tPlural('messages.confirm-delete-assets', count)
+              confirmMessage={records =>
+                tPlural('messages.confirm-delete-assets', records.length)
               }
               deletedMessage={count =>
                 tPlural('messages.deleted-assets', count)

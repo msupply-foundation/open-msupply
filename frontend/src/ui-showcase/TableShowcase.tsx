@@ -574,6 +574,10 @@ const TableShowcaseDemo = () => {
         // here so the click-to-open row affordance (hover / pointer) still
         // shows.
         onRowClick={() => {}}
+        // Per-row clickability: where only some rows open anything, the rest
+        // get no pointer cue, no click and no Enter-to-open (ui-standards ›
+        // list views § interactions). Demo mapping: SHIPPED rows open nothing.
+        rowClickable={row => row.status !== 'SHIPPED'}
         // Demo mapping so every semantic row state renders for review (a
         // real page derives these from its own domain gates — e.g. disabled
         // from its read-only lifecycle check; the tint always pairs with

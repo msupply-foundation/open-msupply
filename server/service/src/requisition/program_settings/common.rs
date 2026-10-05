@@ -70,28 +70,117 @@ pub fn reduce_and_sort_periods(periods: Vec<PeriodRow>) -> Vec<PeriodRow> {
         .collect()
 }
 
+/// Program ids for the given settings, expanded to include every program sharing
+/// an `elmis_code` with one of them. Programs without an `elmis_code` are always
+/// kept, so a store mixing coded and uncoded programs still finds suppliers for
+/// the uncoded ones.
 pub(crate) fn get_program_ids(
     connection: &StorageConnection,
     settings: &Vec<ProgramRequisitionSettings>,
 ) -> Result<Vec<String>, RepositoryError> {
-    let has_elmis_code = settings.iter().any(|s| s.program_row.elmis_code.is_some());
+    let mut program_ids: Vec<String> = settings.iter().map(|s| s.program_row.id.clone()).collect();
 
-    let program_ids: Vec<String> = match has_elmis_code {
-        true => {
-            let elmis_codes: Vec<String> = settings
-                .iter()
-                .filter_map(|s| s.program_row.elmis_code.clone())
-                .collect();
-            ProgramRepository::new(connection)
-                .query_by_filter(
-                    ProgramFilter::new().elmis_code(EqualFilter::equal_any(elmis_codes)),
-                )?
-                .iter()
-                .map(|p| p.id.clone())
-                .collect()
-        }
-        false => settings.iter().map(|s| s.program_row.id.clone()).collect(),
-    };
+    let elmis_codes: Vec<String> = settings
+        .iter()
+        .filter_map(|s| s.program_row.elmis_code.clone())
+        .filter(|c| !c.is_empty())
+        .collect();
+
+    if !elmis_codes.is_empty() {
+        let related = ProgramRepository::new(connection).query_by_filter(
+            ProgramFilter::new().elmis_code(EqualFilter::equal_any(elmis_codes)),
+        )?;
+        program_ids.extend(related.into_iter().map(|p| p.id));
+    }
+
+    program_ids.sort();
+    program_ids.dedup();
 
     Ok(program_ids)
+}
+
+#[cfg(test)]
+mod test {
+    use super::get_program_ids;
+    use repository::{
+        mock::{context_program_a, MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        MasterListRow, NameTagRow, ProgramRequisitionSettings, ProgramRequisitionSettingsRow,
+        ProgramRow,
+    };
+
+    fn program(id: &str, elmis_code: Option<&str>) -> ProgramRow {
+        ProgramRow {
+            id: id.to_string(),
+            name: id.to_string(),
+            master_list_id: None,
+            context_id: context_program_a().id,
+            is_immunisation: false,
+            elmis_code: elmis_code.map(str::to_string),
+            deleted_datetime: None,
+        }
+    }
+
+    fn setting(program_row: ProgramRow) -> ProgramRequisitionSettings {
+        ProgramRequisitionSettings {
+            program_settings_row: ProgramRequisitionSettingsRow::default(),
+            program_row,
+            master_list: MasterListRow::default(),
+            name_tag_row: NameTagRow::default(),
+        }
+    }
+
+    #[actix_rt::test]
+    async fn get_program_ids_keeps_uncoded_programs_when_others_have_elmis_code() {
+        let coded = program("coded", Some("SHARED"));
+        let coded_related = program("coded_related", Some("SHARED"));
+        let uncoded = program("uncoded", None);
+        let unrelated = program("unrelated", Some("OTHER"));
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "get_program_ids_keeps_uncoded_programs_when_others_have_elmis_code",
+            MockDataInserts::none().contexts(),
+            MockData {
+                programs: vec![
+                    coded.clone(),
+                    coded_related.clone(),
+                    uncoded.clone(),
+                    unrelated,
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let result = get_program_ids(&connection, &vec![setting(coded), setting(uncoded)]).unwrap();
+
+        assert_eq!(
+            result,
+            vec![
+                "coded".to_string(),
+                "coded_related".to_string(),
+                "uncoded".to_string()
+            ]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn get_program_ids_no_elmis_code() {
+        let a = program("a", None);
+        let b = program("b", None);
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "get_program_ids_no_elmis_code",
+            MockDataInserts::none().contexts(),
+            MockData {
+                programs: vec![a.clone(), b.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let result = get_program_ids(&connection, &vec![setting(a), setting(b)]).unwrap();
+
+        assert_eq!(result, vec!["a".to_string(), "b".to_string()]);
+    }
 }
