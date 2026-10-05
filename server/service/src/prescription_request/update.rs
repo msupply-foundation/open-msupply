@@ -398,7 +398,7 @@ mod test {
         // rather than when stock actually moved.
         assert_eq!(updated.prescription_datetime, prescribed_three_days_ago);
         assert_eq!(invoice.invoice_row.backdated_datetime, None);
-        assert!(invoice.invoice_row.created_datetime > prescribed_three_days_ago);
+        assert!(invoice.invoice_row.created_datetime >= updated.ready_datetime.unwrap());
 
         // ...with one unallocated line carrying the prescribed quantity + directions
         let lines = InvoiceLineRowRepository::new(&ctx.connection)
