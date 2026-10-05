@@ -172,7 +172,7 @@ export type DiscoveryHostApi = {
    * answer, and the answer depends on WHICH server this is: this machine's
    * own can be proved exactly against the certificate it wrote to disk, while
    * anyone else's can only be trusted on first use, keyed by identity
-   * (spec/android § connection trust, AC-AN8–11). A host handed only a URL
+   * (spec/android § connection trust, OMS-REG-INS-01.17–.22). A host handed only a URL
    * cannot tell those apart and cannot find what it recorded last time —
    * both legacy shells key their fingerprint store on hardware id and port
    * (spec/desktop/README.md § Status).
