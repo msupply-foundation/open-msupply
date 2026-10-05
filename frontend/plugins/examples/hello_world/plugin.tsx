@@ -39,7 +39,7 @@ const intl = pluginIntl(CODE);
  *    click (here, after doing something else first).
  *
  * Neither names the entered store or the app's mount: the same bundle is
- * correct in every store and on every deploy track (AC-PLUG-P3/P4).
+ * correct in every store and on every deploy track (OMS-REG-PLG-04.6/.9).
  *
  * The link's LOOK is the plugin's own, because the host styles no anchor
  * globally — a bare <a> would come out browser-default blue. One host design
@@ -159,10 +159,10 @@ const pagesFlagAtBoot = flag('pluginPages');
  *     settings like a host column. What the real country plugins need.
  *  2. `arrivals` — the BATCHED form. `loadData` runs once per rendered page of
  *     rows, never per cell, and the cell component shows its own loading state
- *     while the batch is in flight (AC-PLUG-K4).
+ *     while the batch is in flight (OMS-REG-PLG-02.5).
  *  3. `orphan` — the DEGRADATION, behind `?pluginBadAnchor`: an anchor naming a
  *     column that does not exist must put the column at the table's end and say
- *     so in diagnostics, never fail the table (AC-PLUG-K2).
+ *     so in diagnostics, never fail the table (OMS-REG-PLG-02.3).
  */
 
 // A stand-in for a real side-fetch: ONE call for the whole page of rows,
@@ -203,7 +203,7 @@ const ArrivalsCell = (props: {
  *     them read-only;
  *  2. a prop change (Save & next) reaches it IN PLACE: the mount stamp and the
  *     click counter below survive the change, because the host must not remount
- *     a contribution to give it new props (AC-PLUG-N2);
+ *     a contribution to give it new props (OMS-REG-PLG-02.14);
  *  3. SDK components carry the host's styling across the boundary: the facts
  *     below are a host `Table`, styled by the host's own stylesheet, and the
  *     gloss is a host `InfoTooltip` — the plugin ships no CSS at all.
@@ -438,10 +438,10 @@ export default definePlugin({
    * What it proves: the page joins the menu and the command palette, the
    * route mounts under the host frame, and the page's code — its own module,
    * inlined into this bundle by the build but a real chunk in dev — is
-   * imported on first navigation, never at startup (AC-PLUG-P2). The gate here
+   * imported on first navigation, never at startup (OMS-REG-PLG-04.4/.5). The gate here
    * is a demo flag; a real plugin gates on the session context it is handed
    * (`ctx.storeMode === 'dispensary'`), and MAY add `permissions` to guard the
-   * nav entry and the URL with one condition (AC-PLUG-P1).
+   * nav entry and the URL with one condition (OMS-REG-PLG-04.1/.2).
    */
   navSections: [
     {
@@ -477,7 +477,7 @@ export default definePlugin({
       // takes a published host section id; `{ root: true }` is a top-level
       // entry of its own; absent means routed with no menu entry (a detail
       // screen). An `in` id the host and the plugin both lack refuses the
-      // plugin at validation, by name (AC-PLUG-P5).
+      // plugin at validation, by name (OMS-REG-PLG-04.11).
       nav: { in: 'helloSection' },
     },
   ],
@@ -549,7 +549,7 @@ export default definePlugin({
       id: 'itemInfo',
       // Behind a flag so the SAME session can show the region both ways: with
       // it, the panel renders below the line's statistics; without it, the
-      // editor has no seam at all (AC-PLUG-N1).
+      // editor has no seam at all (OMS-REG-PLG-02.12).
       when: () => flag('pluginPanel'),
       Component: InfoPanel,
     },

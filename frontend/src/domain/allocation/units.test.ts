@@ -11,7 +11,7 @@ import {
   unitsToLens,
 } from './units';
 
-describe('clampManualPacks (AC-AL6 — 0…available, whole vs partial packs)', () => {
+describe('clampManualPacks (OMS-REG-SMV-11.15–.18 — 0…available, whole vs partial packs)', () => {
   it('floors negatives and non-finite input at zero (both modes)', () => {
     expect(clampManualPacks(-3, 10)).toBe(0);
     expect(clampManualPacks(Number.NaN, 10)).toBe(0);
@@ -37,7 +37,7 @@ describe('clampManualPacks (AC-AL6 — 0…available, whole vs partial packs)', 
   });
 });
 
-describe('lens conversions (AC-AL7 — lens converts, policy stays in units)', () => {
+describe('lens conversions (OMS-REG-SMV-11.19/.20 — lens converts, policy stays in units)', () => {
   it('units lens passes through; negative or non-finite entry converts to undefined', () => {
     expect(lensToUnits(7, { kind: 'units' })).toBe(7);
     expect(lensToUnits(-1, { kind: 'units' })).toBeUndefined();
