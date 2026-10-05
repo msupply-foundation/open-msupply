@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   awaitingReason,
+  compareBatchOrder,
   defaultedPackSize,
   differenceSize,
   isUncounted,
@@ -20,6 +21,8 @@ import {
 //         finer than that is marked rather than rounded away to 0
 //   .86 — a line awaits a reason while its count is off the snapshot in a
 //         direction that demands one and it holds none (.56/.57/.70 → none)
+//   .91 — the editor lists an item's batches soonest expiry first, then by
+//         batch name (numbers as numbers), missing values last
 // Pure count arithmetic — the cheapest layer to pin the exact rule; the detail
 // table's rendering of it (the tint/accent attributes, the absent-value word)
 // is exercised in the e2e suite.
@@ -173,5 +176,51 @@ describe('OMS-REG-INV-03.86 — a line awaits a reason', () => {
         { positive: true, negative: false }
       )
     ).toBe(true);
+  });
+});
+
+describe('OMS-REG-INV-03.91 — the editor lists batches soonest expiry first, then by batch', () => {
+  type Batch = { expiryDate: string | null; batch: string | null };
+  const order = (batches: Batch[]) =>
+    [...batches].sort(compareBatchOrder).map(b => b.batch);
+
+  it('puts the soonest expiry first, whatever the batch names', () => {
+    expect(
+      order([
+        { expiryDate: '2027-06-30', batch: '001' },
+        { expiryDate: '2026-12-31', batch: '003' },
+        { expiryDate: '2027-01-31', batch: '002' },
+      ])
+    ).toEqual(['003', '002', '001']);
+  });
+
+  it('orders batches sharing an expiry by name, digit runs as numbers', () => {
+    expect(
+      order([
+        { expiryDate: '2027-01-31', batch: 'B10' },
+        { expiryDate: '2027-01-31', batch: 'B2' },
+        { expiryDate: '2027-01-31', batch: 'A9' },
+      ])
+    ).toEqual(['A9', 'B2', 'B10']);
+  });
+
+  it('puts a batch with no expiry after every dated one, ordered by name among themselves', () => {
+    expect(
+      order([
+        { expiryDate: null, batch: 'Z' },
+        { expiryDate: null, batch: 'A' },
+        { expiryDate: '2030-01-01', batch: 'M' },
+      ])
+    ).toEqual(['M', 'A', 'Z']);
+  });
+
+  it('puts an unnamed batch after the named ones sharing its expiry', () => {
+    expect(
+      order([
+        { expiryDate: '2027-01-31', batch: null },
+        { expiryDate: '2027-01-31', batch: '' },
+        { expiryDate: '2027-01-31', batch: '001' },
+      ])
+    ).toEqual(['001', null, '']);
   });
 });

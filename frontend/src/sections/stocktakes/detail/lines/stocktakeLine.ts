@@ -85,3 +85,31 @@ export const defaultedPackSize = (
   item: { defaultPackSize: number },
   packSize?: number | null
 ): number => packSize ?? (item.defaultPackSize > 0 ? item.defaultPackSize : 1);
+
+// The line editor's batch order when an item loads (OMS-REG-INV-03.91):
+// soonest expiry first, then by batch name as people read it — digit runs
+// compare as numbers, so "B2" precedes "B10". A batch with no expiry, or no
+// name, comes after those that have one. Ties keep the order given (sort is
+// stable). Applied only on load — rows added while the editor is open stay
+// where they were put (.92).
+const batchCollator = new Intl.Collator(undefined, { numeric: true });
+
+// Missing (null or empty) sorts after present; two missing are a tie.
+const compareMissingLast = (
+  a: string | null | undefined,
+  b: string | null | undefined,
+  compare: (a: string, b: string) => number
+): number => {
+  if (!a) return b ? 1 : 0;
+  if (!b) return -1;
+  return compare(a, b);
+};
+
+export const compareBatchOrder = (
+  a: { expiryDate?: string | null; batch?: string | null },
+  b: { expiryDate?: string | null; batch?: string | null }
+): number =>
+  // Expiry dates are ISO `YYYY-MM-DD`, so text order is date order.
+  compareMissingLast(a.expiryDate, b.expiryDate, (x, y) =>
+    x < y ? -1 : x > y ? 1 : 0
+  ) || compareMissingLast(a.batch, b.batch, batchCollator.compare);

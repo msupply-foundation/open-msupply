@@ -54,6 +54,7 @@ import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
 import {
   awaitingReason,
+  compareBatchOrder,
   defaultedPackSize,
   differenceSize,
   lineDifference,
@@ -222,6 +223,8 @@ const probePresentItems = async (
 // it). countThisLine for the stock lines is `countByDefault`: opt-in (false)
 // when the item already has lines on the stocktake, all-counted (true) for a
 // brand-new item (adding it means counting all its batches) — matching OMS.
+// The two sets are listed together in batch order (compareBatchOrder,
+// OMS-REG-INV-03.91) — the server returns either in no set order.
 const buildDraft = async (
   storeId: string,
   item: StocktakeLineEditItem,
@@ -293,7 +296,7 @@ const buildDraft = async (
     campaign: sl.campaign,
     program: sl.program,
   }));
-  return [...fromExisting, ...fromStock];
+  return [...fromExisting, ...fromStock].sort(compareBatchOrder);
 };
 
 // The card body groups. The modal now defaults to the TABLE view on a wide
@@ -798,7 +801,9 @@ const StocktakeLineEditContent = (
     }
   };
 
-  // Add a new batch (a fresh draft line) — prepended, count blank.
+  // Add a new batch (a fresh draft line), count blank — appended and focused,
+  // so batches added one after another keep the order they were added in
+  // (OMS-REG-INV-03.92; the load order of .91 is never re-applied mid-visit).
   /*
    * `+` adds a batch (spec/keyboard KB-L1/KB-L2) — the app's one BARE-CHARACTER
    * binding, and the only member of the `always` tier.
@@ -825,10 +830,11 @@ const StocktakeLineEditContent = (
   const addBatch = () => {
     const item = currentItem();
     if (!item) return;
+    const id = generateUUID();
     setDraft(
       produce(lines =>
-        lines.unshift({
-          id: generateUUID(),
+        lines.push({
+          id,
           isNew: true,
           countThisLine: true,
           stockLine: null,
@@ -870,6 +876,7 @@ const StocktakeLineEditContent = (
         })
       )
     );
+    batchFields.focus(id);
   };
 
   // Soft-delete a row (isNew splices out; existing flagged deleted → sent as a
