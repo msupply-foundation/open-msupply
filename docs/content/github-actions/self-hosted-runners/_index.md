@@ -305,3 +305,21 @@ Then run the benchmark workflow and compare its summary against other machines:
 gh workflow run integration-test-check.yaml --ref develop \
   -f cache=both -f change=layered -f cold=false
 ```
+
+## Decisions
+
+Why the box is set up this way, so nobody has to rediscover it. Decisions recorded in the code are listed with where to look.
+
+- **Caddy as the reverse proxy, not Traefik or nginx.** Routes here are computable from the hostname, so nothing needs *discovering*. Traefik is the tool for discovery, and charges for it: the docker socket mounted into the proxy (root on the box) or a socket-proxy sidecar, plus per-container labels that would make each compose file know its public hostname. nginx works, but needs three settings hand-tuned that Caddy has by default, each a silent failure if missed — see the comments in `proxy/proxy.Caddyfile`.
+- **The proxy is a container, not a process on the box.** Docker's embedded DNS (`127.0.0.11`), which resolves a deployment by name at dial time, exists only inside containers on a user-defined network.
+- **The proxy and the dashboard are set up by hand, not by CI.** Each fronts every deployment at once, so a change to either should be someone choosing to make it and watching, not a side effect of whichever deploy runs next.
+- **No dedicated runner account.** On a box that does nothing but CI it buys no isolation worth the extra moving part, and every path then has to be written for a user you are not logged in as, which is where runbooks rot.
+- **Lanes registered by hand, not JIT.** JIT runners are ephemeral and never need registering, but minting their config needs a token with Administration: write living on the box. Registration is a one-off per lane; the token is a standing credential.
+- **Distro `docker.io`, not Docker's own repo.** Nothing these jobs do is version-sensitive, and the distro package updates through normal `apt` with no third-party repo or GPG key on a machine that holds registry credentials.
+- **Lane roles are exclusive.** A lane carries one label so a 19-minute build never queues ahead of a one-minute deploy or teardown. That is why `e2e` became a role of its own rather than borrowing `build`; the reasoning is in the header of `frontend-e2e-nightly.yaml`.
+- **One machine-id per deployment**, not the host's: two deployments sharing one collide when both pair to the same central server. See `docker-deploy.yaml`.
+- **The proxy's host port is read back, not configured.** A `PROXY_PORT` repository variable used to duplicate what the proxy already knew, and a mismatch reported every deployment as unroutable. If it is still set on the repository it is inert. See `docker-deploy.yaml`.
+- **`DEPLOY_SHARED_DAEMON` skips the registry rather than adding a local one.** The image then exists only on this box's disk: a prune or a rebuilt box means recompiling rather than pulling, but costs no data, since databases are volumes. `skip_if_exists` probes the daemon instead of the registry while it is set. See `docker-named-deployment.yaml`.
+- **`e2e`, not `reference1`, as the default dataset.** `reference1` is a 2023 V5/V6 export, and `SyncBufferRow.source_site_id` is a plain `i32` with no `#[serde(default)]`, so it fails to deserialise (`missing field 'source_site_id'`) before integration. Fixing it is a server change: that `#[serde(default)]` plus a re-export. `e2e` is exercised nightly, so it cannot rot unnoticed.
+- **The dashboard's design** — the socket-holding container with no network and no listener, sign-in with the viewer's own token, and buttons that dispatch the existing workflows so there is one writer — is in the header comments of `dashboard/compose.dashboard.yaml`, `snapshot.mjs` and `web.mjs`.
+- **How deployments are deployed** — compose files from the running workflow's commit, version overrides for old releases, and why the workflows are not split into `@develop` run files — is Fork 4 of `frontend/kdd/server-image-build/draft-kdd.md`.
