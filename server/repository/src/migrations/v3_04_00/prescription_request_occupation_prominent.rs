@@ -9,8 +9,9 @@ impl MigrationFragment for Migrate {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         // The builtin custom-field seeder (`service/src/custom_field/builtin.rs`)
-        // shipped `prescription_request_occupation` as VISIBLE in the first
-        // 3.02 RC builds; the spec and product want it PROMINENT, beside the
+        // shipped `prescription_request_occupation` as VISIBLE from 33c81efa04
+        // until f15c79bbfd (26 Aug – 7 Sep 2026: `v3.02.0-RC-prescriptions-3`
+        // and the `v3.02.00-develop` builds of that window); the spec and product want it PROMINENT, beside the
         // other three request fields on the detail header (issue #932). The
         // seeder writes `display_mode` on create only — it belongs to the
         // deployment after that — so fixing the registry does not reach a
@@ -22,9 +23,11 @@ impl MigrationFragment for Migrate {
         // the field existed with that default for only a couple of weeks of
         // RC builds, so the stale default is by far the likelier reading.
         //
-        // Matched by (custom_field_id, scope), the table's natural key, rather
-        // than by row id: the scope row's id format has changed since the
-        // first seeds (`<key>__scope_<scope>` then, `<key>__<scope>` now).
+        // Matched by (custom_field_id, scope), the table's UNIQUE natural key,
+        // rather than by row id. The seeder names the row `<key>__<scope>`, but
+        // that is its own convention, not something the table enforces, and a
+        // row that arrived another way can carry a different id (the e2e
+        // datafile's hand-authored rows use `<key>__scope_<scope>`).
         //
         // `custom_field_scope` is central-authored and reaches remotes over v7
         // through the changelog, so central's flip needs a changelog row or
@@ -117,8 +120,8 @@ mod test {
         })
         .await;
 
-        // The occupation row as the first seeds wrote it (old id format, stale
-        // VISIBLE default), a sibling builtin that is legitimately VISIBLE on the
+        // The occupation row as a 3.02 build seeded before f15c79bbfd left it
+        // (the seeder's id, stale VISIBLE default), a sibling builtin that is legitimately VISIBLE on the
         // same scope, and the same field on a scope it never applied to — only
         // the first may move. The central site id is set as it is on a site
         // that has synced.
@@ -129,7 +132,7 @@ mod test {
                 ('prescription_request_occupation', 'prescription_request_occupation', 'Occupation', 'TEXT', 'BUILTIN'),
                 ('prescription_request_weight', 'prescription_request_weight', 'Weight', 'REAL', 'BUILTIN');
             INSERT INTO custom_field_scope (id, custom_field_id, scope, display_mode, sort_order) VALUES
-                ('prescription_request_occupation__scope_prescription_request', 'prescription_request_occupation', 'prescription_request', 'VISIBLE', '5300'),
+                ('prescription_request_occupation__prescription_request', 'prescription_request_occupation', 'prescription_request', 'VISIBLE', '5300'),
                 ('prescription_request_weight__prescription_request', 'prescription_request_weight', 'prescription_request', 'VISIBLE', '5100'),
                 ('prescription_request_occupation__name', 'prescription_request_occupation', 'name', 'VISIBLE', '5300');
             INSERT INTO key_value_store (id, value_int) VALUES
@@ -140,7 +143,7 @@ mod test {
 
         migrate(&connection, Some(version), MigrationConfig::default()).unwrap();
 
-        let occupation = "prescription_request_occupation__scope_prescription_request";
+        let occupation = "prescription_request_occupation__prescription_request";
         assert_eq!(display_mode(&connection, occupation), "PROMINENT");
         assert_eq!(
             display_mode(
@@ -192,7 +195,7 @@ mod test {
             &connection,
             r#"
             UPDATE custom_field_scope SET display_mode = 'HIDDEN'
-            WHERE id = 'prescription_request_occupation__scope_prescription_request';
+            WHERE id = 'prescription_request_occupation__prescription_request';
             "#
         )
         .unwrap();
