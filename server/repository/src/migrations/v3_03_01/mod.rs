@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod stamp_central_unsent_before_v3;
 mod stamp_changelog_unpushed_before_v3;
 
 pub(crate) struct V3_03_01;
@@ -15,7 +16,10 @@ impl Migration for V3_03_01 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(stamp_changelog_unpushed_before_v3::Migrate)]
+        vec![
+            Box::new(stamp_changelog_unpushed_before_v3::Migrate),
+            Box::new(stamp_central_unsent_before_v3::Migrate),
+        ]
     }
 }
 
