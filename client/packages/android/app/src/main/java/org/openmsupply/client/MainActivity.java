@@ -20,10 +20,10 @@ import java.io.File;
 public class MainActivity extends BridgeActivity implements DiscoveryHostActivity {
     RemoteServer server = new RemoteServer();
 
-    // Set by DiscoveryHostPlugin.navigate (host duty AC-DT16): once the page
-    // whose URL starts with this has loaded, drop the WebView history beneath
-    // it, so hardware back cannot re-enter discovery without its flags and
-    // bounce straight back to the server just left. Read in the page-loaded
+    // Set by DiscoveryHostPlugin.navigate (host duty OMS-REG-DESK-01.21): once
+    // the page whose URL starts with this has loaded, drop the WebView history
+    // beneath it, so hardware back cannot re-enter discovery without its flags
+    // and bounce straight back to the server just left. Read in the page-loaded
     // listener installed in onCreate; UI thread only.
     private String pendingHistoryClearPrefix;
 
@@ -91,10 +91,10 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
                 if (!js.isEmpty()) {
                     view.evaluateJavascript(js, null);
                 }
-                // Host duty (AC-DT16): clearHistory only drops entries that
-                // have committed, so it has to run once the target page has
-                // loaded. Prefix-matched because the final URL can carry a
-                // query or a same-origin redirect.
+                // Host duty (OMS-REG-DESK-01.21): clearHistory only drops
+                // entries that have committed, so it has to run once the target
+                // page has loaded. Prefix-matched because the final URL can
+                // carry a query or a same-origin redirect.
                 String prefix = MainActivity.this.pendingHistoryClearPrefix;
                 if (prefix != null && view.getUrl() != null
                         && view.getUrl().startsWith(prefix)) {
@@ -144,13 +144,14 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
 
     @Override
     public void onDestroy() {
-        // Host duty (frontend/src/discovery/hostContract.ts, AC-DT18): the
-        // session ends with the app. Once the page has connected this WebView
-        // to a chosen server the session belongs to that server and lives in
-        // the cookie jar, which otherwise survives to the next launch — so
-        // signing in would not be required after the auto-reconnect AC-DT1
-        // performs. Only when a server was chosen: an install that never left
-        // its own server keeps the device's own session, as it always has.
+        // Host duty (frontend/src/discovery/hostContract.ts,
+        // OMS-REG-DESK-01.30): the session ends with the app. Once the page has
+        // connected this WebView to a chosen server the session belongs to that
+        // server and lives in the cookie jar, which otherwise survives to the
+        // next launch — so signing in would not be required after the
+        // auto-reconnect OMS-REG-DESK-01.1 performs. Only when a server was
+        // chosen: an install that never left its own server keeps the device's
+        // own session, as it always has.
         //
         // Not guaranteed on a process kill; the server's token expiry is the
         // backstop, as it is on desktop.

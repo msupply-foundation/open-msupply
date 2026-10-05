@@ -27,7 +27,7 @@ import {
   type ValidationItem,
 } from './courseEditor';
 
-// Anchors: spec/immunisation-programs/acceptance.md — the editor.
+// Anchors: spec/immunisation-programs/cases/ — the editor.
 //   OMS-REG-IMM-01.31  a new course opens blank with its defaults
 // OMS-REG-IMM-01.34  a blank Save lists name / item / dose as required, sends
 // nothing OMS-REG-IMM-01.36  a duplicate name is refused as such, the draft

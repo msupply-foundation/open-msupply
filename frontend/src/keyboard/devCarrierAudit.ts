@@ -10,9 +10,9 @@ import { declaredBindings } from '../ui/utils/keyActions';
  * control that ADVERTISES a key nothing answers. The badge and
  * `aria-keyshortcuts` are promises — to the user, and to assistive technology —
  * so a control showing "Option+N" that does nothing is worse than a control
- * showing nothing (AC-KB15; the same argument `Button` already applies to a
- * binding derived from a dialog-footer claim: "advertised only where it is
- * claimed").
+ * showing nothing (OMS-REG-KBD-01.26; the same argument `Button` already
+ * applies to a binding derived from a dialog-footer claim: "advertised only
+ * where it is claimed").
  *
  * WHY A SWEEP RATHER THAN A CHECK INSIDE Button / IconButton / SplitButton.
  * The per-carrier version was built first and measured +632 B gzip in the
@@ -66,7 +66,7 @@ const audit = (): void => {
     if (reported.has(key)) continue;
     reported.add(key);
     console.warn(
-      `Shortcut advertised but unanswered: "${describe(el)}" declares ${keys}, and no registered action owns that binding — the badge and aria-keyshortcuts promise a key that does nothing (spec/keyboard KB-R2, AC-KB15). The SCREEN declares the action (createAddAction for Alt+N, createSidePanelOpen for Alt+M); the control carries only the shortcut.`
+      `Shortcut advertised but unanswered: "${describe(el)}" declares ${keys}, and no registered action owns that binding — the badge and aria-keyshortcuts promise a key that does nothing (spec/keyboard KB-R2, OMS-REG-KBD-01.26). The SCREEN declares the action (createAddAction for Alt+N, createSidePanelOpen for Alt+M); the control carries only the shortcut.`
     );
   }
 };

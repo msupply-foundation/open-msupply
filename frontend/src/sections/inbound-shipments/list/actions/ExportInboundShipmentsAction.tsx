@@ -8,10 +8,11 @@ import { inboundQueryInputs, type InboundListFilter } from '../listFilters';
 import { inboundShipmentsToCsv } from '../inboundShipmentsToCsv';
 import { heldInboundQueryScopes } from '../../inboundShipmentScope';
 
-// The inbound-shipments list Export action (spec S1 / AC-L6): the shared
-// CSV/Excel split button, fed this vertical's query. Exports EVERY shipment
-// matching the current filter, not just the page. Delivery, the busy state and
-// the outcome report live in ListExportAction — this file owns only the query.
+// The inbound-shipments list Export action (spec S1 / OMS-REG-REPL-01.9/.10):
+// the shared CSV/Excel split button, fed this vertical's query. Exports EVERY
+// shipment matching the current filter, not just the page. Delivery, the busy
+// state and the outcome report live in ListExportAction — this file owns only
+// the query.
 export interface ExportInboundShipmentsActionProps {
   storeId: string;
   filter: () => InboundListFilter;

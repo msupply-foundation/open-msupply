@@ -1,6 +1,6 @@
 # Build report — plugin-management
 
-**Target stack:** SolidJS + Vite, composed from the shared component library in `src/ui/`, with roles resolved through `spec/ui-standards/components.md`. Built from `spec/plugin-management/` (reverse spec), anchored to the behaviours of its case `OMS-REG-MNG-07` (written `.n` below; the retired `AC-*` mapping is `spec/plugin-management/acceptance.md`). Route `manage/plugins`, registered in `sectionRoutes` (`src/App.tsx`).
+**Target stack:** SolidJS + Vite, composed from the shared component library in `src/ui/`, with roles resolved through `spec/ui-standards/components.md`. Built from `spec/plugin-management/` (reverse spec), anchored to the behaviours of its case `OMS-REG-MNG-07` (written `.n` below), the source of truth. Route `manage/plugins`, registered in `sectionRoutes` (`src/App.tsx`).
 
 ## What was built
 
@@ -50,7 +50,7 @@
 2. ~~**The shared-id trap is detectable.**~~ Resolved: the screen reads the removed row's `kind` and reports the wrong removal as a refusal (`.65`).
 3. **The new confirm key carries plural forms.** `messages.confirm-delete-plugins` was minted as `_one`/`_other`, the catalog's plural convention. `_one` never shows, because one selection uses the reference `messages.confirm-delete-plugin`.
 4. **Install refusals are multi-line dumps.** So the banner shows "Unable to install plugin" with the parser's text behind **More information** (`rejectionFrom` + `ErrorDetails`, per controls › action feedback). The spec says "the server's description"; it might say "behind the details disclosure" where the description is a dump.
-5. **Dev loading makes an editor available at once.** With `OMS_PLUGIN_DIRS`, a plugin loaded from source has its editor registered before its bundle is installed. So in dev an in-session install is configurable without a reload. Production behaves as AC-C3 states.
+5. **Dev loading makes an editor available at once.** With `OMS_PLUGIN_DIRS`, a plugin loaded from source has its editor registered before its bundle is installed. So in dev an in-session install is configurable without a reload. Production behaves as OMS-REG-MNG-07.52/.53 states.
 
 ## Follow-ups
 

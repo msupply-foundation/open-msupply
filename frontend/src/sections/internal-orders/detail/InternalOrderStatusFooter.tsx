@@ -26,11 +26,11 @@ import type { InternalOrderInfoFragment } from './internalOrderDetail.generated'
 // (Draft → Sent → Finalised, each stamped with its date) and the one status
 // action — Confirm Sent.
 //
-// Confirm Sent is hidden on a read-only order (AC-S3). A send that would
-// produce an empty order is refused client-side with an explanation and no
-// call (AC-S4): no lines at all, or — where the store trims zero-requested
-// lines on send — no non-zero-requested line. Where the store keeps
-// zero-requested lines (keepRequisitionLinesWithZeroRequestedQuantityOn-
+// Confirm Sent is hidden on a read-only order (OMS-REG-REPL-05.13/.14). A send
+// that would produce an empty order is refused client-side with an explanation
+// and no call (OMS-REG-REPL-05.17): no lines at all, or — where the store trims
+// zero-requested lines on send — no non-zero-requested line. Where the store
+// keeps zero-requested lines (keepRequisitionLinesWithZeroRequestedQuantityOn-
 // Finalised), an all-zero order is sendable — its lines survive the send
 // (rules › Lifecycle, D20). Otherwise it confirms before sending. The server's
 // domain refusals (the reasons backstop, the emergency cap, cannot-edit) come
@@ -38,19 +38,20 @@ import type { InternalOrderInfoFragment } from './internalOrderDetail.generated'
 // RequisitionSend permission routes to the global permission-denied modal
 // (graphqlFetch default). Where the store requires supplier authorisation and
 // the order carries no comment, the send stamps a generated approval note
-// identifying the sender (AC-S7, buildSendAutoComment) on the same save; the
-// server neither writes nor requires it (contract › lifecycle). A send that
-// lands closes the dialog and hides the button, so the bar's message slot
-// flashes the save confirmation (spec/ui-standards/controls.md § action
-// feedback).
+// identifying the sender (OMS-REG-REPL-05.5/.15/.18, buildSendAutoComment) on
+// the same save; the server neither writes nor requires it (contract ›
+// lifecycle). A send that lands closes the dialog and hides the button, so the
+// bar's message slot flashes the save confirmation
+// (spec/ui-standards/controls.md § action feedback).
 type Phase = 'confirm' | 'empty' | 'sending' | 'error';
 
-// AC-S7: the send auto-comment. When the store requires supplier authorisation
-// and the order has no comment yet, build the approval note from the sending
-// user's identity (name, job title, email, phone — the latter two dashed when
-// unknown, matching the reference). Returns undefined when nothing should be
-// stamped — authorisation off, or the order already carries a comment (kept) —
-// so the send omits `comment` and leaves any existing one untouched.
+// OMS-REG-REPL-05.5/.15/.18: the send auto-comment. When the store requires
+// supplier authorisation and the order has no comment yet, build the approval
+// note from the sending user's identity (name, job title, email, phone — the
+// latter two dashed when unknown, matching the reference). Returns undefined
+// when nothing should be stamped — authorisation off, or the order already
+// carries a comment (kept) — so the send omits `comment` and leaves any
+// existing one untouched.
 const buildSendAutoComment = (
   requiresAuthorisation: boolean,
   existingComment: string | null | undefined
@@ -74,21 +75,21 @@ export interface InternalOrderStatusFooterProps {
   editable: boolean;
   /**
    * The store requires supplier authorisation of internal orders — gates the
-   * send auto-comment stamping (AC-S7).
+   * send auto-comment stamping (OMS-REG-REPL-05.5/.15/.18).
    */
   requiresAuthorisation: boolean;
   /**
    * The store keeps zero-requested lines on send
    * (keepRequisitionLinesWithZeroRequestedQuantityOnFinalised) — an all-zero
-   * order is then sendable (AC-S4, D20).
+   * order is then sendable (OMS-REG-REPL-05.17, D20).
    */
   keepZeroLines: boolean;
   /** A send succeeded — merge the returned node over the current one. */
   onSent: (node: InternalOrderInfoFragment) => void;
   /**
-   * The lines a reasons-backstop refusal named (AC-R3), so the detail can flag
-   * their Reason cells; called with [] on any other outcome to clear stale
-   * flags.
+   * The lines a reasons-backstop refusal named (OMS-REG-REPL-04.81), so the
+   * detail can flag their Reason cells; called with [] on any other outcome to
+   * clear stale flags.
    */
   onReasonsNotProvided: (lineIds: string[]) => void;
 }
@@ -104,8 +105,8 @@ export const InternalOrderStatusFooter: Component<
   const emptySend = () =>
     isEmptySend(props.node.lines.nodes, props.keepZeroLines);
 
-  // Outstanding-ancillary send warning (AC-A9): alert-styled, never blocks the
-  // send. The plan is computed server-side and rides the node.
+  // Outstanding-ancillary send warning (OMS-REG-REPL-13.8): alert-styled, never
+  // blocks the send. The plan is computed server-side and rides the node.
   const ancillaryWarning = () => {
     const ancillary = props.node.ancillaryState;
     if (ancillary.state === 'NEEDS_ADD')
@@ -122,7 +123,7 @@ export const InternalOrderStatusFooter: Component<
   };
 
   const onConfirmSend = () => {
-    // Empty-order refusal is a client check — no call (AC-S4).
+    // Empty-order refusal is a client check — no call (OMS-REG-REPL-05.17).
     setPhase(emptySend() ? 'empty' : 'confirm');
     setErrorMessage(undefined);
     setOpen(true);
@@ -148,8 +149,8 @@ export const InternalOrderStatusFooter: Component<
       return;
     }
     if (result.kind === 'error') {
-      // Flag the offending Reason cells (AC-R3); [] for a non-reasons error
-      // clears any stale flags from an earlier attempt.
+      // Flag the offending Reason cells (OMS-REG-REPL-04.81); [] for a
+      // non-reasons error clears any stale flags from an earlier attempt.
       props.onReasonsNotProvided(result.reasonLineIds);
       setErrorMessage(result.message);
       setPhase('error');
@@ -170,7 +171,7 @@ export const InternalOrderStatusFooter: Component<
       <ContentFooterActions>
         {/* No Close here (D103): leaving the order is the breadcrumb's job, in
             the app bar, where every other screen puts it. */}
-        {/* Hidden on a read-only order (AC-S3). */}
+        {/* Hidden on a read-only order (OMS-REG-REPL-05.13/.14). */}
         <Show when={props.editable}>
           <Button
             icon={<CheckIcon />}
@@ -194,7 +195,7 @@ export const InternalOrderStatusFooter: Component<
               fallback={
                 <>
                   {/* Outstanding-ancillary warning above the confirm prompt;
-                      confirming still sends (AC-A9). */}
+                      confirming still sends (OMS-REG-REPL-13.8). */}
                   <Show when={ancillaryWarning()}>
                     <Alert severity="warning">{ancillaryWarning()}</Alert>
                   </Show>

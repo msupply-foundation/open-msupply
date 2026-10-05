@@ -687,10 +687,10 @@ const start = async (): Promise<void> => {
 
       hasLoadingError = true;
 
-      // Host duty (frontend/src/discovery/hostContract.ts, AC-DT4): a server
-      // that answered the reachability check but then fails to serve its UI
-      // must land back on app-owned content — the discovery page, with the
-      // could-not-connect notice seeded and auto-connect off — never on
+      // Host duty (frontend/src/discovery/hostContract.ts, OMS-REG-DESK-01.5):
+      // a server that answered the reachability check but then fails to serve
+      // its UI must land back on app-owned content — the discovery page, with
+      // the could-not-connect notice seeded and auto-connect off — never on
       // Chromium's error page. A failure on the PAGE's own origin is a
       // packaging fault (or, under ELECTRON_HOST, a dev server that is not
       // running) which a reload cannot fix, so that keeps the error screen

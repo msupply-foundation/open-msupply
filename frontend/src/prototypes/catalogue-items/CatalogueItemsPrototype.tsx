@@ -49,9 +49,6 @@ import {
  *         the catalogue is central-owned"; "Page actions: none."
  *   § Scope — "Item records themselves are maintained in central data entry
  *         outside this app."
- *   acceptance.md — OMS-FUN-ITEM-001 ("Create Items in OMS Central") was
- *         deliberately NOT folded in, because this app's items vertical does
- *         not own item creation.
  *
  * This prototype proposes exactly the capability that scope excludes: creating
  * one item, and importing many. So it does NOT touch the items vertical — doing

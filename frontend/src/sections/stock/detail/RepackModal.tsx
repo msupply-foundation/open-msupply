@@ -41,7 +41,7 @@ import {
   type RepacksByStockLineResult,
 } from './stockLine.generated';
 
-// The repack modal (spec/stock S5, FL6). Review this line's repack history and
+// The repack modal (spec/stock S5). Review this line's repack history and
 // create a repack (split N packs into a new line at a new pack size, optionally
 // a new location). Save is disabled until packs + new pack size are set;
 // fractional-pack / below-zero rejections surface as messages. A successful
@@ -191,10 +191,10 @@ const RepackContent = (props: {
   };
 
   /*
-   * Alt+N — New (spec/keyboard KB-R2, AC-KB7). Registered after the screen
-   * beneath, so it shadows the stock line's own Alt+N while this modal is
-   * open. Inert where the New button is absent, mid-save, and under the print
-   * dialog, which would otherwise hide the new repack it starts.
+   * Alt+N — New (spec/keyboard KB-R2, OMS-REG-KBD-01.14/.15). Registered after
+   * the screen beneath, so it shadows the stock line's own Alt+N while this
+   * modal is open. Inert where the New button is absent, mid-save, and under
+   * the print dialog, which would otherwise hide the new repack it starts.
    */
   createAddAction({
     name: 'button.new',

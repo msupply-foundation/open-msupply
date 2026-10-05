@@ -14,11 +14,12 @@ import { remToPx } from '../../../ui/utils/rem';
 import { Contacts } from '../names.generated';
 import type { ContactsResult } from '../names.generated';
 
-// S4 Contacts tab — a read-only list of the name's contacts (AC-N23): first
-// name, last name, position, email, phone, category 1. Store- AND name-scoped.
-// No row selection and no row actions — there is no contact CRUD in the schema
-// (read-only). It is the standard data table (with its view-control toolbar),
-// matching the list views (spec/ui-standards/detail-views › tabs).
+// S4 Contacts tab — a read-only list of the name's contacts
+// (OMS-REG-REPL-08.20): first name, last name, position, email, phone, category
+// 1. Store- AND name-scoped. No row selection and no row actions — there is no
+// contact CRUD in the schema (read-only). It is the standard data table (with
+// its view-control toolbar), matching the list views
+// (spec/ui-standards/detail-views › tabs).
 
 type ContactRow = ContactsResult['contacts']['nodes'][number];
 

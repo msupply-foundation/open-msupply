@@ -13,13 +13,13 @@ import type { PrescriptionRequestsVariables } from '../prescriptionRequests.gene
 import type { PrescriptionRequestFilter } from '../listFilters';
 import { prescriptionRequestsToCsv } from '../prescriptionRequestsToCsv';
 
-// The prescription-requests list Export (spec/prescription-requests AC-L7):
-// the shared CSV/Excel split button over EVERY row matching the current filter
-// (all pages) — the custom-field filters among them, so the file's row set
-// matches the screen's. Filenames follow the shared list-export rule with
-// `filename.prescription-requests` as the list-name slot (ui-standards/
-// list-views § regions). Delivery, the busy state and the outcome report live
-// in ListExportAction — this file owns only the query.
+// The prescription-requests list Export (spec/prescription-requests
+// OMS-REG-DIS-08.28/.29): the shared CSV/Excel split button over EVERY row
+// matching the current filter (all pages) — the custom-field filters among
+// them, so the file's row set matches the screen's. Filenames follow the shared
+// list-export rule with `filename.prescription-requests` as the list-name slot
+// (ui-standards/ list-views § regions). Delivery, the busy state and the
+// outcome report live in ListExportAction — this file owns only the query.
 
 export interface ExportPrescriptionRequestsActionProps {
   storeId: string;

@@ -21,7 +21,7 @@ mutation deletePrescriptionRequestLine($storeId: String!, $id: String!) {
 }
 
 # The configured abbreviations for directions expansion (consumed read — the
-# same list dispensing's line editor uses; rules § lines, AC-N3).
+# same list dispensing's line editor uses; rules § lines, OMS-REG-DIS-08.38).
 query requestAbbreviations {
   abbreviations {
     id
