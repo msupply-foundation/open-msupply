@@ -155,7 +155,7 @@ describe('parseDiscoveryFlags', () => {
     });
   });
 
-  it('reads canhost, the flag that offers the mode chooser (AC-AN21)', () => {
+  it('reads canhost, the flag that offers the mode chooser (OMS-REG-INS-01.40)', () => {
     expect(parseDiscoveryFlags('?canhost=true').canHostServer).toBe(true);
     // absent on every desktop client install, which goes straight to the list
     expect(parseDiscoveryFlags('').canHostServer).toBe(false);
@@ -298,7 +298,7 @@ const memoryStorage = (): Storage => {
   };
 };
 
-describe('shouldAskInstallMode (AC-AN21)', () => {
+describe('shouldAskInstallMode (OMS-REG-INS-01.40, .41, .42, .43, .45)', () => {
   const flags = {
     autoconnect: true,
     timedout: false,
@@ -348,7 +348,7 @@ describe('shouldAskInstallMode (AC-AN21)', () => {
     ).toBe(false);
   });
 
-  // AC-AN22: answering has to close the question. Neither the stored role nor
+  // OMS-REG-INS-01.44: answering has to close the question. Neither the stored role nor
   // the launch flags change when the user answers, so on the re-ask case above
   // the SAME answer keeps satisfying it — re-picking "this device runs the
   // server" would re-render the question for ever and the only answer that
@@ -361,7 +361,7 @@ describe('shouldAskInstallMode (AC-AN21)', () => {
   });
 });
 
-describe('effectiveFlags (AC-AN21/AC-AN22, AC-DT20)', () => {
+describe('effectiveFlags (OMS-REG-INS-01.41/.44, AC-DT20)', () => {
   const flags = {
     autoconnect: true,
     timedout: false,
@@ -394,7 +394,7 @@ describe('effectiveFlags (AC-AN21/AC-AN22, AC-DT20)', () => {
     ).toBe(false);
   });
 
-  it('but a role chosen HERE is the go-ahead to connect (AC-AN22)', () => {
+  it('but a role chosen HERE is the go-ahead to connect (OMS-REG-INS-01.44)', () => {
     // Without this the answer lands on the seeded could-not-connect notice
     // (§ standaloneSeededFailure) with no attempt ever made.
     const effective = effectiveFlags(
@@ -437,7 +437,7 @@ describe('withLocality', () => {
   });
 });
 
-describe('install mode (AC-AN21)', () => {
+describe('install mode (OMS-REG-INS-01.41)', () => {
   it('round-trips the chosen role', () => {
     const storage = memoryStorage();
     recordInstallMode('server', storage);

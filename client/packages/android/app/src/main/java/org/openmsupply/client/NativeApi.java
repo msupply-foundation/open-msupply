@@ -299,10 +299,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     Log.i(OM_SUPPLY, "Loading WebView url=" + targetUrl);
                     frontendLoaded = true;
                     webView.post(() -> {
-                        // Host duty (AC-DT16, AC-AN20): the boot lands on
-                        // discovery from the static loading page, so without
-                        // pinning history here hardware back resurrects that
-                        // page — which only ever spins, since the readiness
+                        // Host duty (AC-DT16, OMS-REG-INS-01.38): the boot
+                        // lands on discovery from the static loading page, so
+                        // without pinning history here hardware back resurrects
+                        // that page — which only ever spins, since the readiness
                         // poll that drives it has already finished. Same clear
                         // the new frontend's shell does on its client-mode
                         // boot; every host-initiated navigation is a fresh
@@ -341,7 +341,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
      * `canhost=true` says this machine could run the server everyone uses OR
      * connect to someone else's — this app always ships the server library, so
      * it always could be either, and that is what lets the page ask once and
-     * remember the answer (AC-AN21) instead of the retired /android chooser. */
+     * remember the answer (OMS-REG-INS-01.40-.41) instead of the retired
+     * /android chooser. */
     String discoveryUrl(boolean autoconnect, boolean timedout) {
         String url = localUrl + DISCOVERY_PATH + "?canhost=true";
         if (!autoconnect) url += "&autoconnect=false";

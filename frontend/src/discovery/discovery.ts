@@ -408,7 +408,7 @@ export const recordInstallMode = (
   }
 };
 
-/** Whether to put the role question on screen (AC-AN21).
+/** Whether to put the role question on screen (OMS-REG-INS-01.40–.45).
  *
  * Only where the machine could genuinely be either (`canHostServer`), and
  * then in two cases: nobody has answered yet, or the user answered "this

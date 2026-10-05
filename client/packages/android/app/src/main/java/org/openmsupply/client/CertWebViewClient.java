@@ -229,9 +229,9 @@ class CertWebViewClient extends ExtendedWebViewClient {
 
     /** Trust on first use, against the fingerprint recorded under
      * {@code identifier}: record it the first time, require the same one
-     * afterwards (AC-AN9/AC-AN10). The identifier is hardware id and port for
-     * both front ends, so a server already trusted on this device stays
-     * trusted after an upgrade. */
+     * afterwards (OMS-REG-INS-01.19-.21). The identifier is hardware id and
+     * port for both front ends, so a server already trusted on this device
+     * stays trusted after an upgrade. */
     private boolean validateFingerprint(SslCertificate targetCert, String identifier) {
         String fingerprint = this.certificateFingerprint(targetCert);
         if (fingerprint == null) {
@@ -310,7 +310,7 @@ class CertWebViewClient extends ExtendedWebViewClient {
         // This machine's own server can be PROVED: it wrote its certificate to
         // this device, so compare against that. Anyone else's can only be
         // trusted on first use, keyed by identity so a changed certificate is
-        // caught (AC-AN9/AC-AN10).
+        // caught (OMS-REG-INS-01.19-.21).
         Boolean isOwnServer = isDiscovery
                 || (isChosenByPage ? NativeApi.getChosenIsLocal() : connectedServer.isLocal());
         Boolean valid;
