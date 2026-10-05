@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mirroredIssueValue } from './issueMirror';
 
-describe('mirroredIssueValue (Issue field mirrors the grid — AC-AL16, OMS-REG-DIST-03.40)', () => {
+describe('mirroredIssueValue (Issue field mirrors the grid — OMS-REG-SMV-11.24/.25, OMS-REG-DIST-03.40)', () => {
   it('totals issued + placeholder under the units lens (the D61 requested total)', () => {
     expect(mirroredIssueValue(60, 40, { kind: 'units' })).toBe(100);
     expect(mirroredIssueValue(7, 0, { kind: 'units' })).toBe(7);

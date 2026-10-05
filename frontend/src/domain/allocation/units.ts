@@ -1,10 +1,10 @@
 // The allocate-in lens and unit arithmetic
 // (spec/stock-allocation/rules.md § the allocate-in lens): entry happens in
 // units or packs-of-a-size (doses is the manageVaccinesInDoses-gated
-// extension, AC-AL7); the policy always distributes in units.
+// extension, OMS-REG-SMV-11.19/.20); the policy always distributes in units.
 
 /**
- * The quantity-entry lens (AC-AL7): units, packs-of-a-size, or — for vaccine
+ * The quantity-entry lens (OMS-REG-SMV-11.19/.20): units, packs-of-a-size, or — for vaccine
  * items under _manage vaccines in doses_ — doses. `dosesPerUnit` is the
  * item's doses-per-unit (doses = units × dosesPerUnit).
  */
@@ -23,10 +23,10 @@ export const round9 = (value: number): number => Math.round(value * 1e9) / 1e9;
 
 /**
  * Convert a lens-entered quantity to units (negative or non-finite —
- * NaN/Infinity from unparsed input — → undefined: AC-AL6). A dose entry
+ * NaN/Infinity from unparsed input — → undefined: OMS-REG-SMV-11.15–.18). A dose entry
  * divides by the item's doses-per-unit (a zero/missing rate falls back to 1,
  * the old app's `dosesPerUnit || 1`); the policy always distributes in units
- * (AC-AL7 — "lens converts, policy stays in units"). Rounded (round9) — the
+ * (OMS-REG-SMV-11.19/.20 — "lens converts, policy stays in units"). Rounded (round9) — the
  * ÷/× otherwise leaves IEEE dust in figures that surface to the user.
  */
 export const lensToUnits = (
@@ -60,7 +60,7 @@ export const unitsToLens = (units: number, lens: AllocateUnit): number => {
  * `packsToDoses` rounds to whole doses — doses are shown and entered as whole
  * numbers. `dosesToPacks` returns the raw (possibly fractional) pack count for
  * `clampManualPacks` to round UP and clamp, so a doses entry that isn't a
- * whole number of packs is reported back as an adjustment (AC-AL13).
+ * whole number of packs is reported back as an adjustment (OMS-REG-SMV-11.33).
  */
 export const packsToDoses = (
   packs: number,
@@ -76,7 +76,7 @@ export const dosesToPacks = (
 
 /**
  * Clamp a manual per-batch packs entry (rules.md § whole-pack arithmetic,
- * AC-AL6): never negative or non-finite. Whole-pack consumers round a
+ * OMS-REG-SMV-11.15–.18): never negative or non-finite. Whole-pack consumers round a
  * fractional entry UP to whole packs, and an entry beyond availability
  * clamps DOWN to the batch's whole-pack floor; partial-pack consumers keep
  * the exact fraction, bounded to the raw (fractional) availability.

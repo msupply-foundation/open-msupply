@@ -2,9 +2,9 @@ import type { BarReason, IssueWarning } from '../../../../domain/allocation';
 
 // The line editor's inline warning banners, as message descriptors the editor
 // resolves via t()/formatNumber (spec/stock-allocation § reporting,
-// AC-AL2/AL3). Derived from the shared deriveIssueWarnings output:
-// over-allocation surfaces (AC-AL3), and every skipped category is reported
-// (AC-AL2) — reusing the same ported vocabulary the bulk "Allocate placeholder
+// OMS-REG-SMV-11.7/.11). Derived from the shared deriveIssueWarnings output:
+// over-allocation surfaces (OMS-REG-SMV-11.11), and every skipped category is reported
+// (OMS-REG-SMV-11.7) — reusing the same ported vocabulary the bulk "Allocate placeholder
 // lines" report uses (`messages.allocated-lines-skipped-line-reasons` + the
 // `label.*` reason tokens), so the two surfaces read identically. The shortfall
 // is surfaced separately (the placeholder notice), so it produces no banner
@@ -56,7 +56,7 @@ export const issueWarningMessages = (
       case 'shortfall':
         return [];
       // Outbound distributes whole packs only — the partial-packs warning is
-      // the prescriptions (partial-pack dispensing) consumer's (AC-AL12).
+      // the prescriptions (partial-pack dispensing) consumer's (OMS-REG-SMV-11.32).
       case 'partial-packs':
         return [];
     }

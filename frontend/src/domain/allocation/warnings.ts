@@ -9,17 +9,17 @@ import type { Distribution } from './distributeIssue';
 import type { BarReason } from './policy';
 
 export type IssueWarning =
-  /** Whole-pack rounding issued more than requested (AC-AL3). */
+  /** Whole-pack rounding issued more than requested (OMS-REG-SMV-11.11). */
   | { kind: 'over-allocated'; units: number }
-  /** Requested units not covered by usable stock (AC-AL4). */
+  /** Requested units not covered by usable stock (OMS-REG-SMV-11.13). */
   | { kind: 'shortfall'; units: number }
   /**
    * Barred stock with availability was passed over, with each category that
-   * applied (AC-AL2 — the shared skip vocabulary).
+   * applied (OMS-REG-SMV-11.7 — the shared skip vocabulary).
    */
   | { kind: 'skipped-barred'; reasons: readonly BarReason[] }
   /**
-   * The allocation split a pack (partial-packs consumers, AC-AL12) — the
+   * The allocation split a pack (partial-packs consumers, OMS-REG-SMV-11.32) — the
    * user should confirm packs can actually be broken. `nearestAboveUnits` is
    * the allocation with every fractional take rounded up to a whole pack —
    * the old app's "nearest above" figure.
@@ -37,7 +37,7 @@ export const deriveIssueWarnings = (
     reportShortfall: boolean;
     /**
      * The allocated units, for the partial-packs warning's nearest-above
-     * figure (AC-AL12). Omitted (or a whole-pack distribution) never raises
+     * figure (OMS-REG-SMV-11.32). Omitted (or a whole-pack distribution) never raises
      * the warning.
      */
     allocatedUnits?: number;
