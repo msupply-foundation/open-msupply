@@ -1511,13 +1511,16 @@ export type CentralPluginMutations = {
    * `programs` chooses the program for each of a form plugin's program keys
    * (a key left out keeps the program it is already bound to); `takeOver`
    * names document types whose existing entry, installed by no plugin, the
-   * plugin may take over.
+   * plugin may take over; `blankOldUi` names taken-over types whose form
+   * on sites still running the old client may go blank, because the type
+   * carries no legacy UI schema (refused otherwise).
    */
   installUploadedPlugin: PluginInfoNode;
   uninstallPlugin: UninstallPluginNode;
 };
 
 export type CentralPluginMutationsInstallUploadedPluginArgs = {
+  blankOldUi?: InputMaybe<Array<Scalars['String']['input']>>;
   fileId: Scalars['String']['input'];
   programs?: InputMaybe<Array<PluginProgramInput>>;
   takeOver?: InputMaybe<Array<Scalars['String']['input']>>;

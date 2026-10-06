@@ -14,6 +14,9 @@
  *                                               key needs one on first install
  *     [--take-over <documentType>]...           adopt an existing registry
  *                                               entry no plugin owns
+ *     [--blank-old-ui <documentType>]...        let a taken-over type's form
+ *                                               go blank on old-client sites
+ *                                               (it has no legacyUiSchema)
  *     [--dry-run]                               build, then print the command
  *
  * The server is OMS_URL (default http://localhost:8000), logged in as
@@ -36,7 +39,7 @@ const DEFAULT_URL = 'http://localhost:8000';
 const USAGE =
   'usage: pnpm plugin:install <plugin directory or code> ' +
   '[--program <programKey>=<programId>]... [--take-over <documentType>]... ' +
-  '[--dry-run]';
+  '[--blank-old-ui <documentType>]... [--dry-run]';
 
 const fail = message => {
   console.error(`[plugin:install] ${message}`);
@@ -48,11 +51,12 @@ const fail = message => {
 const args = process.argv.slice(2);
 const programs = [];
 const takeOvers = [];
+const blankOldUis = [];
 let target;
 let dryRun = false;
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
-  // `--name value` and `--name=value` both, for the two repeatable options.
+  // `--name value` and `--name=value` both, for the repeatable options.
   const [flag, inline] = arg.startsWith('--') ? arg.split(/=(.*)/s) : [arg];
   const value = () => {
     const next = inline ?? args[++i];
@@ -69,6 +73,8 @@ for (let i = 0; i < args.length; i++) {
     programs.push(pair);
   } else if (flag === '--take-over') {
     takeOvers.push(value());
+  } else if (flag === '--blank-old-ui') {
+    blankOldUis.push(value());
   } else if (flag === '--dry-run') {
     dryRun = true;
   } else if (flag === '--help' || flag === '-h') {
@@ -192,6 +198,7 @@ const cliArgs = [
   password ?? '<OMS_PASSWORD>',
   ...programs.flatMap(pair => ['--program', pair]),
   ...takeOvers.flatMap(documentType => ['--take-over', documentType]),
+  ...blankOldUis.flatMap(documentType => ['--blank-old-ui', documentType]),
 ];
 
 if (dryRun) {

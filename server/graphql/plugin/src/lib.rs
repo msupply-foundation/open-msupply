@@ -64,15 +64,18 @@ impl CentralPluginMutations {
     /// `programs` chooses the program for each of a form plugin's program keys
     /// (a key left out keeps the program it is already bound to); `takeOver`
     /// names document types whose existing entry, installed by no plugin, the
-    /// plugin may take over.
+    /// plugin may take over; `blankOldUi` names taken-over types whose form
+    /// on sites still running the old client may go blank, because the type
+    /// carries no legacy UI schema (refused otherwise).
     async fn install_uploaded_plugin(
         &self,
         ctx: &Context<'_>,
         file_id: String,
         programs: Option<Vec<mutations::install::PluginProgramInput>>,
         take_over: Option<Vec<String>>,
+        blank_old_ui: Option<Vec<String>>,
     ) -> Result<PluginInfoNode> {
-        mutations::install::install_uploaded_plugin(ctx, file_id, programs, take_over)
+        mutations::install::install_uploaded_plugin(ctx, file_id, programs, take_over, blank_old_ui)
     }
 
     async fn uninstall_plugin(

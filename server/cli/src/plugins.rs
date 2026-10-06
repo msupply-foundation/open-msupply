@@ -87,6 +87,12 @@ pub struct InstallPluginBundle {
     /// Repeatable.
     #[clap(long = "take-over")]
     take_over: Vec<String>,
+    /// Taken-over document type whose form may go blank on sites still running
+    /// the old client, because the plugin's type carries no legacy UI schema.
+    /// Install refuses that take-over unless the type is named here.
+    /// Repeatable.
+    #[clap(long = "blank-old-ui")]
+    blank_old_ui: Vec<String>,
 }
 
 #[derive(clap::Parser, Debug)]
@@ -410,6 +416,7 @@ pub async fn install_plugin_bundle(
         password,
         programs,
         take_over,
+        blank_old_ui,
     }: InstallPluginBundle,
 ) -> Result<(), Error> {
     let api = Api::new_with_token(url.clone(), username, password).await?;
@@ -428,6 +435,7 @@ pub async fn install_plugin_bundle(
                 "fileId": uploaded_file.file_id,
                 "programs": programs,
                 "takeOver": take_over,
+                "blankOldUi": blank_old_ui,
             }),
             Some("CentralServerMutationNode"),
         )
@@ -467,6 +475,7 @@ pub async fn generate_and_install_plugin_bundle(
         password,
         programs: Vec::new(),
         take_over: Vec::new(),
+        blank_old_ui: Vec::new(),
     })
     .await?;
     fs::remove_file(out_file.clone()).map_err(|e| Error::FiledToRemoveTempFile(e, out_file))?;

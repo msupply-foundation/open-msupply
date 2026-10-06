@@ -48,6 +48,7 @@ pub fn install_uploaded_plugin(
     file_id: String,
     programs: Option<Vec<PluginProgramInput>>,
     take_over: Option<Vec<String>>,
+    blank_old_ui: Option<Vec<String>>,
 ) -> Result<PluginInfoNode> {
     validate_auth(
         ctx,
@@ -67,6 +68,7 @@ pub fn install_uploaded_plugin(
     let form_options = FormInstallOptions {
         programs: chosen,
         take_over: take_over.unwrap_or_default().into_iter().collect(),
+        blank_old_ui: blank_old_ui.unwrap_or_default().into_iter().collect(),
     };
 
     service_provider

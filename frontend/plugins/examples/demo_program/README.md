@@ -45,11 +45,12 @@ pnpm forms:check       # what `pnpm check` runs: fails if a committed schema or 
 pnpm build:plugins     # emits, checks the versions, then packs dist/bundles/demo_program.json with its form_plugins
 ```
 
-Install it on a dev server, choosing the program for the `demo` key and taking over the server's existing `Patient` entry, and the COVID-19 encounter's where the server has one (on a server without it, install creates the entry):
+Install it on a dev server, choosing the program for the `demo` key and taking over the server's existing `Patient` entry, and the COVID-19 encounter's where the server has one (on a server without it, install creates the entry). The demo's `Patient` type carries no legacy UI schema, so the old client's patient form goes blank after the take-over, and `--blank-old-ui Patient` says that is intended:
 
 ```bash
 OMS_USERNAME=<user> OMS_PASSWORD=<pass> pnpm plugin:install plugins/examples/demo_program \
-  --program demo=DemoProgram --take-over Patient --take-over HIVCareCovid19Encounter
+  --program demo=DemoProgram --take-over Patient --blank-old-ui Patient \
+  --take-over HIVCareCovid19Encounter
 ```
 
 `DemoProgram` is the program id [`kdd/custom-forms/demo-program-seed.sql`](../../../kdd/custom-forms/demo-program-seed.sql) seeds. Serve the browser half from source with `OMS_PLUGIN_DIRS=plugins/examples/demo_program pnpm dev`.
