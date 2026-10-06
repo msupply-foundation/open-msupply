@@ -1507,12 +1507,20 @@ export type CentralPatientSearchResponse =
 
 export type CentralPluginMutations = {
   __typename: 'CentralPluginMutations';
+  /**
+   * `programs` chooses the program for each of a form plugin's program keys
+   * (a key left out keeps the program it is already bound to); `takeOver`
+   * names document types whose existing entry, installed by no plugin, the
+   * plugin may take over.
+   */
   installUploadedPlugin: PluginInfoNode;
   uninstallPlugin: UninstallPluginNode;
 };
 
 export type CentralPluginMutationsInstallUploadedPluginArgs = {
   fileId: Scalars['String']['input'];
+  programs?: InputMaybe<Array<PluginProgramInput>>;
+  takeOver?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type CentralPluginMutationsUninstallPluginArgs = {
@@ -7874,6 +7882,12 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+/** The program chosen for one of a form plugin's program keys. */
+export type PluginProgramInput = {
+  programId: Scalars['String']['input'];
+  programKey: Scalars['String']['input'];
+};
+
 /** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
 export type PreferenceDescriptionContext = {
   storeId?: InputMaybe<Scalars['String']['input']>;
@@ -8488,6 +8502,7 @@ export type PurchaseOrderFilterInput = {
   confirmedDatetime?: InputMaybe<DatetimeFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  number?: InputMaybe<EqualFilterBigNumberInput>;
   requestedDeliveryDate?: InputMaybe<DateFilterInput>;
   sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
@@ -8508,6 +8523,7 @@ export type PurchaseOrderLineError = {
 export type PurchaseOrderLineFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -8525,8 +8541,10 @@ export type PurchaseOrderLineNode = {
   inTransitNumberOfUnits: Scalars['Float']['output'];
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
+  lineTotal: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
+  outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
@@ -8555,11 +8573,22 @@ export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
+  AdjustedNumberOfUnits = 'adjustedNumberOfUnits',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
+  ItemCode = 'itemCode',
   ItemName = 'itemName',
   LineNumber = 'lineNumber',
+  OutstandingNumberOfUnits = 'outstandingNumberOfUnits',
+  PurchaseOrderConfirmedDatetime = 'purchaseOrderConfirmedDatetime',
   PurchaseOrderNumber = 'purchaseOrderNumber',
+  ReceivedNumberOfUnits = 'receivedNumberOfUnits',
   RequestedDeliveryDate = 'requestedDeliveryDate',
+  RequestedNumberOfUnits = 'requestedNumberOfUnits',
+  RequestedPackSize = 'requestedPackSize',
+  ShippedNumberOfUnits = 'shippedNumberOfUnits',
+  Status = 'status',
+  SupplierName = 'supplierName',
+  Unit = 'unit',
 }
 
 export type PurchaseOrderLineSortInput = {
@@ -8637,9 +8666,16 @@ export enum PurchaseOrderNodeStatus {
 export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
 
 export enum PurchaseOrderSortFieldInput {
+  Comment = 'comment',
+  ConfirmedDatetime = 'confirmedDatetime',
   CreatedDatetime = 'createdDatetime',
+  CurrencyCode = 'currencyCode',
   Number = 'number',
+  OrderTotalAfterDiscount = 'orderTotalAfterDiscount',
+  RequestedDeliveryDate = 'requestedDeliveryDate',
+  SentDatetime = 'sentDatetime',
   Status = 'status',
+  Supplier = 'supplier',
   TargetMonths = 'targetMonths',
 }
 
