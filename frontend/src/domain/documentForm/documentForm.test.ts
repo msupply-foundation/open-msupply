@@ -5,7 +5,12 @@ import encounterV2 from '../../../plugins/examples/demo_program/forms/DemoEncoun
 import enrolmentV1 from '../../../plugins/examples/demo_program/forms/DemoProgramEnrolment/v1.json';
 import type { Encounter } from '../../plugin-sdk/documents';
 import { createDraft, pathLabel } from './draft';
-import { selectOptions, type SelectInputProps } from './fields';
+import {
+  dateTimeToDay,
+  dayToDateTime,
+  selectOptions,
+  type SelectInputProps,
+} from './fields';
 import { withFirstNoteText } from './notes';
 import {
   deepEqual,
@@ -95,6 +100,30 @@ const typeChecks = () => {
     retiredTypo,
   ];
 };
+
+describe('a calendar day on a date-time path', () => {
+  it("stores the day's local start with its offset, the same instant as local midnight", () => {
+    const stored = dayToDateTime('2026-10-08');
+    expect(stored).toMatch(/^2026-10-08T00:00:00[+-]\d{2}:\d{2}$/);
+    expect(new Date(stored).getTime()).toBe(
+      new Date('2026-10-08T00:00:00').getTime()
+    );
+    expect(dateTimeToDay(stored)).toBe('2026-10-08');
+  });
+
+  it('reads the day a value records, wherever it was recorded', () => {
+    // Midnight in New Zealand and in New York: the same day as recorded,
+    // though the instants fall on different days elsewhere.
+    expect(dateTimeToDay('2026-10-08T00:00:00+13:00')).toBe('2026-10-08');
+    expect(dateTimeToDay('2026-10-08T00:00:00-04:00')).toBe('2026-10-08');
+  });
+
+  it('reads a UTC instant as the local day it falls on here', () => {
+    const instant = new Date('2026-10-08T00:00:00').toISOString();
+    expect(dateTimeToDay(instant)).toBe('2026-10-08');
+    expect(dateTimeToDay(undefined)).toBeNull();
+  });
+});
 
 describe('selectOptions', () => {
   const order = ['FIRST_LINE', 'SECOND_LINE', 'LEGACY_TRIAL'];

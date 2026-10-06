@@ -22,10 +22,7 @@ import { DateTimeField } from '../../ui/elements/inputs/DateTimeField';
 import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { Select } from '../../ui/elements/selectors/Select';
 import { FormSection } from '../../ui/layout/Form/FormSection';
-import {
-  localDayToUtc,
-  utcToLocalDay,
-} from '../../ui/elements/inputs/dateTimeConvert';
+import { utcToLocalDay } from '../../ui/elements/inputs/dateTimeConvert';
 import type { Draft } from './draft';
 import type {
   BooleanPath,
@@ -162,11 +159,43 @@ export interface DateInputProps<T, P extends TextPath<T>> extends FieldProps {
   path: P;
 }
 
+const pad = (n: number) => String(Math.abs(n)).padStart(2, '0');
+
+/**
+ * A calendar day as a date-time value: the day's local start, written with
+ * the local offset (`2026-10-08T00:00:00+13:00`), as the old client writes
+ * one. The server's Schedule rules read it as the same instant a UTC value
+ * would give, and the day it was recorded on stays readable in the value
+ * itself, so a site in another timezone shows that day rather than the one
+ * the instant falls on there.
+ */
+export const dayToDateTime = (isoDate: string): string => {
+  const start = new Date(`${isoDate}T00:00:00`);
+  const offset = -start.getTimezoneOffset();
+  return (
+    `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}` +
+    `T${pad(start.getHours())}:${pad(start.getMinutes())}:00` +
+    `${offset < 0 ? '-' : '+'}${pad(Math.trunc(offset / 60))}:${pad(offset % 60)}`
+  );
+};
+
+/**
+ * The calendar day a date-time value records: the day as written where the
+ * value carries its own offset, else (a `Z` instant) the local day it falls
+ * on here.
+ */
+export const dateTimeToDay = (value: string | undefined): string | null => {
+  if (!value) return null;
+  const withOffset = /^(\d{4}-\d{2}-\d{2})T[^Z]*[+-]\d{2}:\d{2}$/.exec(value);
+  return withOffset ? (withOffset[1] as string) : utcToLocalDay(value);
+};
+
 /*
  * A calendar day. How it is stored follows the schema's `format` at the path:
  * `date` stores the ISO day; `date-time` stores the start of the chosen local
- * day as an RFC 3339 instant, which is what the server's Schedule event rules
- * read (they fall back to the document's own time for anything else).
+ * day with its offset (dayToDateTime), an RFC 3339 instant, which is what the
+ * server's Schedule event rules read (they fall back to the document's own
+ * time for anything else).
  */
 export const DateInput = <T, P extends TextPath<T>>(
   props: DateInputProps<T, P>
@@ -176,11 +205,11 @@ export const DateInput = <T, P extends TextPath<T>>(
     d().schemaFor(props.path as never)?.format === 'date-time';
   const value = () => {
     const v = d().get(props.path) as string | undefined;
-    return isDateTime() ? utcToLocalDay(v) : (v ?? null);
+    return isDateTime() ? dateTimeToDay(v) : (v ?? null);
   };
   const write = (day: string | null) => {
     if (!day) d().set(props.path, undefined);
-    else d().set(props.path, isDateTime() ? localDayToUtc(day) : day);
+    else d().set(props.path, isDateTime() ? dayToDateTime(day) : day);
   };
   return (
     <DateField
