@@ -884,6 +884,61 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn event_rules_a_version_drops_are_cleared() {
+        let connection = setup("form_plugin_rules_dropped").await;
+        let mut sidecar = demo_sidecar();
+        install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &options(&[("demo", "program_a")], &[]),
+        )
+        .unwrap();
+
+        sidecar.document_types[2].config = None;
+        let installed = install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &FormInstallOptions::default(),
+        )
+        .unwrap();
+        assert_eq!(installed[2].outcome, RegistryOutcome::Updated);
+        assert_eq!(entry(&connection, "DemoEncounter").config, None);
+
+        // Cleared, so the next install of the same bundle finds nothing to do.
+        let cursor = max_cursor(&connection);
+        let installed =
+            install_form_plugins(&connection, &[sidecar], &FormInstallOptions::default()).unwrap();
+        assert_eq!(installed[2].outcome, RegistryOutcome::Unchanged);
+        assert_eq!(written_since(&connection, cursor), vec![]);
+    }
+
+    #[actix_rt::test]
+    async fn a_whole_row_write_from_elsewhere_clears_the_owner() {
+        let connection = setup("form_plugin_row_replaced").await;
+        install_form_plugins(
+            &connection,
+            &[demo_sidecar()],
+            &options(&[("demo", "program_a")], &[]),
+        )
+        .unwrap();
+
+        // As the legacy pull translator writes a row legacy central re-sends.
+        DocumentRegistryRowRepository::new(&connection)
+            .upsert_one(&DocumentRegistryRow {
+                plugin_code: None,
+                program_key: None,
+                config: None,
+                ..entry(&connection, "DemoEncounter")
+            })
+            .unwrap();
+
+        let encounter = entry(&connection, "DemoEncounter");
+        assert_eq!(encounter.plugin_code, None);
+        assert_eq!(encounter.program_key, None);
+        assert_eq!(encounter.config, None);
+    }
+
+    #[actix_rt::test]
     async fn the_legacy_ui_schema_goes_on_every_version_added() {
         let connection = setup("form_plugin_legacy_ui_added").await;
         let layout = json!({ "type": "VerticalLayout", "elements": [] });

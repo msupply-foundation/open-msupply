@@ -43,6 +43,7 @@ table! {
     serde::Deserialize,
 )]
 #[diesel(table_name = document_registry)]
+#[diesel(treat_none_as_null = true)]
 pub struct DocumentRegistryRow {
     pub id: String,
     /// The category of the document registry row, e.g. Patient or ProgramEnrolment.
