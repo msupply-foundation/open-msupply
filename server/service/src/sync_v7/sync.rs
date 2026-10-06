@@ -103,6 +103,10 @@ impl SyncBatchV7 {
     }
 
     /// `generate` with the outgoing translation passed in.
+    ///
+    /// # Arguments
+    /// * `translate` - always `translate_outgoing` outside tests; tests swap in
+    ///   translations that drop or add records to exercise the top-up loop
     fn generate_with(
         context: &SendContext,
         filter: ChangelogCondition::Inner,
