@@ -1,10 +1,10 @@
-use super::asset_property_row::{asset_property, AssetPropertyRow};
+use super::asset_property_row::{AssetPropertyRow, asset_property};
 
-use crate::diesel_macros::apply_string_filter;
 use crate::StringFilter;
-use crate::{diesel_macros::apply_equal_filter, StorageConnection};
+use crate::diesel_macros::apply_string_filter;
+use crate::{StorageConnection, diesel_macros::apply_equal_filter};
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter};
+use crate::{DBType, EqualFilter, repository_error::RepositoryError};
 use diesel::prelude::*;
 
 #[derive(Clone, PartialEq, Debug, Default)]

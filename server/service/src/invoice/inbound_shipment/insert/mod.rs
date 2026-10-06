@@ -1,8 +1,8 @@
+use crate::WithDBError;
 use crate::activity_log::activity_log_entry;
-use crate::invoice::inbound_shipment::{add_from_purchase_order, InboundShipmentType};
+use crate::invoice::inbound_shipment::{InboundShipmentType, add_from_purchase_order};
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
-use crate::WithDBError;
 use repository::{ActivityLogType, Invoice};
 use repository::{InvoiceRowRepository, RepositoryError};
 
@@ -111,16 +111,17 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            currency_a, currency_b, mock_inbound_shipment_c, mock_item_a, mock_name_a,
-            mock_name_linked_to_store_join, mock_name_not_linked_to_store, mock_store_a,
-            mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
         PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
         PurchaseOrderRow, PurchaseOrderRowRepository,
+        mock::{
+            MockData, MockDataInserts, currency_a, currency_b, mock_inbound_shipment_c,
+            mock_item_a, mock_name_a, mock_name_linked_to_store_join,
+            mock_name_not_linked_to_store, mock_store_a, mock_store_linked_to_name,
+            mock_user_account_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{

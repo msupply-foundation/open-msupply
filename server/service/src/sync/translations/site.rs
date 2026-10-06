@@ -1,7 +1,7 @@
 use super::serde_utils::deserialize_sync_version;
-use super::{to_legacy_time, PullTranslateResult, SyncTranslation};
-use crate::sync::translations::PushTranslateResult;
+use super::{PullTranslateResult, SyncTranslation, to_legacy_time};
 use crate::sync::CentralServerConfig;
+use crate::sync::translations::PushTranslateResult;
 use chrono::{NaiveDate, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, Row, SiteRow, SiteRowDelete, SiteRowRepository,
@@ -183,7 +183,7 @@ mod tests {
     use crate::sync::test_util_set_is_central_server;
     use crate::sync::translations::PushSyncRecord;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogTableName, RowActionType,
+        ChangelogTableName, RowActionType, mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

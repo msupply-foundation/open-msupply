@@ -1,8 +1,8 @@
-use repository::{
-    sync_file_reference::{SyncFileReference, SyncFileReferenceFilter, SyncFileReferenceSort},
-    Pagination, RepositoryError, StorageConnectionManager, SyncFileReferenceSortField,
-};
 use repository::{EqualFilter, SyncFileReferenceRepository};
+use repository::{
+    Pagination, RepositoryError, StorageConnectionManager, SyncFileReferenceSortField,
+    sync_file_reference::{SyncFileReference, SyncFileReferenceFilter, SyncFileReferenceSort},
+};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;

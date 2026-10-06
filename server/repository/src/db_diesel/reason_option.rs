@@ -1,6 +1,6 @@
 use super::{
-    reason_option_row::{reason_option, ReasonOptionRow, ReasonOptionType},
     DBType, StorageConnection,
+    reason_option_row::{ReasonOptionRow, ReasonOptionType, reason_option},
 };
 use diesel::prelude::*;
 

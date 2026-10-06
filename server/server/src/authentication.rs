@@ -1,6 +1,6 @@
 use actix_web::HttpRequest;
 use service::{
-    auth::{validate_auth, AuthError, ValidatedUserAuth},
+    auth::{AuthError, ValidatedUserAuth, validate_auth},
     auth_data::AuthData,
 };
 

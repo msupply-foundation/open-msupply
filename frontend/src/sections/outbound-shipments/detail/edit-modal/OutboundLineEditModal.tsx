@@ -358,19 +358,30 @@ export const OutboundLineEditModal = (
 // the same ported vocabulary the bulk allocate report uses. The shortfall is
 // NOT reported here — outbound surfaces it as the dedicated placeholder notice
 // (NEW only) — so deriveIssueWarnings runs reportShortfall:false.
+//
+// Each banner carries the test id of the category it reports (e2e/TESTIDS.md
+// › Distribution), so a suite can tell an over-allocation from a skip report
+// without reading copy.
+type IssueBanner = { testId: string; message: string };
 const warningMessages = (
   derived: readonly IssueWarning[],
   requestedUnits: number
-): string[] =>
+): IssueBanner[] =>
   issueWarningMessages(derived, requestedUnits).map(message =>
     message.key === 'messages.over-allocated'
-      ? t(message.key, {
-          quantity: formatNumber(message.quantity),
-          issueQuantity: formatNumber(message.issueQuantity),
-        })
-      : t(message.key, {
-          reasons: message.reasons.map(reason => t(reason)).join(', '),
-        })
+      ? {
+          testId: 'outbound-over-allocated-warning',
+          message: t(message.key, {
+            quantity: formatNumber(message.quantity),
+            issueQuantity: formatNumber(message.issueQuantity),
+          }),
+        }
+      : {
+          testId: 'outbound-skipped-stock-warning',
+          message: t(message.key, {
+            reasons: message.reasons.map(reason => t(reason)).join(', '),
+          }),
+        }
   );
 
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
@@ -433,7 +444,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // zero-pack lines, silently dropping that status change (spec S4 § save).
   const [vvmConfirm, setVvmConfirm] = createSignal(false);
   // Warnings raised by the last distribution (spec S4 § warnings).
-  const [warnings, setWarnings] = createSignal<string[]>([]);
+  const [warnings, setWarnings] = createSignal<IssueBanner[]>([]);
   // Dirty gate: OK is disabled until something changed (matches the e2e
   // expectation that OK saves a real change).
   const [dirty, setDirty] = createSignal(false);
@@ -599,7 +610,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       onIssueChange(placeholder);
       const placed = draft.reduce((sum, line) => sum + line.numberOfPacks, 0);
       if (placed > 0)
-        setWarnings(prev => [t('messages.auto-allocated-lines'), ...prev]);
+        setWarnings(prev => [
+          {
+            testId: 'outbound-auto-allocated-notice',
+            message: t('messages.auto-allocated-lines'),
+          },
+          ...prev,
+        ]);
     }
 
     // Old-app lens-default parity (its OutboundLineEdit Allocation.tsx): an
@@ -891,10 +908,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setWarnings(
       value != null && appliedQuantity !== value
         ? [
-            t('messages.over-allocated-line', {
-              quantity: formatNumber(appliedQuantity),
-              issueQuantity: formatNumber(value),
-            }),
+            {
+              testId: 'outbound-adjusted-entry-warning',
+              message: t('messages.over-allocated-line', {
+                quantity: formatNumber(appliedQuantity),
+                issueQuantity: formatNumber(value),
+              }),
+            },
           ]
         : []
     );
@@ -1638,10 +1658,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           fallback={
             <Show when={item()}>
               <HStack gap="md">
-                <span>
+                <span data-testid="outbound-unallocated-units">
                   {t('label.unallocated')}: {formatNumber(placeholderUnits())}
                 </span>
-                <span>
+                <span data-testid="outbound-total-units">
                   {t('label.total-units')}:{' '}
                   {formatNumber(issuedUnits() + placeholderUnits())}
                 </span>
@@ -1919,7 +1939,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 not up in the header row where it reflowed the inputs as the
                 user typed. */}
             <Show when={placeholderUnits() > 0}>
-              <Alert severity="info">
+              <Alert severity="info" testId="outbound-placeholder-notice">
                 {t('messages.placeholder-allocated-units', {
                   requestedQuantity: formatNumber(
                     issuedUnits() + placeholderUnits()
@@ -1931,7 +1951,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
             {/* Stacked warning banners (spec S4 § warnings). */}
             <For each={warnings()}>
-              {message => <Alert severity="warning">{message}</Alert>}
+              {banner => (
+                <Alert severity="warning" testId={banner.testId}>
+                  {banner.message}
+                </Alert>
+              )}
             </For>
           </Stack>
         </div>

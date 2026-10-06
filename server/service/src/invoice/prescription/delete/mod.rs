@@ -8,7 +8,7 @@ use crate::{
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
     invoice_line::stock_out_line::{
-        delete_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError, StockOutType,
+        DeleteStockOutLine, DeleteStockOutLineError, StockOutType, delete_stock_out_line,
     },
     service_provider::ServiceContext,
 };
@@ -83,12 +83,12 @@ impl From<RepositoryError> for DeletePrescriptionError {
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceRowRepository,
         mock::{
-            mock_inbound_shipment_c, mock_prescription_a, mock_prescription_verified, mock_store_a,
-            mock_store_c, MockDataInserts,
+            MockDataInserts, mock_inbound_shipment_c, mock_prescription_a,
+            mock_prescription_verified, mock_store_a, mock_store_c,
         },
         test_db::setup_all,
-        InvoiceRowRepository,
     };
 
     use crate::{

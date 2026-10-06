@@ -24,17 +24,17 @@
 use std::{collections::HashMap, fmt::Display};
 
 use actix_web::{
+    HttpRequest, HttpResponse, ResponseError,
     dev::HttpServiceFactory,
     head,
     http::{
-        header::{HeaderMap, AUTHORIZATION},
         StatusCode,
+        header::{AUTHORIZATION, HeaderMap},
     },
     options, patch, post,
     web::{self, Bytes, Data, Payload},
-    HttpRequest, HttpResponse, ResponseError,
 };
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use chrono::Utc;
 use futures::StreamExt;
 use repository::{
@@ -46,8 +46,8 @@ use service::{
     settings::Settings,
     static_files::{InvalidFilePath, StaticFileCategory, StaticFileService},
     sync::{
-        api::{validate_site_auth, SyncApiSettings},
         CentralServerConfig,
+        api::{SyncApiSettings, validate_site_auth},
     },
     sync_v7::sync_on_central::validate_v7_site_auth,
 };
@@ -243,7 +243,7 @@ async fn patch_chunk(
             return Err(TusError::NotFound(format!(
                 "no partial file for {} — POST first",
                 file_id
-            )))
+            )));
         }
     };
 
@@ -647,10 +647,10 @@ mod tests {
     /// central's DB); otherwise the legacy `sync_v5_settings` metadata path runs.
     mod auth_dispatch {
         use super::*;
-        use actix_web::{http::header::AUTHORIZATION, test, App};
+        use actix_web::{App, http::header::AUTHORIZATION, test};
         use repository::{
-            migrations::Version, mock::MockDataInserts, test_db::setup_all, SiteRow,
-            SiteRowRepository, SyncVersion,
+            SiteRow, SiteRowRepository, SyncVersion, migrations::Version, mock::MockDataInserts,
+            test_db::setup_all,
         };
         use service::{settings::test_settings, sync::test_util_set_is_central_server};
 

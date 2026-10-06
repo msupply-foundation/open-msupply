@@ -1,10 +1,10 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     simple_generic_errors::{
         DatabaseError, InternalError, RecordAlreadyExist, UniqueValueViolation,
     },
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     asset::insert_log_reason::{InsertAssetLogReason, InsertAssetLogReasonError as ServiceError},
@@ -112,14 +112,14 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        asset_log_row::AssetLogStatus, assets::asset_log_reason::AssetLogReason,
-        mock::MockDataInserts, StorageConnectionManager,
+        StorageConnectionManager, asset_log_row::AssetLogStatus,
+        assets::asset_log_reason::AssetLogReason, mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
         asset::{
-            insert_log_reason::{InsertAssetLogReason, InsertAssetLogReasonError},
             AssetServiceTrait,
+            insert_log_reason::{InsertAssetLogReason, InsertAssetLogReasonError},
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

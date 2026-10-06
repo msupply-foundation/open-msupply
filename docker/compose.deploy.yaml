@@ -112,10 +112,11 @@ services:
       # longer answering as central.
       oms.central: ${OMS_CENTRAL:-false}
 
-      # Who asked for this deploy - the person who clicked in the dashboard, or
-      # whoever pushed or dispatched. Informational only: nothing reads it back
-      # to decide anything, so unlike the labels above an absent one is
-      # harmless. It is what the dashboard shows as "by ...".
+      # Who owns this deployment - whoever first deployed it, carried forward by
+      # every redeploy, so a server following a busy branch does not become the
+      # last pusher's. See OMS_OWNER in docker-deploy.yaml. Nothing decides
+      # anything on it, so unlike the labels above an absent one is harmless. It
+      # is what the dashboard shows as "by ...".
       oms.actor: ${OMS_ACTOR:-}
 
     # The image's own entrypoint, which runs initdb/pg_ctl/createdb against the

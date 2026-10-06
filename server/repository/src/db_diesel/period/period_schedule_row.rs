@@ -1,6 +1,6 @@
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    repository_error::RepositoryError,
 };
 
 use diesel::prelude::*;

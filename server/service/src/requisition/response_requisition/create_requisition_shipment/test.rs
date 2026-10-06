@@ -7,15 +7,16 @@ mod test_update {
         requisition_line::response_requisition_line::UpdateResponseRequisitionLine,
         service_provider::ServiceProvider,
     };
-    use repository::mock::{mock_new_response_program_requisition, mock_store_a, mock_store_b};
     use repository::EqualFilter;
+    use repository::mock::{mock_new_response_program_requisition, mock_store_a, mock_store_b};
     use repository::{
+        InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
         mock::{
-            mock_finalised_response_requisition, mock_new_response_requisition_for_update_test,
-            mock_new_response_requisition_test, mock_sent_request_requisition, MockDataInserts,
+            MockDataInserts, mock_finalised_response_requisition,
+            mock_new_response_requisition_for_update_test, mock_new_response_requisition_test,
+            mock_sent_request_requisition,
         },
         test_db::setup_all,
-        InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
     };
 
     #[actix_rt::test]

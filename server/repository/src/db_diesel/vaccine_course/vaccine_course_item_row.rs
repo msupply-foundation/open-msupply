@@ -1,8 +1,8 @@
 use super::vaccine_course_item_row::vaccine_course_item::dsl::*;
-use crate::db_diesel::item_row::item;
-use crate::diesel_macros::define_linked_tables;
 use crate::RepositoryError;
 use crate::StorageConnection;
+use crate::db_diesel::item_row::item;
+use crate::diesel_macros::define_linked_tables;
 use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert};
 
 use chrono::NaiveDateTime;

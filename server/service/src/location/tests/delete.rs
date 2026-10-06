@@ -1,14 +1,14 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::{mock_sensor_1, mock_stock_line_a, mock_store_a};
     use repository::EqualFilter;
+    use repository::mock::{mock_sensor_1, mock_stock_line_a, mock_store_a};
     use repository::{
-        location::{LocationFilter, LocationRepository},
-        mock::MockDataInserts,
-        test_db::setup_all,
         InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow,
         LocationMovementRowRepository, SensorFilter, SensorRepository, SensorRowRepository,
         StockLineFilter, StockLineRepository,
+        location::{LocationFilter, LocationRepository},
+        mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     use crate::{

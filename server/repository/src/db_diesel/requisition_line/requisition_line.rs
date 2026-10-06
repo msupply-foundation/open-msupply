@@ -1,12 +1,12 @@
 use crate::{
-    db_diesel::item_row::item, diesel_macros::apply_equal_filter,
-    repository_error::RepositoryError, requisition_row::requisition, DBType, ItemRow,
-    RequisitionRow, StorageConnection,
+    DBType, ItemRow, RequisitionRow, StorageConnection, db_diesel::item_row::item,
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError,
+    requisition_row::requisition,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-use super::{requisition_line_row::requisition_line, RequisitionLineFilter, RequisitionLineRow};
+use super::{RequisitionLineFilter, RequisitionLineRow, requisition_line_row::requisition_line};
 
 type RequisitionLineJoin = (RequisitionLineRow, ItemRow, RequisitionRow);
 

@@ -47,7 +47,7 @@ import styles from './Combobox.module.css';
  */
 const DEFAULT_MAX_VISIBLE_OPTIONS = 100;
 
-interface ComboboxProps<T> {
+export interface ComboboxProps<T> {
   label: string;
   /** The full option set; filtered locally as the user types. */
   items: T[];

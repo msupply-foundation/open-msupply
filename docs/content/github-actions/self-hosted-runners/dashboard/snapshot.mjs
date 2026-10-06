@@ -178,6 +178,12 @@ export function commitFromImage(image, name) {
   } while (version !== prev);
   version = version.replace(/-(amd64|arm64)$/, '').replace(/-(postgres|sqlite)$/, '');
 
+  // `deploy_<sha7>`, shared by every deployment of a commit - `deployVersion`
+  // in deploy-plan.js.
+  const shared = /^deploy_([0-9a-f]{7,40})$/.exec(version);
+  if (shared) return { sha: shared[1], release: null };
+  // `<name>-<sha7>`, the per-name shape from before images were shared, and
+  // still what a preview's `pr-<n>-<sha7>` is.
   if (version.startsWith(`${name}-`)) {
     const rest = version.slice(name.length + 1);
     if (/^[0-9a-f]{7,40}$/.test(rest)) return { sha: rest, release: null };
@@ -328,9 +334,10 @@ async function main() {
 // Guarded so the two pure parsers above can be imported and exercised without
 // starting a loop against a docker socket. They are the load-bearing bit - a
 // tag this file cannot read is a dashboard that cannot answer its one question
-// - and if this graduates out of prototype they belong in
-// .github/scripts/deploy-plan.js beside `imageRef`, which is what builds the
-// tags they take apart, and where there is already a test runner.
+// - so .github/scripts/deploy-dashboard.test.mjs checks them against
+// `imageRef` in deploy-plan.js, which is what builds the tags they take apart.
+// They stay here rather than moving there because the box mounts each of
+// these files on its own.
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   await main();
 }

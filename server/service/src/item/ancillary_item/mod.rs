@@ -3,6 +3,6 @@ mod query;
 #[cfg(test)]
 mod test;
 mod upsert;
-pub use delete::{delete_ancillary_item, DeleteAncillaryItem, DeleteAncillaryItemError};
+pub use delete::{DeleteAncillaryItem, DeleteAncillaryItemError, delete_ancillary_item};
 pub use query::get_ancillary_items;
-pub use upsert::{upsert_ancillary_item, UpsertAncillaryItem, UpsertAncillaryItemError};
+pub use upsert::{UpsertAncillaryItem, UpsertAncillaryItemError, upsert_ancillary_item};

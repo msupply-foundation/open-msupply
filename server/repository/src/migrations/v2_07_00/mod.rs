@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_central_patient_visibility_processor_pg_enum_type;
@@ -50,7 +50,7 @@ impl Migration for V2_07_00 {
 
 #[cfg(test)]
 mod test {
-    use crate::{migrations::sql, StorageConnection};
+    use crate::{StorageConnection, migrations::sql};
 
     #[actix_rt::test]
     async fn migration_2_07_00() {

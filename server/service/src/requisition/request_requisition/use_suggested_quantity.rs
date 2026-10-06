@@ -5,9 +5,9 @@ use crate::{
 };
 use repository::EqualFilter;
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
     RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 #[derive(Debug, PartialEq)]
@@ -118,10 +118,10 @@ impl From<RepositoryError> for UseSuggestedQuantityError {
 mod test {
     use repository::{
         mock::{
-            mock_draft_request_requisition_for_update_test,
+            MockDataInserts, mock_draft_request_requisition_for_update_test,
             mock_full_new_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            mock_store_a, mock_store_b, MockDataInserts,
+            mock_store_a, mock_store_b,
         },
         test_db::setup_all,
     };

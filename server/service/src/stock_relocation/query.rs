@@ -1,5 +1,5 @@
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -153,7 +153,7 @@ pub fn get_stock_relocation(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_stock_line_a, MockDataInserts},
+        mock::{MockDataInserts, mock_stock_line_a},
         test_db::setup_all,
     };
     use util::uuid::uuid;
@@ -197,10 +197,12 @@ mod test {
             .unwrap();
         assert_eq!(list.count, 1);
 
-        assert!(service
-            .get_stock_relocation(&context, Some("store_b"), &id)
-            .unwrap()
-            .is_none());
+        assert!(
+            service
+                .get_stock_relocation(&context, Some("store_b"), &id)
+                .unwrap()
+                .is_none()
+        );
     }
 
     #[actix_rt::test]
@@ -243,8 +245,10 @@ mod test {
                 },
             )
             .unwrap();
-        assert!(other_store
-            .iter()
-            .all(|line| line.stock_line_id != mock_stock_line_a().id));
+        assert!(
+            other_store
+                .iter()
+                .all(|line| line.stock_line_id != mock_stock_line_a().id)
+        );
     }
 }

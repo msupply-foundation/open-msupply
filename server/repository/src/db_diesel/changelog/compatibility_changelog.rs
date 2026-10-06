@@ -4,7 +4,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{diesel_macros::apply_equal_filter, DBType, EqualFilter, RepositoryError};
+use crate::{DBType, EqualFilter, RepositoryError, diesel_macros::apply_equal_filter};
 
 use super::{changelog::*, changelog_cursor_tracker::ChangelogCursorTracker};
 
@@ -167,8 +167,8 @@ impl RowActionType {
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, ChangeLogInsertRow, ChangelogRepository,
-        ChangelogTableName, CompatibilityChangelogFilter, RowActionType,
+        ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, CompatibilityChangelogFilter,
+        RowActionType, mock::MockDataInserts, test_db::setup_all,
     };
 
     fn insert_row(repo: &ChangelogRepository, table_name: ChangelogTableName, record_id: &str) {

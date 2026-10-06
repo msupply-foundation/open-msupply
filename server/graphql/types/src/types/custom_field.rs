@@ -1,9 +1,9 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDateTime;
+use graphql_core::ContextExt;
 use graphql_core::loader::CustomFieldOptionsByCustomFieldIdLoader;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::ContextExt;
 use repository::{CustomField, CustomFieldDisplayMode, CustomFieldOptionRow, CustomFieldRow};
 use serde::Serialize;
 use service::ListResult;

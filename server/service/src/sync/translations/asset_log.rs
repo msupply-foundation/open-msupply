@@ -1,6 +1,6 @@
 use repository::{
-    asset_log_row::AssetLogRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    asset_log_row::AssetLogRow,
 };
 
 use crate::sync::translations::{
@@ -113,7 +113,7 @@ mod tests {
 
     use repository::{
         asset_row::{AssetRow, AssetRowRepository},
-        mock::{mock_asset_a, MockDataInserts},
+        mock::{MockDataInserts, mock_asset_a},
         test_db::setup_all,
     };
 

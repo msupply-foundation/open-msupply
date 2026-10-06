@@ -1,7 +1,7 @@
 use repository::{InvoiceType, RepositoryError, StorageConnection};
 
 pub(crate) use crate::custom_field::apply_custom_fields_patch;
-use crate::custom_field::{check_custom_fields_patch, CustomFieldPatchProblem};
+use crate::custom_field::{CustomFieldPatchProblem, check_custom_fields_patch};
 
 /// `custom_field_scope.scope` scope an invoice type's custom_fields are
 /// configured under — the UI record kind the type renders as. `None` for types

@@ -1,5 +1,5 @@
 use crate::service_provider::ServiceContext;
-use bcrypt::{hash, DEFAULT_COST};
+use bcrypt::{DEFAULT_COST, hash};
 use repository::{RepositoryError, SiteRow, SiteRowRepository, StorageConnection};
 
 #[derive(PartialEq, Debug)]
@@ -56,10 +56,9 @@ fn validate(
 
     if let Some(other) =
         SiteRowRepository::new(connection).find_one_by_name_case_insensitive(input.name.trim())?
+        && other.id != input.id
     {
-        if other.id != input.id {
-            return Err(UpsertSiteError::DuplicateSiteName);
-        }
+        return Err(UpsertSiteError::DuplicateSiteName);
     }
 
     match (&input.password, existing) {
@@ -125,7 +124,7 @@ fn generate(
 
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all, SiteRowRepository};
+    use repository::{SiteRowRepository, mock::MockDataInserts, test_db::setup_all};
 
     use crate::service_provider::ServiceProvider;
 

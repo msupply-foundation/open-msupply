@@ -8,10 +8,10 @@ mod test {
     };
     use repository::EqualFilter;
     use repository::{
-        mock::{mock_inbound_shipment_a, MockDataInserts},
         CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
         CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType, InvoiceFilter,
         InvoiceRepository, InvoiceRow, InvoiceRowRepository,
+        mock::{MockDataInserts, mock_inbound_shipment_a},
     };
     use serde_json::json;
 

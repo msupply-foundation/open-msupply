@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod insert {
     use repository::{
-        mock::{mock_stock_line_a, mock_store_a, mock_user_account_a, MockDataInserts},
+        StockLineRowRepository,
+        mock::{MockDataInserts, mock_stock_line_a, mock_store_a, mock_user_account_a},
         test_db::setup_all,
         vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
-        StockLineRowRepository,
     };
 
     use crate::{
