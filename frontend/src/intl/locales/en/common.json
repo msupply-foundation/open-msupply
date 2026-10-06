@@ -439,6 +439,7 @@
   "error.document-number-max": "Enter {{max}} or less.",
   "error.document-number-min": "Enter {{min}} or more.",
   "error.document-previously-recorded": "Previously recorded: {{value}}. Choose a current value.",
+  "error.document-schema-unusable": "This form's schema could not be read, so this record cannot be checked or saved here.",
   "error.dose-ages-out-of-order": "Each dose needs a higher minimum age than the previous dose",
   "error.dose-configuration-not-allowed": "Cannot set doses for this item because it is not a vaccine.",
   "error.dose-max-less-than-min": "To age must be greater than or equal to From age",

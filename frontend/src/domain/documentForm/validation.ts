@@ -41,14 +41,33 @@ const ajv = new Ajv({
 addFormats(ajv);
 
 const cache = new Map<string, ValidateFunction>();
+// The ids of schemas AJV could not compile, so each is tried and reported once.
+const uncompilable = new Set<string>();
 
-const validatorFor = (schemaId: string, schema: JsonSchema) => {
-  let validate = cache.get(schemaId);
-  if (!validate) {
-    validate = ajv.compile(schema);
+/*
+ * Undefined for a schema AJV cannot compile. The server accepted it, so the
+ * schema is the deployment's and not this form's to refuse; but validation
+ * runs inside the draft's error memo, where a throw would take the screen
+ * down, so the failure is caught and the draft is told it cannot be checked.
+ */
+const validatorFor = (
+  schemaId: string,
+  schema: JsonSchema
+): ValidateFunction | undefined => {
+  const cached = cache.get(schemaId);
+  if (cached || uncompilable.has(schemaId)) return cached;
+  try {
+    const validate = ajv.compile(schema);
     cache.set(schemaId, validate);
+    return validate;
+  } catch (error) {
+    uncompilable.add(schemaId);
+    console.error(
+      `[forms] schema ${schemaId} could not be compiled, so documents on it ` +
+        `cannot be checked here: ${error instanceof Error ? error.message : String(error)}`
+    );
+    return undefined;
   }
-  return validate;
 };
 
 const FORMAT_MESSAGES: Record<string, LocaleKey> = {
@@ -109,6 +128,17 @@ export const validateDocument = (
   data: unknown
 ): DocumentError[] => {
   const validate = validatorFor(schemaId, schema);
+  // One error for the whole document: nothing on it can be checked, so it
+  // cannot be saved from here either.
+  if (!validate) {
+    return [
+      {
+        path: '',
+        keyword: 'schema',
+        message: t('error.document-schema-unusable'),
+      },
+    ];
+  }
   if (validate(data)) return [];
   const seen = new Set<string>();
   const errors: DocumentError[] = [];

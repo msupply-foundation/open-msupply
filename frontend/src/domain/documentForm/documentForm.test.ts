@@ -1,5 +1,5 @@
 import { createRoot } from 'solid-js';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { setDictionaries, setLocale } from '../../intl/intl';
 import encounterV2 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
 import enrolmentV1 from '../../../plugins/examples/demo_program/forms/DemoProgramEnrolment/v1.json';
@@ -219,6 +219,29 @@ describe('validateDocument', () => {
       })
     ).toEqual([]);
     expect(validateDocument('enr-v1', enrolmentSchema, {})).toHaveLength(1);
+  });
+
+  it('reports a schema AJV cannot compile as one document error, once, rather than throwing', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // A reference to a definition the schema does not have: AJV refuses to
+    // compile it, though a server's validator may have accepted it.
+    const broken: JsonSchema = {
+      type: 'object',
+      properties: { weight: { $ref: '#/definitions/Missing' } },
+    };
+    // One error for the whole document; its message is the catalogue's.
+    const unusable = [
+      { path: '', keyword: 'schema', message: expect.any(String) },
+    ];
+    expect(validateDocument('broken-v1', broken, {})).toEqual(unusable);
+    expect(validateDocument('broken-v1', broken, { weight: 1 })).toEqual(
+      unusable
+    );
+    expect(errors).toHaveBeenCalledTimes(1);
+    expect(String(errors.mock.calls[0]?.[0])).toContain(
+      'schema broken-v1 could not be compiled'
+    );
+    errors.mockRestore();
   });
 });
 
