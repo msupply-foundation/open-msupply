@@ -187,8 +187,9 @@ pub enum FormPluginInstallError {
     OnlyOnePatientEntryAllowed(String),
     #[error(
         "Cannot move key \"{program_key}\" to another program: {count} {document_type} \
-         document(s) are saved under its current program (context {context_id}), and install \
-         does not move saved records"
+         document(s) on this server are saved under its current program (context \
+         {context_id}), and install does not move saved records. (Documents not yet synced to \
+         this server are not counted, so none here does not mean none anywhere.)"
     )]
     ProgramChangeBlocked {
         program_key: String,

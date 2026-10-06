@@ -77,7 +77,9 @@ pub struct InstallPluginBundle {
     password: String,
     /// Program for one of a form plugin's program keys, as `<programKey>=<programId>`.
     /// Repeat for each key. Needed for every key on first install; a key left
-    /// out of a re-install keeps the program it is already bound to.
+    /// out of a re-install keeps the program it is already bound to. Moving a
+    /// key to another program is refused while documents are saved under the
+    /// current one, counting only the documents this server holds.
     #[clap(long = "program", value_parser = parse_program_choice)]
     programs: Vec<(String, String)>,
     /// Document type whose existing registry entry, installed by no plugin, the
@@ -103,7 +105,9 @@ pub struct GenerateAndInstallPluginBundle {
     password: String,
     /// Program for one of a form plugin's program keys, as `<programKey>=<programId>`.
     /// Repeat for each key. Needed for every key on first install; a key left
-    /// out of a re-install keeps the program it is already bound to.
+    /// out of a re-install keeps the program it is already bound to. Moving a
+    /// key to another program is refused while documents are saved under the
+    /// current one, counting only the documents this server holds.
     #[clap(long = "program", value_parser = parse_program_choice)]
     programs: Vec<(String, String)>,
     /// Document type whose existing registry entry, installed by no plugin, the
