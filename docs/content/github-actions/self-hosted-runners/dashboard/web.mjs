@@ -19,9 +19,10 @@
 // WHO CLICKED
 //
 // Each person signs in with GitHub, and their click is dispatched with THEIR
-// token, not a shared one. So GitHub itself records who started the run, the
-// deploy records them as `oms.actor` (docker-deploy.yaml takes it from
-// `github.triggering_actor`), and GitHub decides whether they may: someone without write access to
+// token, not a shared one. So GitHub itself records who started the run, a new
+// server records them as its owner, `oms.actor` (docker-deploy.yaml; later
+// deploys carry the first owner forward), and GitHub decides whether they may:
+// someone without write access to
 // the repository gets GitHub's refusal, not a deploy.
 //
 // The sign-in is a GitHub App's user authorization, not an OAuth App's. An
