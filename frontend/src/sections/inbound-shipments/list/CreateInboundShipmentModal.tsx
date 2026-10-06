@@ -155,9 +155,9 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
   };
 
   // ── From a purchase order ─────────────────────────────────────────────────
-  // The store's Sent purchase orders (spec S2 / AC-PG3). Fetched on open;
-  // non-suspending read so the modal shows a spinner rather than tripping a
-  // boundary.
+  // The store's Sent purchase orders (spec S2 / OMS-REG-REPL-02.33). Fetched on
+  // open; non-suspending read so the modal shows a spinner rather than tripping
+  // a boundary.
   const [poData] = createResource(
     () => (props.mode === 'fromPurchaseOrder' ? params.storeId : undefined),
     async storeId => {

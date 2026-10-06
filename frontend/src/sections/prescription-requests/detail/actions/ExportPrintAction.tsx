@@ -10,7 +10,7 @@ import { SelectReportModal } from '@/domain/reports';
 // the request's OWN context, not dispensing's PRESCRIPTION, because the record
 // the forms render against is a prescription_request and not an invoice (a
 // dispensation form pointed at a request id would find nothing). Printing is a
-// read, so it is offered at every status (AC-E1).
+// read, so it is offered at every status (OMS-REG-DIS-10.5–.7).
 
 export interface ExportPrintActionProps {
   requestId: string;

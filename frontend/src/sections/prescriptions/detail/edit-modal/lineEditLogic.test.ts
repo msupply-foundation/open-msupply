@@ -116,7 +116,7 @@ describe('seedDraftLines (OMS-REG-SMV-11.1/.4–.6 client face — FEFO order, b
   });
 });
 
-describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocation)', () => {
+describe('allocateUnits (OMS-REG-DIS-03.31 — partial packs: exact units, no over-allocation)', () => {
   it('splits a pack to fill the exact requested units', () => {
     // One batch of pack size 100 (the probed dispensing shape: 1 unit from a
     // 100-tab pack persists as 0.01 packs).
@@ -218,7 +218,7 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
   });
 });
 
-describe('buildSaveInput (AC-I7 — the item set-save)', () => {
+describe('buildSaveInput (OMS-REG-DIS-03.24 — the item set-save)', () => {
   const lines = [
     line({ id: 'keep', numberOfPacks: 1.5 }),
     line({ id: 'zeroed', numberOfPacks: 0 }),
@@ -246,7 +246,7 @@ describe('buildSaveInput (AC-I7 — the item set-save)', () => {
     ).not.toHaveProperty('prescribedQuantity');
   });
 
-  it('carries the trimmed directions note only when present (AC-R1 — written to every line server-side)', () => {
+  it('carries the trimmed directions note only when present (OMS-REG-DIS-03.28 — written to every line server-side)', () => {
     expect(
       buildSaveInput('inv', 'item', lines, undefined, '  take with water ').note
     ).toBe('take with water');
@@ -276,7 +276,7 @@ describe('canSave (ui-surface S4 — OK needs an item, a change, and a non-zero 
     ).toBe(false);
   });
 
-  it('needs allocated units OR a prescribed quantity (AC-Q1 — demand without stock still saves)', () => {
+  it('needs allocated units OR a prescribed quantity (OMS-REG-DIS-03.25 — demand without stock still saves)', () => {
     expect(
       canSave({
         itemChosen: true,

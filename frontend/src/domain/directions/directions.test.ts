@@ -7,7 +7,7 @@ const ABBREVIATIONS = [
   { text: 'cc', expansion: 'with/after food' },
 ];
 
-describe('expandAbbreviations (AC-R1 — tokens expand, case-insensitively)', () => {
+describe('expandAbbreviations (OMS-REG-DIS-03.28 — tokens expand, case-insensitively)', () => {
   it('replaces each matching token with its expansion', () => {
     expect(expandAbbreviations('2t tds', ABBREVIATIONS)).toBe(
       'Take TWO tablets THREE times a day'
@@ -28,7 +28,7 @@ describe('expandAbbreviations (AC-R1 — tokens expand, case-insensitively)', ()
   });
 });
 
-describe('expandAbbreviations (AC-R2 — item default directions expand the same way)', () => {
+describe('expandAbbreviations (OMS-REG-DIS-03.29 — item default directions expand the same way)', () => {
   it('expands abbreviation tokens inside a chosen default direction', () => {
     expect(expandAbbreviations('2t cc', ABBREVIATIONS)).toBe(
       'Take TWO tablets with/after food'

@@ -3,9 +3,9 @@ import { clinicianForUsername } from './clinicianResource';
 import type { Clinician } from './clinicianResource';
 
 // The username → clinician convention behind the prescribing surfaces' default
-// pick (spec/prescription-requests AC-C6): a clinician's CODE is matched
-// against the signed-in username. Nothing links the two records, so the match
-// is lenient and a miss is an ordinary "no default".
+// pick (spec/prescription-requests OMS-REG-DIS-08.14–.16): a clinician's CODE
+// is matched against the signed-in username. Nothing links the two records, so
+// the match is lenient and a miss is an ordinary "no default".
 
 const clinician = (id: string, code: string): Clinician => ({
   id,
@@ -21,7 +21,7 @@ const list = [
   clinician('cass', 'cass'),
 ];
 
-// AC-C6 — the current user is probably the prescriber.
+// OMS-REG-DIS-08.14–.16 — the current user is probably the prescriber.
 describe('clinicianForUsername', () => {
   it('matches a code to the username, ignoring case and surrounding space', () => {
     expect(clinicianForUsername(list, 'ana')?.id).toBe('ana');

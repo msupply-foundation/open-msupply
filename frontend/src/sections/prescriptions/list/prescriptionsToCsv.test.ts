@@ -98,7 +98,7 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
     expect(csv.trim().split(/\r?\n/)[0].split(',')).toHaveLength(6);
   });
 
-  it('dates rows by the backdated time when set (AC-L1 coalescence)', () => {
+  it('dates rows by the backdated time when set (OMS-REG-DIS-03.49 coalescence)', () => {
     const backdated = prescriptionsToCsv([
       { ...row, backdatedDatetime: '2026-01-05T10:00:00Z' },
     ]);

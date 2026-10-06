@@ -56,9 +56,9 @@ class CertWebViewClient extends ExtendedWebViewClient {
     }
 
     /**
-     * Host duty (frontend/src/discovery/hostContract.ts, AC-DT4): a server that
-     * answered the reachability check but then fails to serve its UI must land
-     * back on app-owned content — the discovery page, with the
+     * Host duty (frontend/src/discovery/hostContract.ts, OMS-REG-DESK-01.5): a
+     * server that answered the reachability check but then fails to serve its
+     * UI must land back on app-owned content — the discovery page, with the
      * could-not-connect notice seeded — never on WebView error content.
      *
      * Main frame only: a failed subresource is the served page's own business.
@@ -94,11 +94,11 @@ class CertWebViewClient extends ExtendedWebViewClient {
      * not found". Only that one URL, and only a 404 — anything else on the
      * local origin is a real error and stays visible.
      *
-     * Two: the same AC-DT4 recovery onReceivedError does, for a server the
-     * discovery page chose. An address can pass the reachability check and
-     * still have no app on it — the likeliest is the server's own discovery
-     * port, at port + 1, which answers 404 to everything but a POSTed query.
-     * Landing there is otherwise a dead end: the 404 is the server's own
+     * Two: the same OMS-REG-DESK-01.5 recovery onReceivedError does, for a
+     * server the discovery page chose. An address can pass the reachability
+     * check and still have no app on it — the likeliest is the server's own
+     * discovery port, at port + 1, which answers 404 to everything but a POSTed
+     * query. Landing there is otherwise a dead end: the 404 is the server's own
      * content, so it carries no way back, and the address is remembered, so the
      * next launch goes straight there again. Clearing app data was the only way
      * out. Any error status counts, since none of them is an app.

@@ -405,8 +405,10 @@ export const ButtonsShowcase = () => {
             (drives aria-label + hover title). <code>bordered</code> gives an
             outlined box (reads as a button in a row);{' '}
             <code>variant="danger"</code> tones a destructive action;{' '}
-            <code>size</code> is <code>small</code> for dense rows. Tab for the
-            focus ring.
+            <code>size</code> is <code>small</code> for dense rows and{' '}
+            <code>large</code> for a control pressed over and over at arm's
+            length — the size that squares with a default field beside it, as a
+            stepper's buttons do. Tab for the focus ring.
           </Lead>
           <Row>
             {/* Bare (toolbar-style) */}
@@ -426,6 +428,8 @@ export const ButtonsShowcase = () => {
               icon={<TrashIcon />}
               label="Delete"
             />
+            {/* Large — a stepper's button, squared with a default field */}
+            <IconButton bordered size="large" icon={<SaveIcon />} label="Save" />
             {/* Bordered medium + disabled */}
             <IconButton bordered icon={<SaveIcon />} label="Save" />
             <IconButton

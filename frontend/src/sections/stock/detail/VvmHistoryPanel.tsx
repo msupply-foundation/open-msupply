@@ -13,7 +13,7 @@ import { ALT_N } from '../../../ui/utils/shortcuts';
 import { hasPermission } from '../../../store/storeContext';
 import type { StockLineVvmLogFragment } from './stockLine.generated';
 
-// The stock-line detail "VVM history" tab (spec/stock S2 › VVM history, FL7).
+// The stock-line detail "VVM history" tab (spec/stock S2 › VVM history).
 // The line's VVM status entries: date, time, VVM status, distribution priority,
 // entered by, comment. A "New status entry" action (opens S6); selecting an
 // entry opens S6 to edit its comment. Gated to vaccine items with

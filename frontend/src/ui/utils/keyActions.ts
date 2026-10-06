@@ -33,8 +33,8 @@ export interface KeyAction {
   /**
    * The palette entry's name. A locale key, or an ACCESSOR that resolves one —
    * either way it is read at render time, so it re-translates on a language
-   * switch. Absent for an unlisted action (AC-KB11) — one that exists to own a
-   * shortcut, not to be found by browsing.
+   * switch. Absent for an unlisted action (OMS-REG-KBD-01.21) — one that exists
+   * to own a shortcut, not to be found by browsing.
    *
    * The accessor form exists for the go-to-destination actions, whose names are
    * COMPOSED — `cmdk.goto` interpolated with the destination's own menu label —
@@ -72,8 +72,9 @@ interface ListedSpec {
 
 /**
  * An unlisted action: owns a shortcut and appears nowhere in the palette
- * (AC-KB11 — navigate-up). Declared explicitly rather than inferred from a
- * missing `name`, so a forgotten name can't silently vanish from the palette.
+ * (OMS-REG-KBD-01.21 — navigate-up). Declared explicitly rather than inferred
+ * from a missing `name`, so a forgotten name can't silently vanish from the
+ * palette.
  */
 interface UnlistedSpec {
   unlisted: true;
@@ -255,10 +256,10 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
  */
 
 /**
- * The screen's add / new action (KB-R2, AC-KB7) — a list's _New_, a detail's
- * _Add item_, a line editor's _New item_. Declared by the SCREEN; the controls
- * that trigger it carry only `shortcut={ALT_N}` for their badge and
- * `aria-keyshortcuts`.
+ * The screen's add / new action (KB-R2, OMS-REG-KBD-01.14/.15) — a list's
+ * _New_, a detail's _Add item_, a line editor's _New item_. Declared by the
+ * SCREEN; the controls that trigger it carry only `shortcut={ALT_N}` for their
+ * badge and `aria-keyshortcuts`.
  *
  * `name` is the action's own control's label (spec/keyboard ui-surface S1:
  * "the screen's add action, named by its own control"), so the palette entry

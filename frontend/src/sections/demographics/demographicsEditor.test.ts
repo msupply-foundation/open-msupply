@@ -10,7 +10,7 @@ import type { LoadedDemographics, SaveOutcome } from './demographicsApi';
 // and by the e2e suite to come.
 //
 // Behaviour anchors: spec/demographics/cases/OMS-REG-MNG-03 (behaviour ids,
-// cited as `.n`; the former AC-* ids map to them in acceptance.md).
+// cited as `.n`).
 
 const state = {
   permissions: new Set<string>(['EDIT_CENTRAL_DATA']),

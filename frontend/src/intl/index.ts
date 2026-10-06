@@ -52,6 +52,7 @@ export { legacyCodePage } from './legacyCodePage';
 export {
   isRtl,
   currentLanguageName,
+  languageName,
   languageOptions,
   getLocalisedFullName,
   translateServerError,

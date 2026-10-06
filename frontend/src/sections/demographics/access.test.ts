@@ -8,8 +8,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // permission is mirrored at the click, not the route.
 //
 // Behaviour anchors: none of OMS-REG-MNG-03's own — the gates are navigation's
-// (OMS-REG-NAV-01); the former AC-A1 was not folded because a capability gate
-// redirects here (spec/demographics/acceptance.md § mapping, rules § access).
+// (OMS-REG-NAV-01); the former access criterion was not folded because a
+// capability gate redirects here (spec/demographics/rules.md § Access).
 
 const state = {
   central: false,
