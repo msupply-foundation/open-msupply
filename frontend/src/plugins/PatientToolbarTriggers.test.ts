@@ -80,6 +80,23 @@ describe('runTrigger', () => {
     expect(open).toHaveBeenCalledWith('DemoEncounter', 'demo_program');
   });
 
+  it('names an async handler whose promise rejects, rather than leaving it unhandled', async () => {
+    const before = pluginDiagnostics().length;
+    let reject!: (error: Error) => void;
+    const pending = new Promise<void>((_, r) => (reject = r));
+    expect(() =>
+      runTrigger(trigger({ onClick: () => pending }), enrolled, vi.fn())
+    ).not.toThrow();
+    expect(pluginDiagnostics().slice(before)).toEqual([]);
+
+    reject(new Error('boom'));
+    await vi.waitFor(() =>
+      expect(pluginDiagnostics().slice(before)[0]?.message).toContain(
+        'its onClick threw'
+      )
+    );
+  });
+
   it('does nothing more for a handler that throws, and names it', () => {
     const before = pluginDiagnostics().length;
     expect(() =>

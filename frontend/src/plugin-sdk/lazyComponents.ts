@@ -11,7 +11,7 @@
  * these must render from the surface's FIRST paint, never first mounted by a
  * later interaction, which would suspend an already-open screen and remount it.
  */
-import { lazy } from 'solid-js';
+import { lazy, untrack } from 'solid-js';
 import type { ConfirmOnLeaveOptions } from '../domain/confirmOnLeave/createConfirmOnLeave';
 import type { Component, JSX } from 'solid-js';
 import type { DataTableProps } from '../ui/elements/table/DataTable';
@@ -131,25 +131,43 @@ export const FilterDateRange: Component<FilterDateRangeProps> = lazy(() =>
  * the eager entry). A form renders its fields at its own first paint, inside
  * the Suspense its mount point provides.
  */
-const formLibrary = () => import('../domain/documentForm/formLibrary');
+type FormLibrary = typeof import('../domain/documentForm/formLibrary');
 
-const LazyTextInput = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.TextInput as Component<TextInputProps<unknown, never>>,
-  }))
+// The library once it has loaded, so that a field mounted after that renders
+// at once rather than through `lazy`.
+let loadedLibrary: FormLibrary | undefined;
+const formLibrary = (): Promise<FormLibrary> =>
+  import('../domain/documentForm/formLibrary').then(m => (loadedLibrary = m));
+
+/*
+ * A form library component, lazy only until the library has loaded. Solid's
+ * `lazy` forgets a loaded component when the last instance of it unmounts, so
+ * a field a form shows conditionally (a date that appears once a box is
+ * ticked) would suspend on every showing, swapping the whole form for its
+ * region's spinner and remounting it (kdd/solid-reactivity-pitfalls). Once
+ * the library is in, every new instance renders the real component directly.
+ */
+const formLibraryComponent = <P extends object>(
+  pick: (library: FormLibrary) => Component<P>
+): Component<P> => {
+  const Lazy = lazy(() => formLibrary().then(m => ({ default: pick(m) })));
+  return props => {
+    // Rendered as a component renders, outside any caller's tracking.
+    const library = loadedLibrary;
+    return untrack(() => (library ? pick(library)(props) : Lazy(props)));
+  };
+};
+
+const LazyTextInput = formLibraryComponent(
+  m => m.TextInput as Component<TextInputProps<unknown, never>>
 );
 /** A single line of free text at a text path. */
-export const TextInput = LazyTextInput as unknown as <
-  T,
-  P extends TextPath<T>,
->(
+export const TextInput = LazyTextInput as unknown as <T, P extends TextPath<T>>(
   props: TextInputProps<T, P>
 ) => JSX.Element;
 
-const LazyTextAreaInput = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.TextAreaInput as Component<TextAreaInputProps<unknown, never>>,
-  }))
+const LazyTextAreaInput = formLibraryComponent(
+  m => m.TextAreaInput as Component<TextAreaInputProps<unknown, never>>
 );
 /** Several lines of free text at a text path. */
 export const TextAreaInput = LazyTextAreaInput as unknown as <
@@ -159,10 +177,8 @@ export const TextAreaInput = LazyTextAreaInput as unknown as <
   props: TextAreaInputProps<T, P>
 ) => JSX.Element;
 
-const LazyNumberInput = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.NumberInput as Component<NumberInputProps<unknown, never>>,
-  }))
+const LazyNumberInput = formLibraryComponent(
+  m => m.NumberInput as Component<NumberInputProps<unknown, never>>
 );
 /** A number at a number path. */
 export const NumberInput = LazyNumberInput as unknown as <
@@ -172,23 +188,16 @@ export const NumberInput = LazyNumberInput as unknown as <
   props: NumberInputProps<T, P>
 ) => JSX.Element;
 
-const LazyDateInput = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.DateInput as Component<DateInputProps<unknown, never>>,
-  }))
+const LazyDateInput = formLibraryComponent(
+  m => m.DateInput as Component<DateInputProps<unknown, never>>
 );
 /** A calendar day, stored as the schema's `format` at the path says. */
-export const DateInput = LazyDateInput as unknown as <
-  T,
-  P extends TextPath<T>,
->(
+export const DateInput = LazyDateInput as unknown as <T, P extends TextPath<T>>(
   props: DateInputProps<T, P>
 ) => JSX.Element;
 
-const LazyDateTimeInput = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.DateTimeInput as Component<DateTimeInputProps<unknown, never>>,
-  }))
+const LazyDateTimeInput = formLibraryComponent(
+  m => m.DateTimeInput as Component<DateTimeInputProps<unknown, never>>
 );
 /** A date and time of day, stored as an RFC 3339 instant. */
 export const DateTimeInput = LazyDateTimeInput as unknown as <
@@ -198,10 +207,8 @@ export const DateTimeInput = LazyDateTimeInput as unknown as <
   props: DateTimeInputProps<T, P>
 ) => JSX.Element;
 
-const LazySelectInput = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.SelectInput as Component<SelectInputProps<unknown, never>>,
-  }))
+const LazySelectInput = formLibraryComponent(
+  m => m.SelectInput as Component<SelectInputProps<unknown, never>>
 );
 /** One value of an enum, with a label for every value the type allows. */
 export const SelectInput = LazySelectInput as unknown as <
@@ -211,10 +218,8 @@ export const SelectInput = LazySelectInput as unknown as <
   props: SelectInputProps<T, P>
 ) => JSX.Element;
 
-const LazyCheckboxInput = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.CheckboxInput as Component<CheckboxInputProps<unknown, never>>,
-  }))
+const LazyCheckboxInput = formLibraryComponent(
+  m => m.CheckboxInput as Component<CheckboxInputProps<unknown, never>>
 );
 /** A yes/no value at a boolean path. */
 export const CheckboxInput = LazyCheckboxInput as unknown as <
@@ -225,8 +230,8 @@ export const CheckboxInput = LazyCheckboxInput as unknown as <
 ) => JSX.Element;
 
 /** A titled group of fields. */
-export const FieldGroup: Component<FieldGroupProps> = lazy(() =>
-  formLibrary().then(m => ({ default: m.FieldGroup }))
+export const FieldGroup: Component<FieldGroupProps> = formLibraryComponent(
+  m => m.FieldGroup
 );
 
 /*
@@ -239,111 +244,110 @@ export const FieldGroup: Component<FieldGroupProps> = lazy(() =>
  * address and phone. From the form library's chunk.
  */
 
-const LazyPatientCodeField = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientCodeField as Component<PatientFieldProps>,
-  }))
+const LazyPatientCodeField = formLibraryComponent(
+  m => m.PatientCodeField as Component<PatientFieldProps>
 );
 /** The patient code, with the host's generator beside it. */
-export const PatientCodeField = LazyPatientCodeField as unknown as <T extends Patient>(
+export const PatientCodeField = LazyPatientCodeField as unknown as <
+  T extends Patient,
+>(
   props: PatientFieldProps<T>
 ) => JSX.Element;
 
-const LazyPatientCode2Field = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientCode2Field as Component<PatientFieldProps>,
-  }))
+const LazyPatientCode2Field = formLibraryComponent(
+  m => m.PatientCode2Field as Component<PatientFieldProps>
 );
 /** The secondary patient code. */
-export const PatientCode2Field = LazyPatientCode2Field as unknown as <T extends Patient>(
+export const PatientCode2Field = LazyPatientCode2Field as unknown as <
+  T extends Patient,
+>(
   props: PatientFieldProps<T>
 ) => JSX.Element;
 
-const LazyPatientFirstNameField = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientFirstNameField as Component<PatientFieldProps>,
-  }))
+const LazyPatientFirstNameField = formLibraryComponent(
+  m => m.PatientFirstNameField as Component<PatientFieldProps>
 );
 /** First name, which the base Patient requires. */
-export const PatientFirstNameField = LazyPatientFirstNameField as unknown as <T extends Patient>(
+export const PatientFirstNameField = LazyPatientFirstNameField as unknown as <
+  T extends Patient,
+>(
   props: PatientFieldProps<T>
 ) => JSX.Element;
 
-const LazyPatientLastNameField = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientLastNameField as Component<PatientFieldProps>,
-  }))
+const LazyPatientLastNameField = formLibraryComponent(
+  m => m.PatientLastNameField as Component<PatientFieldProps>
 );
 /** Last name, which the base Patient requires. */
-export const PatientLastNameField = LazyPatientLastNameField as unknown as <T extends Patient>(
+export const PatientLastNameField = LazyPatientLastNameField as unknown as <
+  T extends Patient,
+>(
   props: PatientFieldProps<T>
 ) => JSX.Element;
 
-const LazyPatientDateOfBirthField = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientDateOfBirthField as Component<PatientFieldProps>,
-  }))
+const LazyPatientDateOfBirthField = formLibraryComponent(
+  m => m.PatientDateOfBirthField as Component<PatientFieldProps>
 );
 /**
  * Date of birth with age beside it, editable both ways; an age entry marks the
  * date estimated.
  */
-export const PatientDateOfBirthField = LazyPatientDateOfBirthField as unknown as <T extends Patient>(
-  props: PatientFieldProps<T>
-) => JSX.Element;
+export const PatientDateOfBirthField =
+  LazyPatientDateOfBirthField as unknown as <T extends Patient>(
+    props: PatientFieldProps<T>
+  ) => JSX.Element;
 
-const LazyPatientGenderField = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientGenderField as Component<PatientFieldProps>,
-  }))
+const LazyPatientGenderField = formLibraryComponent(
+  m => m.PatientGenderField as Component<PatientFieldProps>
 );
 /** Gender, from the store's configured subset. */
-export const PatientGenderField = LazyPatientGenderField as unknown as <T extends Patient>(
+export const PatientGenderField = LazyPatientGenderField as unknown as <
+  T extends Patient,
+>(
   props: PatientFieldProps<T>
 ) => JSX.Element;
 
-const LazyPatientAddressField = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientAddressField as Component<PatientFieldProps>,
-  }))
+const LazyPatientAddressField = formLibraryComponent(
+  m => m.PatientAddressField as Component<PatientFieldProps>
 );
 /**
  * The address, in the first contact block (the one the patient record shows).
  */
-export const PatientAddressField = LazyPatientAddressField as unknown as <T extends Patient>(
+export const PatientAddressField = LazyPatientAddressField as unknown as <
+  T extends Patient,
+>(
   props: PatientFieldProps<T>
 ) => JSX.Element;
 
-const LazyPatientPhoneField = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientPhoneField as Component<PatientFieldProps>,
-  }))
+const LazyPatientPhoneField = formLibraryComponent(
+  m => m.PatientPhoneField as Component<PatientFieldProps>
 );
 /**
  * The phone number, in the first contact block (the one the patient record
  * shows).
  */
-export const PatientPhoneField = LazyPatientPhoneField as unknown as <T extends Patient>(
+export const PatientPhoneField = LazyPatientPhoneField as unknown as <
+  T extends Patient,
+>(
   props: PatientFieldProps<T>
 ) => JSX.Element;
 
-const LazyPatientNextOfKinField = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientNextOfKinField as Component<PatientFieldProps>,
-  }))
+const LazyPatientNextOfKinField = formLibraryComponent(
+  m => m.PatientNextOfKinField as Component<PatientFieldProps>
 );
 /** The next of kin, picked from the store's patients. */
-export const PatientNextOfKinField = LazyPatientNextOfKinField as unknown as <T extends Patient>(
+export const PatientNextOfKinField = LazyPatientNextOfKinField as unknown as <
+  T extends Patient,
+>(
   props: PatientFieldProps<T>
 ) => JSX.Element;
 
-const LazyPatientDeceasedFields = lazy(() =>
-  formLibrary().then(m => ({
-    default: m.PatientDeceasedFields as Component<PatientFieldProps>,
-  }))
+const LazyPatientDeceasedFields = formLibraryComponent(
+  m => m.PatientDeceasedFields as Component<PatientFieldProps>
 );
 /** Deceased, with the date of death while it is ticked. */
-export const PatientDeceasedFields = LazyPatientDeceasedFields as unknown as <T extends Patient>(
+export const PatientDeceasedFields = LazyPatientDeceasedFields as unknown as <
+  T extends Patient,
+>(
   props: PatientFieldProps<T>
 ) => JSX.Element;
 

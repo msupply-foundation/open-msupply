@@ -64,7 +64,7 @@ export const triggerShows = (
 
 /**
  * Runs a trigger's handler with the screen's actions, told which plugin
- * asked. A handler that throws does nothing more.
+ * asked. A handler that throws, or whose promise rejects, does nothing more.
  */
 export const runTrigger = (
   trigger: Trigger,
@@ -76,7 +76,18 @@ export const runTrigger = (
       openDocumentForm(documentType, trigger.pluginCode),
   };
   try {
-    trigger.onClick(props, actions);
+    const result: unknown = trigger.onClick(props, actions);
+    // An async handler's failure arrives later, as a rejection no caller
+    // awaits; caught here it is reported like a throw.
+    if (
+      typeof result === 'object' &&
+      result !== null &&
+      typeof (result as PromiseLike<unknown>).then === 'function'
+    ) {
+      (result as PromiseLike<unknown>).then(undefined, (error: unknown) =>
+        failed(trigger, 'onClick', error)
+      );
+    }
   } catch (error) {
     failed(trigger, 'onClick', error);
   }

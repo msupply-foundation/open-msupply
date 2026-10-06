@@ -557,6 +557,20 @@ export interface FormRecordView {
   readonly documentName: string | undefined;
 }
 
+/*
+ * The document a form slot's component is written against, as the slot sees
+ * it. A plugin's form is typed by its own document type, which extends the
+ * slot's base type and may narrow it (`code: string` where the base `Patient`
+ * has `code?: string`). `Draft` is invariant in its type, since its paths and
+ * the values at them are computed from it, so a form for a narrower type is
+ * not assignable to a form for the base one, and the slot takes a form for
+ * any document type instead. The contribution's `documentType` binds a form
+ * to its type, and the host checks every draft against that type's schema
+ * before a save.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above
+type FormSlotDocument = any;
+
 /**
  * The props a `programEnrolment.form` contribution receives. `T` is the
  * plugin's own document type, so the draft's paths are checked against it:
@@ -675,7 +689,11 @@ export interface TriggerRender<P, A> {
    * session, as on every slot; this gates on the record it sits on.
    */
   visible?: (props: P) => boolean;
-  onClick: (props: P, actions: A) => void;
+  /**
+   * What a click runs. May be async: a rejection is reported like a throw,
+   * as the trigger having done nothing.
+   */
+  onClick: (props: P, actions: A) => void | Promise<void>;
 }
 
 // ── The slot catalogue ──────────────────────────────────────────────────────
@@ -791,16 +809,22 @@ export interface SlotRender {
   // number, rendered read-only for documents pinned to that version and
   // written against that version's own type.
   'programEnrolment.form': {
-    Component: Component<ProgramEnrolmentFormProps>;
-    archived?: Readonly<Record<number, Component<ProgramEnrolmentFormProps>>>;
+    Component: Component<ProgramEnrolmentFormProps<FormSlotDocument>>;
+    archived?: Readonly<
+      Record<number, Component<ProgramEnrolmentFormProps<FormSlotDocument>>>
+    >;
   };
   'encounter.form': {
-    Component: Component<EncounterFormProps>;
-    archived?: Readonly<Record<number, Component<EncounterFormProps>>>;
+    Component: Component<EncounterFormProps<FormSlotDocument>>;
+    archived?: Readonly<
+      Record<number, Component<EncounterFormProps<FormSlotDocument>>>
+    >;
   };
   'patient.form': {
-    Component: Component<PatientFormProps>;
-    archived?: Readonly<Record<number, Component<PatientFormProps>>>;
+    Component: Component<PatientFormProps<FormSlotDocument>>;
+    archived?: Readonly<
+      Record<number, Component<PatientFormProps<FormSlotDocument>>>
+    >;
   };
   // The third departure from the uniform `Component` shape: the host draws
   // the button, so a trigger declares its label and handler instead.

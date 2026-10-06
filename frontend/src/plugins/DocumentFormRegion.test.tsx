@@ -176,6 +176,29 @@ describe('DocumentFormRegion', () => {
     expect(cleanups).toBe(1);
   });
 
+  it("falls back to the default form when the plugin form's when gate throws", () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    register('demo_program', [
+      {
+        ...encounterForm('DemoEncounter', () => 'demo form', 'gated'),
+        when: () => {
+          throw new Error('deliberate');
+        },
+      } as AnyContribution,
+    ]);
+    const { render, dispose } = mount('DemoEncounter', () => record);
+    expect(render()).toBe('default form');
+    expect(pluginDiagnostics().at(-1)).toMatchObject({
+      level: 'error',
+      pluginCode: 'demo_program',
+      message: expect.stringContaining(
+        'encounter.form "demo_program.gated" when gate threw'
+      ),
+    });
+    dispose();
+    errors.mockRestore();
+  });
+
   it('falls back to the default form, and names the failure, when the plugin form throws', () => {
     const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
     const warnings = vi.spyOn(console, 'warn').mockImplementation(() => {});
