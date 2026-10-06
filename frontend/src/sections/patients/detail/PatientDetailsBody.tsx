@@ -1,4 +1,5 @@
 import { Match, Show, Switch, type Component } from 'solid-js';
+import { t } from '../../../intl';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
@@ -18,11 +19,12 @@ export interface PatientDetailsBodyProps {
 }
 
 /*
- * A patient's details form on whichever path the store is on (patientDetails.ts):
- * the built-in form over the patient record, or the patient form a plugin
- * contributes for the store's patient document type, else the host's default
- * patient form on the document. A spinner until the registry is answered and,
- * on the document path, until the document and the form library are in.
+ * A patient's details form on whichever path the store is on
+ * (patientDetails.ts): the built-in form over the patient record, or the
+ * patient form a plugin contributes for the store's patient document type,
+ * else the host's default patient form on the document. A spinner until the
+ * registry is answered and, on the document path, until the document and the
+ * form library are in; a document that is not there says so.
  */
 export const PatientDetailsBody: Component<PatientDetailsBodyProps> = props => {
   const form = () => props.details.documentEditor.form;
@@ -52,6 +54,17 @@ export const PatientDetailsBody: Component<PatientDetailsBodyProps> = props => {
             errors={props.details.editor.validation.visible()}
             testId={props.errorSummaryTestId}
           />
+        </Match>
+        {/* A read that fails is reported by the global error modal and stays
+            loading behind it (kdd/state-management); a document that does not
+            exist, or that the user may not read, is an answer, so it is said
+            here rather than left as a spinner. */}
+        <Match
+          when={
+            props.details.onDocumentPath() && form().status() === 'not-found'
+          }
+        >
+          <Alert severity="error">{t('messages.record-not-found')}</Alert>
         </Match>
         <Match when={form().status() === 'ready' && form().library()}>
           {lib => {

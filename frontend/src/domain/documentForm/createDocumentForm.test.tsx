@@ -402,6 +402,31 @@ describe('when the source changes', () => {
     expect(weight(form)).toBe(80);
   });
 
+  it('reports a document that is not there as not found, not loading', async () => {
+    const { form, go } = follow(
+      {
+        'encounter/gone': async () => null as unknown as FormDocumentFragment,
+        // Read, but its type has no registry entry left to open it with.
+        'encounter/orphan': async () => ({
+          ...encounter('encounter/orphan', 70),
+          documentRegistry: null,
+        }),
+      },
+      { kind: 'existing', name: 'encounter/gone' }
+    );
+    await vi.waitFor(() => expect(form.status()).toBe('not-found'), {
+      timeout: 5000,
+    });
+    expect(form.document()).toBeUndefined();
+
+    go({ kind: 'existing', name: 'encounter/orphan' });
+    await vi.waitFor(
+      () => expect(form.document()?.name).toBe('encounter/orphan'),
+      { timeout: 5000 }
+    );
+    expect(form.status()).toBe('not-found');
+  });
+
   it('does not let a save that returns late stand for the record shown since', async () => {
     let finishSave!: () => void;
     const holdSave = new Promise<void>(resolve => (finishSave = resolve));
