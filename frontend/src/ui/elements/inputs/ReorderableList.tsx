@@ -1,4 +1,11 @@
-import { createMemo, createSignal, For, Show, type JSX } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  For,
+  Show,
+  type Component,
+  type JSX,
+} from 'solid-js';
 import { t } from '../../../intl';
 import {
   ChevronDownIcon,
@@ -40,6 +47,14 @@ const OPPOSITE: Record<Direction, Direction> = {
   up: 'down',
   down: 'up',
   bottom: 'top',
+};
+
+/** Each move's glyph — one chevron for a step, two for the end. */
+const GLYPH: Record<Direction, () => JSX.Element> = {
+  top: () => <ChevronsUpIcon />,
+  up: () => <ChevronDownIcon class={styles.chevronUp} />,
+  down: () => <ChevronDownIcon />,
+  bottom: () => <ChevronsDownIcon />,
 };
 
 export interface ReorderableListProps {
@@ -137,13 +152,40 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
     refocus(id, to);
   };
 
-  const names = () => ({
+  // Keyed by direction, so a move button reads its own name; a memo because
+  // every row reads this and the object is otherwise rebuilt per read.
+  const names = createMemo(() => ({
     dragHandle: props.labels?.dragHandle ?? t('reorder.drag-handle'),
-    moveTop: props.labels?.moveTop ?? t('reorder.move-to-top'),
-    moveUp: props.labels?.moveUp ?? t('reorder.move-up'),
-    moveDown: props.labels?.moveDown ?? t('reorder.move-down'),
-    moveBottom: props.labels?.moveBottom ?? t('reorder.move-to-bottom'),
-  });
+    top: props.labels?.moveTop ?? t('reorder.move-to-top'),
+    up: props.labels?.moveUp ?? t('reorder.move-up'),
+    down: props.labels?.moveDown ?? t('reorder.move-down'),
+    bottom: props.labels?.moveBottom ?? t('reorder.move-to-bottom'),
+  }));
+
+  // One row's move button: the direction picks its name, its glyph and the
+  // end it is dead at (a step up and a jump to the top both die on row one).
+  const MoveButton: Component<{
+    item: ReorderableItem;
+    index: number;
+    to: Direction;
+  }> = button => {
+    const dead = () =>
+      button.to === 'top' || button.to === 'up'
+        ? button.index === 0
+        : button.index === rows().length - 1;
+    return (
+      <button
+        type="button"
+        class={styles.moveButton}
+        aria-label={names()[button.to]}
+        ref={el => buttons.set(buttonKey(button.item.id, button.to), el)}
+        disabled={props.disabled || dead()}
+        onClick={() => move(button.item.id, button.to)}
+      >
+        {GLYPH[button.to]()}
+      </button>
+    );
+  };
 
   return (
     <ol
@@ -203,46 +245,10 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
               </Show>
             </span>
             <span class={styles.actions}>
-              <button
-                type="button"
-                class={styles.moveButton}
-                aria-label={names().moveTop}
-                ref={el => buttons.set(buttonKey(item.id, 'top'), el)}
-                disabled={props.disabled || index() === 0}
-                onClick={() => move(item.id, 'top')}
-              >
-                <ChevronsUpIcon />
-              </button>
-              <button
-                type="button"
-                class={styles.moveButton}
-                aria-label={names().moveUp}
-                ref={el => buttons.set(buttonKey(item.id, 'up'), el)}
-                disabled={props.disabled || index() === 0}
-                onClick={() => move(item.id, 'up')}
-              >
-                <ChevronDownIcon class={styles.chevronUp} />
-              </button>
-              <button
-                type="button"
-                class={styles.moveButton}
-                aria-label={names().moveDown}
-                ref={el => buttons.set(buttonKey(item.id, 'down'), el)}
-                disabled={props.disabled || index() === rows().length - 1}
-                onClick={() => move(item.id, 'down')}
-              >
-                <ChevronDownIcon />
-              </button>
-              <button
-                type="button"
-                class={styles.moveButton}
-                aria-label={names().moveBottom}
-                ref={el => buttons.set(buttonKey(item.id, 'bottom'), el)}
-                disabled={props.disabled || index() === rows().length - 1}
-                onClick={() => move(item.id, 'bottom')}
-              >
-                <ChevronsDownIcon />
-              </button>
+              <MoveButton item={item} index={index()} to="top" />
+              <MoveButton item={item} index={index()} to="up" />
+              <MoveButton item={item} index={index()} to="down" />
+              <MoveButton item={item} index={index()} to="bottom" />
             </span>
           </li>
         )}
