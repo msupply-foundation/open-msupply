@@ -24,8 +24,13 @@ export interface IconButtonProps extends Omit<
    * icon.
    */
   bordered?: boolean;
-  /** Size: 'small' (dense, e.g. a table row action) or 'medium' (default). */
-  size?: 'small' | 'medium';
+  /**
+   * Size: 'small' (dense, e.g. a table row action), 'medium' (default), or
+   * 'large' — a control pressed over and over at arm's length (the
+   * Afghanistan tally's counter steppers), and the size that squares with a
+   * default-size field beside it.
+   */
+  size?: 'small' | 'medium' | 'large';
   /**
    * The key binding this button answers (spec/keyboard KB-H1, S2) — the same
    * ONE prop `Button` takes, driving both `aria-keyshortcuts` and the hint
