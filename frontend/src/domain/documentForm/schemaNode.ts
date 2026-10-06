@@ -9,8 +9,10 @@
  * Emitted schemas are `ts-json-schema-generator` output: a root `allOf` of a
  * `$ref` into `definitions`, properties that are `$ref`s, and inline objects
  * for the `extension` tree. Only local `#/definitions/…` references occur, so
- * that is all this resolves.
+ * that is all this resolves (schemaRef.ts).
  */
+
+import { refTarget } from './schemaRef';
 
 export type JsonSchema = Record<string, unknown>;
 
@@ -32,12 +34,8 @@ const resolveRef = (root: JsonSchema, node: JsonSchema): JsonSchema => {
   // steps; the bound stops a cycle from hanging the form.
   for (let i = 0; i < 16; i++) {
     const ref = current['$ref'];
-    if (typeof ref !== 'string' || !ref.startsWith('#/')) return current;
-    let target: unknown = root;
-    for (const part of ref.slice(2).split('/')) {
-      target = asSchema(target)?.[part];
-    }
-    const resolved = asSchema(target);
+    if (typeof ref !== 'string') return current;
+    const resolved = asSchema(refTarget(root, ref));
     if (!resolved) return current;
     const { $ref: _, ...rest } = current;
     current = { ...resolved, ...rest };

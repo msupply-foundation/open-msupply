@@ -19,6 +19,7 @@ import {
   type JsonScalar,
   type MigrationStep,
 } from './migration';
+import { refTarget } from './schemaRef';
 
 type SchemaNode = Record<string, unknown>;
 
@@ -37,12 +38,9 @@ const resolveRef = (root: SchemaNode, node: SchemaNode): SchemaNode => {
   const seen = new Set<string>();
   while (typeof current.$ref === 'string') {
     const ref = current.$ref;
-    if (seen.has(ref) || !ref.startsWith('#/')) break;
+    if (seen.has(ref)) break;
     seen.add(ref);
-    let target: unknown = root;
-    for (const key of ref.slice(2).split('/')) {
-      target = isNode(target) ? target[key] : undefined;
-    }
+    const target = refTarget(root, ref);
     if (!isNode(target)) break;
     const { $ref: _ref, ...rest } = current;
     current = { ...target, ...rest };
@@ -164,11 +162,29 @@ export const checkCoverage = (
         `${at}: moved takes ${from} to ${to}, which v${stepTarget(step)} does not have`
       );
     }
+    // Every move reads before any writes, so a target that moves away itself
+    // (a swap) is free; any other value already there would be overwritten,
+    // and dropped is applied after the moves, so it cannot clear the way.
+    if (before.has(from) && before.has(to) && movedPath(to, moved) === to) {
+      problems.push(
+        `${at}: moved takes ${from} to ${to}, which v${step.from} already ` +
+          `has, so its value would be overwritten — move ${to} as well`
+      );
+    }
   }
   for (const path of Object.keys(step.kept ?? {})) {
     if (!before.has(path)) {
       problems.push(
         `${at}: kept names ${path}, which v${step.from} does not have`
+      );
+    }
+    // Kept sets a removed path aside, unchecked beneath it; on a path the new
+    // version still has it would hide every change there.
+    if (after.has(path)) {
+      problems.push(
+        `${at}: kept names ${path}, which v${stepTarget(step)} still has — ` +
+          'kept is for a removed path; cover a change at it with moved, ' +
+          'mapped or unresolved'
       );
     }
   }

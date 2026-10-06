@@ -17,6 +17,7 @@ import {
  * packs anything and by scripts/emit-form-schemas.mjs in both modes, so a
  * plugin whose versions do not fit together is never packed or installed:
  *
+ *   - every `$ref` in every version resolves within its schema;
  *   - every event rule's field paths name a field of the current schema;
  *   - for a type with more than one version, each version's hop to the next
  *     is either a step in `forms/<dir>/migrations.ts` whose coverage map
@@ -107,6 +108,7 @@ interface Step {
 
 /** The host modules the checks reuse, typed by the part they call. */
 interface HostModules {
+  unresolvedRefs: (schema: unknown) => string[];
   flattenSchema: (schema: unknown) => Map<string, unknown>;
   checkCoverage: (
     oldSchema: unknown,
@@ -137,6 +139,7 @@ let hostModules: Promise<HostModules> | undefined;
 const loadHostModules = (): Promise<HostModules> =>
   (hostModules ??= Promise.all(
     [
+      'domain/documentForm/schemaRef.ts',
       'domain/documentForm/schemaDiff.ts',
       'domain/documentForm/migration.ts',
       'domain/documentForm/validation.ts',
@@ -437,7 +440,6 @@ export const checkFormVersions = async (
 ): Promise<string[]> => {
   const problems: string[] = [];
   for (const entry of declaration.documentTypes) {
-    if (!entry.events && entry.versions.length < 2) continue;
     const dir = typeDir(pluginDir, entry);
     const unreadable: string[] = [];
     const schemas = entry.versions.map(version => {
@@ -446,6 +448,21 @@ export const checkFormVersions = async (
     });
     if (!schemas.every(isRecord)) continue;
     const host = await loadHostModules();
+    // The form library and the comparison below read nothing behind a
+    // reference that does not resolve, while the validator refuses the
+    // document, so a version with one is not checked further.
+    let refsResolve = true;
+    schemas.forEach((schema, i) => {
+      for (const ref of host.unresolvedRefs(schema)) {
+        refsResolve = false;
+        problems.push(
+          `${join(dir, entry.versions[i].file)}: $ref ${JSON.stringify(ref)} ` +
+            'does not resolve within the schema, so the form and these ' +
+            'checks cannot see the fields it names — fix the schema'
+        );
+      }
+    });
+    if (!refsResolve) continue;
     if (entry.events) {
       problems.push(
         ...checkEventRules(

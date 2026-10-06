@@ -221,6 +221,63 @@ describe('checkCoverage', () => {
     ).toEqual([]);
   });
 
+  it('refuses a move onto a path the old version has, unless it moves away too', () => {
+    const fields = {
+      type: 'object',
+      properties: { a: { type: 'string' }, b: { type: 'string' } },
+    };
+    expect(
+      checkCoverage(fields, fields, { from: 1, moved: { a: 'b' } })
+    ).toEqual([
+      'v1 → v2: moved takes a to b, which v1 already has, so its value would be overwritten — move b as well',
+    ]);
+    // Dropping b is no way round it: dropped is applied after the moves.
+    expect(
+      checkCoverage(fields, fields, {
+        from: 1,
+        moved: { a: 'b' },
+        dropped: ['b'],
+      })
+    ).toContain(
+      'v1 → v2: moved takes a to b, which v1 already has, so its value would be overwritten — move b as well'
+    );
+    expect(
+      checkCoverage(fields, fields, { from: 1, moved: { a: 'b', b: 'a' } })
+    ).toEqual([]);
+  });
+
+  it('refuses kept on a path the new version still has', () => {
+    const old = {
+      type: 'object',
+      properties: {
+        x: {
+          type: 'object',
+          properties: {
+            y: { type: 'string' },
+            z: { type: 'string', enum: ['A', 'B'] },
+          },
+        },
+      },
+    };
+    const next = {
+      type: 'object',
+      properties: {
+        x: {
+          type: 'object',
+          properties: {
+            y: { type: 'number' },
+            z: { type: 'string', enum: ['A'] },
+          },
+        },
+      },
+    };
+    expect(
+      checkCoverage(old, next, { from: 1, kept: { x: () => 'X' } })
+    ).toEqual([
+      'v1 → v2: kept names x, which v2 still has — kept is for a removed path; cover a change at it with moved, mapped or unresolved',
+    ]);
+  });
+
   it('names a changed type, which unresolved covers as any', () => {
     const old = { type: 'object', properties: { bp: { type: 'string' } } };
     const next = {

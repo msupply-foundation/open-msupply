@@ -136,6 +136,24 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
     ]);
   });
 
+  it('names a $ref that does not resolve, in a type with one version', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': {
+        type: 'object',
+        properties: { weight: { $ref: '#/definitions/Measure%3Cnumbr%3E' } },
+        definitions: { 'Measure<number>': { type: 'object' } },
+      },
+    });
+    const declaration = declare({
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      `${visit(dir, 'v1.json')}: $ref "#/definitions/Measure%3Cnumbr%3E" ` +
+        'does not resolve within the schema, so the form and these checks ' +
+        'cannot see the fields it names — fix the schema',
+    ]);
+  });
+
   it('names a missing fixture for an earlier version', async () => {
     const dir = fixture({
       'forms/Visit/v1.json': v1,
