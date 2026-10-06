@@ -1,9 +1,9 @@
 /*
- * AC-LN19 / AC-LN20 (spec/internal-orders § S4 line editor) — a stock figure
- * is suffixed with the active mode's measure word. The generic fallbacks
- * inflect for the figure via the catalog ("1 pack" / "61 packs"; the spec's
- * own example); an item's own unit name is free-text catalogue data and is
- * rendered verbatim.
+ * OMS-REG-REPL-04.74 / OMS-REG-REPL-04.75 (spec/internal-orders § S4 line
+ * editor) — a stock figure is suffixed with the active mode's measure word. The
+ * generic fallbacks inflect for the figure via the catalog ("1 pack" / "61
+ * packs"; the spec's own example); an item's own unit name is free-text
+ * catalogue data and is rendered verbatim.
  */
 import { describe, expect, it } from 'vitest';
 import { setDictionaries, setLocale } from './intl';

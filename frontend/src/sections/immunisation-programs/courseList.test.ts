@@ -8,7 +8,7 @@ import {
   inListOrder,
 } from './courseList';
 
-// Anchors: spec/immunisation-programs/acceptance.md — the program detail.
+// Anchors: spec/immunisation-programs/cases/ — the program detail.
 // OMS-REG-IMM-01.5  each row shows the name, the demographic's name and the
 // live dose count OMS-REG-IMM-01.26  a course with no demographic shows a blank
 // Target demographic OMS-REG-IMM-01.27  name ascending, case-insensitive, is

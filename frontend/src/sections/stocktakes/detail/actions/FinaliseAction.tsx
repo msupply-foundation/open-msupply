@@ -161,7 +161,9 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
               })}
             >
               <Match when={phase() === 'error'}>
-                <Alert severity="error">{errorMessage()}</Alert>
+                <Alert severity="error" testId="finalise-error">
+                  {errorMessage()}
+                </Alert>
               </Match>
             </Switch>
           }
@@ -215,6 +217,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   />
                   <Button
                     variant="primary"
+                    data-testid="show-error-lines-button"
                     onClick={() => {
                       props.onShowErrors();
                       close();

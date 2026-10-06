@@ -24,7 +24,7 @@ Every screen was also driven live (headless Chromium) against a central-pinned s
 
 ## Coverage (behaviour → test)
 
-The anchors are the behaviours in `spec/asset-catalogue/cases/` (`OMS-REG-CAT-01`–`03`, `-09`); `acceptance.md` maps the retired `AC-*` ids onto them. Ids below drop the `OMS-REG-CAT-` prefix (`01.28` is `OMS-REG-CAT-01.28`). **e2e** = `e2e/specs/asset-catalogue-regression.spec.ts`, green on both front ends; **e2e (this FE)** = in that suite but skipped on the current app, which deliberately differs (named at each test); unit = colocated vitest.
+The anchors are the behaviours in `spec/asset-catalogue/cases/` (`OMS-REG-CAT-01`–`03`, `-09`), the source of truth. Ids below drop the `OMS-REG-CAT-` prefix (`01.28` is `OMS-REG-CAT-01.28`). **e2e** = `e2e/specs/asset-catalogue-regression.spec.ts`, green on both front ends; **e2e (this FE)** = in that suite but skipped on the current app, which deliberately differs (named at each test); unit = colocated vitest.
 
 | Behaviours                                                      | Covered by                                                                                                           |
 | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |

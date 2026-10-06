@@ -75,17 +75,18 @@ query inboundShipments(
   }
 }
 
-# Bulk delete from the list (spec AC-L3), TWINNED like every other inbound
-# mutation (contract → creation wire trap): the batch is scope-checked
-# server-side per id, so `batchInboundShipment` accepts ONLY plain-scope
-# (purchaseOrderId IS NULL) shipments and `batchInboundShipmentExternal` ONLY
-# PO-linked ones. A wrong-twin id is refused as an UNTYPED top-level
-# `WrongInboundShipmentType`, which aborts the whole batch — so the caller
-# partitions the selection by scope and sends one batch per scope
-# (deleteInboundShipments.ts), rather than one batch for the lot (issue #1213).
+# Bulk delete from the list (spec OMS-REG-REPL-01.11/.21), TWINNED like every
+# other inbound mutation (contract → creation wire trap): the batch is
+# scope-checked server-side per id, so `batchInboundShipment` accepts ONLY
+# plain-scope (purchaseOrderId IS NULL) shipments and
+# `batchInboundShipmentExternal` ONLY PO-linked ones. A wrong-twin id is refused
+# as an UNTYPED top-level `WrongInboundShipmentType`, which aborts the whole
+# batch — so the caller partitions the selection by scope and sends one batch
+# per scope (deleteInboundShipments.ts), rather than one batch for the lot
+# (issue #1213).
 #
-# Each batch is all-or-nothing by default (spec AC-BA1). Per-id typed errors
-# surface on DeleteInboundShipmentError.
+# Each batch is all-or-nothing by default (spec OMS-REG-REPL-01.21). Per-id
+# typed errors surface on DeleteInboundShipmentError.
 mutation deleteInboundShipments(
   $storeId: String!
   $ids: [DeleteInboundShipmentInput!]!

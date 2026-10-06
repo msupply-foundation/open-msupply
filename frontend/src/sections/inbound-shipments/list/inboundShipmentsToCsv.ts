@@ -3,9 +3,10 @@ import { toCsv } from '../../../domain/reportFiles';
 import { statusLabel } from '../detail/inboundShipmentStatus';
 import type { InboundRowFragment } from './inboundShipments.generated';
 
-// The inbound-shipments list → CSV (spec S1 / AC-L6). Columns match the list's
-// visible fields; headers translated, dates localised, status via the shared
-// label. Feeds a direct .csv download or the server's csvToExcel conversion.
+// The inbound-shipments list → CSV (spec S1 / OMS-REG-REPL-01.9/.10). Columns
+// match the list's visible fields; headers translated, dates localised, status
+// via the shared label. Feeds a direct .csv download or the server's csvToExcel
+// conversion.
 export const inboundShipmentsToCsv = (rows: InboundRowFragment[]): string => {
   const fields = [
     t('label.invoice-number'),

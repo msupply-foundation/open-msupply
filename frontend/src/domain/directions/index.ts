@@ -1,8 +1,8 @@
 // Directions text expansion (spec/prescriptions/rules.md § directions;
-// AC-R1): each whitespace-separated token matching a configured abbreviation
-// expands to its full text, case-insensitively; everything else passes
-// through. Pure — mirrors the real client's expansion so the label text the
-// user saves is the expanded form.
+// OMS-REG-DIS-03.28): each whitespace-separated token matching a configured
+// abbreviation expands to its full text, case-insensitively; everything else
+// passes through. Pure — mirrors the real client's expansion so the label text
+// the user saves is the expanded form.
 
 export interface Abbreviation {
   text: string;

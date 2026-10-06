@@ -55,9 +55,9 @@ export interface NameSearchProps {
   /**
    * Narrow to one side of the system — `internal` for parties that are
    * themselves stores in it (the internal-order create picker,
-   * spec/internal-orders AC-C3), `external` for parties outside it (the
-   * purchase-order create picker, spec/purchase-orders § S2). Omit for every
-   * visible party of the role. See {@link PartyKind} for what each sends.
+   * spec/internal-orders OMS-REG-REPL-04.44), `external` for parties outside it
+   * (the purchase-order create picker, spec/purchase-orders § S2). Omit for
+   * every visible party of the role. See {@link PartyKind} for what each sends.
    */
   parties?: PartyKind;
   /**

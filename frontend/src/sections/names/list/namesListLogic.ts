@@ -4,7 +4,7 @@ import type { CustomFieldFilterState } from '../../../domain/customFields';
 import type { NamesVariables, NamesResult } from '../names.generated';
 
 // Pure list logic for the Customer & Supplier lists (spec/names). Kept
-// framework-free so the AC-N* behaviour (store scope, role filter, type
+// framework-free so the list behaviour (store scope, role filter, type
 // restriction, sort default, pagination, variables shape) is unit-testable in
 // node without a DOM. The two lists are the SAME query differing only by the
 // per-store relationship flag they filter on (rules › the entity and the two
@@ -32,8 +32,9 @@ export const roleRelationshipFilter = (role: Role): NamesFilter =>
   role === 'customer' ? { isCustomer: true } : { isSupplier: true };
 
 // Client-applied type restriction: facility/store only (rules › which names
-// qualify; AC-N4). INVAD/REPACK are excluded by omission; patients, system
-// names, deleted names and disabled-store names are excluded server-side.
+// qualify; OMS-FUN-CUS-001.2, OMS-FUN-SUP-001.2/.3, OMS-REG-DIST-08.20/.21).
+// INVAD/REPACK are excluded by omission; patients, system names, deleted names
+// and disabled-store names are excluded server-side.
 export const TYPE_RESTRICTION: NamesFilter = {
   type: { equalAny: ['FACILITY', 'STORE'] },
 };
@@ -53,8 +54,9 @@ export type NamesListState = {
 
 // Default: sorted name ascending (rules › sorting), first page of 20. The
 // name/code search is the list's default filter (D25's always-present search,
-// AC-N13): seeded present-as-null so its chip shows on a pristine list;
-// stripEmpty drops it from the query until the user types.
+// OMS-REG-DIST-08.24, OMS-REG-REPL-08.17): seeded present-as-null so its chip
+// shows on a pristine list; stripEmpty drops it from the query until the user
+// types.
 export const DEFAULT_STATE: NamesListState = {
   filter: { codeOrName: null },
   sort: [{ key: 'name', desc: false }],
@@ -99,7 +101,8 @@ export const buildVariables = (args: {
 });
 
 // A listed name is itself a store when its `store` relation is present — drives
-// the row's store indicator (rules › columns; AC-N8).
+// the row's store indicator (rules › columns; OMS-REG-DIST-08.23,
+// OMS-REG-REPL-08.16).
 export const isStoreName = (row: Pick<NameRow, 'store'>): boolean =>
   row.store != null;
 
@@ -109,9 +112,9 @@ export const customersListPath = (storeId: string): string =>
   `/${storeId}/distribution/customers`;
 export const suppliersListPath = (storeId: string): string =>
   `/${storeId}/replenishment/suppliers`;
-// A supplier row navigates to its own detail page (AC-N15).
+// A supplier row navigates to its own detail page (OMS-REG-REPL-08.11/.19).
 export const supplierDetailPath = (storeId: string, nameId: string): string =>
   `${suppliersListPath(storeId)}/${nameId}`;
-// A purchase order opens in the purchase-order area (AC-N26).
+// A purchase order opens in the purchase-order area (OMS-REG-REPL-08.23).
 export const purchaseOrderAreaPath = (storeId: string): string =>
   `/${storeId}/replenishment/purchase-order`;

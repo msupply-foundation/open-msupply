@@ -19,9 +19,9 @@
 // face is testable in isolation.
 //
 // The `partialPacks` option is the prescriptions variant
-// (spec/prescriptions/rules.md § allocation, AC-A1): dispensing works in
-// units, so packs may split — the take is the exact fraction needed, there
-// is never over-allocation (passes 2–3 never run), and a shortfall only
+// (spec/prescriptions/rules.md § allocation, OMS-REG-DIS-03.31): dispensing
+// works in units, so packs may split — the take is the exact fraction needed,
+// there is never over-allocation (passes 2–3 never run), and a shortfall only
 // narrows (no placeholder concept).
 //
 // `requiredPackSize` is the packs lens (OMS-REG-SMV-11.21): distribution fills ONLY

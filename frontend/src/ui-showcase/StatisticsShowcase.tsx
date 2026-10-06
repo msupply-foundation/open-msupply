@@ -169,8 +169,8 @@ const PluginOutletCard = () => {
         Shown at two regions: the <em>stat region</em> — inside the built-in
         widget, a plugin stat joins the built-in stat, and a second contribution
         throws on render, so only its slot shows the neutral fallback (dashboard
-        AC-D6); and the <em>widget region</em> — a whole plugin card (Cold
-        Chain) joins the same card grid.
+        OMS-REG-DB-02.10/.11); and the <em>widget region</em> — a whole plugin
+        card (Cold Chain) joins the same card grid.
       </Lead>
       <CardGrid maxColumnWidth="26rem">
         <DashboardCard title="Replenishment">

@@ -515,7 +515,7 @@ export const Dialog = (props: DialogProps) => {
    * KB-E2's choice: "where a continuing action (Save & next) is present and
    * enabled, Enter activates THAT; otherwise it activates the plain confirming
    * action. A disabled action MUST NOT be activated, and Enter then does
-   * nothing" (AC-KB23, AC-KB24).
+   * nothing" (OMS-REG-KBD-02.9/.10, OMS-REG-KBD-02.11).
    */
   const enterTarget = (): ConfirmClaim | undefined => {
     const continuing = claims.get('continuing');
@@ -533,9 +533,10 @@ export const Dialog = (props: DialogProps) => {
    *   <textarea>  Enter inserts a newline (KB-E2 says "from anywhere in its
    *               FORM", and a textarea's Enter is its own).
    *   buttons/links  they self-activate as the keydown's default action, so
-   *               confirming here too would double-fire (KB-E4, AC-KB26).
-   *   listboxes/comboboxes with an open popup  they preventDefault, caught by
-   *               the defaultPrevented guard (KB-E1, AC-KB21).
+   *               confirming here too would double-fire (KB-E4,
+   * OMS-REG-KBD-02.14/.15).   listboxes/comboboxes with an open popup  they
+   * preventDefault, caught by               the defaultPrevented guard (KB-E1,
+   * OMS-REG-KBD-02.7).
    */
   const enterConfirmsFrom = (target: EventTarget | null): boolean => {
     if (!(target instanceof Element)) return false;
@@ -593,16 +594,16 @@ export const Dialog = (props: DialogProps) => {
    * (kdd/keyboard-layer).
    *
    * Alt+S is `surface` tier, so it fires from inside a text field — the whole
-   * point of the dialog tier (AC-KB2). Escape needs no action to work: the
-   * UA's close request handles it, and the binding is declared on CancelButton
-   * purely so the badge and this entry can render it.
+   * point of the dialog tier (OMS-REG-KBD-01.2/.3). Escape needs no action to
+   * work: the UA's close request handles it, and the binding is declared on
+   * CancelButton purely so the badge and this entry can render it.
    *
    * Alt+S targets the PLAIN confirm, never `enterTarget()`. KB-E2's "a
    * continuing action wins" is about ENTER, whose target is implicit — the
    * user pressed a general "go on" key and the footer decides what that means.
    * Alt+S is the Save button's OWN binding: it is the key that button
-   * advertises on its badge (AC-KB15), so running Save & next from it would
-   * fire an action the user did not aim at, and one whose badge sits on a
+   * advertises on its badge (OMS-REG-KBD-01.26), so running Save & next from it
+   * would fire an action the user did not aim at, and one whose badge sits on a
    * different button.
    */
   const saveTarget = (): ConfirmClaim | undefined => {
@@ -708,17 +709,18 @@ export const Dialog = (props: DialogProps) => {
         if (event.key !== 'Enter') return;
         if (props.enterConfirms === false) return;
         // A rung inside the dialog already claimed it: an open picker selecting
-        // its highlighted option (KB-E1/AC-KB21), or a field claiming Enter for
-        // its own completion — the prescription abbreviation field expanding
-        // into directions (KB-E6/AC-KB27). Solid's delegated walk reaches the
-        // field before this handler, so its preventDefault lands first.
+        // its highlighted option (KB-E1/OMS-REG-KBD-02.7), or a field claiming
+        // Enter for its own completion — the prescription abbreviation field
+        // expanding into directions (KB-E6/OMS-REG-KBD-02.16). Solid's
+        // delegated walk reaches the field before this handler, so its
+        // preventDefault lands first.
         if (event.defaultPrevented) return;
-        // A held key must not submit twice (AC-KB26).
+        // A held key must not submit twice (OMS-REG-KBD-02.14/.15).
         if (event.repeat || event.isComposing) return;
         if (!enterConfirmsFrom(event.target)) return;
-        // From here Enter is ours, so consume it either way — with every confirm
-        // disabled, "Enter then does nothing" (AC-KB24) and it must not fall
-        // through to an implicit form submission either.
+        // From here Enter is ours, so consume it either way — with every
+        // confirm disabled, "Enter then does nothing" (OMS-REG-KBD-02.11) and
+        // it must not fall through to an implicit form submission either.
         event.preventDefault();
         // A nested dialog (a ConfirmDialog inside a line editor) is a DOM
         // DESCENDANT of the outer one, so without this the outer dialog would

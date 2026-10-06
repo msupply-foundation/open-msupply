@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { isEmptySend } from './internalOrderDetailStatus';
 
-// The empty-send refusal (AC-S4; rules › Lifecycle; D20; OMS-REG-REPL-05
-// `.17`): a send that would produce an empty order is refused client-side —
-// no lines, or every line zero-requested while the store trims zero lines on
-// send. Where the store keeps zero-requested lines
+// The empty-send refusal (OMS-REG-REPL-05.17; rules › Lifecycle; D20;
+// OMS-REG-REPL-05 `.17`): a send that would produce an empty order is refused
+// client-side — no lines, or every line zero-requested while the store trims
+// zero lines on send. Where the store keeps zero-requested lines
 // (keepRequisitionLinesWithZeroRequestedQuantityOnFinalised), an all-zero
 // order is sendable, its lines surviving the send.
 

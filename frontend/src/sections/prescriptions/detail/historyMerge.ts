@@ -1,8 +1,9 @@
 import type { PrescriptionHistoryResult } from './history.generated';
 
 // The recently-prescribed rows (spec/prescriptions/rules.md § history;
-// AC-H1): one row per ITEM per prescription — an item's lines merged, units
-// summed, the directions note carried from the first line that has one.
+// OMS-REG-DIS-03.46): one row per ITEM per prescription — an item's lines
+// merged, units summed, the directions note carried from the first line that
+// has one.
 
 type HistoryInvoice = PrescriptionHistoryResult['invoices']['nodes'][number];
 

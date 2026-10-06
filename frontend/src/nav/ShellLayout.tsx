@@ -176,14 +176,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
-  // can go (spec/keyboard AC-KB4). The menu offers only what this user, in this
-  // store, can open — permission-withheld destinations are absent, not refused
-  // (spec/navigation § permission gates, D94; OMS-REG-NAV-01.18) — and the same
-  // gated set at every viewport width, phone included (spec/navigation §
-  // mobile-friendly). Memoised so the gated arrays — and the section objects
-  // rebuilt when a child is dropped — keep stable references; otherwise
-  // MenuBar's <For> would remount nav sections on every shell re-render
-  // (kdd/solid-reactivity-pitfalls).
+  // can go (spec/keyboard OMS-REG-KBD-01.5–.7). The menu offers only what this
+  // user, in this store, can open — permission-withheld destinations are
+  // absent, not refused (spec/navigation § permission gates, D94;
+  // OMS-REG-NAV-01.18) — and the same gated set at every viewport width, phone
+  // included (spec/navigation § mobile-friendly). Memoised so the gated arrays
+  // — and the section objects rebuilt when a child is dropped — keep stable
+  // references; otherwise MenuBar's <For> would remount nav sections on every
+  // shell re-render (kdd/solid-reactivity-pitfalls).
   // Plugin sections join the UPPER list, each placed by its declared anchor
   // against the host's published section ids — default the end of the list,
   // above the pinned Catalogue/Manage/Settings/Help cluster (sdk-contract §
