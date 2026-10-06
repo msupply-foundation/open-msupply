@@ -27,6 +27,14 @@ export interface TableProps {
    * more pages or a fetch is in flight, so firing per scroll event is safe.
    */
   onReachEnd?: () => void;
+  /**
+   * Row band, named as DataTable's: `compact` (the default — 40px rows, no
+   * block padding) for a short list of values, or `comfortable` (DataTable's
+   * own default band — 52px rows, 12/16px cell padding) for rows that hold
+   * form controls, so the inputs keep the same clearance from the row
+   * dividers as an editor DataTable's do.
+   */
+  density?: 'compact' | 'comfortable';
 }
 
 /*
@@ -51,6 +59,11 @@ export interface TableProps {
  *   - <th|td data-numeric>   end-aligned, tabular numerals
  *   - <th|td data-check>     narrow centred checkbox column (inputs inside
  *                            are styled; give the <th> an aria-label)
+ *   - <th|td data-control>   a column of one form control per row (a rate, a
+ *                            quantity), one compact input wide: the field
+ *                            fills the cell at its default full width, so it
+ *                            lines up under the column heading at both edges.
+ *                            Add data-numeric to the <th> to end-align it.
  *   - <td data-muted>        secondary text (dates, comments)
  *   - <td data-mono>         monospace (references, codes)
  *   - <tr data-selected>     selected-row tint (the checkbox carries the
@@ -96,7 +109,11 @@ export const Table = (props: TableProps) => {
           props.onReachEnd();
       }}
     >
-      <table class={styles.table} aria-label={props.label}>
+      <table
+        class={styles.table}
+        aria-label={props.label}
+        data-density={props.density ?? 'compact'}
+      >
         {props.children}
       </table>
     </div>
