@@ -198,10 +198,12 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
             with_lag AS (
               SELECT
                 *,
+                -- A stock out moved to the next day can share a date with that day's
+                -- restock; order the stock out first so the restock closes it at 0 days
                 LAG(no_stock) OVER (PARTITION BY store_id,
-                  item_id ORDER BY date) AS previous_no_stock,
+                  item_id ORDER BY date, no_stock DESC) AS previous_no_stock,
                 LAG(date) OVER (PARTITION BY store_id,
-                  item_id ORDER BY date) AS previous_date
+                  item_id ORDER BY date, no_stock DESC) AS previous_date
               FROM
                 days_with_no_stock
               ORDER BY

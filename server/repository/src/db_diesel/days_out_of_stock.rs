@@ -353,6 +353,27 @@ pub(crate) mod test {
         .await;
 
         test_one(
+            "restocked_day_after_stock_out",
+            movement_date,
+            calculation_date,
+            vec![(5, 10), (22, -10), (23, 10)],
+            /*
+            Running out on the 22nd moves that row to the 23rd (the first full day without
+            stock), the same date as the restock row, so the two rows must be ordered
+            deterministically: out of stock first, then restocked
+            +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+            |                        | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+            +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+            | end of day balance     | 10 | 10 | 0  | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+            +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+            | full day without stock | no | no | no | no | no | no | no | no | no | no | no |
+            +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+            */
+            Some(0.0),
+        )
+        .await;
+
+        test_one(
             "in_stock_whole_time",
             movement_date,
             calculation_date,
