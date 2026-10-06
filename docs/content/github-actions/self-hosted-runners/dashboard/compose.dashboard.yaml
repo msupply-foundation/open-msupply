@@ -113,8 +113,9 @@ services:
       # `up -d --force-recreate`, as for snapshot.mjs.
       - ./web.mjs:/app/web.mjs:ro
       - ./index.html:/srv/index.html:ro
-      # Read-only here, written by `snapshot`. Served at
-      # /snapshot/deployments.json, which is what the page fetches.
+      # Read-only here, written by `snapshot`. web.mjs reads deployments.json
+      # from it and serves it, with the runs added, at /api/deployments - which
+      # is what the page fetches.
       - snapshot:/srv/snapshot:ro
     networks:
       - edge
