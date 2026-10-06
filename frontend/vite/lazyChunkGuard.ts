@@ -14,11 +14,17 @@ import type { Plugin } from 'vite';
  * so the check cannot pass by having nothing to check.
  */
 
+// The form library's validator: in every app build, and never eager.
+const VALIDATOR_MODULE = '/src/domain/documentForm/validation.ts';
+
 /** A module id containing any of these is lazy-only. */
 export const LAZY_ONLY_MODULES: readonly string[] = [
-  '/src/domain/documentForm/validation.ts',
+  '/src/domain/documentForm/formLibrary.ts',
+  VALIDATOR_MODULE,
   '/src/domain/documentForm/fields.tsx',
   '/src/domain/documentForm/defaults.tsx',
+  // The host's patient fields, which the library carries for patient forms.
+  '/src/domain/patient/documentFields.tsx',
   '/src/domain/documentForm/baseSchemas/',
   '/node_modules/ajv/',
   '/node_modules/ajv-formats/',
@@ -77,7 +83,7 @@ export const formLibraryBuilt = (bundle: GuardBundle): boolean =>
   Object.values(bundle).some(
     c =>
       c.type === 'chunk' &&
-      c.moduleIds.some(id => id.includes(LAZY_ONLY_MODULES[0]))
+      c.moduleIds.some(id => id.includes(VALIDATOR_MODULE))
   );
 
 export const lazyChunkGuardPlugin = (): Plugin => ({

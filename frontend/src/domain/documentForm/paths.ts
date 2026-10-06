@@ -76,12 +76,24 @@ export type NumberPath<T> = PathsWhere<T, 'number'>;
 /** Paths whose value is a boolean. */
 export type BooleanPath<T> = PathsWhere<T, 'boolean'>;
 
-const segments = (path: string): string[] => path.split('.');
+// Keys that reach an object's prototype rather than its own data. Paths come
+// from plugin code (form paths are compiler-checked, migration paths are
+// checked against the schema), but a document's own keys never need these,
+// and writing through one would change every object in the page.
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** A path's keys, or undefined for a path through a prototype key. */
+const segments = (path: string): string[] | undefined => {
+  const keys = path.split('.');
+  return keys.some(key => UNSAFE_KEYS.has(key)) ? undefined : keys;
+};
 
 /** The value at `path` in `data`, or undefined where any step is missing. */
 export const getAt = (data: unknown, path: string): unknown => {
+  const keys = segments(path);
+  if (!keys) return undefined;
   let current: unknown = data;
-  for (const key of segments(path)) {
+  for (const key of keys) {
     if (current === null || typeof current !== 'object') return undefined;
     current = (current as Record<string, unknown>)[key];
   }
@@ -107,6 +119,7 @@ export const setAt = (
   value: unknown
 ): void => {
   const keys = segments(path);
+  if (!keys) return;
   const last = keys.pop() as string;
   const chain: Record<string, unknown>[] = [target];
   let current = target;

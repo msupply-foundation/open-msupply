@@ -147,6 +147,21 @@ describe('paths', () => {
     expect(getAt(undefined, 'a')).toBeUndefined();
   });
 
+  it('neither reads nor writes through a prototype key', () => {
+    const target: Record<string, unknown> = {};
+    for (const path of [
+      '__proto__.polluted',
+      'a.constructor.prototype.polluted',
+      'prototype.polluted',
+    ]) {
+      setAt(target, path, 'yes');
+      expect(getAt(target, path)).toBeUndefined();
+    }
+    expect(target).toEqual({});
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(getAt({}, 'constructor')).toBeUndefined();
+  });
+
   it('creates parents on write and prunes them when cleared', () => {
     const doc: Record<string, unknown> = { keep: 1 };
     setAt(doc, 'extension.demo.vitals.weightKg', 70);

@@ -92,14 +92,6 @@ export default definePlugin({
   ],
   translations: {
     en: {
-      // The display names of the program and its document types, keyed as
-      // `forms/forms.json` names them.
-      'program.demo': 'Demo Program',
-      'documentType.Patient': 'Patient',
-      'documentType.DemoProgramEnrolment': 'Demo Program',
-      'documentType.DemoEncounter': 'Demo follow-up',
-      'documentType.HIVCareCovid19Encounter': 'HIV Care Covid19 Encounter',
-
       // The patient form, and the trigger on the patient screen.
       'group.patient-details': 'Patient details',
       'group.contact': 'Contact',
