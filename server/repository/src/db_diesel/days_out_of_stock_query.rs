@@ -2,7 +2,7 @@ use crate::{DBConnection, DBType, RepositoryError};
 use chrono::{Days, NaiveDate, NaiveDateTime};
 
 use diesel::{prelude::*, query_builder::*, sql_types::*};
-use util::{end_of_the_day_for_date, sql_utc_datetime_as_local_date};
+use util::{end_of_the_day_for_date, sql_utc_datetime_as_local_date, EPSILON};
 
 pub struct Dos<FH> {
     pub from: NaiveDate,
@@ -187,9 +187,11 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
               SELECT
                 item_id,
                 store_id,
-                end_of_day_stock <= 0 as no_stock,
+                -- Summing fractional quantities as doubles can leave a residue (1e-12) instead
+                -- of 0, and the residue's sign depends on summation order, so compare with a tolerance
+                end_of_day_stock <= {EPSILON} as no_stock,
                 CASE 
-                  WHEN end_of_day_stock <= 0 THEN {add_one_day_to_date} 
+                  WHEN end_of_day_stock <= {EPSILON} THEN {add_one_day_to_date} 
                   ELSE date
                 END AS date
               FROM
