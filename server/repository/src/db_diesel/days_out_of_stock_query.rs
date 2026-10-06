@@ -7,7 +7,7 @@ use util::{end_of_the_day_for_date, sql_utc_datetime_as_local_date};
 pub struct Dos<FH> {
     pub from: NaiveDate,
     pub to: NaiveDate,
-    pub filter_helper: FH,
+    pub movements: FH,
 }
 
 impl<FH> Dos<FH> {
@@ -16,7 +16,7 @@ impl<FH> Dos<FH> {
         let Self {
             from,
             to,
-            filter_helper,
+            movements,
         } = self;
 
         // Need to look back one day before, because we need to know full days out of stock
@@ -27,7 +27,7 @@ impl<FH> Dos<FH> {
         Ok(DosInner {
             from_datetime: end_of_the_day_for_date(&from),
             to_datetime: end_of_the_day_for_date(&to),
-            filter_helper,
+            movements,
             _dos_result: (),
         })
     }
@@ -35,7 +35,7 @@ impl<FH> Dos<FH> {
 pub struct DosInner<FH, SQ> {
     from_datetime: NaiveDateTime,
     to_datetime: NaiveDateTime,
-    filter_helper: FH,
+    movements: FH,
     _dos_result: SQ,
 }
 
@@ -73,17 +73,21 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
     for DosInner<FH, SQ>
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DBType>) -> QueryResult<()> {
-        out.push_sql("WITH inner_query AS (");
-        self.filter_helper.walk_ast(out.reborrow())?;
-        out.push_sql(")");
-
         // Variables
         // bind the timestamp directly for suitability with sqlite & postgres
-        out.push_sql(", variables AS (SELECT ");
+        out.push_sql("WITH variables AS (SELECT ");
         out.push_bind_param::<Timestamp, _>(&self.from_datetime)?;
         out.push_sql(" AS start_datetime, ");
         out.push_bind_param::<Timestamp, _>(&self.to_datetime)?;
         out.push_sql(" AS end_datetime) ");
+
+        // Every movement the calculation needs, read once with the item/store filters
+        // applied, so the CTEs below don't each scan the whole movement history
+        out.push_sql(", movements AS (SELECT item_id, store_id, quantity, datetime FROM (");
+        self.movements.walk_ast(out.reborrow())?;
+        out.push_sql(
+            ") filtered_movements WHERE datetime <= (SELECT end_datetime FROM variables)) ",
+        );
 
         // Query
 
@@ -120,9 +124,9 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
                 SUM(quantity) AS running_balance,
                 (SELECT start_datetime FROM variables)  AS datetime
               FROM
-                stock_movement
+                movements
               WHERE
-                datetime <= (SELECT start_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
+                datetime <= (SELECT start_datetime FROM variables)
               GROUP BY
                 item_id,
                 store_id
@@ -134,9 +138,7 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
                 SUM(quantity) AS running_balance,
                 (SELECT end_datetime FROM variables) AS datetime
               FROM
-                stock_movement
-              WHERE
-                datetime <= (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
+                movements
               GROUP BY
                 item_id,
                 store_id
@@ -163,14 +165,13 @@ impl<FH: QueryFragment<DBType>, SQ: QueryFragment<DBType>> QueryFragment<DBType>
               SELECT
                 item_id,
                 store_id,
-                movement_in_units,
+                quantity AS movement_in_units,
                 datetime,
                 {date} AS date
               FROM
-                item_ledger
+                movements
               WHERE
                 datetime > (SELECT start_datetime FROM variables)
-                AND datetime <= (SELECT end_datetime FROM variables) AND (item_id, store_id) IN (select item_id, store_id from inner_query)
             ),
             daily_stock AS (
               SELECT l.item_id, l.store_id, l.date,

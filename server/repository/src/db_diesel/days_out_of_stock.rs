@@ -10,9 +10,11 @@ use ts_rs::TS;
 // Not a queryable table outside of this
 table! {
     #[sql_name = "stock_movement"]
-    dos_filter_helper (item_id, store_id) {
+    dos_movement (item_id, store_id) {
         item_id -> Text,
-        store_id -> Text
+        store_id -> Text,
+        quantity -> Double,
+        datetime -> Timestamp,
     }
 }
 
@@ -67,19 +69,25 @@ impl<'a> DaysOutOfStockRepository<'a> {
             to,
         } = filter;
 
-        // Build filter_helper query for any present fields
-        let mut filter_helper_query = dos_filter_helper::table
-            .select((dos_filter_helper::item_id, dos_filter_helper::store_id))
-            .distinct()
+        // Stock movements for the filtered items/stores. The filters are bound as literals
+        // here so the database can push them into the stock_movement view, rather than
+        // reading every store's full movement history and filtering afterwards.
+        let mut movements_query = dos_movement::table
+            .select((
+                dos_movement::item_id,
+                dos_movement::store_id,
+                dos_movement::quantity,
+                dos_movement::datetime,
+            ))
             .into_boxed();
 
-        apply_equal_filter!(filter_helper_query, item_id, dos_filter_helper::item_id);
-        apply_equal_filter!(filter_helper_query, store_id, dos_filter_helper::store_id);
+        apply_equal_filter!(movements_query, item_id, dos_movement::item_id);
+        apply_equal_filter!(movements_query, store_id, dos_movement::store_id);
 
         let dos_query = Dos {
             from,
             to,
-            filter_helper: filter_helper_query,
+            movements: movements_query,
         }
         .as_dos_query()?;
 
