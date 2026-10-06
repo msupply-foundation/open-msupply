@@ -11,18 +11,18 @@ import { ZapIcon } from '../../../../ui/icons';
 import { useSuggestedQuantities } from '../internalOrderUpdate';
 
 // The "Use suggested quantities" app-bar action (spec S3 § page actions → S6,
-// AC-Q1/Q2): fills every zero-requested line with its suggestion, behind a
-// confirmation — the whole order in one call, on program orders too. Disabled
-// on read-only orders (AC-Q2 — the server rejects it anyway, but the gate reads
-// as unavailable rather than failing on confirm). Modelled on
-// DeleteInternalOrderAction; a successful apply hands control to the view
-// (onApplied), which refetches the line table.
+// OMS-REG-REPL-04.28/.54): fills every zero-requested line with its suggestion,
+// behind a confirmation — the whole order in one call, on program orders too.
+// Disabled on read-only orders (OMS-REG-REPL-04.54 — the server rejects it
+// anyway, but the gate reads as unavailable rather than failing on confirm).
+// Modelled on DeleteInternalOrderAction; a successful apply hands control to
+// the view (onApplied), which refetches the line table.
 type Phase = 'confirm' | 'applying' | 'error';
 
 export const UseSuggestedQuantitiesAction: Component<{
   storeId: string;
   orderId: string;
-  /** Draft-and-enabled gate — disables the button off Draft (AC-Q2). */
+  /** Draft-and-enabled gate — disables the button off Draft (OMS-REG-REPL-04.54). */
   disabled: boolean;
   /** Applied — the view refetches the line table (the new quantities). */
   onApplied: () => void;

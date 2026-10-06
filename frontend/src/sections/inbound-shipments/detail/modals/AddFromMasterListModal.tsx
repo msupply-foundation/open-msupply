@@ -16,9 +16,10 @@ export interface AddFromMasterListModalProps {
   onAdded: () => void;
 }
 
-// Bulk-add empty stock lines from a master list (spec AC-ML1). Offered only
-// while New and not PO-linked (the toolbar gates the trigger; the server also
-// enforces). One empty line per stock item on the list not already present.
+// Bulk-add empty stock lines from a master list (spec OMS-REG-ISH-01.10).
+// Offered only while New and not PO-linked (the toolbar gates the trigger; the
+// server also enforces). One empty line per stock item on the list not already
+// present.
 export const AddFromMasterListModal: Component<
   AddFromMasterListModalProps
 > = props => (

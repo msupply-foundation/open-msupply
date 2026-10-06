@@ -52,7 +52,8 @@ export const InboundShipmentDetailToolbar: Component<
   // The received date is enabled while Received + backdating-on, yet the server
   // can still refuse the save (moving the date forward, or beyond the store's
   // max-days window). Those come back as untyped rejections; surface the
-  // verdict on the field itself (spec S7 / AC-B), request preserved. It's the
+  // verdict on the field itself (spec S7 /
+  // OMS-REG-REPL-02.29–.32), request preserved. It's the
   // DateField's own `error` rather than a sibling Alert so the cluster's row
   // stays a row of fields.
   const [receivedError, setReceivedError] = createSignal<string>();

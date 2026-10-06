@@ -6,7 +6,7 @@ import {
   programVariables,
 } from './programRegister';
 
-// Anchors: spec/immunisation-programs/acceptance.md — the program list.
+// Anchors: spec/immunisation-programs/cases/ — the program list.
 //   OMS-REG-IMM-01.1  only immunisation programs are listed
 //   OMS-REG-IMM-01.19  name ascending, case-insensitive, is the default order
 //   OMS-REG-IMM-01.20  the name sort reverses and is what the read carries

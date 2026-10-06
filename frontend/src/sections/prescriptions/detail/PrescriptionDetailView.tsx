@@ -96,7 +96,7 @@ import { EditPatientModal } from '../../patients';
 // The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
 // (patient / clinician / date / program), Details + Log tabs over the flat
 // line table (a row per dispensed line, plus a prescribed-quantity
-// placeholder row where an item has nothing dispensed — AC-Q1/V1),
+// placeholder row where an item has nothing dispensed — OMS-REG-DIS-03.25/.55),
 // the side panel, and the status footer. Dispensing happens in the S4 modal
 // (D53). Read-only from VERIFIED: dead affordances are hidden (D39) and a row
 // selection opens S4's read-only face rather than its editor (.73).
@@ -139,9 +139,9 @@ const PrescriptionDetailView: Component = () => {
 
   // The prescription — header, side panel, AND lines in one read (a
   // prescription's line set is small; no server paging needed). A NodeError
-  // (bad id) promotes to the global modal (AC-L5's blocking surface). The
-  // first read suspends into the local <Suspense>; saves merge via mutate,
-  // line saves refetch.
+  // (bad id) promotes to the global modal (OMS-REG-DIS-03.53's blocking
+  // surface). The first read suspends into the local <Suspense>; saves merge
+  // via mutate, line saves refetch.
   const [data, { mutate, refetch }] = createResource(
     () => ({
       storeId: params.storeId,
@@ -167,7 +167,7 @@ const PrescriptionDetailView: Component = () => {
   const info = (): PrescriptionFieldsFragment | undefined => gated(data);
 
   // Insurance providers — the payment-window and insurance-status gates
-  // (AC-Y1; provider presence, not a preference — captured as-is).
+  // (OMS-REG-DIS-04.27; provider presence, not a preference — captured as-is).
   const [providersData] = createResource(
     () => params.storeId,
     async storeId => {
@@ -244,7 +244,8 @@ const PrescriptionDetailView: Component = () => {
       mutate(prev => (prev ? { ...prev, ...outcome.node } : prev));
   };
 
-  // The AC-B2 flow: delete ALL lines, then apply the date/program change.
+  // The OMS-REG-DIS-04.26 flow: delete ALL lines, then apply the date/program
+  // change.
   const clearLinesAndSave = async (input: Omit<UpdateInput, 'id'>) => {
     const node = info();
     if (!node) return;
@@ -283,11 +284,11 @@ const PrescriptionDetailView: Component = () => {
     }
   };
 
-  // Print labels (AC-E2): gated on a configured label printer; one label per
-  // dispensed item — the whole prescription from the app bar, the selection
-  // from the bulk bar. The endpoint's answer is reported either way (.64): the
-  // printer is off-screen hardware, so a rejected print reaches the user only
-  // through this control.
+  // Print labels (OMS-REG-DIS-03.47/.71): gated on a configured label printer;
+  // one label per dispensed item — the whole prescription from the app bar, the
+  // selection from the bulk bar. The endpoint's answer is reported either way
+  // (.64): the printer is off-screen hardware, so a rejected print reaches the
+  // user only through this control.
   const runPrintLabels = async (source: PrintSource, lineIds?: string[]) => {
     const node = info();
     if (!node || printingLabels()) return;
@@ -311,12 +312,12 @@ const PrescriptionDetailView: Component = () => {
     }
   };
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
-  // declaration for the header button and the ghost button in the table's empty
-  // slot; each carries `shortcut={ALT_N}` for its badge. `info()` is the
-  // `.state`-gated read above, so this predicate never suspends the palette
-  // (kdd/keyboard-layer § an action's `disabled` MUST NOT read a suspending
-  // source).
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). One declaration for the header button and the ghost
+  // button in the table's empty slot; each carries `shortcut={ALT_N}` for its
+  // badge. `info()` is the `.state`-gated read above, so this predicate never
+  // suspends the palette (kdd/keyboard-layer § an action's `disabled` MUST NOT
+  // read a suspending source).
   createAddAction({
     name: 'button.add-item',
     run: () => setEditState({}),
@@ -325,9 +326,10 @@ const PrescriptionDetailView: Component = () => {
 
   // Alt+L — print prescription labels (KB-R1's binding table, ui-surface S2). A
   // SPECIFIC action, gated on this screen because this is the only place it
-  // exists (KB-R2's contrast). Available at every status (AC-E2); inert while a
-  // print is already in flight, mirroring the footer control's `loading`. Runs
-  // the HEADER control's print, which is the control that advertises the badge.
+  // exists (KB-R2's contrast). Available at every status
+  // (OMS-REG-DIS-03.47/.71); inert while a print is already in flight,
+  // mirroring the footer control's `loading`. Runs the HEADER control's print,
+  // which is the control that advertises the badge.
   createAction({
     name: 'button.print-prescription-label',
     shortcut: ALT_L,
@@ -555,7 +557,7 @@ const PrescriptionDetailView: Component = () => {
                     </Button>
                   </Show>
                   {/* Print: labels primary, the report selector as the
-                      option — both at every status (AC-E1/E2). Labels report
+                      option — both at every status (OMS-REG-DIS-03.47/.48/.71). Labels report
                       their outcome here (.64): busy, then printed / failed. */}
                   <SplitButton
                     icon={printIcon(printOutcomeOf('header'))}

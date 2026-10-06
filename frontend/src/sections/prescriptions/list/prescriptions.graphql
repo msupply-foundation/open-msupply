@@ -44,9 +44,9 @@ query prescriptions(
 }
 
 # List bulk delete (spec/prescriptions/contract.md § deletion). The selection
-# is pre-checked client-side (AC-D3) so only deletable rows are ever sent —
-# load-bearing, because the batch is all-or-nothing AND misreports rolled-back
-# rows as deleted (contract wire trap).
+# is pre-checked client-side (OMS-REG-DIS-03.45) so only deletable rows are ever
+# sent — load-bearing, because the batch is all-or-nothing AND misreports
+# rolled-back rows as deleted (contract wire trap).
 mutation deletePrescriptions($storeId: String!, $ids: [String!]!) {
   batchPrescription(storeId: $storeId, input: { deletePrescriptions: $ids }) {
     deletePrescriptions {

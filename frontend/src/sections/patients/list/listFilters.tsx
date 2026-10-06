@@ -16,16 +16,16 @@ export type PatientFilter = NonNullable<PatientsVariables['filter']>;
 
 /*
  * Type-driven, EXHAUSTIVE filter definitions for the patient list
- * (spec/patients S1 › Filters, AC-L2/L3). The map passed to constructFilters
- * is keyed by EVERY key of PatientFilterInput: a definition to expose, or
- * `null` to dismiss — so codegen adding a filter key breaks compilation until
- * it is classified, and this one map is both the definitions and the
- * completeness proof. Map key order is the toolbar display order.
+ * (spec/patients S1 › Filters, OMS-REG-DIS-01.18–.20/.44/.45). The map passed
+ * to constructFilters is keyed by EVERY key of PatientFilterInput: a definition
+ * to expose, or `null` to dismiss — so codegen adding a filter key breaks
+ * compilation until it is classified, and this one map is both the definitions
+ * and the completeness proof. Map key order is the toolbar display order.
  *
  * Text filters match as substrings ({ like }); the Patient ID (identifier)
  * filter is the broad OR match across code / secondary code / name / program-
- * enrolment id (AC-L3); date of birth matches exactly ({ equalTo }) and
- * gender as any of the ticked values ({ equalAny }, D110).
+ * enrolment id (OMS-REG-DIS-01.45); date of birth matches exactly ({ equalTo })
+ * and gender as any of the ticked values ({ equalAny }, D110).
  * Custom-field filtering rides on its own bar (the shared customFieldFilters →
  * dynamicFilter, spec/ui-standards/custom-fields), not a PatientFilter chip, so
  * `dynamicFilter` stays dismissed in this map.
@@ -60,7 +60,8 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       />
     ),
   },
-  // Patient ID — the broad identifier match (AC-L3), shown as "Patient ID".
+  // Patient ID — the broad identifier match (OMS-REG-DIS-01.45), shown as
+  // "Patient ID".
   identifier: {
     label: () => t('label.patient-id'),
     render: props => (
@@ -95,9 +96,9 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       />
     ),
   },
-  // Gender — a multi-select over the store's configured subset (AC-G3),
-  // matching any of the ticks via gender.equalAny (honoured — contract §
-  // listing; D110). None → null so the chip stays.
+  // Gender — a multi-select over the store's configured subset
+  // (OMS-REG-DIS-01.50), matching any of the ticks via gender.equalAny
+  // (honoured — contract § listing; D110). None → null so the chip stays.
   gender: {
     label: () => t('label.gender'),
     render: props => (
@@ -166,9 +167,10 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
   dynamicFilter: null,
 });
 
-// Program-enrolment name is a program-module surface (AC-G2): drop it when the
-// module is off. Filtering the stable FILTERS array keeps each surviving chip's
-// reference stable, so FilterBar's <For> reuses rows rather than remounting.
+// Program-enrolment name is a program-module surface (OMS-REG-DIS-02.53,
+// OMS-REG-DIS-01.20/.44): drop it when the module is off. Filtering the stable
+// FILTERS array keeps each surviving chip's reference stable, so FilterBar's
+// <For> reuses rows rather than remounting.
 export const filterFields = (): Filter<PatientFilter>[] => {
   const { programModule } = patientPreferences();
   return FILTERS.filter(f => programModule || f.key !== 'programEnrolmentName');

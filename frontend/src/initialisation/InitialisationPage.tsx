@@ -785,7 +785,7 @@ export const InitialisationPage: Component<{
                   noticeClass={styles.actionNotice}
                 />
                 {/* Arriving from the desktop discovery page (spec/desktop §
-                    server selection, AC-DT16): a not-yet-initialised server
+                    server selection, OMS-REG-DESK-01.21): a not-yet-initialised server
                     may simply be the wrong one — the hand-off's return URL is
                     the way back to choose another. Same affordance as the
                     login page's; renders nothing without the parameter. */}

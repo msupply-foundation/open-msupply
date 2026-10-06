@@ -129,10 +129,11 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
     props.onClose();
   };
 
-  // Custom-fields merge write (spec/patients AC-CF1–CF3) — the same call the
-  // full patient screen's tab makes. Sends only the changed keys; a cleared
-  // field is sent as `null` (never '', which would persist a literal empty
-  // value — AC-CF2). Returns true on success so the tab clears its dirty state.
+  // Custom-fields merge write (spec/patients OMS-REG-DIS-02.45–.47) — the same
+  // call the full patient screen's tab makes. Sends only the changed keys; a
+  // cleared field is sent as `null` (never '', which would persist a literal
+  // empty value — OMS-REG-DIS-02.46). Returns true on success so the tab clears
+  // its dirty state.
   const saveCustomFields = async (
     patch: Record<string, unknown>
   ): Promise<boolean> => {

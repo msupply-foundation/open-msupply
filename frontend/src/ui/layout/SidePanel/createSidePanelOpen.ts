@@ -15,10 +15,11 @@ const KEY = 'side-panel-open';
  * still owns the affordances (the panel's close button, the app bar's More
  * reopen button) — this owns only the boolean.
  *
- * IT ALSO REGISTERS Alt+M / Alt+Shift+M (spec/keyboard KB-R2, AC-KB4a), and that
- * placement is the whole point. KB-R2 says a generic binding is "gated on the
- * thing it acts on being present, AND ON NOTHING ELSE... A screen offering it and
- * not answering the key is a defect in that screen, not a narrower binding."
+ * IT ALSO REGISTERS Alt+M / Alt+Shift+M (spec/keyboard KB-R2,
+ * OMS-REG-KBD-01.8–.10), and that placement is the whole point. KB-R2 says a
+ * generic binding is "gated on the thing it acts on being present, AND ON
+ * NOTHING ELSE... A screen offering it and not answering the key is a defect in
+ * that screen, not a narrower binding."
  *
  * Every screen with a more-info panel already calls this helper, and it owns the
  * boolean the binding toggles — so "the screen has a more-info panel" IS "this

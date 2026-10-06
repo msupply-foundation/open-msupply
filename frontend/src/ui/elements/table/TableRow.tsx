@@ -193,9 +193,10 @@ export function TableRow<T>(props: {
        * row set changes. KB-T1 forbids a positive tab index anywhere.
        */
       tabindex={props.rowFocus ? -1 : undefined}
-      // The row-focus indication (AC-KB37): "a background distinct from row
-      // striping"; styled in CSS, and a focus state rather than a meaning, so
-      // colour independence is satisfied by it also being the focused element.
+      // The row-focus indication (OMS-REG-KBD-02.27/.28): "a background
+      // distinct from row striping"; styled in CSS, and a focus state rather
+      // than a meaning, so colour independence is satisfied by it also being
+      // the focused element.
       data-row-focused={props.rowFocus?.focused() ? '' : undefined}
       // Keep the highlight in step when focus arrives some way other than the
       // arrows — but only when it arrived from the KEYBOARD (see

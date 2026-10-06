@@ -106,8 +106,9 @@ export interface InboundShipmentLineEditModalProps {
   initialLineId?: string;
   /**
    * On a PO-linked shipment, add mode picks a purchase-order LINE (not an item
-   * search) — a line insert must cite one (spec AC-E3). Set to the shipment's
-   * purchaseOrderId to switch the add selector to the PO-line picker.
+   * search) — a line insert must cite one (spec OMS-REG-REPL-09.6). Set to the
+   * shipment's purchaseOrderId to switch the add selector to the PO-line
+   * picker.
    */
   purchaseOrderId?: string;
   /**
@@ -186,9 +187,10 @@ type DraftBatch = {
   campaignId: string | null;
   programId: string | null;
   /**
-   * Whether the user has hand-edited the cost / sell price (AC-H6): a prefilled
-   * price the user hasn't touched clears to zero when the pack size moves off
-   * the item default; an overridden one is left alone.
+   * Whether the user has hand-edited the cost / sell price
+   * (OMS-REG-REPL-09.10/.11): a prefilled price the user hasn't touched clears
+   * to zero when the pack size moves off the item default; an overridden one is
+   * left alone.
    */
   costOverridden: boolean;
   sellOverridden: boolean;
@@ -268,8 +270,9 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   manufacturerName: line.manufacturer?.name ?? null,
   campaignId: line.campaign?.id ?? null,
   programId: line.program?.id ?? null,
-  // Existing lines aren't subject to the prefill-clear (AC-H6 is about adding);
-  // mark both overridden so a pack-size edit never wipes a saved price.
+  // Existing lines aren't subject to the prefill-clear (OMS-REG-REPL-09.10/.11
+  // is about adding); mark both overridden so a pack-size edit never wipes a
+  // saved price.
   costOverridden: true,
   sellOverridden: true,
 });
@@ -345,9 +348,10 @@ type ChosenItem = {
   doses: number;
   /**
    * Item default pack size + store default sell price — the new-line price
-   * prefill (AC-H6). defaultSellPricePerPack is 0 where unknown (the PO-line
-   * picker and edit-mode line-load don't fetch it), so no price prefill there —
-   * correct, since AC-H6 targets the manual add-item case.
+   * prefill (OMS-REG-REPL-09.10/.11). defaultSellPricePerPack is 0 where
+   * unknown (the PO-line picker and edit-mode line-load don't fetch it), so no
+   * price prefill there — correct, since OMS-REG-REPL-09.10/.11 targets the
+   * manual add-item case.
    */
   defaultPackSize: number;
   defaultSellPricePerPack: number;
@@ -488,10 +492,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setLoadingLines(false);
   };
 
-  // A fresh batch for `chosen`, price-prefilled per AC-H6: starts at the item's
-  // default pack size, with cost AND sell price seeded from the store default
-  // sell price — but only when cost is editable (a manual shipment); on a
-  // PO/transfer shipment cost derives from the source, so leave prices at zero.
+  // A fresh batch for `chosen`, price-prefilled per OMS-REG-REPL-09.10/.11:
+  // starts at the item's default pack size, with cost AND sell price seeded
+  // from the store default sell price — but only when cost is editable (a
+  // manual shipment); on a PO/transfer shipment cost derives from the source,
+  // so leave prices at zero.
   const prefillFromItem = (chosen: ChosenItem): DraftBatch => {
     const base = emptyBatch();
     const packSize = chosen.defaultPackSize > 0 ? chosen.defaultPackSize : 1;
@@ -531,7 +536,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // Seed the editor for a search-picked item. The item descriptor comes from
   // the SEARCH option, not from any loaded line: only the option carries the
   // store default sell price, so keeping it is what lets a later "Add batch"
-  // prefill its price (AC-H6) even on an item loaded from its existing lines.
+  // prefill its price (OMS-REG-REPL-09.10/.11) even on an item loaded from its
+  // existing lines.
   const loadChosenItem = async (option: ItemOption) => {
     setLoadingLines(true);
     setErrorMessage(undefined);
@@ -593,10 +599,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   };
 
   // PO-linked add mode: pick a purchase-order LINE instead of an item search
-  // (spec AC-E3 — a PO-linked line insert must cite an order line). The order's
-  // lines are fetched once (sequentially, on mount) into a plain signal — not a
-  // createResource — so they're ready if/when the editor drops into add mode
-  // (initial open, or after an update walk exhausts).
+  // (spec OMS-REG-REPL-09.6 — a PO-linked line insert must cite an order line).
+  // The order's lines are fetched once (sequentially, on mount) into a plain
+  // signal — not a createResource — so they're ready if/when the editor drops
+  // into add mode (initial open, or after an update walk exhausts).
   const [poLineId, setPoLineId] = createSignal<string>();
   const [poLines, setPoLines] = createSignal<PoLine[]>([]);
   const loadPoLines = async () => {
@@ -647,7 +653,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     if (index >= 0) setBatches(index, field, value as never);
   };
 
-  // A new batch prefills from the current item (AC-H6) just like the first one.
+  // A new batch prefills from the current item (OMS-REG-REPL-09.10/.11) just
+  // like the first one.
   const addBatch = () => {
     const chosen = item();
     const batch = chosen ? prefillFromItem(chosen) : emptyBatch();
@@ -655,9 +662,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     batchFields.focus(batch.id);
   };
 
-  // Pack-size / price edits (AC-H6): moving the pack size off the item default
-  // clears a still-prefilled (non-overridden) price to zero; editing a price
-  // marks it overridden so a later pack-size change leaves it alone.
+  // Pack-size / price edits (OMS-REG-REPL-09.10/.11): moving the pack size off
+  // the item default clears a still-prefilled (non-overridden) price to zero;
+  // editing a price marks it overridden so a later pack-size change leaves it
+  // alone.
   const changePackSize = (id: string, value: number) => {
     const chosen = item();
     setBatches(
@@ -809,9 +817,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         // Line authorisation status — sent as a plain value (not a {value}
         // patch), only on a PO-linked shipment that requires authorisation.
         // The line's current value goes on every save: unchanged lines are a
-        // no-op, an edited one is the real change (AC-E6 blocks a change once
-        // Received but allows the no-op). Omitted elsewhere so a manual
-        // shipment never carries it.
+        // no-op, an edited one is the real change (OMS-FUN-ISE-001.10 blocks a
+        // change once Received but allows the no-op). Omitted elsewhere so a
+        // manual shipment never carries it.
         ...(props.prefs.authorisation && props.isExternal
           ? { status: b.status ?? undefined }
           : {}),
@@ -1114,7 +1122,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             value={b.packSize}
             // Don't clamp below 1 — a pack size < 1 is a server rule
             // (PackSizeBelowOne, untyped); submit it and surface the rejection
-            // inline rather than silently coercing to 1 (spec AC-E1 / M2).
+            // inline rather than silently coercing to 1 (spec
+            // OMS-REG-REPL-09.1–.4 / M2).
             min={0}
             // Pack size is Float on the wire and may be fractional; 2-dp room
             // matches the reference (spec S4).
@@ -1234,12 +1243,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Auth status — the line's authorisation state, editable when
     // the store requires authorisation of PO-linked shipments (spec ui-surface
     // col 16 / S4 per-batch fields). The same change is available in bulk from
-    // the detail table's row-selection Approve/Reject/Pending actions. AC-E6
-    // governs when a change is allowed (blocked once Received, a no-op to the
-    // same value excepted); we submit and surface any rejection inline rather
-    // than pre-gating. A brand-new batch can't carry a status on insert (the
-    // server assigns Pending), so it stays read-only (shown as Pending) until
-    // saved.
+    // the detail table's row-selection Approve/Reject/Pending actions.
+    // OMS-FUN-ISE-001.10 governs when a change is allowed (blocked once
+    // Received, a no-op to the same value excepted); we submit and surface any
+    // rejection inline rather than pre-gating. A brand-new batch can't carry a
+    // status on insert (the server assigns Pending), so it stays read-only
+    // (shown as Pending) until saved.
     ...(props.prefs.authorisation && props.isExternal
       ? [
           {
@@ -1314,7 +1323,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         ]
       : []),
     // VVM status — gated by the manage-VVM preference AND a vaccine
-    // item (VVM applies to vaccines only, spec AC-PG1 / M1).
+    // item (VVM applies to vaccines only, spec ui-surface § line
+    // table).
     ...(props.prefs.vvm && item()?.isVaccine
       ? [
           {

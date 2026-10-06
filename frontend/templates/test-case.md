@@ -1,7 +1,7 @@
 <!--
 TEST CASE TEMPLATE — behaviour-anchored format (the tmf-testing format, adopted
-here as the single source of truth for a converted vertical's expected
-behaviour; cases live in spec/<vertical>/cases/).
+here as the single source of truth for a vertical's expected behaviour;
+cases live in spec/<vertical>/cases/).
 
 Copy this file, rename it `<ID> - <Title>.md`, and fill it in. The rules:
 

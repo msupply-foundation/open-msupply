@@ -52,9 +52,9 @@ interface MenuBarProps {
   onHome?: () => void;
   /**
    * Unreachable by keyboard and assistive tech while a page's slide-over panel
-   * has taken over the viewport (spec/keyboard KB-X2/AC-KB17). The shell sets
-   * it; the menu bar renders outside the `Page` that owns the panel, so the
-   * panel cannot mark it inert itself.
+   * has taken over the viewport (spec/keyboard KB-X2/OMS-REG-KBD-02.2/.3). The
+   * shell sets it; the menu bar renders outside the `Page` that owns the panel,
+   * so the panel cannot mark it inert itself.
    */
   inert?: boolean;
 }

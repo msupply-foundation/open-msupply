@@ -12,8 +12,8 @@ const PatientDetailView = lazy(() => import('./detail/PatientDetailView'));
 
 // The create-patient modal is reused by other dispensary surfaces (the
 // prescription create dialog's create-on-no-match flow — spec/prescriptions
-// AC-C5) via its `onCreated` callback. Re-exported here so consumers depend on
-// the patients vertical's public surface, not a deep path.
+// OMS-REG-DIS-01.4/.7/.32) via its `onCreated` callback. Re-exported here so
+// consumers depend on the patients vertical's public surface, not a deep path.
 export {
   CreatePatientModal,
   type CreatePatientModalProps,
@@ -27,13 +27,14 @@ export {
   type EditPatientModalProps,
 } from './detail/EditPatientModal';
 
-// Dispensary-mode gate (spec/patients AC-G1): the whole patient surface is
-// reachable only in dispensary mode. The Dispensary nav group is hidden in
-// other modes (ShellLayout); this layout route blocks direct-URL entry so no
-// patient screen is reachable either way. It renders under StoreGuardLayout,
-// which withholds its children until the store context has loaded, so the
-// store's mode is settled here — a non-dispensary store redirects to the store
-// dashboard rather than briefly exposing a patient screen.
+// Dispensary-mode gate (spec/patients OMS-REG-DIS-01.49): the whole patient
+// surface is reachable only in dispensary mode. The Dispensary nav group is
+// hidden in other modes (ShellLayout); this layout route blocks direct-URL
+// entry so no patient screen is reachable either way. It renders under
+// StoreGuardLayout, which withholds its children until the store context has
+// loaded, so the store's mode is settled here — a non-dispensary store
+// redirects to the store dashboard rather than briefly exposing a patient
+// screen.
 const DispensaryOnly = (props: RouteSectionProps) => {
   const params = useParams<{ storeId: string }>();
   return (
