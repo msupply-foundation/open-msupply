@@ -10,6 +10,7 @@ import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
 import { FormSection } from '../ui/layout/Form/FormSection';
 import { Table } from '../ui/elements/table/Table';
 import { IconButton } from '../ui/elements/buttons/IconButton';
+import { NumberField } from '../ui/elements/inputs/NumberField';
 import { EditIcon, TrashIcon } from '../ui/icons';
 import { FormPreview, Lead, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
@@ -50,6 +51,9 @@ export const detailViewsMetadata: PageMetadata = {
         'sub-table',
         'display shell',
         'packaging',
+        'density',
+        'data-control',
+        'controls',
       ],
     },
   ],
@@ -183,6 +187,71 @@ export const DetailViewsShowcase = () => (
           tool. It carries no cell presets, so alignment and formatting are the
           screen's.
         </Lead>
+        <Lead>
+          Rows of form controls take <code>density="comfortable"</code> — the
+          data table's own default band — so the inputs keep the same clearance
+          from the row dividers as an editor table's. A{' '}
+          <code>data-control</code> column is one compact input wide and the
+          field fills it at its default width, so it lines up under the column
+          heading (<code>data-numeric</code> end-aligns that heading); spare
+          width goes to the columns without one. The vaccine course editor's
+          Rates per store table is built this way.
+        </Lead>
+        <Table label="Rates per store" density="comfortable">
+          <thead>
+            <tr>
+              <th>Store</th>
+              <th data-numeric data-control>
+                Wastage rate
+              </th>
+              <th data-numeric data-control>
+                Coverage rate
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Buka Health Centre</td>
+              <td data-control>
+                <NumberField
+                  label="Buka Health Centre wastage rate"
+                  hideLabel
+                  size="small"
+                  endAdornment="%"
+                  value={10}
+                />
+              </td>
+              <td data-control>
+                <NumberField
+                  label="Buka Health Centre coverage rate"
+                  hideLabel
+                  size="small"
+                  endAdornment="%"
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>Arawa District Store</td>
+              <td data-control>
+                <NumberField
+                  label="Arawa District Store wastage rate"
+                  hideLabel
+                  size="small"
+                  endAdornment="%"
+                />
+              </td>
+              <td data-control>
+                <NumberField
+                  label="Arawa District Store coverage rate"
+                  hideLabel
+                  size="small"
+                  endAdornment="%"
+                  value={90}
+                />
+              </td>
+            </tr>
+          </tbody>
+        </Table>
       </DashboardCard>
     </Stack>
   </ContentContainer>
