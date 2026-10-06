@@ -33,6 +33,7 @@ use crate::{
             Common,
         },
         sync::{sync_record_to_buffer_row, SyncBatchV7},
+        translations::SendContext,
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
@@ -400,7 +401,10 @@ pub async fn pull(
         };
 
         let batch = SyncBatchV7::generate(
-            &ctx.connection,
+            &SendContext {
+                connection: &ctx.connection,
+                receiver_version: Some(&common.version),
+            },
             filter,
             input.cursor,
             Some(input.batch_size),
@@ -505,7 +509,15 @@ pub async fn patient_data_for_site(
             ChangelogCondition::patient_id::matching(patient_id),
         ]);
 
-        let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
+        let batch = SyncBatchV7::generate(
+            &SendContext {
+                connection: &ctx.connection,
+                receiver_version: Some(&common.version),
+            },
+            filter,
+            0,
+            None,
+        )?;
 
         Ok(patient_data_for_site::Output {
             batch,
