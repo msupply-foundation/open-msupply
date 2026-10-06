@@ -1507,12 +1507,20 @@ export type CentralPatientSearchResponse =
 
 export type CentralPluginMutations = {
   __typename: 'CentralPluginMutations';
+  /**
+   * `programs` chooses the program for each of a form plugin's program keys
+   * (a key left out keeps the program it is already bound to); `takeOver`
+   * names document types whose existing entry, installed by no plugin, the
+   * plugin may take over.
+   */
   installUploadedPlugin: PluginInfoNode;
   uninstallPlugin: UninstallPluginNode;
 };
 
 export type CentralPluginMutationsInstallUploadedPluginArgs = {
   fileId: Scalars['String']['input'];
+  programs?: InputMaybe<Array<PluginProgramInput>>;
+  takeOver?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type CentralPluginMutationsUninstallPluginArgs = {
@@ -7768,6 +7776,8 @@ export type PeriodConnector = {
 
 export type PeriodFilterInput = {
   endDate?: InputMaybe<DateFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  periodScheduleId?: InputMaybe<EqualFilterStringInput>;
   startDate?: InputMaybe<DateFilterInput>;
 };
 
@@ -7779,12 +7789,31 @@ export type PeriodNode = {
   startDate: Scalars['NaiveDate']['output'];
 };
 
+export type PeriodScheduleFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type PeriodScheduleNode = {
   __typename: 'PeriodScheduleNode';
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   periods: Array<SchedulePeriodNode>;
 };
+
+export type PeriodScheduleRowConnector = {
+  __typename: 'PeriodScheduleRowConnector';
+  nodes: Array<PeriodScheduleRowNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PeriodScheduleRowNode = {
+  __typename: 'PeriodScheduleRowNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type PeriodScheduleRowResponse = PeriodScheduleRowConnector;
 
 export type PeriodSchedulesConnector = {
   __typename: 'PeriodSchedulesConnector';
@@ -7842,6 +7871,12 @@ export type PluginDataSortInput = {
 export type PluginInfoNode = {
   __typename: 'PluginInfoNode';
   pluginInfo: Scalars['JSON']['output'];
+};
+
+/** The program chosen for one of a form plugin's program keys. */
+export type PluginProgramInput = {
+  programId: Scalars['String']['input'];
+  programKey: Scalars['String']['input'];
 };
 
 /** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
@@ -8003,6 +8038,13 @@ export type PrescriptionRequestConnector = {
 
 export type PrescriptionRequestFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  /**
+   * When the request was dispensed — set by the hand-over's status flip, so
+   * it is null on everything not yet dispensed. Window a "dispensed in
+   * period" count on THIS, never on `status`: a status advances, so a
+   * status-windowed figure falls as records progress.
+   */
+  dispensedDatetime?: InputMaybe<DatetimeFilterInput>;
   /**
    * Dynamic filter condition AST, currently supporting custom field
    * conditions on keys visible for the "prescription_request" scope, e.g.
@@ -8451,6 +8493,7 @@ export type PurchaseOrderFilterInput = {
   confirmedDatetime?: InputMaybe<DatetimeFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  number?: InputMaybe<EqualFilterBigNumberInput>;
   requestedDeliveryDate?: InputMaybe<DateFilterInput>;
   sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
@@ -8471,6 +8514,7 @@ export type PurchaseOrderLineError = {
 export type PurchaseOrderLineFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -8488,8 +8532,10 @@ export type PurchaseOrderLineNode = {
   inTransitNumberOfUnits: Scalars['Float']['output'];
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
+  lineTotal: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
+  outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
@@ -8518,11 +8564,22 @@ export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
+  AdjustedNumberOfUnits = 'adjustedNumberOfUnits',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
+  ItemCode = 'itemCode',
   ItemName = 'itemName',
   LineNumber = 'lineNumber',
+  OutstandingNumberOfUnits = 'outstandingNumberOfUnits',
+  PurchaseOrderConfirmedDatetime = 'purchaseOrderConfirmedDatetime',
   PurchaseOrderNumber = 'purchaseOrderNumber',
+  ReceivedNumberOfUnits = 'receivedNumberOfUnits',
   RequestedDeliveryDate = 'requestedDeliveryDate',
+  RequestedNumberOfUnits = 'requestedNumberOfUnits',
+  RequestedPackSize = 'requestedPackSize',
+  ShippedNumberOfUnits = 'shippedNumberOfUnits',
+  Status = 'status',
+  SupplierName = 'supplierName',
+  Unit = 'unit',
 }
 
 export type PurchaseOrderLineSortInput = {
@@ -8600,9 +8657,16 @@ export enum PurchaseOrderNodeStatus {
 export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
 
 export enum PurchaseOrderSortFieldInput {
+  Comment = 'comment',
+  ConfirmedDatetime = 'confirmedDatetime',
   CreatedDatetime = 'createdDatetime',
+  CurrencyCode = 'currencyCode',
   Number = 'number',
+  OrderTotalAfterDiscount = 'orderTotalAfterDiscount',
+  RequestedDeliveryDate = 'requestedDeliveryDate',
+  SentDatetime = 'sentDatetime',
   Status = 'status',
+  Supplier = 'supplier',
   TargetMonths = 'targetMonths',
 }
 
@@ -8766,6 +8830,7 @@ export type Queries = {
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
+  periodSchedules: PeriodScheduleRowResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
@@ -9298,6 +9363,11 @@ export type QueriesPatientsArgs = {
   filter?: InputMaybe<PatientFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<PatientSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPeriodSchedulesArgs = {
+  filter?: InputMaybe<PeriodScheduleFilterInput>;
   storeId: Scalars['String']['input'];
 };
 
