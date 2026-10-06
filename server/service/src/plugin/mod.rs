@@ -821,7 +821,10 @@ mod test {
         assert!(encounter.config.unwrap().contains("followUpStatus"));
 
         // A second plugin claiming an owned type is refused, and nothing of it
-        // is installed: not its registry entry, its schema, nor its code.
+        // is installed: not its registry entry, its schema, nor its code. Its
+        // first type, RivalVisit, is new and is written before DemoEncounter
+        // is refused, so its absence shows the refusal rolls back what the
+        // install had already written.
         let error = service_provider
             .plugin_service
             .install_uploaded_plugin(
@@ -859,6 +862,18 @@ mod test {
                 .find_one_by_id("rival_DemoEncounter_v1_dddddddddddd")
                 .unwrap(),
             None
+        );
+        assert_eq!(
+            FormSchemaRowRepository::new(&connection)
+                .find_one_by_id("rival_RivalVisit_v1_eeeeeeeeeeee")
+                .unwrap(),
+            None
+        );
+        assert_eq!(
+            DocumentRegistryRowRepository::new(&connection)
+                .find_many_by_document_type("RivalVisit")
+                .unwrap(),
+            vec![]
         );
     }
 

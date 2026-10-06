@@ -1,4 +1,6 @@
 use crate::queries::uploaded_info::PluginInfoNode;
+use std::collections::HashMap;
+
 use async_graphql::Context;
 use async_graphql::*;
 use graphql_core::{
@@ -7,7 +9,10 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    plugin::{form_plugin::FormInstallOptions, InstallUploadedPluginError},
+    plugin::{
+        form_plugin::{FormInstallOptions, FormPluginInstallError},
+        InstallUploadedPluginError,
+    },
     UploadedFile,
 };
 use util::format_error;
@@ -17,6 +22,25 @@ use util::format_error;
 pub struct PluginProgramInput {
     pub program_key: String,
     pub program_id: String,
+}
+
+/// The program chosen for each key. A key chosen twice is refused rather than
+/// left to whichever came last.
+fn program_choices(programs: Vec<PluginProgramInput>) -> Result<HashMap<String, String>, String> {
+    let mut chosen = HashMap::new();
+    for PluginProgramInput {
+        program_key,
+        program_id,
+    } in programs
+    {
+        if let Some(earlier) = chosen.insert(program_key.clone(), program_id.clone()) {
+            return Err(format!(
+                "--program names key \"{program_key}\" twice ({earlier} and {program_id}); \
+                 choose one program for it"
+            ));
+        }
+    }
+    Ok(chosen)
 }
 
 pub fn install_uploaded_plugin(
@@ -38,12 +62,10 @@ pub fn install_uploaded_plugin(
     let context = service_provider.basic_context()?;
     let settings = ctx.get_settings();
 
+    let chosen = program_choices(programs.unwrap_or_default())
+        .map_err(|message| StandardGraphqlError::BadUserInput(message).extend())?;
     let form_options = FormInstallOptions {
-        programs: programs
-            .unwrap_or_default()
-            .into_iter()
-            .map(|p| (p.program_key, p.program_id))
-            .collect(),
+        programs: chosen,
         take_over: take_over.unwrap_or_default().into_iter().collect(),
     };
 
@@ -53,16 +75,56 @@ pub fn install_uploaded_plugin(
         .map_err(|e| {
             let formatted = format_error(&e);
             match e {
+                InstallUploadedPluginError::FormPlugin(FormPluginInstallError::DatabaseError(
+                    _,
+                ))
+                | InstallUploadedPluginError::UploadedFileJsonError(_)
+                | InstallUploadedPluginError::DatabaseError(_) => {
+                    StandardGraphqlError::InternalError(formatted)
+                }
                 // A refusal the person installing can act on, with its reason.
                 InstallUploadedPluginError::FormPlugin(_) => {
                     StandardGraphqlError::BadUserInput(formatted)
-                }
-                InstallUploadedPluginError::UploadedFileJsonError(_)
-                | InstallUploadedPluginError::DatabaseError(_) => {
-                    StandardGraphqlError::InternalError(formatted)
                 }
             }
             .extend()
         })
         .map(PluginInfoNode::from_install)
+}
+
+#[cfg(test)]
+mod test {
+    use super::{program_choices, PluginProgramInput};
+
+    fn choice(program_key: &str, program_id: &str) -> PluginProgramInput {
+        PluginProgramInput {
+            program_key: program_key.to_string(),
+            program_id: program_id.to_string(),
+        }
+    }
+
+    #[test]
+    fn a_program_per_key() {
+        let chosen = program_choices(vec![
+            choice("demo", "program_a"),
+            choice("hiv", "program_b"),
+        ])
+        .unwrap();
+        assert_eq!(chosen.len(), 2);
+        assert_eq!(chosen["demo"], "program_a");
+    }
+
+    #[test]
+    fn a_key_chosen_twice_is_refused() {
+        let error = program_choices(vec![
+            choice("demo", "program_a"),
+            choice("demo", "program_b"),
+        ])
+        .unwrap_err();
+        assert!(
+            error.contains("\"demo\" twice (program_a and program_b)"),
+            "{}",
+            error
+        );
+    }
 }

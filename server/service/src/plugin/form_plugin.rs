@@ -215,6 +215,15 @@ pub enum FormPluginInstallError {
         /// Each missing schema id with how many documents are pinned to it.
         pinned: String,
     },
+    #[error(
+        "{document_type} would be written as registry entry {id}, which already holds \
+         {existing_type}; rename one of the document types"
+    )]
+    EntryIdTaken {
+        document_type: String,
+        id: String,
+        existing_type: String,
+    },
     #[error("Could not serialise the event config of {0}")]
     InvalidConfig(String),
     #[error(transparent)]
@@ -453,13 +462,28 @@ fn install_document_type(
         .transpose()
         .map_err(|_| Error::InvalidConfig(document_type.clone()))?;
 
+    // A taken-over or re-installed entry keeps its id, so there is never a
+    // second row for one document type. A new one is named for its plugin and
+    // type, and since both may hold underscores (`a_b` + `C`, `a` + `b_C`) the
+    // name can already belong to another type's entry, which an upsert would
+    // silently overwrite.
+    let id = match &existing {
+        Some((row, _)) => row.id.clone(),
+        None => {
+            let id = format!("{}_{}", sidecar.plugin_code, document_type);
+            if let Some(taken) = registry_repo.find_one_by_id(&id)? {
+                return Err(Error::EntryIdTaken {
+                    document_type: document_type.clone(),
+                    id,
+                    existing_type: taken.document_type,
+                });
+            }
+            id
+        }
+    };
+
     let row = DocumentRegistryRow {
-        // A taken-over or re-installed entry keeps its id, so there is never a
-        // second row for one document type.
-        id: existing.as_ref().map_or_else(
-            || format!("{}_{}", sidecar.plugin_code, document_type),
-            |(row, _)| row.id.clone(),
-        ),
+        id,
         category: declaration.category.clone(),
         document_type: document_type.clone(),
         context_id: context_id.clone(),
@@ -1435,6 +1459,45 @@ mod test {
             &options(&[("demo", "program_a")], &[PATIENT_TYPE]),
         )
         .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn a_new_entry_whose_id_is_taken_is_refused() {
+        let connection = setup("form_plugin_entry_id_taken").await;
+        let sidecar = |plugin_code: &str, document_type: &str| FormPluginSidecar {
+            plugin_code: plugin_code.to_string(),
+            program_keys: vec!["k".to_string()],
+            document_types: vec![declaration(
+                document_type,
+                DocumentRegistryCategory::Encounter,
+                Some("k"),
+                1,
+            )],
+        };
+        install_form_plugins(
+            &connection,
+            &[sidecar("a_b", "C")],
+            &options(&[("k", "program_a")], &[]),
+        )
+        .unwrap();
+
+        // Plugin `a`'s type `b_C` would be entry `a_b_C` too.
+        let error = install_form_plugins(
+            &connection,
+            &[sidecar("a", "b_C")],
+            &options(&[("k", "program_a")], &[]),
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            error,
+            Error::EntryIdTaken {
+                document_type: "b_C".to_string(),
+                id: "a_b_C".to_string(),
+                existing_type: "C".to_string(),
+            }
+        );
+        assert_eq!(entry(&connection, "C").plugin_code.as_deref(), Some("a_b"));
     }
 
     #[actix_rt::test]

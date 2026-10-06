@@ -103,18 +103,6 @@ pub struct GenerateAndInstallPluginBundle {
     /// Password
     #[clap(long)]
     password: String,
-    /// Program for one of a form plugin's program keys, as `<programKey>=<programId>`.
-    /// Repeat for each key. Needed for every key on first install; a key left
-    /// out of a re-install keeps the program it is already bound to. Moving a
-    /// key to another program is refused while documents are saved under the
-    /// current one, counting only the documents this server holds.
-    #[clap(long = "program", value_parser = parse_program_choice)]
-    programs: Vec<(String, String)>,
-    /// Document type whose existing registry entry, installed by no plugin, the
-    /// plugin may take over (for example the deployment's `Patient` entry).
-    /// Repeatable.
-    #[clap(long = "take-over")]
-    take_over: Vec<String>,
 }
 
 fn parse_program_choice(value: &str) -> Result<(String, String), String> {
@@ -460,8 +448,6 @@ pub async fn generate_and_install_plugin_bundle(
         url,
         username,
         password,
-        programs,
-        take_over,
     }: GenerateAndInstallPluginBundle,
 ) -> Result<(), Error> {
     let out_file = PathBuf::from("report_temp.json");
@@ -471,13 +457,16 @@ pub async fn generate_and_install_plugin_bundle(
         out_file: out_file.clone(),
     })?;
 
+    // The bundle this packs carries no form plugins (`pnpm build:plugins`
+    // packs those), so there are no program keys to choose or types to take
+    // over.
     install_plugin_bundle(InstallPluginBundle {
         path: out_file.clone(),
         url,
         username,
         password,
-        programs,
-        take_over,
+        programs: Vec::new(),
+        take_over: Vec::new(),
     })
     .await?;
     fs::remove_file(out_file.clone()).map_err(|e| Error::FiledToRemoveTempFile(e, out_file))?;

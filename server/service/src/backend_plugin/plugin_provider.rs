@@ -10,6 +10,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::boajs::{self, BoaJsError};
+use crate::plugin::form_plugin::FormPluginSidecar;
 
 #[derive(Debug, Error, PartialEq)]
 #[error("Error in plugin {code}")]
@@ -112,7 +113,7 @@ pub struct PluginBundle {
     /// versions and registry declarations, written to `form_schema` and
     /// `document_registry` at install. Absent from a bundle with no form plugin.
     #[serde(default)]
-    pub form_plugins: Vec<crate::plugin::form_plugin::FormPluginSidecar>,
+    pub form_plugins: Vec<FormPluginSidecar>,
 }
 
 impl PluginInstance {

@@ -17,6 +17,14 @@
       "program_keys": ["hiv"],
       "document_types": [
         {
+          "document_type": "RivalVisit",
+          "category": "Encounter",
+          "name": "Rival visit",
+          "program_key": "hiv",
+          "versions": [{ "id": "rival_RivalVisit_v1_eeeeeeeeeeee", "json_schema": { "type": "object" } }],
+          "config": null
+        },
+        {
           "document_type": "DemoEncounter",
           "category": "Encounter",
           "name": "Rival encounter",
