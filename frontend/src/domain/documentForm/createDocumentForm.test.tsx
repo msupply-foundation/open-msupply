@@ -1,4 +1,4 @@
-import { createRoot, createSignal } from 'solid-js';
+import { batch, createRoot, createSignal } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import v1 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v1.json';
 import v2 from '../../../plugins/examples/demo_program/forms/DemoEncounter/v2.json';
@@ -29,10 +29,12 @@ vi.mock('./formLibrary', async () => ({
 import {
   createDocumentForm,
   type DocumentForm,
+  type DocumentFormSource,
   type FormVersioning,
 } from './createDocumentForm';
 import {
   FormDocumentByName,
+  InsertFormEncounter,
   UpdateFormEncounter,
   type FormDocumentFragment,
 } from './documentForm.generated';
@@ -83,6 +85,16 @@ const versioning = (archived: number[]): FormVersioning => ({
   archived,
 });
 
+// The variables the mocked GraphQL calls read: a read's name, a save's input.
+interface CallVariables {
+  name: string;
+  input: {
+    schemaId: string;
+    parent: string;
+    data: { extension?: { demo?: unknown } };
+  };
+}
+
 let dispose: (() => void) | undefined;
 afterEach(() => {
   dispose?.();
@@ -94,23 +106,25 @@ const open = async (
   loaded: FormDocumentFragment,
   archived: number[]
 ): Promise<DocumentForm<Encounter>> => {
-  graphqlFetch.mockImplementation(async (query: unknown, variables: any) => {
-    if (query === FormDocumentByName) {
-      return { kind: 'success', data: { document: loaded } };
+  graphqlFetch.mockImplementation(
+    async (query: unknown, variables: CallVariables) => {
+      if (query === FormDocumentByName) {
+        return { kind: 'success', data: { document: loaded } };
+      }
+      if (query === UpdateFormEncounter) {
+        const saved = documentPinnedTo(
+          variables.input.schemaId,
+          v2,
+          variables.input.data
+        );
+        return {
+          kind: 'success',
+          data: { updateEncounter: { id: 'encounter-1', document: saved } },
+        };
+      }
+      throw new Error('unexpected query');
     }
-    if (query === UpdateFormEncounter) {
-      const saved = documentPinnedTo(
-        variables.input.schemaId,
-        v2,
-        variables.input.data
-      );
-      return {
-        kind: 'success',
-        data: { updateEncounter: { id: 'encounter-1', document: saved } },
-      };
-    }
-    throw new Error('unexpected query');
-  });
+  );
   const form = createRoot(d => {
     dispose = d;
     const [source] = createSignal({
@@ -183,11 +197,11 @@ describe('opening a document pinned to an earlier version', () => {
     expect(saved?.schema?.id).toBe(V2);
     const [, variables] = graphqlFetch.mock.calls.at(-1) as [
       unknown,
-      { input: { schemaId: string; parent: string; data: any } },
+      CallVariables,
     ];
     expect(variables.input.schemaId).toBe(V2);
     expect(variables.input.parent).toBe(`doc-${V1}`);
-    expect(variables.input.data.extension.demo).toEqual({
+    expect(variables.input.data.extension?.demo).toEqual({
       vitals: { weightKg: 68, heightCm: 172 },
       regimen: 'SECOND_LINE',
       nextVisit: '2026-08-29T12:00:00.000Z',
@@ -236,5 +250,178 @@ describe('opening a document pinned to an earlier version', () => {
     expect(form.version()).toEqual({ kind: 'current' });
     expect(form.draft.readOnly()).toBe(false);
     expect(form.canSave()).toBe(false);
+  });
+});
+
+/*
+ * One form host following a route from record to record, as the patient and
+ * encounter screens do: the source and the patient change under it.
+ */
+describe('when the source changes', () => {
+  // A current (v2) document, which saves as it stands.
+  const encounter = (name: string, weightKg: number) =>
+    ({
+      ...documentPinnedTo(V2, v2, {
+        ...v1Fixture,
+        extension: { demo: { vitals: { weightKg } } },
+      }),
+      id: `doc-${name}`,
+      name,
+    }) as FormDocumentFragment;
+  const newEncounter = (weightKg: number): DocumentFormSource => ({
+    kind: 'new',
+    registry,
+    data: { ...v1Fixture, extension: { demo: { vitals: { weightKg } } } },
+  });
+  const weight = (form: DocumentForm<Encounter>) =>
+    (demo(form)?.vitals as { weightKg?: number } | undefined)?.weightKg;
+  const calls = (query: unknown) =>
+    graphqlFetch.mock.calls.filter(([q]) => q === query);
+
+  // Reads answer from `reads`, which a test may hold back; saves echo the
+  // data under the name they were made for (an insert under `created`).
+  const follow = (
+    reads: Record<string, () => Promise<FormDocumentFragment>>,
+    first: DocumentFormSource,
+    options: { created?: string; holdSave?: Promise<void> } = {}
+  ) => {
+    graphqlFetch.mockImplementation(
+      async (query: unknown, variables: CallVariables) => {
+        if (query === FormDocumentByName) {
+          return {
+            kind: 'success',
+            data: { document: await reads[variables.name]() },
+          };
+        }
+        await options.holdSave;
+        const data = variables.input.data;
+        if (query === UpdateFormEncounter) {
+          const parent = variables.input.parent.replace(/^doc-/, '');
+          return {
+            kind: 'success',
+            data: {
+              updateEncounter: {
+                id: parent,
+                document: { ...encounter(parent, 0), data },
+              },
+            },
+          };
+        }
+        if (query === InsertFormEncounter) {
+          const name = options.created ?? 'encounter/created';
+          return {
+            kind: 'success',
+            data: {
+              insertEncounter: {
+                id: name,
+                document: { ...encounter(name, 0), data },
+              },
+            },
+          };
+        }
+        throw new Error('unexpected query');
+      }
+    );
+    return createRoot(d => {
+      dispose = d;
+      const [source, setSource] = createSignal<DocumentFormSource>(first);
+      const [patientId, setPatientId] = createSignal('patient-1');
+      const form = createDocumentForm<Encounter>({
+        storeId: () => 'store',
+        patientId,
+        source,
+        versioning: type =>
+          type === 'DemoEncounter' ? versioning([1]) : undefined,
+      });
+      // Together, as a screen derives both from the one record it shows.
+      const go = (next: DocumentFormSource, patient = 'patient-1') =>
+        batch(() => {
+          setPatientId(patient);
+          setSource(next);
+        });
+      return { form, go };
+    });
+  };
+  const ready = (form: DocumentForm<Encounter>) =>
+    vi.waitFor(() => expect(form.status()).toBe('ready'), { timeout: 5000 });
+
+  it('starts a new document afresh after an existing one, and inserts it', async () => {
+    const { form, go } = follow(
+      { 'encounter/a': async () => encounter('encounter/a', 70) },
+      { kind: 'existing', name: 'encounter/a' }
+    );
+    await ready(form);
+    expect(weight(form)).toBe(70);
+
+    go(newEncounter(80), 'patient-2');
+    await ready(form);
+    expect(form.document()).toBeUndefined();
+    expect(form.isNew()).toBe(true);
+    expect(weight(form)).toBe(80);
+
+    await form.save();
+    expect(calls(UpdateFormEncounter)).toHaveLength(0);
+    expect(calls(InsertFormEncounter)).toHaveLength(1);
+  });
+
+  it('shows nothing of the last document while the next one loads', async () => {
+    let loadB!: () => void;
+    const bLoaded = new Promise<void>(resolve => (loadB = resolve));
+    const { form, go } = follow(
+      {
+        'encounter/a': async () => encounter('encounter/a', 70),
+        'encounter/b': async () => {
+          await bLoaded;
+          return encounter('encounter/b', 90);
+        },
+      },
+      { kind: 'existing', name: 'encounter/a' }
+    );
+    await ready(form);
+
+    go({ kind: 'existing', name: 'encounter/b' });
+    expect(form.document()).toBeUndefined();
+    expect(form.status()).toBe('loading');
+
+    loadB();
+    await ready(form);
+    expect(form.document()?.name).toBe('encounter/b');
+    expect(weight(form)).toBe(90);
+  });
+
+  it("does not carry one patient's first save over to another's new document", async () => {
+    const { form, go } = follow({}, newEncounter(70));
+    await ready(form);
+    await form.save();
+    expect(form.document()?.name).toBe('encounter/created');
+
+    go(newEncounter(80), 'patient-2');
+    await ready(form);
+    expect(form.document()).toBeUndefined();
+    expect(form.isNew()).toBe(true);
+    expect(weight(form)).toBe(80);
+  });
+
+  it('does not let a save that returns late stand for the record shown since', async () => {
+    let finishSave!: () => void;
+    const holdSave = new Promise<void>(resolve => (finishSave = resolve));
+    const { form, go } = follow(
+      {
+        'encounter/a': async () => encounter('encounter/a', 70),
+        'encounter/b': async () => encounter('encounter/b', 90),
+      },
+      { kind: 'existing', name: 'encounter/a' },
+      { holdSave }
+    );
+    await ready(form);
+    form.draft.set('extension.demo.vitals.weightKg' as never, 71 as never);
+    const saving = form.save();
+
+    go({ kind: 'existing', name: 'encounter/b' });
+    finishSave();
+    await saving;
+    await ready(form);
+    expect(form.document()?.name).toBe('encounter/b');
+    expect(weight(form)).toBe(90);
   });
 });

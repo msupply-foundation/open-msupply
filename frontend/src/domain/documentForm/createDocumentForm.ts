@@ -294,12 +294,17 @@ export const persistDocument = async (
   }
 };
 
-const sourceKey = (s: DocumentFormSource | undefined): string | undefined =>
+// A new source is keyed by its patient as well as its type: two patients'
+// new documents of one type are different documents.
+const sourceKey = (
+  s: DocumentFormSource | undefined,
+  patientId: string
+): string | undefined =>
   s === undefined
     ? undefined
     : s.kind === 'existing'
       ? `existing:${s.name}`
-      : `new:${s.registry.id}`;
+      : `new:${patientId}:${s.registry.id}`;
 
 export const createDocumentForm = <T extends object>(
   options: CreateDocumentFormOptions
@@ -321,10 +326,27 @@ export const createDocumentForm = <T extends object>(
       // A failed read was reported globally; `null` is a document that does
       // not exist or that the user may not read. Wrapped, so the two differ.
       return result.kind === 'success'
-        ? { document: result.data.document }
+        ? { storeId, name, document: result.data.document }
         : undefined;
     }
   );
+
+  // The read for the source as it stands. The resource keeps its last value
+  // while it refetches for another name, and when the source stops naming one
+  // (a new document), and that value is another document's: seeded or saved
+  // into, it would show and update the wrong record.
+  const read = () => {
+    const value = gated(loaded);
+    const s = options.source();
+    return value &&
+      s?.kind === 'existing' &&
+      value.name === s.name &&
+      value.storeId === options.storeId()
+      ? value
+      : undefined;
+  };
+
+  const currentKey = () => sourceKey(options.source(), options.patientId());
 
   // The version a save returned, for the source it was saved under: it
   // supersedes the loaded version (whose id is now a stale parent) until the
@@ -333,25 +355,30 @@ export const createDocumentForm = <T extends object>(
     key: string;
     document: FormDocumentFragment;
   }>();
+
+  // A first save turns a new source into an existing one under the saved
+  // name (the patient screen re-reads its patient); the saved version still
+  // stands for it, so the form does not drop to loading and back.
+  const standsForSource = (s: {
+    key: string;
+    document: FormDocumentFragment;
+  }): boolean => {
+    const source = options.source();
+    return (
+      s.key === currentKey() ||
+      (source?.kind === 'existing' && source.name === s.document.name)
+    );
+  };
+  // Any other source drops it, so coming back to the record reads it afresh.
   createEffect(() => {
-    if (!options.source()) setSaved(undefined);
+    const s = saved();
+    if (s && !standsForSource(s)) setSaved(undefined);
   });
 
   const document = createMemo((): FormDocumentFragment | undefined => {
-    const source = options.source();
-    const key = sourceKey(source);
     const s = saved();
-    // A first save turns a new source into an existing one under the saved
-    // name (the patient screen re-reads its patient); the saved version still
-    // stands for it, so the form does not drop to loading and back.
-    if (
-      s &&
-      (s.key === key ||
-        (source?.kind === 'existing' && source.name === s.document.name))
-    ) {
-      return s.document;
-    }
-    return gated(loaded)?.document ?? undefined;
+    if (s && standsForSource(s)) return s.document;
+    return read()?.document ?? undefined;
   });
 
   const registry = createMemo((): FormRegistryFragment | undefined => {
@@ -366,10 +393,7 @@ export const createDocumentForm = <T extends object>(
     if (!s) return 'idle';
     if (!gated(library)) return 'loading';
     if (s.kind === 'new') return 'ready';
-    if (!document()) {
-      const read = gated(loaded);
-      return read === undefined ? 'loading' : 'not-found';
-    }
+    if (!document()) return read() === undefined ? 'loading' : 'not-found';
     return registry() ? 'ready' : 'not-found';
   });
 
@@ -473,9 +497,8 @@ export const createDocumentForm = <T extends object>(
       return;
     }
     if (status() !== 'ready') return;
-    const s = options.source();
     const doc = document();
-    const key = `${sourceKey(s)}|${doc?.id ?? 'unsaved'}|${version().kind}`;
+    const key = `${currentKey()}|${doc?.id ?? 'unsaved'}|${version().kind}`;
     if (key === seededKey) return;
     seededKey = key;
     untrack(() => {
@@ -508,6 +531,9 @@ export const createDocumentForm = <T extends object>(
     controller.validation.arm();
     const r = registry();
     if (!r || !controller.validation.valid()) return undefined;
+    // The source the save was made from: by the time it returns the screen
+    // may show another record, which this version must not stand for.
+    const key = currentKey();
     setSaving(true);
     setSaveError(undefined);
     const result = await persistDocument({
@@ -523,7 +549,6 @@ export const createDocumentForm = <T extends object>(
       return undefined;
     }
     if (result.kind === 'reported') return undefined;
-    const key = sourceKey(options.source());
     if (key) setSaved({ key, document: result.document });
     return result.document;
   };
