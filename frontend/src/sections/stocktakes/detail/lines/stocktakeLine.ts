@@ -89,9 +89,25 @@ export const defaultedPackSize = (
 // The line editor's batch order when an item loads (OMS-REG-INV-03.91):
 // soonest expiry first, then by batch name as people read it — digit runs
 // compare as numbers, so "B2" precedes "B10". A batch with no expiry, or no
-// name, comes after those that have one. Ties keep the order given (sort is
-// stable). Applied only on load — rows added while the editor is open stay
-// where they were put (.92).
+// name, comes after those that have one. Rows still tied — one batch split
+// across locations or pack sizes, or two unnamed batches — go by location
+// code (read the same way), then pack size, then a fixed id, so the order is
+// total. The server returns the rows in no set order, so a tie left to it could
+// still swap between visits, which is the #1005 bug. Applied only on load —
+// rows added while the editor is open stay where they were put (.92).
+//
+// The fixed id is the saved line's id, or for a stock batch not yet on the
+// stocktake its stock line's id (stockLineId): that draft row's own id is
+// regenerated on every load, so it would not hold.
+export interface BatchOrderKey {
+  expiryDate?: string | null;
+  batch?: string | null;
+  location?: { code: string } | null;
+  packSize?: number | null;
+  id: string;
+  stockLineId?: string | null;
+}
+
 const batchCollator = new Intl.Collator(undefined, { numeric: true });
 
 // Missing (null or empty) sorts after present; two missing are a tie.
@@ -105,11 +121,29 @@ const compareMissingLast = (
   return compare(a, b);
 };
 
-export const compareBatchOrder = (
-  a: { expiryDate?: string | null; batch?: string | null },
-  b: { expiryDate?: string | null; batch?: string | null }
-): number =>
+const compareText = (x: string, y: string): number =>
+  x < y ? -1 : x > y ? 1 : 0;
+
+// Smallest pack size first; a batch with none after those that have one.
+const comparePackSize = (
+  a: number | null | undefined,
+  b: number | null | undefined
+): number => {
+  if (a == null) return b == null ? 0 : 1;
+  if (b == null) return -1;
+  return a - b;
+};
+
+const stableId = (row: BatchOrderKey): string => row.stockLineId ?? row.id;
+
+export const compareBatchOrder = (a: BatchOrderKey, b: BatchOrderKey): number =>
   // Expiry dates are ISO `YYYY-MM-DD`, so text order is date order.
-  compareMissingLast(a.expiryDate, b.expiryDate, (x, y) =>
-    x < y ? -1 : x > y ? 1 : 0
-  ) || compareMissingLast(a.batch, b.batch, batchCollator.compare);
+  compareMissingLast(a.expiryDate, b.expiryDate, compareText) ||
+  compareMissingLast(a.batch, b.batch, batchCollator.compare) ||
+  compareMissingLast(
+    a.location?.code,
+    b.location?.code,
+    batchCollator.compare
+  ) ||
+  comparePackSize(a.packSize, b.packSize) ||
+  compareText(stableId(a), stableId(b));

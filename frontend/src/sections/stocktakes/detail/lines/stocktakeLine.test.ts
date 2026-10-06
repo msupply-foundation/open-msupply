@@ -180,9 +180,21 @@ describe('OMS-REG-INV-03.86 — a line awaits a reason', () => {
 });
 
 describe('OMS-REG-INV-03.91 — the editor lists batches soonest expiry first, then by batch', () => {
-  type Batch = { expiryDate: string | null; batch: string | null };
-  const order = (batches: Batch[]) =>
-    [...batches].sort(compareBatchOrder).map(b => b.batch);
+  type Batch = {
+    id?: string;
+    stockLineId?: string;
+    expiryDate: string | null;
+    batch: string | null;
+    location?: { code: string } | null;
+    packSize?: number | null;
+  };
+  // Every row carries an id, the order's last resort; a placeholder where a
+  // test's rows already differ earlier in the order.
+  const sorted = (batches: Batch[]) =>
+    batches
+      .map((b, i) => ({ ...b, id: b.id ?? `row-${i}` }))
+      .sort(compareBatchOrder);
+  const order = (batches: Batch[]) => sorted(batches).map(b => b.batch);
 
   it('puts the soonest expiry first, whatever the batch names', () => {
     expect(
@@ -222,5 +234,52 @@ describe('OMS-REG-INV-03.91 — the editor lists batches soonest expiry first, t
         { expiryDate: '2027-01-31', batch: '001' },
       ])
     ).toEqual(['001', null, '']);
+  });
+
+  // The tie-breakers: a batch split across locations or pack sizes, or two
+  // blank batches, must still load in one fixed order — a tie left to the
+  // server's order could swap between visits (#1005).
+  const tied = { expiryDate: '2027-01-31', batch: 'B1' };
+
+  it('breaks an expiry-and-name tie by location code as people read it; an unlocated batch last', () => {
+    expect(
+      sorted([
+        { ...tied, location: { code: 'S10' } },
+        { ...tied, location: null },
+        { ...tied, location: { code: 'S2' } },
+      ]).map(b => b.location?.code ?? null)
+    ).toEqual(['S2', 'S10', null]);
+  });
+
+  it('then by pack size, smallest first; a batch with none last', () => {
+    const located = { ...tied, location: { code: 'S1' } };
+    expect(
+      sorted([
+        { ...located, packSize: 100 },
+        { ...located, packSize: null },
+        { ...located, packSize: 10 },
+      ]).map(b => b.packSize)
+    ).toEqual([10, 100, null]);
+  });
+
+  it('last by a fixed id — the saved line id, or the stock line id for a batch not yet on the stocktake', () => {
+    const blank = {
+      expiryDate: null,
+      batch: null,
+      location: null,
+      packSize: 1,
+    };
+    // A stock batch's draft id is regenerated on every load, so its
+    // stockLineId is the one that holds; a saved line has only its own id.
+    const rows: Batch[] = [
+      { ...blank, id: 'draft-z', stockLineId: 'stock-a' },
+      { ...blank, id: 'line-m' },
+      { ...blank, id: 'draft-a', stockLineId: 'stock-z' },
+    ];
+    const ids = (input: Batch[]) =>
+      sorted(input).map(b => b.stockLineId ?? b.id);
+    expect(ids(rows)).toEqual(['line-m', 'stock-a', 'stock-z']);
+    // The same rows handed over in any other order land the same way.
+    expect(ids([...rows].reverse())).toEqual(['line-m', 'stock-a', 'stock-z']);
   });
 });
