@@ -17,7 +17,8 @@
 //                    job; policy: quarantine-or-fix same day).
 //
 // Usage: node scripts/e2e/nightly-report.mjs
-// Each dir holds one <dir>/e2e-report-<leg>/results.json per leg.
+// Each dir holds one <dir>/e2e-report-<leg>/results.json per leg — whether
+// the branch has one leg or many (each artifact carries its own folder).
 //   LEG_ID          (default develop)       — the branch key under test
 //   LEG_IDS         (default LEG_ID)        — every leg's artifact suffix,
 //                                             comma-separated: the branch key
@@ -207,6 +208,10 @@ for (const leg of legs.filter(l => l.run && !l.baseline)) {
 // the next run's baseline.
 const passes = l => (l.run.stats.expected ?? 0) + (l.run.stats.flaky ?? 0);
 const missing = legs.filter(l => !l.run || passes(l) === 0);
+// A results.json at the top of the download, outside every leg's folder, is
+// a stack that DID report, filed where this script doesn't look - an upload
+// and download disagreeing on the artifact layout (#1133), not a boot failure.
+const misfiled = fs.existsSync(`${resultsDir}/results.json`);
 if (missing.length) {
   console.log(
     `### 🚨 Infra failure (${missing.length})\n\n` +
@@ -214,7 +219,9 @@ if (missing.length) {
         .map(l =>
           l.run
             ? `- **${l.label}**: a report in which nothing passed (${l.run.stats.unexpected ?? 0} failed, ${l.run.stats.skipped ?? 0} did not run) — the stack, the browser or the login never came up, so this is not a test result. See the run log and the e2e-triage artifact's server.log.`
-            : `- **${l.label}**: no results.json — the stack never produced a report (boot failure?). See the run log and the e2e-triage artifact's server.log.`
+            : misfiled
+              ? `- **${l.label}**: no \`e2e-report-${l.id}/results.json\`, but a results.json arrived outside every leg's folder — the workflow's artifact upload and download disagree on the layout, so this is not a boot failure. See the upload step in frontend-e2e-nightly.yaml.`
+              : `- **${l.label}**: no results.json — the stack never produced a report (boot failure?). See the run log and the e2e-triage artifact's server.log.`
         )
         .join('\n') +
       '\n'

@@ -1808,6 +1808,7 @@ const StocktakeLineEditContent = (
               bordered
               size="small"
               icon={<CopyIcon />}
+              data-testid="duplicate-batch-button"
               label={t('label.duplicate-batch')}
               onClick={() => duplicateLine(line)}
             />
@@ -1816,6 +1817,7 @@ const StocktakeLineEditContent = (
               size="small"
               variant="danger"
               icon={<TrashIcon />}
+              data-testid="remove-batch-button"
               label={t('button.delete')}
               onClick={() => removeLine(line)}
             />
@@ -1983,7 +1985,12 @@ const StocktakeLineEditContent = (
       actionsLead={
         <Show when={footerSummary()}>
           {summary => (
-            <Alert severity={summary().severity}>{summary().message}</Alert>
+            <Alert
+              severity={summary().severity}
+              testId="stocktake-line-summary"
+            >
+              {summary().message}
+            </Alert>
           )}
         </Show>
       }
