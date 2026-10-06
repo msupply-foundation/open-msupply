@@ -86,6 +86,10 @@ export default defineConfig(({ mode }) => {
   const lockedPort = env.DEV_SERVER_PORT;
   const proxyTarget = env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000';
   return {
+    // A multi-server e2e run (scripts/e2e/run-e2e.sh) starts several dev
+    // servers in one checkout; each gets its own dependency cache so their
+    // optimiser runs can't race. Unset: Vite's default node_modules/.vite.
+    ...(env.VITE_CACHE_DIR ? { cacheDir: env.VITE_CACHE_DIR } : {}),
     // devPluginsPlugin is the author dev loop (vite/devPlugins.ts): it only
     // enumerates plugin sources when SERVING — in a build it resolves its
     // virtual module to an empty map, which is dead code the DEV branch in

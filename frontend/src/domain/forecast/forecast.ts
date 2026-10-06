@@ -4,10 +4,10 @@ import { formatNumber, round } from '../../intl/formatNumber';
 // The shared population-forecast module (kdd/domain-modules): the per-course
 // breakdown a forecast-carrying requisition line stores
 // (RequisitionLineNode.vaccineCourses) and the calculation-display arithmetic
-// over it. The surface is specced at internal-orders (S4, AC-PF7); the
-// requisitions vertical shows the same display on a transferred forecast line
-// (spec/requisitions § forecast context, AC-LE13). The client parses and
-// renders this; it never writes or recomputes it.
+// over it. The surface is specced at internal-orders (S4, OMS-REG-REPL-11.7);
+// the requisitions vertical shows the same display on a transferred forecast
+// line (spec/requisitions § forecast context, OMS-REG-DIST-05.35). The client
+// parses and renders this; it never writes or recomputes it.
 
 // One course-and-demographic group of a line's stored population forecast —
 // the shape the server serialises (contract › Population-based forecasting).
@@ -44,11 +44,11 @@ export const parseVaccineCourses = (json: string | null): VaccineCourse[] => {
 };
 
 // One arithmetic step of the calculation display: its figures substituted into
-// the formula, then the emphasised result (AC-PF7). The step's title and
-// formula wording are static locale keys held by the display component; this
-// pure function owns only the arithmetic so it can be tested against the AC's
-// exact figures. Rounding mirrors the reference: the loss factor to 3 dp, the
-// two dose totals to 2 dp, the units result the ceil of the stored total.
+// the formula, then the emphasised result (OMS-REG-REPL-11.7). The step's title
+// and formula wording are static locale keys held by the display component;
+// this pure function owns only the arithmetic so it can be tested against the
+// AC's exact figures. Rounding mirrors the reference: the loss factor to 3 dp,
+// the two dose totals to 2 dp, the units result the ceil of the stored total.
 export type ForecastStep = { substitution: string; result: string };
 
 export const forecastSteps = (

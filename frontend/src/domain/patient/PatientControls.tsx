@@ -11,7 +11,7 @@ import { InfoTooltip } from '../../ui/elements/feedback/InfoTooltip';
 import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
 import { Button } from '../../ui/elements/buttons/Button';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
-import { currentStoreName, hasPermission } from '../../store/storeContext';
+import { currentStoreName } from '../../store/storeContext';
 import { PatientSearch } from './PatientSearch';
 import { minimalPatientOption } from './patientResource';
 import {
@@ -53,13 +53,12 @@ export interface PatientCodeControlProps {
 }
 
 /**
- * The code and its Generate button (spec/patients § generating a code).
- * Generate is gated on DOCUMENT_MUTATE, not the patient-mutate permission
- * gating the rest of the form: the counter behind it is a program-number
- * allocation (contract › wire trap), so a patient-mutate-only user would just
- * get Forbidden. Without the permission the button is absent and the field
- * keeps the whole row — a dead control would suggest the shortcut is merely
- * unavailable right now, when the user can never have it.
+ * The code and its Generate button (spec/patients § generating a code). No
+ * permission gate of its own: allocatePatientNumber costs PATIENT_MUTATE, the
+ * very thing `disabled` already carries, so the button rides the form's own
+ * state (#268). A read-only viewer gets the button disabled rather than
+ * absent, like every other control on the form — the shortcut is unavailable
+ * for exactly the reason the field itself is.
  */
 export const PatientCodeControl = (
   props: PatientCodeControlProps
@@ -101,17 +100,15 @@ export const PatientCodeControl = (
           disabled={props.disabled}
           onInput={e => props.onChange(e.currentTarget.value)}
         />
-        <Show when={hasPermission('DOCUMENT_MUTATE')}>
-          <Button
-            class={styles.generate}
-            variant="secondary"
-            disabled={props.disabled}
-            loading={generating()}
-            onClick={onGenerate}
-          >
-            {t('label.generate')}
-          </Button>
-        </Show>
+        <Button
+          class={styles.generate}
+          variant="secondary"
+          disabled={props.disabled}
+          loading={generating()}
+          onClick={onGenerate}
+        >
+          {t('label.generate')}
+        </Button>
       </FormRow>
       <ConfirmDialog
         open={confirmRegenerate()}

@@ -22,7 +22,7 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
-interface SelectProps {
+export interface SelectProps {
   label: string;
   /**
    * Name the trigger via `aria-label` instead of rendering a visible label —

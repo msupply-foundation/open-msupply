@@ -31,7 +31,7 @@ const prescription = {
         item: { unitName: 'tablet' },
       },
       // A placeholder line — a prescribed quantity with nothing dispensed.
-      // Never a label (AC-Q1/V1).
+      // Never a label (OMS-REG-DIS-03.25/.55).
       {
         id: 'line-3',
         type: 'UNALLOCATED_STOCK',

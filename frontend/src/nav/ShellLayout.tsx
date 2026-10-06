@@ -7,7 +7,13 @@ import {
   Show,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import { Navigate, useLocation, useNavigate, useParams } from '@solidjs/router';
+import {
+  Navigate,
+  useBeforeLeave,
+  useLocation,
+  useNavigate,
+  useParams,
+} from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
@@ -34,13 +40,13 @@ import { createRegionDiagnostics } from '../plugins/diagnostics';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
 import { bindHostPathname } from './hostLocation';
 import { bindHostSearch } from './hostSearchParams';
+import { dispatchHostBeforeLeave } from './hostBeforeLeave';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
 import { StoreSwitchModal } from '../store/StoreSwitchModal';
-import { reloadForUpdate, updateAvailable } from '../appUpdate';
 
 // The sync modal is the sync-modal vertical's chunk — loaded on first open,
 // not with the shell (each vertical is its own lazy chunk).
@@ -102,6 +108,22 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // signal, so a Back button re-renders the screen reading it.
   bindHostSearch(() => location.search);
 
+  // Route leaves, forwarded to the SDK's `onBeforeLeave` listeners (a plugin
+  // page's leave guard) — subscribed once here, where the router is, so a
+  // plugin never meets `@solidjs/router` (src/nav/hostBeforeLeave.ts).
+  useBeforeLeave(event =>
+    dispatchHostBeforeLeave({
+      toPathname:
+        typeof event.to === 'string' ? event.to.split(/[?#]/)[0] : undefined,
+      fromPathname: event.from.pathname,
+      get defaultPrevented() {
+        return event.defaultPrevented;
+      },
+      preventDefault: () => event.preventDefault(),
+      retry: force => event.retry(force),
+    })
+  );
+
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
   // → 'inventory/stocktakes'. The empty (store root) path is Home's own.
   // Four things below read it — the menu highlight, the tab title, the
@@ -154,14 +176,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
-  // can go (spec/keyboard AC-KB4). The menu offers only what this user, in this
-  // store, can open — permission-withheld destinations are absent, not refused
-  // (spec/navigation § permission gates, D94; OMS-REG-NAV-01.18) — and the same
-  // gated set at every viewport width, phone included (spec/navigation §
-  // mobile-friendly). Memoised so the gated arrays — and the section objects
-  // rebuilt when a child is dropped — keep stable references; otherwise
-  // MenuBar's <For> would remount nav sections on every shell re-render
-  // (kdd/solid-reactivity-pitfalls).
+  // can go (spec/keyboard OMS-REG-KBD-01.5–.7). The menu offers only what this
+  // user, in this store, can open — permission-withheld destinations are
+  // absent, not refused (spec/navigation § permission gates, D94;
+  // OMS-REG-NAV-01.18) — and the same gated set at every viewport width, phone
+  // included (spec/navigation § mobile-friendly). Memoised so the gated arrays
+  // — and the section objects rebuilt when a child is dropped — keep stable
+  // references; otherwise MenuBar's <For> would remount nav sections on every
+  // shell re-render (kdd/solid-reactivity-pitfalls).
   // Plugin sections join the UPPER list, each placed by its declared anchor
   // against the host's published section ids — default the end of the list,
   // above the pinned Catalogue/Manage/Settings/Help cluster (sdk-contract §
@@ -260,12 +282,6 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
     setStoreEditOpen(true);
   };
 
-  // Update prompt (spec/chrome § update prompt, OMS-REG-FTR-02.15/.16): the
-  // footer cell only OFFERS the reload — reloading discards anything the user
-  // is part-way through, so a confirm gates it. Cancel leaves the session
-  // untouched and the cell stays; the app never reloads on its own.
-  const [updateConfirmOpen, setUpdateConfirmOpen] = createSignal(false);
-
   return (
     <>
       <AppShell
@@ -294,8 +310,6 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
            re-colours the bar without a reload. */
         footerColour={storeCustomColour()}
         isCentralServer={isCentralServer()}
-        updateAvailable={updateAvailable()}
-        onUpdateClick={() => setUpdateConfirmOpen(true)}
       >
         <KeyboardHost
           onSyncNow={syncNow}
@@ -351,14 +365,6 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         title={t('heading.logout-confirm')}
         message={t('messages.logout-confirm')}
         onConfirm={logoutAndReset}
-      />
-      <ConfirmDialog
-        open={updateConfirmOpen()}
-        onClose={() => setUpdateConfirmOpen(false)}
-        title={t('label.new-version-available')}
-        message={t('messages.new-version-reload-confirm')}
-        confirmLabel={t('button.refresh')}
-        onConfirm={reloadForUpdate}
       />
       <Show when={storeEditEverOpened()}>
         <StoreEditorModal

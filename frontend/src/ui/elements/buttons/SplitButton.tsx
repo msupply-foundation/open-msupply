@@ -106,7 +106,7 @@ interface SplitButtonProps {
   /**
    * The key binding this control answers (spec/keyboard KB-H1, S2) — the same
    * one prop `Button` takes, driving both `aria-keyshortcuts` and the hint badge
-   * so the two cannot drift (AC-KB15).
+   * so the two cannot drift (OMS-REG-KBD-01.26).
    *
    * It lands on the MAIN half, which is what the binding runs: the prescription
    * detail's `Alt+L` prints labels (the main action) and `Alt+V` confirms the
@@ -181,7 +181,7 @@ export const SplitButton = (props: SplitButtonProps) => {
         aria-busy={props.loading || undefined}
         aria-live="polite"
         // The ARIA grammar, not the platform spelling — the badge below renders
-        // the human form from the same value (KB-M1, AC-KB15).
+        // the human form from the same value (KB-M1, OMS-REG-KBD-01.26).
         aria-keyshortcuts={
           props.shortcut ? ariaKeyshortcuts(props.shortcut) : undefined
         }

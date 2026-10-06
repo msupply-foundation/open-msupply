@@ -69,8 +69,10 @@ export interface SlotContext {
   storeId: string | undefined;
   /**
    * The entered store's code (e.g. 'GRY'), the part of a generated identifier
-   * that names the store it was issued at; undefined until the store
-   * resolves.
+   * or record key that names the store it was issued at (a form's patient
+   * code, the Afghanistan Daily Tally's cohort patient code); undefined until
+   * the store resolves. Rides the login response's store list, so it costs no
+   * query.
    */
   storeCode: string | undefined;
   /**
@@ -91,6 +93,11 @@ export interface SlotContext {
    */
   storeMode: SlotStoreMode | undefined;
   storePreferences: SlotStorePreferences;
+  /**
+   * The logged-in user's id, for a row a plugin attributes to its author;
+   * undefined before the session resolves.
+   */
+  userId: string | undefined;
 }
 
 // ── Contributions ───────────────────────────────────────────────────────────
@@ -277,7 +284,7 @@ export interface ColumnDeclaration<Row, Data = unknown> {
   loadData?: (rows: readonly Row[]) => Promise<Map<string, Data>>;
   /**
    * Declares the column sortable (sdk-contract § the column slot,
-   * AC-PLUG-K7): the value the host orders rows by when the user sorts on
+   * OMS-REG-PLG-02.10): the value the host orders rows by when the user sorts on
    * it, evaluated over the table's FULL row set — `data` is that row's
    * `loadData` entry, loaded for the whole set. Numbers compare numerically,
    * strings by locale; a `null`/`undefined` value sorts last in either
@@ -408,8 +415,10 @@ export type InternalOrderSidePanelSectionProps = {
  *
  * - `internalOrders.recentStocktake` — the store-wide recent-stocktake
  *   warning at the internal-orders New-order action (internal-orders rules §
- *   creation); consulted when New order is invoked with the warn preference
- *   on.
+ *   creation). NOT consulted: no host surface asks a suppression, so a
+ *   contribution naming this id loads and has no effect. The id stays
+ *   published and validated, and the slot keeps its contract, so a surface
+ *   that wants to be suppressible only has to start asking.
  */
 export const HOST_WARNING_IDS = ['internalOrders.recentStocktake'] as const;
 
@@ -890,7 +899,7 @@ export interface PluginPage {
   labelKey: PluginLocaleKey;
   /**
    * Loads the page's BODY component: called on first navigation to the page,
-   * never at startup (AC-PLUG-P2), behind the host's route-level pending
+   * never at startup (OMS-REG-PLG-04.4/.5), behind the host's route-level pending
    * boundary — `load: () => import('./CountPage')`. The host supplies the app
    * frame and page frame (header, breadcrumb, the menu); the component owns
    * only the body, receives no props, and fetches its own data through the
@@ -909,7 +918,7 @@ export interface PluginPage {
   /**
    * The permissions this page requires — ALL of them, as
    * {@link SlotContext.permissions}' own server names. The permission-class
-   * gate, and the one condition behind both doors (AC-PLUG-P1): without them
+   * gate, and the one condition behind both doors (OMS-REG-PLG-04.1): without them
    * the entries are absent, and the page's URL shows the host's no-permission
    * notice in place of the screen. Composed with its plugin nav section's,
    * where the page is placed in one.
@@ -953,6 +962,36 @@ export interface PluginNavSection {
   permissions?: readonly string[];
 }
 
+// ── The configuration contribution ──────────────────────────────────────────
+// NOT a slot (sdk-contract § the configuration contribution): one optional
+// settings editor per plugin, hosted by Manage › Plugins on the central server.
+// The host owns the stored record — it reads it, seeds the editor, holds the
+// draft and writes the whole value on Save; the editor only edits.
+
+/**
+ * What the host hands a configuration editor. `value` is the host's draft and
+ * updates in place as the editor reports changes; the editor is never
+ * remounted to receive one. A `type`, as every slot-props DTO here is, so it
+ * meets the host outlet's `Record<string, unknown>` bound.
+ */
+export type ConfigurationEditorProps<Config = unknown> = {
+  readonly value: Config;
+  /** Report the WHOLE new value — the host stores exactly what it is given. */
+  readonly onChange: (next: Config) => void;
+};
+
+/**
+ * A plugin's settings editor. `Config` defaults to `unknown` for the same
+ * reason a column's `Data` does: the stored record is installation data that
+ * may predate this build, so an editor narrows what it is handed rather than
+ * trusting a shape. Whatever it reports is stored as JSON.
+ */
+export interface PluginConfiguration<Config = unknown> {
+  /** What the editor starts from when nothing (readable) is stored. */
+  defaultConfig: Config;
+  Editor: Component<ConfigurationEditorProps<Config>>;
+}
+
 // ── The plugin module ───────────────────────────────────────────────────────
 
 /** A flat message catalogue — `key` → template, `{{ token }}` interpolated. */
@@ -982,6 +1021,8 @@ export interface PluginDefinition {
   translations?: Partial<Record<SupportedLocale, PluginMessages>>;
   /** Built-in dashboard pieces to hide by published id (built-ins only). */
   suppress?: readonly DashboardPieceId[];
+  /** The plugin's settings editor, shown in Manage › Plugins. */
+  configuration?: PluginConfiguration;
 }
 
 /**

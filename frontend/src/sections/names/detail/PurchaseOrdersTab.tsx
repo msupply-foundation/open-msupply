@@ -22,13 +22,13 @@ import { purchaseOrderAreaPath } from '../list/namesListLogic';
 import { poStatusLabel } from '@/sections/purchase-orders/purchaseOrderStatus';
 
 // S4 Purchase orders tab — a read-only reference list of the supplier's
-// purchase orders (AC-N26). The DATA is owned by the purchase-order vertical
-// (contract › record detail: cross-vertical, named not owned); this tab only
-// lists them, and selecting a row opens the purchase-order area. The PO
-// vertical isn't built in this scope, so a row navigates to the PO area landing
-// (deep-link to a specific PO awaits that vertical — see BUILD_REPORT). It is
-// the standard data table (with its view-control toolbar), matching the list
-// views (spec/ui-standards/ detail-views › tabs).
+// purchase orders (OMS-REG-REPL-08.23). The DATA is owned by the purchase-order
+// vertical (contract › record detail: cross-vertical, named not owned); this
+// tab only lists them, and selecting a row opens the purchase-order area. The
+// PO vertical isn't built in this scope, so a row navigates to the PO area
+// landing (deep-link to a specific PO awaits that vertical — see BUILD_REPORT).
+// It is the standard data table (with its view-control toolbar), matching the
+// list views (spec/ui-standards/ detail-views › tabs).
 
 type PoRow = SupplierPurchaseOrdersResult['purchaseOrders']['nodes'][number];
 
@@ -121,7 +121,7 @@ export const PurchaseOrdersTab: Component<{ supplierName: string }> = props => {
           : undefined
       }
       // Selecting a purchase order opens it in the purchase-order area
-      // (AC-N26).
+      // (OMS-REG-REPL-08.23).
       onRowClick={() => navigate(purchaseOrderAreaPath(params.storeId))}
     />
   );

@@ -1,5 +1,5 @@
 import { graphqlFetch } from '@/api/graphql';
-import { getPlural, t, tPlural } from '@/intl';
+import { t } from '@/intl';
 import {
   parseVaccineCourses,
   type VaccineCourse,
@@ -43,8 +43,8 @@ export type EditorLine = {
   remainingQuantityToSupply: number;
   alreadyIssued: number;
   forecastTotalUnits: number | null;
-  /** The forecast's per-course breakdown (AC-LE13); empty on a forecast-less
-   *  line. */
+  /** The forecast's per-course breakdown (OMS-REG-DIST-05.35); empty on a
+   *  forecast-less line. */
   vaccineCourses: VaccineCourse[];
   /** The customer's volume snapshot on a storage-restricted transferred line
    *  (rules › volume guidance); null on a manual line. */
@@ -94,22 +94,6 @@ export const figureInMode = (
   mode: EntryMode,
   packSize: number
 ): number => Math.ceil(unitsToMode(units, mode, packSize));
-
-// The active mode's measure word — the item's unit name (falling back to
-// "unit") or "pack", inflected for the count it suffixes (the same shape as
-// the internal-order editor's modeWord). An item's own unit name inflects via
-// getPlural (reference-app parity — English only; other languages pass
-// through unchanged).
-export const modeWord = (
-  mode: EntryMode,
-  unitName: string | null,
-  count = 2
-): string => {
-  if (mode === 'packs') return tPlural('label.packs-plural', count);
-  return unitName
-    ? getPlural(unitName, count)
-    : tPlural('label.units-plural', count);
-};
 
 // --- Add-mode item preview ----------------------------------------------------
 
@@ -234,7 +218,8 @@ const mapUpdateError = (
     case 'CannotEditRequisition':
       return { kind: 'error', message: t('error.cannot-edit-requisition') };
     case 'RequisitionReasonNotProvided':
-      // The variance-reason guard (AC-LE8) — the editor flags the Reason field.
+      // The variance-reason guard (OMS-REG-DIST-06.34) — the editor flags the
+      // Reason field.
       return {
         kind: 'error',
         message: t('error.provide-reason-requisition'),

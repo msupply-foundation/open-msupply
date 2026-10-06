@@ -11,7 +11,7 @@ import { usePortalMount } from '../../utils/portalMount';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import styles from './MultiSelect.module.css';
 
-interface MultiSelectProps<T> {
+export interface MultiSelectProps<T> {
   label: string;
   items: T[];
   itemToString: (item: T) => string;

@@ -808,7 +808,7 @@ const StocktakeLineEditContent = (
    * character only where that character is not itself valid input to its fields;
    * `+` is safe among quantity, price, and date fields for exactly that reason."
    * That safety is a property of THIS surface's fields, not a general one, which
-   * is why the binding is declared here and nowhere else (AC-KB45).
+   * is why the binding is declared here and nowhere else (OMS-REG-KBD-01.30).
    *
    * Unlisted: the palette already offers the action under its own name via the
    * header control, so a second entry would be noise. Disabled until an item is
@@ -1808,6 +1808,7 @@ const StocktakeLineEditContent = (
               bordered
               size="small"
               icon={<CopyIcon />}
+              data-testid="duplicate-batch-button"
               label={t('label.duplicate-batch')}
               onClick={() => duplicateLine(line)}
             />
@@ -1816,6 +1817,7 @@ const StocktakeLineEditContent = (
               size="small"
               variant="danger"
               icon={<TrashIcon />}
+              data-testid="remove-batch-button"
               label={t('button.delete')}
               onClick={() => removeLine(line)}
             />
@@ -1973,7 +1975,7 @@ const StocktakeLineEditContent = (
                   undiscoverable from the UI. Naming it inline was one of the two
                   presentations spec/keyboard ui-surface S2 allows; the other is a
                   `shortcut` badge, which is the way to bring it back if the
-                  binding should be visible again. AC-KB15 forbids only having
+                  binding should be visible again. OMS-REG-KBD-01.26 forbids only having
                   BOTH, so neither is also permitted. */}
               {t('label.add-batch')}
             </Button>
@@ -1983,7 +1985,12 @@ const StocktakeLineEditContent = (
       actionsLead={
         <Show when={footerSummary()}>
           {summary => (
-            <Alert severity={summary().severity}>{summary().message}</Alert>
+            <Alert
+              severity={summary().severity}
+              testId="stocktake-line-summary"
+            >
+              {summary().message}
+            </Alert>
           )}
         </Show>
       }
@@ -2035,6 +2042,12 @@ const StocktakeLineEditContent = (
           showFullScreen={false}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
+          configIsDefault={tableConfig.isConfigDefault()}
+          onSaveGlobalDefault={
+            tableConfig.canSaveGlobalDefault()
+              ? tableConfig.saveGlobalTableConfig
+              : undefined
+          }
           controlsMount={tableControls()}
           emptyMessage={t('label.add-new-line')}
           // Controls hold their line when a cell grows a message beneath it —

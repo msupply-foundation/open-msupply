@@ -58,13 +58,13 @@ import { createCodeTakenCheck } from '../../../domain/patient/patientCode';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
 import { FetchFromCentralModal } from './FetchFromCentralModal';
 
-// S2 — the create wizard (spec/patients FL2). A blocking modal with a
+// S2 — the create wizard (spec/patients). A blocking modal with a
 // three-step flow: ① details + search → ② the mandatory local + central
 // duplicate check → ③ the full plain-path details form. A fresh patient
-// identifier is minted when the modal opens (AC-C5), so a duplicate-id
-// rejection is unreachable. The step rail is a section-local presentational
-// stepper — the "wizard stepper" role is not in the component registry (see the
-// implementation flags).
+// identifier is minted when the modal opens (OMS-REG-DIS-01.4/.7/.32), so a
+// duplicate-id rejection is unreachable. The step rail is a section-local
+// presentational stepper — the "wizard stepper" role is not in the component
+// registry (see the implementation flags).
 
 type Step = 1 | 2 | 3;
 
@@ -106,9 +106,9 @@ export interface CreatePatientModalProps {
   /**
    * When set, the modal is being used to create-and-return a patient for
    * another surface (e.g. the prescription create dialog — spec/prescriptions
-   * AC-C5): on a successful create it calls this with the new patient and
-   * closes, INSTEAD of navigating to the patient detail. Omit for the
-   * standalone list flow (navigate to the new patient).
+   * OMS-REG-DIS-01.4/.7/.32): on a successful create it calls this with the new
+   * patient and closes, INSTEAD of navigating to the patient detail. Omit for
+   * the standalone list flow (navigate to the new patient).
    */
   onCreated?: (patient: PatientOption) => void;
 }
@@ -140,13 +140,15 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     patientId: () => undefined,
   });
 
-  // Details-step validation (AC-C3): required errors stay quiet until the first
-  // Save attempt, then surface per field and as the summary below the form.
+  // Details-step validation (OMS-REG-DIS-01.5/.6/.30): required errors stay
+  // quiet until the first Save attempt, then surface per field and as the
+  // summary below the form.
   const validation = createFormValidation(() =>
     patientFieldErrors(draft, codeCheck.taken())
   );
 
-  // Mint a fresh identifier + reset the flow each time the modal opens (AC-C5).
+  // Mint a fresh identifier + reset the flow each time the modal opens
+  // (OMS-REG-DIS-01.4/.7/.32).
   createEffect(() => {
     if (props.open) {
       setStep(1);
@@ -169,8 +171,9 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const canSearch = () =>
     search.firstName.trim() !== '' && search.lastName.trim() !== '';
 
-  // Local + central duplicate check (AC-C1/S2). Central honours only code /
-  // first / last / dob (AC-S3); central-unreachable is decoded to a banner.
+  // Local + central duplicate check (OMS-REG-DIS-01.8–.10/.28/.38). Central
+  // honours only code / first / last / dob (OMS-REG-DIS-01.39);
+  // central-unreachable is decoded to a banner.
   const runSearch = async () => {
     setSearching(true);
     setCentralUnreachable(false);
@@ -197,8 +200,8 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     setStep(2);
   };
 
-  // De-dup central against local (AC-S2): a central candidate already present
-  // locally is not shown a second time.
+  // De-dup central against local (OMS-REG-DIS-01.9/.10/.38): a central
+  // candidate already present locally is not shown a second time.
   const matches = createMemo<MatchRow[]>(() => {
     const localIds = new Set(localMatches().map(p => p.id));
     const local: MatchRow[] = localMatches().map(p => ({
@@ -285,8 +288,8 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
       setSaveError(outcome.message);
       return;
     }
-    // Create-and-return (AC-C5): hand the new patient back to the caller and
-    // close, rather than navigating away to its detail.
+    // Create-and-return (OMS-REG-DIS-01.4/.7/.32): hand the new patient back to
+    // the caller and close, rather than navigating away to its detail.
     if (props.onCreated) {
       const name = [draft.lastName, draft.firstName].filter(Boolean).join(', ');
       props.onClose();

@@ -64,7 +64,10 @@ vi.mock('../auth/authContext', async () => {
     equals: sameFetchedValue,
   });
   edges.auth.setUser = value => setUser(() => value);
-  return { authUser: user };
+  return {
+    authUser: user,
+    currentUserId: () => undefined,
+  };
 });
 vi.mock('../api/graphql', () => ({ graphqlFetch: edges.graphqlFetch }));
 

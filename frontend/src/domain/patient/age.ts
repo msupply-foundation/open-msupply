@@ -4,8 +4,8 @@ import { isoDateToDate } from '../../ui/elements/inputs/dateTimeConvert';
 // A patient's age and date of birth (spec/patients rules › age), shared by
 // the plain-path patient form and the document-path patient fields.
 
-// Age in COMPLETED CALENDAR YEARS derived from date of birth (AC-M3). Undefined
-// when there is no (or a future) dob.
+// Age in COMPLETED CALENDAR YEARS derived from date of birth
+// (OMS-REG-DIS-01.26). Undefined when there is no (or a future) dob.
 //
 // Compares CALENDAR FIELDS, not instants: subtract the years, then take one
 // back if this year's birthday hasn't come round yet. Elapsed-time arithmetic

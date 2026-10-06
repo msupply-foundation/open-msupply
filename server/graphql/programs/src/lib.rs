@@ -21,9 +21,11 @@ use graphql_types::types::program_event::ProgramEventSortInput;
 use graphql_types::types::vaccination::VaccinationNode;
 use graphql_types::types::PeriodFilterInput;
 use graphql_types::types::PeriodsResponse;
+use mutations::allocate_number::allocate_patient_number;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
+use mutations::allocate_number::NumberNode;
 use mutations::contact_trace::insert::insert_contact_trace;
 use mutations::contact_trace::insert::InsertContactTraceInput;
 use mutations::contact_trace::insert::InsertContactTraceResponse;
@@ -447,6 +449,16 @@ impl ProgramsMutations {
         input: AllocateProgramNumberInput,
     ) -> Result<AllocateProgramNumberResponse> {
         allocate_program_number(ctx, store_id, input)
+    }
+
+    /// Allocate the next patient code number for the store. Requires only the
+    /// patient-mutate permission — see allocate_patient_number (#268).
+    pub async fn allocate_patient_number(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<NumberNode> {
+        allocate_patient_number(ctx, store_id)
     }
 
     pub async fn insert_contact_trace(
