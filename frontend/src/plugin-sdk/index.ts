@@ -326,6 +326,14 @@ export type {
 // tested functions, so a one-step move is never re-derived as index maths.
 // Already in the eager graph above — ReorderableList imports them.
 export { moveTo, reorderBy } from '../ui/elements/inputs/reorderLogic';
+// And the focus half of the same move: a reorder moves the row's DOM node and
+// the browser blurs the button that caused it, so a surface with move controls
+// of its own needs the list's refocus contract too, not only its arithmetic.
+export { moveFocus } from '../ui/elements/inputs/moveFocus';
+export type {
+  MoveFocus,
+  MoveButtonElement,
+} from '../ui/elements/inputs/moveFocus';
 
 // ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
 /*
