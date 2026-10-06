@@ -270,6 +270,10 @@ export { HStack } from '../ui/layout/Stack/HStack';
 export type { HStackProps } from '../ui/layout/Stack/HStack';
 export { DetailCard } from '../ui/layout/Detail/DetailCard';
 export type { DetailCardProps } from '../ui/layout/Detail/DetailCard';
+// The recessed grouping panel: Quick Entry's record strip (plugins/afghanistan
+// ui-surface.md § S3) is one. Hand-rolled, pure CSS over tokens.
+export { InsetPanel } from '../ui/layout/InsetPanel/InsetPanel';
+export type { InsetPanelProps } from '../ui/layout/InsetPanel/InsetPanel';
 export { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
 export type { ContentFooterProps } from '../ui/layout/ContentFooter/ContentFooter';
 export { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
