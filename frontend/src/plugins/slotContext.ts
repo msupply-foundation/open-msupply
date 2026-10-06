@@ -5,6 +5,7 @@ import {
   storeContext,
   type StoreMode,
 } from '../store/storeContext';
+import { currentUserId, storeCodeOf } from '../auth/authContext';
 
 // The host's wire `storeMode` → the SDK's domain word. A total map, keyed off
 // the host's own generated union, so a mode added to the schema fails THIS
@@ -32,8 +33,13 @@ export const slotContext = (): SlotContext => {
   const context = storeContext();
   const me = context?.me;
   const mode = currentStoreMode();
+  const storeId = currentStoreId();
   return {
-    storeId: currentStoreId(),
+    storeId,
+    // Both ride the login response (authContext), like the store mode below:
+    // no query of their own, undefined while the session is unresolved.
+    storeCode: storeId === undefined ? undefined : storeCodeOf(storeId),
+    userId: currentUserId(),
     // Passed through as the wire's own `UserPermission` values (SCREAMING_CASE)
     // — not remapped to a parallel vocabulary (kdd/type-safety). The query is
     // already scoped to the entered store, so every node's list applies.

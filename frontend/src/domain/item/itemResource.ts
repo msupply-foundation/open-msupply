@@ -21,11 +21,11 @@ export type ItemOption = {
   isVaccine: boolean;
   /** The item's configured doses-per-unit — the doses-display multiplier. */
   doses: number;
-  /** Default pack size — a new inbound line's starting pack size (AC-H6). */
+  /** Default pack size — a new inbound line's starting pack size (OMS-REG-REPL-09.10/.11). */
   defaultPackSize: number;
   /**
    * The store's default sell price per pack (0 when no store properties) —
-   * prefills a new inbound line's cost AND sell price (AC-H6).
+   * prefills a new inbound line's cost AND sell price (OMS-REG-REPL-09.10/.11).
    */
   defaultSellPricePerPack: number;
 };

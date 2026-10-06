@@ -15,6 +15,9 @@ import { lazy } from 'solid-js';
 import type { ConfirmOnLeaveOptions } from '../domain/confirmOnLeave/createConfirmOnLeave';
 import type { Component, JSX } from 'solid-js';
 import type { DataTableProps } from '../ui/elements/table/DataTable';
+import type { DialogProps } from '../ui/elements/feedback/Dialog';
+import type { ConfirmDialogProps } from '../ui/elements/feedback/ConfirmDialog';
+import type { RecordLinkProps } from './recordLink';
 import type {
   FilterBarProps,
   FilterDateRangeProps,
@@ -98,6 +101,30 @@ export const FilterDateRange: Component<FilterDateRangeProps> = lazy(() =>
   import('../ui/elements/selectors/FilterBar').then(m => ({
     default: m.FilterDateRange,
   }))
+);
+
+/*
+ * The modal dialogs (ui-standards § menus, popovers & modals) — the
+ * Afghanistan Daily Tally's submit confirmation and its leave prompt
+ * (plugins/afghanistan ui-surface § S7, S10). Lazy by kdd/bundling's rule:
+ * a dialog is heavy chrome a plugin-free deployment never opens from the
+ * SDK. A dialog mounts only while open, so it is never the first render of
+ * an already-open screen's Suspense boundary — the one case lazy is unsafe.
+ */
+export const Dialog: Component<DialogProps> = lazy(() =>
+  import('../ui/elements/feedback/Dialog').then(m => ({ default: m.Dialog }))
+);
+
+export const ConfirmDialog: Component<ConfirmDialogProps> = lazy(() =>
+  import('../ui/elements/feedback/ConfirmDialog').then(m => ({
+    default: m.ConfirmDialog,
+  }))
+);
+
+// Lazy so the router stays out of the eager SDK graph (its module reads
+// `window`).
+export const RecordLink: Component<RecordLinkProps> = lazy(() =>
+  import('./recordLink').then(m => ({ default: m.RecordLink }))
 );
 
 /*

@@ -107,8 +107,8 @@ describe('the tier gate (KB-1)', () => {
     const { preventDefault } = press({ code: 'KeyN', alt: true });
 
     expect(run).not.toHaveBeenCalled();
-    // AC-KB1: the action does not run AND the keystroke reaches the field, so
-    // the dispatcher must not swallow it either.
+    // OMS-REG-KBD-01.1: the action does not run AND the keystroke reaches the
+    // field, so the dispatcher must not swallow it either.
     expect(preventDefault).not.toHaveBeenCalled();
   });
 
@@ -129,7 +129,8 @@ describe('the tier gate (KB-1)', () => {
     activeElement = textField as unknown as Element;
     press({ code: 'KeyS', alt: true });
 
-    // AC-KB2: a user who has just typed a value saves without leaving the field.
+    // OMS-REG-KBD-01.2/.3: a user who has just typed a value saves without
+    // leaving the field.
     expect(save).toHaveBeenCalledOnce();
   });
 
@@ -152,7 +153,7 @@ describe('yielding to the rungs above', () => {
     // A slide-over, a table clearing row focus, or Kobalte's picker closing.
     press({ key: 'Escape', consumed: true });
 
-    // AC-KB17/AC-KB18: no rung below the one that consumed it also acts.
+    // OMS-REG-KBD-02.2–.4: no rung below the one that consumed it also acts.
     expect(navigateUp).not.toHaveBeenCalled();
   });
 

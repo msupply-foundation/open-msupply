@@ -38,7 +38,7 @@ const host = (overrides: Partial<FrontEndHost> = {}): FrontEndHost => ({
   ...overrides,
 });
 
-describe('isCompleteAnnouncement (AC-DT7)', () => {
+describe('isCompleteAnnouncement (OMS-REG-DESK-01.10/.11)', () => {
   it('accepts a complete announcement', () => {
     expect(isCompleteAnnouncement(host())).toBe(true);
   });
@@ -59,12 +59,12 @@ describe('isCompleteAnnouncement (AC-DT7)', () => {
 });
 
 describe('mergeServers', () => {
-  it('accumulates fresh servers (AC-DT5)', () => {
+  it('accumulates fresh servers (OMS-REG-DESK-01.6/.7)', () => {
     const merged = mergeServers([host()], [host({ hardwareId: 'HW-B' })]);
     expect(merged.map(serverKey)).toEqual(['HW-A:8000', 'HW-B:8000']);
   });
 
-  it('never lists the same server twice (AC-DT8)', () => {
+  it('never lists the same server twice (OMS-REG-DESK-01.12)', () => {
     const merged = mergeServers(
       [host()],
       [
@@ -82,7 +82,7 @@ describe('mergeServers', () => {
     expect(merged).toHaveLength(2);
   });
 
-  it('drops incomplete announcements while keeping complete ones (AC-DT7)', () => {
+  it('drops incomplete announcements while keeping complete ones (OMS-REG-DESK-01.10/.11)', () => {
     const merged = mergeServers(
       [],
       [host({ hardwareId: '' }), host({ hardwareId: 'HW-B' })]
@@ -112,7 +112,7 @@ describe('frontEndHostDisplay', () => {
   });
 });
 
-describe('parseManualServer (AC-DT14)', () => {
+describe('parseManualServer (OMS-REG-DESK-01.18/.19)', () => {
   it('parses a full URL', () => {
     expect(parseManualServer('https://10.1.1.5:8000', 'UUID-1')).toEqual({
       protocol: 'https',
@@ -183,27 +183,27 @@ describe('autoconnectTarget', () => {
   };
   const previous = host();
 
-  it('goes to the remembered server without asking (AC-DT1)', () => {
+  it('goes to the remembered server without asking (OMS-REG-DESK-01.1)', () => {
     expect(autoconnectTarget(flags, previous)).toBe(previous);
   });
 
-  it('a first launch stays on discovery (AC-DT3)', () => {
+  it('a first launch stays on discovery (OMS-REG-DESK-01.4)', () => {
     expect(autoconnectTarget(flags, undefined)).toBeUndefined();
   });
 
-  it('does not reconnect after the launch check failed (AC-DT2)', () => {
+  it('does not reconnect after the launch check failed (OMS-REG-DESK-01.2/.3)', () => {
     expect(
       autoconnectTarget({ ...flags, timedout: true }, previous)
     ).toBeUndefined();
   });
 
-  it('does not bounce back after an explicit return to discovery (AC-DT16)', () => {
+  it('does not bounce back after an explicit return to discovery (OMS-REG-DESK-01.21)', () => {
     expect(
       autoconnectTarget({ ...flags, autoconnect: false }, previous)
     ).toBeUndefined();
   });
 
-  it('a standalone install always uses its own server (AC-DT20)', () => {
+  it('a standalone install always uses its own server (OMS-REG-DESK-01.32)', () => {
     expect(autoconnectTarget({ ...flags, standalone: true }, previous)).toBe(
       STANDALONE_LOCAL_SERVER
     );
@@ -213,7 +213,7 @@ describe('autoconnectTarget', () => {
   });
 });
 
-describe('discoveryReturnAddress (AC-DT16, AC-DT20)', () => {
+describe('discoveryReturnAddress (OMS-REG-DESK-01.21, OMS-REG-DESK-01.32)', () => {
   const location = {
     origin: 'http://localhost:3007',
     pathname: '/discovery.html',
@@ -225,13 +225,13 @@ describe('discoveryReturnAddress (AC-DT16, AC-DT20)', () => {
     canHostServer: false,
   };
 
-  it('returns without auto-connection (AC-DT16)', () => {
+  it('returns without auto-connection (OMS-REG-DESK-01.21)', () => {
     expect(discoveryReturnAddress(location, flags)).toBe(
       'http://localhost:3007/discovery.html?autoconnect=false'
     );
   });
 
-  it('carries the standalone mode, so the way back never offers the chooser (AC-DT20)', () => {
+  it('carries the standalone mode, so the way back never offers the chooser (OMS-REG-DESK-01.32)', () => {
     expect(
       discoveryReturnAddress(location, { ...flags, standalone: true })
     ).toBe(
@@ -311,13 +311,14 @@ describe('shouldAskInstallMode (OMS-REG-INS-01.40, .41, .42, .43, .45)', () => {
   });
 
   it('never asks where the machine cannot be the server', () => {
-    // every desktop client install: it goes straight to the list (AC-DT3)
+    // every desktop client install: it goes straight to the list
+    // (OMS-REG-DESK-01.4)
     expect(
       shouldAskInstallMode({ ...flags, canHostServer: false }, undefined)
     ).toBe(false);
   });
 
-  it('never asks a standalone install — it decided for itself (AC-DT20)', () => {
+  it('never asks a standalone install — it decided for itself (OMS-REG-DESK-01.32)', () => {
     expect(
       shouldAskInstallMode({ ...flags, standalone: true }, undefined)
     ).toBe(false);
@@ -361,7 +362,7 @@ describe('shouldAskInstallMode (OMS-REG-INS-01.40, .41, .42, .43, .45)', () => {
   });
 });
 
-describe('effectiveFlags (OMS-REG-INS-01.41/.44, AC-DT20)', () => {
+describe('effectiveFlags (OMS-REG-INS-01.41/.44, OMS-REG-DESK-01.32)', () => {
   const flags = {
     autoconnect: true,
     timedout: false,
@@ -381,14 +382,14 @@ describe('effectiveFlags (OMS-REG-INS-01.41/.44, AC-DT20)', () => {
     expect(effectiveFlags(flags, undefined)).toBe(flags);
   });
 
-  it('never rewrites a standalone install — it decided for itself (AC-DT20)', () => {
+  it('never rewrites a standalone install — it decided for itself (OMS-REG-DESK-01.32)', () => {
     const standalone = { ...flags, standalone: true, autoconnect: false };
     expect(effectiveFlags(standalone, 'client', true)).toBe(standalone);
   });
 
   it('a deliberate return does not auto-connect to the role already stored', () => {
-    // AC-DT16: the user asked to come back, so nothing bounces them to the
-    // server they just left — including this device's own.
+    // OMS-REG-DESK-01.21: the user asked to come back, so nothing bounces them
+    // to the server they just left — including this device's own.
     expect(
       effectiveFlags({ ...flags, autoconnect: false }, 'server').autoconnect
     ).toBe(false);
@@ -529,14 +530,14 @@ describe('adoptLegacyPreferences (Android upgrades)', () => {
   });
 });
 
-describe('previous server persistence (AC-DT13–15)', () => {
+describe('previous server persistence (OMS-REG-DESK-01.17–.20)', () => {
   it('round-trips the last successful connection', () => {
     const storage = memoryStorage();
     recordPreviousServer(host(), storage);
     expect(readPreviousServer(storage)).toEqual(host());
   });
 
-  it('a later record wins — chosen or manual alike (AC-DT15)', () => {
+  it('a later record wins — chosen or manual alike (OMS-REG-DESK-01.20)', () => {
     const storage = memoryStorage();
     recordPreviousServer(host(), storage);
     const manual = parseManualServer('https://10.9.9.9:8000', 'U2');
@@ -582,7 +583,7 @@ const info = (overrides: Partial<HostInfo> = {}): HostInfo => ({
   ...overrides,
 });
 
-describe('isLocalServer (spec/android § server discovery, AC-DT5)', () => {
+describe('isLocalServer (spec/android § server discovery, OMS-REG-DESK-01.6/.7)', () => {
   it('marks a server by hardware id, never by address', () => {
     // Announced at loopback — an address compare would call this remote.
     expect(
@@ -620,7 +621,7 @@ describe('isLocalServer (spec/android § server discovery, AC-DT5)', () => {
   });
 });
 
-describe('toFrontEndHost (AC-DT22 address rewriting)', () => {
+describe('toFrontEndHost (OMS-REG-DESK-01.34 address rewriting)', () => {
   const local = { hardwareId: 'HW-THIS' };
 
   it("rewrites this machine's server to an address other machines can reach", () => {
@@ -675,12 +676,12 @@ describe('server URLs (single source for every host)', () => {
   // root is the same catch-all route the hand-off below then navigates to. A
   // socket that answers where no app is served — the server's own discovery
   // port, at port + 1 — is what this plus the host's successful-status rule
-  // refuses (AC-DT25).
-  it('probes where the app should be served (AC-DT12/25)', () => {
+  // refuses (OMS-REG-DESK-01.26–.28).
+  it('probes where the app should be served (OMS-REG-DESK-01.16/25)', () => {
     expect(probeUrl(host())).toBe('https://192.168.1.10:8000/');
   });
 
-  it('connects to the hand-off path (AC-DT19/23)', () => {
+  it('connects to the hand-off path (OMS-REG-DESK-01.31/23)', () => {
     expect(connectUrl(host(), 'login?x=1')).toBe(
       'https://192.168.1.10:8000/login?x=1'
     );
@@ -702,12 +703,12 @@ describe('connectToServer (probe → record → navigate)', () => {
     };
   };
 
-  // Also AC-DT25: an address that answers with an error is a failed probe as
-  // far as the page is concerned — the host reports the status (hostContract.ts
-  // § probe), so "answered but not an app" arrives here as plain false and
-  // takes this same path: nothing remembered, so no later launch can be sent
-  // back to it.
-  it('a failed probe leaves the window here: no record, no navigation (AC-DT12/25)', async () => {
+  // Also OMS-REG-DESK-01.26–.28: an address that answers with an error is a
+  // failed probe as far as the page is concerned — the host reports the status
+  // (hostContract.ts § probe), so "answered but not an app" arrives here as
+  // plain false and takes this same path: nothing remembered, so no later
+  // launch can be sent back to it.
+  it('a failed probe leaves the window here: no record, no navigation (OMS-REG-DESK-01.16/25)', async () => {
     const storage = memoryStorage();
     const navigate = vi.fn();
     const connected = await connectToServer(
@@ -720,7 +721,7 @@ describe('connectToServer (probe → record → navigate)', () => {
     expect(readPreviousServer(storage)).toBeUndefined();
   });
 
-  it('records BEFORE navigating — the ordering that made every host grace-delay unnecessary (AC-DT13/14)', async () => {
+  it('records BEFORE navigating — the ordering that made every host grace-delay unnecessary (OMS-REG-DESK-01.17/14)', async () => {
     const storage = memoryStorage();
     const order: string[] = [];
     const connected = await connectToServer(
@@ -791,7 +792,7 @@ describe('connectToServer (probe → record → navigate)', () => {
     });
   });
 
-  it('remember: false (standalone) records nothing (AC-DT20/21)', async () => {
+  it('remember: false (standalone) records nothing (OMS-REG-DESK-01.32/21)', async () => {
     const storage = memoryStorage();
     await connectToServer(
       { probe: async () => true, navigate: () => {} },

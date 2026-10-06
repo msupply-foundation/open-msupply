@@ -106,9 +106,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     }
 
     /** The exact URL the discovery page navigated to, or null if it has not.
-     * The hand-off itself — used by the failed-load duty (AC-DT4), which is
-     * about THIS load failing, not a later navigation on a server the user is
-     * already signed in to. Certificate trust wants getChosenOrigin(). */
+     * The hand-off itself — used by the failed-load duty (OMS-REG-DESK-01.5),
+     * which is about THIS load failing, not a later navigation on a server the
+     * user is already signed in to. Certificate trust wants getChosenOrigin().
+     * */
     public static String getChosenUrl() {
         return chosenUrl;
     }
@@ -299,14 +300,14 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     Log.i(OM_SUPPLY, "Loading WebView url=" + targetUrl);
                     frontendLoaded = true;
                     webView.post(() -> {
-                        // Host duty (AC-DT16, OMS-REG-INS-01.38): the boot
-                        // lands on discovery from the static loading page, so
-                        // without pinning history here hardware back resurrects
-                        // that page — which only ever spins, since the readiness
-                        // poll that drives it has already finished. Same clear
-                        // the new frontend's shell does on its client-mode
-                        // boot; every host-initiated navigation is a fresh
-                        // start.
+                        // Host duty (OMS-REG-DESK-01.21, OMS-REG-INS-01.38):
+                        // the boot lands on discovery from the static loading
+                        // page, so without pinning history here hardware back
+                        // resurrects that page — which only ever spins, since
+                        // the readiness poll that drives it has already
+                        // finished. Same clear the new frontend's shell does on
+                        // its client-mode boot; every host-initiated navigation
+                        // is a fresh start.
                         // NativeApi.this, not this: the lambda sits inside
                         // the readiness poll's Runnable.
                         Activity bootActivity = NativeApi.this.getActivity();
@@ -351,8 +352,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     }
 
     /** Send the WebView back to discovery, never bouncing straight back to the
-     * server just left (AC-DT16). `timedout` seeds the could-not-connect
-     * notice (AC-DT2/AC-DT4). */
+     * server just left (OMS-REG-DESK-01.21). `timedout` seeds the
+     * could-not-connect notice (OMS-REG-DESK-01.2/.5). */
     void returnToDiscovery(boolean timedout) {
         WebView webView = this.getBridge().getWebView();
         String url = discoveryUrl(false, timedout);

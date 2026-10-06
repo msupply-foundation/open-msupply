@@ -16,7 +16,7 @@
 | D1/D3 · side-panel links | Hand-rolled `<A class={styles.link}>` → `RecordLink` (shipment neutral — the orange tone was wrong; requisition `kind="io"`); native `title` annotation → `Popover openOnHover` on the row label (the outbound pattern); `InternalOrderSidePanel.module.css` deleted. |
 | D2 · colour gate | `ColourTagPicker variant="field"` behind `<Show when={editable}>` with a `ColourTagDot` fallback — the 4-sibling pattern; fixes the spec-anchored gating bug (`ui-surface.md` S5). |
 | D4 · test hook | `data-testid="grand-total-field"` on the pricing grand total. |
-| E1 · restricted rows (AC-L7) | `rowState={row => (isRowEditable(row) ? undefined : 'disabled')}` on the list table — the 5-sibling pattern. |
+| E1 · restricted rows (OMS-REG-REPL-04.37) | `rowState={row => (isRowEditable(row) ? undefined : 'disabled')}` on the list table — the 5-sibling pattern. |
 | E2 · excess marker a11y | `aria-label` now `messages.requested-exceeds-suggested` (existing key), not the column name. |
 | E3 · on-hold marker | On-hold supplier options labelled `… (On hold)` via existing `label.on-hold` — dimming no longer the only cue. |
 | E4 · type cast | `editorLine()` narrowed once via `editorInitialLine()`; the `as` dropped. |
@@ -51,7 +51,7 @@ The vertical is **in good shape structurally** — table wiring is exemplary (ev
 2. **Detail header composition** — the header field cluster is hand-rolled (`Toolbar` + `FormColumns`/`FieldRow` + a CSS module + an `aria-hidden` spacer) where **7 sibling verticals** use `HeaderToolbar` with label-above fields. _Structural; carries the two decisions below._
 3. **Inline-style flex cells** — the icon-annotated table cells, the list's colour-tag+name cell, the create modal's option row, and the ancillary banner's CSS flex rows all hand-roll layout that `HStack`/`Stack` owns.
 
-Plus a small side-panel cluster (hand-rolled `<A>` where `RecordLink` is registered; an **ungated colour picker** — a spec-anchored gating bug), one list-level spec-anchored gap (restricted rows not visually distinguished, AC-L7), and six spec edits.
+Plus a small side-panel cluster (hand-rolled `<A>` where `RecordLink` is registered; an **ungated colour picker** — a spec-anchored gating bug), one list-level spec-anchored gap (restricted rows not visually distinguished, OMS-REG-REPL-04.37), and six spec edits.
 
 Notably, **requisitions shares most of these defects verbatim** (toolbar hand-roll, side-panel links, inline cells, option row, colour-variant omissions). That vertical is out of scope here; a follow-up requisitions migration would be cheap after this one.
 
@@ -129,7 +129,7 @@ The side-panel row also **passes every item of the binding `SIDE_PANEL.md` sign-
 
 | Id  | Where                                               | Fix                                                                                                                                                                              |
 | --- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| E1  | `list/InternalOrdersList.tsx:438-502`               | **Implementation bug (spec wins, `ui-surface.md:49` / AC-L7):** Sent/Finalised/disabled-supplier rows are not visually distinguished as read-only. Add a row tone keyed to `!isRowEditable(row)`, mirroring the detail table's placeholder `rowTone`. |
+| E1  | `list/InternalOrdersList.tsx:438-502`               | **Implementation bug (spec wins, `ui-surface.md:49` / OMS-REG-REPL-04.37):** Sent/Finalised/disabled-supplier rows are not visually distinguished as read-only. Add a row tone keyed to `!isRowEditable(row)`, mirroring the detail table's placeholder `rowTone`. |
 | E2  | `detail/InternalOrderDetailView.tsx:699`            | Excess-warning icon's accessible name is just "Requested" — meaning by colour alone. Give it an excess-specific label (new key in `src/intl/locales/en/` only).                        |
 | E3  | `list/create/CreateInternalOrderModal.tsx:124-135`  | On-hold suppliers dimmed with no textual marker — `controls.md` § Blocked affordances requires "dimmed, **marked**, unselectable", never dimming alone. Append a muted "(on hold)" token to the option label (new en key). |
 | E4  | `detail/InternalOrderDetailView.tsx:1266`           | `as { mode:'edit'; line }` union cast → assign the accessor once and narrow by `.mode` (drops the `as`).                                                                              |

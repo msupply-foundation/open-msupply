@@ -51,7 +51,7 @@ export interface ConfirmClaim {
    * Whether the button is currently inert. An ACCESSOR, read at keypress time,
    * so there is no subscription and no remount risk — and it must fold in
    * `loading`, because Button collapses `disabled || loading` and Enter would
-   * otherwise re-fire a pending confirm (AC-KB26).
+   * otherwise re-fire a pending confirm (OMS-REG-KBD-02.14/.15).
    */
   disabled: () => boolean;
 }

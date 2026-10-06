@@ -88,10 +88,10 @@ query storeContext($storeId: String!) {
     # text; unset/unparseable leaves the bar's default. Set from the store
     # editor's Preferences tab (spec/settings § the store editor).
     storeCustomColour
-    # Internal-orders create gate (spec/internal-orders AC-C1/C5), read by the
-    # dashboard's Order-more shortcut so it runs the same recent-stocktake
-    # warning as the list's New-order button (which fetches it in its own
-    # list context).
+    # Internal-orders create gate (spec/internal-orders OMS-REG-REPL-04.42/.45),
+    # read by the dashboard's Order-more shortcut so it runs the same
+    # recent-stocktake warning as the list's New-order button (which fetches it
+    # in its own list context).
     warnWhenMissingRecentStocktake {
       enabled
       maxAge

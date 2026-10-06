@@ -37,8 +37,9 @@ const saveFailed = (): PatientWriteOutcome => ({
   message: t('error.failed-to-save-patient'),
 });
 
-// Plain-path create (spec/patients AC-C3/C6). The client mints a fresh id, so a
-// PatientExists rejection is not reachable through the UI (AC-C5).
+// Plain-path create (spec/patients OMS-REG-DIS-01.5/.6/.30/.33). The client
+// mints a fresh id, so a PatientExists rejection is not reachable through the
+// UI (OMS-REG-DIS-01.4/.7/.32).
 export const runInsertPatient = async (
   storeId: string,
   input: InsertPatientVariables['input']
@@ -53,8 +54,9 @@ export const runInsertPatient = async (
   return { kind: 'ok', id: result.data.insertPatient.id };
 };
 
-// Plain-path edit (spec/patients AC-E2). updatePatient is a destructive full
-// replace — the caller (patientEdit.ts) MUST build the FULL field set.
+// Plain-path edit (spec/patients OMS-REG-DIS-02.41). updatePatient is a
+// destructive full replace — the caller (patientEdit.ts) MUST build the FULL
+// field set.
 export const runUpdatePatient = async (
   storeId: string,
   input: UpdatePatientVariables['input']
@@ -69,8 +71,8 @@ export const runUpdatePatient = async (
   return { kind: 'ok', id: result.data.updatePatient.id };
 };
 
-// Custom-fields merge write (spec/patients AC-CF1–CF3). A key set to null
-// deletes it; unknown/hidden keys are rejected (surfaced generically).
+// Custom-fields merge write (spec/patients OMS-REG-DIS-02.45–.47). A key set to
+// null deletes it; unknown/hidden keys are rejected (surfaced generically).
 export const runUpdatePatientCustomFields = async (
   storeId: string,
   input: UpdatePatientCustomFieldsVariables['input']

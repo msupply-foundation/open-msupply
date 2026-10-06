@@ -317,15 +317,15 @@ const RequisitionDetailView: Component = () => {
     return entry?.mode === 'edit' ? entry.line : undefined;
   };
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared
-  // by the SCREEN, once, because two controls trigger it: the header
-  // SplitButton and the ghost button in the table's empty slot. Each carries
-  // `shortcut={ALT_N}` for its badge; neither owns the action. `run` is the
-  // single-item add, the split button's default option. Same gate as both
-  // controls (canAdd), but reached through `.state` rather than `info()`:
-  // that reads `data.latest`, which suspends on the first pending read, and
-  // the palette evaluates every action's `disabled()` in its own render
-  // (kdd/keyboard-layer).
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, because two controls
+  // trigger it: the header SplitButton and the ghost button in the table's
+  // empty slot. Each carries `shortcut={ALT_N}` for its badge; neither owns the
+  // action. `run` is the single-item add, the split button's default option.
+  // Same gate as both controls (canAdd), but reached through `.state` rather
+  // than `info()`: that reads `data.latest`, which suspends on the first
+  // pending read, and the palette evaluates every action's `disabled()` in its
+  // own render (kdd/keyboard-layer).
   createAddAction({
     name: 'button.add-item',
     run: () => setEditorLine({ mode: 'add' }),

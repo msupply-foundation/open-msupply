@@ -38,17 +38,18 @@ export const statusColour = (status: PrescriptionStatus): string =>
 
 /**
  * Read-only from VERIFIED (and CANCELLED) — every edit affordance's gate
- * (rules § editability; AC-S3). Cancellation is the one exception and has its
- * own gate below.
+ * (rules § editability; OMS-REG-DIS-04.5). Cancellation is the one exception
+ * and has its own gate below.
  */
 export const isReadOnly = (status: PrescriptionStatus): boolean =>
   status === 'VERIFIED' || status === 'CANCELLED';
 
 /**
- * Deletable while editable — NEW/PICKED only (rules § deletion; AC-D1/D2).
- * The list's bulk delete pre-checks every selected row with this (AC-D3):
- * load-bearing, because the server batch is all-or-nothing AND misreports
- * rolled-back rows as deleted (contract wire trap).
+ * Deletable while editable — NEW/PICKED only (rules § deletion;
+ * OMS-REG-DIS-03.14/.44). The list's bulk delete pre-checks every selected row
+ * with this (OMS-REG-DIS-03.45): load-bearing, because the server batch is
+ * all-or-nothing AND misreports rolled-back rows as deleted (contract wire
+ * trap).
  */
 export const canDeletePrescription = (status: PrescriptionStatus): boolean =>
   status === 'NEW' || status === 'PICKED';
@@ -68,7 +69,7 @@ export const canCancelPrescription = (
  * The status-change split button's option set: the allowed FORWARD transitions
  * only — the current status is never offered (D40), and CANCELLED is never a
  * button option (cancel is the side panel's action). NEW offers the skip
- * (AC-S4); read-only offers nothing (the button is hidden, D39).
+ * (OMS-REG-DIS-04.20); read-only offers nothing (the button is hidden, D39).
  */
 /** The statuses the update operation can set going FORWARD from the button. */
 export type ForwardStatus = 'PICKED' | 'VERIFIED';
@@ -86,9 +87,9 @@ export const nextStatuses = (status: PrescriptionStatus): ForwardStatus[] => {
 };
 
 /**
- * The lifecycle crumb steps (AC-V2): New · Picked · Verified, with Cancelled
- * appearing only once the prescription is cancelled. Dates feed the history
- * popover.
+ * The lifecycle crumb steps (OMS-REG-DIS-04.24): New · Picked · Verified, with
+ * Cancelled appearing only once the prescription is cancelled. Dates feed the
+ * history popover.
  */
 export const statusSteps = (node: {
   status: string;
@@ -118,7 +119,8 @@ export const statusIndex = (status: PrescriptionStatus): number =>
 
 /**
  * The prescription date — the backdated time when set, else creation (rules §
- * the list; AC-L1). The list column, default sort, and CSV all read this.
+ * the list; OMS-REG-DIS-03.49). The list column, default sort, and CSV all read
+ * this.
  */
 export const prescriptionDateOf = (node: {
   backdatedDatetime?: string | null;
@@ -126,9 +128,9 @@ export const prescriptionDateOf = (node: {
 }): string => node.backdatedDatetime ?? node.createdDatetime;
 
 /**
- * The no-lines pre-flight (AC-S6): a prescription with no lines — or only
- * prescribed-quantity placeholder lines — blocks the status button with a
- * notice and no server call (the one sanctioned client pre-flight; the server
+ * The no-lines pre-flight (OMS-REG-DIS-04.22): a prescription with no lines —
+ * or only prescribed-quantity placeholder lines — blocks the status button with
+ * a notice and no server call (the one sanctioned client pre-flight; the server
  * would accept it, a captured gap).
  */
 export const hasDispensedLines = (
@@ -160,9 +162,10 @@ export const isPlaceholderLine = (line: { type: string }): boolean =>
  * prices. It must not be filtered out — recording a prescribed quantity for an
  * item with no stock then showed the user an EMPTY table, so a save that
  * worked looked like one that had failed, with nothing on screen to revisit or
- * delete. "Invisible as a dispensable line" (the reverse-spec's AC-Q1) means
- * it is not a dispensed batch, not that it is unrendered: the status guard
- * ignores it (hasDispensedLines) and its quantity/money cells stay empty.
+ * delete. "Invisible as a dispensable line" (the reverse-spec's
+ * OMS-REG-DIS-03.25) means it is not a dispensed batch, not that it is
+ * unrendered: the status guard ignores it (hasDispensedLines) and its
+ * quantity/money cells stay empty.
  */
 export const isRenderableLine = (line: { type: string }): boolean =>
   line.type === 'STOCK_OUT' ||
@@ -182,7 +185,7 @@ export const isBatchLine = (line: { type: string }): boolean =>
 
 /**
  * Zero-quantity rows that a status confirmation warns about and the change
- * removes (AC-S5).
+ * removes (OMS-REG-DIS-04.21).
  */
 export const zeroQuantityLineCount = (
   lines: readonly { type: string; numberOfPacks: number }[]

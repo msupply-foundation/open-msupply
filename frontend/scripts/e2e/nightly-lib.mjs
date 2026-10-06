@@ -50,7 +50,7 @@ export const testsFromReport = report => {
  * branch's LEGS (the default suites, plus one per plugin profile — see the
  * workflow's plan job). The default leg's keys stay bare, so every issue and
  * every history written before plugin legs existed still matches; another
- * leg's are prefixed with that leg's label, `[plugin-cook_islands] …`. The
+ * leg's are prefixed with that leg's label, `[plugin-<profile>] …`. The
  * prefix is not decoration: the setup tests run in every leg under the same
  * key, so without it a regression could not say which stack it came from, and
  * its history would be read from the wrong leg's reports.
@@ -472,7 +472,12 @@ export const gatherClues = async ({
           artifact_id: art.id,
           archive_format: 'zip',
         });
-        const json = readZipEntry(zip.data, 'results.json');
+        // The artifact carries its own e2e-report-<leg>/ folder; one
+        // uploaded before it did (#1133) holds a bare results.json, and
+        // stays in this window until it expires.
+        const json =
+          readZipEntry(zip.data, `${name}/results.json`) ??
+          readZipEntry(zip.data, 'results.json');
         if (!json) continue;
         list.push(testsFromReport(JSON.parse(json.toString('utf8'))));
       }

@@ -55,7 +55,8 @@ export const createConfirmClaim = (
   const claim: ConfirmClaim = {
     activate: () => element?.click(),
     // Button collapses `disabled || loading` onto the element, so the claim has
-    // to read both or Enter re-fires an in-flight confirm (AC-KB26).
+    // to read both or Enter re-fires an in-flight confirm
+    // (OMS-REG-KBD-02.14/.15).
     disabled: () => props.disabled === true || props.loading === true,
   };
 

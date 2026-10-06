@@ -33,7 +33,7 @@ const invoice = {
   },
 };
 
-describe('historyRows (AC-H1 — one row per item, lines merged)', () => {
+describe('historyRows (OMS-REG-DIS-03.46 — one row per item, lines merged)', () => {
   it('merges an item across batches, summing units and keeping the first note', () => {
     const rows = historyRows([invoice]);
     expect(rows).toHaveLength(2);

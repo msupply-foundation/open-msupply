@@ -48,11 +48,11 @@ const config: CapacitorConfig = {
       }
     : {
         // NO allowNavigation, deliberately. Client mode navigates the WebView
-        // to the CHOSEN server's own origin (spec/desktop AC-DT19's Android
-        // sibling; DiscoveryHostPlugin navigate) — any LAN address or name,
-        // undecidable at build time. A wildcard is not the way to say that:
-        // Capacitor feeds allowNavigation to TWO mechanisms and '*' misfires
-        // in both.
+        // to the CHOSEN server's own origin (spec/desktop OMS-REG-DESK-01.31's
+        // Android sibling; DiscoveryHostPlugin navigate) — any LAN address or
+        // name, undecidable at build time. A wildcard is not the way to say
+        // that: Capacitor feeds allowNavigation to TWO mechanisms and '*'
+        // misfires in both.
         //
         // 1. It joins `allowedOriginRules`, which scopes the native bridge
         //    (Bridge.setAllowedOriginRules → MessageHandler's

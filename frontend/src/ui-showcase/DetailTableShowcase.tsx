@@ -108,7 +108,7 @@ const STATUS_STEPS: StatusStep[] = [
 // — a stock-in line with nothing received and nothing shipped. Reproduced here
 // (a 3-line pure predicate) so the dev-only showcase doesn't pull in the
 // vertical's mutation module. The detail table de-emphasises these in the info
-// tone (spec AC-V3).
+// tone (spec/inbound-shipments ui-surface § line table).
 const isPlaceholderLine = (
   line: Pick<Line, 'type' | 'numberOfPacks' | 'shippedNumberOfPacks'>
 ): boolean =>
@@ -219,7 +219,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
     volumePerPack: Number(((i % 5) * 0.25 + 0.1).toFixed(2)),
     status: null,
     // A line that arrived via another store's transfer can't be independently
-    // deleted; its code flags in the error tone (spec AC-E9).
+    // deleted; its code flags in the error tone (spec OMS-REG-REPL-09.19/.20).
     linkedInvoiceId: i % 24 === 7 ? `inv-${i}` : null,
     locationId: loc ? `loc-${i}` : null,
     location: loc ? { id: `loc-${i}`, code: loc.code, name: loc.name } : null,

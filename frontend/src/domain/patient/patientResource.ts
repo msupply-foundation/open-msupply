@@ -23,8 +23,9 @@ export type CentralPatient = Extract<
 >['nodes'][number];
 
 // A decoded central outcome. `unreachable` is the ONE patient error the app
-// decodes and surfaces (the typed ConnectionError — spec/patients AC-S5);
-// `failed` means a transport/unexpected error the global modal already showed.
+// decodes and surfaces (the typed ConnectionError — spec/patients
+// OMS-REG-DIS-01.41); `failed` means a transport/unexpected error the global
+// modal already showed.
 export type CentralSearchOutcome =
   | { kind: 'ok'; nodes: CentralPatient[] }
   | { kind: 'unreachable'; message: string }
@@ -59,9 +60,10 @@ export const patientSearchPageFetcher =
   };
 
 /**
- * Local duplicate search for the create flow's step ② (spec/patients AC-S1/S2):
- * code/code2 exact, name/first/last substring, dob/gender exact. Returns the
- * bounded, code-ordered rows, or undefined on a failed fetch.
+ * Local duplicate search for the create flow's step ② (spec/patients
+ * OMS-REG-DIS-01.9/.10/.37/.38): code/code2 exact, name/first/last substring,
+ * dob/gender exact. Returns the bounded, code-ordered rows, or undefined on a
+ * failed fetch.
  */
 export const searchLocalPatients = async (
   storeId: string,
@@ -112,10 +114,10 @@ export const minimalPatientOption = (
 });
 
 /**
- * Central duplicate search (spec/patients AC-S3/S5). Only code / first / last /
- * dob are honoured server-side. Central-unreachable comes back as the TYPED
- * ConnectionError union member (a successful GraphQL response), decoded to
- * `unreachable` here — the one error the app surfaces meaningfully.
+ * Central duplicate search (spec/patients OMS-REG-DIS-01.39/.41). Only code /
+ * first / last / dob are honoured server-side. Central-unreachable comes back
+ * as the TYPED ConnectionError union member (a successful GraphQL response),
+ * decoded to `unreachable` here — the one error the app surfaces meaningfully.
  */
 export const searchCentralPatients = async (
   storeId: string,
@@ -130,11 +132,11 @@ export const searchCentralPatients = async (
 };
 
 /**
- * Fetch a central-only patient into the store (spec/patients AC-S4).
- * Registered as a mutation; creates/returns the name_store_join.
- * Central-unreachable is the typed ConnectionError (note the doubled-word type
- * name) — decoded to `unreachable`; the fetch then stops (no retry, per
- * AC-S5).
+ * Fetch a central-only patient into the store (spec/patients
+ * OMS-REG-DIS-01.11/.40). Registered as a mutation; creates/returns the
+ * name_store_join. Central-unreachable is the typed ConnectionError (note the
+ * doubled-word type name) — decoded to `unreachable`; the fetch then stops (no
+ * retry, per OMS-REG-DIS-01.41).
  */
 export const linkPatientToStore = async (
   storeId: string,
