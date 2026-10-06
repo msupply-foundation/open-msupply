@@ -427,7 +427,7 @@ const PatientDetailView: Component = () => {
                         shortcut={
                           tabAction() === 'add-insurance' ? ALT_N : undefined
                         }
-                        data-testid="patient-create-split-button"
+                        testId="patient-create-split-button"
                       />
                     </Show>
                   </HeaderButtons>

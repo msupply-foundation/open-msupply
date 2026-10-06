@@ -33,9 +33,6 @@ export interface ProgramEnrolmentsPanelProps {
 // — spec/patients ui-surface › Programs / Vaccinations tabs. A row opens its
 // enrolment only where the caller passes `onRowClick`. The program name is the
 // document registry name.
-//
-// TO-DO: spec/patients still describes these rows as not clickable; the
-// record-screen spec (kdd/custom-forms implementation-plan H26) updates it.
 export const ProgramEnrolmentsPanel: Component<
   ProgramEnrolmentsPanelProps
 > = props => {
