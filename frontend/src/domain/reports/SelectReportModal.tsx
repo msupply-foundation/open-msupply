@@ -208,6 +208,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
         onClose={props.onClose}
         icon={<PrinterIcon />}
         title={t('title.select-a-form')}
+        testId="report-selector-modal"
         widthRem={40}
         /*
          * No submit key (spec/keyboard KB-E2's opt-out). The footer offers
@@ -232,6 +233,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               variant="secondary"
               icon={<DownloadIcon />}
               disabled={disabled()}
+              data-testid="report-format-excel"
               onClick={() => onFormat('EXCEL')}
             >
               {t('button.export-to-excel')}
@@ -240,6 +242,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               variant="secondary"
               icon={<PrinterIcon />}
               disabled={disabled()}
+              data-testid="report-format-print"
               onClick={() => onFormat('HTML')}
             >
               {t('button.print')}
@@ -253,6 +256,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
                 variant="secondary"
                 icon={<DownloadIcon />}
                 disabled={disabled()}
+                data-testid="report-format-pdf"
                 onClick={() => onFormat('PDF')}
               >
                 {t('button.download-pdf')}

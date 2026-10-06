@@ -1761,6 +1761,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               />
               <Select
                 label={t('label.units')}
+                testId="allocate-in-select"
                 value={allocateInValue()}
                 options={[
                   { value: 'units', label: unitName() },
