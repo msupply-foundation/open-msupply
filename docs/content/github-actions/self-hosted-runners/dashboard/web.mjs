@@ -60,6 +60,7 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 
 const PORT = Number(process.env.PORT || 8000);
@@ -234,16 +235,22 @@ async function dispatch(workflow, inputs, token) {
 }
 
 function githubMessage(text, status) {
-  // 403 and 404 are how GitHub says "this person may not": 404 rather than 403
-  // for a private repository they cannot see at all. Either way the useful
-  // answer is what they are missing, not the status code.
-  if (status === 403 || status === 404) {
-    return `GitHub would not let you run this (${status}). You need write access to ${REPO}.`;
-  }
+  let m = '';
   try {
-    const m = JSON.parse(text).message;
-    if (m) return `GitHub refused the dispatch (${status}): ${m}`;
+    m = JSON.parse(text).message || '';
   } catch { /* not JSON */ }
+  // 403 and 404 are how GitHub says "may not", and there are two different
+  // "who" behind them: the person (no write access - 404 rather than 403 for a
+  // private repository they cannot see at all), or the dashboard's GitHub App
+  // (not installed on the repository, or without Actions: write - typically
+  // "Resource not accessible by integration"). The fixes are different people,
+  // so name both rather than send someone to ask for access they already have.
+  if (status === 403 || status === 404) {
+    return `GitHub would not let you run this (${status}${m ? `: ${m}` : ''}). ` +
+      `Either you need write access to ${REPO}, or the dashboard's GitHub App is not ` +
+      'installed on it with Actions: write - ask whoever runs the deploy box.';
+  }
+  if (m) return `GitHub refused the dispatch (${status}): ${m}`;
   return `GitHub refused the dispatch (${status}).`;
 }
 
@@ -438,14 +445,17 @@ const PREVIEW_ACTIONS = {
   deploy: 'deploy', reseed: 'reseed', teardown: 'teardown', closed: 'teardown',
   opened: 'update', reopened: 'update', synchronize: 'update',
 };
-// The label preview runs care about, as in docker-pr-preview.yaml.
+// The label preview runs care about, as in docker-pr-preview.yaml's gate.
 const PREVIEW_LABEL = 'deploy';
 // A run that has not finished. `waiting`, `requested` and `pending` are rare
 // here but are not finished either.
 const UNFINISHED = new Set(['queued', 'in_progress', 'waiting', 'requested', 'pending']);
-// How many recent runs of each workflow are read. Enough to hold the latest
-// finished run of every active deployment on a busy day.
-const RUNS_PER_WORKFLOW = 50;
+// How many recent runs of each workflow are read - GitHub's page maximum, one
+// call each. Enough to hold the latest finished run of every active deployment
+// on a busy day: the named workflow no longer gets a run per push to every
+// branch (that is docker-named-deployment-push.yaml, which is not read), but the
+// preview workflow still gets one per pull-request event, skipped or not.
+const RUNS_PER_WORKFLOW = 100;
 
 /**
  * What a run is for, from its name, or null when it is not one of ours - a run
@@ -453,14 +463,17 @@ const RUNS_PER_WORKFLOW = 50;
  * message, and is simply not shown.
  *
  *   `deploy vaccine-flow`, `reseed develop`, `teardown v3-02`  a dispatch
- *   `push develop`                                            a push, matched by branch
+ *   `update develop`                                          a follow's fan-out, one
+ *                                                             per follower
+ *   `push develop`, `follow develop`                          a push, and the run it
+ *                                                             hands to; matched by branch
  *   `labeled pr-470 deploy`, `teardown pr-470`                a preview; any
  *                                                             other label is
  *                                                             not ours
  */
 export function parseRunName(title) {
   const t = String(title || '').trim();
-  let m = /^(deploy|reseed|teardown) ([a-z0-9][a-z0-9-]*)$/.exec(t);
+  let m = /^(deploy|reseed|teardown|update) ([a-z0-9][a-z0-9-]*)$/.exec(t);
   if (m) return { action: m[1], name: m[2] };
   m = /^([a-z_]+) pr-(\d+)(?: (\S+))?$/.exec(t);
   if (m) {
@@ -473,7 +486,7 @@ export function parseRunName(title) {
     if (PREVIEW_ACTIONS[event]) return { action: PREVIEW_ACTIONS[event], name };
     return null;
   }
-  m = /^push (\S+)$/.exec(t);
+  m = /^(?:push|follow) (\S+)$/.exec(t);
   if (m) return { action: 'update', branch: m[1] };
   return null;
 }
@@ -483,8 +496,11 @@ export function parseRunName(title) {
 // per deployment name or followed branch, for "last deploy failed".
 let runs = [];
 let lastRun = new Map();
-// The newest push run seen per branch, so a new one can mark the branch head
-// stale - that is how "N commits behind" learns a branch moved.
+// The newest push or follow run seen per branch, so a new one can mark the
+// branch head stale - that is how "N commits behind" learns a branch moved.
+// Follow runs, not the push workflow's runs: that is a workflow of its own
+// that runs on every push to every branch, while a follow exists only for a
+// branch something follows - which is exactly the set this cache holds.
 const pushSeen = new Map();
 
 async function readRuns(token) {
@@ -504,7 +520,9 @@ async function readRuns(token) {
         : parseRunName(r.display_title);
       if (!what) continue;
 
-      if (what.branch && r.event === 'push') {
+      // A push from a branch that predates the push workflow, or the `follow`
+      // run a push hands off to - either way, the branch moved.
+      if (what.branch) {
         const seen = pushSeen.get(what.branch);
         if (seen !== undefined && r.id > seen) headCache.delete(what.branch);
         if (seen === undefined || r.id > seen) pushSeen.set(what.branch, r.id);
@@ -579,9 +597,15 @@ function maybeRefresh(list, token) {
   // Advanced before the round, so a GitHub outage is retried on the clock
   // rather than on every poll from every open tab.
   lastRefresh = Date.now();
+  // A failed runs read means GitHub is not answering, so the round stops there
+  // and keeps the last answer. Going on would enrich with every lookup failing -
+  // blanking the commits, which the page reads as "commit not found" - and then
+  // stamp the round as fresh, so the footer said "commits checked just now"
+  // through an outage.
   refreshing = readRuns(token)
-    .then(() => enrich(list, token))
-    .then(() => { enrichedAt = new Date().toISOString(); })
+    .then(ok => (ok
+      ? enrich(list, token).then(() => { enrichedAt = new Date().toISOString(); })
+      : log('github runs read failed - keeping the last answer')))
     .catch(e => log(`github refresh failed: ${e.message}`))
     .finally(() => { refreshing = null; });
 }
@@ -843,11 +867,15 @@ async function handle(req, res) {
   return send(res, 404, { error: 'not found' });
 }
 
-createServer((req, res) => {
-  handle(req, res).catch(e => {
-    log(`request failed: ${e.stack || e.message}`);
-    if (!res.headersSent) send(res, 500, { error: 'internal error' });
+// Guarded, as in snapshot.mjs, so `parseRunName` can be imported and tested
+// (.github/scripts/deploy-dashboard.test.mjs) without starting a server.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  createServer((req, res) => {
+    handle(req, res).catch(e => {
+      log(`request failed: ${e.stack || e.message}`);
+      if (!res.headersSent) send(res, 500, { error: 'internal error' });
+    });
+  }).listen(PORT, () => {
+    log(`serving on :${PORT}${CAN_SIGN_IN ? `, sign-in on, dispatching to ${REPO}@${DISPATCH_REF}` : ' - no GitHub App configured, so nobody can sign in'}`);
   });
-}).listen(PORT, () => {
-  log(`serving on :${PORT}${CAN_SIGN_IN ? `, sign-in on, dispatching to ${REPO}@${DISPATCH_REF}` : ' - no GitHub App configured, so nobody can sign in'}`);
-});
+}

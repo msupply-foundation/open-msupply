@@ -66,7 +66,7 @@ Both callers share the build cache. BuildKit keys on the build's content, not on
 
 There is no separate client or server build job and no artifact hand-off between jobs. That shape suited GitHub-hosted runners, where each job gets a fresh VM; on a self-hosted box the jobs serialise on a lane and the artifacts move ~100MB between two steps on the same disk. BuildKit runs the frontend build concurrently with the server compile inside one job instead. Use `--progress plain` (already set) rather than splitting it back out for per-step visibility.
 
-Everything publishes to `msupplyfoundation/omsupply`. Deployment builds (`docker-named-deployment.yaml`) are tagged `<name>-<sha>-<db>-amd64` — so `develop-<sha>-<db>-amd64` for develop, as before — and get **no** floating tag: `latest-develop*` is the nightly pointer that demo servers follow, and repointing it on every merge would push unvetted commits at them several times a day. Deployment tags are immutable and the nightly cleanup sweeps them after 30 days like any other non-release tag.
+Everything publishes to `msupplyfoundation/omsupply`. Deployment builds (`docker-named-deployment.yaml`) are tagged `deploy_<sha>-<db>-amd64` (plus `-debug` for a debug build) — keyed on the commit, not the deployment, so every server on one commit shares one image — and get **no** floating tag: `latest-develop*` is the nightly pointer that demo servers follow, and repointing it on every merge would push unvetted commits at them several times a day. Deployment tags are immutable and the nightly cleanup sweeps them after 30 days like any other non-release tag.
 
 ### Image tags
 
@@ -140,7 +140,9 @@ A deployment tracks the ref you gave it. Deploy from a branch and every push to 
 
 The branch a deployment follows is **recorded on it**, so its name and its branch are free to differ — `vaccine-flow` can follow `feature/foo`. Pinning is simply the absence of that record: deploy from a tag or a commit and there is nothing for a push to match.
 
-One branch, one deployment. Two deployments following the same branch would each need their own image and their own deploy, so it says so and stops rather than updating one and leaving the other behind — point the extras at a tag to freeze them. Two _different_ RC branches are fine and get a server each.
+Any number of deployments can follow one branch — a central and a remote on `develop`, or several people each with their own server on the same pull request. A push does not deploy anything itself: it hands the branch to a `follow` run on develop, which builds the pushed commit once (once per profile, if the followers differ) and then starts one `update` run per deployment. Each update finds its image already built and deploys in about a minute.
+
+Every one of those runs, like every run from the dashboard, uses develop's copy of the workflow and the compose files — never the pushed branch's. So a fix to how deployments work reaches every server, RC branches included, as soon as it is on develop. The one exception is a branch cut before this arrangement existed, which keeps its old behaviour until it merges develop once.
 
 A deployment's whole record is a few labels on its container — the branch it follows, when it expires, how it was built, whether it is a central server, and who last deployed it — so there is nothing to configure per deployment and nothing to keep in step. Each one exists because a push carries no form to read, so a redeploy that had to guess would guess wrong in a way nothing announced.
 
@@ -165,9 +167,9 @@ A _branch_ or commit older than v3.04 cannot be built by this pipeline — its D
 
 Moving a deployment between versions far apart — especially backwards — usually needs a **reseed**: the server migrates its database forward on boot but never back, and images before v2.19 keep their database in a different place from later ones.
 
-**An auto-update changes the image and nothing else.** A push has no form to read, so the deployment keeps the expiry it already had and rebuilds with the profile it was already built with — the clock does not move and `debug` does not silently become `release`.
+**An auto-update changes the image and nothing else.** A push's `update` carries no form, so the deployment keeps the expiry it already had and rebuilds with the profile it was already built with — the clock does not move and `debug` does not silently become `release`. You can run `update` by hand too: give just the name and it moves the server to the latest commit of the branch it already follows.
 
-**A push only ever updates.** Pushing to a branch nobody has deployed does nothing, and a deployment removed while a build was running is not resurrected by it.
+**A push only ever updates.** Pushing to a branch nobody has deployed does nothing, a deployment removed while a build was running is not resurrected by it, and one repointed at another branch or a tag since the push is left where its owner put it.
 
 **Anything can be torn down or reseeded, `develop` included.** Both destroy the database, and nothing stops you — these are testing servers seeded from a sample dataset, any of them comes back by deploying it again, and the ones following a branch come back on the next push.
 
@@ -197,9 +199,8 @@ Preview images are swept from Docker Hub after 7 days rather than the usual 30 �
 
 ### Known gap: a paired central and remote
 
-A pair like `develop-central` and `develop-remote` deploys today and needs nothing special — two names are two names, and because each deployment gets its _own_ hardware id they are distinguishable to a central server. Two things are missing:
+A pair like `develop-central` and `develop-remote` deploys today and needs nothing special — two names are two names, both can follow `develop` and both are updated on every push, and because each deployment gets its _own_ hardware id they are distinguishable to a central server. One thing is missing:
 
-- **One branch auto-updates one deployment.** Names are free — a pair can be called anything — but both halves of a pair built from `develop` would carry `oms.branch=develop`, and the push path stops rather than guess between two matches. So a pair from a single branch needs one half pinned to a commit, or redeployed by hand, until this fans out per deployment.
 - **Seeding and sync are mutually exclusive**, so the remote half has to be deployed with `dataset: none` and initialise _through_ sync instead. That is now reachable from the form, but it is only half the answer: initialising through sync needs sync credentials, which nothing here supplies, and the central may need `standalone_store_name`/`standalone_admin_*` to bootstrap with no upstream of its own.
 
 That is a different first-deploy path from every other deployment here and has not been established against a real image yet. It blocks nothing: the pair works now as two independent seeded servers.

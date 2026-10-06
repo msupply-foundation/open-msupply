@@ -201,7 +201,7 @@ Everything else a deployment needs to remember is a **label on its container**, 
 | `oms.expires` | when `docker-expire.yaml` may reap it, or `never` |
 | `oms.profile` | `release` or `debug`, so an auto-update rebuilds it the same way |
 | `oms.central` | whether it is a central server, so a redeploy cannot demote it |
-| `oms.actor` | who last deployed it, for the dashboard. Nothing reads it back. |
+| `oms.actor` | who first deployed it, carried forward on every redeploy and update, for the dashboard |
 
 The labels come from `docker/compose.deploy.yaml` as of the commit whose workflow is running — develop's for a dispatch — not the commit being deployed. That is also how older release tags deploy; see the [Docker page](../../docker/).
 
