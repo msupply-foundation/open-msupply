@@ -20,17 +20,18 @@ import { newPrescriptionRequestDate } from '../detail/prescriptionRequestUpdate'
 import { InsertPrescriptionRequest } from './createPrescriptionRequest.generated';
 
 // The create-request dialog (spec/prescription-requests/ui-surface.md S2,
-// AC-C1.. C3): patient (the one required field — the reusable patient picker),
-// date (defaults today, capped at today) and clinician. Create is unavailable
-// until a patient is chosen; a rejection shows in-dialog with entries intact
-// (rejections here are all generic — contract § wire traps); success navigates
-// to the new request's detail.
+// OMS-REG-DIS-08.1/.2.. C3): patient (the one required field — the reusable
+// patient picker), date (defaults today, capped at today) and clinician. Create
+// is unavailable until a patient is chosen; a rejection shows in-dialog with
+// entries intact (rejections here are all generic — contract § wire traps);
+// success navigates to the new request's detail.
 //
-// The clinician is chosen HERE rather than at the hand-over (AC-C6): it is a
-// field of the request, like the patient beside it, and asking for it at the
-// one moment the request can no longer be edited put it in the wrong place. It
-// defaults to the clinician whose code is the signed-in username, because the
-// prescriber usually enters their own script (see clinicianMatchingUser).
+// The clinician is chosen HERE rather than at the hand-over
+// (OMS-REG-DIS-08.14–.16): it is a field of the request, like the patient
+// beside it, and asking for it at the one moment the request can no longer be
+// edited put it in the wrong place. It defaults to the clinician whose code is
+// the signed-in username, because the prescriber usually enters their own
+// script (see clinicianMatchingUser).
 
 export interface CreatePrescriptionRequestModalProps {
   open: boolean;

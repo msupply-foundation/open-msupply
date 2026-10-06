@@ -15,7 +15,7 @@ import {
 } from './scannerSourceModel';
 
 // The desktop app's USB scanner row (spec/settings/ui-surface.md § Devices;
-// rules § Devices — barcode scanner, AC-BS4).
+// rules § Devices — barcode scanner).
 const scanner = { vendorId: 1, productId: 2, name: 'Zebra DS2208' };
 
 const inDesktopApp = (status: { paired: typeof scanner | null; connected: boolean }) => {

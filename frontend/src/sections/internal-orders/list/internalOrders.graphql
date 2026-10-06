@@ -21,16 +21,16 @@ fragment InternalOrderRow on RequisitionNode {
   # `isDisabled` is the "supplier store disabled" half of the editability
   # boundary (rules › editability): a disabled-store row is read-only — its
   # colour-tag picker is withheld and it can't be deleted — exactly as a
-  # non-Draft row is (AC-L7).
+  # non-Draft row is (OMS-REG-REPL-04.37).
   otherParty(storeId: $storeId) {
     store {
       isDisabled
     }
   }
   # Approval status is read from the linked response requisition's copy; the
-  # RequisitionNode surfaces it directly as approvalStatus (AC-L9).
+  # RequisitionNode surfaces it directly as approvalStatus (OMS-REG-REPL-05.6).
   approvalStatus
-  # Program columns (AC-L8): empty on a non-program order.
+  # Program columns (OMS-REG-REPL-04.38): empty on a non-program order.
   program {
     name
   }
@@ -61,11 +61,12 @@ query internalOrders(
   }
 }
 
-# Bulk delete from the list (spec AC-D1). One batch, all-or-nothing by default —
-# continueOnError is left unset so any member error rolls the whole batch back
-# (contract › deletion). Per-id typed error surfaces on
+# Bulk delete from the list (spec OMS-REG-REPL-04.59). One batch, all-or-nothing
+# by default — continueOnError is left unset so any member error rolls the whole
+# batch back (contract › deletion). Per-id typed error surfaces on
 # DeleteRequestRequisitionError. The UI only OFFERS delete when every selected
-# row is Draft (a UI narrowing, AC-D3); the server enforces the same regardless.
+# row is Draft (a UI narrowing, OMS-REG-REPL-04.60); the server enforces the
+# same regardless.
 mutation deleteInternalOrders(
   $storeId: String!
   $ids: [DeleteRequestRequisitionInput!]!
@@ -93,10 +94,10 @@ mutation deleteInternalOrders(
   }
 }
 
-# Inline row colour-tag edit (spec S1 col 1 / AC-T1): the swatch picker on an
-# editable (Draft, supplier-store-enabled) row writes the colour through the
-# shared header update. Colour carries no domain meaning. The RequisitionNode
-# member is selected so the caller can confirm the save.
+# Inline row colour-tag edit (spec S1 col 1 / OMS-REG-REPL-04.58): the swatch
+# picker on an editable (Draft, supplier-store-enabled) row writes the colour
+# through the shared header update. Colour carries no domain meaning. The
+# RequisitionNode member is selected so the caller can confirm the save.
 mutation updateInternalOrderColour(
   $storeId: String!
   $input: UpdateRequestRequisitionInput!

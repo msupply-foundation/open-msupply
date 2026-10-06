@@ -35,12 +35,12 @@ import {
 } from './requestLineEdit.generated';
 import type { PrescriptionRequestFieldsFragment } from '../prescriptionRequestDetail.generated';
 
-// The line editor (spec/prescription-requests/ui-surface.md S4, AC-N1..N4):
-// pick the item (advisory stock on hand beside the selection — never a
-// block), set the quantity in units, and the directions (abbreviation entry +
-// the item's canned directions + the expanded text). Editing an existing line
-// keeps its item fixed — replace by delete + add. Past New the same surface
-// is the read-only face (values shown, no save).
+// The line editor (spec/prescription-requests/ui-surface.md S4,
+// OMS-REG-DIS-08.35/.36..N4): pick the item (advisory stock on hand beside the
+// selection — never a block), set the quantity in units, and the directions
+// (abbreviation entry + the item's canned directions + the expanded text).
+// Editing an existing line keeps its item fixed — replace by delete + add. Past
+// New the same surface is the read-only face (values shown, no save).
 
 type Line = PrescriptionRequestFieldsFragment['lines']['nodes'][number];
 
@@ -49,7 +49,7 @@ export interface RequestLineEditModalProps {
   requestId: string;
   /** The line being edited; undefined = a new line. */
   line?: Line;
-  /** The request is past New — the read-only face (AC-N5). */
+  /** The request is past New — the read-only face (OMS-REG-DIS-08.41/.42). */
   readOnly?: boolean;
   onClose: () => void;
   onSaved: () => void;
@@ -93,7 +93,7 @@ export const RequestLineEditModal: Component<
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
 
-  // The configured abbreviations (AC-N3) — fetched once per open.
+  // The configured abbreviations (OMS-REG-DIS-08.38) — fetched once per open.
   const [abbrevData] = createResource(async () => {
     const result = await graphqlFetch(RequestAbbreviations, {});
     return result.kind === 'success' ? result.data.abbreviations : undefined;
@@ -101,8 +101,9 @@ export const RequestLineEditModal: Component<
   const abbreviations = () => gated(abbrevData) ?? [];
 
   // An existing line's item, resolved with its live stock on hand — the same
-  // advisory figure a fresh pick carries (AC-N4). Non-suspending: this
-  // resource first fetches on the modal opening over a live screen.
+  // advisory figure a fresh pick carries (OMS-REG-DIS-08.39/.40).
+  // Non-suspending: this resource first fetches on the modal opening over a
+  // live screen.
   const [existingItem] = createResource(
     () => props.line?.itemId,
     itemId => fetchItemById(props.storeId, itemId)
@@ -238,7 +239,7 @@ export const RequestLineEditModal: Component<
           }}
         />
       </Show>
-      {/* Advisory stock on hand (AC-N4): informs, never blocks — an
+      {/* Advisory stock on hand (OMS-REG-DIS-08.39/.40): informs, never blocks — an
           out-of-stock item still saves. A read-only fact among editable
           fields, so it reads as a LabelledValue rather than a disabled input
           (kdd/form-layout). */}

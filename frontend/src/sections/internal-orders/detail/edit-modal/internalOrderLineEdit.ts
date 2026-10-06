@@ -8,11 +8,12 @@ import {
 import type { InternalOrderLineFragment } from '../internalOrderDetail.generated';
 
 // Line-editor domain logic (spec/internal-orders S4): the entry-mode
-// re-expression (AC-LN12/LN17/LN19), the add-mode suggestion preview (AC-LN4),
-// and the two save paths (AC-LN3/LN11).
+// re-expression (OMS-REG-REPL-04.22/.24/.25/.69/.74/.88/.90), the add-mode
+// suggestion preview (OMS-REG-REPL-04.13), and the two save paths
+// (OMS-REG-REPL-04.65/.68).
 
-// The quantity entry mode (AC-LN12): stored values are always UNITS; the mode
-// only re-expresses the display.
+// The quantity entry mode (OMS-REG-REPL-04.22/.24/.69/.88/.90): stored values
+// are always UNITS; the mode only re-expresses the display.
 export type EntryMode = 'units' | 'packs' | 'doses';
 
 // The population-forecast breakdown (VaccineCourse, parseVaccineCourses,
@@ -45,8 +46,8 @@ export type EditorLine = {
   forecastTotalUnits: number | null;
   forecastTotalDoses: number | null;
   /**
-   * The forecast's per-course breakdown (AC-PF7); empty on a forecast-less
-   * line.
+   * The forecast's per-course breakdown (OMS-REG-REPL-11.7); empty on a
+   * forecast-less line.
    */
   vaccineCourses: VaccineCourse[];
   pricePerUnit: number | null;
@@ -72,10 +73,11 @@ export type EditorLine = {
   isNew: boolean;
 };
 
-// --- Entry-mode re-expression (AC-LN12/LN17/LN19) ---------------------------
+// --- Entry-mode re-expression (OMS-REG-REPL-04.22/.24/.25/.69/.74/.88/.90)
+// ---------------------------
 
 // A stored unit value → the display value in the active mode: ÷ pack size for
-// packs (two decimals, AC-LN17), × doses-per-unit for doses.
+// packs (two decimals, OMS-REG-REPL-04.25), × doses-per-unit for doses.
 export const unitsToMode = (
   units: number,
   mode: EntryMode,
@@ -87,9 +89,10 @@ export const unitsToMode = (
   return units;
 };
 
-// A display value in the active mode → the stored units (AC-LN12): packs ×
-// pack size; doses ÷ doses-per-unit, rounded UP (a part-unit of doses still
-// consumes a whole unit).
+// A display value in the active mode → the stored units
+// (OMS-REG-REPL-04.22/.24/.69/.88/.90): packs × pack size; doses ÷
+// doses-per-unit, rounded UP (a part-unit of doses still consumes a whole
+// unit).
 export const modeToUnits = (
   value: number,
   mode: EntryMode,
@@ -101,9 +104,9 @@ export const modeToUnits = (
   return value;
 };
 
-// A statistic re-expressed in the active mode for display (AC-LN19): rounded to
-// a whole number, AMC and Suggested rounding UP, everything else to nearest; an
-// absent value shows 0. Time quantities never pass through here.
+// A statistic re-expressed in the active mode for display (OMS-REG-REPL-04.74):
+// rounded to a whole number, AMC and Suggested rounding UP, everything else to
+// nearest; an absent value shows 0. Time quantities never pass through here.
 export const statInMode = (
   units: number,
   mode: EntryMode,
@@ -115,9 +118,10 @@ export const statInMode = (
   return roundUp ? Math.ceil(raw) : Math.round(raw);
 };
 
-// The store's default entry mode (AC-LN18): packs where the store orders in
-// packs (unconditionally — it does not check the item's pack size), else doses
-// for a dose-managed vaccine with a positive doses-per-unit, else units.
+// The store's default entry mode (OMS-REG-REPL-04.73): packs where the store
+// orders in packs (unconditionally — it does not check the item's pack size),
+// else doses for a dose-managed vaccine with a positive doses-per-unit, else
+// units.
 export const defaultEntryMode = (
   orderInPacks: boolean,
   manageVaccinesInDoses: boolean,
@@ -129,15 +133,16 @@ export const defaultEntryMode = (
   return 'units';
 };
 
-// --- Add-mode suggestion preview (AC-LN4) -----------------------------------
+// --- Add-mode suggestion preview (OMS-REG-REPL-04.13)
+// -----------------------------------
 
 // The suggested quantity previewed from an item's figures before its line
 // exists: zero without consumption, zero when the target months are zero, zero
 // when months-of-stock exceeds the reorder threshold (the target months stand
 // in when the threshold is Not set); otherwise (target − months of stock) ×
 // AMC, rounded up. The real suggestion is the server's, taken at save; this is
-// the draft preview only. (The population-forecast override, AC-PF4, is not
-// previewed — a forecast is captured server-side at line creation.)
+// the draft preview only. (The population-forecast override, OMS-REG-REPL-11.4,
+// is not previewed — a forecast is captured server-side at line creation.)
 export const previewSuggestion = (
   amc: number,
   monthsOfStock: number,
@@ -247,7 +252,8 @@ export const editorLineFromLine = (
   isNew: false,
 });
 
-// --- Save (AC-LN3/LN11) -----------------------------------------------------
+// --- Save (OMS-REG-REPL-04.65/.68)
+// -----------------------------------------------------
 
 export type SaveLineResult =
   { kind: 'saved' } | { kind: 'error'; message: string } | { kind: 'failed' };
@@ -276,9 +282,9 @@ type Draft = {
   optionId?: string | null;
 };
 
-// ADD (AC-LN3): the draft's first save realises the create — insert (server
-// generates the snapshot + suggestion + gated captures) then update (the
-// drafted quantity / comment / reason), in one batch. A typed insert error
+// ADD (OMS-REG-REPL-04.65): the draft's first save realises the create — insert
+// (server generates the snapshot + suggestion + gated captures) then update
+// (the drafted quantity / comment / reason), in one batch. A typed insert error
 // gets the generic failure surface (contract parity); the update error is
 // surfaced inline.
 export const saveNewLine = async (
@@ -325,7 +331,8 @@ export const saveNewLine = async (
   return { kind: 'saved' };
 };
 
-// EDIT (AC-LN11): a single line update; exactly the changed fields persist.
+// EDIT (OMS-REG-REPL-04.68): a single line update; exactly the changed fields
+// persist.
 export const saveExistingLine = async (
   storeId: string,
   line: EditorLine,

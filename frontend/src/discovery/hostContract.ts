@@ -16,22 +16,22 @@
 // see src/discovery/README.md § host duties):
 // - A failed main-frame load of a CONNECTED server's UI must land back on
 //   this page with `?autoconnect=false&timedout=true` (plus `&standalone=true`
-//   if launched standalone), never on shell/browser error content (AC-DT4,
-//   seeding the could-not-connect notice). A failure of the discovery page's
-//   OWN origin is a packaging fault, not a server failure — surface a native
-//   error instead of reloading in a loop.
+//   if launched standalone), never on shell/browser error content
+// (OMS-REG-DESK-01.5,   seeding the could-not-connect notice). A failure of the
+// discovery page's   OWN origin is a packaging fault, not a server failure —
+// surface a native   error instead of reloading in a loop.
 // - The session ends with the app: closing the shell clears session cookies
-//   (AC-DT18).
+//   (OMS-REG-DESK-01.30).
 // - Where the platform has a back gesture (Android), `navigate` also pins the
 //   back stack so hardware-back cannot re-enter this page without its flags
-//   and bounce straight back to the server just left (AC-DT16).
+//   and bounce straight back to the server just left (OMS-REG-DESK-01.21).
 //
 // This contract replaces the legacy shell's `window.electronNativeAPI`
 // (open-msupply client/packages/electron/src/preload.ts). Wire compatibility
 // with that shell was deliberately retired: its fused check-and-navigate
-// `connectToServer` drops the login hand-off path (AC-DT23/24), never seeds
-// `?timedout=true`, and marks locality by address compare — three of the
-// divergences this contract exists to make unrepresentable.
+// `connectToServer` drops the login hand-off path (OMS-REG-DESK-01.22/.23/24),
+// never seeds `?timedout=true`, and marks locality by address compare — three
+// of the divergences this contract exists to make unrepresentable.
 
 export type HostPlatform = 'electron' | 'android';
 
@@ -143,7 +143,7 @@ export type DiscoveryHostApi = {
    * Accumulation and dedup are the page's job (./discovery.ts §
    * mergeServers). */
   announcements: () => Promise<{ announcements: RawAnnouncement[] }>;
-  /** The bounded is-the-app-there check (AC-DT12, AC-DT25). Host-side by
+  /** The bounded is-the-app-there check (OMS-REG-DESK-01.16, OMS-REG-DESK-01.26–.28). Host-side by
    * necessity, not convenience: the release server's CORS rejects unknown
    * cross-origins and a self-signed certificate needs host-side trust
    * (spec/desktop § connection trust — spike posture), so the page's own

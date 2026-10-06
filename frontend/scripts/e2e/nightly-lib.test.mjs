@@ -438,13 +438,13 @@ describe('cluesMarkdown', () => {
 describe('leg-qualified keys', () => {
   it('leaves the default leg bare and prefixes any other', () => {
     expect(legKey(null, 'auth.setup.ts › Auth')).toBe('auth.setup.ts › Auth');
-    expect(legKey('plugin-cook_islands', 'auth.setup.ts › Auth')).toBe(
-      '[plugin-cook_islands] auth.setup.ts › Auth'
+    expect(legKey('plugin-example', 'auth.setup.ts › Auth')).toBe(
+      '[plugin-example] auth.setup.ts › Auth'
     );
   });
   it('splits a qualified key back, and passes a bare one through', () => {
-    expect(splitLegKey('[plugin-cook_islands] a.spec.ts › t')).toEqual({
-      leg: 'plugin-cook_islands',
+    expect(splitLegKey('[plugin-example] a.spec.ts › t')).toEqual({
+      leg: 'plugin-example',
       key: 'a.spec.ts › t',
     });
     expect(splitLegKey('a.spec.ts › t')).toEqual({
@@ -454,8 +454,8 @@ describe('leg-qualified keys', () => {
   });
   it('finds the spec file under the leg prefix', () => {
     expect(
-      specFileOf('[plugin-cook_islands] plugins/cook_islands/ck.spec.ts › gate')
-    ).toBe('plugins/cook_islands/ck.spec.ts');
+      specFileOf('[plugin-example] plugins/example/gate.spec.ts › gate')
+    ).toBe('plugins/example/gate.spec.ts');
   });
 });
 
@@ -474,7 +474,7 @@ describe('gatherClues', () => {
   });
   const artifacts = {
     'e2e-report-develop': report('expected'),
-    'e2e-report-develop-plugin-cook_islands': report('unexpected'),
+    'e2e-report-develop-plugin-example': report('unexpected'),
   };
   const ids = Object.keys(artifacts);
   const github = {
@@ -513,7 +513,7 @@ describe('gatherClues', () => {
       summary: {
         regressions: [
           { key: 'auth.setup.ts › Auth' },
-          { key: '[plugin-cook_islands] auth.setup.ts › Auth' },
+          { key: '[plugin-example] auth.setup.ts › Auth' },
         ],
       },
       serverUrl: 'https://gh',
@@ -521,5 +521,50 @@ describe('gatherClues', () => {
     const [, bare, plugin] = md.split(/\*\*`/);
     expect(bare).toContain('first failure in this window');
     expect(plugin).toContain('has failed before');
+  });
+
+  // #1133: an artifact carries its own e2e-report-<leg>/ folder; one
+  // uploaded before that holds a bare results.json. Both stay in the window
+  // until they expire, so history reads both.
+  it('reads history from both the foldered and the older flat artifact layout', async () => {
+    const name = 'e2e-report-v3.03.00-RC';
+    const zips = {
+      11: streamedZip({
+        [`${name}/results.json`]: JSON.stringify(report('unexpected')),
+      }),
+      12: streamedZip({ 'results.json': JSON.stringify(report('expected')) }),
+    };
+    const md = await gatherClues({
+      github: {
+        ...github,
+        rest: {
+          ...github.rest,
+          actions: {
+            listWorkflowRuns: async () => ({
+              data: { workflow_runs: [{ id: 10 }, { id: 11 }, { id: 12 }] },
+            }),
+            listWorkflowRunArtifacts: async ({ run_id }) => ({
+              data: {
+                artifacts: zips[run_id]
+                  ? [{ id: run_id, name, expired: false }]
+                  : [],
+              },
+            }),
+            downloadArtifact: async ({ artifact_id }) => ({
+              data: zips[artifact_id],
+            }),
+          },
+        },
+      },
+      owner: 'o',
+      repo: 'r',
+      key: 'v3.03.00-RC',
+      currentRunId: 10,
+      summary: { regressions: [{ key: 'auth.setup.ts › Auth' }] },
+      serverUrl: 'https://gh',
+    });
+    // Oldest first: the flat run 12 passed, the foldered run 11 failed.
+    expect(md).toContain('`✅❌`');
+    expect(md).toContain('failed 1 of the previous 2 runs');
   });
 });

@@ -57,7 +57,8 @@ export interface SelectReportModalProps {
    * Host-seeded generation arguments, merged into every generation beneath the
    * report form's own values (a form arg wins on key collision). Lets a record
    * screen seed context its templates need but no form collects — e.g. an
-   * indicator internal order's program / period / customer identity (AC-PR4).
+   * indicator internal order's program / period / customer identity
+   * (spec/internal-orders rules § printing).
    */
   seedArgs?: Record<string, unknown>;
   onClose: () => void;

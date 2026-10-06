@@ -154,8 +154,8 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
   const [reopen, setReopen] = createSignal(false);
 
   // This machine serves everyone iff the install was built that way
-  // (standalone=true, AC-DT20) OR its user said so. The launch flag wins:
-  // a standalone install is never offered a choice, whatever is stored.
+  // (standalone=true, OMS-REG-DESK-01.32) OR its user said so. The launch flag
+  // wins: a standalone install is never offered a choice, whatever is stored.
   // One flag set, downstream (discovery.ts § effectiveFlags).
   const effective = (): DiscoveryFlags =>
     effectiveFlags(flags, mode(), answered());
@@ -167,14 +167,14 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
     reopen() || shouldAskInstallMode(flags, mode(), answered());
 
   // Whether the question is this install's to answer at all: a desktop client
-  // was never offered it, and a standalone install must never be (AC-DT20).
-  // The same conditions shouldAskInstallMode gates on.
+  // was never offered it, and a standalone install must never be
+  // (OMS-REG-DESK-01.32). The same conditions shouldAskInstallMode gates on.
   const roleIsChoosable = flags.canHostServer && !flags.standalone;
 
-  // Where the landing screen can send the user back to (AC-DT16): this page,
-  // told not to bounce straight back and told the install's mode, so a
-  // standalone return is never offered the chooser (AC-DT20). Passed on every
-  // hand-off via the connect path (./discoveryReturn.ts).
+  // Where the landing screen can send the user back to (OMS-REG-DESK-01.21):
+  // this page, told not to bounce straight back and told the install's mode, so
+  // a standalone return is never offered the chooser (OMS-REG-DESK-01.32).
+  // Passed on every hand-off via the connect path (./discoveryReturn.ts).
   // Built from the LAUNCH flags, not the effective ones: standalone=true must
   // mean "this install carries its own server", so a stored role does not
   // disguise itself as one on the way back — that is what lets the return
@@ -211,7 +211,7 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
         <Match when={undecided()}>
           <ModeChooser onChoose={choose} />
         </Match>
-        {/* This machine's own server, used without asking (AC-DT20). */}
+        {/* This machine's own server, used without asking (OMS-REG-DESK-01.32). */}
         <Match when={servesItself()}>
           <StandaloneConnect
             host={props.host}
@@ -266,13 +266,14 @@ const ModeChooser: Component<{
 );
 
 // The landing path of every successful connection: login, carrying the way
-// back here (AC-DT16) and the language active at click time (chosen on this
-// page, unreachable across origins otherwise — AC-DT23/24). One place, so
-// chosen, entered, remembered and standalone servers all get it.
+// back here (OMS-REG-DESK-01.21) and the language active at click time (chosen
+// on this page, unreachable across origins otherwise —
+// OMS-REG-DESK-01.22/.23/24). One place, so chosen, entered, remembered and
+// standalone servers all get it.
 const landingPath = (returnUrl: string) => handoffPath(returnUrl, locale());
 
 /** A standalone install: its own server answers, or the failure is stated
- * with a retry — never a chooser (AC-DT20, spec § standalone
+ * with a retry — never a chooser (OMS-REG-DESK-01.32, spec § standalone
  * auto-connection). */
 const StandaloneConnect: Component<{
   host: DiscoveryHostApi;
@@ -282,8 +283,8 @@ const StandaloneConnect: Component<{
   // Not connected to the install's own server. Seeded when the launch flags
   // mean no attempt will be made (the user chose to come back, or the shell's
   // own launch check already elapsed): the state is stated with its retry
-  // rather than left as a "connecting" spinner nothing is driving (AC-DT9's
-  // bounded-wait principle).
+  // rather than left as a "connecting" spinner nothing is driving
+  // (OMS-REG-DESK-01.13's bounded-wait principle).
   const [failed, setFailed] = createSignal(
     standaloneSeededFailure(props.flags)
   );
@@ -296,7 +297,7 @@ const StandaloneConnect: Component<{
   const attempt = async () => {
     setFailed(false);
     // A standalone install always reconnects to its own server, so there is
-    // nothing to remember (AC-DT20/21).
+    // nothing to remember (OMS-REG-DESK-01.32/21).
     const connected = await connectToServer(
       props.host,
       STANDALONE_LOCAL_SERVER,
@@ -307,9 +308,9 @@ const StandaloneConnect: Component<{
   };
 
   onMount(() => {
-    // The install's own server is used without asking (AC-DT20) — but never
-    // after the shell's launch check failed or the user chose to come back
-    // (AC-DT2, AC-DT16).
+    // The install's own server is used without asking (OMS-REG-DESK-01.32) —
+    // but never after the shell's launch check failed or the user chose to come
+    // back (OMS-REG-DESK-01.2/.3, OMS-REG-DESK-01.21).
     if (autoconnectTarget(props.flags, undefined)) void attempt();
   });
 
@@ -351,15 +352,15 @@ const ServerChooser: Component<{
   returnUrl: string;
 }> = props => {
   const [servers, setServers] = createSignal<FrontEndHost[]>([]);
-  // The bounded wait elapsed with nothing found (AC-DT9).
+  // The bounded wait elapsed with nothing found (OMS-REG-DESK-01.13).
   const [notFound, setNotFound] = createSignal(false);
   // Key of the server a connection attempt is in flight for ('manual' for the
   // entered URL) — one attempt at a time, and the row shows it.
   const [connecting, setConnecting] = createSignal<string>();
   // Display address of the server a choice (or the launch check) failed for —
-  // the "could not be connected to" notice (AC-DT2, AC-DT12). Seeded from
-  // ?timedout: the shell's own launch check already failed on the remembered
-  // server before it showed this page.
+  // the "could not be connected to" notice (OMS-REG-DESK-01.2/.3,
+  // OMS-REG-DESK-01.16). Seeded from ?timedout: the shell's own launch check
+  // already failed on the remembered server before it showed this page.
   const [failedServer, setFailedServer] = createSignal<string | undefined>(
     props.flags.timedout && props.previous
       ? frontEndHostDisplay(props.previous)
@@ -370,8 +371,8 @@ const ServerChooser: Component<{
   );
   const [manualError, setManualError] = createSignal<string>();
   // An auto-connection from launch is in flight, so nothing of the chooser is
-  // on screen yet (AC-DT1). False from the start when there is nothing to
-  // attempt — a first launch, or a return that must not reconnect.
+  // on screen yet (OMS-REG-DESK-01.1). False from the start when there is
+  // nothing to attempt — a first launch, or a return that must not reconnect.
   const [launchAttempt, setLaunchAttempt] = createSignal(
     autoconnectTarget(props.flags, props.previous) !== undefined
   );
@@ -407,7 +408,8 @@ const ServerChooser: Component<{
         result.announcements.map(a => toFrontEndHost(a, info))
       )
     );
-    // Finding anything at all cancels the not-found outcome (AC-DT10).
+    // Finding anything at all cancels the not-found outcome
+    // (OMS-REG-DESK-01.14).
     if (servers().length > 0) {
       if (timeoutTimer != null) clearTimeout(timeoutTimer);
       timeoutTimer = undefined;
@@ -415,8 +417,9 @@ const ServerChooser: Component<{
     }
   };
 
-  // Start (or restart) the search. Searching again starts clean (AC-DT11): a
-  // server that has gone away does not persist in the list.
+  // Start (or restart) the search. Searching again starts clean
+  // (OMS-REG-DESK-01.15): a server that has gone away does not persist in the
+  // list.
   const search = async () => {
     stopTimers();
     batch(() => {
@@ -432,12 +435,13 @@ const ServerChooser: Component<{
         // One last read before deciding. The interval's final tick is up to
         // DISCOVERY_POLL_MS before this moment, so a server that announced
         // in between is sitting in the host's list unpolled — reaching the
-        // not-found outcome with it there is exactly what AC-DT10 forbids.
+        // not-found outcome with it there is exactly what OMS-REG-DESK-01.14
+        // forbids.
         await poll();
         if (disposed) return;
         // An empty list now means the wait genuinely elapsed with nothing
-        // (AC-DT9). Stop polling — the outcome offers "search again" rather
-        // than silently continuing.
+        // (OMS-REG-DESK-01.13). Stop polling — the outcome offers "search
+        // again" rather than silently continuing.
         if (servers().length === 0) {
           stopTimers();
           setNotFound(true);
@@ -448,7 +452,7 @@ const ServerChooser: Component<{
 
   // One connection attempt (its ordering in discovery.ts § connectToServer:
   // probe, record, navigate). Failure leaves the user HERE, list intact, told
-  // which server could not be connected to (AC-DT12).
+  // which server could not be connected to (OMS-REG-DESK-01.16).
   const connect = async (server: FrontEndHost, key: string) => {
     if (connecting() !== undefined) return;
     batch(() => {
@@ -471,13 +475,13 @@ const ServerChooser: Component<{
   const chooseServer = (server: FrontEndHost) =>
     void connect(server, serverKey(server));
 
-  // The auto-connection to a remembered server (AC-DT1). Its locality is
-  // re-decided against this machine first (discovery.ts § withLocality): a
-  // listed server's is computed fresh every poll, but a remembered — or
-  // adopted — record's is as old as the record, and it is what tells the host
-  // how to answer that server's certificate error. This machine's facts are
-  // asked for here rather than waited on from the search beneath, so the two
-  // stay independent.
+  // The auto-connection to a remembered server (OMS-REG-DESK-01.1). Its
+  // locality is re-decided against this machine first (discovery.ts §
+  // withLocality): a listed server's is computed fresh every poll, but a
+  // remembered — or adopted — record's is as old as the record, and it is what
+  // tells the host how to answer that server's certificate error. This
+  // machine's facts are asked for here rather than waited on from the search
+  // beneath, so the two stay independent.
   const autoconnect = async (target: FrontEndHost): Promise<boolean> => {
     const info = await props.host.hostInfo().catch(() => undefined);
     if (disposed) return false;
@@ -501,15 +505,15 @@ const ServerChooser: Component<{
   };
 
   onMount(() => {
-    // A remembered server is used without asking (AC-DT1); the search still
-    // runs beneath the attempt so a failure lands on a ready list. Never
-    // after the shell's launch check failed or the user chose to come back
-    // (AC-DT2, AC-DT16).
+    // A remembered server is used without asking (OMS-REG-DESK-01.1); the
+    // search still runs beneath the attempt so a failure lands on a ready list.
+    // Never after the shell's launch check failed or the user chose to come
+    // back (OMS-REG-DESK-01.2/.3, OMS-REG-DESK-01.21).
     const target = autoconnectTarget(props.flags, props.previous);
     if (target) {
       // ...and while that attempt is in flight the chooser is NOT drawn.
-      // AC-DT1 is "the discovery screen is never shown", so painting the
-      // list and then navigating away flashed a screen the returning user
+      // OMS-REG-DESK-01.1 is "the discovery screen is never shown", so painting
+      // the list and then navigating away flashed a screen the returning user
       // was never meant to see.
       //
       // Dropped only when the attempt FAILS, which is exactly when the
@@ -528,7 +532,7 @@ const ServerChooser: Component<{
       when={!launchAttempt()}
       fallback={
         /* A returning user is not shown the chooser at all while their
-           remembered server is being reached (AC-DT1) — only that something
+           remembered server is being reached (OMS-REG-DESK-01.1) — only that something
            is happening. */
         <div class={styles.searching} role="status">
           <Spinner sizeRem={1.25} label={t('discovery.connecting')} />
@@ -538,7 +542,7 @@ const ServerChooser: Component<{
     >
       <Show when={failedServer()}>
         {/* Told which server could not be connected to, still on the list
-            (AC-DT2, AC-DT12). role=alert announces it when a choice fails
+            (OMS-REG-DESK-01.2/.3, OMS-REG-DESK-01.16). role=alert announces it when a choice fails
             live. */}
         <Alert severity="error" testId="discovery-connect-error">
           {t('error.unable-to-connect', { server: failedServer()! })}
@@ -562,7 +566,7 @@ const ServerChooser: Component<{
         <Switch>
           <Match when={notFound()}>
             {/* The bounded wait elapsed: a stated outcome with a way to
-                search again, not an unbounded spinner (AC-DT9). */}
+                search again, not an unbounded spinner (OMS-REG-DESK-01.13). */}
             <div class={styles.outcome}>
               <Alert severity="warning" testId="discovery-not-found">
                 {t('error.server-not-found')}
@@ -600,7 +604,7 @@ const ServerChooser: Component<{
                         {frontEndHostDisplay(server)}
                       </span>
                       <Show when={server.isLocal}>
-                        {/* Marked as this machine's own server (AC-DT5) —
+                        {/* Marked as this machine's own server (OMS-REG-DESK-01.6/.7) —
                             icon + text, not icon alone. */}
                         <span class={styles.thisMachine}>
                           <HomeIcon />

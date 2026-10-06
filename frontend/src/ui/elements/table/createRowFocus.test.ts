@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRowFocus } from './createRowFocus';
 
-// The contract here is spec/keyboard KB-N1/KB-N2/KB-E5 (AC-KB37–40), which is
-// four rules with one shared failure mode — a key the table takes when it was
-// not the table's to take:
+// The contract here is spec/keyboard KB-N1/KB-N2/KB-E5 (OMS-REG-KBD-02.27–.31),
+// which is four rules with one shared failure mode — a key the table takes when
+// it was not the table's to take:
 //
 //   1. arrows move the highlight and CLAMP at both ends (unlike the palette's
 //      option list, which wraps — KB-N3);
@@ -86,7 +86,7 @@ describe('arrow movement', () => {
     expect(rowFocus.focusedKey()).toBe('c');
   });
 
-  it('CLAMPS at both ends rather than wrapping (AC-KB38)', () => {
+  it('CLAMPS at both ends rather than wrapping (OMS-REG-KBD-02.29)', () => {
     const { table } = fakeTable(['a', 'b']);
     const rowFocus = createRowFocus({});
     const keys = ['a', 'b'];
@@ -131,7 +131,7 @@ describe('Enter opens the focused row (KB-E5)', () => {
   });
 });
 
-describe('Escape clears the highlight (AC-KB39)', () => {
+describe('Escape clears the highlight (OMS-REG-KBD-02.30)', () => {
   it('clears and consumes only while a row is focused', () => {
     const { table } = fakeTable(['a']);
     const rowFocus = createRowFocus({});
@@ -154,7 +154,7 @@ describe('origin (KB-N2)', () => {
     rowFocus.handleKey(press('ArrowDown', table), ['a', 'b']);
 
     // Enter on a cell's action button activates the BUTTON. Consuming it here
-    // too would be two actions from one press (AC-KB26).
+    // too would be two actions from one press (OMS-REG-KBD-02.14/.15).
     expect(
       rowFocus.handleKey(press('Enter', table, 'cell-button'), ['a', 'b'])
     ).toBe(false);
