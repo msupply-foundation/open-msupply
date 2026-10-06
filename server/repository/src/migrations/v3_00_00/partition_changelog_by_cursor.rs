@@ -117,10 +117,17 @@ fn create_future_partitions(
         let to = start + (i + 1) * size;
         // Partition names use the cursor lower bound as the suffix so naming is
         // stable across migration + runtime top-up — no counter to keep in sync.
+        // Create then attach: `CREATE TABLE … PARTITION OF` would take ACCESS
+        // EXCLUSIVE on changelog. `INCLUDING ALL` copies the PK index for
+        // Postgres to adopt on attach.
         sql!(
             connection,
-            "CREATE TABLE changelog_p_{} PARTITION OF changelog \
-             FOR VALUES FROM ({}) TO ({});",
+            "CREATE TABLE changelog_p_{} (LIKE changelog INCLUDING ALL);",
+            from
+        )?;
+        sql!(
+            connection,
+            "ALTER TABLE changelog ATTACH PARTITION changelog_p_{} FOR VALUES FROM ({}) TO ({});",
             from,
             from,
             to
@@ -196,6 +203,7 @@ mod tests {
         let max_cursor: i64 = 4;
         let expected_partitions = (max_cursor + lookahead) / partition_size + 1;
         assert_eq!(count_partitions(&connection), expected_partitions);
+        assert_every_partition_pk_attached(&connection, expected_partitions);
 
         assert_insert_routes_to_partition(&connection, "u_new");
     }
@@ -221,6 +229,7 @@ mod tests {
         let lookahead = config.changelog_partition.lookahead;
         let expected_partitions = lookahead / partition_size + 1;
         assert_eq!(count_partitions(&connection), expected_partitions);
+        assert_every_partition_pk_attached(&connection, expected_partitions);
 
         assert_insert_routes_to_partition(&connection, "first_row");
     }
@@ -312,6 +321,26 @@ mod tests {
         .get_result::<Bigint>(connection.lock().connection())
         .unwrap()
         .value
+    }
+
+    /// Every partition must carry its own leg of the parent's partitioned
+    /// primary key. The create-and-attach helper copies a local PK index and
+    /// relies on Postgres adopting it on attach; if that ever stopped
+    /// happening the parent PK would be left incomplete (or a second index
+    /// built) with no error at migration time.
+    fn assert_every_partition_pk_attached(connection: &StorageConnection, expected: i64) {
+        let attached = diesel::sql_query(
+            "SELECT count(*)::bigint AS value FROM pg_inherits i \
+             JOIN pg_index x ON x.indexrelid = i.inhrelid \
+             WHERE i.inhparent = 'changelog_pkey'::regclass AND x.indisprimary",
+        )
+        .get_result::<Bigint>(connection.lock().connection())
+        .unwrap()
+        .value;
+        assert_eq!(
+            attached, expected,
+            "every changelog partition should have its PK index attached under changelog_pkey"
+        );
     }
 
     fn changelog_is_partitioned(connection: &StorageConnection) -> bool {

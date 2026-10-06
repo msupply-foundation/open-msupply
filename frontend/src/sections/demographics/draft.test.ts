@@ -25,7 +25,7 @@ import {
 // terms, asserted on the pure module the editor and the page ride on.
 //
 // Behaviour anchors: spec/demographics/cases/OMS-REG-MNG-03 (behaviour ids,
-// cited as `.n`; the former AC-* ids map to them in acceptance.md).
+// cited as `.n`).
 
 const indicator = (
   id: string,

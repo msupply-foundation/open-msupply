@@ -177,7 +177,7 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * Arrow-key row navigation: `ArrowDown`/`ArrowUp` move a row highlight
    * (clamped at the ends, scrolled into view), `Enter` opens the highlighted
    * row through the SAME `onRowClick` a mouse click uses, `Escape` clears the
-   * highlight (spec/keyboard KB-N1/KB-E5, AC-KB37–40; issue #1006).
+   * highlight (spec/keyboard KB-N1/KB-E5, OMS-REG-KBD-02.27–.31; issue #1006).
    *
    * DEFAULTS to whether `onRowClick` is set, so every list table answers the
    * arrows without its page opting in — a table whose rows open nothing has
@@ -770,7 +770,7 @@ export function DataTable<T, K extends string, G extends string = never>(
    * KB-F1: "A list screen seeds its table, making arrow-key row navigation
    * available immediately… It MUST NOT steal focus from a text field that
    * already holds it — an arrival that races a search field or a just-dismissed
-   * palette yields to the field" (AC-KB28/AC-KB29).
+   * palette yields to the field" (OMS-REG-KBD-02.17/.18).
    *
    * Done HERE rather than by each page handing in a focus target (the shape
    * that was removed with the first build): the seed is the same on all ~30

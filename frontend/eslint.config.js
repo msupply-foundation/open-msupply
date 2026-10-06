@@ -140,7 +140,11 @@ export default tseslint.config(
         cryptoRandomUuidRestriction,
         createObjectUrlRestriction,
       ],
-      'no-restricted-syntax': ['error', anchorDownloadRestriction, jsxDownloadRestriction],
+      'no-restricted-syntax': [
+        'error',
+        anchorDownloadRestriction,
+        jsxDownloadRestriction,
+      ],
     },
   },
 
@@ -183,7 +187,11 @@ export default tseslint.config(
       // Same Android WebView, same dead click (#1169) — a plugin needing to
       // hand the user a file is an SDK gap, not a hand-rolled download.
       'no-restricted-properties': ['error', createObjectUrlRestriction],
-      'no-restricted-syntax': ['error', anchorDownloadRestriction, jsxDownloadRestriction],
+      'no-restricted-syntax': [
+        'error',
+        anchorDownloadRestriction,
+        jsxDownloadRestriction,
+      ],
       /*
        * The `@/` alias is already unresolvable here (tsconfig.plugins.json and
        * the plugin build preset both omit it), but a RELATIVE reach —
@@ -209,6 +217,21 @@ export default tseslint.config(
           ],
         },
       ],
+    },
+  },
+
+  /*
+   * The Afghanistan plugin's stored shapes are wire constraints: rows the
+   * React bundle wrote are in the field and the Afghanistan reports compile
+   * against a copy of its type module, so payload field names stay snake_case
+   * (plugins/afghanistan/rules.md § data conventions). Property names and the
+   * destructured reads of them are exempt from camelcase there; identifiers
+   * the plugin coins are not.
+   */
+  {
+    files: ['plugins/afghanistan/src/**/*.{ts,tsx}'],
+    rules: {
+      camelcase: ['error', { properties: 'never', ignoreDestructuring: true }],
     },
   },
 

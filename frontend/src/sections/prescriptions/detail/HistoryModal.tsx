@@ -13,8 +13,8 @@ import { PrescriptionHistory } from './history.generated';
 import { historyRows, type HistoryRow } from './historyMerge';
 
 // The recently-prescribed history (spec/prescriptions/ui-surface.md S6;
-// AC-H1): every other prescription of the patient past NEW, newest first
-// (capped at 20 by the query), one row per item with the lines merged. A
+// OMS-REG-DIS-03.46): every other prescription of the patient past NEW, newest
+// first (capped at 20 by the query), one row per item with the lines merged. A
 // read-only table in a dialog; OK closes.
 
 export interface HistoryModalProps {

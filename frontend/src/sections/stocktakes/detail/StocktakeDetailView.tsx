@@ -463,10 +463,10 @@ const StocktakeDetailView: Component = () => {
 
   const current = () => info();
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
-  // declaration for the two controls that trigger it (the toolbar button and the
-  // ghost button in the table's empty slot); each carries `shortcut={ALT_N}` for
-  // its badge, neither owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). One declaration for the two controls that trigger
+  // it (the toolbar button and the ghost button in the table's empty slot);
+  // each carries `shortcut={ALT_N}` for its badge, neither owns the action.
   //
   // Reads `current()` rather than the `node` the JSX binds: that one is a <Show>
   // render-prop accessor scoped inside the tree, while the action is declared at

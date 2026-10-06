@@ -1,4 +1,11 @@
-import { createEffect, createSignal, on, Show, type Component } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  Show,
+  type Component,
+} from 'solid-js';
 import { t } from '../../../intl';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import {
@@ -71,13 +78,10 @@ export const InboundShipmentStatusFooter: Component<
 
   // A refusal speaks for the record it was raised on. Some views keep this
   // footer mounted while the route swaps in another record, so drop it then.
-  createEffect(
-    on(
-      () => props.node.id,
-      () => setErrorMessage(undefined),
-      { defer: true }
-    )
-  );
+  // Keyed on the id through a memo: `props.node.id` alone re-runs whenever the
+  // view replaces the node object (any refetch), with the id unchanged.
+  const recordId = createMemo(() => props.node.id);
+  createEffect(on(recordId, () => setErrorMessage(undefined), { defer: true }));
 
   const sourceLink = () => sourceLinkOf(props.node);
   // Every status surface is limited by the invoice-status-options preference
@@ -125,7 +129,7 @@ export const InboundShipmentStatusFooter: Component<
     }));
 
   return (
-    <ContentFooter>
+    <ContentFooter testId="status-footer">
       {/* Hold — blocks status changes only; disabled once Verified. Toggling
           prompts a confirmation. */}
       <CheckboxButton

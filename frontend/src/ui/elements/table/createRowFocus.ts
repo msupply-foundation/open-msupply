@@ -2,7 +2,8 @@ import { createSignal, untrack } from 'solid-js';
 
 /*
  * Keyboard row navigation for a list table (spec/keyboard KB-N1, KB-N2, KB-E5,
- * AC-KB37/38/39/40; issue #1006 — the current app has it, this one did not).
+ * OMS-REG-KBD-02.27/.28/38/39/40; issue #1006 — the current app has it, this
+ * one did not).
  *
  * KB-N1: "A list table with focus responds to arrow keys: ArrowDown / ArrowUp
  * move the focused row one step, CLAMPED at the ends, scrolling it into view…
@@ -32,7 +33,7 @@ import { createSignal, untrack } from 'solid-js';
  * link, a button — is not ours by construction. That is the wider rule the
  * first build lacked: with only an `isTextEntry` guard, `Enter` on a cell's
  * action button activated the button AND opened the row — two actions from one
- * press, which AC-KB26 forbids.
+ * press, which OMS-REG-KBD-02.14/.15 forbids.
  */
 
 export interface RowFocus {
@@ -142,10 +143,10 @@ export const createRowFocus = (options: {
       if (keys.length === 0) return false;
       const current = focusedKey();
       const index = current === undefined ? -1 : keys.indexOf(current);
-      // CLAMPED (AC-KB38), deliberately unlike an option list, which wraps
-      // (KB-N3). A list table is a window onto a paged dataset, so wrapping
-      // from the last row to the first would claim the list ends there when it
-      // may not.
+      // CLAMPED (OMS-REG-KBD-02.29), deliberately unlike an option list, which
+      // wraps (KB-N3). A list table is a window onto a paged dataset, so
+      // wrapping from the last row to the first would claim the list ends there
+      // when it may not.
       const next =
         event.key === 'ArrowDown'
           ? Math.min(index + 1, keys.length - 1)
@@ -171,8 +172,8 @@ export const createRowFocus = (options: {
       return true;
     }
 
-    // AC-KB39. Consumed ONLY when a row actually holds focus, so on a table
-    // with no row focus Escape falls through to the rungs below (a dialog
+    // OMS-REG-KBD-02.30. Consumed ONLY when a row actually holds focus, so on a
+    // table with no row focus Escape falls through to the rungs below (a dialog
     // cancelling, navigate-up). The keyboard stays on the table, so arrows
     // resume from the top rather than dead-ending on an element that no longer
     // means anything.

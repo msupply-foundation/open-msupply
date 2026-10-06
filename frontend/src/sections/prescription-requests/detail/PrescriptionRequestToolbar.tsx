@@ -38,9 +38,9 @@ import {
 // then the scope's prominent custom fields (weight, unit, category,
 // occupation). Weighted shares follow the dispensing toolbar's measured layout
 // (person-name fields take the biggest shares; the date is pinned at its 9rem
-// format width). Every field is read-only past New (AC-N5); unlike dispensing,
-// a date change never touches lines — the request's lines carry no stock, so
-// nothing needs clearing.
+// format width). Every field is read-only past New (OMS-REG-DIS-08.41/.42);
+// unlike dispensing, a date change never touches lines — the request's lines
+// carry no stock, so nothing needs clearing.
 //
 // Date of birth is here, not in the side panel, because the prescriber reads it
 // while they prescribe: it is what the weight beside it is judged against
@@ -174,7 +174,7 @@ export const PrescriptionRequestToolbar: Component<
         />
       </FormRowItem>
       {/* Prominent custom fields — save-on-change, the prescription_request
-          scope (rules § custom fields; AC-F1). */}
+          scope (rules § custom fields; OMS-REG-DIS-08.44/.45). */}
       <CustomFieldsToolbar
         scope="prescription_request"
         recordId={props.node.id}

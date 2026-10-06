@@ -162,7 +162,10 @@ export { DateField } from '../ui/elements/inputs/DateField';
 export type { DateFieldProps } from '../ui/elements/inputs/DateField';
 export { FieldRow } from '../ui/elements/inputs/FieldRow';
 export { Select } from '../ui/elements/selectors/Select';
-export type { SelectOption } from '../ui/elements/selectors/Select';
+export type {
+  SelectOption,
+  SelectProps,
+} from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
 export { FormSection } from '../ui/layout/Form/FormSection';
@@ -211,6 +214,127 @@ export type {
   IsoDateRange,
 } from '../ui/elements/inputs/DateRangeField';
 
+/*
+ * The Afghanistan Daily Tally's set (plugins/afghanistan ui-surface.md § S1–S7,
+ * the roles its Layout lines name — README § host obligations lists them as
+ * the kit gaps): the collapsible section group for its course cards and
+ * coverage groups; the icon-only button for the counter steppers; the
+ * mutually-exclusive choice for the session type; the row-status badge for
+ * _Draft_ and the count badge for a group's running total; the error detail
+ * disclosure for a failed submission; the loading spinner; the read-only
+ * labelled value for its tiles and stats; the vertical and horizontal stacks;
+ * the detail card for its summary tables; the action footer for Back /
+ * Continue / Submit; the standard Cancel button for its dialog; the typography
+ * role for its headings; the disclosure toggle for _Show all_ / _View
+ * details_. Each is eager because its step renders it from first paint, and
+ * each ships CSS of its own into the SDK chunk (measured:
+ * kdd/bundle-size-by-pr).
+ */
+export {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../ui/elements/accordion/Accordion';
+export type {
+  AccordionContentProps,
+  AccordionItemProps,
+  AccordionProps,
+  AccordionTriggerProps,
+} from '../ui/elements/accordion/Accordion';
+export { IconButton } from '../ui/elements/buttons/IconButton';
+export type { IconButtonProps } from '../ui/elements/buttons/IconButton';
+export { DisclosureToggle } from '../ui/elements/buttons/DisclosureToggle';
+export type { DisclosureToggleProps } from '../ui/elements/buttons/DisclosureToggle';
+export { CancelButton } from '../ui/elements/buttons/StandardButtons';
+export { RadioGroup } from '../ui/elements/inputs/RadioGroup';
+export type {
+  RadioGroupProps,
+  RadioOption,
+} from '../ui/elements/inputs/RadioGroup';
+export { Badge } from '../ui/elements/feedback/Badge';
+export type { BadgeProps } from '../ui/elements/feedback/Badge';
+export { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
+export type { ErrorDetailsProps } from '../ui/elements/feedback/ErrorDetails';
+export { Spinner } from '../ui/elements/feedback/Spinner';
+export { ProgressList } from '../ui/sync/ProgressList';
+export type { ProgressStep } from '../ui/sync/ProgressList';
+export type { SpinnerProps } from '../ui/elements/feedback/Spinner';
+export { LabelledValue } from '../ui/elements/typography/LabelledValue';
+export type { LabelledValueProps } from '../ui/elements/typography/LabelledValue';
+export { Text } from '../ui/elements/typography/Text';
+export type { TextProps } from '../ui/elements/typography/Text';
+export { Stack } from '../ui/layout/Stack/Stack';
+export type { StackProps } from '../ui/layout/Stack/Stack';
+export { HStack } from '../ui/layout/Stack/HStack';
+export type { HStackProps } from '../ui/layout/Stack/HStack';
+export { DetailCard } from '../ui/layout/Detail/DetailCard';
+export type { DetailCardProps } from '../ui/layout/Detail/DetailCard';
+// The recessed grouping panel: Quick Entry's record strip (plugins/afghanistan
+// ui-surface.md § S3) is one. Hand-rolled, pure CSS over tokens.
+export { InsetPanel } from '../ui/layout/InsetPanel/InsetPanel';
+export type { InsetPanelProps } from '../ui/layout/InsetPanel/InsetPanel';
+export { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
+export type { ContentFooterProps } from '../ui/layout/ContentFooter/ContentFooter';
+export { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
+
+/*
+ * The Afghanistan configuration editor's own set (plugins/afghanistan
+ * ui-surface.md § S8 — the five roles it names and no other audited surface
+ * does, plus the reorderable list its Dose order tab needed built):
+ * page-level tabs, the checkbox of the dose matrix, the multi-select of a
+ * summary table's columns, and the two lookups — the item catalogue (async,
+ * server-paginated) and the adjustment reason (a local set). The plugin owns
+ * each lookup's query and option row; the registry deliberately has no
+ * component per data set (spec/ui-standards/components.md § selects &
+ * lookups).
+ *
+ * EAGER, against the lazy-wrapper default below, because of where this surface
+ * renders: the editor is the body of the host's Configure dialog, and its tab
+ * panels mount when a tab is activated — an interaction. A lazy component
+ * first mounted there would suspend the dialog's boundary and remount it,
+ * detaching the open `<dialog>` and taking the half-typed configuration with
+ * it (kdd/solid-reactivity-pitfalls › No remounts on interaction). The same
+ * reason Dialog itself is safe to make lazy — it mounts only while open — makes
+ * a tab panel's contents unsafe. Kobalte is already in this barrel's eager
+ * graph (Select, Accordion), so what is new is each component's own module and
+ * stylesheet (measured: kdd/bundle-size-by-pr).
+ */
+export { Tabs, TabList, TabPanel } from '../ui/elements/tabs/Tabs';
+export type { TabDef } from '../ui/elements/tabs/Tabs';
+// The BARE checkbox, not the labelled field: a matrix cell's box is named by
+// `aria-label`, the same way the host's own DataTable renders it in a
+// selection cell (see BareCheckbox's composition note). It is also the lighter
+// of the pair — `Checkbox` is this plus label and error chrome.
+export { BareCheckbox } from '../ui/elements/inputs/BareCheckbox';
+export type { BareCheckboxProps } from '../ui/elements/inputs/BareCheckbox';
+export { MultiSelect } from '../ui/elements/selectors/MultiSelect';
+export type { MultiSelectProps } from '../ui/elements/selectors/MultiSelect';
+export { Combobox } from '../ui/elements/selectors/Combobox';
+export type { ComboboxProps } from '../ui/elements/selectors/Combobox';
+export { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
+export type { AsyncComboboxProps } from '../ui/elements/selectors/AsyncCombobox';
+export type { Page } from '../ui/utils/createPaginatedSearch';
+export { ReorderableList } from '../ui/elements/inputs/ReorderableList';
+export type {
+  ReorderableItem,
+  ReorderableListLabels,
+  ReorderableListProps,
+} from '../ui/elements/inputs/ReorderableList';
+// The list's own order arithmetic, for a surface that moves an item by a
+// control of its own (the configuration editor's course columns): the same
+// tested functions, so a one-step move is never re-derived as index maths.
+// Already in the eager graph above — ReorderableList imports them.
+export { moveTo, reorderBy } from '../ui/elements/inputs/reorderLogic';
+// And the focus half of the same move: a reorder moves the row's DOM node and
+// the browser blurs the button that caused it, so a surface with move controls
+// of its own needs the list's refocus contract too, not only its arithmetic.
+export { moveFocus } from '../ui/elements/inputs/moveFocus';
+export type {
+  MoveFocus,
+  MoveButtonElement,
+} from '../ui/elements/inputs/moveFocus';
+
 // ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
 /*
  * Heavy components load as their own host chunk on first render, never as
@@ -221,13 +345,18 @@ export type {
  * bar). The type re-exports are erased at build, so they add nothing eager.
  */
 export {
+  ConfirmDialog,
   DataTable,
+  Dialog,
   FilterBar,
   FilterDateRange,
   FilterSelect,
   FilterTextInput,
+  RecordLink,
   UnsavedChangesGuard,
 } from './lazyComponents';
+export type { DialogProps } from '../ui/elements/feedback/Dialog';
+export type { ConfirmDialogProps } from '../ui/elements/feedback/ConfirmDialog';
 export type { DataTableProps } from '../ui/elements/table/DataTable';
 export type {
   Filter,
@@ -321,6 +450,23 @@ export { CheckIcon } from '../ui/icons';
 // disclosure mirrors that look. Same bargain again: Select already pulls it
 // eagerly, so re-exporting costs nothing new.
 export { ChevronDownIcon } from '../ui/icons';
+/*
+ * The Afghanistan Daily Tally's icons (plugins/afghanistan ui-surface.md):
+ * the add icon on _New tally sheet_, the delete icon on _Discard draft_, the
+ * minus and plus of the counter control, the success check beside
+ * _Auto-allocated_, the forward arrow on Continue. All path data in the module
+ * that already ships — the same bargain as the entries above.
+ */
+export {
+  ArrowRightIcon,
+  CheckCircleIcon,
+  MinusCircleIcon,
+  PlusCircleIcon,
+  TrashIcon,
+} from '../ui/icons';
+// The configuration editor's import/export pair (ui-surface § S8): the upload
+// icon is already above, with the Cook Islands tiles; this is its counterpart.
+export { DownloadIcon } from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';
@@ -330,6 +476,9 @@ export {
   pluginIntl,
   locale,
   isRtl,
+  // The host's endonym for a locale: a plugin naming a language must not keep
+  // its own catalogue of language names (./intl.ts).
+  languageName,
   formatNumber,
   round,
   roundTo,
@@ -351,8 +500,17 @@ export type { PluginIntl, SupportedLocale } from './intl';
  * NOT here: a raw (path, filter) pair is the hand-encoding the named builders
  * exist to prevent.
  */
-export { storeHref, navigateTo, currentStorePath } from './navigation';
-export type { NavigateOptions } from './navigation';
+export {
+  storeHref,
+  navigateTo,
+  currentStorePath,
+  onBeforeLeave,
+  usePageTrail,
+  usePageActions,
+  usePageFooter,
+} from './navigation';
+export type { NavigateOptions, BeforeLeaveEvent } from './navigation';
+export type { RecordLinkProps } from './recordLink';
 export { usePageSearch } from './pageSearch';
 /*
  * Leaving a page with unsaved edits — the one piece of navigation a plugin
@@ -381,6 +539,7 @@ export {
   outOfStockItemsPath,
   dispensingListPath,
   prescriptionListPath,
+  prescriptionDetailPath,
   stockListPath,
   stocktakeListPath,
   stocktakeDetailPath,
@@ -394,6 +553,18 @@ export type {
   GraphqlFailure,
   GraphqlErrorItem,
 } from './graphql';
+/*
+ * The non-suspending resource read, the host's own canonical spelling of it
+ * (kdd/solid-reactivity-pitfalls › No remounts on interaction, checklist rule
+ * 2). A plugin screen reads most of its resources AFTER first paint — a step
+ * that opens, a filter that changes — and a direct `resource()` read there
+ * suspends the page's boundary and remounts the body, taking the draft's edit
+ * buffer and the focused field with it. `.latest` alone is not the fix: it
+ * suspends on the first pending read. One function, no weight, and the gate
+ * the KDD requires of every plugin, so it is the host's rather than each
+ * plugin's own near-miss.
+ */
+export { gated } from '../api/gated';
 
 // ── Data access — the backend bridge ────────────────────────────────────────
 export { pluginBridge, usePluginQuery } from './bridge';
@@ -405,6 +576,15 @@ export { pluginData, CONFIGURATION_IDENTIFIER } from './pluginData';
 // secure-context-only (crashes on plain-HTTP LAN origins, #499), so the host's
 // generator is the sanctioned way for a plugin to mint one.
 export { generateUUID } from '../uuid';
+
+// ── Files out of the app ────────────────────────────────────────────────────
+/*
+ * The configuration editor's _Download JSON_ (plugins/afghanistan ui-surface §
+ * S8). One async function; its platform graph loads on the first save, so this
+ * costs nothing eager (see ./files.ts for why a plugin must not hand-roll it).
+ */
+export { saveFile } from './files';
+export type { SaveFileResult } from './files';
 
 // ── Focus ───────────────────────────────────────────────────────────────────
 // Moving focus after an action is a ref-bound handle, never `autofocus` or a

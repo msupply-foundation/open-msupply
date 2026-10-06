@@ -121,7 +121,7 @@ const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
           when={phase() === 'error'}
           fallback={tPlural('messages.confirm-delete-stocktakes', count)}
         >
-          <Alert severity="error">
+          <Alert severity="error" testId="delete-stocktakes-error">
             {t('messages.cannot-delete-finalised-stocktakes')}
           </Alert>
         </Show>

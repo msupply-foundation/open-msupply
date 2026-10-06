@@ -128,7 +128,7 @@ const Body = (
           when={phase() === 'error'}
           fallback={tPlural('messages.confirm-delete-stock-movements', count)}
         >
-          <Alert severity="error">
+          <Alert severity="error" testId="stock-movement-delete-error">
             {errorMessage()}
             <Show when={errorDetail()}>
               {detail => <ErrorDetails detail={detail()} />}
@@ -158,7 +158,12 @@ const Body = (
         >
           {/* Nothing was deleted, so there is nothing to cancel — the error
               phase is acknowledged, not aborted. */}
-          <Button variant="secondary" confirms="plain" onClick={props.onClose}>
+          <Button
+            variant="secondary"
+            confirms="plain"
+            data-testid="dialog-button-close"
+            onClick={props.onClose}
+          >
             {t('button.close')}
           </Button>
         </Show>

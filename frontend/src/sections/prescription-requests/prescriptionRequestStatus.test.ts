@@ -9,7 +9,7 @@ import {
 } from './prescriptionRequestStatus';
 
 // Status vocabulary gates (spec/prescription-requests/rules.md § the lifecycle,
-// § editability; AC-N5, AC-R3).
+// § editability; OMS-REG-DIS-08.41/.42, OMS-REG-DIS-09.10/.11).
 
 describe('asRequestStatus narrows to the vocabulary (safe default locked)', () => {
   it('keeps the three real statuses', () => {
@@ -23,7 +23,7 @@ describe('asRequestStatus narrows to the vocabulary (safe default locked)', () =
   });
 });
 
-describe('isEditable — New only (AC-N5, AC-R3, AC-D2)', () => {
+describe('isEditable — New only (OMS-REG-DIS-08.41/.42, OMS-REG-DIS-09.10/.11, OMS-REG-DIS-10.3/.4)', () => {
   it('is true only for NEW', () => {
     expect(isEditable('NEW')).toBe(true);
     expect(isEditable('READY_TO_DISPENSE')).toBe(false);

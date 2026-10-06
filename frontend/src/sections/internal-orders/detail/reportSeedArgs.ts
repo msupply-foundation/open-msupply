@@ -1,7 +1,7 @@
-// Report generation seeds for a program order (AC-PR4): the program / period /
-// customer identity that indicator report templates need in order to locate the
-// program data behind the order. Handed to the Export/Print selector, which
-// merges them into the report arguments.
+// Report generation seeds for a program order (rules § printing): the program /
+// period / customer identity that indicator report templates need in order to
+// locate the program data behind the order. Handed to the Export/Print
+// selector, which merges them into the report arguments.
 //
 // Deliberately independent of the Indicators tab gate (showIndicators):
 // whether the tab is *offered* is a display decision, but a report template

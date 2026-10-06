@@ -463,6 +463,7 @@ export const CreateStocktakeModal = (props: {
                 hideLabel
                 disabled={creating()}
                 placeholder={t('label.any')}
+                inputTestId="stocktake-master-list-input"
                 value={form().masterListId || undefined}
                 onChange={id => setForm({ ...form(), masterListId: id ?? '' })}
               />
@@ -489,6 +490,7 @@ export const CreateStocktakeModal = (props: {
                 loading={locationsData.loading}
                 disabled={creating()}
                 placeholder={t('label.any')}
+                inputTestId="stocktake-location-input"
                 value={form().locationId || undefined}
                 onChange={l => setForm({ ...form(), locationId: l?.id ?? '' })}
               />
@@ -498,6 +500,7 @@ export const CreateStocktakeModal = (props: {
                 label={t('label.items-expiring-before')}
                 hideLabel
                 disabled={creating()}
+                testId="stocktake-expires-before-input"
                 value={form().expiryDate || null}
                 onChange={v => setForm({ ...form(), expiryDate: v ?? '' })}
               />
@@ -514,6 +517,7 @@ export const CreateStocktakeModal = (props: {
                   hideLabel
                   disabled={creating()}
                   placeholder={t('label.any')}
+                  inputTestId="stocktake-vvm-status-input"
                   value={form().vvmStatusId || undefined}
                   onChange={s =>
                     setForm({ ...form(), vvmStatusId: s?.id ?? '' })

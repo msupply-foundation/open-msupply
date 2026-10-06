@@ -13,7 +13,7 @@ import { InsertOutboundShipment } from './outboundShipments.generated';
 // S2 — customer selection (spec/outbound-shipments ui-surface § S2): a modal
 // over the list titled "Customers", holding a single customer lookup. Choosing
 // a customer creates the shipment immediately and navigates to its detail
-// (FL2); on-hold customers are listed but not selectable (OMS-REG-DIST-02.16,
+//; on-hold customers are listed but not selectable (OMS-REG-DIST-02.16,
 // enforced by the lookup). Failure surfaces as an inline notice in the modal,
 // which stays open with the lookup preserved (controls › dialogs, D20).
 export const CustomerSearchModal = (props: {

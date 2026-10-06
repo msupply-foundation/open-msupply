@@ -11,7 +11,7 @@ import {
 } from './returnLineLogic';
 
 // Draft/upsert semantics for the return-items modal
-// (spec/customer-returns/rules.md § line rules; acceptance.md AC-* cited per
+// (spec/customer-returns/rules.md § line rules; behaviour IDs cited per
 // test). These mirror the SERVER's upsert-by-quantity semantics client-side —
 // the wire assertions live with OMS-REG-DIST-07.27's real-backend leg.
 

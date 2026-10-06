@@ -38,7 +38,7 @@ const fullDraft = (): PatientDraft => ({
   dateOfDeath: null,
 });
 
-describe('ageFromDob (AC-M3 — age derived from date of birth)', () => {
+describe('ageFromDob (OMS-REG-DIS-01.26 — age derived from date of birth)', () => {
   afterEach(() => vi.useRealTimers());
 
   it('is completed calendar years from the date of birth', () => {
@@ -122,7 +122,7 @@ describe('dobFromAge (an age entered in place of a date of birth)', () => {
   });
 });
 
-describe('isDraftValid (AC-C3 — built-in form requires code + names)', () => {
+describe('isDraftValid (OMS-REG-DIS-01.5/.6/.30 — built-in form requires code + names)', () => {
   it('requires code, first name and last name', () => {
     expect(isDraftValid(fullDraft())).toBe(true);
     expect(isDraftValid({ ...fullDraft(), code: '' })).toBe(false);
@@ -135,7 +135,7 @@ describe('isDraftValid (AC-C3 — built-in form requires code + names)', () => {
   });
 });
 
-describe('patientFieldErrors (AC-C3 — required-field rules feed validation)', () => {
+describe('patientFieldErrors (OMS-REG-DIS-01.5/.6/.30 — required-field rules feed validation)', () => {
   const ids = (draft: PatientDraft) =>
     patientFieldErrors(draft)
       .filter(e => e.failed)
@@ -195,7 +195,7 @@ describe('patientFieldErrors (DIS-02 .57 — duplicate code blocks the save)', (
   });
 });
 
-describe('toUpdateInput (AC-E2 — plain edit is a destructive full replace)', () => {
+describe('toUpdateInput (OMS-REG-DIS-02.41 — plain edit is a destructive full replace)', () => {
   it('sends the FULL field set so omitted values clear (never partial)', () => {
     // Blank optional fields must go over the wire as explicit null, not "" and
     // not omitted — the server clears any field not present.
@@ -245,7 +245,7 @@ describe('toUpdateInput (AC-E2 — plain edit is a destructive full replace)', (
   });
 });
 
-describe('toInsertInput (AC-C3/C6 — plain create input)', () => {
+describe('toInsertInput (OMS-REG-DIS-01.5/.6/.30/.33 — plain create input)', () => {
   it('carries the minted id + code and the full field set', () => {
     const input = toInsertInput('new-id', fullDraft());
     expect(input.id).toBe('new-id');

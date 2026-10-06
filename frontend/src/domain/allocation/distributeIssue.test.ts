@@ -120,10 +120,10 @@ describe('distributeIssue', () => {
   });
 });
 
-// The prescriptions variant (spec/prescriptions AC-A1): dispensing works in
-// units, so packs split — the exact request is filled, never rounded up, and
-// the whole-pack over-allocation report can't arise.
-describe('distributeIssue with partialPacks (prescriptions AC-A1)', () => {
+// The prescriptions variant (spec/prescriptions OMS-REG-DIS-03.31): dispensing
+// works in units, so packs split — the exact request is filled, never rounded
+// up, and the whole-pack over-allocation report can't arise.
+describe('distributeIssue with partialPacks (prescriptions OMS-REG-DIS-03.31)', () => {
   it('splits a pack to fill the exact requested units', () => {
     const result = distributeIssue(
       [{ id: 'a', packSize: 100, availablePacks: 100, barred: [] }],

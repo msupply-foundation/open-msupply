@@ -109,15 +109,16 @@ const Body: Component<InsuranceModalProps> = props => {
     draft.policyNumberPerson.trim() !== '';
   const expiryInPast = () =>
     draft.expiryDate !== null && draft.expiryDate < today;
-  // An active policy must carry a non-zero coverage rate (spec AC-I4). Only an
-  // entered 0 trips this — an empty field is the required rule's business.
+  // An active policy must carry a non-zero coverage rate (spec
+  // OMS-REG-DIS-07.6). Only an entered 0 trips this — an empty field is the
+  // required rule's business.
   const activeNeedsCoverage = () =>
     draft.isActive && draft.discountPercentage === 0;
 
-  // Validation (AC-I3/I4). Required errors + the active-needs-coverage rule
-  // (which trips on a policy being edited that already carries 0) stay quiet
-  // until Save; the past-expiry rule surfaces immediately. The Body remounts
-  // per open, so state is fresh.
+  // Validation (OMS-REG-DIS-07.3–.6). Required errors + the
+  // active-needs-coverage rule (which trips on a policy being edited that
+  // already carries 0) stay quiet until Save; the past-expiry rule surfaces
+  // immediately. The Body remounts per open, so state is fresh.
   const validation = createFormValidation(() => [
     {
       id: 'policyNumberFamily',

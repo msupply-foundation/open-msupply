@@ -21,6 +21,8 @@ export interface MasterListSelectProps {
    * that focuses it after an action (e.g. a dialog opening on it).
    */
   focusTarget?: FocusTarget;
+  /** `data-testid` for the text input (a locale-stable test hook). */
+  inputTestId?: string;
 }
 
 /*
@@ -43,6 +45,7 @@ export const MasterListSelect = (props: MasterListSelectProps): JSX.Element => (
     placeholder={props.placeholder}
     width={props.width}
     focusTarget={props.focusTarget}
+    inputTestId={props.inputTestId}
     onChange={m => props.onChange(m?.id ?? null)}
   />
 );

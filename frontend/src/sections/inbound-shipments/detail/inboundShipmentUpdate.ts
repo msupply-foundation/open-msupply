@@ -45,7 +45,7 @@ import {
 // reported shipped: a line added but not yet received. It carries no received
 // quantity and is trimmed the first time the shipment advances out of New
 // (rules → placeholder trimming), so the detail table de-emphasises it in the
-// info tone (spec ui-surface → Line table, AC-V3). Mirrors the reference app's
+// info tone (spec ui-surface → Line table). Mirrors the reference app's
 // `isInboundPlaceholderRow`. Structural param — no fragment import needed.
 export const isPlaceholderLine = (line: {
   type: string;
@@ -261,8 +261,9 @@ export const deleteInboundShipment = async (
   return { ok: false, message: response.error.description };
 };
 
-// Bulk-add empty stock lines from a master list (spec AC-ML1). Returns the
-// count added, or a rejection message (typed member OR untyped top-level).
+// Bulk-add empty stock lines from a master list (spec OMS-REG-ISH-01.10).
+// Returns the count added, or a rejection message (typed member OR untyped
+// top-level).
 export const addFromMasterList = async (
   storeId: string,
   shipmentId: string,

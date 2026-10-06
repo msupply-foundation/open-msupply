@@ -28,9 +28,10 @@ import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 // wrong-scope id answered as a per-id TYPED error instead of a top-level abort)
 // would delete this file. Until the server offers that, the selection is
 // partitioned by the scope each row carries and submitted as one batch per
-// scope. Each batch keeps its own all-or-nothing guarantee (AC-BA1); ACROSS the
-// two, a refusal in the second leaves the first one's shipments deleted, which
-// is why the outcome carries a count alongside its verdict.
+// scope. Each batch keeps its own all-or-nothing guarantee
+// (OMS-REG-REPL-01.21); ACROSS the two, a refusal in the second leaves the
+// first one's shipments deleted, which is why the outcome carries a count
+// alongside its verdict.
 
 /** A selected row, with the scope that picks which twin its delete goes to. */
 export type InboundSelection = { id: string; scope: InboundScope };
@@ -127,9 +128,10 @@ const runScopeBatch = async (
   return summariseScopeBatch(batch);
 };
 
-// Fold one scope's batch response. The batch is all-or-nothing (AC-BA1), so a
-// single typed refusal means NOTHING in it was removed — the count is zero
-// however many siblings reported a DeleteResponse alongside it.
+// Fold one scope's batch response. The batch is all-or-nothing
+// (OMS-REG-REPL-01.21), so a single typed refusal means NOTHING in it was
+// removed — the count is zero however many siblings reported a DeleteResponse
+// alongside it.
 const summariseScopeBatch = (
   batch: BulkDeleteResultFragment
 ): BulkDeleteOutcome => {
