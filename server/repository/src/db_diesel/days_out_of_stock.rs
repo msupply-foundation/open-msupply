@@ -179,11 +179,30 @@ pub(crate) mod test {
         movements: Vec<(i64, i64)>,
         expected_dos: Option<f64>,
     ) {
+        test_one_with_pack_size(
+            test_name,
+            movement_date,
+            calculation_date,
+            1.0,
+            movements,
+            expected_dos,
+        )
+        .await;
+    }
+
+    async fn test_one_with_pack_size(
+        test_name: &str,
+        movement_date: NaiveDateTime,
+        calculation_date: NaiveDateTime,
+        pack_size: f64,
+        movements: Vec<(i64, i64)>,
+        expected_dos: Option<f64>,
+    ) {
         let test_stock_line = StockLineRow {
             id: format!("test_stock_line_{test_name}"),
             item_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
-            pack_size: 1.0,
+            pack_size,
             ..Default::default()
         };
 
@@ -370,6 +389,29 @@ pub(crate) mod test {
             +------------------------+----+----+----+----+----+----+----+----+----+----+----+
             */
             Some(0.0),
+        )
+        .await;
+
+        test_one_with_pack_size(
+            "out_of_stock_with_float_residue",
+            movement_date,
+            calculation_date,
+            0.1,
+            vec![(5, 3), (6, 6), (22, -9)],
+            /*
+            Same as out_of_stock_at_end, but in units of 0.1: 3 * 0.1 + 6 * 0.1 sums to
+            0.9000000000000001 while 9 * 0.1 is 0.9, so the balance after the 22nd is 1.1e-16
+            rather than 0 (in whichever order the rows are summed). It must still count as
+            out of stock
+            +------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            |                        | 20  | 21  | 22  | 23  | 24  | 25  | 26  | 27  | 28  | 29  | 30  |
+            +------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            | end of day balance     | 0.9 | 0.9 | ~0  | ~0  | ~0  | ~0  | ~0  | ~0  | ~0  | ~0  | ~0  |
+            +------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            | full day without stock | no  | no  | no  | yes | yes | yes | yes | yes | yes | yes | yes |
+            +------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            */
+            Some(8.0),
         )
         .await;
 
