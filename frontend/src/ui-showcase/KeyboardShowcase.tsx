@@ -90,11 +90,11 @@ export const KeyboardShowcase = () => {
    * The badge demo's carriers declare REAL actions, for two reasons.
    *
    * The honest one: a control advertising a binding nothing answers is the
-   * drift AC-KB15 forbids, and `devWarnUnansweredShortcut` now says so in dev
-   * — a showcase exempt from the rule it documents would be the wrong kind of
-   * special case. The useful one: these are then live, so Alt+N here actually
-   * fires, and they populate the registry inspector below with something to
-   * look at on a page that mounts no shell.
+   * drift OMS-REG-KBD-01.26 forbids, and `devWarnUnansweredShortcut` now says
+   * so in dev — a showcase exempt from the rule it documents would be the wrong
+   * kind of special case. The useful one: these are then live, so Alt+N here
+   * actually fires, and they populate the registry inspector below with
+   * something to look at on a page that mounts no shell.
    *
    * Component-body calls, never in an effect (kdd/keyboard-layer §
    * consequences).
@@ -136,7 +136,10 @@ export const KeyboardShowcase = () => {
               A search-and-run overlay over every registered action. It composes{' '}
               <code>Dialog</code>, so it layers above an already-open dialog via
               the top layer. Arrows move the highlight (wrapping), Enter runs
-              the highlighted action, Escape dismisses without navigating.
+              the highlighted action, Escape dismisses without navigating. A
+              click outside it dismisses it too: it is the one{' '}
+              <code>Dialog</code> that passes <code>scrimDismiss</code>, while
+              every other dialog ignores a click on the scrim.
             </Note>
             <Row>
               <Button onClick={() => setPaletteOpen(true)}>

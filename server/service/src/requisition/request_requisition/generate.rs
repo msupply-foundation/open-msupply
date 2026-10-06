@@ -1,10 +1,10 @@
+use crate::PluginOrRepositoryError;
 use crate::item_stats::get_item_stats;
 use crate::location::query::get_available_volume_by_location_type;
-use crate::pricing::item_price::{get_pricing_for_items, ItemPriceLookup};
+use crate::pricing::item_price::{ItemPriceLookup, get_pricing_for_items};
 use crate::requisition::common::get_indicative_price_pref;
-use crate::requisition::request_requisition::{order_demand, ForecastInputs};
+use crate::requisition::request_requisition::{ForecastInputs, order_demand};
 use crate::service_provider::ServiceContext;
-use crate::PluginOrRepositoryError;
 use chrono::{NaiveDate, Utc};
 use repository::{
     EqualFilter, ItemRowRepository, LineForecast, RequisitionLineFilter, RequisitionLineRepository,

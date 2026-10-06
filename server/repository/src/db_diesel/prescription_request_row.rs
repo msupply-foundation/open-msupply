@@ -1,13 +1,13 @@
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician, custom_fields_json::JsonValue,
-    diagnosis_row::diagnosis, name_row::name, store_row::store, StorageConnection,
+    StorageConnection, clinician_link_row::clinician_link, clinician_row::clinician,
+    custom_fields_json::JsonValue, diagnosis_row::diagnosis, name_row::name, store_row::store,
 };
 
+use crate::Upsert;
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
-use crate::Upsert;
-use crate::{repository_error::RepositoryError, Delete};
 use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId};
+use crate::{Delete, repository_error::RepositoryError};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;

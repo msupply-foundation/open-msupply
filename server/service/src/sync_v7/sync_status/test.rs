@@ -1,13 +1,13 @@
 use crate::{
     sync::settings::SyncSettings,
     sync::sync_status::status::{FullSyncStatus, InitialisationStatus},
-    test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_and_service_provider},
 };
 use chrono::Utc;
 use repository::{
-    mock::{insert_extra_mock_data, MockData, MockDataInserts},
-    syncv7::SyncError,
     SyncLogV7Row, SyncVersion,
+    mock::{MockData, MockDataInserts, insert_extra_mock_data},
+    syncv7::SyncError,
 };
 use util::assert_matches;
 
@@ -31,10 +31,12 @@ async fn sync_status_v7() {
         service.get_initialisation_status(&service_context),
         Ok(InitialisationStatus::PreInitialisation)
     );
-    assert!(service
-        .get_latest_sync_status(&service_context)
-        .unwrap()
-        .is_none());
+    assert!(
+        service
+            .get_latest_sync_status(&service_context)
+            .unwrap()
+            .is_none()
+    );
 
     // Sync started — in progress
     insert_extra_mock_data(
@@ -91,10 +93,12 @@ async fn sync_status_v7() {
         service.get_initialisation_status(&service_context),
         Ok(InitialisationStatus::Initialising)
     );
-    assert!(service
-        .get_latest_successful_sync_status(&service_context)
-        .unwrap()
-        .is_none());
+    assert!(
+        service
+            .get_latest_successful_sync_status(&service_context)
+            .unwrap()
+            .is_none()
+    );
 
     // Sync completed successfully — initialised
     insert_extra_mock_data(
@@ -127,8 +131,10 @@ async fn sync_status_v7() {
         service.get_initialisation_status(&service_context),
         Ok(InitialisationStatus::Initialised(_))
     );
-    assert!(service
-        .get_latest_successful_sync_status(&service_context)
-        .unwrap()
-        .is_some());
+    assert!(
+        service
+            .get_latest_successful_sync_status(&service_context)
+            .unwrap()
+            .is_some()
+    );
 }

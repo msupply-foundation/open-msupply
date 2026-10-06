@@ -1,6 +1,6 @@
-use repository::{ancillary_item_row::AncillaryItemRow, RequisitionLineRow};
+use repository::{RequisitionLineRow, ancillary_item_row::AncillaryItemRow};
 use std::collections::{HashMap, HashSet};
-use util::{f64_approx_eq, EPSILON};
+use util::{EPSILON, f64_approx_eq};
 
 /// Max number of edges we'll follow when chasing ancillary chains. Matches the
 /// cap enforced on insert so this is defensive — real chains can't exceed it.

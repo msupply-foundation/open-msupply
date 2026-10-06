@@ -1,9 +1,9 @@
 use repository::{
+    EqualFilter, PopulationForecast, PopulationForecastCourse, RepositoryError, StorageConnection,
+    VaccinationCourseRepository, VaccinationCourseRow,
     vaccine_course::vaccine_course_store_config::{
         VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
     },
-    EqualFilter, PopulationForecast, PopulationForecastCourse, RepositoryError, StorageConnection,
-    VaccinationCourseRepository, VaccinationCourseRow,
 };
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -160,8 +160,8 @@ mod tests {
     use super::*;
     use repository::{
         mock::{
-            mock_demographic_a, mock_vaccine_course_a, mock_vaccine_item_a, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_demographic_a, mock_vaccine_course_a,
+            mock_vaccine_item_a,
         },
         test_db::setup_all_with_data,
         vaccine_course::vaccine_course_row::VaccineCourseRow,

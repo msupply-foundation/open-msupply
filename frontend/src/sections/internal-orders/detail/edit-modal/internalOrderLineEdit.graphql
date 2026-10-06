@@ -11,7 +11,7 @@
 # Both carry the draft's forecast method in the update; the server recomputes
 # the line only when it differs from the stored one (rules › choosing a method).
 #
-# ADD mode previews the line BEFORE it exists (AC-LN3 — a reload before the
+# ADD mode previews the line BEFORE it exists (OMS-REG-REPL-04.65 — a reload before the
 # first save finds nothing): the item's details from a live read, and the line's
 # statistics, forecast and suggestion from the forecast preview below — the line
 # the insert would create, so the first save reproduces it.
@@ -70,9 +70,9 @@ mutation addInternalOrderLine(
   }
 }
 
-# DELETE (AC-LN15): remove the selected lines in one batch. The batch is ATOMIC
-# — any member error rolls the whole batch back, so nothing is removed on a
-# partial failure. A validating member still reports DeleteResponse on a
+# DELETE (OMS-REG-REPL-04.71): remove the selected lines in one batch. The batch
+# is ATOMIC — any member error rolls the whole batch back, so nothing is removed
+# on a partial failure. A validating member still reports DeleteResponse on a
 # rolled-back batch (contract › deletion wire trap), so the caller judges the
 # batch by whether ANY member errored, never a member's own response.
 mutation deleteInternalOrderLines(
@@ -104,7 +104,7 @@ mutation deleteInternalOrderLines(
 
 # EDIT: a single line update. Typed errors surface inline (contract › editing
 # lines); the success payload is the refreshed line (the parent refetches the
-# page regardless, AC-LN21).
+# page regardless, OMS-REG-REPL-04.76).
 mutation updateInternalOrderLine(
   $storeId: String!
   $input: UpdateRequestRequisitionLineInput!

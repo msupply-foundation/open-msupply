@@ -1,4 +1,5 @@
 use crate::{
+    PluginOrRepositoryError,
     backend_plugin::{
         plugin_provider::{PluginError, PluginInstance},
         types::transform_request_requisition_lines::Context,
@@ -7,16 +8,15 @@ use crate::{
     requisition::{
         common::check_requisition_row_exists,
         request_requisition::{
-            apply_forecast, generate_requisition_lines, order_demand, ForecastInputs,
-            ForecastMethodOption, ForecastMethodUnavailableReason,
+            ForecastInputs, ForecastMethodOption, ForecastMethodUnavailableReason, apply_forecast,
+            generate_requisition_lines, order_demand,
         },
     },
     service_provider::ServiceContext,
-    PluginOrRepositoryError,
 };
 use repository::{
-    requisition_row::RequisitionType, EqualFilter, ForecastMethod, RepositoryError,
-    RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
+    EqualFilter, ForecastMethod, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionLineRow, requisition_row::RequisitionType,
 };
 
 /// An item's line on a request requisition as the editor's draft would save it, without

@@ -1,6 +1,6 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_types::types::DiagnosisNode;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::diagnosis::get_all_active_diagnoses;

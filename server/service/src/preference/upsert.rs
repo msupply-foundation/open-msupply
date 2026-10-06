@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
+use super::{Preference, PreferenceProvider, UpsertPreferenceError, get_preference_provider};
 use crate::{
     preference::{BackdatingData, CustomTranslationsV2Value, WarnWhenMissingRecentStocktakeData},
     service_provider::ServiceContext,
@@ -488,9 +488,11 @@ mod tests {
             },
         )
         .unwrap();
-        assert!(CustomTranslations
-            .load(&ctx.connection, None)
-            .unwrap()
-            .is_empty());
+        assert!(
+            CustomTranslations
+                .load(&ctx.connection, None)
+                .unwrap()
+                .is_empty()
+        );
     }
 }

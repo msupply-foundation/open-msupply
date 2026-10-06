@@ -91,7 +91,7 @@ fragment InternalOrderLine on RequisitionLineNode {
     reason
   }
   # The items this line's item is configured as an ancillary of — backs the
-  # "Ancillary of" flag on the Name column (AC-A8); empty when none.
+  # "Ancillary of" flag on the Name column (OMS-REG-REPL-13.7); empty when none.
   ancillaryParents {
     id
     name
@@ -141,10 +141,11 @@ fragment InternalOrderInfo on RequisitionNode {
   sentDatetime
   finalisedDatetime
   # Side panel (S5): the creating user (entered-by, with their email for the
-  # info tooltip), the fulfilling inbound shipments (AC-RD1), and the source
-  # customer requisition this order was created from (AC-RD2, display gated on
-  # a preference). Documents (AC-F1) come from the same node so the Documents
-  # tab lists them and Copy carries them.
+  # info tooltip), the fulfilling inbound shipments (OMS-REG-REPL-04.84), and
+  # the source customer requisition this order was created from
+  # (OMS-REG-REPL-04.85, display gated on a preference). Documents
+  # (OMS-REG-REPL-14.1) come from the same node so the Documents tab lists them
+  # and Copy carries them.
   user {
     username
     email
@@ -176,9 +177,9 @@ fragment InternalOrderInfo on RequisitionNode {
       totalBytes
     }
   }
-  # The ancillary plan (AC-A1/A2), computed server-side on every read: the state
-  # drives the toolbar banner + send warning, the deltas back the plan popover.
-  # Both lists are always populated regardless of state.
+  # The ancillary plan (OMS-REG-REPL-13.1/.2), computed server-side on every
+  # read: the state drives the toolbar banner + send warning, the deltas back
+  # the plan popover. Both lists are always populated regardless of state.
   ancillaryState {
     state
     count
@@ -239,7 +240,8 @@ mutation updateInternalOrder(
         __typename
         description
         # The emergency cap carries the maximum it enforced, so the send path
-        # can name it in the rejection copy (AC-EM1); other errors ignore it.
+        # can name it in the rejection copy (OMS-REG-REPL-05.21); other errors
+        # ignore it.
         ... on OrderingTooManyItems {
           maxItemsInEmergencyOrder
         }
@@ -251,7 +253,7 @@ mutation updateInternalOrder(
           description
         }
         # The reasons backstop names every offending line, so the send path can
-        # flag their Reason cells in the table (AC-R3).
+        # flag their Reason cells in the table (OMS-REG-REPL-04.81).
         ... on RequisitionReasonsNotProvided {
           errors {
             requisitionLine {
@@ -264,10 +266,10 @@ mutation updateInternalOrder(
   }
 }
 
-# Ancillary refresh (spec S3 § ancillary items, AC-A3/A4): ADD inserts the
-# missing ancillary lines, UPDATE overwrites stale quantities. The client
-# re-queries the order after, so only the outcome __typename is needed; a typed
-# error surfaces inline.
+# Ancillary refresh (spec S3 § ancillary items, OMS-REG-REPL-13.3/.4): ADD
+# inserts the missing ancillary lines, UPDATE overwrites stale quantities. The
+# client re-queries the order after, so only the outcome __typename is needed; a
+# typed error surfaces inline.
 mutation refreshAncillaryItems(
   $storeId: String!
   $input: RefreshAncillaryItemsInput!
@@ -286,10 +288,10 @@ mutation refreshAncillaryItems(
   }
 }
 
-# Use-suggested (spec S3 § page actions → S6, AC-Q1): fills every zero-requested
-# line with its suggested quantity in one call. The full line set comes back on
-# success, but the client refetches the table regardless — so only the outcome
-# __typename (and a typed error's description) is read here.
+# Use-suggested (spec S3 § page actions → S6, OMS-REG-REPL-04.28): fills every
+# zero-requested line with its suggested quantity in one call. The full line set
+# comes back on success, but the client refetches the table regardless — so only
+# the outcome __typename (and a typed error's description) is read here.
 mutation useSuggestedQuantities($storeId: String!, $requisitionId: String!) {
   useSuggestedQuantity(
     storeId: $storeId

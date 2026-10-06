@@ -104,10 +104,11 @@ const StockList: Component = () => {
   const [createOpen, setCreateOpen] = createSignal(false);
   const prefs = () => stockPreferences();
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the two controls that trigger it (the header button and
-  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
-  // for its badge, neither owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
+  // that trigger it (the header button and the ghost button in the table's
+  // empty slot); each carries `shortcut={ALT_N}` for its badge, neither owns
+  // the action.
   createAddAction({
     name: 'button.new-stock',
     run: () => setCreateOpen(true),

@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use async_graphql::dataloader::Loader;
 use repository::{
-    vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
     RepositoryError, StorageConnectionManager,
+    vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
 };
 
 pub struct VVMStatusLogByStockLineIdLoader {

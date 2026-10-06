@@ -2,9 +2,9 @@
 # mutations — general and program — plus the two reads that feed the modal and
 # its warning gate. An internal order is a REQUEST requisition.
 
-# Program-path data AND the program-tab gate (AC-P1): the store's supplier
-# programs, each with its suppliers, order types, and the periods already
-# windowed (five historic + five future) and pruned of exhausted ones
+# Program-path data AND the program-tab gate (OMS-REG-REPL-04.46): the store's
+# supplier programs, each with its suppliers, order types, and the periods
+# already windowed (five historic + five future) and pruned of exhausted ones
 # server-side. Non-empty → the modal offers the Program tab; empty → general
 # only. Fetched when the modal opens (a spinner shows while it loads).
 query internalOrderProgramSettings($storeId: String!) {
@@ -29,11 +29,12 @@ query internalOrderProgramSettings($storeId: String!) {
   }
 }
 
-# The recent-stocktake warning read (AC-C5): the store's FINALISED stocktakes
-# dated on or after (today − maxAge days). The client counts the DISTINCT
-# itemIds across their lines and warns when that count is below minItems. Only
-# itemId is needed. Finalised-only and the inclusive lower bound are the
-# server's; a finalised stocktake with a null date falls outside the bound.
+# The recent-stocktake warning read (OMS-REG-REPL-04.45): the store's FINALISED
+# stocktakes dated on or after (today − maxAge days). The client counts the
+# DISTINCT itemIds across their lines and warns when that count is below
+# minItems. Only itemId is needed. Finalised-only and the inclusive lower bound
+# are the server's; a finalised stocktake with a null date falls outside the
+# bound.
 query recentStocktakeItems($storeId: String!, $onOrAfter: NaiveDate) {
   stocktakes(
     storeId: $storeId
@@ -56,7 +57,7 @@ query recentStocktakeItems($storeId: String!, $onOrAfter: NaiveDate) {
   }
 }
 
-# General create (AC-C2): the modal sends only id + otherPartyId and hard-codes
+# General create (OMS-REG-REPL-04.6/.43): the modal sends only id + otherPartyId and hard-codes
 # the reorder threshold (0); the target is omitted so the server defaults it to
 # the store's supply interval + safety buffer, else 1; the resolver defaults the
 # expected delivery date to +2 weeks and creates no lines. On success the new
@@ -80,12 +81,13 @@ mutation insertInternalOrder(
   }
 }
 
-# Program create (AC-P3): the modal sends id + otherPartyId + programOrderTypeId
-# + periodId; the resolver reads the thresholds and emergency flag from the
-# order type and pre-fills one line per master-list item (statistics snapshotted
-# as of the period end), seeding indicator values for a non-emergency type. A
-# typed rejection (MaxOrdersReachedForPeriod / SupplierNotValid) — or any other
-# failure — keeps the dialog open with the error (AC-P5); navigation happens only
+# Program create (OMS-REG-REPL-04.48, OMS-REG-REPL-12.2): the modal sends id +
+# otherPartyId + programOrderTypeId + periodId; the resolver reads the
+# thresholds and emergency flag from the order type and pre-fills one line per
+# master-list item (statistics snapshotted as of the period end), seeding
+# indicator values for a non-emergency type. A typed rejection
+# (MaxOrdersReachedForPeriod / SupplierNotValid) — or any other failure — keeps
+# the dialog open with the error (OMS-REG-REPL-04.50); navigation happens only
 # on the RequisitionNode branch.
 mutation insertProgramInternalOrder(
   $storeId: String!

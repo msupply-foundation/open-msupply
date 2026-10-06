@@ -286,7 +286,7 @@ export const AppShell = (props: AppShellProps) => {
               app footer hide so the page content fills the viewport. The page's own
               header hides too (see Page); its content + footer stay. */}
             {/* Inert while a page's slide-over covers the viewport (KB-X2/
-              AC-KB17) — these regions sit OUTSIDE the Page, so the panel cannot
+              OMS-REG-KBD-02.2/.3) — these regions sit OUTSIDE the Page, so the panel cannot
               reach them itself. */}
             <Show when={!fullScreen()}>
               <MenuBar

@@ -30,6 +30,11 @@ const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
 const cellMono = <T,>(cell: TanCell<T, unknown>): boolean =>
   cell.column.columnDef.meta?.mono ?? false;
 
+// The control-line convention: a short cell in a start-aligned editor table
+// centres on the row's inputs (meta.controlLine; the CSS is DataTable's).
+const cellControlLine = <T,>(cell: TanCell<T, unknown>): boolean =>
+  cell.column.columnDef.meta?.controlLine ?? false;
+
 // A column's real growth cap in px (delivered as max-width), or undefined.
 // TanStack merges its default maxSize (Number.MAX_SAFE_INTEGER) into every
 // columnDef, so only a value below that sentinel counts as an actual cap.
@@ -188,9 +193,10 @@ export function TableRow<T>(props: {
        * row set changes. KB-T1 forbids a positive tab index anywhere.
        */
       tabindex={props.rowFocus ? -1 : undefined}
-      // The row-focus indication (AC-KB37): "a background distinct from row
-      // striping"; styled in CSS, and a focus state rather than a meaning, so
-      // colour independence is satisfied by it also being the focused element.
+      // The row-focus indication (OMS-REG-KBD-02.27/.28): "a background
+      // distinct from row striping"; styled in CSS, and a focus state rather
+      // than a meaning, so colour independence is satisfied by it also being
+      // the focused element.
       data-row-focused={props.rowFocus?.focused() ? '' : undefined}
       // Keep the highlight in step when focus arrives some way other than the
       // arrows — but only when it arrived from the KEYBOARD (see
@@ -263,7 +269,20 @@ export function TableRow<T>(props: {
                   leaf value (a column's custom `cell` overrides). renderTemplate, not
                   TanStack's flexRender: the latter untracks the call, freezing every
                   locale-derived value (numbers, dates, money) until a reload. */}
-              {renderTemplate(cell.column.columnDef.cell, cell.getContext())}
+              <Show
+                when={cellControlLine(cell)}
+                fallback={renderTemplate(
+                  cell.column.columnDef.cell,
+                  cell.getContext()
+                )}
+              >
+                <span class={styles.controlLine}>
+                  {renderTemplate(
+                    cell.column.columnDef.cell,
+                    cell.getContext()
+                  )}
+                </span>
+              </Show>
             </td>
           </Show>
         )}

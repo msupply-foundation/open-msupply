@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 
 mod add_bundled_item_table;
 mod add_cold_storage_type_table;

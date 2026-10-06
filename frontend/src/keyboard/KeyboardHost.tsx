@@ -16,7 +16,7 @@ import { storePath, storeRelativePath } from '../nav/storeRelativePath';
  *   - inside <Router>, for navigate / navigate-up;
  *   - inside AppShell, so useFullScreen() reaches the shell's flag (KB-X4);
  *   - under StoreGuardLayout, so the destination gates read a settled store
- *     context (AC-KB4);
+ *     context (OMS-REG-KBD-01.5–.7);
  *   - and NOT on the login or boot screens, where navigate-up and the registry
  *     mean nothing.
  *
@@ -26,11 +26,11 @@ import { storePath, storeRelativePath } from '../nav/storeRelativePath';
  */
 
 export interface KeyboardHostProps {
-  /** Start a manual sync (AC-KB6) — what the Alt+Shift+S binding now does. */
+  /** Start a manual sync (OMS-REG-KBD-01.12/.13) — what the Alt+Shift+S binding now does. */
   onSyncNow: () => void;
-  /** Open the sync window (AC-KB6) — the palette's `Sync details` row. */
+  /** Open the sync window (OMS-REG-KBD-01.12/.13) — the palette's `Sync details` row. */
   onSyncOpen: () => void;
-  /** Ask to confirm, then log out (AC-KB5). */
+  /** Ask to confirm, then log out (OMS-REG-KBD-01.11). */
   onLogoutRequest: () => void;
 }
 

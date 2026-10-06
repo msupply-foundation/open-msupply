@@ -4,10 +4,10 @@ use crate::{
     invoice::get_invoice,
     invoice_line::{
         stock_out_line::{
-            delete_stock_out_line, insert_stock_out_line, update_stock_out_line,
             DeleteStockOutLineError, InsertStockOutLineError, UpdateStockOutLineError,
+            delete_stock_out_line, insert_stock_out_line, update_stock_out_line,
         },
-        update_return_reason_id::{update_return_reason_id, UpdateLineReturnReasonError},
+        update_return_reason_id::{UpdateLineReturnReasonError, update_return_reason_id},
     },
     service_provider::ServiceContext,
 };
@@ -126,10 +126,10 @@ impl From<RepositoryError> for UpdateSupplierReturnLinesError {
 mod test {
     use crate::{
         invoice::supplier_return::{
+            SupplierReturnLineInput,
             update_lines::{
                 UpdateSupplierReturnLines, UpdateSupplierReturnLinesError as ServiceError,
             },
-            SupplierReturnLineInput,
         },
         invoice_line::{
             stock_out_line::{InsertStockOutLineError, UpdateStockOutLineError},
@@ -138,15 +138,15 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_name_store_a, mock_outbound_shipment_e, mock_stock_line_a,
-            mock_store_a, mock_store_b, mock_supplier_return_a,
-            mock_supplier_return_a_invoice_line_a, mock_supplier_return_a_invoice_line_b,
-            mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType,
         ReasonOptionRow, ReasonOptionType,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_name_store_a, mock_outbound_shipment_e,
+            mock_stock_line_a, mock_store_a, mock_store_b, mock_supplier_return_a,
+            mock_supplier_return_a_invoice_line_a, mock_supplier_return_a_invoice_line_b,
+            mock_user_account_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]
@@ -401,8 +401,10 @@ mod test {
         );
 
         // zeroed line was deleted
-        assert!(!updated_lines
-            .iter()
-            .any(|line| line.id == mock_supplier_return_a_invoice_line_b().id));
+        assert!(
+            !updated_lines
+                .iter()
+                .any(|line| line.id == mock_supplier_return_a_invoice_line_b().id)
+        );
     }
 }

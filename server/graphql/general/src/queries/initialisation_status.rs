@@ -40,7 +40,7 @@ impl InitialisationStatusNode {
                 return InitialisationStatusNode {
                     site_name: Some(site_name),
                     status: to::Initialised,
-                }
+                };
             }
             from::Initialising => to::Initialising,
             from::PreInitialisation => to::PreInitialisation,

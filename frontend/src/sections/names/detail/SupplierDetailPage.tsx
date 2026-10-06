@@ -18,9 +18,10 @@ import { ContactsTab } from './ContactsTab';
 import { PurchaseOrdersTab } from './PurchaseOrdersTab';
 
 // S4 — Supplier detail page (read-only), routed at
-// /{storeId}/replenishment/suppliers/:nameId (AC-N15, AC-N21). Page-level tabs:
-// Details · Custom fields · Contacts · Purchase orders. No page actions, no
-// footer — read-only throughout (AC-N22). The single-name read backs the
+// /{storeId}/replenishment/suppliers/:nameId (OMS-REG-REPL-08.11/.19,
+// OMS-REG-REPL-08.11/.19). Page-level tabs: Details · Custom fields · Contacts
+// · Purchase orders. No page actions, no footer — read-only throughout
+// (OMS-REG-DIST-08.12, OMS-REG-REPL-08.12). The single-name read backs the
 // Details and Custom fields tabs; Contacts and Purchase orders fetch their own
 // data.
 
@@ -53,7 +54,8 @@ const SupplierDetailPage: Component = () => {
   const backToList = () => navigate(suppliersListPath(params.storeId));
 
   // Tab order mirrors the current app: Details · Custom fields · Purchase
-  // orders · Contacts (Contacts last) — spec/names ui-surface S4, AC-N21/FL5.
+  // orders · Contacts (Contacts last) — spec/names ui-surface S4,
+  // OMS-REG-REPL-08.11/.19.
   const tabDefs = () => [
     { value: 'details', label: t('name.tab.details') },
     { value: 'custom-fields', label: t('name.tab.custom-fields') },

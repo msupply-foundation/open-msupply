@@ -270,18 +270,30 @@ mod tests {
         })
         .await;
 
-        run(&connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');");
+        run(
+            &connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');",
+        );
         run(
             &connection,
             "INSERT INTO name_link (id, name_id) VALUES ('store_name_link', 'store_name');",
         );
-        run(&connection, "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name_link', 'STORE1', 1);");
-        run(&connection, "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Item', 'ITEM1', 1.0, 'STOCK', '');");
+        run(
+            &connection,
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name_link', 'STORE1', 1);",
+        );
+        run(
+            &connection,
+            "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Item', 'ITEM1', 1.0, 'STOCK', '');",
+        );
         run(
             &connection,
             "INSERT INTO item_link (id, item_id) VALUES ('item_link_id', 'item_id');",
         );
-        run(&connection, "INSERT INTO requisition (id, requisition_number, name_link_id, store_id, type, status, created_datetime, max_months_of_stock, min_months_of_stock, is_emergency) VALUES ('requisition_id', 1, 'store_name_link', 'store_id', 'REQUEST', 'SENT', '2026-01-01 00:00:00', 6.0, 1.0, false);");
+        run(
+            &connection,
+            "INSERT INTO requisition (id, requisition_number, name_link_id, store_id, type, status, created_datetime, max_months_of_stock, min_months_of_stock, is_emergency) VALUES ('requisition_id', 1, 'store_name_link', 'store_id', 'REQUEST', 'SENT', '2026-01-01 00:00:00', 6.0, 1.0, false);",
+        );
 
         let courses = vec![
             course("Course A (Children)", 3.0, 2.0, 1000.0),

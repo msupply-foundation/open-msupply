@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
 use repository::{
+    EqualFilter, RepositoryError, StorageConnection, StringFilter,
     campaign::campaign::{Campaign, CampaignFilter, CampaignRepository},
     campaign::campaign_row::{CampaignRow, CampaignRowRepository},
-    EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 use crate::service_provider::ServiceContext;
@@ -87,10 +87,10 @@ fn validate(
     }
 
     // Validate dates
-    if let (Some(start_date), Some(end_date)) = (input.start_date, input.end_date) {
-        if start_date > end_date {
-            return Err(UpsertCampaignError::InvalidDates);
-        }
+    if let (Some(start_date), Some(end_date)) = (input.start_date, input.end_date)
+        && start_date > end_date
+    {
+        return Err(UpsertCampaignError::InvalidDates);
     }
 
     Ok(())

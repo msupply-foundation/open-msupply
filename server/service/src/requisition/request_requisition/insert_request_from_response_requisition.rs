@@ -10,7 +10,7 @@ use crate::{
     activity_log::activity_log_entry,
     backend_plugin::plugin_provider::PluginError,
     number::next_number,
-    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
+    pricing::item_price::{ItemPriceLookup, get_pricing_for_items},
     requisition::{
         common::{check_requisition_row_exists, get_indicative_price_pref},
         query::get_requisition,
@@ -18,7 +18,7 @@ use crate::{
         requisition_supply_status::get_requisitions_supply_statuses,
     },
     service_provider::ServiceContext,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -290,12 +290,12 @@ mod test_insert_request_from_response_requisition {
         service_provider::ServiceProvider,
     };
     use repository::{
+        EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
         mock::{
-            mock_full_new_response_requisition_for_update_test, mock_name_store_c, mock_store_a,
-            MockData, MockDataInserts,
+            MockData, MockDataInserts, mock_full_new_response_requisition_for_update_test,
+            mock_name_store_c, mock_store_a,
         },
         test_db::setup_all_with_data,
-        EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
     };
     use util::uuid::uuid;
 

@@ -142,11 +142,11 @@ beside it keeps going.
 
 What it demonstrates, in order of importance:
 
-| Fixture detail                                                             | What it proves                                                                                                                                                                                                                                                                 |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `mount-N` beside a click counter (`data-panel-mount`, `data-panel-clicks`) | **Props update in place.** Step through lines with **Save & next**: the facts change to the new line while the stamp and the counter do not — the host must never remount a contribution to give it new props (AC-PLUG-N2). A remount would show `mount-2` and a reset counter |
-| the facts table is an SDK `Table`, the gloss an SDK `InfoTooltip`          | **SDK components carry the host's styling** across the boundary — the plugin ships no CSS, and the host serves the stylesheets its UI kit needs                                                                                                                                |
-| every row reads `props.line` / `props.order`                               | both published DTOs arrive: the line (the same view the column slot gets) and its order, flattened, in domain words (`draft`/`sent`/`finalised`, program and period as ids + names)                                                                                            |
+| Fixture detail                                                             | What it proves                                                                                                                                                                                                                                                                        |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mount-N` beside a click counter (`data-panel-mount`, `data-panel-clicks`) | **Props update in place.** Step through lines with **Save & next**: the facts change to the new line while the stamp and the counter do not — the host must never remount a contribution to give it new props (OMS-REG-PLG-02.14). A remount would show `mount-2` and a reset counter |
+| the facts table is an SDK `Table`, the gloss an SDK `InfoTooltip`          | **SDK components carry the host's styling** across the boundary — the plugin ships no CSS, and the host serves the stylesheets its UI kit needs                                                                                                                                       |
+| every row reads `props.line` / `props.order`                               | both published DTOs arrive: the line (the same view the column slot gets) and its order, flattened, in domain words (`draft`/`sent`/`finalised`, program and period as ids + names)                                                                                                   |
 
 Two rules a real panel must follow, both visible here:
 
@@ -165,7 +165,7 @@ placement: inside a menu group of the plugin's own (declared under
 `navSections`), inside a host section, at the root of the upper list, or none
 at all (routed, no menu entry)
 ([`sdk-contract` § the page contribution](../../../spec/plugins/sdk-contract.md#the-page-contribution-specified-in-full)).
-A placement the host does not provide is refused, naming it (AC-PLUG-P5). Turn
+A placement the host does not provide is refused, naming it (OMS-REG-PLG-04.11). Turn
 this plugin's section on with **`?pluginPages`**:
 
 ```text
@@ -178,17 +178,17 @@ of the upper list, above the pinned bottom cluster) holding one page,
 reachable from the menu, from the command palette ("Go to: Hello page"), and at
 `/<store>/hello-world/hello` directly — one registry, three surfaces.
 
-| Fixture detail                                            | What it proves                                                                                                                                                                                                |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the page body lives in its own module (`HelloPage.tsx`)   | **page code loads on first navigation, never at startup** (AC-PLUG-P2): its console line prints on the first visit, not at boot. The build inlines it into the one bundle; the dev loop keeps it a real chunk |
-| the header, breadcrumb and menu are untouched host chrome | the host owns the app frame and page frame; the contribution is the **body only**, like a dashboard body occupant                                                                                             |
+| Fixture detail                                             | What it proves                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| the page body lives in its own module (`HelloPage.tsx`)    | **page code loads on first navigation, never at startup** (OMS-REG-PLG-04.4/.5): its console line prints on the first visit, not at boot. The build inlines it into the one bundle; the dev loop keeps it a real chunk                                                                     |
+| the header, breadcrumb and menu are untouched host chrome  | the host owns the app frame and page frame; the contribution is the **body only**, like a dashboard body occupant                                                                                                                                                                          |
 | `when: () => pagesFlagAtBoot` (the flag, captured at boot) | the group-level withhold, composed with each placed page's own: absent from menu and palette, and the URL **redirects** — a real plugin gates on `ctx` (`ctx.storeMode === 'dispensary'`), same context, same behaviour. Captured at boot because in-app navigation drops the query string |
-| `nav: { in: 'helloSection' }`                              | the placement — one field of one shape. `{ in }` also takes a published host section id (the entry joins that section's children); `{ root: true }` is a top-level entry; absent means routed with no menu entry, like a host record screen               |
-| `anchor: { before: 'inventory' }`                          | menu placement against a published host section id — the same `{ before / after / end }` shape the dashboard slots use. An anchor naming a gate-hidden section degrades to the end of the upper list, named in diagnostics                              |
-| labels are keys (`pages.section`, `pages.hello`)          | nav labels, the breadcrumb and the tab title all resolve from the plugin's own catalogue, per locale                                                                                                          |
+| `nav: { in: 'helloSection' }`                              | the placement — one field of one shape. `{ in }` also takes a published host section id (the entry joins that section's children); `{ root: true }` is a top-level entry; absent means routed with no menu entry, like a host record screen                                                |
+| `anchor: { before: 'inventory' }`                          | menu placement against a published host section id — the same `{ before / after / end }` shape the dashboard slots use. An anchor naming a gate-hidden section degrades to the end of the upper list, named in diagnostics                                                                 |
+| labels are keys (`pages.section`, `pages.hello`)           | nav labels, the breadcrumb and the tab title all resolve from the plugin's own catalogue, per locale                                                                                                                                                                                       |
 
 Add `permissions: ['...']` to the page (or the group — the two compose) to
-guard the nav entry and direct navigation with **one** condition (AC-PLUG-P1):
+guard the nav entry and direct navigation with **one** condition (OMS-REG-PLG-04.1/.2):
 without the permission the entry is absent and the URL shows the host's
 no-permission notice in place of the screen.
 

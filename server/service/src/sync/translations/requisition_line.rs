@@ -1,15 +1,15 @@
 use crate::sync::translations::{
-    item::ItemTranslation, requisition::RequisitionTranslation, FkField,
+    FkField, item::ItemTranslation, requisition::RequisitionTranslation,
 };
 
 use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_fields_as_option};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    forecast_from_legacy, forecast_to_legacy, ChangelogRow, ChangelogTableName, EqualFilter,
-    ForecastMethod, ItemLinkRowRepository, LegacyForecast, RequisitionFilter, RequisitionLineRow,
-    RequisitionLineRowDelete, RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ForecastMethod, ItemLinkRowRepository,
+    LegacyForecast, RequisitionFilter, RequisitionLineRow, RequisitionLineRowDelete,
+    RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row, StorageConnection,
+    SyncBufferRow, forecast_from_legacy, forecast_to_legacy,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -352,11 +352,11 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::{mock_request_draft_requisition, MockDataInserts},
-        system_log_row::{SystemLogRowRepository, SystemLogType},
-        test_db::setup_all,
         ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RequisitionRow,
         RequisitionRowRepository, RowOrDelete, SyncAction, SyncRecordData,
+        mock::{MockDataInserts, mock_request_draft_requisition},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::setup_all,
     };
     use serde_json::json;
 

@@ -1,6 +1,6 @@
 use crate::RequisitionLineRow;
 
-use super::{mock_item_a, mock_request_draft_requisition, MockData};
+use super::{MockData, mock_item_a, mock_request_draft_requisition};
 
 pub fn mock_test_requisition_line_repository() -> MockData {
     let mut result = MockData::default();

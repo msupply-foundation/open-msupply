@@ -6,7 +6,7 @@ import {
   withLng,
 } from './discoveryReturn';
 
-describe('handoffPath → discoveryReturnUrl round trip (AC-DT16)', () => {
+describe('handoffPath → discoveryReturnUrl round trip (OMS-REG-DESK-01.21)', () => {
   it('lands on login carrying the way back', () => {
     const path = handoffPath(
       'http://localhost:3005/discovery.html?autoconnect=false'

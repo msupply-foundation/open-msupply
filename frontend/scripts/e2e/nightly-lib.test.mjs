@@ -4,13 +4,17 @@ import { crc32, deflateRawSync } from 'node:zlib';
 import {
   cluesMarkdown,
   earlierIssuesFor,
+  gatherClues,
   historyLine,
+  legKey,
   planIssue,
   readZipEntry,
   regressedKeysInBody,
   relatedCommits,
   setFromBody,
   setMarker,
+  specFileOf,
+  splitLegKey,
   syncTrackingIssue,
   testsFromReport,
 } from './nightly-lib.mjs';
@@ -428,5 +432,139 @@ describe('cluesMarkdown', () => {
       earlier: new Map(),
     });
     expect(md).toContain('No commit in the range touches this spec');
+  });
+});
+
+describe('leg-qualified keys', () => {
+  it('leaves the default leg bare and prefixes any other', () => {
+    expect(legKey(null, 'auth.setup.ts › Auth')).toBe('auth.setup.ts › Auth');
+    expect(legKey('plugin-example', 'auth.setup.ts › Auth')).toBe(
+      '[plugin-example] auth.setup.ts › Auth'
+    );
+  });
+  it('splits a qualified key back, and passes a bare one through', () => {
+    expect(splitLegKey('[plugin-example] a.spec.ts › t')).toEqual({
+      leg: 'plugin-example',
+      key: 'a.spec.ts › t',
+    });
+    expect(splitLegKey('a.spec.ts › t')).toEqual({
+      leg: null,
+      key: 'a.spec.ts › t',
+    });
+  });
+  it('finds the spec file under the leg prefix', () => {
+    expect(
+      specFileOf('[plugin-example] plugins/example/gate.spec.ts › gate')
+    ).toBe('plugins/example/gate.spec.ts');
+  });
+});
+
+describe('gatherClues', () => {
+  // One previous run carrying both legs' reports, in which the SAME setup
+  // test passed on the default leg and failed on the plugin leg — so a
+  // history read from the wrong leg's report reads the wrong outcome.
+  const report = status => ({
+    suites: [
+      {
+        title: 'auth.setup.ts',
+        file: 'auth.setup.ts',
+        specs: [{ title: 'Auth', file: 'auth.setup.ts', tests: [{ status }] }],
+      },
+    ],
+  });
+  const artifacts = {
+    'e2e-report-develop': report('expected'),
+    'e2e-report-develop-plugin-example': report('unexpected'),
+  };
+  const ids = Object.keys(artifacts);
+  const github = {
+    rest: {
+      actions: {
+        listWorkflowRuns: async () => ({
+          data: { workflow_runs: [{ id: 1 }, { id: 2 }] },
+        }),
+        listWorkflowRunArtifacts: async ({ run_id }) => ({
+          data: {
+            artifacts:
+              run_id === 1
+                ? ids.map((name, id) => ({ id, name, expired: false }))
+                : [],
+          },
+        }),
+        downloadArtifact: async ({ artifact_id }) => ({
+          data: streamedZip({
+            'results.json': JSON.stringify(artifacts[ids[artifact_id]]),
+          }),
+        }),
+      },
+      repos: {},
+      issues: { listForRepo: async () => ({ data: [] }) },
+    },
+    paginate: async () => [],
+  };
+
+  it("reads each regression's history from its own leg's report", async () => {
+    const md = await gatherClues({
+      github,
+      owner: 'o',
+      repo: 'r',
+      key: 'develop',
+      currentRunId: 2,
+      summary: {
+        regressions: [
+          { key: 'auth.setup.ts › Auth' },
+          { key: '[plugin-example] auth.setup.ts › Auth' },
+        ],
+      },
+      serverUrl: 'https://gh',
+    });
+    const [, bare, plugin] = md.split(/\*\*`/);
+    expect(bare).toContain('first failure in this window');
+    expect(plugin).toContain('has failed before');
+  });
+
+  // #1133: an artifact carries its own e2e-report-<leg>/ folder; one
+  // uploaded before that holds a bare results.json. Both stay in the window
+  // until they expire, so history reads both.
+  it('reads history from both the foldered and the older flat artifact layout', async () => {
+    const name = 'e2e-report-v3.03.00-RC';
+    const zips = {
+      11: streamedZip({
+        [`${name}/results.json`]: JSON.stringify(report('unexpected')),
+      }),
+      12: streamedZip({ 'results.json': JSON.stringify(report('expected')) }),
+    };
+    const md = await gatherClues({
+      github: {
+        ...github,
+        rest: {
+          ...github.rest,
+          actions: {
+            listWorkflowRuns: async () => ({
+              data: { workflow_runs: [{ id: 10 }, { id: 11 }, { id: 12 }] },
+            }),
+            listWorkflowRunArtifacts: async ({ run_id }) => ({
+              data: {
+                artifacts: zips[run_id]
+                  ? [{ id: run_id, name, expired: false }]
+                  : [],
+              },
+            }),
+            downloadArtifact: async ({ artifact_id }) => ({
+              data: zips[artifact_id],
+            }),
+          },
+        },
+      },
+      owner: 'o',
+      repo: 'r',
+      key: 'v3.03.00-RC',
+      currentRunId: 10,
+      summary: { regressions: [{ key: 'auth.setup.ts › Auth' }] },
+      serverUrl: 'https://gh',
+    });
+    // Oldest first: the flat run 12 passed, the foldered run 11 failed.
+    expect(md).toContain('`✅❌`');
+    expect(md).toContain('failed 1 of the previous 2 runs');
   });
 });

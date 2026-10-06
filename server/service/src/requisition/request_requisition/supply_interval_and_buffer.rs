@@ -126,12 +126,12 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
+        NameRowRepository, PreferenceRow, PreferenceRowRepository,
         mock::{
-            mock_name_store_a, mock_name_store_c, mock_store_a, mock_user_account_a,
-            MockDataInserts,
+            MockDataInserts, mock_name_store_a, mock_name_store_c, mock_store_a,
+            mock_user_account_a,
         },
         test_db::setup_all,
-        NameRowRepository, PreferenceRow, PreferenceRowRepository,
     };
 
     #[actix_rt::test]

@@ -1,11 +1,11 @@
 use chrono::NaiveDate;
 
 use crate::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     InvoiceRow, InvoiceStatus, InvoiceType, RequisitionRow,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
-use super::{mock_name_store_b, mock_store_a, MockData};
+use super::{MockData, mock_name_store_b, mock_store_a};
 
 pub fn mock_test_invoice_loaders() -> MockData {
     let mut result = MockData::default();

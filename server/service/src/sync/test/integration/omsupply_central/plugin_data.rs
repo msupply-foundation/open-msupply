@@ -1,8 +1,8 @@
 use crate::sync::{
     test::{
         integration::{
-            central_server_configurations::NewSiteProperties, GraphqlRequest, SyncRecordTester,
-            TestStepData,
+            GraphqlRequest, SyncRecordTester, TestStepData,
+            central_server_configurations::NewSiteProperties,
         },
         test_data::plugin_data::plugin_data,
     },

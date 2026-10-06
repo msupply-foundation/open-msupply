@@ -5,16 +5,16 @@ use graphql_core::{
 };
 use graphql_types::types::{DemographicIndicatorNode, DemographicNode};
 use repository::{
+    DemographicIndicatorFilter, DemographicIndicatorRow, DemographicIndicatorSort,
+    DemographicIndicatorSortField, DemographicProjectionRow, DemographicRow, EqualFilter,
+    StringFilter,
     demographic::{DemographicFilter, DemographicSort, DemographicSortField},
     demographic_projection::{
         DemographicProjection, DemographicProjectionFilter, DemographicProjectionSort,
         DemographicProjectionSortField,
     },
-    DemographicIndicatorFilter, DemographicIndicatorRow, DemographicIndicatorSort,
-    DemographicIndicatorSortField, DemographicProjectionRow, DemographicRow, EqualFilter,
-    StringFilter,
 };
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]

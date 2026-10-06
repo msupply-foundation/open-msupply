@@ -1,14 +1,14 @@
 use super::super::user_row::user_account;
-use super::asset_log_row::{asset_log, AssetLogRow};
+use super::asset_log_row::{AssetLogRow, asset_log};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-use crate::asset_log_row::{latest_asset_log, AssetLogStatus, AssetLogType};
+use crate::asset_log_row::{AssetLogStatus, AssetLogType, latest_asset_log};
 use crate::{
+    DBType, DatetimeFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
-    DBType, DatetimeFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
 pub type AssetLog = AssetLogRow;
@@ -215,9 +215,10 @@ impl AssetLogType {
 #[cfg(test)]
 mod tests {
     use crate::{
+        EqualFilter, Pagination,
         assets::asset_log::{AssetLogFilter, AssetLogRepository},
-        mock::{mock_asset_log_c, mock_asset_logs, MockDataInserts},
-        test_db, EqualFilter, Pagination,
+        mock::{MockDataInserts, mock_asset_log_c, mock_asset_logs},
+        test_db,
     };
 
     use super::{AssetLogSort, AssetLogSortField};

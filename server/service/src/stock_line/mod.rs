@@ -1,7 +1,7 @@
 use self::query::{get_items_by_stock_line_filter, get_stock_line, get_stock_lines};
 
 use super::{ListError, ListResult};
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use chrono::NaiveDateTime;
 use historical_stock::get_historical_stock_lines;
 use repository::{Item, ItemSort, PaginationOption, StockLine, StockLineFilter, StockLineSort};

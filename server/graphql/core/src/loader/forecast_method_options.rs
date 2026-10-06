@@ -2,7 +2,7 @@ use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use repository::RepositoryError;
 use service::{
-    requisition::request_requisition::{get_forecast_method_options, ForecastMethodOption},
+    requisition::request_requisition::{ForecastMethodOption, get_forecast_method_options},
     service_provider::ServiceProvider,
 };
 use std::collections::HashMap;

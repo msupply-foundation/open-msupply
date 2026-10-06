@@ -1,7 +1,7 @@
 use regex::Regex;
 use repository::{
-    contact_form_row::ContactFormRowRepository, RepositoryError, StorageConnection, UserAccountRow,
-    UserAccountRowRepository,
+    RepositoryError, StorageConnection, UserAccountRow, UserAccountRowRepository,
+    contact_form_row::ContactFormRowRepository,
 };
 
 use super::{InsertContactForm, InsertContactFormError};

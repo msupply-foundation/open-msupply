@@ -136,9 +136,9 @@ impl SyncTranslation for LocationTranslation {
 mod tests {
     use super::*;
     use repository::{
+        LocationTypeRow,
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        LocationTypeRow,
     };
 
     #[actix_rt::test]

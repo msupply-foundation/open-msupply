@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_campaign_change_log_table_name;

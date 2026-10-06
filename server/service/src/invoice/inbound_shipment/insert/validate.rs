@@ -2,7 +2,7 @@ use crate::invoice::check_invoice_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::purchase_order::validate::check_purchase_order_exists;
 use crate::store_preference::get_store_preferences;
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party};
 use repository::{
     EqualFilter, Name, RepositoryError, Requisition, RequisitionFilter, RequisitionRepository,
 };
@@ -26,10 +26,10 @@ pub fn validate(
         return Err(InvoiceAlreadyExists);
     }
 
-    if let Some(purchase_order_id) = &input.purchase_order_id {
-        if check_purchase_order_exists(purchase_order_id, connection)?.is_none() {
-            return Err(PurchaseOrderDoesNotExist);
-        }
+    if let Some(purchase_order_id) = &input.purchase_order_id
+        && check_purchase_order_exists(purchase_order_id, connection)?.is_none()
+    {
+        return Err(PurchaseOrderDoesNotExist);
     }
 
     let store_pref = get_store_preferences(connection, store_id)?;

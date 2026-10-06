@@ -1,5 +1,5 @@
 use crate::{
-    requisition::request_requisition::{suggested_quantity, ForecastMethodUnavailableReason},
+    requisition::request_requisition::{ForecastMethodUnavailableReason, suggested_quantity},
     requisition_line::request_requisition_line::{
         DeleteRequestRequisitionLine, InsertRequestRequisitionLine, RequisitionLineForecastPreview,
         RequisitionLineForecastPreviewError, RequisitionLineForecastPreviewInput,
@@ -8,14 +8,14 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 use repository::{
-    ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
-    mock::{
-        mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_e, mock_item_f, mock_item_g,
-        mock_request_draft_requisition, mock_store_a, MockData, MockDataInserts,
-    },
-    test_db::setup_all_with_data,
     ForecastData, ForecastMethod, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     StorageConnection,
+    ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
+    mock::{
+        MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_item_e,
+        mock_item_f, mock_item_g, mock_request_draft_requisition, mock_store_a,
+    },
+    test_db::setup_all_with_data,
 };
 
 fn requisition() -> RequisitionRow {
@@ -397,11 +397,13 @@ async fn forecast_preview_matches_save() {
         preview.max_months_of_stock,
         requisition().max_months_of_stock
     );
-    assert!(preview
-        .forecast_method_options
-        .iter()
-        .all(|option| option.method == ForecastMethod::Population
-            || option.unavailable_reason.is_none()));
+    assert!(
+        preview
+            .forecast_method_options
+            .iter()
+            .all(|option| option.method == ForecastMethod::Population
+                || option.unavailable_reason.is_none())
+    );
     assert_eq!(setup.find_line(&b), None);
 
     // Another method on the new item, as a method change would apply it

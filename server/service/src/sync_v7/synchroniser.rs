@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use log::warn;
-use repository::{syncv7::SyncError, ChangelogCondition, KeyType, RepositoryError};
+use repository::{ChangelogCondition, KeyType, RepositoryError, syncv7::SyncError};
 use thiserror::Error;
 
 use crate::{

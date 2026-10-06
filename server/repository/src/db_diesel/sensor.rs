@@ -1,7 +1,8 @@
-use super::{sensor_row::sensor, DBType, SensorRow, StorageConnection};
+use super::{DBType, SensorRow, StorageConnection, sensor_row::sensor};
 use diesel::prelude::*;
 
 use crate::{
+    StringFilter,
     db_diesel::{
         location::{LocationFilter, LocationRepository},
         location_row::location,
@@ -9,7 +10,6 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
     sensor_row::SensorType,
-    StringFilter,
 };
 
 use crate::{EqualFilter, Pagination, Sort};

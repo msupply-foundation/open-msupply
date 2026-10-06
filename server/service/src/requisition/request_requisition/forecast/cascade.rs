@@ -1,4 +1,4 @@
-use super::{apply_forecast, order_demand, ForecastInputs, OrderDemand};
+use super::{ForecastInputs, OrderDemand, apply_forecast, order_demand};
 use crate::requisition_line::ancillary_items::compute::MAX_ANCILLARY_DEPTH;
 use repository::{
     EqualFilter, ForecastMethod, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,

@@ -7,18 +7,18 @@ use graphql_core::{
         CannotEditRequisition, OrderingTooManyItems, OtherPartyNotACustomer,
         OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound,
     },
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
         UpdateRequestRequisition as ServiceInput, UpdateRequestRequisitionError as ServiceError,
         UpdateRequestRequisitionStatus,
     },
     service_provider::ServiceProvider,
-    NullableUpdate,
 };
 
 use crate::mutations::response_requisition::update::RequisitionReasonsNotProvided;
@@ -176,47 +176,47 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 
     let graphql_error = match error {
         ServiceError::RequisitionDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound));
         }
         ServiceError::CannotEditRequisition => {
             return Ok(UpdateErrorInterface::CannotEditRequisition(
                 CannotEditRequisition,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotASupplier => {
             return Ok(UpdateErrorInterface::OtherPartyNotASupplier(
                 OtherPartyNotASupplier,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotVisible => {
             return Ok(UpdateErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         ServiceError::OrderingTooManyItems(max_order) => {
             return Ok(UpdateErrorInterface::OrderingTooManyItems(
                 OrderingTooManyItems(max_order),
-            ))
+            ));
         }
         ServiceError::ReasonsNotProvided(lines) => {
             return Ok(UpdateErrorInterface::RequisitionReasonsNotProvided(
                 RequisitionReasonsNotProvided(lines),
-            ))
+            ));
         }
         ServiceError::CannotChangeTargetMonthsOfStock => {
             return Ok(UpdateErrorInterface::CannotChangeTargetMonthsOfStock(
                 CannotChangeTargetMonthsOfStock,
-            ))
+            ));
         }
         ServiceError::DestinationCustomerNotACustomer => {
             return Ok(UpdateErrorInterface::OtherPartyNotACustomer(
                 OtherPartyNotACustomer,
-            ))
+            ));
         }
         ServiceError::DestinationCustomerNotVisible => {
             return Ok(UpdateErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         ServiceError::NotThisStoreRequisition
         | ServiceError::OrderTypeNotFound
@@ -252,17 +252,17 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_request_draft_requisition, MockDataInserts},
         Requisition, StorageConnectionManager,
+        mock::{MockDataInserts, mock_request_draft_requisition},
     };
     use serde_json::json;
     use service::{
         requisition::{
+            RequisitionServiceTrait,
             request_requisition::{
                 UpdateRequestRequisition as ServiceInput,
                 UpdateRequestRequisitionError as ServiceError, UpdateRequestRequisitionStatus,
             },
-            RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

@@ -3,26 +3,26 @@ use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::loader::ItemLoader;
 use graphql_core::{
+    ContextExt,
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, NameByIdLoaderInput,
         RequisitionLinesByRequisitionIdLoader, RequisitionLinesRemainingToSupplyLoader,
         RequisitionsByIdLoader, SyncFileReferenceLoader, UserLoader,
     },
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
-use repository::{requisition_row::RequisitionRow, ApprovalStatusType, NameRow, Requisition};
+use repository::{ApprovalStatusType, NameRow, Requisition, requisition_row::RequisitionRow};
 use service::{
+    ListResult,
     requisition::request_requisition::{
-        name_supply_interval_and_buffer, store_supply_interval_and_buffer, SupplyIntervalAndBuffer,
+        SupplyIntervalAndBuffer, name_supply_interval_and_buffer, store_supply_interval_and_buffer,
     },
     requisition_line::ancillary_items::{AncillaryDelta, AncillaryState},
-    ListResult,
 };
 
 use super::{
-    program_node::ProgramNode, InvoiceConnector, ItemNode, NameNode, PeriodNode,
-    RequisitionLineConnector, UserNode,
+    InvoiceConnector, ItemNode, NameNode, PeriodNode, RequisitionLineConnector, UserNode,
+    program_node::ProgramNode,
 };
 use crate::types::SyncFileReferenceConnector;
 
@@ -533,8 +533,8 @@ mod test {
         test_helpers::{setup_graphql_test, setup_graphql_test_with_data},
     };
     use repository::{
-        mock::{mock_user_account_a, MockDataInserts},
         Requisition, RequisitionRow,
+        mock::{MockDataInserts, mock_user_account_a},
     };
     use serde_json::json;
 

@@ -23,7 +23,7 @@ export type CreateResult =
   | { kind: 'error'; message: string }
   | { kind: 'failed' };
 
-// General create (AC-C2): sends only id + otherPartyId with the default
+// General create (OMS-REG-REPL-04.6/.43): sends only id + otherPartyId with the default
 // reorder threshold, leaving the target to the server's default (the
 // store's supply interval + safety buffer). The picker offers only visible,
 // store-backed suppliers, so the typed supplier rejections are unreachable
@@ -56,10 +56,11 @@ const PROGRAM_ERROR_KEYS: Record<string, LocaleKey> = {
   SupplierNotValid: 'error.program-not-valid-for-supplier',
 };
 
-// Program create (AC-P3): sends the order type + period; the resolver fills the
-// rest. Any rejection must keep the dialog open showing the error (AC-P5), so
-// returnGraphqlErrors surfaces the untyped rejections (already-exists, missing
-// order type) as an inline generic message rather than the global modal.
+// Program create (OMS-REG-REPL-04.48, OMS-REG-REPL-12.2): sends the order type
+// + period; the resolver fills the rest. Any rejection must keep the dialog
+// open showing the error (OMS-REG-REPL-04.50), so returnGraphqlErrors surfaces
+// the untyped rejections (already-exists, missing order type) as an inline
+// generic message rather than the global modal.
 export const createProgramOrder = async (
   storeId: string,
   supplierId: string,
@@ -95,10 +96,11 @@ export const createProgramOrder = async (
   return { kind: 'failed' };
 };
 
-// The recent-stocktake warning test (AC-C5): true when the store's finalised
-// stocktakes within maxAge days cover fewer than minItems DISTINCT items — so
-// New order must confirm before opening the modal. Called only when the
-// preference is enabled. A failed read never blocks creation (returns false).
+// The recent-stocktake warning test (OMS-REG-REPL-04.45): true when the store's
+// finalised stocktakes within maxAge days cover fewer than minItems DISTINCT
+// items — so New order must confirm before opening the modal. Called only when
+// the preference is enabled. A failed read never blocks creation (returns
+// false).
 const recentStocktakeIsInsufficient = async (
   storeId: string,
   maxAge: number,

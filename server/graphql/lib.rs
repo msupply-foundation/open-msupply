@@ -9,9 +9,9 @@ use tokio::sync::RwLock;
 
 pub use graphql_core::OperationalStatus;
 
-use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
-use actix_web::{guard, HttpRequest};
+use actix_web::web::{self, Data};
+use actix_web::{HttpRequest, guard};
 
 use async_graphql::{
     EmptyMutation, EmptySubscription, MergedSubscription, Object, ObjectType, Schema,
@@ -23,8 +23,8 @@ use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscripti
 use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_asset::property::AssetPropertiesQueries;
 use graphql_asset::{
-    logs::{AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries},
     AssetMutations, AssetQueries,
+    logs::{AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries},
 };
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
@@ -35,7 +35,7 @@ use graphql_contact::ContactQueries;
 use graphql_contact_form::ContactFormMutations;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
+use graphql_core::{BoxedSelfRequest, RequestUserData, SelfRequest, auth_data_from_request};
 use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
@@ -353,7 +353,7 @@ pub struct BaseSubscriptions;
 #[Subscription]
 impl BaseSubscriptions {
     /// Simple subscription to verify WebSocket connectivity
-    async fn ping(&self) -> impl Stream<Item = String> {
+    async fn ping(&self) -> impl Stream<Item = String> + use<> {
         futures::stream::once(async { "pong".to_string() })
     }
 }

@@ -1,7 +1,7 @@
 use super::ItemNode;
 use async_graphql::*;
 use dataloader::DataLoader;
-use graphql_core::{loader::ItemLoader, ContextExt};
+use graphql_core::{ContextExt, loader::ItemLoader};
 use repository::{
     AncillaryRatioForecast, AncillaryRatioPrincipal, ForecastData, ForecastMethod,
     PopulationForecast, PopulationForecastCourse,

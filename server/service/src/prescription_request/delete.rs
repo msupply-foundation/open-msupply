@@ -6,7 +6,7 @@ use repository::{
 use crate::activity_log::activity_log_entry;
 use crate::service_provider::ServiceContext;
 
-use super::validate::{check_prescription_request_editable, CommonPrescriptionRequestError};
+use super::validate::{CommonPrescriptionRequestError, check_prescription_request_editable};
 
 #[derive(Debug, PartialEq)]
 pub enum DeletePrescriptionRequestError {

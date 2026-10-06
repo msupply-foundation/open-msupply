@@ -4,7 +4,7 @@ pub struct AllocateProgramNumberInput {
 }
 
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
 use repository::NumberRowType;
 use service::{
     auth::{Resource, ResourceAccessRequest},

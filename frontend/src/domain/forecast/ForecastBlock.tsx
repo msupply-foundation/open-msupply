@@ -54,7 +54,8 @@ export interface ForecastBlockProps {
   /**
    * A stock quantity (units) in the editor's active entry mode, with its
    * measure word — so monthly demand and target stock re-express like the
-   * panels' figures (AC-LN19). Rounded to up to `fractionDigits` places:
+   * panels' figures (OMS-REG-REPL-04.74). Rounded to up to `fractionDigits`
+   * places:
    * the block's figures keep two, so monthly demand × target months visibly
    * makes target stock.
    */

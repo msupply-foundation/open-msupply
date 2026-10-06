@@ -12,9 +12,9 @@ use std::sync::Mutex;
 
 pub use operational_status::OperationalStatus;
 
+use actix_web::HttpRequest;
 use actix_web::cookie::Cookie;
 use actix_web::web::Data;
-use actix_web::HttpRequest;
 use async_graphql::{Context, Request, Response};
 
 use actix_web::http::header::COOKIE;
@@ -25,8 +25,8 @@ use service::service_provider::ServiceProvider;
 
 use loader::LoaderRegistry;
 use service::settings::Settings;
-use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
+use tokio::sync::mpsc::Sender;
 
 /// Performs a query to ourself, e.g. the report endpoint can query
 #[async_trait::async_trait]

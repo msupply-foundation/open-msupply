@@ -323,6 +323,7 @@ export const FilterBar = <
         {f => (
           <FilterChip
             label={f.label()}
+            filterKey={f.key}
             onRemove={() => main.remove(f)}
             focusTarget={chipEditor(f.key)}
           >
@@ -345,6 +346,7 @@ export const FilterBar = <
               {f => (
                 <FilterChip
                   label={f.label()}
+                  filterKey={f.key}
                   onRemove={() => ex.remove(f)}
                   focusTarget={chipEditor(f.key)}
                 >
@@ -417,6 +419,8 @@ export const NotChipEditor = (props: { children: JSX.Element }) => (
 // carries it, a seeded default filter's included (#563).
 const FilterChip = (props: {
   label: string;
+  /** The filter's key — stamps the remove button `filter-remove-<key>`. */
+  filterKey: string;
   onRemove: () => void;
   focusTarget: FocusTarget;
   children: JSX.Element;
@@ -431,6 +435,7 @@ const FilterChip = (props: {
     <button
       type="button"
       class={styles.remove}
+      data-testid={`filter-remove-${props.filterKey}`}
       aria-label={t('label.clear-filter-detail', { name: props.label })}
       // Keep the caret where it is while the button is pressed: the editor
       // shrinks to its text when it loses the caret, which slides this button

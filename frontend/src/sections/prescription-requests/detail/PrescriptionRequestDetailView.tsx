@@ -59,7 +59,8 @@ import { EditPatientModal } from '../../patients';
 // prominent custom fields), Details + Custom fields + Log tabs over the line
 // table, the side panel, and the status footer with the Ready-to-dispense
 // hand-over. Read-only past New: dead affordances are hidden and a row click
-// opens the line editor's read-only face (AC-N5, AC-R3).
+// opens the line editor's read-only face (OMS-REG-DIS-08.41/.42,
+// OMS-REG-DIS-09.10/.11).
 
 type Line = PrescriptionRequestFieldsFragment['lines']['nodes'][number];
 
@@ -245,7 +246,7 @@ const PrescriptionRequestDetailView: Component = () => {
                     </Button>
                   </Show>
                   {/* Export/Print — a read, so offered at every status
-                      (AC-E1). */}
+                      (OMS-REG-DIS-10.5–.7). */}
                   <ExportPrintAction
                     requestId={node().id}
                     leadingAction={disabled()}
@@ -378,7 +379,7 @@ const PrescriptionRequestDetailView: Component = () => {
           </Page>
 
           {/* The S4 line editor — mounted fresh per open; the read-only face
-              past New (AC-N5). */}
+              past New (OMS-REG-DIS-08.41/.42). */}
           <Show when={editState()} keyed>
             {state => (
               <RequestLineEditModal

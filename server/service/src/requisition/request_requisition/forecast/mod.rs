@@ -14,16 +14,16 @@ mod population;
 
 pub use cascade::*;
 
-use super::{generate_suggested_quantity, GenerateSuggestedQuantity};
+use super::{GenerateSuggestedQuantity, generate_suggested_quantity};
 use crate::preference::{DisplayPopulationBasedForecasting, Preference};
 use population::CoveringCourses;
 use repository::{
-    ancillary_item::{AncillaryItemFilter, AncillaryItemRepository},
-    ancillary_item_row::AncillaryItemRow,
-    requisition_row::RequisitionType,
     AncillaryRatioForecast, AncillaryRatioPrincipal, EqualFilter, ForecastData, ForecastMethod,
     LineForecast, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
     RequisitionLineRow, RequisitionRow, StorageConnection,
+    ancillary_item::{AncillaryItemFilter, AncillaryItemRepository},
+    ancillary_item_row::AncillaryItemRow,
+    requisition_row::RequisitionType,
 };
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};

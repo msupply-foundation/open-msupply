@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_types::types::{VVMStatusLogResponse, VVMStatusesResponse};
 use mutations::vvm_status_log::{
-    insert::{insert, InsertInput, InsertResponse},
-    update::{update_vvm_status_log, UpdateVVMStatusResponse},
+    insert::{InsertInput, InsertResponse, insert},
+    update::{UpdateVVMStatusResponse, update_vvm_status_log},
 };
 use queries::{
     active_vvm_statuses::active_vvm_statuses, vvm_status_log::get_vvm_status_log_by_stock_line,

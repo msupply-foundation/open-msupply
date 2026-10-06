@@ -1,4 +1,5 @@
 use crate::{
+    PluginOrRepositoryError,
     backend_plugin::{
         plugin_provider::{PluginError, PluginInstance},
         types::transform_request_requisition_lines::Context,
@@ -8,15 +9,14 @@ use crate::{
     },
     service_provider::ServiceContext,
     validate::check_other_party_store_is_disabled,
-    PluginOrRepositoryError,
 };
+use repository::{EqualFilter, ItemType};
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     MasterListLineFilter, MasterListLineRepository, PluginDataRowRepository, RepositoryError,
     RequisitionLine, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
     RequisitionLineRowRepository, StorageConnection,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
-use repository::{EqualFilter, ItemType};
 
 use super::{generate_requisition_lines, recompute_ancillary_dependants};
 
@@ -186,7 +186,9 @@ mod test {
     };
     use assert_approx_eq::assert_approx_eq;
     use repository::{
+        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         mock::{
+            MockData, MockDataInserts,
             common::FullMockMasterList,
             mock_draft_request_requisition_for_update_test,
             mock_full_new_response_requisition_for_update_test, mock_item_a, mock_item_b,
@@ -194,10 +196,8 @@ mod test {
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
             mock_store_a, mock_store_b, mock_test_not_store_a_master_list,
             test_item_stats::{self},
-            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
     };
 
     #[actix_rt::test]

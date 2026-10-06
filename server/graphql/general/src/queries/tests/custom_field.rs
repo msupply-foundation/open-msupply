@@ -4,16 +4,16 @@ mod graphql {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::MockDataInserts, CustomField, CustomFieldFilter, CustomFieldKind, CustomFieldRow,
-        CustomFieldValueType, EqualFilter, RepositoryError, StorageConnection,
-        StorageConnectionManager,
+        CustomField, CustomFieldFilter, CustomFieldKind, CustomFieldRow, CustomFieldValueType,
+        EqualFilter, RepositoryError, StorageConnection, StorageConnectionManager,
+        mock::MockDataInserts,
     };
     use serde_json::json;
 
     use service::{
+        ListError, ListResult,
         custom_field::CustomFieldServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
-        ListError, ListResult,
     };
 
     use crate::GeneralQueries;

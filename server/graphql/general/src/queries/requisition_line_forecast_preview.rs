@@ -2,7 +2,7 @@ use actix_web::web::Data;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::RecordNotFound,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::{
     ForecastMethodNode, ForecastMethodNotAvailable, RequisitionLineForecastPreviewNode,
@@ -112,14 +112,14 @@ fn map_error(error: ServiceError) -> Result<PreviewErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionDoesNotExist | ServiceError::ItemDoesNotExist => {
-            return Ok(PreviewErrorInterface::RecordNotFound(RecordNotFound))
+            return Ok(PreviewErrorInterface::RecordNotFound(RecordNotFound));
         }
         ServiceError::ForecastMethodNotAvailable(reason) => {
             return Ok(PreviewErrorInterface::ForecastMethodNotAvailable(
                 ForecastMethodNotAvailable {
                     unavailable_reason: reason.into(),
                 },
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),

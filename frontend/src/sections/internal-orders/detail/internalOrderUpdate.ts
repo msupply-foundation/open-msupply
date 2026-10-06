@@ -91,14 +91,15 @@ export type SendResult =
       kind: 'error';
       message: string;
       // The lines named by a RequisitionReasonsNotProvided refusal, so the
-      // detail can flag their Reason cells (AC-R3); empty for any other error.
+      // detail can flag their Reason cells (OMS-REG-REPL-04.81); empty for any
+      // other error.
       reasonLineIds: string[];
     }
   | { kind: 'failed' };
 
 // The typed send refusals the client maps to copy (contract parity). The
-// emergency cap (AC-EM1) names the maximum it enforced, interpolated as the
-// pluralised count; the others are fixed strings.
+// emergency cap (OMS-REG-REPL-05.21) names the maximum it enforced,
+// interpolated as the pluralised count; the others are fixed strings.
 const mapSendError = (error: {
   __typename: string;
   description: string;
@@ -111,7 +112,7 @@ const mapSendError = (error: {
       return t('error.cannot-edit-requisition');
     case 'OrderingTooManyItems':
       // Pluralised key (`_one` / `_other`) — tPlural, not t; it interpolates
-      // the count into the copy that names the cap (AC-EM1).
+      // the count into the copy that names the cap (OMS-REG-REPL-05.21).
       return tPlural(
         'error.ordering-too-many-items',
         error.maxItemsInEmergencyOrder ?? 0
@@ -125,7 +126,8 @@ export const sendInternalOrder = async (
   storeId: string,
   id: string,
   // Auto-comment stamped in the same request when the store requires
-  // authorisation and the order carries no comment (rules › lifecycle, AC-S7).
+  // authorisation and the order carries no comment (rules › lifecycle,
+  // OMS-REG-REPL-05.5/.15/.18).
   comment?: string
 ): Promise<SendResult> => {
   const result = await graphqlFetch(UpdateInternalOrder, {
@@ -187,7 +189,8 @@ export const deleteInternalOrder = async (
 
 // --- Ancillary refresh (Add / Update) ---------------------------------------
 
-// The toolbar banner's Add/Update (spec S3 § ancillary items, AC-A3–A5). The
+// The toolbar banner's Add/Update (spec S3 § ancillary items,
+// OMS-REG-REPL-13.3/.4; guards in contract § ancillary items). The
 // caller re-queries the order on success (the plan + lines re-read). A typed
 // rejection surfaces inline; CannotEditRequisition is the only one reachable
 // from an editable-gated banner, but any is mapped.
@@ -218,7 +221,8 @@ export const refreshAncillaryItems = async (
   };
 };
 
-// --- Add from master list (spec S7, AC-LN7/LN8) -----------------------------
+// --- Add from master list (spec S7, OMS-REG-REPL-04.26/.27/.67)
+// -----------------------------
 
 // The bulk add (confirmed from the master-list picker): one line per stock item
 // on the list not already on the order. Idempotent (a re-run adds nothing).
@@ -240,7 +244,8 @@ export const addInternalOrderFromMasterList = async (
   return { kind: 'error', message: response.error.description };
 };
 
-// --- Use suggested quantities (spec S3 § page actions, AC-Q1/Q2) -------------
+// --- Use suggested quantities (spec S3 § page actions, OMS-REG-REPL-04.28/.54)
+// -------------
 
 // The fill-blanks tool: every zero-requested line takes its suggested quantity,
 // in one call, on the whole order. Available on program orders too; Draft-only

@@ -104,10 +104,11 @@ const PurchaseOrdersList: Component = () => {
   });
   const [createOpen, setCreateOpen] = createSignal(false);
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, because two controls trigger it: the header button and
-  // the ghost button in the table's empty slot. Each carries `shortcut={ALT_N}`
-  // for its badge; neither owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, because two controls
+  // trigger it: the header button and the ghost button in the table's empty
+  // slot. Each carries `shortcut={ALT_N}` for its badge; neither owns the
+  // action.
   createAddAction({
     name: 'button.new-purchase-order',
     run: () => setCreateOpen(true),

@@ -4,9 +4,9 @@
 // conversions are the same pair the V5 translator uses.
 
 use repository::{
-    forecast_from_legacy, forecast_to_legacy, migrations::Version, syncv7::SyncError,
-    syncv7::SyncRecordSerializeError, ChangeLogInsertRow, ChangelogRow, ChangelogTableName,
-    LegacyForecast, RequisitionLineRow, RequisitionRowRepository, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRow, ChangelogTableName, LegacyForecast, RequisitionLineRow,
+    RequisitionRowRepository, StorageConnection, Upsert, forecast_from_legacy, forecast_to_legacy,
+    migrations::Version, syncv7::SyncError, syncv7::SyncRecordSerializeError,
 };
 use serde_json::Value;
 
@@ -34,7 +34,7 @@ pub(crate) fn receiver_needs_legacy_forecast(receiver_version: Option<&Version>)
 /// the requisition's target months, with no buffer; no forecast on other lines.
 pub(crate) fn translate_outgoing_requisition_line(
     connection: &StorageConnection,
-    changelog: &ChangelogRow,
+    changelog: ChangelogRow,
     line: RequisitionLineRow,
 ) -> Result<Vec<SyncRecordV7>, SyncError> {
     let target_months = RequisitionRowRepository::new(connection)
@@ -117,10 +117,10 @@ fn requisition_line_from_json(
 mod test {
     use super::*;
     use repository::{
-        mock::{mock_request_draft_requisition, MockDataInserts},
-        test_db::setup_all,
         ChangelogTableName, ForecastData, ForecastMethod, LegacyCourse, PopulationForecast,
         PopulationForecastCourse, RowActionType,
+        mock::{MockDataInserts, mock_request_draft_requisition},
+        test_db::setup_all,
     };
 
     fn population_line(requisition_id: &str) -> RequisitionLineRow {
@@ -186,7 +186,7 @@ mod test {
         let requisition = mock_request_draft_requisition();
         let line = population_line(&requisition.id);
 
-        let record = translate_outgoing_requisition_line(&connection, &changelog_for(&line), line)
+        let record = translate_outgoing_requisition_line(&connection, changelog_for(&line), line)
             .unwrap()
             .pop()
             .unwrap();
@@ -218,7 +218,7 @@ mod test {
             ..Default::default()
         };
 
-        let record = translate_outgoing_requisition_line(&connection, &changelog_for(&line), line)
+        let record = translate_outgoing_requisition_line(&connection, changelog_for(&line), line)
             .unwrap()
             .pop()
             .unwrap();

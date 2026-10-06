@@ -4,7 +4,7 @@ pub mod store;
 pub mod sync_file_reference;
 pub mod temperature_log;
 
-use repository::{migrations::Version, syncv7::SyncError, ChangelogRow, Row, StorageConnection};
+use repository::{Row, RowOrDelete, StorageConnection, migrations::Version, syncv7::SyncError};
 
 use crate::sync_v7::{serde::serialize, sync::SyncRecordV7};
 use requisition_line::{receiver_needs_legacy_forecast, translate_outgoing_requisition_line};
@@ -19,47 +19,25 @@ pub struct SendContext<'a> {
 
 /// Outgoing counterpart of `serde::deserialize`'s special cases: the records a
 /// changelog row is sent as, shaped for the site receiving it. A translation gets
-/// the typed row and may leave it out or add others; `SyncBatchV7::generate` tops
-/// the batch back up.
+/// the typed row, or the delete, and may leave it out or add others;
+/// `SyncBatchV7::generate` tops the batch back up.
 pub(crate) fn translate_outgoing(
     context: &SendContext,
-    changelog: &ChangelogRow,
-    row: Row,
+    row_or_delete: RowOrDelete,
 ) -> Result<Vec<SyncRecordV7>, SyncError> {
-    match row {
+    match row_or_delete {
         // Special cases go here by row type, each calling its table's module
-        Row::RequisitionLine(line) if receiver_needs_legacy_forecast(context.receiver_version) => {
+        RowOrDelete::Row {
+            changelog,
+            row: Row::RequisitionLine(line),
+        } if receiver_needs_legacy_forecast(context.receiver_version) => {
             translate_outgoing_requisition_line(context.connection, changelog, line)
         }
 
-        // Test only: lets `SyncBatchV7`'s tests leave records out and add others
-        #[cfg(test)]
-        Row::Unit(unit) if unit.id.starts_with("left_out") => Ok(vec![]),
-        #[cfg(test)]
-        Row::Unit(unit)
-            if unit.id.starts_with("remote_only") && context.receiver_version.is_none() =>
-        {
-            Ok(vec![])
-        }
-        #[cfg(test)]
-        Row::Unit(unit) if unit.id.starts_with("doubled") => {
-            let record = SyncRecordV7::upsert(changelog, serialize(&Row::Unit(unit))?);
-            let copy = SyncRecordV7 {
-                record_id: format!("{}_copy", record.record_id),
-                ..record.clone()
-            };
-            Ok(vec![record, copy])
-        }
-
         // Basic
-        row => Ok(vec![SyncRecordV7::upsert(changelog, serialize(&row)?)]),
+        RowOrDelete::Row { changelog, row } => {
+            Ok(vec![SyncRecordV7::upsert(changelog, serialize(&row)?)])
+        }
+        RowOrDelete::Delete { changelog } => Ok(vec![SyncRecordV7::delete(changelog)]),
     }
-}
-
-/// `translate_outgoing` for a deleted record, which has no row.
-pub(crate) fn translate_outgoing_delete(
-    _context: &SendContext,
-    changelog: &ChangelogRow,
-) -> Result<Vec<SyncRecordV7>, SyncError> {
-    Ok(vec![SyncRecordV7::delete(changelog)])
 }

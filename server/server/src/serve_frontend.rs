@@ -1,9 +1,8 @@
 use actix_web::http::StatusCode;
 use actix_web::{
-    get,
+    HttpRequest, HttpResponse, Responder, get,
     http::header::{self, ContentType},
     web::{Data, ServiceConfig},
-    HttpRequest, HttpResponse, Responder,
 };
 use mime_guess::{from_path, mime};
 use service::settings::Settings;
@@ -188,7 +187,7 @@ pub fn config_serve_frontend(cfg: &mut ServiceConfig) {
 #[cfg(test)]
 mod test {
     use super::*;
-    use actix_web::{test, App};
+    use actix_web::{App, test};
     use service::settings::test_settings;
     use std::fs;
     use tempfile::TempDir;

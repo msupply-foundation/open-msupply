@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound, standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    ContextExt, simple_generic_errors::RecordNotFound,
+    standard_graphql_error::StandardGraphqlError, standard_graphql_error::validate_auth,
 };
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
 use service::{
@@ -82,7 +82,7 @@ fn map_error(error: ServiceError) -> Result<AllocateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(AllocateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(AllocateErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),
@@ -131,18 +131,18 @@ mod graphql {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, StockLine, StockLineRow,
-        StorageConnectionManager,
+        InvoiceLine, InvoiceLineRow, StockLine, StockLineRow, StorageConnectionManager,
+        mock::MockDataInserts,
     };
     use serde_json::json;
 
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait,
             outbound_shipment_unallocated_line::{
                 AllocateLineResult as ServiceResult,
                 AllocateOutboundShipmentUnallocatedLineError as ServiceError,
             },
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

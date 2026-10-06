@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod test_sync_v7_client_api {
-    use actix_web::{http::header::AUTHORIZATION, web, App, HttpRequest, HttpServer};
+    use actix_web::{App, HttpRequest, HttpServer, http::header::AUTHORIZATION, web};
     use assert_json_diff::assert_json_include;
     use repository::mock::MockData;
     use repository::{
-        migrations::Version, mock::MockDataInserts, ChangelogCondition, ChangelogRepository,
-        ChangelogRow, ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, ItemRow,
-        KeyType, KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection,
-        StoreRow, SyncBufferRepository, UnitRow, Upsert,
+        ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CurrencyRow,
+        CursorAndLimit, FilterBuilder, ItemRow, KeyType, KeyValueStoreRepository, NameRow,
+        RowActionType, StockLineRow, StorageConnection, StoreRow, SyncBufferRepository, UnitRow,
+        Upsert, migrations::Version, mock::MockDataInserts,
     };
     use repository::{KeyValueStoreRow, SyncAction, SyncBufferRow};
     use serde_json::json;
@@ -19,7 +19,7 @@ mod test_sync_v7_client_api {
     use crate::sync_v7::api::{APP_NAME_HEADER, APP_VERSION_HEADER, HARDWARE_ID_HEADER};
     use crate::sync_v7::sync::sync_v7;
     use crate::sync_v7::sync_request::{SyncRequest, SyncRequestStep};
-    use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider};
 
     // ---- Test data: expected rows after integration ----
 

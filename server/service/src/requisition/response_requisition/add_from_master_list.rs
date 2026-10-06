@@ -1,5 +1,5 @@
 use crate::{
-    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
+    pricing::item_price::{ItemPriceLookup, get_pricing_for_items},
     requisition::common::{
         check_master_list_for_store, check_requisition_row_exists, get_indicative_price_pref,
         get_lines_for_requisition,
@@ -8,13 +8,13 @@ use crate::{
     validate::check_other_party_store_is_disabled,
 };
 use chrono::Utc;
+use repository::{EqualFilter, ItemType};
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ForecastMethod, ItemFilter, ItemRepository, MasterListLineFilter, MasterListLineRepository,
     RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
     RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
-use repository::{EqualFilter, ItemType};
 use util::uuid::uuid;
 
 #[derive(Debug, PartialEq)]
@@ -204,14 +204,14 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
+        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         mock::{
-            common::FullMockMasterList, mock_finalised_response_requisition,
+            MockData, MockDataInserts, common::FullMockMasterList,
+            mock_finalised_response_requisition,
             mock_full_new_response_requisition_for_update_test, mock_item_a, mock_item_b,
             mock_name_store_a, mock_store_a, mock_store_b, mock_test_not_store_a_master_list,
-            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
     };
 
     #[actix_rt::test]

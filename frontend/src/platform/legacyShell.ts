@@ -3,9 +3,9 @@
 //
 // The designed way back is the hand-off parameter: the shell connects to
 // `login?discovery-return=<page URL>` and the landing screen renders a link
-// (src/discovery/discoveryReturn.ts, AC-DT16/23). Only a shell that carries
-// the page sends it. A v3.0 or v3.1 shell navigates to the server's bare
-// origin, so on those the parameter never arrives and the screen offers
+// (src/discovery/discoveryReturn.ts, OMS-REG-DESK-01.21/23). Only a shell that
+// carries the page sends it. A v3.0 or v3.1 shell navigates to the server's
+// bare origin, so on those the parameter never arrives and the screen offers
 // nothing at all — verified against a real v3.1 Electron shell serving this
 // exact bundle: the way back was the only thing missing from it.
 //

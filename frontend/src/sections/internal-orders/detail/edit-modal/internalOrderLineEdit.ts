@@ -10,11 +10,12 @@ import {
 import type { InternalOrderLineFragment } from '../internalOrderDetail.generated';
 
 // Line-editor domain logic (spec/internal-orders S4): the entry-mode
-// re-expression (AC-LN12/LN17/LN19), the draft's forecast preview (the add-mode
-// line, and a method change), and the two save paths (AC-LN3/LN11).
+// re-expression (OMS-REG-REPL-04.22/.24/.25/.69/.74/.88/.90), the draft's
+// forecast preview (the add-mode line, and a method change), and the two save
+// paths (OMS-REG-REPL-04.65/.68).
 
-// The quantity entry mode (AC-LN12): stored values are always UNITS; the mode
-// only re-expresses the display.
+// The quantity entry mode (OMS-REG-REPL-04.22/.24/.69/.88/.90): stored values
+// are always UNITS; the mode only re-expresses the display.
 export type EntryMode = 'units' | 'packs' | 'doses';
 
 // The forecast (its type, the method options, and the block that shows them)
@@ -90,10 +91,11 @@ export type EditorLine = {
   isNew: boolean;
 };
 
-// --- Entry-mode re-expression (AC-LN12/LN17/LN19) ---------------------------
+// --- Entry-mode re-expression (OMS-REG-REPL-04.22/.24/.25/.69/.74/.88/.90)
+// ---------------------------
 
 // A stored unit value → the display value in the active mode: ÷ pack size for
-// packs (two decimals, AC-LN17), × doses-per-unit for doses.
+// packs (two decimals, OMS-REG-REPL-04.25), × doses-per-unit for doses.
 export const unitsToMode = (
   units: number,
   mode: EntryMode,
@@ -105,9 +107,10 @@ export const unitsToMode = (
   return units;
 };
 
-// A display value in the active mode → the stored units (AC-LN12): packs ×
-// pack size; doses ÷ doses-per-unit, rounded UP (a part-unit of doses still
-// consumes a whole unit).
+// A display value in the active mode → the stored units
+// (OMS-REG-REPL-04.22/.24/.69/.88/.90): packs × pack size; doses ÷
+// doses-per-unit, rounded UP (a part-unit of doses still consumes a whole
+// unit).
 export const modeToUnits = (
   value: number,
   mode: EntryMode,
@@ -119,9 +122,9 @@ export const modeToUnits = (
   return value;
 };
 
-// A statistic re-expressed in the active mode for display (AC-LN19): rounded to
-// a whole number, AMC and Suggested rounding UP, everything else to nearest; an
-// absent value shows 0. Time quantities never pass through here.
+// A statistic re-expressed in the active mode for display (OMS-REG-REPL-04.74):
+// rounded to a whole number, AMC and Suggested rounding UP, everything else to
+// nearest; an absent value shows 0. Time quantities never pass through here.
 export const statInMode = (
   units: number,
   mode: EntryMode,
@@ -133,9 +136,10 @@ export const statInMode = (
   return roundUp ? Math.ceil(raw) : Math.round(raw);
 };
 
-// The store's default entry mode (AC-LN18): packs where the store orders in
-// packs (unconditionally — it does not check the item's pack size), else doses
-// for a dose-managed vaccine with a positive doses-per-unit, else units.
+// The store's default entry mode (OMS-REG-REPL-04.73): packs where the store
+// orders in packs (unconditionally — it does not check the item's pack size),
+// else doses for a dose-managed vaccine with a positive doses-per-unit, else
+// units.
 export const defaultEntryMode = (
   orderInPacks: boolean,
   manageVaccinesInDoses: boolean,
@@ -240,7 +244,7 @@ export const previewForecastMethod = async (
 
 // --- Add-mode line preview read ---------------------------------------------
 
-// A new item's draft line (AC-LN3): its details from a live read and its
+// A new item's draft line (OMS-REG-REPL-04.65): its details from a live read and its
 // statistics, forecast and suggestion from the forecast preview — the line the
 // insert would create, so the first save reproduces it. Nothing is created.
 export const buildAddPreview = async (
@@ -326,7 +330,8 @@ export const editorLineFromLine = (
   isNew: false,
 });
 
-// --- Save (AC-LN3/LN11) -----------------------------------------------------
+// --- Save (OMS-REG-REPL-04.65/.68)
+// -----------------------------------------------------
 
 export type SaveLineResult =
   { kind: 'saved' } | { kind: 'error'; message: string } | { kind: 'failed' };
@@ -362,8 +367,8 @@ type Draft = {
   optionId?: string | null;
 };
 
-// ADD (AC-LN3): the draft's first save realises the create — insert (server
-// generates the snapshot + suggestion + gated captures) then update (the
+// ADD (OMS-REG-REPL-04.65): the draft's first save realises the create — insert
+// (server generates the snapshot + suggestion + gated captures) then update (the
 // drafted quantity / comment / reason, and the draft's method — a no-op unless
 // the user changed it from the default), in one batch. A typed insert error
 // gets the generic failure surface (contract parity); the update error is
@@ -410,7 +415,8 @@ export const saveNewLine = async (
   return { kind: 'saved' };
 };
 
-// EDIT (AC-LN11): a single line update; exactly the changed fields persist.
+// EDIT (OMS-REG-REPL-04.68): a single line update; exactly the changed fields
+// persist.
 // The draft's method rides it — the server recomputes the forecast only when it
 // differs from the stored one.
 export const saveExistingLine = async (
