@@ -18,7 +18,8 @@ import {
  * plugin whose versions do not fit together is never packed or installed:
  *
  *   - every `$ref` in every version resolves within its schema;
- *   - every event rule's field paths name a field of the current schema;
+ *   - every event rule's field paths name a field of the current schema, and
+ *     a schedule's base time a date-time field;
  *   - for a type with more than one version, each version's hop to the next
  *     is either a step in `forms/<dir>/migrations.ts` whose coverage map
  *     accounts for every difference between the two schemas, or an additive
@@ -109,7 +110,9 @@ interface Step {
 /** The host modules the checks reuse, typed by the part they call. */
 interface HostModules {
   unresolvedRefs: (schema: unknown) => string[];
-  flattenSchema: (schema: unknown) => Map<string, unknown>;
+  flattenSchema: (
+    schema: unknown
+  ) => Map<string, { types: string[]; format?: string }>;
   checkCoverage: (
     oldSchema: unknown,
     newSchema: unknown,
@@ -226,6 +229,27 @@ const checkEventRules = (
         `${file} [${i}]: ${where} ${JSON.stringify(path)} is not a field of ` +
           `v${version} — name a field of the current schema`
       );
+    }
+    // The server reads a schedule's base time as an RFC 3339 instant and,
+    // when the field holds anything else, silently schedules from the
+    // document's own time instead.
+    if (
+      isRecord(rule.config) &&
+      typeof rule.config.datetimeField === 'string'
+    ) {
+      const field = fields.get(rule.config.datetimeField);
+      if (
+        field &&
+        !(field.types.includes('string') && field.format === 'date-time')
+      ) {
+        problems.push(
+          `${file} [${i}]: config.datetimeField ` +
+            `${JSON.stringify(rule.config.datetimeField)} is not a date-time ` +
+            `field of v${version} (${field.format ?? field.types.join('|')}) ` +
+            "— the server would schedule from the document's own time; name " +
+            'a field with `@format date-time`'
+        );
+      }
     }
   });
   return problems;

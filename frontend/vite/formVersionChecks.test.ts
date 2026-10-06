@@ -136,6 +136,39 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
     ]);
   });
 
+  it("names a schedule's base field that is not a date-time", async () => {
+    const scheduled = (format: string) => ({
+      'forms/Visit/v1.json': schema({
+        nextVisit: { type: 'string', format },
+      }),
+      'forms/Visit/events.json': [
+        {
+          type: 'Schedule',
+          event: { type: 'followUp' },
+          config: {
+            datetimeField: 'extension.demo.nextVisit',
+            scheduleIn: { days: 30 },
+          },
+        },
+      ],
+    });
+    const declaration = declare({
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+      events: 'events.json',
+    });
+
+    const date = fixture(scheduled('date'));
+    expect(await checkFormVersions(date, declaration)).toEqual([
+      `${visit(date, 'events.json')} [0]: config.datetimeField ` +
+        '"extension.demo.nextVisit" is not a date-time field of v1 (date) — ' +
+        "the server would schedule from the document's own time; name a " +
+        'field with `@format date-time`',
+    ]);
+    expect(
+      await checkFormVersions(fixture(scheduled('date-time')), declaration)
+    ).toEqual([]);
+  });
+
   it('names a $ref that does not resolve, in a type with one version', async () => {
     const dir = fixture({
       'forms/Visit/v1.json': {

@@ -28,6 +28,8 @@ export interface FlatField {
   types: string[];
   /** The allowed values, where the path is an enum. */
   enum?: JsonScalar[];
+  /** The string format, where the path declares one (`date`, `date-time`). */
+  format?: string;
 }
 
 const isNode = (v: unknown): v is SchemaNode =>
@@ -88,10 +90,14 @@ const enumOf = (parts: SchemaNode[]): JsonScalar[] | undefined => {
   return values;
 };
 
+const formatOf = (parts: SchemaNode[]): string | undefined =>
+  parts.map(part => part.format).find(f => typeof f === 'string') as
+    string | undefined;
+
 /**
- * Every field path in a schema, with its types and allowed values. The root
- * itself is not a field; each property is, objects included, and an object's
- * properties follow under its path.
+ * Every field path in a schema, with its types, allowed values and format.
+ * The root itself is not a field; each property is, objects included, and an
+ * object's properties follow under its path.
  */
 export const flattenSchema = (schema: unknown): Map<string, FlatField> => {
   const fields = new Map<string, FlatField>();
@@ -109,11 +115,13 @@ export const flattenSchema = (schema: unknown): Map<string, FlatField> => {
         const existing = fields.get(path);
         const types = typesOf(childParts);
         const values = enumOf(childParts);
+        const format = formatOf(childParts) ?? existing?.format;
         fields.set(path, {
           types: [...new Set([...(existing?.types ?? []), ...types])].sort(),
           ...(values || existing?.enum
             ? { enum: [...(existing?.enum ?? []), ...(values ?? [])] }
             : {}),
+          ...(format ? { format } : {}),
         });
         if (!types.includes('array')) visit(child, path, depth + 1);
       }
