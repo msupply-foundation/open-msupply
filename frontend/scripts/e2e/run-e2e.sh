@@ -42,10 +42,15 @@
 #   E2E_SERVERS=N     run the suites across N servers side by side, each with
 #                     its own throwaway database and front end, the spec files
 #                     split by last-run duration (scripts/e2e/split-specs.mjs,
-#                     timings in e2e/.spec-timings.json). Default 1. Capped at
+#                     timings in e2e/.spec-timings.json). Unset: automatic — up
+#                     to 3, fewer when other e2e runs on this machine already
+#                     hold servers (see E2E_SERVER_BUDGET). Always capped at
 #                     the number of selected spec files, so a one-suite run
-#                     boots one server; ignored with E2E_SERVER_PORT /
-#                     E2E_FE_PORT or E2E_PLUGIN_PROFILE.
+#                     boots one server; 1 with E2E_SERVER_PORT / E2E_FE_PORT
+#                     or E2E_PLUGIN_PROFILE.
+#   E2E_SERVER_BUDGET=N  how many e2e servers the automatic choice lets this
+#                     machine run at once, across every concurrent run
+#                     (default 6). Ignored when E2E_SERVERS is set.
 #   KEEP_SERVER=1     leave the server + FE running after the tests
 #   E2E_PLUGIN_PROFILE  run a plugin profile instead of the default suites:
 #                     builds that profile's plugin bundle (pnpm build:plugins),
@@ -70,7 +75,7 @@ PLUGIN_CODE=""
 
 SERVER_PORT=${E2E_SERVER_PORT:-}
 FE_PORT=${E2E_FE_PORT:-}
-SERVERS=${E2E_SERVERS:-1}
+SERVERS=${E2E_SERVERS:-auto}
 if [[ -n "$SERVER_PORT" || -n "$FE_PORT" || -n "$PLUGIN_PROFILE" ]]; then
   SERVERS=1
 fi
@@ -251,6 +256,22 @@ fi
 # anything, from Playwright's own listing — so CLI filters select files exactly
 # as they do for the run — split by last-run duration. Fewer selected files
 # than servers boots fewer servers.
+#
+# Automatic count: up to AUTO_MAX_SERVERS, within a machine-wide budget so
+# several agents' runs back off instead of piling up. Other runs' servers are
+# the listeners on this script's server-port slots (9930-10129, even ports).
+AUTO_MAX_SERVERS=3
+if [[ "$SERVERS" == "auto" ]]; then
+  BUDGET=${E2E_SERVER_BUDGET:-6}
+  RUNNING=$(lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null |
+    awk '{ n = split($9, a, ":"); p = a[n] + 0
+           if (p >= 9930 && p <= 10128 && p % 2 == 0) print p }' |
+    sort -u | wc -l | tr -d ' ')
+  SERVERS=$(( BUDGET - RUNNING ))
+  (( SERVERS > AUTO_MAX_SERVERS )) && SERVERS=$AUTO_MAX_SERVERS
+  (( SERVERS < 1 )) && SERVERS=1
+  echo "Servers: up to $SERVERS ($RUNNING other e2e server(s) running, budget $BUDGET; set E2E_SERVERS to choose)"
+fi
 SPEC_GROUPS=""
 if [[ "$SERVERS" -gt 1 ]]; then
   LIST_FILE=$(mktemp -t e2e-list.XXXXXX)
