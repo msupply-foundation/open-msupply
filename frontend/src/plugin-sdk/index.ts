@@ -317,6 +317,11 @@ export type {
   ReorderableListLabels,
   ReorderableListProps,
 } from '../ui/elements/inputs/ReorderableList';
+// The list's own order arithmetic, for a surface that moves an item by a
+// control of its own (the configuration editor's course columns): the same
+// tested functions, so a one-step move is never re-derived as index maths.
+// Already in the eager graph above — ReorderableList imports them.
+export { moveTo, reorderBy } from '../ui/elements/inputs/reorderLogic';
 
 // ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
 /*
