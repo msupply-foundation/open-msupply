@@ -231,23 +231,49 @@ export interface SelectInputProps<T, P extends EnumPath<T>> extends FieldProps {
    * a value the enum gains is a compile error here until it has a label.
    */
   options: Record<NonNullable<PathValue<T, P>> & string, string>;
+  /**
+   * Values the type keeps for the records that hold them but that are no
+   * longer chosen: each is offered, with its label, only on a record that
+   * holds it, so a historical value (the regimen given at that visit) stays
+   * true of its record without being chosen again. The way to retire a value
+   * that records what happened, where marking it unresolved in a migration
+   * would replace it with a current one.
+   */
+  retired?: readonly (NonNullable<PathValue<T, P>> & string)[];
 }
+
+/**
+ * The options a select offers, in `order`: each with its label, leaving out
+ * a retired value unless it is the one the record holds.
+ */
+export const selectOptions = (
+  order: readonly string[],
+  labels: Readonly<Record<string, string>>,
+  retired: readonly string[] | undefined,
+  current: string | undefined
+): { value: string; label: string }[] =>
+  order
+    .filter(value => value === current || !retired?.includes(value))
+    .map(value => ({ value, label: labels[value] ?? value }));
 
 /*
  * One value from an enum. The options are listed in the schema's own enum
  * order, so the list reads the way the type declares it; a value the loaded
- * schema does not have is not offered, whatever the labels say.
+ * schema does not have is not offered, whatever the labels say, and a retired
+ * one only on the record that holds it.
  */
 export const SelectInput = <T, P extends EnumPath<T>>(
   props: SelectInputProps<T, P>
 ): JSX.Element => {
   const d = () => untyped(props.draft);
   const labels = () => props.options as Record<string, string>;
-  const options = () => {
-    const order =
-      d().schemaFor(props.path as never)?.enum ?? Object.keys(labels());
-    return order.map(value => ({ value, label: labels()[value] ?? value }));
-  };
+  const options = () =>
+    selectOptions(
+      d().schemaFor(props.path as never)?.enum ?? Object.keys(labels()),
+      labels(),
+      props.retired,
+      d().get(props.path) as string | undefined
+    );
   const isRequired = () => required(d(), props.path);
   return (
     <Select

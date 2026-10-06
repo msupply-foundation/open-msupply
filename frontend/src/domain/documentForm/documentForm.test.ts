@@ -5,7 +5,7 @@ import encounterV2 from '../../../plugins/examples/demo_program/forms/DemoEncoun
 import enrolmentV1 from '../../../plugins/examples/demo_program/forms/DemoProgramEnrolment/v1.json';
 import type { Encounter } from '../../plugin-sdk/documents';
 import { createDraft, pathLabel } from './draft';
-import type { SelectInputProps } from './fields';
+import { selectOptions, type SelectInputProps } from './fields';
 import { withFirstNoteText } from './notes';
 import {
   deepEqual,
@@ -70,6 +70,13 @@ const typeChecks = () => {
   const labelled: RegimenOptions = { FIRST_LINE: 'a', SECOND_LINE: 'b' };
   // @ts-expect-error: every value the enum allows needs a label.
   const unlabelled: RegimenOptions = { FIRST_LINE: 'a' };
+  type RegimenRetired = SelectInputProps<
+    DemoEncounter,
+    'extension.demo.regimen'
+  >['retired'];
+  const retired: RegimenRetired = ['FIRST_LINE'];
+  // @ts-expect-error: only a value the enum allows can be retired.
+  const retiredTypo: RegimenRetired = ['FIRST_LIN'];
   return [
     text,
     date,
@@ -84,12 +91,54 @@ const typeChecks = () => {
     intoArray,
     labelled,
     unlabelled,
+    retired,
+    retiredTypo,
   ];
 };
 
+describe('selectOptions', () => {
+  const order = ['FIRST_LINE', 'SECOND_LINE', 'LEGACY_TRIAL'];
+  const labels = {
+    FIRST_LINE: 'First line',
+    SECOND_LINE: 'Second line',
+    LEGACY_TRIAL: 'Legacy trial',
+  };
+  const values = (current: string | undefined, retired?: string[]) =>
+    selectOptions(order, labels, retired, current).map(o => o.value);
+
+  it('offers every value in the enum order, each with its label', () => {
+    expect(selectOptions(order, labels, undefined, undefined)).toEqual([
+      { value: 'FIRST_LINE', label: 'First line' },
+      { value: 'SECOND_LINE', label: 'Second line' },
+      { value: 'LEGACY_TRIAL', label: 'Legacy trial' },
+    ]);
+  });
+
+  it('leaves a retired value out of a record that does not hold it', () => {
+    expect(values(undefined, ['LEGACY_TRIAL'])).toEqual([
+      'FIRST_LINE',
+      'SECOND_LINE',
+    ]);
+    expect(values('FIRST_LINE', ['LEGACY_TRIAL'])).toEqual([
+      'FIRST_LINE',
+      'SECOND_LINE',
+    ]);
+  });
+
+  it('offers a retired value, with its label, on the record that holds it', () => {
+    expect(
+      selectOptions(order, labels, ['LEGACY_TRIAL'], 'LEGACY_TRIAL')
+    ).toEqual([
+      { value: 'FIRST_LINE', label: 'First line' },
+      { value: 'SECOND_LINE', label: 'Second line' },
+      { value: 'LEGACY_TRIAL', label: 'Legacy trial' },
+    ]);
+  });
+});
+
 describe('paths', () => {
   it('type checks hold', () => {
-    expect(typeChecks()).toHaveLength(13);
+    expect(typeChecks()).toHaveLength(15);
   });
 
   it('reads through missing parents as undefined', () => {
