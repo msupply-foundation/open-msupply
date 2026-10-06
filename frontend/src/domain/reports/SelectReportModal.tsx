@@ -202,6 +202,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     <>
       <Dialog
         open
+        testId="select-report-modal"
         initialFocus={picker}
         // Blocking while generating — no scrim/Escape exit mid-flight.
         dismissable={!busy()}
@@ -232,6 +233,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               variant="secondary"
               icon={<DownloadIcon />}
               disabled={disabled()}
+              data-testid="report-format-EXCEL"
               onClick={() => onFormat('EXCEL')}
             >
               {t('button.export-to-excel')}
@@ -240,6 +242,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               variant="secondary"
               icon={<PrinterIcon />}
               disabled={disabled()}
+              data-testid="report-format-HTML"
               onClick={() => onFormat('HTML')}
             >
               {t('button.print')}
@@ -253,6 +256,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
                 variant="secondary"
                 icon={<DownloadIcon />}
                 disabled={disabled()}
+                data-testid="report-format-PDF"
                 onClick={() => onFormat('PDF')}
               >
                 {t('button.download-pdf')}
@@ -270,6 +274,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               label={t('title.select-a-form')}
               hideLabel
               focusTarget={picker}
+              inputTestId="report-select-input"
               items={options()}
               itemToString={reportLabel}
               itemToValue={report => report.id}
@@ -282,7 +287,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               dialog open and the actions live to retry (spec/reports S5). */}
           <Show when={phase() === 'error' ? error() : undefined}>
             {shown => (
-              <Alert severity="error">
+              <Alert severity="error" testId="report-error">
                 <Stack gap="sm">
                   <span>{t(shown().key)}</span>
                   <Show when={shown().detail}>
