@@ -201,6 +201,19 @@ pub enum FormPluginInstallError {
          never changes, so the bundle must carry it exactly as installed"
     )]
     SchemaIdConflict(String),
+    #[error(
+        "{document_type} documents saved on this server are pinned to schema versions the \
+         bundle does not list: {pinned}. Every version a document is pinned to must stay in the \
+         type's versions under the same id, or those documents open read-only. A type edited \
+         after it was installed has had its current version re-generated under a new id; make \
+         the change a new version instead. A type taken over needs each of the deployment's \
+         own versions declared. (Documents not yet synced to this server are not counted.)"
+    )]
+    PinnedSchemaVersionsMissing {
+        document_type: String,
+        /// Each missing schema id with how many documents are pinned to it.
+        pinned: String,
+    },
     #[error("Could not serialise the event config of {0}")]
     InvalidConfig(String),
     #[error(transparent)]
@@ -407,6 +420,25 @@ fn install_document_type(
                 });
             }
         }
+    }
+
+    // A document opens in the version of the form its schema id names, so a
+    // version that documents are pinned to can never leave the list.
+    let declared: HashSet<&String> = declaration.versions.iter().map(|v| &v.id).collect();
+    let missing: Vec<String> = DocumentRepository::new(connection)
+        .count_by_form_schema_id(document_type)?
+        .into_iter()
+        .filter(|(schema_id, _)| !declared.contains(schema_id))
+        .map(|(schema_id, count)| {
+            let noun = if count == 1 { "document" } else { "documents" };
+            format!("{schema_id} ({count} {noun})")
+        })
+        .collect();
+    if !missing.is_empty() {
+        return Err(Error::PinnedSchemaVersionsMissing {
+            document_type: document_type.clone(),
+            pinned: missing.join(", "),
+        });
     }
 
     let (schemas_added, ui_schemas_updated) = install_schema_versions(connection, declaration)?;
@@ -1216,6 +1248,137 @@ mod test {
                 count: 1,
             }
         );
+    }
+
+    fn save_document(
+        connection: &StorageConnection,
+        name: &str,
+        document_type: &str,
+        form_schema_id: &str,
+        context_id: &str,
+        status: DocumentStatus,
+    ) {
+        DocumentRepository::new(connection)
+            .insert(&Document {
+                id: format!("{name}_v1"),
+                name: name.to_string(),
+                parent_ids: vec![],
+                user_id: "user".to_string(),
+                datetime: Utc::now(),
+                r#type: document_type.to_string(),
+                data: json!({}),
+                form_schema_id: Some(form_schema_id.to_string()),
+                status,
+                owner_name_id: None,
+                context_id: context_id.to_string(),
+            })
+            .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn a_version_documents_are_pinned_to_cannot_be_dropped() {
+        let connection = setup("form_plugin_pinned_version").await;
+        let mut sidecar = demo_sidecar();
+        install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &options(&[("demo", "program_a")], &[]),
+        )
+        .unwrap();
+        for name in ["e1", "e2"] {
+            save_document(
+                &connection,
+                &format!("patients/p1/encounter/{name}"),
+                "DemoEncounter",
+                "demo_program_DemoEncounter_v2_hash",
+                "program_a",
+                DocumentStatus::Active,
+            );
+        }
+        // A deleted document opens nowhere, so its version is free to go.
+        save_document(
+            &connection,
+            "patients/p1/encounter/e3",
+            "DemoEncounter",
+            "demo_program_DemoEncounter_v1_hash",
+            "program_a",
+            DocumentStatus::Deleted,
+        );
+
+        // The type edited after install: its current version re-generated
+        // under a new id in the same place.
+        sidecar.document_types[2].versions[1].id = "demo_program_DemoEncounter_v2_edited".into();
+        let error = install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &FormInstallOptions::default(),
+        )
+        .unwrap_err();
+        assert_eq!(
+            error,
+            Error::PinnedSchemaVersionsMissing {
+                document_type: "DemoEncounter".to_string(),
+                pinned: "demo_program_DemoEncounter_v2_hash (2 documents)".to_string(),
+            }
+        );
+
+        // The same change as a new version installs, and v1 may go.
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types[2].versions.remove(0);
+        sidecar.document_types[2]
+            .versions
+            .push(version("DemoEncounter", 3));
+        install_form_plugins(&connection, &[sidecar], &FormInstallOptions::default()).unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn a_take_over_must_declare_the_versions_documents_are_pinned_to() {
+        let connection = setup("form_plugin_take_over_pinned").await;
+        insert_unowned_entry(
+            &connection,
+            "existing_patient_entry",
+            PATIENT_TYPE,
+            DocumentRegistryCategory::Patient,
+            PATIENT_CONTEXT_ID,
+        );
+        save_document(
+            &connection,
+            "patients/p1",
+            PATIENT_TYPE,
+            "existing_patient_entry_schema",
+            PATIENT_CONTEXT_ID,
+            DocumentStatus::Active,
+        );
+
+        let error = install_form_plugins(
+            &connection,
+            &[demo_sidecar()],
+            &options(&[("demo", "program_a")], &[PATIENT_TYPE]),
+        )
+        .unwrap_err();
+        assert_eq!(
+            error,
+            Error::PinnedSchemaVersionsMissing {
+                document_type: PATIENT_TYPE.to_string(),
+                pinned: "existing_patient_entry_schema (1 document)".to_string(),
+            }
+        );
+
+        // Declared under the deployment's own id, ahead of the plugin's.
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types[0].versions.insert(
+            0,
+            SchemaVersion {
+                id: "existing_patient_entry_schema".to_string(),
+                json_schema: json!({}),
+            },
+        );
+        install_form_plugins(
+            &connection,
+            &[sidecar],
+            &options(&[("demo", "program_a")], &[PATIENT_TYPE]),
+        )
+        .unwrap();
     }
 
     #[actix_rt::test]

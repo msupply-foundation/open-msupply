@@ -257,6 +257,26 @@ impl<'a> DocumentRepository<'a> {
             .get_result(self.connection.lock().connection())?)
     }
 
+    /// How many documents of a type are pinned to each schema id, by each document's latest
+    /// version, leaving out deleted documents and those pinned to no schema.
+    pub fn count_by_form_schema_id(
+        &self,
+        document_type: &str,
+    ) -> Result<Vec<(String, i64)>, RepositoryError> {
+        let counts: Vec<(Option<String>, i64)> = latest_document::table
+            .filter(latest_document::type_.eq(document_type))
+            .filter(latest_document::status.ne(DocumentStatus::Deleted))
+            .filter(latest_document::form_schema_id.is_not_null())
+            .group_by(latest_document::form_schema_id)
+            .select((latest_document::form_schema_id, diesel::dsl::count_star()))
+            .order_by(latest_document::form_schema_id.asc())
+            .load(self.connection.lock().connection())?;
+        Ok(counts
+            .into_iter()
+            .filter_map(|(id, count)| id.map(|id| (id, count)))
+            .collect())
+    }
+
     /// Get the latest version of some documents
     pub fn query(
         &self,
