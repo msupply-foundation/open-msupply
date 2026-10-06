@@ -137,8 +137,8 @@ mod tests {
     use super::*;
     use repository::{
         mock::{
-            mock_item_a, mock_item_a_lines, mock_item_b, mock_item_b_lines, mock_store_a,
-            mock_store_b, MockData, MockDataInserts,
+            MockData, MockDataInserts, mock_item_a, mock_item_a_lines, mock_item_b,
+            mock_item_b_lines, mock_store_a, mock_store_b,
         },
         test_db,
     };
@@ -179,10 +179,12 @@ mod tests {
         assert_eq!(result.get(&store_a_input).unwrap().len(), 2);
         assert_eq!(result.get(&store_b_input).unwrap().len(), 2);
         // No cross-contamination: store_a's lines are all in store_a.
-        assert!(result
-            .get(&store_a_input)
-            .unwrap()
-            .iter()
-            .all(|sl| sl.stock_line_row.store_id == mock_store_a().id));
+        assert!(
+            result
+                .get(&store_a_input)
+                .unwrap()
+                .iter()
+                .all(|sl| sl.stock_line_row.store_id == mock_store_a().id)
+        );
     }
 }

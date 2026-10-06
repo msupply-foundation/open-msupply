@@ -1,8 +1,8 @@
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::{self, CannotEditInvoice, ForeignKey, ForeignKeyError};
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_core::simple_generic_errors::{self, CannotEditInvoice, ForeignKey, ForeignKeyError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 
 use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
@@ -93,37 +93,37 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         InvoiceDoesNotExist => {
             return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         CannotEditFinalised | OtherPartyStoreDisabled => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 simple_generic_errors::CannotEditInvoice {},
-            ))
+            ));
         }
         StockLineNotFound => {
             return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::StockLineId,
-            )))
+            )));
         }
         LocationIsOnHold => {
             return Ok(InsertErrorInterface::LocationIsOnHold(
                 line::LocationIsOnHold {},
-            ))
+            ));
         }
         LocationNotFound => {
             return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::LocationId,
-            )))
+            )));
         }
         StockLineAlreadyExistsInInvoice(line_id) => {
             return Ok(InsertErrorInterface::StockLineAlreadyExistsInInvoice(
                 line::StockLineAlreadyExistsInInvoice(line_id),
-            ))
+            ));
         }
         BatchIsOnHold => {
             return Ok(InsertErrorInterface::StockLineIsOnHold(
                 StockLineIsOnHold {},
-            ))
+            ));
         }
         ReductionBelowZero { stock_line_id } => {
             return Ok(InsertErrorInterface::NotEnoughStockForReduction(
@@ -131,7 +131,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                     stock_line_id,
                     line_id: None,
                 },
-            ))
+            ));
         }
         // Standard Graphql Errors
         NotThisStoreInvoice
@@ -195,18 +195,18 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_location_1, mock_prescription_a, mock_prescription_a_invoice_lines,
-            MockDataInserts,
-        },
         InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_location_1, mock_prescription_a,
+            mock_prescription_a_invoice_lines,
+        },
     };
     use serde_json::json;
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait,
             stock_out_line::InsertStockOutLineError as ServiceError,
             stock_out_line::{InsertStockOutLine as ServiceInput, StockOutType},
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

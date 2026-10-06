@@ -1,11 +1,11 @@
 use crate::{
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
     db_diesel::{
         changelog::changelog::RowOrId, currency_row::currency, item_link_row::item_link,
         item_row::item, name_row::name,
     },
     diesel_macros::define_linked_tables,
-    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -288,9 +288,9 @@ impl Delete for PurchaseOrderDelete {
 
 #[cfg(test)]
 mod test {
-    use crate::mock::{mock_name_c, mock_store_a, MockDataInserts};
+    use crate::mock::{MockDataInserts, mock_name_c, mock_store_a};
     use crate::{
-        test_db::setup_all, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
+        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus, test_db::setup_all,
     };
     use strum::IntoEnumIterator;
     use util::uuid::uuid;

@@ -1,11 +1,11 @@
-use super::vaccine_course_row::{vaccine_course, VaccineCourseRow};
+use super::vaccine_course_row::{VaccineCourseRow, vaccine_course};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
+    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
 pub enum VaccineCourseSortField {

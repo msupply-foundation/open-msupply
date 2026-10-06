@@ -1,7 +1,7 @@
 use repository::{PrescriptionRequestLineRowRepository, RepositoryError, TransactionError};
 
 use crate::prescription_request::validate::{
-    check_prescription_request_editable, CommonPrescriptionRequestError,
+    CommonPrescriptionRequestError, check_prescription_request_editable,
 };
 use crate::service_provider::ServiceContext;
 
@@ -59,9 +59,9 @@ impl From<RepositoryError> for DeletePrescriptionRequestLineError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_item_a, mock_patient, MockDataInserts},
-        test_db::setup_all,
         PrescriptionRequestLineRowRepository, PrescriptionRequestRow,
+        mock::{MockDataInserts, mock_item_a, mock_patient},
+        test_db::setup_all,
     };
     use util::uuid::uuid;
 
@@ -162,10 +162,12 @@ mod test {
             Err(DeletePrescriptionRequestLineError::NotEditable)
         );
         // ...and it is still there
-        assert!(PrescriptionRequestLineRowRepository::new(&ctx.connection)
-            .find_one_by_id(&line_id)
-            .unwrap()
-            .is_some());
+        assert!(
+            PrescriptionRequestLineRowRepository::new(&ctx.connection)
+                .find_one_by_id(&line_id)
+                .unwrap()
+                .is_some()
+        );
     }
 
     #[actix_rt::test]
@@ -185,10 +187,12 @@ mod test {
         assert_eq!(repo.find_one_by_id(&line_id).unwrap(), None);
         // The request itself, and its other lines, are untouched
         assert!(repo.find_one_by_id(&kept_line_id).unwrap().is_some());
-        assert!(service_provider
-            .prescription_request_service
-            .get_prescription_request(&ctx, Some("store_a"), &request.id)
-            .unwrap()
-            .is_some());
+        assert!(
+            service_provider
+                .prescription_request_service
+                .get_prescription_request(&ctx, Some("store_a"), &request.id)
+                .unwrap()
+                .is_some()
+        );
     }
 }

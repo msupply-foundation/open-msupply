@@ -1,6 +1,6 @@
 use crate::{
-    migrations::{sql, MigrationFragment},
     StorageConnection,
+    migrations::{MigrationFragment, sql},
 };
 
 pub(crate) struct Migrate;

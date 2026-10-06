@@ -1,6 +1,6 @@
 use super::{
-    store_row::store, temperature_breach_row::TemperatureBreachType,
-    temperature_log_row::temperature_log, StorageConnection,
+    StorageConnection, store_row::store, temperature_breach_row::TemperatureBreachType,
+    temperature_log_row::temperature_log,
 };
 
 use crate::repository_error::RepositoryError;

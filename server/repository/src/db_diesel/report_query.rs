@@ -7,11 +7,11 @@
 //! comes back as a JSON object keyed by column. Reports reach the functions through
 //! [`ReportQueryExecutor`], plugins through [`query_read_only`].
 
-use crate::database_settings::SQLITE_LOCKWAIT_MS;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::StorageConnectionManager;
 use crate::TransactionError;
+use crate::database_settings::SQLITE_LOCKWAIT_MS;
 use diesel::sql_types::Text;
 use regex::Regex;
 use std::cell::{Cell, RefCell};
@@ -261,7 +261,7 @@ fn query_json_postgres(
     parameters: Option<&SqlParameters>,
 ) -> Result<Vec<serde_json::Value>, RepositoryError> {
     use diesel::connection::SimpleConnection;
-    use diesel::{sql_query, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query};
     use util::uuid::small_uuid;
 
     // remove trailing ";" if there is any
@@ -591,15 +591,15 @@ mod tests {
     use std::rc::Rc;
 
     use crate::{
-        mock::MockDataInserts, test_db, ActivityLogRow, ActivityLogRowRepository, ActivityLogType,
-        RepositoryError, StorageConnection, StorageConnectionManager, StoreRowRepository,
-        UserAccountRow, UserAccountRowRepository,
+        ActivityLogRow, ActivityLogRowRepository, ActivityLogType, RepositoryError,
+        StorageConnection, StorageConnectionManager, StoreRowRepository, UserAccountRow,
+        UserAccountRowRepository, mock::MockDataInserts, test_db,
     };
 
     use super::{
+        ReportQueryExecutor, ReportSqlQuery, SCOPED_READ_ONLY_CONNECTION, SqlParameters,
         query_json_sqlite, query_read_only, scoped_report_connection, sql_literal,
-        with_read_only_connection, ReportQueryExecutor, ReportSqlQuery, SqlParameters,
-        SCOPED_READ_ONLY_CONNECTION,
+        with_read_only_connection,
     };
 
     /// Run one query through the executor. The SQL here is valid in both dialects, so the same
@@ -992,10 +992,12 @@ mod tests {
         assert_eq!(sql_literal("p", &json!(42)).unwrap(), "42");
         assert_eq!(sql_literal("p", &json!(1.5)).unwrap(), "1.5");
         // No literal spelling of these means anything as one value
-        assert!(sql_literal("p", &json!(["a"]))
-            .unwrap_err()
-            .to_string()
-            .contains("$p"));
+        assert!(
+            sql_literal("p", &json!(["a"]))
+                .unwrap_err()
+                .to_string()
+                .contains("$p")
+        );
         assert!(sql_literal("p", &json!({ "a": 1 })).is_err());
     }
 
@@ -1217,9 +1219,11 @@ mod tests {
                 .len(),
             1
         );
-        assert!(plugin(&connection, &manager, sql, Some(&on("2019-12-31")))
-            .unwrap()
-            .is_empty());
+        assert!(
+            plugin(&connection, &manager, sql, Some(&on("2019-12-31")))
+                .unwrap()
+                .is_empty()
+        );
 
         let rows = plugin(
             &connection,

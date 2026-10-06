@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 
-use super::{get_connection, DBBackendConnection, DBConnection};
+use super::{DBBackendConnection, DBConnection, get_connection};
 
 use crate::db_diesel::changelog::ChangelogCursorTracker;
 use crate::repository_error::RepositoryError;
@@ -47,7 +47,7 @@ impl<'a> LockedConnection<'a> {
                 return Err(TransactionError::Transaction {
                     msg: "Failed to get transaction depth".to_string(),
                     level: -1,
-                })
+                });
             }
         };
         Ok(match level {
@@ -367,7 +367,7 @@ impl StorageConnectionManager {
 
 #[cfg(test)]
 mod connection_manager_tests {
-    use crate::{test_db, RepositoryError, TransactionError};
+    use crate::{RepositoryError, TransactionError, test_db};
 
     #[actix_rt::test]
     async fn test_nested_tx() {
@@ -434,13 +434,13 @@ mod connection_manager_tests {
 #[cfg(test)]
 mod on_commit_test {
     use std::sync::{
-        atomic::{AtomicUsize, Ordering},
         Arc,
+        atomic::{AtomicUsize, Ordering},
     };
 
     use crate::{
-        test_db, ActivityLogRow, ActivityLogRowRepository, ActivityLogType, RepositoryError,
-        TransactionError,
+        ActivityLogRow, ActivityLogRowRepository, ActivityLogType, RepositoryError,
+        TransactionError, test_db,
     };
 
     async fn setup(name: &str) -> (super::StorageConnectionManager, Arc<AtomicUsize>) {

@@ -1,10 +1,10 @@
-use super::item_row::item;
 use super::ItemRow;
-use super::{item_direction_row::item_direction, ItemDirectionRow, StorageConnection};
+use super::item_row::item;
+use super::{ItemDirectionRow, StorageConnection, item_direction_row::item_direction};
 
 use crate::diesel_macros::apply_equal_filter;
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter};
+use crate::{DBType, EqualFilter, repository_error::RepositoryError};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default, PartialEq, Debug)]

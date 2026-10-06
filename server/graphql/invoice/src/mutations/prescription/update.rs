@@ -1,20 +1,20 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::{
     CannotReverseInvoiceStatus, InvalidStockSelection, NodeError, RecordNotFound,
 };
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
 
 use repository::Invoice;
+use service::NullableUpdate;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::prescription::{
     UpdatePrescription as ServiceInput, UpdatePrescriptionError as ServiceError,
     UpdatePrescriptionStatus,
 };
-use service::NullableUpdate;
 
 use crate::mutations::outbound_shipment::error::InvoiceIsNotEditable;
 
@@ -161,19 +161,19 @@ fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
         ServiceError::InvoiceDoesNotExist => {
             return Ok(UpdatePrescriptionErrorInterface::InvoiceDoesNotExist(
                 RecordNotFound {},
-            ))
+            ));
         }
 
         ServiceError::InvoiceIsNotEditable => {
             return Ok(UpdatePrescriptionErrorInterface::InvoiceIsNotEditable(
                 InvoiceIsNotEditable,
-            ))
+            ));
         }
 
         ServiceError::CantBackDate(_) => {
             return Ok(UpdatePrescriptionErrorInterface::CantBackDate(
                 InvalidStockSelection,
-            ))
+            ));
         }
 
         // Standard Graphql Errors
@@ -222,20 +222,20 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_patient, mock_prescription_a, mock_store_a, MockDataInserts},
         Invoice, RepositoryError, StorageConnectionManager,
+        mock::{MockDataInserts, mock_patient, mock_prescription_a, mock_store_a},
     };
     use serde_json::json;
     use service::{
+        NullableUpdate,
         invoice::{
+            InvoiceServiceTrait,
             prescription::{
                 UpdatePrescription as ServiceInput, UpdatePrescriptionError as ServiceError,
                 UpdatePrescriptionStatus,
             },
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
-        NullableUpdate,
     };
 
     use crate::InvoiceMutations;

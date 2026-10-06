@@ -146,12 +146,12 @@ mod test {
     };
     use crate::service_provider::ServiceProvider;
     use repository::mock::{
-        item_query_test1, mock_master_list_program, mock_purchase_order_a, mock_purchase_order_c,
-        mock_purchase_order_d, mock_store_b, MockData,
+        MockData, item_query_test1, mock_master_list_program, mock_purchase_order_a,
+        mock_purchase_order_c, mock_purchase_order_d, mock_store_b,
     };
     use repository::test_db::setup_all_with_data;
     use repository::{
-        mock::{mock_store_a, mock_store_c, mock_test_not_store_a_master_list, MockDataInserts},
+        mock::{MockDataInserts, mock_store_a, mock_store_c, mock_test_not_store_a_master_list},
         test_db::setup_all,
     };
 

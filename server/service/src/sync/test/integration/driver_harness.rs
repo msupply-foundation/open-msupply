@@ -12,10 +12,10 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use repository::StorageConnection;
 use repository::sync_file_reference_row::{
     SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
 };
-use repository::StorageConnection;
 use tokio::task::JoinHandle;
 
 use crate::{

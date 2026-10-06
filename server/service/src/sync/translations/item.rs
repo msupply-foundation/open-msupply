@@ -1,9 +1,9 @@
 use chrono::Utc;
 use repository::{
-    item_category::{ItemCategoryFilter, ItemCategoryRepository},
-    item_category_row::ItemCategoryJoinRow,
     ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
     ItemType, Row, StorageConnection, SyncBufferRow, VENCategory,
+    item_category::{ItemCategoryFilter, ItemCategoryRepository},
+    item_category_row::ItemCategoryJoinRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -11,18 +11,18 @@ use std::sync::LazyLock;
 
 use crate::sync::central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes};
 use crate::sync::{
-    translations::{
-        category::CategoryTranslation, location_type::LocationTypeTranslation,
-        unit::UnitTranslation, FkField,
-    },
     CentralServerConfig,
+    translations::{
+        FkField, category::CategoryTranslation, location_type::LocationTypeTranslation,
+        unit::UnitTranslation,
+    },
 };
 
 use util::sync_serde::empty_str_as_option_string;
 
 use super::{
-    utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
     IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields},
 };
 
 #[allow(non_camel_case_types)]
@@ -401,10 +401,10 @@ fn translate_item_category_join(
 mod tests {
     use super::*;
     use repository::{
+        CategoryRow, LocationTypeRow, SyncAction, SyncRecordData, UnitRow,
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        CategoryRow, LocationTypeRow, SyncAction, SyncRecordData, UnitRow,
     };
 
     #[actix_rt::test]

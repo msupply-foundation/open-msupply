@@ -1,13 +1,13 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::validate_auth;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::prescription_request::batch::{
     BatchPrescriptionRequest as ServiceInput, BatchPrescriptionRequestResult as ServiceResult,
 };
 
-use super::delete::{map_delete_response, DeleteResponse};
-use super::line::{map_delete_line_response, DeleteLineResponse};
+use super::delete::{DeleteResponse, map_delete_response};
+use super::line::{DeleteLineResponse, map_delete_line_response};
 
 #[derive(SimpleObject)]
 #[graphql(concrete(
@@ -112,9 +112,5 @@ fn map_response(
 }
 
 fn vec_or_none<T>(vec: Vec<T>) -> Option<Vec<T>> {
-    if vec.is_empty() {
-        None
-    } else {
-        Some(vec)
-    }
+    if vec.is_empty() { None } else { Some(vec) }
 }

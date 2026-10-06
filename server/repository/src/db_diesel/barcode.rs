@@ -1,4 +1,4 @@
-use super::{barcode_row::barcode, name_row::name, BarcodeRow, DBType, NameRow, StorageConnection};
+use super::{BarcodeRow, DBType, NameRow, StorageConnection, barcode_row::barcode, name_row::name};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{

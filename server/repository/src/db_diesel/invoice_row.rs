@@ -1,13 +1,13 @@
 use super::{
-    clinician_link_row::clinician_link, currency_row::currency, custom_fields_json::JsonValue,
-    item_link_row::item_link, name_row::name, purchase_order_row::purchase_order,
-    shipping_method_row::shipping_method, store_row::store, user_row::user_account,
-    StorageConnection,
+    StorageConnection, clinician_link_row::clinician_link, currency_row::currency,
+    custom_fields_json::JsonValue, item_link_row::item_link, name_row::name,
+    purchase_order_row::purchase_order, shipping_method_row::shipping_method, store_row::store,
+    user_row::user_account,
 };
 use crate::{
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
     db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;

@@ -3,7 +3,7 @@ pub mod download_file;
 pub mod upload_file;
 use repository::RepositoryError;
 use reqwest::{Response, Url};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 use util::{format_error, log_body_read};
 

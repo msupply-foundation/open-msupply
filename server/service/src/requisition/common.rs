@@ -1,16 +1,16 @@
 use std::collections::{HashMap, HashSet};
 
 use repository::{
-    requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
-};
-use repository::{
     ApprovalStatusType, EqualFilter, IndicatorColumnRow, IndicatorColumnRowRepository,
     IndicatorLineRow, IndicatorLineRowRepository, IndicatorValueType, MasterList, MasterListFilter,
     MasterListRepository, ProgramFilter, ProgramIndicatorFilter, ProgramIndicatorRepository,
     ProgramRepository, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, Requisition, RequisitionFilter, RequisitionRepository,
     RequisitionType,
+};
+use repository::{
+    RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionRowRepository, StorageConnection, requisition_row::RequisitionRow,
 };
 
 use crate::preference::{Preference, ShowIndicativePriceInRequisitions};
@@ -297,9 +297,9 @@ pub(crate) fn get_indicative_price_pref(
 mod test_related_program_indicators {
     use super::*;
     use repository::{
-        mock::{context_program_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         IndicatorColumnRow, IndicatorLineRow, ProgramIndicatorRow, ProgramRow,
+        mock::{MockData, MockDataInserts, context_program_a},
+        test_db::setup_all_with_data,
     };
 
     // Two programs that share an elmis_code (e.g. CS + DISTRICT facility levels

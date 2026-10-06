@@ -2,7 +2,7 @@ use actix_web::web::Data;
 use async_graphql::*;
 use chrono::Utc;
 use graphql_core::generic_inputs::PrintReportSortInput;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_core::{ContextExt, RequestUserData};
 use repository::{ReportQueryExecutor, ReportSqlQuery, StoreRowRepository};
 use service::auth::{Resource, ResourceAccessRequest};
@@ -90,7 +90,7 @@ pub async fn generate_report(
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
                 error: map_error(err)?,
-            }))
+            }));
         }
     };
 
@@ -112,7 +112,7 @@ pub async fn generate_report(
                 error: PrintReportErrorInterface::FailedToFetchReportData(
                     FailedToFetchReportData { errors },
                 ),
-            }))
+            }));
         }
     };
     // Look up the current store's code so it can be included in the download
@@ -152,7 +152,7 @@ pub async fn generate_report(
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
                 error: map_error(err)?,
-            }))
+            }));
         }
     };
 
@@ -199,7 +199,7 @@ pub async fn generate_report_definition(
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
                 error: map_error(err)?,
-            }))
+            }));
         }
     };
 
@@ -221,7 +221,7 @@ pub async fn generate_report_definition(
                 error: PrintReportErrorInterface::FailedToFetchReportData(
                     FailedToFetchReportData { errors },
                 ),
-            }))
+            }));
         }
     };
 
@@ -260,7 +260,7 @@ pub async fn generate_report_definition(
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
                 error: map_error(err)?,
-            }))
+            }));
         }
     };
 
@@ -364,7 +364,7 @@ async fn fetch_data(
             _ => {
                 return Err(anyhow::Error::msg(
                     "Unexpected GraphQL response type (object expected)",
-                ))
+                ));
             }
         }
     } else {

@@ -40,8 +40,8 @@ impl From<RepositoryError> for DeleteStocktakeLineError {
 mod stocktake_line_test {
     use repository::{
         mock::{
-            mock_locked_stocktake_line, mock_stocktake_line_a, mock_stocktake_line_finalised,
-            mock_store_a, MockDataInserts,
+            MockDataInserts, mock_locked_stocktake_line, mock_stocktake_line_a,
+            mock_stocktake_line_finalised, mock_store_a,
         },
         test_db::setup_all,
     };

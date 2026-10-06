@@ -2,7 +2,7 @@ use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
     translations::name_store_join::LegacyNameStoreJoinRow,
 };
-use repository::{sync_buffer::SyncRecordData, NameStoreJoinRow, NameStoreJoinRowDelete};
+use repository::{NameStoreJoinRow, NameStoreJoinRowDelete, sync_buffer::SyncRecordData};
 use serde_json::json;
 
 const TABLE_NAME: &str = "name_store_join";

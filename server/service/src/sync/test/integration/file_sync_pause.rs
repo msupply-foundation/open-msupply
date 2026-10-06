@@ -46,13 +46,14 @@ mod tests {
     use crate::{
         static_files::{StaticFileCategory, StaticFileService},
         sync::{
+            CentralServerConfig,
             test::integration::{
+                FullSiteConfig,
                 bandwidth_harness::ToxiproxyProxy,
                 create_site,
-                driver_harness::{record_many, wait_until_uploading, RemoteDrivers, UploadTrace},
-                FullSiteConfig,
+                driver_harness::{RemoteDrivers, UploadTrace, record_many, wait_until_uploading},
             },
-            test_util_set_central_server_url, CentralServerConfig,
+            test_util_set_central_server_url,
         },
         test_helpers::ServiceTestContext,
     };

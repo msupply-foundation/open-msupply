@@ -103,10 +103,10 @@ pub(crate) fn get_program_ids(
 mod test {
     use super::get_program_ids;
     use repository::{
-        mock::{context_program_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         MasterListRow, NameTagRow, ProgramRequisitionSettings, ProgramRequisitionSettingsRow,
         ProgramRow,
+        mock::{MockData, MockDataInserts, context_program_a},
+        test_db::setup_all_with_data,
     };
 
     fn program(id: &str, elmis_code: Option<&str>) -> ProgramRow {

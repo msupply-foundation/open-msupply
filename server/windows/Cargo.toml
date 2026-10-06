@@ -3,7 +3,7 @@ name = "omsupply-service"
 version = "0.1.0"
 description = "A crate that implements windows service methods"
 keywords = ["windows", "service", "daemon"]
-edition = "2018"
+edition.workspace = true
 
 [[bin]]
 path = "src/windows.rs"

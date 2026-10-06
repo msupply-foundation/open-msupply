@@ -141,7 +141,7 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     use crate::diesel::r2d2::ManageConnection;
     use crate::diesel_helper_types::Count;
-    use diesel::{sql_query, sql_types::Text, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query, sql_types::Text};
 
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(settings.connection_string());
@@ -222,7 +222,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 
 #[cfg(feature = "postgres")]
 fn check_postgres_version(connection: &mut DBBackendConnection) -> Result<(), String> {
-    use diesel::{sql_query, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query};
 
     let version_num = sql_query("SHOW server_version_num")
         .get_result::<ServerVersionNum>(connection)
@@ -350,7 +350,7 @@ mod database_setting_test {
         use crate::database_settings::get_storage_connection_manager;
         use crate::test_db::get_test_db_settings;
         use diesel::r2d2::ManageConnection;
-        use diesel::{r2d2::ConnectionManager, sql_query, PgConnection, RunQueryDsl};
+        use diesel::{PgConnection, RunQueryDsl, r2d2::ConnectionManager, sql_query};
 
         let settings = get_test_db_settings("auto_create_db_test");
 

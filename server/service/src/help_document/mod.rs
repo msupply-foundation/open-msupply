@@ -2,11 +2,11 @@ mod delete;
 mod query;
 mod upsert;
 
-pub use delete::{delete_help_document, DeleteHelpDocument, DeleteHelpDocumentError};
+pub use delete::{DeleteHelpDocument, DeleteHelpDocumentError, delete_help_document};
 pub use query::{get_help_document, get_help_documents};
-pub use upsert::{insert_help_document, InsertHelpDocument, InsertHelpDocumentError};
+pub use upsert::{InsertHelpDocument, InsertHelpDocumentError, insert_help_document};
 
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
 use repository::{HelpDocument, HelpDocumentFilter, HelpDocumentSort, PaginationOption};
 
 pub trait HelpDocumentServiceTrait: Send + Sync {

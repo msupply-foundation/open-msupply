@@ -1,11 +1,11 @@
 use super::vvm_status_log_row::vvm_status_log::dsl::*;
 use crate::{
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
     db_diesel::{
         changelog::changelog::RowOrId, invoice_line_row::invoice_line, stock_line_row::stock_line,
         store_row::store,
     },
-    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;

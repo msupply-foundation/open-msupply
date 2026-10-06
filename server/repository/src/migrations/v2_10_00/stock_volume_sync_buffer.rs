@@ -1,7 +1,7 @@
 use crate::migrations::*;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -169,7 +169,7 @@ fn parse_or_integration_error<T: DeserializeOwned>(
 async fn migration_stock_volume() {
     use crate::migrations::*;
     use crate::test_db::*;
-    use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query, sql_types::Timestamp};
 
     let previous_version = v2_09_01::V2_09_01.version();
     let version = v2_10_00::V2_10_00.version();

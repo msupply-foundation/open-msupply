@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod delete {
-    use repository::mock::{mock_immunisation_program_a, MockDataInserts};
+    use repository::EqualFilter;
+    use repository::mock::{MockDataInserts, mock_immunisation_program_a};
     use repository::test_db::setup_all;
     use repository::vaccine_course::vaccine_course::VaccineCourseFilter;
     use repository::vaccine_course::vaccine_course_dose::{
         VaccineCourseDoseFilter, VaccineCourseDoseRepository,
     };
-    use repository::EqualFilter;
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccine_course::delete::DeleteVaccineCourseError;

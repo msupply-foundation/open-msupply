@@ -424,12 +424,12 @@ fn serialise_date(date: NaiveDate) -> String {
 #[cfg(test)]
 mod tests {
     use repository::{
+        InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
         mock::{
-            mock_item_a, mock_item_link_from_item, mock_name_a, mock_store_a, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_item_a, mock_item_link_from_item, mock_name_a,
+            mock_store_a,
         },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
     };
 
     use super::*;

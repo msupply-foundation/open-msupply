@@ -2,10 +2,10 @@ use std::error::Error;
 
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
-    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     ActivityLogRow, ActivityLogRowRepository, ActivityLogType, InvoiceStatus, KeyType,
     KeyValueStoreRepository, PurchaseOrderStatus, StorageConnection, StorageConnectionManager,
+    activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
+    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
 };
 
 use repository::{PaginationOption, RepositoryError};
@@ -15,7 +15,7 @@ use util::{constants::SYSTEM_USER_ID, format_error};
 
 use crate::service_provider::ServiceContext;
 
-use super::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
+use super::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 
 pub fn get_activity_logs(
     connection_manager: &StorageConnectionManager,
@@ -270,17 +270,17 @@ mod test {
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
-        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
     };
     use chrono::{NaiveDate, Utc};
     use repository::{
-        mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
+        ActivityLogType, InvoiceRow, InvoiceStatus, InvoiceType,
+        mock::{MockData, MockDataInserts, mock_name_a, mock_store_a},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::setup_all,
-        ActivityLogType, InvoiceRow, InvoiceStatus, InvoiceType,
     };
 
-    use super::{get_activity_logs, system_log_entry, SystemLogMessage};
+    use super::{SystemLogMessage, get_activity_logs, system_log_entry};
 
     #[actix_rt::test]
     async fn invoice_activity_log_status() {

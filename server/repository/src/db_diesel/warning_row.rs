@@ -1,4 +1,4 @@
-use super::{item_link, item_row::item, StorageConnection};
+use super::{StorageConnection, item_link, item_row::item};
 use crate::{ChangelogSyncType, RepositoryError, Upsert};
 
 use diesel::prelude::*;

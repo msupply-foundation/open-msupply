@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::RecordNotFound,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::{
@@ -89,7 +89,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 
     let graphql_error = match error {
         ServiceError::PurchaseOrderLineDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::PurchaseOrderDoesNotExist | ServiceError::CannotEditPurchaseOrder => {

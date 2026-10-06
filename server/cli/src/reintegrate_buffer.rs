@@ -1,15 +1,14 @@
 use anyhow::anyhow;
 use log::info;
 use repository::{
-    get_storage_connection_manager,
-    migrations::{migrate, MigrationConfig},
-    StorageConnectionManager, SyncBufferRepository, SyncVersion,
+    StorageConnectionManager, SyncBufferRepository, SyncVersion, get_storage_connection_manager,
+    migrations::{MigrationConfig, migrate},
 };
 use service::{
     settings::Settings,
     sync::{
-        seed_central_mapping_custom_fields, sync_status::logger::SyncLogger,
-        synchroniser::integrate_and_translate_sync_buffer, CentralServerConfig,
+        CentralServerConfig, seed_central_mapping_custom_fields, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer,
     },
 };
 

@@ -1,9 +1,9 @@
-use super::campaign_row::{campaign, CampaignRow};
+use super::campaign_row::{CampaignRow, campaign};
 use crate::{
+    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     lower,
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -109,10 +109,10 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
 
         apply_equal_filter!(query, id, campaign::id);
 
-        if let Some(name_filter) = name {
-            if let Some(name_to_match) = name_filter.equal_to {
-                query = query.filter(lower(campaign::name).eq(lower(name_to_match)))
-            }
+        if let Some(name_filter) = name
+            && let Some(name_to_match) = name_filter.equal_to
+        {
+            query = query.filter(lower(campaign::name).eq(lower(name_to_match)))
         }
     }
 
@@ -124,12 +124,13 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
 #[cfg(test)]
 mod tests {
     use crate::{
+        EqualFilter, StringFilter,
         campaign::{
             campaign::CampaignRepository,
             campaign_row::{CampaignRow, CampaignRowRepository},
         },
         mock::MockDataInserts,
-        test_db, EqualFilter, StringFilter,
+        test_db,
     };
 
     use super::CampaignFilter;
