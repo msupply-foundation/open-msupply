@@ -16,10 +16,10 @@ import {
   type NamesListState,
 } from './namesListLogic';
 
-// Logic-level coverage of the Customer & Supplier list acceptance criteria
-// (spec/names). Behaviour that has a backend is validated at the query-shape
-// level here; the live-backend leg (C2) and the rendered-UI/a11y leg (C4) are
-// recorded as gaps in BUILD_REPORT.
+// Logic-level coverage of the Customer & Supplier list behaviours
+// (spec/names/cases/). Behaviour that has a backend is validated at the
+// query-shape level here; the live-backend leg (C2) and the rendered-UI/a11y
+// leg (C4) are recorded as gaps in BUILD_REPORT.
 
 const state = (over: Partial<NamesListState> = {}): NamesListState => ({
   ...DEFAULT_STATE,
@@ -39,7 +39,7 @@ const row = (over: Partial<NameRow> = {}): NameRow => ({
   ...over,
 });
 
-describe("AC-N1 Customer list is the active store's customers", () => {
+describe("OMS-REG-DIST-08.1, OMS-FUN-CUS-001.1 Customer list is the active store's customers", () => {
   it('filters by the per-store isCustomer relationship, scoped to the store', () => {
     const vars = buildVariables({
       storeId: 'storeA',
@@ -52,7 +52,7 @@ describe("AC-N1 Customer list is the active store's customers", () => {
   });
 });
 
-describe("AC-N2 Supplier list is the active store's suppliers", () => {
+describe("OMS-REG-REPL-08.1, OMS-FUN-SUP-001.1 Supplier list is the active store's suppliers", () => {
   it('filters by the per-store isSupplier relationship', () => {
     const vars = buildVariables({
       storeId: 'storeA',
@@ -64,7 +64,7 @@ describe("AC-N2 Supplier list is the active store's suppliers", () => {
   });
 });
 
-describe('AC-N3 Listed names are visible to the store', () => {
+describe('OMS-FUN-CUS-001.1, OMS-FUN-SUP-001.1 Listed names are visible to the store', () => {
   it('applies the relationship flag that (server-side) implies visibility', () => {
     // Filtering by isCustomer/isSupplier selects names whose relationship to
     // the active store carries the flag — which is also what makes them visible
@@ -74,7 +74,7 @@ describe('AC-N3 Listed names are visible to the store', () => {
   });
 });
 
-describe('AC-N4 Only qualifying names appear', () => {
+describe('OMS-FUN-CUS-001.2, OMS-FUN-SUP-001.2/.3, OMS-REG-DIST-08.20/.21 Only qualifying names appear', () => {
   it('restricts the name type to facility/store (excludes INVAD/REPACK by omission)', () => {
     expect(TYPE_RESTRICTION).toEqual({
       type: { equalAny: ['FACILITY', 'STORE'] },
@@ -84,7 +84,7 @@ describe('AC-N4 Only qualifying names appear', () => {
   });
 });
 
-describe('AC-N5 Lists re-scope on active-store change', () => {
+describe('OMS-REG-DIST-08.22, OMS-REG-REPL-08.15 Lists re-scope on active-store change', () => {
   it('re-scopes the query when the store id changes', () => {
     const a = buildVariables({
       storeId: 'A',
@@ -101,7 +101,7 @@ describe('AC-N5 Lists re-scope on active-store change', () => {
   });
 });
 
-describe('AC-N6 Customer/supplier status is per store', () => {
+describe('OMS-REG-DIST-08.15–.17 Customer/supplier status is per store', () => {
   it('selects by the per-store relationship flag, scoped to that store', () => {
     // The same name can be a customer of store A and not of store B — the query
     // is (storeId + relationship flag), so each store gets its own result set.
@@ -121,7 +121,7 @@ describe('AC-N6 Customer/supplier status is per store', () => {
   });
 });
 
-describe('AC-N7 Row shows code and name', () => {
+describe('OMS-REG-DIST-08.23, OMS-REG-REPL-08.16 Row shows code and name', () => {
   it('every row carries a code and a name (the two default columns)', () => {
     const r = row();
     expect(r.code).toBe('ACME');
@@ -129,14 +129,14 @@ describe('AC-N7 Row shows code and name', () => {
   });
 });
 
-describe('AC-N8 Store-kind names carry a store indicator', () => {
+describe('OMS-REG-DIST-08.23, OMS-REG-REPL-08.16 Store-kind names carry a store indicator', () => {
   it('is a store name only when the store relation is present', () => {
     expect(isStoreName(row({ store: { id: 's', code: 'S' } }))).toBe(true);
     expect(isStoreName(row({ store: null }))).toBe(false);
   });
 });
 
-describe('AC-N9 Sort by code or name, default name ascending', () => {
+describe('OMS-REG-DIST-08.3–.6, OMS-REG-REPL-08.3–.6, OMS-FUN-CUS-001.8/.9, OMS-FUN-SUP-001.9/.10 Sort by code or name, default name ascending', () => {
   it('defaults to name ascending, single key', () => {
     expect(DEFAULT_STATE.sort).toEqual([{ key: 'name', desc: false }]);
     expect(DEFAULT_STATE.sort).toHaveLength(1);
@@ -151,7 +151,7 @@ describe('AC-N9 Sort by code or name, default name ascending', () => {
   });
 });
 
-describe('AC-N10 Stable order across pages', () => {
+describe('OMS-REG-DIST-08.9, OMS-REG-REPL-08.9 Stable order across pages', () => {
   it('keeps the same sort while paging (offset changes, sort unchanged)', () => {
     const page1 = buildVariables({
       storeId: 'A',
@@ -167,7 +167,7 @@ describe('AC-N10 Stable order across pages', () => {
   });
 });
 
-describe('AC-N11 Server-side pagination with full total', () => {
+describe('OMS-REG-DIST-08.8/.9, OMS-REG-REPL-08.8/.9, OMS-FUN-CUS-001.11, OMS-FUN-SUP-001.12 Server-side pagination with full total', () => {
   it('sends first + offset as the page window', () => {
     const vars = buildVariables({
       storeId: 'A',
@@ -178,7 +178,7 @@ describe('AC-N11 Server-side pagination with full total', () => {
   });
 });
 
-describe('AC-N12 Page size', () => {
+describe('OMS-REG-DIST-08.8, OMS-REG-REPL-08.8 Page size', () => {
   it('offers 10/20/50/100, defaulting to 50', () => {
     expect(PAGE_SIZE_OPTIONS).toEqual([10, 20, 50, 100]);
     expect(DEFAULT_PAGE_SIZE).toBe(50);
@@ -186,7 +186,7 @@ describe('AC-N12 Page size', () => {
   });
 });
 
-describe('AC-N13 Search by name or code', () => {
+describe('OMS-REG-DIST-08.24, OMS-REG-REPL-08.17 Search by name or code', () => {
   it('passes a codeOrName "like" through and drops an empty chip', () => {
     const withSearch = buildFilter('customer', {
       codeOrName: { like: 'clin' },
@@ -201,7 +201,7 @@ describe('AC-N13 Search by name or code', () => {
   });
 });
 
-describe('AC-N14 Customer row opens its detail in place', () => {
+describe('OMS-REG-DIST-08.11 Customer row opens its detail in place', () => {
   it('the customer list path is the modal host (opened in place, no route change)', () => {
     // The customer detail is a modal over the list, so there is no detail route
     // — the list path is where it opens (see CustomersList).
@@ -209,14 +209,14 @@ describe('AC-N14 Customer row opens its detail in place', () => {
   });
 });
 
-describe('AC-N15 Supplier row navigates to its detail page', () => {
+describe('OMS-REG-REPL-08.11/.19 Supplier row navigates to its detail page', () => {
   it('builds the supplier detail route', () => {
     expect(supplierDetailPath('A', 'n1')).toBe('/A/replenishment/suppliers/n1');
     expect(suppliersListPath('A')).toBe('/A/replenishment/suppliers');
   });
 });
 
-describe('AC-N16 No create/edit/delete/select/export', () => {
+describe('OMS-REG-DIST-08.25, OMS-REG-REPL-08.18 No create/edit/delete/select/export', () => {
   it('the list state carries no selection/mutation surface (read-only)', () => {
     // The state is filter/sort/pagination only — there is no selection set, and
     // buildVariables produces a read query with no mutation input.
@@ -225,7 +225,7 @@ describe('AC-N16 No create/edit/delete/select/export', () => {
   });
 });
 
-describe('AC-N17 Requires authentication and an active store', () => {
+describe('store scoping: requires authentication and an active store', () => {
   it('the query is store-scoped — it cannot be built without a storeId', () => {
     // storeId is a required variable; the section mounts only behind the store
     // guard (an authenticated user with an active store), so no store ⇒ no
@@ -239,7 +239,7 @@ describe('AC-N17 Requires authentication and an active store', () => {
   });
 });
 
-describe('AC-N26 Purchase Orders tab references the purchase-order area', () => {
+describe('OMS-REG-REPL-08.23 Purchase Orders tab references the purchase-order area', () => {
   it('builds the purchase-order area path a PO row navigates to', () => {
     expect(purchaseOrderAreaPath('A')).toBe('/A/replenishment/purchase-order');
   });

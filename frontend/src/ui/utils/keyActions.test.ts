@@ -14,10 +14,11 @@ import { ALT_D, ALT_N, ALT_M } from './shortcuts';
 //
 //   1. registration lasts exactly as long as the owner, so KB-R1's "registered
 //      only while it is actually available" needs no discipline at a call site;
-//   2. a disabled action neither fires nor lists (one field, AC-KB24);
+//   2. a disabled action neither fires nor lists (one field,
+// OMS-REG-KBD-02.11);
 //   3. LAST REGISTERED WINS, so a line editor's "New item" shadows the detail
 //      screen's "Add item" while open and hands Alt+N back on close (KB-R2);
-//   4. an unlisted action fires without being browsable (AC-KB11).
+//   4. an unlisted action fires without being browsable (OMS-REG-KBD-01.21).
 
 const press = (code: string, alt = true): KeyboardEvent =>
   ({
@@ -182,7 +183,8 @@ describe('listing', () => {
     createAction({ name: 'button.save', shortcut: ALT_D, run: () => {} });
     createAction({ unlisted: true, shortcut: ALT_M, run: navigateUp });
 
-    // AC-KB11: the nameless entry owns its binding but is browsable nowhere.
+    // OMS-REG-KBD-01.21: the nameless entry owns its binding but is browsable
+    // nowhere.
     const listed = registeredActions().filter(a => a.name !== undefined);
     expect(listed).toHaveLength(1);
     resolveShortcut(press('KeyM'))?.run();

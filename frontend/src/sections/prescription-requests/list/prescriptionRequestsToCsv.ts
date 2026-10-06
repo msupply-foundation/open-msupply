@@ -12,12 +12,12 @@ import type { PrescriptionRequestsResult } from './prescriptionRequests.generate
 type RequestRow =
   PrescriptionRequestsResult['prescriptionRequests']['nodes'][number];
 
-// The prescription-requests list → CSV (spec/prescription-requests AC-L7):
-// the list's columns, every row matching the active filters. Headers are
-// translated; dates localised; status uses the same catalog labels as the
-// chip; Entered by is the creating account's username, as the column shows.
-// Feeds the direct .csv download or the server's csvToExcel conversion
-// (domain/reportFiles). Mirrors prescriptionsToCsv.
+// The prescription-requests list → CSV (spec/prescription-requests
+// OMS-REG-DIS-08.28/.29): the list's columns, every row matching the active
+// filters. Headers are translated; dates localised; status uses the same
+// catalog labels as the chip; Entered by is the creating account's username, as
+// the column shows. Feeds the direct .csv download or the server's csvToExcel
+// conversion (domain/reportFiles). Mirrors prescriptionsToCsv.
 //
 // The configured custom-field columns (S1 › Columns: one per configured
 // request-scope field) trail the list's own, in the same order and with the

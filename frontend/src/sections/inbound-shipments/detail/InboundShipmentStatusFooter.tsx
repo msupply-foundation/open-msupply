@@ -125,7 +125,7 @@ export const InboundShipmentStatusFooter: Component<
     }));
 
   return (
-    <ContentFooter>
+    <ContentFooter testId="status-footer">
       {/* Hold — blocks status changes only; disabled once Verified. Toggling
           prompts a confirmation. */}
       <CheckboxButton

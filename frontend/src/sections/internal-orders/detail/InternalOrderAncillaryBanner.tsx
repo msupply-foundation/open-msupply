@@ -9,7 +9,8 @@ import { refreshAncillaryItems } from './internalOrderUpdate';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 import styles from './InternalOrderAncillaryBanner.module.css';
 
-// The ancillary-items banner (spec/internal-orders S3 § toolbar, AC-A2–A5).
+// The ancillary-items banner (spec/internal-orders S3 § toolbar,
+// OMS-REG-REPL-13.2–.4; the refresh guards are contract § ancillary items).
 // Shown only while the order is editable AND its server-computed plan is not
 // NONE. Its message states the outstanding work; a Details popover lists the
 // plan; an Add (needs-add) / Update (needs-update) button runs the refresh and

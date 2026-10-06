@@ -98,7 +98,7 @@ server (`:8890`, store _Tamaki Central Medical Store_) during the build.
   and `configureNameProperties` has no delete counterpart, so the empty-catalogue
   branch could not be reached live. Logic-level only.
 
-Slices 1 and 2's `AC-N*` anchors are unchanged by this run; see the vertical's
+Slices 1 and 2's behaviour anchors are unchanged by this run; see the vertical's
 existing tests under `list/` and `detail/`.
 
 ## Flags

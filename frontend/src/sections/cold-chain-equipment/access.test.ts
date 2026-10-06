@@ -8,10 +8,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // navGates.test.ts does.
 //
 // The client half only. The gate itself is navigation's, so it carries no
-// OMS-REG-CCE-04/05/06/07 behaviour of its own
-// (spec/cold-chain-equipment/acceptance.md records the two retired criteria
-// that named it). The server stays the real guard, and that leg is recorded
-// as a C2 gap in BUILD_REPORT.
+// OMS-REG-CCE-04/05/06/07 behaviour of its own. The server stays the real
+// guard, and that leg is recorded as a C2 gap in BUILD_REPORT.
 
 const state = {
   vaccineModule: false,

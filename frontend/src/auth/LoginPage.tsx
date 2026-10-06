@@ -219,7 +219,7 @@ export const LoginPage: Component = () => {
                   {t('login.use-old-interface')}
                 </a>
                 {/* Arriving from the desktop discovery page (spec/desktop §
-                    server selection, AC-DT16): the hand-off names its return
+                    server selection, OMS-REG-DESK-01.21): the hand-off names its return
                     URL in the query string, and this becomes the way to leave
                     this server for another. A plain anchor — the discovery
                     page may be a different origin (the shell's own bundled

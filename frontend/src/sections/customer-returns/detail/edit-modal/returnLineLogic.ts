@@ -5,8 +5,8 @@ import type {
 } from '../customerReturnDetail.generated';
 
 // Pure draft logic for the return-items modal (spec/customer-returns/rules.md
-// § line rules + ui-surface.md S4). Component-free so the AC-citing tests
-// (cases OMS-REG-DIST-07.27–.29, .31) exercise the semantics directly.
+// § line rules + ui-surface.md S4). Component-free so the behaviour-citing
+// tests (cases OMS-REG-DIST-07.27–.29, .31) exercise the semantics directly.
 
 // The wire line input — the generated shape, never remapped (kdd/type-safety).
 export type ReturnLineInput =

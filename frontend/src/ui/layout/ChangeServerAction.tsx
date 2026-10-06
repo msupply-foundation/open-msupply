@@ -15,8 +15,8 @@ import styles from '../styles/LoginInitLayout.module.css';
  *
  * 1. The hand-off's return URL, when the shell sent one — a plain link back
  *    to the discovery page, carrying the language active at click time
- *    (src/discovery/discoveryReturn.ts, AC-DT16/23/24). This is the designed
- *    path and the only one that lands on the new page with its flags.
+ *    (src/discovery/discoveryReturn.ts, OMS-REG-DESK-01.21/23/24). This is the
+ * designed    path and the only one that lands on the new page with its flags.
  * 2. Otherwise the legacy shell bridge, where one answers
  *    (src/platform/legacyShell.ts) — a shell released before the page
  *    existed, which never sends the parameter. Lands on that shell's own

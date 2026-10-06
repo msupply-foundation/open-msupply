@@ -14,7 +14,7 @@ const row = {
   customFields: null,
 };
 
-describe('prescriptionRequestsToCsv (AC-L7 — the list columns, in file form)', () => {
+describe('prescriptionRequestsToCsv (OMS-REG-DIS-08.28/.29 — the list columns, in file form)', () => {
   it('carries number, patient, status, both dates, entered by, comment', () => {
     // In node the catalog isn't loaded, so t() falls back to its keys —
     // header assertions pin the keys standing in for the translated labels
