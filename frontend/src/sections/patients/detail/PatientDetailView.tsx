@@ -1,10 +1,8 @@
 import {
   createResource,
   createSignal,
-  Match,
   Show,
   Suspense,
-  Switch,
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
@@ -28,7 +26,6 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_N } from '../../../ui/utils/shortcuts';
-import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
@@ -43,17 +40,11 @@ import {
   CustomFieldsEditTab,
   EMPTY_FIELD_VALUE,
 } from '../../../domain/customFields';
-import { createPatientEditor } from './patientEditor';
-import { createPatientDocumentEditor } from './patientDocumentEditor';
-import { PatientDetailsForm } from './PatientDetailsForm';
-import { DocumentKeptValues } from '../../../domain/documentForm/DocumentKeptValues';
-import { DocumentVersionNotice } from '../../../domain/documentForm/DocumentVersionNotice';
-import { DocumentFormRegion } from '../../../plugins/DocumentFormRegion';
+import { createPatientDetails } from './patientDetails';
+import { PatientDetailsBody } from './PatientDetailsBody';
 import { PatientToolbarTriggers } from '../../../plugins/PatientToolbarTriggers';
 import { recordPluginDiagnostic } from '../../../plugins/diagnostics';
 import type { FormRegistryFragment } from '../../../domain/documentForm/documentForm.generated';
-import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
-import { Stack } from '../../../ui/layout/Stack/Stack';
 import { InsurancePanel } from './insurance/InsurancePanel';
 import { InsuranceModal } from './insurance/InsuranceModal';
 import {
@@ -67,7 +58,6 @@ import {
   fetchFormRegistries,
   fetchPatientProgramEnrolments,
   fetchPatientEncounters,
-  fetchPatientRegistry,
 } from './programs/programsApi';
 import { ProgramPickerDialog } from './programs/ProgramPickerDialog';
 import {
@@ -137,40 +127,16 @@ const PatientDetailView: Component = () => {
   );
   const node = () => data.latest ?? undefined;
 
-  // Local edit buffer, duplicate-code check, validation, and full-replace save
-  // (spec/patients S3 Details) — shared with the picker's edit modal, so
-  // neither surface can drift on these rules (patientEditor.ts).
-  const editor = createPatientEditor({
+  // The Details tab, on the plain path or the document path as the store's
+  // Patient registry entry says (spec/patients rules › two persistence
+  // paths) — shared with the picker's edit modal, so neither surface can
+  // drift on these rules or write the record under a document (patientDetails.ts).
+  const patientDetails = createPatientDetails({
     storeId: () => params.storeId,
     node,
   });
-
-  // The document path (spec/patients rules › two persistence paths): the
-  // store's Patient registry entry, read once. Undefined while unanswered;
-  // `entry` undefined means none is installed, so the plain path applies.
-  const [patientRegistryData] = createResource(
-    () => params.storeId,
-    fetchPatientRegistry
-  );
-  const patientRegistry = () => gated(patientRegistryData);
-  const onDocumentPath = () => patientRegistry()?.entry !== undefined;
-  const documentEditor = createPatientDocumentEditor({
-    storeId: () => params.storeId,
-    node,
-    registry: () => patientRegistry()?.entry,
-  });
-  const documentForm = documentEditor.form;
-  const archivedVersion = () => {
-    const v = documentForm.version();
-    return v.kind === 'archived' ? v.version : undefined;
-  };
-
-  // The Details tab's save surface, whichever path it is on.
-  const details = () => (onDocumentPath() ? documentEditor : editor);
-  const detailsCanSave = () =>
-    onDocumentPath()
-      ? documentEditor.canSave() && !documentEditor.saving()
-      : editor.isDirty() && !editor.saving();
+  const editor = patientDetails.editor;
+  const details = patientDetails.active;
 
   // Insurance (spec § insurance policies). The tab + add action gate on the
   // site having at least one configured (active) insurance provider; policies
@@ -526,7 +492,7 @@ const PatientDetailView: Component = () => {
                           icon={<SaveIcon />}
                           data-testid="save-button"
                           loading={details().saving()}
-                          disabled={!detailsCanSave()}
+                          disabled={!patientDetails.canSave()}
                           onClick={() => void details().attemptSave()}
                         >
                           {t('button.save')}
@@ -544,66 +510,12 @@ const PatientDetailView: Component = () => {
                     ContentContainer's `padded` supplies (ui-standards/
                     detail-views → detail form). */}
                 <ContentContainer size="form" padded>
-                  <Show when={details().saveError()}>
-                    <Alert severity="error">{details().saveError()}</Alert>
-                  </Show>
-                  <Switch fallback={<Spinner center />}>
-                    <Match when={patientRegistry() && !onDocumentPath()}>
-                      <PatientDetailsForm
-                        storeId={params.storeId}
-                        patientId={params.patientId}
-                        draft={editor.edit}
-                        setField={editor.setField}
-                        disabled={!editor.canMutate()}
-                        errorFor={editor.validation.errorFor}
-                      />
-                      <FormErrorSummary
-                        errors={editor.validation.visible()}
-                        testId="patient-detail-error-summary"
-                      />
-                    </Match>
-                    <Match
-                      when={
-                        documentForm.status() === 'ready' &&
-                        documentForm.library()
-                      }
-                    >
-                      {lib => {
-                        const Default = lib().DefaultPatientForm;
-                        return (
-                          <Stack>
-                            <DocumentVersionNotice
-                              version={documentForm.version()}
-                              onEdit={documentForm.edit}
-                            />
-                            <DocumentFormRegion
-                              slot="patient.form"
-                              documentType={
-                                documentForm.registry()?.documentType ?? ''
-                              }
-                              draft={documentForm.draft}
-                              record={{
-                                patientId: n().id,
-                                documentName: documentForm.document()?.name,
-                              }}
-                              fallback={() => (
-                                <Default draft={documentForm.draft} />
-                              )}
-                              archivedVersion={archivedVersion()}
-                              currentSchemaId={
-                                documentForm.registry()?.formSchemaId
-                              }
-                            />
-                            <DocumentKeptValues values={documentForm.kept()} />
-                            <FormErrorSummary
-                              errors={documentForm.validation.visible()}
-                              testId="patient-detail-error-summary"
-                            />
-                          </Stack>
-                        );
-                      }}
-                    </Match>
-                  </Switch>
+                  <PatientDetailsBody
+                    storeId={params.storeId}
+                    patientId={params.patientId}
+                    details={patientDetails}
+                    errorSummaryTestId="patient-detail-error-summary"
+                  />
                 </ContentContainer>
               </TabPanel>
               <Show when={hasProgramModule()}>

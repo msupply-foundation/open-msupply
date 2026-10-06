@@ -9,19 +9,17 @@ import {
   DialogSaveButton,
 } from '../../../ui/elements/buttons/StandardButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { ContentContainer } from '../../../ui/layout/ContentContainer/ContentContainer';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import { EditIcon } from '../../../ui/icons';
 import { createAddAction } from '../../../ui/utils/keyActions';
-import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
 import { runUpdatePatientCustomFields } from '../patientApi';
 import { Patient, type PatientVariables } from './patient.generated';
-import { createPatientEditor } from './patientEditor';
-import { PatientDetailsForm } from './PatientDetailsForm';
+import { createPatientDetails } from './patientDetails';
+import { PatientDetailsBody } from './PatientDetailsBody';
 import { InsurancePanel } from './insurance/InsurancePanel';
 import { InsuranceModal } from './insurance/InsuranceModal';
 import {
@@ -66,8 +64,11 @@ type ModalTab = 'details' | 'insurance' | 'custom-fields';
  * caller's own page or dialog), so it is read through the `.state` gate, never
  * `.latest` alone — a suspending read would tear down that screen mid-click
  * (kdd/solid-reactivity-pitfalls › no remounts on interaction). The draft,
- * validation and save reuse `createPatientEditor` — the same rules the full
- * detail page's Details tab runs, so the two surfaces can't drift apart.
+ * validation and save reuse `createPatientDetails` — the same path and rules
+ * the full detail page's Details tab runs, so the two surfaces can't drift
+ * apart. On the document path the plugin's patient form (or the host's
+ * default) renders here as on the Details tab; the modal mounts fresh per
+ * open, so its lazy form library is first rendered with the dialog.
  */
 export const EditPatientModal: Component<EditPatientModalProps> = props => {
   const navigate = useNavigate();
@@ -84,7 +85,16 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
   );
   const node = () => gated(data);
 
-  const editor = createPatientEditor({ storeId: () => props.storeId, node });
+  // The details on the store's persistence path, as the patient screen's
+  // Details tab has them: on a store with a patient document type the modal
+  // writes the document too, so the next save from either surface does not
+  // put back what the other changed.
+  const patientDetails = createPatientDetails({
+    storeId: () => props.storeId,
+    node,
+  });
+  const editor = patientDetails.editor;
+  const details = patientDetails.active;
 
   // Insurance tab — identical shape to PatientDetailView's (gated on the site
   // having at least one configured provider; policies load only once the tab
@@ -165,29 +175,29 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
         width="form"
         minBodyHeightRem={34}
         testId="edit-patient-modal"
-        dismissable={!editor.saving()}
+        dismissable={!details().saving()}
         onClose={props.onClose}
         actions={
           <>
             <CancelButton
               data-testid="dialog-button-cancel"
-              disabled={editor.saving()}
+              disabled={details().saving()}
               onClick={props.onClose}
             />
             <Button
               variant="secondary"
               data-testid="view-patient-button"
-              disabled={editor.saving()}
+              disabled={details().saving()}
               onClick={viewPatient}
             >
               {t('button.view-patient')}
             </Button>
-            <Show when={editor.canMutate()}>
+            <Show when={details().canMutate()}>
               <DialogSaveButton
                 data-testid="dialog-button-save"
-                loading={editor.saving()}
-                disabled={!editor.isDirty() || editor.saving()}
-                onClick={() => void editor.attemptSave()}
+                loading={details().saving()}
+                disabled={!patientDetails.canSave()}
+                onClick={() => void details().attemptSave()}
               />
             </Show>
           </>
@@ -209,20 +219,11 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
             />
             <TabPanel value="details">
               <ContentContainer size="form" padded>
-                <Show when={editor.saveError()}>
-                  <Alert severity="error">{editor.saveError()}</Alert>
-                </Show>
-                <PatientDetailsForm
+                <PatientDetailsBody
                   storeId={props.storeId}
                   patientId={props.patientId}
-                  draft={editor.edit}
-                  setField={editor.setField}
-                  disabled={!editor.canMutate()}
-                  errorFor={editor.validation.errorFor}
-                />
-                <FormErrorSummary
-                  errors={editor.validation.visible()}
-                  testId="edit-patient-error-summary"
+                  details={patientDetails}
+                  errorSummaryTestId="edit-patient-error-summary"
                 />
               </ContentContainer>
             </TabPanel>
@@ -265,12 +266,12 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
       />
 
       <ConfirmDialog
-        open={editor.confirmSaveOpen()}
+        open={details().confirmSaveOpen()}
         title={t('heading.are-you-sure')}
         message={t('messages.confirm-save-generic')}
         confirmAction="save"
-        onConfirm={() => void editor.doSave(afterSave)}
-        onClose={() => editor.setConfirmSaveOpen(false)}
+        onConfirm={() => void details().doSave(afterSave)}
+        onClose={() => details().setConfirmSaveOpen(false)}
       />
     </>
   );
