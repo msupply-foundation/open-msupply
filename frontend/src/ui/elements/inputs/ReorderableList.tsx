@@ -13,6 +13,7 @@ import {
   ChevronsUpIcon,
   MenuLinesIcon,
 } from '../../icons';
+import { moveFocus } from './moveFocus';
 import { keepIdentities, moveTo, reorderBy } from './reorderLogic';
 import styles from './ReorderableList.module.css';
 
@@ -98,25 +99,13 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
   const [draggingId, setDraggingId] = createSignal<string>();
 
   /*
-   * The move buttons, by row id and direction. A reorder MOVES the row's DOM
-   * node, and Chromium blurs whatever was focused inside a node it detaches
-   * and re-inserts — so a keyboard user pressing "move up" repeatedly would
-   * lose focus to the body after the first press, and the keyboard path IS
-   * this list's accessible story. After each move focus returns to the same
-   * button of the same row, or to its counterpart where the row has reached
-   * the end and the button it pressed is now disabled.
+   * Focus across a move, the shared registry's (./moveFocus.ts): a reorder
+   * moves the row's DOM node and the browser blurs what was focused inside
+   * it, so without this a keyboard user pressing "move up" repeatedly would
+   * lose focus to the body after the first press — and the keyboard path IS
+   * this list's accessible story.
    */
-  const buttons = new Map<string, HTMLButtonElement>();
-  const buttonKey = (id: string, to: Direction) => `${id}|${to}`;
-  const refocus = (id: string, to: Direction) => {
-    const pressed = buttons.get(buttonKey(id, to));
-    if (pressed?.isConnected && !pressed.disabled) {
-      pressed.focus();
-      return;
-    }
-    // At the end it just reached, the opposite button is the one still live.
-    buttons.get(buttonKey(id, OPPOSITE[to]))?.focus();
-  };
+  const focus = moveFocus<Direction>(OPPOSITE);
 
   /*
    * One object per id, reused while its two lines are unchanged. `<For>` is
@@ -149,7 +138,7 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
   const move = (id: string, to: Direction) => {
     commit(moveTo(ids(), id, to));
     // Solid has flushed the parent's update by now, so the row has moved.
-    refocus(id, to);
+    focus.restore(id, to);
   };
 
   // Keyed by direction, so a move button reads its own name; a memo because
@@ -178,7 +167,7 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
         type="button"
         class={styles.moveButton}
         aria-label={names()[button.to]}
-        ref={el => buttons.set(buttonKey(button.item.id, button.to), el)}
+        ref={focus.ref(button.item.id, button.to)}
         disabled={props.disabled || dead()}
         onClick={() => move(button.item.id, button.to)}
       >
