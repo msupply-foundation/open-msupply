@@ -403,7 +403,7 @@ const StocktakesList: Component = () => {
           ) : (
             <Button
               variant="ghost"
-              data-testid="nothing-here-create-button"
+              data-testid="create-initial-stocktake-button"
               onClick={() => setInitialOpen(true)}
             >
               {t('button.initial-stocktake')}
