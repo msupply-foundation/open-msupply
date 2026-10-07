@@ -54,7 +54,8 @@ pub struct UpdateInput {
     pub default_donor: Option<UpdateDonorInput>,
     pub received_datetime: Option<DateTime<FixedOffset>>,
     /// The shipment's default campaign (null = none): lines added from a
-    /// master list take it, and the line editor prefills new batches with it.
+    /// master list or internal order take it, and the line editor prefills
+    /// new batches with it.
     pub campaign_id: Option<NullableUpdateInput<String>>,
     /// Patch of customFields key -> value (JSON object) merged into the
     /// invoice's custom properties; a `null` value clears that key, keys absent

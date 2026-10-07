@@ -61,7 +61,8 @@ pub struct UpdateInboundShipment {
     pub default_donor: Option<UpdateDefaultDonor>,
     pub received_datetime: Option<DateTime<FixedOffset>>,
     /// The shipment's default campaign (null = none). Lines added from a
-    /// master list take it and the line editor prefills new batches with it;
+    /// master list or internal order take it, and the line editor prefills
+    /// new batches with it;
     /// existing lines are left as they are.
     pub campaign_id: Option<NullableUpdate<String>>,
     /// Patch of customFields key -> value merged into `invoice.custom_fields`

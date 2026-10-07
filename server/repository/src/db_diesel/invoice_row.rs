@@ -179,8 +179,8 @@ pub struct InvoiceRow {
     /// patient-distributed copy of this invoice can land on sites without it.
     pub prescription_request_id: Option<String>,
     /// The shipment-level campaign (None = routine). On inbound, the line
-    /// editor prefills new batches with it and add-from-master-list lines take
-    /// it; on outbound it's the campaign the shipment issues for.
+    /// editor prefills new batches with it and lines added from a master list
+    /// or internal order take it; on outbound it's the campaign the shipment issues for.
     pub campaign_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
