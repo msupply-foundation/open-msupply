@@ -328,9 +328,7 @@ type AncillaryItemNode {
 	"""
 	ancillaryQuantity: Float!
 	"""
-	The ancillary isn't wasted along with the principal (syringes against open-vial
-	wastage), so it is ordered against the principal's quantity net of the
-	principal's wastage rate; false orders it against the whole quantity.
+	Ordered against the principal's quantity net of its wastage rate
 	"""
 	excludePrincipalWastage: Boolean!
 	itemId: String!
@@ -372,8 +370,7 @@ type AncillaryRatioPrincipalNode {
 	itemQuantity: Float!
 	ancillaryQuantity: Float!
 	"""
-	The principal's wastage rate (%) deducted from its demand before the ratio
-	applies; 0 when the link orders for the wasted principal units too
+	The principal's wastage rate (%) deducted before the ratio applies; 0 when none
 	"""
 	wastageRate: Float!
 	"""
@@ -11058,11 +11055,6 @@ input UpsertAncillaryItemInput {
 	Right-hand side of the user-entered `x:y` ratio (ancillary count).
 	"""
 	ancillaryQuantity: Float!
-	"""
-	The ancillary isn't wasted along with the principal, so it is ordered against the
-	principal's quantity net of its wastage rate. Omitted, a saved link keeps its flag
-	and a new one is ordered in full.
-	"""
 	excludePrincipalWastage: Boolean
 }
 

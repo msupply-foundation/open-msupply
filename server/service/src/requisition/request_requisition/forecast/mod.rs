@@ -320,6 +320,9 @@ pub fn wastage_rates(
     store_id: &str,
     item_ids: &[String],
 ) -> Result<HashMap<String, f64>, RepositoryError> {
+    if item_ids.is_empty() {
+        return Ok(HashMap::new());
+    }
     let courses = CoveringCourses::load(connection, store_id, item_ids)?;
     Ok(item_ids
         .iter()
