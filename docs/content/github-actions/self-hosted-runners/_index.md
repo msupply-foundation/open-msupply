@@ -255,9 +255,9 @@ Firefox has its own store: import the root, or set `security.enterprise_roots.en
 
 Shows every deployment on the box — the commit actually running, how far behind its branch, expiry, and whether a deploy is in flight — and lets QA and product start, extend, reseed and remove servers without the GitHub form. Its buttons dispatch the same workflows, with the signed-in person's own token.
 
-Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Releases**, which lists every open-mSupply release, release candidate and nightly with its Docker images (click one to copy its `docker pull`), Windows installers and Android APKs. A third container, `releases`, builds that list every ten minutes from Docker Hub's public tags and the `msupply-releases` B2 bucket, and writes it to a file the dashboard serves. It lists whatever Docker Hub still holds (every release, and a month of nightlies and RCs, per `cleanup-docker-tags.yaml`), plus any older release the bucket has.
+Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Releases**, which lists every open-mSupply release, release candidate and nightly with its Docker images (click one to copy its `docker pull`), Windows installers and Android APKs. A third container, `releases`, builds that list every ten minutes from Docker Hub's public tags and the public `msupply-releases` B2 bucket, and writes it to a file the dashboard serves. It needs no credentials: the bucket can't be listed without a key, so each file is looked up by the name the release workflows upload it under. It lists whatever Docker Hub still holds: every release, and a month of nightlies and RCs, per `cleanup-docker-tags.yaml`. APKs are named after `package.json`'s version rather than the tag, so they're looked for under each way the tag spells its version; that misses only a one-off tag whose version differs from its branch's.
 
-Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket and the B2 key, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs` and `web.mjs`.
+Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs` and `web.mjs`.
 
 **1. Create the GitHub App** people sign in through, once, under the organisation (Settings → Developer settings → GitHub Apps → New):
 
@@ -273,16 +273,11 @@ mkdir -p ~/dashboard
 cat > ~/dashboard/.env <<'EOF'
 GITHUB_CLIENT_ID=Iv23li...
 GITHUB_CLIENT_SECRET=...
-# Optional - see the B2 key below.
-RELEASES_B2_KEY_ID=...
-RELEASES_B2_KEY=...
 EOF
 chmod 600 ~/dashboard/.env
 ```
 
-**The B2 key** lets the Releases tab list the bucket instead of guessing file names. Without it, every Windows installer and the APKs of every release, RC and nightly are still found, but not the APKs of one-off branch builds, which are named after their branch's `package.json` version. Create a key that can list `msupply-releases` and nothing else: in Backblaze, App Keys → Add a New Application Key → allow access to `msupply-releases` only, type **Read Only**; or `b2 key create --bucket msupply-releases releases-dashboard listFiles`. Not the release workflows' key, which can upload. Only the `releases` container sees it.
-
-**3. Run `docker-deploy-services.yaml`**, then open `https://dashboard.<DEPLOY_DOMAIN>`. Besides that optional list-only B2 key, the client secret is the only credential on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
+**3. Run `docker-deploy-services.yaml`**, then open `https://dashboard.<DEPLOY_DOMAIN>`. The client secret is the only credential on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
 
 - **No proxy change is needed**: the container is named `dashboard`, listens on 8000 and sits on `oms-edge`.
 - **Reserved names:** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot`, `oms-dashboard-releases` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action, since a teardown is `docker compose -p <name> down -v`. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
