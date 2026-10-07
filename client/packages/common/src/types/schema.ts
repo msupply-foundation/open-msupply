@@ -5299,6 +5299,12 @@ export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  campaign?: Maybe<CampaignNode>;
+  /**
+   * The shipment's campaign (null = none): the default for new inbound
+   * lines, or the campaign an outbound shipment issues for.
+   */
+  campaignId?: Maybe<Scalars['String']['output']>;
   cancelledDatetime?: Maybe<Scalars['DateTime']['output']>;
   chargesForeignCurrency: Scalars['Float']['output'];
   chargesLocalCurrency: Scalars['Float']['output'];
@@ -8488,6 +8494,7 @@ export type PurchaseOrderFilterInput = {
   confirmedDatetime?: InputMaybe<DatetimeFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  number?: InputMaybe<EqualFilterBigNumberInput>;
   requestedDeliveryDate?: InputMaybe<DateFilterInput>;
   sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
@@ -8508,6 +8515,7 @@ export type PurchaseOrderLineError = {
 export type PurchaseOrderLineFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemName?: InputMaybe<StringFilterInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -8525,8 +8533,10 @@ export type PurchaseOrderLineNode = {
   inTransitNumberOfUnits: Scalars['Float']['output'];
   item: ItemNode;
   lineNumber: Scalars['Int']['output'];
+  lineTotal: Scalars['Float']['output'];
   manufacturer?: Maybe<NameNode>;
   note?: Maybe<Scalars['String']['output']>;
+  outstandingNumberOfUnits: Scalars['Float']['output'];
   pricePerPackAfterDiscount: Scalars['Float']['output'];
   pricePerPackBeforeDiscount: Scalars['Float']['output'];
   purchaseOrder?: Maybe<PurchaseOrderNode>;
@@ -8555,11 +8565,22 @@ export type PurchaseOrderLineNotFound = PurchaseOrderLineError & {
 export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
 
 export enum PurchaseOrderLineSortFieldInput {
+  AdjustedNumberOfUnits = 'adjustedNumberOfUnits',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
+  ItemCode = 'itemCode',
   ItemName = 'itemName',
   LineNumber = 'lineNumber',
+  OutstandingNumberOfUnits = 'outstandingNumberOfUnits',
+  PurchaseOrderConfirmedDatetime = 'purchaseOrderConfirmedDatetime',
   PurchaseOrderNumber = 'purchaseOrderNumber',
+  ReceivedNumberOfUnits = 'receivedNumberOfUnits',
   RequestedDeliveryDate = 'requestedDeliveryDate',
+  RequestedNumberOfUnits = 'requestedNumberOfUnits',
+  RequestedPackSize = 'requestedPackSize',
+  ShippedNumberOfUnits = 'shippedNumberOfUnits',
+  Status = 'status',
+  SupplierName = 'supplierName',
+  Unit = 'unit',
 }
 
 export type PurchaseOrderLineSortInput = {
@@ -8637,9 +8658,16 @@ export enum PurchaseOrderNodeStatus {
 export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
 
 export enum PurchaseOrderSortFieldInput {
+  Comment = 'comment',
+  ConfirmedDatetime = 'confirmedDatetime',
   CreatedDatetime = 'createdDatetime',
+  CurrencyCode = 'currencyCode',
   Number = 'number',
+  OrderTotalAfterDiscount = 'orderTotalAfterDiscount',
+  RequestedDeliveryDate = 'requestedDeliveryDate',
+  SentDatetime = 'sentDatetime',
   Status = 'status',
+  Supplier = 'supplier',
   TargetMonths = 'targetMonths',
 }
 
@@ -11915,6 +11943,12 @@ export type UpdateInboundShipmentErrorInterface = {
 };
 
 export type UpdateInboundShipmentInput = {
+  /**
+   * The shipment's default campaign (null = none): lines added from a
+   * master list or internal order take it, and the line editor prefills
+   * new batches with it.
+   */
+  campaignId?: InputMaybe<NullableStringUpdate>;
   chargesForeignCurrency?: InputMaybe<Scalars['Float']['input']>;
   chargesLocalCurrency?: InputMaybe<Scalars['Float']['input']>;
   colour?: InputMaybe<Scalars['String']['input']>;
@@ -12114,6 +12148,8 @@ export type UpdateOutboundShipmentError = {
 
 export type UpdateOutboundShipmentInput = {
   backdatedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The campaign this shipment issues for (null = routine). */
+  campaignId?: InputMaybe<NullableStringUpdate>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
