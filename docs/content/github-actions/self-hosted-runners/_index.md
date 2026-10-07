@@ -217,7 +217,7 @@ The reverse proxy in front of every deployment and the deployments dashboard liv
 - **The box keeps one file per service, its `.env`:** `~/proxy/.env` and `~/dashboard/.env`. Nothing in CI writes them. `DEPLOY_DOMAIN` and `GITHUB_REPOSITORY` are passed in by the workflow, so neither belongs there.
 - **Only what changed is recreated.** A changed file is a new image, and compose recreates a container only when its image or settings change. Recreating the dashboard signs everyone out; recreating the proxy drops in-flight requests to every deployment for a second or two.
 - **A bad change does not take the box down.** A Caddyfile that does not validate, or a `.mjs` that does not parse, fails the image build, before anything running is touched; the dashboard's tests run before that. If a new version still does not come up healthy, the previous image — kept on the box — is brought back, and the run fails.
-- **Trying a change before it merges:** run the workflow from your branch. That branch's copy stays on the box until the next run from `develop`.
+- **Trying a change before it merges:** run the workflow from your branch. That branch's copy stays on the box until the next run from `develop` — at the latest the daily scheduled one, which also puts back anything changed on the box by hand.
 
 ### Reverse proxy
 
