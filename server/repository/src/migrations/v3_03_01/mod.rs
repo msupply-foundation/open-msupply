@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod restore_invoice_line_indexes;
 mod stamp_central_unsent_before_v3;
 mod stamp_changelog_unpushed_before_v3;
 
@@ -19,6 +20,7 @@ impl Migration for V3_03_01 {
         vec![
             Box::new(stamp_changelog_unpushed_before_v3::Migrate),
             Box::new(stamp_central_unsent_before_v3::Migrate),
+            Box::new(restore_invoice_line_indexes::Migrate),
         ]
     }
 }
