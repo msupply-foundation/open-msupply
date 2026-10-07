@@ -139,6 +139,8 @@ export interface FormsDeclaration {
 export interface FormSchemaVersionRow {
   id: string;
   json_schema: Record<string, unknown>;
+  /** A version under a deployment's own id, declared as `id`. */
+  deployed?: true;
 }
 
 export interface FormDocumentTypeRow {
@@ -954,6 +956,7 @@ export const packFormPlugin = (
           {
             id: versionId(pluginCode, entry, i, schema),
             json_schema: schema,
+            ...(entry.versions[i]?.id ? { deployed: true as const } : {}),
           },
         ];
       });

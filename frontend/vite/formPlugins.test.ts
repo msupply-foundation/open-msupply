@@ -395,6 +395,12 @@ describe('packFormPlugin', () => {
       'deployed-uuid',
       schemaVersionId('demo_program', 'Visit', 2, { ...schema, title: 'v2' }),
     ]);
+    // The deployment's own version is marked, so install can check the entry
+    // it takes over is on one of them.
+    expect(visit.versions.map(version => version.deployed)).toEqual([
+      true,
+      undefined,
+    ]);
     expect(visit.legacy_ui_schema).toEqual(uiSchema);
 
     // A type without one packs no key at all, so the server keeps what it has.

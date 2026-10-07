@@ -70,6 +70,10 @@ pub struct SchemaVersion {
     /// over, that deployment's own id, so documents pinned to it stay pinned.
     pub id: String,
     pub json_schema: serde_json::Value,
+    /// True for a version declared under a deployment's own id: the bundle
+    /// claims to carry that deployment's versions of the type.
+    #[serde(default)]
+    pub deployed: bool,
 }
 
 /// What the person installing chose, from the CLI's `--program` and
@@ -163,6 +167,17 @@ pub enum FormPluginInstallError {
          (plugins/MIGRATING-PROGRAMS.md, step 6), and change them in a later install"
     )]
     TakeOverChangesConfig { document_type: String },
+    #[error(
+        "{document_type} declares versions under a deployment's own ids, but not {schema_id}, \
+         the version this server's {document_type} entry is on: the bundle carries another \
+         deployment's versions of the type, or leaves out this one's current version. Declare \
+         each of this deployment's versions with its \"id\", oldest first \
+         (plugins/MIGRATING-PROGRAMS.md, step 2)"
+    )]
+    TakeOverMissesCurrentVersion {
+        document_type: String,
+        schema_id: String,
+    },
     #[error(
         "No program chosen for key \"{program_key}\" of plugin {plugin_code}. Pass --program \
          {program_key}=<programId>. Programs on this server: {available}"
@@ -487,6 +502,7 @@ fn install_document_type(
     if let Some((row, taken_over)) = &existing {
         refuse_blanking_old_ui(connection, row, declaration, options)?;
         if *taken_over {
+            refuse_another_deployments_versions(row, declaration)?;
             refuse_changing_config(row, declaration)?;
         }
     }
@@ -656,6 +672,30 @@ fn refuse_blanking_old_ui(
     Ok(())
 }
 
+/// A type that declares versions under a deployment's own ids claims to
+/// carry that deployment's versions, so the entry it takes over must be on
+/// one of them: otherwise the bundle was built from another deployment, and
+/// would move this one's entry onto versions its documents were never pinned
+/// to. A type declaring none is the plugin's own, replacing the entry's
+/// schema outright, as the demo's Patient type does.
+fn refuse_another_deployments_versions(
+    row: &DocumentRegistryRow,
+    declaration: &DocumentTypeDeclaration,
+) -> Result<(), FormPluginInstallError> {
+    if !declaration.versions.iter().any(|version| version.deployed) {
+        return Ok(());
+    }
+    match &row.form_schema_id {
+        Some(current) if !declaration.versions.iter().any(|v| v.id == *current) => {
+            Err(FormPluginInstallError::TakeOverMissesCurrentVersion {
+                document_type: declaration.document_type.clone(),
+                schema_id: current.clone(),
+            })
+        }
+        _ => Ok(()),
+    }
+}
+
 /// A take-over carries the deployment's registry config as deployed, as it
 /// carries its schemas: the deployment's sites derive program events and the
 /// old client's next-visit suggestion from it, and the install would replace
@@ -761,6 +801,7 @@ mod test {
         SchemaVersion {
             id: format!("{PLUGIN}_{document_type}_v{n}_hash"),
             json_schema: json!({ "type": "object", "title": format!("{document_type} v{n}") }),
+            deployed: false,
         }
     }
 
@@ -1156,6 +1197,7 @@ mod test {
         legacy.versions = vec![SchemaVersion {
             id: deployed.id.clone(),
             json_schema: deployed.json_schema.clone(),
+            deployed: true,
         }];
         legacy.legacy_ui_schema = Some(deployed.ui_schema.clone());
         let mut sidecar = demo_sidecar();
@@ -1575,6 +1617,7 @@ mod test {
             SchemaVersion {
                 id: "existing_patient_entry_schema".to_string(),
                 json_schema: json!({}),
+                deployed: true,
             },
         );
         install_form_plugins(
@@ -1586,6 +1629,62 @@ mod test {
             ),
         )
         .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn a_take_over_must_carry_the_entrys_current_version() {
+        let connection = setup("form_plugin_other_deployment").await;
+        insert_unowned_entry(
+            &connection,
+            "existing_patient_entry",
+            PATIENT_TYPE,
+            DocumentRegistryCategory::Patient,
+            PATIENT_CONTEXT_ID,
+        );
+        let take_over = || {
+            blanking_old_ui(
+                options(&[("demo", "program_a")], &[PATIENT_TYPE]),
+                &[PATIENT_TYPE],
+            )
+        };
+        let with_deployed = |id: &str| {
+            let mut sidecar = demo_sidecar();
+            sidecar.document_types[0].versions.insert(
+                0,
+                SchemaVersion {
+                    id: id.to_string(),
+                    json_schema: json!({}),
+                    deployed: true,
+                },
+            );
+            sidecar
+        };
+
+        // Built from another deployment's export: no documents here are pinned
+        // yet, so only the entry's current version gives it away.
+        let error = install_form_plugins(
+            &connection,
+            &[with_deployed("other_deployment_schema")],
+            &take_over(),
+        )
+        .unwrap_err();
+        assert_eq!(
+            error,
+            Error::TakeOverMissesCurrentVersion {
+                document_type: PATIENT_TYPE.to_string(),
+                schema_id: "existing_patient_entry_schema".to_string(),
+            }
+        );
+        assert_eq!(entry(&connection, PATIENT_TYPE).plugin_code, None);
+
+        // Carrying this deployment's version, it is taken over.
+        let installed = install_form_plugins(
+            &connection,
+            &[with_deployed("existing_patient_entry_schema")],
+            &take_over(),
+        )
+        .unwrap();
+        assert_eq!(installed[0].outcome, RegistryOutcome::TakenOver);
     }
 
     #[actix_rt::test]
@@ -1685,6 +1784,7 @@ mod test {
         sidecar.document_types[0].versions = vec![SchemaVersion {
             id: "existing_patient_entry_schema".to_string(),
             json_schema: json!({}),
+            deployed: true,
         }];
         install_form_plugins(
             &connection,
@@ -1726,6 +1826,7 @@ mod test {
         sidecar.document_types[0].versions = vec![SchemaVersion {
             id: "existing_patient_entry_schema".to_string(),
             json_schema: json!({}),
+            deployed: true,
         }];
         install_form_plugins(
             &connection,
