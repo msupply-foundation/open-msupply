@@ -14,9 +14,9 @@
  *                                               key needs one on first install
  *     [--take-over <documentType>]...           adopt an existing registry
  *                                               entry no plugin owns
- *     [--blank-old-ui <documentType>]...        let a taken-over type's form
- *                                               go blank on old-client sites
- *                                               (it has no legacyUiSchema)
+ *     [--blank-old-ui <documentType>]...        let a type's form go blank on
+ *                                               old-client sites (it has no
+ *                                               legacyUiSchema)
  *     [--dry-run]                               build, then print the command
  *
  * The server is OMS_URL (default http://localhost:8000), logged in as

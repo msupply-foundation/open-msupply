@@ -82,9 +82,10 @@ pub struct FormInstallOptions {
     /// Document types whose existing entry, owned by no plugin, the installing
     /// plugin may take over.
     pub take_over: HashSet<String>,
-    /// Taken-over document types whose old-client form may go blank: the type
-    /// declares no legacy UI schema, so sites still on the old client lose the
-    /// deployment's form for it. Refused unless named here.
+    /// Document types whose old-client form may go blank: the type declares no
+    /// legacy UI schema, so an install that moves its entry to a new version
+    /// leaves sites still on the old client without the form they drew from
+    /// the version before. Refused unless named here.
     pub blank_old_ui: HashSet<String>,
 }
 
@@ -148,13 +149,13 @@ pub enum FormPluginInstallError {
     #[error("--blank-old-ui names {0}, which no form plugin in this bundle declares")]
     BlankOldUiNotDeclared(String),
     #[error(
-        "{document_type} is taken over without a legacyUiSchema: the deployment's entry has a \
-         UI schema and the version this install makes current has none, so sites still on the \
-         old client would show its form blank from now on. Copy the deployment's UI schema into \
-         the type as its legacyUiSchema (plugins/README.md, taking over a deployed type), or pass \
+        "{document_type} declares no legacyUiSchema: its entry's current version has a UI schema \
+         and the version this install makes current has none, so sites still on the old client \
+         would show its form blank from now on. Copy the deployment's UI schema into the type as \
+         its legacyUiSchema (plugins/README.md, taking over a deployed type), or pass \
          --blank-old-ui {document_type} if no site using this type runs the old client"
     )]
-    TakeOverBlanksOldUi { document_type: String },
+    BlanksOldUi { document_type: String },
     #[error(
         "{document_type} is taken over with a registry config other than the deployment's: its \
          event rules or nextEncounter would change or be dropped. Carry the deployment's config \
@@ -483,9 +484,11 @@ fn install_document_type(
         });
     }
 
-    if let Some((row, true)) = &existing {
+    if let Some((row, taken_over)) = &existing {
         refuse_blanking_old_ui(connection, row, declaration, options)?;
-        refuse_changing_config(row, declaration)?;
+        if *taken_over {
+            refuse_changing_config(row, declaration)?;
+        }
     }
 
     let (schemas_added, ui_schemas_updated) = install_schema_versions(connection, declaration)?;
@@ -613,12 +616,13 @@ fn existing_entry(
 }
 
 /// The old client draws a type's form from the UI schema on the registry
-/// entry's current version. A take-over that moves the entry to a new version
-/// of the plugin's, carrying no legacy UI schema, leaves that form empty on
-/// every site still on the old client, so it is refused unless the person
-/// installing says that is intended. A take-over at the deployment's own
-/// version keeps its stored UI schema, and an entry whose UI schema was
-/// already empty loses nothing.
+/// entry's current version. An install that moves the entry to a new version
+/// carrying no legacy UI schema leaves that form empty on every site still on
+/// the old client, so it is refused unless the person installing says that is
+/// intended: at a take-over, and on every later install, since a take-over at
+/// the deployment's own version keeps its stored UI schema until the plugin
+/// adds a version. An install that keeps the current version, or an entry
+/// whose UI schema was already empty, loses nothing.
 fn refuse_blanking_old_ui(
     connection: &StorageConnection,
     row: &DocumentRegistryRow,
@@ -645,7 +649,7 @@ fn refuse_blanking_old_ui(
         None => false,
     };
     if has_ui {
-        return Err(FormPluginInstallError::TakeOverBlanksOldUi {
+        return Err(FormPluginInstallError::BlanksOldUi {
             document_type: document_type.clone(),
         });
     }
@@ -1645,7 +1649,7 @@ mod test {
         .unwrap_err();
         assert_eq!(
             error,
-            Error::TakeOverBlanksOldUi {
+            Error::BlanksOldUi {
                 document_type: PATIENT_TYPE.to_string()
             }
         );
@@ -1704,6 +1708,68 @@ mod test {
             error,
             Error::BlankOldUiNotDeclared("NotInTheBundle".to_string())
         );
+    }
+
+    #[actix_rt::test]
+    async fn a_later_version_needs_the_old_client_form_too() {
+        let connection = setup("form_plugin_blank_old_ui_later").await;
+        insert_unowned_entry(
+            &connection,
+            "existing_patient_entry",
+            PATIENT_TYPE,
+            DocumentRegistryCategory::Patient,
+            PATIENT_CONTEXT_ID,
+        );
+        // Taken over at the deployment's own version, which keeps its UI
+        // schema, so no legacy UI schema is needed yet.
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types[0].versions = vec![SchemaVersion {
+            id: "existing_patient_entry_schema".to_string(),
+            json_schema: json!({}),
+        }];
+        install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &options(&[("demo", "program_a")], &[PATIENT_TYPE]),
+        )
+        .unwrap();
+
+        // The plugin's own next version would become current with none.
+        sidecar.document_types[0]
+            .versions
+            .push(version(PATIENT_TYPE, 2));
+        let error = install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &FormInstallOptions::default(),
+        )
+        .unwrap_err();
+        assert_eq!(
+            error,
+            Error::BlanksOldUi {
+                document_type: PATIENT_TYPE.to_string()
+            }
+        );
+        assert_eq!(
+            entry(&connection, PATIENT_TYPE).form_schema_id.as_deref(),
+            Some("existing_patient_entry_schema")
+        );
+
+        // Named, it installs; after that the current version has no UI schema
+        // to lose, so the next install needs no flag.
+        install_form_plugins(
+            &connection,
+            &[sidecar.clone()],
+            &blanking_old_ui(FormInstallOptions::default(), &[PATIENT_TYPE]),
+        )
+        .unwrap();
+        assert_eq!(
+            entry(&connection, PATIENT_TYPE).form_schema_id.as_deref(),
+            Some("demo_program_Patient_v2_hash")
+        );
+        let installed =
+            install_form_plugins(&connection, &[sidecar], &FormInstallOptions::default()).unwrap();
+        assert_eq!(installed[0].outcome, RegistryOutcome::Unchanged);
     }
 
     #[actix_rt::test]

@@ -88,10 +88,10 @@ pub struct InstallPluginBundle {
     /// Repeatable.
     #[clap(long = "take-over")]
     take_over: Vec<String>,
-    /// Taken-over document type whose form may go blank on sites still running
-    /// the old client, because the plugin's type carries no legacy UI schema.
-    /// Install refuses that take-over unless the type is named here.
-    /// Repeatable.
+    /// Document type whose form may go blank on sites still running the old
+    /// client, because the plugin's type carries no legacy UI schema. Install
+    /// refuses to move its entry to a version with none, over one with a UI
+    /// schema, unless the type is named here. Repeatable.
     #[clap(long = "blank-old-ui")]
     blank_old_ui: Vec<String>,
 }
