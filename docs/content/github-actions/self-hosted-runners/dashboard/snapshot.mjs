@@ -178,12 +178,13 @@ export function commitFromImage(image, name) {
   } while (version !== prev);
   version = version.replace(/-(amd64|arm64)$/, '').replace(/-(postgres|sqlite)$/, '');
 
-  // `deploy_<sha7>`, shared by every deployment of a commit - `deployVersion`
-  // in deploy-plan.js.
+  // `deploy_<sha7>`, shared by every deployment of a commit, previews included
+  // - `deployVersion` in deploy-plan.js.
   const shared = /^deploy_([0-9a-f]{7,40})$/.exec(version);
   if (shared) return { sha: shared[1], release: null };
-  // `<name>-<sha7>`, the per-name shape from before images were shared, and
-  // still what a preview's `pr-<n>-<sha7>` is.
+  // `<name>-<sha7>`, the per-name shape from before images were shared -
+  // `pr-<n>-<sha7>` for a preview. Kept so containers deployed before then
+  // still show their commit until they are next redeployed.
   if (version.startsWith(`${name}-`)) {
     const rest = version.slice(name.length + 1);
     if (/^[0-9a-f]{7,40}$/.test(rest)) return { sha: rest, release: null };
