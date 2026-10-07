@@ -60,8 +60,9 @@ pub struct UpdateInboundShipment {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
     pub received_datetime: Option<DateTime<FixedOffset>>,
-    /// The shipment's default campaign (null = none). New lines start with
-    /// it in the line editor; existing lines are left as they are.
+    /// The shipment's default campaign (null = none). Lines added from a
+    /// master list take it and the line editor prefills new batches with it;
+    /// existing lines are left as they are.
     pub campaign_id: Option<NullableUpdate<String>>,
     /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left

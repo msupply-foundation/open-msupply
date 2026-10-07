@@ -9877,7 +9877,8 @@ input UpdateInboundShipmentInput {
 	defaultDonor: UpdateDonorInput
 	receivedDatetime: DateTime
 	"""
-	The shipment's default campaign (null = none) — new lines start with it.
+	The shipment's default campaign (null = none): lines added from a
+	master list take it, and the line editor prefills new batches with it.
 	"""
 	campaignId: NullableStringUpdate
 	"""
