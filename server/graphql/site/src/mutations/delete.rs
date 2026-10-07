@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -83,12 +83,12 @@ fn map_error(error: ServiceError) -> Result<DeleteSiteErrorInterface> {
 
     let graphql_error = match error {
         ServiceError::SiteHasStores => {
-            return Ok(DeleteSiteErrorInterface::SiteHasStores(SiteHasStores))
+            return Ok(DeleteSiteErrorInterface::SiteHasStores(SiteHasStores));
         }
         ServiceError::CannotDeleteCentralSite => {
             return Ok(DeleteSiteErrorInterface::CannotDeleteCentralSite(
                 CannotDeleteCentralSite,
-            ))
+            ));
         }
         ServiceError::SiteDoesNotExist => BadUserInput(formatted_error),
         ServiceError::NotStandaloneCentral => BadUserInput(formatted_error),

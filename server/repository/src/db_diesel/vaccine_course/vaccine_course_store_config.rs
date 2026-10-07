@@ -1,12 +1,12 @@
 use super::vaccine_course_store_config_row::{
-    vaccine_course_store_config, VaccineCourseStoreConfigRow,
+    VaccineCourseStoreConfigRow, vaccine_course_store_config,
 };
 
 use diesel::{helper_types::IntoBoxed, prelude::*};
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    StorageConnection,
+    DBType, EqualFilter, StorageConnection, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
 };
 
 #[derive(Clone, Default)]

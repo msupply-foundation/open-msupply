@@ -1,7 +1,7 @@
 use crate::invoice::{
-    can_cancel_invoice, check_invoice_exists, check_invoice_is_editable, check_invoice_type,
-    check_status_change, check_store, custom_fields::check_invoice_custom_fields_patch,
-    is_generated_dispensation, UpdatePrescriptionStatus,
+    UpdatePrescriptionStatus, can_cancel_invoice, check_invoice_exists, check_invoice_is_editable,
+    check_invoice_type, check_status_change, check_store,
+    custom_fields::check_invoice_custom_fields_patch, is_generated_dispensation,
 };
 use crate::validate::check_patient_exists;
 use repository::{
@@ -40,18 +40,17 @@ pub fn validate(
         return Err(NotAPrescriptionInvoice);
     }
 
-    if let Some(properties) = &patch.custom_fields {
-        if let Some(problem) =
+    if let Some(properties) = &patch.custom_fields
+        && let Some(problem) =
             check_invoice_custom_fields_patch(connection, &invoice.r#type, properties)?
-        {
-            return Err(problem.into());
-        }
+    {
+        return Err(problem.into());
     }
 
-    if let Some(clinician_id) = &patch.clinician_id {
-        if !check_clinician_exists(connection, &clinician_id.value)? {
-            return Err(ClinicianDoesNotExist);
-        }
+    if let Some(clinician_id) = &patch.clinician_id
+        && !check_clinician_exists(connection, &clinician_id.value)?
+    {
+        return Err(ClinicianDoesNotExist);
     }
 
     if let Some(field) = changed_prescriber_field(connection, &invoice, patch)? {
@@ -101,10 +100,10 @@ fn changed_prescriber_field(
         return Ok(Some("patient"));
     }
 
-    if let Some(diagnosis_id) = &patch.diagnosis_id {
-        if diagnosis_id.value != invoice.diagnosis_id {
-            return Ok(Some("diagnosis"));
-        }
+    if let Some(diagnosis_id) = &patch.diagnosis_id
+        && diagnosis_id.value != invoice.diagnosis_id
+    {
+        return Ok(Some("diagnosis"));
     }
 
     if let Some(clinician_id) = &patch.clinician_id {

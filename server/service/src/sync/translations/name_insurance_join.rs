@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
     ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option};
@@ -202,8 +202,8 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, InsuranceProviderRow,
-        InsuranceProviderRowRepository, NameLinkRow, NameLinkRowRepository,
+        InsuranceProviderRow, InsuranceProviderRowRepository, NameLinkRow, NameLinkRowRepository,
+        mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

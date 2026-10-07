@@ -2,8 +2,8 @@ use crate::{
     activity_log::activity_log_entry,
     requisition::{
         common::{
-            check_approval_status, check_emergency_order_within_max_items_limit,
-            check_requisition_row_exists, OrderTypeNotFoundError,
+            OrderTypeNotFoundError, check_approval_status,
+            check_emergency_order_within_max_items_limit, check_requisition_row_exists,
         },
         query::get_requisition,
     },
@@ -13,11 +13,11 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    reason_option_row::ReasonOptionType,
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, ReasonOptionFilter, ReasonOptionRepository, RepositoryError,
     Requisition, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
     RequisitionRowRepository, StorageConnection,
+    reason_option_row::ReasonOptionType,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
 use thiserror::Error;
 
@@ -242,18 +242,18 @@ mod test_update {
     };
     use chrono::Utc;
     use repository::{
-        mock::{
-            mock_finalised_response_requisition, mock_new_response_program_requisition,
-            mock_new_response_requisition, mock_new_response_requisition_for_update_test,
-            mock_request_program_requisition, mock_response_program_requisition,
-            mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
-            MockDataInserts,
-        },
-        requisition_row::{RequisitionRow, RequisitionStatus},
-        test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, EqualFilter, RequisitionLineFilter,
         RequisitionLineRepository, RequisitionRowRepository, StorePreferenceRow,
         StorePreferenceRowRepository,
+        mock::{
+            MockDataInserts, mock_finalised_response_requisition,
+            mock_new_response_program_requisition, mock_new_response_requisition,
+            mock_new_response_requisition_for_update_test, mock_request_program_requisition,
+            mock_response_program_requisition, mock_sent_request_requisition, mock_store_a,
+            mock_store_b, mock_user_account_b,
+        },
+        requisition_row::{RequisitionRow, RequisitionStatus},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

@@ -21,6 +21,10 @@
 }
 
 .root {
+  /* The label's line height — shared by the label and the box placement
+     below, so the box stays centred on the first line if either changes. */
+  --checkbox-label-line: 1.3;
+
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
@@ -31,10 +35,14 @@
   cursor: default;
 }
 
-/* Placement of the control in the label row: nudged to the first label
-   line (the box is 18px against the label's ~18.2px line). */
+/* Placement of the control in the label row: centred on the label's FIRST
+   line (half the difference between that line and the box), so a wrapped
+   label keeps the box beside its opening words. Computed from the box size and
+   the line height, so it stays centred if either changes (#984). */
 .control {
-  margin-block-start: 0.0625rem;
+  margin-block-start: calc(
+    (var(--text-sm) * var(--checkbox-label-line) - var(--checkbox-size)) / 2
+  );
 }
 
 .label {
@@ -43,7 +51,7 @@
   /* The shared field-label weight — a choice control's label-beside text reads
      the same as a label-above field's (Carl 2026-07-30). */
   font-weight: var(--field-label-font-weight);
-  line-height: 1.3;
+  line-height: var(--checkbox-label-line);
 }
 
 /* The box fades itself now (BareCheckbox's --disabled-opacity, so the fade also

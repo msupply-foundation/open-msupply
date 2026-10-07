@@ -36,7 +36,7 @@ fn parse_default_query(input: &str) -> anyhow::Result<DefaultQuery> {
         _ => {
             return Err(anyhow::Error::msg(format!(
                 "Invalid default query: {input}"
-            )))
+            )));
         }
     };
     Ok(query)

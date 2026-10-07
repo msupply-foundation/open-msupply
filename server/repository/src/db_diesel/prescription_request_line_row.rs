@@ -1,13 +1,13 @@
 use super::{
-    item_link_row::item_link, item_row::item, prescription_request_row::prescription_request,
-    StorageConnection,
+    StorageConnection, item_link_row::item_link, item_row::item,
+    prescription_request_row::prescription_request,
 };
 
+use crate::Upsert;
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
-use crate::Upsert;
-use crate::{repository_error::RepositoryError, Delete};
 use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId};
+use crate::{Delete, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};

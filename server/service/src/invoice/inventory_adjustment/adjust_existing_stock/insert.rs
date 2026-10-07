@@ -5,13 +5,13 @@ use repository::{
     InvoiceStatus, StockLine,
 };
 
-use super::generate::{generate, GenerateResult, InsertStockInOrOutLine};
+use super::generate::{GenerateResult, InsertStockInOrOutLine, generate};
 use super::validate::validate;
 
 use crate::activity_log::activity_log_entry;
 use crate::invoice::query::get_invoice;
-use crate::invoice_line::stock_in_line::{insert_stock_in_line, InsertStockInLineError};
-use crate::invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError};
+use crate::invoice_line::stock_in_line::{InsertStockInLineError, insert_stock_in_line};
+use crate::invoice_line::stock_out_line::{InsertStockOutLineError, insert_stock_out_line};
 use crate::service_provider::ServiceContext;
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -144,18 +144,18 @@ impl From<crate::preference::PreferenceError> for InsertInventoryAdjustmentError
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_stock_line_a, mock_stock_line_b, mock_store_a, mock_store_b, mock_user_account_a,
-            MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceRowRepository, InvoiceStatus, ReasonOptionRow, ReasonOptionType,
         StockLineFilter, StockLineRepository, StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_stock_line_a, mock_stock_line_b, mock_store_a,
+            mock_store_b, mock_user_account_a,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     use crate::{
         invoice::inventory_adjustment::{
-            adjust_existing_stock::InsertInventoryAdjustment, AdjustmentType,
+            AdjustmentType, adjust_existing_stock::InsertInventoryAdjustment,
         },
         service_provider::ServiceProvider,
     };

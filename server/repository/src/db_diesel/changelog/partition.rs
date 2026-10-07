@@ -1,6 +1,6 @@
 use crate::{
-    migrations::{helpers::max_sequence, ChangelogPartitionConfig},
     RepositoryError, StorageConnection,
+    migrations::{ChangelogPartitionConfig, helpers::max_sequence},
 };
 use diesel::{
     prelude::*,
@@ -97,7 +97,9 @@ pub fn ensure_partition_lookahead(
     if max_upper == 0 {
         // `changelog` isn't partitioned (pre-migration) or has no partitions —
         // should not reach this state. Should we panic or throw error instead? For now, just log and return.
-        log::warn!("changelog partition lookahead: changelog table is not partitioned or has no partitions");
+        log::warn!(
+            "changelog partition lookahead: changelog table is not partitioned or has no partitions"
+        );
         return Ok(PartitionTopUp::Created {
             partitions: 0,
             overflow_rows: 0,
@@ -278,12 +280,13 @@ fn parse_upper_bound(expr: &str) -> Option<i64> {
 #[cfg(all(test, feature = "postgres"))]
 mod tests {
     use super::{
-        attach_range_partition, create_standalone_partition_table, ensure_partition_lookahead,
-        parse_upper_bound, PartitionTopUp, DEFAULT_PARTITION,
+        DEFAULT_PARTITION, PartitionTopUp, attach_range_partition,
+        create_standalone_partition_table, ensure_partition_lookahead, parse_upper_bound,
     };
     use crate::{
-        migrations::ChangelogPartitionConfig, mock::MockDataInserts, test_db, ChangeLogInsertRow,
-        ChangelogRepository, ChangelogTableName, StorageConnection, StorageConnectionManager,
+        ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, StorageConnection,
+        StorageConnectionManager, migrations::ChangelogPartitionConfig, mock::MockDataInserts,
+        test_db,
     };
     use diesel::{
         prelude::*,

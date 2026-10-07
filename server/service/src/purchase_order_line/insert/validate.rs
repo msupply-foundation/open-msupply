@@ -3,7 +3,7 @@ use crate::{
     purchase_order_line::insert::{
         InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput, PackSizeCodeCombination,
     },
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 use repository::{
     EqualFilter, ItemRow, ItemRowRepository, ItemStoreJoinRowRepository,
@@ -51,10 +51,10 @@ pub fn validate(
     let item_store = ItemStoreJoinRowRepository::new(connection)
         .find_one_by_item_and_store_id(&item.id, store_id)?;
 
-    if let Some(item_store_join) = item_store {
-        if item_store_join.ignore_for_orders {
-            return Err(InsertPurchaseOrderLineError::ItemCannotBeOrdered);
-        }
+    if let Some(item_store_join) = item_store
+        && item_store_join.ignore_for_orders
+    {
+        return Err(InsertPurchaseOrderLineError::ItemCannotBeOrdered);
     }
 
     // check if pack size and item id combination already exists
@@ -89,18 +89,18 @@ pub fn validate(
             Ok(_) => {}
             Err(e) => match e {
                 OtherPartyErrors::OtherPartyDoesNotExist => {
-                    return Err(InsertPurchaseOrderLineError::OtherPartyDoesNotExist {})
+                    return Err(InsertPurchaseOrderLineError::OtherPartyDoesNotExist {});
                 }
                 // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
                 // an item variant) or inherited from stock without being visible in this store
                 OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => {
-                    return Err(InsertPurchaseOrderLineError::OtherPartyNotAManufacturer)
+                    return Err(InsertPurchaseOrderLineError::OtherPartyNotAManufacturer);
                 }
                 OtherPartyErrors::DatabaseError(repository_error) => {
                     return Err(InsertPurchaseOrderLineError::DatabaseError(
                         repository_error,
-                    ))
+                    ));
                 }
             },
         };

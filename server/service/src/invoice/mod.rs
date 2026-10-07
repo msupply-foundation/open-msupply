@@ -6,24 +6,24 @@ use repository::PaginationOption;
 use repository::RepositoryError;
 use repository::StockLine;
 
-use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
+use crate::service_provider::ServiceContext;
 pub mod query;
-use self::customer_return::insert::insert_customer_return;
 use self::customer_return::insert::InsertCustomerReturn;
 use self::customer_return::insert::InsertCustomerReturnError;
-use self::inventory_adjustment::add_new_stock_line::{
-    add_new_stock_line, AddNewStockLine, AddNewStockLineError,
-};
-use self::inventory_adjustment::insert_inventory_adjustment;
+use self::customer_return::insert::insert_customer_return;
 use self::inventory_adjustment::InsertInventoryAdjustment;
 use self::inventory_adjustment::InsertInventoryAdjustmentError;
-use self::outbound_shipment::batch_outbound_shipment;
+use self::inventory_adjustment::add_new_stock_line::{
+    AddNewStockLine, AddNewStockLineError, add_new_stock_line,
+};
+use self::inventory_adjustment::insert_inventory_adjustment;
 use self::outbound_shipment::BatchOutboundShipment;
 use self::outbound_shipment::BatchOutboundShipmentResult;
 use self::outbound_shipment::UpdateOutboundShipmentName;
 use self::outbound_shipment::UpdateOutboundShipmentNameError;
+use self::outbound_shipment::batch_outbound_shipment;
 use self::query::*;
 use self::supplier_return::delete::*;
 use self::supplier_return::generate_supplier_return_lines::*;

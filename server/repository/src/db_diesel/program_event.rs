@@ -1,13 +1,13 @@
 use super::{
-    program_event_row::{program_event, program_event_with_links},
     StorageConnection,
+    program_event_row::{program_event, program_event_with_links},
 };
 
 use crate::{
-    db_diesel::{name_link_row::name_link, name_row::name},
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     DBType, DatetimeFilter, EqualFilter, NameRow, Pagination, ProgramEventRow, RepositoryError,
     Sort, StringFilter,
+    db_diesel::{name_link_row::name_link, name_row::name},
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -265,10 +265,10 @@ mod test {
     use chrono::DateTime;
 
     use crate::{
-        mock::{context_program_a, mock_patient, mock_patient_b, MockDataInserts},
-        test_db::setup_all,
         EqualFilter, Pagination, ProgramEventFilter, ProgramEventRepository, ProgramEventRow,
         ProgramEventRowRepository,
+        mock::{MockDataInserts, context_program_a, mock_patient, mock_patient_b},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

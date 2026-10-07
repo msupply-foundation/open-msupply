@@ -2,7 +2,7 @@ use repository::Name;
 use repository::StorageConnection;
 
 use crate::invoice::check_invoice_exists;
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party};
 
 use super::{InsertOutboundShipment, InsertOutboundShipmentError};
 

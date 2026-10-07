@@ -3,13 +3,13 @@ use crate::boajs::context::with_shared_connection;
 use crate::common::days_in_a_month;
 use crate::preference::{AdjustForNumberOfDaysOutOfStock, Preference};
 use crate::{
+    PluginOrRepositoryError,
     backend_plugin::{
         plugin_provider::{PluginInstance, PluginResult},
         types::amc,
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
-    PluginOrRepositoryError,
 };
 use chrono::{Duration, NaiveDate};
 use repository::{
@@ -311,11 +311,12 @@ impl ItemStats {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_item_a, mock_store_a, mock_store_b, test_item_stats, MockData, MockDataInserts,
-        },
-        test_db, PreferenceRow, PreferenceRowRepository, StockLineRow, StorePreferenceRow,
+        PreferenceRow, PreferenceRowRepository, StockLineRow, StorePreferenceRow,
         StorePreferenceRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_store_a, mock_store_b, test_item_stats,
+        },
+        test_db,
     };
 
     use crate::{

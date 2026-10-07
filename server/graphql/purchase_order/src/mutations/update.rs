@@ -1,12 +1,12 @@
 use async_graphql::*;
 use chrono::{NaiveDate, NaiveDateTime};
 use graphql_core::{
+    ContextExt,
     generic_inputs::NullableUpdateInput,
     standard_graphql_error::{
-        validate_auth,
         StandardGraphqlError::{BadUserInput, InternalError},
+        validate_auth,
     },
-    ContextExt,
 };
 use graphql_types::{
     generic_errors::ItemCannotBeOrdered,
@@ -14,11 +14,11 @@ use graphql_types::{
 };
 use repository::{PurchaseOrderLine, PurchaseOrderRow};
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     purchase_order::update::{
         UpdatePurchaseOrderError as ServiceError, UpdatePurchaseOrderInput as ServiceInput,
     },
-    NullableUpdate,
 };
 
 #[derive(InputObject)]
@@ -216,12 +216,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::ItemsCannotBeOrdered(lines) => {
             return Ok(UpdateErrorInterface::ItemsCannotBeOrdered(
                 ItemsCannotBeOrdered(lines),
-            ))
+            ));
         }
         ServiceError::InboundShipmentsNotVerified => {
             return Ok(UpdateErrorInterface::InboundShipmentsNotVerified(
                 InboundShipmentsNotVerified,
-            ))
+            ));
         }
 
         ServiceError::SupplierDoesNotExist

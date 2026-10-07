@@ -4,16 +4,16 @@ use std::collections::HashMap;
 use async_graphql::Context;
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
+    UploadedFile,
     auth::{Resource, ResourceAccessRequest},
     plugin::{
-        form_plugin::{FormInstallOptions, FormPluginInstallError},
         InstallUploadedPluginError,
+        form_plugin::{FormInstallOptions, FormPluginInstallError},
     },
-    UploadedFile,
 };
 use util::format_error;
 
@@ -96,7 +96,7 @@ pub fn install_uploaded_plugin(
 
 #[cfg(test)]
 mod test {
-    use super::{program_choices, PluginProgramInput};
+    use super::{PluginProgramInput, program_choices};
 
     fn choice(program_key: &str, program_id: &str) -> PluginProgramInput {
         PluginProgramInput {

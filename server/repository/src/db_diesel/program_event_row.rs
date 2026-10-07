@@ -131,9 +131,11 @@ impl Upsert for ProgramEventRow {
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
-        assert!(ProgramEventRowRepository::new(con)
-            .find_one_by_id(&self.id)
-            .unwrap()
-            .is_some())
+        assert!(
+            ProgramEventRowRepository::new(con)
+                .find_one_by_id(&self.id)
+                .unwrap()
+                .is_some()
+        )
     }
 }

@@ -133,7 +133,9 @@ pub enum FormPluginInstallError {
         document_type: String,
         category: DocumentRegistryCategory,
     },
-    #[error("{document_type} names program key \"{program_key}\", which plugin {plugin_code} does not declare")]
+    #[error(
+        "{document_type} names program key \"{program_key}\", which plugin {plugin_code} does not declare"
+    )]
     UndeclaredProgramKey {
         plugin_code: String,
         document_type: String,
@@ -186,7 +188,9 @@ pub enum FormPluginInstallError {
         document_type: String,
         id: String,
     },
-    #[error("{count} registry entries exist for document type {document_type}; install needs at most one")]
+    #[error(
+        "{count} registry entries exist for document type {document_type}; install needs at most one"
+    )]
     AmbiguousEntries { document_type: String, count: usize },
     #[error(
         "The existing {document_type} entry is a {existing:?} entry, but the plugin declares it as \
@@ -294,24 +298,24 @@ fn validate_declarations(
 
             match (&declaration.category, &declaration.program_key) {
                 (DocumentRegistryCategory::Patient, _) if document_type != PATIENT_TYPE => {
-                    return Err(Error::PatientTypeName(document_type.clone()))
+                    return Err(Error::PatientTypeName(document_type.clone()));
                 }
                 (DocumentRegistryCategory::Patient, Some(_)) => {
-                    return Err(Error::PatientWithProgramKey(document_type.clone()))
+                    return Err(Error::PatientWithProgramKey(document_type.clone()));
                 }
                 (DocumentRegistryCategory::Patient, None) => {}
                 (category, None) => {
                     return Err(Error::MissingProgramKey {
                         document_type: document_type.clone(),
                         category: category.clone(),
-                    })
+                    });
                 }
                 (_, Some(program_key)) if !sidecar.program_keys.contains(program_key) => {
                     return Err(Error::UndeclaredProgramKey {
                         plugin_code: sidecar.plugin_code.clone(),
                         document_type: document_type.clone(),
                         program_key: program_key.clone(),
-                    })
+                    });
                 }
                 (_, Some(_)) => {}
             }
@@ -380,7 +384,7 @@ fn resolve_program_contexts(
                         plugin_code: sidecar.plugin_code.clone(),
                         program_key: key.clone(),
                         available: available_programs(connection),
-                    })
+                    });
                 }
             },
         };
@@ -660,7 +664,7 @@ fn install_schema_versions(
     for version in &declaration.versions {
         match repo.find_one_by_id(&version.id)? {
             Some(installed) if installed.json_schema != version.json_schema => {
-                return Err(FormPluginInstallError::SchemaIdConflict(version.id.clone()))
+                return Err(FormPluginInstallError::SchemaIdConflict(version.id.clone()));
             }
             Some(installed) => {
                 let replace = legacy_ui_schema.filter(|ui_schema| {
@@ -696,19 +700,19 @@ mod test {
 
     use chrono::Utc;
     use repository::{
-        mock::{context_program_a, MockDataInserts},
-        test_db::setup_all,
         ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, Document,
         DocumentRegistryCategory, DocumentRegistryConfig, DocumentRegistryRow,
         DocumentRegistryRowRepository, DocumentRepository, DocumentStatus, FormSchemaJson,
         FormSchemaRowRepository, StorageConnection,
+        mock::{MockDataInserts, context_program_a},
+        test_db::setup_all,
     };
     use serde_json::json;
     use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use super::{
-        install_form_plugins, DocumentTypeDeclaration, FormInstallOptions,
-        FormPluginInstallError as Error, FormPluginSidecar, RegistryOutcome, SchemaVersion,
+        DocumentTypeDeclaration, FormInstallOptions, FormPluginInstallError as Error,
+        FormPluginSidecar, RegistryOutcome, SchemaVersion, install_form_plugins,
     };
 
     const PLUGIN: &str = "demo_program";
@@ -971,11 +975,13 @@ mod test {
         let installed =
             install_form_plugins(&connection, &[sidecar], &FormInstallOptions::default()).unwrap();
 
-        assert!(installed
-            .iter()
-            .all(|i| i.outcome == RegistryOutcome::Unchanged
-                && i.schemas_added == 0
-                && i.ui_schemas_updated == 0));
+        assert!(
+            installed
+                .iter()
+                .all(|i| i.outcome == RegistryOutcome::Unchanged
+                    && i.schemas_added == 0
+                    && i.ui_schemas_updated == 0)
+        );
         assert_eq!(
             entry(&connection, "DemoEncounter").context_id,
             context_program_a().id
@@ -1241,10 +1247,12 @@ mod test {
                 .as_deref(),
             Some("demo_program_DemoEncounter_v3_hash")
         );
-        assert!(FormSchemaRowRepository::new(&connection)
-            .find_one_by_id("demo_program_DemoEncounter_v1_hash")
-            .unwrap()
-            .is_some());
+        assert!(
+            FormSchemaRowRepository::new(&connection)
+                .find_one_by_id("demo_program_DemoEncounter_v1_hash")
+                .unwrap()
+                .is_some()
+        );
     }
 
     #[actix_rt::test]

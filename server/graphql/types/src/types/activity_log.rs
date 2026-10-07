@@ -2,10 +2,10 @@ use super::{StoreNode, UserNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    loader::{StoreByIdLoader, UserLoader},
     ContextExt,
+    loader::{StoreByIdLoader, UserLoader},
 };
-use repository::{activity_log::ActivityLog, ActivityLogRow};
+use repository::{ActivityLogRow, activity_log::ActivityLog};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]

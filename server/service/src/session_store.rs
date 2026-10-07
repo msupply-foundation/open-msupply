@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use chrono::{DateTime, Duration, Utc};
 use rand::RngExt;
 
@@ -310,9 +310,11 @@ mod tests {
 
         // Central accepts a password the stored hash does not verify against
         assert!(store.revoke_for_credentials_changed_at_central("u"));
-        assert!(store
-            .validate_and_slide(&issued_under_the_old_password)
-            .is_none());
+        assert!(
+            store
+                .validate_and_slide(&issued_under_the_old_password)
+                .is_none()
+        );
         assert!(store.validate_and_slide(&other_user).is_some());
 
         // Sync still hasn't landed the new hash, and a second device logs in with the

@@ -1,4 +1,4 @@
-use crate::sync::translations::{store::StoreTranslation, PullTranslateResult, SyncTranslation};
+use crate::sync::translations::{PullTranslateResult, SyncTranslation, store::StoreTranslation};
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -8,7 +8,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, naive_time};
 
-use super::{to_legacy_time, FkField, PushTranslateResult};
+use super::{FkField, PushTranslateResult, to_legacy_time};
 
 /// Message from mSupply Central Server
 #[derive(Deserialize, Serialize, Debug)]

@@ -48,10 +48,10 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(OutError::NotAnInboundShipment);
     }
-    if let Some(inbound_type) = inbound_shipment_type {
-        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
-            return Err(OutError::WrongInboundShipmentType);
-        }
+    if let Some(inbound_type) = inbound_shipment_type
+        && !inbound_type.matches_input(invoice.purchase_order_id.is_some())
+    {
+        return Err(OutError::WrongInboundShipmentType);
     }
     if !check_invoice_lines_are_editable(&invoice) {
         return Err(OutError::CannotEditInvoice);

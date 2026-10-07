@@ -1,10 +1,10 @@
 use boa_engine::*;
-use repository::{query_read_only, SqlParameters};
+use repository::{SqlParameters, query_read_only};
 use serde_json::Value;
 use util::format_error;
 
 use crate::boajs::{
-    context::{use_boajs_connection, BoaJsContext},
+    context::{BoaJsContext, use_boajs_connection},
     utils::*,
 };
 
@@ -134,17 +134,16 @@ mod test {
     use actix_web::web::Data;
     use chrono::NaiveDate;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ActivityLogRow, ActivityLogRowRepository,
-        ActivityLogType, UserAccountRow, UserAccountRowRepository,
+        ActivityLogRow, ActivityLogRowRepository, ActivityLogType, UserAccountRow,
+        UserAccountRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
     use serde_json::json;
 
     use crate::{
         boajs::{
-            call_method,
+            BoaJsError, call_method,
             context::BoaJsContext,
             utils::{ExecuteGraphQlError, ExecuteGraphql},
-            BoaJsError,
         },
         service_provider::ServiceProvider,
     };
@@ -344,11 +343,13 @@ mod test {
 
         // A positional placeholder is not a name (on postgres it is left alone and the engine
         // complains; sqlite treats it as a name nothing supplies)
-        assert!(call(
-            "run",
-            json!({ "query": "SELECT $1 AS a", "params": { "a": 1 } })
-        )
-        .is_err());
+        assert!(
+            call(
+                "run",
+                json!({ "query": "SELECT $1 AS a", "params": { "a": 1 } })
+            )
+            .is_err()
+        );
 
         // A value with no name is fine: a report is handed every variable it might want
         let rows = call(

@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{ProgramEnrolmentRow, StockLine, VaccinationRow};
 
-use crate::vaccination::generate::{generate_create_prescription, CreatePrescription};
+use crate::vaccination::generate::{CreatePrescription, generate_create_prescription};
 
 use super::InsertVaccination;
 

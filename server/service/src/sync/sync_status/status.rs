@@ -1,9 +1,9 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    syncv7::SyncError, ChangelogRepository, DatetimeFilter, EqualFilter, FilterBuilder, KeyType,
+    ChangelogRepository, DatetimeFilter, EqualFilter, FilterBuilder, KeyType,
     KeyValueStoreRepository, Pagination, RepositoryError, SiteRowRepository, Sort,
     SyncLogV5V6Filter, SyncLogV5V6Repository, SyncLogV5V6Row, SyncLogV5V6SortField,
-    SyncLogV7Condition, SyncLogV7Repository, SyncLogV7SortField, SyncVersion,
+    SyncLogV7Condition, SyncLogV7Repository, SyncLogV7SortField, SyncVersion, syncv7::SyncError,
 };
 
 use crate::{
@@ -463,13 +463,13 @@ impl SyncLogError {
 mod test {
     use crate::{
         sync::{settings::SyncSettings, sync_status::status::InitialisationStatus},
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
     use chrono::Utc;
     use repository::{
-        mock::{insert_extra_mock_data, MockData, MockDataInserts},
-        syncv7::SyncError,
         SyncLogV5V6Row, SyncLogV5V6RowRepository, SyncLogV7Row,
+        mock::{MockData, MockDataInserts, insert_extra_mock_data},
+        syncv7::SyncError,
     };
     use util::assert_matches;
 

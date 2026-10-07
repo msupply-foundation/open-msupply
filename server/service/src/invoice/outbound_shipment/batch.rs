@@ -1,35 +1,35 @@
 use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
+    BatchMutationsProcessor, InputWithResult, WithDBError,
     invoice_line::{
         outbound_shipment_service_line::{
-            delete_outbound_shipment_service_line, insert_outbound_shipment_service_line,
-            update_outbound_shipment_service_line, DeleteOutboundShipmentServiceLineError,
-            InsertOutboundShipmentServiceLine, InsertOutboundShipmentServiceLineError,
-            UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError,
+            DeleteOutboundShipmentServiceLineError, InsertOutboundShipmentServiceLine,
+            InsertOutboundShipmentServiceLineError, UpdateOutboundShipmentServiceLine,
+            UpdateOutboundShipmentServiceLineError, delete_outbound_shipment_service_line,
+            insert_outbound_shipment_service_line, update_outbound_shipment_service_line,
         },
         outbound_shipment_unallocated_line::{
-            allocate_outbound_shipment_unallocated_line, delete_outbound_shipment_unallocated_line,
-            insert_outbound_shipment_unallocated_line, update_outbound_shipment_unallocated_line,
             AllocateLineResult, AllocateOutboundShipmentUnallocatedLineError,
             DeleteOutboundShipmentUnallocatedLine, DeleteOutboundShipmentUnallocatedLineError,
             InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
             UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
+            allocate_outbound_shipment_unallocated_line, delete_outbound_shipment_unallocated_line,
+            insert_outbound_shipment_unallocated_line, update_outbound_shipment_unallocated_line,
         },
         stock_out_line::{
-            delete_stock_out_line, insert_stock_out_line, update_stock_out_line,
             DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
             InsertStockOutLineError, UpdateStockOutLine, UpdateStockOutLineError,
+            delete_stock_out_line, insert_stock_out_line, update_stock_out_line,
         },
     },
     service_provider::ServiceContext,
-    BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
 use super::{
-    delete::{delete_outbound_shipment, DeleteOutboundShipmentError},
-    insert::{insert_outbound_shipment, InsertOutboundShipment, InsertOutboundShipmentError},
-    update::{update_outbound_shipment, UpdateOutboundShipment, UpdateOutboundShipmentError},
+    delete::{DeleteOutboundShipmentError, delete_outbound_shipment},
+    insert::{InsertOutboundShipment, InsertOutboundShipmentError, insert_outbound_shipment},
+    update::{UpdateOutboundShipment, UpdateOutboundShipmentError, update_outbound_shipment},
 };
 
 #[derive(Clone, Debug)]
@@ -260,22 +260,22 @@ pub fn batch_outbound_shipment(
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceLineRowRepository, InvoiceRowRepository,
         mock::{
-            mock_inbound_shipment_a, mock_name_store_b, mock_stock_line_a, mock_store_a,
-            MockDataInserts,
+            MockDataInserts, mock_inbound_shipment_a, mock_name_store_b, mock_stock_line_a,
+            mock_store_a,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository, InvoiceRowRepository,
     };
 
     use crate::{
+        InputWithResult,
         invoice::outbound_shipment::{
-            delete::DeleteOutboundShipmentError, insert::InsertOutboundShipment,
-            BatchOutboundShipment,
+            BatchOutboundShipment, delete::DeleteOutboundShipmentError,
+            insert::InsertOutboundShipment,
         },
         invoice_line::stock_out_line::{InsertStockOutLine, StockOutType},
         service_provider::ServiceProvider,
-        InputWithResult,
     };
 
     #[actix_rt::test]

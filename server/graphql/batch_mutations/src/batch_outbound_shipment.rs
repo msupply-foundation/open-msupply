@@ -1,7 +1,7 @@
-use crate::{to_standard_error, VecOrNone};
+use crate::{VecOrNone, to_standard_error};
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_invoice::mutations::outbound_shipment;
 use graphql_invoice_line::mutations::outbound_shipment_line;
 use service::auth::Resource;
@@ -311,7 +311,7 @@ fn map_insert_lines(responses: InsertLinesResult) -> Result<InsertLinesResponse>
             match outbound_shipment_line::line::insert::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -330,7 +330,7 @@ fn map_update_lines(responses: UpdateLinesResult) -> Result<UpdateLinesResponse>
             match outbound_shipment_line::line::update::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -349,7 +349,7 @@ fn map_delete_lines(responses: DeleteLinesResult) -> Result<DeleteLinesResponse>
             match outbound_shipment_line::line::delete::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -370,7 +370,7 @@ fn map_insert_service_lines(
             match outbound_shipment_line::service_line::insert::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -391,7 +391,7 @@ fn map_update_service_lines(
             match outbound_shipment_line::service_line::update::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -412,7 +412,7 @@ fn map_delete_service_lines(
             match outbound_shipment_line::service_line::delete::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -433,7 +433,7 @@ fn map_insert_unallocated_lines(
             match outbound_shipment_line::unallocated_line::insert::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -454,7 +454,7 @@ fn map_update_unallocated_lines(
             match outbound_shipment_line::unallocated_line::update::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -475,7 +475,7 @@ fn map_delete_unallocated_lines(
             match outbound_shipment_line::unallocated_line::delete::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -495,7 +495,7 @@ fn map_allocate_lines(responses: AllocateLinesResult) -> Result<AllocateLinesRes
             {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -514,19 +514,20 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, RepositoryError,
-        StorageConnectionManager,
+        InvoiceLine, InvoiceLineRow, RepositoryError, StorageConnectionManager,
+        mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
+        InputWithResult,
         invoice::{
+            InvoiceServiceTrait,
             outbound_shipment::{
+                BatchOutboundShipment, BatchOutboundShipmentResult,
                 delete::DeleteOutboundShipmentError,
                 insert::{InsertOutboundShipment, InsertOutboundShipmentError},
                 update::{UpdateOutboundShipment, UpdateOutboundShipmentError},
-                BatchOutboundShipment, BatchOutboundShipmentResult,
             },
-            InvoiceServiceTrait,
         },
         invoice_line::{
             outbound_shipment_service_line::{
@@ -546,7 +547,6 @@ mod test {
             },
         },
         service_provider::{ServiceContext, ServiceProvider},
-        InputWithResult,
     };
 
     use crate::BatchMutations;

@@ -4,11 +4,11 @@ use repository::{InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow, StorageCo
 
 use crate::invoice::{
     common::{
-        generate_batches_total_number_of_packs_update, get_invoice_status_datetime,
-        InvoiceLineHasNoStockLine,
+        InvoiceLineHasNoStockLine, generate_batches_total_number_of_packs_update,
+        get_invoice_status_datetime,
     },
     invoice_date_utils::handle_new_backdated_datetime,
-    stock_effect::{stock_effects, StockEffect},
+    stock_effect::{StockEffect, stock_effects},
 };
 
 use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatus};

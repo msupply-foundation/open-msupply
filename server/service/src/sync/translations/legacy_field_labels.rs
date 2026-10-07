@@ -1,5 +1,5 @@
 use anyhow::{bail, ensure};
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use log::warn;
 use repository::{
     CustomFieldRow, CustomFieldRowRepository, RepositoryError, StorageConnection, SyncBufferRow,
@@ -8,8 +8,8 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::convert::TryInto;
 
-use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
+use crate::sync::central_mapping_custom_fields::keys;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -370,7 +370,7 @@ mod tests {
         central_mapping_custom_fields::seed_central_mapping_custom_fields,
         test_util_set_is_central_server,
     };
-    use repository::{mock::MockDataInserts, test_db::setup_all, SyncAction, SyncRecordData};
+    use repository::{SyncAction, SyncRecordData, mock::MockDataInserts, test_db::setup_all};
 
     /// Captured from a live OG → OMS sync buffer: the 9 factory-default name
     /// labels ("Category 1".."3", "Custom 1".."3", "Category 4".."6"), with a
@@ -403,10 +403,13 @@ mod tests {
 
         assert!(parse_4d_text_array("not base64!").is_err());
         // Valid base64, wrong magic.
-        assert!(parse_4d_text_array(
-            &BASE64_STANDARD.encode(b"XXXX\x22\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
-        )
-        .is_err());
+        assert!(
+            parse_4d_text_array(
+                &BASE64_STANDARD
+                    .encode(b"XXXX\x22\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
+            )
+            .is_err()
+        );
         // Truncated: header promises an element that isn't there.
         let valid = BASE64_STANDARD.decode(DEFAULT_NAME_LABELS_BLOB).unwrap();
         assert!(parse_4d_text_array(&BASE64_STANDARD.encode(&valid[..40])).is_err());

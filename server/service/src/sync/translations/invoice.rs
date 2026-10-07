@@ -1,7 +1,8 @@
 use super::{
-    utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
     FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields},
 };
+use crate::sync::CentralServerConfig;
 use crate::sync::central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
@@ -9,7 +10,6 @@ use crate::sync::translations::{
     name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
     shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 };
-use crate::sync::CentralServerConfig;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -517,7 +517,7 @@ impl SyncTranslation for InvoiceTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "Unsupported invoice type {:?}",
                     data._type
-                )))
+                )));
             }
         };
         let invoice_status = match invoice_status(&invoice_type, &data, is_transfer) {
@@ -526,7 +526,7 @@ impl SyncTranslation for InvoiceTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "Unsupported invoice status {:?} (type: {:?}",
                     data.status, data._type
-                )))
+                )));
             }
         };
 
@@ -686,16 +686,15 @@ impl SyncTranslation for InvoiceTranslation {
         // Inactive user aren't always synced from mSupply
         // To avoid referential issues we'll create a blank placeholder user
         // If the user is synced later the record will be updated to the correct data
-        if let Some(user_id) = &result.user_id {
-            if UserAccountRowRepository::new(connection)
+        if let Some(user_id) = &result.user_id
+            && UserAccountRowRepository::new(connection)
                 .find_one_by_id(user_id)?
                 .is_none()
-            {
-                UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
-                    id: user_id.clone(),
-                    ..Default::default()
-                })?;
-            }
+        {
+            UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
+                id: user_id.clone(),
+                ..Default::default()
+            })?;
         }
 
         let mut operations = Vec::new();
@@ -824,7 +823,7 @@ impl SyncTranslation for InvoiceTranslation {
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
                     "Unsupported invoice type {type:?}"
-                )))
+                )));
             }
         };
 
@@ -833,7 +832,7 @@ impl SyncTranslation for InvoiceTranslation {
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
                     "Unsupported invoice status: {status:?}"
-                )))
+                )));
             }
         };
 
@@ -1288,16 +1287,16 @@ mod tests {
     use super::*;
     use chrono::NaiveDate;
     use repository::{
-        insurance_provider_row::InsuranceProviderRowRepository,
-        mock::{mock_store_a, MockData, MockDataInserts},
-        name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
-        shipping_method_row::ShippingMethodRowRepository,
-        system_log_row::{SystemLogRowRepository, SystemLogType},
-        test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
         CursorAndLimit, DiagnosisRow, DiagnosisRowRepository, FilterBuilder, InsuranceProviderRow,
         KeyType, KeyValueStoreRow, NameInsuranceJoinRowRepository, RowOrDelete, ShippingMethodRow,
         SyncAction, SyncRecordData,
+        insurance_provider_row::InsuranceProviderRowRepository,
+        mock::{MockData, MockDataInserts, mock_store_a},
+        name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
+        shipping_method_row::ShippingMethodRowRepository,
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::{setup_all, setup_all_with_data},
     };
     use serde_json::json;
 

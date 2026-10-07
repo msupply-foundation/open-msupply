@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use repository::ancillary_item::AncillaryItemFilter;
-    use repository::mock::{mock_item_a, mock_item_b, mock_item_c, MockDataInserts};
-    use repository::test_db::setup_all;
     use repository::EqualFilter;
+    use repository::ancillary_item::AncillaryItemFilter;
+    use repository::mock::{MockDataInserts, mock_item_a, mock_item_b, mock_item_c};
+    use repository::test_db::setup_all;
 
     use crate::item::ancillary_item::{
         DeleteAncillaryItem, DeleteAncillaryItemError, UpsertAncillaryItem,

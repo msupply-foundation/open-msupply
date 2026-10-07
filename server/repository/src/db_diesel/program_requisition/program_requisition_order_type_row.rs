@@ -1,8 +1,8 @@
 use super::program_requisition_settings_row::program_requisition_settings;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
-    StorageConnection,
+    ChangelogRepository, RowActionType, SourceSiteId, StorageConnection,
+    repository_error::RepositoryError,
 };
 
 use diesel::prelude::*;

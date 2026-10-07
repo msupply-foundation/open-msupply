@@ -1,12 +1,12 @@
 use std::sync::{Arc, RwLock};
 
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 
 use repository::{
-    migrations::Version, BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes,
-    PluginVariantType,
+    BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes, PluginVariantType,
+    migrations::Version,
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 use crate::boajs::{self, BoaJsError};
@@ -175,11 +175,11 @@ impl PluginInstance {
         // Get existing plugin with same code in the plugin provider
         {
             let plugins = PLUGINS.read().unwrap();
-            if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code) {
-                if existing_plugin.instance.version > version {
-                    // Existing plugin is higher version, skip (still install if same version)
-                    return;
-                }
+            if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code)
+                && existing_plugin.instance.version > version
+            {
+                // Existing plugin is higher version, skip (still install if same version)
+                return;
             }
         } // Drop read lock
 

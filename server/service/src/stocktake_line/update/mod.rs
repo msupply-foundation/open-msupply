@@ -7,7 +7,7 @@ use chrono::NaiveDate;
 use repository::{RepositoryError, StockLine, StocktakeLine, StocktakeLineRowRepository};
 
 use crate::{
-    service_provider::ServiceContext, stocktake_line::query::get_stocktake_line, NullableUpdate,
+    NullableUpdate, service_provider::ServiceContext, stocktake_line::query::get_stocktake_line,
 };
 
 #[derive(Default, Debug, Clone)]
@@ -81,22 +81,22 @@ pub fn update_stocktake_line(
 mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            mock_donor_a, mock_item_a, mock_item_restricted_location_type_b,
-            mock_location_with_restricted_location_type_a, mock_locations,
-            mock_locked_stocktake_line, mock_stock_line_b, mock_stocktake_a, mock_stocktake_line_a,
-            mock_stocktake_line_finalised, mock_store_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, NameRow,
         ReasonOptionRow, ReasonOptionRowRepository, ReasonOptionType, StockLineFilter,
         StockLineRepository, StocktakeLineRow, StocktakeLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_donor_a, mock_item_a,
+            mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
+            mock_locations, mock_locked_stocktake_line, mock_stock_line_b, mock_stocktake_a,
+            mock_stocktake_line_a, mock_stocktake_line_finalised, mock_store_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{
+        NullableUpdate,
         service_provider::ServiceProvider,
         stocktake_line::update::{UpdateStocktakeLine, UpdateStocktakeLineError},
-        NullableUpdate,
     };
 
     #[actix_rt::test]

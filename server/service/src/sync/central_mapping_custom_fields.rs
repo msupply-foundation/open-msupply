@@ -440,7 +440,7 @@ pub fn seed_central_mapping_custom_fields(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all, ChangelogRepository};
+    use repository::{ChangelogRepository, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn seeds_mapping_custom_fields_idempotently() {
@@ -613,7 +613,7 @@ mod tests {
     fn transaction_category_mappings_stay_in_lock_step() {
         use crate::invoice::invoice_custom_field_scope;
         use crate::sync::translations::invoice::{
-            category_key_for_invoice_type, LEGACY_INVOICE_OWNED_KEYS,
+            LEGACY_INVOICE_OWNED_KEYS, category_key_for_invoice_type,
         };
         use repository::InvoiceType::*;
 

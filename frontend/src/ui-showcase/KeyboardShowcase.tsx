@@ -136,7 +136,10 @@ export const KeyboardShowcase = () => {
               A search-and-run overlay over every registered action. It composes{' '}
               <code>Dialog</code>, so it layers above an already-open dialog via
               the top layer. Arrows move the highlight (wrapping), Enter runs
-              the highlighted action, Escape dismisses without navigating.
+              the highlighted action, Escape dismisses without navigating. A
+              click outside it dismisses it too: it is the one{' '}
+              <code>Dialog</code> that passes <code>scrimDismiss</code>, while
+              every other dialog ignores a click on the scrim.
             </Note>
             <Row>
               <Button onClick={() => setPaletteOpen(true)}>

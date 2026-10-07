@@ -1,17 +1,17 @@
 use std::collections::BTreeMap;
 
 use actix_web::{
+    Error, HttpResponse,
     error::InternalError,
     http::StatusCode,
     web::{self, Data, Query},
-    Error, HttpResponse,
 };
 use serde::Deserialize;
 
 use service::{
     preference::{
-        flatten_language_namespaces, CustomTranslations, CustomTranslationsV2,
-        CustomTranslationsV2Value, Preference,
+        CustomTranslations, CustomTranslationsV2, CustomTranslationsV2Value, Preference,
+        flatten_language_namespaces,
     },
     service_provider::ServiceProvider,
 };
