@@ -1,6 +1,6 @@
 use super::{ChangelogRepository, RowActionType, StorageConnection};
 
-use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert};
+use crate::{ChangelogSyncType, SourceSiteId, Upsert, repository_error::RepositoryError};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 

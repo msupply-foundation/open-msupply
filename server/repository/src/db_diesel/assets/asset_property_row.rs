@@ -2,12 +2,12 @@ use super::asset_property_row::asset_property::dsl::*;
 
 use serde::{Deserialize, Serialize};
 
-use crate::types::PropertyValueType;
 use crate::ChangelogRepository;
 use crate::RepositoryError;
 use crate::RowActionType;
 use crate::SourceSiteId;
 use crate::StorageConnection;
+use crate::types::PropertyValueType;
 use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;

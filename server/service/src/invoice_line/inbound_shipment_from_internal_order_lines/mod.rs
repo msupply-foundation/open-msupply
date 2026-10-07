@@ -4,9 +4,9 @@ use repository::{
 };
 
 mod validate;
-use validate::{validate, ValidateResults};
+use validate::{ValidateResults, validate};
 mod generate;
-use generate::{generate, GenerateResult};
+use generate::{GenerateResult, generate};
 
 use crate::service_provider::ServiceContext;
 
@@ -83,14 +83,14 @@ impl From<RepositoryError> for InsertFromInternalOrderLineError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_item_a, mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
-            mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRow,
         InvoiceStatus, InvoiceType, RequisitionLineRow, RequisitionRow, StockLineRowRepository,
         StorePreferenceRow,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_name_store_b, mock_outbound_shipment_e,
+            mock_store_a, mock_store_b, mock_user_account_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{

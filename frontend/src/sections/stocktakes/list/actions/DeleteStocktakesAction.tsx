@@ -29,7 +29,7 @@ export interface DeleteStocktakesActionProps {
 // and NOTHING is deleted, so on error we show OUR translated message (not the
 // server's English description) with just a Close — the selection is kept so
 // the footer (and this dialog) stay mounted. While deleting, the dialog is
-// blocking (no scrim/Escape) and Cancel is hidden. Success closes the dialog
+// blocking (no Escape) and Cancel is hidden. Success closes the dialog
 // and hands back to the list (clear selection + re-query, onDeleted) — closure
 // is the confirmation, no announcement follows (ui-standards controls.md
 // § dialogs / § action feedback).

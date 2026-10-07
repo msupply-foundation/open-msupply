@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod insert {
     use repository::{
-        mock::{mock_store_a, mock_store_b, mock_user_account_a, MockDataInserts},
-        test_db::setup_all,
         SyncMessageRowRepository, SyncMessageRowStatus, SyncMessageRowType,
+        mock::{MockDataInserts, mock_store_a, mock_store_b, mock_user_account_a},
+        test_db::setup_all,
     };
 
     use crate::{

@@ -3,12 +3,12 @@ use super::{
 };
 
 use crate::{
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
     db_diesel::{
         clinician_link_row::clinician_link, clinician_row::clinician, item_row::item,
         name_row::name,
     },
-    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;

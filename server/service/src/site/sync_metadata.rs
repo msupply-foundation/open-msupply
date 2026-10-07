@@ -85,7 +85,7 @@ pub fn record_site_full_pull(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all, SyncVersion};
+    use repository::{SyncVersion, mock::MockDataInserts, test_db::setup_all};
 
     fn base_site() -> SiteRow {
         SiteRow {

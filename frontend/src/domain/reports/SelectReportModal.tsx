@@ -204,7 +204,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
         open
         testId="select-report-modal"
         initialFocus={picker}
-        // Blocking while generating — no scrim/Escape exit mid-flight.
+        // Blocking while generating — no Escape exit mid-flight.
         dismissable={!busy()}
         onClose={props.onClose}
         icon={<PrinterIcon />}

@@ -112,7 +112,7 @@ mod tests {
         mock_encounter_a, mock_immunisation_program_enrolment_a, mock_store_a, mock_user_account_a,
     };
     use repository::{
-        encounter_row::EncounterRow, mock::MockDataInserts, test_db::setup_all, ChangelogRepository,
+        ChangelogRepository, encounter_row::EncounterRow, mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

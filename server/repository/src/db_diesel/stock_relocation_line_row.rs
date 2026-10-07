@@ -1,12 +1,12 @@
 use super::{
-    item_row::item, location_row::location, stock_line_row::stock_line,
-    stock_relocation_row::stock_relocation, StorageConnection,
+    StorageConnection, item_row::item, location_row::location, stock_line_row::stock_line,
+    stock_relocation_row::stock_relocation,
 };
 
-use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::Upsert;
-use crate::{repository_error::RepositoryError, Delete};
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId};
+use crate::{Delete, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};

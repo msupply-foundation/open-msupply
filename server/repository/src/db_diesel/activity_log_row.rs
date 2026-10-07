@@ -1,10 +1,10 @@
 use super::StorageConnection;
 
-use crate::{
-    db_diesel::store_row::store, repository_error::RepositoryError, user_account,
-    ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
 use crate::{ChangelogRepository, RowActionType};
+use crate::{
+    ChangelogSyncType, Delete, SourceSiteId, Upsert, db_diesel::store_row::store,
+    repository_error::RepositoryError, user_account,
+};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;

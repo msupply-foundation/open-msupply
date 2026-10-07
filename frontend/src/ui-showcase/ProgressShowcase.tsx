@@ -1,4 +1,4 @@
-import type { JSX } from 'solid-js';
+import { createSignal, type JSX } from 'solid-js';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
@@ -62,6 +62,11 @@ export const progressMetadata: PageMetadata = {
       searchTerms: ['steps', 'phase', 'determinate', 'connector', 'marker'],
     },
     {
+      id: 'progress-wizard',
+      title: 'Wizard rail',
+      searchTerms: ['wizard', 'navigable', 'tappable', 'jump', 'gate'],
+    },
+    {
       id: 'progress-sync',
       title: 'Sync progress',
       searchTerms: [
@@ -83,6 +88,30 @@ export const progressMetadata: PageMetadata = {
 const demoLoadedAt = Date.now();
 const demoAgo = (seconds: number): string =>
   new Date(demoLoadedAt - seconds * 1000).toISOString();
+
+/*
+ * The navigable variant: a wizard's rail, where the operator jumps back to a
+ * step already done and forward only as far as the gates allow. Here the gate
+ * is "one step at a time"; a real consumer's is its own (the Afghanistan
+ * tally's is its Continue gate).
+ */
+const WizardRailDemo = () => {
+  const [current, setCurrent] = createSignal(1);
+  return (
+    <ProgressList
+      variant="secondary"
+      onStepSelect={setCurrent}
+      steps={['Quick entry', 'Coverage', 'Batches', 'Summary'].map(
+        (label, index) => ({
+          label,
+          started: index <= current(),
+          finished: index < current(),
+          navigable: index !== current() && index <= current() + 1,
+        })
+      )}
+    />
+  );
+};
 
 // A captioned demo row — the small grey label above one indicator.
 const Case = (props: { caption: string; children: JSX.Element }) => (
@@ -187,6 +216,20 @@ export const ProgressShowcase = () => (
             { label: 'Complete', started: false, finished: false },
           ]}
         />
+      </DashboardCard>
+
+      <DashboardCard id="progress-wizard" title="Wizard rail — navigable steps">
+        <Lead>
+          A wizard's step rail is this same stepper: mark a step{' '}
+          <code>navigable</code> and pass <code>onStepSelect</code>, and that
+          step's marker becomes a button named <em>Go to {'{step}'}</em> — the
+          circle only, so the rail's geometry is unchanged and an unreachable
+          step stays a plain marker, out of the tab order. Which steps those
+          are is the consumer's call: it owns the wizard's gates, so nothing
+          here second-guesses them. Below, a step already done and the next one
+          are reachable; press a marker to move.
+        </Lead>
+        <WizardRailDemo />
       </DashboardCard>
 
       <DashboardCard

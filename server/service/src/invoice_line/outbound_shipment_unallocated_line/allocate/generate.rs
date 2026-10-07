@@ -166,10 +166,10 @@ fn get_stock_line_eligibility(stock_line: &StockLine) -> Option<StockLineAlert> 
     };
 
     // VVM Unusable
-    if let Some(vvm_status) = &stock_line.vvm_status_row {
-        if vvm_status.unusable {
-            return Some(VVMStatusUnusable);
-        }
+    if let Some(vvm_status) = &stock_line.vvm_status_row
+        && vvm_status.unusable
+    {
+        return Some(VVMStatusUnusable);
     };
 
     None

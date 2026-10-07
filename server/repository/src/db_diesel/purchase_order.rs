@@ -1,19 +1,19 @@
 use super::{DBType, RepositoryError, StorageConnection};
-use crate::db_diesel::currency_row::{currency, CurrencyRow};
-use crate::db_diesel::name_row::{name, NameRow};
+use crate::db_diesel::currency_row::{CurrencyRow, currency};
+use crate::db_diesel::name_row::{NameRow, name};
 use crate::diesel_macros::{
     apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
     apply_sort_asc_nulls_first, apply_sort_no_case, apply_string_filter,
 };
 use crate::purchase_order_row::{
+    PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus,
     purchase_order::{self},
     purchase_order_stats::{self},
-    PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus,
 };
 
 use crate::{DateFilter, DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 use diesel::query_dsl::QueryDsl;
-use diesel::{dsl::IntoBoxed, prelude::*, RunQueryDsl};
+use diesel::{RunQueryDsl, dsl::IntoBoxed, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct PurchaseOrder {

@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_cancellation_fields_to_invoice;

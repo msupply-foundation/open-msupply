@@ -1,6 +1,6 @@
 use super::{
-    store::StoreTranslation, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    store::StoreTranslation,
 };
 use repository::{
     ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow, SyncMessageRow,

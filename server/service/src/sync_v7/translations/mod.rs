@@ -3,7 +3,7 @@ pub mod store;
 pub mod sync_file_reference;
 pub mod temperature_log;
 
-use repository::{migrations::Version, syncv7::SyncError, RowOrDelete, StorageConnection};
+use repository::{RowOrDelete, StorageConnection, migrations::Version, syncv7::SyncError};
 
 use crate::sync_v7::{serde::serialize, sync::SyncRecordV7};
 

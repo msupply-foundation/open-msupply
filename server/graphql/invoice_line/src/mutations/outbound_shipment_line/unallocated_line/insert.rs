@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{ForeignKey, ForeignKeyError},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{ForeignKey, ForeignKeyError},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
@@ -118,19 +118,19 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::InvoiceDoesNotExist => {
             return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         ServiceError::CanOnlyAddLinesToNewOutboundShipment => {
             return Ok(
                 InsertErrorInterface::UnallocatedLinesOnlyEditableInNewInvoice(
                     UnallocatedLinesOnlyEditableInNewInvoice {},
                 ),
-            )
+            );
         }
         ServiceError::UnallocatedLineForItemAlreadyExistsInInvoice => {
             return Ok(InsertErrorInterface::UnallocatedLineForItemAlreadyExists(
                 UnallocatedLineForItemAlreadyExists {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
@@ -151,20 +151,20 @@ mod graphql {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
-            MockDataInserts,
-        },
         InvoiceLine, InvoiceLineStatsRow, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_outbound_shipment_a,
+            mock_outbound_shipment_a_invoice_lines,
+        },
     };
     use serde_json::json;
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait,
             outbound_shipment_unallocated_line::{
                 InsertOutboundShipmentUnallocatedLine as ServiceInput,
                 InsertOutboundShipmentUnallocatedLineError as ServiceError,
             },
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

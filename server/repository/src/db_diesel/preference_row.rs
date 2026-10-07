@@ -1,6 +1,6 @@
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, ChangelogRepository, ChangelogSyncType, Delete,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert, db_diesel::changelog::changelog::RowOrId,
 };
 
 use super::preference_row::preference::dsl::*;

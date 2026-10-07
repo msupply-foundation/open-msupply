@@ -1,9 +1,9 @@
 use repository::{PaginationOption, Patient, PatientFilter, PatientSort, RepositoryError};
 use util::constants::PATIENT_TYPE;
 
+use crate::ListResult;
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
-use crate::ListResult;
 
 mod insert_patient;
 pub mod patient_schema;

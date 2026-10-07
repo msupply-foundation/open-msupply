@@ -5,7 +5,7 @@ use service::invoice_line::inbound_shipment_service_line::DeleteInboundShipmentS
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound,
 };
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use graphql_core::generic_inputs::InboundShipmentType;
@@ -97,17 +97,17 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::CannotEditInvoice => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         ServiceError::InvoiceDoesNotExist => {
             return Ok(DeleteErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         // Standard Graphql Errors
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
@@ -128,13 +128,13 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
 
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait,
             inbound_shipment_service_line::DeleteInboundShipmentServiceLineError,
             stock_in_line::{DeleteStockInLine, StockInType},
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

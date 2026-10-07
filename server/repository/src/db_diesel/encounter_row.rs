@@ -1,13 +1,13 @@
 use super::{
-    clinician_link, clinician_row::clinician, name_row::name, program_row::program,
-    StorageConnection,
+    StorageConnection, clinician_link, clinician_row::clinician, name_row::name,
+    program_row::program,
 };
 
-use crate::diesel_macros::define_linked_tables;
 use crate::SourceSiteId;
+use crate::diesel_macros::define_linked_tables;
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    Upsert,
+    ChangelogRepository, ChangelogSyncType, RowActionType, Upsert,
+    repository_error::RepositoryError,
 };
 
 use diesel::prelude::*;

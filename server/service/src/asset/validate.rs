@@ -1,4 +1,5 @@
 use repository::{
+    EqualFilter, RepositoryError, StorageConnection, StringFilter,
     asset::{Asset, AssetFilter, AssetRepository},
     asset_internal_location::{AssetInternalLocationFilter, AssetInternalLocationRepository},
     asset_internal_location_row::AssetInternalLocationRow,
@@ -10,7 +11,6 @@ use repository::{
         asset_row::{AssetRow, AssetRowRepository},
     },
     location::{LocationFilter, LocationRepository},
-    EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 use super::update::UpdateAssetError;
@@ -73,10 +73,10 @@ pub fn check_reason_matches_status(
     connection: &StorageConnection,
 ) -> bool {
     // Check if reason is required for this status
-    if let Some(AssetLogStatus::NotFunctioning) = status {
-        if reason_id.is_none() {
-            return false;
-        }
+    if let Some(AssetLogStatus::NotFunctioning) = status
+        && reason_id.is_none()
+    {
+        return false;
     }
 
     // If a reason is provided, validate it matches the status
@@ -117,13 +117,13 @@ pub fn check_comment_required_for_reason(
 ) -> bool {
     if let Some(reason_id) = reason_id {
         let reason = AssetLogReasonRowRepository::new(connection).find_one_by_id(reason_id);
-        if let Ok(Some(reason)) = reason {
-            if reason.comments_required {
-                return comment
-                    .as_ref()
-                    .map(|c| !c.trim().is_empty())
-                    .unwrap_or(false);
-            }
+        if let Ok(Some(reason)) = reason
+            && reason.comments_required
+        {
+            return comment
+                .as_ref()
+                .map(|c| !c.trim().is_empty())
+                .unwrap_or(false);
         }
         true
     } else {

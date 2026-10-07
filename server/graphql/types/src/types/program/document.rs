@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use graphql_core::loader::{
     DocumentRegistryLoader, DocumentRegistryLoaderInput, JsonSchemaLoader, UserLoader,
 };
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::StandardGraphqlError};
 use repository::Document;
 use service::document::raw_document::RawDocument;
 

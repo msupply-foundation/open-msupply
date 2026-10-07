@@ -1,10 +1,10 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::generic_errors::StockLineReducedBelowZero;
 use graphql_types::types::{
     AdjustmentReasonNotProvided, AdjustmentReasonNotValid, StocktakeLineNode,
@@ -109,22 +109,22 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::CannotEditFinalised => {
             return Ok(InsertErrorInterface::CannotEditStocktake(
                 CannotEditStocktake {},
-            ))
+            ));
         }
         ServiceError::StockLineReducedBelowZero(line) => {
             return Ok(InsertErrorInterface::StockLineReducedBelowZero(
                 StockLineReducedBelowZero::from_domain(line),
-            ))
+            ));
         }
         ServiceError::AdjustmentReasonNotProvided => {
             return Ok(InsertErrorInterface::AdjustmentReasonNotProvided(
                 AdjustmentReasonNotProvided,
-            ))
+            ));
         }
         ServiceError::AdjustmentReasonNotValid => {
             return Ok(InsertErrorInterface::AdjustmentReasonNotValid(
                 AdjustmentReasonNotValid,
-            ))
+            ));
         }
         // Standard Graphql Errors
         // TODO some are structured errors (where can be changed concurrently)
@@ -219,10 +219,10 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_location_1, mock_reason_option, mock_stock_line_a, MockDataInserts,
-        },
         StocktakeLine, StocktakeLineRow, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_location_1, mock_reason_option, mock_stock_line_a,
+        },
     };
     use serde_json::json;
     use service::{

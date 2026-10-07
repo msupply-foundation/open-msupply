@@ -18,8 +18,8 @@ use util::sync_serde::{
 };
 
 use super::{
-    is_active_record_on_site, ActiveRecordCheck, FkField, PullTranslateResult, PushTranslateResult,
-    SyncTranslation,
+    ActiveRecordCheck, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    is_active_record_on_site,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -228,7 +228,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "Unsupported line type {:?}",
                     r#type
-                )))
+                )));
             }
         };
 
@@ -238,7 +238,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 return Err(anyhow::Error::msg(format!(
                     "Failed to get invoice: {}",
                     invoice_id
-                )))
+                )));
             }
         };
 
@@ -265,7 +265,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                             return Err(anyhow::Error::msg(format!(
                                 "Failed to get item: {}",
                                 item_id
-                            )))
+                            )));
                         }
                     };
                     let total_multiplier = match r#type {
@@ -597,13 +597,13 @@ mod tests {
     use super::*;
     use chrono::NaiveDateTime;
     use repository::{
-        campaign_row::CampaignRow,
-        item_variant::item_variant_row::ItemVariantRow,
-        mock::{mock_item_a, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
-        system_log_row::{SystemLogRowRepository, SystemLogType},
-        test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder,
         ItemRow, KeyType, KeyValueStoreRow, ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
+        campaign_row::CampaignRow,
+        item_variant::item_variant_row::ItemVariantRow,
+        mock::{MockData, MockDataInserts, mock_item_a, mock_outbound_shipment_a, mock_store_b},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::{setup_all, setup_all_with_data},
     };
     use serde_json::json;
 

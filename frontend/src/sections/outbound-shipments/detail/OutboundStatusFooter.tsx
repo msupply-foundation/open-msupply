@@ -100,7 +100,10 @@ export const OutboundStatusFooter: Component<
   };
 
   return (
-    <ContentFooter>
+    // The shared `table-footer` id (e2e/TESTIDS.md): this bar is the table's
+    // default footer face — the pager docks in it — and gives way to the
+    // `actions-footer` selection bar, exactly as DataTable's own footer does.
+    <ContentFooter testId="table-footer">
       {/* The totals, on the bar itself rather than above it (narrow
           viewports only — the prop is undefined on a wide screen). */}
       {props.totals}

@@ -5,16 +5,16 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        ancillary_item_row::AncillaryItemRow, mock::MockDataInserts, StorageConnectionManager,
+        StorageConnectionManager, ancillary_item_row::AncillaryItemRow, mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
         item::{
+            ItemServiceTrait,
             ancillary_item::{
                 DeleteAncillaryItem, DeleteAncillaryItemError, UpsertAncillaryItem,
                 UpsertAncillaryItemError,
             },
-            ItemServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

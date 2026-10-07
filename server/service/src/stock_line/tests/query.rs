@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod query {
     use chrono::NaiveDate;
-    use repository::{
-        mock::MockDataInserts, test_db::setup_all, StockLineFilter, StockLineSortField,
-    };
     use repository::{EqualFilter, PaginationOption, Sort};
+    use repository::{
+        StockLineFilter, StockLineSortField, mock::MockDataInserts, test_db::setup_all,
+    };
     use std::cmp::Ordering;
 
-    use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
+    use crate::{ListError, SingleRecordError, service_provider::ServiceProvider};
 
     #[actix_rt::test]
     async fn stock_line_service_pagination() {

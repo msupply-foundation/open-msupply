@@ -2,7 +2,13 @@ import { children, Show, type JSX } from 'solid-js';
 import styles from './DetailCard.module.css';
 
 export interface DetailCardProps {
-  /** The card's title — its heading text and accessible name. */
+  /**
+   * The card's title — its heading text and accessible name. Rendered
+   * `dir="auto"`, so a title in another script than the screen's keeps its own
+   * reading order (a plugin's configuration label, say, still untranslated in
+   * the operator's locale). The heading is shrink-to-fit in the header's flex
+   * row, so its own direction does not re-align the card.
+   */
   title: string;
   /** Header-end actions (e.g. Edit/Delete IconButtons). */
   actions?: JSX.Element;
@@ -39,7 +45,9 @@ export const DetailCard = (props: DetailCardProps): JSX.Element => {
   return (
     <section class={styles.card} data-surface={props.surface ?? 'raised'}>
       <div class={styles.header}>
-        <h2 class={styles.title}>{props.title}</h2>
+        <h2 class={styles.title} dir="auto">
+          {props.title}
+        </h2>
         <Show when={actions()}>
           <div class={styles.actions}>{actions()}</div>
         </Show>

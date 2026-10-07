@@ -1,8 +1,8 @@
 mod purchase_order_line_queries;
 use crate::mutations::{
-    delete::{delete_purchase_order_lines, DeleteResponseWithId},
-    insert::{insert_purchase_order_line, InsertInput, InsertResponse},
-    update::{update_purchase_order_line, UpdateInput, UpdateResponse},
+    delete::{DeleteResponseWithId, delete_purchase_order_lines},
+    insert::{InsertInput, InsertResponse, insert_purchase_order_line},
+    update::{UpdateInput, UpdateResponse, update_purchase_order_line},
 };
 use async_graphql::{Context, Object, Result};
 use graphql_core::pagination::PaginationInput;

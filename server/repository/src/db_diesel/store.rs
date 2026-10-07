@@ -1,10 +1,10 @@
-use super::{name_row::name, store_row::store, NameRow, StorageConnection, StoreRow};
+use super::{NameRow, StorageConnection, StoreRow, name_row::name, store_row::store};
 
 use crate::{
+    DBType, EqualFilter, Pagination, RepositoryError, Sort, StringFilter,
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
-    DBType, EqualFilter, Pagination, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};

@@ -87,11 +87,7 @@ pub trait VecOrNone<T> {
 
 impl<T> VecOrNone<T> for Vec<T> {
     fn vec_or_none(self) -> Option<Vec<T>> {
-        if self.is_empty() {
-            None
-        } else {
-            Some(self)
-        }
+        if self.is_empty() { None } else { Some(self) }
     }
 }
 

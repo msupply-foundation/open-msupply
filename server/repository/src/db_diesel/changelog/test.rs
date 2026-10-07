@@ -2,14 +2,6 @@ use super::changelog::changelog_with_links;
 use diesel::prelude::*;
 
 use crate::{
-    asset_class_row::{AssetClassRow, AssetClassRowRepository},
-    asset_row::AssetRow,
-    mock::{
-        mock_item_a, mock_location_1, mock_location_2, mock_location_in_another_store,
-        mock_location_on_hold, mock_name_store_b, mock_store_a, mock_store_b, MockData,
-        MockDataInserts,
-    },
-    test_db::{self, setup_all, setup_all_with_data},
     ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
     ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType, KeyValueStoreRepository,
@@ -17,6 +9,14 @@ use crate::{
     RequisitionRow, RequisitionRowRepository, RowActionType, ShippingMethodRow,
     ShippingMethodRowRepository, StocktakeRow, StorageConnection, StoreRow, StoreRowRepository,
     Upsert, VaccinationRow, VaccinationRowRepository,
+    asset_class_row::{AssetClassRow, AssetClassRowRepository},
+    asset_row::AssetRow,
+    mock::{
+        MockData, MockDataInserts, mock_item_a, mock_location_1, mock_location_2,
+        mock_location_in_another_store, mock_location_on_hold, mock_name_store_b, mock_store_a,
+        mock_store_b,
+    },
+    test_db::{self, setup_all, setup_all_with_data},
 };
 
 fn delete_all_changelog(connection: &StorageConnection) {

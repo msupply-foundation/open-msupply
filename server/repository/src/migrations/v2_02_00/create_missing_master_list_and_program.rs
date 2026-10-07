@@ -1,4 +1,4 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{StorageConnection, migrations::sql};
 use util::constants::MISSING_PROGRAM;
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {

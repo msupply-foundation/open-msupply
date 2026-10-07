@@ -83,9 +83,9 @@ struct BuiltinCustomField {
 /// Removing an entry is a supported operation: it soft-deletes the field (see
 /// [`seed_builtin_custom_fields`]) rather than orphaning it.
 fn builtin_custom_fields() -> Vec<BuiltinCustomField> {
-    use keys::*;
     use CustomFieldDisplayMode::Prominent;
     use CustomFieldValueType::{MultiOption, Real, Text};
+    use keys::*;
 
     vec![
         // ===== prescription_request: the prescriber's clinical extras =====
@@ -359,8 +359,8 @@ mod tests {
     use super::*;
     use crate::sync::central_mapping_custom_fields::seed_central_mapping_custom_fields;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogRepository, CustomFieldFilter,
-        CustomFieldRepository, EqualFilter,
+        ChangelogRepository, CustomFieldFilter, CustomFieldRepository, EqualFilter,
+        mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]
@@ -441,9 +441,11 @@ mod tests {
         let options = option_repo.find_all().unwrap();
         assert_eq!(options.len(), 6);
         assert!(options.iter().all(|row| row.parent_option_id.is_none()));
-        assert!(options
-            .iter()
-            .all(|row| row.custom_field_id == "prescription_request_category"));
+        assert!(
+            options
+                .iter()
+                .all(|row| row.custom_field_id == "prescription_request_category")
+        );
         let under_5 = option_repo
             .find_one_by_id("prescription_request_category__under_5")
             .unwrap()
@@ -648,10 +650,12 @@ mod tests {
             .unwrap()
             .unwrap();
         assert!(field.deleted_datetime.is_none());
-        assert!(custom_field_repo
-            .value_types_for_scope(PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE)
-            .unwrap()
-            .contains_key(key));
+        assert!(
+            custom_field_repo
+                .value_types_for_scope(PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE)
+                .unwrap()
+                .contains_key(key)
+        );
     }
 
     #[actix_rt::test]
@@ -669,10 +673,11 @@ mod tests {
         // kind its own seeder gave it.
         let all = field_repo.find_all().unwrap();
         assert_eq!(all.len(), 29, "a key collided between the two families");
-        assert!(all
-            .iter()
-            .filter(|row| row.kind == CustomFieldKind::Legacy)
-            .all(|row| row.deleted_datetime.is_none()));
+        assert!(
+            all.iter()
+                .filter(|row| row.kind == CustomFieldKind::Legacy)
+                .all(|row| row.deleted_datetime.is_none())
+        );
         assert_eq!(
             all.iter()
                 .filter(|row| row.kind == CustomFieldKind::Builtin)
@@ -713,8 +718,10 @@ mod tests {
             )
             .unwrap();
         assert_eq!(definitions.len(), 4);
-        assert!(definitions
-            .iter()
-            .all(|row| row.custom_field.kind == CustomFieldKind::Builtin));
+        assert!(
+            definitions
+                .iter()
+                .all(|row| row.custom_field.kind == CustomFieldKind::Builtin)
+        );
     }
 }

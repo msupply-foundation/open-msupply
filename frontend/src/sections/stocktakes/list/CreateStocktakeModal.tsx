@@ -350,12 +350,12 @@ export const CreateStocktakeModal = (props: {
       testId="create-stocktake-modal"
       title={t('label.new-stocktake')}
       icon={<PlusCircleIcon />}
-      // Blocking while the mutation is in flight (no scrim/Escape exit until
-      // it resolves).
+      // Blocking while the mutation is in flight (no Escape exit until it
+      // resolves).
       dismissable={!creating()}
       // An explicit dismiss affordance in the top corner, beside the heading
-      // (#837) — the same close path as Escape and the scrim, and ignored while
-      // the create is in flight (dismissable above).
+      // (#837) — the same close path as Escape, and ignored while the create
+      // is in flight (dismissable above).
       closeButton
       onClose={close}
       widthRem={42}

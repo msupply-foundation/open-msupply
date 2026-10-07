@@ -1,8 +1,8 @@
 use super::*;
 use reqwest::{Response, StatusCode, Url};
 use serde::{
-    de::{value::StrDeserializer, IntoDeserializer},
     Deserialize, Deserializer, Serialize, Serializer,
+    de::{IntoDeserializer, value::StrDeserializer},
 };
 use thiserror::Error;
 use url::ParseError;
@@ -92,7 +92,7 @@ impl SyncApiErrorVariantV5 {
     pub(crate) async fn from_response_and_status(status: StatusCode, response: Response) -> Self {
         let error = match to_json::<ErrorWrapper>(response).await {
             Ok(ErrorWrapper { error: source }) => {
-                return SyncApiErrorVariantV5::ParsedError { source, status }
+                return SyncApiErrorVariantV5::ParsedError { source, status };
             }
             Err(error) => error,
         };

@@ -2,29 +2,29 @@
 mod update {
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            mock_item_a, mock_item_b, mock_name_a, mock_name_store_b, mock_store_a,
-            mock_user_account_a, MockDataInserts,
-        },
-        test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, PreferenceRow, PreferenceRowRepository,
         PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, PurchaseOrderRowRepository,
         PurchaseOrderStatus,
+        mock::{
+            MockDataInserts, mock_item_a, mock_item_b, mock_name_a, mock_name_store_b,
+            mock_store_a, mock_user_account_a,
+        },
+        test_db::setup_all,
     };
 
     use crate::{
-        preference::{AuthorisePurchaseOrder, Preference},
-        purchase_order_line::{
-            insert::InsertPurchaseOrderLineInput, update::UpdatePurchaseOrderLineInput,
-        },
-    };
-    use crate::{
+        NullableUpdate,
         purchase_order::{
             insert::InsertPurchaseOrderInput,
             update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
         },
         service_provider::ServiceProvider,
-        NullableUpdate,
+    };
+    use crate::{
+        preference::{AuthorisePurchaseOrder, Preference},
+        purchase_order_line::{
+            insert::InsertPurchaseOrderLineInput, update::UpdatePurchaseOrderLineInput,
+        },
     };
 
     #[actix_rt::test]

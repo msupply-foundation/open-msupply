@@ -1,4 +1,4 @@
-import { createEffect, createSignal, on, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, on, Show } from 'solid-js';
 import { Alert } from '../../elements/feedback/Alert';
 import styles from './ContentFooterMessage.module.css';
 
@@ -69,9 +69,16 @@ export const ContentFooterMessage = (props: ContentFooterMessageProps) => {
 
   // Another record: drop the chip now. Deferred, so the id the footer mounts
   // with is not itself a change.
+  //
+  // Through a memo, not `() => props.recordId`: the caller's id is read off
+  // its record, so a bare accessor re-runs whenever the record OBJECT is
+  // replaced, with the id unchanged. Outbound and purchase orders re-read the
+  // record straight after a save, so the chip was dropped a frame after it
+  // appeared. A memo only notifies when the id itself changes.
+  const recordId = createMemo(() => props.recordId);
   createEffect(
     on(
-      () => props.recordId,
+      recordId,
       () => {
         setShown(undefined);
         setLeaving(false);

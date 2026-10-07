@@ -1,9 +1,9 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use chrono::{DateTime, Utc};
 use repository::database_settings::DatabaseSettings;
 use reqwest::{Client, Error, Response};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use serde_yml;
 use service::{
     settings::{DiscoveryMode, ServerSettings, Settings},
