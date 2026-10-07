@@ -210,7 +210,7 @@ const AdjustContent = (props: {
       minBodyHeightRem={30}
       actionsLead={
         <Show when={error() || belowZero()}>
-          <Alert severity="error">
+          <Alert severity="error" testId="adjust-error">
             {error() ?? t('error.stock-reduced-below-zero')}
           </Alert>
         </Show>

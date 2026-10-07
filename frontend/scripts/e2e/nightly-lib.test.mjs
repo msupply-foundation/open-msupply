@@ -128,6 +128,36 @@ describe('testsFromReport', () => {
       error: 'boom',
     });
   });
+
+  it('keeps the worst outcome when a key recurs across projects (one setup per server)', () => {
+    const setup = (status, message) => ({
+      status,
+      results: [{ errors: message ? [{ message }] : [] }],
+    });
+    const report = {
+      suites: [
+        {
+          title: 'auth.setup.ts',
+          file: 'auth.setup.ts',
+          specs: [
+            {
+              title: 'Auth',
+              file: 'auth.setup.ts',
+              tests: [
+                setup('expected'),
+                setup('unexpected', 'login refused'),
+                setup('expected'),
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    expect(testsFromReport(report).get('auth.setup.ts › Auth')).toEqual({
+      outcome: 'unexpected',
+      error: 'login refused',
+    });
+  });
 });
 
 describe('historyLine', () => {

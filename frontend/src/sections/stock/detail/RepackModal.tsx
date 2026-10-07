@@ -289,7 +289,11 @@ const RepackContent = (props: {
         }
         actionsLead={
           <Show when={error()}>
-            {message => <Alert severity="error">{message()}</Alert>}
+            {message => (
+              <Alert severity="error" testId="repack-error">
+                {message()}
+              </Alert>
+            )}
           </Show>
         }
         actions={
