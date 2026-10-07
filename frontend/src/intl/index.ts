@@ -41,6 +41,7 @@ export {
   utcDateTime,
   customDate,
   exportDate,
+  localeDateFormat,
   localisedTimeAgo,
   getDisplayAge,
   DATE_FNS_LOADERS,

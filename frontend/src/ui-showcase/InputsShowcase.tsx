@@ -699,18 +699,18 @@ export const InputsShowcase = () => {
                 label="Expiry date"
                 value={expiry()}
                 onChange={setExpiry}
-                helperText={`Type e.g. 12 Aug 2027, or pick. Stored: ${
+                helperText={`Type e.g. 12/08/2027, or pick. Stored: ${
                   expiry() ?? '(empty)'
                 }`}
               />
             </Field>
-            <Field caption="Short format (dd/MM/yyyy)">
+            <Field caption="Medium format (dd MMM yyyy)">
               <DateField
                 label="Invoice date"
-                format="dd/MM/yyyy"
+                format="dd MMM yyyy"
                 value={invoiceDate()}
                 onChange={setInvoiceDate}
-                helperText={`Type 23/04/2023. Stored: ${
+                helperText={`Type 23 Apr 2023. Stored: ${
                   invoiceDate() ?? '(empty)'
                 }`}
               />

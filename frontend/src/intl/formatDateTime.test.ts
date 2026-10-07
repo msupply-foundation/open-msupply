@@ -4,6 +4,7 @@ import {
   exportDate,
   getDisplayAge,
   loadDateFnsLocale,
+  localeDateFormat,
   localisedDate,
   localisedDateTime,
   localisedTime,
@@ -150,6 +151,29 @@ describe('digit systems match the numbers beside them', () => {
     await loadDateFnsLocale('fr');
     setLocale('fr');
     expect(localisedDate(AT)).toMatch(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/);
+  });
+
+  // The date fields' default pattern (#774) is this module's `P`, in the
+  // fields' token vocabulary, so what a user types matches what the cell
+  // beside it shows in every language — day-first with slashes for the
+  // Latin-script languages and Arabic, dotted for Russian, year-first for the
+  // Persian-script pair. French and Russian pin the widening of date-fns's
+  // bare `y` year to the `yyyy` token the fields know.
+  it('hands the fields the language’s numeric short-date pattern', async () => {
+    setLocale('en');
+    expect(localeDateFormat()).toBe('dd/MM/yyyy');
+    await loadDateFnsLocale('fr');
+    setLocale('fr');
+    expect(localeDateFormat()).toBe('dd/MM/yyyy');
+    await loadDateFnsLocale('ru');
+    setLocale('ru');
+    expect(localeDateFormat()).toBe('dd.MM.yyyy');
+    await loadDateFnsLocale('ps');
+    setLocale('ps');
+    expect(localeDateFormat()).toBe('yyyy/MM/dd');
+    await loadDateFnsLocale('ar');
+    setLocale('ar');
+    expect(localeDateFormat()).toBe('dd/MM/yyyy');
   });
 
   it('leaves an explicit pattern in Latin digits — it is not for reading', async () => {

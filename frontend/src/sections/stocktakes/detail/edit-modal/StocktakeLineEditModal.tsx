@@ -1314,9 +1314,11 @@ const StocktakeLineEditContent = (
       header: () => t('label.expiry-date'),
       cardGroup: 'batch',
       // 11, not the 10 the width table lists for a date: 10rem was measured
-      // against a rendered VALUE ("11 Sep 2026", 74px in English), but an empty
-      // DateField shows the `DD MMM YYYY` placeholder, and all-caps is wider
-      // than the digits it stands for — at 10rem it clipped to "DD MMM YYY".
+      // against a rendered VALUE, but an empty DateField shows its all-caps
+      // placeholder, which is wider than the digits it stands for — at 10rem
+      // the then-default `DD MMM YYYY` clipped to "DD MMM YYY". The numeric
+      // default (#774) hints `DD/MM/YYYY`, 93px to the old 104px at 14px, so
+      // the floor has slack it did not have; it is kept until re-measured.
       meta: { cardWidth: { min: 11, max: 12.5, weight: 1 }, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;

@@ -35,9 +35,10 @@ import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated'
 // shares; the date is a fixed format that can never use more than its 9rem, so
 // it's pinned (weight 0) instead of claiming a sixth of the strip; Program sits
 // between. The 9rem is measured against the format, not guessed: 9rem leaves
-// 95px of value room, and DateField's default `dd MMM yyyy` renders 74px in
+// 95px of value room, which held the former `dd MMM yyyy` default at 74px in
 // English, 77px in French ("30 juil. 2026") and 80px in Arabic ("٣٠ سبتمبر
-// ٢٠٢٦" — no abbreviation exists), the widest shipped locale. A caller
+// ٢٠٢٦" — no abbreviation exists), the widest shipped locale; the numeric
+// default (#774, "30/07/2026") is narrower still in every language. A caller
 // configuring a long-month format would need a wider floor. The prominent
 // custom fields carry their own narrower share (CustomFieldsToolbar's `field`
 // layout).
