@@ -545,7 +545,7 @@ export const createDocumentForm = <T extends object>(
     });
     setSaving(false);
     if (result.kind === 'refused') {
-      setSaveError(result.message);
+      if (key === currentKey()) setSaveError(result.message);
       return undefined;
     }
     if (result.kind === 'reported') return undefined;

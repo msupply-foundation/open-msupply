@@ -283,7 +283,11 @@ describe('when the source changes', () => {
   const follow = (
     reads: Record<string, () => Promise<FormDocumentFragment>>,
     first: DocumentFormSource,
-    options: { created?: string; holdSave?: Promise<void> } = {}
+    options: {
+      created?: string;
+      holdSave?: Promise<void>;
+      refuseSave?: boolean;
+    } = {}
   ) => {
     graphqlFetch.mockImplementation(
       async (query: unknown, variables: CallVariables) => {
@@ -294,6 +298,7 @@ describe('when the source changes', () => {
           };
         }
         await options.holdSave;
+        if (options.refuseSave) return { kind: 'graphqlError', errors: [] };
         const data = variables.input.data;
         if (query === UpdateFormEncounter) {
           const parent = variables.input.parent.replace(/^doc-/, '');
@@ -448,5 +453,33 @@ describe('when the source changes', () => {
     await ready(form);
     expect(form.document()?.name).toBe('encounter/b');
     expect(weight(form)).toBe(90);
+  });
+
+  it("does not show a late refusal of one record's save on the record shown since", async () => {
+    let finishSave!: () => void;
+    const holdSave = new Promise<void>(resolve => (finishSave = resolve));
+    const { form, go } = follow(
+      {
+        'encounter/a': async () => encounter('encounter/a', 70),
+        'encounter/b': async () => encounter('encounter/b', 90),
+      },
+      { kind: 'existing', name: 'encounter/a' },
+      { holdSave, refuseSave: true }
+    );
+    await ready(form);
+    form.draft.set('extension.demo.vitals.weightKg' as never, 71 as never);
+    const saving = form.save();
+
+    go({ kind: 'existing', name: 'encounter/b' });
+    await ready(form);
+    finishSave();
+    await saving;
+    expect(form.document()?.name).toBe('encounter/b');
+    expect(form.saveError()).toBeUndefined();
+
+    // Refused while still shown, the record shows it.
+    form.draft.set('extension.demo.vitals.weightKg' as never, 91 as never);
+    await form.save();
+    expect(form.saveError()).toBe('refused');
   });
 });

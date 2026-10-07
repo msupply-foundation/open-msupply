@@ -118,6 +118,12 @@ describe('a calendar day on a date-time path', () => {
     expect(dateTimeToDay('2026-10-08T00:00:00-04:00')).toBe('2026-10-08');
   });
 
+  it('reads a bare date as the day it names, west of UTC too', () => {
+    // A legacy document's plain date on a date-time path; read as an
+    // instant, it is UTC midnight, the day before in the Americas.
+    expect(dateTimeToDay('2026-10-08')).toBe('2026-10-08');
+  });
+
   it('reads a UTC instant as the local day it falls on here', () => {
     const instant = new Date('2026-10-08T00:00:00').toISOString();
     expect(dateTimeToDay(instant)).toBe('2026-10-08');

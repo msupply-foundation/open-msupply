@@ -181,11 +181,12 @@ export const dayToDateTime = (isoDate: string): string => {
 
 /**
  * The calendar day a date-time value records: the day as written where the
- * value carries its own offset, else (a `Z` instant) the local day it falls
- * on here.
+ * value carries its own offset or is a bare date (a legacy document's), else
+ * (a `Z` instant) the local day it falls on here.
  */
 export const dateTimeToDay = (value: string | undefined): string | null => {
   if (!value) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const withOffset = /^(\d{4}-\d{2}-\d{2})T[^Z]*[+-]\d{2}:\d{2}$/.exec(value);
   return withOffset ? (withOffset[1] as string) : utcToLocalDay(value);
 };
