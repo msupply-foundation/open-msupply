@@ -154,8 +154,8 @@ describe('digit systems match the numbers beside them', () => {
   });
 
   // The date fields' default pattern (#774) is this module's `P`, in the
-  // fields' token vocabulary, so what a user types matches what the cell
-  // beside it shows in every language — day-first with slashes for the
+  // fields' token vocabulary, so what a user types keeps the order and
+  // separators of the cell beside it in every language — day-first with slashes for the
   // Latin-script languages and Arabic, dotted for Russian, year-first for the
   // Persian-script pair. French and Russian pin the widening of date-fns's
   // bare `y` year to the `yyyy` token the fields know.
@@ -173,6 +173,19 @@ describe('digit systems match the numbers beside them', () => {
     expect(localeDateFormat()).toBe('yyyy/MM/dd');
     await loadDateFnsLocale('ar');
     setLocale('ar');
+    expect(localeDateFormat()).toBe('dd/MM/yyyy');
+  });
+
+  // The languages without a date-fns locale of their own borrow one (the
+  // DATE_FNS_LOADERS substitutions), and the fields' pattern follows the same
+  // borrowing: Djibouti French reads as French, Tetum and Lao as English (GB).
+  it('follows the locale substitutions for the languages without a pack', async () => {
+    await loadDateFnsLocale('fr-DJ');
+    setLocale('fr-DJ');
+    expect(localeDateFormat()).toBe('dd/MM/yyyy');
+    setLocale('tet');
+    expect(localeDateFormat()).toBe('dd/MM/yyyy');
+    setLocale('lo');
     expect(localeDateFormat()).toBe('dd/MM/yyyy');
   });
 
