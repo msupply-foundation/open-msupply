@@ -180,6 +180,20 @@ export const checkCoverage = (
       );
     }
   }
+  // Two moves writing one place lose a value, whichever runs second: the same
+  // target, or one target inside the other.
+  const moves = Object.entries(moved);
+  moves.forEach(([from, to], i) => {
+    for (const [otherFrom, otherTo] of moves.slice(i + 1)) {
+      if (isUnder(to, otherTo) || isUnder(otherTo, to)) {
+        problems.push(
+          `${at}: moved takes ${from} to ${to} and ${otherFrom} to ` +
+            `${otherTo}, ${to === otherTo ? 'the same path' : 'one inside the other'}, ` +
+            'so one value would overwrite the other — give each its own path'
+        );
+      }
+    }
+  });
   for (const path of Object.keys(step.kept ?? {})) {
     if (!before.has(path)) {
       problems.push(

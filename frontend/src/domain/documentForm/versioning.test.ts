@@ -246,6 +246,47 @@ describe('checkCoverage', () => {
     ).toEqual([]);
   });
 
+  it('refuses two moves onto one path, or one inside the other', () => {
+    const str = { type: 'string' };
+    const old = {
+      type: 'object',
+      properties: { phone: str, mobile: str, contact: str },
+    };
+    const merged = {
+      type: 'object',
+      properties: {
+        contactNumber: str,
+        details: { type: 'object', properties: { phone: str } },
+      },
+    };
+    expect(
+      checkCoverage(old, merged, {
+        from: 1,
+        moved: { phone: 'contactNumber', mobile: 'contactNumber' },
+        dropped: ['contact'],
+      })
+    ).toContain(
+      'v1 → v2: moved takes phone to contactNumber and mobile to contactNumber, the same path, so one value would overwrite the other — give each its own path'
+    );
+    expect(
+      checkCoverage(old, merged, {
+        from: 1,
+        moved: { contact: 'details', mobile: 'details.phone' },
+        dropped: ['phone'],
+      })
+    ).toContain(
+      'v1 → v2: moved takes contact to details and mobile to details.phone, one inside the other, so one value would overwrite the other — give each its own path'
+    );
+    // Neighbouring paths are their own places.
+    expect(
+      checkCoverage(old, merged, {
+        from: 1,
+        moved: { phone: 'contactNumber', mobile: 'details.phone' },
+        dropped: ['contact'],
+      })
+    ).toEqual([]);
+  });
+
   it('refuses kept on a path the new version still has', () => {
     const old = {
       type: 'object',
