@@ -10,10 +10,16 @@ import { inflateRawSync } from 'node:zlib';
 
 // ─── Reading a Playwright report ─────────────────────────────────────────────
 
+// Worst first. A run spread across several servers runs each setup test once
+// per server under the same key (e2e/playwright.config.ts), so one failing
+// server's login must not be hidden by another's pass.
+const OUTCOME_RANK = { unexpected: 3, flaky: 2, expected: 1, skipped: 0 };
+
 /**
  * Map of "file › describe › … › title" → { outcome, error } for one
  * results.json. The describe chain matters: the same leaf title recurs across
- * groups in one file (e.g. "list view renders core controls").
+ * groups in one file (e.g. "list view renders core controls"). A key that
+ * recurs across projects keeps its worst outcome.
  */
 export const testsFromReport = report => {
   const tests = new Map();
@@ -28,7 +34,14 @@ export const testsFromReport = report => {
     for (const spec of suite.specs ?? []) {
       for (const t of spec.tests ?? []) {
         const lastRun = t.results?.[t.results.length - 1];
-        tests.set([spec.file, ...chain, spec.title].join(' › '), {
+        const key = [spec.file, ...chain, spec.title].join(' › ');
+        const seen = tests.get(key);
+        if (
+          seen &&
+          (OUTCOME_RANK[seen.outcome] ?? 0) >= (OUTCOME_RANK[t.status] ?? 0)
+        )
+          continue;
+        tests.set(key, {
           // expected | unexpected | flaky | skipped
           outcome: t.status,
           // First line only, ANSI color codes stripped — it lands in markdown.
