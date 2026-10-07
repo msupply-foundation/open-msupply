@@ -1,13 +1,7 @@
-# REFERENCE COPY - not deployed from here.
-#
-# The live file is server-side on the deploy box, beside its compose file, and
-# is authoritative; no workflow copies this over it. Use this as the starting
-# point when standing a box up, then edit the box's copy directly.
-#
-# It lives beside the runbook (`../_index.md`) rather than in `docker/` on
-# purpose: `docker/compose.deploy.yaml` is driven by a workflow, whereas this is
-# driven by a person following that runbook. See compose.proxy.yaml's header for
-# why the proxy's lifecycle is deliberately outside CI.
+# Deployed by .github/workflows/docker-deploy-services.yaml alongside
+# compose.proxy.yaml, which explains why it is a workflow of its own. Baked
+# into the proxy's image (./Dockerfile), whose build runs `caddy validate` on
+# it - a file that does not adapt never reaches the running proxy.
 #
 # WHAT THIS IS
 #

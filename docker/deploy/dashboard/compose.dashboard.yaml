@@ -1,10 +1,14 @@
 # The deployments dashboard: what is running on this box, and buttons for QA and
 # product to start, extend, reseed and remove servers.
 #
-# Stood up by hand from the runbook, for the same reason the proxy is: it is not
-# a deployment of the product, it fronts every deployment at once, and changing
-# it should be someone's deliberate act rather than a side effect of whichever
-# deploy happened to run next.
+# Deployed by .github/workflows/docker-deploy-services.yaml whenever a push to
+# develop changes this directory - the same workflow as the proxy, for the same
+# reason: it is not a deployment of the product, it fronts every deployment at
+# once, so it must not move with whichever deploy happened to run next. The
+# workflow builds the image (./Dockerfile, the three files baked in) and brings
+# it up; nothing here is copied onto the box. Only ~/dashboard/.env is the
+# box's own: it holds the GitHub App's client id and secret, and nothing in CI
+# writes it.
 #
 # TWO CONTAINERS, AND THE SPLIT IS THE POINT
 #
@@ -49,15 +53,20 @@ name: oms-dashboard
 services:
   # Reads the daemon, writes the JSON. No ports and no network.
   snapshot:
-    # Pinned by digest, not just the tag: this container holds the docker
-    # socket, which is root on the box, so what it runs must not change under
-    # it on a `pull`. Move the digest on purpose, when updating node.
-    image: node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
+    # One image for both containers, tagged with the git tree hash of this
+    # directory - the workflow passes it, and keeps the previous tag on the box
+    # to roll back to. `local` is for a hand-run `compose up`. One image means
+    # a change to any file recreates both, so the two never run different
+    # versions of the deployments.json they share. Node pinned by digest in
+    # the Dockerfile, which says why.
+    #
+    # Both services carry the same `build`; the second is a cache hit.
+    build: .
+    image: oms-dashboard:${OMS_DEPLOY_CONFIG:-local}
     container_name: oms-dashboard-snapshot
     restart: unless-stopped
-    # Stock image, no build: snapshot.mjs talks to the Engine API over the
-    # socket with node's own `http`, so it needs neither the docker CLI nor any
-    # npm dependency. Nothing to build means nothing to rebuild when it changes.
+    # snapshot.mjs talks to the Engine API over the socket with node's own
+    # `http`, so it needs neither the docker CLI nor any npm dependency.
     command: ["node", "/app/snapshot.mjs"]
     # The socket is a bind-mounted file, not a network address, so this needs
     # no network to reach the daemon - and having none means a compromise of
@@ -71,10 +80,6 @@ services:
       TICK_SECONDS: ${TICK_SECONDS:-15}
       DF_SECONDS: ${DF_SECONDS:-300}
     volumes:
-      # A single-FILE bind mount, which docker binds by inode - so editing
-      # snapshot.mjs in place needs `up -d --force-recreate`, not a restart.
-      # Exactly the same trap as the live proxy.Caddyfile; see the runbook.
-      - ./snapshot.mjs:/app/snapshot.mjs:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - snapshot:/snapshot
 
@@ -82,25 +87,26 @@ services:
   # turns clicks into workflow dispatches. Knows nothing about docker.
   dashboard:
     # Node rather than a static file server, because the buttons need something
-    # that holds the token and calls GitHub. Still no build and no npm
-    # dependency, for the same reason as `snapshot`.
-    # The same pinned image as `snapshot`, so the two move together.
-    image: node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
+    # that holds the token and calls GitHub. Still no npm dependency. The same
+    # image as `snapshot` - see there.
+    build: .
+    image: oms-dashboard:${OMS_DEPLOY_CONFIG:-local}
     # The routing key - see the header. Must match the hostname's first label.
     container_name: dashboard
     restart: unless-stopped
     command: ["node", "/app/web.mjs"]
     environment:
-      GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:?set GITHUB_REPOSITORY in .env}
+      GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:?GITHUB_REPOSITORY must be set - the workflow passes its own}
       # The GitHub App people sign in through - see the runbook for creating it.
-      # Every read and every dispatch uses the signed-in person's token, so
-      # without these nobody can sign in and the page shows nothing.
+      # From ~/dashboard/.env on the box, the one thing the workflow does not
+      # pass. Every read and every dispatch uses the signed-in person's token,
+      # so without these nobody can sign in and the page shows nothing.
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       # Its own address is https://dashboard.<DEPLOY_DOMAIN>, which is what the
       # App's callback URL must be. The same value the proxy and the
       # repository variable hold.
-      DEPLOY_DOMAIN: ${DEPLOY_DOMAIN:?set DEPLOY_DOMAIN in .env}
+      DEPLOY_DOMAIN: ${DEPLOY_DOMAIN:?DEPLOY_DOMAIN must be set - the workflow passes the repository variable}
       # How often the workflow runs are re-read while someone has the page open.
       # Free while nothing changes (conditional requests); everything else is
       # re-read only when a run says it moved.
@@ -109,10 +115,6 @@ services:
       # trying out a workflow change from its branch before it merges.
       DISPATCH_REF: ${DISPATCH_REF:-develop}
     volumes:
-      # Single-file bind mounts, so editing either needs
-      # `up -d --force-recreate`, as for snapshot.mjs.
-      - ./web.mjs:/app/web.mjs:ro
-      - ./index.html:/srv/index.html:ro
       # Read-only here, written by `snapshot`. web.mjs reads deployments.json
       # from it and serves it, with the runs added, at /api/deployments - which
       # is what the page fetches.
