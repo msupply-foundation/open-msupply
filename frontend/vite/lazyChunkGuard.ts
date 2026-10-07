@@ -23,6 +23,10 @@ export const LAZY_ONLY_MODULES: readonly string[] = [
   VALIDATOR_MODULE,
   '/src/domain/documentForm/fields.tsx',
   '/src/domain/documentForm/defaults.tsx',
+  // The form host, which every document screen and the edit-patient modal
+  // reach, and which pulls in migration and the document operations.
+  '/src/domain/documentForm/createDocumentForm.ts',
+  '/src/plugins/DocumentFormRegion.tsx',
   // The host's patient fields, which the library carries for patient forms.
   '/src/domain/patient/documentFields.tsx',
   '/src/domain/documentForm/baseSchemas/',
