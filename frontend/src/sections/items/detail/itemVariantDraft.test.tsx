@@ -28,9 +28,27 @@ const seed = (): DraftItemVariant => ({
   manufacturerId: '',
   vvmType: '',
   packaging: [
-    { id: 'p1', name: 'Primary', packagingLevel: 1, packSize: undefined, volumePerUnit: undefined },
-    { id: 'p2', name: 'Secondary', packagingLevel: 2, packSize: undefined, volumePerUnit: undefined },
-    { id: 'p3', name: 'Tertiary', packagingLevel: 3, packSize: undefined, volumePerUnit: undefined },
+    {
+      id: 'p1',
+      name: 'Primary',
+      packagingLevel: 1,
+      packSize: undefined,
+      volumePerUnit: undefined,
+    },
+    {
+      id: 'p2',
+      name: 'Secondary',
+      packagingLevel: 2,
+      packSize: undefined,
+      volumePerUnit: undefined,
+    },
+    {
+      id: 'p3',
+      name: 'Tertiary',
+      packagingLevel: 3,
+      packSize: undefined,
+      volumePerUnit: undefined,
+    },
   ],
 });
 

@@ -11,6 +11,11 @@ import type { DraftItemVariant, DraftPackagingRow } from './itemVariantEdit';
  * same mechanism). A leaf write re-runs only that cell's binding, so the row
  * keeps its identity and its focus.
  *
+ * The modal writes packaging ONLY through `setPackaging`; `setForm` is for the
+ * scalar leaves (name, location type, manufacturer, VVM). A `setForm(
+ * 'packaging', rows => rows.map(…))` would replace the rows and bring #593
+ * back.
+ *
  * Pinned by itemVariantDraft.test.tsx (mount counts across a field write).
  */
 export const createItemVariantDraft = (initial: DraftItemVariant) => {
@@ -19,7 +24,9 @@ export const createItemVariantDraft = (initial: DraftItemVariant) => {
   /** Patch one packaging row in place, matched by its stable id. */
   const setPackaging = (
     id: string,
-    patch: Partial<Pick<DraftPackagingRow, 'name' | 'packSize' | 'volumePerUnit'>>
+    patch: Partial<
+      Pick<DraftPackagingRow, 'name' | 'packSize' | 'volumePerUnit'>
+    >
   ) => setForm('packaging', row => row.id === id, patch);
 
   return { form, setForm, setPackaging };
