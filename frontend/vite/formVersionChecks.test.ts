@@ -276,6 +276,51 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
     );
   });
 
+  it('keeps a type the old client draws to additive changes of its own', async () => {
+    const legacy = (versions?: Record<string, unknown>[]) =>
+      declare({
+        legacyUiSchema: 'legacy-ui.json',
+        ...(versions ? { versions } : {}),
+      });
+    const files = {
+      'forms/Visit/v1.json': v1,
+      'forms/Visit/v2.json': v2,
+      'forms/Visit/fixtures/v1.json': v1Document,
+    };
+    const additive =
+      'the old client still draws Visit (legacyUiSchema) and cannot run a ' +
+      'migration, so make the change additive (a new optional field or ' +
+      'value), or remove legacyUiSchema once no site runs the old client';
+
+    // A step into the plugin's own v2 is refused, however complete.
+    const stepped = fixture({
+      ...files,
+      'forms/Visit/migrations.ts': covered,
+    });
+    expect(await checkFormVersions(stepped, legacy())).toEqual([
+      `${visit(stepped, 'migrations.ts')}: the step from v1 migrates into ` +
+        `v2, a version the plugin adds — ${additive}, and remove the step`,
+    ]);
+
+    // With no step, the build says to make it additive, not to add one.
+    const unstepped = fixture(files);
+    const problems = await checkFormVersions(unstepped, legacy());
+    expect(problems.length).toBeGreaterThan(0);
+    for (const problem of problems) {
+      expect(problem).toContain(additive);
+      expect(problem).not.toMatch(
+        /add a step|add one|add it to|needs this file/
+      );
+    }
+
+    // Between two of the deployment's own versions, the step is required.
+    const deployed = legacy([
+      { file: 'v1.json', id: 'deployed-v1' },
+      { file: 'v2.json', source: 'type.ts', type: 'Visit', id: 'deployed-v2' },
+    ]);
+    expect(await checkFormVersions(stepped, deployed)).toEqual([]);
+  });
+
   it('passes an additive hop with no migration', async () => {
     const dir = fixture({
       'forms/Visit/v1.json': v2,

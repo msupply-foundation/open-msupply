@@ -385,6 +385,34 @@ const checkMigrations = async (
   const problems: string[] = [];
 
   /*
+   * The old client draws a type that carries a legacy UI schema, and it
+   * cannot run a migration, so every version the plugin adds itself (one with
+   * no deployment id) must be reached additively. A step between the
+   * deployment's own versions stays required: that difference is on its
+   * sites already.
+   */
+  const additiveOnly = (version: number) =>
+    entry.legacyUiSchema !== undefined &&
+    entry.versions[version - 1]?.id === undefined;
+  const makeItAdditive =
+    `the old client still draws ${entry.documentType} (legacyUiSchema) ` +
+    'and cannot run a migration, so make the change additive (a new ' +
+    'optional field or value), or remove legacyUiSchema once no site runs ' +
+    'the old client';
+  // A gap without its own advice, which is to cover it with a step.
+  const coveredBy = (gap: string) =>
+    gap.replace(/^v\d+ → v\d+: /, '').replace(/ and (is )?not covered — .*$/, '');
+  for (const step of steps) {
+    const target = host.stepTarget(step);
+    if (additiveOnly(target)) {
+      problems.push(
+        `${file}: the step from v${step.from} migrates into v${target}, a ` +
+          `version the plugin adds — ${makeItAdditive}, and remove the step`
+      );
+    }
+  }
+
+  /*
    * Every version's hop towards the current one, as `applyMigrations` takes
    * it: the step `nextStep` picks, or none for an additive change. Every
    * hop is taken by some document, since each version's fixture (and each
@@ -407,10 +435,13 @@ const checkMigrations = async (
       from: at,
     })) {
       problems.push(
-        hasFile
-          ? `${file}: has no step from v${at}, and v${at} → v${at + 1} is ` +
+        additiveOnly(at + 1)
+          ? `${entry.documentType}: v${at} → v${at + 1} is not additive, ` +
+              `since ${coveredBy(gap)} — ${makeItAdditive}`
+          : hasFile
+            ? `${file}: has no step from v${at}, and v${at} → v${at + 1} is ` +
               `not additive, so add one — ${gap}`
-          : `${file}: not found, and v${at} → v${at + 1} of ` +
+            : `${file}: not found, and v${at} → v${at + 1} of ` +
               `${entry.documentType} is not additive, so the type needs ` +
               `this file, with a step from v${at} — ${gap}`
       );
@@ -463,7 +494,11 @@ const checkMigrations = async (
         problems.push(
           `${fixture}: v${at} → v${at + 1} has no migration step, so the ` +
             `document must validate unchanged against v${at + 1}, and it ` +
-            `does not: ${errors} — add a step from v${at} to ${file}`
+            `does not: ${errors} — ${
+              additiveOnly(at + 1)
+                ? makeItAdditive
+                : `add a step from v${at} to ${file}`
+            }`
         );
       }
       at += 1;
@@ -477,8 +512,11 @@ const checkMigrations = async (
       problems.push(
         `${fixture}: v${at} → v${current} has no migration step, so the ` +
           `document must validate unchanged against v${current} ` +
-          `(${currentFile}), and it does not: ${errors} — the change is not ` +
-          `additive, so add a step from v${at} to ${file}`
+          `(${currentFile}), and it does not: ${errors} — ${
+            additiveOnly(current)
+              ? makeItAdditive
+              : `the change is not additive, so add a step from v${at} to ${file}`
+          }`
       );
     } else if (errors) {
       problems.push(
