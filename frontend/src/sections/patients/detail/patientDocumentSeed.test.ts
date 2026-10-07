@@ -28,7 +28,6 @@ const node = (overrides: Partial<PatientNode> = {}): PatientNode => ({
   customFields: null,
   nextOfKin: null,
   document: null,
-  documentDraft: null,
   ...overrides,
 });
 

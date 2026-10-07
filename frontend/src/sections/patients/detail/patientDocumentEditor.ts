@@ -1,4 +1,11 @@
-import { createMemo, createSignal, type Accessor } from 'solid-js';
+import {
+  createMemo,
+  createResource,
+  createSignal,
+  type Accessor,
+} from 'solid-js';
+import { gated } from '../../../api/gated';
+import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { hasPermission } from '../../../store/storeContext';
 import { createCodeTakenCheck } from '../../../domain/patient/patientCode';
@@ -12,6 +19,7 @@ import { documentFormVersioning } from '../../../plugins/documentFormSlot';
 import type { Patient } from '../../../plugin-sdk/documents';
 import { seedPatientDocument } from './patientDocumentSeed';
 import type { PatientResult } from './patient.generated';
+import { PatientDocumentDraft } from './patientDocumentDraft.generated';
 
 type PatientNode = NonNullable<PatientResult['patient']>;
 
@@ -23,11 +31,26 @@ type PatientNode = NonNullable<PatientResult['patient']>;
  * and leave guard work the same on both paths.
  *
  * A patient with a document is edited from the server's `documentDraft` (the
- * latest version with later changes to the name row merged in) and saved as
- * the next version. A patient with none, a name row made by the plain path or
- * a sync, is seeded from that row and gets its first document on its first
- * Save; opening it writes nothing.
+ * latest version with later changes to the name row merged in), read here
+ * and only here, and saved as the next version. A patient with none, a name
+ * row made by the plain path or a sync, is seeded from that row and gets its
+ * first document on its first Save; opening it writes nothing.
  */
+
+/**
+ * A patient document's draft: `draft` undefined where the server has none;
+ * undefined itself where the read failed, which the app reports.
+ */
+export const fetchPatientDocumentDraft = async (key: {
+  storeId: string;
+  patientId: string;
+}): Promise<{ draft: object | undefined } | undefined> => {
+  const result = await graphqlFetch(PatientDocumentDraft, key);
+  if (result.kind !== 'success') return undefined;
+  return {
+    draft: (result.data.patient?.documentDraft as object | null) ?? undefined,
+  };
+};
 
 /** The error summary's names for the host's patient fields, by path. */
 const patientFieldLabels = (): Record<string, string> => ({
@@ -69,16 +92,23 @@ export interface PatientDocumentEditor {
 export const createPatientDocumentEditor = (
   params: PatientDocumentEditorParams
 ): PatientDocumentEditor => {
+  // Read on the document path for a patient with a document, and again
+  // whenever the patient is re-read (after a save), as the draft goes with it.
+  const [draftData] = createResource(() => {
+    const node = params.node();
+    return params.registry() && node?.document
+      ? { storeId: params.storeId(), patientId: node.id }
+      : undefined;
+  }, fetchPatientDocumentDraft);
+
   const source = createMemo((): DocumentFormSource | undefined => {
     const registry = params.registry();
     const node = params.node();
     if (!registry || !node) return undefined;
     if (node.document) {
-      return {
-        kind: 'existing',
-        name: node.document.name,
-        seed: (node.documentDraft as object | null) ?? undefined,
-      };
+      const read = gated(draftData);
+      if (!read) return undefined;
+      return { kind: 'existing', name: node.document.name, seed: read.draft };
     }
     return { kind: 'new', registry, data: seedPatientDocument(node) };
   });

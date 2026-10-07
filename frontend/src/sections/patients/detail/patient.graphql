@@ -5,10 +5,8 @@
 # path projects them. customFields is re-filtered server-side to the "patient"
 # scope's visible keys. On the document path (a Patient registry entry is
 # installed) the Details tab edits the patient document instead: `document`
-# names its latest version, and `documentDraft` is that version's data with
-# any later changes to the name row merged in (made by legacy mSupply or a
-# plain-path edit elsewhere), which is what an edit seeds from. Both are null
-# for a patient that has no document yet.
+# names its latest version, null for a patient that has no document yet. Its
+# draft is a query of its own (patientDocumentDraft.graphql).
 query patient($storeId: String!, $patientId: String!) {
   patient(storeId: $storeId, patientId: $patientId) {
     id
@@ -41,6 +39,5 @@ query patient($storeId: String!, $patientId: String!) {
       id
       name
     }
-    documentDraft
   }
 }
