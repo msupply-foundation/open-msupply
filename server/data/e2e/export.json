@@ -94346,6 +94346,56 @@
    "patient_id": null,
    "reference_id": null,
    "is_integrated": false
+  },
+  {
+   "cursor": 2735,
+   "record_id": "e2e_reason_closed_vial_wastage",
+   "received_datetime": "2026-10-07T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "reason_option",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_reason_closed_vial_wastage",
+    "is_active": true,
+    "reason": "Zz E2E closed-vial wastage",
+    "type": "ClosedVialWastage"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2736,
+   "record_id": "e2e_pref_esti_sort_by_vvm_status_then_expiry",
+   "received_datetime": "2026-10-07T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_pref_esti_sort_by_vvm_status_then_expiry",
+    "key": "sort_by_vvm_status_then_expiry",
+    "value": "true",
+    "store_id": "e2e_stocktake_initial_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
   }
  ],
  "users": [],
