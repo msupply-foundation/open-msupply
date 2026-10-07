@@ -106,12 +106,7 @@ impl CoveringCourses {
         courses
             .iter()
             .map(|course| {
-                let wastage_rate = if course.loss_factor == 1.0 {
-                    0.0
-                } else {
-                    course.wastage_rate
-                };
-                course.monthly_units * wastage_rate
+                course.monthly_units * honoured_wastage_rate(course.wastage_rate).unwrap_or(0.0)
             })
             .sum::<f64>()
             / total
@@ -139,19 +134,24 @@ impl CoveringCourses {
     }
 }
 
+/// Nothing validates a configured wastage rate; outside [0, 100) it has no meaningful
+/// loss factor (100% divides by zero, above it turns demand negative), so it's ignored
+fn honoured_wastage_rate(wastage_rate: f64) -> Option<f64> {
+    (0.0..100.0).contains(&wastage_rate).then_some(wastage_rate)
+}
+
 fn course_forecast(group: &CourseGroup, population_served: f64) -> PopulationForecastCourse {
     let target_population = population_served * (group.population_percentage / 100.0);
-    // Nothing validates a configured wastage rate; outside [0, 100) it has no meaningful
-    // loss factor (100% divides by zero, above it turns demand negative), so it's ignored
-    let loss_factor = if (0.0..100.0).contains(&group.wastage_rate) {
-        1.0 / (1.0 - group.wastage_rate / 100.0)
-    } else {
-        log::warn!(
-            "Ignoring wastage rate {}% on course {}",
-            group.wastage_rate,
-            group.course_name
-        );
-        1.0
+    let loss_factor = match honoured_wastage_rate(group.wastage_rate) {
+        Some(wastage_rate) => 1.0 / (1.0 - wastage_rate / 100.0),
+        None => {
+            log::warn!(
+                "Ignoring wastage rate {}% on course {}",
+                group.wastage_rate,
+                group.course_name
+            );
+            1.0
+        }
     };
     let number_of_doses = group.dose_labels.len() as i32;
     let annual_target_doses =
