@@ -401,7 +401,9 @@ const checkMigrations = async (
     'the old client';
   // A gap without its own advice, which is to cover it with a step.
   const coveredBy = (gap: string) =>
-    gap.replace(/^v\d+ → v\d+: /, '').replace(/ and (is )?not covered — .*$/, '');
+    gap
+      .replace(/^v\d+ → v\d+: /, '')
+      .replace(/ and (is )?not covered — .*$/, '');
   for (const step of steps) {
     const target = host.stepTarget(step);
     if (additiveOnly(target)) {
@@ -555,6 +557,21 @@ export const checkFormVersions = async (
   const problems: string[] = [];
   for (const entry of declaration.documentTypes) {
     const dir = typeDir(pluginDir, entry);
+    // Read only at pack time otherwise, so a missing or broken one would pass
+    // every check until the bundle was built.
+    if (entry.legacyUiSchema) {
+      const file = join(dir, entry.legacyUiSchema);
+      if (!existsSync(file)) {
+        problems.push(`${file}: legacy UI schema file not found`);
+      } else {
+        const unreadable: string[] = [];
+        const uiSchema = readJson(file, unreadable);
+        problems.push(...unreadable);
+        if (unreadable.length === 0 && !isRecord(uiSchema)) {
+          problems.push(`${file}: a legacy UI schema must be a JSON object`);
+        }
+      }
+    }
     const unreadable: string[] = [];
     const schemas = entry.versions.map(version => {
       const file = join(dir, version.file);

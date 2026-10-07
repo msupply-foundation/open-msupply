@@ -208,6 +208,24 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
     ]);
   });
 
+  it('names a legacy UI schema that is missing or not an object', async () => {
+    const declaration = declare({
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+      legacyUiSchema: 'legacy-ui.json',
+    });
+    const missing = fixture({ 'forms/Visit/v1.json': v1 });
+    expect(await checkFormVersions(missing, declaration)).toEqual([
+      `${visit(missing, 'legacy-ui.json')}: legacy UI schema file not found`,
+    ]);
+    const list = fixture({
+      'forms/Visit/v1.json': v1,
+      'forms/Visit/legacy-ui.json': [],
+    });
+    expect(await checkFormVersions(list, declaration)).toEqual([
+      `${visit(list, 'legacy-ui.json')}: a legacy UI schema must be a JSON object`,
+    ]);
+  });
+
   it('names a $ref that does not resolve, in a type with one version', async () => {
     const dir = fixture({
       'forms/Visit/v1.json': {
@@ -286,6 +304,7 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
       'forms/Visit/v1.json': v1,
       'forms/Visit/v2.json': v2,
       'forms/Visit/fixtures/v1.json': v1Document,
+      'forms/Visit/legacy-ui.json': { type: 'VerticalLayout', elements: [] },
     };
     const additive =
       'the old client still draws Visit (legacyUiSchema) and cannot run a ' +

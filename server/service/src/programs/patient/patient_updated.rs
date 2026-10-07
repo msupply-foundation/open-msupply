@@ -259,7 +259,7 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
 ///
 /// `patient_draft_document` works on `SchemaPatient`, which only has the base patient schema's
 /// fields, while a deployment's patient schema can add its own (a top-level `nationality`, a
-/// `district` in a contact details entry). Every value in the stored data that the base schema
+/// `landmark` in a contact details entry). Every value in the stored data that the base schema
 /// has no field for is carried over into the draft, at any depth, so saving the draft does not
 /// drop it. A base schema field is always taken from the draft, so a value the patient row has
 /// cleared stays cleared.
@@ -596,8 +596,8 @@ mod test {
         let mut stored = serde_json::to_value(&patient).unwrap();
         stored["nationality"] = json!("Djiboutian");
         stored["region"] = json!({ "name": "Arta", "code": 3 });
-        stored["contactDetails"][0]["district"] = json!("Balbala");
-        stored["contactDetails"][1]["district"] = json!("Ambouli");
+        stored["contactDetails"][0]["landmark"] = json!("By the mosque");
+        stored["contactDetails"][1]["landmark"] = json!("Opposite the market");
 
         // The patient row has since changed the phone and cleared the date of death
         let now = Utc::now();
@@ -609,8 +609,14 @@ mod test {
 
         assert_eq!(draft["nationality"], json!("Djiboutian"));
         assert_eq!(draft["region"], json!({ "name": "Arta", "code": 3 }));
-        assert_eq!(draft["contactDetails"][0]["district"], json!("Balbala"));
-        assert_eq!(draft["contactDetails"][1]["district"], json!("Ambouli"));
+        assert_eq!(
+            draft["contactDetails"][0]["landmark"],
+            json!("By the mosque")
+        );
+        assert_eq!(
+            draft["contactDetails"][1]["landmark"],
+            json!("Opposite the market")
+        );
         // The base schema's fields still come from the patient row
         assert_eq!(draft["contactDetails"][0]["phone"], json!("333"));
         assert_eq!(draft["contactDetails"][1]["phone"], json!("222"));

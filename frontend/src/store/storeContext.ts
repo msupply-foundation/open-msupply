@@ -332,12 +332,13 @@ const currentStoreName = (): string => {
 // rebuild the regions and remount their contributions.
 let storeCodeMemo: Accessor<string | undefined> | undefined;
 const currentStoreCode = (): string | undefined => {
-  storeCodeMemo ??= createRoot(() =>
-    createMemo(() => {
+  storeCodeMemo ??= createRoot(() => {
+    const memo = createMemo(() => {
       const storeId = currentStoreId();
       return authUser()?.stores.nodes.find(s => s.id === storeId)?.code;
-    })
-  );
+    });
+    return memo;
+  });
   return storeCodeMemo();
 };
 

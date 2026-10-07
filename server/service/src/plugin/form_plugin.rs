@@ -747,10 +747,10 @@ fn install_schema_versions(
                 return Err(FormPluginInstallError::SchemaIdConflict(version.id.clone()));
             }
             Some(installed) => {
-                let replace = legacy_ui_schema.filter(|ui_schema| {
-                    version.id == *current_id && installed.ui_schema != **ui_schema
-                });
-                if let Some(ui_schema) = replace {
+                if let Some(ui_schema) = legacy_ui_schema
+                    && version.id == *current_id
+                    && installed.ui_schema != *ui_schema
+                {
                     repo.upsert_one(&FormSchemaJson {
                         ui_schema: ui_schema.clone(),
                         ..installed

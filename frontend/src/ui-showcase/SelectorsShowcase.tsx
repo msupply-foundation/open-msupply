@@ -488,6 +488,25 @@ export const SelectorsShowcase = () => {
           </Note>
         </DashboardCard>
 
+        <DashboardCard id="selectors-select-error" title="Select — error">
+          <Lead>
+            <code>error</code> switches the control to the error state, as
+            TextField's and Combobox's do: a red border,{' '}
+            <code>aria-invalid</code>, and the message with an alert icon in
+            place of <code>helperText</code>.
+          </Lead>
+          <Select
+            label="Direction"
+            required
+            options={[
+              { value: 'increase', label: 'Increase' },
+              { value: 'decrease', label: 'Decrease' },
+            ]}
+            helperText="Not shown while there is an error"
+            error="Choose a direction"
+          />
+        </DashboardCard>
+
         <DashboardCard
           id="selectors-label-info"
           title="Help tooltip on the label — labelInfo"

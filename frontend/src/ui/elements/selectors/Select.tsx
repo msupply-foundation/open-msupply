@@ -280,7 +280,6 @@ export const Select = (props: SelectProps) => {
           <button
             type="button"
             class={styles.clear}
-            disabled={props.disabled}
             aria-label="Clear selection"
             // Clearing removes this button (showClear turns false), so focus
             // must be handed to the trigger — dropped, it falls to <body> and
