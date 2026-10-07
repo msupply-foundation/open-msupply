@@ -92,7 +92,11 @@ const VvmStatusEntryContent = (props: {
       title={editing() ? t('label.edit-vvm-status') : t('label.new-vvm-status')}
       actionsLead={
         <Show when={error()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+          {message => (
+            <Alert severity="error" testId="vvm-status-error">
+              {message()}
+            </Alert>
+          )}
         </Show>
       }
       actions={

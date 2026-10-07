@@ -33,7 +33,7 @@
     "dev-android": "./scripts/dev-android.sh",
     "worktree": "./scripts/worktree.sh",
     "build-android": "./scripts/build-android.sh",
-    "brief": "if [ -f exploratory/tools/behaviour_brief.py ]; then python3 exploratory/tools/behaviour_brief.py; else echo \"brief skipped — exploratory/ is not in this tree\"; fi",
+    "brief": "sh -c 'if [ -f exploratory/tools/behaviour_brief.py ]; then python3 exploratory/tools/behaviour_brief.py \"$@\"; else echo \"brief skipped — exploratory/ is not in this tree\"; fi' --",
     "check:anchors": "if [ -f exploratory/tools/check_anchor_refs.py ]; then python3 exploratory/tools/check_anchor_refs.py; else echo \"check:anchors skipped — exploratory/ is not in this tree\"; fi"
   },
   "dependencies": {
