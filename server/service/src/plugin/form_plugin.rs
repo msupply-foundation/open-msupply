@@ -156,6 +156,13 @@ pub enum FormPluginInstallError {
     )]
     TakeOverBlanksOldUi { document_type: String },
     #[error(
+        "{document_type} is taken over with a registry config other than the deployment's: its \
+         event rules or nextEncounter would change or be dropped. Carry the deployment's config \
+         exactly, its events in the type's events.json and its nextEncounter in forms.json \
+         (plugins/MIGRATING-PROGRAMS.md, step 6), and change them in a later install"
+    )]
+    TakeOverChangesConfig { document_type: String },
+    #[error(
         "No program chosen for key \"{program_key}\" of plugin {plugin_code}. Pass --program \
          {program_key}=<programId>. Programs on this server: {available}"
     )]
@@ -478,6 +485,7 @@ fn install_document_type(
 
     if let Some((row, true)) = &existing {
         refuse_blanking_old_ui(connection, row, declaration, options)?;
+        refuse_changing_config(row, declaration)?;
     }
 
     let (schemas_added, ui_schemas_updated) = install_schema_versions(connection, declaration)?;
@@ -642,6 +650,34 @@ fn refuse_blanking_old_ui(
         });
     }
     Ok(())
+}
+
+/// A take-over carries the deployment's registry config as deployed, as it
+/// carries its schemas: the deployment's sites derive program events and the
+/// old client's next-visit suggestion from it, and the install would replace
+/// it without a word. Compared as parsed, so key order and spacing do not
+/// count. A stored config the server cannot read gives no events anywhere, so
+/// it has nothing to carry.
+fn refuse_changing_config(
+    row: &DocumentRegistryRow,
+    declaration: &DocumentTypeDeclaration,
+) -> Result<(), FormPluginInstallError> {
+    let Some(stored) = row
+        .config
+        .as_deref()
+        .and_then(|config| serde_json::from_str::<DocumentRegistryConfig>(config).ok())
+    else {
+        return Ok(());
+    };
+    if stored.next_encounter.is_none() && stored.events.is_empty() {
+        return Ok(());
+    }
+    if declaration.config.as_ref() == Some(&stored) {
+        return Ok(());
+    }
+    Err(FormPluginInstallError::TakeOverChangesConfig {
+        document_type: declaration.document_type.clone(),
+    })
 }
 
 /// Adds each version not yet installed, with the type's legacy UI schema, and
@@ -1667,6 +1703,110 @@ mod test {
         assert_eq!(
             error,
             Error::BlankOldUiNotDeclared("NotInTheBundle".to_string())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn a_take_over_carries_the_deployed_config() {
+        let connection = setup("form_plugin_take_over_config").await;
+        insert_unowned_entry(
+            &connection,
+            "deployed_encounter",
+            "DemoEncounter",
+            DocumentRegistryCategory::Encounter,
+            &context_program_a().id,
+        );
+        // The deployment's config, with the demo's rule, a next encounter and
+        // its own key order and spacing.
+        let deployed_config = r#"{
+            "nextEncounter": { "type": "Event", "eventType": "followUp", "label": "Next visit" },
+            "events": [{
+                "event": {
+                    "dataField": "extension.demo.regimen",
+                    "type": "currentRegimen",
+                    "documentType": "DemoProgramEnrolment"
+                },
+                "conditions": [{ "isSet": true, "field": "extension.demo.regimen" }],
+                "type": "Field"
+            }]
+        }"#;
+        DocumentRegistryRowRepository::new(&connection)
+            .upsert_one(&DocumentRegistryRow {
+                config: Some(deployed_config.to_string()),
+                ..entry(&connection, "DemoEncounter")
+            })
+            .unwrap();
+        let take_over = || {
+            blanking_old_ui(
+                options(&[("demo", "program_a")], &["DemoEncounter"]),
+                &["DemoEncounter"],
+            )
+        };
+        let refused = Error::TakeOverChangesConfig {
+            document_type: "DemoEncounter".to_string(),
+        };
+
+        // The demo's rules, without the deployment's next encounter.
+        let mut sidecar = demo_sidecar();
+        let error = install_form_plugins(&connection, &[sidecar.clone()], &take_over());
+        assert_eq!(error.unwrap_err(), refused);
+        // No config at all.
+        sidecar.document_types[2].config = None;
+        let error = install_form_plugins(&connection, &[sidecar.clone()], &take_over());
+        assert_eq!(error.unwrap_err(), refused);
+        let deployed = entry(&connection, "DemoEncounter");
+        assert_eq!(deployed.plugin_code, None);
+        assert_eq!(deployed.config.as_deref(), Some(deployed_config));
+
+        // Carried as deployed, it is taken over.
+        sidecar.document_types[2].config = Some(serde_json::from_str(deployed_config).unwrap());
+        let installed = install_form_plugins(&connection, &[sidecar], &take_over()).unwrap();
+        assert_eq!(installed[2].outcome, RegistryOutcome::TakenOver);
+        let config: DocumentRegistryConfig = serde_json::from_str(
+            entry(&connection, "DemoEncounter")
+                .config
+                .as_deref()
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(config, serde_json::from_str(deployed_config).unwrap());
+    }
+
+    #[actix_rt::test]
+    async fn a_take_over_of_an_entry_with_no_rules_takes_the_plugin_config() {
+        let connection = setup("form_plugin_take_over_no_config").await;
+        insert_unowned_entry(
+            &connection,
+            "deployed_encounter",
+            "DemoEncounter",
+            DocumentRegistryCategory::Encounter,
+            &context_program_a().id,
+        );
+        DocumentRegistryRowRepository::new(&connection)
+            .upsert_one(&DocumentRegistryRow {
+                config: Some(r#"{ "events": [] }"#.to_string()),
+                ..entry(&connection, "DemoEncounter")
+            })
+            .unwrap();
+        let installed = install_form_plugins(
+            &connection,
+            &[demo_sidecar()],
+            &blanking_old_ui(
+                options(&[("demo", "program_a")], &["DemoEncounter"]),
+                &["DemoEncounter"],
+            ),
+        )
+        .unwrap();
+        assert_eq!(installed[2].outcome, RegistryOutcome::TakenOver);
+        assert_eq!(
+            serde_json::from_str::<DocumentRegistryConfig>(
+                entry(&connection, "DemoEncounter")
+                    .config
+                    .as_deref()
+                    .unwrap()
+            )
+            .unwrap(),
+            demo_sidecar().document_types[2].config.clone().unwrap()
         );
     }
 

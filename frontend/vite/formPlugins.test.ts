@@ -175,6 +175,19 @@ describe('parseFormsDeclaration', () => {
       { ...encounterEntry, programkey: 'demo' },
       /unknown key "programkey"/,
     ],
+    [
+      'a next encounter that is not an event',
+      { ...encounterEntry, nextEncounter: { type: 'Date', eventType: 'x' } },
+      /"nextEncounter" must be/,
+    ],
+    [
+      'a next encounter with a misspelt key',
+      {
+        ...encounterEntry,
+        nextEncounter: { type: 'Event', eventtype: 'followUp' },
+      },
+      /"nextEncounter" must be/,
+    ],
   ];
   it.each(refusals)('refuses %s', (_, entry, message) => {
     expect(() =>
@@ -314,6 +327,40 @@ describe('packFormPlugin', () => {
     ]);
     expect(visit.versions[1].json_schema).toEqual({ ...schema, title: 'v2' });
     expect(visit.config).toEqual({ events: rules });
+  });
+
+  it("packs a next encounter into the type's config, with or without rules", () => {
+    const nextEncounter = {
+      type: 'Event',
+      eventType: 'followUpStatus',
+      label: 'Next visit',
+    };
+    const withNext = (events?: string) =>
+      parseFormsDeclaration(
+        {
+          programKeys: ['demo'],
+          documentTypes: [
+            { ...encounterEntry, nextEncounter, ...(events ? { events } : {}) },
+          ],
+        },
+        'forms.json'
+      );
+    const dir = fixture({
+      'forms/Visit/v1.json': schema,
+      'forms/Visit/events.json': rules,
+    });
+    const [withRules] = packFormPlugin(
+      'demo_program',
+      dir,
+      withNext('events.json')
+    ).document_types;
+    expect(withRules.config).toEqual({ nextEncounter, events: rules });
+    const [alone] = packFormPlugin(
+      'demo_program',
+      dir,
+      withNext()
+    ).document_types;
+    expect(alone.config).toEqual({ nextEncounter, events: [] });
   });
 
   it("packs a taken-over version under the deployment's id, and the legacy UI schema", () => {

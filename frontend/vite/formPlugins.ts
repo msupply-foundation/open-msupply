@@ -106,6 +106,12 @@ export interface DocumentTypeDeclaration {
   /** The event rules file, relative to the type's directory. */
   events?: string;
   /**
+   * The registry config's `nextEncounter`: the program event the old client
+   * suggests a document's next visit from. A deployment's own, carried with
+   * its event rules when the plugin takes its entry over.
+   */
+  nextEncounter?: NextEncounterDeclaration;
+  /**
    * The JSON Forms UI schema the old client draws this type's form from,
    * relative to the type's directory: the deployment's own, carried unchanged
    * while any site still runs the old client and deleted when the last one
@@ -113,6 +119,13 @@ export interface DocumentTypeDeclaration {
    * Nothing in this frontend or the plugin's code reads it.
    */
   legacyUiSchema?: string;
+}
+
+/** The Rust `NextEncounterEnum`: only its `Event` variant exists. */
+export interface NextEncounterDeclaration {
+  type: 'Event';
+  eventType: string;
+  label?: string;
 }
 
 export interface FormsDeclaration {
@@ -134,7 +147,10 @@ export interface FormDocumentTypeRow {
   name: string;
   program_key: string | null;
   versions: FormSchemaVersionRow[];
-  config: { events: unknown[] } | null;
+  config: {
+    nextEncounter?: NextEncounterDeclaration;
+    events: unknown[];
+  } | null;
   legacy_ui_schema?: Record<string, unknown>;
 }
 
@@ -167,6 +183,7 @@ const DOCUMENT_TYPE_KEYS = new Set([
   'dir',
   'versions',
   'events',
+  'nextEncounter',
   'legacyUiSchema',
 ]);
 const VERSION_KEYS = new Set(['file', 'source', 'type', 'id']);
@@ -243,6 +260,7 @@ const parseDocumentType = (
     dir,
     versions,
     events,
+    nextEncounter,
     legacyUiSchema,
   } = raw;
   if (!isNonEmptyString(documentType)) {
@@ -302,6 +320,12 @@ const parseDocumentType = (
   } else if (events !== undefined && !isContainedPath(events)) {
     problems.push(`${at}: "events" must stay inside the type's directory`);
   }
+  if (nextEncounter !== undefined && !isNextEncounter(nextEncounter)) {
+    problems.push(
+      `${at}: "nextEncounter" must be { "type": "Event", "eventType": ` +
+        '"<event type>" } with an optional "label", as the deployed config has it'
+    );
+  }
   if (
     legacyUiSchema !== undefined &&
     (!isNonEmptyString(legacyUiSchema) || !legacyUiSchema.endsWith('.json'))
@@ -359,9 +383,19 @@ const parseDocumentType = (
       (version): version is SchemaVersionDeclaration => version !== undefined
     ),
     ...(isNonEmptyString(events) ? { events } : {}),
+    ...(isNextEncounter(nextEncounter) ? { nextEncounter } : {}),
     ...(isNonEmptyString(legacyUiSchema) ? { legacyUiSchema } : {}),
   };
 };
+
+const NEXT_ENCOUNTER_KEYS = new Set(['type', 'eventType', 'label']);
+
+const isNextEncounter = (value: unknown): value is NextEncounterDeclaration =>
+  isRecord(value) &&
+  Object.keys(value).every(key => NEXT_ENCOUNTER_KEYS.has(key)) &&
+  value.type === 'Event' &&
+  isNonEmptyString(value.eventType) &&
+  (value.label === undefined || typeof value.label === 'string');
 
 /**
  * Validate a parsed `forms/forms.json`. Every problem is collected and
@@ -932,9 +966,17 @@ export const packFormPlugin = (
         name: entry.name,
         program_key: entry.programKey ?? null,
         versions,
-        config: entry.events
-          ? { events: readEventRules(join(dir, entry.events), problems) }
-          : null,
+        config:
+          entry.events || entry.nextEncounter
+            ? {
+                ...(entry.nextEncounter
+                  ? { nextEncounter: entry.nextEncounter }
+                  : {}),
+                events: entry.events
+                  ? readEventRules(join(dir, entry.events), problems)
+                  : [],
+              }
+            : null,
         ...(legacyUiSchema ? { legacy_ui_schema: legacyUiSchema } : {}),
       };
     }
