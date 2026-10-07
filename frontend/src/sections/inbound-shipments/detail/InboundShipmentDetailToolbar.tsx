@@ -17,6 +17,7 @@ import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { poLabel } from '../linkedOrder';
 import { NameSearch, type NameSeed } from '../../../domain/name';
+import { CampaignSelect } from '../../../domain/campaign';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
 import { sourceLinkOf, supplierIsStore } from './inboundShipmentStatus';
@@ -158,6 +159,22 @@ export const InboundShipmentDetailToolbar: Component<
           props.edit.setField('theirReference', e.currentTarget.value)
         }
         onBlur={() => props.edit.flush()}
+      />
+
+      {/* The shipment's default campaign: new batches in the line editor start
+          with it (and can be changed per batch); existing lines keep theirs. */}
+      <CampaignSelect
+        label={t('label.campaign-only')}
+        size="small"
+        inputTestId="inbound-campaign-input"
+        value={props.node.campaign?.id}
+        placeholder={t('label.none')}
+        disabled={props.disabled}
+        onChange={campaign =>
+          void props.onSaveField({
+            campaignId: { value: campaign?.id ?? null },
+          })
+        }
       />
 
       <DateField

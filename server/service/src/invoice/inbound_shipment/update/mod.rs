@@ -1,8 +1,8 @@
 use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{
-    WithDBError, custom_field::CustomFieldPatchProblem, invoice::query::get_invoice,
-    service_provider::ServiceContext,
+    NullableUpdate, WithDBError, custom_field::CustomFieldPatchProblem,
+    invoice::query::get_invoice, service_provider::ServiceContext,
 };
 use chrono::{DateTime, FixedOffset};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
@@ -60,6 +60,9 @@ pub struct UpdateInboundShipment {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
     pub received_datetime: Option<DateTime<FixedOffset>>,
+    /// The shipment's default campaign (null = none). New lines start with
+    /// it in the line editor; existing lines are left as they are.
+    pub campaign_id: Option<NullableUpdate<String>>,
     /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left
     /// as-is). Keys must be visible for the "inbound_shipment" scope.
@@ -232,6 +235,7 @@ pub enum UpdateInboundShipmentError {
     CannotReceiveWithNoLines,
     CannotSetShippedStatusOnManualInboundShipment,
     CurrencyRateMustBePositive,
+    CampaignDoesNotExist,
     /// A customFields patch key is not a visible inbound shipment property.
     UnknownPropertyKey(String),
     /// A customFields patch gives a defined property a value of the wrong
@@ -313,18 +317,20 @@ mod test {
         InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
         StockLineRowRepository,
         mock::{
-            MockData, MockDataInserts, mock_donor_a, mock_donor_b, mock_inbound_shipment_a,
-            mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_b,
-            mock_inbound_shipment_c, mock_inbound_shipment_e, mock_inbound_shipment_f, mock_item_a,
-            mock_name_a, mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
-            mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
-            mock_store_linked_to_name, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a,
+            MockData, MockDataInserts, mock_campaign_a, mock_donor_a, mock_donor_b,
+            mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
+            mock_inbound_shipment_b, mock_inbound_shipment_c, mock_inbound_shipment_e,
+            mock_inbound_shipment_f, mock_item_a, mock_name_a, mock_name_linked_to_store_join,
+            mock_name_not_linked_to_store_join, mock_outbound_shipment_e, mock_stock_line_a,
+            mock_store_a, mock_store_b, mock_store_linked_to_name, mock_user_account_a,
+            mock_vaccine_item_a, mock_vvm_status_a,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
     };
 
     use crate::{
+        NullableUpdate,
         invoice::inbound_shipment::{
             InboundShipmentType, UpdateDefaultDonor, UpdateInboundShipment,
             UpdateInboundShipmentStatus,
@@ -2825,5 +2831,72 @@ mod test {
             logs[0].activity_log_row.changed_to,
             Some("2024-12-10".to_string())
         );
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_campaign() {
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "inbound_campaign".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_campaign",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice()],
+                ..Default::default()
+            },
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+        let campaign = |value: Option<String>| UpdateInboundShipment {
+            id: invoice().id,
+            campaign_id: Some(NullableUpdate { value }),
+            ..Default::default()
+        };
+        let saved_campaign = || {
+            InvoiceRowRepository::new(&connection)
+                .find_one_by_id(&invoice().id)
+                .unwrap()
+                .unwrap()
+                .campaign_id
+        };
+
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                campaign(Some("not_a_campaign".to_string())),
+                InboundShipmentType::InboundShipment
+            ),
+            Err(ServiceError::CampaignDoesNotExist)
+        );
+
+        service
+            .update_inbound_shipment(
+                &context,
+                campaign(Some(mock_campaign_a().id)),
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+        assert_eq!(saved_campaign(), Some(mock_campaign_a().id));
+
+        service
+            .update_inbound_shipment(
+                &context,
+                campaign(None),
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+        assert_eq!(saved_campaign(), None);
     }
 }
