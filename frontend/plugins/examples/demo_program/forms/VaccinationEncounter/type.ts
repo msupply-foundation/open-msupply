@@ -1,11 +1,10 @@
 /*
  * A deployed document type taken over by the plugin
- * (kdd/custom-forms/implementation-plan.md § From review, P4): a deployment's
- * HIV Care COVID-19 vaccination encounter, as its schema repository defines
- * it. Two changes from that file, neither of which changes the schema:
- * `Encounter` comes from the SDK (its base type field for field), and the
- * manufacturer is a union of strings, because the plugin tsconfig's
- * `erasableSyntaxOnly` refuses an `enum`. The deployed schema is v1,
+ * (kdd/custom-forms/implementation-plan.md § From review, P4): an illustrative
+ * deployment's vaccination encounter, written as a type copied from a
+ * deployment's schema repository is: `Encounter` comes from the SDK (its base
+ * type field for field), and the manufacturer is a union of strings, because
+ * the plugin tsconfig's `erasableSyntaxOnly` refuses an `enum`. The deployed schema is v1,
  * installed under the deployment's own schema id (`forms.json`) and generated
  * from the archived v1.ts, which the build re-proves on every run; this type
  * is the plugin's v2.
@@ -21,7 +20,7 @@
  */
 import type { Encounter } from '@openmsupply/plugin-sdk';
 
-export type Covid19Manufacture =
+export type VaccineManufacturer =
   | 'Moderna'
   | 'Pfizer'
   | 'Astra-Zeneca'
@@ -30,11 +29,11 @@ export type Covid19Manufacture =
   | 'Novavax'
   | 'Other';
 
-export interface Covid19EncounterExt {
+export interface VaccinationEncounterExt {
   clientOfferedVaccination?: boolean;
   declined?: boolean;
   reasonForDecline?: string;
-  manufacturer?: Covid19Manufacture;
+  manufacturer?: VaccineManufacturer;
   /**
    * @format date
    */
@@ -42,6 +41,6 @@ export interface Covid19EncounterExt {
   batchNumber?: string;
 }
 
-export interface Covid19Encounter extends Encounter {
-  extension?: Covid19EncounterExt;
+export interface VaccinationEncounter extends Encounter {
+  extension?: VaccinationEncounterExt;
 }

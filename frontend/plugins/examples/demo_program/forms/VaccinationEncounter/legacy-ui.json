@@ -6,7 +6,7 @@
   "elements": [
     {
       "type": "Category",
-      "label": "COVID-19 Vaccination Services",
+      "label": "Vaccination Services",
       "options": { "icon": "document" },
       "elements": [
         {
@@ -32,7 +32,7 @@
     },
     {
       "type": "Category",
-      "label": "COVID-19 Vaccination Event",
+      "label": "Vaccination Event",
       "options": { "icon": "injection" },
       "elements": [
         {

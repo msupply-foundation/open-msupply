@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "allOf": [
     {
-      "$ref": "#/definitions/Covid19Encounter"
+      "$ref": "#/definitions/VaccinationEncounter"
     }
   ],
   "definitions": {
@@ -19,83 +19,6 @@
         }
       },
       "type": "object"
-    },
-    "Covid19Encounter": {
-      "properties": {
-        "clinician": {
-          "$ref": "#/definitions/Clinician"
-        },
-        "createdBy": {
-          "$ref": "#/definitions/User",
-          "description": "User who created the encounter (could be different to \"Clinician\")"
-        },
-        "createdDatetime": {
-          "description": "Date time when the encounter was made, e.g. when an clinician schedule the encounter.",
-          "format": "date-time",
-          "type": "string"
-        },
-        "endDatetime": {
-          "description": "Encounter end date and time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "extension": {
-          "$ref": "#/definitions/Covid19EncounterExt"
-        },
-        "location": {
-          "$ref": "#/definitions/EncounterLocation",
-          "description": "The store/clinic/location of the encounter"
-        },
-        "notes": {
-          "description": "An overall note for additional comments about the encounter",
-          "items": {
-            "$ref": "#/definitions/Note"
-          },
-          "type": "array"
-        },
-        "startDatetime": {
-          "description": "Encounter start date and time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "status": {
-          "$ref": "#/definitions/EncounterStatus"
-        }
-      },
-      "required": ["createdDatetime", "startDatetime"],
-      "type": "object"
-    },
-    "Covid19EncounterExt": {
-      "properties": {
-        "clientOfferedVaccination": {
-          "type": "boolean"
-        },
-        "declined": {
-          "type": "boolean"
-        },
-        "manufacturer": {
-          "$ref": "#/definitions/Covid19Manufacture"
-        },
-        "reasonForDecline": {
-          "type": "string"
-        },
-        "vaccinationDate": {
-          "format": "date",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "Covid19Manufacture": {
-      "enum": [
-        "Moderna",
-        "Pfizer",
-        "Astra-Zeneca",
-        "Sinovac",
-        "Johnson & Johnson",
-        "Other"
-      ],
-      "type": "string"
     },
     "EncounterLocation": {
       "properties": {
@@ -141,6 +64,83 @@
         }
       },
       "type": "object"
+    },
+    "VaccinationEncounter": {
+      "properties": {
+        "clinician": {
+          "$ref": "#/definitions/Clinician"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/User",
+          "description": "User who created the encounter (could be different to \"Clinician\")"
+        },
+        "createdDatetime": {
+          "description": "Date time when the encounter was made, e.g. when an clinician schedule the encounter.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "endDatetime": {
+          "description": "Encounter end date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "extension": {
+          "$ref": "#/definitions/VaccinationEncounterExt"
+        },
+        "location": {
+          "$ref": "#/definitions/EncounterLocation",
+          "description": "The store/clinic/location of the encounter"
+        },
+        "notes": {
+          "description": "An overall note for additional comments about the encounter",
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
+        "startDatetime": {
+          "description": "Encounter start date and time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/EncounterStatus"
+        }
+      },
+      "required": ["createdDatetime", "startDatetime"],
+      "type": "object"
+    },
+    "VaccinationEncounterExt": {
+      "properties": {
+        "clientOfferedVaccination": {
+          "type": "boolean"
+        },
+        "declined": {
+          "type": "boolean"
+        },
+        "manufacturer": {
+          "$ref": "#/definitions/VaccineManufacturer"
+        },
+        "reasonForDecline": {
+          "type": "string"
+        },
+        "vaccinationDate": {
+          "format": "date",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "VaccineManufacturer": {
+      "enum": [
+        "Moderna",
+        "Pfizer",
+        "Astra-Zeneca",
+        "Sinovac",
+        "Johnson & Johnson",
+        "Other"
+      ],
+      "type": "string"
     }
   },
   "type": "object"

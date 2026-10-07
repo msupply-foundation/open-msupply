@@ -5,6 +5,6 @@
  * fails when it no longer matches.
  */
 export const versions = [
-  '9c53b7fb-6ba7-47aa-a773-0b071270feca',
-  'demo_program_HIVCareCovid19Encounter_v2_eceae4847825',
+  'fea09b1f-1554-492e-8732-538a271c1c2b',
+  'demo_program_VaccinationEncounter_v2_30c37b9066e7',
 ] as const;

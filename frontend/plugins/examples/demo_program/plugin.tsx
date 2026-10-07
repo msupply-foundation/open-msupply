@@ -14,7 +14,7 @@
  * the archived v1 form, which the host shows read-only for encounters
  * recorded under v1 until the user presses Edit.
  *
- * `HIVCareCovid19Encounter` is a deployed type the plugin took over, with
+ * `VaccinationEncounter` is a deployed type the plugin took over, with
  * its deployment's schema as v1 and an additive v2: its contribution lists
  * the versions and nothing else, since an additive change needs no migration
  * and its earlier documents open in the current form.
@@ -43,8 +43,8 @@ import { DemoEncounterForm } from './forms/DemoEncounter/form';
 import { DemoEncounterV1Form } from './forms/DemoEncounter/v1Form';
 import { migrations as encounterMigrations } from './forms/DemoEncounter/migrations';
 import { versions as encounterVersions } from './forms/DemoEncounter/versions';
-import { Covid19EncounterForm } from './forms/HIVCareCovid19Encounter/form';
-import { versions as covid19EncounterVersions } from './forms/HIVCareCovid19Encounter/versions';
+import { VaccinationEncounterForm } from './forms/VaccinationEncounter/form';
+import { versions as vaccinationEncounterVersions } from './forms/VaccinationEncounter/versions';
 
 export default definePlugin({
   manifest: {
@@ -87,10 +87,10 @@ export default definePlugin({
     },
     {
       slot: 'encounter.form',
-      id: 'covid19-encounter-form',
-      documentType: 'HIVCareCovid19Encounter',
-      Component: encounterForm(Covid19EncounterForm),
-      versions: covid19EncounterVersions,
+      id: 'vaccination-encounter-form',
+      documentType: 'VaccinationEncounter',
+      Component: encounterForm(VaccinationEncounterForm),
+      versions: vaccinationEncounterVersions,
     },
   ],
   translations: {
@@ -157,14 +157,15 @@ export default definePlugin({
       'field.adherence': 'Adherence notes',
       'kept.adherence': 'Adherence notes',
 
-      // The COVID-19 vaccination encounter, taken over from a deployment.
-      'group.covid-services': 'COVID-19 vaccination services',
+      // The vaccination encounter, taken over from a deployment.
+      'group.vaccination-services': 'Vaccination services',
       'field.offered-vaccination': 'Client offered vaccination',
       'field.declined': 'Declined',
       'field.reason-for-decline': 'Reason for decline',
-      'group.covid-event': 'COVID-19 vaccination event',
+      'group.vaccination-event': 'Vaccination event',
       'field.vaccination-date': 'Vaccination date',
       'field.manufacturer': 'Manufacturer',
+      'manufacturer.other': 'Other',
       'field.batch-number': 'Batch number',
     },
   },

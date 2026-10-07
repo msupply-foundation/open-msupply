@@ -109,16 +109,16 @@ describe('parseFormsDeclaration', () => {
       ['Patient', 'Patient', undefined, 1],
       ['DemoProgramEnrolment', 'ProgramEnrolment', 'demo', 1],
       ['DemoEncounter', 'Encounter', 'demo', 2],
-      ['HIVCareCovid19Encounter', 'Encounter', 'demo', 2],
+      ['VaccinationEncounter', 'Encounter', 'demo', 2],
     ]);
     // The taken-over type: its v1 under the deployment's id, and the
     // deployment's UI schema for the old client.
-    const covid = declaration?.documentTypes.at(-1);
-    expect(covid?.versions.map(version => version.id)).toEqual([
-      '9c53b7fb-6ba7-47aa-a773-0b071270feca',
+    const legacy = declaration?.documentTypes.at(-1);
+    expect(legacy?.versions.map(version => version.id)).toEqual([
+      'fea09b1f-1554-492e-8732-538a271c1c2b',
       undefined,
     ]);
-    expect(covid?.legacyUiSchema).toBe('legacy-ui.json');
+    expect(legacy?.legacyUiSchema).toBe('legacy-ui.json');
   });
 
   it('defaults a type directory to its document type', () => {
