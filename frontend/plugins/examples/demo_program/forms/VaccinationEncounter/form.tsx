@@ -75,6 +75,10 @@ export const VaccinationEncounterForm = (
         path="extension.manufacturer"
         label={intl.t('field.manufacturer')}
         options={manufacturers()}
+        // No longer given, but the brand a record holds is a fact about that
+        // visit, so the record keeps showing it; it is just not offered again.
+        // The type still lists it, so the old client can still record it.
+        retired={['Astra-Zeneca']}
         testId="vaccination-manufacturer"
       />
       <TextInput

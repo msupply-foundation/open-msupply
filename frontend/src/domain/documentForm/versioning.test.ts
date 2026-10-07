@@ -144,7 +144,7 @@ describe('checkCoverage', () => {
 
   it('names a retired value the map leaves out', () => {
     expect(checkCoverage(v1, v2, { ...v1ToV2, unresolved: {} })).toEqual([
-      'v1 → v2: extension.demo.regimen value "LEGACY_TRIAL" is retired and not covered — add it to mapped or unresolved',
+      'v1 → v2: extension.demo.regimen value "LEGACY_TRIAL" is retired and not covered — add it to mapped or unresolved, or, where the value records what happened (a fact about that visit), keep it in the new version\'s enum and list it in its SelectInput\'s retired',
     ]);
   });
 

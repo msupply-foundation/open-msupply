@@ -271,7 +271,9 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
     expect(problems[0]).toBe(
       `${visit(dir, 'migrations.ts')}: v1 → v2: extension.demo.regimen ` +
         'value "LEGACY_TRIAL" is retired and not covered — add it to mapped ' +
-        'or unresolved'
+        'or unresolved, or, where the value records what happened (a fact ' +
+        "about that visit), keep it in the new version's enum and list it in " +
+        "its SelectInput's retired"
     );
     // And the fixture holding that value no longer fits the current schema.
     expect(problems[1]).toMatch(

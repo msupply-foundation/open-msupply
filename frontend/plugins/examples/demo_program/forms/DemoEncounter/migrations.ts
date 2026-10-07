@@ -24,6 +24,10 @@ export const v1ToV2 = defineMigration<DemoEncounter>({
     'extension.demo.weightKg': 'extension.demo.vitals.weightKg',
     'extension.demo.heightCm': 'extension.demo.vitals.heightCm',
   },
+  // Unresolved rather than retired (the SelectInput's `retired`): the regimen
+  // is the one the patient is on after the visit, which the Field rule copies
+  // into the enrolment's current regimen, so a record saved again must name a
+  // regimen that still exists.
   unresolved: {
     'extension.demo.regimen': {
       LEGACY_TRIAL: () => intl.t('regimen.LEGACY_TRIAL'),

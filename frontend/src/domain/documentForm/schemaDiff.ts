@@ -277,7 +277,9 @@ export const checkCoverage = (
       if (!covered) {
         problems.push(
           `${at}: ${target} value ${quote(value)} is retired and not covered — ` +
-            'add it to mapped or unresolved'
+            'add it to mapped or unresolved, or, where the value records what ' +
+            'happened (a fact about that visit), keep it in the new ' +
+            "version's enum and list it in its SelectInput's retired"
         );
       }
     }
