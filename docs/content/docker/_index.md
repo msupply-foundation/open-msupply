@@ -188,7 +188,7 @@ Two situations need a clean database, and both are the same fix — run the work
 
 Previews only work for branches in this repository. A PR from a fork gets a read-only token and no secrets, so the workflow says so and stops rather than failing at the registry twenty minutes later.
 
-A preview's image is the same `deploy_<sha>-postgres-amd64-debug` a named debug deployment of that commit uses, so if one also follows the PR's branch, each push is built once between them. Neither removes the image while the other is still running it.
+A preview's image is the same `deploy_<sha>-postgres-amd64-debug` a named debug deployment of that commit uses, so if one also follows the PR's branch, each push is built once between them. Neither removes the image while the other is still running it. Because the image already exists, re-running a preview's workflow for the same push redeploys it without rebuilding — delete the tag (or the local image, when the box doesn't push) to force a fresh build.
 
 ### What every deployment has in common
 
