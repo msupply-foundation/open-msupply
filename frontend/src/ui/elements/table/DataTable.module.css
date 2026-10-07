@@ -32,10 +32,22 @@
   flex-direction: column;
   min-block-size: 0;
   min-inline-size: 0;
-  border: 1px solid var(--color-border-value);
-  border-radius: var(--radius-md);
+  margin-inline: calc(-1 * var(--table-bleed-inline));
+  border: var(--table-frame-width) solid var(--color-border-value);
+  border-radius: var(--table-frame-radius);
   background: var(--bg-white);
   overflow: clip;
+
+  /* The frame as knobs a HOST may turn on a table it holds as its whole body
+     — declared HERE with the standard values, so a host changes them only by
+     setting them on this element (a descendant selector of its own), and a
+     table nested inside a host's own layout (a panel, an accordion, a grid
+     wrapper) keeps the frame. The full-screen Dialog runs its body table to
+     the sheet edges this way: bleed = its inline inset, frame and radius 0
+     (Dialog.module.css › data-fullscreen, #246). */
+  --table-bleed-inline: 0px;
+  --table-frame-width: 1px;
+  --table-frame-radius: var(--radius-md);
 
   /* Width of each leading fixed column (expander / select). The ONE source of
      truth for that box — the .selectCell/.expanderCell rules size to it, and

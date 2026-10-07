@@ -523,3 +523,46 @@
 .dialog[data-hold-height][open] .body {
   flex: 1;
 }
+
+/* Full screen is the one state where the dialog's inset is spent on nothing:
+   the sheet's edges already bound the content, and on a tablet with the
+   keyboard up every row counts (#246). So two things tighten here, and ONLY
+   here — a card or sheet framed by the scrim keeps the standard chrome.
+   (Last in the file: the :has() rule outranks the hold-height rules above,
+   and stylelint wants specificity to ascend.)
+
+   1. The action row: --space-2 above and below the buttons, the body yielding
+   its bottom inset to the row (hairline → 0.5rem → buttons → 0.5rem → edge),
+   from 0.75rem above plus the body's 1rem below. The buttons keep their own
+   height (--touch-target under a coarse pointer); it is the band that
+   tightens, never the targets. */
+.dialog[data-fullscreen] .actions {
+  padding-block: var(--space-2);
+}
+
+.dialog[data-fullscreen] .body:has(> .bottom > .actions) {
+  padding-block-end: 0;
+}
+
+/* 2. A table that IS the body runs edge to edge. The scroll region's padding
+   box is widened to the sheet edges (margin out, padding back in — the
+   content sits where it did, the inline inset now doubling as the focus-ring
+   room), so a direct child may bleed into that padding without the scrollport
+   clipping it. Then every direct child is handed the table frame's knobs
+   (declared with their defaults on DataTable's .root): bleed by the inset, no
+   frame, no radius. Set ON the child, so they beat the table's own defaults
+   only when the table is the child itself; a table nested in an editor's own
+   layout — under a form panel, in an accordion, in a grid wrapper — declares
+   the defaults on its root and keeps its frame. The header, the footer banner
+   and the actions keep their inset: a picker or a button against the sheet
+   edge gains nothing. */
+.dialog[data-fullscreen][open] .scroll {
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  padding-inline: var(--dialog-pad-inline);
+}
+
+.dialog[data-fullscreen][open] .scroll > * {
+  --table-bleed-inline: var(--dialog-pad-inline);
+  --table-frame-width: 0;
+  --table-frame-radius: 0;
+}
