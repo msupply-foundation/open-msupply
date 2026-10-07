@@ -554,16 +554,21 @@
    to the two hairlines block-wise (margin out, padding back in — the content
    sits where it did, the inline inset and the body's gap now doubling as the
    focus-ring room), so a direct child may bleed into that padding without
-   the scrollport clipping it. Then every direct child is handed the table
-   frame's knobs (declared with their defaults on DataTable's .root): bleed
-   by the inset inline and by the gap block-wise, no frame, no radius — the
-   column-header row sits ON the heading's rule and the last row (or the
-   scroll box) ends ON the actions' rule, instead of a 1rem band of empty
-   panel above and below. Set ON the child, so they beat the table's own
-   defaults only when the table is the child itself; a table nested in an
-   editor's own layout — under a form panel, in an accordion, in a grid
-   wrapper — declares the defaults on its root and keeps its frame and its
-   spacing. The header, the footer banner and the actions keep their inset:
+   the scrollport clipping it. Then a SOLE direct child (:only-child) is
+   handed the table frame's knobs (declared with their defaults on
+   DataTable's .root): bleed by the inset inline and by the gap block-wise,
+   no frame, no radius — the column-header row sits ON the heading's rule
+   and the last row (or the scroll box) ends ON the actions' rule, instead
+   of a 1rem band of empty panel above and below. Set ON the child, so they
+   beat the table's own defaults only when the table is the child itself; a
+   table nested in an editor's own layout — under a form panel, in an
+   accordion, in a grid wrapper — declares the defaults on its root and
+   keeps its frame and its spacing. Only-child, because a table that SHARES
+   the region with a sibling above it — the returns editors' progress strip
+   and reference field, the link-order picker's instruction line — is not
+   the body: the block bleed would eat the 1rem gap to that sibling and butt
+   a frameless toolbar against a text field, so it keeps its frame and its
+   gap. The header, the footer banner and the actions keep their inset:
    a picker or a button against the sheet edge gains nothing. A hidden title
    (.header.srOnly, out of flow) leaves no rule to meet, so a body table
    there would run to the sheet's top edge — today every such workbench
@@ -575,7 +580,7 @@
   padding-block: var(--dialog-gap);
 }
 
-.dialog[data-fullscreen][open] .scroll > * {
+.dialog[data-fullscreen][open] .scroll > :only-child {
   --table-bleed-inline: var(--dialog-pad-inline);
   --table-bleed-block: var(--dialog-gap);
   --table-frame-width: 0;
