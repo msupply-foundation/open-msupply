@@ -354,6 +354,11 @@ mutation allocateOutboundLine($storeId: String!, $lineId: String!) {
           batch
         }
       }
+      skippedOtherCampaignStockLines {
+        nodes {
+          batch
+        }
+      }
       issuedExpiringSoonStockLines {
         nodes {
           batch

@@ -236,6 +236,11 @@ interface OutboundLineEditModalProps {
   /** NEW shipments may create placeholders (rules.md § placeholder lines). */
   isNew: boolean;
   /**
+   * The shipment's campaign (null = routine): auto-allocation fills only
+   * batches of the same campaign. Manual entry is never restricted.
+   */
+  campaignId: string | null;
+  /**
    * The item this open STARTS on (a row click) → UPDATE mode (the picker
    * locks). Omitted for "Add item" → add mode. The modal tracks its own
    * current item as the user advances with "OK & next".
@@ -683,6 +688,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     expiredStockIssueThreshold: prefs().expiredStockIssueThreshold,
     manageVvmStatusForStock: prefs().manageVvmStatusForStock,
     sortByVvmStatusThenExpiry: prefs().sortByVvmStatusThenExpiry,
+    issueCampaignId: props.campaignId,
   });
   // TWO bar rules (rules.md § barred batches): the pref-gated ISSUE bar
   // (manual entry disabled, row dimmed — OMS-REG-SMV-11.26/.31) vs the stricter,

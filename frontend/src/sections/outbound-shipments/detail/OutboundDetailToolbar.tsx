@@ -105,7 +105,8 @@ export const OutboundDetailToolbar: Component<
       </FormRowItem>
 
       {/* The campaign this shipment issues for (none = routine). Lines keep
-          their batch's own campaign — this never retags stock. */}
+          their batch's own campaign — this never retags stock — and
+          auto-allocation only takes batches of the same campaign. */}
       <FormRowItem weight={1} minWidth="8rem" maxWidth="16rem">
         <CampaignSelect
           label={t('label.campaign-only')}

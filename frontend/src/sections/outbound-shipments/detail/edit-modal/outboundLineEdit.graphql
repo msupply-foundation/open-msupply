@@ -48,6 +48,7 @@ query draftStockOutLines(
         id
       }
       campaign {
+        id
         name
       }
       program {

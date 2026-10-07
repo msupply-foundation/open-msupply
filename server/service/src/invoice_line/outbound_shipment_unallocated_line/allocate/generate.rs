@@ -31,6 +31,7 @@ pub struct GenerateOutput {
     pub skipped_expired_stock_lines: Vec<StockLine>,
     pub skipped_on_hold_stock_lines: Vec<StockLine>,
     pub skipped_unusable_vvm_status_lines: Vec<StockLine>,
+    pub skipped_other_campaign_stock_lines: Vec<StockLine>,
     pub issued_expiring_soon_stock_lines: Vec<StockLine>,
 }
 
@@ -67,8 +68,17 @@ pub fn generate(
     let sorted_available_stock_lines =
         get_sorted_available_stock_lines(connection, store_id, &unallocated_line, sort_by_vvm)?;
 
+    // Only stock of the shipment's campaign is auto-allocated; a shipment with
+    // no campaign (routine) never takes campaign stock. Programmes don't count.
+    let invoice_campaign_id = &unallocated_line.invoice_row.campaign_id;
+
     // Use FEFO to allocate
     for stock_line in sorted_available_stock_lines {
+        if &stock_line.stock_line_row.campaign_id != invoice_campaign_id {
+            result.skipped_other_campaign_stock_lines.push(stock_line);
+            continue;
+        }
+
         let can_use = get_stock_line_eligibility(&stock_line)
             .map(|eligibility| match eligibility {
                 StockLineAlert::OnHold => {

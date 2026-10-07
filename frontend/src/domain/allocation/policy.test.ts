@@ -180,6 +180,26 @@ describe('autoAllocateBarReasons (OMS-REG-SMV-11.4–.6/.28)', () => {
       )
     ).toEqual(['on-hold']);
   });
+
+  it("another campaign's stock is never auto-allocated when the record matches campaigns", () => {
+    const campaignA = { stockLineOnHold: false, campaign: { id: 'a' } };
+    const routine = { stockLineOnHold: false, campaign: null };
+    const forA = prefs({ issueCampaignId: 'a' });
+    const forRoutine = prefs({ issueCampaignId: null });
+    expect(autoAllocateBarReasons(campaignA, forA, today)).toEqual([]);
+    expect(autoAllocateBarReasons(routine, forA, today)).toEqual([
+      'other-campaign',
+    ]);
+    // A routine record skips every campaign's stock.
+    expect(autoAllocateBarReasons(campaignA, forRoutine, today)).toEqual([
+      'other-campaign',
+    ]);
+    expect(autoAllocateBarReasons(routine, forRoutine, today)).toEqual([]);
+    // No issueCampaignId (prescriptions) = no campaign matching at all.
+    expect(autoAllocateBarReasons(campaignA, prefs(), today)).toEqual([]);
+    // …and manual entry is never barred by campaign.
+    expect(barReasons(routine, forA, today)).toEqual([]);
+  });
 });
 
 // The manual-bar refinements (old-app parity): the on-hold exception for a
