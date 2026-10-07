@@ -762,6 +762,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // both divergence records carry the matching edit (spec/PROCESS.md).
   const lineAutoBarReasons = (line: DraftLine) =>
     autoAllocateBarReasons(line, allocationPrefs());
+  // Auto-allocation skips this batch for its campaign — badged so the missing
+  // tick has a visible reason (the Campaign/program column sits far right).
+  const lineOtherCampaign = (line: DraftLine): boolean =>
+    lineAutoBarReasons(line).includes('other-campaign');
   // The tick column's predicate ("will be used in auto-allocation"): auto-
   // fillable AND, under the packs lens, of the selected pack size (the old
   // app's canAutoAllocate contract).
@@ -1223,6 +1227,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               expired={lineExpired(line)}
               nearExpiry={lineNearExpiry(line)}
               held={lineHeld(line)}
+              otherCampaign={
+                lineOtherCampaign(line)
+                  ? `${t('label.campaign-only')}: ${line.campaign?.name ?? t('label.none')}`
+                  : undefined
+              }
             />
           </span>
         );
@@ -1614,6 +1623,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         },
         'error',
         () => <AlertTriangleIcon />
+      ),
+    },
+    {
+      // Other-campaign flag, CARD-ONLY — the companion to the table's "Not for
+      // this campaign" badge beside the batch code, which cards hide.
+      c: { accessor: lineOtherCampaign, id: 'otherCampaign' },
+      header: () => t('label.not-for-this-campaign'),
+      ...getFlagCell(
+        t('label.not-for-this-campaign'),
+        {
+          headerPosition: 'badge',
+          hideOnTable: true,
+          hideFromColumnSettings: true,
+        },
+        undefined,
+        () => <InfoIcon />
       ),
     },
   ];

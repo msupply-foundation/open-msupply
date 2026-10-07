@@ -68,13 +68,12 @@ pub fn generate(
     let sorted_available_stock_lines =
         get_sorted_available_stock_lines(connection, store_id, &unallocated_line, sort_by_vvm)?;
 
-    // Only stock of the shipment's campaign is auto-allocated; a shipment with
-    // no campaign (routine) never takes campaign stock. Programmes don't count.
-    let invoice_campaign_id = &unallocated_line.invoice_row.campaign_id;
-
     // Use FEFO to allocate
     for stock_line in sorted_available_stock_lines {
-        if &stock_line.stock_line_row.campaign_id != invoice_campaign_id {
+        // Only stock of the shipment's campaign is auto-allocated; a shipment
+        // with no campaign (routine) never takes campaign stock. Programmes
+        // don't count.
+        if stock_line.stock_line_row.campaign_id != unallocated_line.invoice_row.campaign_id {
             result.skipped_other_campaign_stock_lines.push(stock_line);
             continue;
         }
