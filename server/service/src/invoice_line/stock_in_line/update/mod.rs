@@ -1,20 +1,20 @@
 use crate::{
-    activity_log::activity_log_entry_with_diff,
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
     NullableUpdate, WithDBError,
+    activity_log::activity_log_entry_with_diff,
+    invoice_line::{ShipmentTaxUpdate, query::get_invoice_line},
+    service_provider::ServiceContext,
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, ActivityLogType, InvoiceLine,
-    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository,
+    ActivityLogType, InvoiceLine, InvoiceLineRowRepository, InvoiceLineStatus,
+    InvoiceRowRepository, RepositoryError, StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod generate;
 mod validate;
 
-use generate::{generate, GenerateResult};
+use generate::{GenerateResult, generate};
 use validate::validate;
 
 use crate::invoice::inbound_shipment::InboundShipmentType;
@@ -163,30 +163,30 @@ where
 mod test {
     use chrono::NaiveDate;
     use repository::{
+        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+        InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow, InvoiceStatus,
+        InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
         mock::{
-            mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
-            mock_immunisation_program_a, mock_inbound_shipment_a, mock_item_a, mock_item_b,
+            MockData, MockDataInserts, currency_b, mock_customer_return_a_invoice_line_a,
+            mock_customer_return_a_invoice_line_b, mock_immunisation_program_a,
+            mock_inbound_shipment_a, mock_item_a, mock_item_b,
             mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
             mock_name_store_b, mock_outbound_shipment_a, mock_purchase_order_a, mock_reason_option,
             mock_shipment_variance_reason_option, mock_store_a, mock_store_b,
             mock_supplier_return_a_invoice_line_a, mock_transferred_inbound_shipment_a,
             mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, mock_vvm_status_b,
-            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-        InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow, InvoiceStatus,
-        InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
     };
 
     use crate::{
+        NullableUpdate,
         invoice_line::stock_in_line::{
-            insert_stock_in_line, update::UpdateStockInLine, update_stock_in_line,
             InsertStockInLine, StockInType, UpdateStockInLineError as ServiceError,
+            insert_stock_in_line, update::UpdateStockInLine, update_stock_in_line,
         },
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -343,17 +343,19 @@ mod test {
         );
 
         // Zero is allowed, donated and free of charge stock has no price
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: mock_customer_return_a_invoice_line_a().id,
-                sell_price_per_pack: Some(0.0),
-                cost_price_per_pack: Some(0.0),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    sell_price_per_pack: Some(0.0),
+                    cost_price_per_pack: Some(0.0),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
 
         // ItemNotFound
         assert_eq!(
@@ -813,19 +815,21 @@ mod test {
         );
 
         // Setting the same status should NOT trigger the error (no actual change)
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: passed_line().id,
-                r#type: StockInType::InboundShipment,
-                status: Some(NullableUpdate {
-                    value: Some(InvoiceLineStatus::Passed),
-                }),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: passed_line().id,
+                    r#type: StockInType::InboundShipment,
+                    status: Some(NullableUpdate {
+                        value: Some(InvoiceLineStatus::Passed),
+                    }),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
     }
 
     // Expected cost price editability by case:
@@ -935,44 +939,50 @@ mod test {
         );
 
         // Submitting the same cost price should succeed (not a real change)
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: line.id.clone(),
-                r#type: StockInType::InboundShipment,
-                cost_price_per_pack: Some(100_000.0),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: line.id.clone(),
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(100_000.0),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
 
         // A value within floating-point tolerance of the original should also succeed
         // (simulates round-trip through JSON serialization)
         let nearly_same = 100_000.0 + (f64::EPSILON * 100_000.0 * 5.0);
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: line.id.clone(),
-                r#type: StockInType::InboundShipment,
-                cost_price_per_pack: Some(nearly_same),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: line.id.clone(),
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(nearly_same),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
 
         // No cost_price_per_pack in input should skip the check entirely
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: line.id.clone(),
-                r#type: StockInType::InboundShipment,
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: line.id.clone(),
+                    r#type: StockInType::InboundShipment,
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
     }
 
     #[actix_rt::test]
@@ -1012,29 +1022,33 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: line.id,
-                r#type: StockInType::InboundShipment,
-                cost_price_per_pack: Some(999.0),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: line.id,
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(999.0),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
 
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: internal_supplier_line.id,
-                r#type: StockInType::InboundShipment,
-                cost_price_per_pack: Some(999.0),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: internal_supplier_line.id,
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(999.0),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
     }
 
     /// OMS-REG-ISH-01.17 — nothing on an inbound shipment can set, change or
@@ -1095,5 +1109,73 @@ mod test {
         assert_eq!(updated.note, Some("Received short".to_string()));
         // The line's own note is editable; the supplier's comment is not.
         assert_eq!(updated.transfer_comment, line().transfer_comment);
+    }
+
+    /// The figure in the shipment's currency is derived from the UPDATED local
+    /// total, so after a packs edit it reflects the new packs rather than
+    /// lagging one edit behind (it used to be computed from the pre-edit total).
+    #[actix_rt::test]
+    async fn update_stock_in_line_foreign_total_follows_the_edit() {
+        let invoice = InvoiceRow {
+            id: "foreign_currency_inbound_update".to_string(),
+            store_id: mock_store_b().id,
+            name_id: mock_name_store_b().id,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
+            currency_id: Some(currency_b().id),
+            currency_rate: 2.0,
+            ..Default::default()
+        };
+        // 10 packs at 10.00 local: total 100.00, 50.00 in the shipment's currency.
+        let line = InvoiceLineRow {
+            id: "foreign_currency_line_update".to_string(),
+            invoice_id: invoice.id.clone(),
+            item_id: mock_item_a().id,
+            r#type: InvoiceLineType::StockIn,
+            pack_size: 1.0,
+            number_of_packs: 10.0,
+            cost_price_per_pack: 10.0,
+            total_before_tax: 100.0,
+            total_after_tax: 100.0,
+            foreign_currency_price_before_tax: Some(50.0),
+            ..Default::default()
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_stock_in_line_foreign_total_follows_the_edit",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice],
+                invoice_lines: vec![line.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: line.id.clone(),
+                r#type: StockInType::InboundShipment,
+                number_of_packs: Some(5.0),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let updated = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&line.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated.total_before_tax, 50.0);
+        // Half the packs, half the total in the shipment's currency — not the
+        // 50.00 the pre-edit total would have given.
+        assert_eq!(updated.foreign_currency_price_before_tax, Some(25.0));
     }
 }

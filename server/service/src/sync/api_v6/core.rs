@@ -1,6 +1,6 @@
 use thiserror::Error;
 use url::ParseError;
-use util::{with_retries, RetrySeconds};
+use util::{RetrySeconds, with_retries};
 
 use super::*;
 
@@ -150,8 +150,8 @@ impl SyncApiV6 {
 mod test {
     use super::*;
     use crate::sync::api::{
-        test_helpers::{ScriptedResponse, ScriptedServer},
         ParsingResponseError, SyncApiV5,
+        test_helpers::{ScriptedResponse, ScriptedServer},
     };
     use util::assert_matches;
 

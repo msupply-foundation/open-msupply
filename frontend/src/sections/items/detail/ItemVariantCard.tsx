@@ -52,7 +52,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
   // A variant can be a principal (bundling others in) XOR a bundled child
   // (bundled onto another) — never both (rules.md § bundled variants, no
   // nesting). While it's a bundled child, "Add bundled item" withholds itself
-  // (ui-surface S2 › Variants tab, AC-B4).
+  // (ui-surface S2 › Variants tab, OMS-REG-CAT-06.13/.16).
   const isBundledOnOthers = () => props.variant.bundlesWith.length > 0;
 
   const confirmDeleteVariant = async () => {
@@ -208,7 +208,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
           >
             {t('label.add-bundled-item')}
           </Button>
-          {/* Why Add is disabled (ui-surface S2, AC-B4) — the caption the
+          {/* Why Add is disabled (ui-surface S2, OMS-REG-CAT-06.13/.16) — the caption the
               reference app shows beside the withheld action. */}
           <Show when={isBundledOnOthers()}>
             <Text variant="bodySmall">{t('messages.cannot-bundle')}</Text>

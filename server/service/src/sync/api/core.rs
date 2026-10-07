@@ -5,13 +5,13 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::settings::SyncSettings,
 };
-use repository::{migrations::Version, KeyType, KeyValueStoreRepository};
-use reqwest::{header::HeaderMap, Response, Url};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use repository::{KeyType, KeyValueStoreRepository, migrations::Version};
+use reqwest::{Response, Url, header::HeaderMap};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::json;
 use thiserror::Error;
 use url::ParseError;
-use util::{format_error, log_body_read, with_retries_opts, RetrySeconds};
+use util::{RetrySeconds, format_error, log_body_read, with_retries_opts};
 
 use super::*;
 
@@ -214,7 +214,9 @@ impl SyncApiV5 {
         let start = std::time::SystemTime::now();
         let poll_period = std::time::Duration::from_secs(poll_period_seconds);
         let timeout = std::time::Duration::from_secs(timeout_seconds);
-        log::info!("Central server busy with another sync session for this site; waiting for it to become idle...");
+        log::info!(
+            "Central server busy with another sync session for this site; waiting for it to become idle..."
+        );
         loop {
             tokio::time::sleep(poll_period).await;
 

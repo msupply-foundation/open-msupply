@@ -1,5 +1,5 @@
 use crate::sync::translations::{
-    item::ItemTranslation, requisition::RequisitionTranslation, FkField,
+    FkField, item::ItemTranslation, requisition::RequisitionTranslation,
 };
 
 use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_fields_as_option};
@@ -329,11 +329,11 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::{mock_request_draft_requisition, MockDataInserts},
-        system_log_row::{SystemLogRowRepository, SystemLogType},
-        test_db::setup_all,
         ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RequisitionRow,
         RequisitionRowRepository, RowOrDelete, SyncAction, SyncRecordData,
+        mock::{MockDataInserts, mock_request_draft_requisition},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::setup_all,
     };
     use serde_json::json;
 

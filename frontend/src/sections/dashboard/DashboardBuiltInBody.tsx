@@ -335,8 +335,8 @@ export const DashboardBuiltInBody: Component = () => {
   // Order more hands off to the internal-orders vertical's create flow —
   // including its recent-stocktake warning gate and the plugin
   // warning-suppression consult, both inside the shared gate decision
-  // (spec/internal-orders AC-C1/C5, OMS-REG-REPL-04.86/.87), so the dashboard
-  // entry behaves exactly like the list's New-order button. The warn
+  // (spec/internal-orders OMS-REG-REPL-04.42/.45), so the dashboard entry
+  // behaves exactly like the list's New-order button. The warn
   // preference rides the guard-3 store context; the gate decision (and its
   // module) load only on click.
   const [internalOrderCreateOpen, setInternalOrderCreateOpen] =

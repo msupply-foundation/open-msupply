@@ -12,103 +12,103 @@ Two routed screens — the list and one asset's detail — serving **both** dest
 
 | AC | Covered by |
 | --- | --- |
-| **AC-S1** only the cold-chain class | `listState` — the class is merged in last and no user filter can widen it; **live** |
-| **AC-S2** the store restriction | `listState`; **live** (three store assets, no others) |
-| **AC-S3** delete refused across stores | _server-owned_ — see [exemptions](#exempt-but-listed) |
-| **AC-S4** update NOT refused across stores | _server-owned_ — no client path reaches it |
-| **AC-S5** locations uneditable on another store's asset | `assetEdit` — `locationIds` undefined, and the input omits it rather than sending `[]` |
-| **AC-S6** Manage lists every store | `listState` (no store filter sent) · `access` (central-gated); **live** (the destination is withheld off-central) |
-| **AC-S7** unscoped without the Store column | `listState`; the column's own gate is in `EquipmentList` |
-| **AC-L1** default order | `listState`; **live** (installation date ↑ on arrival) |
-| **AC-L2** sortable set | `listState` — `SORTABLE_KEYS` is exactly the three, and the columns read it; **live** |
-| **AC-L3 / AC-L4 / AC-L11** text filters | `listState` |
-| **AC-L5 / AC-L6** category and its types | `listFilters` options are the category's; **live** (chips render) |
-| **AC-L7** a type outside the category is cleared | `listState` — TWO halves: `clearTypeOnCategoryChange` compares the filter being replaced (the loaded type list describes the category being LEFT, so it vouches for the wrong type), and `clearTypeOutsideCategory` catches a type arriving in the URL once that category's own list is ready |
-| **AC-L8 / AC-L9** functional-status filter, and no match for an asset with none | `listState` |
-| **AC-L10 / AC-L16 / AC-L17** the three answers of the non-catalogue filter | `listState` (all three: `true`, `false`, and absent-on-All) · `equipment` (`isNonCatalogue`) · `listFilters` (the chip offers exactly the three) |
-| **AC-L12** empty state | _table-owned_ — the shared `emptyMessage`; **live** on a filtered-to-nothing list |
-| **AC-L13** page ≥ 1 row | `listState` (the client never sends < 1); the server rejection is _server-owned_ |
-| **AC-L14** row click opens the detail | **live** |
-| **AC-L15** store filter | `listFilters` (offered only where the column is) |
-| **AC-N1 / AC-N2 / AC-N3 / AC-N4** identity uniqueness | _server-owned_; the create modal's own message for a duplicate asset number is in `CreateAssetModal` |
-| **AC-N5** create needs an asset number | `createAsset`; **live** (OK disabled) |
-| **AC-N6** clearing the asset number | `assetEdit` — sends `null`, never omits |
-| **AC-C1 / AC-C2 / AC-C8** the two create paths, and the landing | `createAsset` (both inputs); **live** (both modes render) |
-| **AC-C3** type needs a category | `createAsset`; **live** (the type select is disabled) |
-| **AC-C4** the switch clears the choice | `createAsset`, both directions; **live** |
-| **AC-C5** the opening status entry | `createAsset` (`buildCreatedLogInput`) |
-| **AC-C6** category and type fixed | `SummaryTab` renders them as labelled values; **live** |
-| **AC-C7** an unclassified insert | `createAsset` — `classId` is always sent, and the confirm gates on a catalogue item or a type |
-| **AC-P1 / AC-P2 / AC-P3** locations created at insert | _server-owned_ — the effect is inside `insertAsset`'s transaction; verified in the reverse-spec pass |
-| **AC-P4 / AC-P5 / AC-P9** assign, release, wholesale | `assetEdit`; **live** (the held location renders as a removable chip) |
-| **AC-P6 / AC-P7** the two location guards | _server-owned_; the picker makes AC-P6 unreachable — `SummaryTab` asks for `assignedToAsset: false` |
-| **AC-P8** the picker's option set | `SummaryTab` (the filter + the held ones added back) |
-| **AC-R1 / AC-R2 / AC-R3** the catalogue's value wins and is read-only | `properties`, incl. a catalogue key answered with `null`; **live** (18 rows, catalogue ones read-only) |
-| **AC-R4** each property once | `properties` — de-duplicated by key; **live** |
-| **AC-R5** no specification | `properties`; **live** |
-| **AC-R6** mapping dates read-only | `properties`; **live** (both render as labelled values) |
-| **AC-R7** an unanswered number is empty | `DetailsTab` (`undefined`, never `0`) — a fridge whose capacity is unknown is not a fridge that holds nothing; **live** |
-| **AC-FS1** recording a status | `statusLog`; **live** |
-| **AC-FS14** an entry with no status | `statusLog` (`canSubmitStatus`) — the confirming action is inert, so the rejection is unreachable from the screen |
-| **AC-FS2** a status is required | `statusLog`; **live** (OK disabled) |
-| **AC-FS3** the reasons offered | `statusLog`; **live** (only the two `NOT_FUNCTIONING` reasons) |
-| **AC-FS4** changing the status clears the reason | `statusLog` |
-| **AC-FS5** Not Functioning needs a reason | `statusLog`; **live** (OK stays disabled) |
-| **AC-FS6** a mismatched reason | `statusLog` (unreachable from the screen — the picker offers one status's only) |
-| **AC-FS7** a reason may demand observations | `statusLog`, incl. whitespace-only |
-| **AC-FS8 / AC-FS9** never postdated, may be backdated | `statusLog` (the day comparison **and** the instant clamp); **live** (a 2020 mapping landed). The clamp leaves one window unfixed — for a user east of UTC, between their local midnight and 00:00Z the picked day has not begun in UTC at all, so no instant can both be ≤ now and land on it. Not a client bug to fix: it is what the server's date-from-an-instant derivation cannot represent (see [spec gaps](#spec-gaps-hit) 2) |
-| **AC-FS10 / AC-FS11** the status is the latest entry's | _read-shape_ — `AssetNode.statusLog`; **live** (three different statuses on the list) |
-| **AC-FS12** entries are never edited or deleted | _structural_ — no such mutation exists, so none is built |
-| **AC-FS13** an entry's files | `StatusHistoryTab` renders them; the upload is in `UpdateStatusModal` |
-| **AC-M1 / AC-M2** only a cold room maps | `equipment` (`isColdRoom`); **live**, both ways (split button vs plain) |
-| **AC-M3 / AC-M4** the two mapping dates | `statusLog` (the input); **live** — a backdated mapping moved `initial_mapping_date` to `2020-01-15` and today's moved `most_recent_mapping_date` to today |
-| **AC-M5** other values survive the recalc | **live** — both storage capacities intact after two mappings |
-| **AC-M6 / AC-M7** imported mapping dates | _server-owned_ (`insertAsset` writes the synthetic entries) |
-| **AC-M8 / AC-M10** the history's kind filter, both ways | `statusLog` (`logKindFilter`); **live** (the cold room offers the third option) |
-| **AC-M9** a mapping never displaces the status | `statusLog` (`isMapping`) |
-| **AC-D1 / AC-D3** documents | _shared surface_ — [`internal-orders`](../../../spec/internal-orders/ui-surface.md#documents-tab); `DocumentsTab` supplies only the table name and caps; **live** (upload, then the empty state once removed) |
-| **AC-D2** removal confirms first | `DocumentUploadPanel` (shared, see [shared code](#shared-code)); **live** — the remove button opens _Are you sure? / This will remove this document._, Cancel keeps the file and OK removes it |
-| **AC-D4** the catalogue half is empty | `DocumentsTab` (a list-only panel, `documents={[]}`); **live** — _Download catalogue documents_ beside the upload half, reading its empty state |
-| **AC-E1 / AC-E2** the save follows the draft | `assetEdit` (twelve fields, one at a time); **live**, both directions |
-| **AC-E3** the confirmation | **live** — _Are you sure? / Are you ready to save changes?_ |
-| **AC-E4** discard on leave | `createConfirmOnLeave` (shared); wired in `EquipmentDetailView` |
-| **AC-E5 / AC-E9** success, and the list reflecting it | **live** |
-| **AC-E6 / AC-E7** the WHOLE draft is written | `assetEdit`; **live** — editing only the notes left the asset number, all three specification keys, the replacement flag, the serial, both dates and the location untouched |
-| **AC-E8** a rejected save | `EquipmentDetailView` stays put; the message is the global error path's |
-| **AC-X1 / AC-X2 / AC-X7** delete, one and many, and the return to the list | `DeleteAssetsAction` / the detail footer; **live** (the confirmation's copy) |
-| **AC-X3 / AC-X4 / AC-X5 / AC-X6** delete semantics | _server-owned_ — soft delete, released locations, the resurrect; verified in the reverse-spec pass |
-| **AC-I1** only a CSV | `import`; the modal refuses before parsing — the zone's `onRejected` reports it, because a file the accept list refuses never reaches `onFiles` at all; **live** |
-| **AC-I2** a clean file parses | `import` |
-| **AC-I3 / AC-I4 / AC-I5** the three row errors | `import` (missing number, duplicate both ways, unmatched code) |
-| **AC-I6 / AC-I7** soft dates | `import`, incl. the two-digit year and an impossible day |
-| **AC-I8** the status fallback | `import` |
-| **AC-I9** the run | `import` (`rowToInsertInput`); the batching is `EquipmentImportModal` |
-| **AC-I10 / AC-I12** the failed rows and their export | `import` (`failedRowsToCsv`) — each row carries the SERVER's own message, and the file round-trips: a test parses it straight back in and asserts the dates and the replacement flag survive |
-| **AC-I11** the template | `import`, incl. that it round-trips through its own parser |
-| **AC-Z1** the export covers the whole register | `ExportEquipmentAction` sends `classId` alone — see the [spec gaps](#spec-gaps-hit) |
-| **AC-Z2** a column per specification key | `csv`, incl. the catalogue-wins rule |
-| **AC-B1 – AC-B7** scanning | _not built_ — see [exemptions](#exempt-but-listed) |
-| **AC-B5** locked fields read-only | `assetEdit` (`isLockedField`, incl. the server-admin override); `SummaryTab` renders the standing explanation |
-| **AC-AL1 / AC-AL2 / AC-AL3** the activity log | _shared surface_ — `ActivityLogPanel`, passed `order="oldest-first"`; **live** (the trail renders with before/after values, oldest first) |
-| **AC-G1** read permission withheld | `access` — nav entry absent, route `denied`; the server refusal is _server-owned_ |
-| **AC-G2** change permission withheld | `CreateAssetAction` / `ImportEquipmentAction` / `DeleteAssetsAction` / the detail's delete each check and explain |
-| **AC-G3** status permission withheld | `StatusActions` checks both permissions and explains |
-| **AC-G4** unauthenticated | _owned by [`startup/`](../../../spec/startup/)_ |
-| **AC-G5** both permissions held | `access`; **live** (the whole screen) |
-| **AC-F1 – AC-F8** the flow scenarios | composed of the anchors above; **live** for F5 (edit one field, lose nothing) and F3 (map a cold room) |
+| **OMS-REG-CCE-04.15** only the cold-chain class | `listState` — the class is merged in last and no user filter can widen it; **live** |
+| **OMS-REG-CCE-04.16** the store restriction | `listState`; **live** (three store assets, no others) |
+| **OMS-REG-CCE-07.22** delete refused across stores | _server-owned_ — see [exemptions](#exempt-but-listed) |
+| **OMS-REG-CCE-06.10** update NOT refused across stores | _server-owned_ — no client path reaches it |
+| **OMS-REG-CCE-05.24** locations uneditable on another store's asset | `assetEdit` — `locationIds` undefined, and the input omits it rather than sending `[]` |
+| **OMS-REG-CCE-04.17** Manage lists every store | `listState` (no store filter sent) · `access` (central-gated); **live** (the destination is withheld off-central) |
+| **OMS-REG-CCE-04.18** unscoped without the Store column | `listState`; the column's own gate is in `EquipmentList` |
+| **OMS-REG-CCE-04.19** default order | `listState`; **live** (installation date ↑ on arrival) |
+| **OMS-REG-CCE-04.20** sortable set | `listState` — `SORTABLE_KEYS` is exactly the three, and the columns read it; **live** |
+| **OMS-REG-CCE-04.5 / OMS-REG-CCE-04.21 / OMS-REG-CCE-04.9** text filters | `listState` |
+| **OMS-REG-CCE-04.3 / OMS-REG-CCE-04.22** category and its types | `listFilters` options are the category's; **live** (chips render) |
+| **OMS-REG-CCE-04.23** a type outside the category is cleared | `listState` — TWO halves: `clearTypeOnCategoryChange` compares the filter being replaced (the loaded type list describes the category being LEFT, so it vouches for the wrong type), and `clearTypeOutsideCategory` catches a type arriving in the URL once that category's own list is ready |
+| **OMS-REG-CCE-04.24 / OMS-REG-CCE-04.25** functional-status filter, and no match for an asset with none | `listState` |
+| **OMS-REG-CCE-04.7 / OMS-REG-CCE-04.26 / OMS-REG-CCE-04.27** the three answers of the non-catalogue filter | `listState` (all three: `true`, `false`, and absent-on-All) · `equipment` (`isNonCatalogue`) · `listFilters` (the chip offers exactly the three) |
+| **OMS-REG-CCE-04.28** empty state | _table-owned_ — the shared `emptyMessage`; **live** on a filtered-to-nothing list |
+| **rules § reading the list:** page ≥ 1 row | `listState` (the client never sends < 1); the server rejection is _server-owned_ |
+| **OMS-REG-CCE-04.29** row click opens the detail | **live** |
+| **OMS-REG-CCE-04.30** store filter | `listFilters` (offered only where the column is) |
+| **OMS-REG-CCE-05.9 / OMS-REG-CCE-05.10 / OMS-REG-CCE-05.11 / OMS-REG-CCE-05.12** identity uniqueness | _server-owned_; the create modal's own message for a duplicate asset number is in `CreateAssetModal` |
+| **OMS-REG-CCE-05.13** create needs an asset number | `createAsset`; **live** (OK disabled) |
+| **OMS-REG-CCE-05.14** clearing the asset number | `assetEdit` — sends `null`, never omits |
+| **OMS-REG-CCE-05.1 / OMS-REG-CCE-05.3 / OMS-REG-CCE-05.2** the two create paths, and the landing | `createAsset` (both inputs); **live** (both modes render) |
+| **OMS-REG-CCE-05.4** type needs a category | `createAsset`; **live** (the type select is disabled) |
+| **OMS-REG-CCE-05.5** the switch clears the choice | `createAsset`, both directions; **live** |
+| **OMS-REG-CCE-05.6** the opening status entry | `createAsset` (`buildCreatedLogInput`) |
+| **OMS-REG-CCE-05.7** category and type fixed | `SummaryTab` renders them as labelled values; **live** |
+| **OMS-REG-CCE-05.8** an unclassified insert | `createAsset` — `classId` is always sent, and the confirm gates on a catalogue item or a type |
+| **OMS-REG-CCE-05.15 / OMS-REG-CCE-05.16 / OMS-REG-CCE-05.17** locations created at insert | _server-owned_ — the effect is inside `insertAsset`'s transaction; verified in the reverse-spec pass |
+| **OMS-REG-CCE-05.18 / OMS-REG-CCE-05.19 / OMS-REG-CCE-05.23** assign, release, wholesale | `assetEdit`; **live** (the held location renders as a removable chip) |
+| **OMS-REG-CCE-05.20/.22 / OMS-REG-CCE-05.21** the two location guards | _server-owned_; the picker makes OMS-REG-CCE-05.20/.22 unreachable — `SummaryTab` asks for `assignedToAsset: false` |
+| **OMS-REG-CCE-05.22** the picker's option set | `SummaryTab` (the filter + the held ones added back) |
+| **OMS-REG-CCE-06.11 / OMS-REG-CCE-06.12 / OMS-REG-CCE-06.13** the catalogue's value wins and is read-only | `properties`, incl. a catalogue key answered with `null`; **live** (18 rows, catalogue ones read-only) |
+| **OMS-REG-CCE-06.14** each property once | `properties` — de-duplicated by key; **live** |
+| **OMS-REG-CCE-06.15** no specification | `properties`; **live** |
+| **OMS-REG-CCE-06.16** mapping dates read-only | `properties`; **live** (both render as labelled values) |
+| **OMS-REG-CCE-06.17** an unanswered number is empty | `DetailsTab` (`undefined`, never `0`) — a fridge whose capacity is unknown is not a fridge that holds nothing; **live** |
+| **OMS-REG-CCE-06.18** recording a status | `statusLog`; **live** |
+| **OMS-REG-CCE-06.30** an entry with no status | `statusLog` (`canSubmitStatus`) — the confirming action is inert, so the rejection is unreachable from the screen |
+| **OMS-REG-CCE-06.19** a status is required | `statusLog`; **live** (OK disabled) |
+| **OMS-REG-CCE-06.20** the reasons offered | `statusLog`; **live** (only the two `NOT_FUNCTIONING` reasons) |
+| **OMS-REG-CCE-06.21** changing the status clears the reason | `statusLog` |
+| **OMS-REG-CCE-06.22** Not Functioning needs a reason | `statusLog`; **live** (OK stays disabled) |
+| **OMS-REG-CCE-06.23** a mismatched reason | `statusLog` (unreachable from the screen — the picker offers one status's only) |
+| **OMS-REG-CCE-06.24** a reason may demand observations | `statusLog`, incl. whitespace-only |
+| **OMS-REG-CCE-06.25 / OMS-REG-CCE-06.26** never postdated, may be backdated | `statusLog` (the day comparison **and** the instant clamp); **live** (a 2020 mapping landed). The clamp leaves one window unfixed — for a user east of UTC, between their local midnight and 00:00Z the picked day has not begun in UTC at all, so no instant can both be ≤ now and land on it. Not a client bug to fix: it is what the server's date-from-an-instant derivation cannot represent (see [spec gaps](#spec-gaps-hit) 2) |
+| **OMS-REG-CCE-06.27 / OMS-REG-CCE-06.28** the status is the latest entry's | _read-shape_ — `AssetNode.statusLog`; **live** (three different statuses on the list) |
+| **OMS-REG-CCE-06.29** entries are never edited or deleted | _structural_ — no such mutation exists, so none is built |
+| **OMS-REG-CCE-06.45** an entry's files | `StatusHistoryTab` renders them; the upload is in `UpdateStatusModal` |
+| **OMS-REG-CCE-06.31 / OMS-REG-CCE-06.32** only a cold room maps | `equipment` (`isColdRoom`); **live**, both ways (split button vs plain) |
+| **OMS-REG-CCE-06.33 / OMS-REG-CCE-06.34** the two mapping dates | `statusLog` (the input); **live** — a backdated mapping moved `initial_mapping_date` to `2020-01-15` and today's moved `most_recent_mapping_date` to today |
+| **OMS-REG-CCE-06.35** other values survive the recalc | **live** — both storage capacities intact after two mappings |
+| **OMS-REG-CCE-06.36 / OMS-REG-CCE-06.37** imported mapping dates | _server-owned_ (`insertAsset` writes the synthetic entries) |
+| **OMS-REG-CCE-06.38 / OMS-REG-CCE-06.39** the history's kind filter, both ways | `statusLog` (`logKindFilter`); **live** (the cold room offers the third option) |
+| **OMS-REG-CCE-06.40** a mapping never displaces the status | `statusLog` (`isMapping`) |
+| **OMS-REG-CCE-06.41 / OMS-REG-CCE-06.43** documents | _shared surface_ — [`internal-orders`](../../../spec/internal-orders/ui-surface.md#documents-tab); `DocumentsTab` supplies only the table name and caps; **live** (upload, then the empty state once removed) |
+| **OMS-REG-CCE-06.42** removal confirms first | `DocumentUploadPanel` (shared, see [shared code](#shared-code)); **live** — the remove button opens _Are you sure? / This will remove this document._, Cancel keeps the file and OK removes it |
+| **OMS-REG-CCE-06.44** the catalogue half is empty | `DocumentsTab` (a list-only panel, `documents={[]}`); **live** — _Download catalogue documents_ beside the upload half, reading its empty state |
+| **OMS-REG-CCE-06.1 / OMS-REG-CCE-06.2** the save follows the draft | `assetEdit` (twelve fields, one at a time); **live**, both directions |
+| **OMS-REG-CCE-06.3** the confirmation | **live** — _Are you sure? / Are you ready to save changes?_ |
+| **OMS-REG-CCE-06.4** discard on leave | `createConfirmOnLeave` (shared); wired in `EquipmentDetailView` |
+| **OMS-REG-CCE-06.5 / OMS-REG-CCE-06.6** success, and the list reflecting it | **live** |
+| **OMS-REG-CCE-06.8 / OMS-REG-CCE-06.7** the WHOLE draft is written | `assetEdit`; **live** — editing only the notes left the asset number, all three specification keys, the replacement flag, the serial, both dates and the location untouched |
+| **OMS-REG-CCE-06.9** a rejected save | `EquipmentDetailView` stays put; the message is the global error path's |
+| **OMS-REG-CCE-07.15 / OMS-REG-CCE-07.17 / OMS-REG-CCE-07.16** delete, one and many, and the return to the list | `DeleteAssetsAction` / the detail footer; **live** (the confirmation's copy) |
+| **OMS-REG-CCE-07.18 / OMS-REG-CCE-07.19 / OMS-REG-CCE-07.20 / OMS-REG-CCE-07.21** delete semantics | _server-owned_ — soft delete, released locations, the resurrect; verified in the reverse-spec pass |
+| **OMS-REG-CCE-07.1** only a CSV | `import`; the modal refuses before parsing — the zone's `onRejected` reports it, because a file the accept list refuses never reaches `onFiles` at all; **live** |
+| **OMS-REG-CCE-07.2** a clean file parses | `import` |
+| **OMS-REG-CCE-07.3 / OMS-REG-CCE-07.4 / OMS-REG-CCE-07.5** the three row errors | `import` (missing number, duplicate both ways, unmatched code) |
+| **OMS-REG-CCE-07.6 / OMS-REG-CCE-07.7** soft dates | `import`, incl. the two-digit year and an impossible day |
+| **OMS-REG-CCE-07.8** the status fallback | `import` |
+| **OMS-REG-CCE-07.9** the run | `import` (`rowToInsertInput`); the batching is `EquipmentImportModal` |
+| **OMS-REG-CCE-07.10 / OMS-REG-CCE-07.11** the failed rows and their export | `import` (`failedRowsToCsv`) — each row carries the SERVER's own message, and the file round-trips: a test parses it straight back in and asserts the dates and the replacement flag survive |
+| **OMS-REG-CCE-07.12** the template | `import`, incl. that it round-trips through its own parser |
+| **OMS-REG-CCE-07.13/.35** the export covers what the screen shows | `ExportEquipmentAction` sends `buildListFilter` — the same filter the list reads, store restriction included — and the list's sort, unpaginated |
+| **OMS-REG-CCE-07.14** a column per specification key | `csv`, incl. the catalogue-wins rule |
+| **OMS-REG-CCE-04.13/.14/.31/.32/.34–.36** scanning | _not built_ — see [exemptions](#exempt-but-listed) |
+| **OMS-REG-CCE-04.35** locked fields read-only | `assetEdit` (`isLockedField`, incl. the server-admin override); `SummaryTab` renders the standing explanation |
+| **OMS-REG-CCE-06.46 / OMS-REG-CCE-06.47 / OMS-REG-CCE-06.48** the activity log | _shared surface_ — `ActivityLogPanel`, passed `order="oldest-first"`; **live** (the trail renders with before/after values, oldest first) |
+| **navigation gate:** read permission withheld | `access` — nav entry absent, route `denied`; the server refusal is _server-owned_ |
+| **OMS-REG-CCE-05.25, OMS-REG-CCE-07.23** change permission withheld | `CreateAssetAction` / `ImportEquipmentAction` / `DeleteAssetsAction` / the detail's delete each check and explain |
+| **OMS-REG-CCE-06.49** status permission withheld | `StatusActions` checks both permissions and explains |
+| **startup gate:** unauthenticated | _owned by [`startup/`](../../../spec/startup/)_ |
+| **precondition:** both permissions held | `access`; **live** (the whole screen) |
+| **Flows** (the cases' flow scenarios) | composed of the anchors above; **live** for F5 (edit one field, lose nothing) and F3 (map a cold room) |
 
 ### Exempt but listed
 
-- **AC-S3, AC-S4, AC-L13 (server half), AC-N1–AC-N4, AC-P1–AC-P3, AC-P6, AC-P7, AC-X3–AC-X6, AC-M6, AC-M7** — server behaviour with no client path to exercise, or an effect that happens inside a mutation's own transaction. Each was fired directly at the running server during the reverse-spec pass and is recorded in [`contract.md`](../../../spec/cold-chain-equipment/contract.md); none has a colocated test because there is nothing in this code to drive it.
-- **AC-B1 – AC-B8 (scanning)** — **deliberately omitted from this build.** The barcode/GS1 path needs a scanner the shared library gates on (`AddFromScannerButton` renders nothing without one), and the spec itself carries it as source-only, unexercised territory. The one half that IS built is the locked-field consequence (AC-B5), because a scanned asset arriving by sync must still render read-only here. Owed to a follow-up once the scanner surface exists.
-- **AC-G4** — unauthenticated access is the shared startup gate, covered by that vertical.
+- **OMS-REG-CCE-07.22, OMS-REG-CCE-06.10, rules § reading the list (server half), OMS-REG-CCE-05.9–.12, OMS-REG-CCE-05.15–.17, OMS-REG-CCE-05.20/.22, OMS-REG-CCE-05.21, OMS-REG-CCE-07.18–.21, OMS-REG-CCE-06.36, OMS-REG-CCE-06.37** — server behaviour with no client path to exercise, or an effect that happens inside a mutation's own transaction. Each was fired directly at the running server during the reverse-spec pass and is recorded in [`contract.md`](../../../spec/cold-chain-equipment/contract.md); none has a colocated test because there is nothing in this code to drive it.
+- **OMS-REG-CCE-04.13/.14/.31–.36 (scanning)** — **built since**, on the shared scan layer (`src/domain/barcode`): the list's **Scan** page action (armed only when pressed), `list/assetScan.ts` (the resolver — an asset's own id, or a GS1 label via `assetFromGs1Data` — and the scanned-draft insert with its locks), and `list/createAssetScan.ts` (the flow: open a match, confirm and create a draft behind `ASSET_MUTATE_VIA_DATA_MATRIX`, inline notices). Covered by `list/assetScan.test.ts` and driven live with manual input: unknown id → notice; unmatched GS1 label → confirm → created with all four locks and a Functioning entry; same label again → opens it; a medicine GS1 label → notice, not the global error. Two deliberate departures from the current app: a label with no serial/part number (a top-level error on the wire) and a draft with no catalogue item (whose insert would fail as an unexplained storage error) both read as not found.
+- **Unauthenticated access** — unauthenticated access is the shared startup gate, covered by that vertical.
 - **The print action** — `Print asset label` renders and is wired to nothing: the label endpoint needs a configured label printer, which neither the probe stack nor the spec's own known gaps cover. Listed as a follow-up.
 
 ## Flags
 
 ### Spec gaps hit
 
-1. **The CSV export ignores the screen — and this build reproduces it.** [rules › export](../../../spec/cold-chain-equipment/rules.md#export) records, as-is, that the export's filter is `classId` alone: it drops the active filters **and** the store restriction, so a user on **Cold chain › Equipment** who filters to one fridge and exports gets every cold-chain asset the server holds, other stores' included. The spec knowingly overrides [`ui-standards/list-views.md`](../../../spec/ui-standards/list-views.md#regions) for it, so the build follows the spec — but this is **the vertical's first candidate spec refinement**, and the one a reviewer should look at first. Scoping the export to the list's own filter and store would be a two-line change here; it needs a spec decision, not a build decision.
+1. **The CSV export ignored the screen, and this build reproduced it.** The spec recorded, as-is, that the export's filter was `classId` alone — dropping the active filters **and** the store restriction, so exporting from **Cold chain › Equipment** returned every cold-chain asset the server held, other stores' included. It was flagged here as the vertical's first candidate refinement, and the decision was taken on [#693](https://github.com/msupply-foundation/open-msupply-internal/issues/693), **in half**: the export now re-issues the list's active filters, but the team chose to keep it store-wide. So [rules › export](../../../spec/cold-chain-equipment/rules.md#export) still departs from [`ui-standards/list-views.md`](../../../spec/ui-standards/list-views.md#regions), now on the store scope alone rather than on both counts.
 2. **The instant a picked mapping DAY travels as is unspecified.** The server derives the two mapping-date properties by formatting the entry's stored **UTC** datetime, so the day survives only if the instant sent lands on that UTC day. Sending local midnight — what the reference app does — misdates the property by one day for every user east of UTC; this build found that live (a mapping recorded on the 8th read back as the 7th) and now sends the picked day at **00:00 UTC**, clamped to now so the future-date guard cannot refuse it. `contract.md` should say which encoding is intended; a residual window (between local midnight and 00:00Z on the same day) is not representable at all in the server's date-from-an-instant derivation.
 3. **The property-definition filter's shape is load-bearing and easy to get wrong.** `contract.md` says `equalAnyOrNull`; three `equalTo` clauses instead return only the properties scoped to all three of class, category and type at once — which is almost none, so the Details tab renders "No properties defined" for every asset. Built wrong first, caught live, fixed. Worth a line in the contract saying *why* the or-null form is required, not just that it is used.
 4. **`ui-surface.md` S2.2 used to ask for two things at once** — recording, as-is, that the reference app renders read-only property rows as *disabled controls*, and in the same paragraph telling an implementation to follow the standard (a plain labelled value). A reader could take either. Resolved in the spec: the paragraph now states the standard's treatment and names the reference screen's as the difference it is.
@@ -173,7 +173,7 @@ Found by the author driving the running screens, after the gates first went gree
 ## Follow-ups
 
 - **`e2e/TESTIDS.md` owes an Equipment section**, written with the suite. The screen-specific ids this build places: `new-asset-button`, `import-equipment-button`, `create-asset-modal`, `use-catalogue-toggle`, `category-select`, `type-select`, `catalogue-item-input`, `store-input`, `asset-number-input`, `notes-input`, `import-equipment-modal`, `import-file-input`, `download-template-button`, `import-upload-error`, `import-outcome`, `dialog-button-export`, `update-status-button`, `status-split-button-main` / `-dropdown` / `-option-*`, `update-status-modal`, `status-input`, `reason-input`, `observations-input`, `status-files-input`, `temperature-mapping-modal`, `mapping-observations-input`, `serial-input`, `location-input`, `donor-input`, `needs-replacement-checkbox`, `log-event-select`, `print-label-button`, `close-button`, `delete-button`, `save-button`, `asset-not-found`. Everything else is shared.
-- **The scan surface** (AC-B1–AC-B4, AC-B6, AC-B7) once the scanner path exists here.
+- **The scan surface** (OMS-REG-CCE-04.13/.31/.32/.34, OMS-REG-CCE-04.14/.32, OMS-REG-CCE-04.36) once the scanner path exists here.
 - **`Print asset label`** is wired to nothing — it needs the label-print endpoint and a configured printer.
 - **The asset catalogue is not a domain module yet.** Four consumed reads (categories, types, catalogue items, properties) live in this vertical's own `catalogue.graphql`. When **Catalogue › Assets** is built they should move to `src/domain/assetCatalogue/`, which is where the spec already says they are owned.
 - Blocked on no shared component.

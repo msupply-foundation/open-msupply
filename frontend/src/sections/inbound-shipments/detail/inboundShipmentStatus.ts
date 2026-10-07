@@ -49,6 +49,24 @@ export const sourceLinkOf = (info: {
   return 'none';
 };
 
+// Whether a shipment carries a source link at all — the predicate the EDIT
+// gates want, where sourceLinkOf above answers which kind it is (the status
+// flow needs the kind; an edit gate only needs "is there one").
+//
+// Both the cost price and the supplier-declared shipped figures are read-only
+// whenever one is present, because something outside this store supplied them
+// (spec rules → source link). NOT the same as "not manual": a shipment linked
+// only to an internal order has no source link and stays fully editable.
+//
+// Takes the purchase-order half as a BOOLEAN rather than reading inboundType,
+// because the detail view knows it from the permission SCOPE the record was
+// fetched with — which cannot disagree with the record in hand, and is the
+// predicate cost price has always used.
+export const hasSourceLink = (
+  isExternalScope: boolean,
+  linkedShipment: { id: string } | null | undefined
+): boolean => isExternalScope || !!linkedShipment;
+
 const FLOWS: Record<SourceLink, InboundStatus[]> = {
   none: ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED'],
   purchaseOrder: ['NEW', 'SHIPPED', 'DELIVERED', 'RECEIVED', 'VERIFIED'],
@@ -123,6 +141,13 @@ const EDITABLE: InboundStatus[] = ['NEW', 'DELIVERED', 'RECEIVED'];
 
 export const isEditable = (status: string): boolean =>
   EDITABLE.includes(status as InboundStatus);
+
+// Received closes a PO-linked shipment's line-selection actions (issue #873):
+// the goods are in stock, so a bulk change is too late. Lines are still added,
+// edited and deleted one at a time through the editor, and header fields
+// still save, until Verified.
+export const actionsLocked = (status: string, poLinked: boolean): boolean =>
+  poLinked && (status === 'RECEIVED' || status === 'VERIFIED');
 
 // Whether the shipment has actually put stock on the shelf.
 //

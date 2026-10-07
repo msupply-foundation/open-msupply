@@ -54,10 +54,17 @@ export const pluginIntl = (code: string): PluginIntl => ({
  * numbers and dates through the host so digit systems and date order follow
  * the app's locale (sdk-contract § internationalisation), and `locale`/`isRtl`
  * are reactive accessors, so reading them inside a component tracks a switch.
+ *
+ * `languageName` is here because a plugin naming a language — a configuration
+ * label's per-locale field, say — must not keep its own catalogue of language
+ * names: the host already holds every endonym, each correct in every locale, so
+ * a plugin key per language would be a second list to translate and to keep in
+ * step with the locales the app ships.
  */
 export {
   locale,
   isRtl,
+  languageName,
   formatNumber,
   round,
   roundTo,

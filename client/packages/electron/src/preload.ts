@@ -34,6 +34,37 @@ const electronNativeAPI: NativeAPI = {
 
 contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);
 
+// The new front end's native HID scanner
+// (frontend/src/platform/barcodeSources/desktopHid.ts § DesktopHidBridge —
+// the two must agree). `version` lets the front end tell this apart from
+// whatever a later shell exposes under the same name.
+//
+// Exposed on every origin, like electronNativeAPI above, because the page
+// that scans is the connected server's UI. Each listener replaces the last:
+// the front end has exactly one consumer of each.
+contextBridge.exposeInMainWorld('desktopHidScanner', {
+  version: 1,
+  status: () => ipcRenderer.invoke(IPC_MESSAGES.HID_SCANNER_STATUS),
+  candidates: () => ipcRenderer.invoke(IPC_MESSAGES.HID_SCANNER_CANDIDATES),
+  pair: () => ipcRenderer.invoke(IPC_MESSAGES.HID_SCANNER_PAIR),
+  pairDevice: (key: string) =>
+    ipcRenderer.invoke(IPC_MESSAGES.HID_SCANNER_PAIR_DEVICE, key),
+  cancelPair: () => ipcRenderer.invoke(IPC_MESSAGES.HID_SCANNER_CANCEL_PAIR),
+  forget: () => ipcRenderer.invoke(IPC_MESSAGES.HID_SCANNER_FORGET),
+  start: () => ipcRenderer.invoke(IPC_MESSAGES.HID_SCANNER_START),
+  stop: () => ipcRenderer.invoke(IPC_MESSAGES.HID_SCANNER_STOP),
+  onReport: (callback: (bytes: Uint8Array) => void) => {
+    ipcRenderer.removeAllListeners(IPC_MESSAGES.HID_SCANNER_REPORT);
+    ipcRenderer.on(IPC_MESSAGES.HID_SCANNER_REPORT, (_event, bytes) =>
+      callback(bytes)
+    );
+  },
+  onChange: (callback: () => void) => {
+    ipcRenderer.removeAllListeners(IPC_MESSAGES.HID_SCANNER_CHANGED);
+    ipcRenderer.on(IPC_MESSAGES.HID_SCANNER_CHANGED, () => callback());
+  },
+});
+
 // The new front end's discovery host contract
 // (frontend/src/discovery/hostContract.ts), exposed ONLY on the discovery
 // page's own origin.

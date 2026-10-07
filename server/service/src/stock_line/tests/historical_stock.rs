@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod query {
     use chrono::{NaiveDate, NaiveDateTime};
+    use repository::mock::{MockDataInserts, mock_user_account_a};
     use repository::mock::{mock_item_a, mock_name_customer_a, mock_name_store_b, mock_store_a};
-    use repository::mock::{mock_user_account_a, MockDataInserts};
     use repository::{
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
@@ -10,7 +10,7 @@ mod query {
     use util::date_now;
 
     use crate::service_provider::ServiceContext;
-    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_and_service_provider};
 
     static mut INVOICE_NUMBER: i64 = 0;
 
@@ -587,10 +587,12 @@ mod query {
                 false,
             )
             .unwrap();
-        assert!(excluding
-            .rows
-            .iter()
-            .all(|r| r.stock_line_row.id != STOCK_LINE_A));
+        assert!(
+            excluding
+                .rows
+                .iter()
+                .all(|r| r.stock_line_row.id != STOCK_LINE_A)
+        );
 
         // With include_currently_unavailable = true (e.g. backdated inventory
         // adjustment display), line A is now returned. The crucial

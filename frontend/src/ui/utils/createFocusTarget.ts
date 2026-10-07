@@ -51,7 +51,10 @@ import { getOwner, onCleanup } from 'solid-js';
  * Landing SCROLLS then focuses. `focus()` scrolls on its own, but only when it
  * actually moves focus — a disabled control would stay off-screen. Revealing a
  * disabled row is wanted (an uncounted batch a row-click opened), so the scroll
- * is explicit and the focus is `preventScroll`, giving exactly one scroll.
+ * is explicit and the focus is `preventScroll`, giving exactly one scroll. A
+ * caller that needs a different scroll (centred, or by the enclosing cell)
+ * passes it as `landing.scroll` rather than scrolling beforehand — the element
+ * may not be attached yet, and a second scroll would follow on landing anyway.
  *
  * An armed request survives until it lands, `cancel()` drops it, a newer
  * request replaces it, or the owner disposes. It never touches a detached node.
@@ -62,6 +65,18 @@ import { getOwner, onCleanup } from 'solid-js';
  * createDebounced.
  */
 
+/**
+ * How a request LANDS. `scroll` replaces the default nearest-edge
+ * `scrollIntoView` for a target that needs more than the bare control in view
+ * — e.g. a table cell's message line, clear of pinned columns. It runs where
+ * the default would: on the frame the control is attached, just before focus
+ * (which then never scrolls again), so the caller still makes one request and
+ * never touches the element itself.
+ */
+export interface FocusLanding {
+  scroll?: (el: HTMLElement) => void;
+}
+
 export interface FocusTarget {
   /**
    * Solid ref callback for the control that should take focus. Pass straight
@@ -71,9 +86,10 @@ export interface FocusTarget {
   ref: (el: HTMLElement) => void;
   /**
    * Focus the control on the next frame — or as soon as it attaches, if it
-   * isn't mounted yet. Scrolls it into view either way.
+   * isn't mounted yet. Scrolls it into view either way (`landing.scroll`
+   * overrides how).
    */
-  focus: () => void;
+  focus: (landing?: FocusLanding) => void;
   /** Drop an armed request that hasn't landed. */
   cancel: () => void;
 }
@@ -87,9 +103,10 @@ export interface KeyedFocusTargets {
   ref: (key: string) => (el: HTMLElement) => void;
   /**
    * Focus the control for `key` on the next frame — or as soon as it attaches.
-   * A key whose control never appears never lands.
+   * A key whose control never appears never lands. `landing.scroll` overrides
+   * how it scrolls into view.
    */
-  focus: (key: string) => void;
+  focus: (key: string, landing?: FocusLanding) => void;
   /**
    * The attached element registered for `key`, for the rare caller that needs
    * more than focus (the filter bar dispatches a pointer event to open a chip's
@@ -104,8 +121,9 @@ export interface KeyedFocusTargets {
 // just uses a constant key.
 const createRegistry = () => {
   const elements = new Map<string, HTMLElement>();
-  // The key whose control is waiting to be focused, if any.
+  // The key whose control is waiting to be focused, if any, and how it lands.
   let armed: string | undefined;
+  let armedLanding: FocusLanding | undefined;
   let frame: number | undefined;
 
   const attached = (key: string) => {
@@ -120,8 +138,11 @@ const createRegistry = () => {
     const el = attached(armed);
     // Not there yet — stay armed so the request lands when it attaches.
     if (!el) return;
+    const scroll = armedLanding?.scroll;
     armed = undefined;
-    el.scrollIntoView({ block: 'nearest' });
+    armedLanding = undefined;
+    if (scroll) scroll(el);
+    else el.scrollIntoView({ block: 'nearest' });
     el.focus({ preventScroll: true });
   };
 
@@ -138,6 +159,7 @@ const createRegistry = () => {
 
   const cancel = () => {
     armed = undefined;
+    armedLanding = undefined;
     if (frame !== undefined) {
       cancelAnimationFrame(frame);
       frame = undefined;
@@ -154,8 +176,9 @@ const createRegistry = () => {
       elements.set(key, el);
       if (armed === key) schedule();
     },
-    request: (key: string) => {
+    request: (key: string, landing?: FocusLanding) => {
       armed = key;
+      armedLanding = landing;
       schedule();
     },
     get: attached,
@@ -170,7 +193,7 @@ export const createFocusTarget = (): FocusTarget => {
   const registry = createRegistry();
   return {
     ref: el => registry.set(ONLY, el),
-    focus: () => registry.request(ONLY),
+    focus: landing => registry.request(ONLY, landing),
     cancel: registry.cancel,
   };
 };

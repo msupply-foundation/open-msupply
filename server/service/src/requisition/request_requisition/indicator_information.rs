@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use chrono::NaiveDateTime;
 use repository::{
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     EqualFilter, IndicatorLineRowRepository, NameFilter, NameRepository, Pagination,
     PeriodRowRepository, RepositoryError,
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
 };
 
 use crate::{

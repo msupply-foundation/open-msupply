@@ -1,11 +1,11 @@
 use std::{path::Path, rc::Rc};
 
 use boa_engine::{
-    builtins::promise::PromiseState, js_string, module::SimpleModuleLoader, Context, JsError,
-    JsObject, JsValue, Module, Source,
+    Context, JsError, JsObject, JsValue, Module, Source, builtins::promise::PromiseState,
+    js_string, module::SimpleModuleLoader,
 };
 
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 use repository::with_read_only_connection;

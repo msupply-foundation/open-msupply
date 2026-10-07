@@ -50,6 +50,8 @@ mod v2_21_01;
 mod v3_00_00;
 mod v3_01_01;
 mod v3_02_00;
+mod v3_03_00;
+mod v3_04_00;
 mod version;
 mod views;
 
@@ -61,9 +63,9 @@ mod templates;
 pub use self::version::*;
 
 use crate::{
-    migrations::base_migration::{initialize_earliest_db, initialize_latest_db, is_empty_db},
     KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError,
     StorageConnection,
+    migrations::base_migration::{initialize_earliest_db, initialize_latest_db, is_empty_db},
 };
 use chrono::{NaiveDateTime, Utc};
 use diesel::connection::SimpleConnection;
@@ -154,11 +156,15 @@ pub(crate) trait MigrationFragment {
 
 #[derive(Debug, Error)]
 pub enum MigrationError {
-    #[error("The database you are connecting to is a later version ({0}) than the server ({1}). It is unsafe to run with this configuration, the server is stopping")]
+    #[error(
+        "The database you are connecting to is a later version ({0}) than the server ({1}). It is unsafe to run with this configuration, the server is stopping"
+    )]
     DatabaseVersionAboveAppVersion(Version, Version),
     #[error("Database version is not supported ({0}), it cannot be upgraded")]
     DatabaseVersionNotSupported(Version),
-    #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
+    #[error(
+        "Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json"
+    )]
     MigrationAboveAppVersion(Version, Version),
     #[error("Problem dropping or re-creating views {0}")]
     DatabaseViewsError(anyhow::Error),
@@ -232,6 +238,8 @@ pub fn migrate(
         Box::new(v3_00_00::V3_00_00),
         Box::new(v3_01_01::V3_01_01),
         Box::new(v3_02_00::V3_02_00),
+        Box::new(v3_03_00::V3_03_00),
+        Box::new(v3_04_00::V3_04_00),
     ];
 
     // Check if the database has been initialised, if not run the base sql to kick start the process

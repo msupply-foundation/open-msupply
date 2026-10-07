@@ -1,0 +1,45 @@
+# Override for images published before 3.04. Layered on compose.deploy.yaml,
+# never used alone:
+#
+#   docker compose -f docker/compose.deploy.yaml -f docker/compose.deploy.pre-3.04.yaml up
+#
+# docker-deploy.yaml adds it when the image's version calls for it. Which
+# versions those are is the hardcoded table in .github/scripts/deploy-plan.js
+# (`deployContract`), so the version boundary lives there, not here.
+#
+# WHAT IS DIFFERENT ABOUT THESE IMAGES
+#
+# Their runtime base is rust-slim, which ships neither curl nor wget (the rust
+# image removes wget once rustup is installed). compose.deploy.yaml's
+# healthcheck calls curl, so on these images it fails every probe and the
+# deploy waits out --wait-timeout on a server that is answering perfectly well.
+#
+# Everything else in compose.deploy.yaml already holds for them: the same
+# entry-postgres.sh path, PG_DATA under /database (from 2.19), port 8000, the
+# same workdir and therefore the same app_data and log paths, and the same
+# APP__SERVER__* settings.
+
+services:
+  server:
+    healthcheck:
+      # The same probe as compose.deploy.yaml - POST `{ __typename }` to
+      # /graphql and require a 200 - written with bash's /dev/tcp, because bash
+      # is the one thing these images are guaranteed to have (both entrypoints
+      # are bash scripts).
+      #
+      # HTTP/1.0 so the server closes the connection after answering, which is
+      # what lets `head` return rather than wait on a keep-alive. The
+      # Content-Length is the byte length of the body; change one and you must
+      # change the other.
+      #
+      # Compose REPLACES healthcheck.test from an override rather than merging
+      # it, so this list is the whole probe. The interval, retries and
+      # start_period are inherited.
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/8000 &&
+          printf 'POST /graphql HTTP/1.0\r\nContent-Type: application/json\r\nContent-Length: 26\r\n\r\n{"query":"{ __typename }"}' >&3 &&
+          head -n 1 <&3 | grep -q ' 200 '

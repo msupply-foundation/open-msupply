@@ -2,13 +2,13 @@ use crate::{
     service_provider::ServiceProvider,
     sync::api::{DroppedBodyRetries, ParsingResponseError},
 };
-use repository::{migrations::Version, syncv7::SyncError, KeyType, KeyValueStoreRepository};
+use repository::{KeyType, KeyValueStoreRepository, migrations::Version, syncv7::SyncError};
 use reqwest::{
-    header::{HeaderMap, HeaderValue, IntoHeaderName, AUTHORIZATION},
     Response,
+    header::{AUTHORIZATION, HeaderMap, HeaderValue, IntoHeaderName},
 };
-use serde::{de::DeserializeOwned, Serialize};
-use util::{format_error, with_retries, RetrySeconds};
+use serde::{Serialize, de::DeserializeOwned};
+use util::{RetrySeconds, format_error, with_retries};
 
 pub mod download_file;
 pub mod get_token;

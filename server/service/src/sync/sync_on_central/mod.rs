@@ -19,11 +19,11 @@ use crate::{
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
-        api::{validate_site_auth, CommonSyncRecord},
+        CentralServerConfig,
+        api::{CommonSyncRecord, validate_site_auth},
         api_v6::SiteStatusV6,
         synchroniser::integrate_and_translate_sync_buffer,
-        translations::{all_translators, ToSyncRecordTranslationType},
-        CentralServerConfig,
+        translations::{ToSyncRecordTranslationType, all_translators},
     },
 };
 
@@ -673,12 +673,12 @@ pub(crate) fn adjust_v6_cursor(v6_cursor: u64) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        adjust_v6_cursor, validate_site_authored_tables, SITE_AUTHORED_TABLES, TRANSLATED_TABLES,
+        SITE_AUTHORED_TABLES, TRANSLATED_TABLES, adjust_v6_cursor, validate_site_authored_tables,
     };
     use crate::sync::{
         api::{CommonSyncRecord, SyncAction},
         api_v6::SyncParsedErrorV6,
-        translations::{all_translators, ToSyncRecordTranslationType},
+        translations::{ToSyncRecordTranslationType, all_translators},
     };
     use repository::ChangelogRow;
     use serde_json::json;

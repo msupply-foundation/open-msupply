@@ -4,21 +4,21 @@ use crate::{invoice::query::get_invoice, service_provider::ServiceContext};
 
 pub mod generate;
 pub mod validate;
-use generate::{generate, ManagePlaceholderLine};
+use generate::{ManagePlaceholderLine, generate};
 use validate::validate;
 
 use self::generate::GenerateResult;
 
 use super::{
     outbound_shipment_unallocated_line::{
-        delete_outbound_shipment_unallocated_line, insert_outbound_shipment_unallocated_line,
-        update_outbound_shipment_unallocated_line, DeleteOutboundShipmentUnallocatedLineError,
-        InsertOutboundShipmentUnallocatedLineError, UpdateOutboundShipmentUnallocatedLineError,
+        DeleteOutboundShipmentUnallocatedLineError, InsertOutboundShipmentUnallocatedLineError,
+        UpdateOutboundShipmentUnallocatedLineError, delete_outbound_shipment_unallocated_line,
+        insert_outbound_shipment_unallocated_line, update_outbound_shipment_unallocated_line,
     },
     stock_out_line::{
-        delete_stock_out_line, insert_stock_out_line, set_prescribed_quantity,
-        update_stock_out_line, DeleteStockOutLineError, InsertStockOutLineError,
-        SetPrescribedQuantity, SetPrescribedQuantityError, UpdateStockOutLineError,
+        DeleteStockOutLineError, InsertStockOutLineError, SetPrescribedQuantity,
+        SetPrescribedQuantityError, UpdateStockOutLineError, delete_stock_out_line,
+        insert_stock_out_line, set_prescribed_quantity, update_stock_out_line,
     },
 };
 
@@ -201,15 +201,15 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_name_store_b, mock_outbound_shipment_a,
-            mock_shipment_variance_reason_option, mock_stock_line_a, mock_stock_line_b,
-            mock_stock_line_vaccine_item_a, mock_store_a, mock_store_b,
-            mock_transferred_inbound_shipment_a, mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
         InvoiceType,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_name_store_b, mock_outbound_shipment_a,
+            mock_shipment_variance_reason_option, mock_stock_line_a, mock_stock_line_b,
+            mock_stock_line_vaccine_item_a, mock_store_a, mock_store_b,
+            mock_transferred_inbound_shipment_a, mock_user_account_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]
@@ -445,10 +445,12 @@ mod test {
         assert!(updated_lines.iter().any(|line| line.id == "line1"));
 
         // placeholder line was added
-        assert!(updated_lines
-            .iter()
-            .any(|line| line.r#type == InvoiceLineType::UnallocatedStock
-                && line.number_of_packs == 5.0));
+        assert!(
+            updated_lines
+                .iter()
+                .any(|line| line.r#type == InvoiceLineType::UnallocatedStock
+                    && line.number_of_packs == 5.0)
+        );
 
         // existing line was updated
         let updated_line = updated_lines
@@ -458,9 +460,11 @@ mod test {
         assert_eq!(updated_line.number_of_packs, 2.0);
 
         // zeroed line was deleted
-        assert!(!updated_lines
-            .iter()
-            .any(|line| line.id == line_to_delete().id));
+        assert!(
+            !updated_lines
+                .iter()
+                .any(|line| line.id == line_to_delete().id)
+        );
     }
 
     #[actix_rt::test]

@@ -1,8 +1,8 @@
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician, item_row::item,
-    location_type_row::location_type, StorageConnection,
+    StorageConnection, clinician_link_row::clinician_link, clinician_row::clinician,
+    item_row::item, location_type_row::location_type,
 };
-use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
+use crate::{ChangelogSyncType, Upsert, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 

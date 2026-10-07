@@ -42,8 +42,8 @@ mod test {
     use repository::{ClinicianRow, MockClinicianRowRepository, MockStoreRowRepository, StoreRow};
 
     use crate::clinician::insert::{
-        validate::{validate, Repositories},
         InsertClinician, InsertClinicianError,
+        validate::{Repositories, validate},
     };
 
     impl Repositories<'static> {

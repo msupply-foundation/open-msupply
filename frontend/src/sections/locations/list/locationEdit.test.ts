@@ -11,11 +11,11 @@ import {
   type LocationRow,
 } from './locationEdit';
 
-// AC-citing tests for the create/edit modal's logic (spec/locations/
-// acceptance.md). The server-side halves of these criteria (persistence, the
-// store-scoped uniqueness check, the wire name-defaults-to-code) run against
-// the real backend, which has no CI harness yet — that gap is recorded in
-// BUILD_REPORT.md; these tests pin the client's obligations.
+// Behaviour-citing tests for the create/edit modal's logic (spec/locations/
+// cases/OMS-REG-INV-01). The server-side halves of these criteria (persistence,
+// the store-scoped uniqueness check, the wire name-defaults-to-code) run
+// against the real backend, which has no CI harness yet — that gap is recorded
+// in BUILD_REPORT.md; these tests pin the client's obligations.
 
 const row = (overrides: Partial<LocationRow> = {}): LocationRow => ({
   id: 'loc-1',

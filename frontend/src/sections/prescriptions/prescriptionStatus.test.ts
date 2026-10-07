@@ -14,7 +14,7 @@ import {
   zeroQuantityLineCount,
 } from './prescriptionStatus';
 
-describe('isReadOnly (AC-S3 — VERIFIED and CANCELLED freeze the record)', () => {
+describe('isReadOnly (OMS-REG-DIS-04.5 — VERIFIED and CANCELLED freeze the record)', () => {
   it('is editable while NEW and PICKED, frozen from VERIFIED', () => {
     expect(isReadOnly('NEW')).toBe(false);
     expect(isReadOnly('PICKED')).toBe(false);
@@ -27,7 +27,7 @@ describe('isReadOnly (AC-S3 — VERIFIED and CANCELLED freeze the record)', () =
   });
 });
 
-describe('nextStatuses (D40 — forward transitions only; AC-S4 — the skip is offered)', () => {
+describe('nextStatuses (D40 — forward transitions only; OMS-REG-DIS-04.20 — the skip is offered)', () => {
   it('offers PICKED and the VERIFIED skip from NEW', () => {
     expect(nextStatuses('NEW')).toEqual(['PICKED', 'VERIFIED']);
   });
@@ -40,7 +40,7 @@ describe('nextStatuses (D40 — forward transitions only; AC-S4 — the skip is 
   });
 });
 
-describe('canDeletePrescription (AC-D1/D2 — deletable while editable only)', () => {
+describe('canDeletePrescription (OMS-REG-DIS-03.14/.44 — deletable while editable only)', () => {
   it('allows NEW and PICKED, refuses VERIFIED and CANCELLED', () => {
     expect(canDeletePrescription('NEW')).toBe(true);
     expect(canDeletePrescription('PICKED')).toBe(true);
@@ -82,7 +82,8 @@ describe('isRenderableLine (.25 / .33 — placeholders in, returns in)', () => {
   });
 
   // Rendering the placeholder must NOT make it count as dispensed: the status
-  // guard (.22) and the zero-quantity warning (AC-S5) both ignore it.
+  // guard (.22) and the zero-quantity warning (OMS-REG-DIS-04.21) both ignore
+  // it.
   it('does not make a placeholder-only prescription look dispensed', () => {
     expect(hasDispensedLines([{ type: 'UNALLOCATED_STOCK' }])).toBe(false);
     expect(
@@ -112,7 +113,7 @@ describe('isBatchLine (the read-only modal batch grid)', () => {
   });
 });
 
-describe('statusSteps (AC-V2 — CANCELLED appears only once cancelled)', () => {
+describe('statusSteps (OMS-REG-DIS-04.24 — CANCELLED appears only once cancelled)', () => {
   const base = {
     createdDatetime: '2026-07-23T00:00:00Z',
     pickedDatetime: '2026-07-23T01:00:00Z',
@@ -133,7 +134,7 @@ describe('statusSteps (AC-V2 — CANCELLED appears only once cancelled)', () => 
   });
 });
 
-describe('prescriptionDateOf (AC-L1 — backdated when set, else created)', () => {
+describe('prescriptionDateOf (OMS-REG-DIS-03.49 — backdated when set, else created)', () => {
   it('prefers the backdated time', () => {
     expect(
       prescriptionDateOf({
@@ -152,7 +153,7 @@ describe('prescriptionDateOf (AC-L1 — backdated when set, else created)', () =
   });
 });
 
-describe('hasDispensedLines (AC-S6 — placeholder-only counts as no lines)', () => {
+describe('hasDispensedLines (OMS-REG-DIS-04.22 — placeholder-only counts as no lines)', () => {
   it('blocks on empty and on placeholder-only line sets', () => {
     expect(hasDispensedLines([])).toBe(false);
     expect(hasDispensedLines([{ type: 'UNALLOCATED_STOCK' }])).toBe(false);
@@ -164,7 +165,7 @@ describe('hasDispensedLines (AC-S6 — placeholder-only counts as no lines)', ()
   });
 });
 
-describe('zeroQuantityLineCount (AC-S5 — the confirmation counts removable rows)', () => {
+describe('zeroQuantityLineCount (OMS-REG-DIS-04.21 — the confirmation counts removable rows)', () => {
   it('counts zero-pack dispensed rows only — placeholders never count', () => {
     expect(
       zeroQuantityLineCount([

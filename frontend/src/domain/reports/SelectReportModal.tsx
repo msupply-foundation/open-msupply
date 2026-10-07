@@ -57,7 +57,8 @@ export interface SelectReportModalProps {
    * Host-seeded generation arguments, merged into every generation beneath the
    * report form's own values (a form arg wins on key collision). Lets a record
    * screen seed context its templates need but no form collects — e.g. an
-   * indicator internal order's program / period / customer identity (AC-PR4).
+   * indicator internal order's program / period / customer identity
+   * (spec/internal-orders rules § printing).
    */
   seedArgs?: Record<string, unknown>;
   onClose: () => void;
@@ -107,13 +108,13 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   // (`dataError`) or not (`error` — e.g. a PDF render on a server with no
   // Chrome binary): the dialog stays open with the message, because the screen
   // behind it is healthy and the global modal's Reload/Home would only
-  // re-run the same failure or lose the user's place (AC-G6). A `failed`
-  // result is a request that never completed — already on the global modal —
-  // so we just drop back to idle.
-  // The format carries the user's INTENT (HTML = print, Excel and PDF = keep)
-  // and delivery forks on it; each arm's platform difference belongs to the
-  // capability wrapper, not here. Await the delivery: a failure keeps the
-  // dialog up with the inline error rather than closing as if it worked.
+  // re-run the same failure or lose the user's place (OMS-REG-RPT-09.10). A
+  // `failed` result is a request that never completed — already on the global
+  // modal — so we just drop back to idle. The format carries the user's INTENT
+  // (HTML = print, Excel and PDF = keep) and delivery forks on it; each arm's
+  // platform difference belongs to the capability wrapper, not here. Await the
+  // delivery: a failure keeps the dialog up with the inline error rather than
+  // closing as if it worked.
   const deliver = async (
     result: GenerateResult,
     format: PrintFormat
@@ -169,8 +170,9 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     setPhase('generating');
     // The user's timezone travels even when the report has no argument form —
     // shipped templates read `arguments.timezone` unconditionally, and the
-    // captured client sends `{ timezone }` alone on this path (AC-R11). Form
-    // args, when present, already contain it and win on key collision.
+    // captured client sends `{ timezone }` alone on this path
+    // (OMS-REG-RPT-10.21). Form args, when present, already contain it and win
+    // on key collision.
     const result = await generateReport({
       reportId: report.id,
       dataId: props.dataId,
@@ -200,8 +202,9 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     <>
       <Dialog
         open
+        testId="select-report-modal"
         initialFocus={picker}
-        // Blocking while generating — no scrim/Escape exit mid-flight.
+        // Blocking while generating — no Escape exit mid-flight.
         dismissable={!busy()}
         onClose={props.onClose}
         icon={<PrinterIcon />}
@@ -230,6 +233,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               variant="secondary"
               icon={<DownloadIcon />}
               disabled={disabled()}
+              data-testid="report-format-EXCEL"
               onClick={() => onFormat('EXCEL')}
             >
               {t('button.export-to-excel')}
@@ -238,6 +242,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               variant="secondary"
               icon={<PrinterIcon />}
               disabled={disabled()}
+              data-testid="report-format-HTML"
               onClick={() => onFormat('HTML')}
             >
               {t('button.print')}
@@ -251,6 +256,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
                 variant="secondary"
                 icon={<DownloadIcon />}
                 disabled={disabled()}
+                data-testid="report-format-PDF"
                 onClick={() => onFormat('PDF')}
               >
                 {t('button.download-pdf')}
@@ -268,6 +274,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               label={t('title.select-a-form')}
               hideLabel
               focusTarget={picker}
+              inputTestId="report-select-input"
               items={options()}
               itemToString={reportLabel}
               itemToValue={report => report.id}
@@ -280,7 +287,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               dialog open and the actions live to retry (spec/reports S5). */}
           <Show when={phase() === 'error' ? error() : undefined}>
             {shown => (
-              <Alert severity="error">
+              <Alert severity="error" testId="report-error">
                 <Stack gap="sm">
                   <span>{t(shown().key)}</span>
                   <Show when={shown().detail}>

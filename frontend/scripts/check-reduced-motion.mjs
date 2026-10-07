@@ -31,11 +31,11 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-/* Host source PLUS the in-repo plugins: a plugin ships self-contained CSS
-   styled by the host's tokens (spec/plugins/sdk-contract § styling), so a
-   literal duration there escapes the token reduce block exactly as one in
-   src/ would. */
-const CSS_DIRS = ['src', 'plugins', 'examples'];
+/* Host source PLUS the in-repo plugins (the reference ones under
+   plugins/examples/ included): a plugin ships self-contained CSS styled by the
+   host's tokens (spec/plugins/sdk-contract § styling), so a literal duration
+   there escapes the token reduce block exactly as one in src/ would. */
+const CSS_DIRS = ['src', 'plugins'];
 const TOKENS_FILE = 'src/ui/styles/tokens.css';
 const REDUCE_QUERY = 'prefers-reduced-motion';
 

@@ -7,11 +7,11 @@ import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '../../../../ui/icons';
 import { deleteInternalOrder } from '../internalOrderUpdate';
 
-// The side-panel "Delete" action (spec S5 → S6, AC-D1): the button plus a
-// confirm → deleting → error dialog, modelled on DeleteStocktakeAction. The
-// button is shown disabled unless the order is editable (Draft) — the server
-// rejects a non-Draft delete anyway, but the gate reads as unavailable rather
-// than failing on confirm. A successful delete hands control to the view
+// The side-panel "Delete" action (spec S5 → S6, OMS-REG-REPL-04.59): the button
+// plus a confirm → deleting → error dialog, modelled on DeleteStocktakeAction.
+// The button is shown disabled unless the order is editable (Draft) — the
+// server rejects a non-Draft delete anyway, but the gate reads as unavailable
+// rather than failing on confirm. A successful delete hands control to the view
 // (onDeleted), which navigates to the list, so there is no success phase.
 type Phase = 'confirm' | 'deleting' | 'error';
 

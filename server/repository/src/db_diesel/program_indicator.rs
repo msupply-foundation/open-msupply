@@ -1,5 +1,5 @@
 use super::{
-    program_indicator_row::program_indicator, DBType, ProgramIndicatorRow, Sort, StorageConnection,
+    DBType, ProgramIndicatorRow, Sort, StorageConnection, program_indicator_row::program_indicator,
 };
 
 use crate::{

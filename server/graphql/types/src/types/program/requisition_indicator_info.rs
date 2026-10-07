@@ -2,9 +2,9 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use graphql_core::{
+    ContextExt,
     loader::{NameByIdLoader, NameByIdLoaderInput},
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use service::requisition::request_requisition::{
     CustomerIndicatorInformation, IndicatorInformation,

@@ -524,40 +524,67 @@ mod tests {
 
     fn setup_test_data(connection: &StorageConnection) {
         // Names: repack system name (name_link id == name id, as at runtime) + store names
-        run(connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('repack', 'FACILITY', false, false, 'repack', 'Repack');");
+        run(
+            connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('repack', 'FACILITY', false, false, 'repack', 'Repack');",
+        );
         run(
             connection,
             "INSERT INTO name_link (id, name_id) VALUES ('repack', 'repack');",
         );
-        run(connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store1_name', 'FACILITY', true, false, 'STORE1', 'Store One');");
+        run(
+            connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store1_name', 'FACILITY', true, false, 'STORE1', 'Store One');",
+        );
         run(
             connection,
             "INSERT INTO name_link (id, name_id) VALUES ('store1_name', 'store1_name');",
         );
-        run(connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store2_name', 'FACILITY', true, false, 'STORE2', 'Store Two');");
+        run(
+            connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store2_name', 'FACILITY', true, false, 'STORE2', 'Store Two');",
+        );
         run(
             connection,
             "INSERT INTO name_link (id, name_id) VALUES ('store2_name', 'store2_name');",
         );
 
         // store1 is active on this site (site 1); store2 is a synced copy from site 2
-        run(connection, "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store1', 'store1_name', 's1', 1);");
-        run(connection, "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store2', 'store2_name', 's2', 2);");
+        run(
+            connection,
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store1', 'store1_name', 's1', 1);",
+        );
+        run(
+            connection,
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store2', 'store2_name', 's2', 2);",
+        );
         run(
             connection,
             "INSERT INTO key_value_store (id, value_int) VALUES ('SETTINGS_SYNC_SITE_ID', 1);",
         );
 
-        run(connection, "INSERT INTO currency (id, rate, code, is_home_currency, is_active) VALUES ('currency1', 1.0, 'USD', true, true);");
+        run(
+            connection,
+            "INSERT INTO currency (id, rate, code, is_home_currency, is_active) VALUES ('currency1', 1.0, 'USD', true, true);",
+        );
 
-        run(connection, "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item1', 'Item One', 'ITEM1', 1.0, 'STOCK', '');");
+        run(
+            connection,
+            "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item1', 'Item One', 'ITEM1', 1.0, 'STOCK', '');",
+        );
         run(
             connection,
             "INSERT INTO item_link (id, item_id) VALUES ('item1', 'item1');",
         );
 
-        run(connection, "INSERT INTO location (id, code, name, on_hold, store_id) VALUES ('loc_src', 'SRC', 'Source', false, 'store1');");
-        run(connection, "INSERT INTO location (id, code, name, on_hold, store_id) VALUES ('loc_dst', 'DST', 'Destination', false, 'store1');");
+        run(
+            connection,
+            "INSERT INTO location (id, code, name, on_hold, store_id) VALUES ('loc_src', 'SRC', 'Source', false, 'store1');",
+        );
+        run(
+            connection,
+            "INSERT INTO location (id, code, name, on_hold, store_id) VALUES ('loc_dst', 'DST', 'Destination', false, 'store1');",
+        );
 
         let stock_line = |id: &str, store: &str, location: &str, packs: f64| {
             format!(
@@ -598,33 +625,78 @@ mod tests {
         //   srl4 - split into dest_sl_existing which already has a repack StockIn line (skipped)
         //   srl5 - split into dest_sl_adjusted which has a non-repack StockIn from an
         //          inventory addition (still backfilled - the guard is repack-only)
-        run(connection, "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr1', 'store1', 7, 'FINALISED', '2026-06-01 09:00:00', 'user1', '2026-06-01 09:30:00', '2026-06-01 10:00:00');");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl1', 'sr1', 'source_sl', 'dest_sl', 'loc_src', 'loc_dst', 4.0);");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl2', 'sr1', 'source_sl', NULL, 'loc_src', 'loc_dst', 2.0);");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl3', 'sr1', 'source_sl', 'dest_sl_no_loc', 'loc_src', NULL, 1.0);");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl4', 'sr1', 'source_sl', 'dest_sl_existing', 'loc_src', 'loc_dst', 1.0);");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl5', 'sr1', 'source_sl', 'dest_sl_adjusted', 'loc_src', 'loc_dst', 2.0);");
+        run(
+            connection,
+            "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr1', 'store1', 7, 'FINALISED', '2026-06-01 09:00:00', 'user1', '2026-06-01 09:30:00', '2026-06-01 10:00:00');",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl1', 'sr1', 'source_sl', 'dest_sl', 'loc_src', 'loc_dst', 4.0);",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl2', 'sr1', 'source_sl', NULL, 'loc_src', 'loc_dst', 2.0);",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl3', 'sr1', 'source_sl', 'dest_sl_no_loc', 'loc_src', NULL, 1.0);",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl4', 'sr1', 'source_sl', 'dest_sl_existing', 'loc_src', 'loc_dst', 1.0);",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl5', 'sr1', 'source_sl', 'dest_sl_adjusted', 'loc_src', 'loc_dst', 2.0);",
+        );
 
         // Inventory addition on dest_sl_adjusted - a non-repack StockIn that must NOT
         // suppress the backfill of srl5
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('inv_addition', 'store1_name', 'store1', 1, false, '2026-06-05 00:00:00', 'INVENTORY_ADDITION', 'VERIFIED', 1.0, false);");
-        run(connection, "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('addition_in', 'inv_addition', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 10.0, 10.0, 2.0, 2.0, 'dest_sl_adjusted');");
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('inv_addition', 'store1_name', 'store1', 1, false, '2026-06-05 00:00:00', 'INVENTORY_ADDITION', 'VERIFIED', 1.0, false);",
+        );
+        run(
+            connection,
+            "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('addition_in', 'inv_addition', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 10.0, 10.0, 2.0, 2.0, 'dest_sl_adjusted');",
+        );
 
         // Finalised split on store2 - not active on this site, must be skipped
-        run(connection, "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr2', 'store2', 1, 'FINALISED', '2026-06-02 09:00:00', 'user2', '2026-06-02 09:30:00', '2026-06-02 10:00:00');");
-        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('s2_srl', 'sr2', 's2_src', 's2_dest', NULL, NULL, 3.0);");
+        run(
+            connection,
+            "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr2', 'store2', 1, 'FINALISED', '2026-06-02 09:00:00', 'user2', '2026-06-02 09:30:00', '2026-06-02 10:00:00');",
+        );
+        run(
+            connection,
+            "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('s2_srl', 'sr2', 's2_src', 's2_dest', NULL, NULL, 3.0);",
+        );
 
         // Existing repack invoice #5 (also provides dest_sl_existing's StockIn line)
         // and a number counter at 5 - backfilled invoices must continue from 6
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('existing_repack', 'repack', 'store1', 5, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);");
-        run(connection, "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('existing_in', 'existing_repack', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 5.0, 5.0, 1.0, 2.0, 'dest_sl_existing');");
-        run(connection, "INSERT INTO number (id, value, store_id, type) VALUES ('num1', 5, 'store1', 'REPACK');");
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('existing_repack', 'repack', 'store1', 5, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);",
+        );
+        run(
+            connection,
+            "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('existing_in', 'existing_repack', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 5.0, 5.0, 1.0, 2.0, 'dest_sl_existing');",
+        );
+        run(
+            connection,
+            "INSERT INTO number (id, value, store_id, type) VALUES ('num1', 5, 'store1', 'REPACK');",
+        );
 
         // store2's counter lags its max repack invoice number - the migration must
         // NOT touch it (store2 gets no backfilled invoices; its records are synced
         // copies owned by another site)
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('s2_repack', 'store2_name', 'store2', 3, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);");
-        run(connection, "INSERT INTO number (id, value, store_id, type) VALUES ('num2', 1, 'store2', 'REPACK');");
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('s2_repack', 'store2_name', 'store2', 3, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);",
+        );
+        run(
+            connection,
+            "INSERT INTO number (id, value, store_id, type) VALUES ('num2', 1, 'store2', 'REPACK');",
+        );
     }
 
     #[actix_rt::test]

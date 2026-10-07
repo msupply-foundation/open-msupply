@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{response_or_err, ApiResponse};
+use super::{ApiResponse, response_or_err};
 use repository::{migrations::Version, syncv7::SyncError};
-use util::{with_retries, RetrySeconds};
+use util::{RetrySeconds, with_retries};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

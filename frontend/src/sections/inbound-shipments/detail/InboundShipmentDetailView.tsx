@@ -57,6 +57,7 @@ import {
   rememberPageSize,
 } from '../../../list/pageSize';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
+import { pagedNext, rowAfter } from '@/list/pagedNext';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -94,17 +95,29 @@ import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import {
   canChangeStatus,
+  hasSourceLink,
   isEditable,
+  actionsLocked,
   sourceLinkOf,
   supplierIsStore,
 } from './inboundShipmentStatus';
+import { packDifference } from './inboundShipmentLine';
 import { SupplierKindIcon } from '../SupplierKindIcon';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { ExportPrintButton } from '@/domain/reports';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
+import { CaptureWindow } from './scan/CaptureWindow';
+import { createCaptureWindow } from './scan/createCaptureWindow';
+import {
+  createScanControl,
+  ScanButton,
+  shownScanNotice,
+} from '@/domain/barcode';
+import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { showsInternalOrderContext } from './internalOrderContext';
 import { AddFromMasterListModal } from './modals/AddFromMasterListModal';
 import { AddFromInternalOrderModal } from './modals/AddFromInternalOrderModal';
@@ -114,7 +127,6 @@ import {
   ChangeLocationAction,
   AuthoriseLinesAction,
   ChangeCampaignProgramAction,
-  ExportPrintAction,
 } from './actions';
 // "Return selected lines" → the supplier-return from-shipment create flow. The
 // entry point is owned here (inbound detail); the flow is the returns
@@ -147,6 +159,7 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   location: false,
   unitName: false,
   dosesPerUnit: false,
+  shippedNumberOfPacks: false,
   difference: false,
   unitsReceived: false,
   requested: false,
@@ -290,8 +303,9 @@ const InboundShipmentDetailView: Component = () => {
   // are pulled: a line REJECTED during authorisation flips server-side from
   // STOCK_IN to UNALLOCATED_STOCK, and it must stay on the table so its "Auth
   // status" column reads Rejected and the row-selection Approve/Reject/Pending
-  // actions can un-reject it (spec ui-surface col 16 / AC-E6). SERVICE lines
-  // stay out — they belong to the service-charge modal, not this table.
+  // actions can un-reject it (spec ui-surface col 16 / OMS-FUN-ISE-001.10).
+  // SERVICE lines stay out — they belong to the service-charge modal, not this
+  // table.
   const linesVariables = createMemo<InboundShipmentLinesVariables>(() => ({
     storeId: params.storeId,
     filter: {
@@ -392,14 +406,22 @@ const InboundShipmentDetailView: Component = () => {
       !canMutateInboundScope(scope())
     );
   };
+  const isExternal = () => isExternalScope(scope());
   // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
   const isDisabled = () =>
     writeBlocked() || !isEditable(current()?.status ?? '');
+  // The line-selection actions close earlier on a PO-linked shipment — at
+  // Received (issue #873); its lines still open, and items are still added.
+  const bulkLocked = () =>
+    isDisabled() || actionsLocked(current()?.status ?? '', isExternal());
   // The status footer keeps its own, looser status rule — an advance has to
   // stay reachable at Shipped, which the edit gate closes.
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
-  const isExternal = () => isExternalScope(scope());
+  // Whether the shipment carries a source link — see hasSourceLink's own
+  // comment for the rule and why the PO half comes from the scope.
+  const sourceLinked = () =>
+    hasSourceLink(isExternal(), current()?.linkedShipment);
   // The rule, and why a PO-linked shipment is excluded, lives in
   // ./internalOrderContext.
   const showsOrderContext = () =>
@@ -413,7 +435,8 @@ const InboundShipmentDetailView: Component = () => {
   // Header field save → updateInboundShipment (twin by isExternal) → splice.
   // Returns the server's inline verdict so a field that can legitimately be
   // rejected while enabled (the received date — backdating window/direction,
-  // spec S7/AC-B) can show it; buffered fire-and-forget callers ignore it.
+  // spec S7, OMS-REG-REPL-02.29–.32) can show it; buffered fire-and-forget
+  // callers ignore it.
   const saveField = async (
     patch: Partial<Omit<UpdateInboundShipmentVariables['input'], 'id'>>
   ): Promise<{ ok: boolean; message?: string }> => {
@@ -481,12 +504,12 @@ const InboundShipmentDetailView: Component = () => {
     setEditState({ itemId: line.itemId, lineId: line.id });
   const openAdd = () => setEditState({});
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, because two controls trigger it: the header SplitButton
-  // and the ghost button in the table's empty slot. Each carries
-  // `shortcut={ALT_N}` for its badge; neither owns the action — which is
-  // exactly the case a control-owned declaration could not express
-  // (kdd/keyboard-layer decision 3).
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, because two controls
+  // trigger it: the header SplitButton and the ghost button in the table's
+  // empty slot. Each carries `shortcut={ALT_N}` for its badge; neither owns the
+  // action — which is exactly the case a control-owned declaration could not
+  // express (kdd/keyboard-layer decision 3).
   //
   // `run` is the plain add, the split button's default option, NOT its
   // menu-selected value: the binding means "add an item", and the master-list
@@ -498,69 +521,71 @@ const InboundShipmentDetailView: Component = () => {
     disabled: () => !current() || isDisabled(),
   });
 
-  // "OK & next" (update mode): resolve the next item for the editor to advance
-  // to. Owned by the PARENT because the line table is server-paginated — the
-  // next item may be on a later page, and finding it pages the visible table
-  // forward. Given the current item id and the covered-items set (every item
-  // stepped through this walk, so a re-appearing item — one spans several batch
-  // rows — is never offered twice, across pages too), returns the next distinct
-  // uncovered item id in the current sorted order, or undefined when the whole
-  // list is exhausted (→ the modal drops into add mode, table left on the last
-  // page walked). Mirrors the stocktake reference (kdd/stocktake-line-editing).
-  const nextItem = async (
+  // Receiving by scanning (spec/barcode-scanning rules § Learning a code while
+  // receiving; ui-surface S2): a scan opens the capture window, and each scan
+  // after that saves what it holds and loads the next box. The scanner arms on
+  // arrival; the action is disabled while the shipment is not editable (R1).
+  const [scanNotice, setScanNotice] = createSignal<string>();
+  const capture = createCaptureWindow({
+    storeId: () => params.storeId,
+    invoiceId: () => current()?.id ?? params.invoiceId,
+    isExternal,
+    // The same source-link rule the line editor's cost field follows.
+    costLocked: () => isExternal() || !!current()?.linkedShipment,
+    blocked: () =>
+      editState() != null || masterListOpen() || internalOrderOpen(),
+    onSaved: onLinesChanged,
+    onNotice: setScanNotice,
+  });
+  const scan = createScanControl({
+    owner: 'inbound-shipment',
+    disabled: () => !current() || isDisabled(),
+    onScan: read => {
+      setScanNotice(undefined);
+      void capture.receive(read);
+    },
+  });
+  const scanNoticeShown = shownScanNotice(scan, () => {
+    const text = scanNotice();
+    return text === undefined ? undefined : { severity: 'warning', text };
+  });
+
+  // "OK & next" (update mode): the next distinct item for the editor to
+  // advance to. Owned by the PARENT because the line table is server-paginated
+  // — the next item may be on a later page, and finding it pages the visible
+  // table forward (src/list/pagedNext). `covered` is every item stepped
+  // through this walk, so an item spanning several batch rows is never offered
+  // twice, across pages too. Undefined once the list is exhausted (→ the modal
+  // drops into add mode). Mirrors the stocktake reference
+  // (kdd/stocktake-line-editing).
+  const nextItem = (
     currentId: string,
     covered: Set<string>
-  ): Promise<string | undefined> => {
-    // The next distinct, uncovered item within a page's rows. On the CURRENT
-    // page start AFTER the current item's rows (`fromStart` false): items
-    // before it are uncovered but already behind us, so a `past` gate walks
-    // past the current item first. Later pages are all "after", so `fromStart`
-    // true.
-    const pick = (pageRows: Line[], fromStart: boolean): string | undefined => {
-      let past = fromStart;
-      for (const line of pageRows) {
-        const id = line.itemId;
-        if (id === currentId) {
-          past = true;
-          continue;
-        }
-        if (!past || covered.has(id)) continue;
-        return id;
-      }
-      return undefined;
-    };
-
-    // 1. The current page (already loaded) — scan only after the current item.
-    const onThisPage = pick(rows(), false);
-    if (onThisPage) return onThisPage;
-
-    // 2/3. Walk forward a page at a time until we find one or run out. Later
-    // pages scan from their top; the covered set guards repeats. Each page is
-    // fetched DIRECTLY (race-free) while the table's URL offset follows along.
-    let offset = query().offset;
-    const first = query().first;
-    for (;;) {
-      offset += first;
-      if (offset >= totalCount()) return undefined; // no further pages
-      setQuery({ ...query(), offset });
-      const result = await graphqlFetch(InboundShipmentLines, {
-        storeId: params.storeId,
-        filter: {
-          invoiceId: { equalTo: params.invoiceId },
-          type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
-        },
-        sort: query().sort,
-        page: { first, offset },
-      });
-      if (
-        result.kind !== 'success' ||
-        result.data.invoiceLines.__typename !== 'InvoiceLineConnector'
-      )
-        return undefined;
-      const found = pick(result.data.invoiceLines.nodes, true);
-      if (found) return found;
-    }
-  };
+  ): Promise<string | undefined> =>
+    pagedNext<Line, string>({
+      rows,
+      page: () => query(),
+      totalCount,
+      setOffset: offset => setQuery({ ...query(), offset }),
+      fetchPage: async (offset, first) => {
+        const result = await graphqlFetch(InboundShipmentLines, {
+          storeId: params.storeId,
+          filter: {
+            invoiceId: { equalTo: params.invoiceId },
+            type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
+          },
+          sort: query().sort,
+          page: { first, offset },
+        });
+        return result.kind === 'success' &&
+          result.data.invoiceLines.__typename === 'InvoiceLineConnector'
+          ? result.data.invoiceLines.nodes
+          : undefined;
+      },
+      pick: (pageRows, fromStart) =>
+        rowAfter(pageRows, fromStart, l => l.itemId, currentId, covered)
+          ?.itemId,
+    });
 
   const reportSort = () => {
     const s = query().sort[0];
@@ -599,14 +624,15 @@ const InboundShipmentDetailView: Component = () => {
   ];
 
   // Add-item split button options — master list & internal order gated (spec
-  // AC-ML1 / AC-PG4).
+  // OMS-REG-ISH-01.10 / OMS-REG-ISH-01.11).
   const addOptions = () => {
     const node = current();
     const opts: SplitButtonOption[] = [
       { value: 'item', label: t('button.add-item') },
     ];
-    // Add from master list — only while New and not PO-linked (spec AC-ML1).
-    // Disabled-with-reason rather than hidden (M5 / ui-surface cross-cutting).
+    // Add from master list — only while New and not PO-linked (spec
+    // OMS-REG-ISH-01.10). Disabled-with-reason rather than hidden (M5 /
+    // ui-surface cross-cutting).
     const masterListReason = !node
       ? undefined
       : isExternal()
@@ -622,14 +648,14 @@ const InboundShipmentDetailView: Component = () => {
     });
     // Add-from-internal-order — store allows the manual link, the shipment is
     // still editable, and it carries a MANUALLY linked internal order (spec
-    // AC-PG4 / AC-IO1). The distinguishing signal is linkedShipment: an
-    // INCOMING transfer has one (it arrives pre-populated, so there is no
-    // order-line pull to offer), a manual link has a requisition without one.
-    // That is the same signal sourceLinkOf() keys on, so a !== 'transfer' test
-    // would read equivalently here — linkedShipment is named directly because
-    // this gate is about the pre-populated lines, not about the status flow.
-    // Offered only when the store enables manual IO linking (a preference
-    // gate → offer-shaping, omitted otherwise). When offered,
+    // OMS-REG-ISH-01.11 / OMS-REG-ISH-01.8/.9). The distinguishing signal is
+    // linkedShipment: an INCOMING transfer has one (it arrives pre-populated,
+    // so there is no order-line pull to offer), a manual link has a requisition
+    // without one. That is the same signal sourceLinkOf() keys on, so a !==
+    // 'transfer' test would read equivalently here — linkedShipment is named
+    // directly because this gate is about the pre-populated lines, not about
+    // the status flow. Offered only when the store enables manual IO linking (a
+    // preference gate → offer-shaping, omitted otherwise). When offered,
     // disable-with-reason for the per-shipment state (M5): needs a manually
     // linked internal order and an editable shipment.
     if (prefs().manuallyLinkInternalOrderToInboundShipment) {
@@ -678,7 +704,7 @@ const InboundShipmentDetailView: Component = () => {
         ...getCellDefinition('itemCode'),
         // A line that arrived via another store's transfer (linkedInvoiceId
         // set) can't be independently deleted; flag its code in the error tone
-        // so the provenance is visible (spec AC-E9 / M9).
+        // so the provenance is visible (spec OMS-REG-REPL-09.19/.20 / M9).
         cell: info => {
           const line = info.row.original;
           return (
@@ -725,7 +751,8 @@ const InboundShipmentDetailView: Component = () => {
         ...getCellDefinition('expiryDate'),
       },
       // VVM status — gated by the store preference; shown for vaccine items
-      // only, blank otherwise (VVM applies to vaccines, spec AC-PG1 / M1).
+      // only, blank otherwise (VVM applies to vaccines, spec ui-surface
+      // § line table).
       ...(prefs().manageVvmStatusForStock
         ? [
             {
@@ -783,14 +810,32 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.packs-received'),
         ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
       },
-      // Difference (H6) — supplier-shipped packs minus received packs; blank
-      // when nothing was recorded as shipped.
+      // Packs shipped — what the supplier declared they sent. Sits between
+      // Packs received and Difference so the subtraction reads left to right
+      // in the order it is performed, and so the Difference is never shown
+      // without the figure it is measured against (issue #562). Ungated and
+      // hidden-by-default on a narrow table, exactly like Difference: the two
+      // are a pair and must appear and disappear together.
+      //
+      // No `headerPosition: 'badge'`, unlike Packs received above: a card has
+      // ONE badge slot (ui/docs/CARD_TABLE_MODEL.md), and the received count
+      // is what belongs in it. This column pairs with Difference, so it rides
+      // in the card BODY beside it rather than competing for the header.
+      {
+        c: { key: 'shippedNumberOfPacks' },
+        header: () => t('label.shipped-number-of-packs'),
+        ...getCellDefinition('shippedNumberOfPacks'),
+      },
+      // Difference (H6) — received packs minus supplier-shipped packs, so the
+      // figure reads against Packs received beside it: POSITIVE means more
+      // arrived than the supplier declared, negative means the delivery fell
+      // short. Blank when nothing was recorded as shipped. The subtraction
+      // itself lives in packDifference, shared with the line editor's cell so
+      // the two surfaces cannot drift apart in sign.
       {
         c: {
           accessor: line =>
-            line.shippedNumberOfPacks != null
-              ? line.shippedNumberOfPacks - line.numberOfPacks
-              : '',
+            packDifference(line.numberOfPacks, line.shippedNumberOfPacks) ?? '',
           id: 'difference',
         },
         header: () => t('label.difference'),
@@ -960,9 +1005,9 @@ const InboundShipmentDetailView: Component = () => {
               c: {
                 // Placeholder lines (0 packs, nothing shipped) have no
                 // meaningful total — blank (null → empty currency cell) rather
-                // than a zero amount (AC-V3).
+                // than a zero amount (ui-surface § line table).
                 accessor: line =>
-                  isPlaceholderLine(line) ? null : line.totalAfterTax,
+                  isPlaceholderLine(line) ? null : line.totalBeforeTax,
                 id: 'total',
               },
               header: () => t('label.total'),
@@ -1076,8 +1121,12 @@ const InboundShipmentDetailView: Component = () => {
                         onAction={onAddAction}
                       />
                     </Show>
-                    <ExportPrintAction
-                      invoiceId={node().id}
+                    {/* Scan — the shared page-action scan button (spec S3
+                        page actions; barcode-scanning R1). */}
+                    <ScanButton control={scan} />
+                    <ExportPrintButton
+                      context="INBOUND_SHIPMENT"
+                      dataId={node().id}
                       sort={reportSort()}
                     />
                     {/* More — the closed-panel reopen affordance, at the end
@@ -1101,6 +1150,20 @@ const InboundShipmentDetailView: Component = () => {
                       </Button>
                     </Show>
                   </HeaderButtons>
+                  {/* A scan's outcome, inline beside the action that took it
+                      — never a toast (controls › action feedback). */}
+                  <Show when={scanNoticeShown()}>
+                    {notice => (
+                      <Toolbar>
+                        <Alert
+                          severity={notice().severity}
+                          testId="scan-notice"
+                        >
+                          {notice().text}
+                        </Alert>
+                      </Toolbar>
+                    )}
+                  </Show>
                   {/* The header field cluster — never a hand-rolled <Toolbar>
                       (ui/docs/PAGES.md § header field cluster). The kind banner
                       (spec S3: manual shipments don't auto-advance; a
@@ -1168,7 +1231,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1176,7 +1239,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1184,7 +1247,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       locations={locations()}
                       locationsLoading={locationsData.loading}
                       requiredVolume={selectedVolume}
@@ -1195,7 +1258,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
-                      disabled={isDisabled()}
+                      disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
                     />
@@ -1210,7 +1273,7 @@ const InboundShipmentDetailView: Component = () => {
                         storeId={params.storeId}
                         isExternal={isExternal()}
                         selectedIds={selectedIds}
-                        disabled={isDisabled()}
+                        disabled={bulkLocked()}
                         onChanged={onLinesChanged}
                         onError={stampErrors}
                       />
@@ -1260,9 +1323,20 @@ const InboundShipmentDetailView: Component = () => {
                   onSort={onSort}
                   onRowClick={isDisabled() ? undefined : openRow}
                   // A line the last bulk op failed reads in the error tone
-                  // (spec S8 → per-line indicators); an untouched placeholder
-                  // reads in the info tone (AC-V3). Error wins when both hold.
+                  // (spec S8 → per-line indicators).
                   rowTone={line =>
+                    lineErrors().has(line.id) ? 'error' : undefined
+                  }
+                  // Placeholder rows (ui-surface § line table):
+                  // CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isPlaceholderLine(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isPlaceholderLine(line) ? 'unfinished' : undefined
+                  }
+                  // Error wins when both hold.
+                  cardTone={line =>
                     lineErrors().has(line.id)
                       ? 'error'
                       : isPlaceholderLine(line)
@@ -1357,11 +1431,17 @@ const InboundShipmentDetailView: Component = () => {
                   showsOrderContext() ? node().requisition?.id : undefined
                 }
                 // Cost price is read-only only when the shipment carries a
-                // source link — a purchase order or a linked shipment (a
-                // transfer) — NOT merely because the supplier is another store
-                // (spec rules → header fields / AC-H1). A manual internal-
-                // supplier shipment keeps cost editable.
-                costLocked={isExternal() || !!node().linkedShipment}
+                // source link — NOT merely because the supplier is another
+                // store (spec rules → header fields / OMS-REG-REPL-09.12). A
+                // manual internal-supplier shipment keeps cost editable.
+                costLocked={sourceLinked()}
+                // Packs shipped / Shipped pack size are the SENDING side's
+                // record of what left its shelf, so the receiver may read them
+                // but not retype them. Passed separately from costLocked even
+                // though the two resolve alike: they are separate rules that
+                // merely coincide, and reading one as the other is how this
+                // field came to be editable on transfers.
+                shippedLocked={sourceLinked()}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,
@@ -1373,6 +1453,7 @@ const InboundShipmentDetailView: Component = () => {
                 onSaved={onLinesChanged}
                 onRequestNext={nextItem}
               />
+              <CaptureWindow control={capture} />
               <AddFromMasterListModal
                 open={masterListOpen()}
                 onClose={() => setMasterListOpen(false)}

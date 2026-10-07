@@ -1,8 +1,8 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::InsurancePolicyNode;
 use repository::name_insurance_join_row::{

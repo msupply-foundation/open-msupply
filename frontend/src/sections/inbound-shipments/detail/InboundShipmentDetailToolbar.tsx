@@ -16,7 +16,7 @@ import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { poLabel } from '../linkedOrder';
-import { NameSearch, type NameOption } from '../../../domain/name';
+import { NameSearch, type NameSeed } from '../../../domain/name';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
 import { sourceLinkOf, supplierIsStore } from './inboundShipmentStatus';
@@ -25,7 +25,7 @@ import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.gen
 export interface InboundShipmentDetailToolbarProps {
   storeId: string;
   node: InboundInfoFragment;
-  /** True once Verified (global edit lock). */
+  /** The shipment's edit lock (rules § editability). */
   disabled: boolean;
   edit: InboundFieldEdit;
   /** Store backdating gate + window (from inboundShipmentPreferences). */
@@ -52,7 +52,8 @@ export const InboundShipmentDetailToolbar: Component<
   // The received date is enabled while Received + backdating-on, yet the server
   // can still refuse the save (moving the date forward, or beyond the store's
   // max-days window). Those come back as untyped rejections; surface the
-  // verdict on the field itself (spec S7 / AC-B), request preserved. It's the
+  // verdict on the field itself (spec S7 /
+  // OMS-REG-REPL-02.29–.32), request preserved. It's the
   // DateField's own `error` rather than a sibling Alert so the cluster's row
   // stays a row of fields.
   const [receivedError, setReceivedError] = createSignal<string>();
@@ -79,13 +80,9 @@ export const InboundShipmentDetailToolbar: Component<
   // internal order has no source link, and its supplier stays editable.
   const supplierLocked = () => props.disabled || sourceLink() !== 'none';
 
-  const selectedSupplier = (): NameOption => ({
+  const selectedSupplier = (): NameSeed => ({
     id: props.node.otherPartyId,
     name: props.node.otherPartyName,
-    code: '',
-    isSupplier: true,
-    isDonor: false,
-    isOnHold: false,
     isStore: supplierIsStore(props.node),
   });
 
@@ -165,6 +162,7 @@ export const InboundShipmentDetailToolbar: Component<
 
       <DateField
         label={t('label.received')}
+        testId="received-date-field"
         size="small"
         value={draftReceivedDay() ?? utcToLocalDay(props.node.receivedDatetime)}
         disabled={!receivedDateEditable()}

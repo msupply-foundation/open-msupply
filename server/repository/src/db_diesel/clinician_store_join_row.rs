@@ -1,4 +1,4 @@
-use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
+use super::{StorageConnection, clinician_link_row::clinician_link, clinician_row::clinician};
 
 use crate::{ChangelogRepository, Delete, RowActionType};
 use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};

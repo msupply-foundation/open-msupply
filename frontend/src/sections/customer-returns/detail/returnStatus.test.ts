@@ -15,7 +15,7 @@ import type { CustomerReturnInfoFragment } from './customerReturnDetail.generate
 
 // Status/kind logic for customer returns (spec/customer-returns/rules.md
 // § manual vs transfer, § status lifecycle, § editability;
-// acceptance.md AC-* cited per test).
+// behaviour IDs cited per test).
 
 const node = (
   over: Partial<CustomerReturnInfoFragment> = {}

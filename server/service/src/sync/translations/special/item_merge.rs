@@ -1,14 +1,14 @@
 use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 
 use crate::sync::{
+    CentralServerConfig,
     translations::{
+        IntegrationOperation, PullTranslateResult, SyncTranslation,
         item::ItemTranslation,
         special::merge::{
-            apply_item_merge, build_central_merge_message, MergeMessageBody, MergeOutcome,
+            MergeMessageBody, MergeOutcome, apply_item_merge, build_central_merge_message,
         },
-        IntegrationOperation, PullTranslateResult, SyncTranslation,
     },
-    CentralServerConfig,
 };
 
 #[deny(dead_code)]
@@ -36,7 +36,7 @@ impl SyncTranslation for ItemMergeTranslation {
         let mut ops = match apply_item_merge(connection, &data)? {
             MergeOutcome::Operations(ops) => ops,
             MergeOutcome::NothingToDo(reason) => {
-                return Ok(PullTranslateResult::Ignored(reason.to_string()))
+                return Ok(PullTranslateResult::Ignored(reason.to_string()));
             }
         };
 
@@ -54,8 +54,8 @@ mod tests {
     use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository, SyncAction,
-        SyncBufferRepository, SyncBufferRowInsert, SyncRecordData,
+        ItemLinkRow, ItemLinkRowRepository, SyncAction, SyncBufferRepository, SyncBufferRowInsert,
+        SyncRecordData, mock::MockDataInserts, test_db::setup_all,
     };
     use serde_json::json;
 

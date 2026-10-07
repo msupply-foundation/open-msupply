@@ -2,15 +2,15 @@ use std::time::{Duration, Instant, SystemTime};
 
 use crate::{
     cursor_controller::CursorController,
-    sync::{sync_status::logger::SyncStepProgress, GetActiveStoresOnSiteError},
+    sync::{GetActiveStoresOnSiteError, sync_status::logger::SyncStepProgress},
 };
 
 use super::{
     api::*,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
-        translate_rows_to_sync_records, PushSyncRecord, PushTranslationError,
-        ToSyncRecordTranslationType,
+        PushSyncRecord, PushTranslationError, ToSyncRecordTranslationType,
+        translate_rows_to_sync_records,
     },
 };
 
@@ -112,14 +112,12 @@ impl RemoteDataSynchroniser {
             SiteStatusCodeV5::InitialisationInProgress
         );
 
-        if !worker_running {
-            if let Err(error) = self.sync_api_v5.post_initialise().await {
-                // Tolerate transient errors (connection/unknown/dropped response body) and
-                // "central busy" codes, then poll. Safe for a POST: this never re-sends it, it
-                // only moves on to polling for the outcome.
-                if !(error.is_transient() || error.is_central_busy()) {
-                    return Err(error.into());
-                }
+        if !worker_running && let Err(error) = self.sync_api_v5.post_initialise().await {
+            // Tolerate transient errors (connection/unknown/dropped response body) and
+            // "central busy" codes, then poll. Safe for a POST: this never re-sends it, it
+            // only moves on to polling for the outcome.
+            if !(error.is_transient() || error.is_central_busy()) {
+                return Err(error.into());
             }
         }
         self.wait_for_initialisation(
@@ -682,7 +680,7 @@ mod test {
     #[actix_rt::test]
     async fn test_pull_retries_dropped_response_body() {
         use crate::sync::{
-            api::test_helpers::{set_central_server_site_id, ScriptedResponse, ScriptedServer},
+            api::test_helpers::{ScriptedResponse, ScriptedServer, set_central_server_site_id},
             sync_status::logger::SyncLogger,
         };
         use repository::{mock::MockDataInserts, test_db};

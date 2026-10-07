@@ -1,4 +1,4 @@
-use super::{helpers::run_without_change_log_updates, version::Version, Migration};
+use super::{Migration, helpers::run_without_change_log_updates, version::Version};
 
 use crate::StorageConnection;
 

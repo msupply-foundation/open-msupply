@@ -1,7 +1,6 @@
 import { For, Show, type Component } from 'solid-js';
 import { t, localisedDate } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
-import { homeCurrency } from '@/intl/currency';
+import { formatCurrency } from '@/intl/currency';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -44,15 +43,6 @@ export interface RequisitionSidePanelProps {
   /** Colour save (the buffered comment saves through the buffer itself). */
   onSaveField: (patch: Record<string, unknown>) => void;
 }
-
-const money = (value: number): string =>
-  formatNumber(value, {
-    style: 'currency',
-    currency: homeCurrency(),
-    currencyDisplay: 'narrowSymbol',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 
 export const RequisitionSidePanel: Component<
   RequisitionSidePanelProps
@@ -115,7 +105,8 @@ export const RequisitionSidePanel: Component<
           <span>{localisedDate(props.node.createdDatetime)}</span>
         </FieldRow>
         <FieldRow label={t('label.color')}>
-          {/* The picker while editable, read-only otherwise (AC-T1). */}
+          {/* The picker while editable, read-only otherwise
+              (OMS-REG-DIST-05.27). */}
           <Show
             when={props.editable}
             fallback={<ColourTagDot colour={props.node.colour ?? null} />}
@@ -194,7 +185,7 @@ export const RequisitionSidePanel: Component<
         >
           <FieldRow label={t('heading.grand-total')}>
             <strong data-testid="grand-total-field">
-              {money(grandTotal())}
+              {formatCurrency(grandTotal())}
             </strong>
           </FieldRow>
         </SidePanelSection>

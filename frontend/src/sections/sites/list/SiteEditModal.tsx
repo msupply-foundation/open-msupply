@@ -267,11 +267,8 @@ export const SiteEditModal: Component<SiteEditModalProps> = props => {
       width="form"
       title={isEdit ? t('title.edit-site') : t('title.create-site')}
       icon={isEdit ? undefined : <PlusCircleIcon />}
-      // Blocking while a write is in flight. ⚠️ ui-surface asks for a dialog
-      // non-dismissable by BACKDROP click; the library's Dialog has one flag
-      // for the scrim and Escape together, and swallowing Escape would break
-      // the accessibility baseline, so dismissal follows the peer verticals.
-      // Flagged in BUILD_REPORT as a candidate library refinement.
+      // Blocking while a write is in flight. A backdrop click never closes
+      // it, as ui-surface asks — that is every Dialog's default (#1002).
       dismissable={!saving()}
       onClose={props.onClose}
       footer={

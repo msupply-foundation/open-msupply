@@ -61,7 +61,7 @@ import { ExportPrescriptionRequestsAction } from './actions/ExportPrescriptionRe
 // The prescription-requests list (spec/prescription-requests/ui-surface.md S1):
 // the standard list screen over prescriptionRequests. Past-New rows take the
 // read-only row treatment but stay clickable; default sort is created
-// datetime, newest first (AC-L1).
+// datetime, newest first (OMS-REG-DIS-08.17/.18).
 
 type RequestRow =
   PrescriptionRequestsResult['prescriptionRequests']['nodes'][number];
@@ -251,7 +251,8 @@ const PrescriptionRequestsList: Component = () => {
       header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
-    // A column per configured request custom field (AC-CF4) — not sortable;
+    // A column per configured request custom field (OMS-REG-DIS-08.23) — not
+    // sortable;
     // value chosen by kind.
     ...customFieldColumns<RequestRow, SortKey>(
       cfDefs(),

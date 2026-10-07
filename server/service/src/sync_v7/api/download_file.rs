@@ -1,8 +1,8 @@
-use repository::{syncv7::SyncError, SyncFileReferenceRow};
+use repository::{SyncFileReferenceRow, syncv7::SyncError};
 use serde::{Deserialize, Serialize};
-use util::{format_error, with_retries, RetrySeconds};
+use util::{RetrySeconds, format_error, with_retries};
 
-use super::{is_connection_problem, SyncApiV7};
+use super::{SyncApiV7, is_connection_problem};
 use crate::static_files::{StaticFile, StaticFileService};
 
 #[derive(Serialize, Deserialize)]

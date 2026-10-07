@@ -36,6 +36,7 @@ import {
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
+import { packDifference } from '../inboundShipmentLine';
 import { CopyIcon, PlusCircleIcon, TrashIcon } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
 import {
@@ -47,7 +48,7 @@ import {
   type LocationWithVolume,
 } from '../../../../domain/location';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
-import { NameSearch, type NameOption } from '../../../../domain/name';
+import { NameSearch } from '../../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../../domain/campaign/CampaignOrProgramSelect';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import {
@@ -105,8 +106,9 @@ export interface InboundShipmentLineEditModalProps {
   initialLineId?: string;
   /**
    * On a PO-linked shipment, add mode picks a purchase-order LINE (not an item
-   * search) — a line insert must cite one (spec AC-E3). Set to the shipment's
-   * purchaseOrderId to switch the add selector to the PO-line picker.
+   * search) — a line insert must cite one (spec OMS-REG-REPL-09.6). Set to the
+   * shipment's purchaseOrderId to switch the add selector to the PO-line
+   * picker.
    */
   purchaseOrderId?: string;
   /**
@@ -117,6 +119,20 @@ export interface InboundShipmentLineEditModalProps {
   requisitionId?: string;
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
+  /**
+   * The supplier-declared figures (Packs shipped / Shipped pack size) are
+   * read-only, because something outside this store declared them: the
+   * shipment carries a source link (spec rules → source link) — a purchase
+   * order, or a sending shipment (a transfer). Only a shipment with NO source
+   * link records them by hand.
+   *
+   * Deliberately its own prop rather than a second reading of `costLocked`,
+   * even though the two resolve the same way today: they are different rules
+   * that happen to coincide, and collapsing one into the other is exactly how
+   * this field came to be editable on transfers (spec rules → source link
+   * warns against leaning on "manual" alone to carry a gate).
+   */
+  shippedLocked: boolean;
   locations: LocationWithVolume[];
   prefs: LineEditPrefs;
   onSaved: () => void;
@@ -171,9 +187,10 @@ type DraftBatch = {
   campaignId: string | null;
   programId: string | null;
   /**
-   * Whether the user has hand-edited the cost / sell price (AC-H6): a prefilled
-   * price the user hasn't touched clears to zero when the pack size moves off
-   * the item default; an overridden one is left alone.
+   * Whether the user has hand-edited the cost / sell price
+   * (OMS-REG-REPL-09.10/.11): a prefilled price the user hasn't touched clears
+   * to zero when the pack size moves off the item default; an overridden one is
+   * left alone.
    */
   costOverridden: boolean;
   sellOverridden: boolean;
@@ -253,8 +270,9 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   manufacturerName: line.manufacturer?.name ?? null,
   campaignId: line.campaign?.id ?? null,
   programId: line.program?.id ?? null,
-  // Existing lines aren't subject to the prefill-clear (AC-H6 is about adding);
-  // mark both overridden so a pack-size edit never wipes a saved price.
+  // Existing lines aren't subject to the prefill-clear (OMS-REG-REPL-09.10/.11
+  // is about adding); mark both overridden so a pack-size edit never wipes a
+  // saved price.
   costOverridden: true,
   sellOverridden: true,
 });
@@ -330,9 +348,10 @@ type ChosenItem = {
   doses: number;
   /**
    * Item default pack size + store default sell price — the new-line price
-   * prefill (AC-H6). defaultSellPricePerPack is 0 where unknown (the PO-line
-   * picker and edit-mode line-load don't fetch it), so no price prefill there —
-   * correct, since AC-H6 targets the manual add-item case.
+   * prefill (OMS-REG-REPL-09.10/.11). defaultSellPricePerPack is 0 where
+   * unknown (the PO-line picker and edit-mode line-load don't fetch it), so no
+   * price prefill there — correct, since OMS-REG-REPL-09.10/.11 targets the
+   * manual add-item case.
    */
   defaultPackSize: number;
   defaultSellPricePerPack: number;
@@ -473,10 +492,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setLoadingLines(false);
   };
 
-  // A fresh batch for `chosen`, price-prefilled per AC-H6: starts at the item's
-  // default pack size, with cost AND sell price seeded from the store default
-  // sell price — but only when cost is editable (a manual shipment); on a
-  // PO/transfer shipment cost derives from the source, so leave prices at zero.
+  // A fresh batch for `chosen`, price-prefilled per OMS-REG-REPL-09.10/.11:
+  // starts at the item's default pack size, with cost AND sell price seeded
+  // from the store default sell price — but only when cost is editable (a
+  // manual shipment); on a PO/transfer shipment cost derives from the source,
+  // so leave prices at zero.
   const prefillFromItem = (chosen: ChosenItem): DraftBatch => {
     const base = emptyBatch();
     const packSize = chosen.defaultPackSize > 0 ? chosen.defaultPackSize : 1;
@@ -516,7 +536,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // Seed the editor for a search-picked item. The item descriptor comes from
   // the SEARCH option, not from any loaded line: only the option carries the
   // store default sell price, so keeping it is what lets a later "Add batch"
-  // prefill its price (AC-H6) even on an item loaded from its existing lines.
+  // prefill its price (OMS-REG-REPL-09.10/.11) even on an item loaded from its
+  // existing lines.
   const loadChosenItem = async (option: ItemOption) => {
     setLoadingLines(true);
     setErrorMessage(undefined);
@@ -578,10 +599,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   };
 
   // PO-linked add mode: pick a purchase-order LINE instead of an item search
-  // (spec AC-E3 — a PO-linked line insert must cite an order line). The order's
-  // lines are fetched once (sequentially, on mount) into a plain signal — not a
-  // createResource — so they're ready if/when the editor drops into add mode
-  // (initial open, or after an update walk exhausts).
+  // (spec OMS-REG-REPL-09.6 — a PO-linked line insert must cite an order line).
+  // The order's lines are fetched once (sequentially, on mount) into a plain
+  // signal — not a createResource — so they're ready if/when the editor drops
+  // into add mode (initial open, or after an update walk exhausts).
   const [poLineId, setPoLineId] = createSignal<string>();
   const [poLines, setPoLines] = createSignal<PoLine[]>([]);
   const loadPoLines = async () => {
@@ -632,7 +653,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     if (index >= 0) setBatches(index, field, value as never);
   };
 
-  // A new batch prefills from the current item (AC-H6) just like the first one.
+  // A new batch prefills from the current item (OMS-REG-REPL-09.10/.11) just
+  // like the first one.
   const addBatch = () => {
     const chosen = item();
     const batch = chosen ? prefillFromItem(chosen) : emptyBatch();
@@ -640,9 +662,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     batchFields.focus(batch.id);
   };
 
-  // Pack-size / price edits (AC-H6): moving the pack size off the item default
-  // clears a still-prefilled (non-overridden) price to zero; editing a price
-  // marks it overridden so a later pack-size change leaves it alone.
+  // Pack-size / price edits (OMS-REG-REPL-09.10/.11): moving the pack size off
+  // the item default clears a still-prefilled (non-overridden) price to zero;
+  // editing a price marks it overridden so a later pack-size change leaves it
+  // alone.
   const changePackSize = (id: string, value: number) => {
     const chosen = item();
     setBatches(
@@ -794,9 +817,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         // Line authorisation status — sent as a plain value (not a {value}
         // patch), only on a PO-linked shipment that requires authorisation.
         // The line's current value goes on every save: unchanged lines are a
-        // no-op, an edited one is the real change (AC-E6 blocks a change once
-        // Received but allows the no-op). Omitted elsewhere so a manual
-        // shipment never carries it.
+        // no-op, an edited one is the real change (OMS-FUN-ISE-001.10 blocks a
+        // change once Received but allows the no-op). Omitted elsewhere so a
+        // manual shipment never carries it.
         ...(props.prefs.authorisation && props.isExternal
           ? { status: b.status ?? undefined }
           : {}),
@@ -906,6 +929,23 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           (b.shippedPackSize !== undefined && b.shippedPackSize !== b.packSize))
     );
 
+  // A figure declared by whoever supplied the shipment — shown to the receiver
+  // but never typed by them. Rendered as a plain value, not a disabled box:
+  // the absence of a box is what says read-only (kdd/form-layout), where
+  // `disabled` means "an input you can't use right now", which is what a
+  // locked Cost price is. Sized by the column's own cell definition, so it
+  // still lines up with the inputs beside it. An em dash where nothing was
+  // declared, matching the Difference cell. Takes a GETTER, not a value, so
+  // the figure stays tracked as the draft store changes
+  // (kdd/solid-reactivity-pitfalls).
+  const declaredValue = (value: () => number | undefined) => (
+    <span class={styles.statValue}>
+      {value() === undefined
+        ? '—'
+        : formatNumber(value()!, { maximumFractionDigits: 2 })}
+    </span>
+  );
+
   // ---- Columns: one set, split across groups; batch is the anchor. ----
   const columns = (): Column<DraftBatch, never, GroupKey>[] => [
     {
@@ -976,8 +1016,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     },
     // Packs shipped, and the Difference it implies, sit immediately beside
     // Packs received — the comparison the receiver is actually making
-    // (reference design). Supplier-declared quantities are manual-shipment only
-    // (spec S4); they also feed the received-vs-shipped mismatch warning.
+    // (reference design). They also feed the received-vs-shipped mismatch
+    // warning. Absent on a PO-linked shipment, which declares nothing to
+    // compare against; present but READ-ONLY once the shipment carries a
+    // source link (a transfer), because the figure is the sending store's
+    // record of what left its shelf and the receiver must not retype it.
     ...(!props.purchaseOrderId
       ? [
           {
@@ -988,22 +1031,32 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             cell: info => {
               const b = info.row.original;
               return (
-                <NumberField
-                  label={t('label.shipped-number-of-packs')}
-                  hideLabel
-                  size="small"
-                  value={b.shippedNumberOfPacks}
-                  min={0}
-                  decimalLimit={2}
-                  onChange={v => updateBatch(b.id, 'shippedNumberOfPacks', v)}
-                />
+                <Show
+                  when={props.shippedLocked}
+                  fallback={
+                    <NumberField
+                      label={t('label.shipped-number-of-packs')}
+                      hideLabel
+                      size="small"
+                      value={b.shippedNumberOfPacks}
+                      min={0}
+                      decimalLimit={2}
+                      onChange={v =>
+                        updateBatch(b.id, 'shippedNumberOfPacks', v)
+                      }
+                    />
+                  }
+                >
+                  {declaredValue(() => b.shippedNumberOfPacks)}
+                </Show>
               );
             },
           } satisfies Column<DraftBatch, never, GroupKey>,
-          // Difference (computed) — shipped minus received, the SAME direction
+          // Difference (computed) — received minus shipped, the SAME direction
           // the detail table's Difference column reports (H6), so the two never
-          // disagree in sign. Blank until the supplier's shipped figure is
-          // entered; there is nothing to compare against before that.
+          // disagree in sign: POSITIVE means more arrived than the supplier
+          // declared. Blank until the supplier's shipped figure is entered;
+          // there is nothing to compare against before that.
           {
             c: { id: 'difference' },
             header: () => t('label.difference'),
@@ -1022,9 +1075,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               // tracked, so the figure and its tone follow the draft store as
               // the receiver types (kdd/solid-reactivity-pitfalls).
               const diff = () =>
-                b.shippedNumberOfPacks === undefined
-                  ? undefined
-                  : b.shippedNumberOfPacks - b.numberOfPacks;
+                packDifference(b.numberOfPacks, b.shippedNumberOfPacks);
               return (
                 <span
                   class={styles.statValue}
@@ -1071,7 +1122,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             value={b.packSize}
             // Don't clamp below 1 — a pack size < 1 is a server rule
             // (PackSizeBelowOne, untyped); submit it and surface the rejection
-            // inline rather than silently coercing to 1 (spec AC-E1 / M2).
+            // inline rather than silently coercing to 1 (spec
+            // OMS-REG-REPL-09.1–.4 / M2).
             min={0}
             // Pack size is Float on the wire and may be fractional; 2-dp room
             // matches the reference (spec S4).
@@ -1082,7 +1134,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       },
     },
     // Shipped pack size follows the received one so the two pack sizes read as
-    // a pair (manual shipments only, like Packs shipped above).
+    // a pair, and is gated and locked exactly like Packs shipped above.
     ...(!props.purchaseOrderId
       ? [
           {
@@ -1095,15 +1147,22 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             cell: info => {
               const b = info.row.original;
               return (
-                <NumberField
-                  label={t('label.shipped-pack-size')}
-                  hideLabel
-                  size="small"
-                  value={b.shippedPackSize}
-                  min={0}
-                  decimalLimit={2}
-                  onChange={v => updateBatch(b.id, 'shippedPackSize', v)}
-                />
+                <Show
+                  when={props.shippedLocked}
+                  fallback={
+                    <NumberField
+                      label={t('label.shipped-pack-size')}
+                      hideLabel
+                      size="small"
+                      value={b.shippedPackSize}
+                      min={0}
+                      decimalLimit={2}
+                      onChange={v => updateBatch(b.id, 'shippedPackSize', v)}
+                    />
+                  }
+                >
+                  {declaredValue(() => b.shippedPackSize)}
+                </Show>
               );
             },
           } satisfies Column<DraftBatch, never, GroupKey>,
@@ -1184,12 +1243,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Auth status — the line's authorisation state, editable when
     // the store requires authorisation of PO-linked shipments (spec ui-surface
     // col 16 / S4 per-batch fields). The same change is available in bulk from
-    // the detail table's row-selection Approve/Reject/Pending actions. AC-E6
-    // governs when a change is allowed (blocked once Received, a no-op to the
-    // same value excepted); we submit and surface any rejection inline rather
-    // than pre-gating. A brand-new batch can't carry a status on insert (the
-    // server assigns Pending), so it stays read-only (shown as Pending) until
-    // saved.
+    // the detail table's row-selection Approve/Reject/Pending actions.
+    // OMS-FUN-ISE-001.10 governs when a change is allowed (blocked once
+    // Received, a no-op to the same value excepted); we submit and surface any
+    // rejection inline rather than pre-gating. A brand-new batch can't carry a
+    // status on insert (the server assigns Pending), so it stays read-only
+    // (shown as Pending) until saved.
     ...(props.prefs.authorisation && props.isExternal
       ? [
           {
@@ -1264,7 +1323,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         ]
       : []),
     // VVM status — gated by the manage-VVM preference AND a vaccine
-    // item (VVM applies to vaccines only, spec AC-PG1 / M1).
+    // item (VVM applies to vaccines only, spec ui-surface § line
+    // table).
     ...(props.prefs.vvm && item()?.isVaccine
       ? [
           {
@@ -1371,15 +1431,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   role="donor"
                   selected={
                     b.donorId
-                      ? ({
+                      ? {
                           id: b.donorId,
                           name: b.donorName ?? '',
-                          code: '',
-                          isSupplier: false,
-                          isDonor: true,
-                          isOnHold: false,
-                          isStore: false,
-                        } satisfies NameOption)
+                        }
                       : undefined
                   }
                   onSelect={d => {
@@ -1474,15 +1529,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             role="manufacturer"
             selected={
               b.manufacturerId
-                ? ({
+                ? {
                     id: b.manufacturerId,
                     name: b.manufacturerName ?? '',
-                    code: '',
-                    isSupplier: false,
-                    isDonor: false,
-                    isOnHold: false,
-                    isStore: false,
-                  } satisfies NameOption)
+                  }
                 : undefined
             }
             onSelect={m => {

@@ -10,6 +10,7 @@ use repository::{
 
 pub mod query;
 pub mod query_lines;
+pub mod validate;
 
 pub trait MasterListServiceTrait: Sync + Send {
     fn get_master_lists(

@@ -223,16 +223,16 @@ pub fn chain_contains_transient_drop(error: &(dyn std::error::Error + 'static)) 
         // - `UnexpectedEof`: over TLS, a TCP close without `close_notify` (central killed, a
         //   proxy cutting the connection) is rustls' "peer closed connection without sending
         //   TLS close_notify", not hyper's `IncompleteBody`.
-        if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
-            if matches!(
+        if let Some(io_error) = err.downcast_ref::<std::io::Error>()
+            && matches!(
                 io_error.kind(),
                 std::io::ErrorKind::ConnectionReset
                     | std::io::ErrorKind::ConnectionAborted
                     | std::io::ErrorKind::BrokenPipe
                     | std::io::ErrorKind::UnexpectedEof
-            ) {
-                return true;
-            }
+            )
+        {
+            return true;
         }
         let message = err.to_string().to_lowercase();
         if SIGNATURES

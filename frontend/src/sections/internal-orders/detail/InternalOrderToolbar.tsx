@@ -8,7 +8,7 @@ import {
 } from '../../../ui/elements/selectors/Select';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { FormRowItem } from '../../../ui/layout/Form/FormRowItem';
-import { NameSearch, type NameOption } from '../../../domain/name';
+import { NameSearch, type NameSeed } from '../../../domain/name';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 
@@ -34,7 +34,7 @@ export interface InternalOrderToolbarProps {
   editable: boolean;
   /** A program order locks supplier + MOS thresholds even while Draft. */
   isProgram: boolean;
-  /** The destination-customer field's store-preference gate (AC-H5). */
+  /** The destination-customer field's store-preference gate (OMS-REG-REPL-04.55). */
   showDestination: boolean;
   /** The shared header edit buffer; reads/writes theirReference. */
   edit: DebouncedEdit<HeaderEditFields>;
@@ -54,7 +54,8 @@ export interface InternalOrderToolbarProps {
 const MONTH_VALUES = [1, 2, 3, 4, 5, 6];
 
 // A pending MOS change awaiting its confirmation (each change recalculates
-// every line's suggestion, so it passes a confirm — AC-H2).
+// every line's suggestion, so it passes a confirm — OMS-REG-REPL-04.52,
+// OMS-REG-REPL-11.5).
 type PendingMos = { field: 'min' | 'max'; months: number; message: string };
 
 export const InternalOrderToolbar: Component<
@@ -62,29 +63,20 @@ export const InternalOrderToolbar: Component<
 > = props => {
   const [pendingMos, setPendingMos] = createSignal<PendingMos>();
 
-  // Supplier + MOS are locked on a program order even while Draft (AC-H3), and
-  // on any non-editable order.
+  // Supplier + MOS are locked on a program order even while Draft
+  // (OMS-REG-REPL-04.53), and on any non-editable order.
   const fieldsLocked = () => !props.editable || props.isProgram;
 
-  const supplierSeed = (): NameOption => ({
+  const supplierSeed = (): NameSeed => ({
     id: props.node.otherPartyId,
     name: props.node.otherPartyName,
-    code: '',
-    isSupplier: true,
-    isDonor: false,
-    isOnHold: false,
-    isStore: false,
   });
-  const destinationSeed = (): NameOption | undefined => {
+  const destinationSeed = (): NameSeed | undefined => {
     const dc = props.node.destinationCustomer;
     return dc
       ? {
           id: dc.id,
           name: dc.name,
-          code: '',
-          isSupplier: false,
-          isDonor: false,
-          isOnHold: false,
           isStore: true,
         }
       : undefined;
@@ -138,7 +130,8 @@ export const InternalOrderToolbar: Component<
     setPendingMos({
       field: 'min',
       months,
-      // Clearing to "Not set" has its own copy (AC-H2).
+      // Clearing to "Not set" has its own copy (OMS-REG-REPL-04.52,
+      // OMS-REG-REPL-11.5).
       message:
         months === 0
           ? t('messages.unassign-min-mos')
@@ -154,7 +147,7 @@ export const InternalOrderToolbar: Component<
       message: t('messages.changing-max-mos'),
     });
   };
-  // Every dialog close path (Cancel, scrim, Escape, AND the OK button, which
+  // Every dialog close path (Cancel, Escape, AND the OK button, which
   // fires onClose right after onConfirm). confirmMos clears `pendingMos` before
   // that onClose runs, so a still-set pending here means the user CANCELLED —
   // revert the display overrides to the stored values. After a confirm, pending
@@ -198,7 +191,7 @@ export const InternalOrderToolbar: Component<
           role="supplier"
           label={t('label.supplier-name')}
           size="small"
-          storeBacked
+          parties="internal"
           selected={supplierSeed()}
           disabled={fieldsLocked()}
           error={props.supplierError}
@@ -233,7 +226,7 @@ export const InternalOrderToolbar: Component<
             label={t('label.destination-customer')}
             size="small"
             inputTestId="customer-search-input"
-            storeBacked
+            parties="internal"
             excludeId={props.node.otherPartyId}
             selected={destinationSeed()}
             disabled={!props.editable}
@@ -265,7 +258,7 @@ export const InternalOrderToolbar: Component<
           onValueChange={onTargetChange}
         />
       </FormRowItem>
-      {/* MOS-change confirmation (recalculates suggestions — AC-H2). A closed
+      {/* MOS-change confirmation (recalculates suggestions — OMS-REG-REPL-04.52, OMS-REG-REPL-11.5). A closed
           <dialog> renders nothing, so it costs the cluster's row no slot. */}
       <ConfirmDialog
         open={pendingMos() != null}

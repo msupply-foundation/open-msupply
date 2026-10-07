@@ -1,16 +1,16 @@
 use repository::{
-    contact_trace::{ContactTrace, ContactTraceFilter, ContactTraceSort},
     Document, PaginationOption, RepositoryError,
+    contact_trace::{ContactTrace, ContactTraceFilter, ContactTraceSort},
 };
 
 use crate::{
-    service_provider::{ServiceContext, ServiceProvider},
     ListError, ListResult,
+    service_provider::{ServiceContext, ServiceProvider},
 };
 
 use self::{
     query::{contact_trace, contact_traces},
-    upsert::{upsert_contact_trace, UpsertContactTrace, UpsertContactTraceError},
+    upsert::{UpsertContactTrace, UpsertContactTraceError, upsert_contact_trace},
 };
 
 pub mod contact_trace_schema;

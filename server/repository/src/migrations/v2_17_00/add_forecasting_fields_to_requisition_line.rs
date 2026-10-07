@@ -147,7 +147,7 @@ mod tests {
         migrations::{v2_16_00::V2_16_00, v2_17_00::V2_17_00},
         test_db::*,
     };
-    use diesel::{sql_query, ExpressionMethods, QueryDsl, RunQueryDsl};
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, sql_query};
     use util::uuid::uuid;
 
     fn setup_test_dependencies(connection: &StorageConnection) {
@@ -157,16 +157,28 @@ mod tests {
                 .unwrap()
         };
 
-        run("INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name_id', 'FACILITY', true, false, 'STORE1', 'Test Store');");
+        run(
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name_id', 'FACILITY', true, false, 'STORE1', 'Test Store');",
+        );
         run("INSERT INTO name_link (id, name_id) VALUES ('store_name_link_id', 'store_name_id');");
-        run("INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name_link_id', 'STORE1', 1);");
+        run(
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name_link_id', 'STORE1', 1);",
+        );
 
-        run("INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Test Item', 'ITEM1', 1.0, 'STOCK', '');");
+        run(
+            "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Test Item', 'ITEM1', 1.0, 'STOCK', '');",
+        );
         run("INSERT INTO item_link (id, item_id) VALUES ('item_link_id', 'item_id');");
 
-        run("INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('requisition_name_id', 'FACILITY', true, false, 'REQ1', 'Test Requisition');");
-        run("INSERT INTO name_link (id, name_id) VALUES ('requisition_name_link_id', 'requisition_name_id');");
-        run("INSERT INTO requisition (id, requisition_number, name_link_id, store_id, type, status, created_datetime, sent_datetime, max_months_of_stock, min_months_of_stock, is_emergency) VALUES ('requisition_id', 1, 'requisition_name_link_id', 'store_id', 'REQUEST', 'NEW', '2023-01-01 00:00:00', NULL, 6.0, 1.0, false);");
+        run(
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('requisition_name_id', 'FACILITY', true, false, 'REQ1', 'Test Requisition');",
+        );
+        run(
+            "INSERT INTO name_link (id, name_id) VALUES ('requisition_name_link_id', 'requisition_name_id');",
+        );
+        run(
+            "INSERT INTO requisition (id, requisition_number, name_link_id, store_id, type, status, created_datetime, sent_datetime, max_months_of_stock, min_months_of_stock, is_emergency) VALUES ('requisition_id', 1, 'requisition_name_link_id', 'store_id', 'REQUEST', 'NEW', '2023-01-01 00:00:00', NULL, 6.0, 1.0, false);",
+        );
     }
 
     fn create_requisition_line_without_forecasting(connection: &StorageConnection, id: &str) {

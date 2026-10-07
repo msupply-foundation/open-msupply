@@ -1,7 +1,6 @@
 import { createMemo, For, Show, type Component } from 'solid-js';
 import { t, localisedDate } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
-import { homeCurrency } from '../../../intl/currency';
+import { formatCurrency } from '../../../intl/currency';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -47,9 +46,9 @@ export interface InternalOrderSidePanelProps {
   node: InternalOrderInfoFragment;
   editable: boolean;
   isProgram: boolean;
-  /** The linked copy carries an approval status (AC-L9 analogue). */
+  /** The linked copy carries an approval status (OMS-REG-REPL-05.6 analogue). */
   showApproval: boolean;
-  /** Indicative-pricing preference on → the Pricing grand total (AC-IP5). */
+  /** Indicative-pricing preference on → the Pricing grand total (OMS-REG-REPL-10.5). */
   showPricing: boolean;
   /** create-internal-order-from-a-requisition preference → the source row. */
   showSourceLink: boolean;
@@ -62,15 +61,6 @@ export interface InternalOrderSidePanelProps {
   onDeleted: () => void;
 }
 
-const money = (value: number): string =>
-  formatNumber(value, {
-    style: 'currency',
-    currency: homeCurrency(),
-    currencyDisplay: 'narrowSymbol',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
 export const InternalOrderSidePanel: Component<
   InternalOrderSidePanelProps
 > = props => {
@@ -80,7 +70,8 @@ export const InternalOrderSidePanel: Component<
       0
     );
 
-  // The shipment row's hover annotation — created date + by whom (AC-RD1).
+  // The shipment row's hover annotation — created date + by whom
+  // (OMS-REG-REPL-04.84).
   const shipmentTooltip = (createdDatetime: string, username?: string) =>
     `${t('messages.inbound-shipment-created-on', {
       date: localisedDate(createdDatetime),
@@ -168,7 +159,7 @@ export const InternalOrderSidePanel: Component<
         <FieldRow label={t('label.color')}>
           {/* The picker only while editable (spec S5 — colour + comment are
               the two editable fields, disabled when read-only); a read-only
-              order shows the dot, as the list column does (AC-T1). */}
+              order shows the dot, as the list column does (OMS-REG-REPL-04.58). */}
           <Show
             when={props.editable}
             fallback={<ColourTagDot colour={props.node.colour ?? null} />}
@@ -207,7 +198,7 @@ export const InternalOrderSidePanel: Component<
             {shipment => (
               <Text variant="body">
                 {/* The label is a hover popover carrying the created-on / by-
-                    whom annotation (AC-RD1) — a real popover, not a native
+                    whom annotation (OMS-REG-REPL-04.84) — a real popover, not a native
                     `title`, so it also opens on keyboard focus. The label (not
                     the entry) triggers it because the number is itself a link
                     — nesting one interactive in another is invalid. */}
@@ -275,7 +266,7 @@ export const InternalOrderSidePanel: Component<
         >
           <FieldRow label={t('heading.grand-total')}>
             <strong data-testid="grand-total-field">
-              {money(grandTotal())}
+              {formatCurrency(grandTotal())}
             </strong>
           </FieldRow>
         </SidePanelSection>

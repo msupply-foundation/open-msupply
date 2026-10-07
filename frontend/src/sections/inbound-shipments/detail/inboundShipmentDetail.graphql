@@ -261,9 +261,10 @@ query fullInboundShipment(
   }
 }
 
-# Deep-link by human number (spec AC-L5). `type` is required here and is the
-# permission scope selector (contract → permissions) — the caller probes its
-# held scopes since the number alone does not reveal the shipment's scope.
+# Deep-link by human number (spec OMS-REG-REPL-01.18). `type` is required here
+# and is the permission scope selector (contract → permissions) — the caller
+# probes its held scopes since the number alone does not reveal the shipment's
+# scope.
 query inboundShipmentByNumber(
   $storeId: String!
   $invoiceNumber: Int!
@@ -496,8 +497,8 @@ fragment BatchResult on BatchInboundShipmentResponse {
   }
 }
 
-# Bulk-add empty stock lines from a master list (spec AC-ML1; internal
-# shipments only — server-enforced).
+# Bulk-add empty stock lines from a master list (spec OMS-REG-ISH-01.10;
+# internal shipments only — server-enforced).
 mutation addToInboundShipmentFromMasterList(
   $storeId: String!
   $input: AddToShipmentFromMasterListInput!

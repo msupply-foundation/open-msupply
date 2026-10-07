@@ -5,7 +5,7 @@ import {
 } from './allocationWarnings';
 
 describe('issueWarningMessages (stock-allocation § reporting → banner descriptors)', () => {
-  it('reports each skipped category as its own whole-sentence message (AC-AL2 — .59)', () => {
+  it('reports each skipped category as its own whole-sentence message (OMS-REG-SMV-11.7 — DIS-03.59)', () => {
     expect(
       issueWarningMessages(
         [
@@ -32,7 +32,7 @@ describe('issueWarningMessages (stock-allocation § reporting → banner descrip
     ).toEqual([{ key: 'messages.stock-expired' }]);
   });
 
-  it('maps the split-pack warning to units (AC-AL12 — .58)', () => {
+  it('maps the split-pack warning to units (OMS-REG-SMV-11.32 — DIS-03.58)', () => {
     expect(
       issueWarningMessages([{ kind: 'partial-packs', nearestAboveUnits: 30 }], {
         doses: false,
@@ -67,7 +67,7 @@ describe('issueWarningMessages (stock-allocation § reporting → banner descrip
   });
 });
 
-describe('manualEntryMessages (a per-batch entry — AC-AL13, .19/.58)', () => {
+describe('manualEntryMessages (a per-batch entry — OMS-REG-SMV-11.33/.34, DIS-03.19/.58)', () => {
   it('reports the applied quantity when the entry was adjusted', () => {
     expect(manualEntryMessages(12.1, 10, 900)).toEqual([
       {

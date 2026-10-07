@@ -2,8 +2,8 @@ use std::cmp;
 
 use super::{
     api::{
-        CommonSyncRecord, DroppedBodyRetries, ParsingSyncRecordError, SyncApiError, SyncApiV5,
-        CENTRAL_BUSY_POLL_PERIOD_SECONDS, CENTRAL_BUSY_TIMEOUT_SECONDS,
+        CENTRAL_BUSY_POLL_PERIOD_SECONDS, CENTRAL_BUSY_TIMEOUT_SECONDS, CommonSyncRecord,
+        DroppedBodyRetries, ParsingSyncRecordError, SyncApiError, SyncApiV5,
     },
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
 };
@@ -131,12 +131,12 @@ mod test {
     use super::*;
     use crate::sync::{
         api::{
-            test_helpers::{set_central_server_site_id, ScriptedResponse, ScriptedServer},
             SyncApiV5,
+            test_helpers::{ScriptedResponse, ScriptedServer, set_central_server_site_id},
         },
         sync_status::logger::SyncLogger,
     };
-    use repository::{mock::MockDataInserts, test_db, StorageConnection};
+    use repository::{StorageConnection, mock::MockDataInserts, test_db};
 
     fn truncated() -> ScriptedResponse {
         ScriptedResponse::TruncatedBody {

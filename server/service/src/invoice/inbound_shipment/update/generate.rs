@@ -2,9 +2,9 @@ use chrono::Utc;
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
-    location_movement::{LocationMovementFilter, LocationMovementRepository},
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
     LocationMovementRow, Name, PurchaseOrderLineRowRepository, RepositoryError,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
@@ -14,10 +14,10 @@ use util::uuid::uuid;
 
 use crate::invoice::{
     common::{
-        calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
-        GenerateVVMStatusLogInput,
+        GenerateVVMStatusLogInput, calculate_foreign_currency_total, calculate_total_after_tax,
+        generate_vvm_status_log,
     },
-    stock_effect::{stock_effects, StockEffect},
+    stock_effect::{StockEffect, stock_effects},
 };
 use crate::service_provider::ServiceContext;
 
@@ -232,6 +232,7 @@ pub(crate) fn generate(
         Some(generate_cost_price_update_for_lines(
             connection,
             &update_invoice.id,
+            update_invoice.currency_id.clone(),
             &update_invoice.currency_rate,
             update_invoice.charges_foreign_currency,
             update_invoice.charges_local_currency,
@@ -330,6 +331,7 @@ fn generate_foreign_currency_before_tax_for_lines(
 fn generate_cost_price_update_for_lines(
     connection: &StorageConnection,
     invoice_id: &str,
+    currency_id: Option<String>,
     currency_rate: &f64,
     charges_foreign_currency: f64,
     charges_local_currency: f64,
@@ -361,7 +363,7 @@ fn generate_cost_price_update_for_lines(
     for invoice_line in &invoice_lines {
         let row = &invoice_line.invoice_line_row;
         let po_line_id = &invoice_line.invoice_line_row.purchase_order_line_id;
-        let po_price_local = if let Some(ref po_line_id) = po_line_id {
+        let po_price_local = if let Some(po_line_id) = po_line_id {
             if let Some(po_line) = po_line_repo.find_one_by_id(po_line_id)? {
                 po_line.price_per_pack_after_discount * safe_rate
             } else {
@@ -398,6 +400,14 @@ fn generate_cost_price_update_for_lines(
             (line_info.po_price_local * (1.0 + cost_adjustment_fraction) * 100.0).round() / 100.0;
 
         row.cost_price_per_pack = new_cost;
+        row.total_before_tax = new_cost * row.number_of_packs;
+        row.total_after_tax = calculate_total_after_tax(row.total_before_tax, row.tax_percentage);
+        row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+            connection,
+            row.total_before_tax,
+            currency_id.clone(),
+            &safe_rate,
+        )?;
 
         // If sell price matches old cost price, update sell price too
         // Use currency-appropriate tolerance for floating point comparison

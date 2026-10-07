@@ -91,9 +91,9 @@ mod test_delete {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{mock_rnr_form_a, mock_rnr_form_b, mock_store_a, mock_store_b, MockDataInserts},
-        test_db::setup_all,
         RequisitionRowRepository,
+        mock::{MockDataInserts, mock_rnr_form_a, mock_rnr_form_b, mock_store_a, mock_store_b},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

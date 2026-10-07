@@ -1,6 +1,6 @@
 use repository::{
-    rnr_form_row::RnRFormRow, ChangelogRow, ChangelogTableName, RnRFormDelete, Row,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, RnRFormDelete, Row, StorageConnection, SyncBufferRow,
+    rnr_form_row::RnRFormRow,
 };
 
 use crate::sync::translations::{
@@ -10,9 +10,9 @@ use crate::sync::translations::{
 };
 
 use super::{
-    utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
     ToSyncRecordTranslationType,
+    utils::{RenamedKeys, from_renamed_keys_str, to_renamed_keys_value},
 };
 
 /// FK column renamed during the name_link abstraction. Central emits both the canonical
@@ -121,9 +121,9 @@ mod tests {
     use super::*;
 
     use repository::{
-        mock::{mock_program_a, MockDataInserts},
-        test_db::setup_all,
         NameLinkRow, NameLinkRowRepository, ProgramRow, ProgramRowRepository,
+        mock::{MockDataInserts, mock_program_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

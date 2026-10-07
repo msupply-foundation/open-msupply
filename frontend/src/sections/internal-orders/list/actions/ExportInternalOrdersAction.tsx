@@ -8,8 +8,8 @@ import type { InternalOrdersVariables } from '../internalOrders.generated';
 import type { InternalOrderFilter } from '../listFilters';
 import { internalOrdersToCsv } from '../internalOrdersToCsv';
 
-// The internal-orders list Export action (spec S1 / AC-X1): the shared
-// CSV/Excel split button, fed this vertical's query. Exports EVERY order
+// The internal-orders list Export action (spec S1 / OMS-REG-REPL-04.62): the
+// shared CSV/Excel split button, fed this vertical's query. Exports EVERY order
 // matching the current filter (not just the page), newest first ([D12]).
 // Delivery, the busy state and the outcome report live in ListExportAction —
 // this file owns only the query.

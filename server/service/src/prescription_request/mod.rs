@@ -1,15 +1,15 @@
 use self::batch::{
-    batch_prescription_request, BatchPrescriptionRequest, BatchPrescriptionRequestResult,
+    BatchPrescriptionRequest, BatchPrescriptionRequestResult, batch_prescription_request,
 };
-use self::delete::{delete_prescription_request, DeletePrescriptionRequestError};
+use self::delete::{DeletePrescriptionRequestError, delete_prescription_request};
 use self::insert::{
-    insert_prescription_request, InsertPrescriptionRequest, InsertPrescriptionRequestError,
+    InsertPrescriptionRequest, InsertPrescriptionRequestError, insert_prescription_request,
 };
 use self::query::{get_prescription_request, get_prescription_requests};
 use self::update::{
-    update_prescription_request, UpdatePrescriptionRequest, UpdatePrescriptionRequestError,
+    UpdatePrescriptionRequest, UpdatePrescriptionRequestError, update_prescription_request,
 };
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
 use repository::{
     PaginationOption, PrescriptionRequest, PrescriptionRequestFilter, PrescriptionRequestSort,
     RepositoryError,

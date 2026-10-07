@@ -16,6 +16,10 @@ import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { HStack } from '@/ui/layout/Stack/HStack';
+import { Toolbar } from '@/ui/layout/Header/Toolbar';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { ScanButton } from '@/domain/barcode';
 import {
   DataTable,
   type Column,
@@ -37,10 +41,7 @@ import {
   AssetsList as AssetsListQuery,
   type AssetsListVariables,
 } from '../equipment.generated';
-import {
-  AssetCategoriesList,
-  AssetTypesList,
-} from '../catalogue.generated';
+import { AssetCategoriesList, AssetTypesList } from '../catalogue.generated';
 import {
   CCE_CLASS_ID,
   isNonCatalogue,
@@ -51,6 +52,7 @@ import {
 import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
+  buildListFilter,
   buildListVariables,
   clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
@@ -65,6 +67,7 @@ import { CreateAssetAction } from './actions/CreateAssetAction';
 import { ImportEquipmentAction } from './actions/ImportEquipmentAction';
 import { ExportEquipmentAction } from './actions/ExportEquipmentAction';
 import { DeleteAssetsAction } from './actions/DeleteAssetsAction';
+import { createAssetScan } from './createAssetScan';
 
 // S1 — the equipment list (spec/cold-chain-equipment, ui-surface S1). The
 // standard list screen: data + URL-backed filter/sort/pagination state from the
@@ -104,6 +107,13 @@ const EquipmentList: Component = () => {
   const [createOpen, setCreateOpen] = createSignal(false);
   const [importOpen, setImportOpen] = createSignal(false);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+
+  // Scanning an asset (rules § scanning an asset): a match opens it, a GS1
+  // label that matches nothing is offered as a new asset.
+  const scan = createAssetScan({
+    storeId: () => params.storeId,
+    onOpen: id => navigate(id),
+  });
 
   const tableConfig = createTableConfig({
     tableId: 'equipment',
@@ -215,7 +225,8 @@ const EquipmentList: Component = () => {
     if (!loaded || loaded.length === 0) return;
     const current = query().filter;
     const cleared = clearTypeOutsideCategory(current, loaded);
-    if (cleared !== current) setQuery({ ...query(), filter: cleared, offset: 0 });
+    if (cleared !== current)
+      setQuery({ ...query(), filter: cleared, offset: 0 });
   });
 
   const openRow = (row: AssetRow) => navigate(row.id);
@@ -233,7 +244,10 @@ const EquipmentList: Component = () => {
     ...(showStore()
       ? [
           {
-            c: { accessor: (row: AssetRow) => row.store?.storeName ?? '', id: 'store' },
+            c: {
+              accessor: (row: AssetRow) => row.store?.storeName ?? '',
+              id: 'store',
+            },
             header: () => t('label.store'),
             ...getTextCell<AssetRow>(),
             size: remToPx(10),
@@ -281,7 +295,10 @@ const EquipmentList: Component = () => {
       // functional status is a projection of the history, not a stored field
       // (OMS-REG-CCE-06.27/.28). The chip's WORD carries the meaning; the tone only
       // reinforces it (ui-standards/accessibility).
-      c: { accessor: row => row.statusLog?.status ?? '', id: 'functionalStatus' },
+      c: {
+        accessor: row => row.statusLog?.status ?? '',
+        id: 'functionalStatus',
+      },
       header: () => t('label.functional-status'),
       ...getTextCell(),
       size: remToPx(12),
@@ -349,6 +366,7 @@ const EquipmentList: Component = () => {
           <HeaderButtons>
             <ImportEquipmentAction onOpen={() => setImportOpen(true)} />
             <CreateAssetAction onOpen={() => setCreateOpen(true)} />
+            <ScanButton control={scan.control} />
             <ExportEquipmentAction
               storeId={params.storeId}
               // The store column belongs to a CENTRAL SERVER's file, whichever
@@ -356,9 +374,22 @@ const EquipmentList: Component = () => {
               // cold-chain destination of a central server, which would drop
               // the column from a file that should carry it (rules › export).
               isCentral={isCentralServer()}
+              // Exactly what the LIST is reading — the same builder, the
+              // same destination — so the file is what the screen shows
+              // (rules › export).
+              filter={buildListFilter(query(), params.storeId, destination())}
               sort={variables().sort}
             />
           </HeaderButtons>
+          <Show when={scan.notice()}>
+            {notice => (
+              <Toolbar>
+                <Alert severity={notice().severity} testId="scan-notice">
+                  {notice().text}
+                </Alert>
+              </Toolbar>
+            )}
+          </Show>
         </Header>
       }
     >
@@ -420,10 +451,23 @@ const EquipmentList: Component = () => {
           }}
         />
       </Show>
+      <ConfirmDialog
+        open={scan.draft() !== undefined}
+        title={t('heading.create-new-asset')}
+        message={t('messages.create-new-asset-confirmation')}
+        onConfirm={() => void scan.confirmCreate()}
+        onClose={scan.cancelCreate}
+      />
       <Show when={importOpen()}>
         <EquipmentImportModal
           storeId={params.storeId}
-          isCentral={showStore()}
+          // The SERVER's mode, not the destination's — `showStore()` also
+          // demands the all-stores destination, which would drop the store
+          // column from the template and the review on a central server's Cold
+          // chain screen while the export beside it still wrote one. The spec
+          // says central-only of both (rules § bulk import, ui-surface S1/S4),
+          // and the current app reads its own central flag the same way.
+          isCentral={isCentralServer()}
           onClose={() => setImportOpen(false)}
           onImported={afterWrite}
         />

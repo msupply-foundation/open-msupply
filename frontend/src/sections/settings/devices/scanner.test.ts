@@ -1,49 +1,38 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import {
-  availableScanners,
-  MOCK_SCANNER_NAME,
-  scannerConnected,
-  scanningEnabled,
-  setMockScannerEnabled,
-  triggerMockScan,
-} from './scanner';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockScannerEnabled, setMockScannerEnabled } from './scanner';
+import { refreshScanSources } from '../../../platform/barcodeScanner';
 
-afterEach(() => setMockScannerEnabled(false));
-
-// rules § Devices — barcode scanner: the mock scanner is a testing aid:
-// enabling it simulates a connected scanner with no real hardware; everything
-// derives locally from the toggle.
-describe('mock scanner simulates a connected scanner locally (rules § Devices — barcode scanner)', () => {
-  it('reports no scanning capability with the mock off (web build has no hardware plugin)', () => {
-    expect(scanningEnabled()).toBe(false);
-    expect(scannerConnected()).toBe(false);
-    expect(availableScanners()).toEqual([]);
-  });
-
-  it('reports enabled + connected + the mock device with the mock on', () => {
-    setMockScannerEnabled(true);
-    expect(scanningEnabled()).toBe(true);
-    expect(scannerConnected()).toBe(true);
-    expect(availableScanners()).toEqual([MOCK_SCANNER_NAME]);
+// appData is localStorage-backed and localStorage is absent under node. Stub
+// the GLOBAL rather than mocking appData, so the real persistence code runs.
+beforeEach(() => {
+  const store = new Map<string, string>();
+  vi.stubGlobal('localStorage', {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => store.clear(),
   });
 });
 
-// rules § Devices — barcode scanner: Test scanner records nothing server-side:
-// a triggered scan is a purely local value (this module makes no request of any
-// kind — it has no network imports; the returned result is data for the
-// screen's local list).
-describe('scans are produced locally (rules § Devices — barcode scanner)', () => {
-  it('produces a barcode result with a stable shape', () => {
-    const result = triggerMockScan();
-    expect(result.barcode).toContain('(01)');
-    expect(result.id).not.toBe('');
-    expect(result.scannedAt).toBeInstanceOf(Date);
+afterEach(async () => {
+  setMockScannerEnabled(false);
+  await refreshScanSources();
+  vi.unstubAllGlobals();
+});
+
+// rules § Devices — barcode scanner: the toggle is remembered ON THIS DEVICE
+// and never sent to the server.
+describe('the manual-input toggle is device-local', () => {
+  it('holds the choice in a signal both screens read', () => {
+    setMockScannerEnabled(true);
+    expect(mockScannerEnabled()).toBe(true);
+    setMockScannerEnabled(false);
+    expect(mockScannerEnabled()).toBe(false);
   });
 
-  it('produces distinct results so the list visibly accumulates', () => {
-    const first = triggerMockScan();
-    const second = triggerMockScan();
-    expect(second.id).not.toBe(first.id);
-    expect(second.barcode).not.toBe(first.barcode);
+  it('persists it to this device only', () => {
+    setMockScannerEnabled(true);
+    const stored = localStorage.getItem('open-mSupply-app-data');
+    expect(stored).toContain('mockBarcodeScannerEnabled');
   });
 });
