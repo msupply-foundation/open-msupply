@@ -33,6 +33,7 @@
   min-block-size: 0;
   min-inline-size: 0;
   margin-inline: calc(-1 * var(--table-bleed-inline));
+  margin-block: calc(-1 * var(--table-bleed-block));
   border: var(--table-frame-width) solid var(--color-border-value);
   border-radius: var(--table-frame-radius);
   background: var(--bg-white);
@@ -43,9 +44,11 @@
      setting them on this element (a descendant selector of its own), and a
      table nested inside a host's own layout (a panel, an accordion, a grid
      wrapper) keeps the frame. The full-screen Dialog runs its body table to
-     the sheet edges this way: bleed = its inline inset, frame and radius 0
-     (Dialog.module.css › data-fullscreen, #246). */
+     the sheet edges and to its two hairlines this way: bleed = its inline
+     inset and its block gap, frame and radius 0 (Dialog.module.css ›
+     data-fullscreen, #246). */
   --table-bleed-inline: 0px;
+  --table-bleed-block: 0px;
   --table-frame-width: 1px;
   --table-frame-radius: var(--radius-md);
 
