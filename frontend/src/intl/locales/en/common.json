@@ -3928,5 +3928,7 @@
   "label.monthly-units-calculation": "2. Monthly Units Calculation",
   "description.monthly-units-calculation": "Annual Target Doses / 12 / Doses per Unit",
   "label.units-per-month": "units per month",
-  "label.customer-target-stock": "Customer target stock"
+  "label.customer-target-stock": "Customer target stock",
+  "label.exclude-principal-wastage": "Exclude principal item wastage",
+  "description.exclude-principal-wastage": "Tick when this item is not wasted along with the principal item, e.g. syringes where the vaccine's wastage is open-vial. It is then ordered for the principal's quantity less the principal's wastage rate, rather than for every unit."
 }

@@ -10,6 +10,7 @@ export type UpsertAncillaryItemVariables = {
     ancillaryItemId: string;
     itemQuantity: number;
     ancillaryQuantity: number;
+    excludePrincipalWastage: boolean;
   };
 };
 
@@ -22,6 +23,7 @@ export type UpsertAncillaryItemResult = {
   id: string;
   itemQuantity: number;
   ancillaryQuantity: number;
+  excludePrincipalWastage: boolean;
   ancillaryItem: {
   id: string;
   code: string;
@@ -60,7 +62,7 @@ export type UpsertAncillaryItemResult = {
 };
 
 export const UpsertAncillaryItem = {
-  query: "mutation upsertAncillaryItem($storeId: String!, $input: UpsertAncillaryItemInput!) {\n  centralServer {\n    ancillaryItem {\n      upsertAncillaryItem(storeId: $storeId, input: $input) {\n        __typename\n        ... on AncillaryItemNode {\n          id\n          itemQuantity\n          ancillaryQuantity\n          ancillaryItem {\n            id\n            code\n            name\n          }\n        }\n        ... on UpsertAncillaryItemError {\n          error {\n            __typename\n            description\n            ... on DuplicateAncillaryItem {\n              __typename\n            }\n            ... on AncillaryCycleDetected {\n              __typename\n            }\n            ... on AncillaryMaxDepthExceeded {\n              max\n              actual\n            }\n            ... on DatabaseError {\n              __typename\n            }\n            ... on InternalError {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "mutation upsertAncillaryItem($storeId: String!, $input: UpsertAncillaryItemInput!) {\n  centralServer {\n    ancillaryItem {\n      upsertAncillaryItem(storeId: $storeId, input: $input) {\n        __typename\n        ... on AncillaryItemNode {\n          id\n          itemQuantity\n          ancillaryQuantity\n          excludePrincipalWastage\n          ancillaryItem {\n            id\n            code\n            name\n          }\n        }\n        ... on UpsertAncillaryItemError {\n          error {\n            __typename\n            description\n            ... on DuplicateAncillaryItem {\n              __typename\n            }\n            ... on AncillaryCycleDetected {\n              __typename\n            }\n            ... on AncillaryMaxDepthExceeded {\n              max\n              actual\n            }\n            ... on DatabaseError {\n              __typename\n            }\n            ... on InternalError {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<UpsertAncillaryItemResult, UpsertAncillaryItemVariables>;
 
 export type DeleteAncillaryItemVariables = {

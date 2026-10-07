@@ -12,6 +12,7 @@ import { t } from '../../../intl';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
   getCellDefinition,
+  getFlagCell,
   getTextCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
@@ -112,6 +113,16 @@ export const ItemAncillaryPanel: Component<{
         // text helper plus its own width (docs/CELL_TYPES.md § Width model).
         ...getTextCell(),
         size: remToPx(RATIO_WIDTH_REM),
+      },
+      {
+        // The fact IS the flag (ui-standards › boolean cell): a link that
+        // orders against the principal's un-wasted quantity only.
+        c: {
+          accessor: row => row.excludePrincipalWastage,
+          id: 'excludePrincipalWastage',
+        },
+        header: () => t('label.exclude-principal-wastage'),
+        ...getFlagCell(t('label.exclude-principal-wastage')),
       },
     ];
     if (props.isCentral) {
