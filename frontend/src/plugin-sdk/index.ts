@@ -142,7 +142,13 @@ export type {
   ProgramEnrolmentFormProps,
   EncounterFormProps,
   PatientFormProps,
+  EnrolmentFormComponent,
+  EncounterFormComponent,
+  PatientFormComponent,
 } from './types';
+// Each slot takes its form through its helper: eager and tiny, since each
+// only returns its argument, and the contribution is read at load.
+export { patientForm, encounterForm, enrolmentForm } from './forms';
 
 // ── Slot API — the patient toolbar trigger slot ─────────────────────────────
 // A button on the patient screen's header: the host draws it from the

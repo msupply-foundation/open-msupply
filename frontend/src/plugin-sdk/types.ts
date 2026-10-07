@@ -557,20 +557,6 @@ export interface FormRecordView {
   readonly documentName: string | undefined;
 }
 
-/*
- * The document a form slot's component is written against, as the slot sees
- * it. A plugin's form is typed by its own document type, which extends the
- * slot's base type and may narrow it (`code: string` where the base `Patient`
- * has `code?: string`). `Draft` is invariant in its type, since its paths and
- * the values at them are computed from it, so a form for a narrower type is
- * not assignable to a form for the base one, and the slot takes a form for
- * any document type instead. The contribution's `documentType` binds a form
- * to its type, and the host checks every draft against that type's schema
- * before a save.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above
-type FormSlotDocument = any;
-
 /**
  * The props a `programEnrolment.form` contribution receives. `T` is the
  * plugin's own document type, so the draft's paths are checked against it:
@@ -615,6 +601,34 @@ export type PatientFormProps<T extends Patient = Patient> = {
   readonly draft: Draft<T>;
   readonly record: FormRecordView;
 };
+
+/*
+ * A form slot's component, as the slot takes it: made by that slot's helper
+ * (`patientForm`, `encounterForm`, `enrolmentForm`), never a bare component.
+ * A plugin's form is typed by its own document type, which extends the
+ * slot's base type and may narrow it (`code: string` where the base `Patient`
+ * has `code?: string`). `Draft` is invariant in its type, since its paths and
+ * the values at them are computed from it, so no one component type takes
+ * every narrower form and refuses the rest. The helper does the checking
+ * instead: its type parameter is bounded by the slot's base type, so a
+ * narrower form passes and another category's form does not, and an inline
+ * component's paths are checked against the base type. The brand then keeps
+ * a form out of any slot but its own.
+ */
+declare const formSlotBrand: unique symbol;
+interface FormSlotBrand<S extends DocumentFormSlotId> {
+  readonly [formSlotBrand]: S;
+}
+
+/** A `programEnrolment.form` component, made by `enrolmentForm`. */
+export type EnrolmentFormComponent = Component<ProgramEnrolmentFormProps> &
+  FormSlotBrand<'programEnrolment.form'>;
+/** An `encounter.form` component, made by `encounterForm`. */
+export type EncounterFormComponent = Component<EncounterFormProps> &
+  FormSlotBrand<'encounter.form'>;
+/** A `patient.form` component, made by `patientForm`. */
+export type PatientFormComponent = Component<PatientFormProps> &
+  FormSlotBrand<'patient.form'>;
 
 /**
  * Where a form contribution goes: the document type it renders, as its
@@ -805,26 +819,21 @@ export interface SlotRender {
   'prescription.paymentForm': {
     Component: Component<PrescriptionPaymentFormProps>;
   };
-  // A form slot also takes `archived`: an earlier version's form, by version
-  // number, rendered read-only for documents pinned to that version and
-  // written against that version's own type.
+  // A form slot takes its component through the slot's helper, and also
+  // takes `archived`: an earlier version's form, by version number, rendered
+  // read-only for documents pinned to that version and written against that
+  // version's own type.
   'programEnrolment.form': {
-    Component: Component<ProgramEnrolmentFormProps<FormSlotDocument>>;
-    archived?: Readonly<
-      Record<number, Component<ProgramEnrolmentFormProps<FormSlotDocument>>>
-    >;
+    Component: EnrolmentFormComponent;
+    archived?: Readonly<Record<number, EnrolmentFormComponent>>;
   };
   'encounter.form': {
-    Component: Component<EncounterFormProps<FormSlotDocument>>;
-    archived?: Readonly<
-      Record<number, Component<EncounterFormProps<FormSlotDocument>>>
-    >;
+    Component: EncounterFormComponent;
+    archived?: Readonly<Record<number, EncounterFormComponent>>;
   };
   'patient.form': {
-    Component: Component<PatientFormProps<FormSlotDocument>>;
-    archived?: Readonly<
-      Record<number, Component<PatientFormProps<FormSlotDocument>>>
-    >;
+    Component: PatientFormComponent;
+    archived?: Readonly<Record<number, PatientFormComponent>>;
   };
   // The third departure from the uniform `Component` shape: the host draws
   // the button, so a trigger declares its label and handler instead.

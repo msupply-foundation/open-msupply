@@ -31,6 +31,9 @@ import {
   PLUGIN_API_VERSION,
   PlusCircleIcon,
   definePlugin,
+  encounterForm,
+  enrolmentForm,
+  patientForm,
 } from '@openmsupply/plugin-sdk';
 import { name, version } from './package.json';
 import { DemoPatientForm } from './forms/Patient/form';
@@ -54,7 +57,7 @@ export default definePlugin({
       slot: 'patient.form',
       id: 'patient-form',
       documentType: 'Patient',
-      Component: DemoPatientForm,
+      Component: patientForm(DemoPatientForm),
       versions: patientVersions,
     },
     {
@@ -71,22 +74,22 @@ export default definePlugin({
       slot: 'programEnrolment.form',
       id: 'enrolment-form',
       documentType: 'DemoProgramEnrolment',
-      Component: DemoEnrolmentForm,
+      Component: enrolmentForm(DemoEnrolmentForm),
     },
     {
       slot: 'encounter.form',
       id: 'encounter-form',
       documentType: 'DemoEncounter',
-      Component: DemoEncounterForm,
+      Component: encounterForm(DemoEncounterForm),
       versions: encounterVersions,
       migrations: encounterMigrations,
-      archived: { 1: DemoEncounterV1Form },
+      archived: { 1: encounterForm(DemoEncounterV1Form) },
     },
     {
       slot: 'encounter.form',
       id: 'covid19-encounter-form',
       documentType: 'HIVCareCovid19Encounter',
-      Component: Covid19EncounterForm,
+      Component: encounterForm(Covid19EncounterForm),
       versions: covid19EncounterVersions,
     },
   ],
