@@ -58,6 +58,8 @@
       "versions": [
         {
           "file": "v1.json",
+          "source": "v1.ts",
+          "type": "Covid19Encounter",
           "id": "9c53b7fb-6ba7-47aa-a773-0b071270feca"
         },
         {

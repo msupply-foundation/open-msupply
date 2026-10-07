@@ -590,6 +590,45 @@ describe('emitFormSchemas', () => {
     ).toContain('6c1f4a52-3e0b-4d8e-9b7a-2f5d1c8e9a40');
   });
 
+  it("never rewrites a version under a deployment's id, even the current one", async () => {
+    const dir = fixture({ 'forms/Visit/type.ts': visitType('nextVisit') });
+    const declaration = parseFormsDeclaration(
+      {
+        programKeys: ['demo'],
+        documentTypes: [
+          {
+            ...encounterEntry,
+            versions: [
+              {
+                file: 'v1.json',
+                source: 'type.ts',
+                type: 'Visit',
+                id: '6c1f4a52-3e0b-4d8e-9b7a-2f5d1c8e9a40',
+              },
+            ],
+          },
+        ],
+      },
+      'forms.json'
+    );
+    const file = join(dir, 'forms/Visit/v1.json');
+    expect((await emit(dir, declaration, false)).written).toContain(file);
+    const deployed = readFileSync(file, 'utf8');
+
+    // A stray edit to the type would otherwise re-generate the deployment's
+    // schema under its id.
+    writeFileSync(join(dir, 'forms/Visit/type.ts'), visitType('renamed'));
+    for (const check of [true, false]) {
+      const result = await emit(dir, declaration, check);
+      expect(result.problems).toEqual([
+        expect.stringMatching(
+          /v1\.json: Visit in type\.ts no longer generates this file — v1 of Visit is the deployment's own version, under its id, published and frozen.*copy type\.ts to v1\.ts unchanged \(its names are in the schema\), point this version's "source" at it, and declare v2 against type\.ts/
+        ),
+      ]);
+    }
+    expect(readFileSync(file, 'utf8')).toBe(deployed);
+  });
+
   it('check names a stale or missing versions.ts, and emit rewrites it', async () => {
     const { dir, declaration, file } = setup();
     await emit(dir, declaration, false);

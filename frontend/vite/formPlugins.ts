@@ -40,12 +40,14 @@ import {
  *   forms/<dir>/migrations.ts   the migration steps between versions
  *   forms/<dir>/fixtures/v1.json, ...  a document per earlier version
  *
- * Only the LAST declared version is ever regenerated. Every earlier one has
- * been published, so documents on some site are pinned to its id: its file
- * is frozen, and a changed type is a new version, never an edit to an old
- * one. The emit writes an earlier version only when its file does not exist
- * yet, from its archived type, which is how a history begins; after that the
- * archived type must go on generating exactly the frozen file.
+ * Only the LAST declared version is ever regenerated, and only when it is
+ * the plugin's own. Every earlier one has been published, and a version
+ * declared under a deployment's own id was published by that deployment, so
+ * documents on some site are pinned to its id: its file is frozen, and a
+ * changed type is a new version, never an edit to an old one. The emit
+ * writes a frozen version only when its file does not exist yet, from its
+ * archived type, which is how a history begins; after that the archived type
+ * must go on generating exactly the frozen file.
  */
 
 /** The declaration's path inside a plugin directory. */
@@ -702,12 +704,12 @@ export const readPluginCode = (pluginDir: string): string => {
  * Emit (or, with `check`, verify) a plugin's schema versions and each type's
  * `versions.ts`.
  *
- * Emit writes each type's current version from its type, and an earlier
- * version only where its file does not exist yet and an archived type is
- * declared for it. An earlier version whose file exists is regenerated from
- * its archived type, where one is declared, and compared: a difference is a
- * problem in both modes, since the file is frozen and the archived type is
- * meant to describe it. Check writes nothing and reports a current version
+ * Emit writes each type's current version from its type, and a frozen
+ * version (an earlier one, or one declared under a deployment's id) only
+ * where its file does not exist yet and a type is declared for it. A frozen
+ * version whose file exists is regenerated from its type, where one is
+ * declared, and compared: a difference is a problem in both modes, since the
+ * file is frozen and the type is meant to describe it. Check writes nothing and reports a current version
  * that differs from what its type generates, any missing version file, and a
  * stale or missing `versions.ts`.
  */
@@ -743,6 +745,7 @@ export const emitFormSchemas = async (
     for (const [i, version] of entry.versions.entries()) {
       const file = join(dir, version.file);
       const isCurrent = i === entry.versions.length - 1;
+      const frozen = !isCurrent || version.id !== undefined;
       const exists = existsSync(file);
       texts.push(exists ? readFileSync(file, 'utf8') : undefined);
       if (!version.source || !version.type) {
@@ -754,7 +757,7 @@ export const emitFormSchemas = async (
         }
         continue;
       }
-      if (!isCurrent && !exists && check) {
+      if (frozen && !exists && check) {
         result.problems.push(
           `${file}: missing — run \`pnpm forms:emit\` to emit it once from ` +
             `${version.source}`
@@ -765,14 +768,23 @@ export const emitFormSchemas = async (
         generate(join(dir, version.source), version.type),
         file
       );
-      if (!isCurrent && exists) {
+      if (frozen && exists) {
         if (text !== texts[i]) {
+          const published = isCurrent
+            ? "the deployment's own version, under its id"
+            : 'an earlier version';
+          const archive = isCurrent
+            ? `; to change the type, copy ${version.source} to ` +
+              `v${i + 1}.ts unchanged (its names are in the schema), point ` +
+              `this version's "source" at it, and declare v${i + 2} ` +
+              `against ${version.source}`
+            : '';
           result.problems.push(
             `${file}: ${version.type} in ${version.source} no longer ` +
               `generates this file — v${i + 1} of ${entry.documentType} is ` +
-              'an earlier version, published and frozen, so change ' +
+              `${published}, published and frozen, so change ` +
               `${version.source} back until it generates the file again ` +
-              '(never edit the file)'
+              `(never edit the file)${archive}`
           );
         } else {
           result.unchanged.push(file);

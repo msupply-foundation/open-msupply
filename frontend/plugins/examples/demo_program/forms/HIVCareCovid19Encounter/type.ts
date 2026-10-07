@@ -2,11 +2,13 @@
  * A deployed document type taken over by the plugin
  * (kdd/custom-forms/implementation-plan.md § From review, P4): a deployment's
  * HIV Care COVID-19 vaccination encounter, as its schema repository defines
- * it. Two changes from that file, neither of which changes the schema: `Encounter` comes from the SDK (its base type field for field), and
- * the manufacturer is a union of strings, because the plugin tsconfig's
- * `erasableSyntaxOnly` refuses an `enum`. `pnpm forms:emit` generates from it
- * exactly the schema the deployment holds, which is the type's v1, installed
- * under the deployment's own schema id (`forms.json`).
+ * it. Two changes from that file, neither of which changes the schema:
+ * `Encounter` comes from the SDK (its base type field for field), and the
+ * manufacturer is a union of strings, because the plugin tsconfig's
+ * `erasableSyntaxOnly` refuses an `enum`. The deployed schema is v1,
+ * installed under the deployment's own schema id (`forms.json`) and generated
+ * from the archived v1.ts, which the build re-proves on every run; this type
+ * is the plugin's v2.
  *
  * The fields sit directly under `extension`, where the deployment's documents
  * have them, not under the plugin's `extension.demo`.
