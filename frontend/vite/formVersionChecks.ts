@@ -191,9 +191,34 @@ const validate = (
 // ── Event rules ─────────────────────────────────────────────────────────────
 
 /*
+ * The keys of an event rule at each level, as the server's
+ * `DocumentRegistryConfig` types name them (repository
+ * document_registry_config.rs).
+ */
+const EVENT_RULE_KEYS = {
+  rule: ['type', 'conditions', 'config', 'event'],
+  condition: [
+    'field',
+    'isFalsy',
+    'isTruthy',
+    'isSet',
+    'equalTo',
+    'equalAny',
+    'lessThanOrEqualTo',
+    'lessThan',
+    'greaterThanOrEqualTo',
+    'greaterThan',
+  ],
+  event: ['documentType', 'documentName', 'type', 'dataField', 'data'],
+  schedule: ['datetimeField', 'scheduleFromNow', 'scheduleIn'],
+  scheduleIn: ['months', 'days', 'minutes'],
+} as const satisfies Record<string, readonly string[]>;
+
+/*
  * The paths the server reads from a document when it runs a rule
  * (DocumentRegistryConfig): a path the schema lacks is never set, so the
- * rule silently never fires.
+ * rule silently never fires. And every key of a rule, at every level, since
+ * one the server does not know is dropped without a word.
  */
 const checkEventRules = (
   host: HostModules,
@@ -208,6 +233,33 @@ const checkEventRules = (
   const fields = host.flattenSchema(current);
   rules.forEach((rule, i) => {
     if (!isRecord(rule)) return;
+    // The server ignores a key it does not know, so a misspelt one
+    // (`datetimeFeild`) silently takes the rule's default instead.
+    const unknown = (value: unknown, known: readonly string[], at: string) => {
+      if (!isRecord(value)) return;
+      for (const key of Object.keys(value)) {
+        if (known.includes(key)) continue;
+        problems.push(
+          `${file} [${i}]: ${at} has unknown key ${JSON.stringify(key)}, ` +
+            `which the server would ignore — ${at} takes ${known.join(', ')}`
+        );
+      }
+    };
+    unknown(rule, EVENT_RULE_KEYS.rule, 'the rule');
+    if (Array.isArray(rule.conditions)) {
+      rule.conditions.forEach((condition, j) =>
+        unknown(condition, EVENT_RULE_KEYS.condition, `conditions[${j}]`)
+      );
+    }
+    unknown(rule.event, EVENT_RULE_KEYS.event, 'event');
+    if (rule.type === 'Schedule' && isRecord(rule.config)) {
+      unknown(rule.config, EVENT_RULE_KEYS.schedule, 'config');
+      unknown(
+        rule.config.scheduleIn,
+        EVENT_RULE_KEYS.scheduleIn,
+        'config.scheduleIn'
+      );
+    }
     const paths: [string, unknown][] = [];
     if (Array.isArray(rule.conditions)) {
       rule.conditions.forEach((condition, j) => {

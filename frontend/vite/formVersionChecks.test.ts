@@ -169,6 +169,45 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
     ).toEqual([]);
   });
 
+  it('names a key of an event rule the server would ignore, at every level', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': schema({
+        nextVisit: { type: 'string', format: 'date-time' },
+      }),
+      'forms/Visit/events.json': [
+        {
+          type: 'Schedule',
+          conditions: [{ field: 'extension.demo.nextVisit', isset: true }],
+          event: { type: 'followUp', documenttype: 'DemoProgramEnrolment' },
+          config: {
+            datetimeFeild: 'extension.demo.nextVisit',
+            scheduleIn: { day: 30 },
+          },
+          condition: [],
+        },
+      ],
+    });
+    const declaration = declare({
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+      events: 'events.json',
+    });
+    const at = `${visit(dir, 'events.json')} [0]:`;
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      `${at} the rule has unknown key "condition", which the server would ` +
+        'ignore — the rule takes type, conditions, config, event',
+      `${at} conditions[0] has unknown key "isset", which the server would ` +
+        'ignore — conditions[0] takes field, isFalsy, isTruthy, isSet, ' +
+        'equalTo, equalAny, lessThanOrEqualTo, lessThan, ' +
+        'greaterThanOrEqualTo, greaterThan',
+      `${at} event has unknown key "documenttype", which the server would ` +
+        'ignore — event takes documentType, documentName, type, dataField, data',
+      `${at} config has unknown key "datetimeFeild", which the server would ` +
+        'ignore — config takes datetimeField, scheduleFromNow, scheduleIn',
+      `${at} config.scheduleIn has unknown key "day", which the server would ` +
+        'ignore — config.scheduleIn takes months, days, minutes',
+    ]);
+  });
+
   it('names a $ref that does not resolve, in a type with one version', async () => {
     const dir = fixture({
       'forms/Visit/v1.json': {
