@@ -277,8 +277,7 @@ impl AncillaryRatioPrincipalNode {
     pub async fn ancillary_quantity(&self) -> f64 {
         self.principal.ancillary_quantity
     }
-    /// The principal's wastage rate (%) deducted from its demand before the ratio
-    /// applies; 0 when the link orders for the wasted principal units too
+    /// The principal's wastage rate (%) deducted before the ratio applies; 0 when none
     pub async fn wastage_rate(&self) -> f64 {
         self.principal.wastage_rate
     }

@@ -210,7 +210,7 @@ mod test {
                     item_quantity: input.item_quantity,
                     ancillary_quantity: input.ancillary_quantity,
                     deleted_datetime: None,
-                    exclude_principal_wastage: input.exclude_principal_wastage,
+                    exclude_principal_wastage: input.exclude_principal_wastage.unwrap_or(false),
                 })
             })),
             ..Default::default()

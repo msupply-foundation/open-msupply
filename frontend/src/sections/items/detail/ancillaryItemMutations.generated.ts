@@ -10,7 +10,7 @@ export type UpsertAncillaryItemVariables = {
     ancillaryItemId: string;
     itemQuantity: number;
     ancillaryQuantity: number;
-    excludePrincipalWastage: boolean;
+    excludePrincipalWastage?: boolean | null;
   };
 };
 

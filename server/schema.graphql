@@ -11060,9 +11060,10 @@ input UpsertAncillaryItemInput {
 	ancillaryQuantity: Float!
 	"""
 	The ancillary isn't wasted along with the principal, so it is ordered against the
-	principal's quantity net of its wastage rate. Defaults to false: ordered in full.
+	principal's quantity net of its wastage rate. Omitted, a saved link keeps its flag
+	and a new one is ordered in full.
 	"""
-	excludePrincipalWastage: Boolean! = false
+	excludePrincipalWastage: Boolean
 }
 
 union UpsertAncillaryItemResponse = UpsertAncillaryItemError | AncillaryItemNode
