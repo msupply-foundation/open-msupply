@@ -203,6 +203,20 @@ const discoverBackendPlugins = () => {
           '(backend/package.json). Two halves of one plugin share one code.'
       );
     }
+    /*
+     * And one version. A plugin is released, listed and installed as one
+     * bundle, so it has one version line (the bundle portal keys on it - see
+     * .github/scripts/publish-bundles.mjs); two halves numbered apart would
+     * leave "which civ_plugins is this?" with two answers.
+     */
+    if (frontend && frontend.version !== manifest.version) {
+      throw new Error(
+        `${dir}: the two halves declare different versions — ` +
+          `${frontend.version} (package.json) vs ${manifest.version} ` +
+          '(backend/package.json). Two halves of one plugin share one version; ' +
+          'bump them together.'
+      );
+    }
     found.push(manifest);
   }
   return found;

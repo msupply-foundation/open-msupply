@@ -188,6 +188,7 @@ Each is its own compose project — one container running the server and its own
 | `DEPLOY_STATE_DIR` | `/opt/omsupply/deployments` | where each deployment's `machine-id` file is kept; must exist and be writable by the runner user |
 | `DEPLOY_REFERENCE_FILE` | `e2e` | the dataset a new deployment is seeded from. `reference1` does not load on current servers. |
 | `DEPLOY_SHARED_DAEMON` | unset | see above |
+| `BUNDLE_RETAIN_DAYS` | `30` | how long a branch's plugin bundles are kept on the dashboard — see [Plugin bundles](#plugin-bundles) |
 
 ### Deployment state
 
@@ -280,6 +281,20 @@ chmod 600 ~/dashboard/.env
 - **Reserved names:** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action, since a teardown is `docker compose -p <name> down -v`. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
 - **Buttons that dispatch a workflow branch** before it merges: add `DISPATCH_REF=<branch>` to `~/dashboard/.env` and rerun the workflow. The buttons dispatch on `develop` otherwise.
 
+### Plugin bundles
+
+The dashboard's **Plugin bundles** tab (`https://dashboard.<DEPLOY_DOMAIN>/#plugins`) lists ready-to-install bundles of the country plugins in `frontend/plugins/`, **one version line per plugin**: its released versions newest first, which version `develop` and each RC carry, and branch builds as pre-releases. Each has a download button; the file installs through the server's plugin upload or `remote_server_cli install-plugin-bundle`.
+
+They come from **`publish-bundles.yaml`**:
+
+- **Releasing a version:** bump the plugin's `version` (both halves, if it has a backend; `pnpm build:plugins` refuses halves that disagree) and merge it. The first build of a new version on `develop`, an RC branch or a release tag is published, and never changes after. A build whose bytes differ from the released version's is not published; the run warns, and the dashboard flags the branch. Bytes are the test, not source: a toolchain change (a vite or build-preset bump in the lockfile, a new `HOST_RUNTIME`) changes every bundle, and each plugin then needs a version bump to release, since what gets installed has changed.
+- **RC branches and release tags** release a version the same way, once the branch has this workflow. RC branches cut before it can be published by running the workflow by hand from `develop` on the RC; a plugin whose halves still disagree there (CIV before 3.0.0) is skipped with a warning and the rest publish.
+- **Pre-releases:** run the workflow by hand on a branch (Actions → *Publish plugin bundles*). Anything that differs from a release shows as a pre-release, the newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
+- **Compatibility** is recorded beside each version, not as part of it. Today it is derived from the version (the server loads a plugin whose major.minor is at most its own) and from the frontend half's host runtime; see `compatOf` in `.github/scripts/publish-bundles.mjs`.
+- **How:** the build runs `pnpm build:plugins` on a hosted runner and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **`oms-bundles` volume**: `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only. Both this workflow and `docker-deploy-services.yaml` create the volume if it is missing, so there is nothing to set up by hand.
+
+**The store is a cache, not the record.** The plugin build is reproducible (the same commit gives byte-identical bundles), so a pruned bundle, or a lost volume, is rebuilt by running the workflow on the commit it came from. Nothing on the box needs backing up for this.
+
 ## Verifying
 
 ```bash
@@ -309,4 +324,6 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **`DEPLOY_SHARED_DAEMON` skips the registry rather than adding a local one.** The image then exists only on this box's disk: a prune or a rebuilt box means recompiling rather than pulling, but costs no data, since databases are volumes. `skip_if_exists` probes the daemon instead of the registry while it is set. See `docker-named-deployment.yaml`.
 - **`e2e`, not `reference1`, as the default dataset.** `reference1` is a 2023 V5/V6 export, and `SyncBufferRow.source_site_id` is a plain `i32` with no `#[serde(default)]`, so it fails to deserialise (`missing field 'source_site_id'`) before integration. Fixing it is a server change: that `#[serde(default)]` plus a re-export. `e2e` is exercised nightly, so it cannot rot unnoticed.
 - **The dashboard's design** — the socket-holding container with no network and no listener, sign-in with the viewer's own token, and buttons that dispatch the existing workflows so there is one writer — is in the header comments of `.github/deploy/dashboard/compose.dashboard.yaml`, `snapshot.mjs` and `web.mjs`.
+- **Plugin bundles are organised by each plugin's own version, not by branch or commit**, and released by bumping the version, with no git tags yet. Compatibility with core is kept as a separate field so it can stop being tied to the version number later.
+- **Plugin bundles live on this box, not in git** (#645). Committing them back from CI would put a bot commit on `develop` and the RC branches after every plugin change, and would leave QA's branch builds with nowhere to go. A reproducible build means the box only ever holds a cache. They are served by the dashboard because it already has the sign-in and the route. See [Plugin bundles](#plugin-bundles).
 - **How deployments are deployed** — compose files from the running workflow's commit, version overrides for old releases, and why the workflows are not split into `@develop` run files — is Fork 4 of `frontend/kdd/server-image-build/draft-kdd.md`.
