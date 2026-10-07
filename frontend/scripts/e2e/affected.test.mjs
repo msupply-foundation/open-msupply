@@ -13,6 +13,7 @@ import {
   planRun,
   profileSuites,
   runGroups,
+  serversFor,
   visibleTo,
   ownersOf,
   runtimeImports,
@@ -624,5 +625,18 @@ describe('plugin profiles', () => {
       { profile: null, names: ['login-regression', 'stock-regression'] },
       { profile: 'island', names: ['island-regression'] },
     ]);
+  });
+});
+
+describe('serversFor', () => {
+  it("runs up to maxTargeted suites on one server, more on run-e2e.sh's default", () => {
+    expect(serversFor(1, config, {})).toBe('1');
+    expect(serversFor(config.maxTargeted, config, {})).toBe('1');
+    expect(serversFor(config.maxTargeted + 1, config, {})).toBeNull();
+  });
+
+  it('never overrides an E2E_SERVERS the user set', () => {
+    expect(serversFor(1, config, { E2E_SERVERS: 'auto' })).toBeNull();
+    expect(serversFor(20, config, { E2E_SERVERS: '1' })).toBeNull();
   });
 });

@@ -912,6 +912,18 @@ export const nextGreen = ({ green, reached, ran, passed }) => {
  * then each plugin profile (which needs its plugin installed, so can never
  * share the default stack).
  */
+/**
+ * How many servers run-e2e.sh should boot for the default suites, as an
+ * E2E_SERVERS value, or null to leave it to run-e2e.sh's own default (up to
+ * 3, #1171). Each extra server pays a fixed cost — its own restore, front
+ * end and data setup — that a handful of suites never earns back (measured:
+ * 2 smoke suites took 1m27s on one server, 30m33s on auto), so up to
+ * maxTargeted suites run on one; more get the multi-server split. A value
+ * the user set wins.
+ */
+export const serversFor = (count, config, env) =>
+  env.E2E_SERVERS ? null : count <= config.maxTargeted ? '1' : null;
+
 export const runGroups = (names, profiles) => {
   const profileOf = new Map(profiles.map(s => [s.name, s.profile]));
   const groups = new Map();
@@ -1376,13 +1388,25 @@ const main = async () => {
           (profile ? ` on the ${profile} plugin profile's own stack` : '') +
           `: ${names.join(' ')}\n`
       );
+      // A profile always runs on one server (run-e2e.sh forces it).
+      const servers = profile
+        ? null
+        : serversFor(names.length, config, baseEnv);
+      if (servers)
+        console.log(
+          `One server for ${names.length} suite(s) — set E2E_SERVERS=auto to split across several.\n`
+        );
       const r = spawnSync(
         'bash',
         [path.join(SCRIPT_DIR, 'run-e2e.sh'), ...filters, ...opts.pw],
         {
           cwd: FE_DIR,
           stdio: 'inherit',
-          env: profile ? { ...baseEnv, E2E_PLUGIN_PROFILE: profile } : baseEnv,
+          env: profile
+            ? { ...baseEnv, E2E_PLUGIN_PROFILE: profile }
+            : servers
+              ? { ...baseEnv, E2E_SERVERS: servers }
+              : baseEnv,
         }
       );
       outcomes.push({ names, passed: r.status === 0 });
