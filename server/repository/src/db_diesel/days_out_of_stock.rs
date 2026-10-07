@@ -69,9 +69,10 @@ impl<'a> DaysOutOfStockRepository<'a> {
             to,
         } = filter;
 
-        // Stock movements for the filtered items/stores. The filters are bound as literals
-        // here so the database can push them into the stock_movement view, rather than
-        // reading every store's full movement history and filtering afterwards.
+        // Stock movements for the filtered items/stores. The filters are passed as bind
+        // parameters on this query so the database can push them into the stock_movement
+        // view, rather than reading every store's full movement history and filtering
+        // afterwards.
         let mut movements_query = dos_movement::table
             .select((
                 dos_movement::item_id,
