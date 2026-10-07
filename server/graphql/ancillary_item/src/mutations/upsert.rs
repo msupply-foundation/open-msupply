@@ -20,6 +20,10 @@ pub struct UpsertAncillaryItemInput {
     pub item_quantity: f64,
     /// Right-hand side of the user-entered `x:y` ratio (ancillary count).
     pub ancillary_quantity: f64,
+    /// The ancillary isn't wasted along with the principal, so it is ordered against the
+    /// principal's quantity net of its wastage rate. Defaults to false: ordered in full.
+    #[graphql(default)]
+    pub exclude_principal_wastage: bool,
 }
 
 #[derive(SimpleObject)]
@@ -108,6 +112,7 @@ impl UpsertAncillaryItemInput {
             ancillary_item_id,
             item_quantity,
             ancillary_quantity,
+            exclude_principal_wastage,
         } = self;
 
         UpsertAncillaryItem {
@@ -116,6 +121,7 @@ impl UpsertAncillaryItemInput {
             ancillary_item_id,
             item_quantity,
             ancillary_quantity,
+            exclude_principal_wastage,
         }
     }
 }

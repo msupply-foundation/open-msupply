@@ -24,6 +24,13 @@ impl AncillaryItemNode {
         self.ancillary_item.ancillary_quantity
     }
 
+    /// The ancillary isn't wasted along with the principal (syringes against open-vial
+    /// wastage), so it is ordered against the principal's quantity net of the
+    /// principal's wastage rate; false orders it against the whole quantity.
+    pub async fn exclude_principal_wastage(&self) -> bool {
+        self.ancillary_item.exclude_principal_wastage
+    }
+
     pub async fn item_id(&self) -> &str {
         &self.ancillary_item.item_id
     }

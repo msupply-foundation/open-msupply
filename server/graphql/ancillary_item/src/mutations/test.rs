@@ -89,6 +89,7 @@ mod test {
                     id
                     itemQuantity
                     ancillaryQuantity
+                    excludePrincipalWastage
                     itemId
                     ancillaryItemId
                 }
@@ -112,6 +113,7 @@ mod test {
                 "ancillaryItemId": "item_b",
                 "itemQuantity": 2.0,
                 "ancillaryQuantity": 3.0,
+                "excludePrincipalWastage": true,
             }
         }));
 
@@ -208,6 +210,7 @@ mod test {
                     item_quantity: input.item_quantity,
                     ancillary_quantity: input.ancillary_quantity,
                     deleted_datetime: None,
+                    exclude_principal_wastage: input.exclude_principal_wastage,
                 })
             })),
             ..Default::default()
@@ -217,6 +220,7 @@ mod test {
                 "id": "ai1",
                 "itemQuantity": 2.0,
                 "ancillaryQuantity": 3.0,
+                "excludePrincipalWastage": true,
                 "itemId": "item_a",
                 "ancillaryItemId": "item_b",
             }

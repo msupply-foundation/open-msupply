@@ -2,6 +2,7 @@ use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_code_to_location_type;
+mod add_exclude_principal_wastage_to_ancillary_item;
 mod add_forecast_method_to_requisition_line;
 mod add_line_total_to_purchase_order_line;
 
@@ -21,6 +22,7 @@ impl Migration for V3_04_00 {
             Box::new(add_code_to_location_type::Migrate),
             Box::new(add_line_total_to_purchase_order_line::Migrate),
             Box::new(add_forecast_method_to_requisition_line::Migrate),
+            Box::new(add_exclude_principal_wastage_to_ancillary_item::Migrate),
         ]
     }
 }

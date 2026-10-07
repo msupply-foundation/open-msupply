@@ -39,6 +39,8 @@ pub struct UpsertAncillaryItem {
     pub item_quantity: f64,
     /// Right-hand side of the user-entered `x:y` ratio (ancillary count).
     pub ancillary_quantity: f64,
+    /// Order the ancillary against the principal's quantity net of its wastage rate
+    pub exclude_principal_wastage: bool,
 }
 
 pub fn upsert_ancillary_item(
@@ -91,6 +93,7 @@ fn generate(
         ancillary_item_id,
         item_quantity,
         ancillary_quantity,
+        exclude_principal_wastage,
     }: UpsertAncillaryItem,
 ) -> AncillaryItemRow {
     AncillaryItemRow {
@@ -100,6 +103,7 @@ fn generate(
         item_quantity,
         ancillary_quantity,
         deleted_datetime: None,
+        exclude_principal_wastage,
     }
 }
 

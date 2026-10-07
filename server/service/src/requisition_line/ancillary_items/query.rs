@@ -3,8 +3,10 @@ use repository::{
     StorageConnection,
     ancillary_item::{AncillaryItemFilter, AncillaryItemRepository},
 };
+use std::collections::{HashMap, HashSet};
 
 use super::compute::{AncillaryPlan, compute_ancillary_plan};
+use crate::requisition::request_requisition::wastage_rates;
 
 #[derive(Debug, PartialEq)]
 pub enum GetAncillaryPlanError {
@@ -28,6 +30,9 @@ pub fn get_ancillary_plan(
         RequisitionLineFilter::new()
             .requisition_id(EqualFilter::equal_to(requisition_id.to_string())),
     )?;
+    let store_id = lines
+        .first()
+        .map(|line| line.requisition_row.store_id.clone());
     let line_rows: Vec<_> = lines.into_iter().map(|l| l.requisition_line_row).collect();
 
     // Relevant ancillary rows: any row whose principal matches an item on the
@@ -38,5 +43,24 @@ pub fn get_ancillary_plan(
     let ancillary_rows =
         AncillaryItemRepository::new(connection).query_by_filter(AncillaryItemFilter::new())?;
 
-    Ok(compute_ancillary_plan(&line_rows, &ancillary_rows))
+    // The wastage rates, in the order's store, of the principals whose links exclude them
+    let wastage_rates = match store_id {
+        Some(store_id) => {
+            let principal_ids: Vec<String> = ancillary_rows
+                .iter()
+                .filter(|row| row.exclude_principal_wastage)
+                .map(|row| row.item_id.clone())
+                .collect::<HashSet<String>>()
+                .into_iter()
+                .collect();
+            wastage_rates(connection, &store_id, &principal_ids)?
+        }
+        None => HashMap::new(),
+    };
+
+    Ok(compute_ancillary_plan(
+        &line_rows,
+        &ancillary_rows,
+        &wastage_rates,
+    ))
 }

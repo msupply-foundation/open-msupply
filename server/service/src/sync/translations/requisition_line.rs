@@ -583,6 +583,7 @@ mod tests {
                         principal_monthly_consumption: 100.0,
                         item_quantity: 1.0,
                         ancillary_quantity: 2.0,
+                        wastage_rate: 0.0,
                     }],
                 })
                 .to_json(),

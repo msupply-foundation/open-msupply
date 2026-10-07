@@ -327,6 +327,12 @@ type AncillaryItemNode {
 	Right-hand side of the stored `x:y` ratio (ancillary count).
 	"""
 	ancillaryQuantity: Float!
+	"""
+	The ancillary isn't wasted along with the principal (syringes against open-vial
+	wastage), so it is ordered against the principal's quantity net of the
+	principal's wastage rate; false orders it against the whole quantity.
+	"""
+	excludePrincipalWastage: Boolean!
 	itemId: String!
 	ancillaryItemId: String!
 	"""
@@ -365,6 +371,15 @@ type AncillaryRatioPrincipalNode {
 	"""
 	itemQuantity: Float!
 	ancillaryQuantity: Float!
+	"""
+	The principal's wastage rate (%) deducted from its demand before the ratio
+	applies; 0 when the link orders for the wasted principal units too
+	"""
+	wastageRate: Float!
+	"""
+	The principal's monthly demand net of the deducted wastage
+	"""
+	principalUsableConsumption: Float!
 	"""
 	This principal's share of the line's monthly demand
 	"""
@@ -11043,6 +11058,11 @@ input UpsertAncillaryItemInput {
 	Right-hand side of the user-entered `x:y` ratio (ancillary count).
 	"""
 	ancillaryQuantity: Float!
+	"""
+	The ancillary isn't wasted along with the principal, so it is ordered against the
+	principal's quantity net of its wastage rate. Defaults to false: ordered in full.
+	"""
+	excludePrincipalWastage: Boolean! = false
 }
 
 union UpsertAncillaryItemResponse = UpsertAncillaryItemError | AncillaryItemNode

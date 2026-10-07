@@ -34,6 +34,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap_err();
@@ -62,6 +63,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 0.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap_err();
@@ -77,6 +79,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap_err();
@@ -92,6 +95,7 @@ mod tests {
                     ancillary_item_id: "does_not_exist".to_string(),
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap_err();
@@ -107,6 +111,7 @@ mod tests {
                     ancillary_item_id: mock_item_a().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap_err();
@@ -122,6 +127,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap();
@@ -137,6 +143,7 @@ mod tests {
                     ancillary_item_id: mock_item_a().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap_err();
@@ -152,6 +159,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 3.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap_err();
@@ -167,6 +175,7 @@ mod tests {
                     ancillary_item_id: mock_item_b().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 5.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap();
@@ -191,6 +200,7 @@ mod tests {
                     ancillary_item_id: mock_item_c().id,
                     item_quantity: 1.0,
                     ancillary_quantity: 1.0,
+                    exclude_principal_wastage: false,
                 },
             )
             .unwrap();
