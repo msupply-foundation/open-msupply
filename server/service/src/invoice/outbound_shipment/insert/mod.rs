@@ -89,13 +89,13 @@ impl From<TransactionError<InsertOutboundShipmentError>> for InsertOutboundShipm
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceRow, InvoiceRowRepository, NameRow, NameStoreJoinRow,
         mock::{
-            currency_a, mock_name_linked_to_store_join, mock_name_not_linked_to_store,
-            mock_outbound_shipment_a, mock_store_a, mock_store_linked_to_name, mock_user_account_a,
-            MockData, MockDataInserts,
+            MockData, MockDataInserts, currency_a, mock_name_linked_to_store_join,
+            mock_name_not_linked_to_store, mock_outbound_shipment_a, mock_store_a,
+            mock_store_linked_to_name, mock_user_account_a,
         },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceRowRepository, NameRow, NameStoreJoinRow,
     };
 
     use crate::{

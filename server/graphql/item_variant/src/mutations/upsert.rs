@@ -1,19 +1,19 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     generic_inputs::NullableUpdateInput,
     simple_generic_errors::{DatabaseError, InternalError, UniqueValueKey, UniqueValueViolation},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::ItemVariantNode;
 use repository::item_variant::item_variant::ItemVariant;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     item::{
         item_variant::{UpsertItemVariantError as ServiceError, UpsertItemVariantWithPackaging},
         packaging_variant::{UpsertPackagingVariant, UpsertPackagingVariantError},
     },
-    NullableUpdate,
 };
 
 #[derive(InputObject)]
@@ -151,7 +151,7 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
         ServiceError::DuplicateName => {
             return Ok(UpsertItemVariantErrorInterface::DuplicateName(
                 UniqueValueViolation(UniqueValueKey::Name),
-            ))
+            ));
         }
         // Generic errors
         ServiceError::ItemDoesNotExist

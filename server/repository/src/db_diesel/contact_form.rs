@@ -3,13 +3,13 @@ use diesel::{
     prelude::*,
 };
 
-use crate::{diesel_macros::apply_equal_filter, RepositoryError};
+use crate::{RepositoryError, diesel_macros::apply_equal_filter};
 
 use super::{
-    contact_form_row::{contact_form, ContactFormRow},
+    DBType, EqualFilter, NameRow, Pagination, StorageConnection, StoreRow,
+    contact_form_row::{ContactFormRow, contact_form},
     name_row::name,
     store_row::store,
-    DBType, EqualFilter, NameRow, Pagination, StorageConnection, StoreRow,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]

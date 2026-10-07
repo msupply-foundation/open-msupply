@@ -1,12 +1,12 @@
 use actix_web::{
+    HttpRequest, HttpResponse, Responder,
     dev::HttpServiceFactory,
     http::{
-        header::{ContentDisposition, DispositionParam, DispositionType, AUTHORIZATION},
         StatusCode,
+        header::{AUTHORIZATION, ContentDisposition, DispositionParam, DispositionType},
     },
     post,
     web::{self, Data, Json},
-    HttpRequest, HttpResponse, Responder,
 };
 use repository::syncv7::SyncError;
 use service::{
@@ -14,8 +14,8 @@ use service::{
     settings::Settings,
     sync_v7::{
         api::{
-            self, get_token::GetTokenInput, Common, APP_NAME_HEADER, APP_VERSION_HEADER,
-            HARDWARE_ID_HEADER,
+            self, APP_NAME_HEADER, APP_VERSION_HEADER, Common, HARDWARE_ID_HEADER,
+            get_token::GetTokenInput,
         },
         sync_on_central as handlers,
     },
@@ -180,11 +180,11 @@ async fn patient_search(
 #[cfg(test)]
 mod test_sync_v7_server_api {
     use super::*;
-    use actix_web::{test, web::Data, App};
+    use actix_web::{App, test, web::Data};
     use assert_json_diff::assert_json_include;
     use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
-        KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion,
+        KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion,
+        migrations::Version, mock::MockDataInserts, test_db::setup_all,
     };
     use serde_json::json;
     use service::{

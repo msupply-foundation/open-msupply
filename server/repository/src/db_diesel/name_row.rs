@@ -1,12 +1,12 @@
 use super::{
-    currency_row::currency, custom_fields_json::JsonValue, location_type_row::location_type,
-    master_list_name_join::master_list_name_join, master_list_row::master_list,
-    name_store_join::name_store_join, program_row::program, store_row::store, NameType,
-    StorageConnection,
+    NameType, StorageConnection, currency_row::currency, custom_fields_json::JsonValue,
+    location_type_row::location_type, master_list_name_join::master_list_name_join,
+    master_list_row::master_list, name_store_join::name_store_join, program_row::program,
+    store_row::store,
 };
 use crate::{
-    item_link, name_link, repository_error::RepositoryError, ChangelogRepository, Delete,
-    EqualFilter, NameLinkRow, NameLinkRowRepository, RowActionType,
+    ChangelogRepository, Delete, EqualFilter, NameLinkRow, NameLinkRowRepository, RowActionType,
+    item_link, name_link, repository_error::RepositoryError,
 };
 use crate::{ChangelogSyncType, RowOrId, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -505,10 +505,9 @@ mod test {
     use util::uuid::uuid;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        ChangelogTableName, CursorAndLimit, EqualFilter, FilterBuilder, KeyType,
-        KeyValueStoreRepository, NameFilter, NameRepository, NameRow, NameRowRepository,
-        NameRowType,
+        ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, EqualFilter,
+        FilterBuilder, KeyType, KeyValueStoreRepository, NameFilter, NameRepository, NameRow,
+        NameRowRepository, NameRowType, mock::MockDataInserts, test_db::setup_all,
     };
 
     // Covers the v2.01 legacy `name.properties` column. A NameRow upsert must

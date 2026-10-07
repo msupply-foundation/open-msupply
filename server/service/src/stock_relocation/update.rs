@@ -7,11 +7,11 @@ use repository::{
 use util::EPSILON;
 
 use crate::{
-    repack::{insert_repack_from_stock_line, InsertRepack, InsertRepackError},
-    service_provider::ServiceContext,
-    stock_line::update::{update_stock_line, UpdateStockLine, UpdateStockLineError},
-    stock_relocation::validate::{validate_line_movement, LineMovement, ValidateMovementError},
     NullableUpdate,
+    repack::{InsertRepack, InsertRepackError, insert_repack_from_stock_line},
+    service_provider::ServiceContext,
+    stock_line::update::{UpdateStockLine, UpdateStockLineError, update_stock_line},
+    stock_relocation::validate::{LineMovement, ValidateMovementError, validate_line_movement},
 };
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -177,14 +177,14 @@ impl From<RepositoryError> for UpdateStockRelocationError {
 #[cfg(test)]
 mod test {
     use repository::{
-        activity_log::{ActivityLogFilter, ActivityLogRepository},
-        location_movement::{LocationMovementFilter, LocationMovementRepository},
-        mock::{mock_location_1, MockDataInserts},
-        stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
-        test_db::setup_all,
         ActivityLogType, EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository,
         InvoiceLineType, InvoiceRepository, InvoiceStatus, InvoiceType, StockLineRow,
         StockLineRowRepository, StockRelocationStatus,
+        activity_log::{ActivityLogFilter, ActivityLogRepository},
+        location_movement::{LocationMovementFilter, LocationMovementRepository},
+        mock::{MockDataInserts, mock_location_1},
+        stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
+        test_db::setup_all,
     };
     use util::uuid::uuid;
 

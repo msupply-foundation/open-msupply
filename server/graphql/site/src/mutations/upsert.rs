@@ -1,9 +1,9 @@
 use crate::queries::SiteNode;
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{UniqueValueKey, UniqueValueViolation},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{UniqueValueKey, UniqueValueViolation},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -92,18 +92,18 @@ fn map_error(error: ServiceError) -> Result<UpsertSiteErrorInterface> {
 
     let graphql_error = match error {
         ServiceError::CodeRequired => {
-            return Ok(UpsertSiteErrorInterface::CodeRequired(CodeRequired))
+            return Ok(UpsertSiteErrorInterface::CodeRequired(CodeRequired));
         }
         ServiceError::NameRequired => {
-            return Ok(UpsertSiteErrorInterface::NameRequired(NameRequired))
+            return Ok(UpsertSiteErrorInterface::NameRequired(NameRequired));
         }
         ServiceError::PasswordRequired => {
-            return Ok(UpsertSiteErrorInterface::PasswordRequired(PasswordRequired))
+            return Ok(UpsertSiteErrorInterface::PasswordRequired(PasswordRequired));
         }
         ServiceError::DuplicateSiteName => {
             return Ok(UpsertSiteErrorInterface::DuplicateSiteName(
                 UniqueValueViolation(UniqueValueKey::Name),
-            ))
+            ));
         }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

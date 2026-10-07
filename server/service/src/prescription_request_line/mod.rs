@@ -4,10 +4,10 @@ use repository::PrescriptionRequestLineRow;
 pub mod delete;
 pub mod upsert;
 
-use self::delete::{delete_prescription_request_line, DeletePrescriptionRequestLineError};
+use self::delete::{DeletePrescriptionRequestLineError, delete_prescription_request_line};
 use self::upsert::{
-    upsert_prescription_request_line, UpsertPrescriptionRequestLine,
-    UpsertPrescriptionRequestLineError,
+    UpsertPrescriptionRequestLine, UpsertPrescriptionRequestLineError,
+    upsert_prescription_request_line,
 };
 
 // No filtered read here: lines are only ever read through their parent request,

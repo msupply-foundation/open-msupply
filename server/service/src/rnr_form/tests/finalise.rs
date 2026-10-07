@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod finalise {
     use repository::mock::{
-        mock_item_a, mock_item_b, mock_item_c, mock_rnr_form_a, mock_rnr_form_b, mock_store_a,
-        MockData,
+        MockData, mock_item_a, mock_item_b, mock_item_c, mock_rnr_form_a, mock_rnr_form_b,
+        mock_store_a,
     };
-    use repository::mock::{mock_store_b, MockDataInserts};
+    use repository::mock::{MockDataInserts, mock_store_b};
     use repository::test_db::setup_all_with_data;
     use repository::{
         EqualFilter, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,

@@ -1,10 +1,10 @@
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::contact_trace::ContactTraceNode;
-use repository::{contact_trace::ContactTraceFilter, StringFilter};
+use repository::{StringFilter, contact_trace::ContactTraceFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::contact_trace::upsert::{UpsertContactTrace, UpsertContactTraceError},

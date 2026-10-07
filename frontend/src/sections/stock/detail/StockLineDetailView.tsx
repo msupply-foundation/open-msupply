@@ -294,10 +294,11 @@ const StockLineDetailView: Component = () => {
     (prefs().manageVvmStatusForStock || prefs().sortByVvmStatusThenExpiry);
 
   /*
-   * Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7): the VVM tab's
-   * New status entry, which is the only add this screen offers. The control lives
-   * in VvmHistoryPanel and carries `shortcut={ALT_N}` for its badge; the SCREEN
-   * declares the action, as everywhere else.
+   * Alt+N — this screen's add action (spec/keyboard KB-R2,
+   * OMS-REG-KBD-01.14/.15): the VVM tab's New status entry, which is the only
+   * add this screen offers. The control lives in VvmHistoryPanel and carries
+   * `shortcut={ALT_N}` for its badge; the SCREEN declares the action, as
+   * everywhere else.
    *
    * Disabled — and so unlisted in the palette — unless the VVM tab is both offered
    * and showing, with the permission the control itself requires. KB-R2's

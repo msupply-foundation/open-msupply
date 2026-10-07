@@ -109,13 +109,14 @@ export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
         placement="top-start"
         trigger={row}
       >
-        <div class={styles.history}>
+        <div class={styles.history} data-testid="status-history">
           <p class={styles.historyTitle}>{t('label.order-history')}</p>
           <ol class={styles.timeline}>
             <Index each={props.steps}>
               {(step, index) => (
                 <li
                   class={styles.timelineStep}
+                  data-testid="status-history-step"
                   data-reached={index <= props.current ? '' : undefined}
                   data-current={index === props.current ? '' : undefined}
                 >

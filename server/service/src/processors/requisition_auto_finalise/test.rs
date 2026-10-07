@@ -1,12 +1,12 @@
 use std::vec;
 
 use repository::{
-    mock::{MockData, MockDataInserts},
     InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, ItemRow,
     KeyType, KeyValueStoreRepository, KeyValueStoreRow, NameRow, PreferenceRow,
     PreferenceRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
     StoreRow, SystemLogRowRepository, SystemLogType,
+    mock::{MockData, MockDataInserts},
 };
 use util::uuid::uuid;
 
@@ -14,7 +14,7 @@ use crate::{
     preference::PrefKey,
     processors::ProcessorType,
     service_provider::ServiceContext,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 #[tokio::test]

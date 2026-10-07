@@ -2,16 +2,16 @@
 mod test {
     use chrono::NaiveDate;
     use repository::{
+        StockLineRow, StockLineRowRepository,
         mock::{
-            mock_location_with_restricted_location_type_a, mock_name_b, mock_name_customer_a,
-            mock_stock_line_a, mock_stock_line_restricted_location_type_b, mock_store_a,
-            mock_user_account_a, MockDataInserts,
+            MockDataInserts, mock_location_with_restricted_location_type_a, mock_name_b,
+            mock_name_customer_a, mock_stock_line_a, mock_stock_line_restricted_location_type_b,
+            mock_store_a, mock_user_account_a,
         },
         test_db::setup_all,
-        StockLineRow, StockLineRowRepository,
     };
 
-    use crate::{service_provider::ServiceProvider, stock_line::UpdateStockLine, NullableUpdate};
+    use crate::{NullableUpdate, service_provider::ServiceProvider, stock_line::UpdateStockLine};
 
     type ServiceError = crate::stock_line::UpdateStockLineError;
 

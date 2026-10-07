@@ -23,6 +23,8 @@ export interface StatusBadgeProps {
   /** Optional marker icon, decorative (the label carries the meaning). */
   icon?: JSX.Element;
   class?: string;
+  /** Test hook (e2e/TESTIDS.md) — a caller naming the state it renders. */
+  testId?: string;
 }
 
 export const StatusBadge = (props: StatusBadgeProps) => (
@@ -30,6 +32,7 @@ export const StatusBadge = (props: StatusBadgeProps) => (
     class={props.class ? `${styles.badge} ${props.class}` : styles.badge}
     data-tone={props.tone ?? 'neutral'}
     data-appearance={props.appearance ?? 'solid'}
+    data-testid={props.testId}
   >
     <Show when={props.icon}>
       {icon => (

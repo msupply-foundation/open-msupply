@@ -55,7 +55,7 @@ mod tests {
         migrations::{v2_18_00::V2_18_00, v3_00_00::V3_00_00, *},
         test_db::*,
     };
-    use diesel::{connection::SimpleConnection, prelude::*, RunQueryDsl};
+    use diesel::{RunQueryDsl, connection::SimpleConnection, prelude::*};
 
     table! {
         changelog (cursor) {

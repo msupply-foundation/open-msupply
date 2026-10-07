@@ -1,10 +1,10 @@
-use super::{sync_message_row::sync_message, DBType, StorageConnection, SyncMessageRow};
+use super::{DBType, StorageConnection, SyncMessageRow, sync_message_row::sync_message};
 use diesel::prelude::*;
 
 use crate::{
+    SyncMessageRowStatus,
     diesel_macros::{apply_equal_filter, apply_sort},
     repository_error::RepositoryError,
-    SyncMessageRowStatus,
 };
 
 use crate::{EqualFilter, Pagination, Sort};

@@ -2,8 +2,8 @@ use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
 use repository::{
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     EqualFilter, IndicatorValueRow,
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
 };
 use service::service_provider::ServiceProvider;
 use std::collections::{HashMap, HashSet};

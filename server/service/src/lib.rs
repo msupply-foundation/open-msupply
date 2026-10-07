@@ -5,8 +5,8 @@ use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowR
 use repository::location::{LocationFilter, LocationRepository};
 use repository::vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository};
 use repository::{
-    EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_MAX_LIMIT,
-    DEFAULT_PAGINATION_MIN_LIMIT,
+    DEFAULT_PAGINATION_MAX_LIMIT, DEFAULT_PAGINATION_MIN_LIMIT, EqualFilter, Pagination,
+    PaginationOption,
 };
 use repository::{RepositoryError, StorageConnection};
 use serde::de::DeserializeOwned;

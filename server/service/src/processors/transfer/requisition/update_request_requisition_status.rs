@@ -1,6 +1,6 @@
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     ActivityLogType, RepositoryError, RequisitionRow, RequisitionRowRepository, StorageConnection,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 use crate::{

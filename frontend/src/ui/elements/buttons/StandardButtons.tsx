@@ -49,7 +49,7 @@ export const CancelButton = (props: StandardButtonProps) => (
     confirms="cancel"
     // Escape already cancels a dialog through the UA's close request; the
     // binding is declared here so the hint badge and the palette entry render
-    // from the same value (S2, AC-KB15).
+    // from the same value (S2, OMS-REG-KBD-01.26).
     shortcut={ESCAPE}
   >
     {t('button.cancel')}
@@ -111,7 +111,7 @@ export const DialogSaveButton = (props: StandardButtonProps) => (
 /**
  * Primary save that also advances to the next step in a multi-step flow. The
  * CONTINUING confirm: where it is present and enabled, Enter activates it in
- * preference to the plain Save (KB-E2, AC-KB23).
+ * preference to the plain Save (KB-E2, OMS-REG-KBD-02.9/.10).
  */
 export const SaveAndNextButton = (props: StandardButtonProps) => (
   <Button {...props} variant="primary" confirms="continuing">

@@ -2,14 +2,14 @@ use std::{ops::Deref, str::FromStr};
 
 use super::StorageConnection;
 use crate::{
+    KeyType, KeyValueStoreRepository,
     diesel_macros::{diesel_json_type, diesel_string_enum},
     migrations::Version,
     repository_error::RepositoryError,
-    KeyType, KeyValueStoreRepository,
 };
 use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 diesel_string_enum! {
     #[derive(Clone, Eq)]

@@ -1,5 +1,5 @@
 use repository::{
-    database_settings::DatabaseSettings, KeyType, KeyValueStoreRepository, RepositoryError,
+    KeyType, KeyValueStoreRepository, RepositoryError, database_settings::DatabaseSettings,
 };
 use reqwest::Url;
 use thiserror::Error;
@@ -183,7 +183,7 @@ impl SettingsServiceTrait for SettingsService {
 
 #[cfg(test)]
 mod test {
-    use repository::{mock::MockDataInserts, KeyType, KeyValueStoreRepository};
+    use repository::{KeyType, KeyValueStoreRepository, mock::MockDataInserts};
 
     use crate::{sync::settings::BatchSize, test_helpers::setup_all_and_service_provider};
 

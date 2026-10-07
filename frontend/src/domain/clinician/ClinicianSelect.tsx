@@ -46,7 +46,7 @@ export interface ClinicianSelectProps {
  * clinician resource (active clinicians, displayed "Last, First"). A domain
  * widget (src/domain), consumed by the prescriptions create modal and detail
  * toolbar; clearable because a prescription's clinician is optional
- * (spec/prescriptions AC-N2).
+ * (spec/prescriptions OMS-REG-DIS-03.34).
  *
  * With `allowCreate` it also owns the create side flow: the affordance, the
  * modal, and reporting the new clinician back through `onChange` as though it

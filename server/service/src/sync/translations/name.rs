@@ -12,15 +12,15 @@ use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
 
 use crate::sync::{
+    CentralServerConfig,
     central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes},
     translations::currency::CurrencyTranslation,
-    CentralServerConfig,
 };
 
 use super::{
-    utils::{merge_legacy_custom_fields, skip_name_relay_to_legacy, LegacyCustomFieldsBuilder},
     FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
     ToSyncRecordTranslationType,
+    utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields, skip_name_relay_to_legacy},
 };
 
 /// `custom_fields` keys the legacy OG→OMS name import owns (derived from
@@ -572,7 +572,7 @@ impl SyncTranslation for NameTranslation {
             _ => {
                 return Ok(PushTranslateResult::Ignored(
                     "Only push name records that belong to patients".to_string(),
-                ))
+                ));
             }
         };
 
@@ -662,10 +662,10 @@ impl SyncTranslation for NameTranslation {
 mod tests {
     use super::*;
     use repository::{
+        CurrencyRow, SyncAction, SyncRecordData,
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        CurrencyRow, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -803,7 +803,7 @@ mod tests {
 
     #[test]
     fn legacy_custom_fields_only_derived_on_central() {
-        use crate::sync::{test_util_set_is_central_server, CentralServerConfig};
+        use crate::sync::{CentralServerConfig, test_util_set_is_central_server};
         let row = legacy_row_with_customs(Some("Red"), None, Some("Blue"));
 
         // Replicates the pull translator's branch: off central the existing blob is

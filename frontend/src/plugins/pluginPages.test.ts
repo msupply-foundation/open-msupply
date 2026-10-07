@@ -24,6 +24,8 @@ const ctx = vi.hoisted(() => ({
       useConsumptionAndStockFromCustomersForInternalOrders: false,
       monthsUnderstock: undefined,
     },
+    storeCode: undefined,
+    userId: undefined,
   } as SlotContext,
 }));
 
@@ -103,6 +105,8 @@ beforeEach(() => {
       useConsumptionAndStockFromCustomersForInternalOrders: false,
       monthsUnderstock: undefined,
     },
+    storeCode: undefined,
+    userId: undefined,
   };
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });

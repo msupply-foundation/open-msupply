@@ -1,21 +1,21 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::{location::Location, ReasonOption, StocktakeLine};
+use repository::{ReasonOption, StocktakeLine, location::Location};
 use service::usize_to_u32;
 
 use graphql_core::{
+    ContextExt,
     loader::{
         CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByIdLoader,
         NameByIdLoaderInput, ProgramByIdLoader, StockLineByIdLoader, VVMStatusByIdLoader,
     },
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 
 use crate::types::VVMStatusNode;
 
-use crate::types::{program_node::ProgramNode, CampaignNode};
+use crate::types::{CampaignNode, program_node::ProgramNode};
 
 use super::{
     InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,

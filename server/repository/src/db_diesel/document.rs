@@ -1,10 +1,10 @@
 use super::StorageConnection;
 
+use crate::SourceSiteId;
 use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
     define_linked_tables,
 };
-use crate::SourceSiteId;
 use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};

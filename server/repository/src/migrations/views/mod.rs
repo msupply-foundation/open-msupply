@@ -95,7 +95,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
 
 #[cfg(test)]
 mod test {
-    use crate::test_db::{setup_test, SetupOption, SetupResult};
+    use crate::test_db::{SetupOption, SetupResult, setup_test};
 
     use super::{drop_views, rebuild_views};
 

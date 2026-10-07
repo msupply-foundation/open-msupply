@@ -4,6 +4,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
+    ContextExt,
     loader::{
         AncillaryItemsByAncillaryIdLoader, AvailableVolumeOnRequisitionLoader,
         AvailableVolumeOnRequisitionLoaderInput, InvoiceLineForRequisitionLine, ItemLoader,
@@ -11,11 +12,10 @@ use graphql_core::{
         ReasonOptionLoader, RequisitionAndItemId, RequisitionLineSupplyStatusLoader,
     },
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionType},
     ItemRow, RequisitionLine, RequisitionLineRow,
+    requisition_row::{RequisitionRow, RequisitionType},
 };
 use service::{item_stats::ItemStats, usize_to_u32};
 
@@ -429,8 +429,8 @@ mod test {
 
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
-        mock::{mock_item_a, mock_item_b, mock_item_c, mock_item_d, MockDataInserts},
         RequisitionLine,
+        mock::{MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_item_d},
     };
     use serde_json::json;
 

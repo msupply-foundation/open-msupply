@@ -126,7 +126,7 @@ pub const NOT_YET_IN_V7: &[ChangelogTableName] = &[];
 #[cfg(all(test, feature = "postgres"))]
 mod tests {
     use super::*;
-    use crate::{mock::MockDataInserts, test_db::setup_all, StorageConnection};
+    use crate::{StorageConnection, mock::MockDataInserts, test_db::setup_all};
     use diesel::prelude::*;
     use std::collections::{HashMap, HashSet, VecDeque};
     use strum::IntoEnumIterator;

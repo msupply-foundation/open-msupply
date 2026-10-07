@@ -6,15 +6,16 @@ use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
 use report_builder::{
-    print::{generate_report_inner, Config, ReportGenerateData},
     Format,
+    print::{Config, ReportGenerateData, generate_report_inner},
 };
 use repository::{
+    ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType,
+    KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow, ReportRowRepository,
+    StringFilter, SyncBufferRepository, SyncBufferRowInsert, SyncVersion,
     get_storage_connection_manager,
-    migrations::{migrate, MigrationConfig},
-    schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
-    KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
-    ReportRowRepository, StringFilter, SyncBufferRepository, SyncBufferRowInsert, SyncVersion,
+    migrations::{MigrationConfig, migrate},
+    schema_from_row, test_db,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -55,12 +56,11 @@ use reintegrate_buffer::reintegrate_buffer;
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
-    all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
-    generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
-    install_plugin_bundle, list_installed_plugins, uninstall_plugin,
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
     ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
-    TestData, UninstallPlugin,
+    TestData, UninstallPlugin, all_tests, generate_and_install_plugin_bundle,
+    generate_plugin_bundle, generate_plugin_typescript_types, generate_report_data,
+    generate_reports_recursive, install_plugin_bundle, list_installed_plugins, uninstall_plugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -851,7 +851,7 @@ async fn main() -> anyhow::Result<()> {
                 (Some(_), None) | (None, Some(_)) => {
                     return Err(anyhow!(
                         "When arguments path are specified both paths must be present"
-                    ))
+                    ));
                 }
                 (Some(arguments_path), Some(arguments_ui_path)) => {
                     Some(schema_from_row(FormSchemaRow {
@@ -987,7 +987,7 @@ async fn main() -> anyhow::Result<()> {
             Command::new("open")
                 .arg(generated_file_path.clone())
                 .status()
-                .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
+                .unwrap_or_else(|_| panic!("failed to open file {generated_file_path:?}"));
         }
         Action::ToggleReport {
             code,

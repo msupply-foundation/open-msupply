@@ -44,12 +44,13 @@ import {
 
 // The shared Customer/Supplier list screen (spec/names S1/S2). The standard
 // list screen (spec/ui-standards/list-views) minus every write affordance: no
-// selection, no page actions, no bulk footer — read-only (AC-N16). The two
-// lists are one component differing only by `role` (relationship filter +
-// custom-field scope) and how a row opens (customer → modal in place; supplier
-// → navigate), which the caller supplies via onRowClick. Data access uses the
-// fixed shape (never-throwing graphqlFetch + resource signals, .latest
-// non-suspending reads — kdd/state-management, kdd/solid-reactivity-pitfalls).
+// selection, no page actions, no bulk footer — read-only (OMS-REG-DIST-08.25,
+// OMS-REG-REPL-08.18). The two lists are one component differing only by `role`
+// (relationship filter + custom-field scope) and how a row opens (customer →
+// modal in place; supplier → navigate), which the caller supplies via
+// onRowClick. Data access uses the fixed shape (never-throwing graphqlFetch +
+// resource signals, .latest non-suspending reads — kdd/state-management,
+// kdd/solid-reactivity-pitfalls).
 
 export interface NamesListProps {
   role: Role;
@@ -66,7 +67,8 @@ export interface NamesListProps {
 export const NamesList: Component<NamesListProps> = props => {
   // storeId is guaranteed present: the section renders only inside
   // StoreGuardLayout, which requires a resolved, authorised store before
-  // routing (AC-N17 — the list cannot be shown without an active store).
+  // routing (rules § store scoping — the list cannot be shown without an
+  // active store).
   const params = useParams<{ storeId: string }>();
   const { query, setQuery } = useUrlQueryState<NamesListState>({
     ...DEFAULT_STATE,
@@ -79,7 +81,8 @@ export const NamesList: Component<NamesListProps> = props => {
   // (domain/customFields), loaded once per scope and read NON-SUSPENDING so a
   // pending fetch never tears down the open list
   // (kdd/solid-reactivity-pitfalls). Empty when the deployment configures none
-  // (AC-N18/N19: none configured ⇒ no columns and no custom-field filters).
+  // (OMS-FUN-CUS-001.5/.10, OMS-FUN-SUP-001.8/.11: none configured ⇒ no columns
+  // and no custom-field filters).
   const cfReader = customFieldDefinitions(props.scope);
   const cfDefs = () => cfReader.noSuspense();
 
@@ -149,7 +152,8 @@ export const NamesList: Component<NamesListProps> = props => {
       // spread FIRST — the documented override order (docs/CELL_TYPES.md).
       ...getCellDefinition('code', { headerPosition: 'primary' }),
       // The code carries a store indicator when the name is itself a store
-      // (AC-N8). Icon-only marker — accessible name via aria-label.
+      // (OMS-REG-DIST-08.23, OMS-REG-REPL-08.16). Icon-only marker — accessible
+      // name via aria-label.
       cell: info => {
         const row = info.row.original;
         return (
@@ -170,7 +174,8 @@ export const NamesList: Component<NamesListProps> = props => {
       ...getCellDefinition('name', { wrapLines: 2 }),
     },
     // Configured custom-field columns — not sortable; value chosen by kind
-    // (option → resolved name, number/date → localised) (AC-N18).
+    // (option → resolved name, number/date → localised) (OMS-FUN-CUS-001.5,
+    // OMS-FUN-SUP-001.8).
     ...customFieldColumns<NameRow, SortKey>(cfDefs(), row => row.customFields),
   ];
 
@@ -178,8 +183,9 @@ export const NamesList: Component<NamesListProps> = props => {
     <Page
       fillBody
       header={
-        // Breadcrumb only: no page actions (read-only vertical, AC-N16) and no
-        // toolbar — the filter bar belongs to the table (below).
+        // Breadcrumb only: no page actions (read-only vertical,
+        // OMS-REG-DIST-08.25, OMS-REG-REPL-08.18) and no toolbar — the filter
+        // bar belongs to the table (below).
         <Header>
           <Breadcrumb crumbs={props.crumbs()} />
         </Header>
@@ -192,8 +198,10 @@ export const NamesList: Component<NamesListProps> = props => {
         // Filters live in the table's OWN toolbar, never the page header
         // (ui-standards § tables → filtering, binding); the state stays
         // URL-backed here. One filter menu: name/code search + the role's
-        // configured custom-field filters (AC-N13/N19), the latter as the bar's
-        // second group so they share the one menu + chip row.
+        // configured custom-field filters (OMS-REG-DIST-08.24,
+        // OMS-REG-REPL-08.17, OMS-FUN-CUS-001.10, OMS-FUN-SUP-001.11), the
+        // latter as the bar's second group so they share the one menu + chip
+        // row.
         filters={
           <FilterBar
             filters={searchFilters()}
@@ -223,8 +231,10 @@ export const NamesList: Component<NamesListProps> = props => {
         }
         // Pagination renders in the table's own footer bar (kdd/table-state),
         // not a page footer band; there is no selection/bulk bar at all
-        // (read-only, AC-N16). Page-size options 10/20/50/100, default 20
-        // (AC-N12) — Pagination's own default omits 10, so pass the full set.
+        // (read-only, OMS-REG-DIST-08.25, OMS-REG-REPL-08.18). Page-size
+        // options 10/20/50/100, default 20 (OMS-REG-DIST-08.8,
+        // OMS-REG-REPL-08.8) — Pagination's own default omits 10, so pass the
+        // full set.
         pagination={{
           offset: query().offset,
           pageSize: query().first,

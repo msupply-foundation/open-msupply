@@ -1,17 +1,17 @@
-use super::asset_catalogue_item_row::{asset_catalogue_item, AssetCatalogueItemRow};
+use super::asset_catalogue_item_row::{AssetCatalogueItemRow, asset_catalogue_item};
 
 use crate::{
+    StorageConnection, StringFilter,
     asset_class_row::asset_class,
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
-    StorageConnection, StringFilter,
 };
 
 use crate::asset_category_row::asset_category;
 use crate::asset_type_row::asset_catalogue_type;
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
+use crate::{DBType, EqualFilter, Pagination, Sort, repository_error::RepositoryError};
 use diesel::prelude::*;
 
 #[derive(Clone, PartialEq, Debug, Default)]

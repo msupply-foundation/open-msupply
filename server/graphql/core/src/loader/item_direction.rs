@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use repository::{
-    item_direction::{ItemDirection, ItemDirectionFilter, ItemDirectionRepository},
     EqualFilter, RepositoryError,
+    item_direction::{ItemDirection, ItemDirectionFilter, ItemDirectionRepository},
 };
 
 use async_graphql::dataloader::*;

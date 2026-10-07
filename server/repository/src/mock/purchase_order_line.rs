@@ -1,6 +1,6 @@
 use crate::{
-    mock::{mock_item_a, mock_item_b, mock_purchase_order_a, mock_purchase_order_b_finalised},
     PurchaseOrderLineRow,
+    mock::{mock_item_a, mock_item_b, mock_purchase_order_a, mock_purchase_order_b_finalised},
 };
 
 pub fn mock_purchase_order_a_line_1() -> PurchaseOrderLineRow {

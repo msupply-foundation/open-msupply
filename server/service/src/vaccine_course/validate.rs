@@ -1,9 +1,9 @@
 use repository::{
+    EqualFilter, RepositoryError, StorageConnection, StringFilter,
     vaccine_course::{
         vaccine_course::{VaccineCourseFilter, VaccineCourseRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
-    EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 use super::update::VaccineCourseDoseInput;

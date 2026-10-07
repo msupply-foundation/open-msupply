@@ -384,8 +384,8 @@ tr[data-tone='error'] > .td {
 }
 
 /* Disabled rows: cursor follows TRUE interactivity — not-allowed only
-   where a click does nothing; clickable read-only rows (spec AC-L3:
-   they still open) keep the pointer. The grey fill + muted text live
+   where a click does nothing; clickable read-only rows (they
+   still open) keep the pointer. The grey fill + muted text live
    with the other row-state rules further down. */
 tr[data-row-state='disabled']:not(.rowClickable) {
   cursor: not-allowed;
@@ -789,7 +789,7 @@ tr[data-tint='error'] > .selectCell {
   background: color-mix(in srgb, var(--error-main) 8%, var(--surface-raised));
 }
 
-/* Keyboard row focus (spec/keyboard KB-N1/AC-KB37): "the focused row is
+/* Keyboard row focus (spec/keyboard KB-N1/OMS-REG-KBD-02.27/.28): "the focused row is
    indicated by a background DISTINCT FROM ROW STRIPING… the indication is a
    focus state, not a meaning".
 
@@ -1424,7 +1424,7 @@ tr[data-accent='error'] > :first-child::before {
   color: var(--text-secondary);
 }
 
-/* Card view's half of the keyboard row focus (KB-N1/AC-KB37). The two views no
+/* Card view's half of the keyboard row focus (KB-N1/OMS-REG-KBD-02.27/.28). The two views no
    longer paint the highlight alike: table view took the pointer's own hover
    wash (#397 — see the keyboard-row-focus note further up), and a card list has
    no hover stop to take, so the cue here stays a ring. It is drawn on the CARD,
@@ -2029,6 +2029,18 @@ tr[data-accent='error'] > :first-child::before {
   > :is(.td, .selectCell)
   [data-checkbox] {
   margin-block: calc((var(--cell-control-height) - var(--checkbox-size)) / 2);
+}
+
+/* The same line for content the table can't size itself — a row number, an
+   icon button — in a column that opts in (meta.controlLine, which wraps the
+   cell's content in this box). One control tall and centring what it holds, it
+   puts that content on the inputs' line however the row grows beneath them.
+   Inline, so the cell's own text-align still places it across the cell. */
+.root[data-cell-align='start'] .tableScroll[data-view='table'] .controlLine {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--cell-control-height);
+  vertical-align: top;
 }
 
 /* Anything scrolled or focused into view inside an UNPINNED cell — the cell

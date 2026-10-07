@@ -11,7 +11,7 @@ use crate::{
     number::next_number,
     preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
     processors::transfer::invoice::{
-        common::auto_verify_if_store_preference, InvoiceTransferOutput,
+        InvoiceTransferOutput, common::auto_verify_if_store_preference,
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
@@ -19,8 +19,8 @@ use crate::{
 };
 
 use super::{
-    common::{convert_invoice_line_to_single_pack, generate_inbound_lines},
     InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation,
+    common::{convert_invoice_line_to_single_pack, generate_inbound_lines},
 };
 
 const DESCRIPTION: &str = "Create inbound invoice from outbound invoice";
@@ -69,7 +69,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                     original_shipment,
                 ),
                 operation => {
-                    return Ok(InvoiceTransferOutput::WrongOperation(operation.to_owned()))
+                    return Ok(InvoiceTransferOutput::WrongOperation(operation.to_owned()));
                 }
             };
 
@@ -110,23 +110,23 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         }
 
         // 6.
-        if outbound_invoice.invoice_row.status == InvoiceStatus::Picked {
-            if let Some(picked_date) = outbound_invoice.invoice_row.picked_datetime {
-                let pref_months = PreventTransfersMonthsBeforeInitialisation {}
-                    .load(&ctx.connection, None)
-                    .map_err(|e| RepositoryError::DBError {
-                        msg: e.to_string(),
-                        extra: "".to_string(),
-                    })?;
-                if pref_months > 0
-                    && get_first_initialisation_finished_datetime(&ctx.connection)?
-                        .and_then(|initialisation_date| {
-                            initialisation_date.checked_sub_months(Months::new(pref_months as u32))
-                        })
-                        .is_some_and(|cutoff_date| picked_date < cutoff_date)
-                {
-                    return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
-                }
+        if outbound_invoice.invoice_row.status == InvoiceStatus::Picked
+            && let Some(picked_date) = outbound_invoice.invoice_row.picked_datetime
+        {
+            let pref_months = PreventTransfersMonthsBeforeInitialisation {}
+                .load(&ctx.connection, None)
+                .map_err(|e| RepositoryError::DBError {
+                    msg: e.to_string(),
+                    extra: "".to_string(),
+                })?;
+            if pref_months > 0
+                && get_first_initialisation_finished_datetime(&ctx.connection)?
+                    .and_then(|initialisation_date| {
+                        initialisation_date.checked_sub_months(Months::new(pref_months as u32))
+                    })
+                    .is_some_and(|cutoff_date| picked_date < cutoff_date)
+            {
+                return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
             }
         }
 
@@ -304,13 +304,13 @@ mod test {
     use crate::{preference::PrefKey, service_provider::ServiceProvider};
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            mock_item_a, mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData,
-            MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceFilter, InvoiceLineRow, InvoiceLineType, InvoiceRepository, PreferenceRow,
         SyncLogV5V6Row,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_name_b, mock_outbound_shipment_a,
+            mock_store_b,
+        },
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]

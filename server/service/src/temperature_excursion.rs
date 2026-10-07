@@ -83,11 +83,11 @@ fn temperature_excursions(
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         DatetimeFilter, LocationRow, NameRow, SensorRow, StoreRow, TemperatureBreachConfigRow,
         TemperatureBreachType, TemperatureExcursion, TemperatureExcursionRepository,
         TemperatureLogFilter, TemperatureLogRow,
+        mock::{MockData, MockDataInserts},
+        test_db::setup_all_with_data,
     };
 
     use chrono::{Duration, Timelike, Utc};

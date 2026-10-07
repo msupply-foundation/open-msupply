@@ -1,9 +1,8 @@
 use std::any::Any;
 
 use crate::db_diesel::{
-    item_link_row::item_link, name_row::name, period::period_row::period,
+    StorageConnection, item_link_row::item_link, name_row::name, period::period_row::period,
     program_requisition::program_row::program, store_row::store, user_row::user_account,
-    StorageConnection,
 };
 use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
@@ -293,9 +292,9 @@ impl ApprovalStatusType {
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::{mock_request_draft_requisition_all_fields, MockDataInserts},
-        test_db::setup_all,
         ApprovalStatusType, RequisitionRow, RequisitionRowRepository,
+        mock::{MockDataInserts, mock_request_draft_requisition_all_fields},
+        test_db::setup_all,
     };
     use strum::IntoEnumIterator;
 

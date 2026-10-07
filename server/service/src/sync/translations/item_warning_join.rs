@@ -65,8 +65,8 @@ impl SyncTranslation for ItemWarningJoinTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository, WarningRow,
-        WarningRowRepository,
+        ItemLinkRow, ItemLinkRowRepository, WarningRow, WarningRowRepository,
+        mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

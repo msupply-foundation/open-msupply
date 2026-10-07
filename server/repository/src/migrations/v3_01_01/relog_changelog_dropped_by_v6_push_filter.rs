@@ -1,4 +1,4 @@
-use crate::{migrations::*, RepositoryError, StorageConnection};
+use crate::{RepositoryError, StorageConnection, migrations::*};
 use diesel::{
     dsl::{max, sql},
     prelude::*,
@@ -223,7 +223,7 @@ fn is_standalone_central(connection: &StorageConnection) -> anyhow::Result<bool>
 // Copied verbatim from `db_diesel/changelog/partition.rs` and `migrations/helpers.rs` as
 // they were in 3.01.1, rather than calling the shared helpers. The shared
 // `ensure_partition_lookahead` keeps changing, and later versions expect tables that
-// later migrations create (e.g. the 3.03.1 DEFAULT partition), which do not exist yet
+// later migrations create (e.g. the 3.03.0 DEFAULT partition), which do not exist yet
 // when this runs on a database upgrading from below 3.01.1. Do not edit.
 
 /// Ensure enough future cursor-range partitions exist on `changelog` to keep
@@ -244,7 +244,9 @@ pub fn ensure_partition_lookahead(
     if max_upper == 0 {
         // `changelog` isn't partitioned (pre-migration) or has no partitions —
         // should not reach this state. Should we panic or throw error instead? For now, just log and return.
-        log::warn!("changelog partition lookahead: changelog table is not partitioned or has no partitions");
+        log::warn!(
+            "changelog partition lookahead: changelog table is not partitioned or has no partitions"
+        );
         return Ok(0);
     }
 
