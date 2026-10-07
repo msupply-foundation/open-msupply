@@ -17,6 +17,7 @@ import {
   forecastMethodLabel,
   populationSteps,
   principalItemLabel,
+  principalWastageDeduction,
   targetStockCaption,
   unavailableReasonMessage,
   type AncillaryRatioPrincipal,
@@ -145,14 +146,27 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
     props.formatQuantity(units, FRACTION_DIGITS);
   const monthlyDemand = () => quantity(props.line.forecastMonthlyConsumption);
 
-  // A principal's own monthly demand, in its own units: the entry mode's packs
-  // and doses are the ancillary item's, not the principal's.
-  const principalDemand = (principal: AncillaryRatioPrincipal) => {
-    const figure = roundTo(
-      principal.principalMonthlyConsumption,
-      FRACTION_DIGITS
-    );
+  // A quantity of the principal, in its own units: the entry mode's packs and
+  // doses are the ancillary item's, not the principal's.
+  const principalUnits = (
+    units: number,
+    principal: AncillaryRatioPrincipal
+  ) => {
+    const figure = roundTo(units, FRACTION_DIGITS);
     return `${formatNumber(figure)} ${measureWord('units', principal.item?.unitName ?? null, figure)}`;
+  };
+  // The principal's monthly demand — less its wastage where the link excludes
+  // that, so the step to the contribution reads true — × the ratio.
+  const principalCaption = (principal: AncillaryRatioPrincipal) => {
+    const demand = principalUnits(
+      principal.principalMonthlyConsumption,
+      principal
+    );
+    const deduction = principalWastageDeduction(principal);
+    const usable = deduction
+      ? `${demand} ${deduction} = ${principalUnits(principal.principalUsableConsumption, principal)}`
+      : demand;
+    return `${usable} × ${ancillaryRatio(principal)}`;
   };
 
   return (
@@ -255,7 +269,7 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
                 <FigureRow
                   label={principalItemLabel(principal)}
                   value={quantity(principal.monthlyConsumption)}
-                  caption={`${principalDemand(principal)} × ${ancillaryRatio(principal)}`}
+                  caption={principalCaption(principal)}
                   testId="forecast-principal"
                 />
               )}

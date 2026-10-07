@@ -100,6 +100,20 @@ export const populationSteps = (
   },
 ];
 
+/**
+ * The deduction a principal's wastage makes before the ratio applies — "− 50%
+ * wastage" — or undefined when the link orders for the wasted units too
+ * (spec/internal-orders › the Ancillary ratio method).
+ */
+export const principalWastageDeduction = (
+  principal: AncillaryRatioPrincipal
+): string | undefined =>
+  principal.wastageRate > 0
+    ? t('description.less-principal-wastage', {
+        rate: formatNumber(principal.wastageRate),
+      })
+    : undefined;
+
 /** A principal's configured ratio, as ancillary : principal. */
 export const ancillaryRatio = (principal: AncillaryRatioPrincipal): string =>
   `${formatNumber(principal.ancillaryQuantity)} : ${formatNumber(principal.itemQuantity)}`;
