@@ -3,10 +3,10 @@ use chrono::NaiveDate;
 use graphql_types::types::InsuranceProviderNode;
 use repository::InsuranceProviderRow;
 use service::{
+    ListResult,
     requisition_line::chart::{
         ConsumptionHistory, ItemChart, StockEvolution, SuggestedQuantityCalculation,
     },
-    ListResult,
 };
 use util::last_day_of_the_month;
 
@@ -139,7 +139,7 @@ impl ItemChartNode {
                     consumption_history: None,
                     stock_evolution: None,
                     calculation_date: None,
-                }
+                };
             }
         };
 

@@ -1,4 +1,5 @@
 use crate::{
+    NullableUpdate,
     activity_log::activity_log_entry,
     backend_plugin::{
         plugin_provider::{PluginError, PluginInstance},
@@ -6,7 +7,6 @@ use crate::{
     },
     requisition::query::get_requisition,
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 use chrono::NaiveDate;
 use repository::{

@@ -1,10 +1,10 @@
 use super::NameNode;
-use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
+use async_graphql::{Context, ErrorExtensions, Object, Result, dataloader::DataLoader};
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     loader::{NameByIdLoader, NameByIdLoaderInput, StoreLogoLoader},
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use repository::{NameRow, Store, StoreRow};
 
@@ -86,8 +86,8 @@ mod test {
     use async_graphql::{EmptyMutation, Object};
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
-        mock::{MockData, MockDataInserts},
         NameRow, PreferenceRow, Store, StoreRow, StoreRowRepository,
+        mock::{MockData, MockDataInserts},
     };
     use serde_json::json;
 

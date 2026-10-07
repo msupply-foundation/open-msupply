@@ -4,10 +4,10 @@ use repository::{
 
 use crate::{
     activity_log::activity_log_entry,
-    invoice::{get_invoice, UpdateSupplierReturn},
+    invoice::{UpdateSupplierReturn, get_invoice},
     invoice_line::{
-        stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
-        update_return_reason_id::{update_return_reason_id, UpdateLineReturnReasonError},
+        stock_out_line::{InsertStockOutLineError, insert_stock_out_line},
+        update_return_reason_id::{UpdateLineReturnReasonError, update_return_reason_id},
     },
     service_provider::ServiceContext,
 };
@@ -17,8 +17,8 @@ use generate::generate;
 use validate::validate;
 
 use super::{
-    update::{update_supplier_return, UpdateSupplierReturnError, UpdateSupplierReturnStatus},
     SupplierReturnLineInput,
+    update::{UpdateSupplierReturnError, UpdateSupplierReturnStatus, update_supplier_return},
 };
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -149,14 +149,14 @@ impl From<TransactionError<OutError>> for OutError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_inbound_shipment_a, mock_inbound_shipment_c, mock_name_a,
-            mock_outbound_shipment_e, mock_stock_line_b, mock_store_a, mock_store_b,
-            mock_supplier_return_a, mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, NameRow, NameStoreJoinRow,
         ReasonOptionRow, ReasonOptionType,
+        mock::{
+            MockData, MockDataInserts, mock_inbound_shipment_a, mock_inbound_shipment_c,
+            mock_name_a, mock_outbound_shipment_e, mock_stock_line_b, mock_store_a, mock_store_b,
+            mock_supplier_return_a, mock_user_account_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{

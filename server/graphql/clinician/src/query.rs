@@ -1,9 +1,9 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
+    ContextExt,
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::ClinicianNode;
 use repository::{
@@ -11,8 +11,8 @@ use repository::{
     StringFilter,
 };
 use service::{
-    auth::{Resource, ResourceAccessRequest},
     ListResult,
+    auth::{Resource, ResourceAccessRequest},
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

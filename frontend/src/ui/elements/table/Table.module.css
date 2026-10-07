@@ -55,6 +55,19 @@
   white-space: nowrap;
 }
 
+/* Comfortable band (Table `density`): DataTable's own default — 52px rows and
+   12/16px cell padding, the header's inline padding following the body's so
+   the columns stay aligned. For rows of form controls, whose inputs would
+   otherwise sit tight against the row dividers. */
+.table[data-density='comfortable'] th {
+  padding-inline: var(--space-4);
+}
+
+.table[data-density='comfortable'] td {
+  block-size: 3.25rem; /* 52px, as DataTable's comfortable band */
+  padding: var(--space-3) var(--space-4);
+}
+
 .table tbody tr:last-child td {
   border-block-end: none;
 }
@@ -101,6 +114,22 @@
   block-size: 1rem;
   accent-color: var(--primary-main);
   cursor: pointer;
+}
+
+/* --- Control column -------------------------------------------------------
+   One form control per row, one compact input wide. The column holds that
+   width and the field fills it (its default full width), so the input lines up
+   under the column heading at both edges — nothing reaches into the field's
+   box. The width includes the cell's inline padding (border-box), whichever
+   band applies. Spare table width goes to the columns without a width. */
+.table th[data-control],
+.table td[data-control] {
+  inline-size: calc(var(--input-max-compact) + 2 * var(--space-3));
+}
+
+.table[data-density='comfortable'] th[data-control],
+.table[data-density='comfortable'] td[data-control] {
+  inline-size: calc(var(--input-max-compact) + 2 * var(--space-4));
 }
 
 /* --- Row-opening button --------------------------------------------------

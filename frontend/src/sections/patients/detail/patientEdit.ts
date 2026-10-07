@@ -57,10 +57,11 @@ export const seedDraft = (node: PatientNode): PatientDraft => ({
   dateOfDeath: node.dateOfDeath,
 });
 
-// The plain-path built-in form's required-field rules (AC-C3): code + first
-// name + last name, each a plain required error (deferred to Save). One list so
-// the create wizard and the edit tab validate identically; feed to
-// createFormValidation and read back per field / as the summary.
+// The plain-path built-in form's required-field rules
+// (OMS-REG-DIS-01.5/.6/.30): code + first name + last name, each a plain
+// required error (deferred to Save). One list so the create wizard and the edit
+// tab validate identically; feed to createFormValidation and read back per
+// field / as the summary.
 //
 // `codeTaken` is the answer to "does another patient hold this code?"
 // (spec/patients § generating a code, DIS-02 `.57`) — the caller owns the check
@@ -92,7 +93,8 @@ export const patientFieldErrors = (
 ];
 
 // The plain-path built-in form requires code + first name + last name before it
-// will submit (AC-C3); the server itself requires only id + code.
+// will submit (OMS-REG-DIS-01.5/.6/.30); the server itself requires only id +
+// code.
 export const isDraftValid = (draft: PatientDraft): boolean =>
   draft.code.trim() !== '' &&
   draft.firstName.trim() !== '' &&
@@ -109,9 +111,10 @@ const orNull = (value: string): string | null => (value.trim() ? value : null);
 
 // The FULL plain-path field set for a create OR an edit. updatePatient is a
 // destructive full replace — EVERY field is sent so an omitted one clears and
-// `name` recomputes from the parts (AC-E2). The same shape serves insert
-// (InsertPatientInput === UpdatePatientInput minus none). date of death rides
-// the deceased flag: only sent when deceased (the form hides it otherwise).
+// `name` recomputes from the parts (OMS-REG-DIS-02.41). The same shape serves
+// insert (InsertPatientInput === UpdatePatientInput minus none). date of death
+// rides the deceased flag: only sent when deceased (the form hides it
+// otherwise).
 const toFullInput = (id: string, draft: PatientDraft) => ({
   id,
   code: draft.code,

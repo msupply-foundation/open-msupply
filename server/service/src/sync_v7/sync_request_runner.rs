@@ -16,8 +16,8 @@
 // next tick re-picks them as the in-flight group and retries.
 
 use repository::{
-    syncv7::SyncError, ChangelogCondition, FilterBuilder, SyncRequestCondition,
-    SyncRequestRepository, SyncRequestRow,
+    ChangelogCondition, FilterBuilder, SyncRequestCondition, SyncRequestRepository, SyncRequestRow,
+    syncv7::SyncError,
 };
 
 use crate::{

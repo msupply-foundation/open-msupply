@@ -4,8 +4,8 @@ use std::{
 };
 
 use auth::AUTH_QUERY;
-use reqwest::{multipart, RequestBuilder, Url};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use reqwest::{RequestBuilder, Url, multipart};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 #[derive(Debug)]
 pub struct Api {
@@ -76,8 +76,8 @@ pub enum ApiError {
     #[error("Error reading file, {1}")]
     ReadingFile(#[source] io::Error, PathBuf),
 }
-use service::UploadedFile;
 use ApiError as Error;
+use service::UploadedFile;
 
 impl Api {
     pub async fn new_with_token(

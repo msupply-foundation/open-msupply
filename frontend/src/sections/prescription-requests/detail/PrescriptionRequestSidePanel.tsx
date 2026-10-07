@@ -39,8 +39,8 @@ import type { DebouncedEdit } from '../../../domain/debouncedEdit';
 // panel): Additional info (Entered by / Created / Comment) · Patient details
 // (live from the patient record — rules § patient data is live) · Related
 // documents (the generated dispensation, linked, once Ready to dispense —
-// AC-R4) — then the pinned record actions: Delete (while New, AC-D1/D2) and
-// Copy to clipboard.
+// OMS-REG-DIS-09.12–.14) — then the pinned record actions: Delete (while New,
+// OMS-REG-DIS-10.1–.4) and Copy to clipboard.
 
 export interface PrescriptionRequestEditFields {
   comment: string;
@@ -151,7 +151,7 @@ export const PrescriptionRequestSidePanel: Component<
         </FieldRow>
       </SidePanelSection>
 
-      {/* The generated dispensation — reachable from the request (AC-R4). Past
+      {/* The generated dispensation — reachable from the request (OMS-REG-DIS-09.12–.14). Past
           New a hand-over COULD have produced one, but the section waits until
           one is actually there: the dispensation is patient-distributed while
           the request is store-owned, so a site can legitimately hold the
@@ -185,7 +185,7 @@ export const PrescriptionRequestSidePanel: Component<
 
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
-          {/* Delete — hidden once no longer deletable (New only, AC-D2). */}
+          {/* Delete — hidden once no longer deletable (New only, OMS-REG-DIS-10.3/.4). */}
           <Show when={isEditable(status())}>
             <Button
               variant="danger"

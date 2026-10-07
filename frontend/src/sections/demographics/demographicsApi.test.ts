@@ -24,7 +24,7 @@ import {
 // a running central server; see BUILD_REPORT.md § C2.
 //
 // Behaviour anchors: spec/demographics/cases/OMS-REG-MNG-03 (behaviour ids,
-// cited as `.n`; the former AC-* ids map to them in acceptance.md).
+// cited as `.n`).
 
 type Call = {
   operation: string;

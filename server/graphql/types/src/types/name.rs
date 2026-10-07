@@ -1,12 +1,12 @@
-use super::{patient::GenderTypeNode, StoreNode};
+use super::{StoreNode, patient::GenderTypeNode};
 use crate::types::CurrencyNode;
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
+    ContextExt,
     loader::{AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use repository::{Name, NameRow, NameRowType, NameType, Store, StoreRow};
 use serde::Serialize;

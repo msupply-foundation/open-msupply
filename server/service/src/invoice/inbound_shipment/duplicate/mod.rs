@@ -8,7 +8,7 @@ use repository::{
 mod generate;
 mod validate;
 
-use generate::{generate, GenerateResult};
+use generate::{GenerateResult, generate};
 use validate::validate;
 
 #[derive(Debug, PartialEq)]
@@ -81,14 +81,14 @@ impl From<RepositoryError> for DuplicateInboundShipmentError {
 mod test {
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            common::FullMockMasterList, mock_inbound_shipment_a,
-            mock_inbound_shipment_a_invoice_lines, mock_outbound_shipment_e, mock_store_a,
-            mock_store_b, mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType,
         MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameLinkRow, NameRow,
+        mock::{
+            MockData, MockDataInserts, common::FullMockMasterList, mock_inbound_shipment_a,
+            mock_inbound_shipment_a_invoice_lines, mock_outbound_shipment_e, mock_store_a,
+            mock_store_b, mock_user_account_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::service_provider::ServiceProvider;

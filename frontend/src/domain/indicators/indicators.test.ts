@@ -6,8 +6,8 @@ import {
 } from './indicators';
 
 // Logic-level coverage of the shared Indicators tab (spec/internal-orders S3 §
-// Indicators tab): the line merge (AC-I4) and the write-back that keeps a saved
-// cell showing what was saved (#957).
+// Indicators tab): the line merge (OMS-REG-REPL-12.4) and the write-back that
+// keeps a saved cell showing what was saved (#957).
 
 type Columns = IndicatorNode['lineAndColumns'][number]['columns'];
 

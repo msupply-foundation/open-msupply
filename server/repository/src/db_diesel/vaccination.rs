@@ -1,13 +1,13 @@
 use super::{
+    DBType, ItemRow, RepositoryError, StorageConnection, VaccinationRow,
     clinician_link_row::clinician_link, clinician_row::clinician, item_row::item, name_row::name,
-    vaccination_row::vaccination, DBType, ItemRow, RepositoryError, StorageConnection,
-    VaccinationRow,
+    vaccination_row::vaccination,
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort},
-    vaccine_course::vaccine_course_dose_row::{vaccine_course_dose, VaccineCourseDoseRow},
     ClinicianLinkRow, ClinicianRow, EqualFilter, NameRow, Pagination, Sort,
+    diesel_macros::{apply_equal_filter, apply_sort},
+    vaccine_course::vaccine_course_dose_row::{VaccineCourseDoseRow, vaccine_course_dose},
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};

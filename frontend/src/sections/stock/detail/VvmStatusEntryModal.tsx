@@ -11,7 +11,7 @@ import { XCircleIcon, CheckIcon } from '../../../ui/icons';
 import { runInsertVvmStatusLog, runUpdateVvmStatusLog } from '../stockApi';
 import type { StockLineVvmLogFragment } from './stockLine.generated';
 
-// The VVM status entry modal (spec/stock S6, FL7). Create: choose an active VVM
+// The VVM status entry modal (spec/stock S6). Create: choose an active VVM
 // status + optional comment — appends a history entry AND stamps the line's
 // current status. Edit: the status is FIXED (spec/stock rules › VVM two write
 // paths); only the comment is editable. Follows the shared dialog lifecycle.

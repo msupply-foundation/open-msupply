@@ -36,6 +36,13 @@
   block-size: 1.75rem;
 }
 
+/* Squares with a default-size field, so a stepper's buttons and its number
+   read as one control. */
+.iconButton[data-size='large'] {
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+}
+
 .iconButton[data-size='medium'] svg {
   inline-size: 1.125rem;
   block-size: 1.125rem;
@@ -44,6 +51,11 @@
 .iconButton[data-size='small'] svg {
   inline-size: 1rem;
   block-size: 1rem;
+}
+
+.iconButton[data-size='large'] svg {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
 }
 
 /* Bordered variant — an outlined box (input-edge border + white fill). */

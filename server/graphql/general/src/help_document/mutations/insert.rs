@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, InternalError, RecordAlreadyExist},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{DatabaseError, InternalError, RecordAlreadyExist},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::HelpDocumentNode;
 use repository::HelpDocument;
@@ -89,7 +89,7 @@ fn map_error(error: ServiceError) -> Result<InsertHelpDocumentErrorInterface> {
         ServiceError::HelpDocumentAlreadyExists => {
             return Ok(InsertHelpDocumentErrorInterface::HelpDocumentAlreadyExists(
                 RecordAlreadyExist,
-            ))
+            ));
         }
         ServiceError::EmptyTitle => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),

@@ -1,11 +1,11 @@
-use super::{sync_file_reference_row::sync_file_reference, StorageConnection};
+use super::{StorageConnection, sync_file_reference_row::sync_file_reference};
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     SyncFileReferenceRow,
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
 };
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
+use crate::{DBType, EqualFilter, Pagination, Sort, repository_error::RepositoryError};
 use diesel::prelude::*;
 
 #[derive(PartialEq, Debug, Clone)]

@@ -22,12 +22,13 @@ import styles from './CommandPaletteView.module.css';
  *
  * Built on <Dialog>, which is doing a lot of work here for free:
  *   - showModal() puts the palette in the TOP LAYER, so it layers over an
- *     already-open dialog (KB-P1/AC-KB8) — verified on Chromium 138, along with
- *     the dialog beneath going inert and focus restoring back into it on close;
+ *     already-open dialog (KB-P1/OMS-REG-KBD-01.16/.17) — verified on Chromium
+ * 138, along with     the dialog beneath going inert and focus restoring back
+ * into it on close;
  *   - Escape reaches the UA's close request and never the window-level tail, so
  *     KB-X1 ("the palette dismisses, without navigating") is structural;
  *   - `initialFocus` seeds the search field after showModal() has parked focus
- *     on the panel (KB-P2/AC-KB9).
+ *     on the panel (KB-P2/OMS-REG-KBD-01.18).
  *
  * NO cmdk-style library: this is a text field, a filtered list and an arrow-key
  * highlight, none of which carries an a11y contract worth buying
@@ -89,7 +90,7 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
     const term = query().trim().toLowerCase();
     if (!term) return props.entries;
     // KB-P3: by name AND by each action's search keywords, so a term matching
-    // only a keyword still lists the row (AC-KB10).
+    // only a keyword still lists the row (OMS-REG-KBD-01.19/.20).
     return props.entries.filter(
       entry =>
         entry.name.toLowerCase().includes(term) ||
@@ -156,7 +157,8 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
     }
     if (event.key !== 'Enter') return;
     // Consume it either way: with no match there is nothing to run, and Enter
-    // must not fall through to whatever is beneath the palette (AC-KB13).
+    // must not fall through to whatever is beneath the palette
+    // (OMS-REG-KBD-01.23/.24).
     event.preventDefault();
     run(highlighted());
   };
@@ -174,6 +176,9 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
       // their own surface, so the palette floats as those two boxes over the
       // dimmed page rather than sitting on a card.
       chromeless
+      // A light popup with nothing to lose, so a click beside it closes it —
+      // the one dialog that keeps scrim-click dismiss (Dialog › scrimDismiss).
+      scrimDismiss
       widthRem={34}
       testId="command-palette"
     >

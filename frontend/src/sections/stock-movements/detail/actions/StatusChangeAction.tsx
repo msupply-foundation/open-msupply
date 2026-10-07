@@ -114,7 +114,9 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               })}
             >
               <Match when={phase() === 'error'}>
-                <Alert severity="error">{errorMessage()}</Alert>
+                <Alert severity="error" testId="stock-movement-status-error">
+                  {errorMessage()}
+                </Alert>
               </Match>
             </Switch>
           }
@@ -156,6 +158,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           open
           onClose={() => setNoLinesBlocked(false)}
           icon={<InfoIcon />}
+          testId="stock-movement-no-lines-notice"
           title={t('heading.cannot-do-that')}
           description={t('messages.no-lines')}
           actions={

@@ -51,10 +51,10 @@ impl Distribution {
                     transport,
                     ..
                 } = table.sync_style();
-                if let Some(sync_style_options) = &sync_style_options {
-                    if sync_style_options != &transport {
-                        return false;
-                    }
+                if let Some(sync_style_options) = &sync_style_options
+                    && sync_style_options != &transport
+                {
+                    return false;
                 }
                 distributions
                     .iter()

@@ -1,6 +1,6 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use graphql_core::{loader::LocationByIdLoader, ContextExt};
+use graphql_core::{ContextExt, loader::LocationByIdLoader};
 use repository::item_store_join::ItemStoreJoinRow;
 
 use super::LocationNode;

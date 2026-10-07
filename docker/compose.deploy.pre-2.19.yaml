@@ -1,0 +1,37 @@
+# Override for images published before 2.19. Layered on compose.deploy.yaml
+# AND compose.deploy.pre-3.04.yaml - these images predate both changes:
+#
+#   docker compose -f docker/compose.deploy.yaml \
+#     -f docker/compose.deploy.pre-3.04.yaml \
+#     -f docker/compose.deploy.pre-2.19.yaml up
+#
+# docker-deploy.yaml adds it when the image's version calls for it; see
+# `deployContract` in .github/scripts/deploy-plan.js for the version table.
+#
+# WHAT IS DIFFERENT ABOUT THESE IMAGES
+#
+# Two things, both moved in 2.19 by the hardware-id work (#11182):
+#
+#   - entry-postgres.sh keeps the cluster at /var/lib/postgresql/data, not
+#     under /database. compose.deploy.yaml only persists /database, so without
+#     the volume below every redeploy silently starts from an empty database.
+#   - The image has dbus's build-time machine-id at /var/lib/dbus/machine-id,
+#     and machine_uid reads that BEFORE /etc/machine-id. Later images symlink
+#     the two; these do not, so every deployment of one would report the same
+#     baked-in hardware id, and two of them could not pair to one central
+#     server.
+
+services:
+  server:
+    volumes:
+      # Compose merges volumes from an override by mount target, so these are
+      # added to the four in compose.deploy.yaml rather than replacing them.
+      - omsupply-pgdata:/var/lib/postgresql/data
+      # The same per-deployment file compose.deploy.yaml mounts at
+      # /etc/machine-id, so both places machine_uid looks agree.
+      - ${OMS_MACHINE_ID_FILE:?OMS_MACHINE_ID_FILE must be set - see compose.deploy.yaml}:/var/lib/dbus/machine-id:ro
+
+volumes:
+  # Namespaced by project like the others, so `down -v` removes it and
+  # snapshot.mjs counts it towards the deployment's disk use.
+  omsupply-pgdata:

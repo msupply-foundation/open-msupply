@@ -16,7 +16,9 @@ impl MigrationFragment for Migrate {
                 "#
             );
             if result.is_err() {
-                log::warn!("Failed to drop unique constraint on description column of temperature_breach_config table, please check name of constraint");
+                log::warn!(
+                    "Failed to drop unique constraint on description column of temperature_breach_config table, please check name of constraint"
+                );
             }
         } else {
             sql!(

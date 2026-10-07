@@ -3,12 +3,32 @@ import { render } from 'solid-js/web';
 import './index.css';
 import { App } from './App';
 import { registerAndroidBackButton } from './platform/backButton';
+import { refreshScanSources } from './platform/barcodeScanner';
+import { watchHidDevices } from './platform/barcodeSources/webHid';
+import { watchDesktopHid } from './platform/barcodeSources/desktopHid';
 
 const root = document.getElementById('root')!;
 
 // Android shell only (no-op elsewhere): hardware back navigates history
 // instead of closing the app.
 void registerAndroidBackButton();
+
+// Resolve which barcode input this device has, once, before any screen asks
+// (spec/barcode-scanning/rules.md § Triggering a scan: an affordance is
+// hidden entirely where no scanner exists, so the answer has to be in hand by
+// first render). Asynchronous because a plugin has to be questioned; screens
+// read the cached answer synchronously. Re-asked by the Devices settings
+// toggles and on entering the Test scanner page.
+void refreshScanSources();
+
+// ...and re-ask whenever a USB device is plugged in or pulled out, so a
+// scanner unplugged mid-session stops reading as connected. Wired here, at
+// the composition root, because the transport that knows about HID events
+// must not reach back into the wrapper that owns source resolution.
+watchHidDevices(() => void refreshScanSources());
+// The desktop app's native scanner says the same through its shell: paired,
+// forgotten, or pulled out while armed.
+watchDesktopHid(() => void refreshScanSources());
 
 /*
  * Dev-only component showcase: opening the app at #/showcase(/<section>)

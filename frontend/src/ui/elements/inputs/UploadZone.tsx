@@ -10,12 +10,23 @@ import styles from './UploadZone.module.css';
 
 export interface UploadZoneProps extends PartitionOptions {
   /** Called with the files that pass `accept`/`maxSize`. */
-  onFiles: (files: File[]) => void;
+  onFiles?: (files: File[]) => void;
   /**
    * Called with files rejected by `accept`/`maxSize`, so they can be surfaced.
    */
   onRejected?: (rejections: FileRejection<File>[]) => void;
-  /** Allow selecting/dropping more than one file at once (default true). */
+  /**
+   * Called ONCE per pick or drop with both halves, accepted and rejected — for
+   * a host whose decision depends on the whole batch (a single-file dialog
+   * that chooses nothing from a drop of several, which `onFiles` and
+   * `onRejected` alone can't tell). Called beside them, not instead.
+   */
+  onPick?: (accepted: File[], rejected: FileRejection<File>[]) => void;
+  /**
+   * Whether the picker selects several files (default true). A DROP can
+   * always carry several — the attribute only shapes the picker — so a
+   * single-file host decides what a multi-file drop means, through `onPick`.
+   */
   multiple?: boolean;
   disabled?: boolean;
   class?: string;
@@ -24,6 +35,8 @@ export interface UploadZoneProps extends PartitionOptions {
    * hook, e2e/TESTIDS.md) — the setInputFiles target in e2e.
    */
   inputTestId?: string;
+  /** `data-testid` for the drop target itself — where e2e dispatches a drop. */
+  testId?: string;
 }
 
 /*
@@ -33,18 +46,20 @@ export interface UploadZoneProps extends PartitionOptions {
  * (clicking it opens the picker); the real keyboard-operable control is the
  * Browse <button>, whose click bubbles to the same handler. Files are filtered
  * through the pure `partitionFiles` (extension/MIME/size), accepted ones handed
- * to `onFiles`, rejected ones to `onRejected`.
+ * to `onFiles`, rejected ones to `onRejected`, and both together to `onPick`.
  */
 export const UploadZone = (props: UploadZoneProps): JSX.Element => {
   const [local] = splitProps(props, [
     'onFiles',
     'onRejected',
+    'onPick',
     'multiple',
     'disabled',
     'accept',
     'maxSize',
     'class',
     'inputTestId',
+    'testId',
   ]);
 
   const [dragging, setDragging] = createSignal(false);
@@ -59,8 +74,9 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
       accept: local.accept,
       maxSize: local.maxSize,
     });
+    local.onPick?.(accepted, rejected);
     if (rejected.length > 0) local.onRejected?.(rejected);
-    if (accepted.length > 0) local.onFiles(accepted);
+    if (accepted.length > 0) local.onFiles?.(accepted);
   };
 
   const openPicker = () => {
@@ -78,6 +94,7 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
   return (
     <div
       class={local.class ? `${styles.zone} ${local.class}` : styles.zone}
+      data-testid={local.testId}
       data-dragging={dragging() ? '' : undefined}
       data-disabled={local.disabled ? '' : undefined}
       onClick={openPicker}

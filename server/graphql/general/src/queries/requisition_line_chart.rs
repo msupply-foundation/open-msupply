@@ -1,9 +1,9 @@
 use crate::types::ItemChartNode;
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::RecordNotFound,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -100,7 +100,7 @@ fn map_error(error: ServiceError) -> Result<ChartErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionLineDoesNotExist => {
-            return Ok(ChartErrorInterface::RecordNotFound(RecordNotFound))
+            return Ok(ChartErrorInterface::RecordNotFound(RecordNotFound));
         }
         // Standard Graphql Errors
         ServiceError::RequisitionLineDoesNotBelongToCurrentStore => Forbidden(formatted_error),
@@ -157,7 +157,7 @@ mod graphql {
 
     use graphql_core::assert_standard_graphql_error;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
 
     use service::requisition_line::chart::{

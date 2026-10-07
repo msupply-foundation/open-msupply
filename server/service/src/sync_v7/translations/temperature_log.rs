@@ -1,6 +1,6 @@
 use repository::{
-    syncv7::SyncRecordSerializeError, ChangeLogInsertRow, StorageConnection, TemperatureLogRow,
-    TemperatureLogRowRepository, Upsert,
+    ChangeLogInsertRow, StorageConnection, TemperatureLogRow, TemperatureLogRowRepository, Upsert,
+    syncv7::SyncRecordSerializeError,
 };
 
 use crate::sync_v7::serde::DeserializeResult;
@@ -33,13 +33,12 @@ pub(crate) fn translate_temperature_log(
 
     if let Some(existing_id) = TemperatureLogRowRepository::new(connection)
         .find_id_by_sensor_and_datetime(&row.sensor_id, row.datetime)?
+        && existing_id != row.id
     {
-        if existing_id != row.id {
-            // A different device already recorded this reading — collapse onto
-            // the existing row by upserting under its id.
-            row.id = existing_id.clone();
-            changelog_insert.record_id = existing_id;
-        }
+        // A different device already recorded this reading — collapse onto
+        // the existing row by upserting under its id.
+        row.id = existing_id.clone();
+        changelog_insert.record_id = existing_id;
     }
 
     Ok(vec![(Box::new(row) as Box<dyn Upsert>, changelog_insert)])
@@ -50,9 +49,9 @@ mod test {
     use super::*;
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_sensor_1, MockDataInserts},
-        test_db::setup_all,
         ChangelogTableName, RowActionType, TemperatureBreachRow, TemperatureBreachRowRepository,
+        mock::{MockDataInserts, mock_sensor_1},
+        test_db::setup_all,
     };
 
     const SENSOR_ID: &str = "sensor_1";

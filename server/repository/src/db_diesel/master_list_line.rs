@@ -1,13 +1,13 @@
 use crate::{
+    EqualFilter, ItemRow, ItemType, MasterListRepository, Pagination, Sort,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     item_store_join::item_store_join,
     repository_error::RepositoryError,
-    EqualFilter, ItemRow, ItemType, MasterListRepository, Pagination, Sort,
 };
 
 use super::{
-    item_row::item, master_list_line_row::master_list_line, master_list_row::master_list, DBType,
-    MasterListFilter, MasterListLineRow, StorageConnection,
+    DBType, MasterListFilter, MasterListLineRow, StorageConnection, item_row::item,
+    master_list_line_row::master_list_line, master_list_row::master_list,
 };
 
 use diesel::{helper_types::IntoBoxed, prelude::*};
@@ -204,13 +204,13 @@ impl MasterListLineFilter {
 #[cfg(test)]
 mod tests {
     use crate::{
+        EqualFilter, ItemStoreJoinRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+        MasterListLineFilter, MasterListLineRepository, Pagination,
         mock::{
-            mock_item_a, mock_item_b, mock_master_list_master_list_line_filter_test, mock_store_a,
-            MockDataInserts,
+            MockDataInserts, mock_item_a, mock_item_b,
+            mock_master_list_master_list_line_filter_test, mock_store_a,
         },
-        test_db, EqualFilter, ItemStoreJoinRow, ItemStoreJoinRowRepository,
-        ItemStoreJoinRowRepositoryTrait, MasterListLineFilter, MasterListLineRepository,
-        Pagination,
+        test_db,
     };
 
     // An item is barred only where its store join says so: `true` returns the

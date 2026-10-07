@@ -3,8 +3,8 @@ use graphql_core::generic_filters::{EqualFilterInput, EqualFilterStringInput};
 use graphql_core::simple_generic_errors::{NodeError, NodeErrorInterface};
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::{
-    generic_filters::StringFilterInput, pagination::PaginationInput,
-    standard_graphql_error::list_error_to_gql_err, ContextExt,
+    ContextExt, generic_filters::StringFilterInput, pagination::PaginationInput,
+    standard_graphql_error::list_error_to_gql_err,
 };
 use graphql_types::types::StoreNode;
 use repository::{EqualFilter, StoreFilter, StoreSort, StoreSortField};
@@ -165,8 +165,8 @@ mod graphql {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::{mock_name_a, mock_store_a};
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
     use repository::{EqualFilter, RepositoryError, Store, StoreFilter};
+    use repository::{StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
     use service::service_provider::GeneralServiceTrait;
     use service::service_provider::{ServiceContext, ServiceProvider};

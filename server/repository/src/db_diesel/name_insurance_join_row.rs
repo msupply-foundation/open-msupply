@@ -1,11 +1,11 @@
-use super::{name_row::name, ChangelogRepository, RowActionType, StorageConnection};
+use super::{ChangelogRepository, RowActionType, StorageConnection, name_row::name};
 
 use crate::ChangelogSyncType;
 use crate::SourceSiteId;
 use crate::{
+    Sort, Upsert,
     diesel_macros::{apply_sort, define_linked_tables},
     repository_error::RepositoryError,
-    Sort, Upsert,
 };
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;

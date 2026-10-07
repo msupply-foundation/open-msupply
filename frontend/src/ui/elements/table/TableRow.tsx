@@ -30,6 +30,11 @@ const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
 const cellMono = <T,>(cell: TanCell<T, unknown>): boolean =>
   cell.column.columnDef.meta?.mono ?? false;
 
+// The control-line convention: a short cell in a start-aligned editor table
+// centres on the row's inputs (meta.controlLine; the CSS is DataTable's).
+const cellControlLine = <T,>(cell: TanCell<T, unknown>): boolean =>
+  cell.column.columnDef.meta?.controlLine ?? false;
+
 // A column's real growth cap in px (delivered as max-width), or undefined.
 // TanStack merges its default maxSize (Number.MAX_SAFE_INTEGER) into every
 // columnDef, so only a value below that sentinel counts as an actual cap.
@@ -73,6 +78,8 @@ export function TableRow<T>(props: {
   /** Render the row's selection checkbox disabled (see DataTable's prop). */
   selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
+  /** Whether `onRowClick` applies to this row (see DataTable's prop). */
+  rowClickable?: (row: T) => boolean;
   /**
    * Keyboard row navigation (spec/keyboard KB-N1). When set, this row can take
    * the keyboard highlight: the arrows move real DOM focus onto it and `Enter`
@@ -97,9 +104,10 @@ export function TableRow<T>(props: {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for this row: 'info' for records awaiting an action
-   * (placeholder / uncounted lines), 'warning' for a record needing attention
-   * before it can proceed (a held batch), 'error' for a line the server
-   * refused (a failed bulk operation). Stamps data-tone, styled in CSS.
+   * (placeholder / uncounted lines take rowTint + rowAccent 'unfinished'
+   * instead — see DataTable's prop doc), 'warning' for a record needing
+   * attention before it can proceed (a held batch), 'error' for a line the
+   * server refused (a failed bulk operation). Stamps data-tone, styled in CSS.
    * Semantic names only, mapped to palette tokens by the CSS — never colours.
    */
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
@@ -144,13 +152,16 @@ export function TableRow<T>(props: {
    */
   cellVisible: (cell: TanCell<T, unknown>) => boolean;
 }): JSX.Element {
+  const clickable = () =>
+    props.onRowClick !== undefined &&
+    (props.rowClickable?.(props.row.original) ?? true);
   return (
     <tr
       data-testid="table-row"
       // The row's key (TanStack getRowId = the table's rowKey), so a caller can
       // address a specific row in the DOM (e.g. scroll it into view).
       data-row-key={props.row.id}
-      class={props.onRowClick ? styles.rowClickable : undefined}
+      class={clickable() ? styles.rowClickable : undefined}
       data-row-state={
         !props.row.getIsGrouped()
           ? props.rowState?.(props.row.original)
@@ -182,9 +193,10 @@ export function TableRow<T>(props: {
        * row set changes. KB-T1 forbids a positive tab index anywhere.
        */
       tabindex={props.rowFocus ? -1 : undefined}
-      // The row-focus indication (AC-KB37): "a background distinct from row
-      // striping"; styled in CSS, and a focus state rather than a meaning, so
-      // colour independence is satisfied by it also being the focused element.
+      // The row-focus indication (OMS-REG-KBD-02.27/.28): "a background
+      // distinct from row striping"; styled in CSS, and a focus state rather
+      // than a meaning, so colour independence is satisfied by it also being
+      // the focused element.
       data-row-focused={props.rowFocus?.focused() ? '' : undefined}
       // Keep the highlight in step when focus arrives some way other than the
       // arrows — but only when it arrived from the KEYBOARD (see
@@ -193,7 +205,9 @@ export function TableRow<T>(props: {
       onFocus={event => {
         if (isKeyboardFocus(event)) props.rowFocus?.onFocus();
       }}
-      onClick={() => props.onRowClick?.(props.row.original)}
+      onClick={() => {
+        if (clickable()) props.onRowClick?.(props.row.original);
+      }}
     >
       <Show when={props.enableSelection}>
         <td
@@ -255,7 +269,20 @@ export function TableRow<T>(props: {
                   leaf value (a column's custom `cell` overrides). renderTemplate, not
                   TanStack's flexRender: the latter untracks the call, freezing every
                   locale-derived value (numbers, dates, money) until a reload. */}
-              {renderTemplate(cell.column.columnDef.cell, cell.getContext())}
+              <Show
+                when={cellControlLine(cell)}
+                fallback={renderTemplate(
+                  cell.column.columnDef.cell,
+                  cell.getContext()
+                )}
+              >
+                <span class={styles.controlLine}>
+                  {renderTemplate(
+                    cell.column.columnDef.cell,
+                    cell.getContext()
+                  )}
+                </span>
+              </Show>
             </td>
           </Show>
         )}

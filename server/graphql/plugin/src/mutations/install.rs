@@ -2,13 +2,13 @@ use crate::queries::uploaded_info::PluginInfoNode;
 use async_graphql::Context;
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
-    auth::{Resource, ResourceAccessRequest},
-    plugin::{form_plugin::FormInstallOptions, InstallUploadedPluginError},
     UploadedFile,
+    auth::{Resource, ResourceAccessRequest},
+    plugin::{InstallUploadedPluginError, form_plugin::FormInstallOptions},
 };
 use util::format_error;
 

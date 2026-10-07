@@ -44,8 +44,8 @@ mutation insertInboundShipmentExternal(
   }
 }
 
-# Copy an existing shipment to a fresh New draft (AC-DUP1/DUP2). Reachable from
-# the list (single selection) and the detail side panel.
+# Copy an existing shipment to a fresh New draft (OMS-REG-REPL-01.23–.25).
+# Reachable from the list (single selection) and the detail side panel.
 mutation duplicateInboundShipment($storeId: String!, $id: String!) {
   duplicateInboundShipment(storeId: $storeId, id: $id) {
     __typename
@@ -66,8 +66,9 @@ mutation duplicateInboundShipment($storeId: String!, $id: String!) {
 }
 
 # The store's Sent purchase orders — the from-a-purchase-order create option
-# (spec S2 → Link purchase order modal, AC-PG3). Filtered to SENT; supplier +
-# reference + comment shown as table columns so the user can pick the right one.
+# (spec S2 → Link purchase order modal, OMS-REG-REPL-02.33). Filtered to SENT;
+# supplier + reference + comment shown as table columns so the user can pick the
+# right one.
 fragment LinkPurchaseOrderRow on PurchaseOrderNode {
   id
   number

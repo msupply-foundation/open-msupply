@@ -1,6 +1,6 @@
 /*
  * Minimum-browser consistency check (spec/startup/rules.md § Minimum
- * browser, AC-BR6).
+ * browser: one declared minimum).
  *
  * The Chromium floor is declared in two places that cannot share a
  * constant — package.json's browserslist (read by the stylelint/eslint

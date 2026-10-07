@@ -5,7 +5,7 @@ import { round9, type BarReason, type IssueWarning } from '@/domain/allocation';
 // face of the shared reporting vocabulary (spec/stock-allocation § reporting;
 // OMS-REG-DIS-03.58/.59). Dispensing distributes partial packs, so
 // over-allocation never arises (.31) and the split-pack warning does
-// (AC-AL12); the shortfall keeps its own dedicated banner.
+// (OMS-REG-SMV-11.32); the shortfall keeps its own dedicated banner.
 //
 // A skipped category gets its OWN whole-sentence message, one banner each,
 // naming the consequence and not just the condition — the vocabulary's
@@ -53,9 +53,9 @@ const skipMessageKey = (reason: BarReason): SkipMessageKey => {
 
 /**
  * Map a distribution's derived warnings to banner messages: every skipped
- * category reported as its own sentence (AC-AL2 — .59), and the split-pack
+ * category reported as its own sentence (OMS-REG-SMV-11.7 — DIS-03.59), and the split-pack
  * warning naming the nearest whole-pack quantity above, in doses under the
- * doses lens (AC-AL12 — .58).
+ * doses lens (OMS-REG-SMV-11.32 — DIS-03.58).
  */
 export const issueWarningMessages = (
   derived: readonly IssueWarning[],
@@ -88,7 +88,7 @@ export const issueWarningMessages = (
 
 /**
  * A manual per-batch entry's reports, REPLACING any distribution reports —
- * they describe an allocation the edit just changed (AC-AL13): the applied
+ * they describe an allocation the edit just changed (OMS-REG-SMV-11.33/.34): the applied
  * quantity when the entry was adjusted (bounded to availability — .19), and
  * the split-pack warning when the applied packs are fractional (.58). The
  * batch rows are entered in units, so the units message applies whatever the

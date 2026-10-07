@@ -36,6 +36,8 @@ export default defineConfig({
     include: [
       'src/**/*.test.ts',
       'vite/**/*.test.ts',
+      // The nightly e2e workflow's helpers (scripts/e2e/nightly-lib.mjs).
+      'scripts/**/*.test.mjs',
       'plugins/*/src/**/*.test.ts',
       // A form plugin's own tests sit beside its document types under
       // `forms/`, which the `src` glob above does not reach.

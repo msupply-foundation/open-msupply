@@ -158,8 +158,8 @@ impl Upsert for CustomFieldOptionRow {
 mod tests {
     use super::*;
     use crate::{
-        mock::MockDataInserts, test_db, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
-        CustomFieldValueType,
+        CustomFieldKind, CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType,
+        mock::MockDataInserts, test_db,
     };
 
     #[actix_rt::test]

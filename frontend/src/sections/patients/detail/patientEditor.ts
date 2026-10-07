@@ -117,10 +117,10 @@ export const createPatientEditor = (
   const [saveError, setSaveError] = createSignal('');
   const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
 
-  // Full-replace edit (AC-E2): toUpdateInput sends every field. On success,
-  // re-seed from the refreshed record (name is recomputed server-side) by
-  // clearing seededId so the seed effect re-runs once the caller's own refetch
-  // lands a fresh node.
+  // Full-replace edit (OMS-REG-DIS-02.41): toUpdateInput sends every field. On
+  // success, re-seed from the refreshed record (name is recomputed server-side)
+  // by clearing seededId so the seed effect re-runs once the caller's own
+  // refetch lands a fresh node.
   const doSave = async (afterSave?: () => void) => {
     const n = params.node();
     if (!n || !isDraftValid(edit) || saving()) return;
@@ -143,7 +143,7 @@ export const createPatientEditor = (
 
   // Save click: arm validation first, so an invalid form reveals its errors
   // (per field + summary) instead of silently doing nothing; only a valid form
-  // opens the confirmation prompt (AC-E1).
+  // opens the confirmation prompt (OMS-REG-DIS-02.40).
   //
   // The duplicate-code check is the one rule that needs the server, so it runs
   // here rather than in patientFieldErrors — borrowing the `saving` window so

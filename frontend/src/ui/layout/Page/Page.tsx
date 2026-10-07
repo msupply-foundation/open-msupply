@@ -108,10 +108,11 @@ export const Page = (props: PageProps) => {
 
   /*
    * Tell the shell to make everything outside the panel inert while it covers
-   * the viewport (spec/keyboard KB-X2/AC-KB17). The `inert` on `.main` below is
-   * all a Page can reach on its own — MenuBar and the app footer render OUTSIDE
-   * the Page — so without this, Tab from an open panel walked straight into the
-   * nav, the theme toggle, the language selector and sync.
+   * the viewport (spec/keyboard KB-X2/OMS-REG-KBD-02.2/.3). The `inert` on
+   * `.main` below is all a Page can reach on its own — MenuBar and the app
+   * footer render OUTSIDE the Page — so without this, Tab from an open panel
+   * walked straight into the nav, the theme toggle, the language selector and
+   * sync.
    */
   const shellOverlay = useShellOverlay();
   createEffect(() => shellOverlay?.setPanelOverlay(overlayActive()));

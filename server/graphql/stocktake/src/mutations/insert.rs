@@ -1,9 +1,9 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use graphql_core::simple_generic_errors::CannotEditStocktake;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_core::simple_generic_errors::CannotEditStocktake;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::StocktakeNode;
 use repository::Stocktake;
 use service::{
@@ -126,7 +126,7 @@ impl InsertInput {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
-    use repository::{mock::MockDataInserts, Stocktake, StocktakeRow, StorageConnectionManager};
+    use repository::{Stocktake, StocktakeRow, StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},

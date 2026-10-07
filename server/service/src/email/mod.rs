@@ -2,11 +2,11 @@ use chrono::Utc;
 use lettre::address::AddressError;
 use lettre::message::Mailbox;
 use lettre::{
+    SmtpTransport,
     transport::smtp::{
         authentication::Credentials,
         client::{Tls, TlsParameters},
     },
-    SmtpTransport,
 };
 use repository::email_queue_row::{EmailQueueRowRepository, EmailQueueStatus};
 use std::time::Duration;

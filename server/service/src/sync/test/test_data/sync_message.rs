@@ -1,15 +1,15 @@
 use chrono::{NaiveDate, NaiveTime};
 use repository::{
-    sync_buffer::SyncRecordData, SyncBufferRow, SyncMessageRow, SyncMessageRowStatus,
-    SyncMessageRowType,
+    SyncBufferRow, SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType,
+    sync_buffer::SyncRecordData,
 };
 use serde_json::json;
 
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
     translations::{
-        sync_message::{LegacyMessageRow, LegacySyncMessageStatus},
         PullTranslateResult,
+        sync_message::{LegacyMessageRow, LegacySyncMessageStatus},
     },
 };
 

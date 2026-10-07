@@ -12,10 +12,9 @@ use crate::{
 };
 
 use super::{
-    main_patient_doc_name,
+    Patient, PatientFilter, main_patient_doc_name,
     patient_schema::SchemaPatient,
     patient_updated::{create_patient_name_store_join, update_patient_row},
-    Patient, PatientFilter,
 };
 
 #[derive(PartialEq, Debug)]
@@ -225,11 +224,11 @@ fn validate(
 #[cfg(test)]
 pub mod test {
     use repository::{
-        mock::{mock_form_schema_empty, MockDataInserts},
-        test_db::setup_all,
         DocumentFilter, DocumentRegistryCategory, DocumentRegistryRow,
         DocumentRegistryRowRepository, DocumentRepository, EqualFilter, FormSchemaRowRepository,
         Pagination, PatientFilter, PatientRepository, StringFilter,
+        mock::{MockDataInserts, mock_form_schema_empty},
+        test_db::setup_all,
     };
     use serde_json::json;
     use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
@@ -329,14 +328,16 @@ pub mod test {
         matches!(err, UpdateProgramPatientError::InvalidDataSchema(_));
 
         // success insert
-        assert!(PatientRepository::new(&ctx.connection)
-            .query_by_filter(
-                PatientFilter::new().id(EqualFilter::equal_to(patient.id.to_string())),
-                None
-            )
-            .unwrap()
-            .pop()
-            .is_none());
+        assert!(
+            PatientRepository::new(&ctx.connection)
+                .query_by_filter(
+                    PatientFilter::new().id(EqualFilter::equal_to(patient.id.to_string())),
+                    None
+                )
+                .unwrap()
+                .pop()
+                .is_none()
+        );
         service
             .upsert_program_patient(
                 &ctx,

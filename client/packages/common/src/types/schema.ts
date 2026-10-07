@@ -6221,6 +6221,11 @@ export type Mutations = {
   addToOutboundShipmentFromMasterList: AddToOutboundShipmentFromMasterListResponse;
   addToPurchaseOrderFromMasterList: AddToPurchaseOrderFromMasterListResponse;
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
+  /**
+   * Allocate the next patient code number for the store. Requires only the
+   * patient-mutate permission — see allocate_patient_number (#268).
+   */
+  allocatePatientNumber: NumberNode;
   allocateProgramNumber: AllocateProgramNumberResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchInboundShipmentExternal: BatchInboundShipmentResponse;
@@ -6431,6 +6436,10 @@ export type MutationsAddToPurchaseOrderFromMasterListArgs = {
 
 export type MutationsAllocateOutboundShipmentUnallocatedLineArgs = {
   lineId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsAllocatePatientNumberArgs = {
   storeId: Scalars['String']['input'];
 };
 

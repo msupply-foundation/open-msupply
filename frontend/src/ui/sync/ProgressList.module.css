@@ -166,6 +166,28 @@
   color: var(--error-main);
 }
 
+/* A navigable step's marker (a wizard rail): the circle IS the button, so the
+   reset keeps the geometry and the raise .markerButton has. */
+.navButton {
+  position: relative;
+  z-index: 1;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.navButton:hover .circle {
+  border-color: var(--tone-dark);
+}
+
+.navButton:focus-visible {
+  outline: 2px solid var(--tone-dark);
+  outline-offset: 2px;
+}
+
 /* RTL mirror of the progress ring: the connector arrives at the circle's
    inline-start (right) edge, so the flood runs right → left — the same two
    half-arcs, anchored at the right point (top counterclockwise, bottom
