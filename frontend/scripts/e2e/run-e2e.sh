@@ -52,6 +52,11 @@
 #                     machine run at once, across every concurrent run
 #                     (default 6). Ignored when E2E_SERVERS is set.
 #   KEEP_SERVER=1     leave the server + FE running after the tests
+#   E2E_SERVER_CACHE=0      always run cargo build (default: reuse a cached
+#                           server binary when server/ is unchanged — see
+#                           "Server binaries are cached" below)
+#   E2E_SERVER_CACHE_DIR    where the cached binaries live
+#                           (default ~/.cache/open-msupply/e2e-server)
 #   E2E_PLUGIN_PROFILE  run a plugin profile instead of the default suites:
 #                     builds that profile's plugin bundle (pnpm build:plugins),
 #                     installs it into THIS run's throwaway database through
@@ -233,10 +238,60 @@ else
   (cd "$FE_DIR" && pnpm exec playwright install chromium)
 fi
 
-echo "Building server + CLI (sqlite; a no-op when already built)"
-(cd "$SERVER_DIR" && cargo build --bin remote_server --bin remote_server_cli)
+# Server binaries are cached by source hash. A front-end-only change leaves
+# server/ identical to one already built, and even a "no-op" cargo build of
+# it costs minutes on a fresh worktree (one that shares CARGO_TARGET_DIR
+# included), so when the cache holds binaries for this exact source, cargo
+# is skipped and they are used instead. The key is a sha256 over every
+# non-ignored file under server/ as it is on disk — tracked or not, so
+# uncommitted edits count, and Cargo.lock, rust-toolchain.toml and
+# .cargo/config.toml are all in there — plus the host and the cargo
+# profile. ~0.3s for the whole tree.
+CACHE_ROOT=${E2E_SERVER_CACHE_DIR:-$HOME/.cache/open-msupply/e2e-server}
+server_source_key() {
+  local f files=()
+  # The index can still list a file deleted from the worktree; hash what is
+  # actually there.
+  while IFS= read -r -d '' f; do
+    [[ -f "$OMS_DIR/$f" ]] && files+=("$f")
+  done < <(git -C "$OMS_DIR" ls-files -z --cached --others --exclude-standard server)
+  {
+    # rustc -V: an unpinned toolchain updated by rustup changes no file here.
+    echo "host=$(uname -sm) profile=debug rustc=$(cd "$SERVER_DIR" && rustc -V 2>/dev/null)"
+    (cd "$OMS_DIR" && printf '%s\0' ${files[@]+"${files[@]}"} | xargs -0 shasum -a 256)
+  } | shasum -a 256 | cut -c1-16
+}
 # Honour CARGO_TARGET_DIR (CI shares a persistent target dir across jobs).
 BIN_DIR="${CARGO_TARGET_DIR:-$SERVER_DIR/target}/debug"
+SERVER_CACHE_DIR="" # this source's slot in the cache; empty when the cache is off
+if [[ "${E2E_SERVER_CACHE:-1}" != "0" ]]; then
+  if git -C "$OMS_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    SERVER_CACHE_DIR="$CACHE_ROOT/$(server_source_key)"
+  else
+    echo "Server build cache off: $OMS_DIR is not a git checkout"
+  fi
+fi
+if [[ -n "$SERVER_CACHE_DIR" && -x "$SERVER_CACHE_DIR/remote_server" && -x "$SERVER_CACHE_DIR/remote_server_cli" ]]; then
+  touch "$SERVER_CACHE_DIR" # most-recently-used, for the prune below
+  BIN_DIR="$SERVER_CACHE_DIR"
+  echo "Server build skipped: server/ is unchanged since a cached build ($SERVER_CACHE_DIR)"
+else
+  echo "Building server + CLI (sqlite; a no-op when already built)"
+  (cd "$SERVER_DIR" && cargo build --bin remote_server --bin remote_server_cli)
+  if [[ -n "$SERVER_CACHE_DIR" ]]; then
+    # Copy into a temp dir and rename, so a half-copied entry is never a hit.
+    mkdir -p "$CACHE_ROOT"
+    CACHE_TMP=$(mktemp -d "$CACHE_ROOT/.tmp.XXXXXX")
+    cp "$BIN_DIR/remote_server" "$BIN_DIR/remote_server_cli" "$CACHE_TMP/"
+    [[ -d "$SERVER_CACHE_DIR" ]] || mv "$CACHE_TMP" "$SERVER_CACHE_DIR"
+    rm -rf "$CACHE_TMP"
+    echo "Server build cached for next time ($SERVER_CACHE_DIR)"
+    # Each entry is ~0.8GB of debug binaries: keep the 5 most recently used,
+    # and sweep temp dirs an interrupted copy left behind.
+    (cd "$CACHE_ROOT" && ls -1t | tail -n +6 | while IFS= read -r old; do rm -rf -- "./$old"; done)
+    find "$CACHE_ROOT" -mindepth 1 -maxdepth 1 -name '.tmp.*' -mtime +1 -exec rm -rf {} +
+  fi
+fi
 
 # Dependency 2: the restore path this script drives. Probed rather than
 # assumed, because without --refresh the datafile restores with stale dates
