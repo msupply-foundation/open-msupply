@@ -255,6 +255,8 @@ Firefox has its own store: import the root, or set `security.enterprise_roots.en
 
 Shows every deployment on the box — the commit actually running, how far behind its branch, expiry, and whether a deploy is in flight — and lets QA and product start, extend, reseed and remove servers without the GitHub form. Its buttons dispatch the same workflows, with the signed-in person's own token.
 
+Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Releases**, which lists every open-mSupply release, release candidate and nightly with its Docker images (click one to copy its `docker pull`) and its Windows installers. Releases stores nothing: it reads Docker Hub's public tag list every ten minutes, and finds each tag's installers in the public `msupply-releases` B2 bucket by name, so it needs no credentials and shows whatever Docker Hub still holds — every release, and a month of nightlies and RCs, per `cleanup-docker-tags.yaml`.
+
 Its files are in `.github/deploy/dashboard/`. How it works and why — the two-container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs` and `web.mjs`.
 
 **1. Create the GitHub App** people sign in through, once, under the organisation (Settings → Developer settings → GitHub Apps → New):
