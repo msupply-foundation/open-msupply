@@ -81,3 +81,30 @@
     block-size: var(--touch-target);
   }
 }
+
+/* Narrow viewports (≤1023px, breakpoints.navOverlay): one title row. Labelled
+   actions stay while they fit; when they don't, Header sheds them to icons
+   (measured — see Header.tsx), and past that the breadcrumb shrinks and
+   truncates rather than the actions wrapping onto a row of their own. The
+   padding tightens so the row fits. Only for a header whose end cluster is
+   buttons and that has no second row anyway (a toolbar or tab bar) — the
+   utility pages' Server/Version block, and headers with a row below, keep
+   wrapping. */
+@media (max-width: 1023px) {
+  .header {
+    gap: var(--space-2);
+    padding-block: var(--space-2);
+    padding-inline: var(--space-3);
+  }
+
+  .header:has(> [data-header-buttons] > [data-variant]):not(
+      :has(> [data-tab-bar], > [data-toolbar])
+    ) {
+    flex-wrap: nowrap;
+  }
+
+  .header > [data-tab-bar] {
+    flex-basis: calc(100% + 2 * var(--space-3));
+    margin-inline: calc(-1 * var(--space-3));
+  }
+}
