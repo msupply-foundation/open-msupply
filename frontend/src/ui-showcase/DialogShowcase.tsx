@@ -95,6 +95,8 @@ export const dialogMetadata: PageMetadata = {
         'full screen',
         'fullscreen',
         'tablet',
+        'landscape',
+        'short viewport',
         'size full',
         'sheet',
         'breakpoint',
@@ -379,9 +381,12 @@ export const DialogShowcase = () => {
             the header, <code>footer</code> and <code>actions</code> stay pinned
             to the edges. Below the narrow-viewport line (tablet portrait and
             phones) it goes <strong>full-screen</strong>, edge to edge with no
-            radius — as does any dialog sized by a <code>width</code> measure. A
-            default or <code>widthRem</code> dialog stays a centred card at
-            every width.
+            radius — as does any dialog sized by a <code>width</code> measure —
+            and below the <strong>short-viewport</strong> line too (a landscape
+            tablet: shorten the window under 800px), where vertical room is what
+            a workbench spends and the gutters would cost it rows (#246). A{' '}
+            <code>width</code> measure does not follow it there, and a default
+            or <code>widthRem</code> dialog stays a centred card at every size.
           </Lead>
           <Row>
             <Button
@@ -454,7 +459,11 @@ export const DialogShowcase = () => {
             <code>default</code> and <code>widthRem</code> stay centred cards,
             since a confirmation was never wide enough to feel cramped. Resize
             the window across 1024px <em>with a dialog open</em> and watch it
-            flip live.
+            flip live. The two workbench sizes also flip below the
+            short-viewport line (breakpoints.ts › shortViewport, 800px tall — a
+            landscape tablet): shorten the window instead and only{' '}
+            <code>size="large"</code> and <code>size="full"</code> go full
+            screen; the measures stay cards there (#246).
           </Lead>
           <Row>
             <Button variant="secondary" onClick={() => setSizeDemo('default')}>

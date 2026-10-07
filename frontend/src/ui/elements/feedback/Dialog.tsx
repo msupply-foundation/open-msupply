@@ -12,7 +12,10 @@ import {
 import { CloseIcon } from '../../icons';
 import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
-import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import {
+  useIsNavOverlay,
+  useIsShortViewport,
+} from '../../utils/createMediaQuery';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { createAction } from '../../utils/keyActions';
 import { ALT_S, ESCAPE } from '../../utils/shortcuts';
@@ -141,8 +144,9 @@ export interface DialogProps {
    *
    * A measure also opts the dialog into the shared **full-screen** treatment
    * below the narrow-viewport line (tablet portrait and phones, breakpoints.ts
-   * › navOverlay), since a measure describes a page-sized surface. `widthRem`
-   * does not: it stays a centred card at every width.
+   * › navOverlay), since a measure describes a page-sized surface — but not
+   * below the short-viewport line, which only the workbench sizes answer to
+   * (see `size`). `widthRem` does not: it stays a centred card at every width.
    */
   width?: 'prose' | 'form' | 'wide';
   /**
@@ -183,8 +187,9 @@ export interface DialogProps {
    * — #771's win: a two-batch item is a short modal, not an empty full-screen
    * box — and both flex the body so a scrolling child (a DataTable) fills the
    * tall space once content passes the ceiling, and both go full-screen below
-   * the narrow-viewport line like a `width` measure. They differ in how far
-   * they may GROW:
+   * the narrow-viewport line like a `width` measure — and, unlike a measure,
+   * below the short-viewport line too (a landscape tablet, #246; breakpoints.ts
+   * › shortViewport). They differ in how far they may GROW:
    *  - `'large'` — a centred CARD: 56rem wide by default, or a `width`
    *    measure (the internal-order line editor takes `wide`), or `widthRem`
    *    for a bespoke width such as a wider table; ceiling ~80vh
@@ -424,21 +429,35 @@ export const Dialog = (props: DialogProps) => {
   // Both workbench sizes share every rule except width, so almost everything
   // that asks "is this large?" means this.
   const workbench = () => props.size === 'large' || props.size === 'full';
-  // Modals whose width is a page-sized SURFACE go full-screen on tablet
-  // portrait and phones — the same "narrow viewport" line as the nav overlay, so
-  // we reuse navOverlay (1024) rather than mint a fourth breakpoint.
-  // data-fullscreen drives the CSS; the cutoff lives once in breakpoints.ts
-  // (createMediaQuery).
+  // Full screen is decided per AXIS, and each axis has its own line — both
+  // shared with the rest of the shell (the nav overlay, the outbound totals
+  // fold), so no breakpoint is minted here: the cutoffs live once in
+  // breakpoints.ts (createMediaQuery). data-fullscreen drives the CSS.
   //
-  // That is either workbench size (`large`/`full`) and any `width` MEASURE: the
-  // widest measure is wider than the line itself, so below it a measure dialog
-  // would otherwise be an edge-to-edge card holding a 1rem margin — the
-  // in-between this rule exists to remove. A default or `widthRem` dialog stays
-  // a centred card: a confirmation has no business filling a tablet screen, and
-  // a caller who wants the sheet asks for the measure it is sized to.
+  // NARROW (navOverlay — tablet portrait and phones): modals whose width is a
+  // page-sized SURFACE, i.e. either workbench size (`large`/`full`) and any
+  // `width` MEASURE. The widest measure is wider than the line itself, so
+  // below it a measure dialog would otherwise be an edge-to-edge card holding
+  // a 1rem margin — the in-between this rule exists to remove.
+  //
+  // SHORT (shortViewport — a landscape tablet, or a windowed laptop): the
+  // workbench sizes only. A landscape tablet is WIDE, so the narrow line never
+  // fires on one, and the sheet sat there as a floating card with a 2rem
+  // gutter all round — with the on-screen keyboard up, a card showing one
+  // table row (#246). Height is the axis a workbench is built around (a vh
+  // band with a flex body), so a short viewport is where its gutters cost
+  // rows. A measure dialog stays a card here: its height is its content's,
+  // and stretching a `form` to a landscape tablet's full width would pull
+  // labels away from their values (#617).
+  //
+  // A default or `widthRem` dialog stays a centred card on both axes: a
+  // confirmation has no business filling a tablet screen, and a caller who
+  // wants the sheet asks for the measure it is sized to.
   const narrowViewport = useIsNavOverlay();
+  const shortViewport = useIsShortViewport();
   const fullscreen = () =>
-    narrowViewport() && (workbench() || props.width !== undefined);
+    (narrowViewport() && (workbench() || props.width !== undefined)) ||
+    (shortViewport() && workbench());
   // The <dialog>'s OWN aria-labelledby/aria-label depend on whether the title
   // is a string, but the title is resolved inside the Provider (DialogContent),
   // not here — so DialogContent reports it back via this signal rather than us

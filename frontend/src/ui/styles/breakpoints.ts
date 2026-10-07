@@ -14,6 +14,8 @@ export const breakpoints = {
    * the side panel an off-canvas drawer). Also the "narrow viewport" line —
    * tablet portrait and below — at which modal dialogs expand to full screen
    * (ui-standards responsive: tablet portrait / small screen is 600–1023px).
+   * A landscape tablet is wider than this, so for it the dialog's full-screen
+   * rule turns on shortViewport below instead (#246).
    */
   navOverlay: 1024,
   /** Below this = phone-ish; index.css drops the root font-size here. */
@@ -50,6 +52,13 @@ export const breakpoints = {
    * 800 sits above the fleet's landscape tablets (~715px of viewport once
    * browser chrome is off a 768px screen) and this class of laptop window,
    * and below a normal desktop (~950px), which keeps its roomier layout.
+   *
+   * Also the line below which a WORKBENCH dialog (`size="large" | "full"`,
+   * the line editors) goes full screen — the landscape-tablet counterpart of
+   * navOverlay's rule, since a landscape tablet is wide and never crosses
+   * that one (#246, Dialog.tsx). Note it is a line on the VIEWPORT: a
+   * 1280×800 tablet presents ~728px once its system bars are on screen, so
+   * it falls below; an emulator set to a bare 800 sits on the line.
    */
   shortViewport: 800,
 } as const;
