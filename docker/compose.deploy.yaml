@@ -253,7 +253,7 @@ networks:
     # would delete the network out from under the proxy and every deployment
     # still running on it.
     #
-    # A literal name, not a variable: it has to agree with the proxy that was
-    # stood up by hand on the box, and a knob that must match something outside
-    # this repo is worse than no knob.
+    # A literal name, not a variable: it has to agree with the proxy in
+    # .github/deploy/proxy, and a knob that must match another file is worse than
+    # no knob.
     external: true
