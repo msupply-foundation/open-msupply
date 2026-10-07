@@ -211,9 +211,9 @@ The labels come from `docker/compose.deploy.yaml` as of the commit whose workflo
 
 ### Proxy and dashboard
 
-The reverse proxy in front of every deployment and the deployments dashboard live in [`docker/deploy/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/docker/deploy) and are deployed by **`docker-deploy-services.yaml`**. It runs on every push to `develop` that changes them, and can be run by hand. Each directory builds a small image — stock Caddy or node with its files baked in, tagged with the directory's git tree hash — which the workflow brings up on the deploy box.
+The reverse proxy in front of every deployment and the deployments dashboard live in [`.github/deploy/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy) and are deployed by **`docker-deploy-services.yaml`**. It runs on every push to `develop` that changes them, and can be run by hand. Each directory builds a small image — stock Caddy or node with its files baked in, tagged with the directory's git tree hash — which the workflow brings up on the deploy box.
 
-- **Nothing is copied onto the box.** `docker ps` shows which version each one runs: the image tag is the tree hash, `git rev-parse <commit>:docker/deploy/proxy`.
+- **Nothing is copied onto the box.** `docker ps` shows which version each one runs: the image tag is the tree hash, `git rev-parse <commit>:.github/deploy/proxy`.
 - **The box keeps one file per service, its `.env`:** `~/proxy/.env` and `~/dashboard/.env`. Nothing in CI writes them. `DEPLOY_DOMAIN` and `GITHUB_REPOSITORY` are passed in by the workflow, so neither belongs there.
 - **Only what changed is recreated.** A changed file is a new image, and compose recreates a container only when its image or settings change. Recreating the dashboard signs everyone out; recreating the proxy drops in-flight requests to every deployment for a second or two.
 - **A bad change does not take the box down.** A Caddyfile that does not validate, or a `.mjs` that does not parse, fails the image build, before anything running is touched; the dashboard's tests run before that. If a new version still does not come up healthy, the previous image — kept on the box — is brought back, and the run fails.
@@ -223,8 +223,8 @@ The reverse proxy in front of every deployment and the deployments dashboard liv
 
 | file | |
 |---|---|
-| `docker/deploy/proxy/compose.proxy.yaml` | the Caddy container, its ports, its CA volume and the shared network |
-| `docker/deploy/proxy/proxy.Caddyfile` | the one route for every deployment, and why it is Caddy (see its comments) |
+| `.github/deploy/proxy/compose.proxy.yaml` | the Caddy container, its ports, its CA volume and the shared network |
+| `.github/deploy/proxy/proxy.Caddyfile` | the one route for every deployment, and why it is Caddy (see its comments) |
 
 Set up once, outside CI:
 
@@ -254,7 +254,7 @@ Firefox has its own store: import the root, or set `security.enterprise_roots.en
 
 Shows every deployment on the box — the commit actually running, how far behind its branch, expiry, and whether a deploy is in flight — and lets QA and product start, extend, reseed and remove servers without the GitHub form. Its buttons dispatch the same workflows, with the signed-in person's own token.
 
-Its files are in `docker/deploy/dashboard/`. How it works and why — the two-container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs` and `web.mjs`.
+Its files are in `.github/deploy/dashboard/`. How it works and why — the two-container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs` and `web.mjs`.
 
 **1. Create the GitHub App** people sign in through, once, under the organisation (Settings → Developer settings → GitHub Apps → New):
 
@@ -297,7 +297,7 @@ gh workflow run integration-test-check.yaml --ref develop \
 
 Why the box is set up this way, so nobody has to rediscover it. Decisions recorded in the code are listed with where to look.
 
-- **Caddy as the reverse proxy, not Traefik or nginx.** Routes here are computable from the hostname, so nothing needs *discovering*. Traefik is the tool for discovery, and charges for it: the docker socket mounted into the proxy (root on the box) or a socket-proxy sidecar, plus per-container labels that would make each compose file know its public hostname. nginx works, but needs three settings hand-tuned that Caddy has by default, each a silent failure if missed — see the comments in `docker/deploy/proxy/proxy.Caddyfile`.
+- **Caddy as the reverse proxy, not Traefik or nginx.** Routes here are computable from the hostname, so nothing needs *discovering*. Traefik is the tool for discovery, and charges for it: the docker socket mounted into the proxy (root on the box) or a socket-proxy sidecar, plus per-container labels that would make each compose file know its public hostname. nginx works, but needs three settings hand-tuned that Caddy has by default, each a silent failure if missed — see the comments in `.github/deploy/proxy/proxy.Caddyfile`.
 - **The proxy is a container, not a process on the box.** Docker's embedded DNS (`127.0.0.11`), which resolves a deployment by name at dial time, exists only inside containers on a user-defined network.
 - **The proxy and the dashboard are deployed by a workflow of their own, only from `develop`.** Each fronts every deployment at once, so neither may move with whichever deploy runs next — a preview deploys from its pull request's commit. They were stood up by hand at first, and the box drifted: the dashboard went on running a version that could not read the image tags deployments had moved to. See the header of `docker-deploy-services.yaml`.
 - **No dedicated runner account.** On a box that does nothing but CI it buys no isolation worth the extra moving part, and every path then has to be written for a user you are not logged in as, which is where runbooks rot.
@@ -308,5 +308,5 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **The proxy's host port is read back, not configured.** A `PROXY_PORT` repository variable used to duplicate what the proxy already knew, and a mismatch reported every deployment as unroutable. If it is still set on the repository it is inert. See `docker-deploy.yaml`.
 - **`DEPLOY_SHARED_DAEMON` skips the registry rather than adding a local one.** The image then exists only on this box's disk: a prune or a rebuilt box means recompiling rather than pulling, but costs no data, since databases are volumes. `skip_if_exists` probes the daemon instead of the registry while it is set. See `docker-named-deployment.yaml`.
 - **`e2e`, not `reference1`, as the default dataset.** `reference1` is a 2023 V5/V6 export, and `SyncBufferRow.source_site_id` is a plain `i32` with no `#[serde(default)]`, so it fails to deserialise (`missing field 'source_site_id'`) before integration. Fixing it is a server change: that `#[serde(default)]` plus a re-export. `e2e` is exercised nightly, so it cannot rot unnoticed.
-- **The dashboard's design** — the socket-holding container with no network and no listener, sign-in with the viewer's own token, and buttons that dispatch the existing workflows so there is one writer — is in the header comments of `docker/deploy/dashboard/compose.dashboard.yaml`, `snapshot.mjs` and `web.mjs`.
+- **The dashboard's design** — the socket-holding container with no network and no listener, sign-in with the viewer's own token, and buttons that dispatch the existing workflows so there is one writer — is in the header comments of `.github/deploy/dashboard/compose.dashboard.yaml`, `snapshot.mjs` and `web.mjs`.
 - **How deployments are deployed** — compose files from the running workflow's commit, version overrides for old releases, and why the workflows are not split into `@develop` run files — is Fork 4 of `frontend/kdd/server-image-build/draft-kdd.md`.

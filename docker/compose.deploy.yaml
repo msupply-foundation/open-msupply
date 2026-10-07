@@ -254,6 +254,6 @@ networks:
     # still running on it.
     #
     # A literal name, not a variable: it has to agree with the proxy in
-    # docker/deploy/proxy, and a knob that must match another file is worse than
+    # .github/deploy/proxy, and a knob that must match another file is worse than
     # no knob.
     external: true
