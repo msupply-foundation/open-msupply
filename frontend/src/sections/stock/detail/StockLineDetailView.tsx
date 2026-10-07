@@ -473,7 +473,11 @@ const StockLineDetailView: Component = () => {
                     </Show>
 
                     <Show when={saveError()}>
-                      {message => <Alert severity="error">{message()}</Alert>}
+                      {message => (
+                        <Alert severity="error" testId="stock-line-save-error">
+                          {message()}
+                        </Alert>
+                      )}
                     </Show>
 
                     {/* The sectioned edit form (spec/ui-standards detail-views):
