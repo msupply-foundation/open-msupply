@@ -18,7 +18,7 @@ use std::collections::{HashMap, HashSet};
 use repository::{
     DocumentFilter, DocumentRegistryCategory, DocumentRegistryConfig, DocumentRegistryRow,
     DocumentRegistryRowRepository, DocumentRepository, EqualFilter, FormSchemaJson,
-    FormSchemaRowRepository, ProgramFilter, ProgramRepository, ProgramRowRepository,
+    FormSchemaRowRepository, ProgramFilter, ProgramRepository, ProgramRow, ProgramRowRepository,
     RepositoryError, StorageConnection,
 };
 use serde::{Deserialize, Serialize};
@@ -116,6 +116,68 @@ pub struct InstalledDocumentType {
     pub schemas_added: usize,
     /// Versions already present whose legacy UI schema this install replaced.
     pub ui_schemas_updated: usize,
+}
+
+/// How this server's registry stands for a document type a bundle declares:
+/// what an install of it would do, and which of the installer's choices it
+/// needs. Read before installing, so a screen can ask for the choices the CLI
+/// takes as options (`--take-over`, `--blank-old-ui`) instead of learning them
+/// from a refusal.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case", tag = "kind")]
+pub enum ExistingEntry {
+    /// No entry: install creates one.
+    None,
+    /// The plugin's own entry, from an earlier install.
+    Owned,
+    /// An entry no plugin installed: install needs the type named for take-over.
+    Unowned { id: String },
+    /// Another plugin's entry: install is refused.
+    OwnedByAnotherPlugin { owner: String },
+    /// Several entries for the type: install is refused.
+    Ambiguous { count: usize },
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct DocumentTypePreview {
+    pub document_type: String,
+    pub category: DocumentRegistryCategory,
+    pub name: String,
+    pub program_key: Option<String>,
+    pub existing_entry: ExistingEntry,
+    /// True when the install would move the type's entry to a version with no
+    /// UI schema over one that has it, leaving the form blank on sites still
+    /// on the old client; install refuses that unless the type is named as
+    /// allowed to go blank.
+    pub blanks_old_ui: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ProgramKeyPreview {
+    pub program_key: String,
+    /// The declared document types that name this key.
+    pub document_types: Vec<String>,
+    /// The program the key is bound to by an earlier install: the context of
+    /// the plugin's owned entries under the key, where it is a program's.
+    /// `None` on a first install, when the key needs a program chosen.
+    pub bound_program: Option<ProgramRow>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct FormPluginPreview {
+    pub plugin_code: String,
+    pub program_keys: Vec<ProgramKeyPreview>,
+    pub document_types: Vec<DocumentTypePreview>,
+}
+
+/// Everything a screen needs to ask the installer's choices for a bundle's
+/// form plugins before installing it.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct FormInstallPreview {
+    pub form_plugins: Vec<FormPluginPreview>,
+    /// The programs on this server, one to choose for each program key: the
+    /// same list a refusal names.
+    pub programs: Vec<ProgramRow>,
 }
 
 #[derive(Error, Debug, PartialEq)]
@@ -296,6 +358,101 @@ pub(crate) fn install_form_plugins(
     Ok(installed)
 }
 
+/// What installing these form plugins would meet on this server, without
+/// writing anything. Reports rather than refuses: a type another plugin owns
+/// or an ambiguous one is named as such, and install refuses it later with
+/// its reason. The checks that need no database (`validate_declarations`)
+/// are left to install too.
+pub(crate) fn preview_form_plugins(
+    connection: &StorageConnection,
+    sidecars: &[FormPluginSidecar],
+) -> Result<FormInstallPreview, RepositoryError> {
+    let mut form_plugins = Vec::new();
+    // One preview per form plugin in the bundle (usually one).
+    for sidecar in sidecars {
+        // Program key → context id, from the entries this plugin already owns.
+        let bound = bound_contexts(connection, sidecar)?;
+        // Every key the plugin declares, bound or not: an unbound key is what
+        // the installer has to choose a program for.
+        let program_keys = sidecar
+            .program_keys
+            .iter()
+            .map(|key| {
+                // A bound key's context is a program's: look that program up so
+                // the screen can show it by name. No binding, no program.
+                let bound_program = match bound.get(key) {
+                    Some(context_id) => ProgramRepository::new(connection).query_one(
+                        ProgramFilter::new().context_id(EqualFilter::equal_to(context_id.clone())),
+                    )?,
+                    None => None,
+                };
+                Ok(ProgramKeyPreview {
+                    program_key: key.clone(),
+                    // The declared types that name this key (Patient names none).
+                    document_types: sidecar
+                        .document_types
+                        .iter()
+                        .filter(|d| d.program_key.as_ref() == Some(key))
+                        .map(|d| d.document_type.clone())
+                        .collect(),
+                    bound_program,
+                })
+            })
+            // The first database error stops the preview; otherwise one entry per key.
+            .collect::<Result<Vec<_>, RepositoryError>>()?;
+
+        // Every declared type against the registry as it stands.
+        let document_types = sidecar
+            .document_types
+            .iter()
+            .map(|declaration| {
+                // The entry's state, with the row only where install could write it.
+                let (existing_entry, row) =
+                    find_entry(connection, &sidecar.plugin_code, &declaration.document_type)?;
+                // Only an existing entry can lose the old client its form.
+                let blanks_old_ui = match &row {
+                    Some(row) => would_blank_old_ui(connection, row, declaration)?,
+                    None => false,
+                };
+                Ok(DocumentTypePreview {
+                    document_type: declaration.document_type.clone(),
+                    category: declaration.category.clone(),
+                    name: declaration.name.clone(),
+                    program_key: declaration.program_key.clone(),
+                    existing_entry,
+                    blanks_old_ui,
+                })
+            })
+            // As above: one entry per declared type, or the first error.
+            .collect::<Result<Vec<_>, RepositoryError>>()?;
+
+        form_plugins.push(FormPluginPreview {
+            plugin_code: sidecar.plugin_code.clone(),
+            program_keys,
+            document_types,
+        });
+    }
+    Ok(FormInstallPreview {
+        form_plugins,
+        // Every program on the server (deleted ones excluded by the repository),
+        // the list a key's program is chosen from — the same one a refusal names.
+        programs: ProgramRepository::new(connection).query_by_filter(ProgramFilter::new())?,
+    })
+}
+
+/// A key's binding is not stored on its own: it is the context of the entries
+/// the plugin already owns under that key.
+fn bound_contexts(
+    connection: &StorageConnection,
+    sidecar: &FormPluginSidecar,
+) -> Result<HashMap<String, String>, RepositoryError> {
+    Ok(DocumentRegistryRowRepository::new(connection)
+        .find_many_by_plugin_code(&sidecar.plugin_code)?
+        .into_iter()
+        .filter_map(|row| row.program_key.map(|key| (key, row.context_id)))
+        .collect())
+}
+
 /// The checks that need no database: the bundle is internally consistent, and
 /// the options name only what it declares.
 fn validate_declarations(
@@ -379,14 +536,7 @@ fn resolve_program_contexts(
         .filter_map(|d| d.program_key.as_ref())
         .collect();
 
-    // A key's binding is not stored on its own: it is the context of the
-    // entries the plugin already owns under that key.
-    let owned = DocumentRegistryRowRepository::new(connection)
-        .find_many_by_plugin_code(&sidecar.plugin_code)?;
-    let bound: HashMap<&String, &String> = owned
-        .iter()
-        .filter_map(|row| row.program_key.as_ref().map(|key| (key, &row.context_id)))
-        .collect();
+    let bound = bound_contexts(connection, sidecar)?;
 
     let mut contexts = HashMap::new();
     for key in used_keys {
@@ -401,7 +551,7 @@ fn resolve_program_contexts(
                     available: available_programs(connection),
                 })?,
             None => match bound.get(key) {
-                Some(context_id) => (*context_id).clone(),
+                Some(context_id) => context_id.clone(),
                 None => {
                     return Err(FormPluginInstallError::NoProgramForKey {
                         plugin_code: sidecar.plugin_code.clone(),
@@ -589,27 +739,19 @@ fn existing_entry(
     use FormPluginInstallError as Error;
 
     let document_type = &declaration.document_type;
-    let mut rows =
-        DocumentRegistryRowRepository::new(connection).find_many_by_document_type(document_type)?;
-
-    if let Some(owner) = rows
-        .iter()
-        .filter_map(|row| row.plugin_code.as_ref())
-        .find(|owner| **owner != sidecar.plugin_code)
-    {
-        return Err(Error::OwnedByAnotherPlugin {
-            document_type: document_type.clone(),
-            owner: owner.clone(),
-        });
-    }
-    if rows.len() > 1 {
-        return Err(Error::AmbiguousEntries {
-            document_type: document_type.clone(),
-            count: rows.len(),
-        });
-    }
-    let Some(row) = rows.pop() else {
-        return Ok(None);
+    let (existing, row) = find_entry(connection, &sidecar.plugin_code, document_type)?;
+    let Some(row) = row else {
+        return match existing {
+            ExistingEntry::OwnedByAnotherPlugin { owner } => Err(Error::OwnedByAnotherPlugin {
+                document_type: document_type.clone(),
+                owner,
+            }),
+            ExistingEntry::Ambiguous { count } => Err(Error::AmbiguousEntries {
+                document_type: document_type.clone(),
+                count,
+            }),
+            _ => Ok(None),
+        };
     };
 
     if row.category != declaration.category {
@@ -620,15 +762,53 @@ fn existing_entry(
         });
     }
 
-    match row.plugin_code {
-        Some(_) => Ok(Some((row, false))),
-        None if options.take_over.contains(document_type) => Ok(Some((row, true))),
-        None => Err(Error::UnownedEntryExists {
+    match existing {
+        ExistingEntry::Unowned { .. } if options.take_over.contains(document_type) => {
+            Ok(Some((row, true)))
+        }
+        ExistingEntry::Unowned { id } => Err(Error::UnownedEntryExists {
             plugin_code: sidecar.plugin_code.clone(),
             document_type: document_type.clone(),
-            id: row.id,
+            id,
         }),
+        _ => Ok(Some((row, false))),
     }
+}
+
+/// The registry's one entry for a document type, classified for the plugin
+/// installing it. The row comes back only where there is exactly one and no
+/// other plugin owns it: the two cases install refuses carry no row.
+fn find_entry(
+    connection: &StorageConnection,
+    plugin_code: &str,
+    document_type: &str,
+) -> Result<(ExistingEntry, Option<DocumentRegistryRow>), RepositoryError> {
+    let mut rows =
+        DocumentRegistryRowRepository::new(connection).find_many_by_document_type(document_type)?;
+
+    if let Some(owner) = rows
+        .iter()
+        .filter_map(|row| row.plugin_code.as_ref())
+        .find(|owner| *owner != plugin_code)
+    {
+        return Ok((
+            ExistingEntry::OwnedByAnotherPlugin {
+                owner: owner.clone(),
+            },
+            None,
+        ));
+    }
+    if rows.len() > 1 {
+        return Ok((ExistingEntry::Ambiguous { count: rows.len() }, None));
+    }
+    let Some(row) = rows.pop() else {
+        return Ok((ExistingEntry::None, None));
+    };
+    let existing = match row.plugin_code {
+        Some(_) => ExistingEntry::Owned,
+        None => ExistingEntry::Unowned { id: row.id.clone() },
+    };
+    Ok((existing, Some(row)))
 }
 
 /// The old client draws a type's form from the UI schema on the registry
@@ -646,15 +826,37 @@ fn refuse_blanking_old_ui(
     options: &FormInstallOptions,
 ) -> Result<(), FormPluginInstallError> {
     let document_type = &declaration.document_type;
-    if declaration.legacy_ui_schema.is_some() || options.blank_old_ui.contains(document_type) {
+    if options.blank_old_ui.contains(document_type) {
         return Ok(());
     }
-    // Checked non-empty in validate_declarations.
-    let current_id = &declaration.versions.last().unwrap().id;
+    if would_blank_old_ui(connection, row, declaration)? {
+        return Err(FormPluginInstallError::BlanksOldUi {
+            document_type: document_type.clone(),
+        });
+    }
+    Ok(())
+}
+
+/// Whether installing the declaration over this entry leaves the old client's
+/// form blank: the type declares no legacy UI schema, the install moves the
+/// entry to another version, and the version it is on has a UI schema.
+fn would_blank_old_ui(
+    connection: &StorageConnection,
+    row: &DocumentRegistryRow,
+    declaration: &DocumentTypeDeclaration,
+) -> Result<bool, RepositoryError> {
+    if declaration.legacy_ui_schema.is_some() {
+        return Ok(false);
+    }
+    // A type with no version is refused before this is reached; the preview
+    // reports it as losing nothing.
+    let Some(current_id) = declaration.versions.last().map(|v| &v.id) else {
+        return Ok(false);
+    };
     if row.form_schema_id.as_ref() == Some(current_id) {
-        return Ok(());
+        return Ok(false);
     }
-    let has_ui = match &row.form_schema_id {
+    Ok(match &row.form_schema_id {
         Some(id) => FormSchemaRowRepository::new(connection)
             .find_one_by_id(id)?
             .is_some_and(|schema| match &schema.ui_schema {
@@ -663,13 +865,7 @@ fn refuse_blanking_old_ui(
                 _ => true,
             }),
         None => false,
-    };
-    if has_ui {
-        return Err(FormPluginInstallError::BlanksOldUi {
-            document_type: document_type.clone(),
-        });
-    }
-    Ok(())
+    })
 }
 
 /// A type that declares versions under a deployment's own ids claims to
@@ -791,8 +987,9 @@ mod test {
     use util::constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE};
 
     use super::{
-        DocumentTypeDeclaration, FormInstallOptions, FormPluginInstallError as Error,
-        FormPluginSidecar, RegistryOutcome, SchemaVersion, install_form_plugins,
+        DocumentTypeDeclaration, ExistingEntry, FormInstallOptions,
+        FormPluginInstallError as Error, FormPluginSidecar, RegistryOutcome, SchemaVersion,
+        install_form_plugins, preview_form_plugins,
     };
 
     const PLUGIN: &str = "demo_program";
@@ -2084,6 +2281,183 @@ mod test {
                 options(&[("demo", "program_a")], &["HIVCareEncounter"])
             ),
             Error::TakeOverNotDeclared("HIVCareEncounter".to_string())
+        );
+    }
+
+    /// The preview a screen reads before installing: what each key is bound
+    /// to, what each type's entry is, and which install would blank the old
+    /// client's form, first on a server that has only the deployment's own
+    /// Patient entry, then after the install.
+    #[actix_rt::test]
+    async fn preview_reports_bindings_entries_and_the_programs() {
+        let connection = setup("form_plugin_preview").await;
+        insert_unowned_entry(
+            &connection,
+            "existing_patient_entry",
+            PATIENT_TYPE,
+            DocumentRegistryCategory::Patient,
+            PATIENT_CONTEXT_ID,
+        );
+
+        let preview = preview_form_plugins(&connection, &[demo_sidecar()]).unwrap();
+        assert_eq!(preview.form_plugins.len(), 1);
+        let plugin = &preview.form_plugins[0];
+        assert_eq!(plugin.plugin_code, PLUGIN);
+
+        // The key is unbound, and names the two program types.
+        assert_eq!(plugin.program_keys.len(), 1);
+        let key = &plugin.program_keys[0];
+        assert_eq!(key.program_key, "demo");
+        assert_eq!(
+            key.document_types,
+            vec!["DemoProgramEnrolment", "DemoEncounter"]
+        );
+        assert_eq!(key.bound_program, None);
+
+        // The deployment's Patient entry needs a take-over, and moving it to
+        // the plugin's version, which carries no UI schema, blanks the old
+        // client's form; the plugin's own types meet nothing.
+        let types: Vec<_> = plugin
+            .document_types
+            .iter()
+            .map(|t| {
+                (
+                    t.document_type.as_str(),
+                    t.existing_entry.clone(),
+                    t.blanks_old_ui,
+                )
+            })
+            .collect();
+        assert_eq!(
+            types,
+            vec![
+                (
+                    PATIENT_TYPE,
+                    ExistingEntry::Unowned {
+                        id: "existing_patient_entry".to_string()
+                    },
+                    true
+                ),
+                ("DemoProgramEnrolment", ExistingEntry::None, false),
+                ("DemoEncounter", ExistingEntry::None, false),
+            ]
+        );
+        assert_eq!(plugin.document_types[0].program_key, None);
+        assert_eq!(
+            plugin.document_types[2].program_key.as_deref(),
+            Some("demo")
+        );
+        assert_eq!(plugin.document_types[2].name, "DemoEncounter name");
+        assert_eq!(
+            plugin.document_types[2].category,
+            DocumentRegistryCategory::Encounter
+        );
+
+        // The programs to choose from are the server's, as a refusal lists them.
+        assert!(preview.programs.iter().any(|p| p.id == "program_a"));
+
+        // Nothing was written.
+        assert_eq!(entry(&connection, PATIENT_TYPE).plugin_code, None);
+
+        install_form_plugins(
+            &connection,
+            &[demo_sidecar()],
+            &blanking_old_ui(
+                options(&[("demo", "program_a")], &[PATIENT_TYPE]),
+                &[PATIENT_TYPE],
+            ),
+        )
+        .unwrap();
+
+        // After the install: the key reads back its program, every entry is
+        // the plugin's, and a re-install at the same version blanks nothing.
+        let preview = preview_form_plugins(&connection, &[demo_sidecar()]).unwrap();
+        let plugin = &preview.form_plugins[0];
+        assert_eq!(
+            plugin.program_keys[0]
+                .bound_program
+                .as_ref()
+                .map(|p| p.id.as_str()),
+            Some("program_a")
+        );
+        assert!(
+            plugin
+                .document_types
+                .iter()
+                .all(|t| t.existing_entry == ExistingEntry::Owned && !t.blanks_old_ui),
+            "{:?}",
+            plugin.document_types
+        );
+    }
+
+    /// A type another plugin owns is named with its owner, not refused: the
+    /// screen shows it before the install does the refusing.
+    #[actix_rt::test]
+    async fn preview_names_the_plugin_owning_a_type() {
+        let connection = setup("form_plugin_preview_owned").await;
+        install_form_plugins(
+            &connection,
+            &[demo_sidecar()],
+            &options(&[("demo", "program_a")], &[]),
+        )
+        .unwrap();
+
+        let rival = FormPluginSidecar {
+            plugin_code: "rival".to_string(),
+            program_keys: vec!["hiv".to_string()],
+            document_types: vec![declaration(
+                "DemoEncounter",
+                DocumentRegistryCategory::Encounter,
+                Some("hiv"),
+                1,
+            )],
+        };
+        let preview = preview_form_plugins(&connection, &[rival]).unwrap();
+        let plugin = &preview.form_plugins[0];
+        assert_eq!(
+            plugin.document_types[0].existing_entry,
+            ExistingEntry::OwnedByAnotherPlugin {
+                owner: PLUGIN.to_string()
+            }
+        );
+        assert!(!plugin.document_types[0].blanks_old_ui);
+        assert_eq!(plugin.program_keys[0].bound_program, None);
+    }
+
+    /// A type that carries the deployment's UI schema, or a take-over that
+    /// keeps the entry on the version it is already on, blanks nothing.
+    #[actix_rt::test]
+    async fn preview_blanks_old_ui_only_when_the_install_would() {
+        let connection = setup("form_plugin_preview_blank").await;
+        insert_unowned_entry(
+            &connection,
+            "existing_patient_entry",
+            PATIENT_TYPE,
+            DocumentRegistryCategory::Patient,
+            PATIENT_CONTEXT_ID,
+        );
+
+        // With a legacy UI schema declared, the old client keeps a form.
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types[0].legacy_ui_schema =
+            Some(json!({ "type": "VerticalLayout", "elements": [] }));
+        let preview = preview_form_plugins(&connection, &[sidecar]).unwrap();
+        assert!(!preview.form_plugins[0].document_types[0].blanks_old_ui);
+
+        // Declared at the deployment's own version, the entry does not move.
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types[0].versions = vec![SchemaVersion {
+            id: "existing_patient_entry_schema".to_string(),
+            json_schema: json!({}),
+            deployed: true,
+        }];
+        let preview = preview_form_plugins(&connection, &[sidecar]).unwrap();
+        assert!(!preview.form_plugins[0].document_types[0].blanks_old_ui);
+        assert_eq!(
+            preview.form_plugins[0].document_types[0].existing_entry,
+            ExistingEntry::Unowned {
+                id: "existing_patient_entry".to_string()
+            }
         );
     }
 }

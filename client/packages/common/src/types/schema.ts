@@ -3471,6 +3471,20 @@ export type ExistingLinesInput = {
   returnId: Scalars['String']['input'];
 };
 
+/** How this server's registry stands for a document type the bundle declares. */
+export enum ExistingRegistryEntryNode {
+  /** Several entries for the type: install is refused. */
+  Ambiguous = 'AMBIGUOUS',
+  /** No entry: install creates one. */
+  None = 'NONE',
+  /** The plugin's own entry, from an earlier install. */
+  Owned = 'OWNED',
+  /** Another plugin's entry (`existingEntryOwner`): install is refused. */
+  OwnedByAnotherPlugin = 'OWNED_BY_ANOTHER_PLUGIN',
+  /** An entry no plugin installed: install needs the type named in `takeOver`. */
+  Unowned = 'UNOWNED',
+}
+
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String']['output'];
@@ -3539,6 +3553,63 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
     description: Scalars['String']['output'];
     key: ForeignKey;
   };
+
+/**
+ * What installing the uploaded bundle's form plugins would meet on this
+ * server, for the choices `installUploadedPlugin` takes: the program for
+ * each key, the types to take over, and the types whose old-client form may
+ * go blank.
+ */
+export type FormInstallPreviewNode = {
+  __typename: 'FormInstallPreviewNode';
+  formPlugins: Array<FormPluginPreviewNode>;
+  /** The programs on this server, one to choose for each program key. */
+  programs: Array<ProgramNode>;
+};
+
+/** One document type a form plugin declares, checked against this server. */
+export type FormPluginDocumentTypeNode = {
+  __typename: 'FormPluginDocumentTypeNode';
+  /**
+   * True when installing would leave the type's form blank on sites still
+   * running the old client, which install refuses unless the type is named
+   * in `blankOldUi`.
+   */
+  blanksOldUi: Scalars['Boolean']['output'];
+  category: DocumentRegistryCategoryNode;
+  documentType: Scalars['String']['output'];
+  existingEntry: ExistingRegistryEntryNode;
+  /** The unowned entry's id, for `UNOWNED`. */
+  existingEntryId?: Maybe<Scalars['String']['output']>;
+  /** The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`. */
+  existingEntryOwner?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  /** `None` for the Patient type, whose context is fixed. */
+  programKey?: Maybe<Scalars['String']['output']>;
+};
+
+export type FormPluginPreviewNode = {
+  __typename: 'FormPluginPreviewNode';
+  documentTypes: Array<FormPluginDocumentTypeNode>;
+  pluginCode: Scalars['String']['output'];
+  programKeys: Array<FormPluginProgramKeyNode>;
+};
+
+/**
+ * One of a form plugin's program keys, with the program an earlier install
+ * bound it to.
+ */
+export type FormPluginProgramKeyNode = {
+  __typename: 'FormPluginProgramKeyNode';
+  /**
+   * The program the key is already bound to; `None` on a first install,
+   * when `programs` must choose one.
+   */
+  boundProgram?: Maybe<ProgramNode>;
+  /** The declared document types that name this key. */
+  documentTypes: Array<Scalars['String']['output']>;
+  programKey: Scalars['String']['output'];
+};
 
 export type FormSchemaConnector = {
   __typename: 'FormSchemaConnector';
@@ -7882,6 +7953,14 @@ export type PluginDataSortInput = {
 
 export type PluginInfoNode = {
   __typename: 'PluginInfoNode';
+  /**
+   * How the bundle's form plugins stand against this server, read before
+   * installing: each program key's current program, each document type's
+   * existing registry entry and whether installing it would blank the old
+   * client's form, and the programs to choose from. Null on an install's
+   * result.
+   */
+  formInstallPreview?: Maybe<FormInstallPreviewNode>;
   pluginInfo: Scalars['JSON']['output'];
 };
 

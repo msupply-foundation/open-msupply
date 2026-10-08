@@ -25,7 +25,8 @@ use crate::{
     settings::Settings,
 };
 use form_plugin::{
-    FormInstallOptions, FormPluginInstallError, InstalledDocumentType, install_form_plugins,
+    FormInstallOptions, FormInstallPreview, FormPluginInstallError, InstalledDocumentType,
+    install_form_plugins, preview_form_plugins,
 };
 
 pub(crate) const SIGNATURE_TAG: &str = "SIGNATURE";
@@ -62,6 +63,21 @@ pub enum InstallUploadedPluginError {
 pub struct InstalledPluginBundle {
     pub bundle: PluginBundle,
     pub document_types: Vec<InstalledDocumentType>,
+}
+
+/// An uploaded bundle read before installing: its rows, and how its form
+/// plugins stand against this server, for the choices an install needs.
+pub struct UploadedPluginInfo {
+    pub bundle: PluginBundle,
+    pub form_install_preview: FormInstallPreview,
+}
+
+#[derive(Error, Debug)]
+pub enum GetUploadedPluginInfoError {
+    #[error(transparent)]
+    UploadedFileJsonError(#[from] UploadedFileJsonError),
+    #[error(transparent)]
+    DatabaseError(#[from] RepositoryError),
 }
 
 #[derive(Error, Debug)]
@@ -306,10 +322,16 @@ pub trait PluginServiceTrait: Sync + Send {
 
     fn get_uploaded_plugin_info(
         &self,
+        ctx: &ServiceContext,
         settings: &Settings,
         uploaded_file: UploadedFile,
-    ) -> Result<PluginBundle, UploadedFileJsonError> {
-        uploaded_file.as_json_file(settings)
+    ) -> Result<UploadedPluginInfo, GetUploadedPluginInfoError> {
+        let bundle: PluginBundle = uploaded_file.as_json_file(settings)?;
+        let form_install_preview = preview_form_plugins(&ctx.connection, &bundle.form_plugins)?;
+        Ok(UploadedPluginInfo {
+            bundle,
+            form_install_preview,
+        })
     }
 
     fn reload_all_plugins(&self, ctx: &ServiceContext) -> Result<(), RepositoryError> {

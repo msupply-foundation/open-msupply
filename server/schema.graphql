@@ -2892,6 +2892,32 @@ input ExistingLinesInput {
 	returnId: String!
 }
 
+"""
+How this server's registry stands for a document type the bundle declares.
+"""
+enum ExistingRegistryEntryNode {
+	"""
+	No entry: install creates one.
+	"""
+	NONE
+	"""
+	The plugin's own entry, from an earlier install.
+	"""
+	OWNED
+	"""
+	An entry no plugin installed: install needs the type named in `takeOver`.
+	"""
+	UNOWNED
+	"""
+	Another plugin's entry (`existingEntryOwner`): install is refused.
+	"""
+	OWNED_BY_ANOTHER_PLUGIN
+	"""
+	Several entries for the type: install is refused.
+	"""
+	AMBIGUOUS
+}
+
 type FailedToFetchReportData implements PrintReportErrorInterface {
 	description: String!
 	errors: JSON!
@@ -2929,6 +2955,71 @@ enum ForeignKey {
 type ForeignKeyError implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteResponseRequisitionLineErrorInterface & SetPrescribedQuantityErrorInterface & RefreshAncillaryItemsErrorInterface & InsertResponseRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & InsertPurchaseOrderLineErrorInterface {
 	description: String!
 	key: ForeignKey!
+}
+
+"""
+What installing the uploaded bundle's form plugins would meet on this
+server, for the choices `installUploadedPlugin` takes: the program for
+each key, the types to take over, and the types whose old-client form may
+go blank.
+"""
+type FormInstallPreviewNode {
+	formPlugins: [FormPluginPreviewNode!]!
+	"""
+	The programs on this server, one to choose for each program key.
+	"""
+	programs: [ProgramNode!]!
+}
+
+"""
+One document type a form plugin declares, checked against this server.
+"""
+type FormPluginDocumentTypeNode {
+	documentType: String!
+	name: String!
+	category: DocumentRegistryCategoryNode!
+	"""
+	`None` for the Patient type, whose context is fixed.
+	"""
+	programKey: String
+	existingEntry: ExistingRegistryEntryNode!
+	"""
+	The unowned entry's id, for `UNOWNED`.
+	"""
+	existingEntryId: String
+	"""
+	The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`.
+	"""
+	existingEntryOwner: String
+	"""
+	True when installing would leave the type's form blank on sites still
+	running the old client, which install refuses unless the type is named
+	in `blankOldUi`.
+	"""
+	blanksOldUi: Boolean!
+}
+
+type FormPluginPreviewNode {
+	pluginCode: String!
+	programKeys: [FormPluginProgramKeyNode!]!
+	documentTypes: [FormPluginDocumentTypeNode!]!
+}
+
+"""
+One of a form plugin's program keys, with the program an earlier install
+bound it to.
+"""
+type FormPluginProgramKeyNode {
+	programKey: String!
+	"""
+	The declared document types that name this key.
+	"""
+	documentTypes: [String!]!
+	"""
+	The program the key is already bound to; `None` on a first install,
+	when `programs` must choose one.
+	"""
+	boundProgram: ProgramNode
 }
 
 type FormSchemaConnector {
@@ -6288,6 +6379,14 @@ input PluginDataSortInput {
 
 type PluginInfoNode {
 	pluginInfo: JSON!
+	"""
+	How the bundle's form plugins stand against this server, read before
+	installing: each program key's current program, each document type's
+	existing registry entry and whether installing it would blank the old
+	client's form, and the programs to choose from. Null on an install's
+	result.
+	"""
+	formInstallPreview: FormInstallPreviewNode
 }
 
 """
