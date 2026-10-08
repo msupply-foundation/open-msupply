@@ -375,7 +375,7 @@ const FormPluginChoices = (props: {
           )}
         </For>
         <Show when={options().length === 0}>
-          <Alert severity="warning">
+          <Alert severity="warning" testId="upload-plugin-no-programs">
             {t('messages.no-programs-on-server')}
           </Alert>
         </Show>
