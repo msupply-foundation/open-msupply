@@ -26,8 +26,64 @@ export const ManagedPlugins = {
   query: "query ManagedPlugins {\n  centralServer {\n    plugin {\n      installedPlugins {\n        totalCount\n        nodes {\n          id\n          code\n          version\n          kind\n          types\n          hostRuntime\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<ManagedPluginsResult, ManagedPluginsVariables>;
 
+export type UploadedPluginInfoVariables = {
+  fileId: string;
+};
+
+export type UploadedPluginInfoResult = {
+  centralServer: {
+  plugin: {
+  uploadedPluginInfo: ({
+  __typename: "PluginInfoNode";
+} & {
+  formInstallPreview: {
+  formPlugins: Array<{
+  pluginCode: string;
+  programKeys: Array<{
+  programKey: string;
+  documentTypes: Array<string>;
+  boundProgram: {
+  id: string;
+  name: string;
+} | null;
+}>;
+  documentTypes: Array<{
+  documentType: string;
+  name: string;
+  category: "PATIENT" | "PROGRAM_ENROLMENT" | "ENCOUNTER" | "CONTACT_TRACE" | "CUSTOM";
+  programKey: string | null;
+  existingEntry: "NONE" | "OWNED" | "UNOWNED" | "OWNED_BY_ANOTHER_PLUGIN" | "AMBIGUOUS";
+  existingEntryId: string | null;
+  existingEntryOwner: string | null;
+  blanksOldUi: boolean;
+}>;
+}>;
+  programs: Array<{
+  id: string;
+  name: string;
+}>;
+} | null;
+}) | ({
+  __typename: "UploadedPluginError";
+} & {
+  error: "CANNOT_PARSE_FILE";
+});
+};
+};
+};
+
+export const UploadedPluginInfo = {
+  query: "query UploadedPluginInfo($fileId: String!) {\n  centralServer {\n    plugin {\n      uploadedPluginInfo(fileId: $fileId) {\n        __typename\n        ... on PluginInfoNode {\n          formInstallPreview {\n            formPlugins {\n              pluginCode\n              programKeys {\n                programKey\n                documentTypes\n                boundProgram {\n                  id\n                  name\n                }\n              }\n              documentTypes {\n                documentType\n                name\n                category\n                programKey\n                existingEntry\n                existingEntryId\n                existingEntryOwner\n                blanksOldUi\n              }\n            }\n            programs {\n              id\n              name\n            }\n          }\n        }\n        ... on UploadedPluginError {\n          error\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<UploadedPluginInfoResult, UploadedPluginInfoVariables>;
+
 export type InstallUploadedPluginVariables = {
   fileId: string;
+  programs?: Array<{
+    programKey: string;
+    programId: string;
+  }> | null;
+  takeOver?: Array<string> | null;
+  blankOldUi?: Array<string> | null;
 };
 
 export type InstallUploadedPluginResult = {
@@ -41,7 +97,7 @@ export type InstallUploadedPluginResult = {
 };
 
 export const InstallUploadedPlugin = {
-  query: "mutation InstallUploadedPlugin($fileId: String!) {\n  centralServer {\n    plugins {\n      installUploadedPlugin(fileId: $fileId) {\n        pluginInfo\n      }\n    }\n  }\n}",
+  query: "mutation InstallUploadedPlugin($fileId: String!, $programs: [PluginProgramInput!], $takeOver: [String!], $blankOldUi: [String!]) {\n  centralServer {\n    plugins {\n      installUploadedPlugin(\n        fileId: $fileId\n        programs: $programs\n        takeOver: $takeOver\n        blankOldUi: $blankOldUi\n      ) {\n        pluginInfo\n      }\n    }\n  }\n}",
 } as TypedDocument<InstallUploadedPluginResult, InstallUploadedPluginVariables>;
 
 export type UninstallPluginVariables = {
