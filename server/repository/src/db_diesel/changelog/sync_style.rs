@@ -442,10 +442,13 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: false,
             },
+            // Legacy central sends its entries to v5/v6 sites itself. The v6 tag
+            // carries the ones open mSupply central writes (form plugin install)
+            // to those sites; tagging both would take it out of the v6 pull.
             DocumentRegistry => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
-                transport: V5,
+                transport: V6,
                 multi_device_site: false,
             },
             IndicatorColumn => SyncStyle {

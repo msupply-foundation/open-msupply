@@ -10,7 +10,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{FkField, PullTranslateResult, SyncTranslation};
+use super::{FkChecker, FkField, PullTranslateResult, SyncTranslation};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -63,7 +63,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        fk_checker: &crate::sync::translations::FkChecker,
+        fk_checker: &FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyDocumentRegistryRow {
@@ -76,23 +76,6 @@ impl SyncTranslation for DocumentRegistryTranslation {
             config,
         } = sync_record.deserialize()?;
 
-        let fk_check = fk_checker.with_table(connection, "document_registry", &id);
-        let check_fk = fk_checker.with_table_required(connection, "document_registry", &id);
-
-        // A schema this site does not hold is cleared by the check. The entry
-        // keeps the schema it has rather than losing it: an entry with no
-        // schema opens no form, and the row replaces the whole local one.
-        let form_schema_id = match fk_check(
-            form_schema_id.clone(),
-            "form_schema_id",
-            FkField::FormSchema,
-        )? {
-            None if form_schema_id.is_some() => DocumentRegistryRowRepository::new(connection)
-                .find_one_by_id(&id)?
-                .and_then(|row| row.form_schema_id),
-            checked => checked,
-        };
-
         let config_str = match config {
             Some(config) => Some(serde_json::to_string(&config)?),
             None => None,
@@ -101,7 +84,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
         let result = DocumentRegistryRow {
             id,
             document_type,
-            context_id: check_fk(context_id, "context_id", FkField::Context)?,
+            context_id,
             category: match category {
                 LegacyDocumentCategory::Patient => DocumentRegistryCategory::Patient,
                 LegacyDocumentCategory::ProgramEnrolment => {
@@ -125,8 +108,44 @@ impl SyncTranslation for DocumentRegistryTranslation {
             program_key: None,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(check_foreign_keys(
+            connection, fk_checker, result,
+        )?))
     }
+}
+
+/// Checks an incoming entry's foreign keys, for the entries legacy central
+/// sends and for those open mSupply central sends over v6.
+///
+/// A schema this site does not hold is cleared by the check. The entry keeps
+/// the schema it has rather than losing it: an entry with no schema opens no
+/// form, and the row replaces the whole local one. A context the site does not
+/// hold fails the row, since an entry cannot exist without its program.
+pub(super) fn check_foreign_keys(
+    connection: &StorageConnection,
+    fk_checker: &FkChecker,
+    row: DocumentRegistryRow,
+) -> Result<DocumentRegistryRow, anyhow::Error> {
+    let fk_check = fk_checker.with_table(connection, "document_registry", &row.id);
+    let check_fk = fk_checker.with_table_required(connection, "document_registry", &row.id);
+
+    let form_schema_id = match fk_check(
+        row.form_schema_id.clone(),
+        "form_schema_id",
+        FkField::FormSchema,
+    )? {
+        None if row.form_schema_id.is_some() => DocumentRegistryRowRepository::new(connection)
+            .find_one_by_id(&row.id)?
+            .and_then(|existing| existing.form_schema_id),
+        checked => checked,
+    };
+    let context_id = check_fk(row.context_id, "context_id", FkField::Context)?;
+
+    Ok(DocumentRegistryRow {
+        form_schema_id,
+        context_id,
+        ..row
+    })
 }
 
 #[cfg(test)]

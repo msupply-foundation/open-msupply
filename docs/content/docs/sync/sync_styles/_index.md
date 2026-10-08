@@ -145,7 +145,6 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `Currency` | Central | Central | v5 | Yes |
 | `DemographicIndicator` | Central | Central | v5 | — |
 | `Diagnosis` | Central | Central | v5 | — |
-| `DocumentRegistry` | Central | Central | v5 | — |
 | `IndicatorColumn` | Central | Central | v5 | — |
 | `IndicatorLine` | Central | Central | v5 | — |
 | `InsuranceProvider` | Central | Central | v5 | — |
@@ -187,6 +186,7 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `BundledItem` | Central | Central | v6 | — |
 | `Campaign` | Central | Central | v6 | — |
 | `Demographic` | Central | Central | v6 | — |
+| `DocumentRegistry` | Central | Central | v6 | — |
 | `FormSchema` | Central | Central | v6 | Yes |
 | `FrontendPlugin` | Central | Central | v6 | Yes |
 | `HelpDocument` | Central | Central | v6 | Yes |
@@ -330,6 +330,7 @@ Notable special cases:
 | Vaccine-course family (`VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`) | Central-authored on OMS, but a parallel set of legacy translators re-publishes them to legacy 4D when running on OMS central, so v5-only stores still receive them. |
 | `Encounter` | Remote + Patient on v6. It has no main OMS translator of its own — the only translator is a companion legacy translator that re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
 | `Vaccination` | Remote + Patient on v6. Its main translator opts in to OMS push/pull. A companion legacy translator re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
+| `DocumentRegistry` | Written by both centrals. Legacy 4D sends its entries to v5 sites under its own table name and shape. The entries OMS central writes (installing a form plugin does) reach v6 sites through a second translator that opts in to the OMS-central pull and nothing else, so no entry is ever pushed, to legacy 4D or by a site. v7 sites get every entry as the bare row. |
 | `Document` | Legacy, Patient-only — the changelog row carries no store, so routing is purely by Patient. |
 | `Name`, `Item`, `Clinician` merges | Legacy-format `Merge` records continue to flow up to legacy 4D and down to v5 remote sites as before; the merge translator rewrites the local link tables in-line, so central stays consistent regardless of any post-sync processing. **Additionally**, when the translator runs on OMS central it also emits a `SyncMessage` of the matching merge type (with no destination store, so it broadcasts) so v7 remotes — which never receive the legacy `Merge` record — can replay the same link rewrite via a post-sync processor. The processor is a no-op on central, since the translator already did the work. |
 | `MasterList` | Central/Central, but the translator declares no changelog mapping, so nothing pushes on any transport — it only ever flows down from legacy 4D. |
