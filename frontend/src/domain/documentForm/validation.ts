@@ -85,6 +85,8 @@ const messageFor = (e: ErrorObject): string => {
     }
     case 'enum':
       return t('error.document-invalid-option');
+    case 'pattern':
+      return t('error.document-invalid-format');
     case 'type':
       return e.params['type'] === 'number' || e.params['type'] === 'integer'
         ? t('error.document-invalid-number')

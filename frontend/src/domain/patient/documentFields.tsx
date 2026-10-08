@@ -14,8 +14,9 @@
  * persistence paths).
  *
  * Address and phone live in the first contact block (`contactDetails[0]`),
- * the one the server projects onto the patient record. A form-library path
- * stops at an array, so these components are how a form reaches them.
+ * the one the server projects onto the patient record. A form reaches its
+ * other fields with the form library on their first-item paths
+ * (`contactDetails.0.region`).
  */
 import type { JSX } from 'solid-js';
 import { t } from '../../intl';
@@ -42,6 +43,17 @@ export interface PatientFieldProps<T extends Patient = Patient> {
   disabled?: boolean;
 }
 
+/**
+ * A patient field with one label, which a plugin may word its own way (a
+ * deployment's "2ème nom" for the last name); the host's label when absent.
+ */
+export interface LabelledPatientFieldProps<
+  T extends Patient = Patient,
+> extends PatientFieldProps<T> {
+  /** The field's label, already translated. */
+  label?: string;
+}
+
 // Every field reads the base Patient's paths, which any plugin's Patient type
 // has because it extends the base.
 const base = <T extends Patient>(draft: Draft<T>) =>
@@ -57,11 +69,12 @@ const required = (draft: Draft<Patient>, path: 'code' | 'code2') =>
 
 /** The patient code, with the host's generator beside it. */
 export const PatientCodeField = <T extends Patient>(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
   return (
     <PatientCodeControl
+      label={props.label}
       storeId={currentStoreId() ?? ''}
       patientId={d().data.id}
       value={d().data.code ?? ''}
@@ -75,12 +88,12 @@ export const PatientCodeField = <T extends Patient>(
 
 /** The secondary patient code. */
 export const PatientCode2Field = <T extends Patient>(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
   return (
     <TextField
-      label={t('label.code2')}
+      label={props.label ?? t('label.code2')}
       value={d().data.code2 ?? ''}
       onInput={e => d().set('code2', e.currentTarget.value || undefined)}
       required={required(d(), 'code2')}
@@ -92,12 +105,12 @@ export const PatientCode2Field = <T extends Patient>(
 
 /** First name, which the base Patient requires. */
 export const PatientFirstNameField = <T extends Patient>(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
   return (
     <TextField
-      label={t('label.first-name')}
+      label={props.label ?? t('label.first-name')}
       value={d().data.firstName ?? ''}
       // The base type requires the property, so a cleared box keeps it, empty.
       onInput={e => d().set('firstName', e.currentTarget.value)}
@@ -110,12 +123,12 @@ export const PatientFirstNameField = <T extends Patient>(
 
 /** Last name, which the base Patient requires. */
 export const PatientLastNameField = <T extends Patient>(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
   return (
     <TextField
-      label={t('label.last-name')}
+      label={props.label ?? t('label.last-name')}
       value={d().data.lastName ?? ''}
       onInput={e => d().set('lastName', e.currentTarget.value)}
       required
@@ -131,11 +144,12 @@ export const PatientLastNameField = <T extends Patient>(
  * entered directly clears the mark.
  */
 export const PatientDateOfBirthField = <T extends Patient>(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
   return (
     <DateOfBirthControl
+      label={props.label}
       patientId={d().data.id}
       value={d().data.dateOfBirth ?? null}
       estimated={d().data.dateOfBirthIsEstimated === true}
@@ -151,11 +165,12 @@ export const PatientDateOfBirthField = <T extends Patient>(
 
 /** Gender, from the store's configured subset. */
 export const PatientGenderField = <T extends Patient>(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
   return (
     <GenderControl
+      label={props.label}
       value={d().data.gender ?? null}
       onChange={gender => d().set('gender', gender ?? undefined)}
       error={d().errorFor('gender')}
@@ -189,35 +204,36 @@ const ContactTextField = (props: {
 
 /** The address, in the first contact block. */
 export const PatientAddressField = <T extends Patient>(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ): JSX.Element => (
   <ContactTextField
     draft={base(props.draft)}
     field="address1"
-    label={t('label.address')}
+    label={props.label ?? t('label.address')}
     disabled={disabled(props)}
   />
 );
 
 /** The phone number, in the first contact block. */
 export const PatientPhoneField = <T extends Patient>(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ): JSX.Element => (
   <ContactTextField
     draft={base(props.draft)}
     field="phone"
-    label={t('label.phone')}
+    label={props.label ?? t('label.phone')}
     disabled={disabled(props)}
   />
 );
 
 /** The next of kin, picked from the store's patients. */
 export const PatientNextOfKinField = <T extends Patient>(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
   const d = () => base(props.draft);
   return (
     <NextOfKinControl
+      label={props.label}
       storeId={currentStoreId() ?? ''}
       id={d().data.nextOfKin?.id ?? null}
       name={d().data.nextOfKin?.name ?? ''}

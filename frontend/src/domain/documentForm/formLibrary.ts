@@ -17,6 +17,7 @@ export {
   DateInput,
   DateTimeInput,
   SelectInput,
+  AutocompleteInput,
   CheckboxInput,
   FieldGroup,
 } from './fields';

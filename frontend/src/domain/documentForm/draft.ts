@@ -49,6 +49,20 @@ export interface Draft<T> {
   readOnly(): boolean;
 }
 
+/**
+ * What the host's own fields read from a draft beyond `Draft`: the schema
+ * rule a field's value fails, so a field can word that failure its own way (a
+ * text field's example under a pattern failure). Not part of the SDK surface.
+ */
+export interface HostDraft<T> extends Draft<T> {
+  /**
+   * The rule the value at `path` fails: the AJV keyword (`pattern`, `format`,
+   * `required` …), `unresolved` for a value a migration left, undefined for
+   * none or a failure the caller found itself.
+   */
+  failedRule(path: Path<T>): string | undefined;
+}
+
 export interface DraftSchema {
   /** The form-schema id: the validator cache key and the save's schemaId. */
   id: string;
@@ -56,7 +70,7 @@ export interface DraftSchema {
 }
 
 export interface DraftController<T> {
-  draft: Draft<T>;
+  draft: HostDraft<T>;
   /**
    * Replaces the document, making the form pristine. `unresolved` carries
    * the values a migration cleared, by the path they were cleared from.
@@ -139,11 +153,11 @@ export const createDraft = <T extends object>(
   const labelFor = (path: string) =>
     options.labels?.()[path] ?? pathLabel(path);
 
-  const errors = createMemo((): FieldError[] => {
+  const errors = createMemo((): (FieldError & { rule?: string })[] => {
     version();
     if (options.validates?.() === false) return [];
     const validate = options.validate();
-    const found: FieldError[] = [];
+    const found: (FieldError & { rule?: string })[] = [];
     const schemas = [options.schema(), options.baseSchema?.()];
     for (const schema of schemas) {
       if (!schema || !validate) continue;
@@ -158,6 +172,7 @@ export const createDraft = <T extends object>(
           // save attempt and then reads as the generic required message; a
           // wrong value shows the moment it is entered.
           message: e.keyword === 'required' ? undefined : e.message,
+          rule: e.keyword,
         });
       }
     }
@@ -171,6 +186,7 @@ export const createDraft = <T extends object>(
         message: t('error.document-previously-recorded', {
           value: old.label?.() ?? displayValue(old.value),
         }),
+        rule: 'unresolved',
       });
     }
     for (const extra of options.extraErrors?.() ?? []) {
@@ -187,7 +203,7 @@ export const createDraft = <T extends object>(
     return !deepEqual(normalise(unwrap(store)), normalise(seed()));
   });
 
-  const draft: Draft<T> = {
+  const draft: HostDraft<T> = {
     get data() {
       return store as T;
     },
@@ -211,6 +227,7 @@ export const createDraft = <T extends object>(
       };
     },
     errorFor: path => validation.errorFor(path),
+    failedRule: path => errors().find(e => e.id === path)?.rule,
     unresolved: path => unresolvedValues()[path]?.value,
     readOnly: () => options.readOnly?.() ?? false,
   };

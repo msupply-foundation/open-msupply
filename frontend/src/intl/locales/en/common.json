@@ -432,6 +432,8 @@
   "error.document-category-not-supported": "Saving a {{category}} document is not supported here.",
   "error.document-invalid-date": "Enter a valid date.",
   "error.document-invalid-date-time": "Enter a valid date and time.",
+  "error.document-invalid-format": "Incorrect format.",
+  "error.document-invalid-format-example": "Incorrect format. Use: \"{{example}}\"",
   "error.document-invalid-number": "Enter a number.",
   "error.document-invalid-option": "Choose one of the listed options.",
   "error.document-invalid-value": "This value is not valid.",

@@ -454,6 +454,7 @@ export {
   DateInput,
   DateTimeInput,
   SelectInput,
+  AutocompleteInput,
   CheckboxInput,
   FieldGroup,
 } from './lazyComponents';
@@ -471,7 +472,10 @@ export {
   PatientNextOfKinField,
   PatientDeceasedFields,
 } from './lazyComponents';
-export type { PatientFieldProps } from '../domain/patient/documentFields';
+export type {
+  LabelledPatientFieldProps,
+  PatientFieldProps,
+} from '../domain/patient/documentFields';
 export type { Draft } from '../domain/documentForm/draft';
 export type {
   Path,
@@ -501,6 +505,8 @@ export type {
   DateInputProps,
   DateTimeInputProps,
   SelectInputProps,
+  AutocompleteInputProps,
+  AutocompleteOption,
   CheckboxInputProps,
   FieldGroupProps,
 } from '../domain/documentForm/fields';

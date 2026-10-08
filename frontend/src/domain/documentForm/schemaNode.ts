@@ -87,6 +87,15 @@ export const fieldSchemaInfo = (
   let node: JsonSchema = root;
   let required = false;
   for (const key of keys) {
+    // An array's item (`contactDetails.0`): its facts are the `items`
+    // schema's, and an item is never required within its array.
+    if (/^\d+$/.test(key)) {
+      const items = asSchema(resolveRef(root, node)['items']);
+      if (!items) return undefined;
+      required = false;
+      node = items;
+      continue;
+    }
     const { properties, required: req } = flatten(root, node);
     const next = properties[key];
     if (!next) return undefined;

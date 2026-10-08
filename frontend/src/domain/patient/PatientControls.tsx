@@ -47,6 +47,8 @@ export interface PatientCodeControlProps {
   patientId?: string;
   value: string;
   onChange: (code: string) => void;
+  /** The field's label, already translated; the host's own when absent. */
+  label?: string;
   required?: boolean;
   error?: string;
   disabled?: boolean;
@@ -93,7 +95,7 @@ export const PatientCodeControl = (
     <>
       <FormRow>
         <TextField
-          label={t('label.code')}
+          label={props.label ?? t('label.code')}
           required={props.required}
           error={props.error}
           value={props.value}
@@ -137,6 +139,11 @@ export interface DateOfBirthControlProps {
   estimated?: boolean;
   /** `fromAge` is true when the date was back-filled from a typed age. */
   onChange: (dob: string | null, fromAge: boolean) => void;
+  /**
+   * The date of birth's label, already translated; the host's own when
+   * absent. The age beside it keeps the host's.
+   */
+  label?: string;
   required?: boolean;
   error?: string;
   disabled?: boolean;
@@ -185,7 +192,7 @@ export const DateOfBirthControl = (
   return (
     <FormRow>
       <DateField
-        label={t('label.date-of-birth')}
+        label={props.label ?? t('label.date-of-birth')}
         max={today}
         value={props.value}
         required={props.required}
@@ -240,6 +247,8 @@ export const DateOfBirthControl = (
 export interface GenderControlProps {
   value: Gender | null;
   onChange: (gender: Gender | null) => void;
+  /** The field's label, already translated; the host's own when absent. */
+  label?: string;
   error?: string;
   disabled?: boolean;
 }
@@ -247,7 +256,7 @@ export interface GenderControlProps {
 /** Gender, from the store's configured subset (spec/patients § gender). */
 export const GenderControl = (props: GenderControlProps): JSX.Element => (
   <Combobox<GenderOption>
-    label={t('label.gender')}
+    label={props.label ?? t('label.gender')}
     items={genderOptions()}
     itemToString={o => o.label}
     itemToValue={o => o.value}
@@ -268,13 +277,15 @@ export interface NextOfKinControlProps {
   id: string | null;
   name: string;
   onChange: (id: string | null, name: string) => void;
+  /** The field's label, already translated; the host's own when absent. */
+  label?: string;
   disabled?: boolean;
 }
 
 /** The next of kin, picked from the store's patients. */
 export const NextOfKinControl = (props: NextOfKinControlProps): JSX.Element => (
   <PatientSearch
-    label={t('label.next-of-kin')}
+    label={props.label ?? t('label.next-of-kin')}
     storeId={props.storeId}
     disabled={props.disabled}
     selected={props.id ? minimalPatientOption(props.id, props.name) : undefined}

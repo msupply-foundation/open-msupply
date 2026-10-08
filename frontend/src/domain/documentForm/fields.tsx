@@ -21,9 +21,11 @@ import { DateField } from '../../ui/elements/inputs/DateField';
 import { DateTimeField } from '../../ui/elements/inputs/DateTimeField';
 import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { Select } from '../../ui/elements/selectors/Select';
+import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { FormSection } from '../../ui/layout/Form/FormSection';
 import { utcToLocalDay } from '../../ui/elements/inputs/dateTimeConvert';
-import type { Draft } from './draft';
+import { t } from '../../intl';
+import type { Draft, HostDraft } from './draft';
 import type {
   BooleanPath,
   EnumPath,
@@ -54,6 +56,7 @@ interface UntypedDraft {
   set(path: string, value: unknown): void;
   schemaFor: Draft<object>['schemaFor'];
   errorFor(path: string): string | undefined;
+  failedRule: HostDraft<object>['failedRule'];
   readOnly(): boolean;
 }
 const untyped = <T,>(draft: Draft<T>) => draft as unknown as UntypedDraft;
@@ -67,7 +70,26 @@ const required = (d: UntypedDraft, path: string) =>
 export interface TextInputProps<T, P extends TextPath<T>> extends FieldProps {
   draft: Draft<T>;
   path: P;
+  /**
+   * A value in the expected form (`112334`), shown in the message when the
+   * value fails the schema's `pattern`, as a deployment's JSON Forms
+   * `examples` were: "Incorrect format. Use: "112334"".
+   */
+  example?: string;
 }
+
+/**
+ * The message a text field shows: a pattern failure names the field's
+ * example where it has one; any other message is the draft's.
+ */
+export const textFieldError = (
+  message: string | undefined,
+  rule: string | undefined,
+  example: string | undefined
+): string | undefined =>
+  message !== undefined && rule === 'pattern' && example !== undefined
+    ? t('error.document-invalid-format-example', { example })
+    : message;
 
 /** A single line of free text. Cleared, the property is removed. */
 export const TextInput = <T, P extends TextPath<T>>(
@@ -81,7 +103,11 @@ export const TextInput = <T, P extends TextPath<T>>(
       value={(d().get(props.path) as string | undefined) ?? ''}
       onInput={e => d().set(props.path, e.currentTarget.value || undefined)}
       required={required(d(), props.path)}
-      error={d().errorFor(props.path)}
+      error={textFieldError(
+        d().errorFor(props.path),
+        d().failedRule(props.path as never),
+        props.example
+      )}
       disabled={isDisabled(d(), props)}
       data-testid={props.testId}
     />
@@ -318,6 +344,74 @@ export const SelectInput = <T, P extends EnumPath<T>>(
       error={d().errorFor(props.path)}
       disabled={isDisabled(d(), props)}
       testId={props.testId}
+    />
+  );
+};
+
+export interface AutocompleteOption {
+  /** What is stored at the path. */
+  value: string;
+  /** What the user sees and types against, already translated. */
+  label: string;
+}
+
+export interface AutocompleteInputProps<
+  T,
+  P extends TextPath<T>,
+> extends FieldProps {
+  draft: Draft<T>;
+  path: P;
+  /**
+   * The values offered, in the order shown, each with its label. The schema
+   * holds the field as free text, so the list is the form's own and the
+   * compiler cannot check it against the type, as it does a SelectInput's.
+   */
+  options: readonly AutocompleteOption[];
+}
+
+/**
+ * The option a stored value shows as: its own from the list, or, for a value
+ * the list leaves out, the value itself, so a record keeps showing what it
+ * holds.
+ */
+export const autocompleteSelection = (
+  options: readonly AutocompleteOption[],
+  value: string | undefined
+): AutocompleteOption | undefined =>
+  value === undefined
+    ? undefined
+    : (options.find(o => o.value === value) ?? { value, label: value });
+
+/*
+ * One value from a preset list, at a free-text path: the list is the form's,
+ * where the schema allows any text, as a deployment's JSON Forms Autocomplete
+ * narrowed it. Typing filters the list, and nothing outside it can be
+ * entered. A stored value the list leaves out (one an earlier list offered)
+ * shows as stored on the record that holds it, and stays until another is
+ * chosen; it is offered nowhere else. Where the values are fixed, an enum in
+ * the type and a SelectInput carry them in the schema as well.
+ */
+export const AutocompleteInput = <T, P extends TextPath<T>>(
+  props: AutocompleteInputProps<T, P>
+): JSX.Element => {
+  const d = () => untyped(props.draft);
+  const value = () => d().get(props.path) as string | undefined;
+  const isRequired = () => required(d(), props.path);
+  return (
+    <Combobox<AutocompleteOption>
+      label={props.label}
+      helperText={props.helperText}
+      items={props.options as AutocompleteOption[]}
+      itemToString={o => o.label}
+      itemToValue={o => o.value}
+      value={value()}
+      selectedItem={autocompleteSelection(props.options, value())}
+      onChange={o => d().set(props.path, o?.value)}
+      clearable={!isRequired()}
+      required={isRequired()}
+      error={d().errorFor(props.path)}
+      disabled={isDisabled(d(), props)}
+      inputTestId={props.testId}
     />
   );
 };

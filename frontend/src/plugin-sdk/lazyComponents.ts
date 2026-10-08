@@ -25,6 +25,7 @@ import type {
   FilterTextInputProps,
 } from '../ui/elements/selectors/FilterBar';
 import type {
+  AutocompleteInputProps,
   CheckboxInputProps,
   DateInputProps,
   DateTimeInputProps,
@@ -40,7 +41,10 @@ import type {
   NumberPath,
   TextPath,
 } from '../domain/documentForm/paths';
-import type { PatientFieldProps } from '../domain/patient/documentFields';
+import type {
+  LabelledPatientFieldProps,
+  PatientFieldProps,
+} from '../domain/patient/documentFields';
 import type { Patient } from './documents';
 
 const LazyDataTable = lazy(() =>
@@ -218,6 +222,17 @@ export const SelectInput = LazySelectInput as unknown as <
   props: SelectInputProps<T, P>
 ) => JSX.Element;
 
+const LazyAutocompleteInput = formLibraryComponent(
+  m => m.AutocompleteInput as Component<AutocompleteInputProps<unknown, never>>
+);
+/** One value from a preset list at a text path; typing filters the list. */
+export const AutocompleteInput = LazyAutocompleteInput as unknown as <
+  T,
+  P extends TextPath<T>,
+>(
+  props: AutocompleteInputProps<T, P>
+) => JSX.Element;
+
 const LazyCheckboxInput = formLibraryComponent(
   m => m.CheckboxInput as Component<CheckboxInputProps<unknown, never>>
 );
@@ -245,47 +260,47 @@ export const FieldGroup: Component<FieldGroupProps> = formLibraryComponent(
  */
 
 const LazyPatientCodeField = formLibraryComponent(
-  m => m.PatientCodeField as Component<PatientFieldProps>
+  m => m.PatientCodeField as Component<LabelledPatientFieldProps>
 );
 /** The patient code, with the host's generator beside it. */
 export const PatientCodeField = LazyPatientCodeField as unknown as <
   T extends Patient,
 >(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ) => JSX.Element;
 
 const LazyPatientCode2Field = formLibraryComponent(
-  m => m.PatientCode2Field as Component<PatientFieldProps>
+  m => m.PatientCode2Field as Component<LabelledPatientFieldProps>
 );
 /** The secondary patient code. */
 export const PatientCode2Field = LazyPatientCode2Field as unknown as <
   T extends Patient,
 >(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ) => JSX.Element;
 
 const LazyPatientFirstNameField = formLibraryComponent(
-  m => m.PatientFirstNameField as Component<PatientFieldProps>
+  m => m.PatientFirstNameField as Component<LabelledPatientFieldProps>
 );
 /** First name, which the base Patient requires. */
 export const PatientFirstNameField = LazyPatientFirstNameField as unknown as <
   T extends Patient,
 >(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ) => JSX.Element;
 
 const LazyPatientLastNameField = formLibraryComponent(
-  m => m.PatientLastNameField as Component<PatientFieldProps>
+  m => m.PatientLastNameField as Component<LabelledPatientFieldProps>
 );
 /** Last name, which the base Patient requires. */
 export const PatientLastNameField = LazyPatientLastNameField as unknown as <
   T extends Patient,
 >(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ) => JSX.Element;
 
 const LazyPatientDateOfBirthField = formLibraryComponent(
-  m => m.PatientDateOfBirthField as Component<PatientFieldProps>
+  m => m.PatientDateOfBirthField as Component<LabelledPatientFieldProps>
 );
 /**
  * Date of birth with age beside it, editable both ways; an age entry marks the
@@ -293,21 +308,21 @@ const LazyPatientDateOfBirthField = formLibraryComponent(
  */
 export const PatientDateOfBirthField =
   LazyPatientDateOfBirthField as unknown as <T extends Patient>(
-    props: PatientFieldProps<T>
+    props: LabelledPatientFieldProps<T>
   ) => JSX.Element;
 
 const LazyPatientGenderField = formLibraryComponent(
-  m => m.PatientGenderField as Component<PatientFieldProps>
+  m => m.PatientGenderField as Component<LabelledPatientFieldProps>
 );
 /** Gender, from the store's configured subset. */
 export const PatientGenderField = LazyPatientGenderField as unknown as <
   T extends Patient,
 >(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ) => JSX.Element;
 
 const LazyPatientAddressField = formLibraryComponent(
-  m => m.PatientAddressField as Component<PatientFieldProps>
+  m => m.PatientAddressField as Component<LabelledPatientFieldProps>
 );
 /**
  * The address, in the first contact block (the one the patient record shows).
@@ -315,11 +330,11 @@ const LazyPatientAddressField = formLibraryComponent(
 export const PatientAddressField = LazyPatientAddressField as unknown as <
   T extends Patient,
 >(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ) => JSX.Element;
 
 const LazyPatientPhoneField = formLibraryComponent(
-  m => m.PatientPhoneField as Component<PatientFieldProps>
+  m => m.PatientPhoneField as Component<LabelledPatientFieldProps>
 );
 /**
  * The phone number, in the first contact block (the one the patient record
@@ -328,17 +343,17 @@ const LazyPatientPhoneField = formLibraryComponent(
 export const PatientPhoneField = LazyPatientPhoneField as unknown as <
   T extends Patient,
 >(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ) => JSX.Element;
 
 const LazyPatientNextOfKinField = formLibraryComponent(
-  m => m.PatientNextOfKinField as Component<PatientFieldProps>
+  m => m.PatientNextOfKinField as Component<LabelledPatientFieldProps>
 );
 /** The next of kin, picked from the store's patients. */
 export const PatientNextOfKinField = LazyPatientNextOfKinField as unknown as <
   T extends Patient,
 >(
-  props: PatientFieldProps<T>
+  props: LabelledPatientFieldProps<T>
 ) => JSX.Element;
 
 const LazyPatientDeceasedFields = formLibraryComponent(
