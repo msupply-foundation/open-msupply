@@ -1,4 +1,4 @@
-use crate::db_diesel::user_permission_row::{user_permission, UserPermissionRow};
+use crate::db_diesel::user_permission_row::{UserPermissionRow, user_permission};
 use crate::migrations::*;
 use diesel::prelude::*;
 

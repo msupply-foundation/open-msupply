@@ -1,13 +1,13 @@
 use repository::{
+    ClinicianRowRepository, ClinicianRowRepositoryTrait, EncounterRow, EncounterRowRepository,
+    EqualFilter, ProgramEnrolment, ProgramEnrolmentFilter, ProgramEnrolmentRepository,
+    RepositoryError, StorageConnection, Vaccination, VaccinationFilter, VaccinationRepository,
     vaccine_course::{
         vaccine_course_dose::{
             VaccineCourseDose, VaccineCourseDoseFilter, VaccineCourseDoseRepository,
         },
         vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
     },
-    ClinicianRowRepository, ClinicianRowRepositoryTrait, EncounterRow, EncounterRowRepository,
-    EqualFilter, ProgramEnrolment, ProgramEnrolmentFilter, ProgramEnrolmentRepository,
-    RepositoryError, StorageConnection, Vaccination, VaccinationFilter, VaccinationRepository,
 };
 
 pub fn check_vaccination_exists(

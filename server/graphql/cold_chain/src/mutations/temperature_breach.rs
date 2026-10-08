@@ -1,8 +1,8 @@
 use crate::types::temperature_breach::TemperatureBreachNode;
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use repository::TemperatureBreach;
 use service::{
@@ -99,18 +99,18 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_temperature_breach_1, MockDataInserts},
         StorageConnectionManager, TemperatureBreach, TemperatureBreachRow,
+        mock::{MockDataInserts, mock_temperature_breach_1},
     };
     use serde_json::json;
 
     use service::{
         cold_chain::{
+            ColdChainServiceTrait,
             update_temperature_breach::{
                 UpdateTemperatureBreach as ServiceInput,
                 UpdateTemperatureBreachError as ServiceError,
             },
-            ColdChainServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

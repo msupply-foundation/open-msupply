@@ -1,6 +1,6 @@
 use crate::{
-    diesel_macros::diesel_json_type, dynamic_query_filter::create_condition, ChangelogCondition,
-    ChangelogSyncType, RepositoryError, StorageConnection, Upsert,
+    ChangelogCondition, ChangelogSyncType, RepositoryError, StorageConnection, Upsert,
+    diesel_macros::diesel_json_type, dynamic_query_filter::create_condition,
 };
 
 use chrono::NaiveDateTime;
@@ -126,7 +126,6 @@ impl<'a> SyncRequestRepository<'a> {
             .load::<SyncRequestRow>(self.connection.lock().connection())?;
         Ok(rows)
     }
-
 }
 
 impl Upsert for SyncRequestRow {

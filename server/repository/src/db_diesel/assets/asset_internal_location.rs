@@ -1,7 +1,7 @@
 use crate::{
-    asset_internal_location_row::{asset_internal_location, AssetInternalLocationRow},
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     DBType, EqualFilter, Pagination, RepositoryError, Sort, StorageConnection,
+    asset_internal_location_row::{AssetInternalLocationRow, asset_internal_location},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -137,14 +137,15 @@ fn create_filtered_query(
 
 mod tests {
     use crate::{
+        EqualFilter,
         assets::{
             asset_internal_location::AssetInternalLocationRepository,
             asset_internal_location_row::{
                 AssetInternalLocationRow, AssetInternalLocationRowRepository,
             },
         },
-        mock::{mock_asset_a, mock_location_1, MockDataInserts},
-        test_db, EqualFilter,
+        mock::{MockDataInserts, mock_asset_a, mock_location_1},
+        test_db,
     };
 
     use super::AssetInternalLocationFilter;

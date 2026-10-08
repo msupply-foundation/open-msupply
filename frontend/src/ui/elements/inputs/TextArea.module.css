@@ -1,0 +1,196 @@
+/*
+ * TextArea — the TextField input spec on a <textarea>. The field/label/message
+ * shells mirror TextField.module.css; the control differs only where
+ * multi-line forces it: height from the rows attribute (not the input-height
+ * tokens), block padding, line-height 1.5 for wrapped text, resize disabled
+ * (fixed at `rows`, content scrolls — the old OMS TextArea behaviour). All
+ * sizing rem/em; all colours from tokens.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--input-field-gap);
+  min-width: 0;
+  /* Contain the visually-hidden label — see TextField.module.css. */
+  position: relative;
+}
+
+/* Spec max-widths (TextArea defaults to full — set in the component) */
+.field[data-width='short'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
+}
+
+.field[data-width='full'] {
+  max-width: 100%;
+}
+
+/* Label + its labelInfo affordance on one line (only rendered when there IS a
+   labelInfo — as TextField.module.css). */
+.labelRow {
+  display: flex;
+  align-items: center;
+}
+
+/* The row's height is the LABEL's, never the affordance's. An InfoTooltip
+   trigger is taller than the label's line box, and a flex row sized by its
+   tallest child pushes this field's control below its neighbours' — so a field
+   with help text stops lining up in a header cluster or a card row, both of
+   which top-align their items. Giving the affordance zero block-size takes it
+   out of that calculation entirely (it still paints — nothing clips it — and
+   centres on the label's midline), so the field's geometry is identical with
+   and without labelInfo, whatever the label tokens are set to. */
+.labelRow > :not(.label) {
+  display: flex;
+  align-items: center;
+  block-size: 0;
+}
+
+.label {
+  /* Shared field-label token — see --field-label-* in tokens.css. */
+  font-size: var(--field-label-font-size);
+  font-weight: var(--field-label-font-weight);
+  line-height: var(--field-label-line-height);
+  color: var(--field-label-color);
+}
+
+/* Small fields drop the label to 13px too — as TextField.module.css, so a
+   small TextArea's label lines up with the small inputs beside it. */
+.field[data-size='small'] .label {
+  font-size: var(--input-font-sm);
+}
+
+/* Visually hidden but present for assistive tech (used with a FieldRow's visible label). */
+.labelHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.required {
+  margin-inline-start: 0.125em;
+  color: var(--error-main);
+}
+
+.textarea {
+  width: 100%;
+  /* Block padding is DERIVED from the matching input-height token rather than a
+     spacing step, so a one-row TextArea is exactly as tall as a TextField of the
+     same size and an N-row one is N lines on that same rhythm. `1lh` is one line
+     box, so this is "the height token, less one line, halved, less the border".
+     Without it the box is `rows × line-height + a spacing step`, which lands
+     near the token but not on it — a rows=1 small box came out 37.5px against
+     the 36px input, and that 1.5px shows up as a ragged edge when a multi-line
+     field sits in a header field cluster beside single-line ones. */
+  padding: calc((var(--input-height) - 1lh) / 2 - 1px) var(--input-padding-x);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  /* Fixed at the rows height; longer content scrolls (OMS has no resize grip). */
+  resize: none;
+  transition:
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+
+/* Small: the 13px scale, and the block padding re-derived from the SMALL height
+   token so a one-row box matches a small TextField (36px, not 37.5px). */
+.textarea[data-size='small'] {
+  font-size: var(--input-font-sm);
+  padding-block: calc((var(--input-height-sm) - 1lh) / 2 - 1px);
+}
+
+.textarea::placeholder {
+  color: var(--gray-main);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--secondary-main);
+  box-shadow: var(--focus-ring);
+}
+
+/* Error state — red border + red glow (presence of data-error) */
+.textarea[data-error] {
+  border-color: var(--error-main);
+}
+
+.textarea[data-error]:focus {
+  box-shadow: var(--focus-ring-error);
+}
+
+/* Disabled — grey fill, muted border, not interactive */
+.textarea:disabled {
+  background: var(--bg-disabled);
+  border-color: var(--color-divider);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.helper {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--error-main);
+}
+
+/* The glyph takes the error text's own colour (inherited from .error) — it is
+   part of the error line, not a caution of its own. It used to be
+   --color-warning, which rendered an amber triangle above red text and read as
+   a second, milder severity sitting on the same message. */
+.errorIcon {
+  font-size: 0.875em;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+@media (pointer: coarse) {
+  /* Touch font bump — see --input-font-touch. Both size variants, as every
+     other input module (a small field beside a default one must not read at a
+     different size on the same touch surface). */
+  .textarea,
+  .textarea[data-size='small'] {
+    font-size: var(--input-font-touch);
+  }
+
+  /* Touch heights. The block-padding derivation switches to the TOUCH tokens,
+     so a rows={1} box lands exactly on the inputs beside it (48 / 44) the way
+     the rest-mode rules land on 40 / 36, and rows={n} keeps the n-line rhythm
+     on the touch token. min-block-size is deliberately NOT the mechanism here,
+     though it is what every sibling input uses: on a textarea it would seat the
+     single line at the TOP of a taller box instead of centring it. Without
+     this, the box stayed pinned at the rest height on touch — the font bump
+     grows 1lh and the rest-mode formula shrinks the padding by exactly as
+     much, so a small rows={1} sat at 36px against its 44px neighbours. */
+  .textarea {
+    padding-block: calc((var(--input-height-touch) - 1lh) / 2 - 1px);
+  }
+
+  .textarea[data-size='small'] {
+    padding-block: calc((var(--input-height-sm-touch) - 1lh) / 2 - 1px);
+  }
+}

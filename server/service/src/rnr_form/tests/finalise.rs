@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod finalise {
     use repository::mock::{
-        mock_item_a, mock_item_b, mock_item_c, mock_rnr_form_a, mock_rnr_form_b, mock_store_a,
-        MockData,
+        MockData, mock_item_a, mock_item_b, mock_item_c, mock_rnr_form_a, mock_rnr_form_b,
+        mock_store_a,
     };
-    use repository::mock::{mock_store_b, MockDataInserts};
+    use repository::mock::{MockDataInserts, mock_store_b};
     use repository::test_db::setup_all_with_data;
     use repository::{
         EqualFilter, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
@@ -194,9 +194,7 @@ mod finalise {
         // Check correct data was populated
         let auto_populated_line = &requisition_lines
             .iter()
-            .find(|line| {
-                line.requisition_line_row.item_id == auto_populated_line().item_id
-            })
+            .find(|line| line.requisition_line_row.item_id == auto_populated_line().item_id)
             .unwrap()
             .requisition_line_row;
 
@@ -208,9 +206,7 @@ mod finalise {
 
         let manually_entered_line = &requisition_lines
             .iter()
-            .find(|line| {
-                line.requisition_line_row.item_id == manually_entered_line().item_id
-            })
+            .find(|line| line.requisition_line_row.item_id == manually_entered_line().item_id)
             .unwrap()
             .requisition_line_row;
 

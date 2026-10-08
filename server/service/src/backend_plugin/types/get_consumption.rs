@@ -1,5 +1,5 @@
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
-use plugin_provider::{call_plugin, PluginResult};
+use plugin_provider::{PluginResult, call_plugin};
 use repository::PluginType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

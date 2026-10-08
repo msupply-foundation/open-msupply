@@ -1,12 +1,12 @@
 use super::program_row::program;
 
 use crate::{
-    db_diesel::name_tag_row::name_tag, period_schedule_row::period_schedule,
-    repository_error::RepositoryError, StorageConnection,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
+    name_oms_fields,
 };
 use crate::{
-    name_oms_fields, ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId,
-    Upsert,
+    StorageConnection, db_diesel::name_tag_row::name_tag, period_schedule_row::period_schedule,
+    repository_error::RepositoryError,
 };
 use diesel::prelude::*;
 
@@ -24,7 +24,17 @@ joinable!(program_requisition_settings -> program (program_id));
 joinable!(program_requisition_settings -> period_schedule(period_schedule_id));
 allow_tables_to_appear_in_same_query!(program_requisition_settings, name_oms_fields);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = program_requisition_settings)]
 pub struct ProgramRequisitionSettingsRow {
     pub id: String,

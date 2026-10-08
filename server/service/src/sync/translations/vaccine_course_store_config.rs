@@ -1,13 +1,13 @@
 use repository::{
-    vaccine_course::vaccine_course_store_config_row::VaccineCourseStoreConfigRow, ChangelogRow,
-    ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    vaccine_course::vaccine_course_store_config_row::VaccineCourseStoreConfigRow,
 };
 
 use crate::sync::translations::vaccine_course::VaccineCourseTranslation;
 
 use super::{
-    store::StoreTranslation, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType, store::StoreTranslation,
 };
 
 // Needs to be added to all_translators()
@@ -42,8 +42,11 @@ impl SyncTranslation for VaccineCourseStoreConfigTranslation {
         let check_fk =
             fk_checker.with_table_required(connection, "vaccine_course_store_config", &row.id);
 
-        row.vaccine_course_id =
-            check_fk(row.vaccine_course_id, "vaccine_course_id", FkField::VaccineCourse)?;
+        row.vaccine_course_id = check_fk(
+            row.vaccine_course_id,
+            "vaccine_course_id",
+            FkField::VaccineCourse,
+        )?;
         row.store_id = check_fk(row.store_id, "store_id", FkField::Store)?;
 
         Ok(PullTranslateResult::upsert(row))
@@ -97,9 +100,9 @@ impl SyncTranslation for VaccineCourseStoreConfigTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_vaccine_course_a, MockDataInserts},
-        test_db::setup_all,
         VaccineCourseRow, VaccineCourseRowRepository,
+        mock::{MockDataInserts, mock_vaccine_course_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

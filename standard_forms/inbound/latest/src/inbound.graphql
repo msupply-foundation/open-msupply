@@ -73,6 +73,7 @@ query InvoiceQuery(
         packSize
         sellPricePerPack
         costPricePerPack
+        totalBeforeTax
         pricing {
           serviceTotalAfterTax
           serviceTotalBeforeTax

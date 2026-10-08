@@ -1,0 +1,10 @@
+/* The plan popover's measure cap — genuinely bespoke (no component/prop sizes
+   a popover body), so it stays page CSS; the arrangement itself is Stack /
+   HStack. */
+.plan {
+  max-inline-size: 24rem;
+}
+
+.planTitle {
+  font-weight: var(--weight-bold);
+}

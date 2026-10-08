@@ -89,6 +89,7 @@ export const useStocktakeColumns = ({
         accessorFn: row => row.location?.code ?? '',
         header: t('label.location'),
         size: 100,
+        enableSorting: true,
         defaultHideOnMobile: true,
       },
       {

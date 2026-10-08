@@ -26,6 +26,7 @@ import { EditBackdating } from '../Components/EditBackdating';
 import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 import { PreferenceLabelRow } from './PreferenceLabelRow';
 import { ColorPickerPreference } from '../Components/ColorPickerPreference';
+import { EditImagePreference } from '../Components/EditImagePreference';
 
 interface EditPreferenceProps {
   preference: PreferenceDescriptionNode;
@@ -198,6 +199,26 @@ export const EditPreference = ({
               value={value}
               onChange={handleChange}
               preferenceKey={preference.key}
+            />
+          }
+          isLast={isLast}
+        />
+      );
+
+    case PreferenceValueNodeType.Image:
+      if (!isString(preference.value)) {
+        return t('error.something-wrong');
+      }
+      return (
+        <PreferenceLabelRow
+          label={preferenceLabel}
+          Input={
+            // Pass API value/update directly - saved on modal save rather than
+            // debounce-auto-saving the image blob
+            <EditImagePreference
+              value={preference.value}
+              update={update}
+              disabled={disabled}
             />
           }
           isLast={isLast}

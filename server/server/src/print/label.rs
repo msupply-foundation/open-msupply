@@ -1,14 +1,14 @@
 use actix_web::{
-    web::{self, Data},
     HttpRequest, HttpResponse,
+    web::{self, Data},
 };
 use repository::RepositoryError;
 use serde::Deserialize;
 use service::{
     auth_data::AuthData,
     print::label::{
-        host_status, print_asset_label, print_prescription_label, AssetLabelData,
-        PrescriptionLabelData,
+        AssetLabelData, PrescriptionLabelData, host_status, print_asset_label,
+        print_prescription_label,
     },
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,

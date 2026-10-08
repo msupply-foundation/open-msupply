@@ -325,13 +325,13 @@ mod tests {
 
     use super::*;
     use repository::{
+        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder,
+        ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
         campaign_row::CampaignRow,
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_row::VVMStatusRow,
-        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder,
-        ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 

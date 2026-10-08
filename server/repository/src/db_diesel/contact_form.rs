@@ -3,13 +3,13 @@ use diesel::{
     prelude::*,
 };
 
-use crate::{diesel_macros::apply_equal_filter, RepositoryError};
+use crate::{RepositoryError, diesel_macros::apply_equal_filter};
 
 use super::{
-    contact_form_row::{contact_form, ContactFormRow},
+    DBType, EqualFilter, NameRow, Pagination, StorageConnection, StoreRow,
+    contact_form_row::{ContactFormRow, contact_form},
     name_row::name,
     store_row::store,
-    DBType, EqualFilter, NameRow, Pagination, StorageConnection, StoreRow,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -79,13 +79,11 @@ impl<'a> ContactFormRepository<'a> {
         let result = final_query
             .load::<ContactFormJoin>(self.connection.lock().connection())?
             .into_iter()
-            .map(
-                |(contact_form_row, (store_row, name_row))| ContactForm {
-                    contact_form_row,
-                    store_row,
-                    name_row,
-                },
-            )
+            .map(|(contact_form_row, (store_row, name_row))| ContactForm {
+                contact_form_row,
+                store_row,
+                name_row,
+            })
             .collect();
 
         Ok(result)
@@ -94,10 +92,7 @@ impl<'a> ContactFormRepository<'a> {
 
 type BoxedContactFormQuery = IntoBoxed<
     'static,
-    InnerJoin<
-        contact_form::table,
-        InnerJoin<store::table, name::table>,
-    >,
+    InnerJoin<contact_form::table, InnerJoin<store::table, name::table>>,
     DBType,
 >;
 

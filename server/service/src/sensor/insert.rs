@@ -1,5 +1,5 @@
 use super::{query::get_sensor, validate::check_sensor_serial_is_unique};
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use repository::{EqualFilter, SensorType};
 use repository::{
     RepositoryError, Sensor, SensorFilter, SensorRepository, SensorRow, SensorRowRepository,

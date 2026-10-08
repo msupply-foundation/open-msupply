@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    lower, repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert, lower,
+    repository_error::RepositoryError,
 };
 
 use chrono::NaiveDateTime;
@@ -25,8 +25,9 @@ table! {
     }
 }
 
-
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize,
+)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum LanguageType {
@@ -41,7 +42,17 @@ pub enum LanguageType {
     Tetum,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = user_account)]
 pub struct UserAccountRow {
     pub id: String,
@@ -244,8 +255,8 @@ impl Delete for UserAccountRowDelete {
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, LanguageType, UserAccountRow,
-        UserAccountRowRepository,
+        LanguageType, UserAccountRow, UserAccountRowRepository, mock::MockDataInserts,
+        test_db::setup_all,
     };
     use strum::IntoEnumIterator;
 

@@ -8,7 +8,7 @@ mod query {
     };
     use util::constants::IMMUNISATION_CONTEXT_ID;
 
-    use crate::{service_provider::ServiceProvider, SingleRecordError};
+    use crate::{SingleRecordError, service_provider::ServiceProvider};
 
     #[actix_rt::test]
     async fn program_service_single_record() {

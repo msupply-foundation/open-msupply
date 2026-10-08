@@ -2,17 +2,17 @@
 mod query {
     use repository::{
         asset_internal_location_row::AssetInternalLocationRowRepository,
-        mock::{asset::mock_asset_a, mock_store_a, MockDataInserts},
+        mock::{MockDataInserts, asset::mock_asset_a, mock_store_a},
         test_db::setup_all,
     };
 
     use crate::{
+        NullableUpdate,
         asset::{
             insert::InsertAsset,
             update::{UpdateAsset, UpdateAssetError},
         },
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -158,16 +158,18 @@ mod query {
 
         // 7. Check fail on trying to add locations which are already assigned to other assets
 
-        assert!(service
-            .update_asset(
-                &ctx,
-                UpdateAsset {
-                    id: id2.clone(),
-                    location_ids: Some(location_ids_to_add.clone()),
-                    ..Default::default()
-                },
-            )
-            .is_err());
+        assert!(
+            service
+                .update_asset(
+                    &ctx,
+                    UpdateAsset {
+                        id: id2.clone(),
+                        location_ids: Some(location_ids_to_add.clone()),
+                        ..Default::default()
+                    },
+                )
+                .is_err()
+        );
         // 8. Check that adding a new location array which includes locations already assigned won't prompt error
 
         let location_ids_to_add = vec![

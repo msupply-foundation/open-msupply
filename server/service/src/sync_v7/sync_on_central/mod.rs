@@ -5,11 +5,11 @@ use std::{
 
 use chrono::Utc;
 use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
     ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
     RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
     StorageConnection, SyncBufferRepository, SyncVersion,
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
 };
 use thiserror::Error;
 use util::format_error;
@@ -18,22 +18,22 @@ use crate::{
     apis::patient_v4::PatientV4,
     programs::patient::patient_updated::create_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
+    static_files::{StaticFile, StaticFileService},
     sync::{
+        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
         api::{SyncApiSettings, SyncApiV5},
         settings::SYNC_V5_VERSION,
-        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
-    static_files::{StaticFile, StaticFileService},
     sync_v7::{
         api::{
-            download_file,
+            Common, download_file,
             get_token::{GetTokenInput, GetTokenOutput},
             patient_data_for_site, patient_search, pull, push,
             status::{self},
-            Common,
         },
-        sync::{sync_record_to_buffer_row, SyncBatchV7},
-        validate_translate_integrate::{validate_translate_integrate, SyncContext},
+        sync::{SyncBatchV7, sync_record_to_buffer_row},
+        translations::SendContext,
+        validate_translate_integrate::{SyncContext, validate_translate_integrate},
     },
 };
 
@@ -165,7 +165,8 @@ pub async fn get_token(
 ///   until every store's data has been moved to COMS — that error is propagated
 ///   unchanged so ROMS retries. On success the legacy server has flipped to v7,
 ///   but COMS must wait for that to arrive via sync, so we return
-///   `WaitingForCentralV7Upgrade` rather than upgrading locally.
+///   `WaitingForCentralV7Upgrade` rather than upgrading locally — after
+///   triggering COMS's own sync, so the wait is seconds, not a sync interval.
 ///
 /// Acquires a connection per DB touch rather than holding one across the legacy
 /// server roundtrip, so a pool slot isn't tied up during the network call.
@@ -202,6 +203,15 @@ async fn ensure_site_is_v7(
     // don't let ROMS initialise before this site's data is fully integrated on
     // COMS. ROMS retries; the early return above succeeds once the v7 `site` row
     // has synced + integrated.
+    //
+    // That arrival only happens on a COMS sync cycle, so kick one off now rather
+    // than leaving ROMS to wait out COMS's sync interval
+    // (open-msupply-frontend#504 — ROMS retries for ~a minute before showing the
+    // error). The trigger's single-slot channel coalesces: concurrent get_token
+    // calls while a sync is already queued are no-ops, and deliberately NOT
+    // triggering on the `stores_not_migrated` path above — that needs stores
+    // moved to COMS by an operator, which no sync cycle can do.
+    service_provider.sync_trigger.trigger();
     Err(SyncError::WaitingForCentralV7Upgrade)
 }
 
@@ -390,7 +400,10 @@ pub async fn pull(
         };
 
         let batch = SyncBatchV7::generate(
-            &ctx.connection,
+            &SendContext {
+                connection: &ctx.connection,
+                receiver_version: Some(&common.version),
+            },
             filter,
             input.cursor,
             Some(input.batch_size),
@@ -407,15 +420,15 @@ pub async fn pull(
         // A pull batch with nothing remaining means the remote has fully caught
         // up: record last_sync (and first_sync on the initial sync). Best-effort.
         // #11784
-        if batch.remaining == 0 {
-            if let Err(e) = crate::site::sync_metadata::record_site_full_pull(
+        if batch.remaining == 0
+            && let Err(e) = crate::site::sync_metadata::record_site_full_pull(
                 &ctx.connection,
                 site.id,
                 input.is_initialising,
                 Utc::now().naive_utc(),
-            ) {
-                log::warn!("Failed to record last_sync for site {}: {:?}", site.id, e);
-            }
+            )
+        {
+            log::warn!("Failed to record last_sync for site {}: {:?}", site.id, e);
         }
 
         Ok(batch)
@@ -495,7 +508,15 @@ pub async fn patient_data_for_site(
             ChangelogCondition::patient_id::matching(patient_id),
         ]);
 
-        let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
+        let batch = SyncBatchV7::generate(
+            &SendContext {
+                connection: &ctx.connection,
+                receiver_version: Some(&common.version),
+            },
+            filter,
+            0,
+            None,
+        )?;
 
         Ok(patient_data_for_site::Output {
             batch,
@@ -656,13 +677,13 @@ fn set_site_lock(site_id: i32, error: Option<SiteLockError>) {
 mod tests {
     use super::*;
     use crate::{
-        sync::test_util_set_is_central_server,
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        sync::{synchroniser_driver::SyncTrigger, test_util_set_is_central_server},
+        test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
     use httpmock::MockServer;
     use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
-        KeyValueStoreRepository, SyncVersion,
+        KeyType, KeyValueStoreRepository, SyncVersion, migrations::Version, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     const SITE_NAME: &str = "test_site";
@@ -1027,7 +1048,7 @@ mod tests {
 
         let ServiceTestContext {
             connection,
-            service_provider,
+            connection_manager,
             ..
         } = setup_all_and_service_provider(
             "ensure_site_is_v7_waits_for_central",
@@ -1035,6 +1056,11 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+
+        // A service provider whose sync trigger the test can observe.
+        let (sync_trigger, mut sync_receiver) = SyncTrigger::new_test();
+        let mut service_provider = ServiceProvider::new(connection_manager);
+        service_provider.sync_trigger = sync_trigger;
 
         let site = non_v7_site(&connection, &mock_server.base_url());
 
@@ -1044,6 +1070,10 @@ mod tests {
             .await
             .unwrap_err();
         assert!(matches!(err, SyncError::WaitingForCentralV7Upgrade));
+
+        // ...and it must have kicked off its own sync to fetch that row, so the
+        // wait is seconds rather than a sync interval (open-msupply-frontend#504).
+        assert!(sync_receiver.try_recv().is_ok());
 
         // The local site row must be untouched (still V5_V6).
         let stored = SiteRowRepository::new(&connection)
@@ -1066,7 +1096,7 @@ mod tests {
 
         let ServiceTestContext {
             connection,
-            service_provider,
+            connection_manager,
             ..
         } = setup_all_and_service_provider(
             "ensure_site_is_v7_stores_not_migrated",
@@ -1074,6 +1104,10 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+
+        let (sync_trigger, mut sync_receiver) = SyncTrigger::new_test();
+        let mut service_provider = ServiceProvider::new(connection_manager);
+        service_provider.sync_trigger = sync_trigger;
 
         let site = non_v7_site(&connection, &mock_server.base_url());
 
@@ -1083,6 +1117,10 @@ mod tests {
             .await
             .unwrap_err();
         assert!(!matches!(err, SyncError::WaitingForCentralV7Upgrade));
+
+        // No sync is kicked off for this path: syncing cannot move stores to
+        // COMS — that is an operator task on the legacy server.
+        assert!(sync_receiver.try_recv().is_err());
 
         // The local site row must remain V5_V6.
         let stored = SiteRowRepository::new(&connection)

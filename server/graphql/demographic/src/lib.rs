@@ -1,18 +1,18 @@
 use async_graphql::*;
 
 use graphql_core::{
+    ContextExt,
     pagination::PaginationInput,
     simple_generic_errors::{NodeError, NodeErrorInterface},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 
 pub mod mutations;
 pub use mutations::*;
 pub mod types;
 use repository::{
-    demographic::DemographicFilter, demographic_projection::DemographicProjectionFilter,
-    DemographicIndicatorFilter, PaginationOption,
+    DemographicIndicatorFilter, PaginationOption, demographic::DemographicFilter,
+    demographic_projection::DemographicProjectionFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use types::{

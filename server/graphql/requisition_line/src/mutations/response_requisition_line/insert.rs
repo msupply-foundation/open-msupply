@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::RequisitionLineNode;
 use repository::RequisitionLine;
@@ -103,17 +103,17 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::ItemAlreadyExistInRequisition => {
             return Ok(InsertErrorInterface::RequisitionLineWithItemIdExists(
                 RequisitionLineWithItemIdExists {},
-            ))
+            ));
         }
         ServiceError::RequisitionDoesNotExist => {
             return Ok(InsertErrorInterface::RequisitionDoesNotExist(
                 ForeignKeyError(ForeignKey::RequisitionId),
-            ))
+            ));
         }
         ServiceError::CannotEditRequisition => {
             return Ok(InsertErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::RequisitionLineAlreadyExists => BadUserInput(formatted_error),

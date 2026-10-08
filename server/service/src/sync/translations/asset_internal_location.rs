@@ -1,7 +1,7 @@
 use repository::{
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
     asset_internal_location_row::AssetInternalLocationRow,
-    asset_internal_location_row::AssetInternalLocationRowDelete, ChangelogRow, ChangelogTableName,
-    Row, StorageConnection, SyncBufferRow,
+    asset_internal_location_row::AssetInternalLocationRowDelete,
 };
 
 use crate::sync::translations::{asset::AssetTranslation, location::LocationTranslation};
@@ -117,7 +117,7 @@ mod tests {
 
     use repository::{
         asset_row::{AssetRow, AssetRowRepository},
-        mock::{mock_asset_a, MockDataInserts},
+        mock::{MockDataInserts, mock_asset_a},
         test_db::setup_all,
     };
 
@@ -134,10 +134,13 @@ mod tests {
 
         // Seed the asset parent the internal-location's required FK points at.
         AssetRowRepository::new(&connection)
-            .upsert_one(&AssetRow {
-                id: "3de161ed-93ef-4210-aa31-3ae9e53748e8".to_string(),
-                ..mock_asset_a()
-            }, None)
+            .upsert_one(
+                &AssetRow {
+                    id: "3de161ed-93ef-4210-aa31-3ae9e53748e8".to_string(),
+                    ..mock_asset_a()
+                },
+                None,
+            )
             .unwrap();
 
         for record in test_data::test_pull_upsert_records() {

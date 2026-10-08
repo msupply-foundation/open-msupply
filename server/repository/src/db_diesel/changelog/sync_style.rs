@@ -51,10 +51,10 @@ impl Distribution {
                     transport,
                     ..
                 } = table.sync_style();
-                if let Some(sync_style_options) = &sync_style_options {
-                    if sync_style_options != &transport {
-                        return false;
-                    }
+                if let Some(sync_style_options) = &sync_style_options
+                    && sync_style_options != &transport
+                {
+                    return false;
                 }
                 distributions
                     .iter()
@@ -153,6 +153,21 @@ impl ChangelogTableName {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
                 transport: V5,
+                multi_device_site: false,
+            },
+            // OMS-native (no legacy 4D counterpart): the prescriber-authored
+            // prescription request — store-owned rows synced over v7 only.
+            //
+            // RemoteOwned only: prescribing is same-store, so a request has no
+            // reason to follow its patient anywhere. If cross-store prescribing
+            // lands, adding `D::Patient` here also needs `generate_changelog.rs`
+            // to start stamping `patient_id` — and only rows written after that
+            // would follow, since a changelog row's patient is fixed when it is
+            // written.
+            PrescriptionRequest | PrescriptionRequestLine => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V7_ONLY,
                 multi_device_site: false,
             },
             // OMS-native (no legacy 4D counterpart since the v2.21 stock-movement rewrite):

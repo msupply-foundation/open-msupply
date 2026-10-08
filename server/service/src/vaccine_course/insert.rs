@@ -4,12 +4,12 @@ use super::{
     validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
 };
 use crate::{
-    activity_log::activity_log_entry, common::check_program_exists,
+    SingleRecordError, activity_log::activity_log_entry, common::check_program_exists,
     service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
-    SingleRecordError,
 };
 
 use repository::{
+    ActivityLogType, RepositoryError, StorageConnection,
     vaccine_course::{
         vaccine_course_dose_row::VaccineCourseDoseRowRepository,
         vaccine_course_item_row::VaccineCourseItemRowRepository,
@@ -18,7 +18,6 @@ use repository::{
             VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
         },
     },
-    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]

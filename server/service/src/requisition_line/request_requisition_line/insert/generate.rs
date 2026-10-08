@@ -1,6 +1,6 @@
 use crate::{
     requisition::request_requisition::generate_requisition_lines,
-    requisition_line::request_requisition_line::{insert::OutError, InsertRequestRequisitionLine},
+    requisition_line::request_requisition_line::{InsertRequestRequisitionLine, insert::OutError},
     service_provider::ServiceContext,
 };
 use repository::{RequisitionLineRow, RequisitionRow};

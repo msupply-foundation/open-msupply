@@ -443,7 +443,7 @@ impl SyncLogError {
             // map connection errors
             SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ConnectionError(_))
             | SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ConnectionError { .. }) => {
-                return Self::new(SyncApiErrorCode::ConnectionError, sync_error)
+                return Self::new(SyncApiErrorCode::ConnectionError, sync_error);
             }
             // Internal errors
             _ => return Self::message_only(sync_error),
@@ -494,7 +494,7 @@ mod test {
         remote_data_synchroniser::{
             PostInitialisationError, RemotePullError, RemotePushError, WaitForSyncOperationError,
         },
-        sync_status::{logger::SyncLoggerError, SyncLogError},
+        sync_status::{SyncLogError, logger::SyncLoggerError},
         synchroniser::SyncError,
     };
     use repository::{RepositoryError, SyncApiErrorCode};

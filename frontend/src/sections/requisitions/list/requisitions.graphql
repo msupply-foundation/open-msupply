@@ -1,0 +1,116 @@
+# Requisitions LIST screen (spec/requisitions S1) + list bulk delete + the
+# inline row colour-tag edit.
+#
+# A requisition on this surface is a RESPONSE requisition (contract ›
+# "Requisitions only"): the client pins RequisitionFilterInput.type =
+# { equalTo: RESPONSE } on every list read — nothing else on this query
+# distinguishes the response side from the request side (internal orders).
+# Store scope is forced server-side. Filter / sort / pagination are carried as
+# the generated GraphQL input types so the URL state maps straight onto them
+# with no remapping (kdd/type-safety).
+
+fragment RequisitionRow on RequisitionNode {
+  id
+  requisitionNumber
+  status
+  createdDatetime
+  colour
+  comment
+  otherPartyName
+  # The customer's own store, when the customer is itself a store in the
+  # system. `isDisabled` is the "customer store disabled" leg of the
+  # editability boundary (rules › lifecycle & editability): a disabled-store
+  # row keeps its restricted rendering off (only Finalised / approval-blocked
+  # rows render restricted, OMS-REG-DIST-05.21) but withholds the colour-tag
+  # picker and any edit.
+  otherParty(storeId: $storeId) {
+    store {
+      isDisabled
+    }
+  }
+  # The requisition's OWN approval state (unlike the internal-orders list,
+  # which reads the linked copy's) — NONE when no approval is recorded
+  # (OMS-REG-DIST-05.23).
+  approvalStatus
+  # Program columns (OMS-REG-DIST-05.22, D16): empty on a non-program row.
+  programName
+  orderType
+  period {
+    name
+  }
+  # Shipments column — the count of outbound shipments raised against the
+  # requisition (spec S1 col 5).
+  shipments {
+    totalCount
+  }
+}
+
+query requisitions(
+  $storeId: String!
+  $filter: RequisitionFilterInput
+  $sort: [RequisitionSortInput!]
+  $page: PaginationInput
+) {
+  requisitions(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on RequisitionConnector {
+      __typename
+      totalCount
+      nodes {
+        ...RequisitionRow
+      }
+    }
+  }
+}
+
+# Bulk delete from the list (OMS-FUN-DIS-01.36/.37). One batch, all-or-nothing —
+# continueOnError is left unset so any member error rolls the whole batch back
+# (contract › deletion; a member's own "success" on a failed batch is NOT proof
+# it was deleted — judge the batch by whether any member errored). The client
+# does not pre-screen the selection (D23): finalised / transferred /
+# shipment-linked rejections come back typed and surface inline, each mapped to
+# its own message (spec S6).
+mutation deleteRequisitions(
+  $storeId: String!
+  $ids: [DeleteResponseRequisitionInput!]!
+) {
+  batchResponseRequisition(
+    storeId: $storeId
+    input: { deleteResponseRequisitions: $ids }
+  ) {
+    deleteResponseRequisitions {
+      id
+      response {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteResponseRequisitionError {
+          __typename
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# Inline row colour-tag edit (spec S1 col 1 / OMS-REG-DIST-05.27): the swatch
+# picker on an editable (New, not approval-blocked, customer-store-enabled) row
+# writes the colour through the shared header update. Colour carries no domain
+# meaning. The RequisitionNode member is selected so the caller can confirm the
+# save; a CannotEditRequisition rejection leaves the row unchanged
+# (OMS-REG-DIST-05.28/.29).
+mutation updateRequisitionColour(
+  $storeId: String!
+  $input: UpdateResponseRequisitionInput!
+) {
+  updateResponseRequisition(storeId: $storeId, input: $input) {
+    ... on RequisitionNode {
+      __typename
+      id
+      colour
+    }
+  }
+}

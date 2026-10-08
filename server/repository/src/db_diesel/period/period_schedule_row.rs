@@ -1,6 +1,6 @@
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    repository_error::RepositoryError,
 };
 
 use diesel::prelude::*;
@@ -12,7 +12,17 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = period_schedule)]
 pub struct PeriodScheduleRow {
     pub id: String,

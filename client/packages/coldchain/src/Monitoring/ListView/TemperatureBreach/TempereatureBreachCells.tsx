@@ -61,9 +61,12 @@ export const IconCell = ({
   const t = useTranslation();
   const theme = useTheme();
 
+  // e2e contract ids (frontend/e2e/TESTIDS.md § Cold chain › Monitoring):
+  // the status cell's two faces — the acknowledge action, or the comment.
   if (!!rowData?.unacknowledged)
     return (
       <IconButton
+        testId="acknowledge-breach-button"
         onClick={() => acknowledgeBreach(rowData)}
         icon={
           <CircleAlertIcon
@@ -86,7 +89,11 @@ export const IconCell = ({
           </PaperPopoverSection>
         }
       >
-        <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
+        <MessageSquareIcon
+          data-testid="breach-comment"
+          sx={{ fontSize: 16 }}
+          color="primary"
+        />
       </PaperPopover>
     );
 

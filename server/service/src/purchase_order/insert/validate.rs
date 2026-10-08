@@ -1,4 +1,4 @@
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party};
 
 use super::{InsertPurchaseOrderError, InsertPurchaseOrderInput};
 use repository::{NameRow, PurchaseOrderRowRepository, StorageConnection};

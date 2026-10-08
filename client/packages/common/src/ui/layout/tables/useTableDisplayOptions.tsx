@@ -115,7 +115,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         )}
         {/* Hiding filter options within the table, hasColumnFilters is hardcoded to false for now */}
         {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
-        <MRT_ShowHideColumnsButton table={table} />
+        {/* Locale-stable handle for the cross-front-end e2e suites
+            (frontend/e2e/TESTIDS.md § Shared ids — `table-columns`). */}
+        <MRT_ShowHideColumnsButton
+          table={table}
+          {...({ 'data-testid': 'table-columns' } as object)}
+        />
         {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
         {renderSettingsMenu(table)}
       </>

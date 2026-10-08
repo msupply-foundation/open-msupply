@@ -1,4 +1,4 @@
-use cli::{all_tests, TestCredentials, TestData};
+use cli::{TestCredentials, TestData, all_tests};
 use slint::{Model, ModelRc, SharedString, VecModel};
 use std::rc::Rc;
 
@@ -6,8 +6,11 @@ slint::include_modules!();
 
 pub fn main() -> Result<(), slint::PlatformError> {
     // On Windows, open GL is not available in remote connections; force software rendering for the test app to ensure it runs in all environments
+    // SAFETY: first thing in main, before any other thread exists.
     #[cfg(target_os = "windows")]
-    std::env::set_var("SLINT_BACKEND", "winit-software");
+    unsafe {
+        std::env::set_var("SLINT_BACKEND", "winit-software")
+    };
 
     let app = App::new()?;
 

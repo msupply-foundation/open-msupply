@@ -6,16 +6,16 @@ pub mod types;
 
 use async_graphql::*;
 use graphql_core::{
-    pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    pagination::PaginationInput,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
-use repository::{assets::asset::AssetFilter, PaginationOption};
+use repository::{PaginationOption, assets::asset::AssetFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 use types::{
-    map_parse_error, AssetConnector, AssetFilterInput, AssetNode, AssetParseResponse,
-    AssetSortInput, AssetsResponse, GS1DataElement, ScannedDataParseError,
+    AssetConnector, AssetFilterInput, AssetNode, AssetParseResponse, AssetSortInput,
+    AssetsResponse, GS1DataElement, ScannedDataParseError, map_parse_error,
 };
 
 #[derive(Default, Clone)]
@@ -133,16 +133,16 @@ mod test {
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphql_test;
 
+    use repository::{PaginationOption, StorageConnection};
     use repository::{
+        StorageConnectionManager,
         assets::asset::{Asset, AssetFilter, AssetSort},
         mock::MockDataInserts,
-        StorageConnectionManager,
     };
-    use repository::{PaginationOption, StorageConnection};
     use serde_json::json;
 
     use service::{
-        asset::AssetServiceTrait, service_provider::ServiceProvider, ListError, ListResult,
+        ListError, ListResult, asset::AssetServiceTrait, service_provider::ServiceProvider,
     };
 
     use crate::AssetQueries;

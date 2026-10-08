@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    item_variant::{item_variant::ItemVariant, item_variant_row::ItemVariantRow},
     ActivityLogType, RepositoryError,
+    item_variant::{item_variant::ItemVariant, item_variant_row::ItemVariantRow},
 };
 
 use crate::{activity_log::activity_log_entry_with_diff, service_provider::ServiceContext};

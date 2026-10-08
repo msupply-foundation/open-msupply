@@ -2,9 +2,9 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
-        requisition_row::RequisitionType,
         RepositoryError, Requisition, StorageConnectionManager,
+        mock::{MockDataInserts, mock_name_a, mock_request_draft_requisition},
+        requisition_row::RequisitionType,
     };
     use serde_json::json;
 

@@ -1,12 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
 use super::{
-    custom_field_scope_row::custom_field_scope, custom_field_row::custom_field, CustomFieldDisplayMode,
-    CustomFieldKind, CustomFieldRow, CustomFieldValueType, StorageConnection,
+    CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldValueType,
+    StorageConnection, custom_field_row::custom_field, custom_field_scope_row::custom_field_scope,
 };
 
-use crate::{diesel_macros::apply_equal_filter, EqualFilter};
-use crate::{repository_error::RepositoryError, DBType};
+use crate::{DBType, repository_error::RepositoryError};
+use crate::{EqualFilter, diesel_macros::apply_equal_filter};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 /// A custom_field definition together with its per-scope display mode and order.
@@ -92,6 +92,7 @@ impl<'a> CustomFieldRepository<'a> {
         let scope_meta: HashMap<String, (CustomFieldDisplayMode, String)> = match &scope_table {
             Some(scope) => custom_field_scope::table
                 .filter(custom_field_scope::scope.eq(scope))
+                .filter(custom_field_scope::deleted_datetime.is_null())
                 .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
                 .select((
                     custom_field_scope::custom_field_id,
@@ -147,19 +148,40 @@ impl<'a> CustomFieldRepository<'a> {
         &self,
         target_scope: &str,
     ) -> Result<HashSet<String>, RepositoryError> {
+        Ok(self
+            .value_types_for_scope(target_scope)?
+            .into_keys()
+            .collect())
+    }
+
+    /// The same set as [`allowed_keys_for_scope`], each key with the VALUE TYPE
+    /// its stored value must take — what a write path needs to check a patch:
+    /// which keys it may touch, and what shape each value must be.
+    pub fn value_types_for_scope(
+        &self,
+        target_scope: &str,
+    ) -> Result<HashMap<String, CustomFieldValueType>, RepositoryError> {
         let rows: Vec<(String, CustomFieldValueType, CustomFieldKind)> = custom_field::table
             .inner_join(custom_field_scope::table)
             .filter(custom_field::deleted_datetime.is_null())
+            .filter(custom_field_scope::deleted_datetime.is_null())
             .filter(custom_field_scope::scope.eq(target_scope))
             .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
-            .select((custom_field::key, custom_field::value_type, custom_field::kind))
+            .select((
+                custom_field::key,
+                custom_field::value_type,
+                custom_field::kind,
+            ))
             .load(self.connection.lock().connection())?;
 
-        // Unrecognised value_type/kind stay hidden — same rule as `query`.
+        // Unrecognised value_type/kind stay hidden — same rule as `query`. That
+        // also settles what a write to such a field does: its key is not
+        // allowed here, so the patch is rejected as an unknown key rather than
+        // stored unchecked.
         Ok(rows
             .into_iter()
             .filter(|(_, value_type, kind)| is_displayable(value_type, kind))
-            .map(|(key, _, _)| key)
+            .map(|(key, value_type, _)| (key, value_type))
             .collect())
     }
 
@@ -177,6 +199,7 @@ impl<'a> CustomFieldRepository<'a> {
         let rows: Vec<(CustomFieldRow, CustomFieldDisplayMode, String)> = custom_field::table
             .inner_join(custom_field_scope::table)
             .filter(custom_field::deleted_datetime.is_null())
+            .filter(custom_field_scope::deleted_datetime.is_null())
             .filter(custom_field_scope::scope.eq(target_scope))
             .select((
                 custom_field::all_columns,
@@ -228,11 +251,13 @@ impl<'a> CustomFieldRepository<'a> {
 
                 if let Some(scopes) = scopes {
                     let allowed_ids = custom_field_scope::table
+                        .filter(custom_field_scope::deleted_datetime.is_null())
                         .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
                         .filter(custom_field_scope::scope.eq_any(scopes))
                         .into_boxed();
                     query = query.filter(
-                        custom_field::id.eq_any(allowed_ids.select(custom_field_scope::custom_field_id)),
+                        custom_field::id
+                            .eq_any(allowed_ids.select(custom_field_scope::custom_field_id)),
                     );
                 }
             }
@@ -277,8 +302,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        mock::MockDataInserts, test_db, CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow,
-        CustomFieldScopeRowRepository, CustomFieldRowRepository, CustomFieldValueType,
+        CustomFieldDisplayMode, CustomFieldKind, CustomFieldRowRepository, CustomFieldScopeRow,
+        CustomFieldScopeRowRepository, CustomFieldValueType, mock::MockDataInserts, test_db,
     };
 
     fn custom_field(id: &str, key: &str, deleted: bool) -> CustomFieldRow {
@@ -478,7 +503,10 @@ mod tests {
             mode_of("p_prominent_name"),
             Some(CustomFieldDisplayMode::Prominent)
         );
-        assert_eq!(mode_of("p_visible_name"), Some(CustomFieldDisplayMode::Visible));
+        assert_eq!(
+            mode_of("p_visible_name"),
+            Some(CustomFieldDisplayMode::Visible)
+        );
 
         // An unscoped query has no single scope, so carries no per-scope mode.
         let unscoped = repo.query(None).unwrap();
@@ -523,13 +551,16 @@ mod tests {
                     scope: "name".to_string(),
                     display_mode: CustomFieldDisplayMode::Visible,
                     sort_order: rank.to_string(),
+                    deleted_datetime: None,
                 })
                 .unwrap();
         }
 
         let repo = CustomFieldRepository::new(&connection);
         let ordered: Vec<_> = repo
-            .query_by_filter(CustomFieldFilter::new().scope(EqualFilter::equal_to("name".to_string())))
+            .query_by_filter(
+                CustomFieldFilter::new().scope(EqualFilter::equal_to("name".to_string())),
+            )
             .unwrap()
             .into_iter()
             .map(|r| r.custom_field.id)
@@ -585,7 +616,11 @@ mod tests {
                 })
                 .unwrap();
             table_repo
-                .upsert_one(&custom_field_scope(id, "name", CustomFieldDisplayMode::Visible))
+                .upsert_one(&custom_field_scope(
+                    id,
+                    "name",
+                    CustomFieldDisplayMode::Visible,
+                ))
                 .unwrap();
         }
 

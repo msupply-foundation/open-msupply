@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::IdResponse;
-use mutations::{insert_clinician, InsertClinicianInput};
+use mutations::{InsertClinicianInput, insert_clinician};
 
 mod mutations;
 pub mod query;

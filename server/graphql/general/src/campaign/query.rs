@@ -1,13 +1,13 @@
 use async_graphql::*;
 use graphql_core::{
-    pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    pagination::PaginationInput,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::{
     CampaignConnector, CampaignFilterInput, CampaignSortInput, CampaignsResponse,
 };
-use repository::{campaign::campaign::CampaignFilter, PaginationOption};
+use repository::{PaginationOption, campaign::campaign::CampaignFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     campaign::get_campaigns as service_get_campaigns,

@@ -2,9 +2,9 @@ use super::error::{InvoiceIsNotEditable, NotAnOutboundShipmentError};
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
@@ -94,22 +94,22 @@ fn map_error(error: ServiceError) -> Result<UpdateNameErrorInterface> {
         ServiceError::InvoiceDoesNotExist => {
             return Ok(UpdateNameErrorInterface::InvoiceDoesNotExist(
                 RecordNotFound {},
-            ))
+            ));
         }
         ServiceError::InvoiceIsNotEditable => {
             return Ok(UpdateNameErrorInterface::InvoiceIsNotEditable(
                 InvoiceIsNotEditable,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotACustomer => {
             return Ok(UpdateNameErrorInterface::OtherPartyNotACustomer(
                 OtherPartyNotACustomer,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotVisible => {
             return Ok(UpdateNameErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
@@ -128,17 +128,17 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_name_store_a, mock_outbound_shipment_a, mock_store_a, MockDataInserts},
         Invoice, RepositoryError, StorageConnectionManager,
+        mock::{MockDataInserts, mock_name_store_a, mock_outbound_shipment_a, mock_store_a},
     };
     use serde_json::json;
     use service::{
         invoice::{
+            InvoiceServiceTrait,
             outbound_shipment::{
                 UpdateOutboundShipmentName as ServiceInput,
                 UpdateOutboundShipmentNameError as ServiceError,
             },
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

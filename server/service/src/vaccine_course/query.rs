@@ -1,14 +1,14 @@
 use repository::{
+    EqualFilter, PaginationOption, StorageConnection,
     vaccine_course::{
         vaccine_course::{VaccineCourseFilter, VaccineCourseRepository, VaccineCourseSort},
         vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
         vaccine_course_dose_row::VaccineCourseDoseRow,
         vaccine_course_row::VaccineCourseRow,
     },
-    EqualFilter, PaginationOption, StorageConnection,
 };
 
-use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult, SingleRecordError};
+use crate::{ListError, ListResult, SingleRecordError, get_pagination_or_default, i64_to_u32};
 
 pub fn get_vaccine_courses(
     connection: &StorageConnection,

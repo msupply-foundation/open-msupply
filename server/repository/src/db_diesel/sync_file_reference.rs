@@ -1,11 +1,11 @@
-use super::{sync_file_reference_row::sync_file_reference, StorageConnection};
+use super::{StorageConnection, sync_file_reference_row::sync_file_reference};
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     SyncFileReferenceRow,
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
 };
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
+use crate::{DBType, EqualFilter, Pagination, Sort, repository_error::RepositoryError};
 use diesel::prelude::*;
 
 #[derive(PartialEq, Debug, Clone)]
@@ -76,6 +76,9 @@ impl<'a> SyncFileReferenceRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(sync_file_reference::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<SyncFileReferenceRow>(self.connection.lock().connection())?;

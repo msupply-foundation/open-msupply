@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::DeleteResponse;
 use service::{
@@ -65,7 +65,7 @@ fn map_error(error: ServiceError) -> Result<DeleteVaccineCourseErrorInterface> {
         ServiceError::VaccineCourseInUse => {
             return Ok(DeleteVaccineCourseErrorInterface::VaccineCourseInUse(
                 VaccineCourseInUse {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::VaccineCourseDoesNotExist => BadUserInput(formatted_error),

@@ -46,6 +46,7 @@ pub fn generate(
         on_hold: false,
         requisition_id: None,
         purchase_order_id: None,
+        prescription_request_id: None,
 
         // --- Transport details ---
         transport_reference: source_invoice.transport_reference.clone(),
@@ -161,6 +162,8 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
             linked_invoice_id: line.linked_invoice_id,
             linked_invoice_line_id: line.linked_invoice_line_id,
             legacy_goods_received_line_id: None,
+            // No requisition link on the copy, so no request to explain.
+            transfer_comment: None,
         };
     }
 
@@ -210,5 +213,6 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
         linked_invoice_id: None,
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
+        transfer_comment: None,
     }
 }

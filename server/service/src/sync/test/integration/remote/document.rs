@@ -1,7 +1,7 @@
 use crate::sync::{
     integrate_document::DocumentUpsert,
     test::integration::{
-        central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
+        SyncRecordTester, TestStepData, central_server_configurations::NewSiteProperties,
     },
     translations::IntegrationOperation,
 };

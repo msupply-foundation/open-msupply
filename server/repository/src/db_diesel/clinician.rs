@@ -1,12 +1,12 @@
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician,
-    clinician_store_join_row::clinician_store_join, DBType, StorageConnection,
+    DBType, StorageConnection, clinician_link_row::clinician_link, clinician_row::clinician,
+    clinician_store_join_row::clinician_store_join,
 };
 
 use crate::{
+    ClinicianRow, EqualFilter, Pagination, Sort, StringFilter,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    ClinicianRow, EqualFilter, Pagination, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -245,10 +245,11 @@ impl ClinicianFilter {
 #[cfg(test)]
 mod tests {
     use crate::{
-        mock::{mock_store_a, MockDataInserts},
-        test_db, ClinicianFilter, ClinicianRepository, ClinicianRow, ClinicianRowRepository,
+        ClinicianFilter, ClinicianRepository, ClinicianRow, ClinicianRowRepository,
         ClinicianRowRepositoryTrait, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository,
         StringFilter,
+        mock::{MockDataInserts, mock_store_a},
+        test_db,
     };
 
     #[actix_rt::test]

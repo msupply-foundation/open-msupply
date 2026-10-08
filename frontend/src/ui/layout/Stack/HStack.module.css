@@ -1,0 +1,60 @@
+/* HStack — horizontal run of siblings with a consistent gap (see HStack.tsx).
+ * Block-level + full-width like Stack; gap/align/justify are presets only, so
+ * horizontal rhythm stays consistent app-wide. */
+
+.hstack {
+  display: flex;
+  flex-direction: row;
+}
+
+.hstack[data-gap='sm'] {
+  gap: var(--space-2);
+}
+
+.hstack[data-gap='md'] {
+  gap: var(--space-4);
+}
+
+.hstack[data-gap='lg'] {
+  gap: var(--space-6);
+}
+
+.hstack[data-align='start'] {
+  align-items: flex-start;
+}
+
+.hstack[data-align='center'] {
+  align-items: center;
+}
+
+.hstack[data-align='end'] {
+  align-items: flex-end;
+}
+
+.hstack[data-align='baseline'] {
+  align-items: baseline;
+}
+
+.hstack[data-align='stretch'] {
+  align-items: stretch;
+}
+
+.hstack[data-justify='start'] {
+  justify-content: flex-start;
+}
+
+.hstack[data-justify='center'] {
+  justify-content: center;
+}
+
+.hstack[data-justify='end'] {
+  justify-content: flex-end;
+}
+
+.hstack[data-justify='between'] {
+  justify-content: space-between;
+}
+
+.hstack[data-wrap] {
+  flex-wrap: wrap;
+}

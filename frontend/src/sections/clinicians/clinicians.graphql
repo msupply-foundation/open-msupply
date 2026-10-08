@@ -1,0 +1,28 @@
+# Clinicians list — the S1 list population (spec/clinicians). Store-scoped
+# server-side by the clinician–store assignment for storeId (unconditional; no
+# filter escapes it). The client always sends filter.isActive = true so only
+# active clinicians return (contract › which clinicians appear). `sort` honours
+# only the LAST entry — send a single-element list (contract wire trap). No
+# search/filters beyond isActive; the list is read-only.
+query clinicians(
+  $storeId: String!
+  $filter: ClinicianFilterInput
+  $sort: [ClinicianSortInput!]
+  $page: PaginationInput
+) {
+  clinicians(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on ClinicianConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        firstName
+        lastName
+        initials
+        mobile
+        gender
+      }
+    }
+  }
+}

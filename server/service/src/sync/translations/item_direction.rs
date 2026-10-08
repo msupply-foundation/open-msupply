@@ -65,7 +65,7 @@ impl SyncTranslation for ItemDirectionTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository,
+        ItemLinkRow, ItemLinkRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound, standard_graphql_error::validate_auth, ContextExt,
+    ContextExt, simple_generic_errors::RecordNotFound, standard_graphql_error::validate_auth,
 };
 use graphql_types::types::program_indicator::IndicatorValueNode;
 use service::auth::{Resource, ResourceAccessRequest};
@@ -80,12 +80,12 @@ fn map_error(error: UpdateIndicatorValueError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         UpdateIndicatorValueError::IndicatorValueDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         UpdateIndicatorValueError::ValueTypeNotCorrect => {
             return Ok(UpdateErrorInterface::ValueTypeNotCorrect(
                 ValueTypeNotCorrect,
-            ))
+            ));
         }
         // Standard graphql errors
         UpdateIndicatorValueError::NotThisStoreValue

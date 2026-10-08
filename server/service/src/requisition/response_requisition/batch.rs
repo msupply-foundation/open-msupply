@@ -1,12 +1,12 @@
 use repository::RepositoryError;
 
 use crate::{
-    requisition_line::response_requisition_line::*, service_provider::ServiceContext,
     BatchMutationsProcessor, InputWithResult, WithDBError,
+    requisition_line::response_requisition_line::*, service_provider::ServiceContext,
 };
 
 use super::{
-    delete_response_requisition, DeleteResponseRequisition, DeleteResponseRequisitionError,
+    DeleteResponseRequisition, DeleteResponseRequisitionError, delete_response_requisition,
 };
 
 #[derive(Clone)]
@@ -81,9 +81,9 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{mock_full_new_response_requisition_for_update_test, mock_store_a, MockDataInserts},
-        test_db::setup_all,
         RequisitionLineRowRepository,
+        mock::{MockDataInserts, mock_full_new_response_requisition_for_update_test, mock_store_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

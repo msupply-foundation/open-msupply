@@ -1,0 +1,13 @@
+# Create a prescription (spec/prescriptions/contract.md § creation). The
+# response union is InvoiceNode alone — every rejection (duplicate id, no such
+# patient) is a non-typed GraphQL error surfaced by the fetch layer.
+mutation insertPrescription(
+  $storeId: String!
+  $input: InsertPrescriptionInput!
+) {
+  insertPrescription(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      id
+    }
+  }
+}

@@ -1,10 +1,10 @@
 use async_graphql::*;
 
 use repository::{
+    ItemRow,
     vaccine_course::{
         vaccine_course_item::VaccineCourseItem, vaccine_course_item_row::VaccineCourseItemRow,
     },
-    ItemRow,
 };
 
 #[derive(PartialEq, Debug)]

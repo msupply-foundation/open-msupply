@@ -1,6 +1,6 @@
 use super::{
-    temperature_breach_config_row::temperature_breach_config, DBType, StorageConnection,
-    TemperatureBreachConfigRow, TemperatureBreachType,
+    DBType, StorageConnection, TemperatureBreachConfigRow, TemperatureBreachType,
+    temperature_breach_config_row::temperature_breach_config,
 };
 use diesel::prelude::*;
 

@@ -1,5 +1,5 @@
 use crate::migrations::constants::{COLD_CHAIN_EQUIPMENT_UUID, COLD_ROOMS_AND_FREEZER_ROOMS_UUID};
-use crate::{migrations::sql, StorageConnection};
+use crate::{StorageConnection, migrations::sql};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // Asset Category

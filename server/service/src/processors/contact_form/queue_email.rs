@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use repository::{
+    ChangelogRow, ChangelogTableName, EqualFilter, KeyType, KeyValueStoreRepository,
     contact_form::{ContactForm, ContactFormFilter, ContactFormRepository},
     contact_form_row::ContactType,
-    ChangelogRow, ChangelogTableName, EqualFilter, KeyType, KeyValueStoreRepository,
 };
 use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
@@ -10,8 +10,8 @@ use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 use crate::{
     cursor_controller::CursorType,
     email::{
-        enqueue::{enqueue_email, EnqueueEmailData},
         EmailServiceError,
+        enqueue::{EnqueueEmailData, enqueue_email},
     },
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},
@@ -180,19 +180,19 @@ fn create_email(
 #[cfg(feature = "email-tests")]
 mod email_test {
     use repository::{
+        ChangelogRow,
         contact_form::ContactForm,
         contact_form_row::{ContactFormRow, ContactFormRowRepository, ContactType},
         email_queue_row::EmailQueueRowRepository,
-        mock::{mock_name_store_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts},
-        ChangelogRow,
+        mock::{MockData, MockDataInserts, mock_name_store_a, mock_store_a, mock_user_account_a},
     };
     use util::constants::SUPPORT_EMAIL;
 
     use crate::{
         processors::{contact_form::QueueContactEmailProcessor, general_processor::Processor},
         test_helpers::{
-            email_test::send_test_emails, setup_all_with_data_and_service_provider,
-            ServiceTestContext,
+            ServiceTestContext, email_test::send_test_emails,
+            setup_all_with_data_and_service_provider,
         },
     };
 
@@ -270,9 +270,11 @@ mod email_test {
 
         assert_eq!(unsent.len(), 1);
         assert_eq!(unsent[0].to_address, SUPPORT_EMAIL);
-        assert!(unsent[0]
-            .subject
-            .contains("Support request from username_a"));
+        assert!(
+            unsent[0]
+                .subject
+                .contains("Support request from username_a")
+        );
 
         send_test_emails(&service_provider);
     }

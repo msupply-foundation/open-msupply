@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::StandardGraphqlError};
 use service::{
     standalone_central::{
         InitialiseAsCentralServerError as ServiceError, InitialiseAsCentralServerInput,
@@ -155,40 +155,40 @@ fn map_error(error: ServiceError) -> Result<InitialiseAsCentralServerErrorInterf
         ServiceError::AlreadyInitialised => {
             return Ok(InitialiseAsCentralServerErrorInterface::AlreadyInitialised(
                 AlreadyInitialised,
-            ))
+            ));
         }
         ServiceError::NotSupportedOnAndroid => {
             return Ok(
                 InitialiseAsCentralServerErrorInterface::NotSupportedOnAndroid(
                     NotSupportedOnAndroid,
                 ),
-            )
+            );
         }
         ServiceError::StoreNameRequired => {
             return Ok(InitialiseAsCentralServerErrorInterface::StoreNameRequired(
                 StoreNameRequired,
-            ))
+            ));
         }
         ServiceError::AdminUsernameRequired => {
             return Ok(
                 InitialiseAsCentralServerErrorInterface::AdminUsernameRequired(
                     AdminUsernameRequired,
                 ),
-            )
+            );
         }
         ServiceError::AdminPasswordRequired => {
             return Ok(
                 InitialiseAsCentralServerErrorInterface::AdminPasswordRequired(
                     AdminPasswordRequired,
                 ),
-            )
+            );
         }
         ServiceError::AdminUserCreationFailed(_) => {
             return Ok(
                 InitialiseAsCentralServerErrorInterface::AdminUserCreationFailed(
                     AdminUserCreationFailed,
                 ),
-            )
+            );
         }
         // Standard Graphql Errors
         ServiceError::FailedToGetHardwareId(_) => InternalError(formatted_error),

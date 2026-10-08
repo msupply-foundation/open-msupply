@@ -1,11 +1,11 @@
 use async_graphql::*;
 
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::StandardGraphqlError};
 use service::sync::sync_status::status::InitialisationStatus;
 
 use crate::{
     queries::sync_settings::SyncSettingsNode,
-    sync_api_error::{map_request_auth_error, SyncErrorEither, SyncErrorNode},
+    sync_api_error::{SyncErrorEither, SyncErrorNode, map_request_auth_error},
     sync_v7::sync_api_error::SyncErrorV7Node,
 };
 

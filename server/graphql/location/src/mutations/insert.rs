@@ -1,10 +1,10 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     simple_generic_errors::{
         DatabaseError, InternalError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
     },
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::LocationNode;
 use service::{
@@ -102,12 +102,12 @@ fn map_error(error: ServiceError) -> Result<InsertLocationErrorInterface> {
         ServiceError::LocationAlreadyExists => {
             return Ok(InsertLocationErrorInterface::LocationAlreadyExists(
                 RecordAlreadyExist,
-            ))
+            ));
         }
         ServiceError::LocationWithCodeAlreadyExists => {
             return Ok(InsertLocationErrorInterface::UniqueValueViolation(
                 UniqueValueViolation(UniqueValueKey::Code),
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
@@ -125,14 +125,14 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        location::Location, mock::MockDataInserts, LocationRow, StorageConnectionManager,
+        LocationRow, StorageConnectionManager, location::Location, mock::MockDataInserts,
     };
     use serde_json::json;
 
     use service::{
         location::{
-            insert::{InsertLocation, InsertLocationError},
             LocationServiceTrait,
+            insert::{InsertLocation, InsertLocationError},
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

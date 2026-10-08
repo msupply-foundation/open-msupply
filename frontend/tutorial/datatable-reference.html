@@ -1,0 +1,2002 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="tutorial.js"></script>
+    <title>DataTable — interface reference</title>
+    <style>
+      :root {
+        --paper: #fbfaf8;
+        --paper-raised: #ffffff;
+        --ink: #1a1c22;
+        --slate: #5b6070;
+        --slate-soft: #8b8f9c;
+        --hair: #e6e3dd;
+        --hair-strong: #d6d2c9;
+        --accent: #c2410c;
+        --accent-soft: #f2e3d8;
+        --primary-tint: #eef3f8;
+        --primary-ink: #1f4d75;
+        --badge-tint: #eae6f2;
+        --badge-ink: #4a3d78;
+        --code-bg: #f4f1ec;
+        --kw: #9a3412;
+        --ty: #1f4d75;
+        --fn: #6b21a8;
+        --st: #3f6212;
+        --cm: #8b8f9c;
+        --ok: #3f6212;
+        --warn: #9a3412;
+
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+          sans-serif;
+        --font-display:
+          'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua',
+          Georgia, serif;
+        --font-mono:
+          ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', Menlo,
+          Consolas, monospace;
+
+        --measure: 68ch;
+        --gap: 1.5rem;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #16171b;
+          --paper-raised: #1e2026;
+          --ink: #e9e7e2;
+          --slate: #a4a8b4;
+          --slate-soft: #767b88;
+          --hair: #2c2e35;
+          --hair-strong: #3a3d46;
+          --accent: #f97316;
+          --accent-soft: #3a2416;
+          --primary-tint: #17293a;
+          --primary-ink: #7fb0dc;
+          --badge-tint: #262036;
+          --badge-ink: #b3a0e0;
+          --code-bg: #202228;
+          --kw: #f0a878;
+          --ty: #8fbde8;
+          --fn: #c9a0f0;
+          --st: #a3c982;
+          --cm: #767b88;
+          --ok: #a3c982;
+          --warn: #f0a878;
+        }
+      }
+      :root[data-theme='light'] {
+        --paper: #fbfaf8;
+        --paper-raised: #ffffff;
+        --ink: #1a1c22;
+        --slate: #5b6070;
+        --slate-soft: #8b8f9c;
+        --hair: #e6e3dd;
+        --hair-strong: #d6d2c9;
+        --accent: #c2410c;
+        --accent-soft: #f2e3d8;
+        --primary-tint: #eef3f8;
+        --primary-ink: #1f4d75;
+        --badge-tint: #eae6f2;
+        --badge-ink: #4a3d78;
+        --code-bg: #f4f1ec;
+        --kw: #9a3412;
+        --ty: #1f4d75;
+        --fn: #6b21a8;
+        --st: #3f6212;
+        --cm: #8b8f9c;
+        --ok: #3f6212;
+        --warn: #9a3412;
+      }
+      :root[data-theme='dark'] {
+        --paper: #16171b;
+        --paper-raised: #1e2026;
+        --ink: #e9e7e2;
+        --slate: #a4a8b4;
+        --slate-soft: #767b88;
+        --hair: #2c2e35;
+        --hair-strong: #3a3d46;
+        --accent: #f97316;
+        --accent-soft: #3a2416;
+        --primary-tint: #17293a;
+        --primary-ink: #7fb0dc;
+        --badge-tint: #262036;
+        --badge-ink: #b3a0e0;
+        --code-bg: #202228;
+        --kw: #f0a878;
+        --ty: #8fbde8;
+        --fn: #c9a0f0;
+        --st: #a3c982;
+        --cm: #767b88;
+        --ok: #a3c982;
+        --warn: #f0a878;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--font-body);
+        font-size: 1rem;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .wrap {
+        display: grid;
+        grid-template-columns: 1fr;
+        max-width: 78rem;
+        margin: 0 auto;
+        padding: 0 clamp(1rem, 4vw, 3rem);
+      }
+      @media (min-width: 60rem) {
+        .wrap {
+          grid-template-columns: 15rem minmax(0, 1fr);
+          gap: 3rem;
+        }
+      }
+
+      /* ---- masthead ---- */
+      header.masthead {
+        grid-column: 1 / -1;
+        border-bottom: 1px solid var(--hair);
+        padding: clamp(2.5rem, 6vw, 4.5rem) 0 2rem;
+        margin-bottom: 2.5rem;
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 1rem;
+      }
+      h1 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: clamp(2.1rem, 5vw, 3.4rem);
+        line-height: 1.05;
+        letter-spacing: -0.01em;
+        text-wrap: balance;
+        margin: 0 0 1rem;
+      }
+      h1 .mono {
+        font-family: var(--font-mono);
+        font-weight: 500;
+        font-size: 0.82em;
+        color: var(--accent);
+      }
+      .standfirst {
+        font-size: 1.15rem;
+        color: var(--slate);
+        max-width: var(--measure);
+        margin: 0;
+      }
+      .meta-line {
+        margin-top: 1.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--slate-soft);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.25rem;
+      }
+      .meta-line b {
+        color: var(--slate);
+        font-weight: 600;
+      }
+
+      /* ---- side nav ---- */
+      nav.toc {
+        display: none;
+      }
+      @media (min-width: 60rem) {
+        nav.toc {
+          display: block;
+          position: sticky;
+          top: 2rem;
+          align-self: start;
+          height: max-content;
+          font-size: 0.85rem;
+        }
+        nav.toc .toc-title {
+          font-family: var(--font-mono);
+          text-transform: uppercase;
+          letter-spacing: 0.14em;
+          font-size: 0.68rem;
+          color: var(--slate-soft);
+          margin: 0 0 0.9rem;
+        }
+        nav.toc ol {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          counter-reset: toc;
+        }
+        nav.toc li {
+          counter-increment: toc;
+          margin: 0 0 0.15rem;
+        }
+        nav.toc a {
+          display: block;
+          padding: 0.28rem 0 0.28rem 2rem;
+          position: relative;
+          color: var(--slate);
+          text-decoration: none;
+          border-left: 2px solid var(--hair);
+          line-height: 1.35;
+          transition:
+            color 0.15s,
+            border-color 0.15s;
+        }
+        nav.toc a::before {
+          content: counter(toc, decimal-leading-zero);
+          position: absolute;
+          left: 0.6rem;
+          font-family: var(--font-mono);
+          font-size: 0.7rem;
+          color: var(--slate-soft);
+        }
+        nav.toc a:hover {
+          color: var(--accent);
+          border-left-color: var(--accent);
+        }
+      }
+
+      main {
+        grid-column: 1 / -1;
+        min-width: 0;
+      }
+      @media (min-width: 60rem) {
+        main {
+          grid-column: 2;
+        }
+      }
+
+      section {
+        margin-bottom: 4rem;
+        scroll-margin-top: 2rem;
+      }
+      section > * {
+        max-width: var(--measure);
+      }
+      section > .full {
+        max-width: none;
+      }
+
+      h2 {
+        font-family: var(--font-display);
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.15;
+        margin: 0 0 0.4rem;
+        padding-top: 1rem;
+        text-wrap: balance;
+      }
+      h2 .sec-num {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--accent);
+        font-weight: 500;
+        display: block;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.3rem;
+      }
+      h3 {
+        font-family: var(--font-body);
+        font-size: 1.15rem;
+        font-weight: 650;
+        margin: 2.25rem 0 0.5rem;
+        letter-spacing: -0.005em;
+      }
+      h3 code,
+      h2 code {
+        font-size: 0.9em;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      a {
+        color: var(--accent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 2px;
+      }
+
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.88em;
+        background: var(--code-bg);
+        padding: 0.1em 0.36em;
+        border-radius: 4px;
+        color: var(--ink);
+      }
+      strong {
+        font-weight: 650;
+      }
+
+      /* ---- code blocks ---- */
+      pre {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.6;
+        background: var(--code-bg);
+        border: 1px solid var(--hair);
+        border-radius: 10px;
+        padding: 1.1rem 1.25rem;
+        overflow-x: auto;
+        margin: 0 0 1.25rem;
+        max-width: none;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        font-size: inherit;
+        color: var(--ink);
+      }
+      .kw {
+        color: var(--kw);
+      }
+      .ty {
+        color: var(--ty);
+      }
+      .fn {
+        color: var(--fn);
+      }
+      .st {
+        color: var(--st);
+      }
+      .cm {
+        color: var(--cm);
+        font-style: italic;
+      }
+      .filename {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--slate);
+        background: var(--paper-raised);
+        border: 1px solid var(--hair);
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+        padding: 0.3rem 0.7rem;
+        margin-bottom: -0.6rem;
+        position: relative;
+        z-index: 1;
+      }
+      .filename + pre {
+        border-top-left-radius: 0;
+      }
+
+      /* ---- callout ---- */
+      .note {
+        border: 1px solid var(--hair-strong);
+        border-left: 3px solid var(--accent);
+        background: var(--paper-raised);
+        border-radius: 0 8px 8px 0;
+        padding: 1rem 1.25rem;
+        margin: 0 0 1.25rem;
+        font-size: 0.95rem;
+      }
+      .note .note-title {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 0.4rem;
+      }
+      .note.plain {
+        border-left-color: var(--slate-soft);
+      }
+      .note.plain .note-title {
+        color: var(--slate);
+      }
+
+      /* ---- definition tables ---- */
+      .table-scroll {
+        overflow-x: auto;
+        margin: 0 0 1.25rem;
+        max-width: none;
+      }
+      table.props {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.86rem;
+        min-width: 40rem;
+      }
+      table.props th {
+        text-align: left;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--slate-soft);
+        border-bottom: 1.5px solid var(--hair-strong);
+        padding: 0 1rem 0.55rem 0;
+        vertical-align: bottom;
+      }
+      table.props td {
+        border-bottom: 1px solid var(--hair);
+        padding: 0.7rem 1rem 0.7rem 0;
+        vertical-align: top;
+      }
+      table.props tr:last-child td {
+        border-bottom: none;
+      }
+      table.props td:first-child {
+        white-space: nowrap;
+      }
+      table.props .pname {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--ink);
+        font-weight: 600;
+      }
+      table.props .ptype {
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        color: var(--ty);
+        display: block;
+        margin-top: 0.15rem;
+        font-weight: 400;
+        white-space: normal;
+      }
+      table.props .req {
+        color: var(--warn);
+        font-weight: 700;
+      }
+      table.props .opt {
+        color: var(--slate-soft);
+      }
+      table.props td p {
+        margin: 0;
+      }
+      table.props td p + p {
+        margin-top: 0.4rem;
+      }
+
+      /* ==== the card mockup ==== */
+      .demo {
+        max-width: none;
+        background:
+          repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 7px,
+            color-mix(in srgb, var(--hair) 40%, transparent) 7px,
+            color-mix(in srgb, var(--hair) 40%, transparent) 8px
+          ),
+          var(--paper);
+        border: 1px solid var(--hair);
+        border-radius: 12px;
+        padding: 1.75rem;
+        margin: 0 0 0.75rem;
+      }
+      .demo-label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slate-soft);
+        margin: 0 0 1rem;
+      }
+
+      /* faithful re-creation of the real .card */
+      .card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        max-width: 26rem;
+        padding: 0.9rem;
+        border: 1px solid var(--hair-strong);
+        border-radius: 10px;
+        background: var(--paper-raised);
+        position: relative;
+      }
+      .card .region-tag {
+        position: absolute;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.1rem 0.4rem;
+        border-radius: 999px;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      .card-select {
+        width: 1rem;
+        height: 1rem;
+        margin-top: 0.15rem;
+        flex-shrink: 0;
+        border: 1.5px solid var(--slate-soft);
+        border-radius: 3px;
+      }
+      .card-identity {
+        flex: 1;
+        min-width: 0;
+      }
+      .card-primary {
+        color: var(--ink);
+        font-weight: 600;
+        font-size: 1.05rem;
+        background: color-mix(in srgb, var(--primary-tint) 70%, transparent);
+        border-radius: 5px;
+        padding: 0.1rem 0.3rem;
+        display: inline-block;
+      }
+      .card-badge {
+        flex-shrink: 0;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--badge-ink);
+        background: var(--badge-tint);
+        border-radius: 6px;
+        padding: 0.15rem 0.5rem;
+      }
+      .card-caption {
+        font-size: 0.68rem;
+        color: var(--slate-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.1rem;
+      }
+      .card-fields {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.75rem;
+        align-items: baseline;
+      }
+      .card-fields.grouped {
+        border-top: 1px dashed var(--hair);
+        padding-top: 0.5rem;
+      }
+      .card-group-icon {
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+        color: var(--accent);
+      }
+      .card-group-icon svg {
+        width: 0.95rem;
+        height: 0.95rem;
+      }
+      .lv {
+        display: flex;
+        flex-direction: column;
+      }
+      .lv .lv-label {
+        font-size: 0.66rem;
+        color: var(--slate-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .lv .lv-value {
+        font-size: 0.9rem;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .demo-annotate {
+        display: grid;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+        font-size: 0.8rem;
+        max-width: none;
+      }
+      .demo-annotate .row {
+        display: flex;
+        gap: 0.6rem;
+        align-items: baseline;
+      }
+      .demo-annotate .swatch {
+        flex-shrink: 0;
+        width: 0.85rem;
+        height: 0.85rem;
+        border-radius: 3px;
+        margin-top: 0.2rem;
+        border: 1px solid var(--hair-strong);
+      }
+      .demo-annotate .row code {
+        font-size: 0.78rem;
+      }
+
+      /* mini table view mock */
+      .tbl-mock {
+        max-width: none;
+        border: 1px solid var(--hair);
+        border-radius: 10px;
+        overflow: hidden;
+        font-size: 0.82rem;
+        margin: 0 0 0.75rem;
+      }
+      .tbl-tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--hair);
+        background: var(--paper-raised);
+      }
+      .tbl-tab {
+        padding: 0.55rem 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: var(--slate);
+        border-bottom: 2px solid transparent;
+        cursor: default;
+      }
+      .tbl-tab svg {
+        width: 0.85rem;
+        height: 0.85rem;
+      }
+      .tbl-tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+        font-weight: 600;
+      }
+      .tbl-mock table {
+        border-collapse: collapse;
+        width: 100%;
+        font-variant-numeric: tabular-nums;
+      }
+      .tbl-mock th {
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.72rem;
+        color: var(--slate);
+        padding: 0.5rem 0.8rem;
+        border-bottom: 1px solid var(--hair);
+        background: var(--paper-raised);
+      }
+      .tbl-mock td {
+        padding: 0.5rem 0.8rem;
+        border-bottom: 1px solid var(--hair);
+      }
+      .tbl-mock tr:last-child td {
+        border-bottom: none;
+      }
+      .tbl-mock .num {
+        text-align: right;
+      }
+      .tbl-mock .parent td {
+        font-weight: 600;
+        background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
+      }
+      .tbl-mock .child td:first-child {
+        padding-left: 1.8rem;
+        color: var(--slate);
+      }
+
+      .legend {
+        font-size: 0.8rem;
+        color: var(--slate);
+        margin: 0 0 2rem;
+      }
+
+      footer {
+        grid-column: 1 / -1;
+        border-top: 1px solid var(--hair);
+        padding: 2rem 0 3rem;
+        margin-top: 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        color: var(--slate-soft);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.5rem;
+      }
+      footer a {
+        color: var(--slate);
+      }
+
+      ul.tight {
+        margin: 0 0 1.25rem;
+        padding-left: 1.2rem;
+      }
+      ul.tight li {
+        margin-bottom: 0.35rem;
+      }
+
+      .pill {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        padding: 0.12rem 0.5rem;
+        border-radius: 999px;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+      .pill.primary {
+        background: var(--primary-tint);
+        color: var(--primary-ink);
+      }
+      .pill.badge {
+        background: var(--badge-tint);
+        color: var(--badge-ink);
+      }
+      .pill.secondary {
+        background: var(--code-bg);
+        color: var(--slate);
+      }
+      .theme-toggle {
+        position: fixed;
+        top: 1rem;
+        inline-size: max-content;
+        right: 1rem;
+        z-index: 50;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--slate);
+        background: var(--paper-raised);
+        border: 1px solid var(--hair-strong);
+        border-radius: 999px;
+        padding: 0.4rem 0.8rem;
+        cursor: pointer;
+      }
+      .theme-toggle:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .theme-toggle:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+
+    <div class="wrap">
+      <header class="masthead">
+        <p class="eyebrow">Component reference · src/ui/elements/table</p>
+        <h1>The <span class="mono">&lt;DataTable&gt;</span> interface</h1>
+        <p class="standfirst">
+          One generic, server-driven table shared across every list and detail
+          screen. This is the complete contract: the props it takes, the column
+          definition that drives every cell, and the three faces one column set
+          renders as — a sortable table, a tabbed table, and a stack of cards.
+        </p>
+        <div class="meta-line">
+          <span><b>Built on</b> @tanstack/solid-table</span>
+          <span><b>Generic over</b> &lt;T, K, G&gt;</span>
+          <span><b>KDD</b> table-state · edit-line-card-table</span>
+        </div>
+      </header>
+
+      <nav class="toc" aria-label="Contents">
+        <p class="toc-title">Contents</p>
+        <ol>
+          <li><a href="#overview">Mental model</a></li>
+          <li><a href="#props">Table parameters</a></li>
+          <li><a href="#column">The column definition</a></li>
+          <li><a href="#identity">Column identity</a></li>
+          <li><a href="#cells">Cell helpers</a></li>
+          <li><a href="#card">Card areas</a></li>
+          <li><a href="#groups">Tabs &amp; card groups</a></li>
+          <li><a href="#rowgroup">Row grouping</a></li>
+          <li><a href="#config">Layout config</a></li>
+          <li><a href="#example">Full example</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <!-- 1 -->
+        <section id="overview">
+          <h2>
+            <span class="sec-num">01 — MENTAL MODEL</span>What the table is, and
+            isn't
+          </h2>
+          <p>
+            The <code>&lt;DataTable&gt;</code> is
+            <strong>presentational about data</strong>. It does not fetch,
+            paginate, or sort rows — the page hands it the current page of rows
+            already in the order it wants, and the table renders them. What it
+            <em>does</em> own is presentation state: full-screen, the active
+            tab, and the table-vs-card view mode.
+          </p>
+          <p>
+            Ownership splits cleanly, and it's worth holding this in your head
+            before reading the props:
+          </p>
+          <ul class="tight">
+            <li>
+              <strong>The page owns</strong> sort, selection, pagination, and
+              the resolved column config. It hands them in and receives change
+              callbacks — the same controlled shape as a form input.
+            </li>
+            <li>
+              <strong>The table owns</strong> full-screen, the active tab, and
+              (through the config it's handed) the view mode and row-grouping
+              toggle.
+            </li>
+            <li>
+              <strong>TanStack owns</strong> the row model, grouping/expansion,
+              and aggregation. We render what it computes.
+            </li>
+          </ul>
+          <p>
+            The component is generic over three type parameters, and every one
+            is load-bearing — you'll see them throughout:
+          </p>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>Type param</th>
+                  <th>Stands for</th>
+                  <th>Keeps honest</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="pname">T</span></td>
+                  <td>The row type — usually a generated GraphQL node.</td>
+                  <td>
+                    A column's <code>key</code> must be a real field of
+                    <code>T</code>; a typo is a compile error.
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="pname">K</span></td>
+                  <td>The sort-field union — the GraphQL sort keys.</td>
+                  <td>
+                    A column's <code>sortKey</code> and the
+                    <code>onSort</code> callback can only ever name a real sort
+                    field.
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="pname">G</span></td>
+                  <td>
+                    The card-group keys (defaults to <code>never</code> — no
+                    groups).
+                  </td>
+                  <td>
+                    A column's <code>tabsAndCardGroups</code> can only list
+                    groups you actually declared.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 2 -->
+        <section id="props">
+          <h2>
+            <span class="sec-num">02 — TABLE PARAMETERS</span>Every prop
+            <code>&lt;DataTable&gt;</code> takes
+          </h2>
+          <p>
+            The full <code>DataTableProps&lt;T, K, G&gt;</code>. Only three are
+            required; everything else opts a capability in. Grouped by concern
+            rather than alphabetised, because that's how you reach for them.
+          </p>
+
+          <h3>Data <span class="opt">— required</span></h3>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>Prop</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="pname">columns</span>
+                    <span class="req">required</span
+                    ><span class="ptype">Column&lt;T, K, G&gt;[]</span>
+                  </td>
+                  <td>
+                    <p>
+                      The column definitions — the heart of the interface. Each
+                      drives one column's identity, header, cell rendering,
+                      sortability, and card/tab placement. Detailed in §3.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">rows</span>
+                    <span class="req">required</span
+                    ><span class="ptype">T[]</span>
+                  </td>
+                  <td>
+                    <p>
+                      The current page of rows, pre-ordered. The table never
+                      re-sorts them (<code>manualSorting</code>).
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">rowKey</span>
+                    <span class="req">required</span
+                    ><span class="ptype">(row: T) =&gt; string</span>
+                  </td>
+                  <td>
+                    <p>
+                      A stable identity per row, used for selection and keyed
+                      rendering. Return the row's real id — never the array
+                      index.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Sorting <span class="opt">— page-owned</span></h3>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>Prop</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="pname">sort</span
+                    ><span class="ptype">SortState&lt;K&gt; | undefined</span>
+                  </td>
+                  <td>
+                    <p>
+                      The current sort — <code>{ key, desc }</code> — or
+                      <code>undefined</code> when unsorted. Drives the header's
+                      sort indicator.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">onSort</span
+                    ><span class="ptype"
+                      >(key: K, desc: boolean) =&gt; void</span
+                    >
+                  </td>
+                  <td>
+                    <p>
+                      Fired when a sortable header is clicked. TanStack computes
+                      the next direction in the asc → desc cycle; you just
+                      record
+                      <code>key</code> + <code>desc</code> (e.g. into URL
+                      state).
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Interaction &amp; display</h3>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>Prop</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="pname">onRowClick</span
+                    ><span class="ptype">(row: T) =&gt; void</span>
+                  </td>
+                  <td>
+                    <p>
+                      When set, a row becomes clickable (and gets a pointer
+                      cursor) — e.g. navigate, or open an edit modal. Omit for a
+                      static table.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">emptyMessage</span
+                    ><span class="ptype">string</span>
+                  </td>
+                  <td>
+                    <p>
+                      Shown in place of rows when there are none. Defaults to a
+                      translated “No results.”
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">showFullScreen</span
+                    ><span class="ptype">boolean — default true</span>
+                  </td>
+                  <td>
+                    <p>
+                      Show the full-screen toggle in the control bar. Pass
+                      <code>false</code> where full-screen makes no sense — e.g.
+                      a table inside a modal, whose shell isn't the one the
+                      toggle would expand. The card-switch and column-settings
+                      controls are unaffected.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Selection <span class="opt">— page-owned</span></h3>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>Prop</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="pname">enableSelection</span
+                    ><span class="ptype">boolean</span>
+                  </td>
+                  <td>
+                    <p>
+                      Turns on the per-row checkbox column (and the header
+                      select-all).
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">selectedIds</span
+                    ><span class="ptype">string[]</span>
+                  </td>
+                  <td>
+                    <p>
+                      The currently-selected row ids (by <code>rowKey</code>).
+                      Controlled by the page.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">onSelectionChange</span
+                    ><span class="ptype">(ids: string[]) =&gt; void</span>
+                  </td>
+                  <td>
+                    <p>
+                      Fired with the next selection. The page renders the
+                      selection action bar in its own footer, not the table.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>
+            Card groups &amp; row grouping
+            <span class="opt">— optional capabilities</span>
+          </h3>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>Prop</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="pname">tabsAndCardGroups</span
+                    ><span class="ptype">TabAndCardGroup&lt;G&gt;[]</span>
+                  </td>
+                  <td>
+                    <p>
+                      Declares the group set. When present, the table shows a
+                      <strong>tab strip</strong> and renders only the active
+                      group's columns (plus any <code>ALL_TABS</code> anchors).
+                      In card view the same groups become the card's labelled
+                      sections. The table owns which tab is active — no state
+                      leaks to the page. See §6–7.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">rowGroup</span
+                    ><span class="ptype"
+                      >{ columnId: string; labelKey: LocaleKey }</span
+                    >
+                  </td>
+                  <td>
+                    <p>
+                      A <em>different</em> concept from card groups: collapses
+                      rows that share a value under one expandable parent (e.g.
+                      all of an item's batches). Names one column to group by;
+                      the toolbar shows a single on/off toggle. See §8.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>
+            Column layout config <span class="opt">— page-owned, optional</span>
+          </h3>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>Prop</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="pname">config</span
+                    ><span class="ptype">TableConfig</span>
+                  </td>
+                  <td>
+                    <p>
+                      The resolved column order / sizing / pinning / visibility,
+                      plus view mode and grouping. The page resolves its three
+                      layers (default → global → user) into one value — see §9.
+                      Omit and the table uses TanStack's defaults from
+                      <code>columns</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">setConfig</span
+                    ><span class="ptype">&lt;K&gt;(key, value) =&gt; void</span>
+                  </td>
+                  <td>
+                    <p>
+                      Called with the resolved next value for one config field
+                      when the user reorders, resizes, hides, pins, switches
+                      view, or toggles grouping. Controlled exactly like
+                      <code>onSort</code>.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 3 -->
+        <section id="column">
+          <h2>
+            <span class="sec-num">03 — THE COLUMN DEFINITION</span>One
+            <code>Column&lt;T, K, G&gt;</code>, four responsibilities
+          </h2>
+          <p>
+            Every column is one object. It replaces TanStack's raw
+            <code>accessorKey</code>/<code>accessorFn</code>/<code>id</code>
+            with a single nested <code>c</code> identity field (so identity is
+            spelled exactly one way and can be typed), then carries the rest of
+            TanStack's column fields plus two of our own extensions.
+          </p>
+          <span class="filename">src/ui/elements/table/columnTypes.ts</span>
+          <pre><code><span class="kw">export type</span> <span class="ty">Column</span>&lt;<span class="ty">T</span>, <span class="ty">K</span> <span class="kw">extends</span> <span class="ty">string</span>, <span class="ty">G</span> <span class="kw">extends</span> <span class="ty">string</span> = <span class="kw">never</span>&gt; = {
+  c: <span class="ty">ColumnIdentity</span>&lt;<span class="ty">T</span>&gt;;              <span class="cm">// identity: key | id | accessor (see §4)</span>
+} &amp; <span class="ty">Omit</span>&lt;<span class="ty">IdentifiedColumnDef</span>&lt;<span class="ty">T</span>&gt;, <span class="st">'id'</span>&gt; &amp; {
+  sortKey?: <span class="ty">K</span>;                       <span class="cm">// the GraphQL sort field this column sorts by</span>
+  tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span> <span class="ty">ALL_TABS</span>;  <span class="cm">// tab / card-group membership</span>
+};</code></pre>
+          <p>Unpacking the four responsibilities each column object carries:</p>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <span class="pname">c</span
+                    ><span class="ptype">ColumnIdentity&lt;T&gt;</span>
+                  </td>
+                  <td>
+                    <p>
+                      <strong>Identity.</strong> How the column finds its value
+                      and what its id is. Nested under its own field so it never
+                      mixes with display fields. Three forms — §4.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">header</span
+                    ><span class="ptype">string | JSX | fn</span>
+                  </td>
+                  <td>
+                    <p>
+                      The column heading. Use a <strong>string</strong> — card
+                      view reuses it as the field label, and only the string
+                      case yields a readable one.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">cell</span
+                    ><span class="ptype">(info) =&gt; JSX</span>
+                  </td>
+                  <td>
+                    <p>
+                      Renders the body cell. Omit for a plain text column
+                      (TanStack renders the resolved value as-is); provide it to
+                      format or to render an editable control. Receives
+                      <code>info.getValue()</code> and
+                      <code>info.row.original</code>.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">meta</span
+                    ><span class="ptype">ColumnMeta</span>
+                  </td>
+                  <td>
+                    <p>
+                      <strong>Untyped display conventions</strong> —
+                      <code>align</code>, <code>wrapLines</code>, and the
+                      <code>card</code> region. These need no table-specific
+                      type, so they ride TanStack's <code>meta</code> bag
+                      (§5–6).
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">sortKey</span
+                    ><span class="ptype">K</span>
+                  </td>
+                  <td>
+                    <p>
+                      The GraphQL sort field. Kept separate from identity
+                      because a column may sort by a different field than it
+                      displays. Usually equals the column's key.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">tabsAndCardGroups</span
+                    ><span class="ptype">G[] | ALL_TABS</span>
+                  </td>
+                  <td>
+                    <p>
+                      Which tab(s) / card group(s) this column belongs to (§7).
+                      Omit and the column has no group — in card view it falls
+                      to the ungrouped area.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <span class="pname">aggregationFn</span
+                    ><span class="ptype">TanStack AggregationFn</span>
+                  </td>
+                  <td>
+                    <p>
+                      What the grouped-parent cell shows when rows are grouped
+                      (§8). Set directly (the cell helpers set sensible
+                      defaults).
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note">
+            <p class="note-title">The typed-vs-untyped rule</p>
+            <p style="margin: 0">
+              A display convention that needs <strong>no</strong> table-specific
+              type (alignment, wrap, card region) lives in <code>meta</code>. A
+              convention that needs the <code>K</code> or <code>G</code> generic
+              to stay honest (<code>sortKey</code>,
+              <code>tabsAndCardGroups</code>) is a typed field on
+              <code>Column</code> itself — because <code>ColumnMeta</code> can't
+              carry those generics.
+            </p>
+          </div>
+        </section>
+
+        <!-- 4 -->
+        <section id="identity">
+          <h2>
+            <span class="sec-num">04 — COLUMN IDENTITY</span>The
+            <code>c</code> field — three shapes, one per real case
+          </h2>
+          <p>
+            <code>ColumnIdentity&lt;T&gt;</code> is a discriminated union. A
+            column is exactly one of these, and the mapper
+            <code>toColumnDef</code> turns each into the matching TanStack
+            fields, always stamping an explicit id.
+          </p>
+          <span class="filename">src/ui/elements/table/columnTypes.ts</span>
+          <pre><code><span class="kw">export type</span> <span class="ty">ColumnIdentity</span>&lt;<span class="ty">T</span>&gt; =
+  | { key: <span class="kw">keyof</span> <span class="ty">T</span> }                       <span class="cm">// reads that field · natively sortable · id = the key</span>
+  | { id: <span class="ty">string</span> }                         <span class="cm">// a display column — no value read (actions, checkbox)</span>
+  | { accessor: (row: <span class="ty">T</span>) =&gt; <span class="kw">unknown</span>; id: <span class="ty">string</span> };  <span class="cm">// a computed / nested value + an explicit id</span></code></pre>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>Form</th>
+                  <th>When</th>
+                  <th>Example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="pname">{ key }</span></td>
+                  <td>
+                    <p>
+                      The common case. A <code>keyof T</code> — a real field.
+                      The column reads it, is natively sortable, and its id is
+                      that key.
+                    </p>
+                  </td>
+                  <td>
+                    <code>c: { key: <span class="st">'batch'</span> }</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="pname">{ id }</span></td>
+                  <td>
+                    <p>
+                      A display column with no data accessor — an actions
+                      column, a checkbox. Just a unique id.
+                    </p>
+                  </td>
+                  <td>
+                    <code>c: { id: <span class="st">'actions'</span> }</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="pname">{ accessor, id }</span></td>
+                  <td>
+                    <p>
+                      A computed or nested value — <code>row.item.code</code>, a
+                      derived string. An accessor plus an explicit id, since
+                      there's no key to derive one from.
+                    </p>
+                  </td>
+                  <td>
+                    <code
+                      >c: { accessor: <span class="fn">r</span> =&gt;
+                      r.item.code, id: <span class="st">'code'</span> }</code
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Because every column ends up with a known id, the
+            <code>sortKey ⇄ id</code> round-trip (for the controlled manual
+            sort) and the column-layout config both have a stable handle to key
+            by.
+          </p>
+        </section>
+
+        <!-- 5 -->
+        <section id="cells">
+          <h2>
+            <span class="sec-num">05 — CELL HELPERS</span>Fragments you spread
+            into a column
+          </h2>
+          <p>
+            A plain text column needs no <code>cell</code> —
+            <code>{ c: { key }, header, sortKey }</code> renders as-is. For the
+            common formatted types, <code>tableHelpers</code> exports fragments
+            you spread in. Each sets only what differs from a plain column
+            (alignment via <code>meta</code>, a formatting <code>cell</code>,
+            and a sensible grouped-parent <code>aggregationFn</code>).
+          </p>
+          <span class="filename">src/ui/elements/table/tableHelpers.ts</span>
+          <pre><code><span class="fn">getNumberCell</span>()   <span class="cm">// right-aligned; grouped parent → SUM of leaves</span>
+<span class="fn">getDateCell</span>()     <span class="cm">// localised date, blank → em dash; parent → shared date or [multiple]</span>
+<span class="fn">getBooleanCell</span>()  <span class="cm">// resolved value → localised Yes / No</span>
+
+<span class="cm">// spread into a column literal:</span>
+{ c: { key: <span class="st">'snapshotNumberOfPacks'</span> }, header: <span class="fn">t</span>(<span class="st">'…'</span>), sortKey: <span class="st">'snapshot'</span>, ...<span class="fn">getNumberCell</span>() }</code></pre>
+          <div class="note plain">
+            <p class="note-title">Why fragments, not a column factory</p>
+            <p style="margin: 0">
+              Each helper returns a narrow fragment typed off
+              <code>ColumnDefBase</code> — only the fields it sets — so it
+              spreads into a <code>Column</code> of any <code>(K, G)</code>,
+              including a groups-only edit table whose <code>K</code> is
+              <code>never</code>. Explicit composition over a config object: you
+              see exactly which fields each helper contributes.
+            </p>
+          </div>
+        </section>
+
+        <!-- 6 -->
+        <section id="card">
+          <h2>
+            <span class="sec-num">06 — CARD AREAS</span>How a column places
+            itself on a card
+          </h2>
+          <p>
+            In card view, each row becomes a card and every visible cell is
+            routed to one of three areas by its
+            <code>meta.card</code> region. A column with <strong>no</strong>
+            <code>card</code> falls into the secondary area below the header.
+            Below is a faithful re-creation of the real
+            <code>.card</code> layout, showing all three placements together —
+            the regions and sections are exactly what the component renders:
+          </p>
+
+          <div class="demo full">
+            <p class="demo-label">Card view · one row = one card</p>
+            <div class="card">
+              <span
+                class="region-tag pill primary"
+                style="top: -0.65rem; left: 2.4rem"
+                >region: primary</span
+              >
+              <span
+                class="region-tag pill badge"
+                style="top: -0.65rem; right: 0.6rem"
+                >region: badge</span
+              >
+              <div class="card-header">
+                <span class="card-select" aria-hidden="true"></span>
+                <div class="card-identity">
+                  <div class="card-caption">Batch</div>
+                  <span class="card-primary">A batch code / input</span>
+                </div>
+                <div class="card-badge">2,600</div>
+              </div>
+              <div class="card-fields grouped">
+                <span class="card-group-icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M20 7 12 3 4 7l8 4 8-4Z" />
+                    <path d="m4 7 0 10 8 4 8-4V7" />
+                  </svg>
+                </span>
+                <span class="lv"
+                  ><span class="lv-label">Expiry</span
+                  ><span class="lv-value">31/05/2026</span></span
+                >
+                <span class="lv"
+                  ><span class="lv-label">Location</span
+                  ><span class="lv-value">Room A</span></span
+                >
+                <span class="lv"
+                  ><span class="lv-label">Reason</span
+                  ><span class="lv-value">Stocktake</span></span
+                >
+              </div>
+              <div class="card-fields grouped">
+                <span class="card-group-icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 8h.01M11 12h1v4h1" />
+                  </svg>
+                </span>
+                <span class="lv"
+                  ><span class="lv-label">Sell price</span
+                  ><span class="lv-value">1.20</span></span
+                >
+                <span class="lv"
+                  ><span class="lv-label">Cost price</span
+                  ><span class="lv-value">0.80</span></span
+                >
+              </div>
+            </div>
+
+            <div class="demo-annotate">
+              <div class="row">
+                <span
+                  class="swatch"
+                  style="background: var(--primary-tint)"
+                ></span>
+                <div>
+                  <code
+                    >meta: { card: { region: <span class="st">'primary'</span>,
+                    showLabel: <span class="kw">true</span> } }</code
+                  >
+                  — the big top-left title. <code>showLabel</code> captions it
+                  with the column's own header (here “Batch”), useful when the
+                  cell is an unlabelled input.
+                </div>
+              </div>
+              <div class="row">
+                <span
+                  class="swatch"
+                  style="background: var(--badge-tint)"
+                ></span>
+                <div>
+                  <code
+                    >meta: { card: { region: <span class="st">'badge'</span> }
+                    }</code
+                  >
+                  — the top-right chip. A single salient number or status.
+                </div>
+              </div>
+              <div class="row">
+                <span
+                  class="swatch"
+                  style="
+                    background: var(--paper-raised);
+                    border-color: var(--accent);
+                  "
+                ></span>
+                <div>
+                  <strong>No <code>card</code> key</strong> — the cell falls
+                  into the secondary area below the header, as a label-value
+                  pair. Its label is the column header.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <span class="filename"
+            >the three placements, in column definitions</span
+          >
+          <pre><code><span class="cm">// PRIMARY — the card title. showLabel reuses the header as a caption.</span>
+{ c: { key: <span class="st">'batch'</span> }, header: <span class="fn">t</span>(<span class="st">'…batch'</span>),
+  meta: { card: { region: <span class="st">'primary'</span>, showLabel: <span class="kw">true</span> } }, cell: … }
+
+<span class="cm">// BADGE — the top-right chip.</span>
+{ c: { key: <span class="st">'snapshotNumberOfPacks'</span> }, header: <span class="fn">t</span>(<span class="st">'…snapshot'</span>),
+  meta: { card: { region: <span class="st">'badge'</span> }, align: <span class="st">'right'</span> } }
+
+<span class="cm">// SECONDARY — no card key at all → drops below the header as a label-value pair.</span>
+{ c: { key: <span class="st">'expiryDate'</span> }, header: <span class="fn">t</span>(<span class="st">'…expiry'</span>), ...<span class="fn">getDateCell</span>() }</code></pre>
+          <div class="note">
+            <p class="note-title">Visibility still applies</p>
+            <p style="margin: 0">
+              A card only shows cells the column config leaves visible — a
+              hidden column doesn't appear on the card either. The card is a
+              re-layout of the same visible cells, not a separate render path
+              with its own rules.
+            </p>
+          </div>
+        </section>
+
+        <!-- 7 -->
+        <section id="groups">
+          <h2>
+            <span class="sec-num">07 — TABS &amp; CARD GROUPS</span>One
+            membership, two faces
+          </h2>
+          <p>
+            A <strong>card group</strong> is a set of columns that belong
+            together — “Batch”, “Pricing”, “Other”. The same declaration drives
+            two faces: in <strong>table view</strong> each group is a
+            <em>tab</em> (only the active group's columns show); in
+            <strong>card view</strong> each group is a labelled
+            <em>section row</em> on the card, led by its icon. Hence the field
+            name: <code>tabsAndCardGroups</code>.
+          </p>
+
+          <span class="filename"
+            >declare the groups once (the page owns this list)</span
+          >
+          <pre><code><span class="kw">type</span> <span class="ty">GroupKey</span> = <span class="st">'batch'</span> | <span class="st">'pricing'</span> | <span class="st">'other'</span>;   <span class="cm">// this is the G generic</span>
+
+<span class="kw">const</span> <span class="ty">TABS_AND_CARD_GROUPS</span>: <span class="ty">TabAndCardGroup</span>&lt;<span class="ty">GroupKey</span>&gt;[] = [
+  { key: <span class="st">'batch'</span>,   labelKey: <span class="st">'…tab-batch'</span>,   icon: () =&gt; &lt;<span class="ty">StockIcon</span> /&gt; },
+  { key: <span class="st">'pricing'</span>, labelKey: <span class="st">'…tab-pricing'</span>, icon: () =&gt; &lt;<span class="ty">InfoIcon</span> /&gt; },
+  { key: <span class="st">'other'</span>,   labelKey: <span class="st">'…tab-other'</span>,   icon: () =&gt; &lt;<span class="ty">MessageSquareIcon</span> /&gt; },
+];</code></pre>
+          <p>Then each column names its membership. Three shapes:</p>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>On the column</th>
+                  <th>Table view</th>
+                  <th>Card view</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <code
+                      >tabsAndCardGroups: [<span class="st">'batch'</span
+                      >]</code
+                    >
+                  </td>
+                  <td>Shows only on the Batch tab.</td>
+                  <td>In the Batch section row.</td>
+                </tr>
+                <tr>
+                  <td>
+                    <code
+                      >tabsAndCardGroups: <span class="ty">ALL_TABS</span></code
+                    >
+                  </td>
+                  <td>
+                    Shows on <strong>every</strong> tab — a row-identity anchor
+                    (the batch, the checkbox).
+                  </td>
+                  <td>
+                    Falls to the ungrouped area (unless it has a card region).
+                  </td>
+                </tr>
+                <tr>
+                  <td><em>omitted</em></td>
+                  <td>Not part of any tab.</td>
+                  <td>The ungrouped row at the bottom of the card.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="demo full">
+            <p class="demo-label">Table view · the groups become tabs</p>
+            <div class="tbl-mock">
+              <div class="tbl-tabs">
+                <span class="tbl-tab active"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M20 7 12 3 4 7l8 4 8-4Z" />
+                    <path d="m4 7 0 10 8 4 8-4V7" /></svg
+                  >Batch</span
+                >
+                <span class="tbl-tab"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 8h.01M11 12h1v4h1" /></svg
+                  >Pricing</span
+                >
+                <span class="tbl-tab"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"
+                    /></svg
+                  >Other</span
+                >
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>☑</th>
+                    <th>Batch</th>
+                    <th>Expiry</th>
+                    <th>Location</th>
+                    <th class="num">Snapshot</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>☑</td>
+                    <td>26F113</td>
+                    <td>31/05/2026</td>
+                    <td>Room A</td>
+                    <td class="num">2,600</td>
+                  </tr>
+                  <tr>
+                    <td>☑</td>
+                    <td>B50046</td>
+                    <td>31/05/2027</td>
+                    <td>Room A</td>
+                    <td class="num">130</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="legend" style="margin: 0">
+              The Batch tab is active, so only the checkbox + batch (<code
+                >ALL_TABS</code
+              >
+              anchors) and the columns tagged
+              <code>[<span style="color: var(--st)">'batch'</span>]</code> show.
+              Switching to Pricing swaps in the price columns; the anchors stay.
+            </p>
+          </div>
+
+          <div class="note plain">
+            <p class="note-title">Filter, not visibility</p>
+            <p style="margin: 0">
+              The active-tab filter is a <em>secondary</em> filter applied
+              before columns reach the table — deliberately separate from the
+              user's persisted <code>columnVisibility</code>, so switching tabs
+              never rewrites their saved column layout. The table owns the
+              active tab internally; it never leaks to the page.
+            </p>
+          </div>
+        </section>
+
+        <!-- 8 -->
+        <section id="rowgroup">
+          <h2>
+            <span class="sec-num">08 — ROW GROUPING</span>A different axis:
+            collapsing rows
+          </h2>
+          <p>
+            Not to be confused with card groups.
+            <strong>Row grouping</strong> collapses rows that share a value
+            under one expandable parent — every batch of one stocktake item
+            under that item's row. It's TanStack's grouped + expanded row
+            models; the table renders what they compute.
+          </p>
+          <div class="demo full">
+            <p class="demo-label">
+              Row grouping · parent aggregates its leaves
+            </p>
+            <div class="tbl-mock">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Batch</th>
+                    <th>Expiry</th>
+                    <th class="num">Snapshot</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="parent">
+                    <td>▾ Amoxicillin 250mg</td>
+                    <td>[multiple]</td>
+                    <td>[multiple]</td>
+                    <td class="num">217</td>
+                  </tr>
+                  <tr class="child">
+                    <td>26F113</td>
+                    <td>26F113</td>
+                    <td>31/05/2026</td>
+                    <td class="num">130</td>
+                  </tr>
+                  <tr class="child">
+                    <td>B50046</td>
+                    <td>B50046</td>
+                    <td>30/06/2026</td>
+                    <td class="num">87</td>
+                  </tr>
+                  <tr class="parent">
+                    <td>Paracetamol 500mg</td>
+                    <td>PK7397</td>
+                    <td>29/02/2028</td>
+                    <td class="num">16,000</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="legend" style="margin: 0">
+              The parent's <code>Snapshot</code> is <code>getNumberCell</code>'s
+              <strong>sum</strong> aggregation (217 = 130 + 87); the date and
+              batch differ across leaves so they show the
+              <code>[multiple]</code> sentinel. A group with a single leaf
+              (Paracetamol) isn't expandable — it renders as a plain row.
+            </p>
+          </div>
+          <p>
+            Each column decides what its parent cell shows via its
+            <code>aggregationFn</code>:
+          </p>
+          <div class="table-scroll">
+            <table class="props">
+              <thead>
+                <tr>
+                  <th>aggregationFn</th>
+                  <th>Parent shows</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <code><span class="st">'sum'</span></code> (getNumberCell
+                    default)
+                  </td>
+                  <td>The sum of the leaf values.</td>
+                </tr>
+                <tr>
+                  <td><code>sharedOrMultiple</code></td>
+                  <td>
+                    The one shared value if all leaves agree, else
+                    <code>[multiple]</code>.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>sharedOrMultipleDate</code> (getDateCell default)
+                  </td>
+                  <td>
+                    Same, comparing dates by epoch-ms; the parent formats
+                    identically to a leaf.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Grouping is static and page-declared (one
+            <code>rowGroup.columnId</code>); a toolbar folder-icon toggles it on
+            and off, and that on/off state lives in the table config — so it
+            persists and layers per breakpoint just like the view mode.
+          </p>
+        </section>
+
+        <!-- 9 -->
+        <section id="config">
+          <h2>
+            <span class="sec-num">09 — LAYOUT CONFIG</span>Order, size, pinning,
+            visibility, view mode
+          </h2>
+          <p>
+            <code>TableConfig</code> is the user-tunable layout. The four
+            column-state fields are
+            <strong>exactly TanStack's own state shapes</strong> — no remapping
+            — so a stored config feeds <code>state.*</code> directly. Two more
+            fields are view-level choices the table reads directly.
+          </p>
+          <span class="filename">src/ui/elements/table/tableConfig.ts</span>
+          <pre><code><span class="kw">export type</span> <span class="ty">TableConfig</span> = {
+  columnOrder?: <span class="ty">ColumnOrderState</span>;       <span class="cm">// column left-to-right order</span>
+  columnSizing?: <span class="ty">ColumnSizingState</span>;      <span class="cm">// per-column widths</span>
+  columnPinning?: <span class="ty">ColumnPinningState</span>;    <span class="cm">// left / right pinned columns</span>
+  columnVisibility?: <span class="ty">VisibilityState</span>;    <span class="cm">// sparse "show": absent = visible, false = hidden</span>
+  viewMode?: <span class="ty">ViewMode</span>;                   <span class="cm">// 'table' | 'card'</span>
+  groupBy?: <span class="ty">string</span>;                      <span class="cm">// grouped column id, or absent = ungrouped</span>
+};</code></pre>
+          <div class="note plain">
+            <p class="note-title">Three layers, per breakpoint</p>
+            <p style="margin: 0">
+              The page resolves the effective config from three precedence
+              layers —
+              <strong>user</strong> (localStorage) &gt;
+              <strong>global</strong> (a store-wide blob over GraphQL) &gt;
+              <strong>default</strong> — and does it per breakpoint band, with
+              no cross-band fallback. Each field is taken whole from the first
+              layer that provides it, so a user who only reordered still
+              inherits the global widths. This is
+              <code>createTableConfig</code>, itself a store-scoped resource.
+            </p>
+          </div>
+        </section>
+
+        <!-- 10 -->
+        <section id="example">
+          <h2>
+            <span class="sec-num">10 — FULL EXAMPLE</span>A column set using
+            every feature
+          </h2>
+          <p>
+            Distilled from the stocktake line-edit table — the richest real
+            consumer. Note the generics:
+            <code>Column&lt;DraftLine, never, GroupKey&gt;</code> — a
+            groups-only table (<code>K</code> is <code>never</code>: it's not
+            server-sorted), grouped into <code>batch</code> /
+            <code>pricing</code> / <code>other</code>.
+          </p>
+          <span class="filename"
+            >src/sections/stocktakes/detail/edit-modal/StocktakeLineEditModal.tsx</span
+          >
+          <pre><code><span class="kw">const</span> columns = (): <span class="ty">Column</span>&lt;<span class="ty">DraftLine</span>, <span class="kw">never</span>, <span class="ty">GroupKey</span>&gt;[] =&gt; [
+  {
+    c: { id: <span class="st">'countThisLine'</span> },              <span class="cm">// display column, no data read</span>
+    header: <span class="fn">t</span>(<span class="st">'…count-this-line'</span>),
+    tabsAndCardGroups: <span class="ty">ALL_TABS</span>,             <span class="cm">// anchor: first column of every tab</span>
+    meta: { align: <span class="st">'center'</span> },
+    cell: info =&gt; &lt;<span class="ty">input</span> type=<span class="st">"checkbox"</span> … /&gt;,   <span class="cm">// editable cell</span>
+  },
+  {
+    c: { key: <span class="st">'batch'</span> },                     <span class="cm">// keyof DraftLine — typo = compile error</span>
+    header: <span class="fn">t</span>(<span class="st">'…batch'</span>),
+    tabsAndCardGroups: <span class="ty">ALL_TABS</span>,
+    meta: { card: { region: <span class="st">'primary'</span>, showLabel: <span class="kw">true</span> } },  <span class="cm">// card title</span>
+    cell: info =&gt; &lt;<span class="ty">TextField</span> … /&gt;,
+  },
+  {
+    c: { key: <span class="st">'expiryDate'</span> },
+    header: <span class="fn">t</span>(<span class="st">'…expiry'</span>),
+    tabsAndCardGroups: [<span class="st">'batch'</span>],             <span class="cm">// Batch tab / Batch card section</span>
+    cell: info =&gt; &lt;<span class="ty">TextField</span> type=<span class="st">"date"</span> … /&gt;,
+  },
+  {
+    c: { key: <span class="st">'sellPricePerPack'</span> },
+    header: <span class="fn">t</span>(<span class="st">'…sell-price'</span>),
+    tabsAndCardGroups: [<span class="st">'pricing'</span>],           <span class="cm">// Pricing tab / Pricing card section</span>
+    ...<span class="fn">getNumberCell</span>(),
+  },
+  {
+    c: { key: <span class="st">'snapshotNumberOfPacks'</span> },
+    header: <span class="fn">t</span>(<span class="st">'…snapshot'</span>),
+    tabsAndCardGroups: [<span class="st">'batch'</span>],             <span class="cm">// read-only reference figure, in the Batch group</span>
+    cell: info =&gt; &lt;<span class="ty">span</span>&gt;{info.row.original.snapshotNumberOfPacks ?? <span class="st">'—'</span>}&lt;/<span class="ty">span</span>&gt;,
+  },
+  {
+    c: { id: <span class="st">'actions'</span> },                   <span class="cm">// display column (duplicate + delete buttons)</span>
+    header: <span class="fn">t</span>(<span class="st">'common.action'</span>),
+    tabsAndCardGroups: <span class="ty">ALL_TABS</span>,             <span class="cm">// last column of every tab</span>
+    meta: { card: { region: <span class="st">'badge'</span> }, align: <span class="st">'right'</span> },  <span class="cm">// card badge: the action buttons</span>
+    cell: info =&gt; &lt;<span class="ty">RowActions</span> … /&gt;,
+  },
+];
+
+<span class="cm">// …then rendered:</span>
+&lt;<span class="ty">DataTable</span>
+  columns={<span class="fn">columns</span>()}
+  rows={draftLines()}
+  rowKey={line =&gt; line.id}
+  tabsAndCardGroups={<span class="ty">TABS_AND_CARD_GROUPS</span>}
+  enableSelection
+  showFullScreen={<span class="kw">false</span>}          <span class="cm">// inside a modal</span>
+/&gt;</code></pre>
+          <p style="color: var(--slate)">
+            That one array renders as a sortable table, a three-tab table, or a
+            stack of cards with a titled batch, an actions badge, and Batch /
+            Pricing / Other sections — all decided by the fields above, no
+            separate markup per face.
+          </p>
+        </section>
+
+        <footer>
+          <span>src/ui/elements/table/</span>
+          <span
+            >columnTypes.ts · DataTable.tsx · CardView.tsx · tableHelpers.ts ·
+            aggregations.ts · tableConfig.ts</span
+          >
+          <span>KDD: table-state · edit-line-card-table</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

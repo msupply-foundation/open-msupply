@@ -1,6 +1,6 @@
 use crate::{
-    migrations::{sql, DATETIME},
     StorageConnection,
+    migrations::{DATETIME, sql},
 };
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {

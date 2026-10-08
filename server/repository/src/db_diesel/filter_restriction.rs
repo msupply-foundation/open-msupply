@@ -22,8 +22,9 @@ impl EqualFilter<String> {
 mod tests {
 
     use crate::{
-        mock::{mock_name_a, MockData, MockDataInserts},
-        test_db, EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceRow,
+        EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceRow,
+        mock::{MockData, MockDataInserts, mock_name_a},
+        test_db,
     };
 
     fn mock_invoice_a() -> InvoiceRow {

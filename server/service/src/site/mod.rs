@@ -1,15 +1,15 @@
 use self::{
-    assign_stores::{assign_stores_to_site, AssignStoresToSite, AssignStoresToSiteError},
-    clear_token::{clear_site_token, ClearSiteTokenError},
-    delete::{delete_site, DeleteSiteError},
+    assign_stores::{AssignStoresToSite, AssignStoresToSiteError, assign_stores_to_site},
+    clear_token::{ClearSiteTokenError, clear_site_token},
+    delete::{DeleteSiteError, delete_site},
     query::get_sites,
-    set_multi_device::{set_site_multi_device, SetSiteMultiDeviceError},
-    upsert::{upsert_site, UpsertSite, UpsertSiteError},
+    set_multi_device::{SetSiteMultiDeviceError, set_site_multi_device},
+    upsert::{UpsertSite, UpsertSiteError, upsert_site},
 };
 use crate::{
-    service_provider::ServiceContext,
-    site::clear_hardware_id::{clear_site_hardware_id, ClearSiteHardwareIdError},
     ListError, ListResult,
+    service_provider::ServiceContext,
+    site::clear_hardware_id::{ClearSiteHardwareIdError, clear_site_hardware_id},
 };
 use repository::{PaginationOption, SiteFilter, SiteRow, SiteSort};
 

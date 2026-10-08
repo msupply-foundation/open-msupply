@@ -1,4 +1,4 @@
-use super::{store_row::store, user_row::user_account, StorageConnection};
+use super::{StorageConnection, store_row::store, user_row::user_account};
 
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::repository_error::RepositoryError;

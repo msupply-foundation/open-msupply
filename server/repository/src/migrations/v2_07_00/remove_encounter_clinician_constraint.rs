@@ -20,7 +20,9 @@ impl MigrationFragment for Migrate {
                 "#
             );
             if result.is_err() {
-                log::warn!("Failed to drop FK constraint on clinician_link_id column of encounter table, please check name of constraint");
+                log::warn!(
+                    "Failed to drop FK constraint on clinician_link_id column of encounter table, please check name of constraint"
+                );
             }
         } else {
             sql!(

@@ -1,0 +1,17 @@
+/* Body copy inside a panel — inherits the app's --text-sm / --text-body from
+   `body`; only the UA `<p>` margin needs cancelling. */
+.panelText {
+  margin: 0;
+}
+
+/* The closed-state preview text shown beside a trigger's label — it lives
+   inside the trigger, so it must undo the trigger's bold weight and body
+   colour, and truncate with an ellipsis when the row is tight. */
+.preview {
+  overflow: hidden;
+  margin-inline-start: var(--space-2);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

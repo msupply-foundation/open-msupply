@@ -1,0 +1,54 @@
+/*
+ * Initialisation-page-specific styling. The page shell (hero/panel/form/logo/
+ * action group/version line) is the shared ui/styles/LoginInitLayout.module.css
+ * (see Login). The error-panel disclosure classes (.moreInfo/.hint/
+ * .errorDetail) mirror sections/sync-modal/SyncModal.module.css's — same
+ * expandable pattern, kept page-local rather than cross-importing a
+ * sync-modal-scoped module.
+ */
+
+/* The advanced-options disclosure is the library Accordion (rotating chevron,
+   aria-expanded, the shared accordion-trigger testid), trimmed to sit inside a
+   form column rather than to head a page section:
+   - the trigger row's block padding drops to --space-1: the form's own
+     --space-5 gap already separates it from the field above and the button
+     below, so the component's --space-3 on top of that opened a hole in the
+     form.
+   - regular weight, secondary tone, and the small-control size — this is an
+     optional detour from the task, subordinate to the three fields above it
+     and to the Initialise button below. Deliberately NOT the action blue: on
+     this screen that emphasis belongs to the one primary action, and it is the
+     chevron, not a colour, that says "this expands".
+   Hover takes the page's own accent (the hero's blue), so the row answers the
+   pointer without carrying that weight at rest. Focus is left to the
+   component's own ring — a second signal on the same element would only
+   disagree with it.
+
+   The class is doubled to outrank the component's own equal-specificity rules
+   (same precedent as requisitions' `.figure.figure`) — an override that
+   resolved on CSS-module bundle order instead would be a coin toss. */
+.advancedTrigger.advancedTrigger {
+  padding-block: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
+}
+
+.advancedTrigger.advancedTrigger:hover {
+  color: var(--secondary-main);
+}
+
+/* The disclosed field lines up with the fields above it (the component's flat
+   variant is already inline-flush); only the leading gap is added back, and no
+   trailing padding, so the form's own gap below isn't doubled. */
+.advancedContent.advancedContent {
+  padding-block: var(--space-2) 0;
+}
+
+/* The mode chooser's panels. The strip is inline in the form column rather
+   than claiming a header's bottom edge, so the panel owns the gap down to its
+   first field: at the column's own tight spacing the underline sat all but on
+   top of the label below it. */
+.modePanel {
+  padding-block-start: var(--space-4);
+}

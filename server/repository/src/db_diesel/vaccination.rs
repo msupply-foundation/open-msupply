@@ -1,13 +1,13 @@
 use super::{
+    DBType, ItemRow, RepositoryError, StorageConnection, VaccinationRow,
     clinician_link_row::clinician_link, clinician_row::clinician, item_row::item, name_row::name,
-    vaccination_row::vaccination, DBType, ItemRow, RepositoryError, StorageConnection,
-    VaccinationRow,
+    vaccination_row::vaccination,
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort},
-    vaccine_course::vaccine_course_dose_row::{vaccine_course_dose, VaccineCourseDoseRow},
     ClinicianLinkRow, ClinicianRow, EqualFilter, NameRow, Pagination, Sort,
+    diesel_macros::{apply_equal_filter, apply_sort},
+    vaccine_course::vaccine_course_dose_row::{VaccineCourseDoseRow, vaccine_course_dose},
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -98,6 +98,9 @@ impl<'a> VaccinationRepository<'a> {
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(vaccination::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<VaccinationJoin>(self.connection.lock().connection())?;

@@ -1,9 +1,9 @@
 use super::StorageConnection;
 
-use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::Upsert;
-use crate::{repository_error::RepositoryError, Delete};
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId};
+use crate::{Delete, repository_error::RepositoryError};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;

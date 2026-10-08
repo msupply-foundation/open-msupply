@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::mock_store_a;
     use repository::EqualFilter;
+    use repository::mock::mock_store_a;
     use repository::{
+        LocationRow,
         location::{Location, LocationFilter, LocationRepository},
         mock::MockDataInserts,
         test_db::setup_all,
-        LocationRow,
     };
 
     use crate::{

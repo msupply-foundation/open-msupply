@@ -6,9 +6,9 @@ use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
 use crate::{
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
     WithDBError,
+    invoice_line::{ShipmentTaxUpdate, query::get_invoice_line},
+    service_provider::ServiceContext,
 };
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct UpdateOutboundShipmentServiceLine {
@@ -86,18 +86,18 @@ where
 mod test {
 
     use repository::{
+        InvoiceLineRow, InvoiceLineRowRepository,
         mock::{
-            mock_default_service_item, mock_draft_inbound_service_line,
+            MockDataInserts, mock_default_service_item, mock_draft_inbound_service_line,
             mock_draft_outbound_service_line, mock_draft_outbound_shipped_service_line,
-            mock_item_a, mock_item_service_item, mock_store_a, mock_store_c, MockDataInserts,
+            mock_item_a, mock_item_service_item, mock_store_a, mock_store_c,
         },
         test_db::setup_all,
-        InvoiceLineRow, InvoiceLineRowRepository,
     };
 
     use crate::{
         invoice_line::{
-            outbound_shipment_service_line::UpdateOutboundShipmentServiceLine, ShipmentTaxUpdate,
+            ShipmentTaxUpdate, outbound_shipment_service_line::UpdateOutboundShipmentServiceLine,
         },
         service_provider::ServiceProvider,
     };

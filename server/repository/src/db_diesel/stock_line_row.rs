@@ -1,14 +1,15 @@
 use super::{
-    campaign_row::campaign, item_row::item, item_variant::item_variant_row::item_variant,
-    location_row::location, name_row::name, store_row::store, StorageConnection,
+    StorageConnection, campaign_row::campaign, item_row::item,
+    item_variant::item_variant_row::item_variant, location_row::location, name_row::name,
+    store_row::store,
 };
 
-use crate::{
-    db_diesel::barcode_row::barcode, db_diesel::changelog::changelog::RowOrId,
-    db_diesel::vvm_status::vvm_status_row::vvm_status, diesel_macros::define_linked_tables,
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
 use crate::{ChangelogRepository, RowActionType};
+use crate::{
+    ChangelogSyncType, Delete, SourceSiteId, Upsert, db_diesel::barcode_row::barcode,
+    db_diesel::changelog::changelog::RowOrId, db_diesel::vvm_status::vvm_status_row::vvm_status,
+    diesel_macros::define_linked_tables, repository_error::RepositoryError,
+};
 
 use diesel::prelude::*;
 

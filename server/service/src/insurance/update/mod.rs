@@ -1,18 +1,18 @@
 use chrono::NaiveDate;
 use repository::{
+    RepositoryError,
     name_insurance_join_row::{
         InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
     },
-    RepositoryError,
 };
 
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 
 mod generate;
 mod test;
 mod validate;
 
-use generate::{generate, GenerateInput};
+use generate::{GenerateInput, generate};
 use validate::validate;
 
 #[derive(PartialEq, Debug)]

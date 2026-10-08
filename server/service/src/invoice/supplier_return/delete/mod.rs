@@ -8,8 +8,8 @@ use crate::{
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
     invoice_line::stock_out_line::{
-        delete::{delete_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError},
         StockOutType,
+        delete::{DeleteStockOutLine, DeleteStockOutLineError, delete_stock_out_line},
     },
     service_provider::ServiceContext,
 };
@@ -83,13 +83,13 @@ impl From<RepositoryError> for DeleteSupplierReturnError {
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRowRepository,
         mock::{
-            currency_a, mock_name_store_a, mock_name_store_b, mock_outbound_shipment_a,
-            mock_store_a, mock_store_b, mock_supplier_return_a,
-            mock_supplier_return_a_invoice_line_a, MockData, MockDataInserts,
+            MockData, MockDataInserts, currency_a, mock_name_store_a, mock_name_store_b,
+            mock_outbound_shipment_a, mock_store_a, mock_store_b, mock_supplier_return_a,
+            mock_supplier_return_a_invoice_line_a,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRowRepository,
     };
 
     use crate::{

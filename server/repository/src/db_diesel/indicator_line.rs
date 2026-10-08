@@ -1,6 +1,6 @@
 use super::{
-    indicator_line_row::{indicator_line, IndicatorLineRow},
     DBType, StorageConnection,
+    indicator_line_row::{IndicatorLineRow, indicator_line},
 };
 
 use crate::{

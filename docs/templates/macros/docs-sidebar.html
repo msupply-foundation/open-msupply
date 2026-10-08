@@ -1,3 +1,5 @@
+{% import "macros/nav-href.html" as macros_nav %}
+
 {% macro docs_sidebar(current_section, current_url) %}
 <div class="docs-sidebar d-none d-lg-block">
   <nav class="docs-links" aria-label="Main navigation">
@@ -13,74 +15,131 @@
     {% endfor %}
 
     <ul class="sidebar-tree list-unstyled" id="docs-sidebar-tree">
+    {# Leaf pages (index.md) of the root, rendered alongside its sections #}
+    {% for p in root.pages %}
+      <li class="sidebar-item{% if current_url == p.permalink %} is-active-self{% endif %}" data-depth="0">
+        <div class="sidebar-row{% if current_url == p.permalink %} is-active{% endif %}">
+          <a href="{{ p.permalink | safe }}" class="sidebar-link depth-0{% if current_url == p.permalink %} active{% endif %}">{{ p.title | split(pat="/") | last }}</a>
+        </div>
+      </li>
+    {% endfor %}
+
     {# ── Depth 0: top-level sections, always visible ── #}
     {% for s in root.subsections %}
       {% set L0 = get_section(path=s) %}
       {% set L0_active = current_url is starting_with(L0.permalink) %}
       <li class="sidebar-item{% if current_url == L0.permalink %} is-active-self{% endif %}" data-depth="0">
         <div class="sidebar-row{% if L0_active %} is-active{% endif %}">
-          <a href="{{ L0.permalink | safe }}" class="sidebar-link depth-0{% if current_url == L0.permalink %} active{% endif %}">{{ L0.title | split(pat="/") | last }}</a>
-          {% if L0.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+          <a href="{{ macros_nav::nav_href(s=L0) }}" class="sidebar-link depth-0{% if current_url == L0.permalink %} active{% endif %}">{{ L0.title | split(pat="/") | last }}</a>
+          {% if L0.subsections or L0.pages %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
         </div>
       </li>
+
+      {% for p in L0.pages %}
+        <li class="sidebar-item{% if current_url == p.permalink %} is-active-self{% endif %}" data-depth="1" data-parent-permalink="{{ macros_nav::nav_href(s=L0) }}">
+          <div class="sidebar-row{% if current_url == p.permalink %} is-active{% endif %}">
+            <a href="{{ p.permalink | safe }}" class="sidebar-link depth-1{% if current_url == p.permalink %} active{% endif %}">{{ p.title | split(pat="/") | last }}</a>
+          </div>
+        </li>
+      {% endfor %}
 
       {# ── Depth 1: always visible and expanded ── #}
       {% for s1 in L0.subsections %}
         {% set L1 = get_section(path=s1) %}
         {% set L1_active = current_url is starting_with(L1.permalink) %}
-        <li class="sidebar-item{% if current_url == L1.permalink %} is-active-self{% endif %}" data-depth="1" data-parent-permalink="{{ L0.permalink }}">
+        <li class="sidebar-item{% if current_url == L1.permalink %} is-active-self{% endif %}" data-depth="1" data-parent-permalink="{{ macros_nav::nav_href(s=L0) }}">
           <div class="sidebar-row{% if L1_active %} is-active{% endif %}">
-            <a href="{{ L1.permalink | safe }}" class="sidebar-link depth-1{% if current_url == L1.permalink %} active{% endif %}">{{ L1.title | split(pat="/") | last }}</a>
-            {% if L1.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+            <a href="{{ macros_nav::nav_href(s=L1) }}" class="sidebar-link depth-1{% if current_url == L1.permalink %} active{% endif %}">{{ L1.title | split(pat="/") | last }}</a>
+            {% if L1.subsections or L1.pages %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
           </div>
         </li>
+
+        {% for p in L1.pages %}
+          <li class="sidebar-item{% if current_url == p.permalink %} is-active-self{% endif %}" data-depth="2" data-parent-permalink="{{ macros_nav::nav_href(s=L1) }}">
+            <div class="sidebar-row{% if current_url == p.permalink %} is-active{% endif %}">
+              <a href="{{ p.permalink | safe }}" class="sidebar-link depth-2{% if current_url == p.permalink %} active{% endif %}">{{ p.title | split(pat="/") | last }}</a>
+            </div>
+          </li>
+        {% endfor %}
 
         {# ── Depth 2: always visible, collapsed if has children and not active ── #}
         {% for s2 in L1.subsections %}
           {% set L2 = get_section(path=s2) %}
           {% set L2_active = current_url is starting_with(L2.permalink) %}
-          <li class="sidebar-item{% if current_url == L2.permalink %} is-active-self{% endif %}" data-depth="2" data-parent-permalink="{{ L1.permalink }}"{% if not L2_active and L2.subsections %} data-collapsed="true"{% endif %}>
+          <li class="sidebar-item{% if current_url == L2.permalink %} is-active-self{% endif %}" data-depth="2" data-parent-permalink="{{ macros_nav::nav_href(s=L1) }}"{% if not L2_active and (L2.subsections or L2.pages) %} data-collapsed="true"{% endif %}>
             <div class="sidebar-row{% if L2_active %} is-active{% endif %}">
-              <a href="{{ L2.permalink | safe }}" class="sidebar-link depth-2{% if current_url == L2.permalink %} active{% endif %}">{{ L2.title | split(pat="/") | last }}</a>
-              {% if L2.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+              <a href="{{ macros_nav::nav_href(s=L2) }}" class="sidebar-link depth-2{% if current_url == L2.permalink %} active{% endif %}">{{ L2.title | split(pat="/") | last }}</a>
+              {% if L2.subsections or L2.pages %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
             </div>
           </li>
+
+          {% for p in L2.pages %}
+            <li class="sidebar-item{% if current_url == p.permalink %} is-active-self{% endif %}" data-depth="3" data-parent-permalink="{{ macros_nav::nav_href(s=L2) }}"{% if not L2_active %} style="display:none"{% endif %}>
+              <div class="sidebar-row{% if current_url == p.permalink %} is-active{% endif %}">
+                <a href="{{ p.permalink | safe }}" class="sidebar-link depth-3{% if current_url == p.permalink %} active{% endif %}">{{ p.title | split(pat="/") | last }}</a>
+              </div>
+            </li>
+          {% endfor %}
 
           {% for s3 in L2.subsections %}
             {% set L3 = get_section(path=s3) %}
             {% set L3_active = current_url is starting_with(L3.permalink) %}
-            <li class="sidebar-item{% if current_url == L3.permalink %} is-active-self{% endif %}" data-depth="3" data-parent-permalink="{{ L2.permalink }}"{% if not L3_active and L3.subsections %} data-collapsed="true"{% endif %}{% if not L2_active %} style="display:none"{% endif %}>
+            <li class="sidebar-item{% if current_url == L3.permalink %} is-active-self{% endif %}" data-depth="3" data-parent-permalink="{{ macros_nav::nav_href(s=L2) }}"{% if not L3_active and (L3.subsections or L3.pages) %} data-collapsed="true"{% endif %}{% if not L2_active %} style="display:none"{% endif %}>
               <div class="sidebar-row{% if L3_active %} is-active{% endif %}">
-                <a href="{{ L3.permalink | safe }}" class="sidebar-link depth-3{% if current_url == L3.permalink %} active{% endif %}">{{ L3.title | split(pat="/") | last }}</a>
-                {% if L3.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+                <a href="{{ macros_nav::nav_href(s=L3) }}" class="sidebar-link depth-3{% if current_url == L3.permalink %} active{% endif %}">{{ L3.title | split(pat="/") | last }}</a>
+                {% if L3.subsections or L3.pages %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
               </div>
             </li>
+
+            {% for p in L3.pages %}
+              <li class="sidebar-item{% if current_url == p.permalink %} is-active-self{% endif %}" data-depth="4" data-parent-permalink="{{ macros_nav::nav_href(s=L3) }}"{% if not L3_active %} style="display:none"{% endif %}>
+                <div class="sidebar-row{% if current_url == p.permalink %} is-active{% endif %}">
+                  <a href="{{ p.permalink | safe }}" class="sidebar-link depth-4{% if current_url == p.permalink %} active{% endif %}">{{ p.title | split(pat="/") | last }}</a>
+                </div>
+              </li>
+            {% endfor %}
 
             {% for s4 in L3.subsections %}
               {% set L4 = get_section(path=s4) %}
               {% set L4_active = current_url is starting_with(L4.permalink) %}
-              <li class="sidebar-item{% if current_url == L4.permalink %} is-active-self{% endif %}" data-depth="4" data-parent-permalink="{{ L3.permalink }}"{% if not L4_active and L4.subsections %} data-collapsed="true"{% endif %}{% if not L3_active %} style="display:none"{% endif %}>
+              <li class="sidebar-item{% if current_url == L4.permalink %} is-active-self{% endif %}" data-depth="4" data-parent-permalink="{{ macros_nav::nav_href(s=L3) }}"{% if not L4_active and (L4.subsections or L4.pages) %} data-collapsed="true"{% endif %}{% if not L3_active %} style="display:none"{% endif %}>
                 <div class="sidebar-row{% if L4_active %} is-active{% endif %}">
-                  <a href="{{ L4.permalink | safe }}" class="sidebar-link depth-4{% if current_url == L4.permalink %} active{% endif %}">{{ L4.title | split(pat="/") | last }}</a>
-                  {% if L4.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+                  <a href="{{ macros_nav::nav_href(s=L4) }}" class="sidebar-link depth-4{% if current_url == L4.permalink %} active{% endif %}">{{ L4.title | split(pat="/") | last }}</a>
+                  {% if L4.subsections or L4.pages %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
                 </div>
               </li>
+
+              {% for p in L4.pages %}
+                <li class="sidebar-item{% if current_url == p.permalink %} is-active-self{% endif %}" data-depth="5" data-parent-permalink="{{ macros_nav::nav_href(s=L4) }}"{% if not L4_active %} style="display:none"{% endif %}>
+                  <div class="sidebar-row{% if current_url == p.permalink %} is-active{% endif %}">
+                    <a href="{{ p.permalink | safe }}" class="sidebar-link depth-5{% if current_url == p.permalink %} active{% endif %}">{{ p.title | split(pat="/") | last }}</a>
+                  </div>
+                </li>
+              {% endfor %}
 
               {% for s5 in L4.subsections %}
                 {% set L5 = get_section(path=s5) %}
                 {% set L5_active = current_url is starting_with(L5.permalink) %}
-                <li class="sidebar-item{% if current_url == L5.permalink %} is-active-self{% endif %}" data-depth="5" data-parent-permalink="{{ L4.permalink }}"{% if not L5_active and L5.subsections %} data-collapsed="true"{% endif %}{% if not L4_active %} style="display:none"{% endif %}>
+                <li class="sidebar-item{% if current_url == L5.permalink %} is-active-self{% endif %}" data-depth="5" data-parent-permalink="{{ macros_nav::nav_href(s=L4) }}"{% if not L5_active and (L5.subsections or L5.pages) %} data-collapsed="true"{% endif %}{% if not L4_active %} style="display:none"{% endif %}>
                   <div class="sidebar-row{% if L5_active %} is-active{% endif %}">
-                    <a href="{{ L5.permalink | safe }}" class="sidebar-link depth-5{% if current_url == L5.permalink %} active{% endif %}">{{ L5.title | split(pat="/") | last }}</a>
-                    {% if L5.subsections %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
+                    <a href="{{ macros_nav::nav_href(s=L5) }}" class="sidebar-link depth-5{% if current_url == L5.permalink %} active{% endif %}">{{ L5.title | split(pat="/") | last }}</a>
+                    {% if L5.subsections or L5.pages %}<button class="sidebar-chevron-btn" aria-label="Toggle"><svg class="sidebar-chevron" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>{% endif %}
                   </div>
                 </li>
 
+                {% for p in L5.pages %}
+                  <li class="sidebar-item{% if current_url == p.permalink %} is-active-self{% endif %}" data-depth="6" data-parent-permalink="{{ macros_nav::nav_href(s=L5) }}"{% if not L5_active %} style="display:none"{% endif %}>
+                    <div class="sidebar-row{% if current_url == p.permalink %} is-active{% endif %}">
+                      <a href="{{ p.permalink | safe }}" class="sidebar-link depth-6{% if current_url == p.permalink %} active{% endif %}">{{ p.title | split(pat="/") | last }}</a>
+                    </div>
+                  </li>
+                {% endfor %}
+
                 {% for s6 in L5.subsections %}
                   {% set L6 = get_section(path=s6) %}
-                  <li class="sidebar-item{% if current_url == L6.permalink %} is-active-self{% endif %}" data-depth="6" data-parent-permalink="{{ L5.permalink }}"{% if not L5_active %} style="display:none"{% endif %}>
+                  <li class="sidebar-item{% if current_url == L6.permalink %} is-active-self{% endif %}" data-depth="6" data-parent-permalink="{{ macros_nav::nav_href(s=L5) }}"{% if not L5_active %} style="display:none"{% endif %}>
                     <div class="sidebar-row{% if current_url == L6.permalink %} is-active{% endif %}">
-                      <a href="{{ L6.permalink | safe }}" class="sidebar-link depth-6{% if current_url == L6.permalink %} active{% endif %}">{{ L6.title | split(pat="/") | last }}</a>
+                      <a href="{{ macros_nav::nav_href(s=L6) }}" class="sidebar-link depth-6{% if current_url == L6.permalink %} active{% endif %}">{{ L6.title | split(pat="/") | last }}</a>
                     </div>
                   </li>
                 {% endfor %}

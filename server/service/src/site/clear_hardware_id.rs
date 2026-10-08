@@ -56,8 +56,8 @@ impl From<RepositoryError> for ClearSiteHardwareIdError {
 #[cfg(test)]
 mod tests {
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, KeyType, KeyValueStoreRepository,
-        StorageConnection, SyncVersion,
+        KeyType, KeyValueStoreRepository, StorageConnection, SyncVersion, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     use crate::service_provider::ServiceProvider;

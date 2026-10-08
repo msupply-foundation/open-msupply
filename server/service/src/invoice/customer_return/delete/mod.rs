@@ -8,8 +8,8 @@ use crate::{
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
     invoice_line::stock_in_line::{
-        delete::{delete_stock_in_line, DeleteStockInLine, DeleteStockInLineError},
         StockInType,
+        delete::{DeleteStockInLine, DeleteStockInLineError, delete_stock_in_line},
     },
     service_provider::ServiceContext,
 };
@@ -79,13 +79,13 @@ impl From<RepositoryError> for DeleteCustomerReturnError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            currency_a, mock_item_a, mock_name_store_a, mock_name_store_b,
-            mock_outbound_shipment_a, mock_store_a, mock_store_b, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, StockLineRow, StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, currency_a, mock_item_a, mock_name_store_a,
+            mock_name_store_b, mock_outbound_shipment_a, mock_store_a, mock_store_b,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{

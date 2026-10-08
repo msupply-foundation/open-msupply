@@ -1,8 +1,6 @@
 use crate::{
-    invoice::inbound_shipment::InboundShipmentType,
-    invoice_line::stock_in_line::DeleteStockInLine,
-    service_provider::ServiceContext,
-    WithDBError,
+    WithDBError, invoice::inbound_shipment::InboundShipmentType,
+    invoice_line::stock_in_line::DeleteStockInLine, service_provider::ServiceContext,
 };
 use repository::{InvoiceLineRowRepository, RepositoryError};
 
@@ -63,12 +61,13 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceLineRowRepository,
         mock::{
-            mock_draft_inbound_service_line, mock_draft_inbound_verified_service_line,
-            mock_draft_outbound_service_line, mock_store_a, mock_store_b, MockDataInserts,
+            MockDataInserts, mock_draft_inbound_service_line,
+            mock_draft_inbound_verified_service_line, mock_draft_outbound_service_line,
+            mock_store_a, mock_store_b,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository,
     };
 
     use crate::{
@@ -100,7 +99,8 @@ mod test {
                 DeleteStockInLine {
                     id: "invalid".to_string(),
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::LineDoesNotExist)
         );
@@ -112,7 +112,8 @@ mod test {
                 DeleteStockInLine {
                     id: mock_draft_outbound_service_line().id,
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
@@ -124,7 +125,8 @@ mod test {
                 DeleteStockInLine {
                     id: mock_draft_inbound_verified_service_line().id,
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::CannotEditInvoice)
         );
@@ -137,7 +139,8 @@ mod test {
                 DeleteStockInLine {
                     id: mock_draft_inbound_service_line().id,
                     ..Default::default()
-                }, None
+                },
+                None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -163,7 +166,8 @@ mod test {
                 DeleteStockInLine {
                     id: mock_draft_inbound_service_line().id,
                     ..Default::default()
-                }, None
+                },
+                None,
             )
             .unwrap();
 

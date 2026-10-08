@@ -1,11 +1,11 @@
 use super::{
-    shipping_method_row::{shipping_method, ShippingMethodRow},
     StorageConnection,
+    shipping_method_row::{ShippingMethodRow, shipping_method},
 };
 use crate::{
+    DBType, EqualFilter, StringFilter,
     diesel_macros::{apply_equal_filter, apply_string_filter},
     repository_error::RepositoryError,
-    DBType, EqualFilter, StringFilter,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 

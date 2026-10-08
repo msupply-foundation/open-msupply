@@ -1,10 +1,9 @@
-use super::{item_link_row::item_link, name_row::name, StorageConnection};
+use super::{StorageConnection, item_link_row::item_link, name_row::name};
 
 use crate::{
-    db_diesel::changelog::ChangelogRepository,
-    diesel_macros::define_linked_tables,
-    repository_error::RepositoryError,
     ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository, diesel_macros::define_linked_tables,
+    repository_error::RepositoryError,
 };
 
 use chrono::NaiveDate;
@@ -209,7 +208,11 @@ impl<'a> StoreRowRepository<'a> {
 }
 
 impl Upsert for StoreRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con)._upsert(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StoreRow::generate_changelog(
@@ -240,7 +243,7 @@ impl Upsert for StoreLogoRow {
     ) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con).update_logo(&self.id, self.logo.as_deref())?;
         Ok(()) // Table not in Changelog (logo lives on the store row, whose
-               // changelog is emitted via the lean StoreRow upsert)
+        // changelog is emitted via the lean StoreRow upsert)
     }
 
     // Test only — verify the logo round-trip by reading the (id, logo)

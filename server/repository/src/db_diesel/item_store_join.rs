@@ -189,9 +189,9 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for MockItemStoreJoinRowRepository 
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::{mock_item_a, mock_item_a_join_store_a, mock_store_a, MockDataInserts},
-        test_db::setup_all,
         ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+        mock::{MockDataInserts, mock_item_a, mock_item_a_join_store_a, mock_store_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

@@ -1,0 +1,23 @@
+/* StatusMarker — inline severity-toned glyph (see StatusMarker.tsx). The span
+ * centres the 1em icon against the text beside it; the severity maps to the
+ * shared feedback tokens (colour words live only in tokens.css). */
+.marker {
+  display: inline-flex;
+  align-items: center;
+}
+
+.marker[data-severity='error'] {
+  color: var(--error-main);
+}
+
+.marker[data-severity='warning'] {
+  color: var(--warning-main);
+}
+
+.marker[data-severity='info'] {
+  color: var(--info-main);
+}
+
+.marker[data-severity='success'] {
+  color: var(--success-main);
+}

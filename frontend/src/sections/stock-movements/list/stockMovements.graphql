@@ -1,0 +1,33 @@
+fragment StockMovementRow on StockRelocationNode {
+  id
+  stockMovementNumber
+  status
+  lineCount
+  comment
+  createdDatetime
+  finalisedDatetime
+  user {
+    username
+  }
+}
+
+query StockMovements(
+  $storeId: String!
+  $filter: StockRelocationFilterInput
+  $sort: [StockRelocationSortInput!]
+  $page: PaginationInput
+) {
+  stockRelocations(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    ... on StockRelocationConnector {
+      totalCount
+      nodes {
+        ...StockMovementRow
+      }
+    }
+  }
+}

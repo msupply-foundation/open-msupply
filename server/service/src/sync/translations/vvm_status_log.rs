@@ -5,8 +5,8 @@ use crate::sync::translations::{
 use anyhow::Error;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, ChangelogRow, ChangelogTableName, Row,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time};
@@ -152,9 +152,9 @@ impl SyncTranslation for VVMStatusLogTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_outbound_shipment_line_a, mock_stock_line_a, MockDataInserts},
-        test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, StockLineRow, StockLineRowRepository,
+        mock::{MockDataInserts, mock_outbound_shipment_line_a, mock_stock_line_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

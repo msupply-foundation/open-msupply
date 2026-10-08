@@ -1,14 +1,14 @@
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     EqualFilter, InvoiceFilter, InvoiceRepository, RepositoryError, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 use crate::{
     requisition::common::check_requisition_row_exists,
     requisition_line::response_requisition_line::{
-        delete_response_requisition_line, DeleteResponseRequisitionLine,
-        DeleteResponseRequisitionLineError,
+        DeleteResponseRequisitionLine, DeleteResponseRequisitionLineError,
+        delete_response_requisition_line,
     },
     service_provider::ServiceContext,
 };
@@ -122,13 +122,13 @@ mod test_delete {
 
     use chrono::NaiveDateTime;
     use repository::{
-        mock::{
-            mock_new_response_requisition, mock_request_draft_requisition,
-            mock_sent_request_requisition, mock_store_a, mock_store_b, MockDataInserts,
-        },
-        test_db::setup_all,
         InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RequisitionRow,
         RequisitionRowRepository, RequisitionStatus, RequisitionType,
+        mock::{
+            MockDataInserts, mock_new_response_requisition, mock_request_draft_requisition,
+            mock_sent_request_requisition, mock_store_a, mock_store_b,
+        },
+        test_db::setup_all,
     };
 
     use crate::{

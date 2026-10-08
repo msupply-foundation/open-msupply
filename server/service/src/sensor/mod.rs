@@ -1,12 +1,12 @@
 use self::{
     // no delete: sensors can't be deleted - just made inactive
-    insert::{insert_sensor, InsertSensor, InsertSensorError},
+    insert::{InsertSensor, InsertSensorError, insert_sensor},
     query::{get_sensor, get_sensors},
-    update::{update_sensor, UpdateSensor, UpdateSensorError},
+    update::{UpdateSensor, UpdateSensorError, update_sensor},
 };
 
 use super::{ListError, ListResult};
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use repository::{PaginationOption, Sensor, SensorFilter, SensorSort};
 
 pub mod fridge_tag;

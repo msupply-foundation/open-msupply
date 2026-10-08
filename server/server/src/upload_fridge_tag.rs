@@ -2,9 +2,8 @@ use std::ops::Deref;
 
 use actix_multipart::form::MultipartForm;
 use actix_web::{
-    post,
+    HttpRequest, HttpResponse, post,
     web::{self, Data},
-    HttpRequest, HttpResponse,
 };
 use anyhow::Context;
 
@@ -12,7 +11,7 @@ use serde::Deserialize;
 
 use service::{
     auth_data::AuthData,
-    sensor::fridge_tag::{read_sensor, ReadSensor},
+    sensor::fridge_tag::{ReadSensor, read_sensor},
     service_provider::ServiceProvider,
     settings::Settings,
     static_files::{StaticFileCategory, StaticFileService},

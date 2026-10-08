@@ -1,10 +1,10 @@
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
     item_variant::{
         bundled_item::{BundledItemFilter, BundledItemRepository},
         bundled_item_row::{BundledItemRow, BundledItemRowRepository},
         item_variant_row::ItemVariantRow,
     },
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
 };
 
 use crate::{

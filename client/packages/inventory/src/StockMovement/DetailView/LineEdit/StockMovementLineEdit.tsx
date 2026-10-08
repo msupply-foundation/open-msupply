@@ -199,7 +199,7 @@ export const StockMovementLineEdit = ({
       slideAnimation={false}
     >
       <Box display="flex" flexDirection="column" gap={2} paddingX={1}>
-        <Field label={t('label.item', { count: 1 })}>
+        <Field label={t('label.item')}>
           <StockItemSearchInput
             key={itemInputKey}
             autoFocus={!draft.itemId}

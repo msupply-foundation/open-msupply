@@ -1,21 +1,20 @@
 use self::query::{
-    get_purchase_order_line, get_purchase_order_lines,
-    get_units_ordered_in_other_purchase_orders,
+    get_purchase_order_line, get_purchase_order_lines, get_units_ordered_in_other_purchase_orders,
 };
 pub mod query;
 use crate::{
+    ListError, ListResult,
     purchase_order_line::{
-        delete::{delete_purchase_order_line, DeletePurchaseOrderLineError},
+        delete::{DeletePurchaseOrderLineError, delete_purchase_order_line},
         insert::{
-            insert_purchase_order_line, InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput,
+            InsertPurchaseOrderLineError, InsertPurchaseOrderLineInput, insert_purchase_order_line,
         },
         update::{
-            update_purchase_order_line, UpdatePurchaseOrderLineInput,
-            UpdatePurchaseOrderLineInputError,
+            UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError,
+            update_purchase_order_line,
         },
     },
     service_provider::ServiceContext,
-    ListError, ListResult,
 };
 use repository::PurchaseOrderLineRow;
 use repository::{
@@ -81,7 +80,12 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
         item_id: &str,
         exclude_purchase_order_id: &str,
     ) -> Result<f64, RepositoryError> {
-        get_units_ordered_in_other_purchase_orders(ctx, store_id, item_id, exclude_purchase_order_id)
+        get_units_ordered_in_other_purchase_orders(
+            ctx,
+            store_id,
+            item_id,
+            exclude_purchase_order_id,
+        )
     }
 }
 

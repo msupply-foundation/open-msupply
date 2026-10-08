@@ -2,16 +2,16 @@
 mod test {
     use chrono::NaiveDate;
     use repository::{
+        StockLineRow, StockLineRowRepository,
         mock::{
-            mock_location_with_restricted_location_type_a, mock_name_b, mock_name_customer_a,
-            mock_stock_line_a, mock_stock_line_restricted_location_type_b, mock_store_a,
-            mock_user_account_a, MockDataInserts,
+            MockDataInserts, mock_location_with_restricted_location_type_a, mock_name_b,
+            mock_name_customer_a, mock_stock_line_a, mock_stock_line_restricted_location_type_b,
+            mock_store_a, mock_user_account_a,
         },
         test_db::setup_all,
-        StockLineRow, StockLineRowRepository,
     };
 
-    use crate::{service_provider::ServiceProvider, stock_line::UpdateStockLine, NullableUpdate};
+    use crate::{NullableUpdate, service_provider::ServiceProvider, stock_line::UpdateStockLine};
 
     type ServiceError = crate::stock_line::UpdateStockLineError;
 
@@ -113,19 +113,20 @@ mod test {
             Err(ServiceError::ItemVariantDoesNotExist)
         );
 
-        // DonorNotVisible
+        // Invisible name which is also not a donor: the type check runs before the
+        // visibility check (it only needs name_row), so DonorIsNotADonor wins
         assert_eq!(
             service.update_stock_line(
                 &context,
                 UpdateStockLine {
                     id: mock_stock_line_a().id,
                     donor_id: Some(NullableUpdate {
-                        value: Some(mock_name_b().id), // Not visible in store_a
+                        value: Some(mock_name_b().id), // Not visible in store_a, not a donor
                     }),
                     ..Default::default()
                 }
             ),
-            Err(ServiceError::DonorNotVisible)
+            Err(ServiceError::DonorIsNotADonor)
         );
 
         // DonorIsNotADonor

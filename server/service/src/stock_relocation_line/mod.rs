@@ -3,9 +3,9 @@ pub mod delete;
 pub mod upsert;
 
 pub use batch::{
-    batch_stock_relocation_line, BatchStockRelocationLine, BatchStockRelocationLineResult,
+    BatchStockRelocationLine, BatchStockRelocationLineResult, batch_stock_relocation_line,
 };
-pub use delete::{delete_stock_relocation_line, DeleteStockRelocationLineError};
+pub use delete::{DeleteStockRelocationLineError, delete_stock_relocation_line};
 pub use upsert::{
-    upsert_stock_relocation_line, UpsertStockRelocationLine, UpsertStockRelocationLineError,
+    UpsertStockRelocationLine, UpsertStockRelocationLineError, upsert_stock_relocation_line,
 };

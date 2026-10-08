@@ -2,10 +2,10 @@ use chrono::NaiveDateTime;
 use program::deleted_datetime;
 
 use crate::{
-    db_diesel::{context_row::context, document::document, master_list_row::master_list},
-    repository_error::RepositoryError,
     ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, StorageConnection,
     Upsert,
+    db_diesel::{context_row::context, document::document, master_list_row::master_list},
+    repository_error::RepositoryError,
 };
 
 use diesel::prelude::*;

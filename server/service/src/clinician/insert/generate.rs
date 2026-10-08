@@ -1,4 +1,4 @@
-use repository::{clinician_row::ClinicianRow, ClinicianStoreJoinRow};
+use repository::{ClinicianStoreJoinRow, clinician_row::ClinicianRow};
 use util::uuid::uuid;
 
 use super::InsertClinician;

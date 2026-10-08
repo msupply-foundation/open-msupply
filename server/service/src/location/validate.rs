@@ -1,8 +1,8 @@
-use repository::{
-    location::{LocationFilter, LocationRepository},
-    LocationRow, LocationRowRepository, RepositoryError, StorageConnection,
-};
 use repository::{EqualFilter, StringFilter};
+use repository::{
+    LocationRow, LocationRowRepository, RepositoryError, StorageConnection,
+    location::{LocationFilter, LocationRepository},
+};
 
 pub fn check_location_code_is_unique(
     id: &str,

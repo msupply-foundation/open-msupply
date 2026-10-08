@@ -2,10 +2,10 @@ use crate::StorageConnection;
 
 use crate::diesel_macros::apply_equal_filter;
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter};
+use crate::{DBType, EqualFilter, repository_error::RepositoryError};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-use super::{diagnosis_row::diagnosis, DiagnosisRow};
+use super::{DiagnosisRow, diagnosis_row::diagnosis};
 
 pub type Diagnosis = DiagnosisRow;
 

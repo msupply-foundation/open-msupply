@@ -1,0 +1,347 @@
+# Stock-line detail (spec/stock S2) and the quantity-changing flows launched from
+# it (adjust S4, repack S5, VVM entry S6). One comprehensive fragment backs the
+# detail form, the mutation results, and the adjust/repack modals' reads. The
+# arg-bearing donor / manufacturer(storeId) fields read each query's $storeId.
+
+fragment StockLineDetail on StockLineNode {
+  id
+  itemId
+  itemName
+  storeId
+  batch
+  packSize
+  costPricePerPack
+  sellPricePerPack
+  availableNumberOfPacks
+  totalNumberOfPacks
+  expiryDate
+  manufactureDate
+  onHold
+  note
+  barcode
+  volumePerPack
+  totalVolume
+  supplierName
+  locationId
+  vvmStatusId
+  itemVariantId
+  location {
+    id
+    code
+    name
+    locationType {
+      id
+      name
+    }
+  }
+  vvmStatus {
+    id
+    code
+    description
+  }
+  itemVariant {
+    id
+    name
+  }
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  manufacturer(storeId: $storeId) {
+    id
+    name
+  }
+  campaign {
+    id
+    name
+  }
+  program {
+    id
+    name
+  }
+  item {
+    id
+    code
+    name
+    unitName
+    isVaccine
+    doses
+    restrictedLocationTypeId
+    restrictedLocationType {
+      id
+      name
+    }
+  }
+}
+
+# The line's VVM status history (spec/stock S2 › VVM history tab). VvmstatusLog
+# has NO totalCount (contract), nodes only; newest-first is applied client-side
+# (ids/datetime monotonic).
+fragment StockLineVvmLog on VvmstatusLogNode {
+  id
+  createdDatetime
+  comment
+  invoiceLineId
+  status {
+    id
+    code
+    description
+    priority
+  }
+  user {
+    username
+  }
+}
+
+# There is no single-record stock-line query (contract): fetch one line via
+# stockLines filtered by id.equalTo. Also pulls the VVM history for the tab.
+query stockLineById($storeId: String!, $id: EqualFilterStringInput) {
+  stockLines(storeId: $storeId, filter: { id: $id }) {
+    ... on StockLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StockLineDetail
+        vvmStatusLogs {
+          nodes {
+            ...StockLineVvmLog
+          }
+        }
+      }
+    }
+  }
+}
+
+# Partial attribute update (spec/stock › editing attributes). Success returns the
+# saved StockLineNode (re-hydrates the form); RecordNotFound is the only typed
+# member, everything else is a plain GraphQL error keyed by extensions.details.
+mutation updateStockLine($storeId: String!, $input: UpdateStockLineInput!) {
+  updateStockLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on StockLineNode {
+      ...StockLineDetail
+    }
+    ... on UpdateStockLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The line's movement ledger (spec/stock S2 › ledger tab; rules › the ledger).
+# No pagination — the query returns every entry; quantities/balances are in
+# units (signed).
+query stockLedger(
+  $storeId: String!
+  $filter: LedgerFilterInput
+  $sort: [LedgerSortInput!]
+) {
+  ledger(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on LedgerConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        datetime
+        name
+        quantity
+        runningBalance
+        invoiceType
+        invoiceNumber
+        reason
+        user {
+          username
+        }
+      }
+    }
+  }
+}
+
+# Inventory adjustment (spec/stock S4). Success returns the created InvoiceNode
+# (finalised addition/reduction); typed error members carry the offending line.
+mutation createInventoryAdjustment(
+  $storeId: String!
+  $input: CreateInventoryAdjustmentInput!
+) {
+  createInventoryAdjustment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+      type
+      status
+      verifiedDatetime
+    }
+    ... on CreateInventoryAdjustmentError {
+      error {
+        __typename
+        description
+        ... on StockLineReducedBelowZero {
+          stockLine {
+            id
+            availableNumberOfPacks
+            totalNumberOfPacks
+          }
+        }
+        ... on LedgerWouldGoBelowZero {
+          stockLine {
+            id
+          }
+        }
+      }
+    }
+  }
+}
+
+# Historical availability for the adjust preview when backdated (spec/stock
+# contract › backdating): with a datetime it returns each line's
+# minimum-balance-derived availability at that moment.
+query historicalStockLines(
+  $storeId: String!
+  $itemId: String!
+  $datetime: DateTime
+) {
+  historicalStockLines(storeId: $storeId, itemId: $itemId, datetime: $datetime) {
+    ... on StockLineConnector {
+      __typename
+      nodes {
+        id
+        packSize
+        availableNumberOfPacks
+        totalNumberOfPacks
+      }
+    }
+  }
+}
+
+# A stock line's repack history (spec/stock S5, rules › repack history):
+# repacks made FROM it, newest-first (applied client-side). repackId is the new
+# ("to") line's id; the repack that CREATED this line is skipped server-side.
+query repacksByStockLine($storeId: String!, $stockLineId: String!) {
+  repacksByStockLine(storeId: $storeId, stockLineId: $stockLineId) {
+    totalCount
+    nodes {
+      id
+      repackId
+      batch
+      datetime
+      invoice {
+        id
+      }
+      from {
+        numberOfPacks
+        packSize
+        location {
+          id
+          code
+          name
+        }
+      }
+      to {
+        numberOfPacks
+        packSize
+        location {
+          id
+          code
+          name
+        }
+        stockLine {
+          id
+        }
+      }
+    }
+  }
+}
+
+# One repack by its document id (spec/stock S5): drives the modal's read-only
+# view of a selected/just-saved repack and its report.
+query stockRepack($storeId: String!, $invoiceId: String!) {
+  repack(storeId: $storeId, invoiceId: $invoiceId) {
+    __typename
+    ... on RepackNode {
+      id
+      repackId
+      batch
+      datetime
+      from {
+        numberOfPacks
+        packSize
+        location {
+          id
+          code
+          name
+        }
+      }
+      to {
+        numberOfPacks
+        packSize
+        location {
+          id
+          code
+          name
+        }
+        stockLine {
+          id
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Create a repack (spec/stock S5, rules › repack). Success returns the repack
+# InvoiceNode whose STOCK_IN line carries the new line's id (for the full-repack
+# navigation). Typed errors: StockLineReducedBelowZero, CannotHaveFractionalPack.
+mutation insertRepack($storeId: String!, $input: InsertRepackInput!) {
+  insertRepack(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+      lines {
+        nodes {
+          id
+          type
+          stockLine {
+            id
+          }
+        }
+      }
+    }
+    ... on InsertRepackError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Record a VVM status change (spec/stock S6, rules › VVM two write paths).
+# Appends a history entry AND stamps the line's current status. Response is the
+# created node (no typed error union — failures are plain GraphQL errors).
+mutation insertVvmStatusLog($storeId: String!, $input: InsertVVMStatusLogInput!) {
+  insertVvmStatusLog(storeId: $storeId, input: $input) {
+    __typename
+    ... on VvmstatusLogNode {
+      ...StockLineVvmLog
+    }
+  }
+}
+
+# Edit a VVM history entry's comment (status is fixed once recorded).
+mutation updateVvmStatusLog($storeId: String!, $input: UpdateVVMStatusLogInput!) {
+  updateVvmStatusLog(storeId: $storeId, input: $input) {
+    __typename
+    ... on IdResponse {
+      id
+    }
+  }
+}

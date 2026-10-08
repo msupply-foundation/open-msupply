@@ -6,12 +6,12 @@ use self::{
 };
 
 use repository::{
-    vvm_status::{vvm_status_log_row::VVMStatusLogRow, vvm_status_row::VVMStatusRow},
     RepositoryError, StorageConnection,
+    vvm_status::{vvm_status_log_row::VVMStatusLogRow, vvm_status_row::VVMStatusRow},
 };
 use vvm_status_log::{
-    insert::{insert_vvm_status_log, InsertVVMStatusLogError, InsertVVMStatusLogInput},
-    update::{update_vvm_status_log, UpdateVVMStatusLogError, UpdateVVMStatusLogInput},
+    insert::{InsertVVMStatusLogError, InsertVVMStatusLogInput, insert_vvm_status_log},
+    update::{UpdateVVMStatusLogError, UpdateVVMStatusLogInput, update_vvm_status_log},
 };
 
 pub mod vvm_status;

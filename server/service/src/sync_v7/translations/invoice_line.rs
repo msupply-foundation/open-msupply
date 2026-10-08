@@ -1,4 +1,4 @@
-use repository::{syncv7::SyncRecordSerializeError, ChangeLogInsertRow, InvoiceLineRow, Upsert};
+use repository::{ChangeLogInsertRow, InvoiceLineRow, Upsert, syncv7::SyncRecordSerializeError};
 
 use crate::sync_v7::{serde::DeserializeResult, validate_translate_integrate::SyncContext};
 

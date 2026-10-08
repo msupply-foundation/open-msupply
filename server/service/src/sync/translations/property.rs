@@ -1,6 +1,6 @@
 use repository::{
-    property_row::PropertyRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    property_row::PropertyRow,
 };
 
 use super::{

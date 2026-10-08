@@ -1,0 +1,14 @@
+/* RecordLink — a kind-toned link to a related record (see RecordLink.tsx).
+   Ports the inbound linkedOrder pattern (DESIGN_STANDARDS Unit 7) into the
+   library. Only the TONE is owned here (keyed off data-kind — the kind is in
+   the label text, so colour is a redundant cue); weight, size and everything
+   else inherit from the surrounding context. Neutral (no kind) is a plain
+   link. */
+
+.link[data-kind='po'] {
+  color: var(--secondary-main);
+}
+
+.link[data-kind='io'] {
+  color: var(--primary-main);
+}

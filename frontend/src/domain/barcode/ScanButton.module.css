@@ -1,0 +1,18 @@
+/* The scan affordances (spec/barcode-scanning ui-surface § R1). */
+
+.affordance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* The armed indicator. Decorative — the label itself changes to "Ready to
+   scan…", so the state never rests on colour alone. */
+.armed {
+  display: inline-block;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--success-main);
+  margin-inline-start: 0.375rem;
+}

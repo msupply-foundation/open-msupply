@@ -1,7 +1,7 @@
 use repository::{
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     ChangelogRow, ChangelogTableName, EqualFilter, IndicatorValueRow, IndicatorValueRowDelete, Row,
     StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
 };
 
 use serde::{Deserialize, Serialize};
@@ -81,11 +81,23 @@ impl SyncTranslation for IndicatorValue {
 
         Ok(PullTranslateResult::upsert(IndicatorValueRow {
             id,
-            customer_name_id: check_fk(customer_name_id, "customer_name_link_id", FkField::NameLink)?,
+            customer_name_id: check_fk(
+                customer_name_id,
+                "customer_name_link_id",
+                FkField::NameLink,
+            )?,
             store_id: check_fk(store_id, "store_id", FkField::Store)?,
             period_id: check_fk(period_id, "period_id", FkField::Period)?,
-            indicator_line_id: check_fk(indicator_line_id, "indicator_line_id", FkField::IndicatorLine)?,
-            indicator_column_id: check_fk(indicator_column_id, "indicator_column_id", FkField::IndicatorColumn)?,
+            indicator_line_id: check_fk(
+                indicator_line_id,
+                "indicator_line_id",
+                FkField::IndicatorLine,
+            )?,
+            indicator_column_id: check_fk(
+                indicator_column_id,
+                "indicator_column_id",
+                FkField::IndicatorColumn,
+            )?,
             value,
         }))
     }
@@ -169,7 +181,7 @@ impl SyncTranslation for IndicatorValue {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, IndicatorLineRow, IndicatorLineRowRepository,
+        IndicatorLineRow, IndicatorLineRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]
@@ -177,11 +189,8 @@ mod tests {
         use crate::sync::test::test_data::indicator_value;
         let translator = IndicatorValue;
 
-        let (_, connection, _, _) = setup_all(
-            "test_indicator_value_translation",
-            MockDataInserts::all(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_indicator_value_translation", MockDataInserts::all()).await;
 
         // Seed the indicator_line parent the value's required FK points at.
         IndicatorLineRowRepository::new(&connection)

@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 
 use super::{

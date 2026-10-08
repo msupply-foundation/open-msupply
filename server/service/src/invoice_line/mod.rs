@@ -7,9 +7,9 @@ use repository::InvoiceLineSort;
 use repository::PaginationOption;
 use repository::RepositoryError;
 
-use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
+use crate::service_provider::ServiceContext;
 
 pub mod query;
 use self::query::*;

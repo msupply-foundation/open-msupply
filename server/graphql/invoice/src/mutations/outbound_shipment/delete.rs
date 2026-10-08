@@ -1,7 +1,7 @@
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_core::{
-    simple_generic_errors::{CannotEditInvoice, RecordNotFound},
     ContextExt,
+    simple_generic_errors::{CannotEditInvoice, RecordNotFound},
 };
 use graphql_types::{
     generic_errors::CannotDeleteInvoiceWithLines, types::DeleteResponse as GenericDeleteResponse,
@@ -70,12 +70,12 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::InvoiceDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),

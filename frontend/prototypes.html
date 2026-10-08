@@ -1,0 +1,26 @@
+<!doctype html>
+<!-- Entry page for the STANDALONE prototypes build (`pnpm build:prototypes`,
+     vite.prototypes.config.ts) — emitted as the site's index.html. Mirrors
+     showcase.html: no app-only pre-boot pieces, no unsupported-browser warning
+     (an internal tool; check-min-browser.mjs reads index.html only). See
+     src/prototypes/README.md § Standalone build. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open mSupply Design Prototypes</title>
+    <script>
+      // Apply the persisted theme before first paint so a dark-theme user
+      // never sees a flash of light (key shared with ThemeToggle).
+      try {
+        var theme = localStorage.getItem('oms-theme');
+        if (theme) document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/prototypes.tsx"></script>
+  </body>
+</html>

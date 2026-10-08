@@ -1,4 +1,4 @@
-use crate::{mock::mock_prescription_a, InvoiceLineRow, InvoiceLineType};
+use crate::{InvoiceLineRow, InvoiceLineType, mock::mock_prescription_a};
 
 use chrono::NaiveDate;
 

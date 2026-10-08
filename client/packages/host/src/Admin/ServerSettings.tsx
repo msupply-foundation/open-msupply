@@ -113,6 +113,14 @@ export const ServerSettings = () => {
                       `${Environment.API_HOST}/support/vacuum`,
                       {
                         method: 'POST',
+                        // POST /support/vacuum requires the ServerAdmin session
+                        // cookie. In a packaged build API_HOST is derived from
+                        // window.location so this is same-origin and fetch's
+                        // default ('same-origin') would send the cookie anyway,
+                        // but against a dev server the front end and the API sit
+                        // on different ports — cross-origin, so the default sends
+                        // nothing and the vacuum 401s silently. Be explicit.
+                        credentials: 'include',
                       }
                     );
                     if (vacuum.ok) {

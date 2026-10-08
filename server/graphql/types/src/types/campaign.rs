@@ -5,11 +5,11 @@ use graphql_core::{
     simple_generic_errors::NodeError,
 };
 use repository::{
-    campaign::campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField},
     EqualFilter, StringFilter,
+    campaign::campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField},
 };
 
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]

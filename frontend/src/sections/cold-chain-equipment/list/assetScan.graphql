@@ -1,0 +1,34 @@
+# The scan resolver (spec/cold-chain-equipment › rules § scanning an asset;
+# contract § Scanning an asset). Given a GS1 label's elements it returns the
+# existing asset its serial (AI 21) and part number (AI 241) name, or — with
+# no match — an UNSAVED draft built from the label, whose `id` is empty.
+# Nothing is stored; the client creates the draft with insertAsset.
+#
+# A label missing either AI is NOT a union error: it arrives as a top-level
+# GraphQL error (InternalError), which assetScan.ts takes locally.
+query assetFromGs1Data($storeId: String!, $gs1: [Gs1DataElement!]!) {
+  assetFromGs1Data(storeId: $storeId, gs1: $gs1) {
+    __typename
+    ... on AssetNode {
+      id
+      assetNumber
+      serialNumber
+      catalogueItemId
+      warrantyStart
+      warrantyEnd
+      installationDate
+      lockedFields {
+        serialNumber
+        catalogueItemId
+        warrantyStart
+        warrantyEnd
+      }
+    }
+    ... on ScannedDataParseError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

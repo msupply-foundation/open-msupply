@@ -1,10 +1,10 @@
 use crate::service_provider::ServiceContext;
 use repository::{
+    EqualFilter, NameFilter, NameRepository, RepositoryError, StorageConnection, StoreFilter,
+    VaccinationCourseRepository, VaccinationCourseRow,
     vaccine_course::vaccine_course_store_config::{
         VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
     },
-    EqualFilter, NameFilter, NameRepository, RepositoryError, StorageConnection, StoreFilter,
-    VaccinationCourseRepository, VaccinationCourseRow,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -249,8 +249,8 @@ mod tests {
     use crate::service_provider::ServiceProvider;
     use repository::{
         mock::{
-            mock_demographic_a, mock_vaccine_course_a, mock_vaccine_item_a, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_demographic_a, mock_vaccine_course_a,
+            mock_vaccine_item_a,
         },
         test_db::setup_all_with_data,
         vaccine_course::vaccine_course_row::VaccineCourseRow,

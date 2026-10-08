@@ -2,7 +2,7 @@ use crate::{
     activity_log::activity_log_entry,
     common::check_program_exists,
     service_provider::ServiceContext,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 
 use super::{

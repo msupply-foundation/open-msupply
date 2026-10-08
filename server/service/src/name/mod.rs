@@ -1,7 +1,7 @@
 use repository::{Name, NameFilter, NameSort, PaginationOption};
-use update::{update_name_properties, UpdateNameProperties, UpdateNamePropertiesError};
+use update::{UpdateNameProperties, UpdateNamePropertiesError, update_name_properties};
 
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
 
 use self::query::get_names;
 

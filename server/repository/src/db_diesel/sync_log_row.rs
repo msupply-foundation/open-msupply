@@ -165,8 +165,8 @@ mod test {
     use strum::IntoEnumIterator;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, SyncApiErrorCode, SyncLogV5V6Row,
-        SyncLogV5V6RowRepository,
+        SyncApiErrorCode, SyncLogV5V6Row, SyncLogV5V6RowRepository, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

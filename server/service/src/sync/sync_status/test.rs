@@ -1,13 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 
 use actix_web::{
-    web::{self, Data},
     App, HttpServer,
+    web::{self, Data},
 };
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    mock::{insert_extra_mock_data, mock_store_b, MockData, MockDataInserts},
     ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
+    mock::{MockData, MockDataInserts, insert_extra_mock_data, mock_store_b},
 };
 use tokio::sync::Mutex;
 
@@ -19,10 +19,10 @@ use crate::{
             RemoteSyncBatchV5, RemoteSyncRecordV5, SiteInfoV5, SiteStatusCodeV5, SiteStatusV5,
         },
         settings::{BatchSize, SyncSettings},
-        sync_status::{status::InitialisationStatus, SyncLogError},
+        sync_status::{SyncLogError, status::InitialisationStatus},
         synchroniser::{SyncError, SynchroniserV5V6},
     },
-    test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_and_service_provider},
 };
 
 use super::status::{FullSyncStatus, FullSyncStatusV5V6};

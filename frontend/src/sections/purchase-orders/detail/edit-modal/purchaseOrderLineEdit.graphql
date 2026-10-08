@@ -1,0 +1,36 @@
+# The line editor (spec/purchase-orders S10) — what a NEW line needs before it
+# exists. Both line mutations live with the detail screen's
+# (purchaseOrderDetail.graphql); an existing line is edited from the row the
+# table already holds.
+
+# A picked item's facts for a new line: its default pack size (what the line is
+# born with), its unit, its stock on hand NOW, and — a separate root field, the
+# consumed read behind the editor's ordered-elsewhere figure — its units on
+# order across the store's other purchase orders. `stats` triggers the AMC
+# calculation, acceptable for one picked item.
+query purchaseOrderLineItemFacts(
+  $storeId: String!
+  $itemId: String!
+  $orderId: String!
+) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+        unitName
+        defaultPackSize
+        stats(storeId: $storeId) {
+          stockOnHand
+        }
+      }
+    }
+  }
+  unitsOrderedInOtherPurchaseOrders(
+    storeId: $storeId
+    itemId: $itemId
+    excludePurchaseOrderId: $orderId
+  )
+}

@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    requisition_row::RequisitionType, RepositoryError, RequisitionLine, RequisitionLineRow,
-    StorageConnection,
+    RepositoryError, RequisitionLine, RequisitionLineRow, StorageConnection,
+    requisition_row::RequisitionType,
 };
 use util::{date_with_months_offset, last_day_of_the_month};
 mod historic_consumption;
@@ -67,7 +67,7 @@ pub fn get_requisition_line_chart(
                 stock_evolution: None,
                 reference_date: None,
                 suggested_quantity_calculation,
-            })
+            });
         }
     };
 
@@ -170,13 +170,13 @@ mod test {
     use super::*;
     use crate::service_provider::ServiceProvider;
     use repository::{
-        mock::{
-            mock_item_a, mock_name_a, mock_new_response_requisition_for_update_test_line,
-            mock_store_a, mock_store_b, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, NameRow, RequisitionRow,
         StockLineRow, StoreRow,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_name_a,
+            mock_new_response_requisition_for_update_test_line, mock_store_a, mock_store_b,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
     use util::{constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_now, uuid::uuid};
 

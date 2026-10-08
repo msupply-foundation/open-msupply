@@ -82,7 +82,7 @@ mod tests {
         migrations::{v2_18_00::V2_18_00, v2_19_00::V2_19_00, *},
         test_db::*,
     };
-    use diesel::{prelude::*, sql_query, RunQueryDsl};
+    use diesel::{RunQueryDsl, prelude::*, sql_query};
 
     table! {
         invoice_line (id) {
@@ -103,34 +103,79 @@ mod tests {
 
     fn setup_test_dependencies(connection: &StorageConnection) {
         // Supplier name + store
-        run(connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('supplier_name', 'FACILITY', false, true, 'SUP1', 'Supplier');");
-        run(connection, "INSERT INTO name_link (id, name_id) VALUES ('supplier_name_link', 'supplier_name');");
+        run(
+            connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('supplier_name', 'FACILITY', false, true, 'SUP1', 'Supplier');",
+        );
+        run(
+            connection,
+            "INSERT INTO name_link (id, name_id) VALUES ('supplier_name_link', 'supplier_name');",
+        );
 
-        run(connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');");
-        run(connection, "INSERT INTO name_link (id, name_id) VALUES ('store_name_link', 'store_name');");
-        run(connection, "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name_link', 'STORE1', 1);");
+        run(
+            connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');",
+        );
+        run(
+            connection,
+            "INSERT INTO name_link (id, name_id) VALUES ('store_name_link', 'store_name');",
+        );
+        run(
+            connection,
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name_link', 'STORE1', 1);",
+        );
 
         // Item
-        run(connection, "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Item', 'ITEM1', 1.0, 'STOCK', '');");
-        run(connection, "INSERT INTO item_link (id, item_id) VALUES ('item_link', 'item_id');");
+        run(
+            connection,
+            "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Item', 'ITEM1', 1.0, 'STOCK', '');",
+        );
+        run(
+            connection,
+            "INSERT INTO item_link (id, item_id) VALUES ('item_link', 'item_id');",
+        );
 
         // Purchase orders: rate 2.516 (foreign), rate 1.0 (same currency)
-        run(connection, "INSERT INTO purchase_order (id, store_id, supplier_name_link_id, purchase_order_number, status, created_datetime, foreign_exchange_rate) VALUES ('po_foreign', 'store_id', 'supplier_name_link', 1, 'NEW', '2026-01-01 00:00:00', 2.516);");
-        run(connection, "INSERT INTO purchase_order (id, store_id, supplier_name_link_id, purchase_order_number, status, created_datetime, foreign_exchange_rate) VALUES ('po_same_currency', 'store_id', 'supplier_name_link', 2, 'NEW', '2026-01-01 00:00:00', 1.0);");
+        run(
+            connection,
+            "INSERT INTO purchase_order (id, store_id, supplier_name_link_id, purchase_order_number, status, created_datetime, foreign_exchange_rate) VALUES ('po_foreign', 'store_id', 'supplier_name_link', 1, 'NEW', '2026-01-01 00:00:00', 2.516);",
+        );
+        run(
+            connection,
+            "INSERT INTO purchase_order (id, store_id, supplier_name_link_id, purchase_order_number, status, created_datetime, foreign_exchange_rate) VALUES ('po_same_currency', 'store_id', 'supplier_name_link', 2, 'NEW', '2026-01-01 00:00:00', 1.0);",
+        );
 
         // PO lines: price 84.6 (foreign currency)
-        run(connection, "INSERT INTO purchase_order_line (id, purchase_order_id, store_id, line_number, item_link_id, item_name, requested_pack_size, requested_number_of_units, price_per_pack_before_discount, price_per_pack_after_discount, status) VALUES ('pol_foreign', 'po_foreign', 'store_id', 1, 'item_link', 'Item', 1.0, 12.0, 84.6, 84.6, 'NEW');");
-        run(connection, "INSERT INTO purchase_order_line (id, purchase_order_id, store_id, line_number, item_link_id, item_name, requested_pack_size, requested_number_of_units, price_per_pack_before_discount, price_per_pack_after_discount, status) VALUES ('pol_same_currency', 'po_same_currency', 'store_id', 1, 'item_link', 'Item', 1.0, 12.0, 84.6, 84.6, 'NEW');");
+        run(
+            connection,
+            "INSERT INTO purchase_order_line (id, purchase_order_id, store_id, line_number, item_link_id, item_name, requested_pack_size, requested_number_of_units, price_per_pack_before_discount, price_per_pack_after_discount, status) VALUES ('pol_foreign', 'po_foreign', 'store_id', 1, 'item_link', 'Item', 1.0, 12.0, 84.6, 84.6, 'NEW');",
+        );
+        run(
+            connection,
+            "INSERT INTO purchase_order_line (id, purchase_order_id, store_id, line_number, item_link_id, item_name, requested_pack_size, requested_number_of_units, price_per_pack_before_discount, price_per_pack_after_discount, status) VALUES ('pol_same_currency', 'po_same_currency', 'store_id', 1, 'item_link', 'Item', 1.0, 12.0, 84.6, 84.6, 'NEW');",
+        );
 
         // Invoices:
         //   inv_po_linked     - inbound shipment linked to po_foreign
         //   inv_po_same       - inbound shipment linked to po_same_currency
         //   inv_no_po         - inbound shipment with no PO link
         //   inv_outbound      - outbound shipment (irrelevant type)
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation, purchase_order_id) VALUES ('inv_po_linked', 'supplier_name_link', 'store_id', 1, false, '2026-01-01 00:00:00', 'INBOUND_SHIPMENT', 'NEW', 1.0, false, 'po_foreign');");
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation, purchase_order_id) VALUES ('inv_po_same', 'supplier_name_link', 'store_id', 2, false, '2026-01-01 00:00:00', 'INBOUND_SHIPMENT', 'NEW', 1.0, false, 'po_same_currency');");
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('inv_no_po', 'supplier_name_link', 'store_id', 3, false, '2026-01-01 00:00:00', 'INBOUND_SHIPMENT', 'NEW', 1.0, false);");
-        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation, purchase_order_id) VALUES ('inv_outbound', 'supplier_name_link', 'store_id', 4, false, '2026-01-01 00:00:00', 'OUTBOUND_SHIPMENT', 'NEW', 1.0, false, 'po_foreign');");
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation, purchase_order_id) VALUES ('inv_po_linked', 'supplier_name_link', 'store_id', 1, false, '2026-01-01 00:00:00', 'INBOUND_SHIPMENT', 'NEW', 1.0, false, 'po_foreign');",
+        );
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation, purchase_order_id) VALUES ('inv_po_same', 'supplier_name_link', 'store_id', 2, false, '2026-01-01 00:00:00', 'INBOUND_SHIPMENT', 'NEW', 1.0, false, 'po_same_currency');",
+        );
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('inv_no_po', 'supplier_name_link', 'store_id', 3, false, '2026-01-01 00:00:00', 'INBOUND_SHIPMENT', 'NEW', 1.0, false);",
+        );
+        run(
+            connection,
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation, purchase_order_id) VALUES ('inv_outbound', 'supplier_name_link', 'store_id', 4, false, '2026-01-01 00:00:00', 'OUTBOUND_SHIPMENT', 'NEW', 1.0, false, 'po_foreign');",
+        );
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -180,19 +225,78 @@ mod tests {
         setup_test_dependencies(&connection);
 
         // (1) Broken legacy row: stored as foreign value; should be corrected.
-        create_invoice_line(&connection, "il_broken", "inv_po_linked", Some("pol_foreign"), "STOCK_IN", 84.6, 84.6, 12.0);
+        create_invoice_line(
+            &connection,
+            "il_broken",
+            "inv_po_linked",
+            Some("pol_foreign"),
+            "STOCK_IN",
+            84.6,
+            84.6,
+            12.0,
+        );
         // (2) Already-correct row: stored as local value; should be untouched.
-        create_invoice_line(&connection, "il_correct", "inv_po_linked", Some("pol_foreign"), "STOCK_IN", 212.85, 212.85, 12.0);
+        create_invoice_line(
+            &connection,
+            "il_correct",
+            "inv_po_linked",
+            Some("pol_foreign"),
+            "STOCK_IN",
+            212.85,
+            212.85,
+            12.0,
+        );
         // (3) Customised sell price; cost broken; cost fixed but sell preserved.
-        create_invoice_line(&connection, "il_custom_sell", "inv_po_linked", Some("pol_foreign"), "STOCK_IN", 84.6, 99.0, 12.0);
+        create_invoice_line(
+            &connection,
+            "il_custom_sell",
+            "inv_po_linked",
+            Some("pol_foreign"),
+            "STOCK_IN",
+            84.6,
+            99.0,
+            12.0,
+        );
         // (4) Same-currency PO (rate 1.0); even though cost == foreign price, predicate excludes it.
-        create_invoice_line(&connection, "il_same_currency", "inv_po_same", Some("pol_same_currency"), "STOCK_IN", 84.6, 84.6, 12.0);
+        create_invoice_line(
+            &connection,
+            "il_same_currency",
+            "inv_po_same",
+            Some("pol_same_currency"),
+            "STOCK_IN",
+            84.6,
+            84.6,
+            12.0,
+        );
         // (5) Inbound shipment line with no PO link; untouched.
-        create_invoice_line(&connection, "il_no_po", "inv_no_po", None, "STOCK_IN", 84.6, 84.6, 12.0);
+        create_invoice_line(
+            &connection,
+            "il_no_po",
+            "inv_no_po",
+            None,
+            "STOCK_IN",
+            84.6,
+            84.6,
+            12.0,
+        );
         // (6) Outbound shipment line linked to PO somehow (unusual); type mismatch excludes it.
-        create_invoice_line(&connection, "il_outbound", "inv_outbound", Some("pol_foreign"), "STOCK_OUT", 84.6, 84.6, 12.0);
+        create_invoice_line(
+            &connection,
+            "il_outbound",
+            "inv_outbound",
+            Some("pol_foreign"),
+            "STOCK_OUT",
+            84.6,
+            84.6,
+            12.0,
+        );
 
-        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         let rows = invoice_line::table
@@ -215,9 +319,21 @@ mod tests {
         let expected_cost = 84.6 * 2.516;
         assert!(approx(r.1, expected_cost), "il_broken cost = {}", r.1);
         assert!(approx(r.2, expected_cost), "il_broken sell = {}", r.2);
-        assert!(approx(r.3, expected_cost * 12.0), "il_broken total_before_tax = {}", r.3);
-        assert!(approx(r.4, expected_cost * 12.0), "il_broken total_after_tax = {}", r.4);
-        assert!(approx(r.5.unwrap(), 84.6 * 12.0), "il_broken foreign = {:?}", r.5);
+        assert!(
+            approx(r.3, expected_cost * 12.0),
+            "il_broken total_before_tax = {}",
+            r.3
+        );
+        assert!(
+            approx(r.4, expected_cost * 12.0),
+            "il_broken total_after_tax = {}",
+            r.4
+        );
+        assert!(
+            approx(r.5.unwrap(), 84.6 * 12.0),
+            "il_broken foreign = {:?}",
+            r.5
+        );
 
         // (2) Already-correct row untouched.
         let r = by_id("il_correct");

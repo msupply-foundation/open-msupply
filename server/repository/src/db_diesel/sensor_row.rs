@@ -1,7 +1,7 @@
-use super::{location_row::location, store_row::store, StorageConnection};
+use super::{StorageConnection, location_row::location, store_row::store};
 
-use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use crate::{ChangelogRepository, RowActionType};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert, repository_error::RepositoryError};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -110,10 +110,9 @@ impl<'a> SensorRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
-        let exists: bool = diesel::select(diesel::dsl::exists(
-            sensor::table.filter(sensor::id.eq(id)),
-        ))
-        .get_result(self.connection.lock().connection())?;
+        let exists: bool =
+            diesel::select(diesel::dsl::exists(sensor::table.filter(sensor::id.eq(id))))
+                .get_result(self.connection.lock().connection())?;
         Ok(exists)
     }
 

@@ -1,17 +1,18 @@
 use super::{
+    ContextType, Pagination, ReportMetaDataRow, ReportRow, StorageConnection,
     form_schema_row::{self, form_schema},
     report_row::report,
-    ContextType, Pagination, ReportMetaDataRow, ReportRow, StorageConnection,
 };
 
+use crate::{EqualFilter, Sort, StringFilter};
 use crate::{
+    FormSchema, FormSchemaRow,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     migrations::Version,
-    schema_from_row, FormSchema, FormSchemaRow,
+    schema_from_row,
 };
-use crate::{EqualFilter, Sort, StringFilter};
 
-use crate::{diesel_macros::apply_string_filter, DBType, RepositoryError};
+use crate::{DBType, RepositoryError, diesel_macros::apply_string_filter};
 
 use diesel::{dsl::IntoBoxed, helper_types::LeftJoin, prelude::*};
 

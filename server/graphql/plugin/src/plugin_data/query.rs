@@ -1,10 +1,10 @@
 use crate::types::PluginDataConnector;
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use repository::{
     DatetimeFilter, EqualFilter, PaginationOption, PluginDataFilter, PluginDataSort,

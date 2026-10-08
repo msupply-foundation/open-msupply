@@ -1,14 +1,14 @@
 use super::{
-    item_category_row::{item_category_join, ItemCategoryJoinRow},
-    item_row::item,
     DBType, StorageConnection,
+    item_category_row::{ItemCategoryJoinRow, item_category_join},
+    item_row::item,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, ItemRow,
-    Pagination,
+    EqualFilter, ItemRow, Pagination, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]

@@ -1,13 +1,13 @@
-use std::future::{ready, Ready};
+use std::future::{Ready, ready};
 
 use actix_web::{
-    body::{BoxBody, EitherBody},
-    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    http::{
-        header::{self, HeaderValue},
-        StatusCode,
-    },
     Error, HttpResponse,
+    body::{BoxBody, EitherBody},
+    dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
+    http::{
+        StatusCode,
+        header::{self, HeaderValue},
+    },
 };
 use futures_util::future::LocalBoxFuture;
 use service::sync::CentralServerConfig;

@@ -1,0 +1,40 @@
+/*
+ * Subtle MUI-style click ripple. A circle grows from the click point and fades
+ * as it expands, clipped to the host (which must be position:relative). Colour
+ * comes from --ripple-color on the host (set per button state), kept low-alpha
+ * so it reads as a gentle pulse, not a flash.
+ */
+.container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--ripple-color, var(--primary-main));
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple var(--motion-ripple) ease-out;
+}
+
+@keyframes ripple {
+  from {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+/* No reduced-motion block: --motion-ripple is zeroed in tokens.css, and
+   createRipple's own reduced-motion gate means no ripple element is spawned in
+   the first place. Zeroing (rather than `animation: none`) matters if one ever
+   does render — the animationend that dismisses it still fires, so nothing
+   leaks. */

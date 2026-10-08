@@ -3,9 +3,7 @@ use serde::Serialize;
 use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
-use repository::{
-    ChangelogRow, ChangelogTableName, Row, StorageConnection, VaccinationRow,
-};
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection, VaccinationRow};
 
 /*
     This translator is only used to push Vaccination rows to the legacy mSupply server.
@@ -154,10 +152,10 @@ mod tests {
         mock_store_a, mock_user_account_a, mock_vaccine_course_a_dose_a, mock_vaccine_item_a,
     };
     use repository::{
+        ChangelogRepository,
         mock::MockDataInserts,
         test_db::setup_all,
         vaccination_row::{VaccinationRow, VaccinationRowRepository},
-        ChangelogRepository,
     };
 
     #[actix_rt::test]

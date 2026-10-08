@@ -6,8 +6,8 @@ use crate::{
     activity_log::activity_log_entry,
     invoice::get_invoice,
     invoice_line::{
-        stock_in_line::insert::{insert_stock_in_line, InsertStockInLineError},
-        update_return_reason_id::{update_return_reason_id, UpdateLineReturnReasonError},
+        stock_in_line::insert::{InsertStockInLineError, insert_stock_in_line},
+        update_return_reason_id::{UpdateLineReturnReasonError, update_return_reason_id},
     },
     service_provider::ServiceContext,
 };
@@ -17,8 +17,8 @@ use generate::generate;
 use validate::validate;
 
 use super::{
-    update_customer_return, CustomerReturnLineInput, UpdateCustomerReturn,
-    UpdateCustomerReturnError, UpdateCustomerReturnStatus,
+    CustomerReturnLineInput, UpdateCustomerReturn, UpdateCustomerReturnError,
+    UpdateCustomerReturnStatus, update_customer_return,
 };
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -160,14 +160,15 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            currency_a, mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_item_a,
-            mock_item_b, mock_name_customer_a, mock_outbound_shipment_a, mock_outbound_shipment_e,
-            mock_store_a, mock_supplier_return_a, mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, NameRow, NameStoreJoinRow, ReasonOptionRow, ReasonOptionType,
+        mock::{
+            MockData, MockDataInserts, currency_a, mock_customer_return_a,
+            mock_customer_return_a_invoice_line_a, mock_item_a, mock_item_b, mock_name_customer_a,
+            mock_outbound_shipment_a, mock_outbound_shipment_e, mock_store_a,
+            mock_supplier_return_a, mock_user_account_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     use super::CustomerReturnLineInput;

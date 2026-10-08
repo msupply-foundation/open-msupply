@@ -85,8 +85,11 @@ impl SyncTranslation for IndicatorAttribute {
         } = sync_record.deserialize()?;
 
         let check_fk = fk_checker.with_table_required(connection, "indicator_attribute", &id);
-        let program_indicator_id =
-            check_fk(program_indicator_id, "program_indicator_id", FkField::ProgramIndicator)?;
+        let program_indicator_id = check_fk(
+            program_indicator_id,
+            "program_indicator_id",
+            FkField::ProgramIndicator,
+        )?;
 
         Ok(match axis {
             LegacyAxis::Column => PullTranslateResult::upsert(IndicatorColumnRow {

@@ -1,0 +1,16 @@
+# Inventory-adjustment reason options — the choices for a stocktake line's "why counted differs
+# from snapshot" picker. NOT store-scoped (the query takes no storeId): a global lookup, fetched
+# once and shared (reasonOptionsResource). We fetch only ACTIVE reasons; the caller filters to the
+# adjustment types (POSITIVE_/NEGATIVE_INVENTORY_ADJUSTMENT) it needs. id + reason label the option.
+query reasonOptions {
+  reasonOptions(filter: { isActive: true }) {
+    ... on ReasonOptionConnector {
+      __typename
+      nodes {
+        id
+        type
+        reason
+      }
+    }
+  }
+}

@@ -1,10 +1,10 @@
-use insert::{insert_insurance, InsertInsurance, InsertInsuranceError};
+use insert::{InsertInsurance, InsertInsuranceError, insert_insurance};
 use query::{insurance, insurances};
 use repository::{
-    name_insurance_join_row::{NameInsuranceJoinRow, NameInsuranceJoinSort},
     RepositoryError, StorageConnection,
+    name_insurance_join_row::{NameInsuranceJoinRow, NameInsuranceJoinSort},
 };
-use update::{update_insurance, UpdateInsurance, UpdateInsuranceError};
+use update::{UpdateInsurance, UpdateInsuranceError, update_insurance};
 
 use crate::service_provider::ServiceContext;
 

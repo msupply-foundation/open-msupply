@@ -5,10 +5,10 @@ pub mod query;
 
 use graphql_types::types::PrinterConnector;
 use mutations::{
-    insert_printer, update_printer, InsertPrinterInput, InsertPrinterResponse, UpdatePrinterInput,
-    UpdatePrinterResponse,
+    InsertPrinterInput, InsertPrinterResponse, UpdatePrinterInput, UpdatePrinterResponse,
+    insert_printer, update_printer,
 };
-use query::{printers, PrinterFilterInput};
+use query::{PrinterFilterInput, printers};
 
 #[derive(Default, Clone)]
 pub struct PrinterQueries;

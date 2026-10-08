@@ -1,0 +1,16 @@
+{
+  "name": "hello_world",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "omSupplyPlugin": {
+    "target": "frontend",
+    "types": [
+      "dashboard",
+      "requestRequisitionLine"
+    ]
+  },
+  "scripts": {
+    "build-plugin": "vite build"
+  }
+}

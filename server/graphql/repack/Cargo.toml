@@ -1,7 +1,7 @@
 [package]
 name = "graphql_repack"
 version = "0.1.0"
-edition = "2018"
+edition.workspace = true
 
 [lib]
 path = "lib.rs"

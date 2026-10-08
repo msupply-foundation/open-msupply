@@ -1,10 +1,10 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     simple_generic_errors::{
         DatabaseError, InternalError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
     },
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -134,14 +134,14 @@ fn map_error(error: ServiceError) -> Result<InsertAssetCatalogueItemErrorInterfa
         ServiceError::ItemAlreadyExists => {
             return Ok(InsertAssetCatalogueItemErrorInterface::ItemAlreadyExists(
                 RecordAlreadyExist {},
-            ))
+            ));
         }
         ServiceError::CodeAlreadyExists => {
             return Ok(
                 InsertAssetCatalogueItemErrorInterface::UniqueValueViolation(UniqueValueViolation(
                     UniqueValueKey::Code,
                 )),
-            )
+            );
         }
         ServiceError::ManufacturerAndModelAlreadyExist => {
             return Ok(
@@ -151,7 +151,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetCatalogueItemErrorInterfa
                         UniqueCombinationKey::Model,
                     ]),
                 ),
-            )
+            );
         }
 
         // Standard Graphql Errors

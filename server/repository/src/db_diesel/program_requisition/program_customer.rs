@@ -1,6 +1,8 @@
 use diesel::prelude::*;
 
 use crate::{
+    EqualFilter, Name, NameFilter, NameOmsFieldsRow, NameRepository, NameRow, NameStoreJoinRow,
+    ProgramRow, StorageConnection, StoreRow,
     db_diesel::{
         master_list_name_join::master_list_name_join,
         master_list_row::master_list,
@@ -15,8 +17,6 @@ use crate::{
     diesel_macros::apply_equal_filter,
     name_oms_fields, name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, Name, NameFilter, NameOmsFieldsRow, NameRepository, NameRow, NameStoreJoinRow,
-    ProgramRow, StorageConnection, StoreRow,
 };
 
 pub type ProgramCustomerJoin = (
@@ -82,8 +82,7 @@ impl<'a> ProgramCustomerRepository<'a> {
             .select((
                 // Same as NameRepository
                 name::table::all_columns(),
-                name_oms_fields_alias
-                    .fields((name_oms_fields::id, name_oms_fields::properties)),
+                name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
                 name_store_join::table::all_columns().nullable(),
                 store::table::all_columns().nullable(),
                 program::table::all_columns().nullable().assume_not_null(),

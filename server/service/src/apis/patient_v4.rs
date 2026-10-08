@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use repository::GenderType;
 use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Deserializer, Serialize};
-use util::{with_retries, RetrySeconds};
+use util::{RetrySeconds, with_retries};
 
 pub struct PatientApiV4 {
     server_url: Url,

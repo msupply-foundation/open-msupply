@@ -1,7 +1,7 @@
 use super::{
-    indicator_value_row::{indicator_value, IndicatorValueRow},
-    name_row::name,
     DBType, NameRow, StorageConnection,
+    indicator_value_row::{IndicatorValueRow, indicator_value},
+    name_row::name,
 };
 
 use crate::{diesel_macros::apply_equal_filter, repository_error::RepositoryError};

@@ -1,9 +1,9 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
@@ -88,12 +88,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::OtherPartyNotVisible => {
             return Ok(InsertErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotASupplier => {
             return Ok(InsertErrorInterface::OtherPartyNotASupplier(
                 OtherPartyNotASupplier,
-            ))
+            ));
         }
 
         // Standard Graphql Errors

@@ -1,9 +1,12 @@
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
-use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
+use crate::{
+    WithDBError, custom_field::CustomFieldPatchProblem, invoice::query::get_invoice,
+    service_provider::ServiceContext,
+};
 use repository::Invoice;
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
-    StockLineRowRepository,
+    CustomFieldValueType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
+    RepositoryError, StockLineRowRepository,
 };
 
 mod generate;
@@ -104,9 +107,28 @@ pub enum UpdateCustomerReturnError {
     OtherPartyNotVisible,
     OtherPartyNotACustomer,
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Internal
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,
+}
+
+impl From<CustomFieldPatchProblem> for UpdateCustomerReturnError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateCustomerReturnError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateCustomerReturnError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 impl From<RepositoryError> for UpdateCustomerReturnError {
@@ -147,15 +169,15 @@ impl UpdateCustomerReturn {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            currency_a, mock_customer_return_a, mock_customer_return_b,
-            mock_customer_return_b_invoice_line_a, mock_name_store_a, mock_outbound_shipment_e,
-            mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter,
         InvoiceLineRepository, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
         StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, currency_a, mock_customer_return_a, mock_customer_return_b,
+            mock_customer_return_b_invoice_line_a, mock_name_store_a, mock_outbound_shipment_e,
+            mock_store_a, mock_store_b, mock_user_account_a,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     use crate::{
@@ -347,9 +369,11 @@ mod test {
             .unwrap();
 
         // Customer return currently in NEW status, should have no stock lines
-        assert!(invoice_lines
-            .iter()
-            .all(|l| l.invoice_line_row.stock_line_id.is_none()));
+        assert!(
+            invoice_lines
+                .iter()
+                .all(|l| l.invoice_line_row.stock_line_id.is_none())
+        );
 
         let updated_return = service
             .update_customer_return(
@@ -471,9 +495,11 @@ mod test {
             .unwrap();
 
         // Customer return currently in NEW status, should have no stock lines
-        assert!(invoice_lines
-            .iter()
-            .all(|l| l.invoice_line_row.stock_line_id.is_none()));
+        assert!(
+            invoice_lines
+                .iter()
+                .all(|l| l.invoice_line_row.stock_line_id.is_none())
+        );
 
         let updated_return = service
             .update_customer_return(

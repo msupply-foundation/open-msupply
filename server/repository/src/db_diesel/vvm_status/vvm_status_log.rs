@@ -1,12 +1,12 @@
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, StorageConnection,
+    StorageConnection, diesel_macros::apply_equal_filter, repository_error::RepositoryError,
 };
 
 use crate::{DBType, EqualFilter};
 
-use super::vvm_status_log_row::{vvm_status_log, VVMStatusLogRow};
+use super::vvm_status_log_row::{VVMStatusLogRow, vvm_status_log};
 
 pub type VVMStatusLog = VVMStatusLogRow;
 

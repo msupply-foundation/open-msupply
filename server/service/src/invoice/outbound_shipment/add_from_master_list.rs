@@ -1,6 +1,6 @@
+use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
 use crate::invoice::common::check_master_list_for_name_id;
 use crate::invoice::common::get_lines_for_invoice;
-use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
 use crate::validate::check_other_party_store_is_disabled;
 use crate::{invoice::check_invoice_exists, service_provider::ServiceContext};
 use repository::EqualFilter;
@@ -85,12 +85,8 @@ fn validate(
         return Err(OutError::NotAnOutboundShipment);
     }
 
-    check_master_list_for_name_id(
-        connection,
-        &invoice_row.name_id,
-        &input.master_list_id,
-    )?
-    .ok_or(OutError::MasterListNotFoundForThisName)?;
+    check_master_list_for_name_id(connection, &invoice_row.name_id, &input.master_list_id)?
+        .ok_or(OutError::MasterListNotFoundForThisName)?;
 
     Ok(invoice_row)
 }
@@ -133,15 +129,15 @@ mod test {
     use crate::service_provider::ServiceProvider;
     use repository::mock::{mock_store_a, mock_store_c};
     use repository::{
+        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
         mock::{
-            common::FullMockMasterList, mock_inbound_shipment_c, mock_item_a, mock_item_b,
-            mock_item_c, mock_item_d, mock_new_outbound_shipment_no_lines,
-            mock_outbound_shipment_c, mock_outbound_shipment_no_lines,
-            mock_outbound_shipment_shipped, mock_test_not_store_a_master_list, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, common::FullMockMasterList, mock_inbound_shipment_c,
+            mock_item_a, mock_item_b, mock_item_c, mock_item_d,
+            mock_new_outbound_shipment_no_lines, mock_outbound_shipment_c,
+            mock_outbound_shipment_no_lines, mock_outbound_shipment_shipped,
+            mock_test_not_store_a_master_list,
         },
         test_db::{setup_all, setup_all_with_data},
-        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
     };
 
     #[actix_rt::test]

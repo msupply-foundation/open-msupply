@@ -1,8 +1,8 @@
 use repository::{RepositoryError, Requisition, RequisitionLine};
 
 use crate::{
-    requisition_line::request_requisition_line::*, service_provider::ServiceContext,
     BatchMutationsProcessor, InputWithResult, WithDBError,
+    requisition_line::request_requisition_line::*, service_provider::ServiceContext,
 };
 
 use super::*;
@@ -129,21 +129,21 @@ pub fn batch_request_requisition(
 #[cfg(test)]
 mod test {
     use crate::{
+        InputWithResult,
         requisition::request_requisition::{
             BatchRequestRequisition, DeleteRequestRequisition, DeleteRequestRequisitionError,
             InsertRequestRequisition,
         },
         requisition_line::request_requisition_line::InsertRequestRequisitionLine,
         service_provider::ServiceProvider,
-        InputWithResult,
     };
     use repository::{
+        RequisitionLineRowRepository, RequisitionRowRepository,
         mock::{
-            mock_full_new_response_requisition_for_update_test, mock_item_a, mock_name_store_c,
-            mock_store_a, MockDataInserts,
+            MockDataInserts, mock_full_new_response_requisition_for_update_test, mock_item_a,
+            mock_name_store_c, mock_store_a,
         },
         test_db::setup_all,
-        RequisitionLineRowRepository, RequisitionRowRepository,
     };
 
     #[actix_rt::test]

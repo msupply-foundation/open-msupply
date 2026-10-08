@@ -1,4 +1,4 @@
-use super::{currency_row::currency, CurrencyRow, DBType, StorageConnection};
+use super::{CurrencyRow, DBType, StorageConnection, currency_row::currency};
 use diesel::prelude::*;
 
 use crate::{

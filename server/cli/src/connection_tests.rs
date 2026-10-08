@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use log::info;
 use repository::{get_storage_connection_manager, migrations::Version};

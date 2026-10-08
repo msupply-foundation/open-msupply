@@ -78,11 +78,12 @@ impl Loader<RequisitionIndicatorInfoLoaderInput> for RequisitionIndicatorInfoLoa
 mod tests {
     use super::*;
     use repository::{
+        NameRow, StorePreferenceRow,
         mock::{
-            mock_indicator_line_a, mock_name_store_b, mock_period, mock_period_2_a, mock_store_a,
-            MockData, MockDataInserts,
+            MockData, MockDataInserts, mock_indicator_line_a, mock_name_store_b, mock_period,
+            mock_period_2_a, mock_store_a,
         },
-        test_db, NameRow, StorePreferenceRow,
+        test_db,
     };
 
     // The loader registry is shared across requests, so a single batch can contain inputs
@@ -139,11 +140,15 @@ mod tests {
         // was absent (the batch queried only the first period and keyed everything under it).
         let period_1_info = result.get(&period_1_input).unwrap();
         let period_2_info = result.get(&period_2_input).unwrap();
-        assert!(period_1_info
-            .iter()
-            .all(|info| info.datetime.date() == mock_period().end_date));
-        assert!(period_2_info
-            .iter()
-            .all(|info| info.datetime.date() == mock_period_2_a().end_date));
+        assert!(
+            period_1_info
+                .iter()
+                .all(|info| info.datetime.date() == mock_period().end_date)
+        );
+        assert!(
+            period_2_info
+                .iter()
+                .all(|info| info.datetime.date() == mock_period_2_a().end_date)
+        );
     }
 }

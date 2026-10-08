@@ -1,17 +1,17 @@
 use self::delete::{
-    delete_stock_relocation, delete_stock_relocations, DeleteStockRelocation,
-    DeleteStockRelocationError,
+    DeleteStockRelocation, DeleteStockRelocationError, delete_stock_relocation,
+    delete_stock_relocations,
 };
-use self::insert::{insert_stock_relocation, InsertStockRelocation, InsertStockRelocationError};
+use self::insert::{InsertStockRelocation, InsertStockRelocationError, insert_stock_relocation};
 use self::query::{
-    get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
-    DraftStockRelocationLine, StockRelocationDraftFilter,
+    DraftStockRelocationLine, StockRelocationDraftFilter, get_stock_relocation,
+    get_stock_relocation_draft_lines, get_stock_relocations,
 };
-use self::update::{update_stock_relocation, UpdateStockRelocation, UpdateStockRelocationError};
+use self::update::{UpdateStockRelocation, UpdateStockRelocationError, update_stock_relocation};
 use crate::stock_relocation_line::{
-    batch_stock_relocation_line, BatchStockRelocationLine, BatchStockRelocationLineResult,
+    BatchStockRelocationLine, BatchStockRelocationLineResult, batch_stock_relocation_line,
 };
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
 use repository::{
     PaginationOption, RepositoryError, StockRelocation, StockRelocationFilter, StockRelocationRow,
     StockRelocationSort,

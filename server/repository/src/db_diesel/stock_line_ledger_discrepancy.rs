@@ -3,7 +3,7 @@ use super::StorageConnection;
 use crate::diesel_macros::apply_equal_filter;
 use crate::{EqualFilter, RepositoryError, StockLineFilter};
 
-use crate::{db_diesel::stock_line_row::stock_line, DBType, StockLineRepository};
+use crate::{DBType, StockLineRepository, db_diesel::stock_line_row::stock_line};
 
 use diesel::dsl::IntoBoxed;
 use diesel::prelude::*;

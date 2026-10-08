@@ -251,10 +251,7 @@ fn process_single_log_file(
             log_bytes,
         )
         .map_err(|e| {
-            ProcessorError::OtherError(format!(
-                "Failed to store log file '{}': {}",
-                file_name, e
-            ))
+            ProcessorError::OtherError(format!("Failed to store log file '{}': {}", file_name, e))
         })?;
 
     sync_file_ref_repo.upsert_one(&SyncFileReferenceRow {
@@ -370,11 +367,11 @@ fn process_database_files(
 mod tests {
     use anyhow::anyhow;
     use repository::{
-        mock::{mock_store_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         ChangelogRow, EqualFilter, KeyType, KeyValueStoreRepository, SyncFileReferenceFilter,
         SyncFileReferenceRepository, SyncMessageRow, SyncMessageRowRepository,
         SyncMessageRowStatus, SyncMessageRowType,
+        mock::{MockData, MockDataInserts, mock_store_a},
+        test_db::setup_all_with_data,
     };
 
     use crate::{
@@ -405,13 +402,8 @@ mod tests {
     }
 
     impl LogServiceTrait for MockLogService {
-        fn get_log_file_names(
-            &self,
-            _ctx: &ServiceContext,
-        ) -> Result<Vec<String>, anyhow::Error> {
-            self.file_names
-                .clone()
-                .map_err(|e| anyhow!(e))
+        fn get_log_file_names(&self, _ctx: &ServiceContext) -> Result<Vec<String>, anyhow::Error> {
+            self.file_names.clone().map_err(|e| anyhow!(e))
         }
 
         fn get_log_content(
@@ -465,7 +457,8 @@ mod tests {
                 standalone_admin_password: None,
                 workers: None,
                 inactivity_timeout_seconds: crate::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
-                token_refresh_interval_seconds: crate::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                token_refresh_interval_seconds:
+                    crate::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
                 frontend_dir: "frontend".to_string(),
             },
             database: db_settings,

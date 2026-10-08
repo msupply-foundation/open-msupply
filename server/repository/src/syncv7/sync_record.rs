@@ -1,5 +1,5 @@
 use crate::{
-    diesel_macros::diesel_json_type, migrations::Version, ChangelogTableName, RepositoryError,
+    ChangelogTableName, RepositoryError, diesel_macros::diesel_json_type, migrations::Version,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -28,7 +28,7 @@ diesel_json_type! {
         Authentication,
         #[error("Invalid site name or password")]
         InvalidSiteNameOrPassword,
-        #[error("Site already has a token allocated; admin must clear it before re-init")]
+        #[error("Site already has a token allocated; admin must clear it before re-initialisation")]
         TokenAlreadyAllocated,
         #[error("Token not found")]
         TokenNotFound,

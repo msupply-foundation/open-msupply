@@ -68,4 +68,3 @@ impl<'a> DemographicProjectionRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 }
-

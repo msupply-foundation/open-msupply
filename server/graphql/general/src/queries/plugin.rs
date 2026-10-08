@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::ContextExt;
-use service::plugin::{asking_host_or_legacy, FrontendPluginMetadata};
+use service::plugin::{FrontendPluginMetadata, asking_host_or_legacy};
 
 #[derive(PartialEq, Debug, SimpleObject)]
 pub struct FrontendPluginMetadataNode {

@@ -1,6 +1,6 @@
 use async_graphql::*;
 use dataloader::DataLoader;
-use graphql_core::{loader::VaccineCourseByProgramIdLoader, ContextExt};
+use graphql_core::{ContextExt, loader::VaccineCourseByProgramIdLoader};
 use repository::ProgramRow;
 
 use crate::types::VaccineCourseNode;

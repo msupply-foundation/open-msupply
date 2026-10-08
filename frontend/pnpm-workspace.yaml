@@ -1,0 +1,14 @@
+# desktop/ is the Electron shell, a package of its own so that `pnpm deploy`
+# can stage it for @electron/packager (scripts/package-desktop.sh) — the
+# packager copies a DIRECTORY, and that directory needs a manifest and a
+# self-contained node_modules.
+packages:
+  - desktop
+
+# Required by `pnpm deploy` from pnpm 10 onwards. Inert here in every other
+# respect: it changes how a workspace package that depends on ANOTHER
+# workspace package is linked, and nothing in this workspace does. Without it
+# deploy refuses, and its --legacy fallback resolves against the root importer
+# instead of the filtered package — which puts the whole app's runtime tree
+# (solid-js, kobalte, capacitor…) into the desktop installer.
+injectWorkspacePackages: true

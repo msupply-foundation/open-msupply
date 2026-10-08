@@ -1,11 +1,11 @@
 use async_graphql::*;
+use graphql_core::ContextExt;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
-use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
+use graphql_core::generic_inputs::{PrintReportSortInput, report_sort_to_typed_sort};
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::{
-    list_error_to_gql_err, validate_auth, StandardGraphqlError,
+    StandardGraphqlError, list_error_to_gql_err, validate_auth,
 };
-use graphql_core::ContextExt;
 use graphql_types::types::{StocktakeLineConnector, StocktakeLineNode};
 use repository::*;
 use service::auth::Resource;
@@ -141,18 +141,18 @@ mod test {
     use async_graphql::*;
     use chrono::NaiveDate;
     use graphql_core::assert_graphql_query;
-    use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
+    use graphql_core::generic_inputs::{PrintReportSortInput, report_sort_to_typed_sort};
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::mock::{mock_item_a, mock_stocktake_line_a};
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
     use repository::{
         PaginationOption, StocktakeLine, StocktakeLineFilter, StocktakeLineRow, StocktakeLineSort,
     };
+    use repository::{StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
     use service::{
-        service_provider::{ServiceContext, ServiceProvider},
-        stocktake_line::{query::GetStocktakeLinesError, StocktakeLineServiceTrait},
         ListResult,
+        service_provider::{ServiceContext, ServiceProvider},
+        stocktake_line::{StocktakeLineServiceTrait, query::GetStocktakeLinesError},
     };
 
     use crate::StocktakeLineQueries;

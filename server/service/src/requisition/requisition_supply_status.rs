@@ -76,11 +76,7 @@ impl RequisitionLineSupplyStatus {
         let result = self.requisition_line.requisition_line_row.supply_quantity
             - self.quantity_in_invoices();
 
-        if result > 0.0 {
-            result
-        } else {
-            0.0
-        }
+        if result > 0.0 { result } else { 0.0 }
     }
 
     pub fn quantity_in_invoices(&self) -> f64 {

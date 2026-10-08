@@ -1,0 +1,25 @@
+# Everything installed on the SERVER — both kinds, every host runtime — as
+# against `frontendPluginMetadata`, which answers only for this app's own
+# runtime and so cannot see a backend plugin or a bundle built for the other
+# front end. Showing the two side by side is the point: "installed but not
+# loaded here" is the state that otherwise looks identical to "not installed".
+#
+# Central-server only (the `centralServer` root), and gated server-side on
+# ConfigurePlugin rather than the Server Admin that gates the Support section
+# around it — so a failure here is expected on a remote site or for an
+# administrator without that permission, and the block is simply omitted.
+query installedPlugins {
+  centralServer {
+    plugin {
+      installedPlugins {
+        totalCount
+        nodes {
+          id
+          code
+          version
+          kind
+        }
+      }
+    }
+  }
+}

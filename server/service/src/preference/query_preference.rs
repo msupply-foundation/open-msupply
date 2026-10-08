@@ -43,7 +43,7 @@ pub fn _query_store_with_global_default(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::mock::{mock_store_a, MockDataInserts};
+    use repository::mock::{MockDataInserts, mock_store_a};
     use repository::test_db::setup_all;
     use repository::{PreferenceRow, PreferenceRowRepository};
 

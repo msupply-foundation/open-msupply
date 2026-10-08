@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { DetailInputWithLabelRow } from './InputWithLabelRow';
 import { CustomFieldInput } from '@common/components';
-import { CustomFieldDefinitionLike } from '@common/utils';
+import { CustomFieldDefinitionLike, DraftPropertyValue } from '@common/utils';
 import { useIsExtraSmallScreen } from '@common/hooks';
 
 /**
@@ -26,7 +26,7 @@ interface CustomFieldDetailRowsProps {
    * Supply to make the rows editable; called with the property `key` and its
    * new value on each change. When omitted the rows are read-only.
    */
-  onChange?: (key: string, value: string | number | boolean | null) => void;
+  onChange?: (key: string, value: DraftPropertyValue) => void;
   /** Disables the inputs (only meaningful in editable mode). */
   disabled?: boolean;
 }

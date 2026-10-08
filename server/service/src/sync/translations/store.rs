@@ -125,9 +125,9 @@ impl SyncTranslation for StoreTranslation {
 mod tests {
     use super::*;
     use repository::{
+        NameLinkRow, NameRow,
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        NameLinkRow, NameRow,
     };
 
     #[actix_rt::test]

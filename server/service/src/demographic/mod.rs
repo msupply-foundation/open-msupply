@@ -1,20 +1,20 @@
 use self::insert_demographic_indicator::{
-    insert_demographic_indicator, InsertDemographicIndicator, InsertDemographicIndicatorError,
+    InsertDemographicIndicator, InsertDemographicIndicatorError, insert_demographic_indicator,
 };
 
 use self::insert_demographic_projection::{
-    insert_demographic_projection, InsertDemographicProjection, InsertDemographicProjectionError,
+    InsertDemographicProjection, InsertDemographicProjectionError, insert_demographic_projection,
 };
 use self::query_demographic_indicator::{get_demographic_indicator, get_demographic_indicators};
 use self::update_demographic_indicator::{
-    update_demographic_indicator, UpdateDemographicIndicator, UpdateDemographicIndicatorError,
+    UpdateDemographicIndicator, UpdateDemographicIndicatorError, update_demographic_indicator,
 };
 use self::update_demographic_projection::{
-    update_demographic_projection, UpdateDemographicProjection, UpdateDemographicProjectionError,
+    UpdateDemographicProjection, UpdateDemographicProjectionError, update_demographic_projection,
 };
 
 use super::{ListError, ListResult};
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 
 use query_demographic_indicator::get_demographics;
 use query_demographic_projection::get_demographic_projection_by_base_year;

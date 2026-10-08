@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::{generic_errors::RequisitionReasonNotProvided, types::RequisitionLineNode};
 use service::{
@@ -128,17 +128,17 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionLineDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::RequisitionDoesNotExist => {
             return Ok(UpdateErrorInterface::RequisitionDoesNotExist(
                 ForeignKeyError(ForeignKey::RequisitionId),
-            ))
+            ));
         }
         ServiceError::CannotEditRequisition => {
             return Ok(UpdateErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
-            ))
+            ));
         }
         ServiceError::ReasonNotProvided(line) => {
             return Ok(UpdateErrorInterface::ReasonNotProvided(
@@ -163,21 +163,21 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
-            MockDataInserts,
-        },
         RequisitionLine, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_request_draft_requisition,
+            mock_sent_request_requisition_line,
+        },
     };
     use serde_json::json;
 
     use service::{
         requisition_line::{
+            RequisitionLineServiceTrait,
             response_requisition_line::{
                 UpdateResponseRequisitionLine as ServiceInput,
                 UpdateResponseRequisitionLineError as ServiceError,
             },
-            RequisitionLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

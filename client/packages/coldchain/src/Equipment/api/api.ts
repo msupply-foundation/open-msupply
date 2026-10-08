@@ -88,6 +88,37 @@ const assetParsers = {
   }),
 };
 
+// What this register is reading, in one place: the class pinning that makes it
+// the cold chain register, the screen's own filters, and the store restriction
+// the Cold chain destination carries (the server scopes neither). The EXPORT
+// calls this with the same destination scope as the list, so the file is what
+// the screen shows (issue #693).
+//
+// ⚠️ `storeCode` never arrives. Its caller derives the flag from
+// `useCentralServerCallback()`, which returns an OBJECT of callbacks and is
+// therefore always truthy, so the ternary in useAssets.ts always picks
+// `undefined` and the `store` clause below is never built — on any site. The
+// register is unscoped everywhere, and on a non-central site it is unscoped
+// without even the Store column that would name the owner.
+//
+// Left as-is here deliberately. It is captured as current behaviour in the new
+// front end's spec (frontend/spec/cold-chain-equipment/contract.md § the two
+// destinations, "wire trap — the non-central store-code restriction is dead
+// code", confirmed live), and that front end was built to match it. Making the
+// restriction fire would re-scope the list on every non-central site and put
+// the two apps out of step — a product decision, not a comment fix.
+const assetListFilter = (
+  storeId: string,
+  filterBy?: FilterBy | null,
+  storeCode?: string,
+  isColdChain?: boolean
+) => ({
+  ...filterBy,
+  ...(storeCode ? { store: { equalTo: storeCode } } : {}),
+  ...(isColdChain ? { storeId: { equalTo: storeId } } : {}),
+  classId: { equalTo: CCE_CLASS_ID },
+});
+
 export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     byId: async (assetId: string) => {
@@ -125,24 +156,26 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
         key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: {
-          ...filterBy,
-          ...(storeCode ? { store: { equalTo: storeCode } } : {}),
-          ...(isColdChain ? { storeId: { equalTo: storeId } } : {}),
-          classId: { equalTo: CCE_CLASS_ID },
-        },
+        filter: assetListFilter(storeId, filterBy, storeCode, isColdChain),
       });
 
       const items = result?.assets;
 
       return items;
     },
-    listAll: async ({ sortBy }: ListParams<AssetFragment>) => {
+    // The export. The list's own filters and the list's own store scope,
+    // unpaginated — so the file is what the screen shows (issue #693).
+    listAll: async (
+      { sortBy, filterBy }: ListParams<AssetFragment>,
+      isColdChain?: boolean
+    ) => {
       const result = await sdk.assets({
         key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { classId: { equalTo: CCE_CLASS_ID } },
+        // The export carries the destination's store scope, exactly as the
+        // list does — `storeCode` stays out because it is the dead one above.
+        filter: assetListFilter(storeId, filterBy, undefined, isColdChain),
       });
 
       const items = result?.assets;

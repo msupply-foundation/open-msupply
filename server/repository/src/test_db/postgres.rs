@@ -6,15 +6,15 @@ use diesel::{PgConnection, RunQueryDsl};
 use util::lock_file;
 
 use crate::{
+    DBConnection, StorageConnectionManager,
     database_settings::DatabaseSettings,
     get_storage_connection_manager,
-    migrations::{migrate, MigrationConfig, Version},
-    mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
+    migrations::{MigrationConfig, Version, migrate},
+    mock::{MockDataCollection, MockDataInserts, all_mock_data, insert_all_mock_data},
     test_db::constants::{
-        env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_POSTGRES,
-        TEST_OUTPUT_DIR,
+        TEMPLATE_MARKER_FILE_POSTGRES, TEST_OUTPUT_DIR, env_msupply_no_test_db_template,
+        find_workspace_root,
     },
-    DBConnection, StorageConnectionManager,
 };
 
 pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {

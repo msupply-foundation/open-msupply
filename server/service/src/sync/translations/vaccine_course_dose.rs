@@ -1,6 +1,6 @@
 use repository::{
-    vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRow, ChangelogRow,
-    ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRow,
 };
 
 use crate::sync::translations::vaccine_course::VaccineCourseTranslation;
@@ -36,8 +36,11 @@ impl SyncTranslation for VaccineCourseDoseTranslation {
 
         let check_fk = fk_checker.with_table_required(connection, "vaccine_course_dose", &row.id);
 
-        row.vaccine_course_id =
-            check_fk(row.vaccine_course_id, "vaccine_course_id", FkField::VaccineCourse)?;
+        row.vaccine_course_id = check_fk(
+            row.vaccine_course_id,
+            "vaccine_course_id",
+            FkField::VaccineCourse,
+        )?;
 
         Ok(PullTranslateResult::upsert(row))
     }
@@ -89,9 +92,9 @@ impl SyncTranslation for VaccineCourseDoseTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_vaccine_course_a, MockDataInserts},
-        test_db::setup_all,
         VaccineCourseRow, VaccineCourseRowRepository,
+        mock::{MockDataInserts, mock_vaccine_course_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

@@ -72,7 +72,7 @@ impl TryFrom<SyncSettingsRaw> for SyncSettings {
                     return Err("sync settings must set url, username, password_sha256 and \
                                 interval_seconds all together, or omit them all (a flags-only sync \
                                 block)"
-                        .to_string())
+                        .to_string());
                 }
             };
 

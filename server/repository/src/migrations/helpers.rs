@@ -1,9 +1,9 @@
 use diesel::{prelude::*, sql_types::BigInt};
 
 use crate::{
-    db_diesel::changelog::changelog::changelog_with_links, ChangelogCondition, ChangelogRepository,
-    ChangelogTableName, Description, FilterBuilder, RepositoryError, StorageConnection,
-    SyncRequestFilter,
+    ChangelogCondition, ChangelogRepository, ChangelogTableName, Description, FilterBuilder,
+    RepositoryError, StorageConnection, SyncRequestFilter,
+    db_diesel::changelog::changelog::changelog_with_links,
 };
 
 /// Highest allocated changelog cursor, read from the sequence so it includes
@@ -113,7 +113,7 @@ pub(crate) fn seed_sync_request_for_table(
 #[cfg(test)]
 #[actix_rt::test]
 async fn check_change_log_update() {
-    use crate::{test_db::*, NameRow, NameRowRepository};
+    use crate::{NameRow, NameRowRepository, test_db::*};
 
     // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {

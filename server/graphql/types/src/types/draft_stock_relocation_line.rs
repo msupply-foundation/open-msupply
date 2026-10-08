@@ -1,6 +1,6 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
-use graphql_core::{loader::LocationByIdLoader, ContextExt};
+use graphql_core::{ContextExt, loader::LocationByIdLoader};
 use service::stock_relocation::query::DraftStockRelocationLine;
 
 use super::LocationNode;

@@ -1,16 +1,16 @@
 #[cfg(test)]
 mod query {
+    use repository::{EqualFilter, PaginationOption};
     use repository::{
         assets::asset::{AssetFilter, AssetSort, AssetSortField},
         mock::{
-            asset::{mock_asset_a, mock_asset_b},
             MockDataInserts,
+            asset::{mock_asset_a, mock_asset_b},
         },
         test_db::setup_all,
     };
-    use repository::{EqualFilter, PaginationOption};
 
-    use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
+    use crate::{ListError, SingleRecordError, service_provider::ServiceProvider};
 
     #[actix_rt::test]
     async fn asset_service_pagination() {

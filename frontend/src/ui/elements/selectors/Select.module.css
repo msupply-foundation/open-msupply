@@ -1,0 +1,334 @@
+/*
+ * Kobalte Select — styled drop-down. Trigger matches the input spec; the popup
+ * (portaled to <body>, positioned by Kobalte's popper, which matches the
+ * trigger width via `sameWidth`) is styled like a menu. State comes from
+ * Kobalte's data-* attributes. rem/em + logical properties throughout.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--input-field-gap);
+  min-width: 0;
+}
+
+/* Max-width caps — opt-in over the `full` default, mirroring TextField's
+   `width` prop rule for rule (see TextField.module.css, the reference block).
+   `full` lets the dropdown fill its container — a detail row's value column, a
+   form field, a table cell — so it aligns with the fields beside it. */
+.field[data-width='short'] {
+  max-width: var(--input-max-short);
+}
+
+/* Compact keeps the field at the short cap so a longer label still has room;
+   the trigger box itself narrows to 10rem below (after the base .trigger rules,
+   to satisfy no-descending-specificity), exactly as TextField's compact narrows
+   only its input. The value already ellipsises (see .value) if it overruns. */
+.field[data-width='compact'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
+}
+
+.field[data-width='full'] {
+  max-width: 100%;
+}
+
+/* Label + its labelInfo affordance on one line (only rendered when there IS a
+   labelInfo — as TextField.module.css). */
+.labelRow {
+  display: flex;
+  align-items: center;
+}
+
+.label {
+  /* The shared field-label token — identical to TextField's and
+     LabelledValue's label, so a select, a text field and a read-only value
+     read the same in one form. These four values used to be inlined here,
+     which left this label behind when the token changed (Carl 2026-07-30).
+     See --field-label-* in tokens.css. */
+  font-size: var(--field-label-font-size);
+  font-weight: var(--field-label-font-weight);
+  line-height: var(--field-label-line-height);
+  color: var(--field-label-color);
+}
+
+/* Required marker — the same asterisk TextField puts on its label, so a select
+   and a text field in one form read identically. */
+.required {
+  margin-inline-start: 0.125em;
+  color: var(--error-main);
+}
+
+/* Positioning context for the clear affordance — the trigger is a real
+   <button>, so the ✕ can't nest inside it; it overlays the slot the
+   .clearSlot spacer reserves in the trigger's flex row. */
+.control {
+  position: relative;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: var(--input-height);
+  padding-inline: var(--input-padding-x);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.3;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+
+.trigger:focus {
+  outline: none;
+  border-color: var(--secondary-main);
+  box-shadow: var(--focus-ring);
+}
+
+.trigger[data-disabled] {
+  background: var(--bg-disabled);
+  border-color: var(--color-divider);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+/* Compact width: narrow only the trigger box to 10rem (see the .field cap
+   above). Placed after the base .trigger rules so specificity ascends. */
+.field[data-width='compact'] .trigger {
+  max-width: var(--input-max-compact);
+}
+
+.value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Kobalte marks the value with data-placeholder-shown when nothing is selected. */
+.value[data-placeholder-shown] {
+  color: var(--gray-main);
+}
+
+.triggerIcon {
+  margin-inline-start: auto;
+  display: inline-flex;
+  font-size: 1.25rem;
+  color: var(--gray-dark);
+}
+
+/* The slot the clear button occupies: reserved INSIDE the trigger by the
+   spacer (so a long value ellipsises before it, never running under the ✕),
+   filled from outside by the absolutely-positioned button. The ✕ keeps its
+   own slot beside the chevron rather than replacing it on hover — swapping
+   the two puts a destructive control on the pixel a benign one occupied a
+   moment earlier, and relies on hover, which a tablet doesn't have (as
+   Combobox). Muted at rest so it reads as secondary to the value. */
+/* Kept in step with .clear's own width below — this is the room the value
+   ellipsises before, so if the button were narrower than the spacer the text
+   would stop short of it, and wider it would sit under the ✕. */
+.clearSlot {
+  inline-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.clear {
+  position: absolute;
+  /* Align over the reserved slot: end padding + chevron + the flex gap. */
+  inset-inline-end: calc(var(--input-padding-x) + 1.25rem + var(--space-2));
+  inset-block-start: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* A 1rem ✕ in a 1.5rem slot — 4px clear each side, matching the chevron's own
+     inset; see the matching rule in Combobox.module.css for why 1.5rem (24px) is
+     the floor rather than a preference (WCAG 2.2 SC 2.5.8, AA). Keep in step
+     with .clearSlot above, which reserves this width inside the trigger. */
+  inline-size: 1.5rem;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--gray-main);
+  cursor: pointer;
+}
+
+/* Disabled field: the clear button stays inert and dimmed (the field is
+   read-only, so its value can't be cleared). As Combobox. */
+.clear:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: default;
+}
+
+/* Brought up to full strength once engaged. Last of the .clear rules, so it
+   out-specifies the resting colour without descending-specificity juggling. */
+.clear:hover,
+.clear:focus-visible {
+  color: var(--text-body);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  max-height: var(--kb-popper-content-available-height);
+  padding: var(--space-2);
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-4);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  z-index: 50;
+}
+
+.listbox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  outline: none;
+}
+
+.item {
+  /* Never shrink below the row's own text — see Combobox.module.css `.item` for
+     the full account: a scrolling column flex box shrinks its rows, and the
+     coarse-pointer touch floor below replaces the `min-height: auto` that
+     otherwise holds them open, so on a tablet a wrapped option collapsed into
+     44px and overlapped its neighbour (#1039). The touch floor still applies. */
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  padding-inline-end: var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  /* A wrapping row must be allowed to be narrower than its longest word, or the
+     overrun becomes a horizontal scrollbar over the options (#1041) — see
+     Combobox.module.css for why `anywhere` and not `break-word`. */
+  overflow-wrap: anywhere;
+}
+
+.item[data-highlighted] {
+  background: var(--bg-group-main);
+}
+
+.item[data-disabled] {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.adornment {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 1.125rem;
+}
+
+.itemBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.itemDescription {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.itemIndicator {
+  margin-inline-start: auto;
+  display: inline-flex;
+  font-size: 1rem;
+  color: var(--secondary-main);
+}
+
+.helper {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+
+/* Small variant: denser height + 13px text, matching the shared input scale
+   (36px / --input-font-sm — NOT a bespoke size). Placed after the base rules so
+   specificity ascends. ONLY height and font-size change here: the label→control
+   gap (--input-field-gap) and horizontal padding (--input-padding-x) stay on the
+   base .field's shared tokens — the same ones TextField / DateField use at every
+   size — so a small Select lines up with them on BOTH the label→input gap and
+   the text inset (Carl 2026-07-27; previously overrode the gap to --space-1 and
+   the padding to --space-2, so it sat 2px high with the text 4px in). */
+.field[data-size='small'] .trigger {
+  height: var(--input-height-sm);
+}
+
+.field[data-size='small'] .label,
+.field[data-size='small'] .trigger {
+  font-size: var(--input-font-sm);
+}
+
+.field[data-size='small'] .triggerIcon {
+  font-size: 1rem;
+}
+
+/* The small variant's chevron is 1rem, so the clear slot sits nearer the
+   end edge. */
+.field[data-size='small'] .clear {
+  inset-inline-end: calc(var(--input-padding-x) + 1rem + var(--space-2));
+}
+
+/* Touch. Placed LAST, after the small variant above, for the same reason that
+   variant is placed after the base rules — a media query adds no specificity,
+   so the block has to come later in source order or its rules tie with
+   `.field[data-size='small'] .trigger` (0,3,0) and lose. */
+@media (pointer: coarse) {
+  /* Standard 48 / small 44 (both WCAG 2.5.5 AAA), matching every other input.
+     Dropdown .item rows keep the generic --touch-target tap floor.
+
+     The font is set on BOTH rules rather than once on a shared `.trigger`
+     selector: the size rule has to repeat it, and a later bare `.trigger` would
+     descend in specificity (stylelint no-descending-specificity).
+
+     Both sizes land on --text-sm here, NOT --input-font-touch (Ling, tablet
+     review 2026-08-18). The touch bump to 1rem stays right for a text input —
+     you type into it — but a picker trigger only DISPLAYS a value, and at 1rem
+     it read wrong three ways on a real tablet: larger than its own 14px field
+     label, larger than the 14px listbox it opens (.item takes a tap-target
+     min-height, never a font bump), and it squeezed the value badly — a
+     bordered picker already spends 1.75rem on the ✕ plus 1.25rem on the
+     chevron, so long codes truncated. The touch NORMALISATION is kept, just at
+     14px: small and standard still read the same size on the same surface,
+     which is what --input-font-touch was here to guarantee (ui-standards
+     #field-touch-sizing). Heights are untouched — the tap target is unchanged. */
+  .trigger {
+    min-height: var(--input-height-touch);
+    font-size: var(--text-sm);
+  }
+
+  .field[data-size='small'] .trigger {
+    min-height: var(--input-height-sm-touch);
+    font-size: var(--text-sm);
+  }
+
+  .item {
+    min-height: var(--touch-target);
+  }
+}

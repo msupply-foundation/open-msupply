@@ -1,6 +1,6 @@
 use repository::{
-    abbreviation::{Abbreviation, AbbreviationFilter, AbbreviationRepository},
     RepositoryError, StorageConnectionManager,
+    abbreviation::{Abbreviation, AbbreviationFilter, AbbreviationRepository},
 };
 
 pub fn get_all_abbreviations(

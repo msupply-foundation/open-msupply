@@ -92,12 +92,12 @@ mod tests {
 
     use super::*;
     use repository::{
+        ChangelogRepository,
         mock::MockDataInserts,
         test_db::setup_all,
         vaccine_course::vaccine_course_item_row::{
             VaccineCourseItemRow, VaccineCourseItemRowRepository,
         },
-        ChangelogRepository,
     };
 
     #[actix_rt::test]

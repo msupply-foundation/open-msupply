@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{shipping_method_row::ShippingMethodRow, StorageConnection, SyncBufferRow};
+use repository::{StorageConnection, SyncBufferRow, shipping_method_row::ShippingMethodRow};
 
 use serde::{Deserialize, Serialize};
 

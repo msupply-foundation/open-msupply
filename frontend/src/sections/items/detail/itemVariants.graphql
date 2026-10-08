@@ -1,0 +1,82 @@
+# The item's variants, each with its packaging and both sides of any bundle
+# links (spec/items S2 › Variants tab, rules.md § item variants and packaging
+# / bundled variants). Its own query (kdd/state-management), independent of
+# the itemDetail read, so the tab can refetch after a save/delete without
+# reloading the whole page — mirrors the Ancillary items tab's
+# itemAncillaryItems query. Also parametrised by itemId alone (no id filter on
+# the nested nodes), so it doubles as S4's "this item's variants" fetch when a
+# different item is picked in the Bundled-item modal.
+query itemVariants($storeId: String!, $itemId: String!) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        variants {
+          id
+          name
+          itemId
+          itemName
+          locationTypeId
+          locationType {
+            id
+            name
+            minTemperature
+            maxTemperature
+          }
+          manufacturerId
+          manufacturer(storeId: $storeId) {
+            id
+            name
+          }
+          vvmType
+          packagingVariants {
+            id
+            name
+            packagingLevel
+            packSize
+            volumePerUnit
+          }
+          bundledItemVariants {
+            id
+            ratio
+            bundledItemVariantId
+            bundledItemVariant {
+              id
+              name
+              itemName
+            }
+          }
+          bundlesWith {
+            id
+            ratio
+            principalItemVariantId
+            principalItemVariant {
+              id
+              name
+              itemId
+              itemName
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# The location-type picker's options for S3 (contract.md § contract surface) —
+# duplicates locations.graphql's `locationTypes` field under a distinct
+# operation name (operation names are global to codegen); a trivial shared
+# lookup, not worth a cross-vertical generated-file import.
+query itemVariantLocationTypes($storeId: String!) {
+  locationTypes(storeId: $storeId, sort: [{ key: name }]) {
+    ... on LocationTypeConnector {
+      __typename
+      nodes {
+        id
+        name
+        minTemperature
+        maxTemperature
+      }
+    }
+  }
+}

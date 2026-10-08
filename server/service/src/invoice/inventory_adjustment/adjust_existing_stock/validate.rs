@@ -1,9 +1,9 @@
 use chrono::{Duration, Utc};
 use repository::{RepositoryError, StockLine, StorageConnection};
 
-use crate::common::{check_stock_line_exists, CommonStockLineError};
+use crate::common::{CommonStockLineError, check_stock_line_exists};
 use crate::invoice::inventory_adjustment::adjust_existing_stock::AdjustmentType;
-use crate::preference::{preferences::Backdating, Preference};
+use crate::preference::{Preference, preferences::Backdating};
 use crate::stock_line::historical_stock::get_historical_stock_line_available_quantity;
 use crate::stocktake_line::validate::{check_active_adjustment_reasons, check_reason_is_valid};
 

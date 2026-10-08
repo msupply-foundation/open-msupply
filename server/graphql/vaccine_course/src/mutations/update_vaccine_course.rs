@@ -1,18 +1,18 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     generic_inputs::NullableUpdateInput,
     simple_generic_errors::RecordProgramCombinationAlreadyExists,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::vaccine_course::VaccineCourseNode;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::update::{
         UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseDoseInput,
         VaccineCourseItemInput, VaccineCourseStoreConfigInput,
     },
-    NullableUpdate,
 };
 
 pub fn update_vaccine_course(
@@ -173,12 +173,12 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
                 UpdateVaccineCourseErrorInterface::VaccineCourseNameExistsForThisProgram(
                     RecordProgramCombinationAlreadyExists {},
                 ),
-            )
+            );
         }
         ServiceError::VaccineDosesInUse => {
             return Ok(UpdateVaccineCourseErrorInterface::VaccineDosesInUse(
                 VaccineDosesInUse,
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::VaccineCourseDoesNotExist

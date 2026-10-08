@@ -8,7 +8,7 @@ use crate::sync::translations::{
     location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
 };
 
-use super::{to_legacy_time, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, to_legacy_time};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
 };

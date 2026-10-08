@@ -3,7 +3,7 @@ use repository::{RepositoryError, RequisitionLine, RequisitionType, StorageConne
 
 mod response_line_stats;
 pub use self::response_line_stats::{
-    customer_store_stats, response_store_stats, RequestStoreStats, ResponseStoreStats,
+    RequestStoreStats, ResponseStoreStats, customer_store_stats, response_store_stats,
 };
 use super::common::check_requisition_line_exists;
 
@@ -69,13 +69,13 @@ mod test {
     use crate::service_provider::ServiceProvider;
     use chrono::Utc;
     use repository::{
-        mock::{
-            mock_draft_request_requisition_line, mock_new_response_requisition_test, mock_store_a,
-            mock_store_b, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         ApprovalStatusType, RequisitionLineRow, RequisitionRow, RequisitionStatus,
         StorePreferenceRow, StorePreferenceRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_draft_request_requisition_line,
+            mock_new_response_requisition_test, mock_store_a, mock_store_b,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     type ServiceError = ResponseRequisitionStatsError;

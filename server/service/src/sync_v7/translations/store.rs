@@ -4,9 +4,9 @@
 // on the next tick to pull all data for the newly-owned store.
 
 use repository::{
-    syncv7::SyncRecordSerializeError, ChangeLogInsertRow, ChangelogFilter, Description, KeyType,
-    KeyValueStoreRepository, StorageConnection, StoreRow, StoreRowRepository, SyncRequestFilter,
-    SyncRequestRow, Upsert,
+    ChangeLogInsertRow, ChangelogFilter, Description, KeyType, KeyValueStoreRepository,
+    StorageConnection, StoreRow, StoreRowRepository, SyncRequestFilter, SyncRequestRow, Upsert,
+    syncv7::SyncRecordSerializeError,
 };
 
 use crate::sync_v7::serde::DeserializeResult;

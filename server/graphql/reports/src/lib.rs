@@ -3,11 +3,11 @@ mod mutations;
 use crate::export::csv_to_excel;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use mutations::install::install_uploaded_reports;
-use mutations::update::{update_report, UpdateReportInput, UpdateReportNode};
-use print::{generate_report, generate_report_definition, PrintReportResponse};
+use mutations::update::{UpdateReportInput, UpdateReportNode, update_report};
+use print::{PrintReportResponse, generate_report, generate_report_definition};
 use reports::{
-    all_report_versions, report, reports, ReportFilterInput, ReportResponse, ReportSortInput,
-    ReportsResponse,
+    ReportFilterInput, ReportResponse, ReportSortInput, ReportsResponse, all_report_versions,
+    report, reports,
 };
 use repository::PaginationOption;
 use service::report::report_service::PrintFormat as ServicePrintFormat;

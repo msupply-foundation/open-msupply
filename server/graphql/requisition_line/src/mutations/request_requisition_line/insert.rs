@@ -2,7 +2,7 @@ use actix_web::web::Data;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::RequisitionLineNode;
 use repository::RequisitionLine;
@@ -66,16 +66,15 @@ pub async fn insert(
 
     // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
     // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
-    let result = tokio::task::spawn_blocking(
-        move || -> Result<Result<RequisitionLine, ServiceError>> {
+    let result =
+        tokio::task::spawn_blocking(move || -> Result<Result<RequisitionLine, ServiceError>> {
             let service_context = service_provider.context(store_id, user.user_id)?;
             Ok(service_provider
                 .requisition_line_service
                 .insert_request_requisition_line(&service_context, input))
-        },
-    )
-    .await
-    .map_err(StandardGraphqlError::from_join_error)??;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }
@@ -118,17 +117,17 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::ItemAlreadyExistInRequisition => {
             return Ok(InsertErrorInterface::RequisitionLineWithItemIdExists(
                 RequisitionLineWithItemIdExists {},
-            ))
+            ));
         }
         ServiceError::RequisitionDoesNotExist => {
             return Ok(InsertErrorInterface::RequisitionDoesNotExist(
                 ForeignKeyError(ForeignKey::RequisitionId),
-            ))
+            ));
         }
         ServiceError::CannotEditRequisition => {
             return Ok(InsertErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::RequisitionLineAlreadyExists => BadUserInput(formatted_error),
@@ -152,20 +151,20 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
-            MockDataInserts,
-        },
         RequisitionLine, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_request_draft_requisition,
+            mock_sent_request_requisition_line,
+        },
     };
     use serde_json::json;
     use service::{
         requisition_line::{
+            RequisitionLineServiceTrait,
             request_requisition_line::{
                 InsertRequestRequisitionLine as ServiceInput,
                 InsertRequestRequisitionLineError as ServiceError,
             },
-            RequisitionLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

@@ -1,8 +1,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceStatus, LocationMovementRowRepository, RepositoryError, StockLineRowRepository,
-    TransactionError,
+    CustomFieldValueType, Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceStatus, LocationMovementRowRepository, RepositoryError,
+    StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
@@ -11,13 +11,14 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+use crate::NullableUpdate;
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
+use crate::custom_field::CustomFieldPatchProblem;
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::processors::ProcessorType::RequisitionAutoFinalise;
 use crate::service_provider::ServiceContext;
-use crate::NullableUpdate;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentStatus {
@@ -59,6 +60,12 @@ pub enum UpdateOutboundShipmentError {
     ShippingMethodDoesNotExist,
     /// A customFields patch key is not a visible outbound shipment property.
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     CannotHaveEstimatedDeliveryDateBeforeShippedDate,
@@ -70,6 +77,19 @@ pub enum UpdateOutboundShipmentError {
     PreferenceError(crate::preference::PreferenceError),
     /// Holds the id of the invalid invoice line
     InvoiceLineHasNoStockLine(String),
+}
+
+impl From<CustomFieldPatchProblem> for UpdateOutboundShipmentError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateOutboundShipmentError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateOutboundShipmentError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 type OutError = UpdateOutboundShipmentError;
@@ -204,28 +224,28 @@ impl UpdateOutboundShipment {
 mod test {
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_b,
-            mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
-            mock_outbound_shipment_picked, mock_store_a, mock_store_c, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
         InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow,
         NameStoreJoinRow, PreferenceRow, PreferenceRowRepository, StockLineRow,
         StockLineRowRepository, StorageConnection,
+        mock::{
+            MockData, MockDataInserts, mock_inbound_shipment_a, mock_item_a, mock_name_a,
+            mock_outbound_shipment_b, mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
+            mock_outbound_shipment_picked, mock_store_a, mock_store_c,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{
+        NullableUpdate,
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
         invoice_line::ShipmentTaxUpdate,
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
-    use super::{backdated_datetime_change, UpdateOutboundShipmentError};
+    use super::{UpdateOutboundShipmentError, backdated_datetime_change};
 
     type ServiceError = UpdateOutboundShipmentError;
 

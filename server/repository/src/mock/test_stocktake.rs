@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 
 use crate::{StockLineRow, StocktakeLineRow, StocktakeRow, StocktakeStatus};
 
-use super::{mock_donor_a, mock_item_a, mock_stock_line_a, mock_stock_line_b, MockData};
+use super::{MockData, mock_donor_a, mock_item_a, mock_stock_line_a, mock_stock_line_b};
 
 pub fn mock_stocktake_without_lines() -> StocktakeRow {
     StocktakeRow {

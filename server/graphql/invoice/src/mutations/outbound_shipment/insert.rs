@@ -1,7 +1,7 @@
 use async_graphql::*;
+use graphql_core::ContextExt;
 use graphql_core::simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::ContextExt;
 use graphql_core::{simple_generic_errors::NodeError, standard_graphql_error::validate_auth};
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
@@ -106,12 +106,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::OtherPartyNotACustomer => {
             return Ok(InsertErrorInterface::OtherPartyNotACustomer(
                 OtherPartyNotACustomer,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotVisible => {
             return Ok(InsertErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::InvoiceAlreadyExists => BadUserInput(formatted_error),
@@ -127,12 +127,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 mod graphql {
     use graphql_core::test_helpers::setup_graphql_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
+    use repository::InvoiceRowRepository;
+    use repository::mock::{MockDataInserts, mock_name_store_c};
     use repository::mock::{
         mock_name_linked_to_store, mock_name_not_linked_to_store, mock_name_store_b,
         mock_outbound_shipment_number_store_a, mock_store_linked_to_name,
     };
-    use repository::mock::{mock_name_store_c, MockDataInserts};
-    use repository::InvoiceRowRepository;
     use serde_json::json;
     use util::uuid::uuid;
 

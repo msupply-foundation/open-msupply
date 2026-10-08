@@ -40,7 +40,7 @@ pub fn generate(
         None => unit,
     };
 
-    Ok(PurchaseOrderLineRow {
+    let mut row = PurchaseOrderLineRow {
         id,
         store_id: store_id.to_string(),
         purchase_order_id,
@@ -53,6 +53,7 @@ pub fn generate(
         expected_delivery_date,
         price_per_pack_before_discount: price_per_pack_before_discount.unwrap_or(0.0),
         price_per_pack_after_discount: price_per_pack_after_discount.unwrap_or(0.0),
+        line_total: 0.0,
         manufacturer_id,
         note,
         unit,
@@ -61,5 +62,8 @@ pub fn generate(
         status: PurchaseOrderLineStatus::New,
         adjusted_number_of_units: None,
         stock_on_hand_in_units: 0.0,
-    })
+    };
+    row.line_total = row.calculate_line_total();
+
+    Ok(row)
 }

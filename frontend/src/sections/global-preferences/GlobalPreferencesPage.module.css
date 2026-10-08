@@ -1,0 +1,76 @@
+/*
+ * The Global preferences page's row rhythm (spec/global-preferences/
+ * ui-surface.md § S1): a centred width-capped column — filter, then one
+ * labelled row per ungrouped preference, then the group accordions. Same
+ * hairline row treatment as the store editor's Preferences panel, so the two
+ * halves of the one catalogue read alike. Tokens only.
+ */
+
+/* The centred column: the shared ContentContainer caps the page measure; this
+   caps the preference column itself to a comfortable form width within it. */
+.column {
+  inline-size: 100%;
+  max-inline-size: 40rem;
+  margin-inline: auto;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+/* One preference row: label inline-start, control hugging the inline-end;
+   wraps on very narrow widths so a long label never crushes its control. */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--color-divider);
+}
+
+.row > :last-child {
+  margin-inline-start: auto;
+}
+
+/* A full-width block row (the gender choice grid, a row's inline failure
+   notice): same rhythm and divider, content on its own lines. */
+.block {
+  padding-block: var(--space-3);
+  border-block-end: 1px solid var(--color-divider);
+  container-type: inline-size;
+}
+
+.rows > :last-child {
+  border-block-end: none;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* The gender checkboxes: two columns (row-major, as the reference), collapsing
+   to one on very narrow widths. */
+.choiceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1) var(--space-3);
+  margin-block-start: var(--space-2);
+}
+
+@container (max-width: 24rem) {
+  .choiceGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The AMC calculation explainer, trailing its group's rows. */
+.explainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-block-start: var(--space-3);
+}

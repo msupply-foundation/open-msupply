@@ -1,0 +1,55 @@
+# Manage › Plugins (spec/plugin-management/contract.md). Every plugin read and
+# write sits under the `centralServer` wrapper; the screen is central-only by
+# its navigation gate, so a "Not a central server" answer is unexpected here.
+
+# One read, no arguments: every installed row of both kinds
+# (contract § reading the installed plugins). `hostRuntime` is null on a
+# backend row. Named apart from Settings › Support's own `InstalledPlugins`
+# read, so the two generated exports never collide.
+query ManagedPlugins {
+  centralServer {
+    plugin {
+      installedPlugins {
+        totalCount
+        nodes {
+          id
+          code
+          version
+          kind
+          types
+          hostRuntime
+        }
+      }
+    }
+  }
+}
+
+# Installs a bundle already sent to POST /upload. `pluginInfo` is untyped JSON
+# the screen never reads: success is the call answering at all
+# (contract § install).
+mutation InstallUploadedPlugin($fileId: String!) {
+  centralServer {
+    plugins {
+      installUploadedPlugin(fileId: $fileId) {
+        pluginInfo
+      }
+    }
+  }
+}
+
+# Removes ONE row by id (contract § uninstalling plugins).
+mutation UninstallPlugin($id: String!) {
+  centralServer {
+    plugins {
+      uninstallPlugin(id: $id) {
+        id
+        code
+        kind
+      }
+    }
+  }
+}
+
+# The configuration record is read and written through the SDK's own
+# plugin-data operations (src/plugin-sdk/pluginData.graphql), under
+# CONFIGURATION_IDENTIFIER (contract § configuring a plugin).

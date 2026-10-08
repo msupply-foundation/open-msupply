@@ -84,7 +84,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             | InvoiceStatus::Cancelled => {
                 return Ok(InvoiceTransferOutput::WrongInboundStatus(
                     inbound_invoice.invoice_row.status.to_owned(),
-                ))
+                ));
             }
         }
 

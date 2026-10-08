@@ -5,18 +5,18 @@ use repository::EncounterSort;
 use repository::PaginationOption;
 use repository::RepositoryError;
 
-use crate::service_provider::ServiceContext;
-use crate::service_provider::ServiceProvider;
 use crate::ListError;
 use crate::ListResult;
+use crate::service_provider::ServiceContext;
+use crate::service_provider::ServiceProvider;
 
-use self::encounter_fields::encounter_fields;
 use self::encounter_fields::EncounterFields;
 use self::encounter_fields::EncounterFieldsResult;
+use self::encounter_fields::encounter_fields;
 pub use self::insert::*;
 use self::query::encounter;
 use self::query::encounters;
-use self::suggested_next_encounter::{suggested_next_encounter, SuggestedNextEncounter};
+use self::suggested_next_encounter::{SuggestedNextEncounter, suggested_next_encounter};
 pub use self::update::*;
 
 pub mod encounter_fields;

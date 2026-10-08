@@ -1,10 +1,10 @@
 use super::StorageConnection;
 
+use crate::SourceSiteId;
 use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
     define_linked_tables,
 };
-use crate::SourceSiteId;
 use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Upsert};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
@@ -292,6 +292,9 @@ impl<'a> DocumentRepository<'a> {
         //println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let rows: Vec<DocumentJoin> = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(latest_document::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load(self.connection.lock().connection())?;

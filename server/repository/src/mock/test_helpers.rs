@@ -2,8 +2,8 @@ use chrono::{Duration, NaiveDateTime};
 use util::datetime_now;
 
 use crate::{
-    mock::{mock_name_a, MockData},
     InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
+    mock::{MockData, mock_name_a},
 };
 
 pub fn make_movements(stock_line: StockLineRow, date_quantity: Vec<(i64, i64)>) -> MockData {

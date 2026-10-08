@@ -1,10 +1,10 @@
 use chrono::Utc;
 use repository::{
-    location::LocationFilter, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow,
-    ItemRowRepository, ItemType, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    NumberRowType, ProgramRowRepository, RepositoryError, StockLine, StockLineFilter,
-    StockLineRepository, StockLineRow, StocktakeLineRow, StocktakeRow, StocktakeStatus,
-    StorageConnection,
+    DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemType,
+    MasterListFilter, MasterListLineFilter, MasterListLineRepository, NumberRowType,
+    ProgramRowRepository, RepositoryError, StockLine, StockLineFilter, StockLineRepository,
+    StockLineRow, StocktakeLineRow, StocktakeRow, StocktakeStatus, StorageConnection,
+    location::LocationFilter,
 };
 use util::uuid::uuid;
 

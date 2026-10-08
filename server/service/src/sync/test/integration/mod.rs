@@ -15,10 +15,10 @@ use crate::{
         synchroniser_runner::Synchroniser, translation_and_integration::integrate,
         translations::IntegrationOperation,
     },
-    test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_and_service_provider},
 };
 use central_server_configurations::{ConfigureCentralServer, SiteConfiguration};
-use repository::{mock::MockDataInserts, StorageConnection};
+use repository::{StorageConnection, mock::MockDataInserts};
 use serde::Serialize;
 use std::{error::Error, future::Future};
 
@@ -133,8 +133,7 @@ async fn random_delay(min_millisecond: u64, max_millisecond: u64) {
     use rand::RngExt;
     let diff = max_millisecond - min_millisecond;
     // .random::<f64>() generates a float between 0 and 1
-    let delay_millisecond =
-        (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
+    let delay_millisecond = (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
     tokio::time::sleep(std::time::Duration::from_millis(delay_millisecond)).await;
 }
 

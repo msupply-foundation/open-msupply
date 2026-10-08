@@ -1,7 +1,7 @@
 use repository::EqualFilter;
 use repository::{
-    location::{Location, LocationFilter, LocationRepository},
     RepositoryError, StorageConnectionManager,
+    location::{Location, LocationFilter, LocationRepository},
 };
 
 use async_graphql::dataloader::*;

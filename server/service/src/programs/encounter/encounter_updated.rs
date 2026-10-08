@@ -7,7 +7,7 @@ use util::hash::sha256;
 
 use crate::programs::{
     program_event::{ProgramEventService, ProgramEventServiceTrait},
-    update_program_document::{update_program_events, UpdateProgramDocumentError},
+    update_program_document::{UpdateProgramDocumentError, update_program_events},
 };
 
 use super::{
@@ -123,12 +123,12 @@ fn update_encounter_row(
 mod encounter_document_updated_test {
     use chrono::{DateTime, Timelike, Utc};
     use repository::{
+        EqualFilter, ProgramEventFilter,
         mock::{
-            context_program_a, mock_form_schema_simplified_encounter,
-            mock_form_schema_simplified_enrolment, mock_patient, MockDataInserts,
+            MockDataInserts, context_program_a, mock_form_schema_simplified_encounter,
+            mock_form_schema_simplified_enrolment, mock_patient,
         },
         test_db::setup_all,
-        EqualFilter, ProgramEventFilter,
     };
     use serde_json::json;
 

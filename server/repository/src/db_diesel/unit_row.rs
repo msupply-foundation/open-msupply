@@ -1,7 +1,7 @@
-use super::{unit_row::unit::dsl::*, StorageConnection};
+use super::{StorageConnection, unit_row::unit::dsl::*};
 use crate::{
-    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
     ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
 };
 use diesel::prelude::*;
 

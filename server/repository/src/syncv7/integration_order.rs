@@ -83,6 +83,7 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::Preference,
     ChangelogTableName::ProgramEnrolment,
     ChangelogTableName::ProgramRequisitionOrderType,
+    ChangelogTableName::PrescriptionRequest,
     ChangelogTableName::PurchaseOrder,
     ChangelogTableName::Requisition,
     ChangelogTableName::RnrForm,
@@ -97,6 +98,7 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::IndicatorValue,
     ChangelogTableName::Invoice,
     ChangelogTableName::ItemStoreJoin,
+    ChangelogTableName::PrescriptionRequestLine,
     ChangelogTableName::PurchaseOrderLine,
     ChangelogTableName::RequisitionLine,
     ChangelogTableName::RnrFormLine,
@@ -124,7 +126,7 @@ pub const NOT_YET_IN_V7: &[ChangelogTableName] = &[];
 #[cfg(all(test, feature = "postgres"))]
 mod tests {
     use super::*;
-    use crate::{mock::MockDataInserts, test_db::setup_all, StorageConnection};
+    use crate::{StorageConnection, mock::MockDataInserts, test_db::setup_all};
     use diesel::prelude::*;
     use std::collections::{HashMap, HashSet, VecDeque};
     use strum::IntoEnumIterator;

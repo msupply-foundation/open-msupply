@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{ForeignKey, ForeignKeyError, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{ForeignKey, ForeignKeyError, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::{
@@ -85,12 +85,12 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::InvoiceDoesNotExist => {
             return Ok(DeleteErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         // Standard Graphql Errors
         ServiceError::LineIsNotUnallocatedLine => BadUserInput(formatted_error),
@@ -107,16 +107,16 @@ mod graphql {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
 
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait,
             outbound_shipment_unallocated_line::{
                 DeleteOutboundShipmentUnallocatedLine as ServiceInput,
                 DeleteOutboundShipmentUnallocatedLineError as ServiceError,
             },
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

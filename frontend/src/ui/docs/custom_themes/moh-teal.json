@@ -1,0 +1,20 @@
+{
+  "name": "Sample — Ministry teal (light only)",
+  "brand": "#00695c",
+  "accent": "#1565c0",
+  "success": "#2e7d32",
+  "surface": {
+    "page": "#ffffff",
+    "nav": "#e9f1ef",
+    "header": "#f4f8f7"
+  },
+  "text": {
+    "body": "#132420",
+    "muted": "#47605a"
+  },
+  "status": {
+    "shipped": "#0f766e",
+    "delivered": "#6d4aff",
+    "received": "#1565c0"
+  }
+}

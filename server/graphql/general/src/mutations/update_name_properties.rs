@@ -1,9 +1,9 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::RecordNotFound,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::RecordNotFound,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::NameNode;
 use service::{
@@ -82,7 +82,7 @@ fn map_error(error: ServiceError) -> Result<UpdateNamePropertiesErrorInterface> 
         ServiceError::NameDoesNotExist => {
             return Ok(UpdateNamePropertiesErrorInterface::NameNotFound(
                 RecordNotFound,
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::UpdatedRecordNotFound | ServiceError::DatabaseError(_) => {

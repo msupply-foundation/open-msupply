@@ -1,9 +1,9 @@
 use super::{BatchIsReserved, LineLinkedToTransferredInvoice};
 use async_graphql::*;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_core::{
-    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
     ContextExt,
+    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
@@ -96,27 +96,27 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::CannotEditFinalised
         | ServiceError::OtherPartyStoreDisabled
         | ServiceError::CannotDeleteLinesOfAuthorisedReceivedInvoice => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         ServiceError::InvoiceDoesNotExist => {
             return Ok(DeleteErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         ServiceError::BatchIsReserved => {
-            return Ok(DeleteErrorInterface::BatchIsReserved(BatchIsReserved {}))
+            return Ok(DeleteErrorInterface::BatchIsReserved(BatchIsReserved {}));
         }
         ServiceError::LineLinkedToTransferredInvoice => {
             return Ok(DeleteErrorInterface::LineLinkedToTransferredInvoice(
                 LineLinkedToTransferredInvoice {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotThisInvoiceLine(_)
@@ -136,16 +136,16 @@ mod test {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
-    use repository::{mock::MockDataInserts, RepositoryError, StorageConnectionManager};
+    use repository::{RepositoryError, StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
 
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait,
             stock_in_line::{
                 DeleteStockInLine as ServiceInput, DeleteStockInLineError as ServiceError,
                 StockInType,
             },
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

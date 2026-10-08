@@ -3,14 +3,15 @@ mod test {
 
     use chrono::{Duration, NaiveDate};
     use repository::{
-        mock::{
-            mock_item_a, mock_item_b, mock_name_a, mock_outbound_shipment_a_invoice_lines,
-            mock_store_a, mock_store_b, mock_vaccine_item_a, mock_vvm_status_a, mock_vvm_status_b,
-            mock_vvm_status_c_level3_unusable, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceType,
         PreferenceRow, PreferenceRowRepository, StockLine, StockLineRow,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_name_a,
+            mock_outbound_shipment_a_invoice_lines, mock_store_a, mock_store_b,
+            mock_vaccine_item_a, mock_vvm_status_a, mock_vvm_status_b,
+            mock_vvm_status_c_level3_unusable,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
     use util::constants::stock_line_expiring_soon_offset;
     use util::{date_now, date_now_with_offset};

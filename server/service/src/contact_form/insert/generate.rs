@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{contact_form_row::ContactFormRow, UserAccountRow};
+use repository::{UserAccountRow, contact_form_row::ContactFormRow};
 
 use super::InsertContactForm;
 

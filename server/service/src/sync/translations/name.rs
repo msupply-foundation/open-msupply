@@ -9,16 +9,18 @@ use util::sync_serde::{
 };
 
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 
 use crate::sync::{
-    central_mapping_custom_fields::keys, translations::currency::CurrencyTranslation,
     CentralServerConfig,
+    central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes},
+    translations::currency::CurrencyTranslation,
 };
 
 use super::{
-    utils::{merge_legacy_custom_fields, skip_name_relay_to_legacy, LegacyCustomFieldsBuilder},
     FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
     ToSyncRecordTranslationType,
+    utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields, skip_name_relay_to_legacy},
 };
 
 /// `custom_fields` keys the legacy OG→OMS name import owns (derived from
@@ -31,19 +33,18 @@ use super::{
 /// refreshes them — last-writer-wins, identical to the custom fields. Push-back
 /// to OG is live for rows central relays (rows authored on this server or on a
 /// V7 site, see `skip_name_relay_to_legacy`).
-const LEGACY_NAME_OWNED_KEYS: &[&str] = &[
-    keys::NAME_CUSTOM_1,
-    keys::NAME_CUSTOM_2,
-    keys::NAME_CUSTOM_3,
-    // `custom_field.key` is globally unique, so the name category dimensions are
-    // prefixed `name_category*` (item already owns `category2`/`category3`).
-    keys::NAME_CATEGORY_1,
-    keys::NAME_CATEGORY_2,
-    keys::NAME_CATEGORY_3,
-    keys::NAME_CATEGORY_4,
-    keys::NAME_CATEGORY_5,
-    keys::NAME_CATEGORY_6,
-];
+/// Derived from the mapping registry rather than retyped, so there is one list of
+/// OG-owned keys (`central_mapping_custom_fields`) instead of a copy here to drift
+/// out of step with it. Every name mapping definition is seeded onto all three name
+/// scopes, so their union *is* the name importer's owned set.
+///
+/// (`custom_field.key` is globally unique, so the name category dimensions are
+/// prefixed `name_category*` — item already owns `category2`/`category3`.)
+///
+/// Computed once: the registry is rebuilt on each call and the import reads this
+/// per name row.
+static LEGACY_NAME_OWNED_KEYS: LazyLock<Vec<&'static str>> =
+    LazyLock::new(|| legacy_owned_keys_for_scopes(&["customer", "supplier", "patient"]));
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -229,27 +230,63 @@ pub struct LegacyNameRow {
     // convention) and serde rename pins the wire name to the 4D column name.
     // TODO: when we widen this beyond custom1/2/3, consider #[serde(flatten)]
     // into a HashMap and filter by custom field scope at translate time.
-    #[serde(default, rename = "custom1", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "custom1",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub custom_1: Option<String>,
-    #[serde(default, rename = "custom2", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "custom2",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub custom_2: Option<String>,
-    #[serde(default, rename = "custom3", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "custom3",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub custom_3: Option<String>,
 
     // Legacy 4D `[name]category1_ID..category6_ID` columns — six independent
     // category dimensions, each storing a leaf id. Imported as OPTION props
     // (`build_legacy_custom_fields`); category1 is hierarchical, 2–6 flat.
-    #[serde(default, rename = "category1_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category1_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category1_id: Option<String>,
-    #[serde(default, rename = "category2_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category2_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category2_id: Option<String>,
-    #[serde(default, rename = "category3_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category3_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category3_id: Option<String>,
-    #[serde(default, rename = "category4_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category4_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category4_id: Option<String>,
-    #[serde(default, rename = "category5_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category5_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category5_id: Option<String>,
-    #[serde(default, rename = "category6_ID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        default,
+        rename = "category6_ID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub category6_id: Option<String>,
 
     #[serde(default)]
@@ -339,7 +376,7 @@ impl SyncTranslation for NameTranslation {
             merge_legacy_custom_fields(
                 existing_custom_fields,
                 build_legacy_custom_fields(&legacy),
-                LEGACY_NAME_OWNED_KEYS,
+                &LEGACY_NAME_OWNED_KEYS,
             )
         } else {
             existing_custom_fields
@@ -535,7 +572,7 @@ impl SyncTranslation for NameTranslation {
             _ => {
                 return Ok(PushTranslateResult::Ignored(
                     "Only push name records that belong to patients".to_string(),
-                ))
+                ));
             }
         };
 
@@ -625,10 +662,10 @@ impl SyncTranslation for NameTranslation {
 mod tests {
     use super::*;
     use repository::{
+        CurrencyRow, SyncAction, SyncRecordData,
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        CurrencyRow, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -732,7 +769,11 @@ mod tests {
         row.category2_id = Some("OG_VALUE".to_string());
         let existing = Some(json!({ "name_category_2": "OMS_EDIT", "patient_note": "keep" }));
         assert_eq!(
-            merge_legacy_custom_fields(existing, build_legacy_custom_fields(&row), LEGACY_NAME_OWNED_KEYS),
+            merge_legacy_custom_fields(
+                existing,
+                build_legacy_custom_fields(&row),
+                &LEGACY_NAME_OWNED_KEYS
+            ),
             Some(json!({ "name_category_2": "OG_VALUE", "patient_note": "keep" }))
         );
     }
@@ -747,16 +788,22 @@ mod tests {
             Some("A".to_string())
         );
         // absent key
-        assert_eq!(legacy_value_from_custom_fields(&custom_fields, "custom_2"), None);
+        assert_eq!(
+            legacy_value_from_custom_fields(&custom_fields, "custom_2"),
+            None
+        );
         // non-string value is not pushed to a TEXT column
-        assert_eq!(legacy_value_from_custom_fields(&custom_fields, "custom_3"), None);
+        assert_eq!(
+            legacy_value_from_custom_fields(&custom_fields, "custom_3"),
+            None
+        );
         // NULL blob
         assert_eq!(legacy_value_from_custom_fields(&None, "custom_1"), None);
     }
 
     #[test]
     fn legacy_custom_fields_only_derived_on_central() {
-        use crate::sync::{test_util_set_is_central_server, CentralServerConfig};
+        use crate::sync::{CentralServerConfig, test_util_set_is_central_server};
         let row = legacy_row_with_customs(Some("Red"), None, Some("Blue"));
 
         // Replicates the pull translator's branch: off central the existing blob is
@@ -767,7 +814,7 @@ mod tests {
                 merge_legacy_custom_fields(
                     existing,
                     build_legacy_custom_fields(&row),
-                    LEGACY_NAME_OWNED_KEYS,
+                    &LEGACY_NAME_OWNED_KEYS,
                 )
             } else {
                 existing
@@ -786,7 +833,10 @@ mod tests {
         // The central server derives the owned keys and merges them with the
         // existing OMS-authored keys (and fans the result out over v7).
         test_util_set_is_central_server(true);
-        assert_eq!(derive(None), Some(json!({"custom_1": "Red", "custom_3": "Blue"})));
+        assert_eq!(
+            derive(None),
+            Some(json!({"custom_1": "Red", "custom_3": "Blue"}))
+        );
         assert_eq!(
             derive(Some(json!({"patient_note": "keep"}))),
             Some(json!({"custom_1": "Red", "custom_3": "Blue", "patient_note": "keep"}))
@@ -802,7 +852,9 @@ mod tests {
     #[actix_rt::test]
     async fn name_relay_to_legacy_routed_by_source_site() {
         use crate::sync::test_util_set_is_central_server;
-        use repository::{KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion};
+        use repository::{
+            KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion,
+        };
 
         let (_, connection, _, _) = setup_all(
             "name_relay_to_legacy_routed_by_source_site",

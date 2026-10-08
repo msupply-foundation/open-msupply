@@ -87,18 +87,18 @@ mod test {
     };
     use chrono::{NaiveDate, Utc};
     use repository::{
-        mock::{
-            item_query_test1, mock_item_a, mock_item_b, mock_location_1,
-            mock_master_list_item_query_test1, mock_master_list_master_list_line_filter_test,
-            mock_master_list_program_b, mock_program_master_list_test, mock_stocktake_a,
-            mock_store_a, mock_store_b, mock_user_account_a, mock_vvm_status_a,
-            program_master_list_store, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         EqualFilter, ItemFilter, ItemRepository, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRow, StockLineFilter, StockLineRepository, StockLineRow,
         StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository, StocktakeRow,
         StocktakeRowRepository, StocktakeStatus,
+        mock::{
+            MockData, MockDataInserts, item_query_test1, mock_item_a, mock_item_b, mock_location_1,
+            mock_master_list_item_query_test1, mock_master_list_master_list_line_filter_test,
+            mock_master_list_program_b, mock_program_master_list_test, mock_stocktake_a,
+            mock_store_a, mock_store_b, mock_user_account_a, mock_vvm_status_a,
+            program_master_list_store,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     #[actix_rt::test]
@@ -222,13 +222,11 @@ mod test {
         assert!(invalid_result.is_err());
 
         // add a stock line for another store and check that it is not added to the stocktake
-        let _ = StockLineRowRepository::new(&connection).upsert_one({
-            &StockLineRow {
-                id: "stock_line_row_1".to_string(),
-                store_id: mock_store_b().id,
-                item_id: item_query_test1().id,
-                ..Default::default()
-            }
+        let _ = StockLineRowRepository::new(&connection).upsert_one(&StockLineRow {
+            id: "stock_line_row_1".to_string(),
+            store_id: mock_store_b().id,
+            item_id: item_query_test1().id,
+            ..Default::default()
         });
 
         service
@@ -341,15 +339,13 @@ mod test {
         assert_eq!(stocktake_rows.len(), 0);
 
         // add a stock_line for that location and try again
-        let _ = StockLineRowRepository::new(&connection).upsert_one({
-            &StockLineRow {
-                id: "stock_line_row_1".to_string(),
-                store_id: mock_store_a().id,
-                item_id: mock_item_a().id,
-                location_id: Some(location_id.clone()),
-                total_number_of_packs: 100.0,
-                ..Default::default()
-            }
+        let _ = StockLineRowRepository::new(&connection).upsert_one(&StockLineRow {
+            id: "stock_line_row_1".to_string(),
+            store_id: mock_store_a().id,
+            item_id: mock_item_a().id,
+            location_id: Some(location_id.clone()),
+            total_number_of_packs: 100.0,
+            ..Default::default()
         });
 
         service
@@ -422,15 +418,13 @@ mod test {
         assert_eq!(stocktake_rows.len(), 0);
 
         // add a stock_line with that VVM Status and try again
-        let _ = StockLineRowRepository::new(&connection).upsert_one({
-            &StockLineRow {
-                id: "vvm_stock_line_row".to_string(),
-                store_id: mock_store_a().id,
-                item_id: mock_item_a().id,
-                total_number_of_packs: 100.0,
-                vvm_status_id: Some(vvm_status_id.clone()),
-                ..Default::default()
-            }
+        let _ = StockLineRowRepository::new(&connection).upsert_one(&StockLineRow {
+            id: "vvm_stock_line_row".to_string(),
+            store_id: mock_store_a().id,
+            item_id: mock_item_a().id,
+            total_number_of_packs: 100.0,
+            vvm_status_id: Some(vvm_status_id.clone()),
+            ..Default::default()
         });
 
         service

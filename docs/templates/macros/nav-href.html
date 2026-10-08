@@ -1,0 +1,15 @@
+{# Where a sidebar entry for a section should link to.
+
+   A section that exists only as a container — an _index.md with no body, whose
+   content lives in a child page — can point its nav entry at that page with
+   `extra.nav_url` in its frontmatter:
+
+     [extra]
+     nav_url = "@/server/service/sync/synchronisation/index.md"
+
+   The @/…md form is resolved at build time, so a rename or typo fails the build
+   rather than silently 404ing. Sections without nav_url link to themselves.
+
+   This lives in its own file because Tera macros can only call macros from a
+   file they import, and a macro file importing itself recurses forever. #}
+{% macro nav_href(s) %}{%- if s.extra.nav_url -%}{{ get_url(path=s.extra.nav_url) | safe }}{%- else -%}{{ s.permalink | safe }}{%- endif -%}{% endmacro nav_href %}

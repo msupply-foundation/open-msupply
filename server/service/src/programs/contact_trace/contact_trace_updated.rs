@@ -4,9 +4,9 @@ use super::{
 };
 use chrono::{DateTime, NaiveDate};
 use repository::{
+    Document, GenderType, ProgramRow, StorageConnection, StringFilter,
     contact_trace::{ContactTraceFilter, ContactTraceRepository},
     contact_trace_row::{ContactTraceRow, ContactTraceRowRepository},
-    Document, GenderType, ProgramRow, StorageConnection, StringFilter,
 };
 use std::str::FromStr;
 use util::hash::sha256;

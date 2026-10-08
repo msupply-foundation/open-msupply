@@ -1,4 +1,4 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{StorageConnection, migrations::sql};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     const PROPERTY_VALUE_TYPE: &str = if cfg!(feature = "postgres") {

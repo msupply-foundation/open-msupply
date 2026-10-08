@@ -1,8 +1,8 @@
 use chrono::{NaiveDate, NaiveDateTime};
 
 use crate::{
-    mock::mock_name_store_b, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus,
-    InvoiceType, ItemRow, StockLineRow,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow, StockLineRow,
+    mock::mock_name_store_b,
 };
 
 // Mock ledger data, across 2 items, varying stock lines, invoice types and statuses

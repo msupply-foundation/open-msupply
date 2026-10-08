@@ -1,7 +1,7 @@
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 
 use super::{UpdateVVMStatusLogError, UpdateVVMStatusLogInput};
-use crate::{vvm::vvm_status_log::validate::get_vvm_status_log, StorageConnection};
+use crate::{StorageConnection, vvm::vvm_status_log::validate::get_vvm_status_log};
 
 pub fn validate(
     input: &UpdateVVMStatusLogInput,

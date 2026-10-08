@@ -15,6 +15,9 @@
           {{t(k="label.months", f="months")}}
         </td>
         <td>{{t(k="label.soh", f="SOH")}}</td>
+        {% if data.showDoses %}
+        <td>{{t(k="label.doses", f="Doses")}}</td>
+        {% endif %}
         <td>
           {{t(k="label.amc", f="AMC")}}
           ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})
@@ -62,6 +65,9 @@
           precision=1)}}
         </td>
         <td style="text-align: right">{{SOH}}</td>
+        {% if data.showDoses %}
+        <td style="text-align: right">{{item.dosesOnHand | default(value='')}}</td>
+        {% endif %}
         <td style="text-align: right">{{AMC}}</td>
         <td style="text-align: right">
           {{item.stats.availableMonthsOfStockOnHand | default(value=0) | round(

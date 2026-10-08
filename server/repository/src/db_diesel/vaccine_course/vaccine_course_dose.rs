@@ -1,6 +1,6 @@
 use super::{
-    vaccine_course_dose_row::{vaccine_course_dose, VaccineCourseDoseRow},
-    vaccine_course_row::{vaccine_course, VaccineCourseRow},
+    vaccine_course_dose_row::{VaccineCourseDoseRow, vaccine_course_dose},
+    vaccine_course_row::{VaccineCourseRow, vaccine_course},
 };
 
 use diesel::{
@@ -9,8 +9,8 @@ use diesel::{
 };
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    StorageConnection,
+    DBType, EqualFilter, StorageConnection, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
 };
 
 type VaccineCourseDoseJoin = (VaccineCourseDoseRow, VaccineCourseRow);

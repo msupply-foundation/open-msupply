@@ -4,8 +4,8 @@ use chrono::NaiveDate;
 
 use dataloader::DataLoader;
 use graphql_core::{
-    loader::{NameByIdLoader, NameByIdLoaderInput, StockLineByIdLoader},
     ContextExt,
+    loader::{NameByIdLoader, NameByIdLoaderInput, StockLineByIdLoader},
 };
 use serde::Serialize;
 use service::vaccination::get_vaccination_card::{VaccinationCard, VaccinationCardItem};

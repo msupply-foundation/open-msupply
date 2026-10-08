@@ -1,0 +1,11 @@
+/* The band row's element run sits in an HStack (baseline-aligned, wrapping);
+   each item after the first is divided from the one before by a hairline
+   separator (ui-surface S5: "separators divide the elements"). The stack's
+   gap spaces the rule from the item before it, the padding spaces it from the
+   item after, so the rule sits centred between its neighbours. A wrapped item
+   keeps its separator, which then reads as a leading rule. */
+
+.item {
+  padding-inline-start: var(--space-2);
+  border-inline-start: 1px solid currentcolor;
+}

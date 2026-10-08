@@ -1,0 +1,33 @@
+/*
+ * ContentContainer — a content measure (see ContentContainer.tsx). Grows to
+ * fill its parent up to the size cap, then centres (default) or hugs the
+ * inline-start edge. No padding by default — the Page body owns that; this
+ * only bounds the growth. The opt-in `padded` mode is for form content inside
+ * a fillBody body (no body padding to inherit — a mixed table+form detail
+ * view); it matches the Page body's edge padding so the form reads the same as
+ * on a normal padded page.
+ */
+.container {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.container[data-padded] {
+  padding: var(--space-5);
+}
+
+.container[data-align='start'] {
+  margin-inline: 0;
+}
+
+.container[data-size='form'] {
+  max-inline-size: var(--measure-form);
+}
+
+.container[data-size='prose'] {
+  max-inline-size: var(--measure-prose);
+}
+
+.container[data-size='wide'] {
+  max-inline-size: var(--measure-wide);
+}

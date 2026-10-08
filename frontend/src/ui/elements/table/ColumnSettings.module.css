@@ -1,0 +1,253 @@
+/*
+ * Columns panel — the content inside the toolbar's Columns popover
+ * (ui-standards § tables → column management, the advanced example's
+ * #mrt-cols-pop). A flex list matching the spec: Show all / Hide all bulk
+ * actions, a muted Show | Move | Pin header, then one row per column — an
+ * eye/eye-off visibility toggle + name (the clickable label), with the Move
+ * and Pin control groups trailing. Table-wide settings (density, Reset) live
+ * in the separate Settings popover (TableSettings). Bare CSS + tokens; the
+ * outer panel padding comes from the Popover's .controlPopover override
+ * (DataTable.module.css). Only px are the hairline dividers / focus ring.
+ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 18rem;
+}
+
+/* Show all / Hide all (ui-standards .mrt-pop-actions): two blue text links
+   over a bottom hairline — NOT uppercased (the spec title/links are sentence
+   case). */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  border-block-end: 1px solid var(--color-divider);
+  margin-block-end: var(--space-1);
+}
+
+.action {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--secondary-main);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.action:hover {
+  text-decoration: underline;
+}
+
+/* Column header (ui-standards .mrt-col-head): a muted mini-title row labelling
+   the Show / Move / Pin columns. 0.6875rem is the spec's popover mini-title
+   size (11px — below --text-xs; no token, so a literal like the spacious-density
+   1.25rem precedent). */
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 0.125rem var(--space-2) var(--space-2);
+  color: var(--gray-main);
+  font-size: 0.6875rem;
+  font-weight: var(--weight-semibold);
+}
+
+.headShow {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.headActions {
+  display: inline-flex;
+  align-items: baseline;
+  flex-shrink: 0;
+}
+
+.headMove,
+.headPin {
+  display: inline-block;
+  inline-size: 3.125rem;
+  text-align: center;
+}
+
+.headPin {
+  margin-inline-start: 0.8125rem;
+}
+
+/* One column row (ui-standards .mrt-col-row): the clickable visibility label
+   (flex) + the trailing Move / Pin groups. Whole-row hover wash. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.row:hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+}
+
+/* The visibility toggle IS this label: a visually-hidden checkbox (the
+   accessible control) + an eye / eye-off glyph + the column name. Clicking
+   anywhere on the label toggles the column (the spec's .mrt-col-label). */
+.colLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+/* Hidden column reads muted (spec .mrt-col-label:has(input:not(:checked))). */
+.colLabel:has(.visInput:not(:checked)) {
+  color: var(--gray-main);
+}
+
+.colLabel:has(.visInput:disabled) {
+  cursor: default;
+}
+
+/* The real checkbox — visually hidden but focusable (keeps the accessible
+   name + keyboard toggle; the eye is decorative). Not sr-only-clipped so the
+   focus ring can key off it via the sibling .eye. */
+.visInput {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.eye {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+}
+
+/* Shown = eye; hidden = eye-off. Toggle the two glyphs off the checkbox state
+   (sibling of .eye inside the label). */
+.eyeHide {
+  display: none;
+}
+
+.visInput:not(:checked) ~ .eye {
+  color: var(--gray-main);
+}
+
+.visInput:not(:checked) ~ .eye .eyeShow {
+  display: none;
+}
+
+.visInput:not(:checked) ~ .eye .eyeHide {
+  display: inline-flex;
+}
+
+.visInput:focus-visible ~ .eye {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.colName {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+/* Trailing control cluster: the Move group (with a divider) + the Pin group. */
+.colActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.moveGroup {
+  display: inline-flex;
+  gap: 0.125rem;
+  padding-inline-end: var(--space-2);
+  border-inline-end: 1px solid var(--color-divider);
+}
+
+.pinGroup {
+  display: inline-flex;
+  gap: 0.125rem;
+  flex-shrink: 0;
+}
+
+/* Move + pin buttons (ui-standards .mrt-move-btn / .mrt-pin-btn): 1.5rem
+   borderless squares, muted at rest, a soft wash + darker glyph on hover. */
+.moveBtn,
+.pinBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--gray-main);
+  cursor: pointer;
+}
+
+.moveBtn {
+  /* Chevron glyph size (icon is 1em). */
+  font-size: var(--text-sm);
+}
+
+.pinBtn {
+  /* Pin glyph size (icon is 1em; the spec's pin SVG reads at ~1rem). */
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* Pinned-to-this-edge: blue glyph on a light blue tint (spec .mrt-pin-btn.active
+   — a subtle state, NOT a solid fill). Base (rest) here; the hover variant sits
+   after .pinBtn:hover so it wins while a pinned button is hovered. Ordered
+   before the :disabled/:hover rules for no-descending-specificity. */
+.pinActive {
+  color: var(--secondary-main);
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+}
+
+.moveBtn:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: default;
+}
+
+.pinBtn:hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  color: var(--text-body);
+}
+
+.pinActive:hover {
+  color: var(--secondary-main);
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+}
+
+.moveBtn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  color: var(--text-body);
+}
+
+/* The single chevron icon does double duty: pointing down as-is, flipped for "up". */
+.chevronUp {
+  transform: rotate(180deg);
+}

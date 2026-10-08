@@ -2,16 +2,16 @@ use std::collections::HashSet;
 
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 
 use async_graphql::{Context, Enum, Object, SimpleObject, Union};
 use serde_json::json;
 use service::{
+    UploadedFile, UploadedFileJsonError,
     auth::{Resource, ResourceAccessRequest},
     backend_plugin::plugin_provider::PluginBundle,
-    UploadedFile, UploadedFileJsonError,
 };
 use util::format_error;
 
@@ -66,7 +66,7 @@ fn map_error(error: UploadedFileJsonError) -> Result<UploadedPluginErrorVariant>
     let graphql_error = match error {
         // Structured
         UploadedFileJsonError::CannotParseFile(_) => {
-            return Ok(UploadedPluginErrorVariant::CannotParseFile)
+            return Ok(UploadedPluginErrorVariant::CannotParseFile);
         }
         // Internal
         UploadedFileJsonError::UploadedFileConversionError(_)

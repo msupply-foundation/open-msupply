@@ -65,8 +65,8 @@ impl SyncTranslation for ItemWarningJoinTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository, WarningRow,
-        WarningRowRepository,
+        ItemLinkRow, ItemLinkRowRepository, WarningRow, WarningRowRepository,
+        mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]
@@ -74,11 +74,8 @@ mod tests {
         use crate::sync::test::test_data::item_warning_join as test_data;
         let translator = ItemWarningJoinTranslation {};
 
-        let (_, connection, _, _) = setup_all(
-            "test_item_warning_join_translation",
-            MockDataInserts::all(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_item_warning_join_translation", MockDataInserts::all()).await;
 
         // Seed the item_link + warning parents the join's required FKs point at.
         ItemLinkRowRepository::new(&connection)

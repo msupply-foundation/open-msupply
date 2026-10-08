@@ -37,6 +37,7 @@ pub enum KeyType {
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
     AssignPrescriptionNumberProcessorCursor,
+    PrescriptionRequestStatusProcessorCursor,
     RequisitionAutoFinaliseProcessorCursor,
     SupportUploadFilesProcessorCursor,
     MergeSyncMessageProcessorCursor,

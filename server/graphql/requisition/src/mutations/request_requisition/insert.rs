@@ -1,10 +1,10 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible},
-    standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError,
     ContextExt,
+    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible},
+    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::validate_auth,
 };
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
@@ -118,12 +118,12 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::OtherPartyNotASupplier => {
             return Ok(InsertErrorInterface::OtherPartyNotASupplier(
                 OtherPartyNotASupplier,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotVisible => {
             return Ok(InsertErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
@@ -145,17 +145,17 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_request_draft_requisition, MockDataInserts},
         Requisition, StorageConnectionManager,
+        mock::{MockDataInserts, mock_request_draft_requisition},
     };
     use serde_json::json;
     use service::{
         requisition::{
+            RequisitionServiceTrait,
             request_requisition::{
                 InsertRequestRequisition as ServiceInput,
                 InsertRequestRequisitionError as ServiceError,
             },
-            RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

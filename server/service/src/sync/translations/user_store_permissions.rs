@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     apis::permissions::{map_api_permissions, permissions_to_domain},
-    sync::translations::{store::StoreTranslation, user::UserTranslation, IntegrationOperation},
+    sync::translations::{IntegrationOperation, store::StoreTranslation, user::UserTranslation},
 };
 use repository::{
     EqualFilter, PermissionType, StorageConnection, SyncBufferRow, UserPermissionFilter,
@@ -142,10 +142,10 @@ impl SyncTranslation for UserStorePermissionTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
+        SyncAction, SyncBufferRow,
+        mock::{MockData, MockDataInserts, mock_store_a, mock_user_account_a},
         sync_buffer::SyncRecordData,
         test_db::setup_all_with_data,
-        SyncAction, SyncBufferRow,
     };
 
     const TABLE_NAME: &str = "user_store";

@@ -1,7 +1,7 @@
 use async_graphql::*;
 
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::InvoiceNode;
 
 use repository::Invoice;
@@ -78,6 +78,7 @@ impl SavePrescriptionLinesInput {
             lines: lines
                 .into_iter()
                 .map(|line| SaveStockOutInvoiceLine {
+                    transfer_comment: None,
                     id: line.id,
                     number_of_packs: line.number_of_packs,
                     stock_line_id: line.stock_line_id,

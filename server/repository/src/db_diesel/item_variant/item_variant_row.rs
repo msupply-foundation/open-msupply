@@ -1,11 +1,12 @@
 use crate::{
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
     db_diesel::{
         barcode_row::barcode, item_row::item, location_row::location,
         location_type_row::location_type, name_link_row::name_link, name_row::name,
     },
     diesel_macros::define_linked_tables,
-    user_account, ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType,
-    SourceSiteId, StorageConnection, Upsert,
+    user_account,
 };
 
 use chrono::NaiveDateTime;

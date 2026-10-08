@@ -46,6 +46,7 @@ pub fn generate(
         on_hold: false,
         requisition_id: None,
         purchase_order_id: None,
+        prescription_request_id: None,
 
         // --- Transport details ---
         transport_reference: source_invoice.transport_reference.clone(),
@@ -154,6 +155,8 @@ pub fn generate(
             vvm_status_id: None,
             shipped_number_of_packs: None,
             legacy_goods_received_line_id: None,
+            // No requisition link on the copy, so no request to explain.
+            transfer_comment: None,
         });
     }
 

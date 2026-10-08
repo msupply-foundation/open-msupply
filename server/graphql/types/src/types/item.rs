@@ -2,12 +2,13 @@ use super::{
     AncillaryItemNode, ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode,
     StockLineConnector, WarningNode,
 };
-use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode};
+use crate::types::{ItemStorePropertiesNode, LocationTypeNode, program_node::ProgramNode};
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     loader::{
         AllowedCustomFieldKeysByScopeLoader, AncillaryItemsByAncillaryIdLoader,
         AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDirectionsByItemIdLoader,
@@ -19,11 +20,10 @@ use graphql_core::{
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
-use repository::{category_row::CategoryRow, Item, ItemRow};
+use repository::{Item, ItemRow, category_row::CategoryRow};
 use serde_json::json;
-use service::ListResult;
+use service::{ListResult, item_stats::ItemStats};
 
 #[derive(PartialEq, Debug)]
 pub struct ItemNode {
@@ -124,6 +124,31 @@ impl ItemNode {
         #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
         period_end: Option<NaiveDate>,
     ) -> Result<ItemStatsNode> {
+        // The full item-stats path computes consumption and runs the AMC backend plugin —
+        // far too expensive when the query only selects stock on hand (e.g. the item list
+        // export asks for stats { stockOnHand } across every item). Serve those selections
+        // from the cheap batched stock_on_hand loader instead.
+        let only_stock_on_hand = ctx.field().selection_set().all(|field| {
+            matches!(
+                field.name(),
+                "stockOnHand" | "availableStockOnHand" | "__typename"
+            )
+        });
+        if only_stock_on_hand {
+            let loader = ctx.get_loader::<DataLoader<ItemsStockOnHandLoader>>();
+            let stock_on_hand = loader
+                .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
+                .await?
+                .unwrap_or_default();
+
+            return Ok(ItemStatsNode::from_domain(ItemStats {
+                item_id: self.row().id.clone(),
+                available_stock_on_hand: stock_on_hand.available_stock_on_hand,
+                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
+                ..Default::default()
+            }));
+        }
+
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
             .load_one(ItemStatsLoaderInput::new(
@@ -172,7 +197,7 @@ impl ItemNode {
         let result = loader
             .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
             .await?
-            .map(|soh| soh.available_stock_on_hand)
+            .map(|soh| soh.available_stock_on_hand as u32)
             .unwrap_or(0);
 
         Ok(result)
@@ -187,7 +212,7 @@ impl ItemNode {
         let result = loader
             .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
             .await?
-            .map(|soh| soh.total_stock_on_hand)
+            .map(|soh| soh.total_stock_on_hand as u32)
             .unwrap_or(0);
 
         Ok(result)

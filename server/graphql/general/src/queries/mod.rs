@@ -14,6 +14,8 @@ pub mod refresh_token;
 pub use self::refresh_token::*;
 pub mod master_list;
 pub use self::master_list::*;
+pub mod period_schedules;
+pub use self::period_schedules::*;
 pub mod invoice_counts;
 pub mod master_list_line;
 pub use self::invoice_counts::*;

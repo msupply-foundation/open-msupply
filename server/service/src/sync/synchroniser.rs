@@ -2,7 +2,8 @@ use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        sync_buffer::get_sync_buffer_for_table, sync_status::logger::SyncStep, CentralServerConfig,
+        CentralServerConfig, repair_source_site_id::repair_source_site_id,
+        sync_buffer::get_sync_buffer_for_table, sync_status::logger::SyncStep,
     },
 };
 use log::warn;
@@ -27,11 +28,11 @@ use super::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
     },
-    settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
+    settings::{SYNC_V5_VERSION, SYNC_V6_VERSION, SyncSettings},
     sync_on_central::adjust_v6_cursor,
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
-    translations::{all_translators, pull_integration_order, SyncTranslators},
+    translations::{SyncTranslators, all_translators, pull_integration_order},
 };
 
 const INTEGRATION_BATCH_SIZE: i64 = 10_000;
@@ -191,12 +192,28 @@ impl SynchroniserV5V6 {
             )?;
         }
 
+        // Builtin custom fields are OMS-authored rather than mapped from OG, so
+        // unlike the mapping properties above they are meaningful on a central
+        // with no legacy central behind it — gated on being central, not on
+        // being a *synced* central. (A standalone central never gets here at
+        // all: its sync driver parks, so it seeds from the server's startup
+        // path instead.) Change-aware, so steady-state syncs add no changelog
+        // churn, and a builtin added in a later version is picked up on the
+        // next sync.
+        if CentralServerConfig::is_central_server() {
+            crate::custom_field::builtin::seed_builtin_custom_fields(&ctx.connection)?;
+        }
+
         let central_sync_server_id = site_info.msupply_central_site_id;
         // Set central server site id in key value store, so it can be used by other code which hasn't called the get_site_info api
         KeyValueStoreRepository::new(&ctx.connection).set_i32(
             KeyType::SettingsSyncCentralServerSiteId,
             Some(site_info.msupply_central_site_id),
         )?;
+
+        // Must run after the central site id is known and before the push and integration
+        // below, which both read what it corrects - see `repair_source_site_id`.
+        repair_source_site_id(&ctx.connection, central_sync_server_id)?;
 
         // First check sync status
 
@@ -411,6 +428,9 @@ pub(crate) fn run_post_sync_triggers(
 
     ctx.processors_trigger
         .trigger_processor(ProcessorType::AssignPrescriptionNumber);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::PrescriptionRequestStatus);
 
     ctx.processors_trigger
         .trigger_processor(ProcessorType::Plugins);
@@ -644,7 +664,7 @@ impl<'a> SyncBufferIntegrator<'a> {
 mod tests {
     use repository::mock::MockDataInserts;
 
-    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_and_service_provider};
 
     use super::*;
 

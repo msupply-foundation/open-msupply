@@ -2,7 +2,7 @@ mod map;
 pub mod prepare;
 
 use prepare::{
-    prepare_program_requisition_settings_by_customer, CustomerProgramRequisitionSetting,
+    CustomerProgramRequisitionSetting, prepare_program_requisition_settings_by_customer,
 };
 use repository::{
     EqualFilter, MasterListFilter, NameTagFilter, ProgramCustomer, ProgramRequisitionSettings,

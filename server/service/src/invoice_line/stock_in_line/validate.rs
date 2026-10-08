@@ -1,23 +1,23 @@
 use repository::{
-    vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
     EqualFilter, InvoiceLineRow, RepositoryError, StockLineRow, StockLineRowRepository,
     StorageConnection,
+    vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
 };
 
 pub fn check_pack_size(pack_size_option: Option<f64>) -> bool {
-    if let Some(pack_size) = pack_size_option {
-        if pack_size < 1.0 {
-            return false;
-        }
+    if let Some(pack_size) = pack_size_option
+        && pack_size < 1.0
+    {
+        return false;
     }
     true
 }
 
 pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
-    if let Some(number_of_packs) = number_of_packs_option {
-        if number_of_packs <= 0.0 {
-            return false;
-        }
+    if let Some(number_of_packs) = number_of_packs_option
+        && number_of_packs <= 0.0
+    {
+        return false;
     }
     true
 }
@@ -39,10 +39,10 @@ pub fn check_batch_stock_reserved(
     line: &InvoiceLineRow,
     batch: Option<StockLineRow>,
 ) -> Result<bool, RepositoryError> {
-    if let Some(batch) = batch {
-        if line.number_of_packs != batch.available_number_of_packs {
-            return Ok(false);
-        }
+    if let Some(batch) = batch
+        && line.number_of_packs != batch.available_number_of_packs
+    {
+        return Ok(false);
     }
     Ok(true)
 }

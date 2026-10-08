@@ -5,12 +5,12 @@ mod insert {
     use chrono::{Duration, NaiveDate};
     use repository::mock::common::FullMockMasterList;
     use repository::mock::{
-        mock_immunisation_program_a, mock_name_b, mock_name_store_b, mock_name_store_c,
+        MockData, mock_immunisation_program_a, mock_name_b, mock_name_store_b, mock_name_store_c,
         mock_period, mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_period_2_d,
         mock_rnr_form_a, mock_rnr_form_a_line_a, mock_rnr_form_b, mock_rnr_form_b_line_a,
-        mock_store_a, mock_store_b, MockData,
+        mock_store_a, mock_store_b,
     };
-    use repository::mock::{mock_program_b, MockDataInserts};
+    use repository::mock::{MockDataInserts, mock_program_b};
     use repository::test_db::setup_all_with_data;
     use repository::{
         ContextRow, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow, ItemType,

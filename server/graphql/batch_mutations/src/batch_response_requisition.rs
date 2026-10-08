@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
 use graphql_requisition::mutations::response_requisition;
 use graphql_requisition_line::mutations::response_requisition_line;
 use service::{
@@ -7,7 +7,7 @@ use service::{
     requisition::response_requisition::*,
 };
 
-use crate::{to_standard_error, VecOrNone};
+use crate::{VecOrNone, to_standard_error};
 
 type ServiceResult = BatchResponseRequisitionResult;
 type ServiceInput = BatchResponseRequisition;
@@ -145,21 +145,21 @@ fn map_delete_requisitions(
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
-    use repository::{mock::MockDataInserts, RepositoryError, StorageConnectionManager};
+    use repository::{RepositoryError, StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
     use service::{
+        InputWithResult,
         requisition::{
+            RequisitionServiceTrait,
             response_requisition::{
                 BatchResponseRequisition, BatchResponseRequisitionResult,
                 DeleteResponseRequisition, DeleteResponseRequisitionError,
             },
-            RequisitionServiceTrait,
         },
         requisition_line::response_requisition_line::{
             DeleteResponseRequisitionLine, DeleteResponseRequisitionLineError,
         },
         service_provider::{ServiceContext, ServiceProvider},
-        InputWithResult,
     };
 
     use crate::BatchMutations;

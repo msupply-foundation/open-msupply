@@ -1,7 +1,7 @@
 use super::item_link_row::item_link;
 use crate::{
-    item_row::item, repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType,
-    Delete, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, StorageConnection,
+    Upsert, item_row::item, repository_error::RepositoryError,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;

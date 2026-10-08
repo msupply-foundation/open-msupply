@@ -1,0 +1,83 @@
+/*
+ * Page header strip. One flat flex-wrap container — the parts slot
+ * themselves: HeaderButtons pushes to the inline-end edge with an auto
+ * margin, Toolbar forces its own full-width row with flex-basis: 100%.
+ * When the row is too narrow the buttons wrap below the breadcrumb
+ * intrinsically; row-gap spaces the wrapped lines. No breakpoints.
+ */
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-3) var(--space-4); /* row column: wrapped lines / crumb↔buttons */
+  padding-block: var(--space-3);
+  padding-inline: var(--space-5);
+  background: var(--header-bg);
+  border-block-end: 1px solid var(--header-border);
+}
+
+/*
+ * --- Tab bar slot -------------------------------------------------------
+ * A ui/Tabs <TabList> rendered as the header's LAST child (it emits
+ * data-tab-bar) claims its own full-width row and becomes the header's
+ * bottom edge, as in the RnD demo: the strip's own border replaces the
+ * header's, and negative inline margins undo the header's padding so the
+ * border runs edge to edge. These numbers compensate the header's own
+ * padding, so they live here, not in Tabs.module.css.
+ */
+.header:has(> [data-tab-bar]) {
+  padding-block-end: 0;
+  border-block-end: none;
+}
+
+.header > [data-tab-bar] {
+  /* Bleed the strip to both header edges. The strip is a border-box flex item,
+     so a bare `flex-basis: 100%` sizes its box to the header's CONTENT width
+     (padding excluded) — the negative inline margins then shift that box, but a
+     negative margin-inline-end can't widen a box with no following sibling, so
+     the strip fell short by one --space-5 on the end edge. Add both paddings
+     back to the basis so the border-box spans the header's full border-box; the
+     negative margins realign the margin-box with the content. */
+  flex-basis: calc(100% + 2 * var(--space-5));
+  margin-inline: calc(-1 * var(--space-5));
+  /* row-gap already puts space-3 above; pull back to the demo's space-2 */
+  margin-block-start: calc(var(--space-2) - var(--space-3));
+}
+
+/* --- Overlay-mode hamburger (rendered only inside an AppShell) ---------- */
+.hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-body);
+  cursor: pointer;
+}
+
+.hamburger:hover {
+  background: var(--bg-group-main);
+}
+
+.hamburger:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.hamburgerIcon {
+  font-size: 1.5rem;
+}
+
+/* On coarse pointers give the hamburger a full touch target. */
+@media (pointer: coarse) {
+  .hamburger {
+    inline-size: var(--touch-target);
+    block-size: var(--touch-target);
+  }
+}

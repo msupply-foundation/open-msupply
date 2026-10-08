@@ -1,7 +1,7 @@
 use repository::{InvoiceRow, InvoiceType, ItemRow, RequisitionLineRow, StorageConnection};
 
 use crate::{
-    invoice::{check_invoice_exists, check_invoice_is_editable, check_store},
+    invoice::{check_invoice_exists, check_invoice_lines_are_editable, check_store},
     invoice_line::validate::check_item_exists,
     requisition_line::common::check_requisition_line_exists,
     validate::check_other_party_store_is_disabled,
@@ -33,7 +33,7 @@ pub fn validate(
         return Err(NotAnInboundShipment);
     }
 
-    if !check_invoice_is_editable(&invoice) {
+    if !check_invoice_lines_are_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
     if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
@@ -43,10 +43,10 @@ pub fn validate(
     let requisition_line = check_requisition_line_exists(connection, &input.requisition_line_id)?
         .ok_or(RequisitionLineDoesNotExist)?;
 
-    if let Some(invoice_req_id) = &invoice.requisition_id {
-        if requisition_line.requisition_row.id != *invoice_req_id {
-            return Err(RequisitionNotLinkedToInvoice);
-        }
+    if let Some(invoice_req_id) = &invoice.requisition_id
+        && requisition_line.requisition_row.id != *invoice_req_id
+    {
+        return Err(RequisitionNotLinkedToInvoice);
     }
 
     let item =

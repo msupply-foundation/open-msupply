@@ -6,10 +6,10 @@ use repository::{
 };
 
 use crate::{
+    NullableUpdate,
     preference::{AuthorisePurchaseOrder, Preference},
     purchase_order::update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
-    NullableUpdate,
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 
 pub fn validate(
@@ -24,12 +24,11 @@ pub fn validate(
         .pop()
         .ok_or(UpdatePurchaseOrderError::PurchaseOrderDoesNotExist)?;
 
-    // When PO is Sent or Finalised, only status changes are allowed (no field edits)
     let current_status = &purchase_order.purchase_order_row.status;
     if matches!(
         current_status,
         PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
-    ) && !input.is_status_only_change()
+    ) && !input.is_allowed_on_closed_order(current_status)
     {
         return Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder);
     }
@@ -79,14 +78,13 @@ pub fn validate(
     }
 
     // Only wanna check if status has been updated
-    if input.status.is_some() {
-        if let Some(non_orderable_items) =
+    if input.status.is_some()
+        && let Some(non_orderable_items) =
             check_items_orderable(connection, store_id, purchase_order_lines)?
-        {
-            return Err(UpdatePurchaseOrderError::ItemsCannotBeOrdered(
-                non_orderable_items,
-            ));
-        }
+    {
+        return Err(UpdatePurchaseOrderError::ItemsCannotBeOrdered(
+            non_orderable_items,
+        ));
     }
 
     Ok((purchase_order, None))
@@ -126,10 +124,10 @@ fn check_items_orderable(
         let item_store_join =
             item_store_join_repo.find_one_by_item_and_store_id(item_id, store_id)?;
 
-        if let Some(item_store_join) = item_store_join {
-            if item_store_join.ignore_for_orders {
-                non_orderable_items.push(line.clone());
-            }
+        if let Some(item_store_join) = item_store_join
+            && item_store_join.ignore_for_orders
+        {
+            non_orderable_items.push(line.clone());
         }
     }
 

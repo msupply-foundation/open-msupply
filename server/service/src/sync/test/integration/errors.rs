@@ -16,7 +16,7 @@ mod tests {
             sync_status::SyncLogError,
             synchroniser::{SyncError, SynchroniserV5V6},
             test::integration::{
-                central_server_configurations::SiteConfiguration, create_site, FullSiteConfig,
+                FullSiteConfig, central_server_configurations::SiteConfiguration, create_site,
             },
         },
         test_helpers::ServiceTestContext,

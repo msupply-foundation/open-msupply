@@ -6,7 +6,7 @@ use repository::{
     Currency, CurrencyFilter, CurrencyRow, CurrencySort, CurrencySortField, EqualFilter,
 };
 
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]

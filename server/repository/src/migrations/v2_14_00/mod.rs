@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_encounter_changelog_table_name;
@@ -44,7 +44,12 @@ mod test {
         .await;
 
         // Run this migration
-        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(get_database_version(&connection), version);
     }
 }

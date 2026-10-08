@@ -21,26 +21,17 @@ impl ViewMigrationFragment for ViewMigration {
             r#"
                 CREATE VIEW purchase_order_stats AS
                 SELECT
-                    po.id AS purchase_order_id,
-                    COALESCE(SUM(
-                        CASE
-                            WHEN pol.adjusted_number_of_units IS NOT NULL
-                            THEN (pol.adjusted_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
-                            ELSE (pol.requested_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
-                        END
-                    ), 0) AS order_total_before_discount,
-                    COALESCE(SUM(
-                        CASE
-                            WHEN pol.adjusted_number_of_units IS NOT NULL
-                            THEN (pol.adjusted_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
-                            ELSE (pol.requested_number_of_units / NULLIF(pol.requested_pack_size, 0)) * pol.price_per_pack_after_discount
-                        END
-                    ), 0) * (1-(COALESCE(po.supplier_discount_percentage, 0)/100)) AS order_total_after_discount 
-
-                FROM
-                    purchase_order po JOIN purchase_order_line pol on po.id = pol.purchase_order_id
-                GROUP BY
-                    po.id;
+                    totals.purchase_order_id,
+                    totals.order_total_before_discount,
+                    totals.order_total_before_discount * (1 - (COALESCE(po.supplier_discount_percentage, 0) / 100)) AS order_total_after_discount
+                FROM (
+                    SELECT
+                        pol.purchase_order_id,
+                        COALESCE(SUM(pol.line_total), 0) AS order_total_before_discount
+                    FROM purchase_order_line pol
+                    GROUP BY pol.purchase_order_id
+                ) totals
+                JOIN purchase_order po ON po.id = totals.purchase_order_id;
             "#
         )?;
 

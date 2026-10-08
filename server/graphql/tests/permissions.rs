@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use async_graphql::MergedObject;
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
 use graphql_core::test_helpers::setup_graphql_test;
-use repository::{mock::MockDataInserts, StorageConnectionManager};
+use repository::{StorageConnectionManager, mock::MockDataInserts};
 use service::{
     auth::{AuthError, AuthServiceTrait, Resource, ResourceAccessRequest, ValidatedUser},
     auth_data::AuthData,
@@ -1340,9 +1340,12 @@ impl TestService {
                     || self.expected.store_id.is_some() != actual.store_id.is_some()
                 {
                     Some(format!(
-                            "Expected: resource == {:?} && store_id.is_some() == {}; Actual: resource == {:?} && store_id.is_some() == {}",
-                            &self.expected.resource, self.expected.store_id.is_some(), actual.resource, actual.store_id.is_some()
-                        ))
+                        "Expected: resource == {:?} && store_id.is_some() == {}; Actual: resource == {:?} && store_id.is_some() == {}",
+                        &self.expected.resource,
+                        self.expected.store_id.is_some(),
+                        actual.resource,
+                        actual.store_id.is_some()
+                    ))
                 } else {
                     None
                 }

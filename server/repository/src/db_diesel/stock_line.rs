@@ -1,17 +1,19 @@
 use super::{
+    DBType, LocationRow, MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
     barcode_row::barcode,
     campaign_row::campaign,
     item_row::item,
-    item_variant::item_variant_row::{item_variant, ItemVariantRow},
+    item_variant::item_variant_row::{ItemVariantRow, item_variant},
     location_row::location,
     name_row::name,
     stock_line_row::stock_line,
-    unit_row::{unit, UnitRow},
-    vvm_status::vvm_status_row::{vvm_status, VVMStatusRow},
-    DBType, LocationRow, MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
+    unit_row::{UnitRow, unit},
+    vvm_status::vvm_status_row::{VVMStatusRow, vvm_status},
 };
 
 use crate::{
+    BarcodeRow, DateFilter, EqualFilter, Item, ItemFilter, ItemRepository, ItemRow, ItemSort,
+    ItemSortField, MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
     campaign_row::CampaignRow,
     diesel_extensions::OrderByExtensions,
     diesel_macros::{
@@ -20,8 +22,6 @@ use crate::{
     },
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    BarcodeRow, DateFilter, EqualFilter, Item, ItemFilter, ItemRepository, ItemRow, ItemSort,
-    ItemSortField, MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -181,7 +181,10 @@ impl<'a> StockLineRepository<'a> {
             query = query.order(stock_line::id.asc())
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let final_query = query
+            .then_order_by(stock_line::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
@@ -239,7 +242,11 @@ impl<'a> StockLineRepository<'a> {
             items_query = items_query.order(item::name.asc());
         }
 
+        // Stable tiebreaker, as above — item name ties are common (the same
+        // item name across different codes), and the unsorted default orders
+        // by name too, so neither branch is deterministic without this.
         let final_query = items_query
+            .then_order_by(item::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
@@ -304,19 +311,17 @@ impl<'a> StockLineRepository<'a> {
                 apply_string_filter!(query, search, stock_line::batch);
 
                 // Store id must be passed to filter
-                if let Some(store_id) = &query_store_id {
-                    if search_for_item.is_some() || item_code_or_name.is_some() {
-                        let item_filter = ItemFilter {
-                            code_or_name: search_for_item.or(item_code_or_name),
-                            ..ItemFilter::new().is_active(true)
-                        };
-                        let item_query = ItemRepository::create_filtered_query(
-                            store_id.clone(),
-                            Some(item_filter),
-                        );
+                if let Some(store_id) = &query_store_id
+                    && (search_for_item.is_some() || item_code_or_name.is_some())
+                {
+                    let item_filter = ItemFilter {
+                        code_or_name: search_for_item.or(item_code_or_name),
+                        ..ItemFilter::new().is_active(true)
+                    };
+                    let item_query =
+                        ItemRepository::create_filtered_query(store_id.clone(), Some(item_filter));
 
-                        query = query.or_filter(item::id.eq_any(item_query.select(item::id)));
-                    }
+                    query = query.or_filter(item::id.eq_any(item_query.select(item::id)));
                 }
             }
 
@@ -505,10 +510,11 @@ mod test {
     use chrono::NaiveDate;
 
     use crate::{
+        ItemRow, Pagination, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
+        StockLineSort, StockLineSortField,
         mock::MockDataInserts,
-        mock::{mock_item_a, mock_item_b, mock_store_a, MockData},
-        test_db, ItemRow, Pagination, StockLine, StockLineFilter, StockLineRepository,
-        StockLineRow, StockLineSort, StockLineSortField,
+        mock::{MockData, mock_item_a, mock_item_b, mock_store_a},
+        test_db,
     };
 
     fn from_row(stock_line_row: StockLineRow, item_row: ItemRow) -> StockLine {

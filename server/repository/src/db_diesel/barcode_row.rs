@@ -2,8 +2,8 @@ use crate::SourceSiteId;
 use crate::{ChangelogSyncType, Upsert};
 
 use super::{
-    invoice_line_row::invoice_line, item_link_row::item_link, item_row::item,
-    name_link_row::name_link, RepositoryError, StorageConnection,
+    RepositoryError, StorageConnection, invoice_line_row::invoice_line, item_link_row::item_link,
+    item_row::item, name_link_row::name_link,
 };
 use crate::diesel_macros::define_linked_tables;
 use crate::{ChangelogRepository, RowActionType};

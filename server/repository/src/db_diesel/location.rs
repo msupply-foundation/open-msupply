@@ -1,15 +1,15 @@
-use super::{location_row::location, LocationRow, StorageConnection};
+use super::{LocationRow, StorageConnection, location_row::location};
 
 use crate::{
+    StringFilter,
     asset_internal_location_row::asset_internal_location,
     diesel_extensions::OrderByExtensions,
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
-    StringFilter,
 };
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
+use crate::{DBType, EqualFilter, Pagination, Sort, repository_error::RepositoryError};
 use diesel::prelude::*;
 
 #[derive(PartialEq, Debug, Clone)]
@@ -86,6 +86,9 @@ impl<'a> LocationRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(location::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<LocationRow>(self.connection.lock().connection())?;

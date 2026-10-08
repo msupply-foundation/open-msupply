@@ -1,12 +1,12 @@
 use diesel::prelude::*;
 
 use crate::{
+    DBType, NameTagRow, StorageConnection,
     db_diesel::{
         name_row::name, name_tag_join::name_tag_join, name_tag_row::name_tag, store_row::store,
     },
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
-    DBType, NameTagRow, StorageConnection,
 };
 
 use crate::EqualFilter;

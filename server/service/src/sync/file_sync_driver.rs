@@ -8,14 +8,14 @@ use crate::{
     sync::file_synchroniser::FileSynchroniser,
 };
 
-use super::settings::SyncSettings;
 use super::CentralServerConfig;
+use super::settings::SyncSettings;
 use tokio::{
     sync::{
         mpsc::{self, Receiver, Sender},
         watch,
     },
-    time::{timeout, Duration},
+    time::{Duration, timeout},
 };
 use util::format_error;
 
@@ -182,12 +182,13 @@ impl FileSyncDriver {
 
             // If not stopped or paused and we have a central server URL to upload to
             // (file bytes only ever transfer remote ↔ central, never on central itself)
-            if !stopped && !paused {
-                if let Some(url) = file_sync_central_url(&service_provider) {
-                    files_to_upload = self
-                        .sync(&url, service_provider.clone(), self.pause_rx.clone())
-                        .await;
-                }
+            if !stopped
+                && !paused
+                && let Some(url) = file_sync_central_url(&service_provider)
+            {
+                files_to_upload = self
+                    .sync(&url, service_provider.clone(), self.pause_rx.clone())
+                    .await;
             }
         }
     }
@@ -314,8 +315,8 @@ pub fn file_sync_central_url(service_provider: &ServiceProvider) -> Option<Strin
 #[cfg(test)]
 mod tests {
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SyncFileDirection, SyncFileReferenceRow,
-        SyncFileReferenceRowRepository, SyncFileStatus, SyncLogV5V6Row, SyncLogV5V6RowRepository,
+        SyncFileDirection, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
+        SyncLogV5V6Row, SyncLogV5V6RowRepository, mock::MockDataInserts, test_db::setup_all,
     };
     use std::time::Instant;
 
@@ -325,7 +326,7 @@ mod tests {
             test_util_set_central_server_url, test_util_set_is_central_server,
             test_util_set_is_initialised,
         },
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
 
     #[actix_rt::test]
@@ -470,10 +471,12 @@ mod tests {
                 ..Default::default()
             })
             .unwrap();
-        assert!(service_provider
-            .sync_status_service
-            .is_initialised(&service_context)
-            .unwrap());
+        assert!(
+            service_provider
+                .sync_status_service
+                .is_initialised(&service_context)
+                .unwrap()
+        );
         trigger.unpause();
 
         // Poll rather than sleeping a fixed amount, so the assertion isn't coupled to

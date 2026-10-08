@@ -5,7 +5,7 @@ use std::{
 
 use diesel::prelude::*;
 
-use crate::{repository_error::RepositoryError, StorageConnection};
+use crate::{StorageConnection, repository_error::RepositoryError};
 
 use super::changelog::changelog_with_links;
 
@@ -98,7 +98,7 @@ impl std::fmt::Debug for ChangelogCursorTracker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{test_db, TransactionError};
+    use crate::{TransactionError, test_db};
 
     #[actix_rt::test]
     async fn empty_tracker_returns_none() {

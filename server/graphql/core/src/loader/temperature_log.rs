@@ -1,7 +1,7 @@
 use repository::EqualFilter;
 use repository::{
-    temperature_log::{TemperatureLog, TemperatureLogFilter, TemperatureLogRepository},
     RepositoryError, StorageConnectionManager,
+    temperature_log::{TemperatureLog, TemperatureLogFilter, TemperatureLogRepository},
 };
 
 use async_graphql::dataloader::*;

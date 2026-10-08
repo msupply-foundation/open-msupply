@@ -1,6 +1,4 @@
-use repository::db_diesel::sync_file_reference_row::{
-    SyncFileReferenceRow, SyncFileReferenceWire,
-};
+use repository::db_diesel::sync_file_reference_row::{SyncFileReferenceRow, SyncFileReferenceWire};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};

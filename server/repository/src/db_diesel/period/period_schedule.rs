@@ -1,10 +1,10 @@
-use super::{period_schedule_row::period_schedule, PeriodScheduleRow};
+use super::{PeriodScheduleRow, period_schedule_row::period_schedule};
 use diesel::prelude::*;
 
 use crate::{
+    DBType, StorageConnection,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    DBType, StorageConnection,
 };
 
 use crate::{EqualFilter, Sort};

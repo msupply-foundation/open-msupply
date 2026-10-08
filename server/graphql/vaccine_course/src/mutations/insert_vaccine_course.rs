@@ -3,18 +3,18 @@ use super::{
 };
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{RecordAlreadyExist, RecordProgramCombinationAlreadyExists},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{RecordAlreadyExist, RecordProgramCombinationAlreadyExists},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::VaccineCourseNode;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::{
         insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
         update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
     },
-    NullableUpdate,
 };
 
 pub fn insert_vaccine_course(
@@ -151,14 +151,14 @@ fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
         ServiceError::VaccineCourseAlreadyExists => {
             return Ok(InsertVaccineCourseErrorInterface::ItemAlreadyExists(
                 RecordAlreadyExist {},
-            ))
+            ));
         }
         ServiceError::VaccineCourseNameExistsForThisProgram => {
             return Ok(
                 InsertVaccineCourseErrorInterface::VaccineCourseNameExistsForThisProgram(
                     RecordProgramCombinationAlreadyExists {},
                 ),
-            )
+            );
         }
         // Standard Graphql Errors
         ServiceError::ProgramDoesNotExist

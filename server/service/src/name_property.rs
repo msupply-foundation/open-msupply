@@ -1,10 +1,10 @@
 use repository::{
-    types::PropertyValueType, NameProperty, NamePropertyFilter, NamePropertyRepository,
-    NamePropertyRow, NamePropertyRowRepository, PropertyRow, PropertyRowRepository,
-    RepositoryError, StorageConnection, StorageConnectionManager, TransactionError,
+    NameProperty, NamePropertyFilter, NamePropertyRepository, NamePropertyRow,
+    NamePropertyRowRepository, PropertyRow, PropertyRowRepository, RepositoryError,
+    StorageConnection, StorageConnectionManager, TransactionError, types::PropertyValueType,
 };
 
-use crate::{usize_to_u32, validate::check_property_key_does_not_exist, ListError, ListResult};
+use crate::{ListError, ListResult, usize_to_u32, validate::check_property_key_does_not_exist};
 
 pub fn get_name_properties(
     connection_manager: &StorageConnectionManager,
@@ -115,7 +115,7 @@ mod test {
 
     use crate::name_property::InitialiseNamePropertyError;
 
-    use super::{initialise_name_properties, InitialiseNameProperty};
+    use super::{InitialiseNameProperty, initialise_name_properties};
 
     #[actix_rt::test]
     async fn initialise_name_properties_test() {

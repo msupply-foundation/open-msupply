@@ -1,6 +1,6 @@
 use crate::{MasterListNameJoinRow, MasterListRow, NameRow, StoreRow};
 
-use super::{common::FullMockMasterList, MockData};
+use super::{MockData, common::FullMockMasterList};
 
 pub fn mock_test_master_list_repository() -> MockData {
     let mut result = MockData::default();

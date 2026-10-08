@@ -68,6 +68,10 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("stock_relocation", "finalised_datetime"),
         ("plugin_data", "datetime"),
         ("help_document", "created_datetime"),
+        ("prescription_request", "created_datetime"),
+        ("prescription_request", "prescription_datetime"),
+        ("prescription_request", "ready_datetime"),
+        ("prescription_request", "dispensed_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -420,12 +424,12 @@ fn serialise_date(date: NaiveDate) -> String {
 #[cfg(test)]
 mod tests {
     use repository::{
+        InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
         mock::{
-            mock_item_a, mock_item_link_from_item, mock_name_a, mock_store_a, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_item_a, mock_item_link_from_item, mock_name_a,
+            mock_store_a,
         },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
     };
 
     use super::*;

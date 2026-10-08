@@ -2,15 +2,15 @@
 mod insert {
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_name_a, MockDataInserts},
+        InsuranceProviderRow, InsuranceProviderRowRepository,
+        mock::{MockDataInserts, mock_name_a},
         name_insurance_join_row::InsurancePolicyType,
         test_db::setup_all,
-        InsuranceProviderRow, InsuranceProviderRowRepository,
     };
 
     use crate::{
         insurance::insert::{
-            generate::compose_policy_number, InsertInsurance, InsertInsuranceError,
+            InsertInsurance, InsertInsuranceError, generate::compose_policy_number,
         },
         service_provider::ServiceProvider,
     };

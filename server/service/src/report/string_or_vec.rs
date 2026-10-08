@@ -1,6 +1,6 @@
 use std::fmt;
 
-use serde::de::{self, value, Deserialize, Deserializer, SeqAccess, Visitor};
+use serde::de::{self, Deserialize, Deserializer, SeqAccess, Visitor, value};
 
 pub(crate) fn string_or_vec<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
 where

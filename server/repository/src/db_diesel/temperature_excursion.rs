@@ -1,12 +1,12 @@
+use crate::{RepositoryError, StorageConnection};
 use crate::{
+    TemperatureBreachType, TemperatureLogFilter,
     db_diesel::{
         temperature_breach_config_row::temperature_breach_config,
         temperature_log_row::temperature_log,
     },
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
-    TemperatureBreachType, TemperatureLogFilter,
 };
-use crate::{RepositoryError, StorageConnection};
 use chrono::NaiveDateTime;
 
 use diesel::{prelude::*, sql_types::Integer};

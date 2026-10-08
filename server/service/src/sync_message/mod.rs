@@ -1,10 +1,10 @@
 use crate::{
+    ListError, ListResult,
     service_provider::ServiceContext,
     sync_message::{
-        insert::{insert_sync_message, InsertSyncMessageError, InsertSyncMessageInput},
+        insert::{InsertSyncMessageError, InsertSyncMessageInput, insert_sync_message},
         query::{get_sync_message, get_sync_messages},
     },
-    ListError, ListResult,
 };
 use repository::{
     PaginationOption, RepositoryError, SyncMessageFilter, SyncMessageRow, SyncMessageSort,

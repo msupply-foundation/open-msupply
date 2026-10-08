@@ -2,7 +2,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::EqualFilterStringInput, loader::SyncFileReferenceLoader, ContextExt,
+    ContextExt, generic_filters::EqualFilterStringInput, loader::SyncFileReferenceLoader,
 };
 use repository::{EqualFilter, HelpDocument, HelpDocumentFilter};
 use service::ListResult;

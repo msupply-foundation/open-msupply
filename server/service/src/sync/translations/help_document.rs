@@ -1,6 +1,6 @@
 use repository::{
-    help_document_row::HelpDocumentRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    help_document_row::HelpDocumentRow,
 };
 
 use super::{

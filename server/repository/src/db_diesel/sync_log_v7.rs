@@ -1,6 +1,6 @@
 use crate::{
-    diesel_macros::apply_sort, dynamic_query_filter::create_condition, syncv7::SyncError, DBType,
-    Pagination, RepositoryError, Sort, StorageConnection,
+    DBType, Pagination, RepositoryError, Sort, StorageConnection, diesel_macros::apply_sort,
+    dynamic_query_filter::create_condition, syncv7::SyncError,
 };
 
 use chrono::NaiveDateTime;
@@ -161,9 +161,10 @@ impl<'a> SyncLogV7Repository<'a> {
 #[cfg(test)]
 mod test {
     use crate::{
+        SyncLogV7Repository, SyncLogV7Row,
         mock::{MockData, MockDataInserts},
         syncv7::SyncError,
-        test_db, SyncLogV7Repository, SyncLogV7Row,
+        test_db,
     };
 
     use chrono::{Duration, NaiveDateTime};

@@ -1,0 +1,102 @@
+# The dashboard's wire surface (spec/dashboard/contract.md): six
+# read-only count queries, one operation per panel family so each panel owns
+# its own loading / error state, and a family that fails does not touch its
+# siblings. A family the user cannot read is not requested at all
+# (OMS-REG-DB-01.60 — the page pauses its resource); the prescription counts
+# ride the requests list instead (./prescriptionRequestCounts.graphql). All are
+# store-scoped; none mutate (OMS-REG-DB-01.21/.24).
+#
+# timezoneOffset is deliberately omitted everywhere — the app sends no offset,
+# so the server buckets "today" / "this week" in its own local timezone
+# (contract.md § time windows, incl. the wire trap: the default is
+# server-local, NOT UTC).
+
+# Internal inbound shipments (no linked purchase order): created today / this
+# week + not delivered (New/Shipped) — OMS-REG-DB-01.33/.34/.35.
+query inboundShipmentCounts($storeId: String!) {
+  inboundShipmentCounts(storeId: $storeId) {
+    created {
+      today
+      thisWeek
+    }
+    notDelivered
+  }
+}
+
+# External inbound shipments (with a purchase-order link): same three
+# counts, fetched only while the procurement preference shows the panel — OMS-REG-DB-01.36.
+query inboundShipmentExternalCounts($storeId: String!) {
+  inboundShipmentExternalCounts(storeId: $storeId) {
+    created {
+      today
+      thisWeek
+    }
+    notDelivered
+  }
+}
+
+# Requisition counts serve two panels: Internal Orders (request.draft — OMS-REG-DB-01.40)
+# and the Distribution Requisitions panel (response.new / emergency.new —
+# OMS-REG-DB-01.38/.39). Permission RequisitionQuery despite the RequisitionStats
+# resource name (contract.md wire trap).
+query requisitionCounts($storeId: String!) {
+  requisitionCounts(storeId: $storeId) {
+    request {
+      draft
+    }
+    response {
+      new
+    }
+    emergency {
+      new
+    }
+  }
+}
+
+# Outbound shipments not yet dispatched (New/Allocated/Picked) — OMS-REG-DB-01.37.
+# `created` exists on the wire but the dashboard does not show it (contract.md §
+# outbound shipments), so it is not selected.
+query outboundShipmentCounts($storeId: String!) {
+  outboundShipmentCounts(storeId: $storeId) {
+    notShipped
+  }
+}
+
+# Expiring-stock counts over stock lines with packs in the store (OMS-REG-DB-01.41/.42/.44/.45).
+# The app always sends daysTillExpired explicitly (30 — rules.md § thresholds);
+# the server-side default of 7 is a fallback we never rely on.
+query stockCounts($storeId: String!, $daysTillExpired: Int) {
+  stockCounts(storeId: $storeId, daysTillExpired: $daysTillExpired) {
+    expired
+    expiringSoon
+    expiringInNextThreeMonths
+    expiringBetweenThresholds
+  }
+}
+
+# Stock-level counts (OMS-REG-DB-01.47–.54). The thresholds are always sent explicitly,
+# filled from the store understock / overstock preferences (contract.md § stock
+# levels); the alert-based counts inside are driven by store preferences that
+# are NOT query arguments. Note the wrapper: the query returns ItemCounts whose
+# single `itemCounts` field carries the seven numbers.
+query itemCounts(
+  $storeId: String!
+  $lowStockThreshold: Float
+  $highStockThreshold: Float
+) {
+  itemCounts(
+    storeId: $storeId
+    lowStockThreshold: $lowStockThreshold
+    highStockThreshold: $highStockThreshold
+  ) {
+    itemCounts {
+      total
+      noStock
+      lowStock
+      highStock
+      outOfStockProducts
+      productsAtRiskOfBeingOutOfStock
+      productsOverstocked
+    }
+  }
+}

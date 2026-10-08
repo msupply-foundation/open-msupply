@@ -47,6 +47,7 @@ export const AppBarButtonsComponent = ({
             Icon={<UploadIcon />}
             label={t('button.import')}
             onClick={importModalController.toggleOn}
+            data-testid="import-catalogue-button"
           />
         )}
         <ExportSelector
@@ -57,6 +58,7 @@ export const AppBarButtonsComponent = ({
         {isCentralServer && (
           <BaseButton
             startIcon={<EditIcon />}
+            data-testid="manage-log-reasons-button"
             variant="outlined"
             onClick={() => {
               navigate(path);

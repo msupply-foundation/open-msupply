@@ -1,14 +1,13 @@
 use async_graphql::*;
 use chrono::Utc;
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::StandardGraphqlError};
 use graphql_types::types::UserNode;
 
 use http2::header::SET_COOKIE;
 use service::{
     auth_data::AuthData,
     login::{
-        LoginError, LoginFailure, LoginInput, LoginService, LoginSuccess,
-        MIN_ERR_RESPONSE_TIME_SEC,
+        LoginError, LoginFailure, LoginInput, LoginService, LoginSuccess, MIN_ERR_RESPONSE_TIME_SEC,
     },
     session_store::SESSION_LIFETIME,
     sync::CentralServerConfig,
@@ -169,29 +168,31 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                 LoginError::LoginFailure(LoginFailure::InvalidCredentials) => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
                         error: AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials),
-                    }))
+                    }));
                 }
                 LoginError::LoginFailure(LoginFailure::AccountBlocked(timeout_remaining)) => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
                         error: AuthTokenErrorInterface::AccountBlocked(AccountBlocked {
                             timeout_remaining,
                         }),
-                    }))
+                    }));
                 }
                 LoginError::MSupplyCentralNotReached => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
                         error: AuthTokenErrorInterface::CentralSyncRequired(CentralSyncRequired),
-                    }))
+                    }));
                 }
                 LoginError::LoginFailure(LoginFailure::NoSiteAccess) => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
                         error: AuthTokenErrorInterface::NoSiteAccess(NoSiteAccess),
-                    }))
+                    }));
                 }
                 LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
                 | LoginError::FetchUserError(_)
-                | LoginError::UpdateUserError(_) => StandardGraphqlError::InternalError(formatted_error),
+                | LoginError::UpdateUserError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
             };
             return Err(graphql_error.extend());
         }

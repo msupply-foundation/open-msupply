@@ -1,7 +1,7 @@
 use repository::InsuranceProviderRow;
 use repository::{
-    insurance_provider_row::InsuranceProviderRowRepository, RepositoryError,
-    StorageConnectionManager,
+    RepositoryError, StorageConnectionManager,
+    insurance_provider_row::InsuranceProviderRowRepository,
 };
 
 use async_graphql::dataloader::*;

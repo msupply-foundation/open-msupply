@@ -1,4 +1,4 @@
-use super::{sql, version::Version, Migration};
+use super::{Migration, sql, version::Version};
 
 use crate::StorageConnection;
 

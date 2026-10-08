@@ -72,7 +72,7 @@ impl SyncTranslation for MasterListNameJoinTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, MasterListRow, MasterListRowRepository,
+        MasterListRow, MasterListRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

@@ -71,6 +71,9 @@ enum_variant_names = "allow"
 # TODO: Will need frontend changes too. Will be nice for readability.
 too_many_arguments = "allow"
 
+[workspace.package]
+edition = "2024"
+
 [workspace]
 resolver = "2"
 members = [
@@ -101,6 +104,7 @@ members = [
   "graphql/requisition",
   "graphql/requisition_line",
   "graphql/stock_line",
+  "graphql/prescription_request",
   "graphql/stock_relocation",
   "graphql/stocktake",
   "graphql/stocktake_line",

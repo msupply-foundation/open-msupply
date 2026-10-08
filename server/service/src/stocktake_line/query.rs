@@ -5,7 +5,7 @@ use repository::{
 };
 
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 
 #[derive(Debug, PartialEq)]
@@ -73,7 +73,7 @@ impl From<RepositoryError> for GetStocktakeLinesError {
 #[cfg(test)]
 mod stocktake_line_test {
     use repository::{
-        mock::{mock_stocktake_a, mock_store_a, MockDataInserts},
+        mock::{MockDataInserts, mock_stocktake_a, mock_store_a},
         test_db::setup_all,
     };
 

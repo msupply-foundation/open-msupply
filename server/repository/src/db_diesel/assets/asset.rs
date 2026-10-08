@@ -1,4 +1,4 @@
-use super::asset_row::{asset, AssetRow};
+use super::asset_row::{AssetRow, asset};
 
 use diesel::{
     dsl::{IntoBoxed, LeftJoin},
@@ -6,14 +6,14 @@ use diesel::{
 };
 
 use crate::{
-    asset_log_row::{latest_asset_log, AssetLogRow, AssetLogStatus},
+    DBType, DateFilter, EqualFilter, Pagination, Sort, StorageConnection, StoreRow, StringFilter,
+    asset_log_row::{AssetLogRow, AssetLogStatus, latest_asset_log},
     db_diesel::{name_row::name, store_row::store},
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DBType, DateFilter, EqualFilter, Pagination, Sort, StorageConnection, StoreRow, StringFilter,
 };
 
 pub type Asset = AssetRow;
@@ -183,6 +183,9 @@ impl<'a> AssetRepository<'a> {
         }
 
         let final_query = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(asset::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
@@ -281,12 +284,13 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
 #[cfg(test)]
 mod tests {
     use crate::{
+        EqualFilter,
         assets::{
             asset::AssetRepository,
             asset_row::{AssetRow, AssetRowRepository},
         },
-        mock::{mock_store_a, MockDataInserts},
-        test_db, EqualFilter,
+        mock::{MockDataInserts, mock_store_a},
+        test_db,
     };
 
     use super::AssetFilter;

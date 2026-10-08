@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod query {
+    use repository::EqualFilter;
     use repository::item_variant::bundled_item::BundledItemFilter;
     use repository::mock::{
-        mock_item_a_variant_1, mock_item_a_variant_2, mock_item_b_variant_1, mock_item_b_variant_2,
-        mock_item_c_variant_1, MockDataInserts,
+        MockDataInserts, mock_item_a_variant_1, mock_item_a_variant_2, mock_item_b_variant_1,
+        mock_item_b_variant_2, mock_item_c_variant_1,
     };
     use repository::test_db::setup_all;
-    use repository::EqualFilter;
     use util::uuid::uuid;
 
     use crate::item::bundled_item::{DeleteBundledItem, UpsertBundledItem, UpsertBundledItemError};

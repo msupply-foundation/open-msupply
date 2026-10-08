@@ -2,16 +2,16 @@ pub mod mutations;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::{
+    ContextExt,
     generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_general::{ItemSortInput, ItemsResponse};
 use graphql_types::types::*;
 use repository::{
-    location::LocationFilter, DateFilter, EqualFilter, PaginationOption, StockLineFilter,
-    StockLineSort, StockLineSortField, StringFilter,
+    DateFilter, EqualFilter, PaginationOption, StockLineFilter, StockLineSort, StockLineSortField,
+    StringFilter, location::LocationFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 

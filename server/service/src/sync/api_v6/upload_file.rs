@@ -1,11 +1,11 @@
 use super::*;
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use repository::SyncFileReferenceRow;
-use reqwest::{header::HeaderMap, StatusCode};
-use util::https_client;
+use reqwest::{StatusCode, header::HeaderMap};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use tokio::sync::watch;
+use util::https_client;
 
 /// Chunk size for tus PATCH bodies. 4 MiB balances roundtrip overhead vs retry granularity —
 /// a network blip wastes at most 4 MiB before resume picks up at the last server-acked offset.

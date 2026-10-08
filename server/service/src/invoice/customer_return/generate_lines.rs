@@ -1,4 +1,4 @@
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
 use chrono::NaiveDate;
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
@@ -150,8 +150,8 @@ mod test {
     use crate::{invoice::ExistingLinesInput, service_provider::ServiceProvider};
     use repository::{
         mock::{
-            mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_item_a,
-            mock_outbound_shipment_a_invoice_lines, MockDataInserts,
+            MockDataInserts, mock_customer_return_a, mock_customer_return_a_invoice_line_a,
+            mock_item_a, mock_outbound_shipment_a_invoice_lines,
         },
         test_db::setup_all,
     };
@@ -217,10 +217,12 @@ mod test {
 
         assert_eq!(result.count, 2);
         // pack_issued set from the outbound shipment
-        assert!(result
-            .rows
-            .iter()
-            .all(|row| row.packs_issued.unwrap() > 0.0));
+        assert!(
+            result
+                .rows
+                .iter()
+                .all(|row| row.packs_issued.unwrap() > 0.0)
+        );
         // number_of_packs is 0, as this is a new return line
         assert!(result.rows.iter().all(|row| row.number_of_packs == 0.0));
     }

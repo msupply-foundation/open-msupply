@@ -218,6 +218,34 @@ describe('mapPropertyFilters', () => {
     });
   });
 
+  it('asks a MULTI_OPTION field for set overlap, expanded both ways', () => {
+    const multi = def({
+      key: 'multi_category',
+      name: 'Categories',
+      valueType: CustomFieldNodeValueType.MultiOption,
+      options: [
+        { id: 'parent', name: 'Parent' },
+        { id: 'leaf_1', name: 'Leaf 1', parentOptionId: 'parent' },
+        { id: 'leaf_2', name: 'Leaf 2', parentOptionId: 'parent' },
+      ],
+    });
+    // Filtering on a LEAF must also find a record stored minimally as its
+    // parent, so the ancestor goes in the set too.
+    expect(
+      mapPropertyFilters(
+        { [propertyUrlParam('multi_category')]: { equalTo: 'leaf_1' } },
+        [multi]
+      )
+    ).toEqual({
+      dynamicFilter: {
+        CustomField: {
+          key: 'multi_category',
+          filter: { MultiOption: { In: ['leaf_1', 'parent'] } },
+        },
+      },
+    });
+  });
+
   it('keeps an exact match for an option id not in the definition', () => {
     expect(
       mapPropertyFilters(

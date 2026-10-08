@@ -1,7 +1,7 @@
 use super::{
-    master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, name_row::name, program_row::program, store_row::store, DBType,
-    MasterListRow, StorageConnection,
+    DBType, MasterListRow, StorageConnection, master_list_line_row::master_list_line,
+    master_list_name_join::master_list_name_join, master_list_row::master_list, name_row::name,
+    program_row::program, store_row::store,
 };
 
 use crate::{

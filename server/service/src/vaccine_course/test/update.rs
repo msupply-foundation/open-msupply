@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod query {
+    use repository::EqualFilter;
     use repository::mock::{
-        mock_demographic_a, mock_immunisation_program_a, mock_item_a, mock_item_b, MockDataInserts,
+        MockDataInserts, mock_demographic_a, mock_immunisation_program_a, mock_item_a, mock_item_b,
     };
     use repository::test_db::setup_all;
     use repository::vaccine_course::vaccine_course_dose::{
@@ -10,7 +11,6 @@ mod query {
     use repository::vaccine_course::vaccine_course_item::{
         VaccineCourseItemFilter, VaccineCourseItemRepository,
     };
-    use repository::EqualFilter;
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccine_course::insert::InsertVaccineCourse;

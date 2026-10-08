@@ -1,12 +1,12 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     simple_generic_errors::{
         DatabaseError, InternalError, NoPermissionForThisStore, RecordAlreadyExist,
         UniqueValueViolation,
     },
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     asset::insert::{InsertAsset, InsertAssetError as ServiceError},
@@ -160,13 +160,13 @@ mod test {
 
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
-    use repository::{assets::asset::Asset, mock::MockDataInserts, StorageConnectionManager};
+    use repository::{StorageConnectionManager, assets::asset::Asset, mock::MockDataInserts};
     use serde_json::json;
 
     use service::{
         asset::{
-            insert::{InsertAsset, InsertAssetError},
             AssetServiceTrait,
+            insert::{InsertAsset, InsertAssetError},
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

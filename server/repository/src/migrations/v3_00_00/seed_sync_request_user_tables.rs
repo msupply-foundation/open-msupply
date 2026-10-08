@@ -9,11 +9,11 @@
 // auxiliary runner picks it up post-init.
 
 use crate::{
+    ChangelogTableName,
     migrations::{
         helpers::{pull_has_started, seed_sync_request_for_table},
         *,
     },
-    ChangelogTableName,
 };
 
 pub(crate) struct Migrate;

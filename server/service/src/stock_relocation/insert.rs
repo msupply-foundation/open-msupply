@@ -59,7 +59,7 @@ impl From<RepositoryError> for InsertStockRelocationError {
 
 #[cfg(test)]
 mod test {
-    use repository::{mock::MockDataInserts, test_db::setup_all, StockRelocationStatus};
+    use repository::{StockRelocationStatus, mock::MockDataInserts, test_db::setup_all};
     use util::uuid::uuid;
 
     use crate::service_provider::{ServiceContext, ServiceProvider};

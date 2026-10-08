@@ -1,0 +1,11 @@
+# The create modal's insert (spec/rnr-forms/ui-surface.md S2; rules §
+# creation). The modal's program and schedule/period reads come from the
+# shared program domain module (src/domain/program).
+
+mutation InsertRnrForm($storeId: String!, $input: InsertRnRFormInput!) {
+  insertRnrForm(storeId: $storeId, input: $input) {
+    ... on RnRFormNode {
+      id
+    }
+  }
+}

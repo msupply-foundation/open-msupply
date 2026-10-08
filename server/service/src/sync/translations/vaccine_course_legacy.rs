@@ -100,10 +100,10 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::{mock_program_a, MockDataInserts},
+        ChangelogRepository,
+        mock::{MockDataInserts, mock_program_a},
         test_db::setup_all,
         vaccine_course::vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
-        ChangelogRepository,
     };
 
     #[actix_rt::test]

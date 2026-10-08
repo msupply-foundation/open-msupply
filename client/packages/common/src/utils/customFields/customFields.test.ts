@@ -1,10 +1,17 @@
 import { CustomFieldNodeValueType } from '@common/types';
 import {
+  applyOptionToggle,
+  collapseToStoredOptionIds,
+  expandStoredOptionIds,
   formatCustomFieldValue,
   getHierarchicalOptions,
+  getOptionAncestorIds,
   getOptionAndDescendantIds,
   getSelectableOptions,
+  getTopMostOptionIds,
   getVisiblePropertyRows,
+  optionFilterQueryIds,
+  readMultiOptionIds,
   resolveOptionValue,
   CustomFieldDefinitionLike,
 } from './customFields';
@@ -36,13 +43,73 @@ describe('resolveOptionValue', () => {
   });
 
   it('joins an array of option ids', () => {
-    expect(resolveOptionValue(definition, ['opt_1', 'opt_2'])).toBe('Red, Blue');
+    expect(resolveOptionValue(definition, ['opt_1', 'opt_2'])).toBe(
+      'Red, Blue'
+    );
   });
 
   it('drops unresolvable ids from an array so a missing id leaves no stray comma', () => {
-    expect(resolveOptionValue(definition, ['opt_1', 'opt_missing', 'opt_2'])).toBe(
-      'Red, Blue'
-    );
+    expect(
+      resolveOptionValue(definition, ['opt_1', 'opt_missing', 'opt_2'])
+    ).toBe('Red, Blue');
+  });
+});
+
+describe('deleted options', () => {
+  // The server returns deleted options on purpose: a stored value is only ever
+  // an option id, so dropping them would make every record still holding one
+  // render a raw id. They stay resolvable, but nothing offers them as a choice.
+  const deleted = (id: string, name: string) => ({
+    id,
+    name,
+    deletedDatetime: '2026-01-01T00:00:00',
+  });
+
+  const definition = def({
+    valueType: CustomFieldNodeValueType.Option,
+    options: [option('live', 'Pregnant'), deleted('gone', 'Widowed')],
+  });
+
+  it('still resolves a deleted option to its name', () => {
+    expect(resolveOptionValue(definition, 'gone')).toBe('Widowed');
+  });
+
+  it('never offers a deleted option for selection', () => {
+    expect(getSelectableOptions(definition).map(o => o.id)).toEqual(['live']);
+    expect(getHierarchicalOptions(definition).map(o => o.id)).toEqual(['live']);
+  });
+
+  it('still matches a deleted descendant when filtering by its parent', () => {
+    const hierarchy = def({
+      valueType: CustomFieldNodeValueType.Option,
+      options: [
+        option('parent', 'Parent'),
+        { ...deleted('child', 'Child'), parentOptionId: 'parent' },
+      ],
+    });
+    expect(getOptionAndDescendantIds(hierarchy, 'parent')).toEqual([
+      'parent',
+      'child',
+    ]);
+  });
+
+  it('promotes the children of a deleted parent to roots rather than losing them', () => {
+    const hierarchy = def({
+      valueType: CustomFieldNodeValueType.Option,
+      options: [
+        deleted('parent', 'Parent'),
+        { ...option('child', 'Child'), parentOptionId: 'parent' },
+      ],
+    });
+    expect(getHierarchicalOptions(hierarchy)).toEqual([
+      {
+        id: 'child',
+        name: 'Child',
+        parentOptionId: 'parent',
+        depth: 0,
+        isLeaf: true,
+      },
+    ]);
   });
 });
 
@@ -83,7 +150,10 @@ describe('getSelectableOptions', () => {
         withParent('c2', 'Child 2', 'p'),
       ],
     });
-    expect(getSelectableOptions(definition).map(o => o.id)).toEqual(['c1', 'c2']);
+    expect(getSelectableOptions(definition).map(o => o.id)).toEqual([
+      'c1',
+      'c2',
+    ]);
   });
 });
 
@@ -194,7 +264,9 @@ describe('formatCustomFieldValue', () => {
   const localisedDate = (d: Date) => d.toISOString().slice(0, 10);
 
   it('stringifies text/number/real values', () => {
-    expect(formatCustomFieldValue(def({}), 'hello', localisedDate)).toBe('hello');
+    expect(formatCustomFieldValue(def({}), 'hello', localisedDate)).toBe(
+      'hello'
+    );
     expect(
       formatCustomFieldValue(
         def({ valueType: CustomFieldNodeValueType.Real }),
@@ -219,12 +291,104 @@ describe('formatCustomFieldValue', () => {
     );
   });
 
+  it('shows nothing for a value whose shape is not what its type means', () => {
+    // What a definition retyped on central leaves behind, and what the server
+    // refuses to write: a list under a single-valued field, a bare id under a
+    // multi-valued one, a number under text.
+    const single = def({
+      valueType: CustomFieldNodeValueType.Option,
+      options: [option('opt_1', 'Red')],
+    });
+    expect(formatCustomFieldValue(single, ['opt_1'], () => '')).toBe('');
+    const multi = def({
+      valueType: CustomFieldNodeValueType.MultiOption,
+      options: [option('opt_1', 'Red')],
+    });
+    expect(formatCustomFieldValue(multi, 'opt_1', () => '')).toBe('');
+    const text = def({ valueType: CustomFieldNodeValueType.Text });
+    expect(formatCustomFieldValue(text, 42, () => '')).toBe('');
+  });
+
   it('resolves OPTION values via the definition options', () => {
     const optDef = def({
       valueType: CustomFieldNodeValueType.Option,
       options: [option('opt_1', 'Red')],
     });
     expect(formatCustomFieldValue(optDef, 'opt_1', localisedDate)).toBe('Red');
+  });
+});
+
+// MULTI_OPTION stores the MINIMAL covering set — a parent stands for its whole
+// subtree — while the picker works in the expanded set. The rewrite implements
+// the same rules (frontend/src/domain/customFields/parse.ts); these pin them
+// here so the two apps can't disagree about what a value means.
+describe('multi-option values', () => {
+  const hierarchy = def({
+    valueType: CustomFieldNodeValueType.MultiOption,
+    options: [
+      { id: 'root', name: 'Vulnerable', parentOptionId: null },
+      { id: 'child', name: 'Under-5', parentOptionId: 'root' },
+      { id: 'sibling', name: 'Disabled', parentOptionId: 'root' },
+      { id: 'flat', name: 'Pregnant', parentOptionId: null },
+    ],
+  });
+
+  it('reads only an array of strings as a value', () => {
+    expect(readMultiOptionIds(['a', 'b'])).toEqual(['a', 'b']);
+    // A scalar is what a field retyped from OPTION leaves behind.
+    expect(readMultiOptionIds('a')).toEqual([]);
+    expect(readMultiOptionIds(['a', 2])).toEqual([]);
+    expect(readMultiOptionIds(undefined)).toEqual([]);
+  });
+
+  it('expands a stored parent and collapses a fully ticked subtree back', () => {
+    expect(expandStoredOptionIds(hierarchy, ['root']).sort()).toEqual([
+      'child',
+      'root',
+      'sibling',
+    ]);
+    expect(
+      collapseToStoredOptionIds(hierarchy, ['root', 'child', 'sibling'])
+    ).toEqual(['root']);
+    // A partially ticked parent stores its ticked child, in definition order.
+    expect(collapseToStoredOptionIds(hierarchy, ['flat', 'child'])).toEqual([
+      'child',
+      'flat',
+    ]);
+  });
+
+  it('ticking a node takes its subtree; unticking one takes its ancestors', () => {
+    expect(applyOptionToggle(hierarchy, [], ['root']).sort()).toEqual([
+      'child',
+      'root',
+      'sibling',
+    ]);
+    expect(
+      applyOptionToggle(
+        hierarchy,
+        ['root', 'child', 'sibling'],
+        ['root', 'child']
+      ).sort()
+    ).toEqual(['child']);
+  });
+
+  it('expands a filter both ways so minimal storage still matches', () => {
+    // Up: a record stored minimally as `root` must answer a filter on `child`.
+    expect(optionFilterQueryIds(hierarchy, 'child').sort()).toEqual([
+      'child',
+      'root',
+    ]);
+    expect(getOptionAncestorIds(hierarchy, 'child')).toEqual(['root']);
+  });
+
+  it('displays the top-most ids only', () => {
+    expect(getTopMostOptionIds(hierarchy, ['root', 'child'])).toEqual(['root']);
+    expect(formatCustomFieldValue(hierarchy, ['root', 'child'], () => '')).toBe(
+      'Vulnerable'
+    );
+    expect(formatCustomFieldValue(hierarchy, ['child', 'flat'], () => '')).toBe(
+      'Under-5, Pregnant'
+    );
   });
 });
 

@@ -1,6 +1,7 @@
 use repository::{
-    requisition_row::RequisitionType, EqualFilter, InvoiceLineFilter, InvoiceLineRepository,
-    RepositoryError, RequisitionLineRowRepository, RequisitionStatus, StorageConnection,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, RepositoryError,
+    RequisitionLineRowRepository, RequisitionStatus, StorageConnection,
+    requisition_row::RequisitionType,
 };
 
 use crate::{
@@ -84,9 +85,10 @@ fn validate(
             .requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
     )?;
 
-    if invoice_lines.iter().any(|invoice_line| {
-        requisition_line_row.item_id == invoice_line.invoice_line_row.item_id
-    }) {
+    if invoice_lines
+        .iter()
+        .any(|invoice_line| requisition_line_row.item_id == invoice_line.invoice_line_row.item_id)
+    {
         return Err(OutError::CannotDeleteLineLinkedToShipment);
     }
 
@@ -102,13 +104,12 @@ impl From<RepositoryError> for DeleteResponseRequisitionLineError {
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceLineRow, InvoiceRow, InvoiceStatus, RequisitionLineRowRepository,
         mock::{
-            mock_full_new_response_requisition_for_update_test,
-            mock_request_draft_requisition_calculation_test, mock_store_a, mock_store_b, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_full_new_response_requisition_for_update_test,
+            mock_request_draft_requisition_calculation_test, mock_store_a, mock_store_b,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, InvoiceRow, InvoiceStatus, RequisitionLineRowRepository,
     };
 
     use crate::{

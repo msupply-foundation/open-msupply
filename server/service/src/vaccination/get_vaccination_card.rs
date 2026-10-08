@@ -171,14 +171,14 @@ pub fn get_vaccination_status(
 mod tests {
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            mock_immunisation_program_a, mock_immunisation_program_enrolment_a, mock_patient,
-            mock_vaccine_course_a_dose_a, MockDataInserts,
-        },
         NameRow, NameRowRepository, VaccinationCardRow,
+        mock::{
+            MockDataInserts, mock_immunisation_program_a, mock_immunisation_program_enrolment_a,
+            mock_patient, mock_vaccine_course_a_dose_a,
+        },
     };
 
-    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_and_service_provider};
 
     use super::{get_suggested_date, get_vaccination_card};
 

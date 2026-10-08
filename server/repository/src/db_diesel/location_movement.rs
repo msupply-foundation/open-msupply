@@ -1,11 +1,11 @@
 use diesel::*;
 
-use super::{location_movement_row::location_movement, LocationMovementRow, StorageConnection};
+use super::{LocationMovementRow, StorageConnection, location_movement_row::location_movement};
 use crate::{
+    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
     },
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -79,6 +79,9 @@ impl<'a> LocationMovementRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(location_movement::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<LocationMovementRow>(self.connection.lock().connection())?;

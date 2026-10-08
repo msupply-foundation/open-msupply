@@ -145,7 +145,7 @@ impl CursorController {
 #[cfg(test)]
 mod test {
     use super::*;
-    use repository::test_db::{setup_test, SetupOption, SetupResult};
+    use repository::test_db::{SetupOption, SetupResult, setup_test};
 
     // Test multiple dynamic cursors make sure one does not affect the other
     #[actix_rt::test]

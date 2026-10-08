@@ -1,0 +1,11 @@
+/* One store option row: the store's CODE above its NAME. Two stacked lines so
+   the code reads as the row's identifier and the name as its label. */
+.option {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.code {
+  font-weight: var(--weight-bold);
+}

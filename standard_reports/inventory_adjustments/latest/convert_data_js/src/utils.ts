@@ -142,6 +142,7 @@ const applyFilter = <T>(
 const shouldIncludeLine = (
   line: AdjustmentLineNode,
   filters: Filters,
+  masterListItemIds: Set<string>,
 ): boolean => {
   let include = true;
 
@@ -149,8 +150,8 @@ const shouldIncludeLine = (
     filterByItemCodeOrName(line, value),
   );
 
-  include = applyFilter(include, filters.masterListId, (value) =>
-    filterByMasterListId(line, value),
+  include = applyFilter(include, filters.masterListId, () =>
+    filterByMasterListId(line, masterListItemIds),
   );
 
   include = applyFilter(include, filters.locationId, (value) =>
@@ -180,9 +181,12 @@ const shouldIncludeLine = (
 const applyFilters = (
   lines: AdjustmentLineNode[],
   filters: Filters,
+  masterListItemIds: Set<string>,
 ): AdjustmentLineNode[] => {
   if (!lines?.length) return [];
-  return lines.filter((line) => shouldIncludeLine(line, filters));
+  return lines.filter((line) =>
+    shouldIncludeLine(line, filters, masterListItemIds),
+  );
 };
 
 // Process lines: apply filters and sort the result
@@ -190,11 +194,18 @@ export const processLines = (
   invoices: InvoiceNode[],
   stocktakes: StocktakeNode[],
   filters: Filters,
+  // Item ids of the master list chosen in `filters.masterListId`. Empty unless a
+  // master list is chosen, and only read when one is - see filters.ts
+  masterListItemIds: Set<string> = new Set(),
 ): AdjustmentLineNode[] => {
   if (!invoices?.length) return [];
 
   const adjustmentLines = getAdjustmentLines(invoices, stocktakes);
-  const filteredLines = applyFilters(adjustmentLines, filters);
+  const filteredLines = applyFilters(
+    adjustmentLines,
+    filters,
+    masterListItemIds,
+  );
   return sortByKey(
     filteredLines,
     filters.sort as SortKey,

@@ -2,8 +2,8 @@ use async_graphql::*;
 
 use dataloader::DataLoader;
 use graphql_core::{
-    loader::VaccineCourseLoader, simple_generic_errors::NodeError,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    ContextExt, loader::VaccineCourseLoader, simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError,
 };
 use repository::vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRow;
 

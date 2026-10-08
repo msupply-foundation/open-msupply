@@ -1,18 +1,18 @@
-use self::delete::{delete_asset, DeleteAssetError};
-use self::delete_log_reason::{delete_log_reason, DeleteAssetLogReasonError};
-use self::insert::{insert_asset, InsertAsset, InsertAssetError};
-use self::insert_log::{insert_asset_log, InsertAssetLog, InsertAssetLogError};
+use self::delete::{DeleteAssetError, delete_asset};
+use self::delete_log_reason::{DeleteAssetLogReasonError, delete_log_reason};
+use self::insert::{InsertAsset, InsertAssetError, insert_asset};
+use self::insert_log::{InsertAssetLog, InsertAssetLogError, insert_asset_log};
 use self::insert_log_reason::{
-    insert_asset_log_reason, InsertAssetLogReason, InsertAssetLogReasonError,
+    InsertAssetLogReason, InsertAssetLogReasonError, insert_asset_log_reason,
 };
 use self::query::{get_asset, get_assets};
 use self::query_asset_property::get_asset_properties;
 use self::query_log::{get_asset_log, get_asset_logs};
 use self::query_log_reason::{get_asset_log_reason, get_asset_log_reasons};
-use self::update::{update_asset, UpdateAsset, UpdateAssetError};
+use self::update::{UpdateAsset, UpdateAssetError, update_asset};
 
 use super::{ListError, ListResult};
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use parse::AssetFromGs1Error;
 use repository::asset_log_reason::{AssetLogReason, AssetLogReasonFilter, AssetLogReasonSort};
 use repository::asset_property::AssetPropertyFilter;

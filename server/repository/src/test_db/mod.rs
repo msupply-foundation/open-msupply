@@ -11,10 +11,10 @@ pub use self::postgres::*;
 mod constants;
 
 use crate::{
+    StorageConnection, StorageConnectionManager,
     database_settings::DatabaseSettings,
     migrations::Version,
-    mock::{insert_extra_mock_data, MockData, MockDataCollection, MockDataInserts},
-    StorageConnection, StorageConnectionManager,
+    mock::{MockData, MockDataCollection, MockDataInserts, insert_extra_mock_data},
 };
 
 /// Generic setup method to help setup test environment

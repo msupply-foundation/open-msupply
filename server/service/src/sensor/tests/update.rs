@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::mock_store_a;
     use repository::EqualFilter;
-    use repository::{mock::MockDataInserts, test_db::setup_all, SensorFilter, SensorRepository};
+    use repository::mock::mock_store_a;
+    use repository::{SensorFilter, SensorRepository, mock::MockDataInserts, test_db::setup_all};
 
     use crate::NullableUpdate;
     use crate::{

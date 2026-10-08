@@ -1,9 +1,9 @@
 use async_graphql::*;
 
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible};
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::ResourceAccessRequest;
@@ -119,12 +119,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::OtherPartyNotASupplier => {
             return Ok(InsertErrorInterface::OtherPartyNotASupplier(
                 OtherPartyNotASupplier,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotVisible => {
             return Ok(InsertErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::InvoiceAlreadyExists
@@ -150,16 +150,16 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_inbound_shipment_c, mock_name_a, mock_store_a, MockDataInserts},
         Invoice, RepositoryError, StorageConnectionManager,
+        mock::{MockDataInserts, mock_inbound_shipment_c, mock_name_a, mock_store_a},
     };
     use serde_json::json;
     use service::{
         invoice::{
+            InvoiceServiceTrait,
             inbound_shipment::{
                 InsertInboundShipment as ServiceInput, InsertInboundShipmentError as ServiceError,
             },
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

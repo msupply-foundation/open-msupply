@@ -124,6 +124,7 @@ export const StoreWastagePanel = ({
         label={t('button.configure-per-store')}
         onClick={handleOpen}
         shouldShrink={false}
+        data-testid="configure-per-store-button"
         sx={{ whiteSpace: 'nowrap' }}
       />
       <SlidePanel
@@ -132,6 +133,7 @@ export const StoreWastagePanel = ({
         title={t('heading.configure-rates-per-store')}
         cancelButton={<DialogButton variant="back" onClick={handleBack} />}
         okButton={<DialogButton variant="ok" onClick={refreshStates} />}
+        testId="store-rates-panel"
       >
         <Box px={3}>
           <BasicTextInput
@@ -140,6 +142,7 @@ export const StoreWastagePanel = ({
             placeholder={t('placeholder.filter-by-store-name')}
             fullWidth
             sx={{ marginBottom: 1 }}
+            slotProps={{ htmlInput: { 'data-testid': 'store-rates-search' } }}
           />
           <Box
             display="flex"
@@ -178,6 +181,7 @@ export const StoreWastagePanel = ({
                 return (
                   <Box
                     key={store.id}
+                    data-testid="store-rate-row"
                     display="flex"
                     justifyContent="space-between"
                     alignItems="center"
@@ -197,6 +201,11 @@ export const StoreWastagePanel = ({
                       }
                       max={100}
                       {...inputProps}
+                      slotProps={{
+                        htmlInput: {
+                          'data-testid': `store-rate-wastage-${store.id}`,
+                        },
+                      }}
                     />
                     <NumericTextInput
                       value={config?.coverageRate ?? undefined}
@@ -208,6 +217,11 @@ export const StoreWastagePanel = ({
                         )
                       }
                       {...inputProps}
+                      slotProps={{
+                        htmlInput: {
+                          'data-testid': `store-rate-coverage-${store.id}`,
+                        },
+                      }}
                     />
                   </Box>
                 );

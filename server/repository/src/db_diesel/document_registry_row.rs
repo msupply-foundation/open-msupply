@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::form_schema_row::form_schema, ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId, Upsert,
+    db_diesel::form_schema_row::form_schema,
 };
 
 use diesel::prelude::*;
@@ -30,7 +30,16 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = document_registry)]
 pub struct DocumentRegistryRow {
     pub id: String,

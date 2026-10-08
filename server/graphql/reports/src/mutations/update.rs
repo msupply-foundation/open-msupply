@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -21,10 +21,7 @@ pub struct UpdateReportNode {
     pub is_active: bool,
 }
 
-pub fn update_report(
-    ctx: &Context<'_>,
-    input: UpdateReportInput,
-) -> Result<UpdateReportNode> {
+pub fn update_report(ctx: &Context<'_>, input: UpdateReportInput) -> Result<UpdateReportNode> {
     let UpdateReportInput { id, is_active } = input;
 
     validate_auth(

@@ -4,8 +4,8 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::{
-    ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
@@ -63,10 +63,7 @@ impl<'a> VaccineCourseRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(
-        &self,
-        vaccine_course_row: &VaccineCourseRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, vaccine_course_row: &VaccineCourseRow) -> Result<(), RepositoryError> {
         self._upsert_one(vaccine_course_row)?;
         let changelog = VaccineCourseRow::generate_changelog(
             vaccine_course_row.id.clone(),
@@ -100,7 +97,10 @@ impl<'a> VaccineCourseRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<VaccineCourseRow>, RepositoryError> {
         Ok(vaccine_course::table
             .filter(vaccine_course::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

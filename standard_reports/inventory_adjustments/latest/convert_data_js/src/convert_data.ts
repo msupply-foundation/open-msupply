@@ -9,6 +9,9 @@ const extractStocktakes = (data: Data) => {
   return data?.stocktakes?.nodes ?? [];
 };
 
+const extractMasterListItemIds = (data: Data) =>
+  new Set((data?.masterListItems?.nodes ?? []).map((item) => item.id));
+
 const buildResult = (
   data: Data,
   filters: Arguments,
@@ -30,6 +33,12 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
 }) => {
   const invoices = extractInvoices(data);
   const stocktakes = extractStocktakes(data);
-  const processedLines = processLines(invoices, stocktakes, filters);
+  const masterListItemIds = extractMasterListItemIds(data);
+  const processedLines = processLines(
+    invoices,
+    stocktakes,
+    filters,
+    masterListItemIds
+  );
   return buildResult(data, filters, processedLines);
 };

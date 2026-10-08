@@ -1,9 +1,9 @@
 use chrono::{DateTime, NaiveDate, NaiveDateTime};
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
     InvoiceRepository, ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository,
     RequisitionRow, RequisitionRowDelete, Row, StorageConnection, SyncBufferRow,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 use serde::{Deserialize, Serialize};
@@ -253,7 +253,7 @@ impl SyncTranslation for RequisitionTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "Unsupported requisition type: {:?}",
                     data.r#type
-                )))
+                )));
             }
         };
 
@@ -429,7 +429,7 @@ impl SyncTranslation for RequisitionTranslation {
                     return Ok(PushTranslateResult::Ignored(format!(
                         "Unsupported requisition status: {:?} (type: {:?}) row id: {}",
                         status, r#type, requisition_row.id
-                    )))
+                    )));
                 }
             },
             om_status: Some(status),
@@ -647,11 +647,11 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::{mock_period, mock_store_a, MockDataInserts},
-        test_db::setup_all,
         ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, NameLinkRow,
         NameLinkRowRepository, PeriodRow, PeriodRowRepository, RowOrDelete, StoreRow,
         StoreRowRepository, SyncAction, SyncBufferRow, SyncRecordData,
+        mock::{MockDataInserts, mock_period, mock_store_a},
+        test_db::setup_all,
     };
     use serde_json::json;
     use util::assert_variant;

@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod query {
     use repository::mock::mock_store_a;
-    use repository::{
-        mock::MockDataInserts, test_db::setup_all, Sensor, SensorFilter, SensorRepository,
-        SensorRow,
-    };
     use repository::{EqualFilter, SensorType};
+    use repository::{
+        Sensor, SensorFilter, SensorRepository, SensorRow, mock::MockDataInserts,
+        test_db::setup_all,
+    };
 
     use crate::{
         sensor::insert::{InsertSensor, InsertSensorError},

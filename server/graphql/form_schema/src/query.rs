@@ -5,7 +5,7 @@ use repository::{FormSchemaSort, FormSchemaSortField, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
 use graphql_core::{
-    pagination::PaginationInput, standard_graphql_error::validate_auth, ContextExt,
+    ContextExt, pagination::PaginationInput, standard_graphql_error::validate_auth,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

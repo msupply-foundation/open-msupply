@@ -1,0 +1,7 @@
+mutation DeleteStockMovements($storeId: String!, $ids: [String!]!) {
+  deleteStockRelocations(storeId: $storeId, ids: $ids) {
+    ... on DeleteStockRelocationsNode {
+      ids
+    }
+  }
+}

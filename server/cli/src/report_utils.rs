@@ -1,6 +1,6 @@
-use base64::{prelude::BASE64_STANDARD, Engine};
-use report_builder::{build::build_report_definition, BuildArgs};
-use repository::{schema_from_row, ContextType, FormSchemaRow, RepositoryError};
+use base64::{Engine, prelude::BASE64_STANDARD};
+use report_builder::{BuildArgs, build::build_report_definition};
+use repository::{ContextType, FormSchemaRow, RepositoryError, schema_from_row};
 use service::{
     report::definition::ConvertDataType,
     standard_reports::{ReportData, ReportsData},
@@ -51,8 +51,8 @@ pub enum ReportError {
 use ReportError as Error;
 
 use crate::{
-    helpers::{run_command_with_error, CommandError},
     YARN_COMMAND,
+    helpers::{CommandError, run_command_with_error},
 };
 
 pub fn generate_reports_recursive(
@@ -152,7 +152,7 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
 
     let form_schema_json = match (arguments_path, arguments_ui_path) {
         (Some(_), None) | (None, Some(_)) => {
-            return Err(Error::FailedToGenerateArgumentSchema(path.to_path_buf()))
+            return Err(Error::FailedToGenerateArgumentSchema(path.to_path_buf()));
         }
         (Some(arguments_path), Some(arguments_ui_path)) => Some(
             schema_from_row(FormSchemaRow {

@@ -1,13 +1,13 @@
 use repository::{
-    barcode::{Barcode, BarcodeFilter, BarcodeRepository, BarcodeSort},
     BarcodeRow, BarcodeRowRepository, EqualFilter, PaginationOption, RepositoryError,
     StorageConnection, StorageConnectionManager,
+    barcode::{Barcode, BarcodeFilter, BarcodeRepository, BarcodeSort},
 };
 use util::uuid::uuid;
 
 use crate::{item::item::check_item_exists, service_provider::ServiceContext};
 
-use super::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
+use super::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 
 pub struct InsertResult {
     pub id: String,

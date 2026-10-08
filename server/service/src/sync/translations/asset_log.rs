@@ -1,6 +1,6 @@
 use repository::{
-    asset_log_row::AssetLogRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    asset_log_row::AssetLogRow,
 };
 
 use crate::sync::translations::{
@@ -113,7 +113,7 @@ mod tests {
 
     use repository::{
         asset_row::{AssetRow, AssetRowRepository},
-        mock::{mock_asset_a, MockDataInserts},
+        mock::{MockDataInserts, mock_asset_a},
         test_db::setup_all,
     };
 
@@ -127,10 +127,13 @@ mod tests {
 
         // Seed the asset parent the log's required FK points at (reason_id is null in test data).
         AssetRowRepository::new(&connection)
-            .upsert_one(&AssetRow {
-                id: "3de161ed-93ef-4210-aa31-3ae9e53748e8".to_string(),
-                ..mock_asset_a()
-            }, None)
+            .upsert_one(
+                &AssetRow {
+                    id: "3de161ed-93ef-4210-aa31-3ae9e53748e8".to_string(),
+                    ..mock_asset_a()
+                },
+                None,
+            )
             .unwrap();
 
         for record in test_data::test_pull_upsert_records() {

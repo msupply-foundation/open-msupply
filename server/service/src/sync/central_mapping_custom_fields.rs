@@ -1,6 +1,7 @@
 use repository::{
-    CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository,
-    CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType, RepositoryError, StorageConnection,
+    CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+    CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType, RepositoryError,
+    StorageConnection,
 };
 
 /// Stable string identifiers for the code-defined legacy mapping custom_fields.
@@ -101,13 +102,13 @@ struct MappingCustomField {
 /// different scopes never interact, so the item and name groups below can be
 /// interleaved freely — the order that matters is the relative order *within* a
 /// scope. Reordering entries here changes display order on the next central sync.
-fn mapping_custom_fields() -> Vec<MappingCustomField> {
+static MAPPING_CUSTOM_FIELDS: &[MappingCustomField] = {
     use keys::*;
     // Import value-type/display-mode variants explicitly rather than glob-importing
     // both enums: each carries an `Other` variant, so two globs would clash.
     use CustomFieldDisplayMode::{Prominent, Visible};
     use CustomFieldValueType::{Boolean, Option, Real, Text};
-    vec![
+    &[
         // ===== item scope: categories first, then user fields =====
 
         // item categories — a single OPTION custom_field whose options are the
@@ -332,6 +333,31 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             scopes: &["prescription"],
         },
     ]
+};
+
+/// The `custom_fields` keys the OG→OMS import owns for a record kind — every
+/// mapping custom_field seeded onto any of its scopes, which is by construction
+/// every key its `build_legacy_*_custom_fields` can emit (a mapping definition
+/// exists precisely because the import writes its key).
+///
+/// Takes a slice because a record kind's owned set isn't always one scope: names
+/// span `customer`/`supplier`/`patient` and invoices one scope per invoice type,
+/// while items are simply `["item"]`.
+///
+/// This is what a translator passes to `merge_legacy_custom_fields` as its owned
+/// set, so the registry above stays the single list of OG-owned keys rather than
+/// each translator keeping its own copy to drift out of step.
+pub(crate) fn legacy_owned_keys_for_scopes(scopes: &[&str]) -> Vec<&'static str> {
+    let mut keys: Vec<&'static str> = MAPPING_CUSTOM_FIELDS
+        .iter()
+        .filter(|def| def.scopes.iter().any(|seeded| scopes.contains(seeded)))
+        .map(|def| def.key)
+        .collect();
+    // A definition seeded onto several of the scopes asked for (the name defs are
+    // on all three name scopes) would otherwise appear once per scope.
+    keys.sort_unstable();
+    keys.dedup();
+    keys
 }
 
 /// Seed the code-defined mapping custom_field definitions. **Central-server only** —
@@ -348,13 +374,13 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
 /// field-label sync once created), and the `custom_field_scope` mapping is only
 /// created when **absent**, so a later display-mode edit (`display_mode`) is
 /// preserved rather than reset here.
-pub(crate) fn seed_central_mapping_custom_fields(
+pub fn seed_central_mapping_custom_fields(
     connection: &StorageConnection,
 ) -> Result<(), RepositoryError> {
     let custom_field_repo = CustomFieldRowRepository::new(connection);
     let table_repo = CustomFieldScopeRowRepository::new(connection);
 
-    for (index, def) in mapping_custom_fields().into_iter().enumerate() {
+    for (index, def) in MAPPING_CUSTOM_FIELDS.iter().enumerate() {
         let existing = custom_field_repo.find_one_by_id(def.key)?;
         let custom_field = CustomFieldRow {
             id: def.key.to_string(),
@@ -396,6 +422,9 @@ pub(crate) fn seed_central_mapping_custom_fields(
                     .as_ref()
                     .map_or_else(|| def.display_mode.clone(), |row| row.display_mode.clone()),
                 sort_order: sort_order.clone(),
+                // Legacy mapping fields are never withdrawn, so this is only
+                // ever cleared — the sweep that sets it is builtin-only.
+                deleted_datetime: None,
             };
             // Change-aware: only write when the row differs, so steady-state
             // re-seeds add no changelog churn.
@@ -411,12 +440,15 @@ pub(crate) fn seed_central_mapping_custom_fields(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all, ChangelogRepository};
+    use repository::{ChangelogRepository, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn seeds_mapping_custom_fields_idempotently() {
-        let (_, connection, _, _) =
-            setup_all("seed_central_mapping_custom_fields", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all(
+            "seed_central_mapping_custom_fields",
+            MockDataInserts::none(),
+        )
+        .await;
 
         let custom_field_repo = CustomFieldRowRepository::new(&connection);
         let table_repo = CustomFieldScopeRowRepository::new(&connection);
@@ -432,7 +464,10 @@ mod tests {
             .find_one_by_id("custom_1")
             .unwrap()
             .expect("missing custom_1");
-        assert_eq!(name_1.id, name_1.key, "key is the id for legacy custom_fields");
+        assert_eq!(
+            name_1.id, name_1.key,
+            "key is the id for legacy custom_fields"
+        );
         assert_eq!(name_1.key, "custom_1");
         assert_eq!(name_1.kind, CustomFieldKind::Legacy);
         assert_eq!(name_1.value_type, CustomFieldValueType::Text);
@@ -467,9 +502,12 @@ mod tests {
             .expect("missing custom_1__patient mapping");
         assert_eq!(patient_mapping.custom_field_id, "custom_1");
         assert_eq!(patient_mapping.scope, "patient");
-        assert_eq!(patient_mapping.display_mode, CustomFieldDisplayMode::Visible);
+        assert_eq!(
+            patient_mapping.display_mode,
+            CustomFieldDisplayMode::Visible
+        );
 
-        // sort_order ranks fields by their position in `mapping_custom_fields()`;
+        // sort_order ranks fields by their position in `MAPPING_CUSTOM_FIELDS`;
         // assert the resulting per-scope display order matches the intended order
         // (this is what changes when the list above is reordered).
         let order_for = |scope: &str| {
@@ -575,12 +613,12 @@ mod tests {
     fn transaction_category_mappings_stay_in_lock_step() {
         use crate::invoice::invoice_custom_field_scope;
         use crate::sync::translations::invoice::{
-            category_key_for_invoice_type, LEGACY_INVOICE_OWNED_KEYS,
+            LEGACY_INVOICE_OWNED_KEYS, category_key_for_invoice_type,
         };
         use repository::InvoiceType::*;
 
-        let seeded: Vec<_> = mapping_custom_fields()
-            .into_iter()
+        let seeded: Vec<_> = MAPPING_CUSTOM_FIELDS
+            .iter()
             .filter(|def| LEGACY_INVOICE_OWNED_KEYS.contains(&def.key))
             .collect();
 
@@ -633,12 +671,16 @@ mod tests {
 
         // The owned-keys list is exactly the seeded category keys (the per-type
         // keys + the pi2 prescription dimension), no more, no less.
+        //
+        // The list is now derived from this registry by scope, so comparing it back
+        // against the registry would only restate its own definition. What still has
+        // teeth is the other end: that the scope-derived set matches the keys
+        // `category_key_for_invoice_type` actually writes. A category key whose
+        // definition is seeded onto the wrong scope (or no scope) drops out of the
+        // owned set and fails here.
         let mut owned: Vec<_> = LEGACY_INVOICE_OWNED_KEYS.to_vec();
-        let mut seeded_keys: Vec<_> = seeded.iter().map(|def| def.key).collect();
         owned.sort_unstable();
-        seeded_keys.sort_unstable();
         expected_keys.sort_unstable();
-        assert_eq!(owned, seeded_keys);
         assert_eq!(owned, expected_keys);
     }
 }

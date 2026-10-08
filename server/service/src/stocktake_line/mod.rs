@@ -1,7 +1,7 @@
 use repository::PaginationOption;
 use repository::{RepositoryError, StocktakeLine, StocktakeLineFilter, StocktakeLineSort};
 
-use crate::{service_provider::ServiceContext, ListResult};
+use crate::{ListResult, service_provider::ServiceContext};
 
 pub mod query;
 pub mod validate;
@@ -13,7 +13,7 @@ mod insert;
 pub use self::insert::*;
 
 mod update;
-use self::query::{get_stocktake_line, get_stocktake_lines, GetStocktakeLinesError};
+use self::query::{GetStocktakeLinesError, get_stocktake_line, get_stocktake_lines};
 pub use self::update::*;
 
 pub trait StocktakeLineServiceTrait: Sync + Send {

@@ -1,7 +1,7 @@
 use std::{future::Future, sync::Arc};
 
 use crate::service_provider::ServiceProvider;
-use crate::sync::{is_initialised, CentralServerConfig};
+use crate::sync::{CentralServerConfig, is_initialised};
 
 use super::file_sync_driver::FileSyncTrigger;
 use super::{settings::SyncSettings, synchroniser_runner::Synchroniser};
@@ -122,6 +122,14 @@ impl SyncTrigger {
         SyncTrigger {
             sender: mpsc::channel(1).0,
         }
+    }
+
+    /// A trigger whose receiver the test holds, so it can assert whether a
+    /// code path fired a sync (e.g. `ensure_site_is_v7`'s central kick).
+    #[cfg(test)]
+    pub(crate) fn new_test() -> (SyncTrigger, mpsc::Receiver<()>) {
+        let (sender, receiver) = mpsc::channel(1);
+        (SyncTrigger { sender }, receiver)
     }
 }
 

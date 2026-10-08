@@ -3,7 +3,7 @@ use crate::{
     sync::test::integration::transfer::{new_instance_of_existing_site, sync_and_delay},
 };
 
-use super::{initialise_transfer_sites, SyncIntegrationTransferContext};
+use super::{SyncIntegrationTransferContext, initialise_transfer_sites};
 
 #[actix_rt::test]
 async fn integration_sync_transfer_shipment_normal() {

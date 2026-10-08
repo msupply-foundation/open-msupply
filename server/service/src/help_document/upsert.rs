@@ -44,9 +44,10 @@ pub fn insert_help_document(
             repo.upsert_one(&row)?;
 
             HelpDocumentRepository::new(connection)
-                .query_by_filter(repository::HelpDocumentFilter::new().id(
-                    repository::EqualFilter::equal_to(input.id.clone()),
-                ))?
+                .query_by_filter(
+                    repository::HelpDocumentFilter::new()
+                        .id(repository::EqualFilter::equal_to(input.id.clone())),
+                )?
                 .pop()
                 .ok_or(InsertHelpDocumentError::CreatedRecordNotFound)
         })

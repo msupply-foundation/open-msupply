@@ -1,6 +1,6 @@
 use crate::sync::translations::{
-    name::NameTranslation, store::StoreTranslation, FkField, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, name::NameTranslation,
+    store::StoreTranslation,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
@@ -498,8 +498,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        CursorAndLimit, FilterBuilder, RowOrDelete,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
+        mock::MockDataInserts, test_db::setup_all,
     };
     use serde_json::json;
 

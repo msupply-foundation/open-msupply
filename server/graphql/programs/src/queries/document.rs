@@ -4,7 +4,7 @@ use graphql_core::generic_filters::{
 };
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
 use graphql_types::types::document::{DocumentConnector, DocumentNode};
 use repository::{
     DatetimeFilter, DocumentFilter, DocumentSort, DocumentSortField, EqualFilter, PaginationOption,

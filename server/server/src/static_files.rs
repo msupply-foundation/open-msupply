@@ -1,19 +1,19 @@
 use std::io::ErrorKind;
 
 use actix_files as fs;
-use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::MultipartForm;
+use actix_multipart::form::tempfile::TempFile;
 
 use actix_web::error::InternalError;
-use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;
+use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::web::Data;
-use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse};
+use actix_web::{Error, HttpRequest, HttpResponse, delete, get, guard, post, web};
 
 use fs::NamedFile;
+use repository::SyncFileDirection;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
-use repository::SyncFileDirection;
 use repository::{
     EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
 };
@@ -25,10 +25,10 @@ use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::StaticFile;
-use service::static_files::{StaticFileCategory, StaticFileService};
+use service::static_files::{InvalidFilePath, StaticFileCategory, StaticFileService};
+use service::sync::CentralServerConfig;
 use service::sync::file_sync_driver::{file_sync_central_url, get_sync_settings};
 use service::sync::file_synchroniser::{self, FileSynchroniser};
-use service::sync::CentralServerConfig;
 use service::usize_to_i32;
 use std::sync::Arc;
 use thiserror::Error;
@@ -110,17 +110,17 @@ fn check_purchase_order_document_editable(
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
         .pop();
 
-    if let Some(po) = purchase_order {
-        if matches!(
+    if let Some(po) = purchase_order
+        && matches!(
             po.purchase_order_row.status,
             PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
-        ) {
-            return Err(InternalError::new(
-                "Cannot upload or delete documents for a sent or finalised purchase order",
-                StatusCode::BAD_REQUEST,
-            )
-            .into());
-        }
+        )
+    {
+        return Err(InternalError::new(
+            "Cannot upload or delete documents for a sent or finalised purchase order",
+            StatusCode::BAD_REQUEST,
+        )
+        .into());
     }
 
     Ok(())
@@ -135,7 +135,17 @@ async fn files(
     req: HttpRequest,
     query: web::Query<FileRequestQuery>,
     settings: Data<Settings>,
+    auth_data: Data<AuthData>,
 ) -> Result<HttpResponse, Error> {
+    // Temporary files are where generated report output lands, so the file id must not
+    // be the only thing standing between a request and someone's report data.
+    validate_cookie_auth(req.clone(), &auth_data).map_err(|_err| {
+        InternalError::new(
+            "You must be logged in to download files",
+            StatusCode::UNAUTHORIZED,
+        )
+    })?;
+
     let service = StaticFileService::new(&settings.server.base_dir)
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
@@ -329,6 +339,15 @@ async fn download_sync_file(
         Err(error) => error,
     };
 
+    // The table name, record id and file id are all URL path segments, so one that can't
+    // be a path component is a malformed request rather than a fault on this server
+    if let DownloadFileError::Other(ref err) = error
+        && InvalidFilePath::is_in(err)
+    {
+        log::warn!("Rejected sync file download: {}", format_error(&error));
+        return Err(InternalError::new(err.to_string(), StatusCode::BAD_REQUEST).into());
+    }
+
     let error = match error {
         DownloadFileError::NotFoundLocallyAndThisIsCentralServer
         | DownloadFileError::ErrorDownloadingFile(
@@ -417,6 +436,28 @@ mod test {
     use super::*;
     use actix_web::body::to_bytes;
 
+    /// Minimal Settings for route tests; only `server.base_dir` is read by these
+    /// handlers. Built through the shared helper rather than deserialised from a JSON
+    /// literal, so a field added to `Settings` is a compile error here instead of a
+    /// panic at the first `unwrap`.
+    fn test_settings() -> Settings {
+        service::settings::test_settings(
+            repository::database_settings::DatabaseSettings {
+                username: String::new(),
+                password: String::new(),
+                port: 0,
+                host: String::new(),
+                database_name: "test".to_string(),
+                database_path: None,
+                connection_pool_max_connections: None,
+                connection_pool_min_idle: None,
+                connection_pool_timeout_seconds: None,
+                init_sql: None,
+            },
+            None,
+        )
+    }
+
     fn temp_file(name: &str, size: usize) -> TempFile {
         TempFile {
             file: tempfile::NamedTempFile::new().unwrap(),
@@ -424,6 +465,40 @@ mod test {
             file_name: Some(name.to_string()),
             size,
         }
+    }
+
+    /// Security audit DS-5: `/files` serves generated report output, so an unauthenticated
+    /// request must be refused rather than treating the file id as the access control.
+    #[actix_rt::test]
+    async fn files_requires_authentication() {
+        use actix_web::{App, test, web::Data};
+        use service::auth_data::AuthData;
+        use std::sync::{Arc, RwLock};
+
+        let auth_data = Data::new(AuthData {
+            session_store: Arc::new(RwLock::new(Default::default())),
+            cookie_suffix: "8000".to_string(),
+            no_ssl: true,
+            debug_no_access_control: false,
+        });
+
+        let app = test::init_service(
+            App::new()
+                .app_data(auth_data)
+                .app_data(Data::new(test_settings()))
+                .configure(|cfg| {
+                    cfg.service(web::resource("/files").guard(guard::Get()).to(files));
+                }),
+        )
+        .await;
+
+        // No session cookie
+        let request = test::TestRequest::get()
+            .uri("/files?id=some-report-file-id")
+            .to_request();
+        let response = test::call_service(&app, request).await;
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     }
 
     #[actix_rt::test]

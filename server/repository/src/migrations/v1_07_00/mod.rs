@@ -1,4 +1,4 @@
-use super::{helpers::run_without_change_log_updates, version::Version, Migration};
+use super::{Migration, helpers::run_without_change_log_updates, version::Version};
 
 use crate::StorageConnection;
 
@@ -346,7 +346,12 @@ async fn migration_1_07_00_merge() {
         .load(connection.lock().connection())
         .unwrap();
 
-    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+    migrate(
+        &connection,
+        Some(version.clone()),
+        MigrationConfig::default(),
+    )
+    .unwrap();
     assert_eq!(get_database_version(&connection), version);
 
     let expected_item_links = vec![

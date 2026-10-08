@@ -10,9 +10,10 @@ import { PropertyNodeValueType, CustomFieldNodeValueType } from '@common/types';
  * so the two don't line up 1:1.
  *
  * Returns `null` for value types that don't map to the legacy control:
- *  - `OPTION`: handled directly by `CustomFieldInput` via an id-aware
- *    Autocomplete (the legacy control is name/string based and would corrupt the
- *    stored id), so it never routes through this bridge.
+ *  - `OPTION` / `MULTI_OPTION`: handled directly by `CustomFieldInput` via an
+ *    id-aware Autocomplete (the legacy control is name/string based and would
+ *    corrupt the stored id, and has no multi-value form at all), so they never
+ *    route through this bridge.
  *
  * This keeps the V2→legacy mapping in one place so the edit control itself is
  * untouched (it's shared with the Stores properties UI).
@@ -32,6 +33,7 @@ export const toLegacyPropertyInput = (
     case CustomFieldNodeValueType.Boolean:
       return { valueType: PropertyNodeValueType.Boolean };
     case CustomFieldNodeValueType.Option:
+    case CustomFieldNodeValueType.MultiOption:
     default:
       return null;
   }

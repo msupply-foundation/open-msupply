@@ -2,7 +2,7 @@ use super::*;
 use copy_dir::copy_dir;
 use diesel::{Connection, RunQueryDsl};
 use repository::DBBackendConnection;
-use service::settings::{is_develop, Settings};
+use service::settings::{Settings, is_develop};
 use std::{
     fs, io,
     path::{Path, PathBuf},

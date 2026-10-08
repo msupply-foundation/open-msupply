@@ -5,11 +5,11 @@ use repository::{
 };
 
 use crate::{
+    NullableUpdate,
     activity_log::activity_log_entry,
-    purchase_order::update::{update_purchase_order, UpdatePurchaseOrderInput},
+    purchase_order::update::{UpdatePurchaseOrderInput, update_purchase_order},
     purchase_order_line::{insert::PackSizeCodeCombination, query::get_purchase_order_line},
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 
 mod generate;

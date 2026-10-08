@@ -1,4 +1,4 @@
-use repository::{sync_buffer::SyncRecordData, MasterListLineRow, SyncBufferRow};
+use repository::{MasterListLineRow, SyncBufferRow, sync_buffer::SyncRecordData};
 
 use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
 

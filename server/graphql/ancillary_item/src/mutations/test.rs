@@ -5,16 +5,16 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        ancillary_item_row::AncillaryItemRow, mock::MockDataInserts, StorageConnectionManager,
+        StorageConnectionManager, ancillary_item_row::AncillaryItemRow, mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
         item::{
+            ItemServiceTrait,
             ancillary_item::{
                 DeleteAncillaryItem, DeleteAncillaryItemError, UpsertAncillaryItem,
                 UpsertAncillaryItemError,
             },
-            ItemServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -25,14 +25,20 @@ mod test {
     struct TestService {
         upsert: Option<
             Box<
-                dyn Fn(&ServiceContext, UpsertAncillaryItem) -> Result<AncillaryItemRow, UpsertAncillaryItemError>
+                dyn Fn(
+                        &ServiceContext,
+                        UpsertAncillaryItem,
+                    ) -> Result<AncillaryItemRow, UpsertAncillaryItemError>
                     + Sync
                     + Send,
             >,
         >,
         delete: Option<
             Box<
-                dyn Fn(&ServiceContext, DeleteAncillaryItem) -> Result<String, DeleteAncillaryItemError>
+                dyn Fn(
+                        &ServiceContext,
+                        DeleteAncillaryItem,
+                    ) -> Result<String, DeleteAncillaryItemError>
                     + Sync
                     + Send,
             >,
@@ -111,7 +117,9 @@ mod test {
 
         // Cycle error → typed AncillaryCycleDetected error variant
         let test_service = TestService {
-            upsert: Some(Box::new(|_, _| Err(UpsertAncillaryItemError::CycleDetected))),
+            upsert: Some(Box::new(|_, _| {
+                Err(UpsertAncillaryItemError::CycleDetected)
+            })),
             ..Default::default()
         };
         let expected_cycle = json!({
@@ -152,10 +160,7 @@ mod test {
         // MaxDepthExceeded → typed AncillaryMaxDepthExceeded error variant with max/actual
         let test_service = TestService {
             upsert: Some(Box::new(|_, _| {
-                Err(UpsertAncillaryItemError::MaxDepthExceeded {
-                    max: 5,
-                    actual: 6,
-                })
+                Err(UpsertAncillaryItemError::MaxDepthExceeded { max: 5, actual: 6 })
             })),
             ..Default::default()
         };

@@ -1,15 +1,15 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     generic_filters::EqualFilterStringInput,
     map_filter,
     pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::{ReasonOptionConnector, ReasonOptionNodeType};
 use repository::{
-    reason_option::{ReasonOptionFilter, ReasonOptionSort, ReasonOptionSortField},
     EqualFilter, PaginationOption, ReasonOptionType,
+    reason_option::{ReasonOptionFilter, ReasonOptionSort, ReasonOptionSortField},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},

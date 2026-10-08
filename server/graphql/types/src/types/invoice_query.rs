@@ -17,9 +17,9 @@ use graphql_core::loader::{
     UserLoader,
 };
 use graphql_core::{
+    ContextExt,
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use repository::{
     ClinicianRow, InvoiceRow, InvoiceType, Name, NameRow, NameRowType, PricingRow, Store, StoreRow,
@@ -27,7 +27,7 @@ use repository::{
 
 use repository::Invoice;
 use serde::Serialize;
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -244,8 +244,7 @@ impl InvoiceNode {
             return Ok(None);
         };
 
-        let Some(scope) = service::invoice::invoice_custom_field_scope(&self.row().r#type)
-        else {
+        let Some(scope) = service::invoice::invoice_custom_field_scope(&self.row().r#type) else {
             return Ok(None);
         };
 
@@ -551,6 +550,12 @@ impl InvoiceNode {
         &self.row().purchase_order_id
     }
 
+    /// The prescriber's prescription request this dispensing invoice was
+    /// generated from (soft link — the order may not exist on this site)
+    pub async fn prescription_request_id(&self) -> &Option<String> {
+        &self.row().prescription_request_id
+    }
+
     pub async fn purchase_order(&self, ctx: &Context<'_>) -> Result<Option<PurchaseOrderNode>> {
         // &self.row().purchase_order_id
         let Some(purchase_order_id) = &self.row().purchase_order_id else {
@@ -692,11 +697,11 @@ mod test {
 
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
-        mock::{
-            currency_a, mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
-            MockDataInserts,
-        },
         Invoice, InvoiceLineRow, InvoiceLineType, InvoiceRow,
+        mock::{
+            MockData, MockDataInserts, currency_a, mock_item_a, mock_item_b, mock_item_c,
+            mock_name_a, mock_store_a,
+        },
     };
     use serde_json::json;
 

@@ -4,20 +4,20 @@ mod query {
     use repository::item_variant::bundled_item::BundledItemFilter;
     use repository::item_variant::item_variant::ItemVariantFilter;
     use repository::mock::{
-        mock_item_a, mock_item_b, mock_name_c, mock_name_store_b, mock_store_a,
-        mock_user_account_a, MockDataInserts,
+        MockDataInserts, mock_item_a, mock_item_b, mock_name_c, mock_name_store_b, mock_store_a,
+        mock_user_account_a,
     };
     use repository::test_db::setup_all;
     use repository::{ActivityLogType, EqualFilter, StringFilter};
     use util::uuid::uuid;
 
+    use crate::NullableUpdate;
     use crate::activity_log::get_activity_logs;
     use crate::item::bundled_item::UpsertBundledItem;
     use crate::item::item_variant::{
         DeleteItemVariant, UpsertItemVariantError, UpsertItemVariantWithPackaging,
     };
     use crate::service_provider::ServiceProvider;
-    use crate::NullableUpdate;
 
     #[actix_rt::test]
     async fn create_edit_delete_item_variant() {
@@ -330,13 +330,14 @@ mod query {
         );
         assert_eq!(result.unwrap_err(), UpsertItemVariantError::DuplicateName);
 
-        // Test manufacturer not visible
+        // Test manufacturer type check: name_c is not visible in this store, but visibility
+        // no longer blocks manufacturers - the is-a-manufacturer check must still apply
         let result = service.upsert_item_variant(
             &context,
             UpsertItemVariantWithPackaging {
                 id: uuid(),
                 item_id: mock_item_a().id,
-                name: "OtherPartyNotVisible".to_string(),
+                name: "OtherPartyNotAManufacturer".to_string(),
                 manufacturer_id: Some(NullableUpdate {
                     value: Some(mock_name_c().id),
                 }),
@@ -345,7 +346,7 @@ mod query {
         );
         assert_eq!(
             result.unwrap_err(),
-            UpsertItemVariantError::OtherPartyNotVisible
+            UpsertItemVariantError::OtherPartyNotAManufacturer
         );
     }
 }

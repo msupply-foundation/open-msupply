@@ -1,6 +1,6 @@
 use crate::{
-    db_diesel::changelog::ChangelogRepository, lower, ChangelogSyncType, Delete, RepositoryError,
-    RowActionType, SourceSiteId, StorageConnection, SyncVersion, Upsert,
+    ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    SyncVersion, Upsert, db_diesel::changelog::ChangelogRepository, lower,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;

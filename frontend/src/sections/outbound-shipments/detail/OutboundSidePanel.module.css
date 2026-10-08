@@ -1,0 +1,11 @@
+/* A group heading's text + its info gloss, INSIDE SidePanelSubheading's <h3>.
+   An <h3> takes phrasing content, so the row can't be an HStack (a <div>) — this
+   is the inline-level equivalent, and it is what SIDE_PANEL.md's own
+   info-icon-after-heading recipe shows (there as an inline style, which the
+   reach-for order forbids). `--space-2` keeps the gap HStack's `sm` gave it, so
+   the heading looks unchanged. */
+.groupHeading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}

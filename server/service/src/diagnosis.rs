@@ -1,6 +1,6 @@
 use repository::{
-    diagnosis::{Diagnosis, DiagnosisFilter, DiagnosisRepository},
     RepositoryError, StorageConnectionManager,
+    diagnosis::{Diagnosis, DiagnosisFilter, DiagnosisRepository},
 };
 
 pub fn get_all_active_diagnoses(

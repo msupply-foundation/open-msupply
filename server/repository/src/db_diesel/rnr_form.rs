@@ -1,12 +1,12 @@
 use super::{
+    DBType, NameRow, RepositoryError, RnRFormRow, RnRFormStatus, StorageConnection, StoreRow,
     name_row::name, period_row::period, program_row::program, rnr_form_row::rnr_form,
-    store_row::store, DBType, NameRow, RepositoryError, RnRFormRow, RnRFormStatus,
-    StorageConnection, StoreRow,
+    store_row::store,
 };
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     DatetimeFilter, EqualFilter, Pagination, PeriodRow, ProgramRow, Sort,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -42,13 +42,7 @@ pub struct RnRFormRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-type RnRFormJoin = (
-    RnRFormRow,
-    NameRow,
-    StoreRow,
-    PeriodRow,
-    ProgramRow,
-);
+type RnRFormJoin = (RnRFormRow, NameRow, StoreRow, PeriodRow, ProgramRow);
 
 impl<'a> RnRFormRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -113,9 +107,7 @@ impl<'a> RnRFormRepository<'a> {
     }
 }
 
-fn to_domain(
-    (rnr_form_row, name_row, store_row, period_row, program_row): RnRFormJoin,
-) -> RnRForm {
+fn to_domain((rnr_form_row, name_row, store_row, period_row, program_row): RnRFormJoin) -> RnRForm {
     RnRForm {
         rnr_form_row,
         name_row,

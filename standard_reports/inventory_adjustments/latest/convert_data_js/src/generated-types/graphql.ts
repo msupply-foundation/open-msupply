@@ -4,11 +4,19 @@ export type InventoryAdjustmentsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   adjustmentDateFrom?: Types.InputMaybe<Types.Scalars['DateTime']['input']>;
   adjustmentDateTo?: Types.InputMaybe<Types.Scalars['DateTime']['input']>;
+  masterListId?: Types.InputMaybe<Types.Scalars['String']['input']>;
 }>;
 
 
 export type InventoryAdjustmentsQuery = {
   __typename?: 'Queries',
+  masterListItems: {
+    __typename?: 'ItemConnector',
+    nodes: Array<{
+      __typename?: 'ItemNode',
+      id: string
+    }>
+  },
   invoices: {
     __typename?: 'InvoiceConnector',
     nodes: Array<{
@@ -48,12 +56,7 @@ export type InventoryAdjustmentsQuery = {
             id: string,
             code: string,
             name: string,
-            unitName?: string | null,
-            masterLists?: Array<{
-              __typename?: 'MasterListNode',
-              id: string,
-              name: string
-            }> | null
+            unitName?: string | null
           }
         }>
       }

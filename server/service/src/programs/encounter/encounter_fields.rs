@@ -6,7 +6,7 @@ use repository::{
 };
 
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 
 use super::extract_fields::extract_fields;

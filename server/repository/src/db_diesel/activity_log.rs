@@ -1,10 +1,10 @@
-use super::{activity_log_row::activity_log, ActivityLogRow, DBType, StorageConnection};
+use super::{ActivityLogRow, DBType, StorageConnection, activity_log_row::activity_log};
 use diesel::prelude::*;
 
 use crate::{
+    ActivityLogType,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    ActivityLogType,
 };
 
 use crate::{EqualFilter, Pagination, Sort};
@@ -83,6 +83,9 @@ impl<'a> ActivityLogRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(activity_log::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<ActivityLogRow>(self.connection.lock().connection())?;

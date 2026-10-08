@@ -1,0 +1,43 @@
+.empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  block-size: 100%;
+  min-block-size: 10rem;
+  padding: var(--space-4);
+  text-align: center;
+}
+
+/* The illustration. Sized via font-size (the icon is 1em); ~120px at
+   the base root font-size, matching the current app. Stroked in currentColor,
+   so it takes the same quiet grey as the "Nothing here" heading below. */
+.graphic {
+  font-size: 7.5rem;
+  line-height: 1;
+  color: var(--gray-light);
+}
+
+/* "Nothing here" — the bold heading, quiet grey (the current app's gray.light). */
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: var(--weight-bold);
+  color: var(--gray-light);
+}
+
+/* Message + CTA on ONE line (matching the current app): the body line, then the
+   optional call-to-action button inline after it — wrapping together, centred. */
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  max-inline-size: 30rem;
+}
+
+/* The body line. Quiet grey (--gray-main = the current app's gray.main,
+   #8f90a6), not the darker --text-secondary which read almost black. */
+.message {
+  color: var(--gray-main);
+}

@@ -1,6 +1,6 @@
 use super::query_temperature_log::get_temperature_log;
 use super::validate::check_temperature_log_does_not_exist;
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use chrono::NaiveDateTime;
 use repository::{
     RepositoryError, StorageConnection, TemperatureLog, TemperatureLogRow,

@@ -1,18 +1,17 @@
 use actix_multipart::form::{
-    tempfile::{TempFile, TempFileConfig},
     MultipartForm,
+    tempfile::{TempFile, TempFileConfig},
 };
 use actix_web::{
-    post,
+    HttpRequest, HttpResponse, post,
     web::{self, Data},
-    HttpRequest, HttpResponse,
 };
 
 use service::{
+    UploadedFile,
     auth_data::AuthData,
     settings::Settings,
     static_files::{StaticFileCategory, StaticFileService},
-    UploadedFile,
 };
 
 use crate::authentication::validate_cookie_auth;

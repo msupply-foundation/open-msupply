@@ -1,14 +1,14 @@
 use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 
 use crate::sync::{
+    CentralServerConfig,
     translations::{
+        IntegrationOperation, PullTranslateResult, SyncTranslation,
         name::NameTranslation,
         special::merge::{
-            apply_name_merge, build_central_merge_message, MergeMessageBody, MergeOutcome,
+            MergeMessageBody, MergeOutcome, apply_name_merge, build_central_merge_message,
         },
-        IntegrationOperation, PullTranslateResult, SyncTranslation,
     },
-    CentralServerConfig,
 };
 
 #[deny(dead_code)]
@@ -34,7 +34,7 @@ impl SyncTranslation for NameMergeTranslation {
         let mut ops = match apply_name_merge(connection, &data)? {
             MergeOutcome::Operations(ops) => ops,
             MergeOutcome::NothingToDo(reason) => {
-                return Ok(PullTranslateResult::Ignored(reason.to_string()))
+                return Ok(PullTranslateResult::Ignored(reason.to_string()));
             }
         };
 
@@ -57,9 +57,9 @@ mod tests {
     use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, EqualFilter, NameLinkRow, NameLinkRowRepository,
-        NameStoreJoinFilter, NameStoreJoinRepository, SyncAction, SyncBufferRepository,
-        SyncBufferRowInsert, SyncRecordData,
+        EqualFilter, NameLinkRow, NameLinkRowRepository, NameStoreJoinFilter,
+        NameStoreJoinRepository, SyncAction, SyncBufferRepository, SyncBufferRowInsert,
+        SyncRecordData, mock::MockDataInserts, test_db::setup_all,
     };
     use serde_json::json;
 

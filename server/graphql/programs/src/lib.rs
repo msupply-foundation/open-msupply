@@ -1,9 +1,11 @@
 use async_graphql::*;
 use chrono::DateTime;
 use chrono::Utc;
+use graphql_core::ContextExt;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::validate_auth;
-use graphql_core::ContextExt;
+use graphql_types::types::PeriodFilterInput;
+use graphql_types::types::PeriodsResponse;
 use graphql_types::types::contact_trace::ContactTraceFilterInput;
 use graphql_types::types::contact_trace::ContactTraceResponse;
 use graphql_types::types::contact_trace::ContactTraceSortInput;
@@ -19,55 +21,55 @@ use graphql_types::types::program_enrolment::ProgramEventFilterInput;
 use graphql_types::types::program_event::ProgramEventResponse;
 use graphql_types::types::program_event::ProgramEventSortInput;
 use graphql_types::types::vaccination::VaccinationNode;
-use graphql_types::types::PeriodFilterInput;
-use graphql_types::types::PeriodsResponse;
-use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
-use mutations::contact_trace::insert::insert_contact_trace;
+use mutations::allocate_number::NumberNode;
+use mutations::allocate_number::allocate_patient_number;
+use mutations::allocate_number::allocate_program_number;
 use mutations::contact_trace::insert::InsertContactTraceInput;
 use mutations::contact_trace::insert::InsertContactTraceResponse;
-use mutations::contact_trace::update::update_contact_trace;
+use mutations::contact_trace::insert::insert_contact_trace;
 use mutations::contact_trace::update::UpdateContactTraceInput;
 use mutations::contact_trace::update::UpdateContactTraceResponse;
-use mutations::encounter::insert::insert_encounter;
+use mutations::contact_trace::update::update_contact_trace;
 use mutations::encounter::insert::InsertEncounterInput;
 use mutations::encounter::insert::InsertEncounterResponse;
-use mutations::encounter::update::update_encounter;
+use mutations::encounter::insert::insert_encounter;
 use mutations::encounter::update::UpdateEncounterInput;
 use mutations::encounter::update::UpdateEncounterResponse;
+use mutations::encounter::update::update_encounter;
 use mutations::insert_document_registry::*;
-use mutations::patient::insert::insert_patient;
 use mutations::patient::insert::InsertPatientInput;
 use mutations::patient::insert::InsertPatientResponse;
-use mutations::patient::update::update_patient;
+use mutations::patient::insert::insert_patient;
 use mutations::patient::update::UpdatePatientInput;
 use mutations::patient::update::UpdatePatientResponse;
-use mutations::patient::update_custom_fields::update_patient_custom_fields;
+use mutations::patient::update::update_patient;
 use mutations::patient::update_custom_fields::UpdatePatientCustomFieldsInput;
 use mutations::patient::update_custom_fields::UpdatePatientCustomFieldsResponse;
-use mutations::program_enrolment::insert::insert_program_enrolment;
+use mutations::patient::update_custom_fields::update_patient_custom_fields;
 use mutations::program_enrolment::insert::InsertProgramEnrolmentInput;
 use mutations::program_enrolment::insert::InsertProgramEnrolmentResponse;
-use mutations::program_enrolment::update::update_program_enrolment;
+use mutations::program_enrolment::insert::insert_program_enrolment;
 use mutations::program_enrolment::update::UpdateProgramEnrolmentInput;
 use mutations::program_enrolment::update::UpdateProgramEnrolmentResponse;
+use mutations::program_enrolment::update::update_program_enrolment;
 use mutations::program_patient::insert::*;
-use mutations::program_patient::update::update_program_patient;
 use mutations::program_patient::update::UpdateProgramPatientInput;
 use mutations::program_patient::update::UpdateProgramPatientResponse;
+use mutations::program_patient::update::update_program_patient;
 use mutations::rnr_form::finalise::{
-    finalise_rnr_form, FinaliseRnRFormInput, FinaliseRnRFormResponse,
+    FinaliseRnRFormInput, FinaliseRnRFormResponse, finalise_rnr_form,
 };
-use mutations::rnr_form::insert::{insert_rnr_form, InsertRnRFormInput, InsertRnRFormResponse};
-use mutations::rnr_form::update::update_rnr_form;
+use mutations::rnr_form::insert::{InsertRnRFormInput, InsertRnRFormResponse, insert_rnr_form};
 use mutations::rnr_form::update::UpdateRnRFormInput;
 use mutations::rnr_form::update::UpdateRnRFormResponse;
+use mutations::rnr_form::update::update_rnr_form;
 use mutations::vaccination::insert::{
-    insert_vaccination, InsertVaccinationInput, InsertVaccinationResponse,
+    InsertVaccinationInput, InsertVaccinationResponse, insert_vaccination,
 };
 use mutations::vaccination::update::{
-    update_vaccination, UpdateVaccinationInput, UpdateVaccinationResponse,
+    UpdateVaccinationInput, UpdateVaccinationResponse, update_vaccination,
 };
 use queries::contact_trace::contact_traces;
 use service::auth::Resource;
@@ -83,9 +85,9 @@ mod mutations;
 
 mod queries;
 pub mod types;
-use crate::mutations::rnr_form::delete::delete_rnr_form;
 use crate::mutations::rnr_form::delete::DeleteRnRFormInput;
 use crate::mutations::rnr_form::delete::DeleteRnRFormResponse;
+use crate::mutations::rnr_form::delete::delete_rnr_form;
 use crate::types::period_schedule::PeriodSchedulesResponse;
 
 use self::queries::*;
@@ -447,6 +449,16 @@ impl ProgramsMutations {
         input: AllocateProgramNumberInput,
     ) -> Result<AllocateProgramNumberResponse> {
         allocate_program_number(ctx, store_id, input)
+    }
+
+    /// Allocate the next patient code number for the store. Requires only the
+    /// patient-mutate permission — see allocate_patient_number (#268).
+    pub async fn allocate_patient_number(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<NumberNode> {
+        allocate_patient_number(ctx, store_id)
     }
 
     pub async fn insert_contact_trace(

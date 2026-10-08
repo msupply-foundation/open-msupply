@@ -1,11 +1,11 @@
-use super::{abbreviation_row::abbreviation, AbbreviationRow, StorageConnection};
+use super::{AbbreviationRow, StorageConnection, abbreviation_row::abbreviation};
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_string_filter},
     StringFilter,
+    diesel_macros::{apply_equal_filter, apply_string_filter},
 };
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter};
+use crate::{DBType, EqualFilter, repository_error::RepositoryError};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type Abbreviation = AbbreviationRow;

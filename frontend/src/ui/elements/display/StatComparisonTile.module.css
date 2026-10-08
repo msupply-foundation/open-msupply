@@ -1,0 +1,53 @@
+/*
+ * StatComparisonTile — a recessed tile showing a current value → its adjusted
+ * preview, for the stock adjustment modal. Colours/spacing are tokens; the only
+ * px is the border-radius.
+ */
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--bg-group-light);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.values {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.value {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.valueMuted {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.note {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.arrow {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}

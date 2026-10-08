@@ -1,6 +1,6 @@
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter},
     EqualFilter, InvoiceType, Pagination, RepositoryError,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter},
 };
 
 use super::{DBType, DatetimeFilter, InvoiceStatus, StorageConnection};
@@ -166,11 +166,12 @@ fn create_filtered_query(filter: Option<ItemLedgerFilter>) -> ItemLedgerQuery {
 #[cfg(test)]
 mod tests {
     use crate::{
+        ItemLinkRowRepository,
         mock::{
-            ledger::{get_test_ledger_datetime, mock_ledger_data},
             MockData, MockDataInserts,
+            ledger::{get_test_ledger_datetime, mock_ledger_data},
         },
-        test_db, ItemLinkRowRepository,
+        test_db,
     };
 
     use super::*;

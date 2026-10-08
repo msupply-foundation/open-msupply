@@ -36,4 +36,3 @@ async fn scheduled_task_runner(service_provider: Arc<ServiceProvider>, interval_
         }
     }
 }
-

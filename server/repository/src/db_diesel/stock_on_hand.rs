@@ -1,7 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::item_row::item, diesel_macros::apply_equal_filter, EqualFilter, RepositoryError,
+    EqualFilter, RepositoryError, db_diesel::item_row::item, diesel_macros::apply_equal_filter,
 };
 use diesel::prelude::*;
 

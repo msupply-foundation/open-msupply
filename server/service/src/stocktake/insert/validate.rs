@@ -23,15 +23,15 @@ pub fn validate(
     if !check_store_exists(connection, store_id)? {
         return Err(InsertStocktakeError::InvalidStore);
     }
-    if let Some(master_list_id) = &input.master_list_id {
-        if !check_master_list_exists(connection, store_id, master_list_id)? {
-            return Err(InsertStocktakeError::InvalidMasterList);
-        }
+    if let Some(master_list_id) = &input.master_list_id
+        && !check_master_list_exists(connection, store_id, master_list_id)?
+    {
+        return Err(InsertStocktakeError::InvalidMasterList);
     }
-    if let Some(location_id) = &input.location_id {
-        if !check_location_exists(connection, store_id, location_id)? {
-            return Err(InsertStocktakeError::InvalidLocation);
-        }
+    if let Some(location_id) = &input.location_id
+        && !check_location_exists(connection, store_id, location_id)?
+    {
+        return Err(InsertStocktakeError::InvalidLocation);
     }
 
     Ok(())

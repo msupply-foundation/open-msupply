@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys};
 use graphql_core::pagination::PaginationInput;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
 use graphql_types::types::patient::{PatientFilterInput, PatientNode};
 use repository::{
     EqualFilter, NameCondition, PaginationOption, PatientFilter, PatientSort, PatientSortField,

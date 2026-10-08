@@ -1,0 +1,7 @@
+mutation InsertStockMovement($storeId: String!, $input: InsertStockRelocationInput!) {
+  insertStockRelocation(storeId: $storeId, input: $input) {
+    ... on StockRelocationNode {
+      id
+    }
+  }
+}

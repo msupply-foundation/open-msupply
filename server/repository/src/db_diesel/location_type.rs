@@ -1,4 +1,4 @@
-use super::{location_type_row::location_type, DBType, LocationTypeRow, StorageConnection};
+use super::{DBType, LocationTypeRow, StorageConnection, location_type_row::location_type};
 
 use diesel::prelude::*;
 

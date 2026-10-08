@@ -6,15 +6,15 @@ pub mod line;
 pub mod update;
 
 pub use delete::{
-    delete_stock_relocation, delete_stock_relocations, DeleteInput, DeleteResponses,
-    DeleteStockRelocationResponse,
+    DeleteInput, DeleteResponses, DeleteStockRelocationResponse, delete_stock_relocation,
+    delete_stock_relocations,
 };
-pub use insert::{insert_stock_relocation, InsertInput, InsertResponse};
+pub use insert::{InsertInput, InsertResponse, insert_stock_relocation};
 pub use line::{
-    batch_stock_relocation_line, BatchLineInput, BatchLineResponse, DeleteLineResponse,
-    UpsertLineInput, UpsertLineResponse,
+    BatchLineInput, BatchLineResponse, DeleteLineResponse, UpsertLineInput, UpsertLineResponse,
+    batch_stock_relocation_line,
 };
-pub use update::{update_stock_relocation, UpdateInput, UpdateResponse};
+pub use update::{UpdateInput, UpdateResponse, update_stock_relocation};
 
 pub struct LocationOnHold {
     pub location_id: String,

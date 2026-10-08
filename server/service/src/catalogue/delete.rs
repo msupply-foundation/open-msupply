@@ -1,7 +1,7 @@
 use crate::service_provider::ServiceContext;
+use repository::EqualFilter;
 use repository::asset::{AssetFilter, AssetRepository};
 use repository::asset_catalogue_item_row::AssetCatalogueItemRowRepository;
-use repository::EqualFilter;
 use repository::{RepositoryError, StorageConnection};
 
 #[derive(PartialEq, Debug)]

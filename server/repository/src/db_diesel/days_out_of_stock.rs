@@ -1,5 +1,5 @@
 use crate::{
-    diesel_macros::apply_equal_filter, Dos, EqualFilter, RepositoryError, StorageConnection,
+    Dos, EqualFilter, RepositoryError, StorageConnection, diesel_macros::apply_equal_filter,
 };
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -98,13 +98,13 @@ pub(crate) mod test {
 
     use super::*;
 
-    use crate::mock::test_helpers::{make_movements_extended, MakeMovements};
     use crate::mock::MockData;
+    use crate::mock::test_helpers::{MakeMovements, make_movements_extended};
+    use crate::{EqualFilter, StockLineRow};
     use crate::{
-        mock::{mock_item_a, mock_store_a, MockDataInserts},
+        mock::{MockDataInserts, mock_item_a, mock_store_a},
         test_db::setup_all_with_data,
     };
-    use crate::{EqualFilter, StockLineRow};
 
     async fn run_dos_test(
         test_name: &str,
@@ -233,7 +233,9 @@ pub(crate) mod test {
 
     #[actix_rt::test]
     async fn test_dos() {
-        std::env::set_var("TZ", "Pacific/Auckland");
+        // SAFETY: nextest runs each test in its own process, and nothing else in this one reads
+        // or writes the environment while it's being changed.
+        unsafe { std::env::set_var("TZ", "Pacific/Auckland") };
 
         let movement_date = get_local_date_as_utc(
             NaiveDate::from_ymd_opt(2025, 12, 30)
@@ -412,6 +414,7 @@ pub(crate) mod test {
         )
         .await;
 
-        std::env::set_var("TZ", "");
+        // SAFETY: as above.
+        unsafe { std::env::set_var("TZ", "") };
     }
 }

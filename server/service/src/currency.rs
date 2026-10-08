@@ -2,7 +2,7 @@ use repository::{
     Currency, CurrencyFilter, CurrencyRepository, CurrencySort, EqualFilter, RepositoryError,
 };
 
-use crate::{i64_to_u32, service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, i64_to_u32, service_provider::ServiceContext};
 
 pub trait CurrencyServiceTrait: Sync + Send {
     fn get_currency(

@@ -1,10 +1,10 @@
-use super::{sync_log_row::sync_log, StorageConnection};
+use super::{StorageConnection, sync_log_row::sync_log};
 
 use crate::{
+    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogV5V6Row,
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
     },
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogV5V6Row,
 };
 
 use diesel::prelude::*;
@@ -51,7 +51,10 @@ impl<'a> SyncLogV5V6Repository<'a> {
         Ok(self.query(Pagination::one(), Some(filter), None)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: SyncLogV5V6Filter) -> Result<Vec<SyncLog>, RepositoryError> {
+    pub fn query_by_filter(
+        &self,
+        filter: SyncLogV5V6Filter,
+    ) -> Result<Vec<SyncLog>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
@@ -79,6 +82,9 @@ impl<'a> SyncLogV5V6Repository<'a> {
         }
 
         let final_query = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(sync_log::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 

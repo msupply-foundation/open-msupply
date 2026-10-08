@@ -2,19 +2,17 @@ use async_graphql::*;
 
 use dataloader::DataLoader;
 use graphql_core::{
+    ContextExt,
     loader::{
         DemographicLoader, VaccineCourseDoseByVaccineCourseIdLoader,
-        VaccineCourseStoreConfigByVaccineCourseIdLoader,
-        VaccineCourseItemByVaccineCourseIdLoader,
+        VaccineCourseItemByVaccineCourseIdLoader, VaccineCourseStoreConfigByVaccineCourseIdLoader,
     },
-    ContextExt,
 };
 
 use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 
 use super::{
-    DemographicNode, VaccineCourseDoseNode, VaccineCourseStoreConfigNode,
-    VaccineCourseItemNode,
+    DemographicNode, VaccineCourseDoseNode, VaccineCourseItemNode, VaccineCourseStoreConfigNode,
 };
 
 #[derive(PartialEq, Debug)]

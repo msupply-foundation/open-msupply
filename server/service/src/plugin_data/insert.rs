@@ -4,7 +4,7 @@ use repository::{
     PluginDataRowRepository, RepositoryError,
 };
 
-use crate::{service_provider::ServiceContext, sync::CentralServerConfig, WithDBError};
+use crate::{WithDBError, service_provider::ServiceContext, sync::CentralServerConfig};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertPluginDataError {
@@ -84,12 +84,12 @@ fn validate(ctx: &ServiceContext, input: &InsertPluginData) -> Result<(), Insert
         ));
     }
 
-    if let Some(store_id) = &input.store_id {
-        if &ctx.store_id != store_id {
-            return Err(InsertPluginDataError::InternalError(
-                "Store ID doesn't match logged in store_id".to_string(),
-            ));
-        }
+    if let Some(store_id) = &input.store_id
+        && &ctx.store_id != store_id
+    {
+        return Err(InsertPluginDataError::InternalError(
+            "Store ID doesn't match logged in store_id".to_string(),
+        ));
     }
 
     Ok(())
@@ -116,9 +116,9 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_store_a, mock_user_account_a, MockDataInserts},
-        test_db::setup_all,
         PluginDataRow,
+        mock::{MockDataInserts, mock_store_a, mock_user_account_a},
+        test_db::setup_all,
     };
 
     use crate::{plugin_data::InsertPluginData, service_provider::ServiceProvider};

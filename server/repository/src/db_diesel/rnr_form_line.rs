@@ -1,11 +1,11 @@
 use super::{
-    item_row::item, requisition_line_row::requisition_line, rnr_form_line_row::rnr_form_line,
-    DBType, RepositoryError, StorageConnection,
+    DBType, RepositoryError, StorageConnection, item_row::item,
+    requisition_line_row::requisition_line, rnr_form_line_row::rnr_form_line,
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     EqualFilter, ItemRow, Pagination, RequisitionLineRow, RnRFormLineRow, Sort,
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -80,6 +80,9 @@ impl<'a> RnRFormLineRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(rnr_form_line::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<RnRFormLineJoin>(self.connection.lock().connection())?;
@@ -88,9 +91,7 @@ impl<'a> RnRFormLineRepository<'a> {
     }
 }
 
-fn to_domain(
-    (rnr_form_line_row, item_row, requisition_line_row): RnRFormLineJoin,
-) -> RnRFormLine {
+fn to_domain((rnr_form_line_row, item_row, requisition_line_row): RnRFormLineJoin) -> RnRFormLine {
     RnRFormLine {
         rnr_form_line_row,
         requisition_line_row,

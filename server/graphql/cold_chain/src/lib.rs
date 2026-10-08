@@ -3,16 +3,16 @@ pub(crate) mod types;
 
 use async_graphql::*;
 use graphql_core::{
-    pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    pagination::PaginationInput,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
-use mutations::{update_sensor, UpdateSensorInput, UpdateSensorResponse};
+use mutations::{UpdateSensorInput, UpdateSensorResponse, update_sensor};
 use repository::{
-    temperature_breach::TemperatureBreachFilter, EqualFilter, PaginationOption, SensorFilter,
-    TemperatureBreachSortField,
+    EqualFilter, PaginationOption, SensorFilter, TemperatureBreachSortField,
+    temperature_breach::TemperatureBreachFilter,
 };
-use repository::{temperature_log::TemperatureLogFilter, TemperatureBreachSort};
+use repository::{TemperatureBreachSort, temperature_log::TemperatureLogFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 use types::{
     sensor::{SensorConnector, SensorFilterInput, SensorsResponse},
@@ -251,18 +251,18 @@ mod test_logs {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphql_test;
+    use repository::{EqualFilter, PaginationOption, Sort};
     use repository::{
+        SensorFilter, StorageConnection, StorageConnectionManager, TemperatureLogRow,
         mock::MockDataInserts,
         temperature_log::{
             TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
         },
-        SensorFilter, StorageConnection, StorageConnectionManager, TemperatureLogRow,
     };
-    use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
 
     use service::{
-        cold_chain::ColdChainServiceTrait, service_provider::ServiceProvider, ListError, ListResult,
+        ListError, ListResult, cold_chain::ColdChainServiceTrait, service_provider::ServiceProvider,
     };
 
     use crate::ColdChainQueries;
@@ -516,14 +516,14 @@ mod test_breaches {
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::PaginationOption;
     use repository::{
+        StorageConnection, StorageConnectionManager, TemperatureBreachRow, TemperatureBreachType,
         mock::MockDataInserts,
         temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort},
-        StorageConnection, StorageConnectionManager, TemperatureBreachRow, TemperatureBreachType,
     };
     use serde_json::json;
 
     use service::{
-        cold_chain::ColdChainServiceTrait, service_provider::ServiceProvider, ListError, ListResult,
+        ListError, ListResult, cold_chain::ColdChainServiceTrait, service_provider::ServiceProvider,
     };
 
     use crate::ColdChainQueries;
@@ -676,17 +676,17 @@ mod test_notifications {
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::{
-        mock::MockDataInserts, temperature_breach::TemperatureBreach, StorageConnection,
-        StorageConnectionManager, TemperatureBreachRow, TemperatureBreachType,
+        PaginationOption, TemperatureBreachFilter, TemperatureBreachSort, TemperatureExcursion,
     };
     use repository::{
-        PaginationOption, TemperatureBreachFilter, TemperatureBreachSort, TemperatureExcursion,
+        StorageConnection, StorageConnectionManager, TemperatureBreachRow, TemperatureBreachType,
+        mock::MockDataInserts, temperature_breach::TemperatureBreach,
     };
     use serde_json::json;
 
     use service::cold_chain::ColdChainServiceTrait;
     use service::temperature_excursion::TemperatureExcursionServiceTrait;
-    use service::{service_provider::ServiceProvider, ListError, ListResult};
+    use service::{ListError, ListResult, service_provider::ServiceProvider};
 
     use crate::ColdChainQueries;
 
@@ -896,17 +896,17 @@ mod test_sensor {
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphql_test;
     //use repository::mock::mock_sensors;
-    use repository::{
-        mock::MockDataInserts, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField,
-        SensorType, StorageConnectionManager, StringFilter,
-    };
     use repository::{EqualFilter, PaginationOption, Sort};
+    use repository::{
+        Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField, SensorType,
+        StorageConnectionManager, StringFilter, mock::MockDataInserts,
+    };
     use serde_json::json;
 
     use service::{
+        ListError, ListResult,
         sensor::SensorServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
-        ListError, ListResult,
     };
 
     use crate::ColdChainQueries;

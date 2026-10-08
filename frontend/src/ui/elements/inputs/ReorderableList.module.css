@@ -1,0 +1,116 @@
+/*
+ * ReorderableList — a plain <ol> of bordered rows: drag handle, optional
+ * position, the two text lines, then the four move buttons trailing. Row order
+ * is the list's content, so nothing here positions by index. The dragged row
+ * fades rather than lifting: a transform would move it out from under the
+ * pointer that is driving the native drag.
+ *
+ * The only px are the hairline borders and the focus outline (the sizing rule's
+ * exceptions).
+ */
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  transition: opacity var(--motion-fast) ease;
+}
+
+.row[data-dragging] {
+  opacity: 0.4;
+}
+
+/* Pointer-only affordance (the buttons are the keyboard path), so it never
+   takes focus and shows the grab cursor instead. */
+.handle {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  cursor: grab;
+}
+
+.row[data-dragging] .handle {
+  cursor: grabbing;
+}
+
+/* The 1-based position — tabular so the column stays straight past ten. */
+.position {
+  flex-shrink: 0;
+  min-inline-size: 1.5rem;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.label {
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.description {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
+}
+
+.moveButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  /* Chevron glyph size (the icon is 1em), as the Columns panel's move pair. */
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.moveButton:disabled {
+  cursor: default;
+  opacity: var(--disabled-opacity);
+}
+
+.moveButton:focus-visible {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: 1px;
+}
+
+.moveButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  color: var(--text-body);
+}
+
+/* Move up is the move-down chevron turned over — the pair the Columns panel
+   draws the same way. */
+.chevronUp {
+  transform: rotate(180deg);
+}

@@ -1,7 +1,7 @@
 use repository::{
-    barcode::{Barcode, BarcodeFilter, BarcodeRepository},
     BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, Row, StorageConnection,
     SyncBufferRow,
+    barcode::{Barcode, BarcodeFilter, BarcodeRepository},
 };
 use serde::{Deserialize, Serialize};
 
@@ -132,8 +132,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        CursorAndLimit, FilterBuilder, RowOrDelete,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
+        mock::MockDataInserts, test_db::setup_all,
     };
     use serde_json::json;
 

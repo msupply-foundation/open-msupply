@@ -7,7 +7,12 @@ import {
   CheckboxIndeterminateIcon,
 } from '@common/icons';
 
-export const Checkbox: FC<CheckboxProps> = props => {
+interface Props extends CheckboxProps {
+  /** Placed on the underlying input, for deterministic e2e hooks. As Switch's. */
+  testId?: string;
+}
+
+export const Checkbox: FC<Props> = ({ testId, slotProps, ...props }) => {
   return (
     <MuiCheckbox
       color="outline"
@@ -16,6 +21,13 @@ export const Checkbox: FC<CheckboxProps> = props => {
       checkedIcon={<CheckboxCheckedIcon />}
       indeterminateIcon={<CheckboxIndeterminateIcon />}
       {...props}
+      slotProps={{
+        ...slotProps,
+        input: {
+          ...slotProps?.input,
+          ...(testId ? { 'data-testid': testId } : {}),
+        },
+      }}
     />
   );
 };

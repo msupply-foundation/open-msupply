@@ -504,14 +504,14 @@ mod test {
     use super::integrate_sensor_data;
     use crate::{
         sensor::fridge_tag::breach_sort_weight,
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
     use chrono::{Duration, NaiveDate, NaiveDateTime};
     use repository::{
-        mock::{mock_store_a, mock_store_b, MockDataInserts},
         Pagination, Sort, TemperatureBreachFilter, TemperatureBreachRepository,
         TemperatureBreachRow, TemperatureBreachType, TemperatureLogRepository,
         TemperatureLogSortField,
+        mock::{MockDataInserts, mock_store_a, mock_store_b},
     };
     use temperature_sensor as ts;
 

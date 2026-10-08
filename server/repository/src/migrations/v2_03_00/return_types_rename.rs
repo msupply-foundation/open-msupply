@@ -1,4 +1,4 @@
-use crate::{migrations::*, StorageConnection};
+use crate::{StorageConnection, migrations::*};
 
 pub fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     if cfg!(feature = "postgres") {

@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::simple_generic_errors::NodeError;
 use repository::sync_file_reference::SyncFileReference;
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::db_diesel::sync_file_reference_row::SyncFileStatus")]

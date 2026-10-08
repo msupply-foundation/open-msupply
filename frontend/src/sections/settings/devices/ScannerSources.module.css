@@ -1,0 +1,102 @@
+/*
+ * The barcode-scanner input list. One row per input the app knows how to
+ * drive, whether or not this device has it — the alternative (three
+ * near-identical "status: disabled" rows) said the same thing three times
+ * and still never named the input.
+ */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.row[data-state='active'] {
+  border-color: var(--success-main);
+}
+
+.row[data-state='unavailable'],
+.row[data-state='disabled'],
+.row[data-state='not-set-up'] {
+  /* Present but plainly not in play: dimmed as a group, never hidden. */
+  opacity: 0.65;
+}
+
+.identity {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.detail {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+/* A line of its own under the row — pairing prompts, notices, the device
+   list — rather than squeezed in beside the controls. */
+.panel {
+  flex-basis: 100%;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.candidates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.candidates li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The pairing barcode on white whatever the theme: a scanner reads dark bars
+   on a light ground, and the image carries no background of its own. */
+.pairing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.pairing img {
+  max-width: 100%;
+  height: auto;
+  padding: var(--space-2);
+  background: #fff;
+  border-radius: var(--radius-md);
+}

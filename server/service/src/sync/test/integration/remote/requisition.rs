@@ -1,13 +1,13 @@
 use crate::sync::{
     test::integration::{
-        central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
+        SyncRecordTester, TestStepData, central_server_configurations::NewSiteProperties,
     },
     translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow, RequisitionRowDelete,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 use serde_json::json;
 use util::uuid::uuid;

@@ -55,7 +55,7 @@ mod tests {
         migrations::{v2_18_00::V2_18_00, v3_00_00::V3_00_00, *},
         test_db::*,
     };
-    use diesel::{connection::SimpleConnection, prelude::*, RunQueryDsl};
+    use diesel::{RunQueryDsl, connection::SimpleConnection, prelude::*};
 
     table! {
         changelog (cursor) {
@@ -105,7 +105,12 @@ mod tests {
             )
             .unwrap();
 
-        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         let load = |table: &'static str, record_id: &'static str| {
@@ -137,8 +142,11 @@ mod tests {
         // in populate_changelog_with_rows_for_sync_v7_tables); re-running backfills them in
         // place, no duplicate.
         diesel::update(
-            changelog::table
-                .filter(changelog::record_id.eq("perm_x").or(changelog::record_id.eq("usj_x"))),
+            changelog::table.filter(
+                changelog::record_id
+                    .eq("perm_x")
+                    .or(changelog::record_id.eq("usj_x")),
+            ),
         )
         .set(changelog::store_id.eq(None::<String>))
         .execute(connection.lock().connection())

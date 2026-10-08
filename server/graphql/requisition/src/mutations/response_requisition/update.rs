@@ -1,9 +1,9 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, OrderingTooManyItems, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{CannotEditRequisition, OrderingTooManyItems, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::{generic_errors::RequisitionReasonNotProvided, types::RequisitionNode};
 use repository::RequisitionLine;
@@ -123,22 +123,22 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::CannotEditRequisition => {
             return Ok(UpdateErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
-            ))
+            ));
         }
         ServiceError::ReasonsNotProvided(lines) => {
             return Ok(UpdateErrorInterface::RequisitionReasonsNotProvided(
                 RequisitionReasonsNotProvided(lines),
-            ))
+            ));
         }
         ServiceError::OrderingTooManyItems(max_order) => {
             return Ok(UpdateErrorInterface::OrderingTooManyItems(
                 OrderingTooManyItems(max_order),
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition
@@ -168,18 +168,18 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_request_draft_requisition, MockDataInserts},
         Requisition, StorageConnectionManager,
+        mock::{MockDataInserts, mock_request_draft_requisition},
     };
     use serde_json::json;
 
     use service::{
         requisition::{
+            RequisitionServiceTrait,
             response_requisition::{
                 UpdateResponseRequisition as ServiceInput,
                 UpdateResponseRequisitionError as ServiceError, UpdateResponseRequisitionStatus,
             },
-            RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

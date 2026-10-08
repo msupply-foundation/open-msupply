@@ -1,0 +1,4 @@
+/* Interface / Server each on their own line inside the one version row. */
+.line {
+  display: block;
+}

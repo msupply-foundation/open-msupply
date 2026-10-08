@@ -2,7 +2,27 @@ query InventoryAdjustments(
   $storeId: String!
   $adjustmentDateFrom: DateTime
   $adjustmentDateTo: DateTime
+  # Defaults to an id no master list can have, so that a report run without the
+  # master list filter matches no items here rather than fetching every item
+  # that is on any master list. convert_data ignores these ids when the filter
+  # is unset, so an explicit null is still correct, just less economical.
+  $masterListId: String = ""
 ) {
+  # Item ids of the master list chosen in the report filters. Fetched at the top
+  # level and matched on item id in convert_data rather than as
+  # `item { masterLists }` inside each invoice line: that made the query three
+  # nested lists deep, which overflowed the stack of the actix worker resolving
+  # it on debug builds (#897).
+  masterListItems: items(
+    storeId: $storeId
+    filter: { masterListId: { equalTo: $masterListId } }
+  ) {
+    ... on ItemConnector {
+      nodes {
+        id
+      }
+    }
+  }
   # Query inventory adjustment invoices
   invoices(
     storeId: $storeId
@@ -47,10 +67,6 @@ query InventoryAdjustments(
                 code
                 name
                 unitName
-                masterLists(storeId: $storeId) {
-                  id
-                  name
-                }
               }
             }
           }

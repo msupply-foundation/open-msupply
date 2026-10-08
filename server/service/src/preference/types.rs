@@ -1,5 +1,5 @@
 use repository::{PreferenceRow, RepositoryError, StorageConnection};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use strum::{Display, EnumString};
 use thiserror::Error;
@@ -27,11 +27,13 @@ pub enum PrefKey {
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
     ItemMarginOverridesSupplierMargin,
+    TransferStockToInternalCustomersAtCostPrice,
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     Backdating,
     ReceivePaymentsFromPrescriptions,
+    GlobalLogo,
 
     // Store preferences
     BlindStocktake,
@@ -81,6 +83,7 @@ pub enum PreferenceValueType {
     BackdatingData,
     String,
     Colour,
+    Image,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
 }
@@ -107,6 +110,8 @@ pub enum UpsertPreferenceError {
     NotACentralServer,
     #[error("Store ID is required for store preference")]
     StoreIdNotProvided,
+    #[error("Invalid value for preference {0}: {1}")]
+    InvalidValue(String, String),
 }
 
 pub trait Preference: Sync + Send {
@@ -244,9 +249,9 @@ impl From<RepositoryError> for UpsertPreferenceError {
 mod tests {
 
     use super::*;
-    use repository::mock::{mock_store_a, MockDataInserts};
-    use repository::test_db::setup_all;
     use repository::PreferenceRow;
+    use repository::mock::{MockDataInserts, mock_store_a};
+    use repository::test_db::setup_all;
 
     #[actix_rt::test]
     async fn test_preference() {

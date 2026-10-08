@@ -4,17 +4,18 @@ use std::{
     time::Instant,
 };
 
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use log::{error, info};
 use repository::{
-    migrations::Version, BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow,
-    FrontendPluginRowRepository, HostRuntime, PluginType, RepositoryError, LEGACY_HOST_RUNTIME,
+    BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow, FrontendPluginRowRepository,
+    HostRuntime, LEGACY_HOST_RUNTIME, PluginType, RepositoryError, migrations::Version,
 };
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 use crate::{
+    UploadedFile, UploadedFileJsonError,
     backend_plugin::{
         plugin_provider::{PluginBundle, PluginError, PluginInstance},
         types::graphql_query,
@@ -22,7 +23,6 @@ use crate::{
     processors::ProcessorType,
     service_provider::ServiceContext,
     settings::Settings,
-    UploadedFile, UploadedFileJsonError,
 };
 
 pub(crate) const SIGNATURE_TAG: &str = "SIGNATURE";
@@ -261,9 +261,16 @@ pub trait PluginServiceTrait: Sync + Send {
                 code: row.code,
                 version: row.version,
                 kind: InstalledPluginKind::Backend,
-                types: row.types.0.iter().filter_map(|t| {
-                    serde_json::to_value(t).ok().and_then(|v| v.as_str().map(ToString::to_string))
-                }).collect(),
+                types: row
+                    .types
+                    .0
+                    .iter()
+                    .filter_map(|t| {
+                        serde_json::to_value(t)
+                            .ok()
+                            .and_then(|v| v.as_str().map(ToString::to_string))
+                    })
+                    .collect(),
                 host_runtime: None,
             });
         }
@@ -507,17 +514,17 @@ impl PluginServiceTrait for PluginService {}
 #[cfg(test)]
 mod test {
     use crate::{
+        UploadedFile,
         backend_plugin::plugin_provider::PluginBundle,
         static_files::{StaticFileCategory, StaticFileService},
-        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
-        UploadedFile,
+        test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
     };
     use repository::{
-        mock::{MockData, MockDataInserts},
         BackendPluginRow, BackendPluginRowRepository, ChangelogCondition, ChangelogRepository,
         ChangelogTableName, CursorAndLimit, FilterBuilder, FrontendPluginFile, FrontendPluginFiles,
         FrontendPluginRow, FrontendPluginRowRepository, FrontendPluginTypes, HostRuntime,
-        PluginType, PluginTypes, RowActionType, LEGACY_HOST_RUNTIME,
+        LEGACY_HOST_RUNTIME, PluginType, PluginTypes, RowActionType,
+        mock::{MockData, MockDataInserts},
     };
 
     use super::{
@@ -630,7 +637,8 @@ mod test {
         plugins.sort_by(|a, b| a.id.cmp(&b.id));
 
         // Same code, same version — every other listed field is identical.
-        let runtimes: Vec<Option<&str>> = plugins.iter().map(|p| p.host_runtime.as_deref()).collect();
+        let runtimes: Vec<Option<&str>> =
+            plugins.iter().map(|p| p.host_runtime.as_deref()).collect();
         assert_eq!(runtimes, vec![Some("react"), Some("solid")]);
     }
 

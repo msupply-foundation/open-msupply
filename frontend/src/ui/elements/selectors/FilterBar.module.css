@@ -1,0 +1,369 @@
+/*
+ * Filter bar — port of the RnD prototype's FilterBar.module.css plus the
+ * relevant parts of its shared Menu.module.css. Radix state selectors become
+ * Kobalte's (`data-state='open'` → `data-expanded`, `data-state='checked'` →
+ * `data-checked`) and the prototype's hard-coded whites become contrast
+ * tokens. Menus are portaled to <body>, so they inherit `dir` and mirror in
+ * RTL.
+ */
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* The "Add filter" trigger — the spec's dashed pill (ui-standards § tables →
+   filtering): funnel icon + label, dashed hairline, fully-round ends; hover
+   flips border + text to the accent. */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  /* Same 1.875rem box as .chip so the pills sit as one row of equals. */
+  min-block-size: 1.875rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px dashed var(--color-border-value);
+  border-radius: var(--radius-pill);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  /* After the font shorthand: the inherited ~1.7 body line box would
+     otherwise push the pill to 34px. */
+  line-height: var(--table-line-height);
+  cursor: pointer;
+}
+
+.trigger:hover,
+.trigger[data-expanded] {
+  border-color: var(--secondary-main);
+  color: var(--secondary-main);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: 2px;
+}
+
+/* Exhausted — every filter is already added, so there is nothing to pick. */
+.trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.triggerIcon {
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+/* One active filter — the spec's tinted pill (`Label: value ▾ ✕`), with our
+   live editor control inline where the spec hides an editor popover (the
+   recorded empty-chip divergence). The tint layers translucently so it sits
+   on the toolbar band in both themes. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline: var(--space-3) var(--space-1);
+  min-block-size: 1.875rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--secondary-main) 10%, transparent);
+  color: var(--secondary-dark);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.chipLabel {
+  white-space: nowrap;
+}
+
+/* Enum value trigger inside a chip — de-boxed to read as `value ▾` on the
+   pill; its hover deepens the tint like the spec's chip-edit zone. */
+.enumTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.125rem var(--space-2);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.enumTrigger:hover,
+.enumTrigger[data-expanded] {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+}
+
+.enumTrigger:focus-visible {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: -2px;
+}
+
+/* The caret riding an enum value (spec: chip-caret at reduced emphasis). */
+.triggerChevron {
+  font-size: 1rem;
+  color: inherit;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+/* Inline text/date editor inside a chip — transparent on the pill. */
+.textFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline: var(--space-1);
+}
+
+/* Active editing state: the input zone tints slightly darker — the same
+   signal as an open enum trigger — rather than a focus ring (Carl,
+   2026-07-24). Keyboard focus still gets :focus-visible outlines on the
+   discrete controls (trigger, remove, clear). */
+.textFilter:focus-within {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+  border-radius: var(--radius-pill);
+}
+
+.textFilterIcon {
+  display: inline-flex;
+  font-size: 1rem;
+  color: inherit;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  block-size: 1.625rem;
+  /* Shrink-to-fit: a blurred chip is only as wide as its text (plus label /
+     adornments); focusing re-opens comfortable typing room. field-sizing is
+     Chromium 123+ — our enforced floor is past it (check-min-browser). The
+     transition rides the min-inline-size change (real lengths interpolate;
+     the intrinsic content growth itself still steps). */
+  field-sizing: content;
+  min-inline-size: 2.5rem;
+  max-inline-size: 16rem;
+  transition: min-inline-size var(--motion-base) ease;
+}
+
+.input:focus {
+  min-inline-size: 10rem;
+}
+
+/* De-box a shared field component (NumberField, DateRangeField) inside a
+   chip: their frames read the input tokens, so scoping overrides here
+   strips the box and caps their small 2.25rem height to the text-filter
+   line — while keeping the component (locale gating, calendar, caret
+   safety). The inner focus ring is zeroed; the active tint below signals
+   editing instead. */
+.bareField {
+  display: inline-flex;
+  --input-border: transparent;
+  --bg-white: transparent;
+  --focus-ring: 0 0 0 0 transparent;
+  --input-height: 1.625rem;
+  --input-height-sm: 1.625rem;
+  --input-padding-x: var(--space-2);
+}
+
+.bareField:focus-within {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+  border-radius: var(--radius-pill);
+}
+
+/* Their focus states recolour the inner frame's border with a literal
+   token (not var(--input-border)), so out-specify them: (0,2,1) beats the
+   components' (0,2,0) :focus-within rules. */
+.bareField div:focus-within {
+  border-color: transparent;
+}
+
+.bareField input {
+  field-sizing: content;
+  min-inline-size: 3.5rem;
+  /* The same ceiling .input gives the plain text chip. The CHIP owns this, not
+     the component: a filter chip is a content-sized pill in a wrapping bar, so
+     whatever field is dropped in must stop growing at the same point. It used
+     to come from NumberField's `compact` DEFAULT capping its box at 10rem —
+     which was invisible, applied to nothing else in the bar, and vanished the
+     moment that default changed (2026-08-13). */
+  max-inline-size: 16rem;
+}
+
+/* Number-range boxes: the 3.5rem floor above is sized for dates and reads as
+   dead space beside a one-digit bound, so tighten it — and align each bound
+   toward the dash (From keeps NumberField's end-align; To starts after it). */
+.numberRange input {
+  min-inline-size: 2rem;
+}
+
+.numberRange > :last-child input {
+  text-align: start;
+}
+
+/* TextField's chrome lives on the <input> itself (.input:focus recolours
+   it with a literal token) — same out-specify trick as the div frames. */
+.bareField input:focus {
+  border-color: transparent;
+}
+
+/* Round remove button on each chip (inside the pill; hover = neutral wash,
+   the spec's chip-x). */
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.remove:hover {
+  background: color-mix(in srgb, var(--text-body) 12%, transparent);
+}
+
+.remove:focus-visible {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: -2px;
+}
+
+/* The boolean chip's checkbox (FilterCheckbox → BareCheckbox): a little
+   breathing room against the pill's remove button; the box look itself is
+   the shared control's. */
+.checkboxFilter {
+  margin-inline-end: var(--space-1);
+}
+
+/* Bar-level "Clear all" — the spec's borderless text button, shown only
+   while filters are active. */
+.clearAll {
+  border: none;
+  background: transparent;
+  padding: var(--space-1) var(--space-2);
+  color: var(--secondary-main);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.clearAll:hover {
+  text-decoration: underline;
+}
+
+.clearAll:focus-visible {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: 2px;
+}
+
+/* --- Menus (both dropdowns share these) --------------------------------- */
+
+.content {
+  z-index: 50;
+  min-inline-size: 12.5rem;
+  max-block-size: 21.25rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-4);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  white-space: nowrap;
+}
+
+.item[data-highlighted] {
+  background: var(--bg-group-main);
+}
+
+.itemLabel {
+  flex: 1;
+}
+
+/* The "No options" row (see NoOptions) — a muted status, not a choice, so it
+   reads as the same greyed line the Combobox/MultiSelect listboxes use for
+   theirs. Sizing comes from .content's font-size. */
+.status {
+  padding: var(--space-2);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Kobalte's Separator renders an <hr> — flatten it to a token hairline. */
+.separator {
+  height: 1px;
+  margin: var(--space-1) 0;
+  border: none;
+  background: var(--color-divider);
+}
+
+/* Boxed checkbox rows (multi-select menu — the FilterMultiSelect items) */
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  border: 1px solid var(--gray-light);
+  border-radius: var(--radius-sm);
+  color: var(--primary-contrast);
+}
+
+.checkboxItem[data-checked] .checkbox {
+  background: var(--secondary-main);
+  border-color: var(--secondary-main);
+}
+
+/* Single-select rows (FilterSelect): the chosen option carries a bare check
+   mark — a boxed checkbox is the multi-select affordance (spec ui-standards
+   tables › filtering). */
+.checkMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--secondary-main);
+}
+
+.indicator {
+  display: inline-flex;
+  font-size: 0.75rem;
+}
+
+@media (pointer: coarse) {
+  .item {
+    min-height: var(--touch-target);
+  }
+}

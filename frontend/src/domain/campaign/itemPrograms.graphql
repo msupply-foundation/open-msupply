@@ -1,0 +1,21 @@
+# The programs available for one item in the current store — the program side of
+# the campaign-or-program picker (spec/stocktakes S4). Unlike campaigns (a single
+# store-scoped cache), programs are narrowed BY ITEM, so this is fetched per item
+# rather than cached store-wide: the picker re-queries whenever its item changes.
+# existsForStoreId restricts to programs configured for this store; sorted by name
+# for a stable option order. id + name label the option.
+query itemPrograms($storeId: String!, $itemId: String!) {
+  programs(
+    storeId: $storeId
+    filter: { itemId: { equalTo: $itemId }, existsForStoreId: { equalTo: $storeId } }
+    sort: { key: name }
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}

@@ -1,9 +1,9 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, InternalError, UniqueValueKey, UniqueValueViolation},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{DatabaseError, InternalError, UniqueValueKey, UniqueValueViolation},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::CampaignNode;
 use repository::campaign::campaign::Campaign;
@@ -93,7 +93,7 @@ fn map_error(error: ServiceError) -> Result<UpsertCampaignErrorInterface> {
         ServiceError::DuplicateName => {
             return Ok(UpsertCampaignErrorInterface::DuplicateName(
                 UniqueValueViolation(UniqueValueKey::Name),
-            ))
+            ));
         }
         // Generic errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),

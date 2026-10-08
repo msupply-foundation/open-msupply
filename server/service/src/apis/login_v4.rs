@@ -168,12 +168,10 @@ impl LoginApiV4 {
                     // Handle account blocked error (i.e. too many failed login attempts)
                     if let Ok(error_body) =
                         serde_json::from_value::<LoginResponseErrorV4>(body.clone())
+                        && error_body.status == "user_login_timeout"
+                        && let Some(timeout_remaining) = error_body.timeout_remaining
                     {
-                        if error_body.status == "user_login_timeout" {
-                            if let Some(timeout_remaining) = error_body.timeout_remaining {
-                                return Err(LoginV4Error::AccountBlocked(timeout_remaining));
-                            }
-                        }
+                        return Err(LoginV4Error::AccountBlocked(timeout_remaining));
                     }
                 }
 

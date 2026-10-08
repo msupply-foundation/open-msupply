@@ -1,6 +1,6 @@
 use repository::{
-    item_variant::item_variant::{ItemVariantFilter, ItemVariantRepository},
     EqualFilter, RepositoryError, StorageConnection,
+    item_variant::item_variant::{ItemVariantFilter, ItemVariantRepository},
 };
 
 pub fn check_item_variant_exists(

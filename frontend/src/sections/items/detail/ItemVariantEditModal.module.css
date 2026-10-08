@@ -1,0 +1,21 @@
+/* The packaging grid — a fixed 3-row layout (Primary/Secondary/Tertiary;
+   rules.md § item variants and packaging), Level shown read-only, Name/Pack
+   size/Volume per unit editable. Level's column is narrow (a bare digit);
+   the other three share the remaining width equally. */
+.grid {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 1fr 1fr;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+}
+
+.columnHeader {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
+.level {
+  font-weight: var(--weight-medium);
+  text-align: center;
+}

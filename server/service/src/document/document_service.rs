@@ -1,4 +1,4 @@
-use jsonschema::{validator_for, Validator};
+use jsonschema::{Validator, validator_for};
 use repository::{
     Document, DocumentFilter, DocumentRepository, DocumentSort, EqualFilter,
     FormSchemaRowRepository, Pagination, PaginationOption, RepositoryError, StorageConnection,
@@ -6,7 +6,7 @@ use repository::{
 };
 
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 
 use super::raw_document::RawDocument;
@@ -226,11 +226,11 @@ fn insert_document(
 mod document_service_test {
     use chrono::{DateTime, Utc};
     use repository::{
+        DocumentStatus,
         mock::{
-            context_program_a, mock_form_schema_empty, mock_form_schema_simple, MockDataInserts,
+            MockDataInserts, context_program_a, mock_form_schema_empty, mock_form_schema_simple,
         },
         test_db::setup_all,
-        DocumentStatus,
     };
     use serde_json::json;
 

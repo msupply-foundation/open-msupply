@@ -182,7 +182,6 @@ fragment ItemVariant on ItemVariantNode {
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow
-    isVisible
   }
   locationTypeId
   locationType {
@@ -612,6 +611,7 @@ fragment CustomField on CustomFieldNode {
     key
     name
     parentOptionId
+    deletedDatetime
   }
 }
 

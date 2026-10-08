@@ -1,9 +1,9 @@
-use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
+use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 use repository::{
+    PaginationOption, StorageConnection,
     item_variant::item_variant::{
         ItemVariant, ItemVariantFilter, ItemVariantRepository, ItemVariantSort,
     },
-    PaginationOption, StorageConnection,
 };
 
 pub fn get_item_variants(

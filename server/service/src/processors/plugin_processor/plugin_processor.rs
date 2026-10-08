@@ -6,7 +6,7 @@ use util::format_error;
 
 use crate::{
     backend_plugin::{
-        plugin_provider::{call_plugin, call_plugin_async, PluginInstance},
+        plugin_provider::{PluginInstance, call_plugin, call_plugin_async},
         types::processor,
     },
     cursor_controller::CursorType,

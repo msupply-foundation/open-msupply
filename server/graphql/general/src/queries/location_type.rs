@@ -1,17 +1,17 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     generic_filters::EqualFilterStringInput,
     pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::LocationTypeNode;
 use repository::{EqualFilter, PaginationOption};
 use repository::{LocationType, LocationTypeFilter, LocationTypeSort, LocationTypeSortField};
 use service::{
+    ListResult,
     auth::{Resource, ResourceAccessRequest},
     location_type::get_location_types,
-    ListResult,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

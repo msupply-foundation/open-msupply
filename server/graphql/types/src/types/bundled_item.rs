@@ -1,6 +1,6 @@
 use async_graphql::*;
 use dataloader::DataLoader;
-use graphql_core::{loader::ItemVariantByItemVariantIdLoader, ContextExt};
+use graphql_core::{ContextExt, loader::ItemVariantByItemVariantIdLoader};
 use repository::item_variant::bundled_item_row::BundledItemRow;
 
 use super::ItemVariantNode;

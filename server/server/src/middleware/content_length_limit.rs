@@ -1,13 +1,13 @@
-use std::future::{ready, Ready};
+use std::future::{Ready, ready};
 
 use actix_web::{
-    body::EitherBody,
-    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    http::StatusCode,
     Error, HttpResponse,
+    body::EitherBody,
+    dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
+    http::StatusCode,
 };
-use futures_util::future::LocalBoxFuture;
 use futures_util::TryStreamExt;
+use futures_util::future::LocalBoxFuture;
 
 static DEFAULT_MAX_UPLOAD_SIZE_BYTES: u64 = 100 * 1024 * 1024; // 100MB
 

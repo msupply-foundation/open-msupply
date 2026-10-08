@@ -1,9 +1,9 @@
 use diesel::prelude::*;
 
 use crate::{
+    EqualFilter, RequisitionType, StorageConnection, StringFilter,
     diesel_macros::{apply_equal_filter, apply_string_filter},
     repository_error::RepositoryError,
-    EqualFilter, RequisitionType, StorageConnection, StringFilter,
 };
 
 table! {
@@ -129,14 +129,14 @@ mod test {
     use std::cmp::Ordering;
 
     use crate::{
-        mock::{
-            mock_name_store_a, mock_period_schedule_1, mock_store_a, mock_store_b, MockData,
-            MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         ContextRow, EqualFilter, MasterListRow, PeriodRow, ProgramRow, RequisitionRow,
         RequisitionType, RequisitionsInPeriod, RequisitionsInPeriodFilter,
         RequisitionsInPeriodRepository,
+        mock::{
+            MockData, MockDataInserts, mock_name_store_a, mock_period_schedule_1, mock_store_a,
+            mock_store_b,
+        },
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]

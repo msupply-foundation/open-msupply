@@ -1,6 +1,6 @@
 use crate::{InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType};
 
-use super::{mock_default_service_item, mock_name_a, MockData};
+use super::{MockData, mock_default_service_item, mock_name_a};
 
 pub fn mock_test_service_item() -> MockData {
     MockData {

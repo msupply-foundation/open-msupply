@@ -14,7 +14,7 @@ use self::transfer::requisition::ProcessRequisitionTransfersError;
 use self::transfer::{
     invoice::process_invoice_transfers, requisition::process_requisition_transfers,
 };
-use general_processor::{process_records, ProcessorError};
+use general_processor::{ProcessorError, process_records};
 
 // Processor currently disabled (not constructed in ProcessorType::get_processors), see #12547
 #[allow(dead_code, unused_imports)]
@@ -25,6 +25,7 @@ mod general_processor;
 mod load_plugin;
 mod merge_sync_message;
 mod plugin_processor;
+mod prescription_request_status;
 mod requisition_auto_finalise;
 mod support_upload_files;
 pub use general_processor::ProcessorType;
@@ -220,8 +221,8 @@ mod test {
     use actix_rt::task::JoinHandle;
     use tokio::{
         sync::{
-            mpsc::{self, Sender},
             Mutex,
+            mpsc::{self, Sender},
         },
         time,
     };

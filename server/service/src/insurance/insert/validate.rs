@@ -1,4 +1,4 @@
-use repository::{name_insurance_join_row::NameInsuranceJoinRowRepository, StorageConnection};
+use repository::{StorageConnection, name_insurance_join_row::NameInsuranceJoinRowRepository};
 
 use super::InsertInsuranceError;
 

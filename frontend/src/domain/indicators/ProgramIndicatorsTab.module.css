@@ -1,0 +1,68 @@
+/* The Indicators tab's two-pane layout (spec S3 § Indicators tab): the line
+   list on the inline-start, the selected line's form filling the rest; they
+   stack on narrow viewports. Both panes are FormSections, so the tab reads as
+   one sectioned form page — the shape the custom-fields tab and the stock /
+   patient detail forms use. */
+.tab {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: flex-start;
+}
+
+/* Narrow enough that the form keeps the room, wide enough that a `code - name`
+   entry usually sits on one line (it wraps within the row when it doesn't). */
+.lines {
+  flex: 0 1 18rem;
+  min-inline-size: 13rem;
+}
+
+.lineList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-block-size: 32rem;
+  overflow-y: auto;
+}
+
+/* A selectable row, the app's nav-item shape: rounded, quiet until hovered.
+   The selection is carried by weight and the current-item marker as well as
+   the tint (never colour alone). */
+.lineButton {
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: pointer;
+}
+
+.lineButton:hover {
+  background: var(--gray-pale);
+}
+
+.lineButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.lineButton[data-selected] {
+  background: color-mix(in srgb, var(--primary-main) 10%, transparent);
+  color: var(--primary-main);
+  font-weight: var(--weight-bold);
+}
+
+.editor {
+  flex: 1 1 24rem;
+  min-inline-size: 0;
+}
+
+/* The cell rows keep the form measure — two FormColumns at their own basis —
+   so an input stays a field, not a banner, however wide the screen. The
+   breakdown table below is free to use the full pane. */
+.fields {
+  max-inline-size: 45.5rem;
+}

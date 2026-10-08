@@ -1,8 +1,8 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    loader::{StoreByIdLoader, SyncFileReferenceLoader},
     ContextExt,
+    loader::{StoreByIdLoader, SyncFileReferenceLoader},
 };
 use graphql_types::types::{StoreNode, SyncFileReferenceConnector};
 use repository::{SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType};

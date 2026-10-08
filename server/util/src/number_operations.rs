@@ -8,11 +8,7 @@ pub fn fraction_is_integer(fraction: f64) -> bool {
 
 pub fn pos_zero(value: f64) -> f64 {
     // This would make -0.0 = positive 0.0
-    if value == 0.0 {
-        0.0
-    } else {
-        value
-    }
+    if value == 0.0 { 0.0 } else { value }
 }
 
 /// Compare two f64 values for approximate equality using a relative tolerance.

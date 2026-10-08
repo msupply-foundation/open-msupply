@@ -36,7 +36,7 @@ export const SelectItem = ({
   return (
     <Grid container gap="4px" width="100%">
       <ModalRow>
-        <ModalLabel label={t('label.item', { count: 1 })} />
+        <ModalLabel label={t('label.item')} />
         <Grid flex={1}>
           <StockItemSearchInput
             autoFocus={!itemId}

@@ -1,7 +1,7 @@
 [package]
 name = "graphql"
 version = "0.1.0"
-edition = "2018"
+edition.workspace = true
 
 [lib]
 path = "./lib.rs"
@@ -36,6 +36,7 @@ graphql_stocktake_line = { path = "stocktake_line" }
 graphql_types = { path = "types" }
 graphql_batch_mutations = { path = "batch_mutations" }
 graphql_stock_line = { path = "stock_line" }
+graphql_prescription_request = { path = "prescription_request" }
 graphql_stock_relocation = { path = "stock_relocation" }
 graphql_repack = { path = "repack" }
 graphql_printer = { path = "printer" }

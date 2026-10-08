@@ -1,0 +1,105 @@
+# The line editor (spec/outbound-shipments S4). The batch grid is the
+# server-computed draft: one row per available batch (FEFO-ordered by the
+# server), carrying available/in-store packs, hold state, and the item's
+# existing shipment lines as pre-filled numberOfPacks — plus the item's current
+# placeholder quantity.
+query draftStockOutLines(
+  $storeId: String!
+  $itemId: String!
+  $invoiceId: String!
+) {
+  draftStockOutLines(
+    storeId: $storeId
+    itemId: $itemId
+    invoiceId: $invoiceId
+  ) {
+    placeholderQuantity
+    draftLines {
+      id
+      numberOfPacks
+      stockLineId
+      batch
+      expiryDate
+      packSize
+      sellPricePerPack
+      inStorePacks
+      availablePacks
+      stockLineOnHold
+      dosesPerUnit
+      volumePerPack
+      location {
+        id
+        code
+        onHold
+      }
+      vvmStatus {
+        id
+        description
+        unusable
+        priority
+      }
+      itemVariantId
+      receivedNumberOfPacks
+      # The ITEM's supplier comment, repeated on every draft row of the item
+      # (spec rules § supplier comment) — the editor shows one field for it and
+      # echoes it back on every line it saves.
+      transferComment
+      reasonOption {
+        id
+      }
+      campaign {
+        name
+      }
+      program {
+        name
+      }
+      donor(storeId: $storeId) {
+        name
+      }
+      manufacturer(storeId: $storeId) {
+        name
+      }
+    }
+  }
+}
+
+# The item's variants, for the batch column's variant-info popover (spec S4
+# § batch grid): a batch row carrying an itemVariantId reveals the item's
+# variant list with its own marked. Fetched by seedItem only when some draft
+# line carries a variant id — most items have none and skip this read.
+query itemVariants($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        variants {
+          id
+          name
+          vvmType
+          manufacturer(storeId: $storeId) {
+            name
+          }
+        }
+      }
+    }
+  }
+}
+
+# The item-set save (OMS-REG-DIST-03.20): replaces the item's lines as a set — changed packs
+# updated, zeroed batches removed, the placeholder created/updated/removed to
+# match. Returns the invoice node; the view refetches the detail (totals,
+# trims, and placeholder management are server-side).
+# ⚠ Every rejection here is a non-typed GraphQL error (contract.md wire trap) —
+# the caller opts into returnGraphqlErrors and translates what it can.
+mutation saveOutboundItemLines(
+  $storeId: String!
+  $input: SaveOutboundShipmentLinesInput!
+) {
+  saveOutboundShipmentItemLines(storeId: $storeId, input: $input) {
+    id
+  }
+}
