@@ -7,8 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { t, localisedDate } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
-import { homeCurrency } from '../../../intl/currency';
+import { formatCurrency } from '../../../intl/currency';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import {
@@ -89,15 +88,6 @@ export interface InboundShipmentSidePanelProps {
   onRefetch: () => void;
   onDeleted: () => void;
 }
-
-const money = (value: number): string =>
-  formatNumber(value, {
-    style: 'currency',
-    currency: homeCurrency(),
-    currencyDisplay: 'narrowSymbol',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 
 const round2 = (value: number): number => Math.round(value * 100) / 100;
 
@@ -320,7 +310,7 @@ export const InboundShipmentSidePanel: Component<
             off when not editable or the stock sub-total is zero) · total. */}
         <SidePanelSubheading>{t('heading.stock-charges')}</SidePanelSubheading>
         <FieldRow label={t('label.sub-total')}>
-          <span>{money(pricing().stockTotalBeforeTax)}</span>
+          <span>{formatCurrency(pricing().stockTotalBeforeTax)}</span>
         </FieldRow>
         <FieldRow label={t('label.tax')}>
           <NumberField
@@ -333,7 +323,7 @@ export const InboundShipmentSidePanel: Component<
             decimalLimit={2}
             endAdornment="%"
             disabled={props.disabled || pricing().stockTotalBeforeTax === 0}
-            helperText={money(
+            helperText={formatCurrency(
               pricing().stockTotalAfterTax - pricing().stockTotalBeforeTax
             )}
             onChange={value =>
@@ -342,7 +332,7 @@ export const InboundShipmentSidePanel: Component<
           />
         </FieldRow>
         <FieldRow label={t('label.total')}>
-          <span>{money(pricing().stockTotalAfterTax)}</span>
+          <span>{formatCurrency(pricing().stockTotalAfterTax)}</span>
         </FieldRow>
 
         {/* Service charges: an edit action opens the service-line modal; an
@@ -366,12 +356,12 @@ export const InboundShipmentSidePanel: Component<
         <For each={serviceLineRows()}>
           {line => (
             <FieldRow label={line.itemName}>
-              <span>{money(line.totalBeforeTax)}</span>
+              <span>{formatCurrency(line.totalBeforeTax)}</span>
             </FieldRow>
           )}
         </For>
         <FieldRow label={t('label.sub-total')}>
-          <span>{money(pricing().serviceTotalBeforeTax)}</span>
+          <span>{formatCurrency(pricing().serviceTotalBeforeTax)}</span>
         </FieldRow>
         <FieldRow label={t('label.tax')}>
           <NumberField
@@ -384,14 +374,14 @@ export const InboundShipmentSidePanel: Component<
             decimalLimit={2}
             endAdornment="%"
             disabled={props.disabled || pricing().serviceTotalBeforeTax === 0}
-            helperText={money(
+            helperText={formatCurrency(
               pricing().serviceTotalAfterTax - pricing().serviceTotalBeforeTax
             )}
             onChange={value => setServiceTax(value ?? 0)}
           />
         </FieldRow>
         <FieldRow label={t('label.total')}>
-          <span>{money(pricing().serviceTotalAfterTax)}</span>
+          <span>{formatCurrency(pricing().serviceTotalAfterTax)}</span>
         </FieldRow>
 
         {/* Foreign currency — code/rate/converted total + the gated
@@ -430,12 +420,14 @@ export const InboundShipmentSidePanel: Component<
         </FieldRow>
         <Show when={props.node.currency && !props.node.currency.isHomeCurrency}>
           <FieldRow label={t('label.foreign-currency-total')}>
-            <span>{money(pricing().foreignCurrencyTotalAfterTax ?? 0)}</span>
+            <span>
+              {formatCurrency(pricing().foreignCurrencyTotalAfterTax ?? 0)}
+            </span>
           </FieldRow>
         </Show>
 
         <FieldRow label={t('heading.grand-total')}>
-          <strong>{money(pricing().totalAfterTax)}</strong>
+          <strong>{formatCurrency(pricing().totalAfterTax)}</strong>
         </FieldRow>
       </SidePanelSection>
 
