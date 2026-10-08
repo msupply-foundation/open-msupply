@@ -68,10 +68,7 @@ export const ItemAncillaryPanel: Component<{
   // a suspending read there tears down and remounts the whole screen.
   const rows = (): AncillaryRow[] => gated(data) ?? [];
 
-  const onSaved = () => {
-    props.onEditorChange(undefined);
-    void refetch();
-  };
+  const onSaved = () => void refetch();
 
   const confirmDelete = async () => {
     // Captured before ConfirmDialog's own onClose (fired right after
