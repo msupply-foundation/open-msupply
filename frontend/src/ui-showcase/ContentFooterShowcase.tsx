@@ -65,8 +65,8 @@ export const contentFooterMetadata: PageMetadata = {
 };
 
 // The message-slot demo's flow: each confirm moves one stage on and flashes
-// the save confirmation. The last stage hides the button, as a real footer
-// does.
+// the stage it reached (issue #1127). The last stage hides the button, as a
+// real footer does.
 const INBOUND_STEPS: StatusStep[] = [
   { label: 'New' },
   { label: 'Delivered' },
@@ -81,8 +81,9 @@ export const ContentFooterShowcase = () => {
   const [refusal, setRefusal] = createSignal<string>();
   const advance = () => {
     setRefusal(undefined);
-    setStage(stage() + 1);
-    saved.show('Shipment saved');
+    const next = stage() + 1;
+    setStage(next);
+    saved.show(INBOUND_STEPS[next].label);
   };
   const [picked, setPicked] = createSignal<ReadonlySet<string>>(new Set());
   const toggle = (id: string) =>

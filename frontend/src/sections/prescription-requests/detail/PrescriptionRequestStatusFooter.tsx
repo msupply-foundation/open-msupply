@@ -15,6 +15,7 @@ import {
   asRequestStatus,
   isEditable,
   statusIndex,
+  statusLabel,
   statusSteps,
 } from '../prescriptionRequestStatus';
 import { savePrescriptionRequest } from './prescriptionRequestUpdate';
@@ -34,8 +35,8 @@ import type { PrescriptionRequestFieldsFragment } from './prescriptionRequestDet
 // to confirm.
 //
 // A hand-over that lands closes the dialog and hides the button, so the bar's
-// message slot flashes the save confirmation (spec/ui-standards/controls.md §
-// action feedback).
+// message slot flashes the status it reached, "Ready to dispense" (issue
+// #1127; spec/ui-standards/controls.md § action feedback).
 
 export interface PrescriptionRequestStatusFooterProps {
   storeId: string;
@@ -91,7 +92,7 @@ export const PrescriptionRequestStatusFooter: Component<
     if (outcome.kind === 'saved') {
       closeDialogs();
       props.onSaved(outcome.node);
-      saved.show(t('messages.saved'));
+      saved.show(statusLabel('READY_TO_DISPENSE'));
       return;
     }
     if (outcome.kind === 'rejected') {

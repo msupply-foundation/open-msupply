@@ -2894,6 +2894,7 @@
   "messages.prescription-created": "Dispensing record #{{count}} created",
   "messages.prescription-given": "Prescribed {{amount}} {{item}} on {{date}}",
   "messages.prescription-saved": "Dispensing record saved",
+  "messages.prescription-verified": "Verified - dispensing record saved",
   "messages.prescription-will-be-created": "Dispensing record will be created when form is saved",
   "messages.products-at-risk-of-stock-out-info": "Items projected to run out of stock within {{num}} months, based on average monthly consumption (AMC). Only items with stock on hand and recorded consumption are included.",
   "messages.properties-download-example": "Download a template CSV",

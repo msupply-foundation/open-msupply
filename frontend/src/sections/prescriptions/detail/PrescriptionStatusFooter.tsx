@@ -38,8 +38,9 @@ import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated'
 // the payment window opens instead (OMS-REG-DIS-04.27). A typed rejection
 // surfaces in the same dialog as a blocking notice — never a toast (S7, D21). A
 // change that lands closes the dialog, so the bar's message slot flashes the
-// save confirmation (spec/ui-standards/controls.md § action feedback) — the
-// split button is gone at Verified.
+// status it reached, in the crumb's own word; Verified adds that the dispensing
+// record is saved (issue #1127; spec/ui-standards/controls.md § action
+// feedback) — the split button is gone at Verified.
 
 export interface PrescriptionStatusFooterProps {
   storeId: string;
@@ -160,7 +161,11 @@ export const PrescriptionStatusFooter: Component<
       // Only a WHOLE success flashes. A plugin after-save failure (above)
       // keeps the payment window open to report it; a success chip behind it
       // would contradict that.
-      saved.show(t('messages.prescription-saved'));
+      saved.show(
+        next === 'VERIFIED'
+          ? t('messages.prescription-verified')
+          : t(STATUS_LABEL_KEYS[next])
+      );
       return;
     }
     setWorking(false);
