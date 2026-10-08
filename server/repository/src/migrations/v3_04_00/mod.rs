@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_code_to_location_type;
 mod add_line_total_to_purchase_order_line;
+mod remove_use_procurement_functionality_pref;
 
 pub(crate) struct V3_04_00;
 
@@ -19,6 +20,7 @@ impl Migration for V3_04_00 {
         vec![
             Box::new(add_code_to_location_type::Migrate),
             Box::new(add_line_total_to_purchase_order_line::Migrate),
+            Box::new(remove_use_procurement_functionality_pref::Migrate),
         ]
     }
 }

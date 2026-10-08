@@ -6324,7 +6324,6 @@ enum PreferenceKey {
 	manageVaccinesInDoses
 	manageVvmStatusForStock
 	orderInPacks
-	useProcurementFunctionality
 	sortByVvmStatusThenExpiry
 	useSimplifiedMobileUi
 	disableManualReturns
@@ -6401,7 +6400,6 @@ type PreferencesNode {
 	manageVaccinesInDoses: Boolean!
 	manageVvmStatusForStock: Boolean!
 	orderInPacks: Boolean!
-	useProcurementFunctionality: Boolean!
 	sortByVvmStatusThenExpiry: Boolean!
 	useSimplifiedMobileUi: Boolean!
 	disableManualReturns: Boolean!
@@ -10933,7 +10931,6 @@ input UpsertPreferencesInput {
 	manageVaccinesInDoses: [BoolStorePrefInput!]
 	manageVvmStatusForStock: [BoolStorePrefInput!]
 	orderInPacks: [BoolStorePrefInput!]
-	useProcurementFunctionality: [BoolStorePrefInput!]
 	sortByVvmStatusThenExpiry: [BoolStorePrefInput!]
 	useSimplifiedMobileUi: [BoolStorePrefInput!]
 	disableManualReturns: [BoolStorePrefInput!]

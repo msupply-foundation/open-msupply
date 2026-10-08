@@ -97,7 +97,6 @@ pub struct UpsertPreferencesInput {
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
     pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
-    pub use_procurement_functionality: Option<Vec<BoolStorePrefInput>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
@@ -181,7 +180,6 @@ impl UpsertPreferencesInput {
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
-            use_procurement_functionality,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
@@ -247,9 +245,6 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             order_in_packs: order_in_packs
-                .as_ref()
-                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            use_procurement_functionality: use_procurement_functionality
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry
