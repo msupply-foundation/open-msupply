@@ -234,6 +234,7 @@ export const ItemVariantEditModal: Component<
               onInput={e => setForm({ ...form(), name: e.currentTarget.value })}
             />
             <Combobox<LocationType>
+              inputTestId="item-variant-location-type-input"
               label={t('label.location-type')}
               items={locationTypes()}
               loading={typesData.loading}
@@ -247,6 +248,7 @@ export const ItemVariantEditModal: Component<
               }
             />
             <NameSearch
+              inputTestId="item-variant-manufacturer-input"
               label={t('label.manufacturer')}
               storeId={props.storeId}
               role="manufacturer"
@@ -283,6 +285,7 @@ export const ItemVariantEditModal: Component<
                   <>
                     <span class={styles.level}>{row.packagingLevel}</span>
                     <TextField
+                      data-testid="packaging-name-input"
                       label={t('label.name')}
                       hideLabel
                       disabled={saving()}
@@ -292,6 +295,7 @@ export const ItemVariantEditModal: Component<
                       }
                     />
                     <NumberField
+                      data-testid="packaging-pack-size-input"
                       label={t('label.pack-size')}
                       hideLabel
                       min={0}
@@ -301,6 +305,7 @@ export const ItemVariantEditModal: Component<
                       onChange={packSize => setPackaging(row.id, { packSize })}
                     />
                     <NumberField
+                      data-testid="packaging-volume-per-unit-input"
                       label={t('label.volume-per-unit')}
                       hideLabel
                       min={0}
