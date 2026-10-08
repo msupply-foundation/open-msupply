@@ -1,5 +1,8 @@
 # Open mSupply Forecasting plugins
 
+> **Imported from [msupply-foundation/open-msupply-forecasting-plugins](https://github.com/msupply-foundation/open-msupply-forecasting-plugins)** (Oct 2026, `main` with history — each commit's `Source:` trailer links its original). File issues in this repo now, not there. Built bundles were stripped from history; they live on the bundle server.
+>
+> This is the plugin for the **React UI**. There is no SolidJS port yet. The build and install steps below still assume the old layout — this repo checked out as a submodule at `client/packages/plugins/<name>/` — and its webpack and tsconfig files still reach up into that directory, so they do not build from here yet.
 
 ## Translation Note
 Since we can't currently translate the column names in plugins, this plugin will install with French, we'll need to either solve the core problem or fork this repo if a french version is needed in future.
