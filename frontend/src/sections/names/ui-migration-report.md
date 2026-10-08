@@ -44,7 +44,7 @@ Rows = every screen/piece in scope; columns = the eleven dimensions.
 
 - **Rule:** [`detail-views.md` § Never-editable fields are never disabled controls](../../../spec/ui-standards/detail-views.md#never-editable-fields-are-never-disabled-controls) + [D67](../../../spec/DIVERGENCES.md) (decided 2026-07-27, generalised app-wide 2026-07-29). `spec/names/ui-surface.md:56` already said the same.
 - **Was:** `NameDetailForm` composed 19 `DetailRow`s, and `DetailRow` renders a `value` in a `disabled readOnly TextField` and a `checked` in a `disabled` checkbox. So every field was a greyed-out box, the three flags were disabled checkboxes (which cannot tell `false` from _never set_), and empty fields rendered as empty boxes rather than dashes. The [items migration](../items/ui-migration-report.md) had logged this as a names follow-up; the Custom fields tab on the same page already conformed, so two tabs of one record contradicted each other.
-- **Now:** `ContentContainer size="form"` → `Stack gap="lg"` → `RecordNameHeader` → `FormColumns`/`FormColumn` (each a `Stack gap="md"` of `LabelledValue variant="field"`) → a full-width `Stack gap="md"` for address / country / website / supply level. Field order and the AC-N25 trade-term interleave are unchanged; the address pair is a `FormRow`; unset → `EMPTY_FIELD_VALUE` (a dash); flags → `t('messages.yes')`/`t('messages.no')`.
+- **Now:** `ContentContainer size="form"` → `Stack gap="lg"` → `RecordNameHeader` → `FormColumns`/`FormColumn` (each a `Stack gap="md"` of `LabelledValue variant="field"`) → a full-width `Stack gap="md"` for address / country / website / supply level. Field order and the OMS-REG-DIST-08.26, OMS-REG-REPL-08.22 trade-term interleave are unchanged; the address pair is a `FormRow`; unset → `EMPTY_FIELD_VALUE` (a dash); flags → `t('messages.yes')`/`t('messages.no')`.
 - **Decisions taken:** `RecordNameHeader` is kept over `IdentityHeader` because `ui-surface` names the record-name-header role and it carries the store indicator, which `IdentityHeader` has no slot for. The groups stay untitled (the spec gives this form no headings), so each column stacks fields directly rather than through `FormSection`, which requires a title — the same shape as `CustomFieldsView`.
 - **`padded`:** the page host passes it (its `Page` is `fillBody` for the table tabs, so the body has no edge padding); the modal host doesn't (the dialog body already pads).
 - **Shared:** `EMPTY_FIELD_VALUE` is now exported from `domain/customFields/index.ts` — it is the app-wide empty marker for a read-only field, so the Details tab and the Custom fields tab render an unset field identically.
@@ -57,7 +57,7 @@ Rows = every screen/piece in scope; columns = the eleven dimensions.
 
 ### R3 — Pagination was a page footer band · **applied**
 
-[`kdd/table-state`](../../../kdd/table-state/draft-kdd.md) (2026-07-23): the `DataTable` renders one footer bar and the page passes state through `pagination`. The `ContentFooter` + `Pagination` slot is replaced by the prop, carrying `pageSizes: [...PAGE_SIZE_OPTIONS]` so AC-N12's 10/20/50/100 set survives. There is no selection bar to swap with (read-only, AC-N16).
+[`kdd/table-state`](../../../kdd/table-state/draft-kdd.md) (2026-07-23): the `DataTable` renders one footer bar and the page passes state through `pagination`. The `ContentFooter` + `Pagination` slot is replaced by the prop, carrying `pageSizes: [...PAGE_SIZE_OPTIONS]` so OMS-REG-DIST-08.8, OMS-REG-REPL-08.8's 10/20/50/100 set survives. There is no selection bar to swap with (read-only, OMS-REG-DIST-08.25, OMS-REG-REPL-08.18).
 
 ### R4 — Column widths and cell types · **applied**
 
@@ -94,7 +94,7 @@ Both hosts spun forever on an id that resolves to no record. Now: spinner while 
 
 ## Spec reconciliation
 
-All three conflicts were **pure-UI**, so the standards won and the spec moved. No behaviour/content/gating conflict was found: field sets, column sets, tab order, sort default, page sizes, store scoping, read-only-ness and the row-open behaviours all matched `rules.md`/`acceptance.md` as implemented.
+All three conflicts were **pure-UI**, so the standards won and the spec moved. No behaviour/content/gating conflict was found: field sets, column sets, tab order, sort default, page sizes, store scoping, read-only-ness and the row-open behaviours all matched `rules.md` and the cases as implemented.
 
 - **SE1 · `spec/names/ui-surface.md` (S1 Layout)** — the "**Toolbar:** a search field … plus the add-a-filter menu" bullet placed filters in a page toolbar, which `tables.md:15` overrides. It now states the filter **set** only and defers placement to the table standard; the pagination bullet likewise no longer asserts a page footer.
 - **SE2 · `spec/names/ui-surface.md` (S3 Layout, S4 Details tab)** — [`detail-views.md:41`](../../../spec/ui-standards/detail-views.md) requires a fully read-only vertical to **state which** read-only presentation it uses. Both now name the sectioned form of read-only labelled values, with the two column groups, their wrap order, and the paired address row. `:56`'s "plain text, Yes/No, dash" sentence already matched the fix and stands.

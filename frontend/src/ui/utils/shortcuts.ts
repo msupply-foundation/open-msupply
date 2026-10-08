@@ -6,10 +6,10 @@ import { t } from '../../intl';
  * the ones spec/keyboard/behaviours.md names. The app never spells a binding
  * out; it names the const.
  *
- * One value serves all three consumers, which is what makes AC-KB15's "the
- * badge MUST be driven by the same declared shortcut the control exposes to
- * assistive technology — never a second, hand-maintained copy that can drift"
- * structural rather than a rule someone follows:
+ * One value serves all three consumers, which is what makes OMS-REG-KBD-01.26's
+ * "the badge MUST be driven by the same declared shortcut the control exposes
+ * to assistive technology — never a second, hand-maintained copy that can
+ * drift" structural rather than a rule someone follows:
  *
  *   matches()           the dispatcher
  *   ariaKeyshortcuts()  the accessibility tree
@@ -154,14 +154,14 @@ export const ALT_V = shortcut({ alt: true, code: 'KeyV', tier: 'global' });
 /** Open the repack modal. Stock line detail only. — StockLineDetailView */
 export const ALT_R = shortcut({ alt: true, code: 'KeyR', tier: 'global' });
 /**
- * Scan a barcode. NOT YET REGISTERED — its creation site is the scanner
- * control, which does not exist yet; it belongs in the helper that owns that
- * control, the way createSidePanelOpen owns Alt+M (KB-R2).
+ * Scan a barcode, wherever a scanner control is present and enabled.
+ * — createScanControl (domain/barcode)
  */
 export const CTRL_S = shortcut({ ctrl: true, code: 'KeyS', tier: 'global' });
 /**
  * Navigate up one level (KB-X5) — the Escape ladder's tail. Registered as an
- * UNLISTED action (AC-KB11): it owns the binding without being browsable.
+ * UNLISTED action (OMS-REG-KBD-01.21): it owns the binding without being
+ * browsable.
  */
 export const ESCAPE = shortcut({ key: 'Escape', tier: 'global' });
 

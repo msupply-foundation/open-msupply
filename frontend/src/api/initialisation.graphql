@@ -78,8 +78,8 @@ query latestSyncStatus {
 
 # Post-login polled fallback for the sync modal (spec/sync-modal: subscription
 # primary, polling fallback): status + push-queue count in one poll.
-# ⚠️ The polled count and the subscription's count are DIFFERENT derivations on
-# the server — see spec/sync-modal/contract.md § Records to push.
+# The polled count and the subscription's count are the same server value —
+# see spec/sync-modal/contract.md § Records to push.
 query syncStatusAndQueue {
   latestSyncStatus {
     ...SyncStatus

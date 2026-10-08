@@ -2,10 +2,10 @@ use std::collections::BTreeMap;
 
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
-use graphql_types::types::{patient::GenderTypeNode, InvoiceNodeStatus};
+use graphql_types::types::{InvoiceNodeStatus, patient::GenderTypeNode};
 use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},

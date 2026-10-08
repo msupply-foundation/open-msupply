@@ -7,7 +7,8 @@ import {
 
 // Shared Indicators-tab domain logic (spec/internal-orders S3 § Indicators
 // tab owns the surface; spec/requisitions § indicator values consumes it):
-// the line merge (AC-I4) and the per-cell save (AC-I5–I7).
+// the line merge (OMS-REG-REPL-12.4) and the per-cell save
+// (OMS-REG-REPL-12.5/.6; the status guard is contract § indicator values).
 
 type IndicatorConnector = Extract<
   ProgramIndicatorValuesResult['programIndicators'],
@@ -26,8 +27,8 @@ export type IndicatorCell = {
   value: string;
 };
 
-// One customer-breakdown row for a line (AC-I10): a supplied customer store,
-// its figures per column, and the period-end date (or null).
+// One customer-breakdown row for a line (OMS-REG-REPL-12.9): a supplied
+// customer store, its figures per column, and the period-end date (or null).
 export type IndicatorCustomerRow = {
   /** Unique per ROW, not per customer: a merged line repeats its customers
    *  once per source indicator, so the source line qualifies the id. */
@@ -37,8 +38,9 @@ export type IndicatorCustomerRow = {
   values: Record<string, string>;
 };
 
-// A merged indicator line (AC-I4): one entry per line code, its cells combined
-// across the program's indicators, its customer rows repeated per source.
+// A merged indicator line (OMS-REG-REPL-12.4): one entry per line code, its
+// cells combined across the program's indicators, its customer rows repeated
+// per source.
 export type IndicatorEntry = {
   code: string;
   name: string;
@@ -74,11 +76,11 @@ const effectiveType = (
   line: 'NUMBER' | 'STRING' | null
 ): 'NUMBER' | 'STRING' => ((column ?? line) === 'NUMBER' ? 'NUMBER' : 'STRING');
 
-// Merge the program's indicator lines into one entry per line code (AC-I4):
-// indicators ordered alphabetically by code (so the first's columns lead),
-// lines grouped by code, columns combined; a cell with no stored value is
-// dropped, and a line with no stored cell is absent. Entries order by line
-// number.
+// Merge the program's indicator lines into one entry per line code
+// (OMS-REG-REPL-12.4): indicators ordered alphabetically by code (so the
+// first's columns lead), lines grouped by code, columns combined; a cell with
+// no stored value is dropped, and a line with no stored cell is absent. Entries
+// order by line number.
 export const mergeIndicatorLines = (
   nodes: readonly IndicatorNode[]
 ): IndicatorEntry[] => {
@@ -161,8 +163,8 @@ export const applySavedIndicatorValue = (
     ),
   }));
 
-// The per-cell save (AC-I5): updateIndicatorValue, mapping the typed errors —
-// RecordNotFound → messages.record-not-found, anything else →
+// The per-cell save (OMS-REG-REPL-12.5): updateIndicatorValue, mapping the
+// typed errors — RecordNotFound → messages.record-not-found, anything else →
 // error.value-type-not-correct (the client's mapping, contract › edit). A save
 // answers with the stored value, which the caller writes back into the nodes.
 export type CellSaveResult =

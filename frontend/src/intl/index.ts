@@ -52,8 +52,9 @@ export { legacyCodePage } from './legacyCodePage';
 export {
   isRtl,
   currentLanguageName,
+  languageName,
   languageOptions,
   getLocalisedFullName,
-  getPlural,
   translateServerError,
 } from './intlUtils';
+export { measureWord, type MeasureMode } from './measureWord';

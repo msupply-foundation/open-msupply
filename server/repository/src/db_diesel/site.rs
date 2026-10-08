@@ -1,8 +1,8 @@
-use super::{site_row::site, DBType, SiteRow, StorageConnection};
+use super::{DBType, SiteRow, StorageConnection, site_row::site};
 use crate::{
+    EqualFilter, Pagination, Sort, StringFilter,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    EqualFilter, Pagination, Sort, StringFilter,
 };
 use diesel::prelude::*;
 

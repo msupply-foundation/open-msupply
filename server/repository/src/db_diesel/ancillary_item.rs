@@ -1,7 +1,7 @@
-use super::ancillary_item_row::{ancillary_item, AncillaryItemRow};
+use super::ancillary_item_row::{AncillaryItemRow, ancillary_item};
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    Pagination, StorageConnection,
+    DBType, EqualFilter, Pagination, StorageConnection, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -242,9 +242,10 @@ fn longest_path_from(adj: &HashMap<String, Vec<String>>, from: &str) -> u32 {
 mod tests {
     use super::*;
     use crate::{
+        ItemLinkRow, ItemLinkRowRepository, ItemRow, ItemRowRepository,
         ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository},
         mock::MockDataInserts,
-        test_db, ItemLinkRow, ItemLinkRowRepository, ItemRow, ItemRowRepository,
+        test_db,
     };
 
     async fn setup(name: &str) -> StorageConnection {

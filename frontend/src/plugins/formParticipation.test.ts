@@ -1,6 +1,6 @@
 /*
  * Form participation (spec/plugins/rules.md § form participation;
- * acceptance AC-PLUG-F2 "Veto aborts atomically"):
+ * spec/plugins/cases OMS-REG-PLG-03.3/.4, the atomic veto):
  *
  * · a contribution can VETO a save before persistence — the save is aborted,
  *   nothing is persisted, and the veto's message is surfaced;
@@ -20,7 +20,7 @@ import { createSaveCoordinator } from './formParticipation';
 
 const context = { recordId: 'prescription-1' };
 
-describe('AC-PLUG-F2 — before-save veto', () => {
+describe('OMS-REG-PLG-03.3 — before-save veto', () => {
   it('reports ok when no contribution objects', async () => {
     const coordinator = createSaveCoordinator();
     await expect(coordinator.runBeforeSave()).resolves.toEqual({ kind: 'ok' });

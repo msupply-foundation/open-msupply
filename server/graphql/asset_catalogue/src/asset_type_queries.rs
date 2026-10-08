@@ -1,17 +1,17 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
     simple_generic_errors::{NodeError, NodeErrorInterface},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 
-use repository::{
-    asset_type::{AssetTypeFilter, AssetTypeSort, AssetTypeSortField},
-    StringFilter,
-};
 use repository::{EqualFilter, PaginationOption};
+use repository::{
+    StringFilter,
+    asset_type::{AssetTypeFilter, AssetTypeSort, AssetTypeSortField},
+};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     catalogue::query_type::{get_asset_type, get_asset_types},

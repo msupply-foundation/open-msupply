@@ -40,6 +40,11 @@ export interface ProgressStep {
    * label is translated, so identifying one step needs an id of its own.
    */
   testId?: string;
+  /**
+   * The rail may jump to this step: its marker becomes a button calling
+   * `onStepSelect`.
+   */
+  navigable?: boolean;
 }
 
 // Compact elapsed label, the current app's decomposition: exact seconds under
@@ -83,6 +88,15 @@ const stepStatus = (state: StepState, errored: boolean): string => {
  * `variant` picks the tone (primary = brand, the sync modal; secondary = the
  * initialisation screen) — semantic, never colour-named.
  *
+ * Display-only unless a consumer marks steps `navigable` and passes
+ * `onStepSelect` — a wizard rail, whose markers are then buttons (the role's
+ * second consumer family; ui/docs/ADDING_A_COMPONENT.md, closed
+ * `WizardStepper`). The consumer owns which steps those are, so a gate it
+ * holds is never restated here. A navigable step cannot ALSO carry the
+ * completed-step popover — one marker, one button, and Popover owns its
+ * trigger's click — so navigation wins and the figures move into the button's
+ * accessible name; the overlap warns in dev rather than going quiet.
+ *
  * Steps always run in order, so anything before the furthest-started step is
  * complete — even if its own `finished` timestamp never came back (e.g. a
  * push with nothing to send). Deriving completion from progression keeps the
@@ -117,6 +131,8 @@ export const ProgressList = (props: {
   error?: boolean;
   /** `data-testid` for the list element (locale-stable test hook). */
   testId?: string;
+  /** Pressed a navigable step's marker — a wizard rail's move. */
+  onStepSelect?: (index: number) => void;
 }) => {
   // The furthest-started step: everything before it is completed, whatever
   // its own finished flag says.
@@ -224,6 +240,69 @@ export const ProgressList = (props: {
               </Show>
             </span>
           );
+          const navigable = () =>
+            step().navigable === true && props.onStepSelect !== undefined;
+          // A completed step's own figures, as one phrase: the popover's
+          // accessible name, and the tail of a navigable step's.
+          const figures = () =>
+            state() === 'completed' && (count() || elapsed());
+          const figuresLabel = () =>
+            count()
+              ? elapsed()
+                ? t('label.step-progress-elapsed', {
+                    label: step().label,
+                    // count() gates this arm: done/total are present.
+                    done: step().done ?? 0,
+                    total: step().total ?? 0,
+                    elapsed: elapsed(),
+                  })
+                : t('label.step-progress', {
+                    label: step().label,
+                    done: step().done ?? 0,
+                    total: step().total ?? 0,
+                  })
+              : t('label.step-elapsed', {
+                  label: step().label,
+                  elapsed: elapsed(),
+                });
+
+          /*
+           * A navigable step's circle IS the button — and it cannot be a
+           * popover's trigger as well: Popover owns that button's click, and in
+           * hover mode the click is the ONLY way to open on touch, so the two
+           * cannot share it. Navigation wins, because it is the interaction and
+           * the figures are not; they ride the button's accessible name, which
+           * is where the popover already put them so they were never
+           * hover-only. The visible bubble is what a navigable step gives up,
+           * which is why the warning below says so out loud.
+           */
+          const markerControl = () =>
+            navigable() ? (
+              <button
+                type="button"
+                class={styles.navButton}
+                aria-label={t('label.go-to-step', {
+                  label: figures() ? figuresLabel() : step().label,
+                })}
+                onClick={() => props.onStepSelect?.(index)}
+              >
+                {marker()}
+              </button>
+            ) : (
+              marker()
+            );
+
+          // The role's two consumer families have not overlapped yet (a sync
+          // run navigates nowhere, a wizard's steps carry no count). Say it
+          // rather than let the next one find a rail that silently stopped
+          // being clickable.
+          if (import.meta.env.DEV)
+            createEffect(() => {
+              if (navigable() && figures())
+                console.warn(
+                  `ProgressList: step "${step().label}" is navigable AND carries a count or elapsed time. Its marker is the navigation button, so the hover bubble is dropped and the figures ride the button's accessible name instead.`
+                );
+            });
           return (
             <li
               class={styles.step}
@@ -232,34 +311,12 @@ export const ProgressList = (props: {
               aria-current={state() === 'active' ? 'step' : undefined}
               data-testid={step().testId}
             >
-              <Show
-                when={state() === 'completed' && (count() || elapsed())}
-                fallback={marker()}
-              >
+              <Show when={figures() && !navigable()} fallback={markerControl()}>
                 <Popover
                   openOnHover
                   placement="bottom"
                   trigger={marker()}
-                  triggerLabel={
-                    count()
-                      ? elapsed()
-                        ? t('label.step-progress-elapsed', {
-                            label: step().label,
-                            // count() gates this arm: done/total are present.
-                            done: step().done ?? 0,
-                            total: step().total ?? 0,
-                            elapsed: elapsed(),
-                          })
-                        : t('label.step-progress', {
-                            label: step().label,
-                            done: step().done ?? 0,
-                            total: step().total ?? 0,
-                          })
-                      : t('label.step-elapsed', {
-                          label: step().label,
-                          elapsed: elapsed(),
-                        })
-                  }
+                  triggerLabel={figuresLabel()}
                   triggerClass={styles.markerButton}
                   class={styles.countBubble}
                 >

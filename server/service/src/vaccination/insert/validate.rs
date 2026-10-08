@@ -1,5 +1,5 @@
 use crate::{
-    common::{check_stock_line_exists, CommonStockLineError},
+    common::{CommonStockLineError, check_stock_line_exists},
     invoice_line::validate::check_item_exists,
     name::validate::check_name_exists,
     vaccination::validate::{
@@ -61,16 +61,16 @@ pub fn validate(
         // Only if there is no previous vaccination at all do we error using InsertVaccinationError::VaccineIsNotNextDose, above^
     }
 
-    if let Some(clinician_id) = &input.clinician_id {
-        if !check_clinician_exists(clinician_id, connection)? {
-            return Err(InsertVaccinationError::ClinicianDoesNotExist);
-        }
+    if let Some(clinician_id) = &input.clinician_id
+        && !check_clinician_exists(clinician_id, connection)?
+    {
+        return Err(InsertVaccinationError::ClinicianDoesNotExist);
     }
 
-    if let Some(facility_name_id) = &input.facility_name_id {
-        if check_name_exists(connection, facility_name_id)?.is_none() {
-            return Err(InsertVaccinationError::FacilityDoesNotExist);
-        }
+    if let Some(facility_name_id) = &input.facility_name_id
+        && check_name_exists(connection, facility_name_id)?.is_none()
+    {
+        return Err(InsertVaccinationError::FacilityDoesNotExist);
     }
     // If not given, reason is required
     if !input.given && input.not_given_reason.is_none() {

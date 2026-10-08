@@ -3,7 +3,7 @@ pub use insert::{InsertClinician, InsertClinicianError};
 
 use repository::{Clinician, ClinicianFilter, ClinicianRow, ClinicianSort, PaginationOption};
 
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
 
 use self::query::get_clinicians;
 

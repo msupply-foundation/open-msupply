@@ -1,20 +1,20 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use graphql_core::ContextExt;
 use graphql_core::loader::{
     AllowedCustomFieldKeysByScopeLoader, DiagnosisLoader, ItemLoader, PatientLoader,
     PrescriptionRequestLinesByRequestIdLoader, UserLoader,
 };
-use graphql_core::ContextExt;
 use graphql_types::types::program::patient::PatientNode;
 use graphql_types::types::{
-    filter_custom_fields, ClinicianNode, DiagnosisNode, ItemNode, UserNode,
+    ClinicianNode, DiagnosisNode, ItemNode, UserNode, filter_custom_fields,
 };
 use repository::{
     ClinicianRow, PrescriptionRequest, PrescriptionRequestLineRow, PrescriptionRequestRow,
 };
-use service::prescription_request::update::PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE;
 use service::ListResult;
+use service::prescription_request::update::PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE;
 
 pub struct PrescriptionRequestNode {
     pub prescription_request: PrescriptionRequest,

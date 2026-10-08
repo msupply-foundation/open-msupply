@@ -7,11 +7,10 @@ use crate::{
         is_generated_dispensation, prescriber_prescribed_quantity,
     },
     invoice_line::{
-        check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
-        invoice_backdated_date,
-        stock_out_line::{adjust_for_residual_packs, BatchPair},
+        LocationIsOnHoldError, check_batch_exists, check_batch_on_hold, check_existing_stock_line,
+        check_location_on_hold, invoice_backdated_date,
+        stock_out_line::{BatchPair, adjust_for_residual_packs},
         validate::{check_line_belongs_to_invoice, check_line_exists, check_number_of_packs},
-        LocationIsOnHoldError,
     },
     service_provider::ServiceContext,
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
@@ -52,13 +51,12 @@ pub fn validate(
     // set_prescribed_quantity. Neither front end sends the field on this path
     // at all — they write it through set_prescribed_quantity — so this closes
     // the wire, not a flow.
-    if let Some(prescribed_quantity) = input.prescribed_quantity {
-        if is_generated_dispensation(&invoice)
-            && prescriber_prescribed_quantity(connection, &invoice, &line_row.item_id)?
-                != Some(prescribed_quantity)
-        {
-            return Err(CannotChangePrescribedQuantity);
-        }
+    if let Some(prescribed_quantity) = input.prescribed_quantity
+        && is_generated_dispensation(&invoice)
+        && prescriber_prescribed_quantity(connection, &invoice, &line_row.item_id)?
+            != Some(prescribed_quantity)
+    {
+        return Err(CannotChangePrescribedQuantity);
     }
 
     let existing_stock = check_existing_stock_line(
@@ -106,10 +104,10 @@ pub fn validate(
         }
     })?;
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
-        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
-            return Err(VVMStatusDoesNotExist);
-        }
+    if let Some(vvm_status_id) = &input.vvm_status_id
+        && check_vvm_status_exists(connection, vvm_status_id)?.is_none()
+    {
+        return Err(VVMStatusDoesNotExist);
     }
 
     if let Some(NullableUpdate {

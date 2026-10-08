@@ -1,13 +1,13 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_invoice::mutations::prescription;
 use graphql_invoice_line::mutations::prescription_line;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::prescription::*;
 
-use crate::{to_standard_error, VecOrNone};
+use crate::{VecOrNone, to_standard_error};
 
 #[derive(SimpleObject)]
 #[graphql(concrete(
@@ -275,7 +275,7 @@ fn map_set_prescribed_quantity(
             match prescription_line::set_prescribed_quantity::map_response(response.result) {
                 Ok(response) => response,
                 Err(standard_error) => {
-                    return Err(to_standard_error(response.input, standard_error))
+                    return Err(to_standard_error(response.input, standard_error));
                 }
             };
         result.push(MutationWithId {
@@ -294,18 +294,19 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, RepositoryError,
-        StorageConnectionManager,
+        InvoiceLine, InvoiceLineRow, RepositoryError, StorageConnectionManager,
+        mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
+        InputWithResult,
         invoice::{
+            InvoiceServiceTrait,
             prescription::{
                 BatchPrescription, BatchPrescriptionResult, DeletePrescriptionError,
                 InsertPrescription, InsertPrescriptionError, UpdatePrescription,
                 UpdatePrescriptionError,
             },
-            InvoiceServiceTrait,
         },
         invoice_line::stock_out_line::{
             DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
@@ -313,7 +314,6 @@ mod test {
             StockOutType, UpdateStockOutLine, UpdateStockOutLineError,
         },
         service_provider::{ServiceContext, ServiceProvider},
-        InputWithResult,
     };
 
     use crate::BatchMutations;

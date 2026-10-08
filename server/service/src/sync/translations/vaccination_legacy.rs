@@ -152,10 +152,10 @@ mod tests {
         mock_store_a, mock_user_account_a, mock_vaccine_course_a_dose_a, mock_vaccine_item_a,
     };
     use repository::{
+        ChangelogRepository,
         mock::MockDataInserts,
         test_db::setup_all,
         vaccination_row::{VaccinationRow, VaccinationRowRepository},
-        ChangelogRepository,
     };
 
     #[actix_rt::test]

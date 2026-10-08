@@ -4,12 +4,12 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::diesel_macros::diesel_string_enum;
 use crate::ChangelogRepository;
 use crate::RepositoryError;
 use crate::RowActionType;
 use crate::SourceSiteId;
 use crate::StorageConnection;
+use crate::diesel_macros::diesel_string_enum;
 use crate::{ChangelogSyncType, Upsert};
 
 diesel_string_enum! {

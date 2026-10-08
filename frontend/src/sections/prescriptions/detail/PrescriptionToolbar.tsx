@@ -54,11 +54,12 @@ import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated'
 // picker"), a separate follow-up against the shared Combobox, not this change.
 //
 // The fields: Patient (the reusable picker — changeable in place, identity
-// kept, never cleared: AC-N1/N3-adjacent), Clinician (clearable, AC-N2), Date
-// (the prescription date, capped at today — AC-B5), Program. A date or program
-// change while lines exist warns that ALL lines will be removed, then clears
-// them before applying (AC-B2 — the server only enforces the no-lines
-// condition; the ordering is the client's).
+// kept, never cleared: OMS-REG-DIS-03.33/.35-adjacent), Clinician (clearable,
+// OMS-REG-DIS-03.34), Date (the prescription date, capped at today —
+// OMS-REG-DIS-04.7), Program. A date or program change while lines exist warns
+// that ALL lines will be removed, then clears them before applying
+// (OMS-REG-DIS-04.26 — the server only enforces the no-lines condition; the
+// ordering is the client's).
 //
 // On a dispensation GENERATED from a prescription request, Patient and
 // Clinician are read-only however editable the record itself is: they are the
@@ -73,7 +74,7 @@ export interface PrescriptionToolbarProps {
   disabled: boolean;
   /** A plain header save (no line implications). */
   onSave: (input: Omit<UpdateInput, 'id'>) => void;
-  /** Delete ALL lines, then save (the AC-B2 flow). Resolves once the node
+  /** Delete ALL lines, then save (the OMS-REG-DIS-04.26 flow). Resolves once the node
    *  reflects the save (or the save failed) — the fields keep showing the
    *  chosen values until then, so a confirmed pick never flickers back to
    *  the old ones for the save round-trip. */
@@ -159,7 +160,7 @@ export const PrescriptionToolbar: Component<
           // the detail view alongside its other modals.
           onEditPatient={props.onEditPatient}
           // A prescription always has a patient: the picker never clears
-          // (null selections are ignored), it only swaps (AC-N1).
+          // (null selections are ignored), it only swaps (OMS-REG-DIS-03.33).
           onSelect={patient =>
             patient && props.onSave({ patientId: patient.id })
           }
@@ -205,7 +206,8 @@ export const PrescriptionToolbar: Component<
           disabled={props.disabled}
           onChange={programId => {
             // Clearing the program keeps the lines (the catalogue only
-            // widens); choosing a DIFFERENT program clears them (AC-B2).
+            // widens); choosing a DIFFERENT program clears them
+            // (OMS-REG-DIS-04.26).
             if (programId == null)
               return props.onSave({ programId: { value: null } });
             if (programId === props.node.programId) return;
@@ -213,7 +215,7 @@ export const PrescriptionToolbar: Component<
           }}
         />
       </FormRowItem>
-      {/* Prominent custom fields (AC-CF1) — save-on-change, wearing their own
+      {/* Prominent custom fields (OMS-REG-DIS-03.38/.39) — save-on-change, wearing their own
           labels like the fields above (the cluster's `field` layout). */}
       <CustomFieldsToolbar
         scope="prescription"
@@ -224,7 +226,7 @@ export const PrescriptionToolbar: Component<
         onSave={patch => props.onSave({ customFields: patch })}
       />
 
-      {/* The clear-lines warning (AC-B2): proceeding deletes every line, then
+      {/* The clear-lines warning (OMS-REG-DIS-04.26): proceeding deletes every line, then
           applies the pending change; declining leaves everything untouched. */}
       <Show when={pending()}>
         {input => (

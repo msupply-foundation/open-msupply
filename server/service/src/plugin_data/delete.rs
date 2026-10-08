@@ -1,6 +1,6 @@
 use repository::{PluginDataRow, PluginDataRowRepository, RepositoryError};
 
-use crate::{service_provider::ServiceContext, sync::CentralServerConfig, WithDBError};
+use crate::{WithDBError, service_provider::ServiceContext, sync::CentralServerConfig};
 
 #[derive(Debug, PartialEq)]
 pub enum DeletePluginDataError {
@@ -34,12 +34,12 @@ fn validate(ctx: &ServiceContext, id: &str) -> Result<PluginDataRow, DeletePlugi
         ));
     }
 
-    if let Some(store_id) = &plugin_data.store_id {
-        if &ctx.store_id != store_id {
-            return Err(DeletePluginDataError::InternalError(
-                "Store ID doesn't match logged in store_id".to_string(),
-            ));
-        }
+    if let Some(store_id) = &plugin_data.store_id
+        && &ctx.store_id != store_id
+    {
+        return Err(DeletePluginDataError::InternalError(
+            "Store ID doesn't match logged in store_id".to_string(),
+        ));
     }
 
     Ok(plugin_data)
@@ -66,9 +66,9 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         PluginDataRow, PluginDataRowRepository,
+        mock::{MockData, MockDataInserts, mock_store_a, mock_user_account_a},
+        test_db::setup_all_with_data,
     };
 
     use crate::{plugin_data::DeletePluginDataError, service_provider::ServiceProvider};

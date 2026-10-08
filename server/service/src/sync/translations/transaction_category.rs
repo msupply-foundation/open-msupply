@@ -4,8 +4,8 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
+use crate::sync::central_mapping_custom_fields::keys;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -129,8 +129,9 @@ impl SyncTranslation for TransactionCategoryTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, CustomFieldKind, CustomFieldOptionRowRepository,
-        CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType, SyncAction, SyncRecordData,
+        CustomFieldKind, CustomFieldOptionRowRepository, CustomFieldRow, CustomFieldRowRepository,
+        CustomFieldValueType, SyncAction, SyncRecordData, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     fn sync_record(category_type: &str) -> SyncBufferRow {

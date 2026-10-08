@@ -1,11 +1,11 @@
 use diesel::*;
 
-use super::{location_movement_row::location_movement, LocationMovementRow, StorageConnection};
+use super::{LocationMovementRow, StorageConnection, location_movement_row::location_movement};
 use crate::{
+    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
     },
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]

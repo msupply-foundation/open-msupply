@@ -9,18 +9,18 @@ use crate::sync::{
     api::SyncAction,
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
-        check_test_records_against_database, extract_sync_buffer_rows,
+        TestSyncOutgoingRecord, check_test_records_against_database, extract_sync_buffer_rows,
         test_data::{get_all_push_test_records, get_all_sync_v6_records},
-        TestSyncOutgoingRecord,
     },
-    translations::{translate_rows_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType},
+    translations::{PushSyncRecord, ToSyncRecordTranslationType, translate_rows_to_sync_records},
 };
 use pretty_assertions::assert_eq;
 use repository::{
-    mock::{mock_store_b, MockData, MockDataInserts},
+    ChangelogRepository, ChangelogTableName, KeyType, KeyValueStoreRow, SyncBufferRepository,
+    SyncBufferRow, SyncBufferRowInsert,
+    mock::{MockData, MockDataInserts, mock_store_b},
     system_log_row::{SystemLogRowRepository, SystemLogType},
-    test_db, ChangelogRepository, ChangelogTableName, KeyType, KeyValueStoreRow,
-    SyncBufferRepository, SyncBufferRow, SyncBufferRowInsert,
+    test_db,
 };
 
 // TODO fix test v7
@@ -117,16 +117,18 @@ async fn test_sync_pull_and_push() {
         })
         .collect::<Vec<_>>();
     // Translate
-    let mut translated = vec![translate_rows_to_sync_records(
-        &connection,
-        changelogs,
-        vec![
-            ToSyncRecordTranslationType::PushToLegacyCentral,
-            ToSyncRecordTranslationType::PullFromOmSupplyCentral,
-            ToSyncRecordTranslationType::PushToOmSupplyCentral,
-        ],
-    )
-    .unwrap()]
+    let mut translated = vec![
+        translate_rows_to_sync_records(
+            &connection,
+            changelogs,
+            vec![
+                ToSyncRecordTranslationType::PushToLegacyCentral,
+                ToSyncRecordTranslationType::PullFromOmSupplyCentral,
+                ToSyncRecordTranslationType::PushToOmSupplyCentral,
+            ],
+        )
+        .unwrap(),
+    ]
     .into_iter()
     .flatten()
     .collect::<Vec<PushSyncRecord>>();

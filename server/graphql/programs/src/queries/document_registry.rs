@@ -1,9 +1,9 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     generic_filters::EqualFilterStringInput,
     map_filter,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::document_registry::{
     DocumentRegistryCategoryNode, DocumentRegistryConnector, DocumentRegistryNode,

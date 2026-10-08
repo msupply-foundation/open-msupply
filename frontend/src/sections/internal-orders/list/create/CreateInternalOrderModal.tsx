@@ -32,11 +32,11 @@ import { createGeneralOrder, createProgramOrder } from './createInternalOrder';
 // a supplier and the empty Draft is created immediately (no confirm) — and a
 // Program order — cascade supplier → program → order type → period, then
 // Create. The modal offers both as tabs (Program first) only when the store can
-// create program orders (its supplier-program settings are non-empty, AC-P1);
-// otherwise the General path fills it. On success the caller navigates to the
-// new order (onCreated); a program rejection keeps the dialog open with the
-// error (AC-P5). The general path's rejections are unreachable / surfaced
-// globally (contract › creation).
+// create program orders (its supplier-program settings are non-empty,
+// OMS-REG-REPL-04.46); otherwise the General path fills it. On success the
+// caller navigates to the new order (onCreated); a program rejection keeps the
+// dialog open with the error (OMS-REG-REPL-04.50). The general path's
+// rejections are unreachable / surfaced globally (contract › creation).
 
 // A cascade select is an id-valued autocomplete whose label the FieldRow shows.
 type CascadeOption = { id: string; label: string; disabled?: boolean };
@@ -102,7 +102,8 @@ export const CreateInternalOrderModal: Component<
   const [tab, setTab] = createSignal('program');
   const activeTab = () => (programCapable() ? tab() : 'general');
 
-  // Program-path selections. Each choice clears the ones below it (AC-P2).
+  // Program-path selections. Each choice clears the ones below it
+  // (OMS-REG-REPL-04.47).
   const [supplierId, setSupplierId] = createSignal<string>();
   const [programId, setProgramId] = createSignal<string>();
   const [orderTypeId, setOrderTypeId] = createSignal<string>();
@@ -124,9 +125,9 @@ export const CreateInternalOrderModal: Component<
   });
 
   // Program suppliers: deduped across every program setting, name-sorted;
-  // on-hold suppliers listed but not selectable (AC-P2 supplier picker) — and
-  // textually marked, so the block never reads from the dimming alone
-  // (ui-standards controls.md § blocked affordances).
+  // on-hold suppliers listed but not selectable (OMS-REG-REPL-04.47 supplier
+  // picker) — and textually marked, so the block never reads from the dimming
+  // alone (ui-standards controls.md § blocked affordances).
   const suppliers = createMemo<CascadeOption[]>(() => {
     const seen = new Map<string, CascadeOption>();
     for (const setting of settingsList())
@@ -177,7 +178,8 @@ export const CreateInternalOrderModal: Component<
   const createReady = () =>
     !!supplierId() && !!programId() && !!orderTypeId() && !!periodId();
 
-  // General path: picking a supplier creates and navigates immediately (AC-C2).
+  // General path: picking a supplier creates and navigates immediately
+  // (OMS-REG-REPL-04.6/.43).
   const onGeneralSupplier = async (supplier: NameOption | null) => {
     if (!supplier || submitting()) return;
     setSubmitting(true);
@@ -331,7 +333,8 @@ export const CreateInternalOrderModal: Component<
       minBodyHeightRem={30}
       // Cancel is the house way out on both paths (ui-standards › dialogs §
       // chrome); Create sits beside it only on the Program path — the General
-      // path creates on supplier-select and has no confirm (AC-C2/AC-P3).
+      // path creates on supplier-select and has no confirm
+      // (OMS-REG-REPL-04.6/.43/.48, OMS-REG-REPL-12.2).
       actions={
         <>
           <CancelButton

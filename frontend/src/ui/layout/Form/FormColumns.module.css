@@ -9,3 +9,15 @@
   gap: var(--space-6);
   align-items: start;
 }
+
+/* `stretch`: the columns on one line take that line's height, and each
+   column's last block (a FormColumn is a flex column) grows into the extra, so
+   a boxed group ends level with its neighbour's. A wrapped column sits on a
+   line of its own, so it keeps its content height. */
+.columns[data-stretch] {
+  align-items: stretch;
+}
+
+.columns[data-stretch] > * > :last-child {
+  flex-grow: 1;
+}

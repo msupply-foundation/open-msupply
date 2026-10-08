@@ -33,10 +33,10 @@ pub fn validate(
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
     }
-    if let Some(inbound_type) = inbound_shipment_type {
-        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
-            return Err(WrongInboundShipmentType);
-        }
+    if let Some(inbound_type) = inbound_shipment_type
+        && !inbound_type.matches_input(invoice.purchase_order_id.is_some())
+    {
+        return Err(WrongInboundShipmentType);
     }
     if !check_invoice_lines_are_editable(&invoice) {
         return Err(CannotEditFinalised);

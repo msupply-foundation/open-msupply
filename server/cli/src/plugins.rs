@@ -1,4 +1,4 @@
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use log::{info, warn};
 use repository::{
     BackendPluginRow, FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow,
@@ -19,8 +19,9 @@ use thiserror::Error as ThisError;
 use util::format_error;
 
 use crate::{
-    queries_mutations::{INSTALLED_PLUGINS, INSTALL_PLUGINS, UNINSTALL_PLUGIN},
-    run_command_with_error, Api, ApiError, CommandError, YARN_COMMAND,
+    Api, ApiError, CommandError, YARN_COMMAND,
+    queries_mutations::{INSTALL_PLUGINS, INSTALLED_PLUGINS, UNINSTALL_PLUGIN},
+    run_command_with_error,
 };
 
 #[derive(ThisError, Debug)]

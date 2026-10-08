@@ -83,8 +83,9 @@ impl Loader<AvailableVolumeOnRequisitionLoaderInput> for AvailableVolumeOnRequis
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
-        test_db, ItemRow, RequisitionLineRow, RequisitionRow,
+        ItemRow, RequisitionLineRow, RequisitionRow,
+        mock::{MockData, MockDataInserts, mock_name_a, mock_store_a},
+        test_db,
     };
 
     fn test_item(id: &str) -> ItemRow {

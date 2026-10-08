@@ -19,8 +19,10 @@ import type { NamesFilter } from './namesListLogic';
  * accident, and this map is BOTH the definition and the completeness proof.
  *
  * Only `codeOrName` is exposed: a single free-text box that the server matches
- * against BOTH name and code (contract › filtering & search; AC-N13). Everything else is dismissed — role/type/visibility are
- * applied by the page (not user chips), and the rest are programmatic.
+ * against BOTH name and code (contract › filtering & search;
+ * OMS-REG-DIST-08.24, OMS-REG-REPL-08.17). Everything else is dismissed —
+ * role/type/visibility are applied by the page (not user chips), and the rest
+ * are programmatic.
  *
  * NB: ui-surface asks for an always-present dedicated search FIELD; that role
  * is ⛔ not built (components.md › inputs: "Free-text search / filter"), so it
@@ -80,9 +82,10 @@ const SEARCH_FILTERS: Filter<NamesFilter>[] = constructFilters<NamesFilter>({
 
 export const searchFilters = (): Filter<NamesFilter>[] => SEARCH_FILTERS;
 
-// The custom-field filters (AC-N18/N19) are the shared builder — one text
-// filter per configured field for the role's scope; none configured ⇒ none.
-// Re-exported so the list keeps importing filters from one place.
+// The custom-field filters (OMS-FUN-CUS-001.5/.10, OMS-FUN-SUP-001.8/.11) are
+// the shared builder — one text filter per configured field for the role's
+// scope; none configured ⇒ none. Re-exported so the list keeps importing
+// filters from one place.
 export {
   customFieldFilters,
   type CustomFieldFilterState,

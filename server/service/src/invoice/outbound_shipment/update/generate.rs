@@ -1,8 +1,8 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    location_movement::{LocationMovementFilter, LocationMovementRepository},
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow,
     RepositoryError,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
 };
 use repository::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
@@ -11,22 +11,22 @@ use repository::{
 use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
 use crate::{
+    NullableUpdate,
     invoice::{
         common::{
-            calculate_foreign_currency_total, calculate_total_after_tax,
+            InvoiceLineHasNoStockLine, calculate_foreign_currency_total, calculate_total_after_tax,
             generate_batches_total_number_of_packs_update, get_invoice_status_datetime,
-            get_lines_for_invoice, InvoiceLineHasNoStockLine,
+            get_lines_for_invoice,
         },
         invoice_date_utils::handle_new_backdated_datetime,
-        stock_effect::{stock_effects, StockEffect},
+        stock_effect::{StockEffect, stock_effects},
     },
     store_preference::get_store_preferences,
-    NullableUpdate,
 };
 
 use super::{
-    backdated_datetime_change, UpdateOutboundShipment, UpdateOutboundShipmentError,
-    UpdateOutboundShipmentStatus,
+    UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus,
+    backdated_datetime_change,
 };
 
 pub(crate) struct GenerateResult {

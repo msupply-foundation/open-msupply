@@ -4,7 +4,7 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use util::sync_serde::ok_or_none;
 
-use crate::{migrations::*, GenderType};
+use crate::{GenderType, migrations::*};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]

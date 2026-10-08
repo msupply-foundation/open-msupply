@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::form_schema_row::form_schema, ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId, Upsert,
+    db_diesel::form_schema_row::form_schema,
 };
 
 use diesel::prelude::*;

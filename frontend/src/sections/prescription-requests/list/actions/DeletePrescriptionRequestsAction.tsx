@@ -12,13 +12,13 @@ export interface DeletePrescriptionRequestsActionProps {
   storeId: string;
   /** The currently-selected request ids. */
   selectedIds: () => string[];
-  /** id → status off the loaded rows, for the selection pre-check (AC-D2). */
+  /** id → status off the loaded rows, for the selection pre-check (OMS-REG-DIS-10.3/.4). */
   statusOf: (id: string) => string | undefined;
   /** Deletion succeeded — clear the selection and re-query. */
   onDeleted: () => void;
 }
 
-// The list delete action (spec/prescription-requests AC-D1/D2), the
+// The list delete action (spec/prescription-requests OMS-REG-DIS-10.1–.4), the
 // prescriptions delete-action shape: the selection is PRE-CHECKED
 // client-side — a past-New row in the selection refuses the whole batch with
 // a blocking notice and no server call (a sanctioned UI-only guard; the

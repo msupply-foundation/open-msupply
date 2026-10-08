@@ -7,7 +7,7 @@ use repository::{
     CustomFieldScopeRowRepository, CustomFieldValueType, RepositoryError, StorageConnection,
 };
 
-use crate::{service_provider::ServiceContext, usize_to_u32, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext, usize_to_u32};
 
 /// A single change to a field's display mode on one scope (part of a batch).
 #[derive(Clone, Debug, PartialEq)]
@@ -243,17 +243,17 @@ pub(crate) fn merge_patch(
 #[cfg(test)]
 mod tests {
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, CustomFieldDisplayMode, CustomFieldKind,
-        CustomFieldRow, CustomFieldRowRepository, CustomFieldScopeRow,
-        CustomFieldScopeRowRepository, CustomFieldValueType,
+        CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+        CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType,
+        mock::MockDataInserts, test_db::setup_all,
     };
 
     use serde_json::json;
 
     use crate::{
         custom_field::{
-            check_custom_fields_patch, value_matches_type, CustomFieldPatchProblem,
-            CustomFieldScopeUpdate, UpdateCustomFieldScopes, UpdateCustomFieldScopesError,
+            CustomFieldPatchProblem, CustomFieldScopeUpdate, UpdateCustomFieldScopes,
+            UpdateCustomFieldScopesError, check_custom_fields_patch, value_matches_type,
         },
         service_provider::ServiceProvider,
     };

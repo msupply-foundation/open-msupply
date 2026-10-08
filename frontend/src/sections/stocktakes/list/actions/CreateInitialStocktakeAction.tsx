@@ -67,6 +67,7 @@ export const CreateInitialStocktakeAction = (props: {
   return (
     <Dialog
       open={props.open}
+      testId="create-initial-stocktake-modal"
       // Blocking while the create is in flight — no click-outside / Escape
       // until it resolves.
       dismissable={!creating()}
@@ -76,9 +77,14 @@ export const CreateInitialStocktakeAction = (props: {
       description={t('messages.confirm-create-initial-stocktake')}
       actions={
         <>
-          <CancelButton disabled={creating()} onClick={props.onClose} />
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            disabled={creating()}
+            onClick={props.onClose}
+          />
           <Button
             variant="primary"
+            data-testid="dialog-button-ok"
             loading={creating()}
             confirms="plain"
             onClick={() => void create()}

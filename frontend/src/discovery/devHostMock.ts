@@ -84,7 +84,7 @@ export const installDevHostMock = (): DiscoveryHostApi => {
     }),
     startDiscovery: () => {
       // The host's half of a clean restart (hostContract.ts: "clearing prior
-      // results"); the list's own reset is the page's (AC-DT11).
+      // results"); the list's own reset is the page's (OMS-REG-DESK-01.15).
       found = [];
       if (scenario !== 'none') probeLocalServers();
     },

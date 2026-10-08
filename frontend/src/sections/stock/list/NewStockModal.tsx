@@ -28,6 +28,13 @@ import { NameSearch } from '../../../domain/name';
 import { VvmStatusSelect } from '../../../domain/vvmStatus';
 import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
 import { CampaignOrProgramSelect } from '../../../domain/campaign';
+import {
+  barcodeFieldFill,
+  createScanControl,
+  ScanFieldButton,
+  ScanNotice,
+  scanUnusableReason,
+} from '../../../domain/barcode';
 import { stockPreferences } from '../../../store/storeContext';
 import { runInsertStockLine } from '../stockApi';
 import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
@@ -38,7 +45,7 @@ import {
   type InsertStockLineVariables,
 } from './newStock.generated';
 
-// The new-stock modal (spec/stock S3, FL5). Item-first: the rest of the form
+// The new-stock modal (spec/stock S3). Item-first: the rest of the form
 // appears once an item is chosen (its defaults seed pack size + sell price; its
 // variants are offered). Mechanically a finalised inventory addition
 // (insertStockLine). Follows the shared dialog lifecycle (busy OK, close on
@@ -125,6 +132,17 @@ const NewStockContent = (props: {
   // Item-first: the modal always opens with nothing picked, so the flow starts
   // by typing (spec S3).
   const itemSearch = createFocusTarget();
+
+  // The Barcode field's scan affordance — the same as the stock line
+  // detail's (barcode-scanning rules § Setting a code on a stock line:
+  // "Creating a new stock line with a code does the same"). The field only
+  // exists once an item is chosen, so until then a scan has nowhere to go.
+  const scanner = createScanControl({
+    owner: 'new-stock',
+    mode: 'field',
+    disabled: () => saving() || !item(),
+    onScan: scan => setDraft(barcodeFieldFill(scan)),
+  });
 
   const prefs = () => stockPreferences();
   const today = localTodayIso();
@@ -279,7 +297,11 @@ const NewStockContent = (props: {
       title={t('heading.stock-line-details')}
       actionsLead={
         <Show when={error()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+          {message => (
+            <Alert severity="error" testId="new-stock-error">
+              {message()}
+            </Alert>
+          )}
         </Show>
       }
       actions={
@@ -387,7 +409,14 @@ const NewStockContent = (props: {
                     data-testid="field-barcode"
                     value={draft.barcode}
                     onInput={e => setDraft('barcode', e.currentTarget.value)}
+                    helperText={scanUnusableReason(scanner)}
+                    endAction={
+                      scanner.available() ? (
+                        <ScanFieldButton control={scanner} />
+                      ) : undefined
+                    }
                   />
+                  <ScanNotice control={scanner} />
                   <FormRow>
                     <DateField
                       label={t('label.expiry-date')}

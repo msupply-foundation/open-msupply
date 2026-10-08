@@ -6,7 +6,7 @@ use repository::{
     StockMovementFilter, StockMovementRepository, StorageConnection,
 };
 
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, service_provider::ServiceContext};
 
 use super::query::get_stock_lines;
 

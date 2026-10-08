@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
     use repository::mock::context_program_a;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
     use repository::{
         DocumentRegistry, DocumentRegistryCategory, FormSchema, FormSchemaRowRepository,
     };
+    use repository::{mock::MockDataInserts, test_db::setup_all};
     use serde_json::json;
     use util::constants::PATIENT_CONTEXT_ID;
 
