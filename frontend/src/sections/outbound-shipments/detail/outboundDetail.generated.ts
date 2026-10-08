@@ -291,6 +291,26 @@ export const OutboundLines = {
   query: "query outboundLines($storeId: String!, $page: PaginationInput, $filter: InvoiceLineFilterInput, $sort: [InvoiceLineSortInput!]) {\n  invoiceLines(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {\n    ... on InvoiceLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...OutboundLine\n      }\n    }\n  }\n}\n\nfragment OutboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n  }\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  receivedNumberOfPacks\n  batch\n  expiryDate\n  sellPricePerPack\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  foreignCurrencyPriceBeforeTax\n  note\n  locationName\n  location {\n    id\n    code\n    onHold\n  }\n  stockLine {\n    id\n    onHold\n  }\n  vvmStatus {\n    id\n    description\n  }\n  volumePerPack\n}",
 } as TypedDocument<OutboundLinesResult, OutboundLinesVariables>;
 
+export type OutboundLineIdsVariables = {
+  storeId: string;
+  invoiceId: string;
+};
+
+export type OutboundLineIdsResult = {
+  invoiceLines: ({
+  __typename: "InvoiceLineConnector";
+} & {
+  nodes: Array<{
+  id: string;
+  type: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE";
+}>;
+});
+};
+
+export const OutboundLineIds = {
+  query: "query outboundLineIds($storeId: String!, $invoiceId: String!) {\n  invoiceLines(storeId: $storeId, filter: {invoiceId: {equalTo: $invoiceId}}) {\n    ... on InvoiceLineConnector {\n      __typename\n      nodes {\n        id\n        type\n      }\n    }\n  }\n}",
+} as TypedDocument<OutboundLineIdsResult, OutboundLineIdsVariables>;
+
 export type UpdateOutboundShipmentVariables = {
   storeId: string;
   input: {

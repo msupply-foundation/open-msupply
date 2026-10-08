@@ -1125,9 +1125,9 @@ const OutboundDetailView: Component = () => {
                   edit={edit}
                   onSaveField={async patch => {
                     await saveField(patch);
-                    // A backdate DELETES the shipment's lines server-side
-                    // (OMS-REG-DIST-04.24) — the visible page must follow,
-                    // like any other line-level change.
+                    // A backdate follows deleting all the shipment's lines
+                    // (OMS-REG-DIST-04.24, PickedDateField) — the visible
+                    // page must follow, like any other line-level change.
                     if ('backdatedDatetime' in patch) await refetchAfterSave();
                   }}
                   onEditServiceCharges={() => setServiceOpen(true)}
