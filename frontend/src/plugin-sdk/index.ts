@@ -217,8 +217,7 @@ export type {
 /*
  * The Afghanistan Daily Tally's set (private/plugins/afghanistan ui-surface.md
  * § S1–S7, the roles its Layout lines name — README § host obligations lists
- * them as
- * the kit gaps): the collapsible section group for its course cards and
+ * them as the kit gaps): the collapsible section group for its course cards and
  * coverage groups; the icon-only button for the counter steppers; the
  * mutually-exclusive choice for the session type; the row-status badge for
  * _Draft_ and the count badge for a group's running total; the error detail
@@ -402,8 +401,8 @@ export type { Band, LayeredConfig } from '../ui/elements/table/tableConfig';
  * The six the Cook Islands navigator names for its tiles
  * (private/plugins/cook_islands ui-surface.md § S2/S3): patient, inbox tray,
  * truck, box with an arrow out, stock, sheet — in that order below. That file
- * describes the PICTURE and
- * never names an export, so this list is the mapping; keep the two in step.
+ * describes the PICTURE and never names an export, so this list is the
+ * mapping; keep the two in step.
  * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
  * flip or an a11y attribute on the host icon reaches the contributed surface
  * too — a copied SVG would fork on the first such change.

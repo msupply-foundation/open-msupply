@@ -232,7 +232,7 @@ const config = tseslint.config(
           patterns: [
             {
               // `@/…`; any path reaching into src/; and any escape above the
-              // plugin's own tree (plugins/<dir>/src/x sits 3 levels down, so
+              // plugin's own tree (<plugin dir>/src/x sits 3 levels down, so
               // four-or-more `../` can only mean leaving the plugin).
               group: ['@/*', '**/src/*', '../../../../*'],
               message:

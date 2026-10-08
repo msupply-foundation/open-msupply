@@ -285,7 +285,7 @@ chmod 600 ~/dashboard/.env
 
 ### Plugin bundles
 
-The dashboard's **Plugin bundles** tab (`https://dashboard.<DEPLOY_DOMAIN>/#plugins`) lists ready-to-install bundles of the country plugins in `frontend/plugins/`, **one version line per plugin**: its released versions newest first, which version `develop` and each RC carry, and branch builds as pre-releases. Each has a download button; the file installs through the server's plugin upload or `remote_server_cli install-plugin-bundle`.
+The dashboard's **Plugin bundles** tab (`https://dashboard.<DEPLOY_DOMAIN>/#plugins`) lists ready-to-install bundles of the country plugins in `private/plugins/`, **one version line per plugin**: its released versions newest first, which version `develop` and each RC carry, and branch builds as pre-releases. Each has a download button; the file installs through the server's plugin upload or `remote_server_cli install-plugin-bundle`.
 
 They come from **`publish-bundles.yaml`**:
 

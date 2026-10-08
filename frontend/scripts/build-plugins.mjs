@@ -406,8 +406,7 @@ for (const [i, row] of backendRows.entries()) {
  * `civ_plugins` — so grouping by it puts both in one bundle, the unit that has
  * to be installed together. A plugin with only one half (frontend-only like
  * the examples, backend-only like BES) simply gets a bundle with one populated
- * list;
- * nothing here requires a pair.
+ * list; nothing here requires a pair.
  */
 const bundles = new Map();
 /* eslint-disable camelcase -- Rust PluginBundle's field names. */

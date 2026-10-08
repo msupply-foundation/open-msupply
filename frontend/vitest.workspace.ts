@@ -1,6 +1,7 @@
 import { defineWorkspace } from 'vitest/config';
 import solid from 'vite-plugin-solid';
 import { BACKEND_COMMON } from './vite/backendPluginBuild';
+import { PLUGIN_SHARED_DEPS } from './vitest.config';
 
 /*
  * Three vitest projects, because the kinds of unit test need different module
@@ -52,7 +53,11 @@ export default defineWorkspace([
   {
     plugins: [solid()],
     define,
-    resolve: { alias, conditions: ['browser', 'development'] },
+    resolve: {
+      alias,
+      conditions: ['browser', 'development'],
+      dedupe: PLUGIN_SHARED_DEPS,
+    },
     test: {
       name: 'solid',
       // Plugins' component-shaped tests run here too: same reason as the
@@ -66,7 +71,10 @@ export default defineWorkspace([
     },
   },
   {
-    resolve: { alias: { '@common': BACKEND_COMMON } },
+    resolve: {
+      alias: { '@common': BACKEND_COMMON },
+      dedupe: PLUGIN_SHARED_DEPS,
+    },
     test: {
       name: 'backend-plugins',
       include: ['../private/plugins/civ/backend/src/**/*.test.ts'],

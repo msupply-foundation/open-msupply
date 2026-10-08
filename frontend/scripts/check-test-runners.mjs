@@ -217,8 +217,15 @@ if (failures.length) {
   process.exit(1);
 }
 
+// The plugin roots beside frontend/ are globbed ahead of need: the public
+// mirror has no private/, and plugins/ holds only the examples (which carry
+// no tests) until a public plugin arrives. An empty one is expected there,
+// not a sign of a suite that moved.
+const OPTIONAL_ROOTS = ['../plugins/', '../private/plugins/'];
+
 for (const { name, globs } of RUNNERS) {
   for (const g of globs) {
+    if (OPTIONAL_ROOTS.some(root => g.startsWith(root))) continue;
     if (!testFiles.some(f => matchesGlob(f, g))) {
       console.warn(`check-test-runners: ${name} — '${g}' matches no file.`);
     }

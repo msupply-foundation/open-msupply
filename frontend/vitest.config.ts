@@ -1,5 +1,16 @@
 import { defineConfig } from 'vitest/config';
 
+/*
+ * The in-repo plugins sit beside frontend/ (../plugins, ../private/plugins),
+ * so a bare import in a plugin's test walks up past this package to the repo
+ * root's node_modules — the React client's yarn install, with its own graphql
+ * and no solid-js. Deduping resolves these from frontend/ instead: one Solid
+ * runtime for the plugin and the SDK it calls (two copies don't track each
+ * other's signals), and the same graphql the app is built with, whether or
+ * not the root happens to be installed.
+ */
+export const PLUGIN_SHARED_DEPS = ['solid-js', 'graphql'];
+
 // Unit tests (intl, codegen helpers) run in node. The deterministic e2e
 // suites that need the real backend live under e2e/ (Playwright, not vitest).
 export default defineConfig({
@@ -29,6 +40,7 @@ export default defineConfig({
     // @tanstack/solid-table resolve as two disconnected instances (the
     // limitation renderTemplate.test.tsx documents).
     conditions: ['browser'],
+    dedupe: PLUGIN_SHARED_DEPS,
   },
   test: {
     // The in-repo country plugins are covered too — co-locating them buys
