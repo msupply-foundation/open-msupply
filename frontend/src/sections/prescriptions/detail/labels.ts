@@ -1,13 +1,11 @@
-import { PRINT_LABEL_PRESCRIPTION_URL } from '../../../config';
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
 
-// Dispensing-label printing (spec/prescriptions/rules.md § label printing;
-// AC-E2): one label per dispensed ITEM — quantity summary + directions,
-// patient name and code, store/date/clinician — POSTed to the server's
-// label-print endpoint. Requires a configured label printer (the caller
-// gates on the labelPrinterSettings read). The payload mirrors the reference
-// client's label shape; the item-warning slot is not fetched here and prints
-// empty (recorded in the build report).
+// What a dispensing label says (spec/prescriptions/rules.md § label printing;
+// OMS-REG-DIS-03.47): one label per dispensed ITEM — quantity summary +
+// directions, patient name and code, store/date/clinician. Delivering it is
+// the device's (@/domain/labelPrinter). The payload mirrors the
+// reference client's label shape; the item-warning slot is not fetched here
+// and prints empty (recorded in the build report).
 
 export interface PrescriptionLabel {
   itemDetails: string;
@@ -56,49 +54,4 @@ export const buildLabels = (
       details,
     };
   });
-};
-
-/**
- * The outcome of a print attempt. `detail` is what the user is shown behind the
- * error disclosure, so it must always say something: the endpoint has no
- * structured error shape (spec/prescriptions/contract.md § label printing), the
- * plain-text body IS the message.
- */
-export type PrintLabelsOutcome = { ok: true } | { ok: false; detail: string };
-
-/**
- * POST the labels to the server's prescription label-print endpoint. Same
- * non-throwing style as the report-file fetches — a failure resolves, it never
- * throws — and the caller reports it on the control that started it
- * (spec/ui-standards/controls.md § action feedback). Every failure path here
- * MUST resolve a detail: an unprintable label reaches nobody but this user, and
- * a report with nothing in it is what issue #818 was.
- */
-export const printLabels = async (
-  labels: PrescriptionLabel[]
-): Promise<PrintLabelsOutcome> => {
-  try {
-    const response = await fetch(PRINT_LABEL_PRESCRIPTION_URL, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(labels),
-    });
-    if (response.ok) return { ok: true };
-    // The body carries the server's message ("Error getting printer settings:
-    // …", or the printer error itself). Reading it can fail on its own, and an
-    // empty body would leave the report blank — fall back to the status line.
-    const body = await response.text().catch(() => '');
-    return {
-      ok: false,
-      detail: body.trim() || `${response.status} ${response.statusText}`.trim(),
-    };
-  } catch (error) {
-    // A transport failure (server down, DNS, offline) — never a structured
-    // Error necessarily, so don't assume `.message` is there.
-    return {
-      ok: false,
-      detail: error instanceof Error ? error.message : String(error),
-    };
-  }
 };

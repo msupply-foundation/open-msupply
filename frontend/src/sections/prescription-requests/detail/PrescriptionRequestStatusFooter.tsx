@@ -9,6 +9,8 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import {
   asRequestStatus,
   isEditable,
@@ -20,16 +22,20 @@ import type { PrescriptionRequestFieldsFragment } from './prescriptionRequestDet
 
 // The detail status footer (spec/prescription-requests/ui-surface.md S3 §
 // status footer): the lifecycle crumbs and — while New — the hand-over action
-// (AC-R1..R3). One client pre-flight: no lines → a blocking notice, no server
-// call (mirroring the server's own no-lines rejection so the common case
-// never round-trips). A rejection surfaces in the same dialog as a blocking
-// notice — never a toast. There is no Dispensed action: that flip is the
-// server's (rules § becoming dispensed).
+// (OMS-REG-DIS-09.1/.2..R3). One client pre-flight: no lines → a blocking
+// notice, no server call (mirroring the server's own no-lines rejection so the
+// common case never round-trips). A rejection surfaces in the same dialog as a
+// blocking notice — never a toast. There is no Dispensed action: that flip is
+// the server's (rules § becoming dispensed).
 //
-// The confirmation asks for NOTHING (AC-R6): the clinician the generated
-// dispensation takes is the REQUEST's own field, set on the header while it
-// was still editable, so by here there is nothing left to enter — only to
-// confirm.
+// The confirmation asks for NOTHING (OMS-REG-DIS-09.16–.18): the clinician the
+// generated dispensation takes is the REQUEST's own field, set on the header
+// while it was still editable, so by here there is nothing left to enter — only
+// to confirm.
+//
+// A hand-over that lands closes the dialog and hides the button, so the bar's
+// message slot flashes the save confirmation (spec/ui-standards/controls.md §
+// action feedback).
 
 export interface PrescriptionRequestStatusFooterProps {
   storeId: string;
@@ -45,12 +51,13 @@ export const PrescriptionRequestStatusFooter: Component<
   const [working, setWorking] = createSignal(false);
   const [rejection, setRejection] = createSignal<string>();
   const [noLinesOpen, setNoLinesOpen] = createSignal(false);
+  const saved = createFlash<string>();
 
   const status = () => asRequestStatus(props.node.status);
 
   const openConfirm = () => {
-    // The one sanctioned pre-flight (AC-R1): nothing prescribed blocks with a
-    // notice and no server call.
+    // The one sanctioned pre-flight (OMS-REG-DIS-09.1/.2): nothing prescribed
+    // blocks with a notice and no server call.
     if (props.node.lines.totalCount === 0) return setNoLinesOpen(true);
     setConfirmOpen(true);
   };
@@ -84,6 +91,7 @@ export const PrescriptionRequestStatusFooter: Component<
     if (outcome.kind === 'saved') {
       closeDialogs();
       props.onSaved(outcome.node);
+      saved.show(t('messages.saved'));
       return;
     }
     if (outcome.kind === 'rejected') {
@@ -98,9 +106,12 @@ export const PrescriptionRequestStatusFooter: Component<
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(props.node)}
         current={statusIndex(status())}
       />
+
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>
         {/* Hidden once past New — a permanently dead control is hidden. */}
@@ -115,7 +126,7 @@ export const PrescriptionRequestStatusFooter: Component<
         </Show>
       </ContentFooterActions>
 
-      {/* The no-lines blocking notice (AC-R1) — a notice, never a toast. It
+      {/* The no-lines blocking notice (OMS-REG-DIS-09.1/.2) — a notice, never a toast. It
           offers nothing to do but close, so it is not a question; and it gets
           its own wording rather than the shared one, which talks about
           placeholder lines a prescription request cannot have. */}
@@ -140,7 +151,7 @@ export const PrescriptionRequestStatusFooter: Component<
         }
       />
 
-      {/* The hand-over confirmation (AC-R2); a rejection swaps the message
+      {/* The hand-over confirmation (OMS-REG-DIS-09.3–.9); a rejection swaps the message
           for the blocking notice. */}
       <Show when={confirmOpen()}>
         <Dialog

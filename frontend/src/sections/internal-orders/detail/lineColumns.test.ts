@@ -11,13 +11,14 @@ import {
   INTERNAL_ORDER_LINE_COLUMNS,
   mergeLineColumns,
   publishedLineColumnIds,
+  sortLinesByContribution,
   type LineColumnBatch,
   type LineColumnContribution,
 } from './lineColumns';
 
 // The line table's plugin column region (internal-orders ui-surface § S8).
 // Behaviours cited from OMS-REG-REPL-16 (this vertical's slot-region case) and
-// the plugin criteria they realise: AC-PLUG-K1 (anchored, reload-stable
+// the plugin criteria they realise: OMS-REG-PLG-02.1 (anchored, reload-stable
 // placement), K2 (missing anchor degrades visibly), K4 (batched data), K5
 // (namespaced column identity), I1 (namespaced translation).
 
@@ -85,7 +86,7 @@ describe('mergeLineColumns — no contributions (OMS-REG-REPL-16.1)', () => {
   });
 });
 
-describe('mergeLineColumns — placement (OMS-REG-REPL-16.2, AC-PLUG-K1)', () => {
+describe('mergeLineColumns — placement (OMS-REG-REPL-16.2, OMS-REG-PLG-02.1)', () => {
   it('places a contributed column after its anchor', () => {
     const merged = mergeLineColumns(
       hostColumns('amc', 'mos', 'requested'),
@@ -130,7 +131,7 @@ describe('mergeLineColumns — placement (OMS-REG-REPL-16.2, AC-PLUG-K1)', () =>
   });
 });
 
-describe('mergeLineColumns — identity (AC-PLUG-K5)', () => {
+describe('mergeLineColumns — identity (OMS-REG-PLG-02.8)', () => {
   it('namespaces the merged id with the plugin code', () => {
     const merged = mergeLineColumns(
       hostColumns('amc'),
@@ -150,7 +151,7 @@ describe('mergeLineColumns — identity (AC-PLUG-K5)', () => {
   });
 });
 
-describe('mergeLineColumns — a hidden or absent anchor (OMS-REG-REPL-16.3, AC-PLUG-K2)', () => {
+describe('mergeLineColumns — a hidden or absent anchor (OMS-REG-REPL-16.3, OMS-REG-PLG-02.3)', () => {
   it('falls to the table end with a diagnostic when the anchor does not exist', () => {
     const merged = mergeLineColumns(
       hostColumns('amc', 'mos'),
@@ -207,7 +208,7 @@ describe('mergeLineColumns — a hidden or absent anchor (OMS-REG-REPL-16.3, AC-
 });
 
 describe('mergeLineColumns — presentation', () => {
-  it('translates the header in the plugin`s own namespace (AC-PLUG-I1)', () => {
+  it('translates the header in the plugin`s own namespace (OMS-REG-PLG-04.13)', () => {
     registerPluginTranslations('demo_plugin', {
       en: { 'label.total': 'Total in stock' },
     });
@@ -287,7 +288,7 @@ describe('mergeLineColumns — presentation', () => {
     expect(sizes.get('demo_plugin.nonsense')).toBeUndefined();
   });
 
-  it('is not sortable — no sortKey, so the host declares no sort for it', () => {
+  it('is not sortable without a declared sortValue — no sortKey (OMS-REG-REPL-16.4)', () => {
     const merged = mergeLineColumns(
       hostColumns('amc'),
       [contribution({ id: 'total' })],
@@ -295,9 +296,45 @@ describe('mergeLineColumns — presentation', () => {
     );
     expect(merged.columns[1]!.sortKey).toBeUndefined();
   });
+
+  it('is sortable under its namespaced id where the contribution declares a sortValue (OMS-REG-REPL-16.12, OMS-REG-PLG-02.10)', () => {
+    const merged = mergeLineColumns(
+      hostColumns('amc'),
+      [contribution({ id: 'total', sortValue: () => 1 })],
+      view
+    );
+    expect(merged.columns[1]!.sortKey).toBe('demo_plugin.total');
+  });
+
+  it('gives a sortable Component column its sort value as the accessor — a display column cannot sort', () => {
+    const Cell = () => null;
+    const merged = mergeLineColumns(
+      hostColumns('amc'),
+      [
+        contribution({
+          id: 'aged',
+          value: undefined,
+          Component: Cell,
+          sortValue: row => row.itemName,
+        }),
+      ],
+      view
+    );
+    const column = merged.columns[1]!;
+    expect(column.c.accessor).toBeDefined();
+    expect(column.c.accessor?.({ id: 'l1', value: 0 })).toBe('item l1');
+    // Without a declared sort the Component column stays a pure display
+    // column — no accessor, nothing cached.
+    const plain = mergeLineColumns(
+      hostColumns('amc'),
+      [contribution({ id: 'plain', value: undefined, Component: Cell })],
+      view
+    );
+    expect(plain.columns[1]!.c.accessor).toBeUndefined();
+  });
 });
 
-describe('mergeLineColumns — batched data (AC-PLUG-K4)', () => {
+describe('mergeLineColumns — batched data (OMS-REG-PLG-02.5)', () => {
   const batch = (entries: [string, number][]): LineColumnBatch => ({
     data: new Map([['demo_plugin.total', new Map<string, unknown>(entries)]]),
     loading: false,
@@ -360,7 +397,7 @@ describe('mergeLineColumns — batched data (AC-PLUG-K4)', () => {
   });
 });
 
-describe('mergeLineColumns — containment (AC-PLUG-E1)', () => {
+describe('mergeLineColumns — containment (OMS-REG-PLG-02.20)', () => {
   it('blanks a throwing value function rather than failing the table', () => {
     const merged = mergeLineColumns(
       hostColumns('amc'),
@@ -377,5 +414,114 @@ describe('mergeLineColumns — containment (AC-PLUG-E1)', () => {
     expect(accessed(merged.columns[1]!, { id: 'l1', value: 0 })).toBe('');
     // The host column beside it is untouched.
     expect(merged.columns[0]).toBeDefined();
+  });
+});
+
+describe('sortLinesByContribution — the declared sort (OMS-REG-REPL-16.12, OMS-REG-PLG-02.10)', () => {
+  const rows: Row[] = [
+    { id: 'a', value: 3 },
+    { id: 'b', value: 1 },
+    { id: 'c', value: 2 },
+  ];
+  const rowIds = (sorted: Row[]) => sorted.map(row => row.id);
+  const byValue = contribution({
+    id: 'last-counted',
+    sortValue: (_line: InternalOrderLineView, data?: unknown) =>
+      data as number | null | undefined,
+  });
+  const entries = (pairs: [string, unknown][]) => new Map(pairs);
+
+  it('orders numbers numerically, in each direction', () => {
+    const data = entries([
+      ['a', 3],
+      ['b', 1],
+      ['c', 2],
+    ]);
+    expect(
+      rowIds(sortLinesByContribution(rows, view, byValue, data, false))
+    ).toEqual(['b', 'c', 'a']);
+    expect(
+      rowIds(sortLinesByContribution(rows, view, byValue, data, true))
+    ).toEqual(['a', 'c', 'b']);
+  });
+
+  it('orders strings by locale', () => {
+    const data = entries([
+      ['a', 'Zoe'],
+      ['b', 'ada'],
+      ['c', 'Mia'],
+    ]);
+    expect(
+      rowIds(sortLinesByContribution(rows, view, byValue, data, false))
+    ).toEqual(['b', 'c', 'a']);
+  });
+
+  it('sorts a null or undefined value last, in either direction', () => {
+    const data = entries([
+      ['a', null],
+      ['b', 2],
+      ['c', 1],
+    ]);
+    expect(
+      rowIds(sortLinesByContribution(rows, view, byValue, data, false))
+    ).toEqual(['c', 'b', 'a']);
+    expect(
+      rowIds(sortLinesByContribution(rows, view, byValue, data, true))
+    ).toEqual(['b', 'c', 'a']);
+    // A row the loader returned no entry for reads undefined — also last.
+    const sparse = entries([
+      ['b', 2],
+      ['c', 1],
+    ]);
+    expect(
+      rowIds(sortLinesByContribution(rows, view, byValue, sparse, true))
+    ).toEqual(['b', 'c', 'a']);
+  });
+
+  it('lets an Infinity sentinel place "no value" first on a stalest-first sort', () => {
+    // The contract's escape hatch: never-counted maps to Infinity, so a
+    // descending (stalest-first) sort leads with it — and two sentinels
+    // read as equal rather than NaN-scrambling the comparator.
+    const data = entries([
+      ['a', Infinity],
+      ['b', 4],
+      ['c', Infinity],
+    ]);
+    const sorted = rowIds(
+      sortLinesByContribution(rows, view, byValue, data, true)
+    );
+    expect(sorted[2]).toBe('b');
+    expect(new Set(sorted.slice(0, 2))).toEqual(new Set(['a', 'c']));
+  });
+
+  it('reads a throwing sortValue as no value, contained and named once', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const throwing = contribution({
+      id: 'boom',
+      sortValue: (line: InternalOrderLineView) => {
+        if (line.id === 'b') throw new Error('deliberate');
+        return 1;
+      },
+    });
+    const sorted = rowIds(
+      sortLinesByContribution(rows, view, throwing, entries([]), false)
+    );
+    expect(sorted[2]).toBe('b');
+    expect(error).toHaveBeenCalledTimes(1);
+    error.mockRestore();
+  });
+
+  it('returns the rows untouched when the contribution declares no sort', () => {
+    expect(
+      rowIds(
+        sortLinesByContribution(
+          rows,
+          view,
+          contribution({ id: 'plain' }),
+          undefined,
+          false
+        )
+      )
+    ).toEqual(['a', 'b', 'c']);
   });
 });

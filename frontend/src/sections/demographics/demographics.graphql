@@ -1,0 +1,184 @@
+# The indicator read (spec/demographics contract § the grid): every indicator,
+# in ONE generous page — the grid is a bounded working set edited as one draft
+# (rules § the grid), so it is loaded whole, never paged. `first: 1000` is the
+# help screens' established single-page figure; `first: 1001` was accepted
+# live, so no ceiling binds. The `name` sort is sent EXPLICITLY (below) and the
+# client pins `generalRow` to the top after the fetch. The reference client's
+# `first: 20` with no pager is the first-page capture the spec README records.
+#
+# Wire traps this selection lives with (contract.md):
+#   • ⚠️ The read's ORDER depends on whether a sort is sent. With no `sort`
+#     argument the server orders by the raw name — byte order, so every
+#     upper-case name sorts before every lower-case one (`RSPEC CHILDREN`
+#     ahead of `rspec bulk 1`). Only an explicit `sort: [{ key: name }]` gives
+#     the case-insensitive order the rules state (rules § the grid), which is
+#     what the reference client sends too. Never drop this argument.
+#   • `storeId` is required but NOT validated — the data is installation-wide
+#     and unfiltered by store; the argument exists for the auth plumbing. Any
+#     store id answers the same rows.
+#   • The union has exactly one member, so no failure arrives through it.
+query demographicIndicators($storeId: String!) {
+  demographicIndicators(
+    storeId: $storeId
+    page: { first: 1000, offset: 0 }
+    sort: [{ key: name, desc: false }]
+  ) {
+    ... on DemographicIndicatorConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+        baseYear
+        basePopulation
+        populationPercentage
+        year1Projection
+        year2Projection
+        year3Projection
+        year4Projection
+        year5Projection
+      }
+    }
+  }
+}
+
+# The growth rates for the screen's base year (contract § growth rates) — the
+# five header percentages. Called with the fixed base year 2024.
+#
+# Wire trap: the ABSENT-data case is a typed miss. With no record stored for
+# the year the response is `NodeError { error: RecordNotFound }`, which the
+# client reads as "zero rates, no record yet" (rules § growth rates) — the
+# first Save then CREATES the record rather than updating one. Any other
+# NodeError member is a genuine failure.
+query demographicProjectionByBaseYear($baseYear: Int!) {
+  demographicProjectionByBaseYear(baseYear: $baseYear) {
+    __typename
+    ... on DemographicProjectionNode {
+      id
+      baseYear
+      year1
+      year2
+      year3
+      year4
+      year5
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The four writes, all under the central namespace (contract § access): each
+# authorises against EDIT_CENTRAL_DATA with no store, and the `centralServer`
+# root itself refuses off-central with an UNTYPED top-level error
+# ("Internal error" / details "Not a central server") before any member is
+# reached.
+#
+# ⚠️ Wire trap — every declared error member is UNREACHABLE (contract §
+# rejections). Each resolver maps every service rejection to a top-level
+# GraphQL error ("Bad user input" with the Rust variant name in
+# `extensions.details`, e.g. `DemographicIndicatorAlreadyExistsForThisYear`)
+# and never constructs the `…Error` union member. The caller therefore reads
+# GraphQL errors itself (returnGraphqlErrors) and branches on
+# `extensions.details`, never on `__typename`. The error fragments below are
+# selected only so a response that DID carry one would still type.
+#
+# Save writes every row (rules § saving the draft): one update per existing
+# row, one insert per new row, all in parallel and each its own server
+# transaction — then the growth rates, only once every row has answered with a
+# node. A rejected row does not undo the others: the partial-persistence rule.
+mutation insertDemographicIndicator($input: InsertDemographicIndicatorInput!) {
+  centralServer {
+    demographic {
+      insertDemographicIndicator(input: $input) {
+        __typename
+        ... on DemographicIndicatorNode {
+          id
+        }
+        ... on InsertDemographicIndicatorError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# Partial on the wire — an omitted field leaves the stored value unchanged —
+# but the client always sends the full field set (contract § indicators),
+# including `basePopulation` = the baseline on EVERY row and the five
+# recomputed projections. On `generalRow` the client sends its own translated
+# label as `name` (rules § the general population row, captured as-is).
+mutation updateDemographicIndicator($input: UpdateDemographicIndicatorInput!) {
+  centralServer {
+    demographic {
+      updateDemographicIndicator(input: $input) {
+        __typename
+        ... on DemographicIndicatorNode {
+          id
+        }
+        ... on UpdateDemographicIndicatorError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# Creates the growth-rate record on the first save of an installation with
+# none stored for the base year (rules § growth rates). One record per base
+# year: a second insert for a year that has one is refused
+# (`DemographicProjectionBaseYearAlreadyExists`), unreachable from the screen's
+# own flow since the read above decides insert vs update.
+mutation insertDemographicProjection(
+  $input: InsertDemographicProjectionInput!
+) {
+  centralServer {
+    demographic {
+      insertDemographicProjection(input: $input) {
+        __typename
+        ... on DemographicProjectionNode {
+          id
+        }
+        ... on InsertDemographicProjectionError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# Partial on the wire (an omitted year is unchanged); the client always sends
+# all five plus `baseYear`. No range is validated — the 0–100 two-decimal
+# bound is the client's alone (rules § input bounds).
+mutation updateDemographicProjection(
+  $input: UpdateDemographicProjectionInput!
+) {
+  centralServer {
+    demographic {
+      updateDemographicProjection(input: $input) {
+        __typename
+        ... on DemographicProjectionNode {
+          id
+        }
+        ... on UpdateDemographicProjectionError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}

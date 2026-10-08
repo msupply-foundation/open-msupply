@@ -378,7 +378,7 @@ export const ROLES: Record<RoleName, RoleSpec> = {
   },
   unfinished: {
     shorthand: 'base',
-    // The awaiting-a-step marking (outbound placeholder rows). Its own role,
+    // The awaiting-a-step marking (placeholder / uncounted rows). Its own role,
     // not a member of `warning`: a site rebranding its caution amber must not
     // silently repaint "still to do" as "something is wrong".
     members: { base: ['--marking-unfinished'] },

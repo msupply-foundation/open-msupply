@@ -15,7 +15,7 @@ use crate::sync::translations::{
 use util::sync_serde::{empty_str_as_option, empty_str_or_i32, object_fields_as_option};
 
 use super::{
-    master_list::MasterListTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
+    IntegrationOperation, PullTranslateResult, SyncTranslation, master_list::MasterListTranslation,
 };
 
 #[allow(non_snake_case)]

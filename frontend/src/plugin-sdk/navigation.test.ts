@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /*
  * The SDK's route/link primitives (spec/plugins/sdk-contract.md § SDK surface;
- * AC-PLUG-P3 for the link, AC-PLUG-P4 for the route).
+ * OMS-REG-PLG-04.6 for the link, OMS-REG-PLG-04.9 for the route).
  *
  * Two things they exist to stop a plugin getting wrong, and both are asserted
  * at BOTH mounts: the entered store, and the mount the app is served under. A
@@ -18,7 +18,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  * than test-only parameters.
  */
 
-const state: { storeId: string | undefined } = { storeId: undefined };
+const state: { storeId: string | undefined; pathname: string } = {
+  storeId: undefined,
+  pathname: '/',
+};
 const navigated = vi.fn();
 
 vi.mock('../store/storeContext', () => ({
@@ -27,6 +30,9 @@ vi.mock('../store/storeContext', () => ({
 vi.mock('../nav/hostNavigate', () => ({
   hostNavigate: (href: string, options?: { replace?: boolean }) =>
     navigated(href, options),
+}));
+vi.mock('../nav/hostLocation', () => ({
+  hostPathname: () => state.pathname,
 }));
 
 const at = async (base: string) => {
@@ -136,5 +142,35 @@ describe('navigateTo', () => {
     expect(navigated).toHaveBeenCalledWith('/rc/', undefined);
     expect(warned).toHaveBeenCalledOnce();
     warned.mockRestore();
+  });
+});
+
+describe.each(mounts)('currentStorePath (%s)', (_name, base) => {
+  const mount = base.replace(/\/$/, '');
+
+  it('reads the path below the store root, mount and store stripped', async () => {
+    const { currentStorePath } = await at(base);
+    state.pathname = `${mount}/store-a/stock-count/report/past`;
+    expect(currentStorePath()).toBe('stock-count/report/past');
+  });
+
+  it("reads the store's landing screen as the empty path", async () => {
+    const { currentStorePath } = await at(base);
+    state.pathname = `${mount}/store-a`;
+    expect(currentStorePath()).toBe('');
+  });
+
+  it('round-trips what storeHref resolved — one path vocabulary', async () => {
+    // The read half must hand back exactly what the write half took, or a
+    // page comparing its own sub-paths would be comparing two spellings.
+    const { currentStorePath, storeHref } = await at(base);
+    state.pathname = storeHref('stock-count/report/past/2026-08-01');
+    expect(currentStorePath()).toBe('stock-count/report/past/2026-08-01');
+  });
+
+  it('is undefined before a store is entered', async () => {
+    const { currentStorePath } = await at(base);
+    state.storeId = undefined;
+    expect(currentStorePath()).toBeUndefined();
   });
 });

@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, RecordBelongsToAnotherStore, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{DatabaseError, RecordBelongsToAnotherStore, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
@@ -79,6 +79,16 @@ fn map_error(error: ServiceError) -> Result<DeleteLocationErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LocationInUse(location_in_use) => {
+            // `location_in_use.sensors` is deliberately not on the wire: a
+            // SensorConnector lives in the cold-chain GraphQL crate, and having
+            // this inventory mutation depend on that one to list them would be
+            // the wrong way round. What matters to a client is that the refusal
+            // is TYPED — before the sensor check existed it arrived as an
+            // internal error naming a foreign key.
+            //
+            // TODO: surface which sensors. Wants SensorNode moved into
+            // graphql_types first, so this crate can name one without
+            // depending on the cold-chain GraphQL crate.
             return Ok(DeleteLocationErrorInterface::LocationInUse(LocationInUse {
                 stock_lines: StockLineConnector::from_vec(location_in_use.stock_lines),
                 invoice_lines: InvoiceLineConnector::from_vec(location_in_use.invoice_lines),
@@ -121,18 +131,18 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
-            mock_stock_line_a, MockDataInserts,
-        },
         InvoiceLine, InvoiceLineStatsRow, StockLine, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_outbound_shipment_a,
+            mock_outbound_shipment_a_invoice_lines, mock_stock_line_a,
+        },
     };
     use serde_json::json;
 
     use service::{
         location::{
-            delete::{DeleteLocation, DeleteLocationError, LocationInUse},
             LocationServiceTrait,
+            delete::{DeleteLocation, DeleteLocationError, LocationInUse},
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -269,6 +279,7 @@ mod test {
                     campaign_row: None,
                 }],
                 invoice_lines: vec![successful_invoice_line()],
+                sensors: vec![],
             }))
         }));
 

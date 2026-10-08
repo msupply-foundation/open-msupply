@@ -4,16 +4,15 @@ use std::{
 };
 
 use actix_web::{
-    guard,
+    HttpRequest, guard,
     web::{self, Data},
-    HttpRequest,
 };
 use async_graphql::{EmptySubscription, ObjectType, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use repository::{
+    StorageConnection, StorageConnectionManager,
     mock::{MockData, MockDataCollection, MockDataInserts},
     test_db::setup_all_with_data,
-    StorageConnection, StorageConnectionManager,
 };
 
 use service::{
@@ -23,7 +22,7 @@ use service::{
 
 use crate::{
     auth_data_from_request,
-    loader::{get_loaders, LoaderRegistry},
+    loader::{LoaderRegistry, get_loaders},
 };
 
 pub struct TestGraphqlSettings<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone> {

@@ -24,7 +24,7 @@ const setUp = (opts: {
 beforeEach(() => setUp({}));
 afterEach(() => vi.unstubAllGlobals());
 
-describe('detectLocale (AC-TR13/14/23)', () => {
+describe('detectLocale (OMS-REG-I18N-01.26/14/23)', () => {
   it('resolves in order: query, last-used, browser, default', () => {
     setUp({ search: '?lng=ru', last: 'pt', browser: ['es'] });
     expect(detectLocale()).toBe('ru');
@@ -50,6 +50,21 @@ describe('detectLocale (AC-TR13/14/23)', () => {
 
     setUp({ search: '?lng=fr-dj' });
     expect(detectLocale()).toBe('fr-DJ');
+  });
+
+  it('falls past an unsupported or garbage query value', () => {
+    // The desktop discovery hand-off carries `?lng=` across origins
+    // (spec/desktop OMS-REG-DESK-01.24/.25); a value with no catalog must fall
+    // through to the next source, never break detection or stick as a raw
+    // value.
+    setUp({ search: '?lng=de', last: 'pt' });
+    expect(detectLocale()).toBe('pt');
+
+    setUp({ search: '?lng=<script>alert(1)</script>' });
+    expect(detectLocale()).toBe('en');
+
+    setUp({ search: '?lng=' });
+    expect(detectLocale()).toBe('en');
   });
 
   it('skips preferred languages it does not support', () => {

@@ -1,4 +1,4 @@
-import { t, localisedDate } from '../../../intl';
+import { t, exportDate } from '../../../intl';
 import { toCsv } from '../../../domain/reportFiles';
 import { genderLabel } from '../../../domain/patient';
 import type { PatientsResult } from './patients.generated';
@@ -24,11 +24,11 @@ export const patientsToCsv = (rows: PatientRow[]): string => {
   const data = rows.map(row => [
     row.code,
     row.code2 ?? '',
-    row.createdDatetime ? localisedDate(row.createdDatetime) : '',
+    row.createdDatetime ? exportDate(row.createdDatetime) : '',
     row.firstName ?? '',
     row.lastName ?? '',
     row.gender ? genderLabel(row.gender) : '',
-    row.dateOfBirth ? localisedDate(row.dateOfBirth) : '',
+    row.dateOfBirth ? exportDate(row.dateOfBirth) : '',
     row.nextOfKinName ?? '',
     row.isDeceased ? t('messages.yes') : t('messages.no'),
   ]);

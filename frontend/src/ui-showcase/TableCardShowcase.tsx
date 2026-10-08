@@ -42,6 +42,7 @@ import {
   type Filter,
 } from '../ui/elements/selectors/FilterBar';
 import { Button } from '../ui/elements/buttons/Button';
+import { IconButton } from '../ui/elements/buttons/IconButton';
 import {
   InfoIcon,
   LockIcon,
@@ -742,6 +743,115 @@ const RowStatesDemo = () => {
 // ============================================================================
 // § The card model
 // ============================================================================
+
+// An editor table: every cell an in-place control, top-aligned (cellAlign
+// "start") so a field's validation message hangs below it without lifting it
+// out of line with its neighbours — Line 2's quantity is over the limit to
+// show it. The row number and the delete button are shorter than the inputs,
+// so they take meta.controlLine: held to one input's height, they centre on
+// the inputs' line instead of riding the top of their cells. Fields edit in
+// place (the line array keeps its reference, so no cell remounts and focus
+// stays); a delete replaces the array, which is what rebuilds the rows.
+interface EditorLine {
+  id: string;
+  label: string;
+  quantity: number | undefined;
+}
+
+const EditorTableDemo = () => {
+  const [state, setState] = createStore<{ lines: EditorLine[] }>({
+    lines: [
+      { id: 'e1', label: 'Line 1', quantity: 40 },
+      { id: 'e2', label: 'Line 2', quantity: 250 },
+      { id: 'e3', label: 'Line 3', quantity: 60 },
+    ],
+  });
+  const indexOf = (id: string) => state.lines.findIndex(l => l.id === id);
+  const columns = (): Column<EditorLine, never>[] => [
+    {
+      c: { id: 'number' },
+      header: () => '#',
+      meta: { align: 'right', controlLine: true, hideFromColumnSettings: true },
+      size: remToPx(3),
+      cell: info => info.row.index + 1,
+    },
+    {
+      c: { key: 'label' },
+      header: () => 'Label',
+      meta: { hideFromColumnSettings: true },
+      cell: info => (
+        <TextField
+          label="Label"
+          hideLabel
+          size="small"
+          value={info.row.original.label}
+          onInput={e =>
+            setState(
+              'lines',
+              indexOf(info.row.original.id),
+              'label',
+              e.currentTarget.value
+            )
+          }
+        />
+      ),
+    },
+    {
+      c: { key: 'quantity' },
+      header: () => 'Quantity',
+      meta: { hideFromColumnSettings: true },
+      cell: info => (
+        <NumberField
+          label="Quantity"
+          hideLabel
+          size="small"
+          min={0}
+          value={info.row.original.quantity}
+          error={
+            (info.row.original.quantity ?? 0) > 100 ? 'At most 100' : undefined
+          }
+          onChange={v =>
+            setState('lines', indexOf(info.row.original.id), 'quantity', v)
+          }
+        />
+      ),
+    },
+    {
+      c: { id: 'delete' },
+      header: () => 'Delete',
+      meta: {
+        align: 'center',
+        controlLine: true,
+        hideFromColumnSettings: true,
+      },
+      size: remToPx(4),
+      cell: info => (
+        <IconButton
+          bordered
+          icon={<TrashIcon />}
+          label="Delete"
+          variant="danger"
+          size="small"
+          onClick={() =>
+            setState('lines', lines =>
+              lines.filter(l => l.id !== info.row.original.id)
+            )
+          }
+        />
+      ),
+    },
+  ];
+  return (
+    <DataTable
+      columns={columns()}
+      rows={state.lines}
+      rowKey={l => l.id}
+      showFullScreen={false}
+      cellAlign="start"
+      emptyMessage="No lines"
+    />
+  );
+};
 
 // 4 — One list, two renderings: the SAME columns as a working table, plus
 // showCardToggle (needs setConfig). The name declares itself the card title
@@ -1580,6 +1690,22 @@ export const TableCardShowcase = () => (
             <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <RowStatesDemo />
+        </DashboardCard>
+
+        <DashboardCard title="Table basics · An editor table">
+          <Lead>
+            A table of in-place controls — a modal's line editor, the vaccine
+            course editor's doses — sets <code>cellAlign="start"</code>, so a
+            field that grows a validation message beneath it (Line 2's quantity)
+            keeps its input level with the rest of the row. Anything{' '}
+            <em>shorter</em> than an input would then ride the top of its cell:
+            a column of row numbers or row actions opts into{' '}
+            <code>meta.controlLine</code>, which holds its content to one
+            input's height so it centres on the inputs' line, the way the table
+            already centres a checkbox. Table view only; inert in a
+            centre-aligned table.
+          </Lead>
+          <EditorTableDemo />
         </DashboardCard>
 
         <DashboardCard

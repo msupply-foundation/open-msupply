@@ -1,8 +1,11 @@
 use crate::{
-    db_diesel::{changelog::changelog::RowOrId, item_link_row::item_link, item_row::item},
-    diesel_macros::define_linked_tables,
     ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
+    db_diesel::{
+        changelog::changelog::RowOrId, currency_row::currency, item_link_row::item_link,
+        item_row::item, name_row::name,
+    },
+    diesel_macros::define_linked_tables,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -72,10 +75,16 @@ define_linked_tables! {
 }
 
 joinable!(purchase_order -> purchase_order_stats (id));
+joinable!(purchase_order -> name (supplier_name_id));
+joinable!(purchase_order -> currency (currency_id));
 
 allow_tables_to_appear_in_same_query!(purchase_order_stats, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order, item);
+allow_tables_to_appear_in_same_query!(purchase_order, name);
+allow_tables_to_appear_in_same_query!(purchase_order, currency);
+allow_tables_to_appear_in_same_query!(purchase_order_stats, name);
+allow_tables_to_appear_in_same_query!(purchase_order_stats, currency);
 
 #[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order)]
@@ -279,9 +288,9 @@ impl Delete for PurchaseOrderDelete {
 
 #[cfg(test)]
 mod test {
-    use crate::mock::{mock_name_c, mock_store_a, MockDataInserts};
+    use crate::mock::{MockDataInserts, mock_name_c, mock_store_a};
     use crate::{
-        test_db::setup_all, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
+        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus, test_db::setup_all,
     };
     use strum::IntoEnumIterator;
     use util::uuid::uuid;

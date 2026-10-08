@@ -57,7 +57,7 @@ import {
 } from './actions';
 import { CreateInternalOrderModal } from './create/CreateInternalOrderModal';
 import { StocktakeWarningDialog } from './create/StocktakeWarningDialog';
-import { recentStocktakeIsInsufficient } from './create/createInternalOrder';
+import { recentStocktakeGateShows } from './create/createInternalOrder';
 
 // The internal-orders list view (spec/internal-orders S1). An internal order is
 // a REQUEST requisition; `type` is pinned to REQUEST on every read. Mirrors the
@@ -84,8 +84,8 @@ type ListState = {
   first: number;
 };
 
-// Default sort: created date, newest first (AC-L3). URL-backed, so a user's own
-// header click overrides it (and is shareable/restorable).
+// Default sort: created date, newest first (OMS-REG-REPL-04.34). URL-backed, so
+// a user's own header click overrides it (and is shareable/restorable).
 const DEFAULT_STATE: ListState = {
   filter: {},
   sort: [{ key: 'createdDatetime', desc: true }],
@@ -104,7 +104,8 @@ const InternalOrdersList: Component = () => {
   });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Create-flow state: the modal, the recent-stocktake warning gate, and the
-  // in-flight stocktake check that decides between them (spec S2 / AC-C5).
+  // in-flight stocktake check that decides between them (spec S2 /
+  // OMS-REG-REPL-04.45).
   const [createOpen, setCreateOpen] = createSignal(false);
   const [gateOpen, setGateOpen] = createSignal(false);
   const [checking, setChecking] = createSignal(false);
@@ -174,9 +175,10 @@ const InternalOrdersList: Component = () => {
     setOffset: offset => setQuery({ ...query(), offset }),
   });
 
-  // The store-context gates for the conditional columns (AC-L8/L9), fetched
-  // once per store, read non-suspending. Safe default OFF while unresolved — a
-  // gated column never flashes in before its gate is known.
+  // The store-context gates for the conditional columns (OMS-REG-REPL-04.38,
+  // OMS-REG-REPL-05.6), fetched once per store, read non-suspending. Safe
+  // default OFF while unresolved — a gated column never flashes in before its
+  // gate is known.
   const [context] = createResource(
     () => params.storeId,
     async storeId => {
@@ -193,11 +195,14 @@ const InternalOrdersList: Component = () => {
   const warnStocktake = () =>
     context.latest?.preferences.warnWhenMissingRecentStocktake;
 
-  // New order (AC-C1/AC-C5): where the store warns on missing recent
-  // stocktakes, evaluate them first — a shortfall diverts through the warning
-  // gate; otherwise (and when the preference is off) the create modal opens
-  // directly. The New-order button is disabled until the context read resolves,
-  // so the gate is always decided before the modal can open.
+  // New order (OMS-REG-REPL-04.42/.45/.86/.87): where the store warns on
+  // missing recent stocktakes, evaluate the shared gate decision first — a
+  // shortfall diverts through the warning gate unless an installed plugin's
+  // warning-suppression contribution suppresses the store-wide warning with
+  // its own item-level measure (rules › creation); otherwise (and when the
+  // preference is off) the create modal opens directly. The New-order button
+  // is disabled until the context read resolves, so the gate is always decided
+  // before the modal can open.
   const startCreate = async () => {
     const warn = warnStocktake();
     if (!warn?.enabled) {
@@ -205,25 +210,32 @@ const InternalOrdersList: Component = () => {
       return;
     }
     setChecking(true);
-    const insufficient = await recentStocktakeIsInsufficient(
-      params.storeId,
-      warn.maxAge,
-      warn.minItems
-    );
-    setChecking(false);
-    if (insufficient) setGateOpen(true);
-    else setCreateOpen(true);
+    // The gate decision cannot reject (graphqlFetch never throws), but the
+    // finally guarantees a fault can never leave the button disabled for good.
+    try {
+      const shows = await recentStocktakeGateShows(
+        params.storeId,
+        warn.maxAge,
+        warn.minItems
+      );
+      if (shows) setGateOpen(true);
+      else setCreateOpen(true);
+    } finally {
+      setChecking(false);
+    }
   };
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the two controls that trigger it (the header button
-  // and the ghost button in the table's empty slot); each carries
-  // `shortcut={ALT_N}` for its badge, neither owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
+  // that trigger it (the header button and the ghost button in the table's
+  // empty slot); each carries `shortcut={ALT_N}` for its badge, neither owns
+  // the action.
   //
   // Same inertness as both controls: the store context has to resolve before
   // the stocktake-warning gate can be decided, and a check already in flight
-  // must not be started twice (AC-KB26's "once activated, the control MUST stop
-  // accepting a second activation", which for a key means declining it).
+  // must not be started twice (OMS-REG-KBD-02.14/.15's "once activated, the
+  // control MUST stop accepting a second activation", which for a key means
+  // declining it).
   createAddAction({
     name: 'label.new-internal-order',
     run: () => void startCreate(),
@@ -237,7 +249,8 @@ const InternalOrdersList: Component = () => {
 
   // Bulk delete is offered only while EVERY selected row is Draft (and its
   // supplier's store enabled) — a deliberate UI narrowing of the server's guard
-  // (AC-D3). The button is otherwise disabled with a reason tooltip.
+  // (OMS-REG-REPL-04.60). The button is otherwise disabled with a reason
+  // tooltip.
   const selectedRows = () => rows().filter(r => selectedIds().includes(r.id));
   const allSelectedDeletable = () =>
     selectedRows().length > 0 && selectedRows().every(isRowEditable);
@@ -263,9 +276,10 @@ const InternalOrdersList: Component = () => {
   const openRow = (row: Row) =>
     navigate(`/${params.storeId}/replenishment/internal-order/${row.id}`);
 
-  // Inline supplier colour-tag edit (spec S1 col 1 / AC-T1): write the colour
-  // through the shared header update and refetch on success. Offered only on
-  // editable rows (Draft, supplier-store enabled); read-only rows show a dot.
+  // Inline supplier colour-tag edit (spec S1 col 1 / OMS-REG-REPL-04.58): write
+  // the colour through the shared header update and refetch on success. Offered
+  // only on editable rows (Draft, supplier-store enabled); read-only rows show
+  // a dot.
   const setColour = async (row: Row, colour: string) => {
     const result = await graphqlFetch(UpdateInternalOrderColour, {
       storeId: params.storeId,
@@ -285,7 +299,8 @@ const InternalOrdersList: Component = () => {
   const columns = (): Column<Row, SortKey>[] => [
     {
       // Name — supplier name, carrying the row's colour-tag affordance: the
-      // swatch picker on an editable row, a read-only dot otherwise (AC-T1).
+      // swatch picker on an editable row, a read-only dot otherwise
+      // (OMS-REG-REPL-04.58).
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: () => t('label.name'),
@@ -359,7 +374,7 @@ const InternalOrdersList: Component = () => {
       ...getCellDefinition('countRows'),
     },
     // Program / Order type / Period — only when the store has supplier programs
-    // (AC-L8); empty for a non-program order.
+    // (OMS-REG-REPL-04.38); empty for a non-program order.
     ...(hasPrograms()
       ? ([
           {
@@ -385,8 +400,8 @@ const InternalOrdersList: Component = () => {
       ...getCellDefinition('comment'),
     },
     // Approval status — only when the store requires supplier authorisation
-    // (AC-L9); read from the linked response requisition's copy, None fallback.
-    // Not sortable.
+    // (OMS-REG-REPL-05.6); read from the linked response requisition's copy,
+    // None fallback. Not sortable.
     ...(requiresAuthorisation()
       ? ([
           {
@@ -471,11 +486,12 @@ const InternalOrdersList: Component = () => {
         onSort={onSort}
         onRowClick={openRow}
         // Restricted rows (Sent/Finalised, or a disabled supplier store) read
-        // as read-only via the disabled background tint (AC-L7) — the same
-        // rowState the other list views key off their editability gate.
+        // as read-only via the disabled background tint (OMS-REG-REPL-04.37) —
+        // the same rowState the other list views key off their editability
+        // gate.
         rowState={row => (isRowEditable(row) ? undefined : 'disabled')}
         emptyMessage={t('error.no-internal-orders')}
-        // Empty state offers create (AC-N2).
+        // Empty state offers create (OMS-REG-REPL-04.40).
         empty={
           <Button
             variant="ghost"
@@ -493,8 +509,9 @@ const InternalOrdersList: Component = () => {
         // Bulk actions for the selection footer (the table adds the count +
         // Clear). Delete stays clickable; when the selection includes a
         // non-Draft (or disabled-supplier-store) order, the click explains why
-        // it can't proceed instead of submitting — never a dead click (AC-D3,
-        // ui-standards controls.md § "active-and-explaining").
+        // it can't proceed instead of submitting — never a dead click
+        // (OMS-REG-REPL-04.60, ui-standards controls.md §
+        // "active-and-explaining").
         selectionActions={
           <DeleteInternalOrdersAction
             storeId={params.storeId}

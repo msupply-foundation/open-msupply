@@ -92,13 +92,13 @@ export const FieldShell = (props: FieldShellProps) => {
         when={props.error}
         fallback={
           <Show when={props.helperText}>
-            <p id={messageId} class={styles.helper}>
+            <p id={messageId} class={styles.helper} data-field-message="helper">
               {props.helperText}
             </p>
           </Show>
         }
       >
-        <p id={messageId} class={styles.error}>
+        <p id={messageId} class={styles.error} data-field-message="error">
           <AlertTriangleIcon class={styles.errorIcon} />
           {props.error}
         </p>

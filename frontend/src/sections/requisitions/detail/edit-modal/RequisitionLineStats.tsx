@@ -1,5 +1,5 @@
 import { For, Show, type Component, type JSX } from 'solid-js';
-import { t } from '@/intl';
+import { measureWord, t } from '@/intl';
 import { formatNumber, round } from '@/intl/formatNumber';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import { InfoIcon } from '@/ui/icons';
@@ -9,7 +9,6 @@ import {
 } from '@/domain/forecast';
 import {
   figureInMode,
-  modeWord,
   type EntryMode,
   type LineStats,
 } from './requisitionLineEdit';
@@ -18,11 +17,12 @@ import styles from './RequisitionLineStats.module.css';
 // The line editor's two read-only stats tabs (spec S4 § stats tabs): My store
 // — the proportional stacked our-stock / requested bars — and Customer — the
 // target-quantity breakdown (or the population-forecast calculation display,
-// AC-LE13) with the volume block beneath (AC-LE12). Every quantity displays
-// re-expressed in the active representation, rounded UP to a whole number
-// (the figure rows' rounding), and swapping the representation recalculates
-// the bars. Both summaries come from a server read keyed on the SAVED line —
-// a not-yet-saved item has none (D75) and the tabs sit in their empty state.
+// OMS-REG-DIST-05.35) with the volume block beneath (OMS-REG-DIST-05.34).
+// Every quantity displays re-expressed in the active representation, rounded UP
+// to a whole number (the figure rows' rounding), and swapping the
+// representation recalculates the bars. Both summaries come from a server read
+// keyed on the SAVED line — a not-yet-saved item has none (D75) and the tabs
+// sit in their empty state.
 
 // The two sections' relative widths (the reference's calculatePercentage):
 // each section's bar is sized against the OTHER section's total, so the two
@@ -32,6 +32,11 @@ const percent = (part: number, total: number): number =>
 
 // The month-axis text shows only when the axis is wide enough for it.
 const MIN_AXIS_WIDTH_FOR_TEXT = 5;
+// A value bar shows its number only when wider than 5% of the target, and its
+// label only when wider than 10%, so a narrow bar never stacks its label a
+// letter per line; the bar's tooltip carries both.
+const MIN_BAR_WIDTH_FOR_VALUE = 5;
+const MIN_BAR_WIDTH_FOR_LABEL = 10;
 
 type Segment = {
   label: string;
@@ -49,10 +54,16 @@ export const RequisitionLineStats: Component<{
   unitName: string | null;
   /** Withholds the other-stores legend row (spec S4 § stats tabs). */
   finalised: boolean;
-  /** The forecast calculation display stands in for the breakdown (AC-LE13). */
+  /**
+   * The forecast calculation display stands in for the breakdown
+   * (OMS-REG-DIST-05.35).
+   */
   showForecast: boolean;
   courses: VaccineCourse[];
-  /** The volume block's live figures (AC-LE12); null on a snapshot-less line. */
+  /**
+   * The volume block's live figures (OMS-REG-DIST-05.34); null on a
+   * snapshot-less line.
+   */
   volume: {
     locationTypeName: string;
     availableVolume: number;
@@ -65,9 +76,9 @@ export const RequisitionLineStats: Component<{
     figureInMode(units, props.entryMode, props.packSize);
   // The heading's measure word is a category (always plural); a legend value's
   // inflects for the figure it suffixes.
-  const measure = () => modeWord(props.entryMode, props.unitName);
+  const measure = () => measureWord(props.entryMode, props.unitName);
   const legendValue = (value: number) =>
-    `${formatNumber(value)} ${modeWord(props.entryMode, props.unitName, value)}`;
+    `${formatNumber(value)} ${measureWord(props.entryMode, props.unitName, value)}`;
 
   // One stats section: heading, the proportional stacked bar (sized against
   // the sibling section via `width`), and its legend — or the italic info
@@ -212,12 +223,24 @@ export const RequisitionLineStats: Component<{
     const showText = () => axisWidth() > MIN_AXIS_WIDTH_FOR_TEXT;
     const months = () =>
       Array.from({ length: Math.ceil(maxMonths()) }, (_, i) => i + 1);
-    const monthText = (m: number) =>
-      `${formatNumber(Math.ceil(amc() * m))}${showText() ? ` (${m} ${m === 1 ? t('label.month') : t('label.months')})` : ''}`;
+    const monthNumber = (m: number) => formatNumber(Math.ceil(amc() * m));
+    const fullCount = (m: number) =>
+      ` (${m} ${m === 1 ? t('label.month') : t('label.months')})`;
+    const monthCount = (m: number) => (showText() ? fullCount(m) : '');
+    const monthText = (m: number) => `${monthNumber(m)}${monthCount(m)}`;
     const barFlex = (value: number) =>
       target() === 0
         ? 0
         : Math.min(Math.round((100 * value) / target()), 100);
+    // A bar's number or label shows only when the bar is wide enough for it.
+    const valueClass = (value: number) =>
+      barFlex(value) > MIN_BAR_WIDTH_FOR_VALUE
+        ? styles.valueNum
+        : styles.srOnly;
+    const labelClass = (value: number) =>
+      barFlex(value) > MIN_BAR_WIDTH_FOR_LABEL
+        ? styles.valueLabel
+        : styles.srOnly;
     return (
       <section class={styles.section}>
         <Show when={amc() === 0}>
@@ -235,7 +258,11 @@ export const RequisitionLineStats: Component<{
           <h3 class={styles.sectionHeading}>
             {`${t('heading.target-quantity')} (${measure()})`}
           </h3>
-          <div class={styles.monthAxis} style={{ width: `${axisWidth()}%` }}>
+          <div
+            class={styles.monthAxis}
+            classList={{ [styles.numbersOnly ?? '']: !showText() }}
+            style={{ width: `${axisWidth()}%` }}
+          >
             <div class={styles.monthEdge}>
               <Show when={showText()}>
                 <span class={styles.monthEdgeLabel}>0</span>
@@ -244,7 +271,19 @@ export const RequisitionLineStats: Component<{
             <For each={months()}>
               {m => (
                 <div class={styles.monthCell} title={monthText(m)}>
-                  <div class={styles.monthValue}>{monthText(m)}</div>
+                  <div class={styles.monthValue}>
+                    <span class={styles.monthNumber}>{monthNumber(m)}</span>
+                    {/* A count the axis has no room for stays for screen
+                        readers. */}
+                    <Show
+                      when={showText()}
+                      fallback={
+                        <span class={styles.srOnly}>{fullCount(m)}</span>
+                      }
+                    >
+                      {monthCount(m)}
+                    </Show>
+                  </div>
                 </div>
               )}
             </For>
@@ -257,10 +296,11 @@ export const RequisitionLineStats: Component<{
                 style={{ 'flex-basis': `${barFlex(soh())}%` }}
                 title={`${t('label.stock-on-hand')}: ${legendValue(soh())}`}
               >
+                {/* Text too big for a thin bar stays for screen readers. */}
                 <div class={`${styles.valueFill} ${styles.stockMainFill}`}>
-                  <span class={styles.valueNum}>{formatNumber(soh())}</span>
+                  <span class={valueClass(soh())}>{formatNumber(soh())}</span>
                 </div>
-                <div class={styles.valueLabel}>{t('label.stock-on-hand')}</div>
+                <div class={labelClass(soh())}>{t('label.stock-on-hand')}</div>
               </div>
               <div class={styles.divider} />
             </Show>
@@ -271,11 +311,11 @@ export const RequisitionLineStats: Component<{
                 title={`${t('label.suggested-order-quantity')}: ${legendValue(suggested())}`}
               >
                 <div class={`${styles.valueFill} ${styles.otherRequestedFill}`}>
-                  <span class={styles.valueNum}>
+                  <span class={valueClass(suggested())}>
                     {formatNumber(suggested())}
                   </span>
                 </div>
-                <div class={styles.valueLabel}>
+                <div class={labelClass(suggested())}>
                   {t('label.suggested-order-quantity')}
                 </div>
               </div>
@@ -287,9 +327,9 @@ export const RequisitionLineStats: Component<{
     );
   };
 
-  // The volume block (AC-LE12), beneath the breakdown — or the forecast
-  // display — on a line carrying the customer's volume snapshot. Guidance
-  // only: the live item volume at the typed supply, then the remaining
+  // The volume block (OMS-REG-DIST-05.34), beneath the breakdown — or the
+  // forecast display — on a line carrying the customer's volume snapshot.
+  // Guidance only: the live item volume at the typed supply, then the remaining
   // capacity or the bold no-capacity message.
   const VolumeBlock = (): JSX.Element => {
     const remaining = () =>

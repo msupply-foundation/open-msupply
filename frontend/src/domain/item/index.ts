@@ -4,4 +4,10 @@
 // (src/ui/utils/createPaginatedSearch) alongside AsyncCombobox, its general
 // home.
 export { ItemSearch, type ItemSearchProps } from './ItemSearch';
-export { type ItemOption, fetchItemById, itemPageFetcher } from './itemResource';
+export {
+  type ItemLookup,
+  type ItemOption,
+  fetchItemById,
+  itemPageFetcher,
+  lookUpItemById,
+} from './itemResource';

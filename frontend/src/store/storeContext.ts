@@ -1,5 +1,5 @@
 import { createMemo, createRoot, createSignal, type Accessor } from 'solid-js';
-import { graphqlFetch } from '../api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '../api/graphql';
 import {
   StoreContext,
   type StoreContextResult,
@@ -182,7 +182,8 @@ const outboundShipmentPreferences = () => {
 // the safe OFF/empty while the context is unresolved so a gated surface never
 // flashes in before its preference is known (the same rule as the other
 // *Preferences accessors). Reactive — a post-sync refetch re-gates in place.
-// The WHOLE-surface dispensary gate (AC-G1) is `isDispensary` below.
+// The WHOLE-surface dispensary gate (OMS-REG-DIS-01.49) is `isDispensary`
+// below.
 const patientPreferences = () => {
   const prefs = storeContext()?.preferences;
   const store = storeContext()?.storePreferences;
@@ -199,7 +200,7 @@ const patientPreferences = () => {
 // Same safe defaults while unresolved as the other *Preferences accessors —
 // OFF for gated columns/fields, but `invoiceStatusOptions` empty means
 // UNRESTRICTED (every status offered until the real value resolves — the
-// permissive default, per AC-PR2). Reactive — a
+// permissive default, per OMS-REG-DIS-02.49). Reactive — a
 // post-sync refetch re-gates in place.
 const prescriptionPreferences = () => {
   const prefs = storeContext()?.preferences;
@@ -271,9 +272,9 @@ const currentStoreMode = (): StoreMode | undefined => {
 };
 
 // The entered store's dispensary gate (spec/patients § configuration gates ›
-// AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
-// group (ShellLayout) and its routes (the patients section's route guard). The
-// store's mode rides the me/login response's store list
+// OMS-REG-DIS-01.49). Dispensary mode gates the WHOLE patient surface — the
+// Dispensary nav group (ShellLayout) and its routes (the patients section's
+// route guard). The store's mode rides the me/login response's store list
 // (UserStoreNode.storeMode), so it is known before any store is entered; the
 // entered store is the one `currentStoreId` names. Every gated surface renders
 // under StoreGuardLayout, which withholds its children until the context has
@@ -285,10 +286,11 @@ const isDispensary = (): boolean => currentStoreMode() === 'DISPENSARY';
 // Whether the entered store has the vaccine (cold-chain) module enabled
 // (StorePreferenceNode.vaccineModule). Gates the cold-chain DESTINATIONS — the
 // menu's Cold chain section and the palette's cold-chain entries (spec/keyboard
-// AC-KB4) — which is the legitimate kind of module gate: it gates the place
-// there is to go to, not a generic action (KB-R2). Same safe-default-OFF rule
-// as the other gates, so a gated destination never flashes in before the
-// preference is known. Reactive — a post-sync refetch re-gates in place.
+// OMS-REG-KBD-01.5–.7) — which is the legitimate kind of module gate: it gates
+// the place there is to go to, not a generic action (KB-R2). Same
+// safe-default-OFF rule as the other gates, so a gated destination never
+// flashes in before the preference is known. Reactive — a post-sync refetch
+// re-gates in place.
 const hasVaccineModule = (): boolean =>
   storeContext()?.storePreferences?.vaccineModule ?? false;
 
@@ -319,6 +321,18 @@ const currentStoreName = (): string => {
   return authUser()?.stores.nodes.find(s => s.id === storeId)?.name ?? '';
 };
 
+// The purchase-order vertical's gates (spec/purchase-orders rules §
+// availability, § the status lifecycle): the per-store procurement preference
+// that decides whether the destination exists at all, and whether the approval
+// state is part of the ladder. Both live on the global PreferencesNode.
+const purchaseOrderPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  return {
+    useProcurementFunctionality: prefs?.useProcurementFunctionality ?? false,
+    authorisePurchaseOrder: prefs?.authorisePurchaseOrder ?? false,
+  };
+};
+
 // A server UserPermission name as it arrives in the store-context query
 // (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
 // generated so callers can't typo a permission. Reading the union off the
@@ -341,6 +355,28 @@ const hasPermission = (permission: UserPermission): boolean => {
   );
 };
 
+// The wire's PascalCase spelling of the same permission — the form an actual
+// Forbidden carries as `HasPermission(EditCentralData)`, and the form the
+// permission-denied modal humanises. The SCREAMING_CASE name above is the
+// store context's; the two must stay in step, which is why they sit together.
+const EDIT_CENTRAL_DATA = 'EditCentralData';
+
+/**
+ * The central-administration write guard: the standing-capability mirror the
+ * central screens share (ui-standards › validation § permission gating).
+ * Returns true when the user may write central data; otherwise raises the
+ * global permission-denied modal — the same one a server Forbidden routes to
+ * — and returns false, so the caller sends nothing.
+ *
+ * Used by Manage › Demographics and Programs › Immunizations, which had a
+ * verbatim copy each (PR #749 review, F11). The server stays the real guard.
+ */
+const guardCentralDataEdit = (): boolean => {
+  if (hasPermission('EDIT_CENTRAL_DATA')) return true;
+  reportPermissionDenied([EDIT_CENTRAL_DATA]);
+  return false;
+};
+
 export {
   storeContext,
   refetch as refetchStoreContext,
@@ -358,6 +394,8 @@ export {
   hasVaccineModule,
   hasProgramModule,
   hasProcurement,
+  purchaseOrderPreferences,
   hasPermission,
+  guardCentralDataEdit,
 };
 export type { UserPermission, StoreMode };

@@ -1,7 +1,7 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
-use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_types::types::DeleteResponse;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::stock_relocation::delete::{
@@ -108,16 +108,16 @@ fn map_error(error: DeleteServiceError) -> async_graphql::Error {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
         stock_relocation::{
+            StockRelocationServiceTrait,
             delete::{
                 DeleteStockRelocation as DeleteServiceInput,
                 DeleteStockRelocationError as DeleteServiceError,
             },
-            StockRelocationServiceTrait,
         },
     };
 

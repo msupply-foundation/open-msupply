@@ -1,19 +1,19 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
 
 use repository::Invoice;
+use service::NullableUpdate;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::outbound_shipment::update::{
     UpdateOutboundShipment as ServiceInput, UpdateOutboundShipmentError as ServiceError,
     UpdateOutboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
-use service::NullableUpdate;
 
 use super::error::{
     CannotChangeStatusOfInvoiceOnHold, CannotHaveEstimatedDeliveryDateBeforeShippedDate,
@@ -161,23 +161,23 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::InvoiceDoesNotExist => {
-            return Ok(UpdateErrorInterface::InvoiceDoesNotExist(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::InvoiceDoesNotExist(RecordNotFound {}));
         }
         ServiceError::CannotReverseInvoiceStatus => {
             return Ok(UpdateErrorInterface::CannotReverseInvoiceStatus(
                 CannotReverseInvoiceStatus,
-            ))
+            ));
         }
         ServiceError::InvoiceIsNotEditable => {
             return Ok(UpdateErrorInterface::InvoiceIsNotEditable(
                 InvoiceIsNotEditable,
-            ))
+            ));
         }
 
         ServiceError::CannotChangeStatusOfInvoiceOnHold => {
             return Ok(UpdateErrorInterface::CannotChangeStatusOfInvoiceOnHold(
                 CannotChangeStatusOfInvoiceOnHold,
-            ))
+            ));
         }
         ServiceError::CanOnlyChangeToAllocatedWhenNoUnallocatedLines(lines) => {
             return Ok(
@@ -186,19 +186,19 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                         lines,
                     )),
                 ),
-            )
+            );
         }
         ServiceError::CannotIssueInForeignCurrency => {
             return Ok(UpdateErrorInterface::CannotIssueInForeignCurrency(
                 CannotIssueInForeignCurrency,
-            ))
+            ));
         }
         ServiceError::CannotHaveEstimatedDeliveryDateBeforeShippedDate => {
             return Ok(
                 UpdateErrorInterface::CannotHaveEstimatedDeliveryDateBeforeShippedDate(
                     CannotHaveEstimatedDeliveryDateBeforeShippedDate,
                 ),
-            )
+            );
         }
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
@@ -247,7 +247,7 @@ impl UpdateOutboundShipmentStatusInput {
 mod graphql {
     use graphql_core::test_helpers::setup_graphql_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
-    use repository::mock::{mock_new_invoice_with_unallocated_line, MockDataInserts};
+    use repository::mock::{MockDataInserts, mock_new_invoice_with_unallocated_line};
     use serde_json::json;
 
     use crate::{InvoiceMutations, InvoiceQueries};

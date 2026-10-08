@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   showBarcodeScannerRows,
+  showPrintViaUsbRow,
   showThemeAndLogoRows,
   visibleSections,
 } from './sectionVisibility';
@@ -72,5 +73,19 @@ describe('barcode-scanner rows are Server-Admin-only (SET-05.23)', () => {
 
   it('shows the scanner rows to a Server Admin', () => {
     expect(showBarcodeScannerRows(adminRemote)).toBe(true);
+  });
+});
+
+// OMS-REG-SET-05.41 — the Print via USB row is absent on Android, while the
+// network address, port and label-size fields remain. Platform-gated, not
+// permission-gated, so a non-admin still sees Devices itself.
+describe('the Print via USB row is desktop-only (SET-05.41)', () => {
+  it('hides the row on Android while Devices stays visible', () => {
+    expect(visibleSections(nonAdmin)).toContain('devices');
+    expect(showPrintViaUsbRow(true)).toBe(false);
+  });
+
+  it('shows the row everywhere else', () => {
+    expect(showPrintViaUsbRow(false)).toBe(true);
   });
 });

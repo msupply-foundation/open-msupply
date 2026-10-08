@@ -123,11 +123,12 @@ const InboundShipmentsList: Component = () => {
   >();
   const prefs = () => inboundShipmentPreferences();
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the three controls that can trigger it (the plain New
-  // button, the procurement split button, and the ghost button in the table's
-  // empty slot — only two ever render at a time); each carries
-  // `shortcut={ALT_N}` for its badge, none owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the three
+  // controls that can trigger it (the plain New button, the procurement split
+  // button, and the ghost button in the table's empty slot — only two ever
+  // render at a time); each carries `shortcut={ALT_N}` for its badge, none owns
+  // the action.
   //
   // `run` is the manual create, which is the plain button's action and the
   // split button's default option. The from-a-purchase-order route keeps its
@@ -434,7 +435,7 @@ const InboundShipmentsList: Component = () => {
           <HeaderButtons>
             {/* A store with procurement functionality gets a split button
                 offering the from-a-purchase-order flow as its second option
-                (spec AC-PG3); otherwise a plain New shipment button. */}
+                (spec OMS-REG-REPL-02.33); otherwise a plain New shipment button. */}
             <Show
               when={prefs().useProcurementFunctionality}
               fallback={
@@ -526,7 +527,7 @@ const InboundShipmentsList: Component = () => {
               refetchList={() => void refetch()}
               clearSelection={clearSelection}
             />
-            {/* Make a copy — enabled only for a single selection (spec AC-L4);
+            {/* Make a copy — enabled only for a single selection (spec OMS-REG-REPL-01.17);
                 shown disabled-with-reason otherwise (M5). Number/supplier come
                 from the (only) selected row; when multi-selected the action is
                 disabled so the confirm never opens. */}

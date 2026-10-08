@@ -9,7 +9,7 @@ use repository::{
 use util::uuid::uuid;
 
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 
 pub struct EventInput {
@@ -332,7 +332,7 @@ impl ProgramEventServiceTrait for ProgramEventService {}
 mod test {
     use chrono::{DateTime, NaiveTime};
     use repository::{
-        mock::{mock_program_a, MockDataInserts},
+        mock::{MockDataInserts, mock_program_a},
         test_db::setup_all,
     };
 

@@ -105,7 +105,7 @@ describe('validateLoadedModule', () => {
     }
   );
 
-  it('refuses a plugin built against a newer plugin API (AC-PLUG-V1)', () => {
+  it('refuses a plugin built against a newer plugin API (OMS-REG-PLG-01.10)', () => {
     // The api_too_new example's shape: valid in every other respect, so the
     // ONLY reason it is refused is the version gate.
     const tooNew = definePlugin({
@@ -145,7 +145,7 @@ describe('validateLoadedModule', () => {
     );
   });
 
-  it('loads a downlevel plugin with a warning (AC-PLUG-V2)', () => {
+  it('loads a downlevel plugin with a warning (OMS-REG-PLG-01.12)', () => {
     // Only meaningful once the host has moved past its floor; until then the
     // window is empty and there is nothing to assert but the boundary itself.
     if (PLUGIN_API_MIN_SUPPORTED >= PLUGIN_API_VERSION) {
@@ -192,6 +192,7 @@ describe('validateLoadedModule', () => {
       'dashboard.panel',
       'dashboard.stat',
       'dashboard.widget',
+      'host.warningSuppression',
       'internalOrder.sidePanelSection',
       'internalOrderLine.column',
       'internalOrderLine.infoPanel',
@@ -262,6 +263,101 @@ describe('validateLoadedModule', () => {
     });
     expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
       'no Component function'
+    );
+  });
+
+  it('accepts a warning-suppression contribution — a resolver and a published warning, no Component', () => {
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          warning: 'internalOrders.recentStocktake',
+          suppresses: () => true,
+        },
+      ],
+    });
+    expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+  });
+
+  it('refuses a warning suppression with no suppresses resolver — a Component cannot stand in', () => {
+    // The slot is consulted, never rendered (sdk-contract § the
+    // warning-suppression slot): a bundle offering a Component there was built
+    // against a surface this host does not have.
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          warning: 'internalOrders.recentStocktake',
+          Component,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'has no suppresses function'
+    );
+  });
+
+  it('refuses a warning suppression that ALSO carries a Component — a consulted slot never renders', () => {
+    // Silently dropping the render half would hide from the author that the
+    // surface they built against does not exist here; the wrong form refuses
+    // whole, as everywhere (sdk-contract § contributions).
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          warning: 'internalOrders.recentStocktake',
+          suppresses: () => true,
+          Component,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'consulted, never rendered'
+    );
+  });
+
+  it('refuses a warning suppression naming an unpublished warning id, by name', () => {
+    // An unknown warning means the bundle was built against a host that
+    // publishes it — the same judgement as an unknown slot id, so the refusal
+    // names the published set instead of silently never consulting it.
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          warning: 'internalOrders.someFutureWarning',
+          suppresses: () => true,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'suppresses unknown warning "internalOrders.someFutureWarning"'
+    );
+  });
+
+  it('refuses a warning suppression naming no warning at all — a missing field is not an unknown id', () => {
+    // The refusal must say the field is absent (and name the published set),
+    // not claim an unknown warning called "undefined" — the author's defect is
+    // a missing declaration, not a bad name.
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          suppresses: () => true,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'names no warning to suppress'
     );
   });
 
@@ -517,7 +613,7 @@ describe('validateLoadedModule — pages & nav sections', () => {
   // The placement is where new arms join additively; a shape or an id this
   // host does not provide is refused BY NAME, so a bundle built for a newer
   // surface degrades to a clear diagnostic instead of misregistering.
-  it('refuses an `in` id that is neither a plugin nav section nor a host section, naming the known set (AC-PLUG-P5)', () => {
+  it('refuses an `in` id that is neither a plugin nav section nor a host section, naming the known set (OMS-REG-PLG-04.11)', () => {
     expect(pagesRefusal([page({ nav: { in: 'no-such-section' } })])).toContain(
       "neither one of this plugin's nav sections nor a host section"
     );
@@ -542,5 +638,65 @@ describe('validateLoadedModule — pages & nav sections', () => {
     expect(pagesRefusal([page({ nav: { in: 42 } })])).toContain(
       'invalid "in" id'
     );
+  });
+});
+
+// The settings editor (spec/plugins/sdk-contract.md § the configuration
+// contribution; spec/plugin-management OMS-REG-MNG-07.49 depends on a loaded one).
+describe('validateLoadedModule — configuration', () => {
+  const withConfiguration = (configuration: unknown) => ({
+    ...wellFormed(),
+    configuration,
+  });
+
+  it('accepts an Editor with a JSON-serialisable default', () => {
+    const verdict = validateLoadedModule(
+      'demo',
+      asModule(
+        withConfiguration({
+          defaultConfig: { greeting: 'hi' },
+          Editor: Component,
+        })
+      )
+    );
+    expect(verdict.kind).toBe('ok');
+  });
+
+  it('accepts a bundle that declares no configuration', () => {
+    expect(validateLoadedModule('demo', asModule(wellFormed())).kind).toBe(
+      'ok'
+    );
+  });
+
+  it('refuses a configuration that is not an object', () => {
+    expect(
+      refusal(validateLoadedModule('demo', asModule(withConfiguration('x'))))
+    ).toBe('configuration is not an object');
+  });
+
+  it('refuses a configuration with no Editor component', () => {
+    expect(
+      refusal(
+        validateLoadedModule(
+          'demo',
+          asModule(withConfiguration({ defaultConfig: {} }))
+        )
+      )
+    ).toBe('configuration declares no Editor component');
+  });
+
+  it('refuses a default the host could never store', () => {
+    const circular: Record<string, unknown> = {};
+    circular['self'] = circular;
+    for (const defaultConfig of [undefined, circular, () => 1]) {
+      expect(
+        refusal(
+          validateLoadedModule(
+            'demo',
+            asModule(withConfiguration({ defaultConfig, Editor: Component }))
+          )
+        )
+      ).toBe('configuration.defaultConfig is not JSON-serialisable');
+    }
   });
 });

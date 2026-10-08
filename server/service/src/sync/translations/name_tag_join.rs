@@ -72,7 +72,7 @@ impl SyncTranslation for NameTagJoinTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all, NameTagRow, NameTagRowRepository};
+    use repository::{NameTagRow, NameTagRowRepository, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn test_name_tag_join_translation() {

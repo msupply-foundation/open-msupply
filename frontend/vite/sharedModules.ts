@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import type {
   HtmlTagDescriptor,
   IndexHtmlTransformContext,
@@ -116,41 +117,67 @@ const entryCssFiles = (
 };
 
 /**
- * The HTML entry this build is for: index.html for the app, showcase.html for
- * the standalone showcase (vite.showcase.config.ts). Read back off the config
- * rather than hardcoded, because a `config` hook's result is merged OVER the
- * user config — hardcoding index.html here silently discards any other page
- * the config asked for, and builds the app in its place.
+ * The HTML pages of the build this plugin serves, keyed by entry name. Read
+ * back off the config rather than hardcoded, because a `config` hook's
+ * result is merged OVER the user config — collapsing to index.html here
+ * silently discards any other page the config asked for, and builds the app
+ * in its place.
+ *
+ * A string input (vite.showcase/prototypes.config.ts, which merge over the
+ * app config) is that build's one page, under the conventional `index` key;
+ * the app config's object input (index.html + discovery.html) is taken
+ * as-is. The `index` entry is the PLUGIN-HOST page — the only one that
+ * receives the import-map and SDK-CSS injection below: the discovery page
+ * runs before any server is chosen and loads no plugins (spec/desktop), so
+ * injecting there would make it fetch the SDK's stylesheets for nothing.
  */
-const hostPage = (config: UserConfig): string => {
+export const hostPages = (config: UserConfig): Record<string, string> => {
   const input = config.build?.rollupOptions?.input;
-  return typeof input === 'string' ? input : 'index.html';
+  if (input === undefined) return { index: 'index.html' };
+  if (typeof input === 'string') return { index: input };
+  if (Array.isArray(input))
+    throw new Error(
+      'sharedModulesPlugin: array rollup input is not supported — use the object form'
+    );
+  return { ...input };
 };
 
 export const sharedModulesPlugin = (): Plugin => {
   let base = '/';
+  let pluginHostPage = 'index.html';
+  let pluginHostPagePath = '';
   return {
     name: 'oms:shared-modules',
-    config: config => ({
-      build: {
-        rollupOptions: {
-          // 'exports-only' keeps each facade's re-exports intact without
-          // inserting a wrapper chunk (a 'strict' default would add one; a
-          // laxer setting would let Rollup drop the re-exports entirely).
-          preserveEntrySignatures: 'exports-only',
-          input: {
-            index: hostPage(config),
-            ...Object.fromEntries(SHARED_MODULES.map(m => [m.entry, m.source])),
+    config: config => {
+      const pages = hostPages(config);
+      pluginHostPage = pages.index ?? 'index.html';
+      return {
+        build: {
+          rollupOptions: {
+            // 'exports-only' keeps each facade's re-exports intact without
+            // inserting a wrapper chunk (a 'strict' default would add one; a
+            // laxer setting would let Rollup drop the re-exports entirely).
+            preserveEntrySignatures: 'exports-only',
+            input: {
+              ...pages,
+              ...Object.fromEntries(
+                SHARED_MODULES.map(m => [m.entry, m.source])
+              ),
+            },
           },
         },
-      },
-    }),
+      };
+    },
     configResolved(config) {
       base = config.base;
+      pluginHostPagePath = resolve(config.root, pluginHostPage);
     },
     transformIndexHtml: {
       order: 'post',
       handler(html, ctx) {
+        // Only the plugin-host page is transformed (dev and build alike:
+        // ctx.filename is the page's resolved file path) — see hostPages.
+        if (resolve(ctx.filename) !== pluginHostPagePath) return;
         // Dev serves the facade sources directly — Vite rewrites their
         // re-exports to the same optimised deps the app uses, so identity
         // holds in dev too (and a CSS module imported through the SDK injects

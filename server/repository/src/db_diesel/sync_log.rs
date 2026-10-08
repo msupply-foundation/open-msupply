@@ -1,10 +1,10 @@
-use super::{sync_log_row::sync_log, StorageConnection};
+use super::{StorageConnection, sync_log_row::sync_log};
 
 use crate::{
+    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogV5V6Row,
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
     },
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogV5V6Row,
 };
 
 use diesel::prelude::*;

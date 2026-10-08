@@ -14,9 +14,10 @@ import {
 } from '../../../domain/patient';
 import { EMPTY_FIELD_VALUE } from '../../../domain/customFields';
 
-// S2b — retrieve a central-only patient into the store (spec/patients FL3,
-// AC-S4/S5). Opened from a step-② download row. Confirms, links + syncs, then
-// offers "View patient"; central-unreachable is the one decoded error.
+// S2b — retrieve a central-only patient into the store (spec/patients,
+// OMS-REG-DIS-01.11/.40/.41). Opened from a step-② download row. Confirms,
+// links + syncs, then offers "View patient"; central-unreachable is the one
+// decoded error.
 
 type Phase = 'confirm' | 'fetching' | 'done' | 'unreachable';
 

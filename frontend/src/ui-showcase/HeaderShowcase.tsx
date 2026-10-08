@@ -7,6 +7,7 @@ import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../ui/layout/Header/Toolbar';
 import { HeaderToolbar } from '../ui/layout/Header/HeaderToolbar';
+import { StandingBanner } from '../ui/layout/Header/StandingBanner';
 import { FormRowItem } from '../ui/layout/Form/FormRowItem';
 import { Select } from '../ui/elements/selectors/Select';
 import { Combobox } from '../ui/elements/selectors/Combobox';
@@ -19,6 +20,7 @@ import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Button } from '../ui/elements/buttons/Button';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import {
+  AlertCircleIcon,
   TruckIcon,
   PlusCircleIcon,
   DownloadIcon,
@@ -140,6 +142,20 @@ export const headerMetadata: PageMetadata = {
         'mos',
         'internal order',
         'requisition',
+      ],
+    },
+    {
+      id: 'header-standing-banner',
+      title: 'Standing-context banner',
+      searchTerms: [
+        'banner',
+        'notification',
+        'standing',
+        'context',
+        'actions',
+        'cold chain',
+        'breach',
+        'band',
       ],
     },
     {
@@ -570,6 +586,66 @@ export const HeaderShowcase = () => {
                   />
                 </div>
               </HeaderToolbar>
+            </Header>
+            <PageBody />
+          </PageFrame>
+        </DashboardCard>
+
+        <DashboardCard
+          id="header-standing-banner"
+          title="Standing-context banner — a message AND controls, above the page"
+        >
+          <Lead>
+            The app-bar action-bearing standing-context banner via{' '}
+            <code>&lt;StandingBanner&gt;</code>: a full-width chrome row
+            carrying a message cluster and, pinned to the inline-end, the
+            controls that act on it — more than the compact{' '}
+            <code>&lt;Alert&gt;</code> chip above may hold, since a compact
+            alert is never actionable. <code>severity</code> is Alert's
+            vocabulary (tint + default glyph, <code>icon</code> overrides by
+            intent); <code>actions</code> drop under the message when the row is
+            squeezed. A polite <code>status</code> live region by default — a
+            standing band re-reads on a poll. The host decides where it sits:
+            the shell stacks the cold-chain notification band above every page
+            (one instance per row, as here); a detail screen renders its own in
+            its header's toolbar row.
+          </Lead>
+          <PageFrame>
+            <StandingBanner
+              severity="error"
+              icon={AlertCircleIcon}
+              actions={
+                <Button variant="secondary" size="small">
+                  View details
+                </Button>
+              }
+            >
+              <strong>Temperature breach detected! 3 h 5 min ago</strong>
+              {' · '}Last temperature reading: 9.5 °C{' · '}Device:{' '}
+              <strong>Fridge A</strong> Location:{' '}
+              <strong>Vaccine fridge</strong>
+              {' · '}Total unacknowledged: 62
+            </StandingBanner>
+            <StandingBanner
+              severity="info"
+              actions={
+                <>
+                  <Button variant="secondary" size="small">
+                    Details
+                  </Button>
+                  <Button variant="secondary" size="small">
+                    Add
+                  </Button>
+                </>
+              }
+            >
+              3 ancillary items are available for this order.
+            </StandingBanner>
+            <Header>
+              <Breadcrumb
+                icon={<TruckIcon />}
+                crumbs={[{ label: 'Monitoring' }]}
+              />
             </Header>
             <PageBody />
           </PageFrame>

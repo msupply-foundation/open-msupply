@@ -1,14 +1,14 @@
-use super::{backdated_datetime_change, UpdateOutboundShipment, UpdateOutboundShipmentError};
+use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, backdated_datetime_change};
+use crate::NullableUpdate;
 use crate::common::check_shipping_method_exists;
 use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
-    check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_status_change, check_store, custom_fields::check_invoice_custom_fields_patch,
-    InvoiceRowStatusError,
+    InvoiceRowStatusError, check_invoice_exists, check_invoice_is_editable, check_invoice_status,
+    check_invoice_type, check_status_change, check_store,
+    custom_fields::check_invoice_custom_fields_patch,
 };
-use crate::preference::{preferences::Backdating, Preference};
+use crate::preference::{Preference, preferences::Backdating};
 use crate::validate::{check_other_party_store_is_disabled, get_other_party};
-use crate::NullableUpdate;
 use chrono::{Duration, Utc};
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
@@ -41,12 +41,11 @@ pub fn validate(
         return Err(NotAnOutboundShipment);
     }
 
-    if let Some(properties) = &patch.custom_fields {
-        if let Some(problem) =
+    if let Some(properties) = &patch.custom_fields
+        && let Some(problem) =
             check_invoice_custom_fields_patch(connection, &invoice.r#type, properties)?
-        {
-            return Err(problem.into());
-        }
+    {
+        return Err(problem.into());
     }
 
     if patch.currency_id.is_some()
@@ -59,10 +58,9 @@ pub fn validate(
     if let Some(NullableUpdate {
         value: Some(shipping_method_id),
     }) = &patch.shipping_method_id
+        && !check_shipping_method_exists(connection, shipping_method_id)?
     {
-        if !check_shipping_method_exists(connection, shipping_method_id)? {
-            return Err(ShippingMethodDoesNotExist);
-        }
+        return Err(ShippingMethodDoesNotExist);
     }
 
     // Backdating validation: preference enabled, only New outbound shipments, no lines, not future, max days

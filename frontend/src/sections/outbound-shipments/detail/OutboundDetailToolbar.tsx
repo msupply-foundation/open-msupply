@@ -73,8 +73,6 @@ export const OutboundDetailToolbar: Component<
             code: props.node.otherParty.code,
             isOnHold: props.node.otherParty.isOnHold,
             isStore: props.node.otherParty.store != null,
-            isSupplier: false,
-            isDonor: false,
           }}
           disabled={customerLocked()}
           error={props.customerError}

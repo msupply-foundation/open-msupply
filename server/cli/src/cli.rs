@@ -6,15 +6,16 @@ use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
 use report_builder::{
-    print::{generate_report_inner, Config, ReportGenerateData},
     Format,
+    print::{Config, ReportGenerateData, generate_report_inner},
 };
 use repository::{
+    ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType,
+    KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow, ReportRowRepository,
+    StringFilter, SyncBufferRepository, SyncBufferRowInsert, SyncVersion,
     get_storage_connection_manager,
-    migrations::{migrate, MigrationConfig},
-    schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
-    KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
-    ReportRowRepository, StringFilter, SyncBufferRepository, SyncBufferRowInsert, SyncVersion,
+    migrations::{MigrationConfig, migrate},
+    schema_from_row, test_db,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -55,12 +56,11 @@ use reintegrate_buffer::reintegrate_buffer;
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
-    all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
-    generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
-    install_plugin_bundle, list_installed_plugins, uninstall_plugin,
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
     ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
-    TestData, UninstallPlugin,
+    TestData, UninstallPlugin, all_tests, generate_and_install_plugin_bundle,
+    generate_plugin_bundle, generate_plugin_typescript_types, generate_report_data,
+    generate_reports_recursive, install_plugin_bundle, list_installed_plugins, uninstall_plugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -310,6 +310,14 @@ enum Action {
         /// Diagnostic use only — scoping can skip rows the chosen tables depend on.
         #[clap(long, value_delimiter = ',')]
         tables: Vec<String>,
+        /// Translate and integrate as the central server. Many translators branch on
+        /// `CentralServerConfig::is_central_server()` (custom fields, categories, merges,
+        /// patient name_store_joins, site, ...), so a buffer dumped from a central server must be
+        /// replayed as central to reproduce what central produced. Also enabled by
+        /// `server.override_is_central_server: true` in the config file, matching the server.
+        /// Defaults to remote-site behaviour, which is what the CLI has always done.
+        #[clap(long)]
+        as_central: bool,
     },
 }
 
@@ -488,6 +496,7 @@ async fn main() -> anyhow::Result<()> {
                     .clone()
                     .unwrap_or_default()
                     .to_migration_config(),
+                starting_database_version: None,
             };
             migrate(
                 &connection_manager.connection().unwrap(),
@@ -505,6 +514,7 @@ async fn main() -> anyhow::Result<()> {
             skip_buffer_reset,
             errors_only,
             tables,
+            as_central,
         } => {
             reintegrate_buffer(
                 &settings,
@@ -515,6 +525,7 @@ async fn main() -> anyhow::Result<()> {
                 errors_only,
                 // empty `--tables` means no scoping (integrate everything)
                 (!tables.is_empty()).then_some(tables),
+                as_central,
             )?;
         }
         Action::InitialiseFromCentral { users } => {
@@ -840,7 +851,7 @@ async fn main() -> anyhow::Result<()> {
                 (Some(_), None) | (None, Some(_)) => {
                     return Err(anyhow!(
                         "When arguments path are specified both paths must be present"
-                    ))
+                    ));
                 }
                 (Some(arguments_path), Some(arguments_ui_path)) => {
                     Some(schema_from_row(FormSchemaRow {
@@ -976,7 +987,7 @@ async fn main() -> anyhow::Result<()> {
             Command::new("open")
                 .arg(generated_file_path.clone())
                 .status()
-                .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
+                .unwrap_or_else(|_| panic!("failed to open file {generated_file_path:?}"));
         }
         Action::ToggleReport {
             code,

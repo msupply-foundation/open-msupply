@@ -34,7 +34,12 @@ import { FieldRow } from '../../ui/elements/inputs/FieldRow';
 import { Stack } from '../../ui/layout/Stack/Stack';
 import { HStack } from '../../ui/layout/Stack/HStack';
 import { Text } from '../../ui/elements/typography/Text';
-import { CopyIcon, TrashIcon, DownloadIcon, UploadIcon } from '../../ui/icons';
+import {
+  CopyIcon,
+  TrashIcon,
+  ExportIcon,
+  ImportIcon,
+} from '../../ui/icons';
 import {
   LegacyCustomTranslations,
   UpsertGlobalPreferences,
@@ -582,7 +587,7 @@ export const CustomTranslationsModal = (props: {
                 disabled={saving()}
                 data-testid="custom-translations-import"
               >
-                <UploadIcon /> {t('button.import')}
+                <ImportIcon /> {t('button.import')}
               </Button>
               <Button
                 variant="secondary"
@@ -590,7 +595,7 @@ export const CustomTranslationsModal = (props: {
                 disabled={saving()}
                 data-testid="custom-translations-export"
               >
-                <DownloadIcon /> {t('button.export')}
+                <ExportIcon /> {t('button.export')}
               </Button>
               <Button
                 variant="secondary"

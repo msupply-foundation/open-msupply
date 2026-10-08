@@ -153,6 +153,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             }
             options={statuses}
             width="100%"
+            inputTestId="status-input"
           />
         </Row>
         <Row label={t('label.reason')} isExtraSmallScreen={isExtraSmallScreen}>
@@ -166,6 +167,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
               onChange({ reasonId: selected?.value as string })
             }
             value={reasons.find(r => r?.value === draft.reasonId) ?? null}
+            inputTestId="reason-input"
           />
         </Row>
         <Row
@@ -178,6 +180,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             rows={4}
             fullWidth
             onChange={e => debouncedOnChange({ comment: e.target.value })}
+            slotProps={{ htmlInput: { 'data-testid': 'observations-input' } }}
           />
         </Row>
         <Box

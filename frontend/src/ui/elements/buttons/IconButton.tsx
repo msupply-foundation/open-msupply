@@ -24,13 +24,18 @@ export interface IconButtonProps extends Omit<
    * icon.
    */
   bordered?: boolean;
-  /** Size: 'small' (dense, e.g. a table row action) or 'medium' (default). */
-  size?: 'small' | 'medium';
+  /**
+   * Size: 'small' (dense, e.g. a table row action), 'medium' (default), or
+   * 'large' — a control pressed over and over at arm's length (the
+   * Afghanistan tally's counter steppers), and the size that squares with a
+   * default-size field beside it.
+   */
+  size?: 'small' | 'medium' | 'large';
   /**
    * The key binding this button answers (spec/keyboard KB-H1, S2) — the same
    * ONE prop `Button` takes, driving both `aria-keyshortcuts` and the hint
    * badge revealed while Alt or Ctrl is held, so the two cannot drift
-   * (AC-KB15).
+   * (OMS-REG-KBD-01.26).
    *
    * An icon-only control needs it as much as a labelled one: the more-info
    * panel's show/hide pair is a `Button` on the way in (the app bar's _More_,
@@ -80,7 +85,7 @@ export const IconButton = (props: IconButtonProps): JSX.Element => {
       aria-label={local.label}
       title={local.label}
       // The ARIA grammar, not the platform spelling — the badge renders the
-      // human form from the same value (KB-M1, AC-KB15).
+      // human form from the same value (KB-M1, OMS-REG-KBD-01.26).
       aria-keyshortcuts={
         local.shortcut ? ariaKeyshortcuts(local.shortcut) : undefined
       }

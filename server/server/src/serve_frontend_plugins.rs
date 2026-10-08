@@ -1,8 +1,7 @@
 use actix_web::{
-    error, get,
+    Error, HttpResponse, error, get,
     http::header,
     web::{self, Data},
-    Error, HttpResponse,
 };
 
 use repository::RepositoryError;

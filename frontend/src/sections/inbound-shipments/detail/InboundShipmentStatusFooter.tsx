@@ -1,4 +1,11 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  Show,
+  type Component,
+} from 'solid-js';
 import { t } from '../../../intl';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import {
@@ -11,6 +18,8 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
@@ -60,12 +69,23 @@ export interface InboundShipmentStatusFooterProps {
 // SUBMITTED, not pre-validated (spec S7 / validation.md → actions): a server
 // rejection (on hold, cannot-reverse, cannot-set-shipped-on-manual, pending
 // lines) returns and is shown inline at the control, the request preserved.
+// A committed advance is reported in the same slot, as a flash of the current
+// app's save confirmation (spec/ui-standards/controls.md § action feedback):
+// the split button is gone at Verified, and the crumb alone is easy to miss.
 export const InboundShipmentStatusFooter: Component<
   InboundShipmentStatusFooterProps
 > = props => {
   const [holdConfirm, setHoldConfirm] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
+  const saved = createFlash<string>();
+
+  // A refusal speaks for the record it was raised on. Some views keep this
+  // footer mounted while the route swaps in another record, so drop it then.
+  // Keyed on the id through a memo: `props.node.id` alone re-runs whenever the
+  // view replaces the node object (any refetch), with the id unchanged.
+  const recordId = createMemo(() => props.node.id);
+  createEffect(on(recordId, () => setErrorMessage(undefined), { defer: true }));
 
   const sourceLink = () => sourceLinkOf(props.node);
   // Every status surface is limited by the invoice-status-options preference
@@ -90,6 +110,7 @@ export const InboundShipmentStatusFooter: Component<
     if (busy()) return;
     setBusy(true);
     setErrorMessage(undefined);
+    saved.clear();
     const result = await updateInboundShipment(
       props.storeId,
       props.isExternal,
@@ -101,8 +122,10 @@ export const InboundShipmentStatusFooter: Component<
       }
     );
     setBusy(false);
-    if (result.kind === 'saved') props.onAdvanced(result.node);
-    else if (result.kind === 'error') setErrorMessage(result.message);
+    if (result.kind === 'saved') {
+      props.onAdvanced(result.node);
+      saved.show(t('messages.shipment-saved'));
+    } else if (result.kind === 'error') setErrorMessage(result.message);
   };
 
   const options = () =>
@@ -112,7 +135,7 @@ export const InboundShipmentStatusFooter: Component<
     }));
 
   return (
-    <ContentFooter>
+    <ContentFooter testId="status-footer">
       {/* Hold — blocks status changes only; disabled once Verified. Toggling
           prompts a confirmation. */}
       <CheckboxButton
@@ -127,6 +150,7 @@ export const InboundShipmentStatusFooter: Component<
       {/* The current stage always has a step to mark, hidden or not
           (OMS-REG-REPL-03.28). */}
       <StatusIndicator
+        recordId={props.node.id}
         steps={steps()}
         current={currentStep(offered(), props.node.status)}
       />
@@ -137,12 +161,19 @@ export const InboundShipmentStatusFooter: Component<
           reach it. */}
       <Pagination {...props.pagination} inBar />
 
-      {/* A rejected advance shows here, at the control, request preserved. */}
+      {/* A rejected advance shows here, full width at the control, request
+          preserved. An error the user must act on is never shrunk to a chip;
+          it stays until the next attempt. */}
       <Show when={errorMessage()}>
-        <Alert severity="error" testId="status-error">
-          {errorMessage()}
-        </Alert>
+        {message => (
+          <Alert severity="error" testId="status-error">
+            {message()}
+          </Alert>
+        )}
       </Show>
+
+      {/* A committed advance flashes its save confirmation. */}
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>
         <Show when={!props.disabled && reachable().length > 0}>

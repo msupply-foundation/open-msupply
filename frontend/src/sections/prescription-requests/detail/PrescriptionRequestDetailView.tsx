@@ -1,9 +1,4 @@
-import {
-  createResource,
-  createSignal,
-  Show,
-  type Component,
-} from 'solid-js';
+import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
@@ -55,6 +50,7 @@ import {
   type PrescriptionRequestEditFields,
 } from './PrescriptionRequestSidePanel';
 import { PrescriptionRequestStatusFooter } from './PrescriptionRequestStatusFooter';
+import { ExportPrintAction } from './actions/ExportPrintAction';
 import { RequestLineEditModal } from './edit-modal/RequestLineEditModal';
 import { EditPatientModal } from '../../patients';
 
@@ -63,7 +59,8 @@ import { EditPatientModal } from '../../patients';
 // prominent custom fields), Details + Custom fields + Log tabs over the line
 // table, the side panel, and the status footer with the Ready-to-dispense
 // hand-over. Read-only past New: dead affordances are hidden and a row click
-// opens the line editor's read-only face (AC-N5, AC-R3).
+// opens the line editor's read-only face (OMS-REG-DIS-08.41/.42,
+// OMS-REG-DIS-09.10/.11).
 
 type Line = PrescriptionRequestFieldsFragment['lines']['nodes'][number];
 
@@ -98,7 +95,8 @@ const PrescriptionRequestDetailView: Component = () => {
             : undefined,
       });
       if (result.kind !== 'success') return undefined;
-      return result.data.prescriptionRequest.__typename === 'PrescriptionRequestNode'
+      return result.data.prescriptionRequest.__typename ===
+        'PrescriptionRequestNode'
         ? result.data.prescriptionRequest
         : undefined;
     }
@@ -113,9 +111,7 @@ const PrescriptionRequestDetailView: Component = () => {
   const rows = (): Line[] =>
     (info()?.lines.nodes ?? [])
       .slice()
-      .sort((a, b) =>
-        (a.item?.name ?? '').localeCompare(b.item?.name ?? '')
-      );
+      .sort((a, b) => (a.item?.name ?? '').localeCompare(b.item?.name ?? ''));
 
   const tableConfig = createTableConfig({
     tableId: 'prescription-request-detail',
@@ -249,6 +245,12 @@ const PrescriptionRequestDetailView: Component = () => {
                       {t('button.add-item')}
                     </Button>
                   </Show>
+                  {/* Export/Print — a read, so offered at every status
+                      (OMS-REG-DIS-10.5–.7). */}
+                  <ExportPrintAction
+                    requestId={node().id}
+                    leadingAction={disabled()}
+                  />
                   <Show when={!sidePanelOpen()}>
                     <Button
                       variant="secondary"
@@ -377,7 +379,7 @@ const PrescriptionRequestDetailView: Component = () => {
           </Page>
 
           {/* The S4 line editor — mounted fresh per open; the read-only face
-              past New (AC-N5). */}
+              past New (OMS-REG-DIS-08.41/.42). */}
           <Show when={editState()} keyed>
             {state => (
               <RequestLineEditModal

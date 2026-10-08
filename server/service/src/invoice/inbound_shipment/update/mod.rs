@@ -1,8 +1,8 @@
 use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{
-    custom_field::CustomFieldPatchProblem, invoice::query::get_invoice,
-    service_provider::ServiceContext, WithDBError,
+    WithDBError, custom_field::CustomFieldPatchProblem, invoice::query::get_invoice,
+    service_provider::ServiceContext,
 };
 use chrono::{DateTime, FixedOffset};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
@@ -135,11 +135,11 @@ pub fn update_inbound_shipment(
                 }
             }
 
-            if update_invoice.status == InvoiceStatus::Verified {
-                if let Some(movements) = location_movements {
-                    for movement in movements {
-                        LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
-                    }
+            if update_invoice.status == InvoiceStatus::Verified
+                && let Some(movements) = location_movements
+            {
+                for movement in movements {
+                    LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                 }
             }
 
@@ -168,11 +168,7 @@ pub fn update_inbound_shipment(
 
             if let Some(update_cost_price) = update_cost_price_for_lines {
                 for line in update_cost_price {
-                    invoice_line_repository.update_cost_price(
-                        &line.id,
-                        line.cost_price_per_pack,
-                        line.sell_price_per_pack,
-                    )?;
+                    invoice_line_repository.update_cost_price(&line)?;
                 }
             }
 
@@ -312,21 +308,20 @@ impl UpdateInboundShipment {
 mod test {
     use chrono::{Duration, Utc};
     use repository::{
+        ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
+        InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
+        StockLineRowRepository,
         mock::{
-            mock_donor_a, mock_donor_b, mock_inbound_shipment_a,
+            MockData, MockDataInserts, mock_donor_a, mock_donor_b, mock_inbound_shipment_a,
             mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_b,
             mock_inbound_shipment_c, mock_inbound_shipment_e, mock_inbound_shipment_f, mock_item_a,
             mock_name_a, mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
             mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
             mock_store_linked_to_name, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a,
-            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-        ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
-        InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow,
-        InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
-        StockLineRowRepository,
     };
 
     use crate::{
@@ -335,9 +330,9 @@ mod test {
             UpdateInboundShipmentStatus,
         },
         invoice_line::{
-            query::get_invoice_lines,
-            stock_in_line::{insert_stock_in_line, InsertStockInLine, StockInType},
             ShipmentTaxUpdate,
+            query::get_invoice_lines,
+            stock_in_line::{InsertStockInLine, StockInType, insert_stock_in_line},
         },
         service_provider::ServiceProvider,
     };
@@ -1608,32 +1603,38 @@ mod test {
         );
 
         // Recording that nothing arrived of what was shipped is a valid receipt
-        assert!(service
-            .update_inbound_shipment(
-                &context,
-                receive(nothing_received_invoice().id),
-                InboundShipmentType::InboundShipment,
-            )
-            .is_ok());
+        assert!(
+            service
+                .update_inbound_shipment(
+                    &context,
+                    receive(nothing_received_invoice().id),
+                    InboundShipmentType::InboundShipment,
+                )
+                .is_ok()
+        );
 
         // A shipment of only service lines (freight and the like) is valid
-        assert!(service
-            .update_inbound_shipment(
-                &context,
-                receive(service_line_invoice().id),
-                InboundShipmentType::InboundShipment,
-            )
-            .is_ok());
+        assert!(
+            service
+                .update_inbound_shipment(
+                    &context,
+                    receive(service_line_invoice().id),
+                    InboundShipmentType::InboundShipment,
+                )
+                .is_ok()
+        );
 
         // A transfer can be received even when every line is zero, receiving nothing is how the
         // store closes out a transfer where nothing arrived
-        assert!(service
-            .update_inbound_shipment(
-                &context,
-                receive(transferred_invoice().id),
-                InboundShipmentType::InboundShipment,
-            )
-            .is_ok());
+        assert!(
+            service
+                .update_inbound_shipment(
+                    &context,
+                    receive(transferred_invoice().id),
+                    InboundShipmentType::InboundShipment,
+                )
+                .is_ok()
+        );
     }
 
     #[actix_rt::test]
@@ -1833,6 +1834,7 @@ mod test {
                 // Set to None for mock insert (invoices inserted before POs).
                 // Updated to Some after setup_all_with_data.
                 purchase_order_id: None,
+                currency_id: Some(repository::mock::currency_b().id),
                 currency_rate: 1.0,
                 charges_local_currency: 0.0,
                 charges_foreign_currency: 0.0,
@@ -1963,6 +1965,17 @@ mod test {
             "Line B sell price should remain 25.0 (was different from old cost), got {}",
             line_b.sell_price_per_pack
         );
+        assert!(
+            (line_a.total_before_tax - 55.0).abs() < 0.0001,
+            "Line A total should be 55.0 (11.0 x 5 packs), got {}",
+            line_a.total_before_tax
+        );
+        assert!(
+            (line_b.total_before_tax - 220.0).abs() < 0.0001,
+            "Line B total should be 220.0 (22.0 x 10 packs), got {}",
+            line_b.total_before_tax
+        );
+        assert_eq!(line_a.total_after_tax, line_a.total_before_tax);
 
         // ============================================================
         // Test 2: Idempotency - running again with same charges produces same result
@@ -2039,6 +2052,26 @@ mod test {
             (line_b.cost_price_per_pack - 40.0).abs() < 0.0001,
             "Line B cost should be 40.0 with rate 2.0, got {}",
             line_b.cost_price_per_pack
+        );
+        assert!(
+            (line_a.total_before_tax - 100.0).abs() < 0.0001,
+            "Line A total should be 100.0 (20.0 x 5 packs), got {}",
+            line_a.total_before_tax
+        );
+        assert!(
+            (line_a.total_after_tax - 100.0).abs() < 0.0001,
+            "Line A total after tax should be 100.0 (no tax), got {}",
+            line_a.total_after_tax
+        );
+        assert!(
+            (line_a.foreign_currency_price_before_tax.unwrap() - 50.0).abs() < 0.0001,
+            "Line A foreign price should be 50.0 (100.0 / rate 2.0), got {:?}",
+            line_a.foreign_currency_price_before_tax
+        );
+        assert!(
+            (line_b.total_before_tax - 400.0).abs() < 0.0001,
+            "Line B total should be 400.0 (40.0 x 10 packs), got {}",
+            line_b.total_before_tax
         );
 
         // ============================================================
@@ -2416,8 +2449,8 @@ mod test {
     async fn update_inbound_shipment_backdate_received_success() {
         use chrono::{DateTime, FixedOffset};
         use repository::{
-            location_movement::{LocationMovementFilter, LocationMovementRepository},
             LocationMovementRow, LocationMovementRowRepository,
+            location_movement::{LocationMovementFilter, LocationMovementRepository},
         };
 
         let now = Utc::now().fixed_offset();

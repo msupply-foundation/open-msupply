@@ -1,4 +1,4 @@
-use super::{name_oms_fields, name_tag_row::name_tag, StorageConnection};
+use super::{StorageConnection, name_oms_fields, name_tag_row::name_tag};
 use crate::diesel_macros::define_linked_tables;
 use crate::name_row::name;
 use crate::repository_error::RepositoryError;
@@ -164,9 +164,9 @@ impl Upsert for NameTagJoinRow {
 #[cfg(test)]
 mod test_name_tag_row {
     use crate::{
+        NameRow, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        NameRow, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
     };
 
     #[actix_rt::test]

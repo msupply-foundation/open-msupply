@@ -34,8 +34,12 @@ export const languageOptions = SUPPORTED_LOCALES.map(value => ({
 /** Whether the active locale is right-to-left (drives document.dir). */
 export const isRtl = (): boolean => isRtlLocale(locale());
 
+/** Endonym of one language — its own name, whatever the active locale. */
+export const languageName = (code: SupportedLocale): string =>
+  LANGUAGE_ENDONYM[code];
+
 /** Endonym of the active language. */
-export const currentLanguageName = (): string => LANGUAGE_ENDONYM[locale()];
+export const currentLanguageName = (): string => languageName(locale());
 
 /**
  * A person's full name for the active locale. All supported languages currently
@@ -45,23 +49,6 @@ export const getLocalisedFullName = (
   firstName: StringOrEmpty,
   lastName: StringOrEmpty
 ): string => `${firstName ?? ''} ${lastName ?? ''}`.trim();
-
-// Minimal English pluralisation for dynamic words (the reference app used the
-// `pluralize` package; kept dependency-free here per the simplification spec).
-// Only English is pluralised — other languages return the word unchanged.
-const IRREGULAR: Record<string, string> = {
-  each: 'each',
-  person: 'people',
-};
-
-export const getPlural = (word: string, count: number): string => {
-  if (locale() !== 'en' || count === 1) return word;
-  const lower = word.toLowerCase();
-  if (IRREGULAR[lower]) return IRREGULAR[lower];
-  if (/(s|x|z|ch|sh)$/i.test(word)) return `${word}es`;
-  if (/[^aeiou]y$/i.test(word)) return `${word.slice(0, -1)}ies`;
-  return `${word}s`;
-};
 
 /**
  * Translate a server error key. The catalog won't hold every possible server

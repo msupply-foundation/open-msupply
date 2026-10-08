@@ -1,11 +1,11 @@
-use super::asset_log_reason_row::{asset_log_reason, AssetLogReasonRow};
+use super::asset_log_reason_row::{AssetLogReasonRow, asset_log_reason};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
+    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
     asset_log_row::AssetLogStatus,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
 pub type AssetLogReason = AssetLogReasonRow;

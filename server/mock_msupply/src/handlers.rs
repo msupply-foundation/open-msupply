@@ -6,7 +6,7 @@
 //! sites are tracked, get_site_info is consistent, and all other sync
 //! endpoints answer "nothing to do".
 
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use serde::Serialize;
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -150,7 +150,7 @@ pub async fn post_test_delete() -> impl Responder {
 }
 
 fn parse_basic_auth(req: &HttpRequest) -> Option<(String, String)> {
-    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
     let header = req.headers().get(actix_web::http::header::AUTHORIZATION)?;
     let encoded = header.to_str().ok()?.strip_prefix("Basic ")?;
     let decoded = STANDARD.decode(encoded).ok()?;

@@ -151,7 +151,20 @@ export const SunIcon = (props: IconProps) => (
   </Stroke>
 );
 
-/* Export / download — arrow pointing down into the tray */
+/* Cold — the cold half of a temperature breach kind (cold-chain monitoring),
+   paired with SunIcon for hot so the direction is never colour alone */
+/* Hugeicons: SnowIcon */
+export const SnowflakeIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M12 2V22M12 2L9.5 4.5M12 2L14.5 4.5M12 22L9.5 19.5M12 22L14.5 19.5" />
+    <path d="M3.33984 7L20.6603 17M3.33984 7L2.42462 10.4151M3.33984 7L6.75491 6.08478M20.6603 17L21.5755 13.5849M20.6603 17L17.2452 17.9152" />
+    <path d="M3.33984 17L20.6603 7M3.33984 17L6.75491 17.9152M3.33984 17L2.42462 13.5849M20.6603 7L17.2452 6.08478M20.6603 7L21.5755 10.4151" />
+  </Stroke>
+);
+
+/* Download — arrow pointing down into the tray. The LITERAL act of saving a
+   file onto the device: a report, a help document, a CSV template. Not the
+   Export half of an Import/Export pair — that is ExportIcon below. */
 /* Hugeicons: Download01Icon */
 export const DownloadIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -160,12 +173,46 @@ export const DownloadIcon = (props: IconProps) => (
   </Stroke>
 );
 
-/* Import / upload — arrow pointing up out of the tray */
+/* Upload — arrow pointing up out of the tray. The LITERAL act of sending a
+   file from the device: a drop zone, a document upload. Not the Import half of
+   an Import/Export pair — that is ImportIcon below. */
 /* Hugeicons: Upload01Icon */
 export const UploadIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M2.99994 17C2.99994 17.93 2.99994 18.395 3.10216 18.7765C3.37956 19.8117 4.18821 20.6204 5.22348 20.8978C5.60498 21 6.06997 21 6.99994 21L16.9999 21C17.9299 21 18.3949 21 18.7764 20.8978C19.8117 20.6204 20.6203 19.8117 20.8977 18.7765C20.9999 18.395 20.9999 17.93 20.9999 17" />
     <path d="M16.5 7.49993C16.5 7.49993 13.1858 2.99997 12 2.99996C10.8141 2.99995 7.50002 7.49996 7.50002 7.49996M12 3.99996V16" />
+  </Stroke>
+);
+
+/*
+ * Import / Export — the data-transfer PAIR, aliased by INTENT rather than by
+ * arrow direction (ui-standards/components § icons: "a screen names an icon by
+ * intent").
+ *
+ * Which way each arrow points is a product decision, not a reading of the
+ * glyph, and screens kept getting the pair inverted because they reached for
+ * the direction words instead: import means data coming IN, so it takes the
+ * arrow pointing INTO the tray, and export means data going OUT. Deciding it
+ * once, here, is what stops the two halves drifting apart across call sites —
+ * and matches the reference app, whose Import shows a down arrow and Export an
+ * up one.
+ *
+ * Use these for the Import/Export pair. Keep DownloadIcon / UploadIcon for the
+ * literal file acts they name — downloading a report is not an export.
+ */
+export const ImportIcon = DownloadIcon;
+export const ExportIcon = UploadIcon;
+/* Inbox tray — where an order arrives from the party it was placed
+   with, as distinct from CustomersIcon (the party dispensed TO). Named
+   for the picture, like TruckIcon and FileIcon: no section owns it, and
+   the Cook Islands navigator's Internal Order tile (its first consumer)
+   maps a tile icon to the ACT rather than to that section's menu glyph,
+   which is ReplenishmentIcon. */
+/* Hugeicons: InboxIcon */
+export const InboxIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28249 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28249 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12Z" />
+    <path d="M21.5 13.5H16.5743C15.7322 13.5 15.0706 14.2036 14.6995 14.9472C14.2963 15.7551 13.4889 16.5 12 16.5C10.5111 16.5 9.70373 15.7551 9.30054 14.9472C8.92942 14.2036 8.26777 13.5 7.42566 13.5H2.5" />
   </Stroke>
 );
 
@@ -804,6 +851,19 @@ export const NothingHereIcon = (props: IconProps) => (
     <path d="M2 22L22 2" />
     <path d="M19.8478 9.0631C20 9.4306 20 9.8394 20 10.6569V14C20 17.77124 20 19.65685 18.8284 20.82843C17.6569 22 15.7712 22 12 22C9.33333 22 7.60948 22 6.41421 21.58579M4.41421 19.58579C4 18.39052 4 16.66667 4 14L4 9.4558C4 6.2108 4 4.5883 4.88607 3.4893C5.06508 3.2673 5.26731 3.0651 5.48933 2.8861C6.58831 2 8.21082 2 11.4558 2C12.1614 2 12.5141 2 12.8372 2.114C12.9044 2.1377 12.9702 2.165 13.0345 2.1957C13.3436 2.3436 13.593 2.593 14.0919 3.0919L17.5 6.5" />
     <path d="M13 2.5L13 3.2513C13 6.0797 13 7.4939 13.8787 8.3726C14.1785 8.6724 14.5406 8.8699 15 9" />
+  </Stroke>
+);
+
+/* Barcode scan: a barcode inside viewfinder corners — the scan affordances
+   (spec/barcode-scanning ui-surface § R1). Drawn in the Hugeicons stroke
+   style; the package isn't a dependency, so there is no glyph to copy. */
+export const ScanIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M3 8V6.5C3 4.567 4.567 3 6.5 3H8" />
+    <path d="M16 3H17.5C19.433 3 21 4.567 21 6.5V8" />
+    <path d="M21 16V17.5C21 19.433 19.433 21 17.5 21H16" />
+    <path d="M8 21H6.5C4.567 21 3 19.433 3 17.5V16" />
+    <path d="M7 8V16M10 8V16M13 8V13M13 15.5V16M16.5 8V16" />
   </Stroke>
 );
 

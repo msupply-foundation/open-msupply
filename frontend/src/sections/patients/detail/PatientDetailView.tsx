@@ -132,10 +132,10 @@ const PatientDetailView: Component = () => {
     policy?: InsurancePolicyFragment;
   }>();
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the two controls that trigger it (the app-bar button and
-  // the ghost button in the Insurance panel's empty slot); each carries
-  // `shortcut={ALT_N}` for its badge.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
+  // that trigger it (the app-bar button and the ghost button in the Insurance
+  // panel's empty slot); each carries `shortcut={ALT_N}` for its badge.
   //
   // Disabled — and so unlisted in the palette — except on the Insurance tab with
   // the mutate permission, which is exactly when either control renders. KB-R2's
@@ -210,10 +210,10 @@ const PatientDetailView: Component = () => {
     { label: displayName() },
   ];
 
-  // Custom-fields merge write (spec/patients AC-CF1–CF3). Sends only the
-  // changed keys; a cleared field is sent as `null` (never '', which would
-  // persist a literal empty value — AC-CF2). Returns true on success so the
-  // edit tab clears its dirty state.
+  // Custom-fields merge write (spec/patients OMS-REG-DIS-02.45–.47). Sends only
+  // the changed keys; a cleared field is sent as `null` (never '', which would
+  // persist a literal empty value — OMS-REG-DIS-02.46). Returns true on success
+  // so the edit tab clears its dirty state.
   const saveCustomFields = async (
     patch: Record<string, unknown>
   ): Promise<boolean> => {
@@ -423,7 +423,7 @@ const PatientDetailView: Component = () => {
                 </TabPanel>
               </Show>
               <TabPanel value="custom-fields">
-                {/* Custom fields (spec/patients ui-surface; write path AC-CF1–CF3).
+                {/* Custom fields (spec/patients ui-surface; write path OMS-REG-DIS-02.45–.47).
                     Disabled when the user can't mutate the patient. The write is
                     the patient-specific merge operation, independent of the
                     details form (rules › custom fields). No toolbar here, so the

@@ -85,6 +85,10 @@ export default defineConfig(({ mode }) => {
   const lockedPort = env.DEV_SERVER_PORT;
   const proxyTarget = env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000';
   return {
+    // A multi-server e2e run (scripts/e2e/run-e2e.sh) starts several dev
+    // servers in one checkout; each gets its own dependency cache so their
+    // optimiser runs can't race. Unset: Vite's default node_modules/.vite.
+    ...(env.VITE_CACHE_DIR ? { cacheDir: env.VITE_CACHE_DIR } : {}),
     // devPluginsPlugin is the author dev loop (vite/devPlugins.ts): it only
     // enumerates plugin sources when SERVING — in a build it resolves its
     // virtual module to an empty map, which is dead code the DEV branch in
@@ -111,6 +115,21 @@ export default defineConfig(({ mode }) => {
     // every asset reference to match and exposes it at runtime as
     // import.meta.env.BASE_URL (read by <Router base> in src/App.tsx).
     base: process.env.VITE_BASE_PATH || '/',
+    build: {
+      // The two pages of the one build (kdd/bundling § Second entry): the
+      // served app (index) and the shells' bundled discovery page
+      // (spec/desktop) — one module graph, one tree-shake, so the page shares
+      // the app's intl/UI chunks instead of duplicating them in a second
+      // build. sharedModulesPlugin appends its facade entries to this map and
+      // injects the plugin import map into the `index` page only.
+      // The manifest drives scripts/prune-discovery-dist.mjs (the desktop
+      // shell's payload) and scripts/bundle-size.mjs (the bundle ledger's
+      // per-page measurement, kdd/bundle-size-by-pr.md).
+      manifest: true,
+      rollupOptions: {
+        input: { index: 'index.html', discovery: 'discovery.html' },
+      },
+    },
     define: {
       LANG_VERSION: JSON.stringify(
         mode === 'production' ? String(Date.now()) : 'dev'

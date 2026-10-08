@@ -2,8 +2,10 @@
  * The plugin module contract, as types (spec/plugins/sdk-contract.md).
  *
  * Everything here is public API for out-of-tree plugins: additive-only within
- * a PLUGIN_API_VERSION major, and a rename is a version bump. Type-only
- * module — it must stay free of runtime code so importing it costs nothing.
+ * a PLUGIN_API_VERSION major, and a rename is a version bump. Types first:
+ * the only runtime values are the published id catalogues
+ * (HOST_NAV_SECTION_IDS, HOST_WARNING_IDS) — string literals, so importing
+ * this module still costs next to nothing; keep any other runtime code out.
  */
 import type { Component } from 'solid-js';
 import type { SupportedLocale } from '../intl';
@@ -63,8 +65,10 @@ export interface SlotContext {
    */
   storeId: string | undefined;
   /**
-   * The user's permissions in the entered store, as the server's PascalCase
-   * `UserPermission` names (e.g. 'RequisitionMutate').
+   * The user's permissions in the entered store, as the wire's SCREAMING_SNAKE
+   * `UserPermission` enum values (e.g. 'REQUISITION_MUTATE') — NOT the
+   * PascalCase resource names the server's auth ERRORS carry
+   * ('RequisitionMutate').
    */
   permissions: readonly string[];
   /**
@@ -78,6 +82,18 @@ export interface SlotContext {
    */
   storeMode: SlotStoreMode | undefined;
   storePreferences: SlotStorePreferences;
+  /**
+   * The entered store's code — the prefix of a record key a plugin derives
+   * per store (the Afghanistan Daily Tally's cohort patient code); undefined
+   * before the store guard resolves. Rides the login response's store list,
+   * so it costs no query.
+   */
+  storeCode: string | undefined;
+  /**
+   * The logged-in user's id, for a row a plugin attributes to its author;
+   * undefined before the session resolves.
+   */
+  userId: string | undefined;
 }
 
 // ── Contributions ───────────────────────────────────────────────────────────
@@ -262,6 +278,17 @@ export interface ColumnDeclaration<Row, Data = unknown> {
    * synchronously from `data`; a contribution hidden by `when` never runs it.
    */
   loadData?: (rows: readonly Row[]) => Promise<Map<string, Data>>;
+  /**
+   * Declares the column sortable (sdk-contract § the column slot,
+   * OMS-REG-PLG-02.10): the value the host orders rows by when the user sorts on
+   * it, evaluated over the table's FULL row set — `data` is that row's
+   * `loadData` entry, loaded for the whole set. Numbers compare numerically,
+   * strings by locale; a `null`/`undefined` value sorts last in either
+   * direction, so a contribution that wants a placement for "no value"
+   * returns a sentinel (e.g. `Infinity`) instead. Omitted, no sort is
+   * offered on the column.
+   */
+  sortValue?: (row: Row, data?: Data) => ColumnValue;
 }
 
 /**
@@ -368,6 +395,52 @@ export type InternalOrderSidePanelSectionProps = {
   readonly lines: readonly InternalOrderLineView[];
 };
 
+// ── Warning suppression ─────────────────────────────────────────────────────
+// The one CONSULTED slot: it renders nothing, ever. The host asks it a
+// question at a defined moment instead of giving it a region to draw in
+// (sdk-contract § the warning-suppression slot). Generic over host warnings:
+// the contribution names its target as data (a published warning id), so a
+// new suppressible warning is a new id here, never a new slot or SDK shape.
+
+/**
+ * The host warnings a plugin may suppress, as published ids — additive-only
+ * within a `PLUGIN_API_VERSION` major, like the slot catalogue itself. A
+ * contribution naming any other id is refused whole, by name (the same
+ * judgement as an unknown slot id): it was built against a host that
+ * publishes the warning, and this one does not.
+ *
+ * - `internalOrders.recentStocktake` — the store-wide recent-stocktake
+ *   warning at the internal-orders New-order action (internal-orders rules §
+ *   creation). NOT consulted: no host surface asks a suppression, so a
+ *   contribution naming this id loads and has no effect. The id stays
+ *   published and validated, and the slot keeps its contract, so a surface
+ *   that wants to be suppressible only has to start asking.
+ */
+export const HOST_WARNING_IDS = ['internalOrders.recentStocktake'] as const;
+
+/** A published suppressible host warning id — a suppression target. */
+export type HostWarningId = (typeof HOST_WARNING_IDS)[number];
+
+/**
+ * How a plugin answers whether the host warning its contribution names is
+ * suppressed — replaced by a measure of the plugin's own (the Cook Islands
+ * item-level count freshness replacing the store-wide recent-stocktake
+ * warning). The host consults every visible contribution naming the warning
+ * at the moment the warning would otherwise show; any `true` suppresses it
+ * for that invocation, and the host's flow proceeds directly.
+ *
+ * `false` — and equally a thrown error or a rejected promise — leaves the
+ * warning to the host's own behaviour: a failing plugin can never strip a
+ * store of the one measure it has (rules § error isolation). The answer is
+ * per-store and MAY be asynchronous, because whether the replacement applies
+ * is typically the plugin's own data (the Cook Islands counting schedule);
+ * the host awaits it inside the in-flight state of the action that would
+ * show the warning.
+ */
+export type WarningSuppressionResolver = (
+  ctx: SlotContext
+) => boolean | Promise<boolean>;
+
 // ── Form participation ──────────────────────────────────────────────────────
 // The dirty/validity/veto/after-save handshake between a contribution and the
 // editable host form it sits in (sdk-contract § form participation). Save
@@ -421,7 +494,9 @@ export interface FormParticipation {
  * within a `PLUGIN_API_VERSION` major.
  */
 export interface PrescriptionPaymentView {
-  /** The prescription (invoice) id — the natural `relatedRecordId` for a row. */
+  /**
+   * The prescription (invoice) id — the natural `relatedRecordId` for a row.
+   */
   readonly id: string;
   /** The prescription's human-facing number. */
   readonly invoiceNumber: number;
@@ -460,6 +535,11 @@ export interface SlotPropsMap {
   'internalOrderLine.column': ColumnCellProps<InternalOrderLineView>;
   'internalOrderLine.infoPanel': InternalOrderLineInfoPanelProps;
   'internalOrder.sidePanelSection': InternalOrderSidePanelSectionProps;
+  // The consulted slot has no props: nothing renders, so there is nothing to
+  // receive. The empty entry only keeps the slot in the catalogue's uniform
+  // shape (`SlotId = keyof SlotPropsMap`) — deliberately not a named, exported
+  // type, which would publish a props DTO no plugin can ever be handed.
+  'host.warningSuppression': Record<string, never>;
   'prescription.paymentForm': PrescriptionPaymentFormProps;
 }
 
@@ -505,6 +585,11 @@ export interface SlotPlacement {
   // The side panel's region is one fixed place too — after the panel's own
   // sections, before its actions — so there is no anchor to name.
   'internalOrder.sidePanelSection': NoPlacement;
+  // Consulted, not placed: nothing renders, so there is nowhere to anchor.
+  // The one declaration is the TARGET — which published host warning the
+  // contribution suppresses; `when(ctx)` and the resolver's own answer do the
+  // rest.
+  'host.warningSuppression': { warning: HostWarningId };
   'prescription.paymentForm': NoPlacement;
 }
 
@@ -526,6 +611,10 @@ export interface SlotRender {
   'internalOrder.sidePanelSection': {
     Component: Component<InternalOrderSidePanelSectionProps>;
   };
+  // The second departure from the uniform `Component` shape (the column
+  // slot's `value` is the first): the consulted slot renders nothing, so its
+  // whole "render" is the answer it gives when consulted.
+  'host.warningSuppression': { suppresses: WarningSuppressionResolver };
   'prescription.paymentForm': {
     Component: Component<PrescriptionPaymentFormProps>;
   };
@@ -620,7 +709,7 @@ export interface PluginPage {
   labelKey: PluginLocaleKey;
   /**
    * Loads the page's BODY component: called on first navigation to the page,
-   * never at startup (AC-PLUG-P2), behind the host's route-level pending
+   * never at startup (OMS-REG-PLG-04.4/.5), behind the host's route-level pending
    * boundary — `load: () => import('./CountPage')`. The host supplies the app
    * frame and page frame (header, breadcrumb, the menu); the component owns
    * only the body, receives no props, and fetches its own data through the
@@ -639,7 +728,7 @@ export interface PluginPage {
   /**
    * The permissions this page requires — ALL of them, as
    * {@link SlotContext.permissions}' own server names. The permission-class
-   * gate, and the one condition behind both doors (AC-PLUG-P1): without them
+   * gate, and the one condition behind both doors (OMS-REG-PLG-04.1): without them
    * the entries are absent, and the page's URL shows the host's no-permission
    * notice in place of the screen. Composed with its plugin nav section's,
    * where the page is placed in one.
@@ -683,6 +772,36 @@ export interface PluginNavSection {
   permissions?: readonly string[];
 }
 
+// ── The configuration contribution ──────────────────────────────────────────
+// NOT a slot (sdk-contract § the configuration contribution): one optional
+// settings editor per plugin, hosted by Manage › Plugins on the central server.
+// The host owns the stored record — it reads it, seeds the editor, holds the
+// draft and writes the whole value on Save; the editor only edits.
+
+/**
+ * What the host hands a configuration editor. `value` is the host's draft and
+ * updates in place as the editor reports changes; the editor is never
+ * remounted to receive one. A `type`, as every slot-props DTO here is, so it
+ * meets the host outlet's `Record<string, unknown>` bound.
+ */
+export type ConfigurationEditorProps<Config = unknown> = {
+  readonly value: Config;
+  /** Report the WHOLE new value — the host stores exactly what it is given. */
+  readonly onChange: (next: Config) => void;
+};
+
+/**
+ * A plugin's settings editor. `Config` defaults to `unknown` for the same
+ * reason a column's `Data` does: the stored record is installation data that
+ * may predate this build, so an editor narrows what it is handed rather than
+ * trusting a shape. Whatever it reports is stored as JSON.
+ */
+export interface PluginConfiguration<Config = unknown> {
+  /** What the editor starts from when nothing (readable) is stored. */
+  defaultConfig: Config;
+  Editor: Component<ConfigurationEditorProps<Config>>;
+}
+
 // ── The plugin module ───────────────────────────────────────────────────────
 
 /** A flat message catalogue — `key` → template, `{{ token }}` interpolated. */
@@ -712,6 +831,8 @@ export interface PluginDefinition {
   translations?: Partial<Record<SupportedLocale, PluginMessages>>;
   /** Built-in dashboard pieces to hide by published id (built-ins only). */
   suppress?: readonly DashboardPieceId[];
+  /** The plugin's settings editor, shown in Manage › Plugins. */
+  configuration?: PluginConfiguration;
 }
 
 /**

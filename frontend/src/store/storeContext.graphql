@@ -62,6 +62,12 @@ query storeContext($storeId: String!) {
     # Inbound-shipment gates (spec/inbound-shipments): procurement (from-PO
     # creation option), authorisation lock, and the backdating window.
     useProcurementFunctionality
+    # Whether a purchase order passes through Ready for approval at all
+    # (spec/purchase-orders rules § the status lifecycle). With it off the
+    # state is absent from the ladder AND an order asked to enter it silently
+    # becomes Ready for sending instead, so the detail screen's footer must
+    # know before it offers a move.
+    authorisePurchaseOrder
     externalInboundShipmentLinesMustBeAuthorised
     backdating {
       inventoryAdjustmentsEnabled
@@ -82,10 +88,10 @@ query storeContext($storeId: String!) {
     # text; unset/unparseable leaves the bar's default. Set from the store
     # editor's Preferences tab (spec/settings § the store editor).
     storeCustomColour
-    # Internal-orders create gate (spec/internal-orders AC-C1/C5), read by the
-    # dashboard's Order-more shortcut so it runs the same recent-stocktake
-    # warning as the list's New-order button (which fetches it in its own
-    # list context).
+    # Internal-orders create gate (spec/internal-orders OMS-REG-REPL-04.42/.45),
+    # read by the dashboard's Order-more shortcut so it runs the same
+    # recent-stocktake warning as the list's New-order button (which fetches it
+    # in its own list context).
     warnWhenMissingRecentStocktake {
       enabled
       maxAge

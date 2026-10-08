@@ -47,9 +47,9 @@ export const savePrescription = async (
 };
 
 /**
- * Delete every given line — the date/program-change clear-lines step (AC-B2)
- * and the selection footer's bulk delete. All-or-nothing on the wire; only
- * ever sent while the prescription is editable.
+ * Delete every given line — the date/program-change clear-lines step
+ * (OMS-REG-DIS-04.26) and the selection footer's bulk delete. All-or-nothing on
+ * the wire; only ever sent while the prescription is editable.
  */
 export const deleteLines = async (
   storeId: string,
@@ -73,12 +73,12 @@ export const deleteLines = async (
  *
  * Today must not be widened (#1211). End-of-day today is always in the future,
  * and a future instant is silently DROPPED by the server — it clears
- * `backdatedDatetime` instead of storing it (contract wire trap, AC-B5). The
- * date then displays as `backdatedDatetime ?? createdDatetime`, so a
- * prescription created on an earlier day snapped straight back to its creation
- * date and could never be dated today. Sending the current moment stores it
- * (server-verified), and for a prescription created today it is
- * indistinguishable from not backdating at all.
+ * `backdatedDatetime` instead of storing it (contract wire trap,
+ * OMS-REG-DIS-04.7). The date then displays as `backdatedDatetime ??
+ * createdDatetime`, so a prescription created on an earlier day snapped
+ * straight back to its creation date and could never be dated today. Sending
+ * the current moment stores it (server-verified), and for a prescription
+ * created today it is indistinguishable from not backdating at all.
  */
 export const prescriptionDateInstant = (isoDay: string): string =>
   isoDay === localTodayIso()

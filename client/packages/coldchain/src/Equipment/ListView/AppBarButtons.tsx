@@ -158,11 +158,13 @@ export const AppBarButtonsComponent = ({
           Icon={<UploadIcon />}
           label={t('button.upload-assets')}
           onClick={handleUploadAssetClick}
+          data-testid="import-equipment-button"
         />
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-asset')}
           onClick={handleCreateAssetClick}
+          data-testid="new-asset-button"
         />
         <AddFromScannerButton
           initialListening={false}

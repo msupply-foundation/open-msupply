@@ -1,4 +1,10 @@
-import { createResource, createSignal, For, Show, type Component } from 'solid-js';
+import {
+  createResource,
+  createSignal,
+  For,
+  Show,
+  type Component,
+} from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
@@ -16,7 +22,12 @@ import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipbo
 import { TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
-import { asRequestStatus, isEditable } from '../prescriptionRequestStatus';
+import { hasPermission } from '../../../store/storeContext';
+import {
+  asRequestStatus,
+  isEditable,
+  readsDispensations,
+} from '../prescriptionRequestStatus';
 import {
   DeletePrescriptionRequestById,
   GeneratedDispensations,
@@ -28,8 +39,8 @@ import type { DebouncedEdit } from '../../../domain/debouncedEdit';
 // panel): Additional info (Entered by / Created / Comment) · Patient details
 // (live from the patient record — rules § patient data is live) · Related
 // documents (the generated dispensation, linked, once Ready to dispense —
-// AC-R4) — then the pinned record actions: Delete (while New, AC-D1/D2) and
-// Copy to clipboard.
+// OMS-REG-DIS-09.12–.14) — then the pinned record actions: Delete (while New,
+// OMS-REG-DIS-10.1–.4) and Copy to clipboard.
 
 export interface PrescriptionRequestEditFields {
   comment: string;
@@ -56,11 +67,16 @@ export const PrescriptionRequestSidePanel: Component<
   // The generated dispensation(s) — the back-link lookup (contract § the
   // hand-over), keyed on the request + its status so the hand-over refetches.
   // Read non-suspending: the panel lives under the already-open detail.
+  //
+  // GATED ON THE DISPENSING VERTICAL'S OWN READ as well as on the status
+  // (readsDispensations): a prescriber need not hold PRESCRIPTION_QUERY, and
+  // asking without it raises the global permission-denied modal the instant the
+  // hand-over flips the status (issue #637).
   const [dispensations] = createResource(
     () =>
-      isEditable(status())
-        ? undefined
-        : { id: props.node.id, status: status() },
+      readsDispensations(status(), hasPermission)
+        ? { id: props.node.id, status: status() }
+        : undefined,
     async ({ id }) => {
       const result = await graphqlFetch(GeneratedDispensations, {
         storeId: props.storeId,
@@ -135,7 +151,7 @@ export const PrescriptionRequestSidePanel: Component<
         </FieldRow>
       </SidePanelSection>
 
-      {/* The generated dispensation — reachable from the request (AC-R4). Past
+      {/* The generated dispensation — reachable from the request (OMS-REG-DIS-09.12–.14). Past
           New a hand-over COULD have produced one, but the section waits until
           one is actually there: the dispensation is patient-distributed while
           the request is store-owned, so a site can legitimately hold the
@@ -169,7 +185,7 @@ export const PrescriptionRequestSidePanel: Component<
 
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
-          {/* Delete — hidden once no longer deletable (New only, AC-D2). */}
+          {/* Delete — hidden once no longer deletable (New only, OMS-REG-DIS-10.3/.4). */}
           <Show when={isEditable(status())}>
             <Button
               variant="danger"

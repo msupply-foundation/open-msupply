@@ -1,7 +1,7 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
-use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
+use graphql_core::standard_graphql_error::validate_auth;
 use repository::{StockRelocation, StockRelocationRow};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::stock_relocation::update::{
@@ -101,7 +101,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         } => {
             return Ok(UpdateErrorInterface::NotEnoughStock(NotEnoughStock {
                 stock_line_id,
-            }))
+            }));
         }
         E::LineValidation {
             error: V::SourceLocationOnHold(location_id) | V::DestinationLocationOnHold(location_id),
@@ -109,7 +109,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         } => {
             return Ok(UpdateErrorInterface::LocationOnHold(LocationOnHold {
                 location_id,
-            }))
+            }));
         }
         E::StockRelocationDoesNotExist
         | E::NotThisStoreRelocation

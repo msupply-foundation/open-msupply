@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getCurrencyInfo, setHomeCurrency, homeCurrency } from './currency';
+import {
+  formatCurrency,
+  getCurrencyInfo,
+  setHomeCurrency,
+  homeCurrency,
+} from './currency';
 
 describe('getCurrencyInfo', () => {
   it('derives minor units from Intl (the old hand-table drifted: KMF is 0)', () => {
@@ -44,5 +49,18 @@ describe('homeCurrency', () => {
     expect(homeCurrency()).toBe('PGK');
     setHomeCurrency(null);
     expect(homeCurrency()).toBe('USD');
+  });
+});
+
+describe('formatCurrency', () => {
+  it("formats at the currency's minor units with its narrow symbol", () => {
+    expect(formatCurrency(1234.5, 'EUR')).toBe('€1,234.50');
+    expect(formatCurrency(1234.5, 'JPY')).toBe('¥1,235');
+  });
+
+  it('falls back to the home currency when none is given', () => {
+    setHomeCurrency('USD');
+    expect(formatCurrency(2, null)).toBe('$2.00');
+    expect(formatCurrency(2)).toBe('$2.00');
   });
 });

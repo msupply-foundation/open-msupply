@@ -1,6 +1,6 @@
 use crate::loader::{location::VolumeUsedByLocationLoader, *};
 use actix_web::web::Data;
-use anymap::{any::Any, Map};
+use anymap::{Map, any::Any};
 use async_graphql::dataloader::DataLoader;
 use diagnosis::DiagnosisLoader;
 use item_variant::{ItemVariantByItemVariantIdLoader, ItemVariantsByItemIdLoader};

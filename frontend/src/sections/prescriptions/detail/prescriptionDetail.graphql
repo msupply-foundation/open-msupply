@@ -167,8 +167,9 @@ query diagnosesActive {
 }
 
 # Bulk line delete (detail selection footer; also the date/program-change
-# clear-lines flow — spec/prescriptions AC-B2). Same all-or-nothing batch as
-# the list delete; the client only ever sends it on an editable prescription.
+# clear-lines flow — spec/prescriptions OMS-REG-DIS-04.26). Same all-or-nothing
+# batch as the list delete; the client only ever sends it on an editable
+# prescription.
 mutation deletePrescriptionLines(
   $storeId: String!
   $ids: [DeletePrescriptionLineInput!]!
@@ -191,17 +192,6 @@ mutation deletePrescriptionLines(
         }
       }
     }
-  }
-}
-
-# The label-printer settings gate (spec/prescriptions § label printing): null
-# means no printer configured — the print action explains instead of printing.
-query labelPrinterSettings {
-  labelPrinterSettings {
-    address
-    port
-    labelHeight
-    labelWidth
   }
 }
 

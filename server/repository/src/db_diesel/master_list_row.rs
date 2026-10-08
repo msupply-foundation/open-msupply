@@ -1,8 +1,8 @@
-use super::{item_link_row::item_link, master_list_row::master_list::dsl::*, StorageConnection};
+use super::{StorageConnection, item_link_row::item_link, master_list_row::master_list::dsl::*};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError,
 };
 
 use diesel::prelude::*;

@@ -11,11 +11,11 @@ import { ALT_SHIFT_L, ALT_SHIFT_S, ESCAPE } from '../ui/utils/shortcuts';
  */
 
 export interface GlobalActionHandlers {
-  /** Start a manual sync, without opening anything (AC-KB6). */
+  /** Start a manual sync, without opening anything (OMS-REG-KBD-01.12/.13). */
   syncNow: () => void;
-  /** Open the sync window (AC-KB6 — the screen underneath must not move). */
+  /** Open the sync window (OMS-REG-KBD-01.12/.13 — the screen underneath must not move). */
   openSync: () => void;
-  /** Log out, asking to confirm first (AC-KB5). */
+  /** Log out, asking to confirm first (OMS-REG-KBD-01.11). */
   requestLogout: () => void;
   /**
    * Exit full-screen mode if engaged, reporting whether it did (KB-X4). The
@@ -93,10 +93,10 @@ export const createGlobalActions = (handlers: GlobalActionHandlers): void => {
    * order them, and the order has to be written down. Full screen first, then
    * navigate up.
    *
-   * UNLISTED (AC-KB11): the entry exists to own the binding, and a palette row
-   * reading "navigate up one level" would be noise. Its tier is `global`, so it
-   * is suppressed while a text field holds focus (KB-X5) — unlike a dialog's
-   * Escape, which is not.
+   * UNLISTED (OMS-REG-KBD-01.21): the entry exists to own the binding, and a
+   * palette row reading "navigate up one level" would be noise. Its tier is
+   * `global`, so it is suppressed while a text field holds focus (KB-X5) —
+   * unlike a dialog's Escape, which is not.
    */
   createAction({
     unlisted: true,
@@ -116,6 +116,12 @@ export const createGlobalActions = (handlers: GlobalActionHandlers): void => {
         topmost.hidePopover();
         return;
       }
+      // An open modal dialog owns Escape through its own close request, so a
+      // press that reached this rung came from OUTSIDE it — focus dropped to
+      // <body> when a focused control inside was disabled or removed. The
+      // ladder stops here, whatever the browser or however focus moved: the
+      // screen under a modal never navigates away beneath it.
+      if (document.querySelector('dialog:modal')) return;
       if (handlers.exitFullScreen()) return;
       handlers.navigateUp();
     },

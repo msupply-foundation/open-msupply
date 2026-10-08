@@ -104,12 +104,9 @@ export default tseslint.config(
       '**/*.generated.ts',
       '**/*.css.d.ts',
       'codegen/**', // CommonJS (.cjs) with its own node:test suite
-      // The COUNTRY plugins' backend halves: BoaJS code built by the
-      // open-msupply client toolchain, plus its prebuilt shipped artifact —
-      // vendored, so not this repo's lint domain
-      // (plugins/civ/backend/README.md). The reference backend plugin
-      // (examples/*/backend) is ours and IS linted, below.
-      'plugins/*/backend/**',
+      // A prebuilt bundle is a build artifact wherever it appears — it is
+      // packed verbatim, so it is output, not source.
+      'plugins/*/backend/prebuilt/**',
     ],
   },
 
@@ -117,13 +114,13 @@ export default tseslint.config(
   // APIs unsupported by the minimum browser (browserslist in package.json —
   // Chromium 132, the WebView on the oldest Android 8.1 tablets deployed).
   // The example
-  // plugins (examples/) are the same: ordinary Solid components running in the
+  // plugins (plugins/examples/) are the same: ordinary Solid components running in the
   // host's runtime, so they answer to the same rules.
   {
-    files: ['src/**/*.{ts,tsx}', 'examples/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'plugins/examples/**/*.{ts,tsx}'],
     // The reference BACKEND plugin is not browser code — it has its own block
     // below rather than Solid, DOM globals and browser-compat rules.
-    ignores: ['examples/*/backend/**'],
+    ignores: ['plugins/examples/*/backend/**'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -143,7 +140,11 @@ export default tseslint.config(
         cryptoRandomUuidRestriction,
         createObjectUrlRestriction,
       ],
-      'no-restricted-syntax': ['error', anchorDownloadRestriction, jsxDownloadRestriction],
+      'no-restricted-syntax': [
+        'error',
+        anchorDownloadRestriction,
+        jsxDownloadRestriction,
+      ],
     },
   },
 
@@ -186,7 +187,11 @@ export default tseslint.config(
       // Same Android WebView, same dead click (#1169) — a plugin needing to
       // hand the user a file is an SDK gap, not a hand-rolled download.
       'no-restricted-properties': ['error', createObjectUrlRestriction],
-      'no-restricted-syntax': ['error', anchorDownloadRestriction, jsxDownloadRestriction],
+      'no-restricted-syntax': [
+        'error',
+        anchorDownloadRestriction,
+        jsxDownloadRestriction,
+      ],
       /*
        * The `@/` alias is already unresolvable here (tsconfig.plugins.json and
        * the plugin build preset both omit it), but a RELATIVE reach —
@@ -216,20 +221,44 @@ export default tseslint.config(
   },
 
   /*
-   * The reference BACKEND plugin (examples/<code>/backend) — the half that
-   * runs in the server's BoaJS engine. No Solid, no DOM, and deliberately NO
-   * `globals.browser`: the only globals it has are the host functions the
-   * engine binds, which the plugin declares ambiently (its `host.d.ts`), so an
-   * accidental `document` or `window` should be an undefined-variable error
-   * rather than something the config quietly permits. `no-console` is absent
-   * for the same reason — there is no console in the engine, so a stray
-   * `console.log` is already an error here, and `log()` is the way out.
-   *
-   * The country plugins' vendored backend halves are ignored above; this one
-   * is ours and builds in this repo, so it answers to the shared rules.
+   * The Afghanistan plugin's stored shapes are wire constraints: rows the
+   * React bundle wrote are in the field and the Afghanistan reports compile
+   * against a copy of its type module, so payload field names stay snake_case
+   * (plugins/afghanistan/rules.md § data conventions). Property names and the
+   * destructured reads of them are exempt from camelcase there; identifiers
+   * the plugin coins are not.
    */
   {
-    files: ['examples/*/backend/**/*.ts'],
+    files: ['plugins/afghanistan/src/**/*.{ts,tsx}'],
+    rules: {
+      camelcase: ['error', { properties: 'never', ignoreDestructuring: true }],
+    },
+  },
+
+  /*
+   * Every BACKEND half — the reference plugin (plugins/examples/<code>/backend) and
+   * the country plugins' — which run in the server's BoaJS engine. No Solid,
+   * no DOM, and deliberately NO `globals.browser`: the only globals they have
+   * are the host functions the engine binds, so an accidental `document` or
+   * `window` should be an undefined-variable error rather than something the
+   * config quietly permits. `no-console` is absent for the same reason —
+   * there is no console in the engine, so a stray `console.log` is already an
+   * error here, and `log()` is the way out.
+   *
+   * Where those globals come from is the one thing that differs, and the
+   * rules do not care: cook_islands and the reference plugin declare them
+   * ambiently (`host.d.ts`), CIV imports `@common/types`. All of it is
+   * written and owned here, so all of it answers to the shared rules.
+   */
+  {
+    files: [
+      'plugins/examples/*/backend/**/*.ts',
+      'plugins/*/backend/**/*.ts',
+      // The wire contract both halves import. Type-only, so it needs the TS
+      // parser and nothing else — and it sits outside `src/`, the only plugin
+      // path the app block covers.
+      'plugins/*/shared/**/*.ts',
+    ],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
       parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
@@ -254,7 +283,9 @@ export default tseslint.config(
     files: [
       'src/**/*.{ts,tsx}',
       'plugins/*/src/**/*.{ts,tsx}',
-      'examples/**/*.{ts,tsx}',
+      'plugins/*/backend/**/*.ts',
+      'plugins/*/shared/**/*.ts',
+      'plugins/examples/**/*.{ts,tsx}',
       '*.config.{ts,js}',
       'scripts/**/*.mjs',
     ],

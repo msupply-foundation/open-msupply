@@ -2,13 +2,14 @@ import {
   createEffect,
   createResource,
   createSignal,
-  For,
   Show,
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { PRINT_LABEL_TEST_URL } from '../../../config';
 import { getLabelPrinterUseUsb, setLabelPrinterUseUsb } from '../../../appData';
+import { isAndroid } from '../../../platform';
+import { showPrintViaUsbRow } from '../sectionVisibility';
 import { hasPermission } from '../../../store/storeContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
@@ -26,19 +27,10 @@ import {
   defaultLabelPrinterForm,
   type LabelPrinterForm,
 } from './labelPrinterForm';
-import {
-  availableScanners,
-  mockScannerEnabled,
-  scannerConnected,
-  scanningEnabled,
-  setMockScannerEnabled,
-} from './scanner';
-import {
-  LabelPrinterSettings,
-  UpdateLabelPrinterSettings,
-} from './labelPrinter.generated';
+import { ScannerSources } from './ScannerSources';
+import { LabelPrinterSettings } from '../../../domain/labelPrinter';
+import { UpdateLabelPrinterSettings } from './labelPrinter.generated';
 import { HStack } from '../../../ui/layout/Stack/HStack';
-import styles from '../Settings.module.css';
 
 /*
  * Devices (spec/settings/ui-surface.md § Devices).
@@ -173,13 +165,16 @@ export const DevicesSection = () => {
           not `heading.*`. */}
       <FormSection title={t('settings.label-printing')} headingLevel="h3">
         {/* The switch's own label serves — no FieldRow wrapper, which would
-            duplicate the visible label (registry › labelled field row). */}
-        <ToggleSwitch
-          label={t('settings.print-via-usb')}
-          checked={useUsb()}
-          onChange={toggleUsb}
-          testId="print-via-usb"
-        />
+            duplicate the visible label (registry › labelled field row).
+            Absent on Android (OMS-REG-SET-05.41 — why, in sectionVisibility). */}
+        <Show when={showPrintViaUsbRow(isAndroid())}>
+          <ToggleSwitch
+            label={t('settings.print-via-usb')}
+            checked={useUsb()}
+            onChange={toggleUsb}
+            testId="print-via-usb"
+          />
+        </Show>
         {/* Explicit caps: this section's FieldRows sit in the settings page's
             58rem ContentContainer, so the control column is ~51rem wide — far
             more than a hostname or a port number has to say. These are the
@@ -262,46 +257,15 @@ export const DevicesSection = () => {
       </FormSection>
 
       {/* Barcode scanner — Server Admin only, strictly stricter than the
-          label printer beside it (OMS-REG-SET-05.23). All state is local-device; nothing
-          here reaches the server (contract § Devices — barcode scanner). */}
+          label printer beside it (OMS-REG-SET-05.23). All state is
+          local-device; nothing here reaches the server (contract § Devices —
+          barcode scanner).
+
+          One row per input the app can drive, each with its own control,
+          rather than a stack of label/value rows restating "no scanner". */}
       <Show when={hasPermission('SERVER_ADMIN')}>
         <FormSection title={t('settings.barcode-scanner')} headingLevel="h3">
-          <FieldRow label={t('label.barcode-scanner-status')}>
-            <span data-testid="scanner-status">
-              {scanningEnabled()
-                ? t('label.barcode-scanner-enabled')
-                : t('label.barcode-scanner-disabled')}
-            </span>
-          </FieldRow>
-          <FieldRow label={t('label.barcode-scanner-connection-status')}>
-            <span data-testid="scanner-connection">
-              {scannerConnected()
-                ? t('label.barcode-scanner-connected')
-                : t('label.barcode-scanner-not-connected')}
-            </span>
-          </FieldRow>
-          <FieldRow label={t('label.barcode-scanner-available')}>
-            <Show
-              when={availableScanners().length > 0}
-              fallback={<span>{t('messages.no-scanners-available')}</span>}
-            >
-              <ul class={styles.scanResultList} data-testid="scanner-list">
-                <For each={availableScanners()}>{name => <li>{name}</li>}</For>
-              </ul>
-            </Show>
-          </FieldRow>
-          <HStack gap="sm">
-            <ToggleSwitch
-              label={t('settings.enable-mock-barcode-scanner')}
-              checked={mockScannerEnabled()}
-              onChange={setMockScannerEnabled}
-              testId="mock-scanner-toggle"
-            />
-            {/* Literal, non-localised pair — an i18n gap in the reference app
-              captured as-is by the spec (ui-surface § Devices); the
-              correctly-localised pair two rows above is deliberate contrast. */}
-            <span>{mockScannerEnabled() ? 'Enabled' : 'Disabled'}</span>
-          </HStack>
+          <ScannerSources />
           <HStack justify="end" gap="md">
             <Button
               variant="secondary"

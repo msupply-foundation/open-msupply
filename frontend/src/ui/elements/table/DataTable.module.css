@@ -66,6 +66,21 @@
   flex: 1;
   flex-direction: column;
   min-block-size: 0;
+  /* Anchors the floating refetch spinner below. */
+  position: relative;
+}
+
+/* The refetch indicator when there is no toolbar row to hold it (see
+   DataTable's refetchSpinner): the table area's top inline-end corner, over
+   the sticky header band. */
+.floatingLoading {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  inset-block-start: var(--space-1);
+  inset-inline-end: var(--space-2);
+  color: var(--text-secondary);
 }
 
 /* The scroll box is borderless — the frame on .root encloses it, the
@@ -75,6 +90,11 @@
   flex: 1;
   min-block-size: 0;
   overflow: auto;
+
+  /* The pinned blocks' measured widths, set inline in table view (DataTable's
+     frozenWidths); 0 when nothing is pinned or in card view. */
+  --frozen-left: 0;
+  --frozen-right: 0;
 }
 
 /* fitContent (card view only): the table stops owning a scroll box and lays
@@ -340,8 +360,9 @@
 }
 
 /* Semantic row tones — data-tone stamped by TableRow when the page's rowTone
-   predicate matches. 'info' = the action-blue text the current app gives rows
-   awaiting an action (e.g. outbound's placeholder lines). Colour on the cells
+   predicate matches. 'info' = action-blue text for a row awaiting an action.
+   Placeholder / uncounted lines don't use it: they take the 'unfinished'
+   tint + accent below (CARD_TABLE_MODEL.md § rowAccent). Colour on the cells
    so plain text follows; richer cell content (chips, swatches) keeps its own
    colours. */
 tr[data-tone='info'] > .td {
@@ -363,8 +384,8 @@ tr[data-tone='error'] > .td {
 }
 
 /* Disabled rows: cursor follows TRUE interactivity — not-allowed only
-   where a click does nothing; clickable read-only rows (spec AC-L3:
-   they still open) keep the pointer. The grey fill + muted text live
+   where a click does nothing; clickable read-only rows (they
+   still open) keep the pointer. The grey fill + muted text live
    with the other row-state rules further down. */
 tr[data-row-state='disabled']:not(.rowClickable) {
   cursor: not-allowed;
@@ -589,6 +610,15 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   transition: background-color var(--motion-base);
 }
 
+/* The LAST body row draws no bottom hairline: whatever follows it supplies
+   the seam — the frame's own edge, the footer band's top hairline
+   (ContentFooter) or a <tfoot>'s (.tf) — and a row hairline pressed against
+   any of them made a doubled seam (the frame note above: single seams). A
+   scroll box taller than its rows simply runs on white below the last row. */
+tbody > tr:last-child > :is(.td, .selectCell) {
+  border-block-end: 0;
+}
+
 /* Placement of the BareCheckbox in a selection cell: centred by margin.
    The control's root is block-level (BareCheckbox.module.css) so the cell
    never gets an inline formatting context — an inline-level box there
@@ -759,7 +789,7 @@ tr[data-tint='error'] > .selectCell {
   background: color-mix(in srgb, var(--error-main) 8%, var(--surface-raised));
 }
 
-/* Keyboard row focus (spec/keyboard KB-N1/AC-KB37): "the focused row is
+/* Keyboard row focus (spec/keyboard KB-N1/OMS-REG-KBD-02.27/.28): "the focused row is
    indicated by a background DISTINCT FROM ROW STRIPING… the indication is a
    focus state, not a meaning".
 
@@ -1394,7 +1424,7 @@ tr[data-accent='error'] > :first-child::before {
   color: var(--text-secondary);
 }
 
-/* Card view's half of the keyboard row focus (KB-N1/AC-KB37). The two views no
+/* Card view's half of the keyboard row focus (KB-N1/OMS-REG-KBD-02.27/.28). The two views no
    longer paint the highlight alike: table view took the pointer's own hover
    wash (#397 — see the keyboard-row-focus note further up), and a card list has
    no hover stop to take, so the cue here stays a ring. It is drawn on the CARD,
@@ -1951,4 +1981,100 @@ tr[data-accent='error'] > :first-child::before {
    with it (a same-specificity tie is decided by bundle order — fragile). */
 .root > .tableFooter {
   padding-block: var(--space-2);
+}
+
+/* ── In-place-editor tables: cell content at the TOP ───────────────────────
+   The one exception to the vertical centring of body cells (see `.td[data-wrap]`
+   for why centring is the default). A table of IN-PLACE EDITORS opts in with
+   `cellAlign="start"` (DataTable): such a cell grows a validation message
+   BENEATH its control, and centred growth lifts that cell's control above its
+   neighbours' — the row of inputs stops lining up exactly when one of them is
+   wrong, the state where alignment matters most. Top-aligned they hold their
+   place and the message hangs below.
+
+   This does not reopen the `vertical-align: top` reverted for wrapping columns:
+   that broke because a SINGLE-LINE cell in a wrapping column sat above its
+   centred neighbours. Here every cell in the table holds a control of the same
+   height, so the clean row is unchanged and only the error state moves.
+
+   Last in the file, and qualified past the row tint / state rules above, which
+   also target `.td`: this sheet is ordered by ascending specificity. */
+.root[data-cell-align='start'] .table tbody tr > .td,
+.root[data-cell-align='start'] .table tbody tr > .selectCell {
+  vertical-align: top;
+}
+
+/* Top-aligned, a control SHORTER than the row's inputs would ride the top of
+   its cell — a checkbox, the row-selection box included — while the inputs
+   beside it centre on their own line. So a checkbox takes half the height
+   difference as block margin and lands on the same centre line. The line is
+   the small input height, which is what start-aligned editor tables use, with
+   the touch height under a coarse pointer, as the inputs themselves switch.
+   Table view only: a card header centres its own row. */
+.root[data-cell-align='start'] {
+  --cell-control-height: var(--input-height-sm);
+}
+
+@media (pointer: coarse) {
+  .root[data-cell-align='start'] {
+    --cell-control-height: var(--input-height-sm-touch);
+  }
+}
+
+.root[data-cell-align='start']
+  .tableScroll[data-view='table']
+  .table
+  tbody
+  tr
+  > :is(.td, .selectCell)
+  [data-checkbox] {
+  margin-block: calc((var(--cell-control-height) - var(--checkbox-size)) / 2);
+}
+
+/* The same line for content the table can't size itself — a row number, an
+   icon button — in a column that opts in (meta.controlLine, which wraps the
+   cell's content in this box). One control tall and centring what it holds, it
+   puts that content on the inputs' line however the row grows beneath them.
+   Inline, so the cell's own text-align still places it across the cell. */
+.root[data-cell-align='start'] .tableScroll[data-view='table'] .controlLine {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--cell-control-height);
+  vertical-align: top;
+}
+
+/* Anything scrolled or focused into view inside an UNPINNED cell — the cell
+   itself or a focusable control in it — stops clear of the pinned columns
+   instead of under them. Scroll margin on those targets rather than scroll
+   padding on the box: padding would also treat the pinned cells' own controls
+   as hidden, and a Tab onto a row's select box would scroll the table back.
+   The controls are named rather than matched with `*`, which would test every
+   element on the page on each style recalculation. Last in the file for its
+   specificity. */
+.tableScroll :is(.td, .th):not([data-pinned]),
+.tableScroll
+  :is(.td, .th):not([data-pinned])
+  :is(input, button, select, textarea, a[href], [tabindex]) {
+  scroll-margin-left: var(--frozen-left);
+  scroll-margin-right: var(--frozen-right);
+}
+
+/* A field's message line under a control in a TABLE cell ([data-field-message]:
+   error / warning / helper). Cells don't wrap (white-space above), so a long
+   message ran on one line, widened its column to the cell cap and was then
+   cut off. Now every message line wraps within its field, and none widens
+   its column by its own length (`contain: inline-size`) — a helper such as
+   "3 short" never does. An error or warning instead makes its cell at least
+   16rem wide, so a sentence-long server message takes a few lines rather
+   than a column of single words beside a narrow number field. Table view
+   only: a card field has its own width and wraps already. */
+.tableScroll[data-view='table'] .td [data-field-message] {
+  white-space: normal;
+  contain: inline-size;
+}
+
+.tableScroll[data-view='table']
+  .td
+  :is([data-field-message='error'], [data-field-message='warning']) {
+  min-inline-size: 16rem;
 }

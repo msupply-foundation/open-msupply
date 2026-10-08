@@ -1,7 +1,7 @@
 use async_graphql::*;
+use graphql_core::ContextExt;
 use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::ContextExt;
 use graphql_types::types::{CustomFieldConnector, CustomFieldsResponse};
 use repository::{CustomFieldFilter, EqualFilter};
 

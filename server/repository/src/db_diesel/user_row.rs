@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    lower, repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert, lower,
+    repository_error::RepositoryError,
 };
 
 use chrono::NaiveDateTime;
@@ -255,8 +255,8 @@ impl Delete for UserAccountRowDelete {
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, LanguageType, UserAccountRow,
-        UserAccountRowRepository,
+        LanguageType, UserAccountRow, UserAccountRowRepository, mock::MockDataInserts,
+        test_db::setup_all,
     };
     use strum::IntoEnumIterator;
 

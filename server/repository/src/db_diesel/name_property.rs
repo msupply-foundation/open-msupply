@@ -1,10 +1,10 @@
 use super::{
-    name_property_row::name_property, property_row::property, NamePropertyRow, StorageConnection,
+    NamePropertyRow, StorageConnection, name_property_row::name_property, property_row::property,
 };
 
-use crate::{diesel_macros::apply_equal_filter, PropertyRow};
+use crate::{PropertyRow, diesel_macros::apply_equal_filter};
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter};
+use crate::{DBType, EqualFilter, repository_error::RepositoryError};
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
     prelude::*,
