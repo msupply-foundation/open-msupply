@@ -503,6 +503,7 @@
   "error.finalise-snapshot-mismatch": "The stock quantity is now different from when the stocktake was started because some of the stock has been issued in outbound shipments, dispensing, or another stocktake. Please delete the affected lines and try again.",
   "error.foreign-key-error": "Database error",
   "error.form-plugin-type-ambiguous": "{{documentType}} has more than one registry entry on this server, so this install will be refused.",
+  "error.form-plugin-type-category": "{{documentType}} exists on this server with category {{existing}}, but the plugin declares it as {{declared}}, so this install will be refused.",
   "error.form-plugin-type-owned": "{{documentType}} is owned by plugin {{owner}}, so this install will be refused.",
   "error.fridge-tag-import": "Unable to import fridge sensor logs: {{message}}",
   "error.fridge-tag-import-empty": "No data imported",

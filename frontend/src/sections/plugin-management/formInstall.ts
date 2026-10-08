@@ -110,8 +110,8 @@ export const blankOldUiCandidates = (
 
 /**
  * The types install will refuse whatever is chosen: an entry another plugin
- * owns, or several entries for one type. Shown before installing, since no
- * choice gets past them.
+ * owns, several entries for one type, or an entry of another category than
+ * the one declared. Shown before installing, since no choice gets past them.
  */
 export const refusedTypes = (
   preview: FormInstallPreview
@@ -120,7 +120,8 @@ export const refusedTypes = (
     plugin.documentTypes.filter(
       type =>
         type.existingEntry === 'OWNED_BY_ANOTHER_PLUGIN' ||
-        type.existingEntry === 'AMBIGUOUS'
+        type.existingEntry === 'AMBIGUOUS' ||
+        type.existingEntry === 'CATEGORY_MISMATCH'
     )
   );
 

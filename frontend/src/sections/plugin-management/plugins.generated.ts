@@ -52,9 +52,10 @@ export type UploadedPluginInfoResult = {
   name: string;
   category: "PATIENT" | "PROGRAM_ENROLMENT" | "ENCOUNTER" | "CONTACT_TRACE" | "CUSTOM";
   programKey: string | null;
-  existingEntry: "NONE" | "OWNED" | "UNOWNED" | "OWNED_BY_ANOTHER_PLUGIN" | "AMBIGUOUS";
+  existingEntry: "NONE" | "OWNED" | "UNOWNED" | "OWNED_BY_ANOTHER_PLUGIN" | "AMBIGUOUS" | "CATEGORY_MISMATCH";
   existingEntryId: string | null;
   existingEntryOwner: string | null;
+  existingEntryCategory: "PATIENT" | "PROGRAM_ENROLMENT" | "ENCOUNTER" | "CONTACT_TRACE" | "CUSTOM" | null;
   blanksOldUi: boolean;
 }>;
 }>;
@@ -73,7 +74,7 @@ export type UploadedPluginInfoResult = {
 };
 
 export const UploadedPluginInfo = {
-  query: "query UploadedPluginInfo($fileId: String!) {\n  centralServer {\n    plugin {\n      uploadedPluginInfo(fileId: $fileId) {\n        __typename\n        ... on PluginInfoNode {\n          formInstallPreview {\n            formPlugins {\n              pluginCode\n              programKeys {\n                programKey\n                documentTypes\n                boundProgram {\n                  id\n                  name\n                }\n              }\n              documentTypes {\n                documentType\n                name\n                category\n                programKey\n                existingEntry\n                existingEntryId\n                existingEntryOwner\n                blanksOldUi\n              }\n            }\n            programs {\n              id\n              name\n            }\n          }\n        }\n        ... on UploadedPluginError {\n          error\n        }\n      }\n    }\n  }\n}",
+  query: "query UploadedPluginInfo($fileId: String!) {\n  centralServer {\n    plugin {\n      uploadedPluginInfo(fileId: $fileId) {\n        __typename\n        ... on PluginInfoNode {\n          formInstallPreview {\n            formPlugins {\n              pluginCode\n              programKeys {\n                programKey\n                documentTypes\n                boundProgram {\n                  id\n                  name\n                }\n              }\n              documentTypes {\n                documentType\n                name\n                category\n                programKey\n                existingEntry\n                existingEntryId\n                existingEntryOwner\n                existingEntryCategory\n                blanksOldUi\n              }\n            }\n            programs {\n              id\n              name\n            }\n          }\n        }\n        ... on UploadedPluginError {\n          error\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<UploadedPluginInfoResult, UploadedPluginInfoVariables>;
 
 export type InstallUploadedPluginVariables = {

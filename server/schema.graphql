@@ -2916,6 +2916,11 @@ enum ExistingRegistryEntryNode {
 	Several entries for the type: install is refused.
 	"""
 	AMBIGUOUS
+	"""
+	An entry of another category (`existingEntryCategory`) than the one
+	declared: install is refused.
+	"""
+	CATEGORY_MISMATCH
 }
 
 type FailedToFetchReportData implements PrintReportErrorInterface {
@@ -2991,6 +2996,10 @@ type FormPluginDocumentTypeNode {
 	The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`.
 	"""
 	existingEntryOwner: String
+	"""
+	The existing entry's category, for `CATEGORY_MISMATCH`.
+	"""
+	existingEntryCategory: DocumentRegistryCategoryNode
 	"""
 	True when installing would leave the type's form blank on sites still
 	running the old client, which install refuses unless the type is named

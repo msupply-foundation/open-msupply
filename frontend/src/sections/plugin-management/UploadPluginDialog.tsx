@@ -4,6 +4,7 @@ import {
   isForbidden,
   missingPermissions,
   reportPermissionDenied,
+  type GraphqlErrorItem,
 } from '@/api/graphql';
 import { rejectionFrom, type Rejection } from '@/api/rejection';
 import { reportUnauthenticated } from '@/auth/authContext';
@@ -70,11 +71,42 @@ type Notice =
   | { kind: 'upload'; status: string }
   | { kind: 'install'; rejection: Rejection };
 
-/** An uploaded bundle awaiting its choices: the file as the server holds it. */
+/**
+ * An uploaded bundle awaiting its choices: the file as the server holds it.
+ * `fileId` is cleared once the server reports that upload gone (it keeps one
+ * for an hour): the next Install plugin sends the file again, choices kept.
+ */
 interface Staged {
-  fileId: string;
+  fileId: string | undefined;
   preview: FormInstallPreview;
 }
+
+/**
+ * What one Upload plugin leaves: the file's id, and its preview where the
+ * file read as a bundle.
+ */
+interface Uploaded {
+  fileId: string;
+  preview: FormInstallPreview | undefined;
+}
+
+// The install's refusal for an upload the server no longer holds (contract §
+// install: an unknown or swept fileId answers details `File not found`).
+const isUploadGone = (errors: GraphqlErrorItem[]): boolean =>
+  errors.some(error => error.extensions?.details === 'File not found');
+
+// A registry category as the preview names it, by its label where one exists.
+const CATEGORY_LABEL: Partial<Record<string, Parameters<typeof t>[0]>> = {
+  PATIENT: 'label.patient',
+  PROGRAM_ENROLMENT: 'label.program-enrolment',
+  ENCOUNTER: 'label.encounter',
+  CUSTOM: 'label.custom',
+};
+const categoryLabel = (category: string | null | undefined): string => {
+  if (!category) return '';
+  const key = CATEGORY_LABEL[category];
+  return key ? t(key) : category;
+};
 
 const NO_CHOICES: InstallChoices = {
   programs: {},
@@ -126,11 +158,13 @@ export const UploadPluginDialog = (props: {
     </Alert>
   );
 
-  // Upload, then read the bundle. A form plugin's bundle is staged for its
-  // choices and the dialog asks; anything else — no form plugin, or a file the
-  // read could not parse — goes straight to install, which answers as it
-  // always has (a non-bundle is refused there with the server's own words).
-  const upload = async (chosen: File): Promise<string | undefined> => {
+  // Upload, then read the bundle. The read's answer is the preview where the
+  // file reads as a bundle; where it does not, there is none, and the install
+  // that follows refuses the file with the server's own words, as it always
+  // has. A failure graphqlFetch has already reported — a dropped connection,
+  // an ended session, an abort — stops here, as it does for every call: the
+  // install is not sent to fail the same way again.
+  const uploadAndRead = async (chosen: File): Promise<Uploaded | undefined> => {
     const uploaded = await uploadBundle(chosen);
     if (!uploaded.ok) {
       setNotice({ kind: 'upload', status: uploaded.status });
@@ -140,23 +174,23 @@ export const UploadPluginDialog = (props: {
       if (uploaded.signedOut) reportUnauthenticated();
       return undefined;
     }
-    // Kept local: a failed read is not the outcome — the install that follows
-    // reports its own, through the usual paths.
     const info = await graphqlFetch(
       UploadedPluginInfo,
       { fileId: uploaded.fileId },
       { returnGraphqlErrors: true }
     );
-    const preview =
-      info.kind === 'success'
-        ? previewOf(info.data.centralServer.plugin.uploadedPluginInfo)
-        : undefined;
-    if (preview && needsChoices(preview)) {
-      setStaged({ fileId: uploaded.fileId, preview });
-      setChoices(initialChoices(preview));
+    if (info.kind !== 'success' && info.kind !== 'graphqlError')
       return undefined;
-    }
-    return uploaded.fileId;
+    // Kept local: a GraphQL answer other than the preview — the typed
+    // cannot-parse error, or an error the install would answer alike — is not
+    // the outcome; the install that follows reports its own.
+    return {
+      fileId: uploaded.fileId,
+      preview:
+        info.kind === 'success'
+          ? previewOf(info.data.centralServer.plugin.uploadedPluginInfo)
+          : undefined,
+    };
   };
 
   const confirm = async () => {
@@ -164,17 +198,33 @@ export const UploadPluginDialog = (props: {
     if (!chosen || running()) return;
     setRunning(true);
     setNotice(undefined);
-    const stagedBundle = staged();
-    const fileId = stagedBundle ? stagedBundle.fileId : await upload(chosen);
+    const held = staged();
+    let fileId = held?.fileId;
     if (fileId === undefined) {
-      // Staged for its choices, or the upload failed: either way the dialog
-      // now waits on the user.
-      setRunning(false);
-      return;
+      const read = await uploadAndRead(chosen);
+      if (!read) {
+        // The upload or the read failed, and said so: the dialog waits on
+        // the user, the file still chosen.
+        setRunning(false);
+        return;
+      }
+      fileId = read.fileId;
+      if (held) {
+        // A held bundle whose upload the server had discarded: the same file
+        // is up again under a new id, and the choices made stand.
+        setStaged({ fileId, preview: held.preview });
+      } else if (read.preview && needsChoices(read.preview)) {
+        // A form plugin's bundle is staged for its choices and the dialog
+        // asks; nothing is installed until Install plugin.
+        setStaged({ fileId, preview: read.preview });
+        setChoices(initialChoices(read.preview));
+        setRunning(false);
+        return;
+      }
     }
     const result = await graphqlFetch(
       InstallUploadedPlugin,
-      stagedBundle ? installVariables(fileId, choices()) : { fileId },
+      held ? installVariables(fileId, choices()) : { fileId },
       { returnGraphqlErrors: true }
     );
     props.onAttempted();
@@ -188,11 +238,17 @@ export const UploadPluginDialog = (props: {
       // A Forbidden goes to the permission-denied modal, as every other one.
       if (isForbidden(result.errors))
         reportPermissionDenied(missingPermissions(result.errors));
-      else
+      else {
         setNotice({
           kind: 'install',
           rejection: rejectionFrom(result.errors, ''),
         });
+        // The server keeps an upload for an hour: a held bundle refused as
+        // gone is sent again by the next Install plugin, its choices kept
+        // (rules › a bundle carrying form plugins).
+        if (held && isUploadGone(result.errors))
+          setStaged({ fileId: undefined, preview: held.preview });
+      }
     }
     // Any other failure surfaced globally; release the busy state either way.
     // The choices stay for the retry (OMS-REG-MNG-07.73).
@@ -230,15 +286,25 @@ export const UploadPluginDialog = (props: {
       .filter(Boolean)
       .join(' ');
 
-  const refusedText = (type: DocumentTypePreview): string =>
-    type.existingEntry === 'OWNED_BY_ANOTHER_PLUGIN'
-      ? t('error.form-plugin-type-owned', {
+  const refusedText = (type: DocumentTypePreview): string => {
+    switch (type.existingEntry) {
+      case 'OWNED_BY_ANOTHER_PLUGIN':
+        return t('error.form-plugin-type-owned', {
           documentType: type.documentType,
           owner: type.existingEntryOwner ?? '',
-        })
-      : t('error.form-plugin-type-ambiguous', {
+        });
+      case 'CATEGORY_MISMATCH':
+        return t('error.form-plugin-type-category', {
+          documentType: type.documentType,
+          existing: categoryLabel(type.existingEntryCategory),
+          declared: categoryLabel(type.category),
+        });
+      default:
+        return t('error.form-plugin-type-ambiguous', {
           documentType: type.documentType,
         });
+    }
+  };
 
   return (
     <Dialog

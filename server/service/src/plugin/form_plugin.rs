@@ -136,6 +136,8 @@ pub enum ExistingEntry {
     OwnedByAnotherPlugin { owner: String },
     /// Several entries for the type: install is refused.
     Ambiguous { count: usize },
+    /// An entry of another category than the one declared: install is refused.
+    CategoryMismatch { existing: DocumentRegistryCategory },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -152,6 +154,8 @@ pub struct DocumentTypePreview {
     pub blanks_old_ui: bool,
 }
 
+/// One program key a declared type names. A key the sidecar declares but no
+/// type uses is left out, as install leaves it unbound.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ProgramKeyPreview {
     pub program_key: String,
@@ -372,11 +376,20 @@ pub(crate) fn preview_form_plugins(
     for sidecar in sidecars {
         // Program key → context id, from the entries this plugin already owns.
         let bound = bound_contexts(connection, sidecar)?;
-        // Every key the plugin declares, bound or not: an unbound key is what
-        // the installer has to choose a program for.
+        // Every key a declared type names, bound or not: an unbound key is
+        // what the installer has to choose a program for. A key no type names
+        // is skipped, as install skips it (`resolve_program_contexts` binds
+        // only the keys in use), so the screen never asks for a program the
+        // install would not write.
         let program_keys = sidecar
             .program_keys
             .iter()
+            .filter(|key| {
+                sidecar
+                    .document_types
+                    .iter()
+                    .any(|d| d.program_key.as_ref() == Some(*key))
+            })
             .map(|key| {
                 // A bound key's context is a program's: look that program up so
                 // the screen can show it by name. No binding, no program.
@@ -407,8 +420,12 @@ pub(crate) fn preview_form_plugins(
             .iter()
             .map(|declaration| {
                 // The entry's state, with the row only where install could write it.
-                let (existing_entry, row) =
-                    find_entry(connection, &sidecar.plugin_code, &declaration.document_type)?;
+                let (existing_entry, row) = find_entry(
+                    connection,
+                    &sidecar.plugin_code,
+                    &declaration.document_type,
+                    &declaration.category,
+                )?;
                 // Only an existing entry can lose the old client its form.
                 let blanks_old_ui = match &row {
                     Some(row) => would_blank_old_ui(connection, row, declaration)?,
@@ -739,7 +756,12 @@ fn existing_entry(
     use FormPluginInstallError as Error;
 
     let document_type = &declaration.document_type;
-    let (existing, row) = find_entry(connection, &sidecar.plugin_code, document_type)?;
+    let (existing, row) = find_entry(
+        connection,
+        &sidecar.plugin_code,
+        document_type,
+        &declaration.category,
+    )?;
     let Some(row) = row else {
         return match existing {
             ExistingEntry::OwnedByAnotherPlugin { owner } => Err(Error::OwnedByAnotherPlugin {
@@ -750,17 +772,14 @@ fn existing_entry(
                 document_type: document_type.clone(),
                 count,
             }),
+            ExistingEntry::CategoryMismatch { existing } => Err(Error::CategoryMismatch {
+                document_type: document_type.clone(),
+                existing,
+                declared: declaration.category.clone(),
+            }),
             _ => Ok(None),
         };
     };
-
-    if row.category != declaration.category {
-        return Err(Error::CategoryMismatch {
-            document_type: document_type.clone(),
-            existing: row.category,
-            declared: declaration.category.clone(),
-        });
-    }
 
     match existing {
         ExistingEntry::Unowned { .. } if options.take_over.contains(document_type) => {
@@ -776,12 +795,14 @@ fn existing_entry(
 }
 
 /// The registry's one entry for a document type, classified for the plugin
-/// installing it. The row comes back only where there is exactly one and no
-/// other plugin owns it: the two cases install refuses carry no row.
+/// installing it. The row comes back only where there is exactly one, no
+/// other plugin owns it and it is of the declared category: the three cases
+/// install refuses carry no row.
 fn find_entry(
     connection: &StorageConnection,
     plugin_code: &str,
     document_type: &str,
+    declared: &DocumentRegistryCategory,
 ) -> Result<(ExistingEntry, Option<DocumentRegistryRow>), RepositoryError> {
     let mut rows =
         DocumentRegistryRowRepository::new(connection).find_many_by_document_type(document_type)?;
@@ -804,6 +825,16 @@ fn find_entry(
     let Some(row) = rows.pop() else {
         return Ok((ExistingEntry::None, None));
     };
+    // An entry of another category is not one install could write, whoever
+    // owns it: refused, so no row.
+    if row.category != *declared {
+        return Ok((
+            ExistingEntry::CategoryMismatch {
+                existing: row.category,
+            },
+            None,
+        ));
+    }
     let existing = match row.plugin_code {
         Some(_) => ExistingEntry::Owned,
         None => ExistingEntry::Unowned { id: row.id.clone() },
@@ -2459,5 +2490,63 @@ mod test {
                 id: "existing_patient_entry".to_string()
             }
         );
+    }
+
+    /// An entry of another category than the plugin declares is refused
+    /// whatever is chosen: the preview names it with the category it has and
+    /// takes no row from it, so it blanks nothing; install refuses it alike.
+    #[actix_rt::test]
+    async fn preview_names_an_entry_of_another_category() {
+        let connection = setup("form_plugin_preview_category").await;
+        // The deployment's own DemoEncounter entry, as an enrolment.
+        insert_unowned_entry(
+            &connection,
+            "existing_demo_encounter",
+            "DemoEncounter",
+            DocumentRegistryCategory::ProgramEnrolment,
+            "program_a",
+        );
+
+        let preview = preview_form_plugins(&connection, &[demo_sidecar()]).unwrap();
+        let encounter = &preview.form_plugins[0].document_types[2];
+        assert_eq!(encounter.document_type, "DemoEncounter");
+        assert_eq!(
+            encounter.existing_entry,
+            ExistingEntry::CategoryMismatch {
+                existing: DocumentRegistryCategory::ProgramEnrolment
+            }
+        );
+        assert!(!encounter.blanks_old_ui);
+
+        assert_eq!(
+            install_form_plugins(
+                &connection,
+                &[demo_sidecar()],
+                &options(&[("demo", "program_a")], &["DemoEncounter"]),
+            )
+            .unwrap_err(),
+            Error::CategoryMismatch {
+                document_type: "DemoEncounter".to_string(),
+                existing: DocumentRegistryCategory::ProgramEnrolment,
+                declared: DocumentRegistryCategory::Encounter,
+            }
+        );
+    }
+
+    /// A key the sidecar declares but no type names is not asked for a
+    /// program: install binds only the keys in use.
+    #[actix_rt::test]
+    async fn preview_lists_only_the_keys_a_type_names() {
+        let connection = setup("form_plugin_preview_keys").await;
+        let mut sidecar = demo_sidecar();
+        sidecar.program_keys.push("unused".to_string());
+
+        let preview = preview_form_plugins(&connection, &[sidecar]).unwrap();
+        let keys: Vec<_> = preview.form_plugins[0]
+            .program_keys
+            .iter()
+            .map(|key| key.program_key.as_str())
+            .collect();
+        assert_eq!(keys, vec!["demo"]);
     }
 }

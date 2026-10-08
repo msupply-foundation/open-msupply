@@ -150,6 +150,9 @@ pub enum ExistingRegistryEntryNode {
     OwnedByAnotherPlugin,
     /// Several entries for the type: install is refused.
     Ambiguous,
+    /// An entry of another category (`existingEntryCategory`) than the one
+    /// declared: install is refused.
+    CategoryMismatch,
 }
 
 /// One document type a form plugin declares, checked against this server.
@@ -165,6 +168,8 @@ pub struct FormPluginDocumentTypeNode {
     pub existing_entry_id: Option<String>,
     /// The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`.
     pub existing_entry_owner: Option<String>,
+    /// The existing entry's category, for `CATEGORY_MISMATCH`.
+    pub existing_entry_category: Option<DocumentRegistryCategoryNode>,
     /// True when installing would leave the type's form blank on sites still
     /// running the old client, which install refuses unless the type is named
     /// in `blankOldUi`.
@@ -260,22 +265,34 @@ impl FormPluginPreviewNode {
 impl FormPluginDocumentTypeNode {
     fn from_domain(preview: DocumentTypePreview) -> Self {
         // The service's enum carries its detail inside the variant; GraphQL has
-        // no payload-bearing enums, so the detail is flattened into two optional
-        // fields beside the plain variant: the unowned entry's id, or the
-        // owning plugin's code. Every other variant leaves both empty.
-        let (existing_entry, existing_entry_id, existing_entry_owner) = match preview.existing_entry
-        {
-            ExistingEntry::None => (ExistingRegistryEntryNode::None, None, None),
-            ExistingEntry::Owned => (ExistingRegistryEntryNode::Owned, None, None),
-            ExistingEntry::Unowned { id } => (ExistingRegistryEntryNode::Unowned, Some(id), None),
-            ExistingEntry::OwnedByAnotherPlugin { owner } => (
-                ExistingRegistryEntryNode::OwnedByAnotherPlugin,
-                None,
-                Some(owner),
-            ),
-            // The count is not worth a field: the install refuses either way.
-            ExistingEntry::Ambiguous { .. } => (ExistingRegistryEntryNode::Ambiguous, None, None),
-        };
+        // no payload-bearing enums, so the detail is flattened into three
+        // optional fields beside the plain variant: the unowned entry's id, the
+        // owning plugin's code, or the existing entry's category. Every other
+        // variant leaves all three empty.
+        let (existing_entry, existing_entry_id, existing_entry_owner, existing_entry_category) =
+            match preview.existing_entry {
+                ExistingEntry::None => (ExistingRegistryEntryNode::None, None, None, None),
+                ExistingEntry::Owned => (ExistingRegistryEntryNode::Owned, None, None, None),
+                ExistingEntry::Unowned { id } => {
+                    (ExistingRegistryEntryNode::Unowned, Some(id), None, None)
+                }
+                ExistingEntry::OwnedByAnotherPlugin { owner } => (
+                    ExistingRegistryEntryNode::OwnedByAnotherPlugin,
+                    None,
+                    Some(owner),
+                    None,
+                ),
+                // The count is not worth a field: the install refuses either way.
+                ExistingEntry::Ambiguous { .. } => {
+                    (ExistingRegistryEntryNode::Ambiguous, None, None, None)
+                }
+                ExistingEntry::CategoryMismatch { existing } => (
+                    ExistingRegistryEntryNode::CategoryMismatch,
+                    None,
+                    None,
+                    Some(DocumentRegistryCategoryNode::from(existing)),
+                ),
+            };
         FormPluginDocumentTypeNode {
             document_type: preview.document_type,
             name: preview.name,
@@ -284,6 +301,7 @@ impl FormPluginDocumentTypeNode {
             existing_entry,
             existing_entry_id,
             existing_entry_owner,
+            existing_entry_category,
             blanks_old_ui: preview.blanks_old_ui,
         }
     }

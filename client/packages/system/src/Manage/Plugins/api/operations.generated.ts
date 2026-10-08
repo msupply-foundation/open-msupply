@@ -77,6 +77,7 @@ export type UploadedPluginInfoQuery = {
                   existingEntry: Types.ExistingRegistryEntryNode;
                   existingEntryId?: string | null;
                   existingEntryOwner?: string | null;
+                  existingEntryCategory?: Types.DocumentRegistryCategoryNode | null;
                   blanksOldUi: boolean;
                 }>;
               }>;
@@ -230,6 +231,7 @@ export const UploadedPluginInfoDocument = gql`
                   existingEntry
                   existingEntryId
                   existingEntryOwner
+                  existingEntryCategory
                   blanksOldUi
                 }
               }

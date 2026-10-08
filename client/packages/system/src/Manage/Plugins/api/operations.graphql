@@ -58,6 +58,7 @@ query uploadedPluginInfo($fileId: String!) {
                 existingEntry
                 existingEntryId
                 existingEntryOwner
+                existingEntryCategory
                 blanksOldUi
               }
             }

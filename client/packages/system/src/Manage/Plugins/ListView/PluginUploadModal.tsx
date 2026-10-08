@@ -8,6 +8,7 @@ import {
   Box,
   Checkbox,
   DialogButton,
+  DocumentRegistryCategoryNode,
   ExistingRegistryEntryNode,
   Select,
   Typography,
@@ -291,15 +292,43 @@ const FormPluginChoices = ({
       .filter(Boolean)
       .join(' ');
 
-  const refusedText = (type: DocumentTypePreview): string =>
-    type.existingEntry === ExistingRegistryEntryNode.OwnedByAnotherPlugin
-      ? t('error.form-plugin-type-owned', {
+  // A registry category as the preview names it, by its label where one exists.
+  const categoryLabel = (
+    category: DocumentRegistryCategoryNode | null | undefined
+  ): string => {
+    switch (category) {
+      case DocumentRegistryCategoryNode.Patient:
+        return t('label.patient');
+      case DocumentRegistryCategoryNode.ProgramEnrolment:
+        return t('label.program-enrolment');
+      case DocumentRegistryCategoryNode.Encounter:
+        return t('label.encounter');
+      case DocumentRegistryCategoryNode.Custom:
+        return t('label.custom');
+      default:
+        return category ?? '';
+    }
+  };
+
+  const refusedText = (type: DocumentTypePreview): string => {
+    switch (type.existingEntry) {
+      case ExistingRegistryEntryNode.OwnedByAnotherPlugin:
+        return t('error.form-plugin-type-owned', {
           documentType: type.documentType,
           owner: type.existingEntryOwner ?? '',
-        })
-      : t('error.form-plugin-type-ambiguous', {
+        });
+      case ExistingRegistryEntryNode.CategoryMismatch:
+        return t('error.form-plugin-type-category', {
+          documentType: type.documentType,
+          existing: categoryLabel(type.existingEntryCategory),
+          declared: categoryLabel(type.category),
+        });
+      default:
+        return t('error.form-plugin-type-ambiguous', {
           documentType: type.documentType,
         });
+    }
+  };
 
   return (
     <Box
@@ -336,21 +365,25 @@ const FormPluginChoices = ({
             {t('label.form-plugin-code', { code: plugin.pluginCode })}
           </Typography>
           {plugin.programKeys.map(key => (
-            <Box
+            <Select
               key={key.programKey}
-              data-testid={`upload-plugin-program-${key.programKey}`}
-            >
-              <Select
-                label={key.programKey}
-                required
-                fullWidth
-                options={options}
-                value={choices.programs[key.programKey] ?? ''}
-                onChange={e => onProgram(key.programKey, e.target.value)}
-                helperText={keyHelper(key)}
-                disabled={disabled}
-              />
-            </Box>
+              label={key.programKey}
+              required
+              fullWidth
+              options={options}
+              value={choices.programs[key.programKey] ?? ''}
+              onChange={e => onProgram(key.programKey, e.target.value)}
+              helperText={keyHelper(key)}
+              disabled={disabled}
+              // On the select's trigger, as e2e/TESTIDS.md places it.
+              slotProps={{
+                select: {
+                  SelectDisplayProps: {
+                    'data-testid': `upload-plugin-program-${key.programKey}`,
+                  } as React.HTMLAttributes<HTMLDivElement>,
+                },
+              }}
+            />
           ))}
         </Box>
       ))}

@@ -52,6 +52,7 @@ const type = (
   existingEntry: ExistingRegistryEntryNode.None,
   existingEntryId: null,
   existingEntryOwner: null,
+  existingEntryCategory: null,
   blanksOldUi: false,
   ...rest,
 });
@@ -197,10 +198,14 @@ describe('a blanked old-interface form needs acknowledging (.71)', () => {
   });
 });
 
-describe("another plugin's type, or an ambiguous one, is refused up front (.72)", () => {
-  it('names both and withholds the install whatever is chosen', () => {
+describe("another plugin's type, an ambiguous one, or one of another category is refused up front (.72)", () => {
+  it('names all three and withholds the install whatever is chosen', () => {
     const refused = preview({
       documentTypes: [
+        type('Patient', null, {
+          existingEntry: ExistingRegistryEntryNode.CategoryMismatch,
+          existingEntryCategory: DocumentRegistryCategoryNode.Encounter,
+        }),
         type('HIVEncounter', 'hivCare', {
           existingEntry: ExistingRegistryEntryNode.OwnedByAnotherPlugin,
           existingEntryOwner: 'other_plugin',
@@ -211,6 +216,7 @@ describe("another plugin's type, or an ambiguous one, is refused up front (.72)"
       ],
     });
     expect(refusedTypes(refused).map(t => t.documentType)).toEqual([
+      'Patient',
       'HIVEncounter',
       'TBEncounter',
     ]);

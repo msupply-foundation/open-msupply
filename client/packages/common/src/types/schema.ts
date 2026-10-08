@@ -3475,6 +3475,11 @@ export type ExistingLinesInput = {
 export enum ExistingRegistryEntryNode {
   /** Several entries for the type: install is refused. */
   Ambiguous = 'AMBIGUOUS',
+  /**
+   * An entry of another category (`existingEntryCategory`) than the one
+   * declared: install is refused.
+   */
+  CategoryMismatch = 'CATEGORY_MISMATCH',
   /** No entry: install creates one. */
   None = 'NONE',
   /** The plugin's own entry, from an earlier install. */
@@ -3579,6 +3584,8 @@ export type FormPluginDocumentTypeNode = {
   category: DocumentRegistryCategoryNode;
   documentType: Scalars['String']['output'];
   existingEntry: ExistingRegistryEntryNode;
+  /** The existing entry's category, for `CATEGORY_MISMATCH`. */
+  existingEntryCategory?: Maybe<DocumentRegistryCategoryNode>;
   /** The unowned entry's id, for `UNOWNED`. */
   existingEntryId?: Maybe<Scalars['String']['output']>;
   /** The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`. */

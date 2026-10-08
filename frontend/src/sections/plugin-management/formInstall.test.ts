@@ -38,6 +38,7 @@ const type = (
   existingEntry: 'NONE',
   existingEntryId: null,
   existingEntryOwner: null,
+  existingEntryCategory: null,
   blanksOldUi: false,
   ...rest,
 });
@@ -189,9 +190,13 @@ describe('OMS-REG-MNG-07.71 — a blanked old-interface form needs acknowledging
 });
 
 describe("OMS-REG-MNG-07.72 — another plugin's type is refused up front", () => {
-  it('names an owned type and an ambiguous one, and withholds the install', () => {
+  it('names an owned type, an ambiguous one and one of another category, and withholds the install', () => {
     const owned = preview({
       documentTypes: [
+        type('Patient', null, {
+          existingEntry: 'CATEGORY_MISMATCH',
+          existingEntryCategory: 'ENCOUNTER',
+        }),
         type('HIVEncounter', 'hivCare', {
           existingEntry: 'OWNED_BY_ANOTHER_PLUGIN',
           existingEntryOwner: 'other_plugin',
@@ -200,6 +205,7 @@ describe("OMS-REG-MNG-07.72 — another plugin's type is refused up front", () =
       ],
     });
     expect(refusedTypes(owned).map(t => t.documentType)).toEqual([
+      'Patient',
       'HIVEncounter',
       'TBEncounter',
     ]);
