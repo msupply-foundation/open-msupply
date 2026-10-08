@@ -13,7 +13,7 @@ import {
   useTranslation,
   useFormatNumber,
 } from '@openmsupply-client/common';
-import { usePluginData } from '../../../../../api';
+import { usePluginData } from '../../../../../../../client/packages/plugins/api';
 
 interface ForecastQuantityData {
   courseTitle: string;

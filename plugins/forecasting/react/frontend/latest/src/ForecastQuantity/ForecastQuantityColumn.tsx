@@ -10,7 +10,7 @@ import {
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { RequestLineFragment } from '@openmsupply-client/system';
-import { usePluginData } from '../../../../../api';
+import { usePluginData } from '../../../../../../../client/packages/plugins/api';
 
 const useColumnStore = create<PluginDataStore<RequestLineFragment, string>>(
   (set, get) => ({
