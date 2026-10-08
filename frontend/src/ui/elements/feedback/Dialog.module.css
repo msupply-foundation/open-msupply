@@ -588,7 +588,24 @@
    cluster — keeps the 1rem gap on the side it shares with a neighbour. The
    header, the footer banner and the actions keep their inset: a picker or a
    button against the sheet edge gains nothing. A hidden title (.header
-   .srOnly, out of flow) leaves no rule to meet. */
+   .srOnly, out of flow) leaves no rule to meet — unless the editor's own
+   header panel stands in for it (data-dialog-header, below).
+
+   THE CHAIN RULE. A bleed is a negative margin, and it only shows if every
+   box between the table and the sheet lets it through: the scroll region
+   does (margin out + padding back in, above), a plain wrapper does, but a
+   wrapper that SCROLLS or clips (overflow other than visible) cuts it off —
+   the first cut of this did exactly that to the outbound editor, whose grid
+   lives in its own scroll box: the table measured at the sheet edges, and
+   its first and last 24px (the row tick, the On-hold column) were simply
+   hidden. So a table is only bled through boxes that have widened their
+   padding box the same way, and an editor's own scroller between the body
+   and its table says so with data-dialog-scroll: the Dialog widens it to the
+   sheet edges inline, and block-wise to the rule it starts at (the heading
+   strip, when it follows one or is the region's first child) and to the
+   actions' rule (when it is the region's last child); the table's block
+   bleed is then handed down that chain and no other. The editor's
+   advisories inside the same scroller keep its inset. */
 .dialog[data-fullscreen][open] .scroll {
   margin-inline: calc(-1 * var(--dialog-pad-inline));
   margin-block: calc(-1 * var(--dialog-gap));
@@ -615,7 +632,48 @@
   --table-frame-radius: 0;
 }
 
-/* Block (one rule per position; specificity ascends for stylelint). */
+/* An editor's own scroll box between the body and its table (the chain
+   rule above): widened to the sheet edges the way .scroll is, so the table's
+   inline bleed shows instead of being clipped; its content — the editor's
+   advisories under the grid — keeps the inset. */
+.dialog[data-fullscreen][open] .scroll [data-dialog-scroll] {
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  padding-inline: var(--dialog-pad-inline);
+}
+
+/* An editor's header panel that stands in for the hidden title row (the
+   outbound editor's Item · Issue · Units · Available cluster, a grouping card
+   in the body on a desktop): in full screen it IS the heading strip — the
+   same place, inset and rule as .header, so the editor reads like one whose
+   picker sits in the title slot — and its card chrome goes. */
+.dialog[data-fullscreen][open] .scroll > [data-dialog-header] {
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  padding: 0 var(--dialog-pad-inline) var(--space-3);
+  border: 0;
+  border-block-end: 1px solid var(--color-divider);
+  border-radius: 0;
+  background: none;
+}
+
+/* …and the scroller's block edges: to the rule it starts at, to the actions'
+   rule it ends at. */
+.dialog[data-fullscreen][open] .scroll > [data-dialog-scroll]:first-child,
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-header]
+  + [data-dialog-scroll] {
+  margin-block-start: calc(-1 * var(--dialog-gap));
+  padding-block-start: var(--dialog-gap);
+}
+
+.dialog[data-fullscreen][open] .scroll > [data-dialog-scroll]:last-child {
+  margin-block-end: calc(-1 * var(--dialog-gap));
+  padding-block-end: var(--dialog-gap);
+}
+
+/* Block bleed of the table (one rule per position; specificity ascends for
+   stylelint). Each selector is a chain of boxes that have all widened the
+   same edge — never a shortcut through one that has not. */
 .dialog[data-fullscreen][open] .scroll > :only-child {
   --table-bleed-block-start: var(--dialog-gap);
   --table-bleed-block-end: var(--dialog-gap);
@@ -635,6 +693,41 @@
 
 .dialog[data-fullscreen][open]
   .scroll
+  > :last-child
+  > [data-dialog-table]:last-child {
+  --table-bleed-block-end: var(--dialog-gap);
+}
+
+/* Through a marked scroller: its first content starts at the rule it was
+   widened to… */
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-scroll]:first-child
+  > [data-dialog-table]:first-child,
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-header]
+  + [data-dialog-scroll]
+  > [data-dialog-table]:first-child,
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-scroll]:first-child
+  > :first-child
+  > [data-dialog-table]:first-child,
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-header]
+  + [data-dialog-scroll]
+  > :first-child
+  > [data-dialog-table]:first-child {
+  --table-bleed-block-start: var(--dialog-gap);
+}
+
+/* …and its last content ends at the actions' rule (the direct-child case is
+   the generic last-child chain above). */
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-scroll]:last-child
   > :last-child
   > [data-dialog-table]:last-child {
   --table-bleed-block-end: var(--dialog-gap);

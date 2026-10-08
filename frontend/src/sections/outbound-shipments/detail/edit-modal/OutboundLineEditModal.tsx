@@ -1733,8 +1733,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           drops to its own row as space runs out (see the module CSS). The
           registry's inset grouping panel holds them, so the cluster reads as one
           thing the modal acts on rather than four controls loose against the
-          panel (#872). */}
-      <InsetPanel class={styles.headerPanel}>
+          panel (#872). In the full-screen sheet the panel is the dialog's
+          heading strip instead (`dialogHeader`, #246): the title is hidden,
+          so this cluster stands where the stocktake editor's picker does. */}
+      <InsetPanel class={styles.headerPanel} dialogHeader>
         <div class={styles.headerRow}>
           {/* The shared server-searched item lookup (spec S4 — the registry's
             async catalogue-lookup; no client-side cached cap), locked in
@@ -1887,7 +1889,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             TOGETHER, so a message costs nothing until you reach the end of the
             cards (the table lays out at content height here — DataTable's
             `fitContent` — instead of owning a scroll box of its own). */}
-        <div class={styles.workArea}>
+        {/* data-dialog-scroll: this is the editor's OWN scroll box between the
+            dialog body and its main table, so in the full-screen sheet the
+            Dialog widens it to the sheet edges the way it widens its own
+            scroll region — otherwise the grid's edge-to-edge bleed would be
+            clipped here, hiding the first and last columns (#246). */}
+        <div class={styles.workArea} data-dialog-scroll>
           {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
               disabled (OMS-REG-SMV-11.26/.31). */}
           <div class={styles.batchGrid}>
