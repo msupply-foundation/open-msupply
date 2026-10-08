@@ -1,5 +1,9 @@
 # bes-plugins
 
+> **Imported from [msupply-foundation/bes-plugins](https://github.com/msupply-foundation/bes-plugins)** (Oct 2026, `main` with history — each commit's `Source:` trailer links its original). File issues in this repo now, not there. Built bundles were stripped from history; they live on the bundle server.
+>
+> This is the plugin for the **React UI**. There is no SolidJS port yet. The build and install steps below still assume the old layout — this repo checked out as a submodule at `client/packages/plugins/<name>/` — and its webpack and tsconfig files still reach up into that directory, so they do not build from here yet.
+
 - [bes-plugins](#bes-plugins)
   - [Functionality](#functionality)
     - [graphql_query params](#graphql_query-params)
