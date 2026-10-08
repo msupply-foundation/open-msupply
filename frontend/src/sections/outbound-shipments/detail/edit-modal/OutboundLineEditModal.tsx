@@ -15,7 +15,7 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { formatCurrency } from '../../../../intl/currency';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { Dialog, DIALOG_SCROLL } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
@@ -1889,12 +1889,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             TOGETHER, so a message costs nothing until you reach the end of the
             cards (the table lays out at content height here — DataTable's
             `fitContent` — instead of owning a scroll box of its own). */}
-        {/* data-dialog-scroll: this is the editor's OWN scroll box between the
+        {/* DIALOG_SCROLL: this is the editor's OWN scroll box between the
             dialog body and its main table, so in the full-screen sheet the
             Dialog widens it to the sheet edges the way it widens its own
             scroll region — otherwise the grid's edge-to-edge bleed would be
-            clipped here, hiding the first and last columns (#246). */}
-        <div class={styles.workArea} data-dialog-scroll>
+            clipped here, hiding the first and last columns (the chain rule on
+            DialogProps.size, #246). */}
+        <div class={styles.workArea} {...DIALOG_SCROLL}>
           {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
               disabled (OMS-REG-SMV-11.26/.31). */}
           <div class={styles.batchGrid}>

@@ -423,6 +423,11 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * dialog with a form (a repack history, a duplicates list): that one keeps
    * its frame. A table that is the body's only child gets the same treatment
    * without it; saying so still records the intent.
+   *
+   * If the table sits inside the editor's OWN scroll box, spread
+   * `DIALOG_SCROLL` (from Dialog) on that box too, or the table's first and
+   * last columns are clipped instead of reaching the sheet's edge. All three
+   * hooks and the chain rule: `DialogProps.size`.
    */
   dialogTable?: boolean;
 

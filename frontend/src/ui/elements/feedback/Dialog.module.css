@@ -600,7 +600,8 @@
    its first and last 24px (the row tick, the On-hold column) were simply
    hidden. So a table is only bled through boxes that have widened their
    padding box the same way, and an editor's own scroller between the body
-   and its table says so with data-dialog-scroll: the Dialog widens it to the
+   and its table says so with data-dialog-scroll (spread DIALOG_SCROLL from
+   Dialog.tsx, where the three hooks are documented): the Dialog widens it to the
    sheet edges inline, and block-wise to the rule it starts at (the heading
    strip, when it follows one or is the region's first child) and to the
    actions' rule (when it is the region's last child); the table's block

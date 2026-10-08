@@ -44,7 +44,8 @@ export interface AccordionProps {
    * edges with no radius — its trigger row keeping the dialog's inset, its
    * content none — so the table inside sits flush under the trigger
    * (Dialog.module.css › data-fullscreen, #246). The `card` variant's chrome
-   * is what moves; a dialog that is not full screen ignores it.
+   * is what moves; a dialog that is not full screen ignores it. All three
+   * full-screen hooks and the chain rule: `DialogProps.size`.
    */
   dialogTable?: boolean;
   class?: string;

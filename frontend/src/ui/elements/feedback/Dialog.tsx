@@ -209,6 +209,27 @@ export interface DialogProps {
    *    contributes there is not ours to measure. The internal-order editor's
    *    card is the recorded exception (ui/docs/DESIGN_STANDARDS.md, #617).
    *    `widthRem` is ignored.
+   *
+   * **Full-screen line tables** (#246). In the full-screen state a workbench
+   * dialog runs its main line table to the sheet's edges with no frame, and
+   * to its hairlines on the side(s) where the table ends the body. Three
+   * opt-in hooks drive it. This Dialog's stylesheet is the only thing that
+   * reads them (Dialog.module.css › data-fullscreen):
+   *  - `dialogTable` on the `DataTable`, or on the `Accordion` that holds it:
+   *    this is the dialog's MAIN line table. A table that is the body's only
+   *    child is treated this way without it. A secondary table left unmarked
+   *    (a repack history, a duplicates list) keeps its frame.
+   *  - `dialogHeader` on an `InsetPanel`: the editor's header cluster stands in
+   *    for a hidden title, so it becomes the heading strip.
+   *  - `{...DIALOG_SCROLL}` (exported below) on an editor's OWN scroll box
+   *    between the body and its table.
+   *
+   * The chain rule: the bleed is a negative margin, so it only shows through
+   * boxes that let it. A plain wrapper does. A box that scrolls or clips
+   * (any `overflow` but `visible`) cuts it off. So an editor that puts its
+   * table inside its own scroller must spread `DIALOG_SCROLL` on that
+   * scroller, or the table's first and last columns are clipped instead of
+   * reaching the edge. The outbound line editor's work area is the example.
    */
   size?: 'auto' | 'large' | 'full';
   /**
@@ -243,6 +264,15 @@ export interface DialogProps {
    * e2e/TESTIDS.md). */
   testId?: string;
 }
+
+/**
+ * Spread on a line editor's OWN scroll box, the one between the dialog body
+ * and its main table: `<div class={styles.workArea} {...DIALOG_SCROLL}>`. In
+ * the full-screen state the Dialog widens that box to the sheet's edges the
+ * way it widens its own scroll region, so the table's bleed reaches them
+ * instead of being clipped. See the chain rule on `DialogProps.size`.
+ */
+export const DIALOG_SCROLL = { 'data-dialog-scroll': '' } as const;
 
 /*
  * Input types that ACTIVATE THEMSELVES on Enter, as the keydown's default

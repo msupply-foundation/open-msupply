@@ -31,7 +31,8 @@ export interface InsetPanelProps {
    * make the panel the heading strip — the dialog's inset and hairline, no
    * card chrome — so the editor reads like one whose picker sits in the
    * title slot (Dialog.module.css › data-fullscreen, #246). A dialog that is
-   * not full screen ignores it: the grouping card stays.
+   * not full screen ignores it: the grouping card stays. All three full-screen
+   * hooks and the chain rule: `DialogProps.size`.
    */
   dialogHeader?: boolean;
 }
