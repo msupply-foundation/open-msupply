@@ -37,7 +37,7 @@ import {
   rememberPageSize,
 } from '../../../list/pageSize';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
-import { inboundShipmentPreferences } from '../../../store/storeContext';
+import { hasPermission } from '../../../store/storeContext';
 import {
   InboundShipments,
   type InboundRowFragment,
@@ -117,15 +117,14 @@ const InboundShipmentsList: Component = () => {
     first: initialPageSize(),
   });
   // The create modal: plain manual create, or the from-a-purchase-order flow
-  // (offered only when the store's procurement preference is on).
+  // (offered only to a user who may read purchase orders).
   const [createMode, setCreateMode] = createSignal<
     'manual' | 'fromPurchaseOrder'
   >();
-  const prefs = () => inboundShipmentPreferences();
 
   // Alt+N — this screen's add action (spec/keyboard KB-R2,
   // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the three
-  // controls that can trigger it (the plain New button, the procurement split
+  // controls that can trigger it (the plain New button, the from-PO split
   // button, and the ghost button in the table's empty slot — only two ever
   // render at a time); each carries `shortcut={ALT_N}` for its badge, none owns
   // the action.
@@ -433,11 +432,11 @@ const InboundShipmentsList: Component = () => {
         <Header>
           <Breadcrumb crumbs={crumbs()} />
           <HeaderButtons>
-            {/* A store with procurement functionality gets a split button
+            {/* A user who may read purchase orders gets a split button
                 offering the from-a-purchase-order flow as its second option
                 (spec OMS-REG-REPL-02.33); otherwise a plain New shipment button. */}
             <Show
-              when={prefs().useProcurementFunctionality}
+              when={hasPermission('PURCHASE_ORDER_QUERY')}
               fallback={
                 <Button
                   icon={<PlusCircleIcon />}

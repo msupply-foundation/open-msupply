@@ -3283,7 +3283,6 @@
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
   "preference.storeCustomColour": "Custom colour of page footer (hex code, e.g. #000000 for black)",
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
-  "preference.useProcurementFunctionality": "Use procurement functionality",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
   "preference.warnWhenMissingRecentStocktake": "Warn users when creating internal order if there is no recent stocktake",
   "preference.warnWhenMissingRecentStocktake.description": "Display a warning when stocktake data is older than the specified max age or recent stock takes have fewer than the minimum number of items so isn't considered a valid stocktake for calculating stock levels.",

@@ -39,8 +39,8 @@ import { LinkPurchaseOrderModal } from './LinkPurchaseOrderModal';
 //    LinkInternalOrderModal opens (link one, or Next to skip). A supplier with
 //    no linkable orders — or a store without the preference — creates
 //    immediately, no extra step.
-// - 'fromPurchaseOrder': the rich LinkPurchaseOrderModal (offered only when
-// the store's procurement preference is on). Linking a PO is mandatory; the
+// - 'fromPurchaseOrder': the rich LinkPurchaseOrderModal (offered only to a
+// user who may read purchase orders). Linking a PO is mandatory; the
 // supplier comes from the chosen order. Creates via the ...External twin
 // (contract → creation wire trap: purchaseOrderId REQUIRES the external
 // mutation).

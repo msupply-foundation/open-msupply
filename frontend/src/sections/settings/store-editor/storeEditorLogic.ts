@@ -368,7 +368,6 @@ const BOOL_PREFERENCE_KEYS = [
   'showIndicativePriceInRequisitions',
   'blindStocktake',
   'orderInPacks',
-  'useProcurementFunctionality',
   'sortByVvmStatusThenExpiry',
   'useSimplifiedMobileUi',
   'disableManualReturns',

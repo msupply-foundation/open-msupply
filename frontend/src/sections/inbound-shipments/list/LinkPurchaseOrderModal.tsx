@@ -15,7 +15,7 @@ import { remToPx } from '../../../ui/utils/rem';
 import type { LinkPurchaseOrderRowFragment } from './createInboundShipment.generated';
 
 // The from-a-purchase-order create step (spec S2 → Link purchase order modal),
-// offered when the store's procurement preference is on. A rich, contextful
+// offered to a user who may read purchase orders. A rich, contextful
 // table of the store's Sent purchase orders — NOT a bare dropdown — so the user
 // can pick the right one by supplier / reference / comment. Unlike the
 // internal-order link, linking a PO here is MANDATORY: both add buttons are
