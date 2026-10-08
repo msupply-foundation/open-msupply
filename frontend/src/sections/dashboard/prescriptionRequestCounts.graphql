@@ -2,7 +2,7 @@
 # prescription counts). Unlike the six count families, prescription requests
 # have no count query on the wire: these are the vertical's own LIST query read
 # for `totalCount` alone, with a minimal page and no `nodes` — the windowed
-# count read pattern (plugins/cook_islands/src/navigator/dispensedToday.graphql).
+# count read pattern (private/plugins/cook_islands/src/navigator/dispensedToday.graphql).
 #
 # ONE operation, two aliases, deliberately: both aliases authorise against
 # PrescriptionRequestQuery on the same root field, so they share one failure

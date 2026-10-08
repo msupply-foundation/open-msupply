@@ -102,7 +102,7 @@ natively, and `:name` works too.
 An array expands to a value list `(a, b, c)` — right for `IN`, wrong for a
 `VALUES` row source, which needs one row per element. Build those parameter
 NAMES yourself (`$item0`, `$item1`, …) and interpolate the names, never the
-values; `plugins/civ/backend/src/sqlQueries.ts` does exactly this in
+values; `private/plugins/civ/backend/src/sqlQueries.ts` does exactly this in
 `daysOutOfStockTotal`.
 
 ### Older servers
@@ -143,7 +143,7 @@ console.log(mod.plugins.graphql_query({ store_id: 's1', input: { type: 'ping' } 
 
 CIV's backend half is built by the **open-msupply client toolchain** (webpack +
 ts-loader + `backendCommon`) and committed at
-[`plugins/civ/backend/prebuilt/plugin.js`](../../civ/backend/README.md),
+[`private/plugins/civ/backend/prebuilt/plugin.js`](../../../private/plugins/civ/backend/README.md),
 which the packer ships **verbatim** — byte-identical to the field bundle. A
 committed `prebuilt/plugin.js` always wins; the build here is for a plugin whose
 source this repo owns, which today means this one. The two produce different

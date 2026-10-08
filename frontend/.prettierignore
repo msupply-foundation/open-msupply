@@ -1,5 +1,7 @@
 # Prettier ignores. Prettier already skips node_modules and reads this file for
 # everything else; it does NOT read .gitignore, so build output is listed here too.
+# `pnpm format` runs from the repo root (the plugins live in ../plugins and
+# ../private/plugins) and names this file and .prettierrc explicitly.
 
 # Dependencies & build output
 node_modules
@@ -16,7 +18,7 @@ codegen
 
 # A prebuilt bundle is a build artifact wherever it appears — a committed
 # build is packed verbatim, so reformatting it would change what ships.
-plugins/*/backend/prebuilt
+**/backend/prebuilt
 
 # Lockfile
 pnpm-lock.yaml

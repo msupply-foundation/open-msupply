@@ -1,7 +1,8 @@
 {
   /*
    * The FRONTEND halves of the in-repo plugins — the reference plugins
-   * (plugins/examples/*) and the country plugins (plugins/*) — plus the one
+   * (../plugins/examples/*) and the country plugins (../private/plugins/*,
+   * and any public one at ../plugins/*) — plus the one
    * backend half that carries its own `host.d.ts` (see the exclude at the
    * bottom). Typechecked exactly as an out-of-tree plugin would be: the SDK
    * resolved from source through the `@openmsupply/plugin-sdk` path mapping
@@ -21,7 +22,17 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "paths": { "@openmsupply/plugin-sdk": ["./src/plugin-sdk/index.ts"] },
+    "paths": {
+      "@openmsupply/plugin-sdk": ["./src/plugin-sdk/index.ts"],
+      // The plugins live outside frontend/ (../plugins, ../private/plugins),
+      // where node resolution would never reach this package's node_modules.
+      // A plugin may import only the SDK and solid-js; vitest and graphql are
+      // for its co-located tests.
+      "solid-js": ["./node_modules/solid-js"],
+      "solid-js/*": ["./node_modules/solid-js/*"],
+      "vitest": ["./node_modules/vitest"],
+      "graphql": ["./node_modules/graphql"]
+    },
     "allowImportingTsExtensions": true,
     // One divergence from tsconfig.app.json: a plugin imports its identity
     // (name, version) from its own package.json — the same file the pack step
@@ -48,26 +59,28 @@
    * through the file list.
    */
   "include": [
-    "plugins/examples/**/*.ts",
-    "plugins/examples/**/*.tsx",
-    "plugins/*/src/**/*.ts",
-    "plugins/*/src/**/*.tsx",
+    "../plugins/examples/**/*.ts",
+    "../plugins/examples/**/*.tsx",
+    "../plugins/*/src/**/*.ts",
+    "../plugins/*/src/**/*.tsx",
+    "../private/plugins/*/src/**/*.ts",
+    "../private/plugins/*/src/**/*.tsx",
     // cook_islands' BACKEND half, plus the `shared/` wire contract both
     // halves import. Named rather than globbed as `plugins/*/backend`,
     // because civ's half compiles only against its own toolchain's
     // `@common/*` and so must stay out.
-    "plugins/cook_islands/backend/src/**/*.ts",
-    "plugins/cook_islands/shared/**/*.ts",
+    "../private/plugins/cook_islands/backend/src/**/*.ts",
+    "../private/plugins/cook_islands/shared/**/*.ts",
     "src/globals.d.ts",
     "src/intl/globals.d.ts"
   ],
   /*
    * The examples' BACKEND halves belong to tsconfig.backend-plugins.json,
    * which is where `@common/*` is mapped. Without this they would be swept up
-   * by the `plugins/examples/**` globs above and fail with TS2307 on
+   * by the `../plugins/examples/**` globs above and fail with TS2307 on
    * `@common/types` — this project deliberately has no such mapping.
    * cook_islands' backend half is the exception that stays here; see the
    * include note above and the header of tsconfig.backend-plugins.json.
    */
-  "exclude": ["plugins/examples/*/backend/**"]
+  "exclude": ["../plugins/examples/*/backend/**"]
 }

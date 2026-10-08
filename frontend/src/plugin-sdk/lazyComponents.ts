@@ -106,8 +106,8 @@ export const FilterDateRange: Component<FilterDateRangeProps> = lazy(() =>
 /*
  * The modal dialogs (ui-standards § menus, popovers & modals) — the
  * Afghanistan Daily Tally's submit confirmation and its leave prompt
- * (plugins/afghanistan ui-surface § S7, S10). Lazy by kdd/bundling's rule:
- * a dialog is heavy chrome a plugin-free deployment never opens from the
+ * (private/plugins/afghanistan ui-surface § S7, S10). Lazy by kdd/bundling's
+ * rule: a dialog is heavy chrome a plugin-free deployment never opens from the
  * SDK. A dialog mounts only while open, so it is never the first render of
  * an already-open screen's Suspense boundary — the one case lazy is unsafe.
  */

@@ -93,7 +93,9 @@ const sectionNames = files =>
 // Plugin profiles (e2e/README.md § Plugin profiles): a suite under
 // specs/plugins/<profile>/ runs on its own stack with that plugin installed,
 // never on the default one. A profile counts only when
-// plugins/<profile>/package.json exists — the nightly's rule.
+// private/plugins/<profile>/package.json exists — the nightly's rule.
+// Profiles are deployments, so their plugins are the country ones.
+const profilePluginDir = profile => `private/plugins/${profile}`;
 const PROFILE_SPEC =
   /^frontend\/e2e\/specs\/plugins\/([^/]+)\/([^/]+)\.spec\.ts$/;
 export const profileSuites = files =>
@@ -101,11 +103,13 @@ export const profileSuites = files =>
     .map(f => PROFILE_SPEC.exec(f))
     .filter(Boolean)
     .map(([spec, profile, name]) => ({ name, profile, spec }))
-    .filter(s => files.has(`frontend/plugins/${s.profile}/package.json`))
+    .filter(s => files.has(`${profilePluginDir(s.profile)}/package.json`))
     .sort((a, b) => a.name.localeCompare(b.name));
 const allSuiteNames = files =>
   [...specNames(files), ...profileSuites(files).map(s => s.name)].sort();
-const PLUGIN_DIR = /^frontend\/plugins\/([^/]+)\//;
+// Every in-repo plugin: public ones in plugins/, country ones in
+// private/plugins/ (plugins/examples/ counts as one, never a profile).
+const PLUGIN_DIR = /^((?:private\/)?plugins\/[^/]+)\//;
 
 /**
  * The config as selection uses it: a plugin with no profile is ignored —
@@ -113,7 +117,9 @@ const PLUGIN_DIR = /^frontend\/plugins\/([^/]+)\//;
  * its specs/plugins/<profile>/ directory; nothing to list here.
  */
 export const effectiveConfig = (config, files) => {
-  const profiles = new Set(profileSuites(files).map(s => s.profile));
+  const profiles = new Set(
+    profileSuites(files).map(s => profilePluginDir(s.profile))
+  );
   const unloaded = new Set(
     [...files]
       .map(f => PLUGIN_DIR.exec(f)?.[1])
@@ -121,10 +127,7 @@ export const effectiveConfig = (config, files) => {
   );
   return {
     ...config,
-    ignore: [
-      ...config.ignore,
-      ...[...unloaded].map(d => `frontend/plugins/${d}/**`),
-    ],
+    ignore: [...config.ignore, ...[...unloaded].map(d => `${d}/**`)],
   };
 };
 
@@ -156,7 +159,7 @@ export const ownersOf = (config, files) => {
       kind: 'suite',
       profile: s.profile,
       frontend: [
-        `frontend/plugins/${s.profile}/**`,
+        `${profilePluginDir(s.profile)}/**`,
         'frontend/src/plugins/**',
         s.spec,
       ],
@@ -183,7 +186,7 @@ const RESOLVE_EXTS = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json'];
 const inGraph = f =>
   f.startsWith('frontend/src/') ||
   f.startsWith('frontend/e2e/') ||
-  f.startsWith('frontend/plugins/');
+  PLUGIN_DIR.test(f);
 
 /**
  * Resolve an import specifier to a repo-relative file in `files`, or null for
@@ -956,9 +959,9 @@ export const checkConfig = (config, files) => {
       .map(f => /^frontend\/e2e\/specs\/plugins\/([^/]+)\//.exec(f)?.[1])
       .filter(Boolean)
   ))
-    if (!files.has(`frontend/plugins/${profile}/package.json`))
+    if (!files.has(`${profilePluginDir(profile)}/package.json`))
       problems.push(
-        `specs/plugins/${profile}/ has no plugin: frontend/plugins/${profile}/package.json is missing`
+        `specs/plugins/${profile}/ has no plugin: ${profilePluginDir(profile)}/package.json is missing`
       );
 
   // Every suite owns something: its same-named section, or an override.
