@@ -1,6 +1,6 @@
 const { merge } = require('webpack-merge');
 // Expecting for every plugin to be developed from 'common/packages/plugins/{plugin repo}/backend/{version}'
-const generateBaseConfig = require('../../../backend-plugin-webpack.config.js');
+const generateBaseConfig = require('../../../../../client/packages/plugins/backend-plugin-webpack.config.js');
 const path = require('path');
 
 const distDir = path.resolve(__dirname, 'dist');

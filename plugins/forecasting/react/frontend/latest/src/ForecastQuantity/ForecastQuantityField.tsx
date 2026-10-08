@@ -8,7 +8,7 @@ import {
   useTranslation,
   ValueInfoRow,
 } from '@openmsupply-client/common';
-import { usePluginData } from '../../../../../api';
+import { usePluginData } from '../../../../../../../client/packages/plugins/api';
 
 export type ForecastQuantityFieldPlugin = ArrayElement<
   NonNullable<Plugins['requestRequisitionLine']>['editViewField']
