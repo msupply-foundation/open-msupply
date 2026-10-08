@@ -212,12 +212,12 @@ The labels come from `docker/compose.deploy.yaml` as of the commit whose workflo
 
 ### Proxy and dashboard
 
-The reverse proxy in front of every deployment and the deployments dashboard live in [`.github/deploy/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy) and are deployed by **`docker-deploy-services.yaml`**. It runs on every push to `develop` that changes them, and can be run by hand. Each directory builds a small image — stock Caddy or node with its files baked in, tagged with the directory's git tree hash — which the workflow brings up on the deploy box.
+The reverse proxy in front of every deployment and the deployments dashboard live in [`.github/deploy/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy) and are deployed by **`docker-deploy-services.yaml`**. It runs on every push to `develop` that changes them, and can be run by hand. Each directory builds small images — stock Caddy or node with its files baked in, tagged with the directory's git tree hash — which the workflow brings up on the deploy box. The dashboard builds two: one for the page and its server, and one with only `snapshot.mjs` for the container that holds the docker socket.
 
 - **Nothing is copied onto the box.** `docker ps` shows which version each one runs: the image tag is the tree hash, `git rev-parse <commit>:.github/deploy/proxy`.
 - **The box keeps one file per service, its `.env`:** `~/proxy/.env` and `~/dashboard/.env`. Nothing in CI writes them. `DEPLOY_DOMAIN` and `GITHUB_REPOSITORY` are passed in by the workflow, so neither belongs there.
 - **Only what changed is recreated.** A changed file is a new image, and compose recreates a container only when its image or settings change. Recreating the dashboard signs everyone out; recreating the proxy drops in-flight requests to every deployment for a second or two.
-- **A bad change does not take the box down.** A Caddyfile that does not validate, or a `.mjs` that does not parse, fails the image build, before anything running is touched; the dashboard's tests run before that. If a new version still does not come up healthy, the previous image — kept on the box — is brought back, and the run fails.
+- **A bad change does not take the box down.** A Caddyfile that does not validate, a `.mjs` that does not parse, or a dashboard page that fails its typecheck or tests fails the image build, before anything running is touched; the dashboard's tests run before that. If a new version still does not come up healthy, the previous image — kept on the box — is brought back, and the run fails.
 - **Trying a change before it merges:** run the workflow from your branch. That branch's copy stays on the box until the next run from `develop` — at the latest the daily scheduled one, which also puts back anything changed on the box by hand.
 
 ### Reverse proxy
@@ -257,7 +257,7 @@ Shows every deployment on the box — the commit actually running, how far behin
 
 Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Releases**, which lists every open-mSupply release, release candidate and nightly with its Docker images (click one to copy its `docker pull`), Windows installers and Android APKs. A third container, `releases`, builds that list every ten minutes from Docker Hub's public tags and the public `msupply-releases` B2 bucket, and writes it to a file the dashboard serves. It needs no credentials: the bucket can't be listed without a key, so each file is looked up by the name the release workflows upload it under. It lists whatever Docker Hub still holds: every release, and a month of nightlies and RCs, per `cleanup-docker-tags.yaml`. APKs are named after `package.json`'s version rather than the tag, so they're looked for under each way the tag spells its version; that misses only a one-off tag whose version differs from its branch's.
 
-Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs` and `web.mjs`.
+Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs` and `web.mjs`. The page itself is a Solid app in `ui/`, built into the image by the `Dockerfile`'s first stage; `ui/README.md` says how to run it locally.
 
 **1. Create the GitHub App** people sign in through, once, under the organisation (Settings → Developer settings → GitHub Apps → New):
 
@@ -285,7 +285,7 @@ chmod 600 ~/dashboard/.env
 
 ### Plugin bundles
 
-The dashboard's **Plugin bundles** tab (`https://dashboard.<DEPLOY_DOMAIN>/#plugins`) lists ready-to-install bundles of the country plugins in `frontend/plugins/`, **one version line per plugin**: its released versions newest first, which version `develop` and each RC carry, and branch builds as pre-releases. Each has a download button; the file installs through the server's plugin upload or `remote_server_cli install-plugin-bundle`.
+The dashboard's **Plugin bundles** tab (`https://dashboard.<DEPLOY_DOMAIN>/plugins`) lists ready-to-install bundles of the country plugins in `frontend/plugins/`, **one version line per plugin**: its released versions newest first, which version `develop` and each RC carry, and branch builds as pre-releases. Each has a download button; the file installs through the server's plugin upload or `remote_server_cli install-plugin-bundle`.
 
 They come from **`publish-bundles.yaml`**:
 
