@@ -80,6 +80,7 @@ PLUGIN_CODE=""
 
 SERVER_PORT=${E2E_SERVER_PORT:-}
 FE_PORT=${E2E_FE_PORT:-}
+DATAFILE_NAME="" # set before the restore; e2e unless a profile overlays it
 SERVERS=${E2E_SERVERS:-auto}
 if [[ -n "$SERVER_PORT" || -n "$FE_PORT" || -n "$PLUGIN_PROFILE" ]]; then
   SERVERS=1
@@ -210,6 +211,9 @@ cleanup() {
     rm -f "$SERVER_DIR/${DB_NAMES[$i]}".sqlite*
     rm -rf "$SERVER_DIR/app_data/${DB_NAMES[$i]}"
   done
+  if [[ -n "$DATAFILE_NAME" && "$DATAFILE_NAME" != e2e ]]; then
+    rm -rf "$SERVER_DIR/data/$DATAFILE_NAME"
+  fi
 }
 trap cleanup EXIT
 
@@ -390,14 +394,31 @@ done
 DB_NAME=${DB_NAMES[0]}
 LOG_DIR=${LOG_DIRS[0]}
 
-echo "Restoring ${#DB_NAMES[@]} database(s) from $SERVER_DIR/data/e2e"
+# A plugin profile may carry a datafile OVERLAY — the deployment's central
+# configuration on top of the shared datafile (scripts/e2e/apply-overlay.mjs;
+# e2e/README.md § Plugin profiles). The merged copy is written beside the
+# shared one, named by port like the database (server/data is gitignored
+# apart from e2e/), and removed with it. A profile always runs one server
+# (see SERVERS above), so there is one copy.
+DATAFILE_NAME=e2e
+OVERLAY="$FE_DIR/e2e/fixtures/plugins/$PLUGIN_PROFILE/overlay.json"
+if [[ -n "$PLUGIN_PROFILE" && -f "$OVERLAY" ]]; then
+  DATAFILE_NAME=e2e_${PLUGIN_PROFILE}_$SERVER_PORT
+  node "$FE_DIR/scripts/e2e/apply-overlay.mjs" "$SERVER_DIR/data/e2e" \
+    "$OVERLAY" "$SERVER_DIR/data/$DATAFILE_NAME" || {
+    echo "Could not apply $OVERLAY to the shared datafile" >&2
+    exit 1
+  }
+fi
+
+echo "Restoring ${#DB_NAMES[@]} database(s) from $SERVER_DIR/data/$DATAFILE_NAME"
 RESTORE_PIDS=()
 for i in "${!DB_NAMES[@]}"; do
   rm -f "$SERVER_DIR/${DB_NAMES[$i]}".sqlite*
   (cd "$SERVER_DIR" && env MSUPPLY_NO_TEST_DB_TEMPLATE=1 \
     APP__DATABASE__DATABASE_NAME="${DB_NAMES[$i]}" \
     "${SYNC_OFF[@]}" "${SERVER_ROLE_PIN[@]}" \
-    "$BIN_DIR/remote_server_cli" initialise-from-export -n e2e -r \
+    "$BIN_DIR/remote_server_cli" initialise-from-export -n "$DATAFILE_NAME" -r \
     > "${LOG_DIRS[$i]}/e2e-init.log" 2>&1) &
   RESTORE_PIDS+=($!)
 done
