@@ -40,8 +40,72 @@ export type InstalledPluginsQuery = {
   };
 };
 
+export type UploadedPluginInfoQueryVariables = Types.Exact<{
+  fileId: Types.Scalars['String']['input'];
+}>;
+
+export type UploadedPluginInfoQuery = {
+  __typename: 'Queries';
+  centralServer: {
+    __typename: 'CentralServerQueryNode';
+    plugin: {
+      __typename: 'CentralPluginQueries';
+      uploadedPluginInfo:
+        | {
+            __typename: 'PluginInfoNode';
+            formInstallPreview?: {
+              __typename: 'FormInstallPreviewNode';
+              formPlugins: Array<{
+                __typename: 'FormPluginPreviewNode';
+                pluginCode: string;
+                programKeys: Array<{
+                  __typename: 'FormPluginProgramKeyNode';
+                  programKey: string;
+                  documentTypes: Array<string>;
+                  boundProgram?: {
+                    __typename: 'ProgramNode';
+                    id: string;
+                    name: string;
+                  } | null;
+                }>;
+                documentTypes: Array<{
+                  __typename: 'FormPluginDocumentTypeNode';
+                  documentType: string;
+                  name: string;
+                  category: Types.DocumentRegistryCategoryNode;
+                  programKey?: string | null;
+                  existingEntry: Types.ExistingRegistryEntryNode;
+                  existingEntryId?: string | null;
+                  existingEntryOwner?: string | null;
+                  blanksOldUi: boolean;
+                }>;
+              }>;
+              programs: Array<{
+                __typename: 'ProgramNode';
+                id: string;
+                name: string;
+              }>;
+            } | null;
+          }
+        | {
+            __typename: 'UploadedPluginError';
+            error: Types.UploadedPluginErrorVariant;
+          };
+    };
+  };
+};
+
 export type InstallUploadedPluginMutationVariables = Types.Exact<{
   fileId: Types.Scalars['String']['input'];
+  programs?: Types.InputMaybe<
+    Array<Types.PluginProgramInput> | Types.PluginProgramInput
+  >;
+  takeOver?: Types.InputMaybe<
+    Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']
+  >;
+  blankOldUi?: Types.InputMaybe<
+    Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']
+  >;
 }>;
 
 export type InstallUploadedPluginMutation = {
@@ -140,11 +204,64 @@ export const InstalledPluginsDocument = gql`
   }
   ${InstalledPluginNodeFragmentDoc}
 `;
+export const UploadedPluginInfoDocument = gql`
+  query uploadedPluginInfo($fileId: String!) {
+    centralServer {
+      plugin {
+        uploadedPluginInfo(fileId: $fileId) {
+          __typename
+          ... on PluginInfoNode {
+            formInstallPreview {
+              formPlugins {
+                pluginCode
+                programKeys {
+                  programKey
+                  documentTypes
+                  boundProgram {
+                    id
+                    name
+                  }
+                }
+                documentTypes {
+                  documentType
+                  name
+                  category
+                  programKey
+                  existingEntry
+                  existingEntryId
+                  existingEntryOwner
+                  blanksOldUi
+                }
+              }
+              programs {
+                id
+                name
+              }
+            }
+          }
+          ... on UploadedPluginError {
+            error
+          }
+        }
+      }
+    }
+  }
+`;
 export const InstallUploadedPluginDocument = gql`
-  mutation installUploadedPlugin($fileId: String!) {
+  mutation installUploadedPlugin(
+    $fileId: String!
+    $programs: [PluginProgramInput!]
+    $takeOver: [String!]
+    $blankOldUi: [String!]
+  ) {
     centralServer {
       plugins {
-        installUploadedPlugin(fileId: $fileId) {
+        installUploadedPlugin(
+          fileId: $fileId
+          programs: $programs
+          takeOver: $takeOver
+          blankOldUi: $blankOldUi
+        ) {
           pluginInfo
         }
       }
@@ -242,6 +359,24 @@ export function getSdk(
             signal,
           }),
         'installedPlugins',
+        'query',
+        variables
+      );
+    },
+    uploadedPluginInfo(
+      variables: UploadedPluginInfoQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UploadedPluginInfoQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UploadedPluginInfoQuery>({
+            document: UploadedPluginInfoDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'uploadedPluginInfo',
         'query',
         variables
       );
