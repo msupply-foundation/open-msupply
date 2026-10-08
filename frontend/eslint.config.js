@@ -4,6 +4,31 @@ import solid from 'eslint-plugin-solid/configs/typescript';
 import commentLength from 'eslint-plugin-comment-length';
 import compat from 'eslint-plugin-compat';
 import globals from 'globals';
+import { readFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+
+/*
+ * Every block is anchored at the REPO root (the `basePath` stamped on below),
+ * not at this file's directory, because the in-repo plugins live beside
+ * frontend/ — public ones in plugins/, country ones in private/plugins/.
+ * Globs are therefore repo-relative: host code is `frontend/...`. An absolute
+ * basePath matches the same whichever directory ESLint runs from, so an editor
+ * linting from frontend/ still applies the host blocks; `pnpm lint` runs from
+ * the repo root so the plugin directories are inside its base path too.
+ */
+const REPO_ROOT = dirname(import.meta.dirname);
+
+/*
+ * The minimum browser, stated once in package.json. eslint-plugin-compat looks
+ * for a browserslist by walking up from each linted file, which finds
+ * frontend/package.json for host code but nothing for a plugin outside
+ * frontend/ — so it would fall back to browserslist's defaults (Opera Mini and
+ * all) and flag `Promise.all`. Handing it the list makes every file answer to
+ * the same target.
+ */
+const { browserslist } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+);
 
 /*
  * Comment line-length cap. `overflow-only` wraps ONLY lines that exceed the
@@ -94,19 +119,19 @@ const sharedRules = {
  * Type-checking is owned by `tsc` (see the `check` script); ESLint covers what
  * the compiler doesn't, so these rules are the fast, non-type-aware set.
  */
-export default tseslint.config(
+const config = tseslint.config(
   {
     ignores: [
-      // Anywhere, not just the root: plugins/<code>/dist holds built bundles.
+      // Anywhere, not just the root: <plugin dir>/dist holds built bundles.
       '**/dist/**',
-      'dist-ssr/**',
-      'node_modules/**',
+      'frontend/dist-ssr/**',
+      '**/node_modules/**',
       '**/*.generated.ts',
       '**/*.css.d.ts',
-      'codegen/**', // CommonJS (.cjs) with its own node:test suite
+      'frontend/codegen/**', // CommonJS (.cjs) with its own node:test suite
       // A prebuilt bundle is a build artifact wherever it appears — it is
       // packed verbatim, so it is output, not source.
-      'plugins/*/backend/prebuilt/**',
+      '{plugins,private/plugins}/*/backend/prebuilt/**',
     ],
   },
 
@@ -114,10 +139,10 @@ export default tseslint.config(
   // APIs unsupported by the minimum browser (browserslist in package.json —
   // Chromium 132, the WebView on the oldest Android 8.1 tablets deployed).
   // The example
-  // plugins (plugins/examples/) are the same: ordinary Solid components running in the
-  // host's runtime, so they answer to the same rules.
+  // plugins (plugins/examples/) are the same: ordinary Solid components
+  // running in the host's runtime, so they answer to the same rules.
   {
-    files: ['src/**/*.{ts,tsx}', 'plugins/examples/**/*.{ts,tsx}'],
+    files: ['frontend/src/**/*.{ts,tsx}', 'plugins/examples/**/*.{ts,tsx}'],
     // The reference BACKEND plugin is not browser code — it has its own block
     // below rather than Solid, DOM globals and browser-compat rules.
     ignores: ['plugins/examples/*/backend/**'],
@@ -153,7 +178,7 @@ export default tseslint.config(
   // legitimately implement the web halves of saveBlob/openBlob. Only the
   // download restrictions lift here; the crypto one stands everywhere.
   {
-    files: ['src/platform/**/*.{ts,tsx}'],
+    files: ['frontend/src/platform/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-properties': ['error', cryptoRandomUuidRestriction],
       'no-restricted-syntax': 'off',
@@ -161,7 +186,8 @@ export default tseslint.config(
   },
 
   /*
-   * The in-repo country plugins (plugins/<code>/src). Same rules as app source —
+   * The in-repo plugins (private/plugins/<code>/src, and any public one at
+   * plugins/<code>/src). Same rules as app source —
    * they are Solid components in the host's runtime, so the reactivity and
    * browser-compat rules apply identically — plus the import boundary
    * (spec/plugins/sdk-contract.md § imports): a plugin may import ONLY the SDK
@@ -170,7 +196,7 @@ export default tseslint.config(
    * this makes the failure say why.
    */
   {
-    files: ['plugins/*/src/**/*.{ts,tsx}'],
+    files: ['{plugins,private/plugins}/*/src/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -224,20 +250,21 @@ export default tseslint.config(
    * The Afghanistan plugin's stored shapes are wire constraints: rows the
    * React bundle wrote are in the field and the Afghanistan reports compile
    * against a copy of its type module, so payload field names stay snake_case
-   * (plugins/afghanistan/rules.md § data conventions). Property names and the
-   * destructured reads of them are exempt from camelcase there; identifiers
-   * the plugin coins are not.
+   * (private/plugins/afghanistan/rules.md § data conventions). Property names
+   * and the destructured reads of them are exempt from camelcase there;
+   * identifiers the plugin coins are not.
    */
   {
-    files: ['plugins/afghanistan/src/**/*.{ts,tsx}'],
+    files: ['private/plugins/afghanistan/src/**/*.{ts,tsx}'],
     rules: {
       camelcase: ['error', { properties: 'never', ignoreDestructuring: true }],
     },
   },
 
   /*
-   * Every BACKEND half — the reference plugin (plugins/examples/<code>/backend) and
-   * the country plugins' — which run in the server's BoaJS engine. No Solid,
+   * Every BACKEND half — the reference plugin
+   * (plugins/examples/<code>/backend) and the country plugins' — which run in
+   * the server's BoaJS engine. No Solid,
    * no DOM, and deliberately NO `globals.browser`: the only globals they have
    * are the host functions the engine binds, so an accidental `document` or
    * `window` should be an undefined-variable error rather than something the
@@ -253,11 +280,11 @@ export default tseslint.config(
   {
     files: [
       'plugins/examples/*/backend/**/*.ts',
-      'plugins/*/backend/**/*.ts',
+      '{plugins,private/plugins}/*/backend/**/*.ts',
       // The wire contract both halves import. Type-only, so it needs the TS
       // parser and nothing else — and it sits outside `src/`, the only plugin
       // path the app block covers.
-      'plugins/*/shared/**/*.ts',
+      '{plugins,private/plugins}/*/shared/**/*.ts',
     ],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
@@ -268,7 +295,7 @@ export default tseslint.config(
 
   // Build config + node scripts.
   {
-    files: ['*.config.{ts,js}', 'scripts/**/*.mjs'],
+    files: ['frontend/*.config.{ts,js}', 'frontend/scripts/**/*.mjs'],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
       globals: globals.node,
@@ -281,13 +308,13 @@ export default tseslint.config(
   // above.
   {
     files: [
-      'src/**/*.{ts,tsx}',
-      'plugins/*/src/**/*.{ts,tsx}',
-      'plugins/*/backend/**/*.ts',
-      'plugins/*/shared/**/*.ts',
+      'frontend/src/**/*.{ts,tsx}',
+      '{plugins,private/plugins}/*/src/**/*.{ts,tsx}',
+      '{plugins,private/plugins}/*/backend/**/*.ts',
+      '{plugins,private/plugins}/*/shared/**/*.ts',
       'plugins/examples/**/*.{ts,tsx}',
-      '*.config.{ts,js}',
-      'scripts/**/*.mjs',
+      'frontend/*.config.{ts,js}',
+      'frontend/scripts/**/*.mjs',
     ],
     plugins: { 'comment-length': commentLength },
     rules: {
@@ -301,4 +328,8 @@ export default tseslint.config(
       ],
     },
   }
+);
+
+export default [...config, { settings: { browsers: browserslist } }].map(
+  block => ({ ...block, basePath: REPO_ROOT })
 );

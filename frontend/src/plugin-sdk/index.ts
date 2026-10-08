@@ -173,8 +173,8 @@ export type { FormSectionProps } from '../ui/layout/Form/FormSection';
 export { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 export type { ContentContainerProps } from '../ui/layout/ContentContainer/ContentContainer';
 // The settings-form set — what the Stocktake Helper's Settings screen needs
-// (plugins/cook_islands, #489): save/discard actions, the numeric thresholds,
-// the item search box, and the per-item Priority toggle.
+// (private/plugins/cook_islands, #489): save/discard actions, the numeric
+// thresholds, the item search box, and the per-item Priority toggle.
 // NumberField and TextField are already in this barrel's graph (CurrencyField
 // wraps NumberField, which renders through TextField), so exporting them keeps
 // two modules alive that ship regardless; Button and ToggleSwitch are new
@@ -204,10 +204,10 @@ export { foldForSearch, matchesSearch } from '../ui/utils/searchText';
 export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
 export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
 // The date-range filter — what the Stocktake Helper's past-reports list needs
-// (plugins/cook_islands, #490): a pick-only range whose `max` refuses future
-// dates and whose pick flow cannot produce an inverted range. New CSS-bearing
-// modules in the SDK chunk — the field, its DatePickerPanel and their shared
-// styles (measured: kdd/bundle-size-by-pr).
+// (private/plugins/cook_islands, #490): a pick-only range whose `max` refuses
+// future dates and whose pick flow cannot produce an inverted range. New
+// CSS-bearing modules in the SDK chunk — the field, its DatePickerPanel and
+// their shared styles (measured: kdd/bundle-size-by-pr).
 export { DateRangeField } from '../ui/elements/inputs/DateRangeField';
 export type {
   DateRangeFieldProps,
@@ -215,8 +215,9 @@ export type {
 } from '../ui/elements/inputs/DateRangeField';
 
 /*
- * The Afghanistan Daily Tally's set (plugins/afghanistan ui-surface.md § S1–S7,
- * the roles its Layout lines name — README § host obligations lists them as
+ * The Afghanistan Daily Tally's set (private/plugins/afghanistan ui-surface.md
+ * § S1–S7, the roles its Layout lines name — README § host obligations lists
+ * them as
  * the kit gaps): the collapsible section group for its course cards and
  * coverage groups; the icon-only button for the counter steppers; the
  * mutually-exclusive choice for the session type; the row-status badge for
@@ -270,8 +271,9 @@ export { HStack } from '../ui/layout/Stack/HStack';
 export type { HStackProps } from '../ui/layout/Stack/HStack';
 export { DetailCard } from '../ui/layout/Detail/DetailCard';
 export type { DetailCardProps } from '../ui/layout/Detail/DetailCard';
-// The recessed grouping panel: Quick Entry's record strip (plugins/afghanistan
-// ui-surface.md § S3) is one. Hand-rolled, pure CSS over tokens.
+// The recessed grouping panel: Quick Entry's record strip
+// (private/plugins/afghanistan ui-surface.md § S3) is one. Hand-rolled, pure
+// CSS over tokens.
 export { InsetPanel } from '../ui/layout/InsetPanel/InsetPanel';
 export type { InsetPanelProps } from '../ui/layout/InsetPanel/InsetPanel';
 export { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
@@ -279,7 +281,7 @@ export type { ContentFooterProps } from '../ui/layout/ContentFooter/ContentFoote
 export { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 
 /*
- * The Afghanistan configuration editor's own set (plugins/afghanistan
+ * The Afghanistan configuration editor's own set (private/plugins/afghanistan
  * ui-surface.md § S8 — the five roles it names and no other audited surface
  * does, plus the reorderable list its Dose order tab needed built):
  * page-level tabs, the checkbox of the dose matrix, the multi-select of a
@@ -397,9 +399,10 @@ export type { Band, LayeredConfig } from '../ui/elements/table/tableConfig';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
- * The six the Cook Islands navigator names for its tiles (plugins/cook_islands
- * ui-surface.md § S2/S3): patient, inbox tray, truck, box with an arrow out,
- * stock, sheet — in that order below. That file describes the PICTURE and
+ * The six the Cook Islands navigator names for its tiles
+ * (private/plugins/cook_islands ui-surface.md § S2/S3): patient, inbox tray,
+ * truck, box with an arrow out, stock, sheet — in that order below. That file
+ * describes the PICTURE and
  * never names an export, so this list is the mapping; keep the two in step.
  * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
  * flip or an a11y attribute on the host icon reaches the contributed surface
@@ -451,11 +454,11 @@ export { CheckIcon } from '../ui/icons';
 // eagerly, so re-exporting costs nothing new.
 export { ChevronDownIcon } from '../ui/icons';
 /*
- * The Afghanistan Daily Tally's icons (plugins/afghanistan ui-surface.md):
- * the add icon on _New tally sheet_, the delete icon on _Discard draft_, the
- * minus and plus of the counter control, the success check beside
- * _Auto-allocated_, the forward arrow on Continue. All path data in the module
- * that already ships — the same bargain as the entries above.
+ * The Afghanistan Daily Tally's icons (private/plugins/afghanistan
+ * ui-surface.md): the add icon on _New tally sheet_, the delete icon on
+ * _Discard draft_, the minus and plus of the counter control, the success
+ * check beside _Auto-allocated_, the forward arrow on Continue. All path data
+ * in the module that already ships — the same bargain as the entries above.
  */
 export {
   ArrowRightIcon,
@@ -579,9 +582,10 @@ export { generateUUID } from '../uuid';
 
 // ── Files out of the app ────────────────────────────────────────────────────
 /*
- * The configuration editor's _Download JSON_ (plugins/afghanistan ui-surface §
- * S8). One async function; its platform graph loads on the first save, so this
- * costs nothing eager (see ./files.ts for why a plugin must not hand-roll it).
+ * The configuration editor's _Download JSON_ (private/plugins/afghanistan
+ * ui-surface § S8). One async function; its platform graph loads on the first
+ * save, so this costs nothing eager (see ./files.ts for why a plugin must not
+ * hand-roll it).
  */
 export { saveFile } from './files';
 export type { SaveFileResult } from './files';

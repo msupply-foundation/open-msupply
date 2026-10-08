@@ -112,8 +112,8 @@ describe('discoverDevPlugins', () => {
       undefined,
       fakeFs({
         ...examples,
-        '/repo/plugins/civ/package.json': plugin('civ_plugins'),
-        '/repo/plugins/civ/src/plugin.tsx': '',
+        '/repo/private/plugins/civ/package.json': plugin('civ_plugins'),
+        '/repo/private/plugins/civ/src/plugin.tsx': '',
       })
     );
     expect(plugins).toEqual([]);
@@ -123,11 +123,11 @@ describe('discoverDevPlugins', () => {
   it('loads an in-repo plugin named by repo-relative path', () => {
     const { plugins, problems } = discoverDevPlugins(
       ROOT,
-      'plugins/civ',
+      'private/plugins/civ',
       fakeFs({
         ...examples,
-        '/repo/plugins/civ/package.json': plugin('civ_plugins'),
-        '/repo/plugins/civ/src/plugin.tsx': '',
+        '/repo/private/plugins/civ/package.json': plugin('civ_plugins'),
+        '/repo/private/plugins/civ/src/plugin.tsx': '',
       })
     );
     expect(problems).toEqual([]);
@@ -135,8 +135,8 @@ describe('discoverDevPlugins', () => {
     expect(plugins).toEqual([
       {
         code: 'civ_plugins',
-        dir: '/repo/plugins/civ',
-        entry: '/repo/plugins/civ/src/plugin.tsx',
+        dir: '/repo/private/plugins/civ',
+        entry: '/repo/private/plugins/civ/src/plugin.tsx',
       },
     ]);
   });

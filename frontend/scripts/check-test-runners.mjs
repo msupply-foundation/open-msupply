@@ -151,10 +151,23 @@ const EXCLUDED = [];
 
 // Tracked files plus new, un-ignored ones, so a test file added in the working
 // tree is checked before it is staged rather than after it lands. git also
-// keeps node_modules and every build output out of the list for free.
+// keeps node_modules and every build output out of the list for free. The
+// in-repo plugins sit beside frontend/, so they are listed too — as
+// `../plugins/...` and `../private/plugins/...`, the form the runners' globs
+// use. A root missing from this tree (no private/ in the public mirror) is
+// simply absent from git's answer.
 const testFiles = execFileSync(
   'git',
-  ['ls-files', '--cached', '--others', '--exclude-standard'],
+  [
+    'ls-files',
+    '--cached',
+    '--others',
+    '--exclude-standard',
+    '--',
+    '.',
+    '../plugins',
+    '../private/plugins',
+  ],
   { encoding: 'utf8' }
 )
   .split('\n')

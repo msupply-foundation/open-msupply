@@ -14,7 +14,7 @@ import { BACKEND_COMMON } from './vite/backendPluginBuild';
  *   The environment stays `node`: components under test render no DOM (they
  *   return values and run effects), so nothing needs a document, and the suite
  *   costs no jsdom dependency.
- * - `backend-plugins`: CIV's BoaJS half (`plugins/civ/backend/src`). Two
+ * - `backend-plugins`: CIV's BoaJS half (`private/plugins/civ/backend/src`). Two
  *   differences, both about running code written for another host: the
  *   `@common` specifier resolves to the server-generated `backendCommon`, and
  *   `globals: true` lets the suites keep the bare `describe`/`it`/`expect`
@@ -57,7 +57,11 @@ export default defineWorkspace([
       name: 'solid',
       // Plugins' component-shaped tests run here too: same reason as the
       // host's — reactivity only tracks under the browser conditions.
-      include: ['src/**/*.test.tsx', 'plugins/*/src/**/*.test.tsx'],
+      include: [
+        'src/**/*.test.tsx',
+        '../plugins/*/src/**/*.test.tsx',
+        '../private/plugins/*/src/**/*.test.tsx',
+      ],
       environment: 'node',
     },
   },
@@ -65,7 +69,7 @@ export default defineWorkspace([
     resolve: { alias: { '@common': BACKEND_COMMON } },
     test: {
       name: 'backend-plugins',
-      include: ['plugins/civ/backend/src/**/*.test.ts'],
+      include: ['../private/plugins/civ/backend/src/**/*.test.ts'],
       globals: true,
       environment: 'node',
     },

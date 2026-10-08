@@ -28,14 +28,15 @@
  *
  * Exit code 1 with a file:line report on failure. Run via `pnpm check`.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-/* Host source PLUS the in-repo plugins (the reference ones under
-   plugins/examples/ included): a plugin ships self-contained CSS styled by the
+/* Host source PLUS the in-repo plugins (public ones under ../plugins/, the
+   reference plugins included, and country ones under ../private/plugins/,
+   absent from the public mirror): a plugin ships self-contained CSS styled by the
    host's tokens (spec/plugins/sdk-contract § styling), so a literal duration
    there escapes the token reduce block exactly as one in src/ would. */
-const CSS_DIRS = ['src', 'plugins'];
+const CSS_DIRS = ['src', '../plugins', '../private/plugins'];
 const TOKENS_FILE = 'src/ui/styles/tokens.css';
 const REDUCE_QUERY = 'prefers-reduced-motion';
 
@@ -119,7 +120,7 @@ const walk = dir => {
     else if (entry.name.endsWith('.css')) cssFiles.push(path);
   }
 };
-CSS_DIRS.forEach(walk);
+CSS_DIRS.filter(dir => existsSync(dir)).forEach(walk);
 
 /*
  * Ranges covered by a `prefers-reduced-motion` media query — brace-matched from

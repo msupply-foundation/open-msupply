@@ -39,14 +39,15 @@ export default defineConfig({
       // The e2e scripts' own tests: the nightly workflow's helpers
       // (nightly-lib.mjs) and e2e:affected (affected.mjs).
       'scripts/**/*.test.mjs',
-      'plugins/*/src/**/*.test.ts',
+      '../plugins/*/src/**/*.test.ts',
+      '../private/plugins/*/src/**/*.test.ts',
       // cook_islands' backend half and shared domain core, named rather than
       // globbed: civ's backend tests are jest-style and import `@common/*`,
       // so they would fail the run on sight. `shared/` sits OUTSIDE the
-      // `plugins/*/src` glob — leaving it out silently skips the whole
+      // `plugins/*/src` globs — leaving it out silently skips the whole
       // domain-core suite, which is exactly what happened when it moved.
-      'plugins/cook_islands/backend/src/**/*.test.ts',
-      'plugins/cook_islands/shared/**/*.test.ts',
+      '../private/plugins/cook_islands/backend/src/**/*.test.ts',
+      '../private/plugins/cook_islands/shared/**/*.test.ts',
     ],
     environment: 'node',
   },
