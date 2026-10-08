@@ -1892,6 +1892,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               disabled (OMS-REG-SMV-11.26/.31). */}
           <div class={styles.batchGrid}>
             <DataTable
+              dialogTable
               columns={columns()}
               rows={draftRows()}
               rowKey={line => line.id}

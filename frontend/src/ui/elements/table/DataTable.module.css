@@ -33,22 +33,25 @@
   min-block-size: 0;
   min-inline-size: 0;
   margin-inline: calc(-1 * var(--table-bleed-inline));
-  margin-block: calc(-1 * var(--table-bleed-block));
+  margin-block: calc(-1 * var(--table-bleed-block-start))
+    calc(-1 * var(--table-bleed-block-end));
   border: var(--table-frame-width) solid var(--color-border-value);
   border-radius: var(--table-frame-radius);
   background: var(--bg-white);
   overflow: clip;
 
-  /* The frame as knobs a HOST may turn on a table it holds as its whole body
-     — declared HERE with the standard values, so a host changes them only by
-     setting them on this element (a descendant selector of its own), and a
-     table nested inside a host's own layout (a panel, an accordion, a grid
-     wrapper) keeps the frame. The full-screen Dialog runs its body table to
-     the sheet edges and to its two hairlines this way: bleed = its inline
-     inset and its block gap, frame and radius 0 (Dialog.module.css ›
-     data-fullscreen, #246). */
+  /* The frame as knobs a HOST may turn on a table it holds as its main line
+     table — declared HERE with the standard values, so a host changes them
+     only by setting them on this element (a descendant selector of its own),
+     and a table nested inside a host's own layout (a panel, an accordion, a
+     grid wrapper) keeps the frame. The full-screen Dialog runs its body table
+     to the sheet edges and to its two hairlines this way: bleed = its inline
+     inset and its block gap on the side(s) the table ends the body, frame and
+     radius 0 — on the table that IS the body, or one marked `dialogTable`
+     (Dialog.module.css › data-fullscreen, #246). */
   --table-bleed-inline: 0px;
-  --table-bleed-block: 0px;
+  --table-bleed-block-start: 0px;
+  --table-bleed-block-end: 0px;
   --table-frame-width: 1px;
   --table-frame-radius: var(--radius-md);
 

@@ -891,7 +891,14 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               closed, the trigger row summarises the drawn batches
               (OMS-REG-DIS-03.57) so the picked batch — usually one — is
               visible without expanding. */}
-            <Accordion collapsible variant="card">
+            <Accordion
+              collapsible
+              variant="card"
+              // The dialog's main line table lives in here: in the
+              // full-screen sheet the card runs to the sheet edges and the
+              // table sits flush under the trigger row (#246).
+              dialogTable
+            >
               <AccordionItem value="batches">
                 <AccordionTrigger
                   // h4: this disclosure sits INSIDE the Quantity section,

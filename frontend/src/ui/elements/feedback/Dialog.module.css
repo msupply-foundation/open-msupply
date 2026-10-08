@@ -549,30 +549,46 @@
   padding-block-end: 0;
 }
 
-/* 2. A table that IS the body runs edge to edge — and hairline to hairline.
+/* 2. The body's MAIN line table runs edge to edge — and hairline to hairline
+   where the layout allows. Which table: the scroll region's sole child (the
+   table IS the body — the stocktake editor, the pickers), or a surface that
+   carries data-dialog-table: DataTable's and Accordion's `dialogTable` prop,
+   set by a line editor whose body holds other things too — the inbound
+   editor's notices, the outbound editor's header panel and advisories, the
+   returns editors' stepper and reference field, the prescription editor's
+   Batches disclosure in the middle of its form. Explicit on purpose: a table
+   that shares a dialog with a form is not always the body (the create-patient
+   duplicates list, a repack history), so only an editor that says so gets
+   the treatment, and a secondary table it leaves unmarked keeps its frame.
+
    The scroll region's padding box is widened to the sheet edges inline and
    to the two hairlines block-wise (margin out, padding back in — the content
    sits where it did, the inline inset and the body's gap now doubling as the
-   focus-ring room), so a direct child may bleed into that padding without
-   the scrollport clipping it. Then a SOLE direct child (:only-child) is
-   handed the table frame's knobs (declared with their defaults on
-   DataTable's .root): bleed by the inset inline and by the gap block-wise,
-   no frame, no radius — the column-header row sits ON the heading's rule
-   and the last row (or the scroll box) ends ON the actions' rule, instead
-   of a 1rem band of empty panel above and below. Set ON the child, so they
-   beat the table's own defaults only when the table is the child itself; a
-   table nested in an editor's own layout — under a form panel, in an
-   accordion, in a grid wrapper — declares the defaults on its root and
-   keeps its frame and its spacing. Only-child, because a table that SHARES
-   the region with a sibling above it — the returns editors' progress strip
-   and reference field, the link-order picker's instruction line — is not
-   the body: the block bleed would eat the 1rem gap to that sibling and butt
-   a frameless toolbar against a text field, so it keeps its frame and its
-   gap. The header, the footer banner and the actions keep their inset:
-   a picker or a button against the sheet edge gains nothing. A hidden title
-   (.header.srOnly, out of flow) leaves no rule to meet, so a body table
-   there would run to the sheet's top edge — today every such workbench
-   dialog nests its table in its own wrapper, which keeps it framed. */
+   focus-ring room), so a child may bleed into that padding without the
+   scrollport clipping it. Then the surface is handed its frame's knobs —
+   declared with their defaults on DataTable's .root and on the card
+   Accordion's root — and set ON that element, so they beat the component's
+   own defaults only there: a table nested elsewhere declares the defaults on
+   its root and keeps its frame and its spacing.
+
+   Inline: bleed by the inset, no frame, no radius. A marked accordion bleeds
+   the same way, drops its radius, keeps the dialog's inset on its trigger
+   row (so "Batches" lines up with the form above it) and gives its content
+   none; the table inside it drops its frame and radius but does NOT bleed —
+   the accordion already reaches the edge.
+
+   Block: the END bleed goes to a table that ends the region — the sole
+   child; a marked table that is the region's last child, or the last child
+   of its last child (the inbound editor's display:contents wrapper, the
+   service-charges grid) — so its last row meets the actions' rule. The START
+   bleed goes only to a table that is the whole region (the sole child, or
+   the sole child of a sole-child wrapper), so its header row sits on the
+   heading's rule. A marked table mid-flow — under the outbound editor's
+   header panel with advisories after it, under the returns editors' field
+   cluster — keeps the 1rem gap on the side it shares with a neighbour. The
+   header, the footer banner and the actions keep their inset: a picker or a
+   button against the sheet edge gains nothing. A hidden title (.header
+   .srOnly, out of flow) leaves no rule to meet. */
 .dialog[data-fullscreen][open] .scroll {
   margin-inline: calc(-1 * var(--dialog-pad-inline));
   margin-block: calc(-1 * var(--dialog-gap));
@@ -580,9 +596,46 @@
   padding-block: var(--dialog-gap);
 }
 
-.dialog[data-fullscreen][open] .scroll > :only-child {
+.dialog[data-fullscreen][open] .scroll > :only-child,
+.dialog[data-fullscreen][open] .scroll [data-dialog-table] {
   --table-bleed-inline: var(--dialog-pad-inline);
-  --table-bleed-block: var(--dialog-gap);
   --table-frame-width: 0;
   --table-frame-radius: 0;
+  --accordion-bleed-inline: var(--dialog-pad-inline);
+  --accordion-radius: 0;
+  --accordion-trigger-inset: var(--dialog-pad-inline);
+  --accordion-content-inset: 0px;
+  --accordion-content-pad-end: 0px;
+}
+
+/* The table inside a marked accordion: unframed, not bled. */
+.dialog[data-fullscreen][open] .scroll [data-dialog-table] [data-datatable] {
+  --table-bleed-inline: 0px;
+  --table-frame-width: 0;
+  --table-frame-radius: 0;
+}
+
+/* Block (one rule per position; specificity ascends for stylelint). */
+.dialog[data-fullscreen][open] .scroll > :only-child {
+  --table-bleed-block-start: var(--dialog-gap);
+  --table-bleed-block-end: var(--dialog-gap);
+}
+
+.dialog[data-fullscreen][open] .scroll > [data-dialog-table]:last-child {
+  --table-bleed-block-end: var(--dialog-gap);
+}
+
+.dialog[data-fullscreen][open]
+  .scroll
+  > :only-child
+  > [data-dialog-table]:only-child {
+  --table-bleed-block-start: var(--dialog-gap);
+  --table-bleed-block-end: var(--dialog-gap);
+}
+
+.dialog[data-fullscreen][open]
+  .scroll
+  > :last-child
+  > [data-dialog-table]:last-child {
+  --table-bleed-block-end: var(--dialog-gap);
 }
