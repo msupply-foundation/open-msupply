@@ -126,9 +126,13 @@
   }
 
   /* An ancestor crumb has no claim of its own (basis 0): the record's name
-     keeps its width, and the ancestors share whatever is left, truncating. */
+     keeps its width, and the ancestors share whatever is left, truncating.
+     Capped at its own text, so when the header wraps and the trail gets a
+     whole line, the ancestor doesn't stretch across it and push the record's
+     name to the far end. */
   .list > .crumb:not(:last-child) {
     flex: 1 1 0;
+    max-inline-size: max-content;
   }
 
   .separator {
