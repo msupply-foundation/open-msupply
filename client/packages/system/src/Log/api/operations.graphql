@@ -5,7 +5,7 @@ fragment LogLevelRow on LogLevelNode {
 
 fragment LogRow on LogNode {
   __typename
-  fileContent
+  content
   fileNames
 }
 

@@ -2374,6 +2374,7 @@
   "message.remember-store-choice": "Remember my choice",
   "message.select-program-first": "Select a program first",
   "message.select-schedule-first": "Select a schedule first",
+  "message.server-log-truncated": "This log is too large to show in full, so only its most recent entries are shown. Save it to get the whole file.",
   "messages": "Messages",
   "messages.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.active-policy-needs-coverage": "An active policy must have a non-zero coverage rate. Increase the rate or deactivate the policy.",
