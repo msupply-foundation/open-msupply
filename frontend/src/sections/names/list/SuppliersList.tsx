@@ -5,8 +5,9 @@ import { NamesList } from './NamesList';
 import { supplierDetailPath } from './namesListLogic';
 
 // S2 — Supplier list (from Replenishment). The standard names list scoped to
-// the active store's suppliers (AC-N2); a row NAVIGATES to the supplier's
-// detail page (AC-N15), unlike the customer list's in-place modal.
+// the active store's suppliers (OMS-REG-REPL-08.1, OMS-FUN-SUP-001.1); a row
+// NAVIGATES to the supplier's detail page (OMS-REG-REPL-08.11/.19), unlike the
+// customer list's in-place modal.
 const SuppliersList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();

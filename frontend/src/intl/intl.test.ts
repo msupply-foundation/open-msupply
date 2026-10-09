@@ -32,7 +32,7 @@ describe('t', () => {
   it('falls back to the English string for a key missing from the active locale', () => {
     // 'label.expiry-date' exists in the English catalog but not the Arabic
     // one; under Arabic it must resolve to the English string, not leak the
-    // raw key (spec/i18n → translating text, AC-TR19).
+    // raw key (spec/i18n → translating text, OMS-REG-I18N-01.2).
     expect((commonAr as Record<string, string>)['label.expiry-date']).toBe(
       undefined
     );
@@ -49,9 +49,10 @@ describe('t', () => {
   it('resolves a regional variant through its base locale, then English', () => {
     // fr-DJ is a thin overlay on fr: it restates `app.login`, leaves
     // `app.loading` to French, and a key in neither resolves to English rather
-    // than the raw key (spec/i18n → translating text, AC-TR20). That last hop
-    // is seeded rather than read off a real key: the French catalog now covers
-    // every English one, so no shipped key has the gap it needs.
+    // than the raw key (spec/i18n → translating text, OMS-REG-I18N-01.23/.24).
+    // That last hop is seeded rather than read off a real key: the French
+    // catalog now covers every English one, so no shipped key has the gap it
+    // needs.
     setDictionaries(previous => ({
       ...previous,
       en: { ...commonEn, 'probe.english-only': 'English only' },

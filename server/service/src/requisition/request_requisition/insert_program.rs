@@ -1,4 +1,5 @@
 use crate::{
+    PluginOrRepositoryError,
     activity_log::activity_log_entry,
     backend_plugin::{
         plugin_provider::{PluginError, PluginInstance},
@@ -7,28 +8,27 @@ use crate::{
     number::next_number,
     requisition::{
         common::{
-            check_exceeded_max_orders_for_period, check_requisition_row_exists,
-            default_indicator_value, indicator_value_type, related_indicator_schema,
-            CheckExceededOrdersForPeriod,
+            CheckExceededOrdersForPeriod, check_exceeded_max_orders_for_period,
+            check_requisition_row_exists, default_indicator_value, indicator_value_type,
+            related_indicator_schema,
         },
-        program_indicator::query::{program_indicators, ProgramIndicator},
+        program_indicator::query::{ProgramIndicator, program_indicators},
         program_settings::get_supplier_program_requisition_settings,
         query::get_requisition,
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
-    PluginOrRepositoryError,
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository,
     IndicatorValueType, MasterListLineFilter, MasterListLineRepository, NameFilter, NameRepository,
     NumberRowType, Pagination, PeriodRowRepository, PluginDataRowRepository,
     ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
     Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
     StorageConnection, StoreFilter, StoreRepository,
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
 use util::uuid::uuid;
 
@@ -421,14 +421,14 @@ mod test_insert {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            mock_name_store_b, mock_period, mock_program_a, mock_program_order_types_a,
-            mock_request_draft_requisition, mock_user_account_a, program_master_list_store,
-            MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         EqualFilter, NameRow, RequisitionLineFilter, RequisitionLineRepository,
         RequisitionRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_name_store_b, mock_period, mock_program_a,
+            mock_program_order_types_a, mock_request_draft_requisition, mock_user_account_a,
+            program_master_list_store,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
     #[actix_rt::test]
     async fn insert_program_request_requisition_errors() {

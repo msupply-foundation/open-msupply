@@ -52,7 +52,7 @@ mod tests {
         migrations::{v2_16_00::V2_16_00, v2_17_00::V2_17_00, *},
         test_db::*,
     };
-    use diesel::{prelude::*, sql_query, RunQueryDsl};
+    use diesel::{RunQueryDsl, prelude::*, sql_query};
 
     table! {
         stock_line (id) {
@@ -69,19 +69,31 @@ mod tests {
                 .unwrap()
         };
 
-        run("INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('manufacturer_a', 'FACILITY', false, false, 'manufacturer_A', 'Manufacturer A');");
+        run(
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('manufacturer_a', 'FACILITY', false, false, 'manufacturer_A', 'Manufacturer A');",
+        );
         run("INSERT INTO name_link (id, name_id) VALUES ('manufacturer_a', 'manufacturer_a');");
 
-        run("INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');");
+        run(
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');",
+        );
         run("INSERT INTO name_link (id, name_id) VALUES ('store_name', 'store_name');");
 
-        run("INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name', 'STORE1', 1);");
+        run(
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name', 'STORE1', 1);",
+        );
 
-        run("INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Test Item', 'ITEM1', 1.0, 'STOCK', '');");
+        run(
+            "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Test Item', 'ITEM1', 1.0, 'STOCK', '');",
+        );
         run("INSERT INTO item_link (id, item_id) VALUES ('item_id', 'item_id');");
 
-        run("INSERT INTO item_variant (id, name, item_link_id, manufacturer_link_id) VALUES ('variant_with_manufacturer', 'Variant with manufacturer', 'item_id', 'manufacturer_a');");
-        run("INSERT INTO item_variant (id, name, item_link_id, manufacturer_link_id) VALUES ('variant_no_manufacturer', 'Variant no manufacturer', 'item_id', NULL);");
+        run(
+            "INSERT INTO item_variant (id, name, item_link_id, manufacturer_link_id) VALUES ('variant_with_manufacturer', 'Variant with manufacturer', 'item_id', 'manufacturer_a');",
+        );
+        run(
+            "INSERT INTO item_variant (id, name, item_link_id, manufacturer_link_id) VALUES ('variant_no_manufacturer', 'Variant no manufacturer', 'item_id', NULL);",
+        );
     }
 
     fn create_stock_line(connection: &StorageConnection, id: &str, item_variant_id: Option<&str>) {

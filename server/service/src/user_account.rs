@@ -6,7 +6,7 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
+use bcrypt::{BcryptError, DEFAULT_COST, hash, verify};
 use log::{error, warn};
 use std::collections::{HashMap, HashSet};
 
@@ -291,12 +291,12 @@ impl<'a> UserAccountService<'a> {
 #[cfg(test)]
 mod user_account_test {
     use repository::{
+        PermissionType,
         mock::{
-            mock_user_account_a, mock_user_account_b, mock_user_empty_hashed_password,
-            MockDataInserts,
+            MockDataInserts, mock_user_account_a, mock_user_account_b,
+            mock_user_empty_hashed_password,
         },
         test_db::{self, setup_all},
-        PermissionType,
     };
     use util::assert_matches;
 

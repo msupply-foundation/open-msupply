@@ -12,9 +12,9 @@ pub mod android {
     use service::settings::{DiscoveryMode, LogMode, LoggingSettings, ServerSettings, Settings};
     use tokio::sync::mpsc;
 
+    use self::jni::EnvUnowned;
     use self::jni::errors::LogErrorAndDefault;
     use self::jni::objects::{JClass, JString};
-    use self::jni::EnvUnowned;
 
     struct ServerBucket {
         off_switch: mpsc::Sender<()>,
@@ -23,7 +23,7 @@ pub mod android {
 
     static SERVER_BUCKET: Mutex<Option<ServerBucket>> = Mutex::new(None);
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
         mut unowned_env: EnvUnowned,
         _: JClass,
@@ -115,7 +115,7 @@ pub mod android {
         *bucket = Some(ServerBucket { off_switch, thread });
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(
         _: EnvUnowned,
         _: JClass,

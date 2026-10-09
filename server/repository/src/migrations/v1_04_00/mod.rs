@@ -1,4 +1,4 @@
-use super::{version::Version, Migration};
+use super::{Migration, version::Version};
 
 use crate::StorageConnection;
 pub(crate) struct V1_04_00;

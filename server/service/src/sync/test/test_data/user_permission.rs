@@ -1,5 +1,5 @@
 use repository::{
-    mock::context_program_a, PermissionType, UserPermissionRow, UserPermissionRowDelete,
+    PermissionType, UserPermissionRow, UserPermissionRowDelete, mock::context_program_a,
 };
 
 use crate::sync::test::TestSyncIncomingRecord;

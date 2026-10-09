@@ -4,7 +4,7 @@
 # never flashes in before its gate is known.
 #
 # - preferences.selectDestinationStoreForAnInternalOrder → the Destination
-#   customer toolbar field (AC-H5).
+#   customer toolbar field (OMS-REG-REPL-04.55).
 # - preferences.manageVaccinesInDoses → the Doses-per-unit column + the dose
 #   annotations on unit-quantity columns.
 # - preferences.showIndicativePriceInRequisitions → the two indicative-price
@@ -13,11 +13,12 @@
 #   (population) column.
 # - preferences.warningForExcessRequest → the excess-request cue on Requested.
 # - storePreferences.requestRequisitionRequiresAuthorisation → the approval
-#   columns (AC-S6).
+#   columns (OMS-REG-REPL-05.7/.8/.20).
 # - storePreferences.useConsumptionAndStockFromCustomersForInternalOrders (with
 #   a program order) → the extended consumption columns + the Area-AMC header.
 # - preferences.canCreateInternalOrderFromARequisition → the side panel's
-#   "Created from requisition" related-document row (AC-RD2, display-only).
+#   "Created from requisition" related-document row (OMS-REG-REPL-04.85,
+# display-only).
 # - storePreferences.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised →
 #   the empty-send guard: where the store keeps zero-requested lines, an
 #   all-zero order (with ≥1 line) is sendable (rules › Lifecycle, D20).
@@ -29,15 +30,15 @@ query internalOrderDetailContext($storeId: String!) {
     displayPopulationBasedForecasting
     warningForExcessRequest
     canCreateInternalOrderFromARequisition
-    # The line editor's default entry mode (AC-LN18): packs where the store
-    # orders in packs, else doses for a dose-managed vaccine, else units.
+    # The line editor's default entry mode (OMS-REG-REPL-04.73): packs where the
+    # store orders in packs, else doses for a dose-managed vaccine, else units.
     orderInPacks
   }
   storePreferences(storeId: $storeId) {
     requestRequisitionRequiresAuthorisation
     useConsumptionAndStockFromCustomersForInternalOrders
     # Paired with the above, gates the Indicators tab's customer-breakdown panel
-    # (AC-I10).
+    # (OMS-REG-REPL-12.9).
     extraFieldsInRequisition
     keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
   }

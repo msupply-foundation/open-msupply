@@ -10,12 +10,13 @@ import {
 } from 'solid-js';
 import { graphqlFetch } from '../../../../api/graphql';
 import { gated } from '../../../../api/gated';
-import { t, tPlural } from '../../../../intl';
+import { measureWord, t, tPlural } from '../../../../intl';
 import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { InsetPanel } from '../../../../ui/layout/InsetPanel/InsetPanel';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
@@ -52,7 +53,6 @@ import {
   modeToUnits,
   unitsToMode,
   statInMode,
-  modeWord,
   saveNewLine,
   saveExistingLine,
   type EditorLine,
@@ -63,12 +63,12 @@ import styles from './InternalOrderLineEditModal.module.css';
 import { Num } from '../../../../ui/elements/typography/Num';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
-// mode, general orders only — AC-LN1) or fill one line (edit mode, any status;
-// read-only opens with every control disabled). Panels: the item's statistics,
-// its stock movements (extended gate), the edits, and below them either the
-// read-only context charts (target-quantity breakdown + consumption /
-// stock-evolution) or, where the store forecasts and this line carries a
-// forecast, the population-forecast calculation display (AC-PF7).
+// mode, general orders only — OMS-REG-REPL-04.63) or fill one line (edit mode,
+// any status; read-only opens with every control disabled). Panels: the item's
+// statistics, its stock movements (extended gate), the edits, and below them
+// either the read-only context charts (target-quantity breakdown + consumption
+// / stock-evolution) or, where the store forecasts and this line carries a
+// forecast, the population-forecast calculation display (OMS-REG-REPL-11.7).
 
 export interface InternalOrderLineEditModalProps {
   open: boolean;
@@ -79,7 +79,7 @@ export interface InternalOrderLineEditModalProps {
   maxMonths: number;
   /** Read-only order → every control disabled (reads still shown). */
   editable: boolean;
-  /** General order → add mode reachable; program orders can't add (AC-LN1). */
+  /** General order → add mode reachable; program orders can't add (OMS-REG-REPL-04.63). */
   canAdd: boolean;
   // Preference gates (spec S4 — the extra rows/columns).
   showDoses: boolean;
@@ -87,7 +87,8 @@ export interface InternalOrderLineEditModalProps {
   showForecast: boolean;
   showExcess: boolean;
   /**
-   * Customer-statistics program order → the movements panel + reason (AC-R1).
+   * Customer-statistics program order → the movements panel + reason
+   * (OMS-REG-REPL-04.79).
    */
   showExtended: boolean;
   orderInPacks: boolean;
@@ -104,11 +105,11 @@ export interface InternalOrderLineEditModalProps {
   ) => InternalOrderLineFragment | undefined;
   /**
    * The order's existing line for an item, if any — so add mode loads that
-   * line to edit rather than starting a duplicate (AC-LN2/LN6, the
+   * line to edit rather than starting a duplicate (OMS-REG-REPL-04.64, the
    * one-line-per-item rule).
    */
   findLineForItem: (itemId: string) => InternalOrderLineFragment | undefined;
-  /** A save committed — the parent refetches the line table (AC-LN21). */
+  /** A save committed — the parent refetches the line table (OMS-REG-REPL-04.76). */
   onCommitted: () => void;
   /**
    * The order this line belongs to, as the SDK's published view — half of the
@@ -147,7 +148,7 @@ const LineEditContent = (
   );
   const [entryMode, setEntryMode] = createSignal<EntryMode>('units');
   // The requested quantity always in UNITS; the entry mode only re-expresses
-  // its display (AC-LN12).
+  // its display (OMS-REG-REPL-04.22/.24/.69/.88/.90).
   const [requestedUnits, setRequestedUnits] = createSignal(0);
   const [comment, setComment] = createSignal('');
   const [reasonId, setReasonId] = createSignal<string | null>(null);
@@ -164,6 +165,12 @@ const LineEditContent = (
   // request is made from the branches below rather than declared as the
   // Dialog's initialFocus.
   const itemSearch = createFocusTarget();
+  // Requested — focused on every landing on a line, however it was reached:
+  // an edit-mode open, a "Save & next" advance, or an add-mode item pick
+  // (spec S4, OMS-REG-REPL-04.22/.24/.69/.88/.90). Driven from seedLine, not
+  // the Dialog's initialFocus: that prop fires only as the dialog opens, and
+  // the other two landings happen in a dialog already open.
+  const requestedField = createFocusTarget();
 
   let disposed = false;
   onCleanup(() => (disposed = true));
@@ -201,8 +208,10 @@ const LineEditContent = (
   };
 
   // Land the editor on a line — an existing line (edit) or an add-mode
-  // preview. Seeds the entry mode from the store preference (AC-LN18) and the
-  // draft from the line's current values.
+  // preview. Seeds the entry mode from the store preference
+  // (OMS-REG-REPL-04.73) and the draft from the line's current values, and
+  // lands the caret on Requested — a read-only order being the one exception,
+  // having nothing to type into.
   const seedLine = (editorLine: EditorLine) => {
     setLine(editorLine);
     covered.add(editorLine.lineId);
@@ -218,12 +227,14 @@ const LineEditContent = (
     setComment(editorLine.comment);
     setReasonId(editorLine.reasonId);
     setErrorMessage(undefined);
+    if (props.editable) requestedField.focus();
   };
 
   const pickItem = async (itemId: string) => {
     // An item already on the order loads its EXISTING line to edit — no
-    // duplicate (AC-LN2/LN6). The picker stays live (mode stays 'add'), but
-    // the loaded line's isNew=false makes the save an update, not an insert.
+    // duplicate (OMS-REG-REPL-04.64). The picker stays live (mode stays 'add'),
+    // but the loaded line's isNew=false makes the save an update, not an
+    // insert.
     const existing = props.findLineForItem(itemId);
     if (existing) {
       seedLine(editorLineFromLine(existing));
@@ -243,10 +254,10 @@ const LineEditContent = (
     if (preview) seedLine(preview);
   };
 
-  // Back to the empty add state — add mode, no item (AC-LN5: switching items or
-  // returning discards any unsaved draft with nothing created). Focus returns
-  // to the item search, as on an add-mode open (spec S4) — the same landing the
-  // other three line editors give it.
+  // Back to the empty add state — add mode, no item (OMS-REG-REPL-04.66:
+  // switching items or returning discards any unsaved draft with nothing
+  // created). Focus returns to the item search, as on an add-mode open (spec
+  // S4) — the same landing the other three line editors give it.
   const backToSearch = () => {
     itemSearch.focus();
     setMode('add');
@@ -282,7 +293,7 @@ const LineEditContent = (
   const packSize = () => current()?.defaultPackSize ?? 1;
   const doses = () => current()?.doses ?? 0;
   const suggested = () => current()?.suggestedQuantity ?? 0;
-  // Doses surfaces demand a POSITIVE doses-per-unit (AC-LN20).
+  // Doses surfaces demand a POSITIVE doses-per-unit (OMS-REG-REPL-04.75).
   const dosesApply = () =>
     props.showDoses && (current()?.isVaccine ?? false) && doses() > 0;
 
@@ -301,8 +312,8 @@ const LineEditContent = (
   };
 
   // A variance from the suggestion demands a reason on a customer-statistics
-  // program order (AC-R1); at equality the reason control is disabled and the
-  // stored reason is cleared (AC-R2).
+  // program order (OMS-REG-REPL-04.79); at equality the reason control is
+  // disabled and the stored reason is cleared (OMS-REG-REPL-04.80).
   const variance = () => requestedUnits() !== suggested();
   const excess = () => props.showExcess && requestedUnits() - suggested() >= 1;
 
@@ -313,29 +324,30 @@ const LineEditContent = (
     return (
       <>
         <Num value={figure} />{' '}
-        {modeWord(entryMode(), current()?.unitName ?? null, figure)}
+        {measureWord(entryMode(), current()?.unitName ?? null, figure)}
       </>
     );
   };
 
-  // A unit quantity re-expressed in the OTHER measure (AC-LN20): units when
-  // doses is the active mode, the dose equivalent otherwise — rounded whole.
+  // A unit quantity re-expressed in the OTHER measure (OMS-REG-REPL-04.75):
+  // units when doses is the active mode, the dose equivalent otherwise —
+  // rounded whole.
   const otherMeasure = (units: number): string => {
     if (entryMode() === 'doses') {
       const unitCount = Math.round(units);
-      return `${roundedText(unitCount)} ${modeWord('units', current()?.unitName ?? null, unitCount)}`;
+      return `${roundedText(unitCount)} ${measureWord('units', current()?.unitName ?? null, unitCount)}`;
     }
     const doseCount = Math.round(units * doses());
     return `${roundedText(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
 
-  // The dose caption beneath the requested number (AC-LN20).
+  // The dose caption beneath the requested number (OMS-REG-REPL-04.75).
   const requestedCaption = () =>
     dosesApply() ? otherMeasure(requestedUnits()) : undefined;
 
-  // The dose caption beneath a statistics/movements stock value (AC-LN20):
-  // each NON-ZERO stock value carries the other measure; zeros (and the
-  // fixed/time rows, which never call this) carry none.
+  // The dose caption beneath a statistics/movements stock value
+  // (OMS-REG-REPL-04.75): each NON-ZERO stock value carries the other measure;
+  // zeros (and the fixed/time rows, which never call this) carry none.
   const statCaption = (units: number): string | undefined =>
     dosesApply() && units !== 0 ? otherMeasure(units) : undefined;
 
@@ -375,9 +387,9 @@ const LineEditContent = (
       if (ok) props.onClose();
     });
 
-  // Save & next (AC-LN22/LN23): save, then continue. Add mode reopens the empty
-  // picker; update mode advances the walk (skipping covered), dropping into add
-  // mode when exhausted on a general order, else closing.
+  // Save & next (OMS-REG-REPL-04.77/.78): save, then continue. Add mode reopens
+  // the empty picker; update mode advances the walk (skipping covered),
+  // dropping into add mode when exhausted on a general order, else closing.
   const advance = (fromLineId: string) => {
     const next = props.nextLine(fromLineId, covered);
     if (next) seedLine(editorLineFromLine(next));
@@ -401,7 +413,7 @@ const LineEditContent = (
   // line being edited and its order, as the SDK's published DTOs. ONE memo, so
   // the pair's identity changes only when the line or the order does — and
   // never a remount: advancing with Save & next writes the `line` signal, so
-  // the mounted contributions read a new DTO in place (AC-PLUG-N2).
+  // the mounted contributions read a new DTO in place (OMS-REG-PLG-02.14).
   const infoPanelSlotProps = createMemo<
     InternalOrderLineInfoPanelProps | undefined
   >(() => {
@@ -417,27 +429,27 @@ const LineEditContent = (
     const unitName = current()?.unitName ?? null;
     const count = requestedDisplay() === 1 ? 1 : 2;
     const options = [
-      { value: 'units', label: modeWord('units', unitName, count) },
+      { value: 'units', label: measureWord('units', unitName, count) },
     ];
     if (packSize() > 0)
       options.push({
         value: 'packs',
-        label: modeWord('packs', unitName, count),
+        label: measureWord('packs', unitName, count),
       });
     if (dosesApply())
       options.push({
         value: 'doses',
-        label: modeWord('doses', unitName, count),
+        label: measureWord('doses', unitName, count),
       });
     return options;
   });
 
   // A read-only statistics row: bold label, right-aligned value. `caption` is
-  // the muted other-measure line beneath the value (AC-LN20), right-aligned
-  // like it. `highlight` tints the row like the edits inset panel (the
-  // middle-panel Suggested — the requested block it is read against, spec S4),
-  // the tint bleeding slightly past both sides while the text stays aligned
-  // with the column.
+  // the muted other-measure line beneath the value (OMS-REG-REPL-04.75),
+  // right-aligned like it. `highlight` tints the row like the edits inset panel
+  // (the middle-panel Suggested — the requested block it is read against, spec
+  // S4), the tint bleeding slightly past both sides while the text stays
+  // aligned with the column.
   const StatRow = (rowProps: {
     label: string;
     value: JSX.Element;
@@ -462,29 +474,24 @@ const LineEditContent = (
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size={workingSize() ? 'full' : 'auto'}
-      // `full`, not `large` — but for a different reason than the shipment
-      // editors' column count. This one's CONTEXT CHARTS want the room: the
-      // charts region caps itself at 64rem so the pair sits side by side
-      // (.charts in the CSS module, matching the original app's layout), which
-      // a 56rem card can never give it — the body is ~53rem, so the two ~29rem
-      // charts stack and the whole editor reads cramped. `full` puts the cap
-      // back in reach; the region's own max-inline-size + auto margins keep it
-      // a centred block rather than letting it sprawl.
-      //
-      // The PLUGIN SLOT below the form settles it independently: what a
-      // deployment contributes there is not ours to measure (CIV's panel is a
-      // six-column table), so no card width is safe for every site.
-      //
-      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
-      // command-palette-shaped card at the standard create-modal width (the
-      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
-      // OWN the open suggestions list — the search takes initial focus and the
-      // combobox opens on focus, so the list is this state's resting face, and
-      // without the reserved height it would dangle past the card onto the
-      // scrim. The popup itself matches its trigger's width. The reserved
-      // height is likewise dropped once the latch flips.
-      widthRem={44}
+      size={workingSize() ? 'large' : 'auto'}
+      // A CARD at the wide content measure, not the full-bleed sheet: the
+      // three panels (22 + 22 + 28rem and two `lg` gaps, 76rem) fit inside
+      // it, centred, and a general order's two panels sit in the same box. A
+      // card also caps its HEIGHT at 80vh; this editor's content is short, so
+      // that costs it nothing on a landscape tablet (the requisition editor's
+      // does, so it stays a sheet). With a deployment's plugin panel below
+      // the form, it scrolls sooner than a sheet would.
+      width={workingSize() ? 'wide' : undefined}
+      // widthRem sizes the PRE-PICK state only: a command-palette-shaped card
+      // at the standard create-modal width (the CreateStocktake/
+      // CreateInternalOrder family), with a body tall enough to OWN the open
+      // suggestions list — the search takes initial focus and the combobox
+      // opens on focus, so the list is this state's resting face, and without
+      // the reserved height it would dangle past the card onto the scrim. The
+      // popup matches its trigger's width. Both are dropped once the latch
+      // flips, so the measure above takes over.
+      widthRem={workingSize() ? undefined : 44}
       minBodyHeightRem={28}
       testId="internal-order-line-edit-modal"
       // Untitled per spec S4 — the title stays as the accessible name only.
@@ -524,7 +531,7 @@ const LineEditContent = (
       }
     >
       {/* Top — the item. Add mode: a live search picker (switching items
-          discards the unsaved draft, AC-LN5). Update mode: fixed, disabled. */}
+          discards the unsaved draft, OMS-REG-REPL-04.66). Update mode: fixed, disabled. */}
       <Show
         when={updateMode()}
         fallback={
@@ -561,10 +568,17 @@ const LineEditContent = (
       <Show when={current()}>
         {editorLine => (
           <>
-            <div class={styles.panels}>
-              {/* Left — the line's statistics (AC-LN19: every stock quantity in
-                the active entry mode; time quantities exempt). */}
-              <div class={styles.column}>
+            <HStack
+              wrap
+              justify="center"
+              align="start"
+              gap="lg"
+              class={styles.panels}
+            >
+              {/* Left — the line's statistics (OMS-REG-REPL-04.74: every stock quantity in
+                the active entry mode; time quantities exempt), on a recessed
+                inset panel like the edits (#617). */}
+              <InsetPanel gap="sm" class={styles.column}>
                 <Show when={editorLine().unitName}>
                   <StatRow
                     label={t('label.unit')}
@@ -624,11 +638,12 @@ const LineEditContent = (
                     caption={statCaption(editorLine().expiringUnits)}
                   />
                 </Show>
-              </div>
+              </InsetPanel>
 
-              {/* Middle — stock movements (extended gate only). */}
+              {/* Middle — stock movements (extended gate only), on its own
+                inset panel. */}
               <Show when={props.showExtended}>
-                <div class={styles.column}>
+                <InsetPanel gap="sm" class={styles.column}>
                   <StatRow
                     label={t('label.suggested')}
                     value={stat(editorLine().suggestedQuantity, true)}
@@ -659,11 +674,11 @@ const LineEditContent = (
                     label={t('label.days-out-of-stock')}
                     value={`${roundedText(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
                   />
-                </div>
+                </InsetPanel>
               </Show>
 
               {/* Right — the edits, on a recessed inset panel. */}
-              <InsetPanel class={styles.edits}>
+              <InsetPanel gap="sm" class={styles.edits}>
                 {/* Suggested here only when the movements panel is absent. */}
                 <Show when={!props.showExtended}>
                   <StatRow
@@ -680,6 +695,7 @@ const LineEditContent = (
                       min={0}
                       decimalLimit={2}
                       data-testid="requested-quantity-input"
+                      ref={requestedField.ref}
                       disabled={disabled() || saving()}
                       value={requestedDisplay()}
                       onChange={onRequestedChange}
@@ -699,14 +715,14 @@ const LineEditContent = (
                   {caption => <div class={styles.caption}>{caption()}</div>}
                 </Show>
 
-                {/* Excess-request warning (AC-LN13). */}
+                {/* Excess-request warning (OMS-REG-REPL-04.70). */}
                 <Show when={excess()}>
                   <Alert severity="warning" testId="excess-request-warning">
                     {t('warning.requested-exceeds-suggested')}
                   </Alert>
                 </Show>
 
-                {/* Indicative price rows (AC-IP6) — never re-expressed by the
+                {/* Indicative price rows (OMS-REG-REPL-10.6) — never re-expressed by the
                   entry mode; the total tracks the requested units live. */}
                 <Show when={props.showPricing}>
                   <StatRow
@@ -725,7 +741,7 @@ const LineEditContent = (
                   />
                 </Show>
 
-                {/* Reason (extended gate) — disabled/empty at equality (AC-R2). */}
+                {/* Reason (extended gate) — disabled/empty at equality (OMS-REG-REPL-04.80). */}
                 <Show when={props.showExtended}>
                   <FieldRow label={t('label.reason')}>
                     <ReasonSelect
@@ -752,16 +768,16 @@ const LineEditContent = (
                   />
                 </FieldRow>
               </InsetPanel>
-            </div>
+            </HStack>
 
             {/* The plugin info-panel region (internal-orders ui-surface § S8 ›
               editor region): read-only decoration between the record panels
               above and the charts below. No wrapper, no heading, no border — an
               invisible seam, so with nothing contributing the editor is
               byte-identical to one built without it (spec/plugins § S1,
-              AC-PLUG-N1). The non-keyed Show hands the outlet the props pair as
+              OMS-REG-PLG-02.12). The non-keyed Show hands the outlet the props pair as
               an ACCESSOR: a new line flows into the live contributions rather
-              than replacing them (AC-PLUG-N2). */}
+              than replacing them (OMS-REG-PLG-02.14). */}
             <Show when={infoPanelSlotProps()}>
               {slotProps => (
                 <PluginSlotOutlet
@@ -774,7 +790,7 @@ const LineEditContent = (
 
             {/* Below — where the store shows population-based forecasting and
               this line carries a forecast, the calculation display stands in
-              for the charts (spec S4, AC-PF7); otherwise the read-only context
+              for the charts (spec S4, OMS-REG-REPL-11.7); otherwise the read-only context
               charts: the target-quantity breakdown (client-side from the line's
               stats) atop the consumption-history + stock-evolution pair. The
               pair needs a saved line's server series (chartData); absent it — an

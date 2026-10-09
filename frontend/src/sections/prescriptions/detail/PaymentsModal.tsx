@@ -35,13 +35,13 @@ import {
 import type { UpdateInput } from './prescriptionUpdate';
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
 
-// The payment window (spec/prescriptions/ui-surface.md S5; AC-Y1/Y2): opened
-// by the status confirmation when insurance providers exist and the total is
-// charged. Total to be paid (read-only) · Insurance policy (the patient's
-// ACTIVE, unexpired policies — patients-owned records) · Discount rate ·
-// Paid by insurance (derived). Confirming hands the policy + discount fields
-// to the status change so they save together; cancelling leaves the status
-// untouched.
+// The payment window (spec/prescriptions/ui-surface.md S5;
+// OMS-REG-DIS-04.27/.28): opened by the status confirmation when insurance
+// providers exist and the total is charged. Total to be paid (read-only) ·
+// Insurance policy (the patient's ACTIVE, unexpired policies — patients-owned
+// records) · Discount rate · Paid by insurance (derived). Confirming hands the
+// policy + discount fields to the status change so they save together;
+// cancelling leaves the status untouched.
 //
 // The form is also a PLUGIN SLOT — S5's "(A plugin slot may extend this
 // form.)", the `prescription.payment-form` slot (spec/plugins/ui-surface.md
@@ -74,7 +74,7 @@ export interface PaymentsModalProps {
    * the save counts as complete (spec/plugins/rules.md § form participation).
    * It resolves to a message when a plugin's post-save work failed, and
    * `undefined` when everything landed — so a veto or a rejected status change
-   * leaves no plugin data behind (AC-PLUG-F2), and a plugin write that fails
+   * leaves no plugin data behind (OMS-REG-PLG-03.3), and a plugin write that fails
    * after a successful host write is reported rather than lost.
    */
   onConfirm: (
@@ -109,7 +109,7 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
 
   /*
    * The patient's policies, fetched when the window opens (it mounts per open);
-   * only active, unexpired ones are offered (AC-Y2).
+   * only active, unexpired ones are offered (OMS-REG-DIS-04.28).
    *
    * Keyed on the patient id — a PRIMITIVE, so the resource's internal source
    * memo can dedupe it (its default equality is `===`, and an object literal is
@@ -180,7 +180,7 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
 
     /*
      * Validity gates the save (spec/plugins/rules.md § form participation:
-     * "gate validity — blocking save with a per-field message"; AC-PLUG-F1).
+     * "gate validity — blocking save with a per-field message"; OMS-REG-PLG-03.1).
      * Checked BEFORE the veto handlers, so a contribution that reports invalid
      * blocks the save whether or not it also registered a veto — which is what
      * makes `setValidity` a real gate rather than a signal the host ignores.

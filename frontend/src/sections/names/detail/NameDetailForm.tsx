@@ -97,7 +97,7 @@ export const NameDetailForm = (props: {
                 {fieldValue(n().phone)}
               </LabelledValue>
               {/* Supplier trade terms — interleaved into the two columns
-                  (AC-N25), not gathered into a group of their own. */}
+                  (OMS-REG-DIST-08.26, OMS-REG-REPL-08.22), not gathered into a group of their own. */}
               <Show when={isSupplier()}>
                 <LabelledValue
                   variant="field"
@@ -183,7 +183,7 @@ export const NameDetailForm = (props: {
               )}
             </Show>
           </LabelledValue>
-          {/* Customer-only supply level — a v1 name property (AC-N25). */}
+          {/* Customer-only supply level — a v1 name property (OMS-REG-DIST-08.26, OMS-REG-REPL-08.22). */}
           <Show when={!isSupplier()}>
             <LabelledValue
               variant="field"

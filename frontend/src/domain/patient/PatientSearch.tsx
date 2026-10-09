@@ -47,8 +47,9 @@ export interface PatientSearchProps {
   /**
    * When set, a **Create patient** affordance is offered beside the picker
    * (spec/patients S4 allow-create; the create-on-no-match flow, e.g.
-   * prescriptions AC-C5). The consuming vertical opens its own patient-create
-   * flow from this callback and selects the result via `onSelect`.
+   * prescriptions OMS-REG-DIS-03.18). The consuming vertical opens its own
+   * patient-create flow from this callback and selects the result via
+   * `onSelect`.
    */
   onCreatePatient?: () => void;
   /**

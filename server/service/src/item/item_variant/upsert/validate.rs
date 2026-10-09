@@ -1,13 +1,13 @@
 use super::UpsertItemVariantWithPackaging;
 use crate::{
+    NullableUpdate,
     invoice_line::validate::check_item_exists,
     item::item_variant::UpsertItemVariantError,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
-    NullableUpdate,
+    validate::{CheckOtherPartyType, OtherPartyErrors, check_other_party},
 };
 use repository::{
-    item_variant::item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
     EqualFilter, ItemLinkRowRepository, LocationTypeRowRepository, StorageConnection, StringFilter,
+    item_variant::item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
 };
 
 pub fn validate(
@@ -36,7 +36,7 @@ pub fn validate(
     }
 
     if let Some(NullableUpdate {
-        value: Some(ref manufacturer_id),
+        value: Some(manufacturer_id),
     }) = &input.manufacturer_id
     {
         match check_other_party(
@@ -53,14 +53,14 @@ pub fn validate(
                 OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => return Err(OtherPartyNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    return Err(DatabaseError(repository_error))
+                    return Err(DatabaseError(repository_error));
                 }
             },
         };
     };
 
     if let Some(NullableUpdate {
-        value: Some(ref location_type_id),
+        value: Some(location_type_id),
     }) = &input.location_type_id
     {
         // Check if the location type exists

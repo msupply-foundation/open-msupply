@@ -1,5 +1,5 @@
 use repository::{
-    campaign::campaign_row::CampaignRowRepository, RepositoryError, StorageConnection,
+    RepositoryError, StorageConnection, campaign::campaign_row::CampaignRowRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -65,7 +65,7 @@ impl From<RepositoryError> for DeleteCampaignError {
 mod test {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
-    use crate::campaign::{check_campaign_exists, UpsertCampaign};
+    use crate::campaign::{UpsertCampaign, check_campaign_exists};
     use crate::service_provider::ServiceProvider;
 
     use super::*;

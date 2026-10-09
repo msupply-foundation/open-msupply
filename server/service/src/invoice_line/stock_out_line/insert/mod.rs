@@ -1,14 +1,14 @@
 use super::StockOutType;
 use crate::{
-    invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
+    NullableUpdate, WithDBError,
+    invoice::update_picked_date::{UpdatePickedDateError, update_picked_date},
     invoice_line::{query::get_invoice_line, stock_out_line::insert::generate::GenerateResult},
     service_provider::ServiceContext,
-    NullableUpdate, WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
-    InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
+    InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod generate;
@@ -128,20 +128,20 @@ pub fn insert_stock_out_line(
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
         mock::{
-            mock_item_a, mock_item_b_lines, mock_location_on_hold, mock_name_store_a,
-            mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_c,
+            MockDataInserts, mock_item_a, mock_item_b_lines, mock_location_on_hold,
+            mock_name_store_a, mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_c,
             mock_outbound_shipment_c_invoice_lines, mock_patient, mock_prescription_a,
             mock_stock_line_a, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
             mock_stock_line_si_d, mock_store_a, mock_store_b, mock_store_c, stock_line_with_volume,
-            MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
-        InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
     };
 
     use crate::{
+        NullableUpdate,
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
@@ -149,7 +149,6 @@ mod test {
             InsertStockOutLine, InsertStockOutLineError as ServiceError, StockOutType,
         },
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
     #[actix_rt::test]

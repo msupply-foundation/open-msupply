@@ -46,9 +46,9 @@ impl StockExpiryCountServiceTrait for StockExpiryServiceCount {
 mod stock_count_test {
     use chrono::{Days, Utc};
     use repository::{
-        mock::{mock_item_a, mock_store_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         StockLineRow, StockLineRowRepository,
+        mock::{MockData, MockDataInserts, mock_item_a, mock_store_a},
+        test_db::setup_all_with_data,
     };
 
     use crate::service_provider::ServiceProvider;

@@ -1,4 +1,4 @@
-use crate::types::{program_node::ProgramNode, PurchaseOrderLineNode, VVMStatusNode};
+use crate::types::{PurchaseOrderLineNode, VVMStatusNode, program_node::ProgramNode};
 
 use super::{
     CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
@@ -8,6 +8,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
+    ContextExt,
     loader::{
         CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader,
         LinkedRequisitionLineLoader, NameByIdLoader, NameByIdLoaderInput, ProgramByIdLoader,
@@ -16,11 +17,10 @@ use graphql_core::{
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
-use repository::{location::Location, InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, ItemRow};
+use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, ItemRow, location::Location};
 use serde::Serialize;
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -447,8 +447,8 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType,
-        InvoiceRow, ItemRow, LocationRow,
+        InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType, InvoiceRow, ItemRow,
+        LocationRow, mock::MockDataInserts,
     };
     use serde_json::json;
 

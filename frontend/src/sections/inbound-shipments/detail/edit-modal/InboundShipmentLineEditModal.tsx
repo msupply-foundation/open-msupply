@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { getPlural, t } from '../../../../intl';
+import { t } from '../../../../intl';
 import { roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -108,8 +108,9 @@ export interface InboundShipmentLineEditModalProps {
   initialLineId?: string;
   /**
    * On a PO-linked shipment, add mode picks a purchase-order LINE (not an item
-   * search) — a line insert must cite one (spec AC-E3). Set to the shipment's
-   * purchaseOrderId to switch the add selector to the PO-line picker.
+   * search) — a line insert must cite one (spec OMS-REG-REPL-09.6). Set to the
+   * shipment's purchaseOrderId to switch the add selector to the PO-line
+   * picker.
    */
   purchaseOrderId?: string;
   /**
@@ -188,9 +189,10 @@ type DraftBatch = {
   campaignId: string | null;
   programId: string | null;
   /**
-   * Whether the user has hand-edited the cost / sell price (AC-H6): a prefilled
-   * price the user hasn't touched clears to zero when the pack size moves off
-   * the item default; an overridden one is left alone.
+   * Whether the user has hand-edited the cost / sell price
+   * (OMS-REG-REPL-09.10/.11): a prefilled price the user hasn't touched clears
+   * to zero when the pack size moves off the item default; an overridden one is
+   * left alone.
    */
   costOverridden: boolean;
   sellOverridden: boolean;
@@ -270,8 +272,9 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   manufacturerName: line.manufacturer?.name ?? null,
   campaignId: line.campaign?.id ?? null,
   programId: line.program?.id ?? null,
-  // Existing lines aren't subject to the prefill-clear (AC-H6 is about adding);
-  // mark both overridden so a pack-size edit never wipes a saved price.
+  // Existing lines aren't subject to the prefill-clear (OMS-REG-REPL-09.10/.11
+  // is about adding); mark both overridden so a pack-size edit never wipes a
+  // saved price.
   costOverridden: true,
   sellOverridden: true,
 });
@@ -347,9 +350,10 @@ type ChosenItem = {
   doses: number;
   /**
    * Item default pack size + store default sell price — the new-line price
-   * prefill (AC-H6). defaultSellPricePerPack is 0 where unknown (the PO-line
-   * picker and edit-mode line-load don't fetch it), so no price prefill there —
-   * correct, since AC-H6 targets the manual add-item case.
+   * prefill (OMS-REG-REPL-09.10/.11). defaultSellPricePerPack is 0 where
+   * unknown (the PO-line picker and edit-mode line-load don't fetch it), so no
+   * price prefill there — correct, since OMS-REG-REPL-09.10/.11 targets the
+   * manual add-item case.
    */
   defaultPackSize: number;
   defaultSellPricePerPack: number;
@@ -415,18 +419,18 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     defaultConfig: { base: { viewMode: 'card' } },
   });
 
-  // Load one item's existing lines and seed the batch draft — a plain
-  // SEQUENTIAL fetch, NOT a createResource (issue #428: draft state is built
-  // from individual fetches). Advancing between items during a walk then
-  // mutates the draft in place with no <Suspense> boundary to trip, so it never
-  // remounts (kdd/solid-reactivity-pitfalls › No remounts on interaction).
-  // `focusLineId` is the batch to focus once loaded (the clicked batch on a row
-  // open); omitted → the first row. Records the item in the covered set for the
-  // walk. Closes if the item has no lines left (it vanished).
-  const loadItemById = async (id: string, focusLineId?: string) => {
-    setLoadingLines(true);
-    setErrorMessage(undefined);
-    coveredItemIds.add(id);
+  // Which item load is current. Both loaders take a ticket before their fetch
+  // and drop their result if another load started meanwhile, so picking two
+  // items in quick succession can't let the slower fetch land last and seed the
+  // editor with the item the user already moved off. Not reactive.
+  let loadTicket = 0;
+
+  // One item's existing lines on this shipment — a plain SEQUENTIAL fetch, NOT
+  // a createResource (issue #428: draft state is built from individual
+  // fetches). Advancing between items during a walk then mutates the draft in
+  // place with no <Suspense> boundary to trip, so it never remounts
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction).
+  const fetchItemLines = async (id: string) => {
     const result = await graphqlFetch(InboundShipmentLines, {
       storeId: props.storeId,
       filter: {
@@ -435,19 +439,46 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       },
       page: { first: 200 },
     });
-    const lines =
-      result.kind === 'success' &&
+    return result.kind === 'success' &&
       result.data.invoiceLines.__typename === 'InvoiceLineConnector'
-        ? result.data.invoiceLines.nodes
-        : [];
+      ? result.data.invoiceLines.nodes
+      : [];
+  };
+
+  // Seed the batch draft from an item's existing lines, plus the two per-ITEM
+  // banner facts and the PO link (every batch of an item carries the same
+  // trio, so the first answers for all).
+  const seedFromLines = (lines: InboundLineFragment[]) => {
+    const first = lines[0];
+    if (!first) return;
+    setBatches(lines.map(fromLine));
+    setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
+    setTransferComment(first.transferComment);
+    // A PO-linked shipment's existing lines already cite the order line they
+    // fill — inherit it so "Add batch" (another batch for this same item)
+    // carries the link automatically, instead of requiring a re-pick that
+    // update mode's locked selector doesn't even offer (new batches were
+    // otherwise saving with purchaseOrderLineId undefined).
+    setPoLineId(first.purchaseOrderLine?.id ?? undefined);
+  };
+
+  // Load one item's existing lines and seed the draft from them. `focusLineId`
+  // is the batch to focus once loaded (the clicked batch on a row open);
+  // omitted → the first row. Records the item in the covered set for the walk.
+  // Closes if the item has no lines left (it vanished).
+  const loadItemById = async (id: string, focusLineId?: string) => {
+    setLoadingLines(true);
+    setErrorMessage(undefined);
+    coveredItemIds.add(id);
+    const ticket = ++loadTicket;
+    const lines = await fetchItemLines(id);
+    if (ticket !== loadTicket) return;
     const first = lines[0];
     if (!first) {
       props.onClose();
       return;
     }
-    setBatches(lines.map(fromLine));
-    setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
-    setTransferComment(first.transferComment);
+    seedFromLines(lines);
     setItem({
       id: first.itemId,
       code: first.itemCode,
@@ -458,21 +489,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       defaultPackSize: first.item?.defaultPackSize ?? 1,
       defaultSellPricePerPack: 0,
     });
-    // A PO-linked shipment's existing lines already cite the order line they
-    // fill — inherit it so "Add batch" (another batch for this same item)
-    // carries the link automatically, instead of requiring a re-pick that
-    // update mode's locked selector doesn't even offer (new batches were
-    // otherwise saving with purchaseOrderLineId undefined).
-    setPoLineId(first.purchaseOrderLine?.id ?? undefined);
     // Focus the requested batch, else the first row.
     batchFields.focus(focusLineId ?? first.id);
     setLoadingLines(false);
   };
 
-  // A fresh batch for `chosen`, price-prefilled per AC-H6: starts at the item's
-  // default pack size, with cost AND sell price seeded from the store default
-  // sell price — but only when cost is editable (a manual shipment); on a
-  // PO/transfer shipment cost derives from the source, so leave prices at zero.
+  // A fresh batch for `chosen`, price-prefilled per OMS-REG-REPL-09.10/.11:
+  // starts at the item's default pack size, with cost AND sell price seeded
+  // from the store default sell price — but only when cost is editable (a
+  // manual shipment); on a PO/transfer shipment cost derives from the source,
+  // so leave prices at zero.
   const prefillFromItem = (chosen: ChosenItem): DraftBatch => {
     const base = emptyBatch();
     const packSize = chosen.defaultPackSize > 0 ? chosen.defaultPackSize : 1;
@@ -488,21 +514,37 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
 
   // Picking from the item search is an ADD-flow action (update mode is entered
   // only by clicking a row, and locks the selector), so it keeps mode 'add'.
-  // Items already on the shipment are NOT excluded — picking one loads a fresh
-  // batch for it (issue #428, confirmed with Mark; matches the stocktake
-  // editor). State for any item currently in the editor is lost, by design.
+  // Items already on the shipment are NOT excluded from the search (issue #428,
+  // confirmed with Mark; matches the stocktake editor) — but picking one must
+  // land the user ON that item's existing batches, exactly as a row click does,
+  // not on a blank editor that silently authors a SECOND entry for the same
+  // item (issue #775). The exclusion and the lookup are two halves of one rule;
+  // dropping the exclusion without the lookup is what regressed. State for any
+  // item currently in the editor is lost, by design.
   const chooseItem = (option: ItemOption | null) => {
     setMode('add');
-    // A fresh item has no line on this shipment, so neither per-item fact
-    // carries over from whatever was open before.
-    setLoadedRequested(null);
-    setTransferComment(null);
     if (!option) {
+      // Cleared: no item, so neither per-item fact applies.
+      setLoadedRequested(null);
+      setTransferComment(null);
       setItem(null);
       setBatches([]);
       topSelector.focus();
       return;
     }
+    void loadChosenItem(option);
+  };
+
+  // Seed the editor for a search-picked item. The item descriptor comes from
+  // the SEARCH option, not from any loaded line: only the option carries the
+  // store default sell price, so keeping it is what lets a later "Add batch"
+  // prefill its price (OMS-REG-REPL-09.10/.11) even on an item loaded from its
+  // existing lines.
+  const loadChosenItem = async (option: ItemOption) => {
+    setLoadingLines(true);
+    setErrorMessage(undefined);
+    coveredItemIds.add(option.id);
+    const ticket = ++loadTicket;
     const chosen: ChosenItem = {
       id: option.id,
       code: option.code,
@@ -513,11 +555,26 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       defaultPackSize: option.defaultPackSize,
       defaultSellPricePerPack: option.defaultSellPricePerPack,
     };
-    const batch = prefillFromItem(chosen);
+    const existing = await fetchItemLines(option.id);
+    if (ticket !== loadTicket) return;
     setItem(chosen);
-    setBatches([batch]);
-    // Picking an item drops focus straight onto its first batch's packs field.
-    batchFields.focus(batch.id);
+    if (existing.length > 0) {
+      // Already on the shipment: show what has been received for it so far and
+      // land on the first batch. No blank batch is appended — the user adds one
+      // with "Add batch" if that is what they came for, and it prefills then.
+      seedFromLines(existing);
+      batchFields.focus(existing[0]?.id ?? '');
+    } else {
+      // Genuinely new to this shipment, so neither per-item fact carries over
+      // from whatever was open before.
+      setLoadedRequested(null);
+      setTransferComment(null);
+      const batch = prefillFromItem(chosen);
+      setBatches([batch]);
+      // Picking a new item drops focus straight onto its batch's packs field.
+      batchFields.focus(batch.id);
+    }
+    setLoadingLines(false);
   };
 
   // The linked order's lines. Fetched once into a plain signal, like the
@@ -544,10 +601,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   };
 
   // PO-linked add mode: pick a purchase-order LINE instead of an item search
-  // (spec AC-E3 — a PO-linked line insert must cite an order line). The order's
-  // lines are fetched once (sequentially, on mount) into a plain signal — not a
-  // createResource — so they're ready if/when the editor drops into add mode
-  // (initial open, or after an update walk exhausts).
+  // (spec OMS-REG-REPL-09.6 — a PO-linked line insert must cite an order line).
+  // The order's lines are fetched once (sequentially, on mount) into a plain
+  // signal — not a createResource — so they're ready if/when the editor drops
+  // into add mode (initial open, or after an update walk exhausts).
   const [poLineId, setPoLineId] = createSignal<string>();
   const [poLines, setPoLines] = createSignal<PoLine[]>([]);
   const loadPoLines = async () => {
@@ -598,7 +655,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     if (index >= 0) setBatches(index, field, value as never);
   };
 
-  // A new batch prefills from the current item (AC-H6) just like the first one.
+  // A new batch prefills from the current item (OMS-REG-REPL-09.10/.11) just
+  // like the first one.
   const addBatch = () => {
     const chosen = item();
     const batch = chosen ? prefillFromItem(chosen) : emptyBatch();
@@ -606,9 +664,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     batchFields.focus(batch.id);
   };
 
-  // Pack-size / price edits (AC-H6): moving the pack size off the item default
-  // clears a still-prefilled (non-overridden) price to zero; editing a price
-  // marks it overridden so a later pack-size change leaves it alone.
+  // Pack-size / price edits (OMS-REG-REPL-09.10/.11): moving the pack size off
+  // the item default clears a still-prefilled (non-overridden) price to zero;
+  // editing a price marks it overridden so a later pack-size change leaves it
+  // alone.
   const changePackSize = (id: string, value: number) => {
     const chosen = item();
     setBatches(
@@ -665,16 +724,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // The rows the table shows: the draft minus soft-deleted batches.
   const rows = (): DraftBatch[] => batches.filter(b => !b.deleted);
 
-  // "2,000 Tablets" — the units the entered packs come to, shown under Packs
+  // "2,000 Tablet" — the units the entered packs come to, shown under Packs
   // received. Empty (not "0") when there is nothing to say yet, so a fresh
-  // batch carries no noise; the unit name inflects with the count the way every
-  // other line editor does (getPlural — English only by design, intlUtils).
+  // batch carries no noise.
   const unitsHint = (b: DraftBatch): string => {
     const units = b.numberOfPacks * b.packSize;
     if (!units) return '';
     const unit = item()?.unitName;
     return unit
-      ? `${roundedText(units)} ${getPlural(unit, units)}`
+      ? `${roundedText(units)} ${unit}`
       : roundedText(units);
   };
 
@@ -761,9 +819,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         // Line authorisation status — sent as a plain value (not a {value}
         // patch), only on a PO-linked shipment that requires authorisation.
         // The line's current value goes on every save: unchanged lines are a
-        // no-op, an edited one is the real change (AC-E6 blocks a change once
-        // Received but allows the no-op). Omitted elsewhere so a manual
-        // shipment never carries it.
+        // no-op, an edited one is the real change (OMS-FUN-ISE-001.10 blocks a
+        // change once Received but allows the no-op). Omitted elsewhere so a
+        // manual shipment never carries it.
         ...(props.prefs.authorisation && props.isExternal
           ? { status: b.status ?? undefined }
           : {}),
@@ -1062,7 +1120,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             value={b.packSize}
             // Don't clamp below 1 — a pack size < 1 is a server rule
             // (PackSizeBelowOne, untyped); submit it and surface the rejection
-            // inline rather than silently coercing to 1 (spec AC-E1 / M2).
+            // inline rather than silently coercing to 1 (spec
+            // OMS-REG-REPL-09.1–.4 / M2).
             min={0}
             // Pack size is Float on the wire and may be fractional; 2-dp room
             // matches the reference (spec S4).
@@ -1182,12 +1241,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // Auth status — the line's authorisation state, editable when
     // the store requires authorisation of PO-linked shipments (spec ui-surface
     // col 16 / S4 per-batch fields). The same change is available in bulk from
-    // the detail table's row-selection Approve/Reject/Pending actions. AC-E6
-    // governs when a change is allowed (blocked once Received, a no-op to the
-    // same value excepted); we submit and surface any rejection inline rather
-    // than pre-gating. A brand-new batch can't carry a status on insert (the
-    // server assigns Pending), so it stays read-only (shown as Pending) until
-    // saved.
+    // the detail table's row-selection Approve/Reject/Pending actions.
+    // OMS-FUN-ISE-001.10 governs when a change is allowed (blocked once
+    // Received, a no-op to the same value excepted); we submit and surface any
+    // rejection inline rather than pre-gating. A brand-new batch can't carry a
+    // status on insert (the server assigns Pending), so it stays read-only
+    // (shown as Pending) until saved.
     ...(props.prefs.authorisation && props.isExternal
       ? [
           {
@@ -1262,7 +1321,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         ]
       : []),
     // VVM status — gated by the manage-VVM preference AND a vaccine
-    // item (VVM applies to vaccines only, spec AC-PG1 / M1).
+    // item (VVM applies to vaccines only, spec ui-surface § line
+    // table).
     ...(props.prefs.vvm && item()?.isVaccine
       ? [
           {
@@ -1739,14 +1799,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                           size="small"
                           data-testid="requested-quantity-value"
                         >
-                          {/* Unit name after the figure, inflected with the
-                              count (getPlural, as unitsHint) — so the banner
-                              reads like the requisition editors' quantities. */}
+                          {/* Unit name after the figure (as unitsHint) — so
+                              the banner reads like the requisition editors'
+                              quantities. */}
                           {(() => {
                             const unit = item()?.unitName;
                             const requested = context().requested;
                             return unit
-                              ? `${roundedText(requested)} ${getPlural(unit, requested)}`
+                              ? `${roundedText(requested)} ${unit}`
                               : roundedText(requested);
                           })()}
                         </LabelledValue>
@@ -1782,6 +1842,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 showFullScreen={false}
                 config={tableConfig.config()}
                 setConfig={tableConfig.setConfig}
+                configIsDefault={tableConfig.isConfigDefault()}
+                onSaveGlobalDefault={
+                  tableConfig.canSaveGlobalDefault()
+                    ? tableConfig.saveGlobalTableConfig
+                    : undefined
+                }
                 controlsMount={tableControls()}
                 emptyMessage={t('label.add-batch')}
               />

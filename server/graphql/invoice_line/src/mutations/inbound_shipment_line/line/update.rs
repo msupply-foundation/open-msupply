@@ -1,23 +1,23 @@
 use async_graphql::*;
 use chrono::NaiveDate;
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, ForeignKey, ForeignKeyError, NotAnInboundShipment, RecordNotFound,
 };
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
 
 use graphql_core::generic_inputs::InboundShipmentType;
 use repository::{InvoiceLine, InvoiceLineStatus};
+use service::NullableUpdate;
 use service::auth::ResourceAccessRequest;
+use service::invoice_line::ShipmentTaxUpdate;
 use service::invoice_line::stock_in_line::{
     StockInType, UpdateStockInLine as ServiceInput, UpdateStockInLineError as ServiceError,
 };
-use service::invoice_line::ShipmentTaxUpdate;
-use service::NullableUpdate;
 
-use super::{validate_line_edit_authorisation, BatchIsReserved};
+use super::{BatchIsReserved, validate_line_edit_authorisation};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentLineInput")]
@@ -213,25 +213,25 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::InvoiceDoesNotExist => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         ServiceError::CannotChangeLineStatusOfReceivedInvoice => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         ServiceError::BatchIsReserved => {
-            return Ok(UpdateErrorInterface::BatchIsReserved(BatchIsReserved {}))
+            return Ok(UpdateErrorInterface::BatchIsReserved(BatchIsReserved {}));
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice
@@ -270,23 +270,23 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_item_a,
-            mock_location_1, MockDataInserts,
-        },
         InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines,
+            mock_item_a, mock_location_1,
+        },
     };
     use serde_json::json;
     use service::{
+        NullableUpdate,
         invoice_line::{
+            InvoiceLineServiceTrait,
             stock_in_line::{
                 StockInType, UpdateStockInLine as ServiceInput,
                 UpdateStockInLineError as ServiceError,
             },
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
-        NullableUpdate,
     };
 
     use crate::InvoiceLineMutations;

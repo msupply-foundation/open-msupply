@@ -67,7 +67,7 @@ const sizing = (
 // reads as data. A real zero is a VALUE and still renders "0"; reserve a
 // literal "N/A" for a field genuinely not applicable to the row (≠ missing),
 // rendered by the page's own cell. (The items list's months-of-stock dash is
-// spec-owned — AC-S2, absence ≠ zero — and deliberately kept.)
+// spec-owned — OMS-REG-CAT-04.34, absence ≠ zero — and deliberately kept.)
 
 // These return a narrow column FRAGMENT — only the fields they set (meta/cell
 // + the grouping aggregationFn), typed off ColumnDefBase (the non-identity

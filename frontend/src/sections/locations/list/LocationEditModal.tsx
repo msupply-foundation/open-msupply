@@ -215,7 +215,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       testId="location-edit-modal"
       title={isEdit() ? t('label.edit-location') : t('label.create-location')}
       icon={isEdit() ? undefined : <PlusCircleIcon />}
-      // Blocking while a mutation is in flight (no scrim/Escape exit until it
+      // Blocking while a mutation is in flight (no Escape exit until it
       // resolves).
       dismissable={saving() === null}
       onClose={props.onClose}

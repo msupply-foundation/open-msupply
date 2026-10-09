@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod delete {
     use repository::{
+        ActivityLogRowRepository, ActivityLogType,
         mock::{
-            mock_item_a, mock_purchase_order_b_line_1, mock_store_a, mock_user_account_a,
-            MockDataInserts,
+            MockDataInserts, mock_item_a, mock_purchase_order_b_line_1, mock_store_a,
+            mock_user_account_a,
         },
         test_db::setup_all,
-        ActivityLogRowRepository, ActivityLogType,
     };
 
     use crate::{

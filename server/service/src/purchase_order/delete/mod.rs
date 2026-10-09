@@ -5,11 +5,11 @@ pub mod validate;
 use validate::validate;
 
 use crate::{
+    WithDBError,
     activity_log::activity_log_entry,
     purchase_order::common::get_lines_for_purchase_order,
-    purchase_order_line::delete::{delete_purchase_order_line, DeletePurchaseOrderLineError},
+    purchase_order_line::delete::{DeletePurchaseOrderLineError, delete_purchase_order_line},
     service_provider::ServiceContext,
-    WithDBError,
 };
 
 type OutError = DeletePurchaseOrderError;
@@ -98,12 +98,12 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
         mock::{
-            mock_purchase_order_a, mock_purchase_order_c, mock_purchase_order_d, mock_store_a,
-            MockDataInserts,
+            MockDataInserts, mock_purchase_order_a, mock_purchase_order_c, mock_purchase_order_d,
+            mock_store_a,
         },
         test_db::setup_all,
-        PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
 
     use crate::{

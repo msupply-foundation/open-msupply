@@ -5,8 +5,8 @@ use repository::{
 };
 
 use crate::{
-    service_provider::{ServiceContext, ServiceProvider},
     ListResult,
+    service_provider::{ServiceContext, ServiceProvider},
 };
 
 use super::{Patient, PatientFilter};

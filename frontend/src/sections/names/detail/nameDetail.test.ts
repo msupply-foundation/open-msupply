@@ -50,7 +50,7 @@ const result = (node?: NameDetail): NameByIdResult => ({
   },
 });
 
-describe('AC-N21 Supplier detail from the single-name read', () => {
+describe('OMS-REG-REPL-08.11/.19 Supplier detail from the single-name read', () => {
   it('takes the single name from the id-filtered read', () => {
     const node = detail();
     expect(detailFromResult(result(node))?.id).toBe('n1');
@@ -60,7 +60,7 @@ describe('AC-N21 Supplier detail from the single-name read', () => {
   });
 });
 
-describe('AC-N20 Customer detail shows attributes and supply level', () => {
+describe('OMS-REG-DIST-08.11/.12/.26 Customer detail shows attributes and supply level', () => {
   const defs: NamePropertyDef[] = [
     {
       id: 'p1',
@@ -89,7 +89,7 @@ describe('AC-N20 Customer detail shows attributes and supply level', () => {
   });
 });
 
-describe('AC-N22 Detail views are read-only', () => {
+describe('OMS-REG-DIST-08.12, OMS-REG-REPL-08.12 Detail views are read-only', () => {
   it('the read model is derivation-only — no mutation helpers exist here', () => {
     // The module exports only readers/derivers; there is nothing that writes.
     const node = detail();
@@ -100,7 +100,7 @@ describe('AC-N22 Detail views are read-only', () => {
   });
 });
 
-describe('AC-N25 Role-specific fields', () => {
+describe('OMS-REG-DIST-08.26, OMS-REG-REPL-08.22 Role-specific fields', () => {
   it('the detail model carries supplier-only trade terms', () => {
     const node = detail();
     expect(node.hshCode).toBe('H1');
@@ -118,8 +118,8 @@ describe('AC-N25 Role-specific fields', () => {
   });
 });
 
-describe('AC-N8/AC-N24 detail store indicator & empty custom fields', () => {
-  it('flags a store-kind name in the detail header (AC-N24 empty handled in tab)', () => {
+describe('OMS-REG-DIST-08.23, OMS-REG-REPL-08.16/.21 detail store indicator & empty custom fields', () => {
+  it('flags a store-kind name in the detail header (OMS-REG-REPL-08.21 empty handled in tab)', () => {
     expect(
       isStoreName(detail({ store: { id: 's', code: 'S', storeName: 'S' } }))
     ).toBe(true);

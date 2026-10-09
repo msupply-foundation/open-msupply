@@ -1,5 +1,5 @@
 use repository::{PreferenceRow, RepositoryError, StorageConnection};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use strum::{Display, EnumString};
 use thiserror::Error;
@@ -250,9 +250,9 @@ impl From<RepositoryError> for UpsertPreferenceError {
 mod tests {
 
     use super::*;
-    use repository::mock::{mock_store_a, MockDataInserts};
-    use repository::test_db::setup_all;
     use repository::PreferenceRow;
+    use repository::mock::{MockDataInserts, mock_store_a};
+    use repository::test_db::setup_all;
 
     #[actix_rt::test]
     async fn test_preference() {

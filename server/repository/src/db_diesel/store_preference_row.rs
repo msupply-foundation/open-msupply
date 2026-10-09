@@ -1,8 +1,8 @@
-use super::{user_store_join_row::user_store_join, StorageConnection};
+use super::{StorageConnection, user_store_join_row::user_store_join};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError,
 };
 
 use super::{store_row::store, user_row::user_account};

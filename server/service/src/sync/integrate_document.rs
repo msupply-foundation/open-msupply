@@ -170,9 +170,9 @@ fn update_contact_trace(
 mod integrate_document_test {
     use chrono::{DateTime, Utc};
     use repository::{
-        mock::{context_program_a, document_registry_b, mock_patient, MockDataInserts},
-        test_db::setup_all,
         DocumentStatus, Pagination, ProgramEnrolmentFilter, StringFilter,
+        mock::{MockDataInserts, context_program_a, document_registry_b, mock_patient},
+        test_db::setup_all,
     };
     use serde_json::json;
 

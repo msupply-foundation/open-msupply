@@ -1,17 +1,17 @@
 use super::{
-    name_row::name, name_store_join::name_store_join, store_row::store, DBType, NameRow,
-    NameStoreJoinRow, StorageConnection, StoreRow,
+    DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow, name_row::name,
+    name_store_join::name_store_join, store_row::store,
 };
 
 use crate::{
+    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreFilter, StoreRepository,
+    StringFilter,
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
     dynamic_query_filter::create_condition,
     name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreFilter, StoreRepository,
-    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -492,11 +492,12 @@ mod tests {
     use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
     use crate::{
+        NameFilter, NameRepository, NameRow, NameRowRepository, Pagination, StringFilter,
         mock::{
-            mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2,
-            MockDataInserts,
+            MockDataInserts, mock_name_1, mock_test_name_query_store_1,
+            mock_test_name_query_store_2,
         },
-        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination, StringFilter,
+        test_db,
     };
 
     use std::convert::TryFrom;

@@ -1,6 +1,6 @@
 use repository::{
-    printer_row::{PrinterRow, PrinterRowRepository},
     RepositoryError, StorageConnection,
+    printer_row::{PrinterRow, PrinterRowRepository},
 };
 
 use crate::service_provider::ServiceContext;

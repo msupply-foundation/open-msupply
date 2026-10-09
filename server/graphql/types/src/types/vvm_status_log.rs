@@ -2,8 +2,8 @@ use super::{StockLineNode, UserNode, VVMStatusNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    loader::{StockLineByIdLoader, UserLoader, VVMStatusByIdLoader},
     ContextExt,
+    loader::{StockLineByIdLoader, UserLoader, VVMStatusByIdLoader},
 };
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 

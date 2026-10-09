@@ -5,10 +5,10 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{mock_printer_a, MockDataInserts},
+        EqualFilter, PrinterRow,
+        mock::{MockDataInserts, mock_printer_a},
         printer::{PrinterFilter, PrinterRepository},
         test_db::setup_all,
-        EqualFilter, PrinterRow,
     };
 
     #[actix_rt::test]

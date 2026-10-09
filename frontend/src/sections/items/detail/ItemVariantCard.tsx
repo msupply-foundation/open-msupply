@@ -53,7 +53,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
   // A variant can be a principal (bundling others in) XOR a bundled child
   // (bundled onto another) — never both (rules.md § bundled variants, no
   // nesting). While it's a bundled child, "Add bundled item" withholds itself
-  // (ui-surface S2 › Variants tab, AC-B4).
+  // (ui-surface S2 › Variants tab, OMS-REG-CAT-06.13/.16).
   const isBundledOnOthers = () => props.variant.bundlesWith.length > 0;
 
   const confirmDeleteVariant = async () => {
@@ -89,15 +89,18 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
   return (
     <>
       <DetailCard
+        testId="item-variant-card"
         title={props.variant.name}
         actions={
           <>
             <IconButton
+              data-testid="item-variant-edit-button"
               icon={<EditIcon />}
               label={t('label.edit')}
               onClick={props.onEdit}
             />
             <IconButton
+              data-testid="item-variant-delete-button"
               icon={<TrashIcon />}
               label={t('label.delete')}
               variant="danger"
@@ -113,10 +116,16 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
         </Show>
 
         <FormRow>
-          <LabelledValue label={t('label.location-type')}>
+          <LabelledValue
+            data-testid="item-variant-location-type"
+            label={t('label.location-type')}
+          >
             {props.variant.locationType?.name ?? ''}
           </LabelledValue>
-          <LabelledValue label={t('label.manufacturer')}>
+          <LabelledValue
+            data-testid="item-variant-manufacturer"
+            label={t('label.manufacturer')}
+          >
             {props.variant.manufacturer?.name ?? ''}
           </LabelledValue>
           <Show when={props.isVaccine}>
@@ -141,7 +150,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
             <tbody>
               <For each={props.variant.packagingVariants}>
                 {row => (
-                  <tr>
+                  <tr data-testid="item-variant-packaging-row">
                     <td>{row.packagingLevel}</td>
                     <td>{row.name}</td>
                     <td data-numeric>{row.packSize}</td>
@@ -184,7 +193,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
               <tbody>
                 <For each={props.variant.bundledItemVariants}>
                   {bundle => (
-                    <tr>
+                    <tr data-testid="bundled-item-row">
                       <td>
                         {bundle.bundledItemVariant
                           ? `${bundle.bundledItemVariant.itemName} - ${bundle.bundledItemVariant.name}`
@@ -193,6 +202,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
                       <td data-numeric>{formatRatio(bundle.ratio)}</td>
                       <td data-check>
                         <IconButton
+                          data-testid="bundled-item-delete-button"
                           icon={<TrashIcon />}
                           label={t('label.delete')}
                           variant="danger"
@@ -211,16 +221,19 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
             </Alert>
           </Show>
           <Button
+            data-testid="add-bundled-item-button"
             icon={<PlusCircleIcon />}
             disabled={isBundledOnOthers()}
             onClick={() => setBundleModalOpen(true)}
           >
             {t('label.add-bundled-item')}
           </Button>
-          {/* Why Add is disabled (ui-surface S2, AC-B4) — the caption the
+          {/* Why Add is disabled (ui-surface S2, OMS-REG-CAT-06.13/.16) — the caption the
               reference app shows beside the withheld action. */}
           <Show when={isBundledOnOthers()}>
-            <Text variant="bodySmall">{t('messages.cannot-bundle')}</Text>
+            <Text variant="bodySmall" data-testid="cannot-bundle-message">
+              {t('messages.cannot-bundle')}
+            </Text>
           </Show>
         </FormSection>
 
@@ -246,7 +259,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
               <tbody>
                 <For each={props.variant.bundlesWith}>
                   {bundle => (
-                    <tr>
+                    <tr data-testid="bundled-on-row">
                       <td>
                         <Show when={bundle.principalItemVariant}>
                           {principal => (

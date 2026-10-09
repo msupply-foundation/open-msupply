@@ -5,8 +5,8 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
 
-use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
+use crate::sync::central_mapping_custom_fields::keys;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -154,7 +154,7 @@ impl SyncTranslation for NameCategoryTranslation {
 mod tests {
     use super::*;
     use crate::sync::test_util_set_is_central_server;
-    use repository::{mock::MockDataInserts, test_db::setup_all, SyncAction, SyncRecordData};
+    use repository::{SyncAction, SyncRecordData, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn name_category_emits_custom_field_option_on_central() {

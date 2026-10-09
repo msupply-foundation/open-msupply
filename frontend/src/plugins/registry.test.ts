@@ -4,6 +4,7 @@ import { definePlugin } from '../plugin-sdk/definePlugin';
 import type { AnyContribution, PluginDefinition } from '../plugin-sdk/types';
 import {
   clearPlugins,
+  configurationFor,
   contributionsFor,
   loadedPlugins,
   registerPlugin,
@@ -169,5 +170,25 @@ describe('suppressedPieces', () => {
     registerPlugin(plugin('alpha', { suppress: ['distribution'] }));
     expect([...suppressedPieces()]).toEqual(['distribution']);
     expect(contributionsFor('dashboard.widget')()).toEqual([]);
+  });
+});
+
+// spec/plugin-management OMS-REG-MNG-07.49/.50: a code is configurable when a LOADED plugin of
+// it ships an editor — settled by the registry, nothing else.
+describe('configurationFor', () => {
+  const configuration = {
+    defaultConfig: { greeting: 'hi' },
+    Editor: Component,
+  };
+
+  it('answers the editor of the loaded plugin with that code', () => {
+    registerPlugin(plugin('with_editor', { configuration }));
+    registerPlugin(plugin('without_editor'));
+    expect(configurationFor('with_editor')).toBe(configuration);
+    expect(configurationFor('without_editor')).toBeUndefined();
+  });
+
+  it('answers nothing for a code that never loaded (OMS-REG-MNG-07.52)', () => {
+    expect(configurationFor('installed_this_session')).toBeUndefined();
   });
 });

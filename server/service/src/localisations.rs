@@ -167,7 +167,10 @@ impl Localisations {
         fallback.ok_or(TranslationError(key))
     }
 
-    pub fn get_translation_function(&self, current_language: Option<String>) -> impl Function {
+    pub fn get_translation_function(
+        &self,
+        current_language: Option<String>,
+    ) -> impl Function + use<> {
         let translation_copy = self.clone();
         let lang = match current_language {
             Some(language) => language,
@@ -237,7 +240,7 @@ pub struct GetTranslation {
 mod test {
 
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, PreferenceRow, PreferenceRowRepository,
+        PreferenceRow, PreferenceRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
 
     use crate::{

@@ -27,12 +27,12 @@ export interface DuplicateInboundShipmentActionProps {
   title?: string;
 }
 
-// "Make a copy" (spec AC-DUP1/DUP2, rules → duplicating a shipment). Shared by
-// the list (single-selection) and the detail side panel. Duplication always
-// produces a fresh New draft; on success we navigate to it. If any stock-in
-// line was dropped for a catalogue-gone item, the count is surfaced in a brief
-// success step (the spec calls for a toast, but Toast is a ⛔ not-built role —
-// see the section README delta — so we use an in-context Alert instead).
+// "Make a copy" (spec OMS-REG-REPL-01.23–.25, rules → duplicating a shipment).
+// Shared by the list (single-selection) and the detail side panel. Duplication
+// always produces a fresh New draft; on success we navigate to it. If any
+// stock-in line was dropped for a catalogue-gone item, the count is surfaced in
+// a brief success step (the spec calls for a toast, but Toast is a ⛔ not-built
+// role — see the section README delta — so we use an in-context Alert instead).
 type Phase = 'confirm' | 'working' | 'skipped' | 'error';
 
 export const DuplicateInboundShipmentAction: Component<

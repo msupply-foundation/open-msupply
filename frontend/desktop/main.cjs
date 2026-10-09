@@ -309,8 +309,8 @@ const createWindow = async () => {
     }
   });
 
-  // Host duty (hostContract.ts, AC-DT4): a server that answered the probe but
-  // whose UI then fails to load stays in app-owned content — back to
+  // Host duty (hostContract.ts, OMS-REG-DESK-01.5): a server that answered the
+  // probe but whose UI then fails to load stays in app-owned content — back to
   // discovery, the failure named by the seeded could-not-connect notice
   // (?timedout). A failure on the page's OWN origin is a packaging fault, not
   // a server failure: reloading would just fail again forever, so say so and
@@ -342,8 +342,9 @@ const createWindow = async () => {
     void loadDiscovery({ autoconnect: 'false', timedout: 'true' });
   });
 
-  // Host duty (AC-DT18): closing the app ends the session — same mechanism as
-  // the legacy shell: clear cookies while everything is still alive.
+  // Host duty (OMS-REG-DESK-01.30): closing the app ends the session — same
+  // mechanism as the legacy shell: clear cookies while everything is still
+  // alive.
   let closing = false;
   win.on('close', event => {
     if (closing) return;

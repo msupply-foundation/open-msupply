@@ -32,7 +32,7 @@ import {
 import { roundedText } from '../../../intl/numberDisplay';
 import { Num } from '../../../ui/elements/typography/Num';
 
-// The stock adjustment modal (spec/stock S4, FL4). Correct one line's quantity
+// The stock adjustment modal (spec/stock S4). Correct one line's quantity
 // by a direction + amount, with an optional reason and (when the backdating
 // preference allows) a past date. Two stat tiles preview current → adjusted
 // available packs / packs on hand (historical values when backdated). OK stays
@@ -211,7 +211,7 @@ const AdjustContent = (props: {
       minBodyHeightRem={30}
       actionsLead={
         <Show when={error() || belowZero()}>
-          <Alert severity="error">
+          <Alert severity="error" testId="adjust-error">
             {error() ?? t('error.stock-reduced-below-zero')}
           </Alert>
         </Show>

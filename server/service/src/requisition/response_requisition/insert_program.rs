@@ -1,13 +1,13 @@
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
-    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
+    pricing::item_price::{ItemPriceLookup, get_pricing_for_items},
     requisition::{
         common::{
-            check_exceeded_max_orders_for_period, check_requisition_row_exists,
-            default_indicator_value, get_indicative_price_pref, CheckExceededOrdersForPeriod,
+            CheckExceededOrdersForPeriod, check_exceeded_max_orders_for_period,
+            check_requisition_row_exists, default_indicator_value, get_indicative_price_pref,
         },
-        program_indicator::query::{program_indicators, ProgramIndicator},
+        program_indicator::query::{ProgramIndicator, program_indicators},
         program_settings::get_program_requisition_settings_by_customer,
         query::get_requisition,
     },
@@ -15,12 +15,12 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, ItemFilter,
     ItemRepository, MasterListLineFilter, MasterListLineRepository, NumberRowType, Pagination,
     ProgramIndicatorFilter, ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError,
     Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRowRepository,
     StoreFilter, StoreRepository,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
 use util::uuid::uuid;
 
@@ -375,16 +375,16 @@ impl From<RepositoryError> for InsertProgramResponseRequisitionError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_store_a, mock_store_b,
-            mock_user_account_a, MockData, MockDataInserts,
-        },
         ContextRow, MasterListNameJoinRow, MasterListRow, NameStoreJoinRow, NameTagJoinRow,
         NameTagRow, PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow,
         ProgramRequisitionSettingsRow, ProgramRow,
+        mock::{
+            MockData, MockDataInserts, mock_name_store_a, mock_name_store_b, mock_name_store_c,
+            mock_store_a, mock_store_b, mock_user_account_a,
+        },
     };
 
-    use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider};
 
     use super::{InsertProgramResponseRequisition, InsertProgramResponseRequisitionError};
 

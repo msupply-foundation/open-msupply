@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
-    SingleRecordError,
+    ListError, ListResult, SingleRecordError, get_pagination_or_default, i64_to_u32,
+    service_provider::ServiceContext,
 };
 use repository::{
-    location::{Location, LocationFilter, LocationRepository, LocationSort},
     EqualFilter, ItemFilter, ItemRepository, LocationRow, PaginationOption, RepositoryError,
     StockLineFilter, StockLineRepository, StorageConnection,
+    location::{Location, LocationFilter, LocationRepository, LocationSort},
 };
 
 pub fn get_locations(

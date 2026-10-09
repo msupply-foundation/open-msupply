@@ -1,9 +1,9 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::InvoiceNode;
 use service::invoice::customer_return::update::{
@@ -92,12 +92,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::OtherPartyNotACustomer => {
             return Ok(UpdateErrorInterface::OtherPartyNotACustomer(
                 OtherPartyNotACustomer,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotVisible => {
             return Ok(UpdateErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist

@@ -47,8 +47,8 @@ import { createResource } from 'solid-js';
 // Colour / Comment) · Pricing (insurance block when a policy is attached,
 // always the Grand total) · Patient details (name / code / DOB / gender /
 // insurance status / Diagnosis) — then the pinned record actions: Delete
-// (while deletable, AC-D1/D2), Cancel prescription (VERIFIED only, permission
-// affordance gate, AC-X1/X4), Copy to clipboard.
+// (while deletable, OMS-REG-DIS-03.14/.44), Cancel prescription (VERIFIED only,
+// permission affordance gate, OMS-REG-DIS-04.29/.32), Copy to clipboard.
 
 export interface PrescriptionEditFields {
   theirReference: string;
@@ -65,7 +65,7 @@ export interface PrescriptionSidePanelProps {
   hasInsuranceProviders: boolean;
   /** The patient's active policy count (for the insured/not-insured row). */
   patientPolicyCount: number | undefined;
-  /** The cancel affordance's permission gate (AC-X4 — client-side only). */
+  /** The cancel affordance's permission gate (OMS-REG-DIS-04.32 — client-side only). */
   canCancelPermission: boolean;
   onSave: (input: Omit<UpdateInput, 'id'>) => void;
   /** Cancel the prescription (VERIFIED → CANCELLED). */
@@ -143,15 +143,15 @@ export const PrescriptionSidePanel: Component<
 
   const insurance = () => props.node.insurancePolicy;
 
-  // The prescription request this dispensation was generated from (AC-R4's
-  // other direction). Keyed on the soft link, so it only fetches for a
-  // generated prescription. The request genuinely may not be here — it is
-  // RemoteOwned while the invoice is patient-distributed, so a second site
-  // holding this invoice has the link but not its target — and that answers
-  // RecordNotFound, which is a member of the union rather than an error. It
-  // has to be told apart by `__typename`: without that it deserialises to `{}`
-  // and reads as a node whose every field is undefined. Read non-suspending —
-  // the panel lives under the already-open detail.
+  // The prescription request this dispensation was generated from
+  // (OMS-REG-DIS-09.12–.14's other direction). Keyed on the soft link, so it
+  // only fetches for a generated prescription. The request genuinely may not be
+  // here — it is RemoteOwned while the invoice is patient-distributed, so a
+  // second site holding this invoice has the link but not its target — and that
+  // answers RecordNotFound, which is a member of the union rather than an
+  // error. It has to be told apart by `__typename`: without that it
+  // deserialises to `{}` and reads as a node whose every field is undefined.
+  // Read non-suspending — the panel lives under the already-open detail.
   //
   // GATED ON THE REQUEST VERTICAL'S OWN READ, which a dispenser need not hold
   // (spec/prescription-requests § permissions): the request read authorises on
@@ -332,6 +332,7 @@ export const PrescriptionSidePanel: Component<
           <Combobox<Diagnosis>
             label={t('heading.diagnosis')}
             hideLabel
+            inputTestId="diagnosis-select"
             items={gated(diagnoses) ?? []}
             loading={diagnoses.loading}
             itemToString={d => d.description}
@@ -392,7 +393,7 @@ export const PrescriptionSidePanel: Component<
           </Show>
           {/* Cancel — VERIFIED only, never on a cancellation reversal; the
               permission gate withholds with its explanation through the
-              affordance (AC-X4). Danger tone: voiding a verified prescription
+              affordance (OMS-REG-DIS-04.32). Danger tone: voiding a verified prescription
               is destructive. */}
           <Show
             when={canCancelPrescription(status(), props.node.isCancellation)}

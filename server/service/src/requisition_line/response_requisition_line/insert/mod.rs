@@ -1,6 +1,6 @@
 mod validate;
 use crate::{
-    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
+    pricing::item_price::{ItemPriceLookup, get_pricing_for_items},
     requisition::common::get_indicative_price_pref,
     requisition_line::query::get_requisition_line,
     service_provider::ServiceContext,
@@ -118,14 +118,14 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            mock_finalised_response_requisition, mock_item_a, mock_name_b, mock_program_a,
-            mock_store_a, mock_store_b, new_response_requisition, test_item_stats, MockData,
-            MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionStatus,
         RequisitionType,
+        mock::{
+            MockData, MockDataInserts, mock_finalised_response_requisition, mock_item_a,
+            mock_name_b, mock_program_a, mock_store_a, mock_store_b, new_response_requisition,
+            test_item_stats,
+        },
+        test_db::setup_all_with_data,
     };
 
     fn new_response_requisition_line() -> RequisitionLineRow {

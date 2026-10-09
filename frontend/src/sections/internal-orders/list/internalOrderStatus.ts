@@ -33,8 +33,8 @@ export const statusColour = (status: Status): string => {
   }
 };
 
-// Approval status → its catalog label (spec S1 col 11 / AC-L9). The value is
-// the requisition's own approvalStatus, read from the linked response
+// Approval status → its catalog label (spec S1 col 11 / OMS-REG-REPL-05.6). The
+// value is the requisition's own approvalStatus, read from the linked response
 // requisition's copy; NONE is the "no linked copy / no approval recorded"
 // fallback.
 type ApprovalStatus = InternalOrderRowFragment['approvalStatus'];
@@ -60,7 +60,8 @@ export const approvalStatusLabel = (status: ApprovalStatus): string => {
 
 // The editability boundary as it reaches the list (rules › editability): an
 // order is editable only while Draft AND its supplier's store is enabled.
-// Drives the row's colour-tag affordance (picker vs read-only dot, AC-T1) and
-// whether it may be bulk-deleted (AC-D3) — the same rejection the server gives.
+// Drives the row's colour-tag affordance (picker vs read-only dot,
+// OMS-REG-REPL-04.58) and whether it may be bulk-deleted (OMS-REG-REPL-04.60) —
+// the same rejection the server gives.
 export const isRowEditable = (row: InternalOrderRowFragment): boolean =>
   row.status === 'DRAFT' && !row.otherParty.store?.isDisabled;

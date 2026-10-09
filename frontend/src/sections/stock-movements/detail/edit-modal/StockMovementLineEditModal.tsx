@@ -1,7 +1,9 @@
 import {
+  createEffect,
   createMemo,
   createResource,
   createSignal,
+  on,
   Show,
   type Component,
 } from 'solid-js';
@@ -85,6 +87,19 @@ export const StockMovementLineEditModal: Component<
     };
   };
   const itemFocus = createFocusTarget();
+  // Focus runs down the fields in their own order — item → batch →
+  // destination → packs — each choice landing on the next thing still to
+  // settle. An update-mode open starts at the end of that chain: item, batch
+  // and destination are all settled on an existing line, so the quantity is
+  // what it was opened to change. The later fields render behind the batch
+  // `<Show>`, so a request simply waits for the field to attach
+  // (ui/utils/createFocusTarget).
+  const batchFocus = createFocusTarget();
+  const destinationFocus = createFocusTarget();
+  const packsFocus = createFocusTarget();
+  // Set by an item pick, cleared when that item's candidates land — see the
+  // effect below.
+  const [awaitingCandidates, setAwaitingCandidates] = createSignal(false);
 
   // --- batch candidates ------------------------------------------------------
   // Keyed on the serialised variables; fetches per picked item. Read via the
@@ -119,6 +134,29 @@ export const StockMovementLineEditModal: Component<
       candidates(),
       props.addedStockLineIds(),
       props.line?.stockLineId
+    )
+  );
+
+  // Where an item pick leaves the user: the batch when there is a choice to
+  // make, else the destination — a sole candidate is pre-selected, so its
+  // batch row is already answered. Nothing to focus when the item has no
+  // candidates at all; the picker keeps focus and the empty dropdown says why.
+  const landAfterItem = (settled: DraftStockMovementLineFragment[]) => {
+    if (settled.length > 1) batchFocus.focus();
+    else if (settled.length === 1) destinationFocus.focus();
+  };
+
+  // The candidates usually arrive after the pick, so the landing waits on the
+  // SETTLED list: `options()` still holds the previous item's candidates while
+  // the new fetch is in flight (the `.state` gate serves the last value).
+  createEffect(
+    on(
+      () => (candidatesData.state === 'ready' ? options() : undefined),
+      settled => {
+        if (!settled || !awaitingCandidates()) return;
+        setAwaitingCandidates(false);
+        landAfterItem(settled);
+      }
     )
   );
 
@@ -162,13 +200,21 @@ export const StockMovementLineEditModal: Component<
   };
 
   const onPickItem = (id: string | undefined) => {
+    // Re-picking the item already chosen settles nothing, so the effect above
+    // would never fire — land straight away off the list already in hand.
+    const inHand = !!id && id === itemId() && candidatesData.state === 'ready';
     setPickedItemId(id);
     setPickedBatchId(undefined);
     setPickedDestinationId(undefined);
     setEnteredPacks(undefined);
+    setAwaitingCandidates(!!id && !inHand);
+    if (inHand) landAfterItem(options());
   };
   const onPickBatch = (batch: DraftStockMovementLineFragment | null) => {
     setPickedBatchId(batch?.stockLineId);
+    // The batch settled — the destination is the next thing to choose (the
+    // quantity behind it is already seeded with the batch's full available).
+    if (batch) destinationFocus.focus();
     setPickedDestinationId(undefined);
     setEnteredPacks(undefined);
   };
@@ -260,14 +306,18 @@ export const StockMovementLineEditModal: Component<
       // Add mode opens ON the item search (ui-surface S3: "auto-focused and
       // opened while empty") — the Combobox opens on focus, so the catalogue
       // is already showing and the first keystroke narrows it. Update mode
-      // takes the panel default: its item search is read-only, and the fields
-      // that matter are further down.
-      initialFocus={isUpdate() ? undefined : itemFocus}
+      // opens on Packs to move: its item and batch are fixed, so the quantity
+      // is what the line was opened to change.
+      initialFocus={isUpdate() ? packsFocus : itemFocus}
       testId="stock-movement-line-modal"
       title={isUpdate() ? t('heading.edit-line') : t('heading.add-line')}
       actionsLead={
         <Show when={error()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+          {message => (
+            <Alert severity="error" testId="stock-movement-line-error">
+              {message()}
+            </Alert>
+          )}
         </Show>
       }
       actions={
@@ -324,6 +374,7 @@ export const StockMovementLineEditModal: Component<
             itemToString={candidateLabel}
             itemToValue={o => o.stockLineId}
             itemDisabled={isCandidateDisabled}
+            focusTarget={batchFocus}
             renderItem={o => <span>{candidateLabel(o)}</span>}
             value={selectedBatch()?.stockLineId}
             onChange={onPickBatch}
@@ -373,11 +424,19 @@ export const StockMovementLineEditModal: Component<
               <LocationVolumeSelect
                 label={t('label.destination-location')}
                 hideLabel
+                inputTestId="stock-movement-destination-input"
+                focusTarget={destinationFocus}
                 locations={destinationOptions()}
                 loading={props.locationsLoading()}
                 value={destinationId()}
                 itemDisabledReason={destinationDisabledReason}
-                onChange={l => setPickedDestinationId(l?.id ?? null)}
+                onChange={l => {
+                  setPickedDestinationId(l?.id ?? null);
+                  // Last field in the chain — the quantity is all that is
+                  // left to confirm or change. Clearing the destination
+                  // leaves focus here, with the field still to answer.
+                  if (l) packsFocus.focus();
+                }}
               />
             </FieldRow>
             <FieldRow label={t('label.for-reference')}>
@@ -393,6 +452,7 @@ export const StockMovementLineEditModal: Component<
                 label={t('label.packs-to-move')}
                 hideLabel
                 data-testid="packs-to-move-input"
+                ref={packsFocus.ref}
                 min={1}
                 max={batch().availableNumberOfPacks}
                 // Pack counts carry the batch's own precision (OMS f64), so a

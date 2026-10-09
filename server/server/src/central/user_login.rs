@@ -1,8 +1,8 @@
 use actix_web::{
+    HttpResponse,
     dev::HttpServiceFactory,
     post,
     web::{self, Data, Json},
-    HttpResponse,
 };
 use serde::Serialize;
 use service::{

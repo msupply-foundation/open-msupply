@@ -15,7 +15,7 @@
  * created inside the contribution's mount — so the `onCleanup` behind it
  * belongs to that contribution, and one that leaves (unmounted, `when` gate
  * flipped, or replaced) releases its handlers and validity entries and can no
- * longer affect a save (AC-PLUG-F4). The prescription DTO reaches the
+ * longer affect a save (OMS-REG-PLG-03.7). The prescription DTO reaches the
  * contribution through the outlet's getter-bound props, so the host
  * recomputing the insurance split updates a LIVE form instead of remounting
  * it.
