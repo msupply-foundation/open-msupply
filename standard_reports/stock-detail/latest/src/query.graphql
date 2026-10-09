@@ -23,6 +23,8 @@ query StockDetail($storeId: String, $itemCodeOrName: String) {
           code
           name
           unitName
+          isVaccine
+          doses
         }
       }
     }
