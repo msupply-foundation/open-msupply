@@ -36,7 +36,9 @@ use super::{
     translations::{all_translators, pull_integration_order, SyncTranslators},
 };
 
-const INTEGRATION_BATCH_SIZE: i64 = 10_000;
+/// Pending sync buffer rows fetched per query during integration (v5/v6 and v7), so memory stays
+/// bounded however much is pending.
+pub(crate) const INTEGRATION_BATCH_SIZE: i64 = 10_000;
 /// Without the outer integration transaction, how many buffer rows commit together. Small enough
 /// to release SQLite's write lock regularly, large enough that commits are not the bottleneck on
 /// Postgres (one WAL flush per chunk rather than per record).
