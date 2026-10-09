@@ -23,7 +23,7 @@ export type SaveGlobalTableConfigsVariables = {
     authorisePurchaseOrder?: boolean | null;
     authorisePurchaseOrderStoreOverride?: Array<{
     storeId: string;
-    value: boolean;
+    value?: boolean | null;
   }> | null;
     customTranslations?: unknown | null;
     customTranslationsV2?: unknown | null;

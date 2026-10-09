@@ -10,8 +10,8 @@ use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingData, StorePrefUpdate, UpsertPreferenceError, UpsertPreferences,
-        WarnWhenMissingRecentStocktakeData,
+        BackdatingData, StoreOverrideUpdate, StorePrefUpdate, UpsertPreferenceError,
+        UpsertPreferences, WarnWhenMissingRecentStocktakeData,
     },
 };
 
@@ -19,6 +19,15 @@ use service::{
 pub struct BoolStorePrefInput {
     pub store_id: String,
     pub value: bool,
+}
+
+/// One store's edit of a global preference it may override. A null `value`
+/// CLEARS the store's override, returning the store to the global value — the
+/// only way back once a store has pinned its own.
+#[derive(InputObject)]
+pub struct BoolStoreOverrideInput {
+    pub store_id: String,
+    pub value: Option<bool>,
 }
 
 #[derive(InputObject)]
@@ -70,7 +79,7 @@ pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
-    pub authorise_purchase_order_store_override: Option<Vec<BoolStorePrefInput>>,
+    pub authorise_purchase_order_store_override: Option<Vec<BoolStoreOverrideInput>>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     /// v2 custom translations, shape: `language -> namespace -> key -> value`.
     /// Passed as a JSON value to avoid nested-map InputObject friction.
@@ -317,6 +326,15 @@ impl UpsertPreferencesInput {
             do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+        }
+    }
+}
+
+impl BoolStoreOverrideInput {
+    pub fn to_domain(&self) -> StoreOverrideUpdate<bool> {
+        StoreOverrideUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value,
         }
     }
 }

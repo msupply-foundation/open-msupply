@@ -21,8 +21,9 @@ import {
 const pref = (
   key: GlobalPreference['key'],
   valueType: GlobalPreference['valueType'],
-  value: unknown = false
-): GlobalPreference => ({ key, valueType, value });
+  value: unknown = false,
+  overridingStores: GlobalPreference['overridingStores'] = null
+): GlobalPreference => ({ key, valueType, value, overridingStores });
 
 const CATALOGUE: GlobalPreference[] = [
   pref('allowTrackingOfStockByDonor', 'BOOLEAN'),

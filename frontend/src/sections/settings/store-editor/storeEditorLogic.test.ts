@@ -239,7 +239,7 @@ const preference = (
   key: StorePreference['key'],
   valueType: StorePreference['valueType'],
   value: unknown
-): StorePreference => ({ key, valueType, value });
+): StorePreference => ({ key, valueType, value, storeOverride: null });
 
 describe('preferenceValue', () => {
   it('shows the staged edit over the served value, including a staged falsy', () => {
@@ -256,7 +256,7 @@ describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .46)', () => 
   const pref = (
     key: StorePreference['key'],
     valueType: StorePreference['valueType'] = 'BOOLEAN'
-  ): StorePreference => ({ key, valueType, value: false });
+  ): StorePreference => ({ key, valueType, value: false, storeOverride: null });
   // A slice of the served order: the purchase-order preferences sit apart
   // (rows 1, 5 and 15) among unrelated rows.
   const served: StorePreference[] = [
