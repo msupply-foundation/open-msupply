@@ -369,8 +369,8 @@ App data would need to be cleared if the local certificate was changed.
 
 ## Log files on Android
 
-Go to `browse files` in device manager, then navigate to `data/org.openmsupply.client/files/(log_name).log` to view log, logs that have exceeded the max file size is compressed and saved as a `.gz` zip.
-Alternatively when using an emulator, navigate to `data/user/0/org.openmsupply.client/files/(log_name).log`.
+Go to `browse files` in device manager, then navigate to `data/org.openmsupply.client/files/logs/remote_server.log` to view log. Once the log reaches 20 MB it is compressed and rotated to `remote_server.log.0.gz` (up to 50 compressed files are kept).
+Alternatively when using an emulator, navigate to `data/user/0/org.openmsupply.client/files/logs/remote_server.log`.
 
 ## Common Android Studio Errors
 
