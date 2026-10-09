@@ -169,8 +169,8 @@ const PluginOutletCard = () => {
         Shown at two regions: the <em>stat region</em> — inside the built-in
         widget, a plugin stat joins the built-in stat, and a second contribution
         throws on render, so only its slot shows the neutral fallback (dashboard
-        AC-D6); and the <em>widget region</em> — a whole plugin card (Cold
-        Chain) joins the same card grid.
+        OMS-REG-DB-02.10/.11); and the <em>widget region</em> — a whole plugin
+        card (Cold Chain) joins the same card grid.
       </Lead>
       <CardGrid maxColumnWidth="26rem">
         <DashboardCard title="Replenishment">
@@ -222,16 +222,16 @@ const PluginSlotOutletCard = () => {
       title="PluginSlotOutlet — a contribution that receives props"
     >
       <Lead>
-        The same mount point for a slot whose contributions take{' '}
-        <em>props</em> — the internal-order line editor's info panel (plugins
-        sdk-contract § the info-panel slot). Identical rules: what it is given,
-        in that order, <em>no wrapper element</em>, one error boundary each (the
-        second contribution throws, so only its own place shows the fallback).
-        What it adds is the walk's guarantee: the slot props arrive as an{' '}
+        The same mount point for a slot whose contributions take <em>props</em>{' '}
+        — the internal-order line editor's info panel (plugins sdk-contract §
+        the info-panel slot). Identical rules: what it is given, in that order,{' '}
+        <em>no wrapper element</em>, one error boundary each (the second
+        contribution throws, so only its own place shows the fallback). What it
+        adds is the walk's guarantee: the slot props arrive as an{' '}
         <strong>accessor</strong> and are delivered per key, so a new record
         reaches a <em>live</em> contribution. Press <em>Next record</em>: the
         facts change while the contribution's mount number and click count stay
-        put — a remount would reset both (AC-PLUG-N2).
+        put — a remount would reset both (OMS-REG-PLG-02.14).
       </Lead>
       <Button variant="secondary" onClick={() => setIndex(n => n + 1)}>
         Next record

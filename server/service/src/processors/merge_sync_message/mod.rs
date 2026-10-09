@@ -12,9 +12,9 @@ use crate::{
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        translation_and_integration::integrate,
-        translations::special::merge::{apply_merge, MergeOutcome, MergeSyncMessageBody},
         CentralServerConfig,
+        translation_and_integration::integrate,
+        translations::special::merge::{MergeOutcome, MergeSyncMessageBody, apply_merge},
     },
 };
 

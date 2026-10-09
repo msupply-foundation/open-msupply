@@ -1,12 +1,12 @@
 #[cfg(test)]
 mod insert {
     use repository::{
+        ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineRowRepository,
         mock::{
-            mock_item_a, mock_item_b, mock_name_a, mock_store_a, mock_user_account_a,
-            MockDataInserts,
+            MockDataInserts, mock_item_a, mock_item_b, mock_name_a, mock_store_a,
+            mock_user_account_a,
         },
         test_db::setup_all,
-        ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineRowRepository,
     };
 
     use crate::{

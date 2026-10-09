@@ -206,10 +206,10 @@ describe('passesFullness', () => {
 
 // The list the picker actually offers, and the field-level suppression on top
 // of the filter — `fullnessFilter={false}` on a field that references a
-// location without placing stock in it (a sensor's assignment, AC-P8 of
-// spec/cold-chain-sensors). Such a field shows no tabs, so it must not narrow
-// its options either: there would be no control on screen to explain a missing
-// location.
+// location without placing stock in it (a sensor's assignment,
+// OMS-REG-CCE-03.35/.36 of spec/cold-chain-sensors). Such a field shows no
+// tabs, so it must not narrow its options either: there would be no control on
+// screen to explain a missing location.
 describe('visibleLocations', () => {
   const FULL = withId('full', 10, 10, 5);
   const EMPTY = withId('empty', 10, 0, 0);

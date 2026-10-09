@@ -6,17 +6,17 @@ use generate::*;
 
 use chrono::{NaiveDate, Utc};
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, ActivityLogType,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
+    ActivityLogType, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLine, StockLineRowRepository, Stocktake,
     StocktakeLine, StocktakeLineRowRepository, StocktakeRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 use crate::{
     activity_log::activity_log_entry_with_diff,
     invoice_line::{
-        stock_in_line::{insert_stock_in_line, InsertStockInLineError},
-        stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
+        stock_in_line::{InsertStockInLineError, insert_stock_in_line},
+        stock_out_line::{InsertStockOutLineError, insert_stock_out_line},
     },
     service_provider::ServiceContext,
     stocktake::query::get_stocktake,
@@ -183,32 +183,31 @@ pub fn update_stocktake(
 mod test {
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            mock_donor_b, mock_item_a, mock_item_a_variant_1, mock_locked_stocktake,
-            mock_stock_line_a, mock_stock_line_b, mock_stocktake_a,
-            mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
-            mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
-            mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
-            mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
-            mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a, MockData,
-            MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineType, NameRow,
         PreferenceRow, StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
         StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
         StocktakeRow, StocktakeStatus,
+        mock::{
+            MockData, MockDataInserts, mock_donor_b, mock_item_a, mock_item_a_variant_1,
+            mock_locked_stocktake, mock_stock_line_a, mock_stock_line_b, mock_stocktake_a,
+            mock_stocktake_finalised_without_lines, mock_stocktake_full_edit,
+            mock_stocktake_line_a, mock_stocktake_line_new_stock_line,
+            mock_stocktake_line_stock_deficit, mock_stocktake_line_stock_surplus,
+            mock_stocktake_new_stock_line, mock_stocktake_no_count_change, mock_stocktake_no_lines,
+            mock_stocktake_stock_deficit, mock_stocktake_stock_surplus, mock_store_a,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
     use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
     use crate::{
+        NullableUpdate,
         service_provider::ServiceProvider,
         stocktake::{
-            update::{UpdateStocktake, UpdateStocktakeError},
             UpdateStocktakeStatus,
+            update::{UpdateStocktake, UpdateStocktakeError},
         },
         stocktake_line::UpdateStocktakeLine,
-        NullableUpdate,
     };
 
     #[actix_rt::test]

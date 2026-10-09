@@ -65,7 +65,8 @@ export const CUSTOM_FIELD_SCOPES: readonly CustomFieldScope[] = [
     // scope above. Its fields are shipped by open-mSupply itself rather than
     // configured per deployment (`service/src/custom_field/builtin.rs`), so
     // this tab is never empty — it is where a deployment hides or promotes
-    // what it was given (rules § custom fields, AC-F3).
+    // what it was given (spec/prescription-requests rules § custom fields,
+    // OMS-REG-DIS-08.47).
     value: 'prescription_request',
     labelKey: 'label.custom-field-scope-prescription-request',
     offersProminent: true,

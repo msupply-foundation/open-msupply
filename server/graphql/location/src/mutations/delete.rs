@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, RecordBelongsToAnotherStore, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{DatabaseError, RecordBelongsToAnotherStore, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 
 use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
@@ -131,18 +131,18 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
-            mock_stock_line_a, MockDataInserts,
-        },
         InvoiceLine, InvoiceLineStatsRow, StockLine, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_outbound_shipment_a,
+            mock_outbound_shipment_a_invoice_lines, mock_stock_line_a,
+        },
     };
     use serde_json::json;
 
     use service::{
         location::{
-            delete::{DeleteLocation, DeleteLocationError, LocationInUse},
             LocationServiceTrait,
+            delete::{DeleteLocation, DeleteLocationError, LocationInUse},
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

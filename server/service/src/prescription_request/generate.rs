@@ -4,7 +4,7 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::invoice::prescription::{insert_prescription, InsertPrescription};
+use crate::invoice::prescription::{InsertPrescription, insert_prescription};
 use crate::invoice_line::stock_out_line::set_prescribed_quantity::generate::unallocated_prescribed_line;
 use crate::service_provider::ServiceContext;
 

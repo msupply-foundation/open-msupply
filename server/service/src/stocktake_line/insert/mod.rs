@@ -1,5 +1,5 @@
 mod validate;
-use validate::{validate, GenerateResult};
+use validate::{GenerateResult, validate};
 mod generate;
 use generate::generate;
 
@@ -118,25 +118,25 @@ impl From<RepositoryError> for InsertStocktakeLineError {
 mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
+        EqualFilter, NameRow, ReasonOptionRow, ReasonOptionType, StockLineFilter,
+        StockLineRepository, StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
         campaign::campaign_row::CampaignRow,
         mock::{
-            mock_donor_a, mock_item_a, mock_item_a_lines,
+            MockData, MockDataInserts, mock_donor_a, mock_item_a, mock_item_a_lines,
             mock_location_with_restricted_location_type_a, mock_locked_stocktake,
             mock_new_stock_line_for_stocktake_a, mock_stock_line_b,
             mock_stock_line_restricted_location_type_b, mock_stock_line_si_d, mock_stocktake_a,
             mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
-            program_master_list_store, MockData, MockDataInserts,
+            program_master_list_store,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, NameRow, ReasonOptionRow, ReasonOptionType, StockLineFilter,
-        StockLineRepository, StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
     };
     use util::uuid::uuid;
 
     use crate::{
+        NullableUpdate,
         service_provider::ServiceProvider,
         stocktake_line::insert::{InsertStocktakeLine, InsertStocktakeLineError},
-        NullableUpdate,
     };
 
     #[actix_rt::test]

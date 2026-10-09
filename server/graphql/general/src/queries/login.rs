@@ -1,6 +1,6 @@
 use async_graphql::*;
 use chrono::Utc;
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::StandardGraphqlError};
 use graphql_types::types::UserNode;
 
 use http2::header::SET_COOKIE;
@@ -168,24 +168,24 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                 LoginError::LoginFailure(LoginFailure::InvalidCredentials) => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
                         error: AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials),
-                    }))
+                    }));
                 }
                 LoginError::LoginFailure(LoginFailure::AccountBlocked(timeout_remaining)) => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
                         error: AuthTokenErrorInterface::AccountBlocked(AccountBlocked {
                             timeout_remaining,
                         }),
-                    }))
+                    }));
                 }
                 LoginError::MSupplyCentralNotReached => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
                         error: AuthTokenErrorInterface::CentralSyncRequired(CentralSyncRequired),
-                    }))
+                    }));
                 }
                 LoginError::LoginFailure(LoginFailure::NoSiteAccess) => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
                         error: AuthTokenErrorInterface::NoSiteAccess(NoSiteAccess),
-                    }))
+                    }));
                 }
                 LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)

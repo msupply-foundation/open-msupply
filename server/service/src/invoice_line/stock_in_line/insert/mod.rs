@@ -1,11 +1,12 @@
 use crate::{
-    invoice::inbound_shipment::InboundShipmentType, invoice_line::query::get_invoice_line,
-    service_provider::ServiceContext, NullableUpdate, WithDBError,
+    NullableUpdate, WithDBError, invoice::inbound_shipment::InboundShipmentType,
+    invoice_line::query::get_invoice_line, service_provider::ServiceContext,
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, BarcodeRowRepository, InvoiceLine,
-    InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository,
+    BarcodeRowRepository, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository,
+    RepositoryError, StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod generate;
@@ -152,32 +153,33 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
+        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, PreferenceRow,
+        StorePreferenceRow, StorePreferenceRowRepository,
         barcode::{BarcodeFilter, BarcodeRepository},
         mock::{
-            currency_b, mock_customer_return_a, mock_customer_return_a_invoice_line_a,
-            mock_immunisation_program_a, mock_inbound_shipment_a, mock_inbound_shipment_c,
-            mock_inbound_shipment_e, mock_item_a, mock_item_restricted_location_type_b,
-            mock_location_with_restricted_location_type_a, mock_name_customer_a, mock_name_store_b,
-            mock_outbound_shipment_e, mock_purchase_order_a, mock_purchase_order_a_line_1,
+            MockData, MockDataInserts, currency_b, mock_customer_return_a,
+            mock_customer_return_a_invoice_line_a, mock_immunisation_program_a,
+            mock_inbound_shipment_a, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_item_a,
+            mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
+            mock_name_customer_a, mock_name_store_b, mock_outbound_shipment_e,
+            mock_purchase_order_a, mock_purchase_order_a_line_1,
             mock_shipment_variance_reason_option, mock_store_a, mock_store_b, mock_user_account_a,
-            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
+            mock_vaccine_item_a, mock_vvm_status_a,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::{
             vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
             vvm_status_log_row::VVMStatusLogRow,
         },
-        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, PreferenceRow,
-        StorePreferenceRow, StorePreferenceRowRepository,
     };
 
     use crate::{
+        NullableUpdate,
         invoice_line::stock_in_line::{
-            insert::InsertStockInLine, InsertStockInLineError as ServiceError, StockInType,
+            InsertStockInLineError as ServiceError, StockInType, insert::InsertStockInLine,
         },
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
     use super::super::insert_stock_in_line;

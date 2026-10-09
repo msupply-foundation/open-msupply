@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
 import { DEFAULT_STATE, buildListVariables } from './listState';
 
-// AC-citing tests for the list's state → variables wiring (spec/locations/
-// acceptance.md § list & lifecycle). The rendered halves — the URL round-trip
-// (useUrlQueryState), the server actually scoping/sorting/paginating — are
-// shared-infrastructure and real-backend behaviour respectively (BUILD_REPORT
-// records the real-backend gap).
+// Behaviour-citing tests for the list's state → variables wiring
+// (spec/locations/cases/OMS-REG-INV-01). The rendered halves — the URL
+// round-trip (useUrlQueryState), the server actually scoping/sorting/paginating
+// — are shared-infrastructure and real-backend behaviour respectively
+// (BUILD_REPORT records the real-backend gap).
 
 describe('OMS-REG-INV-01.36 — list is store-scoped', () => {
   it('every query carries the active store id', () => {

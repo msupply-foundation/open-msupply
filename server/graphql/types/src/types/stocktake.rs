@@ -1,16 +1,16 @@
 use super::{
-    program_node::ProgramNode, InvoiceNode, StocktakeLineConnector, SyncFileReferenceConnector,
-    UserNode,
+    InvoiceNode, StocktakeLineConnector, SyncFileReferenceConnector, UserNode,
+    program_node::ProgramNode,
 };
-use async_graphql::{dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
+use async_graphql::{Context, Enum, ErrorExtensions, Object, Result, dataloader::DataLoader};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
+    ContextExt,
     loader::{
         InvoiceByIdLoader, ProgramByIdLoader, StocktakeLineByStocktakeIdLoader,
         SyncFileReferenceLoader, UserLoader,
     },
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use repository::StocktakeRow;
 use serde::Serialize;
@@ -184,8 +184,8 @@ mod test {
 
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::{mock_user_account_a, MockDataInserts},
         StocktakeRow,
+        mock::{MockDataInserts, mock_user_account_a},
     };
     use serde_json::json;
 

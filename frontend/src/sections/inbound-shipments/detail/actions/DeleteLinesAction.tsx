@@ -21,7 +21,7 @@ export interface LineActionProps {
   onError: (errors: InboundLineErrors) => void;
 }
 
-// Bulk delete selected stock-in lines (spec S3 → line-selection actions, FL5).
+// Bulk delete selected stock-in lines (spec S3 → line-selection actions).
 // The batch is atomic; a per-line lock (reserved stock, transferred-in,
 // stocktake-referenced) fails and its reason is surfaced. Mirrors the stocktake
 // DeleteLinesAction pattern.

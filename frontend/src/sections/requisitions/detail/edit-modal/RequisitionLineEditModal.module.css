@@ -1,28 +1,19 @@
 /* The requisition line editor's figure grid (spec/requisitions S4 § layout):
-   even full-width columns — two for a general requisition, three for an
-   extra-fields program one — each stacking labelled figure rows; they wrap to
-   stacked on narrow viewports. */
+   even columns — two for a general requisition, three for an extra-fields
+   program one — each a Stack of labelled figure rows and panels. The row is an
+   HStack (wrap, centred, `lg` gap); this only spaces it from the item above. */
 .grid {
-  display: flex;
-  gap: var(--space-4);
-  align-items: flex-start;
-  flex-wrap: wrap;
   margin-block-start: var(--space-3);
 }
 
+/* Capped, so each figure box stays next to its label however wide the sheet
+   is. A step above one form column (--measure-form-column) because the supply
+   column's entry row splits into a number box AND the units/packs select at
+   equal widths. */
 .column {
   flex: 1 1 16rem;
   min-inline-size: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-/* A grouping panel's rows stack a little tighter than the column's blocks. */
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  max-inline-size: 26rem;
 }
 
 /* Every figure box sits right-aligned at its row's inline-end, all the same
@@ -37,9 +28,9 @@
   text-align: end;
 }
 
-/* The plain caption figures at the head of the first column (default pack
-   size, doses per unit) — not boxed rows. Typography only; the row itself is
-   the generic HStack. */
+/* The first panel's heading figures (default pack size, doses per unit) —
+   plain captions, not boxed rows. Typography only: the rows are HStacks in a
+   Stack, and the panel's `head` slot draws the divider under them. */
 .caption {
   font-size: var(--text-sm);
   color: var(--text-secondary);
@@ -81,4 +72,3 @@
   color: var(--text-secondary);
   font-size: var(--text-sm);
 }
-

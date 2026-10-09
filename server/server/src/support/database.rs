@@ -1,4 +1,4 @@
-use actix_web::{web::Data, Error, HttpRequest, HttpResponse};
+use actix_web::{Error, HttpRequest, HttpResponse, web::Data};
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
@@ -144,7 +144,7 @@ pub async fn vacuum_database(
 mod tests {
     use std::sync::{Arc, RwLock};
 
-    use actix_web::{http::StatusCode, test, web::Data, App};
+    use actix_web::{App, http::StatusCode, test, web::Data};
     use repository::{mock::MockDataInserts, test_db::setup_all};
     use service::{
         auth_data::AuthData, service_provider::ServiceProvider, session_store::SessionStore,

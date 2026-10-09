@@ -7,11 +7,11 @@ use repository::{NameRowRepository, StockLine, StockLineRow};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::uuid::uuid;
 
+use crate::NullableUpdate;
 use crate::invoice::inventory_adjustment::UpdateInventoryAdjustmentReason;
 use crate::invoice_line::stock_in_line::{InsertStockInLine, StockInType};
 use crate::invoice_line::stock_out_line::{InsertStockOutLine, StockOutType};
 use crate::number::next_number;
-use crate::NullableUpdate;
 
 use super::{AdjustmentType, InsertInventoryAdjustment};
 

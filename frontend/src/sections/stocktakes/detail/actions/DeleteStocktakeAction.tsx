@@ -34,7 +34,7 @@ export interface DeleteStocktakeActionProps {
 // ONE record in view.
 //
 // Shape mirrors FinaliseAction: the dialog is blocking while the delete is in
-// flight (no scrim/Escape, Cancel hidden, the OK button shows loading). The
+// flight (no Escape, Cancel hidden, the OK button shows loading). The
 // atomic batchStocktake delete is the source of truth for what can be deleted
 // (a finalised / on-hold stocktake can't) — on a DeleteStocktakeError we switch
 // the SAME dialog to our translated message with just a Close. There is no

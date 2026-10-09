@@ -1,4 +1,11 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  Show,
+  type Component,
+} from 'solid-js';
 import { t } from '@/intl';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
@@ -9,11 +16,16 @@ import {
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '@/ui/utils/createFlash';
 import { Button } from '@/ui/elements/buttons/Button';
 import { ArrowRightIcon } from '@/ui/icons';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { hasPermission } from '@/store/storeContext';
-import { poStatusLabel, type PurchaseOrderStatus } from '../purchaseOrderStatus';
+import {
+  poStatusLabel,
+  type PurchaseOrderStatus,
+} from '../purchaseOrderStatus';
 import type { PurchaseOrderInfoFragment } from './purchaseOrderDetail.generated';
 import {
   currentStep,
@@ -69,6 +81,14 @@ export const PurchaseOrderStatusFooter: Component<
   const [confirming, setConfirming] = createSignal<PurchaseOrderStatus>();
   const [busy, setBusy] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
+  const saved = createFlash<string>();
+
+  // A refusal speaks for the record it was raised on. Some views keep this
+  // footer mounted while the route swaps in another record, so drop it then.
+  // Keyed on the id through a memo: `props.node.id` alone re-runs whenever the
+  // view replaces the node object (any refetch), with the id unchanged.
+  const recordId = createMemo(() => props.node.id);
+  createEffect(on(recordId, () => setErrorMessage(undefined), { defer: true }));
 
   const status = () => props.node.status as PurchaseOrderStatus;
   const target = () => nextStatus(status(), props.authorisationRequired);
@@ -94,6 +114,7 @@ export const PurchaseOrderStatusFooter: Component<
 
   const start = (to: PurchaseOrderStatus) => {
     setErrorMessage(undefined);
+    saved.clear();
     const declined = refusal(to);
     if (declined) {
       setErrorMessage(declined);
@@ -108,12 +129,18 @@ export const PurchaseOrderStatusFooter: Component<
     const result = await props.onMove(to);
     setBusy(false);
     setConfirming(undefined);
-    if (!result.ok) setErrorMessage(result.message);
+    if (!result.ok) {
+      // No message = a transport failure, already up in the global modal.
+      if (result.message) setErrorMessage(result.message);
+      return;
+    }
+    saved.show(t('messages.purchase-order-saved'));
   };
 
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={steps()}
         current={currentStep(status(), props.authorisationRequired)}
       />
@@ -122,11 +149,11 @@ export const PurchaseOrderStatusFooter: Component<
           cluster so a crowded bar wraps it whole rather than crushing it). */}
       <Pagination {...props.pagination} inBar />
 
-      {/* A declined or rejected move shows here, at the control. A blocked
-          move names the offending items and the table marks those lines; a
-          finalise blocked by an unverified shipment names that instead —
-          though its wording denies a delivered shipment exists, which is the
-          server's message, not ours (contract ⚠️). */}
+      {/* A declined or rejected move shows here, full width at the control.
+          A blocked move names the offending items and the table marks those
+          lines; a finalise blocked by an unverified shipment names that
+          instead — though its wording denies a delivered shipment exists,
+          which is the server's message, not ours (contract ⚠️). */}
       <Show when={errorMessage()}>
         {message => (
           <Alert severity="error" testId="status-error">
@@ -134,6 +161,9 @@ export const PurchaseOrderStatusFooter: Component<
           </Alert>
         )}
       </Show>
+
+      {/* A move that lands flashes its save confirmation. */}
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>
         <Show when={target()}>
@@ -166,10 +196,7 @@ export const PurchaseOrderStatusFooter: Component<
               onClose={() => setConfirming(undefined)}
               title={t('heading.are-you-sure')}
               message={
-                <Show
-                  when={confirmation.note}
-                  fallback={confirmation.message}
-                >
+                <Show when={confirmation.note} fallback={confirmation.message}>
                   {note => (
                     <Stack gap="sm">
                       <span>{confirmation.message}</span>

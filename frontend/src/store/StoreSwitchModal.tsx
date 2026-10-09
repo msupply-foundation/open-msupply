@@ -11,7 +11,7 @@ import { t } from '../intl';
 // Spec (startup S3 › store switch, SL-6, [D14]): the store-selection panel's
 // MODAL host — opened by the bottom-bar store selector, over the current
 // screen, with the URL and entered store unchanged while it is open
-// (OMS-REG-LGN-02.11). Dismissable (Escape / scrim / the close affordance):
+// (OMS-REG-LGN-02.11). Dismissable (Escape / the close affordance):
 // dismissing changes nothing (.29), and the native <dialog> returns focus to
 // the trigger (.30). Confirming a store closes it and navigates to
 // /{store-id}, re-running Guards 2 and 3.

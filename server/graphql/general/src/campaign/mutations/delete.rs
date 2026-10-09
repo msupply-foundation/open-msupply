@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, RecordNotFound},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{DatabaseError, RecordNotFound},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -125,7 +125,7 @@ fn map_error(error: ServiceError) -> Result<DeleteCampaignErrorInterface> {
         ServiceError::CampaignDoesNotExist => {
             return Ok(DeleteCampaignErrorInterface::CampaignNotFound(
                 RecordNotFound,
-            ))
+            ));
         }
         ServiceError::DatabaseError(_) => BadUserInput(formatted_error),
     };

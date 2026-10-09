@@ -1,4 +1,5 @@
 use crate::{
+    ListError, ListResult,
     app_data::{AppDataService, AppDataServiceTrait},
     asset::AssetServiceTrait,
     auth::{AuthService, AuthServiceTrait},
@@ -62,9 +63,9 @@ use crate::{
     repack::{RepackService, RepackServiceTrait},
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{
+        RequisitionService, RequisitionServiceTrait,
         indicator_value::{IndicatorValueService, IndicatorValueServiceTrait},
         program_indicator::{ProgramIndicatorService, ProgramIndicatorServiceTrait},
-        RequisitionService, RequisitionServiceTrait,
     },
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     rnr_form::{RnRFormService, RnRFormServiceTrait},
@@ -91,7 +92,6 @@ use crate::{
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
     vvm::{VVMService, VVMServiceTrait},
-    ListError, ListResult,
 };
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,

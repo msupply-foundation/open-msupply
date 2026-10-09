@@ -37,7 +37,7 @@
 - **Errorable number cell** — a shared `getNumberCell`-family fragment for "number + optional inline line-error", to de-duplicate the snapshot cell across the detail table and line editor. **Tag (a): candidate new library component** → its own `ADDING_A_COMPONENT.md` task. Deliberately **not** built here (a migration doesn't smuggle in new library components).
 - **Mono `code`/`batch`/`location` cells + `getCellDefinition` width presets** (dim 3, BENIGN) — a tracked cross-cutting rollout gap (`CELL_TYPES.md` § Delivery status), not stocktakes-specific. Left to roll out with that programme.
 - **Optional test-hook parity** (dim 10, BENIGN) — the detail selection footer's `testId="actions-footer"` and the initial-create dialog's button testids. No contract gap today; left as-is.
-- **FL5 enumeration order** — only the on-screen **footer** order was reconciled (SE4); the FL5 bullet _list_ order in `ui-surface.md` was left (it enumerates the actions, it doesn't claim their on-screen order).
+- **Bulk line-action enumeration order** — only the on-screen **footer** order was reconciled (SE4); the bulk line-action bullet _list_ order in `ui-surface.md` was left (it enumerates the actions, it doesn't claim their on-screen order).
 - **`DIVERGENCES.md`** — SE5/SE6/SE7 describe this app's combined-flow title / card model / absent Unit display; if any is a deliberate delta from the reference app it may warrant a one-line `DIVERGENCES.md` entry. Not added speculatively — **your call**.
 
 ### Your visual pass (required — the skill cannot sign this off)

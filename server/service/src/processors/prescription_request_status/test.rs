@@ -1,19 +1,19 @@
 use chrono::Utc;
 use repository::{
-    mock::{mock_item_a, mock_patient, MockData, MockDataInserts},
     EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
     InvoiceType, KeyType, KeyValueStoreRow, NameRow, PrescriptionRequestRow,
     PrescriptionRequestRowRepository, PrescriptionRequestStatus, StoreRow,
+    mock::{MockData, MockDataInserts, mock_item_a, mock_patient},
 };
 use util::uuid::uuid;
 
 use crate::{
-    invoice::prescription::{update_prescription, UpdatePrescription, UpdatePrescriptionStatus},
+    invoice::prescription::{UpdatePrescription, UpdatePrescriptionStatus, update_prescription},
     prescription_request::insert::InsertPrescriptionRequest,
     prescription_request::update::{UpdatePrescriptionRequest, UpdatePrescriptionRequestStatus},
     prescription_request_line::upsert::UpsertPrescriptionRequestLine,
     processors::ProcessorType,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 /// When a dispensing invoice generated from a prescription request reaches

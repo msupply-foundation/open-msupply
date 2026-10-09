@@ -88,9 +88,9 @@ impl SyncTranslation for PackagingVariantTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_item_variants, MockDataInserts},
-        test_db::setup_all,
         ItemVariantRow, ItemVariantRowRepository,
+        mock::{MockDataInserts, mock_item_variants},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

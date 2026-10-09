@@ -57,14 +57,14 @@ mod tests {
     use crate::{
         service_provider::ServiceProvider,
         site::{
-            assign_stores::{assign_stores_to_site, AssignStoresToSite},
-            upsert::{upsert_site, UpsertSite},
+            assign_stores::{AssignStoresToSite, assign_stores_to_site},
+            upsert::{UpsertSite, upsert_site},
         },
     };
     use repository::{
-        mock::{mock_store_a, MockDataInserts},
-        test_db::setup_all,
         KeyType, KeyValueStoreRepository, SiteRowRepository,
+        mock::{MockDataInserts, mock_store_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

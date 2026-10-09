@@ -1,7 +1,7 @@
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_core::{
-    simple_generic_errors::{CannotEditInvoice, RecordNotFound},
     ContextExt,
+    simple_generic_errors::{CannotEditInvoice, RecordNotFound},
 };
 use graphql_types::{
     generic_errors::{CannotDeleteGeneratedDispensation, CannotDeleteInvoiceWithLines},
@@ -74,19 +74,19 @@ fn map_error(error: ServiceError) -> Result<DeletePrescriptionErrorInterface> {
         ServiceError::InvoiceDoesNotExist => {
             return Ok(DeletePrescriptionErrorInterface::RecordNotFound(
                 RecordNotFound {},
-            ))
+            ));
         }
         ServiceError::CannotEditFinalised => {
             return Ok(DeletePrescriptionErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         ServiceError::CannotDeleteGeneratedDispensation => {
             return Ok(
                 DeletePrescriptionErrorInterface::CannotDeleteGeneratedDispensation(
                     CannotDeleteGeneratedDispensation,
                 ),
-            )
+            );
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice | ServiceError::NotAPrescriptionInvoice => {
@@ -105,8 +105,8 @@ mod graphql {
     use graphql_core::test_helpers::setup_graphql_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
 
-    use repository::mock::{mock_prescription_a, MockDataInserts};
     use repository::InvoiceRowRepository;
+    use repository::mock::{MockDataInserts, mock_prescription_a};
     use serde_json::json;
 
     use crate::{InvoiceMutations, InvoiceQueries};

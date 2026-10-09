@@ -1,12 +1,12 @@
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-        check_status_change, check_store, custom_fields::check_invoice_custom_fields_patch,
-        InvoiceRowStatusError,
+        InvoiceRowStatusError, check_invoice_exists, check_invoice_is_editable,
+        check_invoice_status, check_invoice_type, check_status_change, check_store,
+        custom_fields::check_invoice_custom_fields_patch,
     },
     validate::{
-        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
-        OtherPartyErrors,
+        CheckOtherPartyType, OtherPartyErrors, check_other_party,
+        check_other_party_store_is_disabled,
     },
 };
 use repository::{InvoiceLineRowRepository, InvoiceRow, InvoiceType, Name, StorageConnection};
@@ -35,12 +35,11 @@ pub fn validate(
         return Err(NotACustomerReturn);
     }
 
-    if let Some(properties) = &patch.custom_fields {
-        if let Some(problem) =
+    if let Some(properties) = &patch.custom_fields
+        && let Some(problem) =
             check_invoice_custom_fields_patch(connection, &return_row.r#type, properties)?
-        {
-            return Err(problem.into());
-        }
+    {
+        return Err(problem.into());
     }
 
     // Status check

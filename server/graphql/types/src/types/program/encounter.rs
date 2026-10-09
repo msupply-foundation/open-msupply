@@ -1,6 +1,7 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
+    ContextExt,
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::{
         ClinicianLoader, ClinicianLoaderInput, DocumentLoader, PatientLoader,
@@ -10,7 +11,6 @@ use graphql_core::{
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use repository::{
     DatetimeFilter, Encounter, EncounterFilter, EncounterRow, EncounterSort, EncounterSortField,

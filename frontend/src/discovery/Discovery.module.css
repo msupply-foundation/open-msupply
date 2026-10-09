@@ -44,7 +44,7 @@
   overflow-y: auto;
 }
 
-/* One discovered server — the whole row is the choose action (AC-DT12). */
+/* One discovered server — the whole row is the choose action (OMS-REG-DESK-01.16). */
 .serverRow {
   display: flex;
   align-items: center;
@@ -83,7 +83,7 @@
   overflow-wrap: break-word;
 }
 
-/* "This machine" marker (AC-DT5) — icon + text, never colour or icon alone. */
+/* "This machine" marker (OMS-REG-DESK-01.6/.7) — icon + text, never colour or icon alone. */
 .thisMachine {
   display: inline-flex;
   align-items: center;
@@ -104,7 +104,7 @@
 }
 
 /* A stated outcome or an error, with its follow-up action beneath
-   (AC-DT9: "offers to search again"). */
+   (OMS-REG-DESK-01.13: "offers to search again"). */
 .outcome {
   display: flex;
   flex-direction: column;
@@ -132,7 +132,7 @@
   margin-block-start: 1.4rem;
 }
 
-/* The install-mode chooser (AC-AN21): two equal choices, so they read as a
+/* The install-mode chooser (OMS-REG-INS-01.40): two equal choices, so they read as a
    pair rather than as two buttons that happen to sit together. Stretched
    because the labels differ in length and a ragged pair reads as accidental. */
 .modeChoices {

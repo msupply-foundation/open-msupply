@@ -1,10 +1,10 @@
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    SingleRecordError, activity_log::activity_log_entry, service_provider::ServiceContext,
 };
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
     asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemRepository},
     asset_catalogue_item_row::{AssetCatalogueItemRow, AssetCatalogueItemRowRepository},
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 use super::query_catalogue_item::get_asset_catalogue_item;
@@ -81,16 +81,15 @@ pub fn validate(
     }
 
     // Check the manufacturer, model, and type combination is unique
-    if let Some(manufacturer) = &input.manufacturer {
-        if repo.count(Some(
+    if let Some(manufacturer) = &input.manufacturer
+        && repo.count(Some(
             AssetCatalogueItemFilter::new()
                 .manufacturer(StringFilter::equal_to(manufacturer))
                 .model(StringFilter::equal_to(&input.model))
                 .type_id(EqualFilter::equal_to(input.type_id.clone())),
         ))? > 0
-        {
-            return Err(InsertAssetCatalogueItemError::ManufacturerAndModelAlreadyExist);
-        }
+    {
+        return Err(InsertAssetCatalogueItemError::ManufacturerAndModelAlreadyExist);
     }
 
     Ok(())

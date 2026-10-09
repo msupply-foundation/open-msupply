@@ -9,9 +9,9 @@ use crate::sync::translations::{
 };
 
 use super::{
-    utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
     ToSyncRecordTranslationType,
+    utils::{RenamedKeys, from_renamed_keys_str, to_renamed_keys_value},
 };
 
 /// FK columns renamed during the name_link / entity-link abstraction. Central emits both the
@@ -112,9 +112,9 @@ impl SyncTranslation for VaccinationTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_vaccine_course_a_dose_a, MockDataInserts},
-        test_db::setup_all,
         VaccineCourseDoseRow, VaccineCourseDoseRowRepository,
+        mock::{MockDataInserts, mock_vaccine_course_a_dose_a},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

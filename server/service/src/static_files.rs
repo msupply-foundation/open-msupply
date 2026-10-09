@@ -428,7 +428,7 @@ mod test {
 
     use crate::static_files::StaticFileCategory;
 
-    use super::{InvalidFilePath, StaticFileService, STATIC_FILE_DIR};
+    use super::{InvalidFilePath, STATIC_FILE_DIR, StaticFileService};
 
     const TEST_DIR: &str = "test_static_files";
 
@@ -477,19 +477,23 @@ mod test {
         std::thread::sleep(Duration::from_millis(service.max_lifetime_millis + 1));
 
         // Check that the temporary file is deleted after expected lifespan
-        assert!(service
-            .find_file(&file_in.id, StaticFileCategory::Temporary)
-            .unwrap()
-            .is_none());
+        assert!(
+            service
+                .find_file(&file_in.id, StaticFileCategory::Temporary)
+                .unwrap()
+                .is_none()
+        );
 
         // Check that the sync file is not deleted
-        assert!(service
-            .find_file(
-                &sync_file_in.id,
-                StaticFileCategory::SyncFile("asset".to_string(), "asset_id".to_string())
-            )
-            .unwrap()
-            .is_some());
+        assert!(
+            service
+                .find_file(
+                    &sync_file_in.id,
+                    StaticFileCategory::SyncFile("asset".to_string(), "asset_id".to_string())
+                )
+                .unwrap()
+                .is_some()
+        );
 
         // Clean up
         fs::remove_dir_all(&test_dir).unwrap();
@@ -728,10 +732,12 @@ mod test {
         assert_eq!(fs::read_to_string(&file.path).unwrap(), "hello file bytes");
 
         // The completed file is served under its final name…
-        assert!(service
-            .find_file("file1", category.clone())
-            .unwrap()
-            .is_some());
+        assert!(
+            service
+                .find_file("file1", category.clone())
+                .unwrap()
+                .is_some()
+        );
 
         // …and no partial_ working file remains in the directory.
         let dir = temp_dir.path().join(category.to_path_buf());

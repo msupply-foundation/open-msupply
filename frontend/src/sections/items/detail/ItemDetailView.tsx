@@ -206,6 +206,7 @@ const ItemDetailView: Component = () => {
                       when={activeTab() === 'ancillary' && isCentralServer()}
                     >
                       <Button
+                        data-testid="add-ancillary-item-button"
                         icon={<PlusCircleIcon />}
                         onClick={() => setAncillaryEditor({ mode: 'create' })}
                       >
@@ -219,6 +220,7 @@ const ItemDetailView: Component = () => {
                       when={activeTab() === 'variants' && isCentralServer()}
                     >
                       <Button
+                        data-testid="add-variant-button"
                         icon={<PlusCircleIcon />}
                         onClick={() => setVariantEditor({ mode: 'create' })}
                       >
@@ -239,17 +241,20 @@ const ItemDetailView: Component = () => {
                       no href and render as plain text. */}
                   <Toolbar>
                     <StatsPanel
+                      testId="item-stat-stock-on-hand"
                       title={t('title.stock-on-hand')}
                       titleHref={stockHref()}
                       state={{ status: 'ready' }}
                     >
                       <Statistic
+                        testId="item-stat-stock-on-hand-units"
                         label={t('label.units')}
                         value={formatUnits(i().stats.stockOnHand)}
                         href={stockHref()}
                       />
                       <Show when={i().isVaccine}>
                         <Statistic
+                          testId="item-stat-stock-on-hand-doses"
                           label={t('label.doses')}
                           value={formatUnits(
                             dosesEquivalent(i().stats.stockOnHand, i().doses)
@@ -259,10 +264,12 @@ const ItemDetailView: Component = () => {
                       </Show>
                     </StatsPanel>
                     <StatsPanel
+                      testId="item-stat-amc"
                       title={t('title.average-monthly-consumption')}
                       state={{ status: 'ready' }}
                     >
                       <Statistic
+                        testId="item-stat-amc-units"
                         label={t('label.units')}
                         value={formatUnits(
                           i().stats.averageMonthlyConsumption,
@@ -271,10 +278,12 @@ const ItemDetailView: Component = () => {
                       />
                     </StatsPanel>
                     <StatsPanel
+                      testId="item-stat-months-of-stock"
                       title={t('title.months-of-stock')}
                       state={{ status: 'ready' }}
                     >
                       <Statistic
+                        testId="item-stat-months-of-stock-months"
                         label={t('text.months')}
                         value={formatMonthsOfStock(
                           i().stats.monthsOfStockOnHand
@@ -304,12 +313,14 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-name"
                             label={t('label.name')}
                           >
                             {i().name}
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-code"
                             label={t('label.code')}
                           >
                             {i().code}
@@ -318,23 +329,30 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-unit"
                             label={t('label.unit')}
                           >
                             {i().unitName ?? ''}
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-strength"
                             label={t('label.strength')}
                           >
                             {i().strength ?? ''}
                           </LabelledValue>
                         </FormRow>
                         <FormRow>
-                          <LabelledValue variant="field" label={t('label.ddd')}>
+                          <LabelledValue
+                            variant="field"
+                            data-testid="item-field-ddd"
+                            label={t('label.ddd')}
+                          >
                             {i().ddd}
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-type"
                             label={t('label.type')}
                           >
                             {i().type}
@@ -343,6 +361,7 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-is-vaccine"
                             label={t('label.is-vaccine')}
                           >
                             {i().isVaccine
@@ -352,6 +371,7 @@ const ItemDetailView: Component = () => {
                           <Show when={i().isVaccine}>
                             <LabelledValue
                               variant="field"
+                              data-testid="item-field-doses"
                               label={t('label.doses')}
                             >
                               {formatUnits(i().doses)}
@@ -363,12 +383,14 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-atc-category"
                             label={t('label.atc-category')}
                           >
                             {i().atcCategory}
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-universal-name"
                             label={t('label.universal-name')}
                           >
                             {i().msupplyUniversalName}
@@ -377,6 +399,7 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-universal-code"
                             label={t('label.universal-code')}
                           >
                             {i().universalCode}
@@ -391,6 +414,7 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-location-type"
                             label={t('label.location-type')}
                           >
                             {i().restrictedLocationType?.name ?? ''}
@@ -401,12 +425,14 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-default-pack-size"
                             label={t('label.default-pack-size')}
                           >
                             {formatUnits(i().defaultPackSize)}
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-outer-pack-size"
                             label={t('label.outer-pack-size')}
                           >
                             {formatUnits(i().outerPackSize)}
@@ -415,12 +441,14 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-volume-per-pack"
                             label={t('label.volume-per-pack')}
                           >
                             {formatUnits(i().volumePerPack, 2)}
                           </LabelledValue>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-volume-per-outer-pack"
                             label={t('label.volume-per-outer-pack')}
                           >
                             {formatUnits(i().volumePerOuterPack, 2)}
@@ -429,6 +457,7 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-weight"
                             label={t('label.weight')}
                           >
                             {formatUnits(i().weight, 2)}
@@ -439,6 +468,7 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-margin"
                             label={t('label.margin')}
                           >
                             {formatUnits(i().margin, 2)}
@@ -459,6 +489,7 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-default-sell-price-per-pack"
                             label={t('label.default-sell-price-per-pack')}
                           >
                             {formatUnits(
@@ -473,6 +504,7 @@ const ItemDetailView: Component = () => {
                         <FormRow>
                           <LabelledValue
                             variant="field"
+                            data-testid="item-field-ignore-for-orders"
                             label={t('label.ignore-for-orders')}
                           >
                             {(i().itemStoreProperties?.ignoreForOrders ?? false)

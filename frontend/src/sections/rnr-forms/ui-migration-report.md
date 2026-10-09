@@ -70,9 +70,8 @@ navigates).
 1. **List filters** — resolved as _Created chip only_: both siblings' filter
    maps dismiss `programId` as programmatic, so the audit's "Program chip"
    half had no house pattern; the exhaustive map records the dismissal.
-2. **Search highlight + scroll** — spec + case moved: `.50` reworded (logged in
-   [`acceptance.md`](../../../spec/rnr-forms/acceptance.md)); the chip removes
-   non-matches, making highlight redundant.
+2. **Search highlight + scroll** — spec + case moved: `.50` reworded; the chip
+   removes non-matches, making highlight redundant.
 3. **Comment cell** — stays single-line (two siblings agree; no multi-line cell
    editor exists); the spec's "multiline" reworded.
 
@@ -87,7 +86,7 @@ chip at stocktakes' altitude; virtualised-rows, Enter-advances, confirmed-tone
 and white/muted-cell clauses dropped; client-side sort stated; lifecycle
 indicator + side-panel title named; finalise confirms' verbs named; S4
 line-save contradiction collapsed (one owner, linked). `rules.md`: S2→S3 link
-text. `cases/OMS-REG-REPL-07` `.50` reworded + `acceptance.md` change log.
+text. `cases/OMS-REG-REPL-07` `.50` reworded.
 `spec/ui-standards/components.md`: Confirmation-dialog row now sanctions the
 phased/async `Dialog` composition. `e2e/TESTIDS.md`: `delete-lines-button`
 (shared) replaces the bespoke id; Created chip documented; default-chip and

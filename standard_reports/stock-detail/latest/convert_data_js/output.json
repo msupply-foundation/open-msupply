@@ -1,47 +1,70 @@
 {
-  "items": {
-    "nodes": [
-      {
-        "id": "101",
-        "code": "ITEM001",
-        "name": "Item A",
-        "stats": {
-          "totalConsumption": 1200,
-          "availableMonthsOfStockOnHand": 4.5,
-          "availableStockOnHand": 300.902,
-          "averageMonthlyConsumption": 266.7
+  "data": {
+    "stockLines": {
+      "nodes": [
+        {
+          "batch": "BCG-17",
+          "expiryDate": "2027-01-31",
+          "id": "line-bcg",
+          "packSize": 10,
+          "storeId": "store-a",
+          "totalNumberOfPacks": 12,
+          "supplierName": "UNICEF",
+          "location": {
+            "code": "COLD-1"
+          },
+          "item": {
+            "code": "BCG20",
+            "name": "BCG vaccine, 20 dose vial",
+            "unitName": "Vial",
+            "isVaccine": true,
+            "doses": 20
+          },
+          "dosesOnHand": 2400
         },
-        "monthConsumption": 200,
-        "lastMonthConsumption": 500,
-        "twoMonthsAgoConsumption": 123,
-        "expiringInSixMonths": 150,
-        "expiringInTwelveMonths": 170,
-        "stockOnOrder": 0,
-        "AMC12": 150.8,
-        "AMC24": 250.8,
-        "SOH": 300.9,
-        "MOS": 4.5
-      },
-      {
-        "id": "101",
-        "code": "ITEM001",
-        "name": "Item A",
-        "stats": {
-          "availableStockOnHand": 200,
-          "totalConsumption": 100,
-          "availableMonthsOfStockOnHand": 4.5
+        {
+          "batch": "MR-03",
+          "expiryDate": null,
+          "id": "line-mr",
+          "packSize": 1,
+          "storeId": "store-a",
+          "totalNumberOfPacks": 2.5,
+          "supplierName": null,
+          "location": null,
+          "item": {
+            "code": "MR10",
+            "name": "Measles-rubella vaccine",
+            "unitName": "Vial",
+            "isVaccine": true,
+            "doses": 0
+          },
+          "dosesOnHand": 3
         },
-        "stockOnOrder": 0,
-        "AMC12": 150.8,
-        "AMC24": 250.8,
-        "SOH": 200,
-        "MOS": 4.5,
-        "expiringInSixMonths": 150,
-        "expiringInTwelveMonths": 170,
-        "lastMonthConsumption": 500,
-        "monthConsumption": 200,
-        "twoMonthsAgoConsumption": 123
-      }
-    ]
+        {
+          "batch": "P-001",
+          "expiryDate": "2027-06-30",
+          "id": "line-paracetamol",
+          "packSize": 100,
+          "storeId": "store-a",
+          "totalNumberOfPacks": 10,
+          "supplierName": "Central Medical Stores",
+          "location": {
+            "code": "A1"
+          },
+          "item": {
+            "code": "PAR500",
+            "name": "Paracetamol 500mg tablets",
+            "unitName": "Tablet",
+            "isVaccine": false,
+            "doses": 0
+          }
+        }
+      ]
+    },
+    "showDoses": true
+  },
+  "arguments": {
+    "sort": "item.name",
+    "dir": "asc"
   }
 }

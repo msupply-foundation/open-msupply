@@ -1,10 +1,10 @@
-use super::{activity_log_row::activity_log, ActivityLogRow, DBType, StorageConnection};
+use super::{ActivityLogRow, DBType, StorageConnection, activity_log_row::activity_log};
 use diesel::prelude::*;
 
 use crate::{
+    ActivityLogType,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    ActivityLogType,
 };
 
 use crate::{EqualFilter, Pagination, Sort};

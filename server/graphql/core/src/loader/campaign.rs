@@ -1,8 +1,8 @@
 use async_graphql::dataloader::*;
 use async_graphql::*;
 use repository::{
-    campaign_row::{CampaignRow, CampaignRowRepository},
     RepositoryError, StorageConnectionManager,
+    campaign_row::{CampaignRow, CampaignRowRepository},
 };
 use std::collections::HashMap;
 

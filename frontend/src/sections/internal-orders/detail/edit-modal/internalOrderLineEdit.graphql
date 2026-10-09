@@ -10,9 +10,10 @@
 #    is cleared server-side when the quantity returns to the suggestion (D30).
 #
 # ADD mode previews the item's statistics from a live read BEFORE any line
-# exists (AC-LN3 — a reload before the first save finds nothing): the item's
-# current stock/consumption figures, from which the client previews the
-# suggestion. The real snapshot + suggestion are the server's, taken at save.
+# exists (OMS-REG-REPL-04.65 — a reload before the first save finds nothing):
+# the item's current stock/consumption figures, from which the client previews
+# the suggestion. The real snapshot + suggestion are the server's, taken at
+# save.
 
 # One item's current figures for the add-mode statistics preview. `stats`
 # triggers the AMC calculation — acceptable for a single picked item (contrast
@@ -71,9 +72,9 @@ mutation addInternalOrderLine(
   }
 }
 
-# DELETE (AC-LN15): remove the selected lines in one batch. The batch is ATOMIC
-# — any member error rolls the whole batch back, so nothing is removed on a
-# partial failure. A validating member still reports DeleteResponse on a
+# DELETE (OMS-REG-REPL-04.71): remove the selected lines in one batch. The batch
+# is ATOMIC — any member error rolls the whole batch back, so nothing is removed
+# on a partial failure. A validating member still reports DeleteResponse on a
 # rolled-back batch (contract › deletion wire trap), so the caller judges the
 # batch by whether ANY member errored, never a member's own response.
 mutation deleteInternalOrderLines(
@@ -105,7 +106,7 @@ mutation deleteInternalOrderLines(
 
 # EDIT: a single line update. Typed errors surface inline (contract › editing
 # lines); the success payload is the refreshed line (the parent refetches the
-# page regardless, AC-LN21).
+# page regardless, OMS-REG-REPL-04.76).
 mutation updateInternalOrderLine(
   $storeId: String!
   $input: UpdateRequestRequisitionLineInput!

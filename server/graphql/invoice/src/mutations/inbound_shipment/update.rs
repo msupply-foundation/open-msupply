@@ -5,13 +5,13 @@ use crate::mutations::{
 use async_graphql::*;
 
 use chrono::{DateTime, FixedOffset};
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::{InboundShipmentType, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
 };
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, RecordNotFound};
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::ResourceAccessRequest;
@@ -184,43 +184,43 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::InvoiceDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound));
         }
         ServiceError::CannotReverseInvoiceStatus => {
             return Ok(UpdateErrorInterface::CannotReverseInvoiceStatus(
                 CannotReverseInvoiceStatus,
-            ))
+            ));
         }
         ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
-            return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice))
+            return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice));
         }
         ServiceError::CannotReceiveWithPendingLines => {
             return Ok(UpdateErrorInterface::CannotReceiveWithPendingLines(
                 CannotReceiveWithPendingLines,
-            ))
+            ));
         }
 
         ServiceError::CannotChangeStatusOfInvoiceOnHold => {
             return Ok(UpdateErrorInterface::CannotChangeStatusOfInvoiceOnHold(
                 CannotChangeStatusOfInvoiceOnHold,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotASupplier => {
             return Ok(UpdateErrorInterface::OtherPartyNotASupplier(
                 OtherPartyNotASupplier,
-            ))
+            ));
         }
         ServiceError::OtherPartyNotVisible => {
             return Ok(UpdateErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
-            ))
+            ));
         }
         ServiceError::CannotIssueForeignCurrencyForInternalSuppliers => {
             return Ok(
                 UpdateErrorInterface::CannotIssueForeignCurrencyForInternalSuppliers(
                     CannotIssueInForeignCurrency,
                 ),
-            )
+            );
         }
         // Standard Graphql Errors
         ServiceError::CannotUpdateStatusAndDonorAtTheSameTime
@@ -276,21 +276,22 @@ mod test {
         test_helpers::{setup_graphql_test, setup_graphql_test_with_data},
     };
     use repository::{
-        mock::{
-            mock_inbound_shipment_c, mock_name_linked_to_store, mock_name_not_linked_to_store,
-            mock_name_store_a, mock_store_a, mock_store_linked_to_name, MockData, MockDataInserts,
-        },
         Invoice, InvoiceRowRepository, PermissionType, RepositoryError, StorageConnectionManager,
         UserPermissionRow,
+        mock::{
+            MockData, MockDataInserts, mock_inbound_shipment_c, mock_name_linked_to_store,
+            mock_name_not_linked_to_store, mock_name_store_a, mock_store_a,
+            mock_store_linked_to_name,
+        },
     };
     use serde_json::json;
     use service::{
         invoice::{
+            InvoiceServiceTrait,
             inbound_shipment::{
                 UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
                 UpdateInboundShipmentStatus,
             },
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
