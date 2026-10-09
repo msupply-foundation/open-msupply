@@ -157,6 +157,8 @@ export const InputsShowcase = () => {
   // sub-choice — the exact shape the create-stocktake modal uses.
   const [stocktakeType, setStocktakeType] = createSignal('full');
   const [includeAll, setIncludeAll] = createSignal('soh');
+  // Segmented demo: the store editor's follow-global / on / off choice.
+  const [authorise, setAuthorise] = createSignal('global');
   // Checkbox / ToggleSwitch demos.
   const [countZero, setCountZero] = createSignal(true);
   const [confirmed, setConfirmed] = createSignal(false);
@@ -854,7 +856,13 @@ export const InputsShowcase = () => {
             (the three below decide what the create-stocktake modal shows under
             them); a plain yes/no like <em>Which items</em> stays a bare list.
             The selected state comes from <code>:has(input:checked)</code> — no
-            JS mirrors it, so the box and the dot cannot disagree.
+            JS mirrors it, so the box and the dot cannot disagree.{' '}
+            <code>appearance="segmented"</code> is the third drawing: the same
+            radios joined into one bar, for a short set of exclusive values that
+            all deserve to be on the surface. It fills the selection{' '}
+            <strong>neutral</strong> rather than brand — a settings panel of
+            segmented rows would otherwise be a wall of orange marking nothing,
+            so a row that needs colour marks it beside the control instead.
           </Lead>
           <FormPreview>
             <RadioGroup
@@ -879,6 +887,17 @@ export const InputsShowcase = () => {
                   label: 'Blank stocktake',
                   description: 'Start empty and add items manually.',
                 },
+              ]}
+            />
+            <RadioGroup
+              label='Authorise purchase orders (appearance="segmented")'
+              appearance="segmented"
+              value={authorise()}
+              onChange={setAuthorise}
+              options={[
+                { value: 'global', label: 'Global' },
+                { value: 'on', label: 'On' },
+                { value: 'off', label: 'Off' },
               ]}
             />
             <RadioGroup
