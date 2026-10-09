@@ -1,5 +1,4 @@
 import {
-  createMemo,
   createSignal,
   For,
   Match,
@@ -12,6 +11,7 @@ import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
+import { RadioGroup } from '../../../ui/elements/inputs/RadioGroup';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import {
   ColourTagDot,
@@ -28,6 +28,7 @@ import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { CloseIcon } from '../../../ui/icons';
+import { createCatalogueView } from '@/domain/preferences';
 import {
   asBool,
   asColour,
@@ -36,9 +37,11 @@ import {
   asWarnParts,
   IMMUTABLE_INVOICE_STATUSES,
   INBOUND_STATUS_OPTIONS,
-  filterStoreCatalogue,
   groupStorePreferences,
+  isOverridable,
   OUTBOUND_STATUS_OPTIONS,
+  overrideChoice,
+  overrideSelection,
   preferenceValue,
   toggleInvoiceStatus,
   type InvoiceStatusOption,
@@ -54,7 +57,7 @@ import styles from './StorePreferencesPanel.module.css';
  * then one labelled row per ungrouped store preference in the SERVED order —
  * the server's catalogue order is the display order (contract § The store
  * editor) — then the Procurement group: the purchase-order preferences
- * together in one accordion, closed on arrival (SET-05.46). Each row is label
+ * together in one accordion, closed on arrival (SET-05.61). Each row is label
  * inline-start, control inline-end, on the hairline row rhythm (the module
  * CSS); the two composites — the recent-stocktake group and the
  * invoice-status choice — take a full-width block each. Every control is
@@ -71,7 +74,7 @@ export const StorePreferencesPanel = (props: {
   /** True while the catalogue read is still in flight — suppresses the
    *  empty state so it never flashes before rows land (as Properties). */
   loading: boolean;
-  onStage: (key: string, value: unknown) => void;
+  onStage: (preference: StorePreference, value: unknown) => void;
 }) => {
   const [filter, setFilter] = createSignal('');
   // The invoice-status guard's refusal (SET-05.38) — shown after a refused
@@ -86,41 +89,31 @@ export const StorePreferencesPanel = (props: {
 
   const groupLabel = (group: StorePreferenceGroup) => t(group.labelKey);
 
-  // The catalogue as shown: ungrouped rows and groups, both filtered — a group
-  // stays whole while its label or any member matches (SET-05.35, .46).
-  // Grouped once per catalogue and filtered once per keystroke, both memoised
-  // so the group objects keep their identity while the term changes and the
-  // keyed lists below never remount the accordion item on typing
-  // (kdd/solid-reactivity-pitfalls).
-  const grouped = createMemo(() => groupStorePreferences(props.preferences));
-  const catalogue = createMemo(() =>
-    filterStoreCatalogue(grouped(), label, groupLabel, filter())
-  );
-  const nothingVisible = () => {
-    const { ungrouped, groups } = catalogue();
-    return ungrouped.length === 0 && groups.length === 0;
-  };
-
-  // Which groups are open: the user's own choice, closed on arrival
-  // (SET-05.46). While a filter is active every kept group is held open so the
-  // rows it matched on are visible; clearing the filter hands the groups back
-  // to the user's choice.
-  const [openGroups, setOpenGroups] = createSignal<string[]>([]);
-  const filtering = () => filter().trim() !== '';
-  const expandedGroups = () =>
-    filtering() ? catalogue().groups.map(group => group.id) : openGroups();
+  // The catalogue as shown, and the group's open state: the shared catalogue
+  // view (@/domain/preferences), which memoises both so the keyed lists below
+  // never remount the accordion item on typing, keeps a group whole while its
+  // label or any member matches, holds it open while a filter is active, and
+  // starts it closed on arrival (SET-05.35, .61).
+  const { catalogue, nothingVisible, accordionProps } = createCatalogueView({
+    preferences: () => props.preferences,
+    group: groupStorePreferences,
+    labelOf: label,
+    groupLabelOf: groupLabel,
+    filter,
+  });
 
   const value = (preference: StorePreference) =>
     preferenceValue(preference, props.draft);
 
   const stageStatusToggle = (
+    statusPreference: StorePreference,
     current: readonly InvoiceStatusOption[],
     status: InvoiceStatusOption,
     checked: boolean
   ) => {
     const next = toggleInvoiceStatus(current, status, checked);
     setStatusGuardShown(next === null);
-    if (next !== null) props.onStage('invoiceStatusOptions', next);
+    if (next !== null) props.onStage(statusPreference, next);
   };
 
   // One preference row: the visible label inline-start, the control hugging
@@ -138,7 +131,7 @@ export const StorePreferencesPanel = (props: {
   const WarnStocktakeGroup = (groupProps: { preference: StorePreference }) => {
     const parts = () => asWarnParts(value(groupProps.preference));
     const stagePart = (patch: Partial<WarnStocktakeParts>) =>
-      props.onStage(groupProps.preference.key, { ...parts(), ...patch });
+      props.onStage(groupProps.preference, { ...parts(), ...patch });
     const partLabel = (part: 'enabled' | 'maxAge' | 'minItems') =>
       t(`preference.warnWhenMissingRecentStocktake.${part}` as LocaleKey);
     return (
@@ -196,6 +189,7 @@ export const StorePreferencesPanel = (props: {
   };
 
   const StatusGroup = (groupProps: {
+    preference: StorePreference;
     heading: string;
     /** Distinguishes the two groups' testids (NEW appears in both). */
     idPrefix: string;
@@ -215,7 +209,12 @@ export const StorePreferencesPanel = (props: {
               }
               testId={`store-preference-invoice-status-${groupProps.idPrefix}-${status.toLowerCase()}`}
               onChange={checked =>
-                stageStatusToggle(groupProps.current, status, checked)
+                stageStatusToggle(
+                  groupProps.preference,
+                  groupProps.current,
+                  status,
+                  checked
+                )
               }
             />
           )}
@@ -224,6 +223,53 @@ export const StorePreferencesPanel = (props: {
     </Stack>
   );
 
+  /*
+   * A global preference this store may override: a THREE-way choice, not a
+   * toggle (SET-05.59). "Global" is both the state a store starts in and the
+   * only way back out of an override — a toggle can say "off" but never
+   * "whatever the global value happens to be", which is why a store that had
+   * merely been toggled could never return to following global.
+   *
+   * All three values sit on the surface (a segmented RadioGroup) rather than
+   * behind a select: opening a popup to read three words costs more than the
+   * width they take. The row's own label names the preference, so the group
+   * is named by it rather than repeating it as a legend.
+   */
+  const OverrideRow = (overrideProps: { preference: StorePreference }) => {
+    const preference = () => overrideProps.preference;
+    return (
+      <Row label={label(preference())}>
+        <RadioGroup
+          label={label(preference())}
+          hideLabel
+          appearance="segmented"
+          value={overrideChoice(value(preference()))}
+          disabled={props.disabled}
+          options={[
+            {
+              value: 'global',
+              label: t('label.global'),
+              testId: `store-preference-${preference().key}-global`,
+            },
+            {
+              value: 'on',
+              label: t('label.on'),
+              testId: `store-preference-${preference().key}-on`,
+            },
+            {
+              value: 'off',
+              label: t('label.off'),
+              testId: `store-preference-${preference().key}-off`,
+            },
+          ]}
+          onChange={next =>
+            props.onStage(preference(), overrideSelection(next))
+          }
+        />
+      </Row>
+    );
+  };
+
   // One catalogue row, control by kind — shared by the ungrouped list and the
   // group members so both render identically (kdd/explicit-composition: each
   // kind is its own written-out branch).
@@ -231,6 +277,11 @@ export const StorePreferencesPanel = (props: {
     const preference = () => rowProps.preference;
     return (
       <Switch>
+        {/* An overridable global preference comes FIRST, whatever its kind:
+            two states can't express the three a store has (SET-05.59). */}
+        <Match when={isOverridable(preference())}>
+          <OverrideRow preference={preference()} />
+        </Match>
         <Match when={preference().valueType === 'BOOLEAN'}>
           <Row label={label(preference())}>
             <ToggleSwitch
@@ -239,7 +290,7 @@ export const StorePreferencesPanel = (props: {
               checked={asBool(value(preference()))}
               disabled={props.disabled}
               testId={`store-preference-${preference().key}`}
-              onChange={checked => props.onStage(preference().key, checked)}
+              onChange={checked => props.onStage(preference(), checked)}
             />
           </Row>
         </Match>
@@ -262,7 +313,7 @@ export const StorePreferencesPanel = (props: {
               data-testid={`store-preference-${preference().key}`}
               // The wire has no "unset" — a cleared field stages the
               // kind's zero (rules § The store editor › Preferences).
-              onChange={next => props.onStage(preference().key, next ?? 0)}
+              onChange={next => props.onStage(preference(), next ?? 0)}
             />
           </Row>
         </Match>
@@ -279,9 +330,9 @@ export const StorePreferencesPanel = (props: {
                 label={label(preference())}
                 variant="field"
                 allowCustom
-                onSelect={colour => props.onStage(preference().key, colour)}
+                onSelect={colour => props.onStage(preference(), colour)}
                 // Reset stages the kind's zero — "no colour" (SET-05.40).
-                onReset={() => props.onStage(preference().key, '')}
+                onReset={() => props.onStage(preference(), '')}
               />
             </Show>
           </Row>
@@ -303,12 +354,14 @@ export const StorePreferencesPanel = (props: {
             <Stack gap="sm">
               <span class={styles.label}>{label(preference())}</span>
               <StatusGroup
+                preference={preference()}
                 heading={`${t('label.outbound-shipment')} / ${t('supplier-return')}`}
                 idPrefix="outbound"
                 options={OUTBOUND_STATUS_OPTIONS}
                 current={asStatusList(value(preference()))}
               />
               <StatusGroup
+                preference={preference()}
                 heading={`${t('label.inbound-shipment')} / ${t('customer-return')}`}
                 idPrefix="inbound"
                 options={INBOUND_STATUS_OPTIONS}
@@ -367,17 +420,11 @@ export const StorePreferencesPanel = (props: {
           </For>
         </div>
         {/* The Procurement group — the purchase-order preferences together,
-            closed on arrival; members keep catalogue order (SET-05.46). Held
+            closed on arrival; members keep catalogue order (SET-05.61). Held
             open while a filter is active; nothing renders when the filter
             leaves no group. */}
         <Show when={catalogue().groups.length > 0}>
-          <Accordion
-            multiple
-            value={expandedGroups()}
-            onValueChange={ids => {
-              if (!filtering()) setOpenGroups(ids);
-            }}
-          >
+          <Accordion multiple {...accordionProps}>
             <For each={catalogue().groups}>
               {group => (
                 <AccordionItem value={group.id}>

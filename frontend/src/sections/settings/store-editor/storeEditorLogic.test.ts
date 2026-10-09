@@ -7,7 +7,12 @@ import {
   canEditPreferences,
   filterStoreCatalogue,
   groupStorePreferences,
+  isOverridable,
+  overrideChoice,
+  overrideSelection,
   preferenceValue,
+  stagePreference,
+  storedSelection,
   toggleInvoiceStatus,
   type StorePreference,
   canEditAnything,
@@ -241,6 +246,19 @@ const preference = (
   value: unknown
 ): StorePreference => ({ key, valueType, value, storeOverride: null });
 
+/* An overridable global preference as the STORE listing serves it: `value` is
+   what applies in this store, `storeOverride` says how it got there. */
+const overridable = (
+  value: boolean,
+  isOverridden: boolean,
+  globalValue: boolean
+): StorePreference => ({
+  key: 'authorisePurchaseOrder',
+  valueType: 'BOOLEAN',
+  value,
+  storeOverride: { isOverridden, globalValue },
+});
+
 describe('preferenceValue', () => {
   it('shows the staged edit over the served value, including a staged falsy', () => {
     const pref = preference('blindStocktake', 'BOOLEAN', true);
@@ -249,7 +267,79 @@ describe('preferenceValue', () => {
   });
 });
 
-describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .46)', () => {
+describe('the three states of an overridable preference (SET-05.59)', () => {
+  it('a store with no row of its own records "follow global", not the value it shows', () => {
+    const following = overridable(true, false, true);
+    // What applies is the global true; what the STORE records is "follow".
+    expect(following.value).toBe(true);
+    expect(storedSelection(following)).toBeNull();
+    expect(overrideChoice(preferenceValue(following, {}))).toBe('global');
+  });
+
+  it('distinguishes a followed value from a pinned one that reads the same', () => {
+    // The pair the old two-state control could not tell apart: both show
+    // "off", and only one of them would survive the global value changing.
+    const followed = overridable(false, false, false);
+    const pinned = overridable(false, true, false);
+    expect(overrideChoice(preferenceValue(followed, {}))).toBe('global');
+    expect(overrideChoice(preferenceValue(pinned, {}))).toBe('off');
+  });
+
+  it('a plain store preference has no third state', () => {
+    const plain = preference('blindStocktake', 'BOOLEAN', false);
+    expect(isOverridable(plain)).toBe(false);
+    expect(storedSelection(plain)).toBe(false);
+    expect(overrideChoice(preferenceValue(plain, {}))).toBe('off');
+  });
+
+  it('maps each choice to what the save carries', () => {
+    expect(overrideSelection('global')).toBeNull();
+    expect(overrideSelection('on')).toBe(true);
+    expect(overrideSelection('off')).toBe(false);
+  });
+});
+
+describe('stagePreference — an edit back to the stored state stages nothing (SET-05.60)', () => {
+  it('drops the key when a toggle returns to what the store records', () => {
+    const pref = preference('blindStocktake', 'BOOLEAN', false);
+    const on = stagePreference({}, pref, true);
+    expect(on).toEqual({ blindStocktake: true });
+    expect(stagePreference(on, pref, false)).toEqual({});
+  });
+
+  it('a no-op flick never pins a store that was merely following global', () => {
+    // The accident the reviewer found: on-then-off wrote a row equal to the
+    // global value, silently opting the store out of every later change.
+    const following = overridable(true, false, true);
+    const pinned = stagePreference({}, following, false);
+    expect(pinned).toEqual({ authorisePurchaseOrder: false });
+    expect(stagePreference(pinned, following, null)).toEqual({});
+  });
+
+  it('choosing "use global" on an overridden store IS a change, and stages the clear', () => {
+    const overridden = overridable(false, true, true);
+    expect(stagePreference({}, overridden, null)).toEqual({
+      authorisePurchaseOrder: null,
+    });
+    // ...while re-choosing the value it is already pinned to is not.
+    expect(stagePreference({}, overridden, false)).toEqual({});
+  });
+
+  it('compares composites by content, not identity', () => {
+    const parts = { enabled: true, maxAge: 30, minItems: 5 };
+    const pref = preference(
+      'warnWhenMissingRecentStocktake',
+      'WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA',
+      parts
+    );
+    expect(stagePreference({}, pref, { ...parts })).toEqual({});
+    expect(stagePreference({}, pref, { ...parts, maxAge: 60 })).toEqual({
+      warnWhenMissingRecentStocktake: { ...parts, maxAge: 60 },
+    });
+  });
+});
+
+describe('groupStorePreferences / filterStoreCatalogue (SET-05.35, .61)', () => {
   // The grouping and filter mechanics are the shared catalogue helper's
   // (domain/preferences tests); these pin which keys form the Procurement
   // group and that the filter respects it.
@@ -415,7 +505,7 @@ describe('buildPreferencesInput (SET-05.37)', () => {
     expect(buildPreferencesInput({}, 'store-a')).toBeUndefined();
   });
 
-  it('writes the purchase-order authorisation row as the store override, never the global value (SET-05.45)', () => {
+  it('writes the purchase-order authorisation row as the store override, never the global value (SET-05.59)', () => {
     const input = buildPreferencesInput(
       { authorisePurchaseOrder: false },
       'store-a'
@@ -426,6 +516,18 @@ describe('buildPreferencesInput (SET-05.37)', () => {
       ],
     });
     expect(input).not.toHaveProperty('authorisePurchaseOrder');
+  });
+
+  it('sends a null value to REMOVE the store override (SET-05.60)', () => {
+    // The one write that deletes rather than writes: the store follows the
+    // global value again, later changes included.
+    expect(
+      buildPreferencesInput({ authorisePurchaseOrder: null }, 'store-a')
+    ).toEqual({
+      authorisePurchaseOrderStoreOverride: [
+        { storeId: 'store-a', value: null },
+      ],
+    });
   });
 
   it('carries the composite and the status set in their wire shapes', () => {

@@ -3,6 +3,7 @@
 // maths, and the editability derivations. No Solid, no fetching — the modal
 // composes these.
 
+import { sameFetchedValue } from '@/typeHelpers';
 import type { NamePropertiesResult } from '../configuration/nameProperties.generated';
 import type {
   StorePreferencesResult,
@@ -235,12 +236,70 @@ export type UpsertPreferencesInput = UpsertStorePreferencesVariables['input'];
  */
 export type PreferenceDraft = Record<string, unknown>;
 
-/** The value a control shows: the staged edit, else what the server holds. */
+/*
+ * Whether a store may decline this preference's global value — the served
+ * `storeOverride` block is the marker, and nothing else in the catalogue
+ * carries one (contract § The store editor).
+ */
+export const isOverridable = (preference: StorePreference): boolean =>
+  preference.storeOverride != null;
+
+/*
+ * What the STORE records for a preference, which is not always the value it
+ * shows: an overridable preference records `null` — "follow the global value"
+ * — until the store pins its own. That distinction is the whole point of the
+ * three-way control: a store following a global `false` and a store pinned to
+ * `false` show the same value and behave differently the next time the global
+ * value changes (rules § The store editor › Preferences).
+ */
+export const storedSelection = (preference: StorePreference): unknown =>
+  preference.storeOverride && !preference.storeOverride.isOverridden
+    ? null
+    : preference.value;
+
+/** What a control holds: the staged edit, else what the store records. `null`
+ *  from an overridable preference means "following global". */
 export const preferenceValue = (
   preference: StorePreference,
   draft: PreferenceDraft
 ): unknown =>
-  preference.key in draft ? draft[preference.key] : preference.value;
+  preference.key in draft ? draft[preference.key] : storedSelection(preference);
+
+/*
+ * Stage one edit. An edit back to what the store already records DROPS the
+ * key instead of staging it: the save writes exactly the keys the draft
+ * carries, so a toggle flicked on and then off again would otherwise write a
+ * row — and for an overridable preference that row pins the store to the
+ * global value it was merely following, silently opting it out of every later
+ * global change.
+ */
+export const stagePreference = (
+  draft: PreferenceDraft,
+  preference: StorePreference,
+  value: unknown
+): PreferenceDraft => {
+  if (sameFetchedValue(value, storedSelection(preference))) {
+    const { [preference.key]: _unstaged, ...rest } = draft;
+    return rest;
+  }
+  return { ...draft, [preference.key]: value };
+};
+
+/*
+ * The three choices an overridable preference offers, as the select's own
+ * values: follow the global value, or pin this store to one. `global` is what
+ * removes a row that already exists — the only way back (rules § The store
+ * editor › Preferences).
+ */
+export type OverrideChoice = 'global' | 'on' | 'off';
+
+export const overrideChoice = (selection: unknown): OverrideChoice =>
+  selection == null ? 'global' : asBool(selection) ? 'on' : 'off';
+
+/** The select hands back a raw string; anything that isn't a pinned value
+ *  means "follow global", so the mapping is total and needs no cast. */
+export const overrideSelection = (choice: string): boolean | null =>
+  choice === 'on' ? true : choice === 'off' ? false : null;
 
 // Defensive readers from the untyped value — a wrong-typed value reads as the
 // kind's zero, which is also what the server fabricates for "unset".
@@ -360,12 +419,12 @@ const GROUP_OF: Partial<
 };
 
 /** The served catalogue split into the ungrouped rows and the Procurement
- *  group, both in served order (SET-05.46). */
+ *  group, both in served order (SET-05.61). */
 export const groupStorePreferences = (preferences: StorePreference[]) =>
   groupCatalogue(preferences, GROUP_OF);
 
 /** The filter (SET-05.35): ungrouped rows match on their own label; a group
- *  stays whole while its label or any member matches (SET-05.46). */
+ *  stays whole while its label or any member matches (SET-05.61). */
 export {
   filterCatalogue as filterStoreCatalogue,
   matchesPreferenceFilter,
@@ -472,11 +531,18 @@ export const buildPreferencesInput = (
       { storeId, value: asStatusList(draft.invoiceStatusOptions) },
     ];
   // The one global preference a store may override (rules § The store editor
-  // › Preferences): served under its own key, written through the override
-  // field so the global value is left alone.
+  // › Preferences): served under its own key, written through the
+  // override field so the global value is left alone. A null value CLEARS the
+  // store's row, handing the store back to the global value.
   if ('authorisePurchaseOrder' in draft)
     input.authorisePurchaseOrderStoreOverride = [
-      { storeId, value: asBool(draft.authorisePurchaseOrder) },
+      {
+        storeId,
+        value:
+          draft.authorisePurchaseOrder === null
+            ? null
+            : asBool(draft.authorisePurchaseOrder),
+      },
     ];
 
   return Object.keys(input).length > 0 ? input : undefined;

@@ -46,6 +46,7 @@ import {
   propertyFields,
   serialiseProperties,
   setProperty,
+  stagePreference,
   type PreferenceDraft,
   type PropertyDraft,
 } from './storeEditorLogic';
@@ -418,8 +419,10 @@ export const StoreEditorModal = (props: {
               draft={prefDraft()}
               disabled={!prefsEditable()}
               loading={preferencesData.loading}
-              onStage={(key, value) =>
-                setPrefDraft(current => ({ ...current, [key]: value }))
+              onStage={(preference, value) =>
+                setPrefDraft(current =>
+                  stagePreference(current, preference, value)
+                )
               }
             />
           </TabPanel>
