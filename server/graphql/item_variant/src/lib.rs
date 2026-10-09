@@ -3,6 +3,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::ItemVariantNode;
 use repository::PaginationOption;
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -14,6 +15,8 @@ pub struct ItemVariantQueries;
 
 #[Object]
 impl ItemVariantQueries {
+    /// Whether any item has variants. Auto-created variants, which only hold a
+    /// barcode, don't count.
     pub async fn item_variants_configured(
         &self,
         ctx: &Context<'_>,
@@ -69,5 +72,16 @@ impl ItemVariantMutations {
         input: DeleteItemVariantInput,
     ) -> Result<DeleteItemVariantResponse> {
         delete_item_variant(ctx, store_id, input)
+    }
+
+    /// Makes a variant central created to hold a barcode a real one, so it shows
+    /// in variant lists and pickers. Its id stays the same.
+    async fn promote_item_variant(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<ItemVariantNode> {
+        promote_item_variant(ctx, store_id, id)
     }
 }

@@ -21,7 +21,11 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{category_row::CategoryRow, Item, ItemRow};
+use repository::{
+    category_row::CategoryRow,
+    item_variant::item_variant::{ItemVariantFilter, ItemVariantRepository},
+    EqualFilter, Item, ItemRow,
+};
 use serde_json::json;
 use service::{item_stats::ItemStats, ListResult};
 
@@ -218,7 +222,24 @@ impl ItemNode {
         Ok(result)
     }
 
-    pub async fn variants(&self, ctx: &Context<'_>) -> Result<Vec<ItemVariantNode>> {
+    /// The item's variants. Auto-created ones, which central creates only to hold
+    /// a barcode, are left out unless `includeAutoCreated` is true.
+    pub async fn variants(
+        &self,
+        ctx: &Context<'_>,
+        include_auto_created: Option<bool>,
+    ) -> Result<Vec<ItemVariantNode>> {
+        if include_auto_created == Some(true) {
+            let variants = ItemVariantRepository::new(&ctx.get_connection_manager().connection()?)
+                .query_by_filter(
+                    ItemVariantFilter::new()
+                        .item_id(EqualFilter::equal_to(self.row().id.clone()))
+                        .include_auto_created(),
+                )
+                .map_err(StandardGraphqlError::from_repository_error)?;
+            return Ok(ItemVariantNode::from_vec(variants));
+        }
+
         let loader = ctx.get_loader::<DataLoader<ItemVariantsByItemIdLoader>>();
         let result = loader
             .load_one(self.row().id.clone())

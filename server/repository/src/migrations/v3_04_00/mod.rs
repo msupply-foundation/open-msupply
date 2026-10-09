@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_barcode_auto_confirm_processor_cursor_pg_enum;
 mod add_code_to_location_type;
+mod add_is_auto_created_to_item_variant;
 mod add_line_total_to_purchase_order_line;
 mod barcode_proposals;
 mod seed_barcode_auto_confirm_processor_cursor;
@@ -25,6 +26,7 @@ impl Migration for V3_04_00 {
             Box::new(barcode_proposals::Migrate),
             Box::new(add_barcode_auto_confirm_processor_cursor_pg_enum::Migrate),
             Box::new(seed_barcode_auto_confirm_processor_cursor::Migrate),
+            Box::new(add_is_auto_created_to_item_variant::Migrate),
         ]
     }
 }

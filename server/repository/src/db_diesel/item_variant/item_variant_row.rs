@@ -24,6 +24,7 @@ define_linked_tables! {
         vvm_type -> Nullable<Text>,
         created_datetime -> Timestamp,
         created_by -> Nullable<Text>,
+        is_auto_created -> Bool,
     },
     links: {
         item_link_id -> item_id,
@@ -56,6 +57,11 @@ pub struct ItemVariantRow {
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     pub created_by: Option<String>,
+    /// Created on central only to hold a barcode (decisions/2026-09-30_barcodes.md).
+    /// Left out of variant lists and pickers, along with its packaging variants,
+    /// unless a query asks for it. Promoting it to a real variant clears this.
+    #[serde(default)]
+    pub is_auto_created: bool,
     // Resolved from link tables - must be last to match view column order.
     // Serialise as `item_id` / `manufacturer_id`; the sync translator also emits the legacy
     // `*_link_id` aliases for cross-version compatibility (see `RenamedKeys`).

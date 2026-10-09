@@ -120,6 +120,12 @@ impl ItemVariantNode {
     pub async fn vvm_type(&self) -> &Option<String> {
         &self.item_variant.vvm_type
     }
+
+    /// Created on central only to hold a barcode. Left out of variant lists unless
+    /// asked for.
+    pub async fn is_auto_created(&self) -> bool {
+        self.item_variant.is_auto_created
+    }
 }
 
 impl ItemVariantNode {

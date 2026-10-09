@@ -656,6 +656,7 @@ mod tests {
                     vvm_type: None,
                     created_datetime: NaiveDateTime::default(),
                     created_by: None,
+                    is_auto_created: false,
                 }],
                 key_value_store_rows: vec![KeyValueStoreRow {
                     id: KeyType::SettingsSyncSiteId,

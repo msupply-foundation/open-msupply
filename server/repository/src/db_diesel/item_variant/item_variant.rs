@@ -44,6 +44,9 @@ pub struct ItemVariantFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
+    /// Auto-created variants only hold a barcode, so they're left out unless
+    /// asked for (decisions/2026-09-30_barcodes.md)
+    pub include_auto_created: bool,
 }
 
 impl ItemVariantFilter {
@@ -63,6 +66,11 @@ impl ItemVariantFilter {
 
     pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
         self.item_id = Some(filter);
+        self
+    }
+
+    pub fn include_auto_created(mut self) -> Self {
+        self.include_auto_created = true;
         self
     }
 }
@@ -151,12 +159,18 @@ fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQ
     // Exclude any deleted items
     query = query.filter(item_variant::deleted_datetime.is_null());
 
-    if let Some(f) = filter {
-        let ItemVariantFilter { id, name, item_id } = f;
+    let ItemVariantFilter {
+        id,
+        name,
+        item_id,
+        include_auto_created,
+    } = filter.unwrap_or_default();
 
-        apply_equal_filter!(query, id, item_variant::id);
-        apply_string_filter!(query, name, item_variant::name);
-        apply_equal_filter!(query, item_id, item::id);
+    apply_equal_filter!(query, id, item_variant::id);
+    apply_string_filter!(query, name, item_variant::name);
+    apply_equal_filter!(query, item_id, item::id);
+    if !include_auto_created {
+        query = query.filter(item_variant::is_auto_created.eq(false));
     }
     query
 }
@@ -203,6 +217,7 @@ mod tests {
                     .unwrap(),
                 created_by: None,
                 manufacturer_id: None,
+                is_auto_created: false,
             })
             .unwrap();
 
@@ -225,5 +240,52 @@ mod tests {
 
         assert_eq!(item_variant_row.id, id);
         assert_eq!(item_variant_row.name, name);
+    }
+
+    /// Auto-created variants are left out unless the filter asks for them
+    #[actix_rt::test]
+    async fn test_item_variant_query_leaves_out_auto_created() {
+        let (_, storage_connection, _, _) = test_db::setup_all(
+            "test_item_variant_query_leaves_out_auto_created",
+            MockDataInserts::none().items(),
+        )
+        .await;
+
+        let repo = ItemVariantRowRepository::new(&storage_connection);
+        for (id, is_auto_created) in [("real", false), ("auto", true)] {
+            repo.upsert_one(&ItemVariantRow {
+                id: id.to_string(),
+                name: id.to_string(),
+                item_id: mock_item_a().id,
+                is_auto_created,
+                ..Default::default()
+            })
+            .unwrap();
+        }
+
+        let ids = |filter: ItemVariantFilter| {
+            let mut ids: Vec<String> = ItemVariantRepository::new(&storage_connection)
+                .query_by_filter(filter)
+                .unwrap()
+                .into_iter()
+                .map(|variant| variant.item_variant_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+        let for_item = || ItemVariantFilter::new().item_id(EqualFilter::equal_to(mock_item_a().id));
+
+        assert_eq!(ids(for_item()), vec!["real"]);
+        assert_eq!(ids(for_item().include_auto_created()), vec!["auto", "real"]);
+        assert_eq!(
+            ids(ItemVariantFilter::new().id(EqualFilter::equal_to("auto".to_string()))),
+            Vec::<String>::new()
+        );
+        assert_eq!(
+            ItemVariantRepository::new(&storage_connection)
+                .count(None)
+                .unwrap(),
+            1
+        );
     }
 }

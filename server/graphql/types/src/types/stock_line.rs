@@ -124,10 +124,13 @@ impl StockLineNode {
         self.stock_line.barcode().map(display_barcode)
     }
 
+    /// None for an auto-created variant, which only holds a barcode: it's kept out
+    /// of sight like it is in variant lists. `itemVariantId` still gives it.
     pub async fn item_variant(&self) -> Option<ItemVariantNode> {
         self.stock_line
             .item_variant_row
             .as_ref()
+            .filter(|item_variant_row| !item_variant_row.is_auto_created)
             .map(|item_variant_row| {
                 ItemVariantNode::from_domain(ItemVariant {
                     item_variant_row: item_variant_row.clone(),

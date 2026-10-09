@@ -167,6 +167,7 @@ mod tests {
                     .unwrap(),
                 created_by: None,
                 manufacturer_id: None,
+                is_auto_created: false,
             })
             .unwrap();
 

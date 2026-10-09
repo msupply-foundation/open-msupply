@@ -13,8 +13,9 @@ use bundled_item::{
 };
 pub use item::*;
 use item_variant::{
-    delete_item_variant, get_item_variants, upsert_item_variant, DeleteItemVariant,
-    DeleteItemVariantError, UpsertItemVariantError, UpsertItemVariantWithPackaging,
+    delete_item_variant, get_item_variants, promote_item_variant, upsert_item_variant,
+    DeleteItemVariant, DeleteItemVariantError, PromoteItemVariantError, UpsertItemVariantError,
+    UpsertItemVariantWithPackaging,
 };
 use packaging_variant::{
     delete_packaging_variant, get_packaging_variants, upsert_packaging_variant,
@@ -61,6 +62,14 @@ pub trait ItemServiceTrait: Sync + Send {
         input: DeleteItemVariant,
     ) -> Result<String, DeleteItemVariantError> {
         delete_item_variant(ctx, input)
+    }
+
+    fn promote_item_variant(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+    ) -> Result<ItemVariant, PromoteItemVariantError> {
+        promote_item_variant(ctx, id)
     }
 
     fn get_packaging_variants(
