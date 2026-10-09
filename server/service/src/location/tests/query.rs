@@ -2,15 +2,23 @@
 mod query {
     use repository::{
         location::{LocationFilter, LocationSortField},
-        mock::{mock_asset_b, mock_location_1, stock_line_with_volume, MockDataInserts},
-        test_db::setup_all,
-        LocationRow, LocationRowRepository, StockLineRow, StockLineRowRepository,
+        mock::{
+            mock_asset_b, mock_location_1, mock_store_a, mock_store_b, stock_line_with_volume,
+            MockData, MockDataInserts,
+        },
+        test_db::{setup_all, setup_all_with_data},
+        ItemRow, ItemType, LocationRow, LocationRowRepository, LocationTypeRow, StockLineRow,
+        StockLineRowRepository,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
 
     use crate::{
-        asset::update::UpdateAsset, location::query::get_volume_used,
-        service_provider::ServiceProvider, ListError, SingleRecordError,
+        asset::update::UpdateAsset,
+        location::query::{
+            get_available_volume_by_location_type, get_volume_used, AvailableVolumeByType,
+        },
+        service_provider::ServiceProvider,
+        ListError, SingleRecordError,
     };
 
     #[actix_rt::test]
@@ -323,5 +331,114 @@ mod query {
         // Adds volumes correctly
         let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();
         assert_eq!(result, 1500.0);
+    }
+
+    #[actix_rt::test]
+    async fn location_get_available_volume_by_location_type() {
+        let type_x = || LocationTypeRow {
+            id: "type_x".to_string(),
+            ..Default::default()
+        };
+        let type_y = || LocationTypeRow {
+            id: "type_y".to_string(),
+            ..Default::default()
+        };
+        let type_no_locations = || LocationTypeRow {
+            id: "type_no_locations".to_string(),
+            ..Default::default()
+        };
+        let item = |id: &str, location_type: Option<&str>| ItemRow {
+            id: id.to_string(),
+            r#type: ItemType::Stock,
+            restricted_location_type_id: location_type.map(str::to_string),
+            ..Default::default()
+        };
+        let location = |id: &str, store_id: &str, location_type: &str, volume: f64| LocationRow {
+            id: id.to_string(),
+            store_id: store_id.to_string(),
+            location_type_id: Some(location_type.to_string()),
+            volume,
+            ..Default::default()
+        };
+        let stock_line =
+            |id: &str, store_id: &str, location_id: &str, packs: f64, volume: f64| StockLineRow {
+                id: id.to_string(),
+                store_id: store_id.to_string(),
+                item_id: "item_x1".to_string(),
+                location_id: Some(location_id.to_string()),
+                total_number_of_packs: packs,
+                total_volume: volume,
+                ..Default::default()
+            };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "location_get_available_volume_by_location_type",
+            MockDataInserts::all(),
+            MockData {
+                location_types: vec![type_x(), type_y(), type_no_locations()],
+                items: vec![
+                    // Unrestricted item first: it used to end the lookup for every item
+                    item("item_unrestricted", None),
+                    item("item_x1", Some("type_x")),
+                    item("item_x2", Some("type_x")),
+                    item("item_y", Some("type_y")),
+                    item("item_no_locations", Some("type_no_locations")),
+                ],
+                locations: vec![
+                    location("x_1", &mock_store_a().id, "type_x", 100.0),
+                    location("x_2", &mock_store_a().id, "type_x", 50.0),
+                    location("y_1", &mock_store_a().id, "type_y", 200.0),
+                    // Another store's location of the same type is not ours to fill
+                    location("x_other_store", &mock_store_b().id, "type_x", 1000.0),
+                ],
+                stock_lines: vec![
+                    stock_line("in_x_1", &mock_store_a().id, "x_1", 2.0, 30.0),
+                    stock_line("in_x_2", &mock_store_a().id, "x_2", 1.0, 10.0),
+                    // No packs left, so takes no space
+                    stock_line("empty_in_x_2", &mock_store_a().id, "x_2", 0.0, 20.0),
+                    stock_line(
+                        "in_x_other_store",
+                        &mock_store_b().id,
+                        "x_other_store",
+                        1.0,
+                        500.0,
+                    ),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let item_ids: Vec<String> = [
+            "item_unrestricted",
+            "item_x1",
+            "item_x2",
+            "item_y",
+            "item_no_locations",
+        ]
+        .iter()
+        .map(|id| id.to_string())
+        .collect();
+
+        let result =
+            get_available_volume_by_location_type(&connection, &mock_store_a().id, &item_ids)
+                .unwrap();
+
+        let type_x_volume = AvailableVolumeByType {
+            restricted_location_type_id: Some("type_x".to_string()),
+            available_volume: Some(150.0 - 40.0),
+        };
+        assert_eq!(result.get("item_x1"), Some(&type_x_volume));
+        assert_eq!(result.get("item_x2"), Some(&type_x_volume));
+        assert_eq!(
+            result.get("item_y"),
+            Some(&AvailableVolumeByType {
+                restricted_location_type_id: Some("type_y".to_string()),
+                available_volume: Some(200.0),
+            })
+        );
+        assert_eq!(result.get("item_unrestricted"), None);
+        assert_eq!(result.get("item_no_locations"), None);
+        assert_eq!(result.len(), 3);
     }
 }
