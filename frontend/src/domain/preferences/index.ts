@@ -11,3 +11,8 @@ export {
   type PreferenceGroupDef,
   type PreferenceGroupLabelKey,
 } from './catalogue';
+export {
+  createCatalogueView,
+  type CatalogueView,
+  type CatalogueViewOptions,
+} from './createCatalogueView';
