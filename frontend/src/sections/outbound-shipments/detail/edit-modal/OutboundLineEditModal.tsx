@@ -1796,7 +1796,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     : []),
                   ...distinctPackSizes().map(size => ({
                     value: `packs-${size}`,
-                    label: t('label.packs-of-pack-size', { packSize: size }),
+                    label: t('label.packs-of-pack-size', {
+                      packSize: roundedText(size),
+                    }),
                   })),
                 ]}
                 onValueChange={value => {
