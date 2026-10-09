@@ -2896,6 +2896,8 @@
   "messages.plugin-deleted-successfully": "Plugin deleted. It will stay active until the server is restarted.",
   "messages.plugin-upload-helper": "Select a plugin bundle file (.json) to upload and install. Plugin bundles are generated using the open-msupply CLI tool.",
   "messages.plugin-uploaded-successfully": "Plugin installed successfully",
+  "messages.preference-overridden-at-stores_one": "{{count}} store overrides this setting",
+  "messages.preference-overridden-at-stores_other": "{{count}} stores override this setting",
   "messages.prescription-created": "Dispensing record #{{count}} created",
   "messages.prescription-given": "Prescribed {{amount}} {{item}} on {{date}}",
   "messages.prescription-saved": "Dispensing record saved",
