@@ -343,8 +343,17 @@ impl SynchroniserV5V6 {
         // for the v7 URL. On success, persist KV + carry cursors over and
         // kick off a v7 get_token in the background. On failure, surface the
         // error so the sync log records it and the frontend can show it.
-        if !CentralServerConfig::is_central_server() {
-            self.try_upgrade_to_v7(ctx).await?;
+        if !CentralServerConfig::is_central_server()
+            && let Err(error) = self.try_upgrade_to_v7(ctx).await
+        {
+            // The v5+v6 part of the cycle finished and its records are integrated; only
+            // the move to v7 was refused. Legacy central refuses it until every store on
+            // the site has moved to open mSupply central, which can take weeks, so the
+            // processors those records need still run: transfers, reloading plugins,
+            // numbering. The one-off initialisation triggers below wait for a cycle that
+            // completes.
+            trigger_post_sync_processors(ctx);
+            return Err(error);
         }
 
         // Deliberately *after* try_upgrade_to_v7, and as late in the cycle as possible. On
@@ -411,6 +420,12 @@ pub(crate) fn run_post_sync_triggers(
         service_provider.ledger_fix_trigger.trigger();
     }
 
+    trigger_post_sync_processors(ctx);
+}
+
+/// The processors that run on what a sync brought in. Also run on a v5/v6 site
+/// whose request to move to v7 was refused, see `SynchroniserV5V6::sync_inner`.
+pub(crate) fn trigger_post_sync_processors(ctx: &ServiceContext) {
     ctx.processors_trigger
         .trigger_requisition_transfer_processors();
     ctx.processors_trigger.trigger_invoice_transfer_processors();
