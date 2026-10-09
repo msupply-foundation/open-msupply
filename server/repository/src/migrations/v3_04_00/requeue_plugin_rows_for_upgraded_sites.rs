@@ -12,29 +12,28 @@ impl MigrationFragment for Migrate {
         "requeue_plugin_rows_for_upgraded_sites"
     }
 
-    /// Integrate again the rows from open mSupply central that this site could not use
-    /// on an older version, so a site that upgrades ends up with its form plugins.
+    /// Integrate plugin bundles again on a site that stored them before it knew their
+    /// runtime, so a site that upgrades loads its form plugins in the new front end.
     ///
-    /// Two kinds of row reach a v5/v6 site that an older version gets wrong:
-    /// - `document_registry`, which central sends from 3.4 for the entries a form plugin
-    ///   install writes. Older versions have no translator for it, so they mark each row
-    ///   done with "Translator for record not found".
-    /// - `frontend_plugin`, whose `host_runtime` versions before 3.01.1 did not know.
-    ///   They dropped the field, and the 3.01.1 migration then gave every bundle `react`,
-    ///   so a bundle built for the new front end is never loaded by it.
+    /// Versions before 3.01.1 did not know `frontend_plugin`'s `host_runtime`. They
+    /// dropped the field when integrating the row, and the 3.01.1 migration then gave
+    /// every bundle `react`, so a bundle built for the new front end is never loaded by
+    /// it. The row does not come back by itself: the site's v6 pull cursor is already
+    /// past it, and reinstalling an unchanged bundle on central writes nothing. It is
+    /// still in the sync buffer with its runtime, so this moves the latest row of each
+    /// bundle back to pending, as `v3_00_00::reintegrate_items_for_custom_field_options`
+    /// does, and the next v5/v6 sync integrates it with this version's translator. Only
+    /// the latest row per bundle: when that is a delete it is applied again, so a bundle
+    /// removed after its last upsert stays removed. A row this site already integrated
+    /// correctly is written again with the same values.
     ///
-    /// Neither comes back by itself: the site's v6 pull cursor is already past them, and
-    /// reinstalling an unchanged bundle on central writes nothing. Both are still in the
-    /// sync buffer, so this moves the latest row of each record back to pending, as
-    /// `v3_00_00::reintegrate_items_for_custom_field_options` does, and the next v5/v6
-    /// sync integrates them with this version's translators. Only the latest row per
-    /// record: when that is a delete it is applied again, so a plugin removed after its
-    /// last upsert stays removed. A row this site already integrated correctly is
-    /// written again with the same values.
+    /// Registry entries from OMS central (`document_registry`) need nothing here. A
+    /// version without that translator integrates only the tables it knows, so it never
+    /// touches those rows and they are still pending when the site reaches 3.4.
     ///
     /// Skipped on a site already on v7, which no longer runs the v5/v6 integration, so
     /// the rows would stay pending for good. On central nothing matches, since central
-    /// never pulls these tables.
+    /// never pulls bundles.
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         if is_on_v7(connection)? {
             return Ok(());
@@ -51,9 +50,9 @@ impl MigrationFragment for Migrate {
                         integration_error = NULL
                     WHERE cursor IN (
                         SELECT MAX(cursor) FROM sync_buffer
-                            WHERE table_name IN ('document_registry', 'frontend_plugin')
+                            WHERE table_name = 'frontend_plugin'
                                 AND sync_version = 'V5_V6'
-                            GROUP BY table_name, record_id
+                            GROUP BY record_id
                     );
             "#
         )?;
@@ -98,87 +97,88 @@ mod test {
             .unwrap();
     }
 
-    /// A buffer row as a site leaves it once integrated, with or without an error.
-    fn insert_integrated(
+    /// A buffer row from central, either integrated or never touched.
+    fn insert_row(
         connection: &StorageConnection,
         cursor: i32,
         table_name: &str,
         record_id: &str,
         action: &str,
         sync_version: &str,
-        error: Option<&str>,
+        integrated: bool,
     ) {
-        let error = error
-            .map(|e| format!("'{e}'"))
-            .unwrap_or("NULL".to_string());
+        let integration_datetime = if integrated {
+            "'2026-01-01 00:00:01'"
+        } else {
+            "NULL"
+        };
         run(
             connection,
             &format!(
-                "INSERT INTO sync_buffer (cursor, record_id, received_datetime, integration_datetime, integration_error, table_name, action, data, sync_version, source_site_id, is_integrated) \
-                 VALUES ({cursor}, '{record_id}', '2026-01-01 00:00:00', '2026-01-01 00:00:01', {error}, '{table_name}', '{action}', '{{}}', '{sync_version}', 1, true);"
+                "INSERT INTO sync_buffer (cursor, record_id, received_datetime, integration_datetime, table_name, action, data, sync_version, source_site_id, is_integrated) \
+                 VALUES ({cursor}, '{record_id}', '2026-01-01 00:00:00', {integration_datetime}, '{table_name}', '{action}', '{{}}', '{sync_version}', 1, {integrated});"
             ),
         );
     }
 
-    /// What an older v5/v6 site has buffered by the time it upgrades: registry entries it
-    /// could not translate, plugin bundles it integrated without their runtime, and rows
-    /// that are none of this migration's business.
+    /// What an older v5/v6 site has buffered by the time it upgrades: plugin bundles it
+    /// integrated without their runtime, a registry entry it never touched, and rows that
+    /// are none of this migration's business.
     fn insert_rows(connection: &StorageConnection) {
-        let dropped = Some("Translator for record not found");
-        insert_integrated(
+        insert_row(
             connection,
             1,
-            "document_registry",
-            "entry",
-            "UPSERT",
-            "V5_V6",
-            dropped,
-        );
-        insert_integrated(
-            connection,
-            2,
-            "document_registry",
-            "entry",
-            "UPSERT",
-            "V5_V6",
-            dropped,
-        );
-        insert_integrated(
-            connection,
-            3,
             "frontend_plugin",
             "bundle",
             "UPSERT",
             "V5_V6",
-            None,
+            true,
         );
-        insert_integrated(
+        insert_row(
+            connection,
+            2,
+            "frontend_plugin",
+            "bundle",
+            "UPSERT",
+            "V5_V6",
+            true,
+        );
+        insert_row(
+            connection,
+            3,
+            "frontend_plugin",
+            "removed",
+            "UPSERT",
+            "V5_V6",
+            true,
+        );
+        insert_row(
             connection,
             4,
             "frontend_plugin",
             "removed",
-            "UPSERT",
-            "V5_V6",
-            None,
-        );
-        insert_integrated(
-            connection,
-            5,
-            "frontend_plugin",
-            "removed",
             "DELETE",
             "V5_V6",
-            None,
+            true,
         );
-        insert_integrated(connection, 6, "item", "item", "UPSERT", "V5_V6", None);
-        insert_integrated(
+        insert_row(connection, 5, "item", "item", "UPSERT", "V5_V6", true);
+        insert_row(
             connection,
-            7,
+            6,
             "frontend_plugin",
             "bundle_v7",
             "UPSERT",
             "V7",
-            None,
+            true,
+        );
+        insert_row(
+            connection,
+            7,
+            "document_registry",
+            "entry",
+            "UPSERT",
+            "V5_V6",
+            false,
         );
     }
 
@@ -216,19 +216,19 @@ mod test {
         connection
     }
 
-    /// The latest v5/v6 row of each registry entry and plugin bundle goes back to pending,
-    /// the delete included; earlier rows of the same record, other tables and v7 rows stay
-    /// integrated.
+    /// The latest v5/v6 row of each plugin bundle goes back to pending, the delete
+    /// included; earlier rows of the same bundle, other tables and v7 rows stay
+    /// integrated. The registry entry was pending all along.
     #[actix_rt::test]
-    async fn requeues_the_latest_registry_and_plugin_rows() {
+    async fn requeues_the_latest_plugin_rows() {
         let connection = upgrade("migration_requeue_plugin_rows", "V5_V6").await;
-        assert_eq!(pending(&connection), vec![2, 3, 5]);
+        assert_eq!(pending(&connection), vec![2, 4, 7]);
     }
 
     /// A site on v7 never runs the v5/v6 integration again, so nothing is moved.
     #[actix_rt::test]
     async fn leaves_a_v7_site_alone() {
         let connection = upgrade("migration_requeue_plugin_rows_v7", "V7").await;
-        assert_eq!(pending(&connection), Vec::<i32>::new());
+        assert_eq!(pending(&connection), vec![7]);
     }
 }
