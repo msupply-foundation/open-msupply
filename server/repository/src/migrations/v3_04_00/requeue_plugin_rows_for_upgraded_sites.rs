@@ -29,7 +29,10 @@ impl MigrationFragment for Migrate {
     ///
     /// Registry entries from OMS central (`document_registry`) need nothing here. A
     /// version without that translator integrates only the tables it knows, so it never
-    /// touches those rows and they are still pending when the site reaches 3.4.
+    /// touches those rows and they are still pending when the site reaches 3.4. That
+    /// holds while the site syncs over v5/v6: one that moved to v7 on an earlier 3.x
+    /// never runs the v5/v6 integration again, so remotes are upgraded together with
+    /// OMS central.
     ///
     /// Skipped on a site already on v7, which no longer runs the v5/v6 integration, so
     /// the rows would stay pending for good. On central nothing matches, since central

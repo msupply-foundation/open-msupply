@@ -4,8 +4,10 @@ use repository::{
 
 use super::{
     FkChecker, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType, document_registry::check_foreign_keys,
-    form_schema::FormSchemaTranslation, master_list::MasterListTranslation,
+    ToSyncRecordTranslationType,
+    document_registry::{DocumentRegistryTranslation, check_foreign_keys},
+    form_schema::FormSchemaTranslation,
+    master_list::MasterListTranslation,
     om_form_schema::OmFormSchemaTranslation,
 };
 
@@ -36,6 +38,11 @@ impl SyncTranslation for OmDocumentRegistryTranslation {
             OmFormSchemaTranslation.table_name(),
             // The program context is synced via the program master list
             MasterListTranslation.table_name(),
+            // A type a plugin took over keeps its entry's id, so a site can get both
+            // centrals' copies in one sync (initialising, say). Legacy central's goes
+            // in first and this one last, so the site ends with what open mSupply
+            // central holds; otherwise the order between them would be arbitrary.
+            DocumentRegistryTranslation.table_name(),
         ]
     }
 
@@ -230,14 +237,38 @@ mod tests {
         ));
     }
 
-    /// Entries from open mSupply central integrate before documents, so a document
-    /// whose type arrives in the same sync gets its enrolment or encounter row.
+    /// Legacy central's copy of an entry integrates first and open mSupply central's
+    /// last, then documents, so a site keeps open mSupply central's copy and a
+    /// document whose type arrives in the same sync gets its enrolment or encounter
+    /// row.
     #[test]
-    fn entries_integrate_before_documents() {
+    fn entries_integrate_legacy_first_then_central_then_documents() {
         let translators = all_translators();
         let order = pull_integration_order(&translators);
         let position = |table: &str| order.iter().position(|t| *t == table).unwrap();
+        assert!(position("om_document_registry") < position("document_registry"));
         assert!(position("document_registry") < position("om_document"));
+    }
+
+    /// Both centrals' copies of a taken-over entry in one sync: the site keeps open
+    /// mSupply central's, with the plugin as its owner.
+    #[actix_rt::test]
+    async fn central_copy_of_an_entry_wins_over_legacy_copy_in_the_same_sync() {
+        let (_, connection, _, _) = setup_all(
+            "central_copy_of_an_entry_wins_over_legacy_copy_in_the_same_sync",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        buffer(&connection, 0, plugin_entry());
+        buffer(&connection, 0, legacy_copy_of_plugin_entry());
+        integrate_and_translate_sync_buffer(&connection, None, 0, true).unwrap();
+
+        let entry = DocumentRegistryRowRepository::new(&connection)
+            .find_one_by_id("demo_program_PluginEnrolment")
+            .unwrap()
+            .unwrap();
+        assert_eq!(entry.plugin_code.as_deref(), Some("demo_program"));
     }
 
     /// A document pulled from legacy central and the entry for its type pulled from
@@ -308,6 +339,25 @@ mod tests {
                 "form_schema_id": mock_form_schema_simple().id,
                 "plugin_code": "demo_program",
                 "program_key": "demo"
+            })),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        }
+    }
+
+    /// The same entry as legacy central holds it from before the take-over.
+    fn legacy_copy_of_plugin_entry() -> SyncBufferRow {
+        SyncBufferRow {
+            table_name: "om_document_registry".to_string(),
+            record_id: "demo_program_PluginEnrolment".to_string(),
+            data: SyncRecordData(serde_json::json!({
+                "ID": "demo_program_PluginEnrolment",
+                "category": "PROGRAM_ENROLMENT",
+                "document_type": "PluginEnrolment",
+                "context_ID": context_program_a().id,
+                "name": "Plugin enrolment",
+                "form_schema_ID": mock_form_schema_simple().id,
+                "config": null
             })),
             action: SyncAction::Upsert,
             ..Default::default()
