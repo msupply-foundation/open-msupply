@@ -153,9 +153,11 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
                   <tr data-testid="item-variant-packaging-row">
                     <td>{row.packagingLevel}</td>
                     <td>{row.name}</td>
-                    <td data-numeric>{row.packSize}</td>
                     {/* Blank when unset — a cell, not a labelled field
                         (ui-standards § tables › absent values). */}
+                    <td data-numeric>
+                      {row.packSize == null ? '' : <Num value={row.packSize} />}
+                    </td>
                     <td data-numeric>
                       {row.volumePerUnit == null ? (
                         ''
