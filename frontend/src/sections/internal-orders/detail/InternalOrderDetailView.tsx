@@ -726,7 +726,8 @@ const InternalOrderDetailView: Component = () => {
       ...getCellDefinition('amc'),
     },
     {
-      c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
+      // MOS: the raw figure, so the number cell applies display rounding.
+      c: { accessor: line => mos(line), id: COL.mos },
       sortKey: 'mos',
       header: () => t('label.months-of-stock'),
       ...getCellDefinition('mos'),

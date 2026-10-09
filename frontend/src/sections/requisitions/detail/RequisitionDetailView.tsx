@@ -699,8 +699,9 @@ const RequisitionDetailView: Component = () => {
             ...getCellDefinition('amc'),
           },
           {
-            // MOS: available ÷ AMC, one decimal, zero without consumption.
-            c: { accessor: l => mos(l).toFixed(1), id: 'mos' },
+            // MOS: available ÷ AMC, zero without consumption — the raw figure,
+            // so the number cell applies display rounding.
+            c: { accessor: l => mos(l), id: 'mos' },
             header: () => t('label.months-of-stock'),
             ...getCellDefinition('mos'),
           },

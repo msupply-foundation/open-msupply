@@ -613,7 +613,12 @@ const LineEditContent = (
                 />
                 <StatRow
                   label={t('label.months-of-stock')}
-                  value={`${editorLine().monthsOfStock.toFixed(1)} ${t('label.months')}`}
+                  value={
+                    <>
+                      <Num value={editorLine().monthsOfStock} />{' '}
+                      {t('label.months')}
+                    </>
+                  }
                 />
                 <Show
                   when={

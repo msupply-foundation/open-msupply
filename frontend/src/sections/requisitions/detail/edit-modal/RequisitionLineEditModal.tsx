@@ -499,6 +499,9 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           ? t('label.months')
           : measureWord(entryMode(), current()?.unitName ?? null, shown());
     const shown = () => {
+      // Months (customer MOS, never editable) go to Num raw so they follow
+      // display rounding; days stay at one decimal.
+      if (rowProps.fixed === 'months') return rowProps.units;
       if (rowProps.fixed) return Math.round(rowProps.units * 10) / 10;
       if (rowProps.onChange) {
         const raw = unitsToMode(rowProps.units, entryMode(), packSize());
