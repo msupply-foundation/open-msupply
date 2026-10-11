@@ -1,4 +1,5 @@
 use crate::{
+    barcode::find_confirmed,
     invoice::common::{
         calculate_foreign_currency_total, calculate_total_after_tax,
         generate_invoice_user_id_update, generate_vvm_status_log, GenerateVVMStatusLogInput,
@@ -33,6 +34,7 @@ pub fn generate(
     item_row: ItemRow,
     existing_invoice_row: InvoiceRow,
 ) -> Result<GenerateResult, RepositoryError> {
+    let input = with_scanned_item_variant(connection, input)?;
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
     let external_inbound_shipment_lines_must_be_authorised =
         ExternalInboundShipmentLinesMustBeAuthorised
@@ -229,6 +231,27 @@ fn generate_line(
         transfer_comment: None,
         // An empty barcode is no barcode
         barcode: barcode.as_deref().and_then(standard_barcode),
+    })
+}
+
+/// A scanned barcode confirmed for the item gives the line its item variant,
+/// unless the line has one already. A barcode that isn't confirmed yet leaves the
+/// line without one.
+fn with_scanned_item_variant(
+    connection: &StorageConnection,
+    input: InsertStockInLine,
+) -> Result<InsertStockInLine, RepositoryError> {
+    if input.item_variant_id.is_some() {
+        return Ok(input);
+    }
+    let Some(value) = input.barcode.as_deref().and_then(standard_barcode) else {
+        return Ok(input);
+    };
+    let item_variant_id =
+        find_confirmed(connection, &value, &input.item_id)?.map(|barcode| barcode.item_variant.id);
+    Ok(InsertStockInLine {
+        item_variant_id,
+        ..input
     })
 }
 

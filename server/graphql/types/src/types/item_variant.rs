@@ -13,6 +13,7 @@ use repository::item_variant::{
     item_variant_row::ItemVariantRow, packaging_variant_row::PackagingVariantRow,
 };
 use repository::ItemRow;
+use util::barcode::display_barcode;
 pub struct PackagingVariantNode {
     pub packaging_variant: PackagingVariantRow,
 }
@@ -171,6 +172,14 @@ impl PackagingVariantNode {
 
     pub async fn volume_per_unit(&self) -> Option<f64> {
         self.packaging_variant.volume_per_unit
+    }
+
+    /// The confirmed barcode for this packaging, as people read it
+    pub async fn barcode(&self) -> Option<&str> {
+        self.packaging_variant
+            .barcode
+            .as_deref()
+            .map(display_barcode)
     }
 }
 

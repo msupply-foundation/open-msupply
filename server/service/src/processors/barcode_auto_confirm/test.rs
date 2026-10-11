@@ -1,6 +1,6 @@
 use chrono::Utc;
 use repository::{
-    barcode::{BarcodeFilter, BarcodeRepository},
+    item_variant::packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
     mock::{
         mock_item_a, mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
     },
@@ -29,7 +29,8 @@ fn proposal(id: &str, store_id: &str) -> BarcodeProposalRow {
     }
 }
 
-/// On central, a second site proposing a barcode for the same item confirms it
+/// On central, a second site proposing a barcode for the same item confirms it,
+/// onto the item's auto-created variant
 #[tokio::test]
 async fn confirms_when_a_second_store_proposes() {
     test_util_set_is_central_server(true);
@@ -44,8 +45,10 @@ async fn confirms_when_a_second_store_proposes() {
     let ctx = service_provider.basic_context().unwrap();
     let proposals = BarcodeProposalRowRepository::new(&ctx.connection);
     let confirmed = || {
-        BarcodeRepository::new(&ctx.connection)
-            .query_by_filter(BarcodeFilter::new().value(EqualFilter::equal_to(VALUE.to_string())))
+        PackagingVariantRepository::new(&ctx.connection)
+            .query_by_filter(
+                PackagingVariantFilter::new().barcode(EqualFilter::equal_to(VALUE.to_string())),
+            )
             .unwrap()
     };
     let process = || async {
@@ -66,8 +69,14 @@ async fn confirms_when_a_second_store_proposes() {
         .upsert_one(&proposal("second", &mock_store_b().id))
         .unwrap();
     process().await;
-    let barcodes = confirmed();
-    assert_eq!(barcodes.len(), 1);
-    assert_eq!(barcodes[0].barcode_row.item_id, mock_item_a().id);
-    assert_eq!(barcodes[0].barcode_row.pack_size, Some(10.0));
+    let packaging_variants = confirmed();
+    assert_eq!(packaging_variants.len(), 1);
+    assert_eq!(packaging_variants[0].pack_size, Some(10.0));
+    let item_variant =
+        repository::item_variant::item_variant_row::ItemVariantRowRepository::new(&ctx.connection)
+            .find_one_by_id(&packaging_variants[0].item_variant_id)
+            .unwrap()
+            .unwrap();
+    assert_eq!(item_variant.item_id, mock_item_a().id);
+    assert!(item_variant.is_auto_created);
 }

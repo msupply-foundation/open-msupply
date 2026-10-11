@@ -16,6 +16,7 @@ pub type PackagingVariantSort = Sort<PackagingVariantSortField>;
 pub struct PackagingVariantFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_variant_id: Option<EqualFilter<String>>,
+    pub barcode: Option<EqualFilter<String>>,
 }
 
 impl PackagingVariantFilter {
@@ -30,6 +31,11 @@ impl PackagingVariantFilter {
 
     pub fn item_variant_id(mut self, filter: EqualFilter<String>) -> Self {
         self.item_variant_id = Some(filter);
+        self
+    }
+
+    pub fn barcode(mut self, filter: EqualFilter<String>) -> Self {
+        self.barcode = Some(filter);
         self
     }
 }
@@ -115,10 +121,12 @@ fn create_filtered_query(filter: Option<PackagingVariantFilter>) -> BoxedPackagi
         let PackagingVariantFilter {
             id,
             item_variant_id,
+            barcode,
         } = f;
 
         apply_equal_filter!(query, id, packaging_variant::id);
         apply_equal_filter!(query, item_variant_id, packaging_variant::item_variant_id);
+        apply_equal_filter!(query, barcode, packaging_variant::barcode);
     }
     query
 }
@@ -180,6 +188,7 @@ mod tests {
                 pack_size: Some(1.0),
                 volume_per_unit: Some(0.015),
                 deleted_datetime: None,
+                barcode: None,
             })
             .unwrap();
 

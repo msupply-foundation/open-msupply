@@ -50,7 +50,6 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::Program,
     ChangelogTableName::Report,
     ChangelogTableName::AssetCatalogueType,
-    ChangelogTableName::Barcode,
     ChangelogTableName::Contact,
     ChangelogTableName::Document,
     ChangelogTableName::Encounter,

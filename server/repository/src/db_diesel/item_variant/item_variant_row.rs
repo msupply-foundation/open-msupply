@@ -1,7 +1,7 @@
 use crate::{
     db_diesel::{
-        barcode_row::barcode, item_row::item, location_row::location,
-        location_type_row::location_type, name_link_row::name_link, name_row::name,
+        item_row::item, location_row::location, location_type_row::location_type,
+        name_link_row::name_link, name_row::name,
     },
     diesel_macros::define_linked_tables,
     user_account, ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType,
@@ -42,7 +42,6 @@ allow_tables_to_appear_in_same_query!(item_variant, item);
 allow_tables_to_appear_in_same_query!(item_variant, user_account);
 allow_tables_to_appear_in_same_query!(item_variant, name);
 allow_tables_to_appear_in_same_query!(item_variant, location_type);
-allow_tables_to_appear_in_same_query!(item_variant, barcode);
 allow_tables_to_appear_in_same_query!(item_variant, location);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]

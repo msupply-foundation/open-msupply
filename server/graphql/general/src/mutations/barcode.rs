@@ -1,6 +1,5 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_inputs::NullableUpdateInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -8,13 +7,11 @@ use graphql_types::types::{BarcodeMatchNode, BarcodeNode, DeleteResponse};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     barcode::{
-        DeleteBarcodeProposalError, InsertBarcodeInput as ServiceInsertInput, ManageBarcodeError,
-        ProposeBarcodeError, ProposeBarcodeInput as ServiceProposeInput,
-        UpdateBarcodeInput as ServiceUpdateInput,
+        BarcodeTarget, DeleteBarcodeProposalError, InsertBarcodeInput as ServiceInsertInput,
+        ManageBarcodeError, ProposeBarcodeError, ProposeBarcodeInput as ServiceProposeInput,
     },
     service_provider::ServiceContext,
     sync::CentralServerConfig,
-    NullableUpdate,
 };
 
 fn service_context(
@@ -131,7 +128,8 @@ pub enum LegacyInsertBarcodeResponse {
 }
 
 /// Deprecated: kept for clients that predate `proposeBarcode`. On central it adds a
-/// confirmed barcode, as it used to; elsewhere it proposes one. Errors are
+/// confirmed barcode, on the item's auto-created variant; elsewhere it proposes
+/// one. Errors are
 /// top-level GraphQL errors.
 pub fn legacy_insert_barcode(
     ctx: &Context<'_>,
@@ -152,6 +150,7 @@ pub fn legacy_insert_barcode(
                 item_id,
                 pack_size,
                 manufacturer_id: None,
+                target: BarcodeTarget::AutoCreated,
             },
         ))?;
         return Ok(LegacyInsertBarcodeResponse::Response(
@@ -181,14 +180,28 @@ pub struct InsertConfirmedBarcodeInput {
     pub item_id: String,
     pub pack_size: Option<f64>,
     pub manufacturer_id: Option<String>,
+    /// Put the barcode on this packaging variant of the item, which has none yet
+    pub packaging_variant_id: Option<String>,
+    /// Add a packaging variant with the barcode to this item variant of the item
+    pub item_variant_id: Option<String>,
 }
 
-#[derive(InputObject)]
-pub struct UpdateBarcodeInput {
-    pub id: String,
-    /// Moves the barcode to another item
-    pub item_id: Option<String>,
-    pub pack_size: Option<NullableUpdateInput<f64>>,
+/// Where a barcode goes: an existing packaging variant, a new packaging variant
+/// on an existing item variant, or, with neither, a new packaging variant on the
+/// item's auto-created variant for the manufacturer
+fn barcode_target(
+    packaging_variant_id: Option<String>,
+    item_variant_id: Option<String>,
+) -> Result<BarcodeTarget> {
+    match (packaging_variant_id, item_variant_id) {
+        (None, None) => Ok(BarcodeTarget::AutoCreated),
+        (Some(id), None) => Ok(BarcodeTarget::PackagingVariant(id)),
+        (None, Some(id)) => Ok(BarcodeTarget::ItemVariant(id)),
+        (Some(_), Some(_)) => Err(StandardGraphqlError::BadUserInput(
+            "Give a packaging variant or an item variant, not both".to_string(),
+        )
+        .extend()),
+    }
 }
 
 /// Confirmed barcodes, managed on central. Errors are top-level GraphQL errors.
@@ -197,7 +210,8 @@ pub struct BarcodeMutations;
 
 #[Object]
 impl BarcodeMutations {
-    /// Adds a confirmed barcode for an item, or brings back a removed one
+    /// Confirms a barcode for an item without a proposal. Confirming one the item
+    /// already has returns it.
     pub async fn insert_barcode(
         &self,
         ctx: &Context<'_>,
@@ -210,6 +224,8 @@ impl BarcodeMutations {
             item_id,
             pack_size,
             manufacturer_id,
+            packaging_variant_id,
+            item_variant_id,
         } = input;
         map_manage_result(ctx.service_provider().barcode_service.insert_barcode(
             &service_context,
@@ -218,55 +234,36 @@ impl BarcodeMutations {
                 item_id,
                 pack_size,
                 manufacturer_id,
+                target: barcode_target(packaging_variant_id, item_variant_id)?,
             },
         ))
         .map(BarcodeNode::from_domain)
     }
 
-    /// Confirms a store's proposal, so the barcode reaches every site
+    /// Confirms a store's proposal, so the barcode reaches every site. With no
+    /// packaging variant or item variant given, it goes on the item's auto-created
+    /// variant for the proposal's manufacturer.
     pub async fn confirm_barcode_proposal(
         &self,
         ctx: &Context<'_>,
         store_id: String,
         id: String,
+        packaging_variant_id: Option<String>,
+        item_variant_id: Option<String>,
     ) -> Result<BarcodeNode> {
         let service_context = service_context(ctx, &store_id, Resource::MutateItems)?;
+        let target = barcode_target(packaging_variant_id, item_variant_id)?;
         map_manage_result(
             ctx.service_provider()
                 .barcode_service
-                .confirm_barcode_proposal(&service_context, &id),
+                .confirm_barcode_proposal(&service_context, &id, target),
         )
         .map(BarcodeNode::from_domain)
     }
 
-    /// Changes a confirmed barcode's pack size, or moves it to another item
-    pub async fn update_barcode(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UpdateBarcodeInput,
-    ) -> Result<BarcodeNode> {
-        let service_context = service_context(ctx, &store_id, Resource::MutateItems)?;
-        let UpdateBarcodeInput {
-            id,
-            item_id,
-            pack_size,
-        } = input;
-        map_manage_result(ctx.service_provider().barcode_service.update_barcode(
-            &service_context,
-            ServiceUpdateInput {
-                id,
-                item_id,
-                pack_size: pack_size.map(|update| NullableUpdate {
-                    value: update.value,
-                }),
-            },
-        ))
-        .map(BarcodeNode::from_domain)
-    }
-
-    /// Removes a confirmed barcode everywhere. Stores proposing it again won't
-    /// confirm it; only adding it on central brings it back.
+    /// Removes the barcode from a packaging variant, everywhere. `id` is the
+    /// packaging variant's. An auto-created variant left with no barcode is
+    /// deleted.
     pub async fn delete_barcode(
         &self,
         ctx: &Context<'_>,
@@ -291,8 +288,10 @@ fn map_manage_result<T>(result: Result<T, ManageBarcodeError>) -> Result<T> {
             NotCentralServer => StandardGraphqlError::Forbidden(formatted),
             InvalidBarcode
             | InvalidItem
-            | BarcodeDoesNotExist
             | ProposalDoesNotExist
+            | PackagingVariantDoesNotExist
+            | ItemVariantDoesNotExist
+            | PackagingVariantHasBarcode
             | BarcodeAlreadyExistsForItem => StandardGraphqlError::BadUserInput(formatted),
             DatabaseError(_) => StandardGraphqlError::InternalError(formatted),
         };

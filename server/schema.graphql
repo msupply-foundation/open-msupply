@@ -803,7 +803,7 @@ type BackdatingNode {
 
 type BarcodeMatchNode {
 	"""
-	The confirmed barcode's id, or the proposal's
+	The packaging variant's id, or the proposal's
 	"""
 	id: String!
 	status: BarcodeStatusNode!
@@ -816,31 +816,43 @@ type BarcodeMatchNode {
 	"""
 	barcode: String!
 	itemId: String!
+	"""
+	The item variant to put on the line, for a confirmed barcode. It may be
+	auto-created, so not in the item's variant list.
+	"""
+	itemVariantId: String
+	"""
+	For a confirmed barcode
+	"""
+	packagingVariantId: String
 	packSize: Float
 	manufacturerId: String
 }
 
 type BarcodeMutations {
 	"""
-	Adds a confirmed barcode for an item, or brings back a removed one
+	Confirms a barcode for an item without a proposal. Confirming one the item
+	already has returns it.
 	"""
 	insertBarcode(storeId: String!, input: InsertConfirmedBarcodeInput!): BarcodeNode!
 	"""
-	Confirms a store's proposal, so the barcode reaches every site
+	Confirms a store's proposal, so the barcode reaches every site. With no
+	packaging variant or item variant given, it goes on the item's auto-created
+	variant for the proposal's manufacturer.
 	"""
-	confirmBarcodeProposal(storeId: String!, id: String!): BarcodeNode!
+	confirmBarcodeProposal(storeId: String!, id: String!, packagingVariantId: String, itemVariantId: String): BarcodeNode!
 	"""
-	Changes a confirmed barcode's pack size, or moves it to another item
-	"""
-	updateBarcode(storeId: String!, input: UpdateBarcodeInput!): BarcodeNode!
-	"""
-	Removes a confirmed barcode everywhere. Stores proposing it again won't
-	confirm it; only adding it on central brings it back.
+	Removes the barcode from a packaging variant, everywhere. `id` is the
+	packaging variant's. An auto-created variant left with no barcode is
+	deleted.
 	"""
 	deleteBarcode(storeId: String!, id: String!): DeleteResponse!
 }
 
 type BarcodeNode {
+	"""
+	The packaging variant's id
+	"""
 	id: String!
 	"""
 	The barcode in its standard form with its scheme, e.g.
@@ -856,9 +868,14 @@ type BarcodeNode {
 	"""
 	gtin: String! @deprecated(reason: "Use `barcode`")
 	itemId: String!
+	itemVariantId: String
+	packagingVariantId: String
+	"""
+	The barcode is on a variant central created only to hold barcodes
+	"""
+	isAutoCreated: Boolean!
 	packSize: Float
 	manufacturerId: String
-	manufacturerName: String
 }
 
 type BarcodeProposalNode {
@@ -3407,6 +3424,14 @@ input InsertConfirmedBarcodeInput {
 	itemId: String!
 	packSize: Float
 	manufacturerId: String
+	"""
+	Put the barcode on this packaging variant of the item, which has none yet
+	"""
+	packagingVariantId: String
+	"""
+	Add a packaging variant with the barcode to this item variant of the item
+	"""
+	itemVariantId: String
 }
 
 input InsertContactFormInput {
@@ -5040,7 +5065,11 @@ type ItemNode {
 	backend-plugin path.
 	"""
 	stockOnHand(storeId: String!): Int!
-	variants: [ItemVariantNode!]!
+	"""
+	The item's variants. Auto-created ones, which central creates only to hold
+	a barcode, are left out unless `includeAutoCreated` is true.
+	"""
+	variants(includeAutoCreated: Boolean): [ItemVariantNode!]!
 	"""
 	Ancillary items configured against this item — i.e. items that should be
 	ordered alongside it (e.g. syringes that go with a vaccine).
@@ -5128,6 +5157,11 @@ type ItemStorePropertiesNode {
 type ItemVariantMutations {
 	upsertItemVariant(storeId: String!, input: UpsertItemVariantInput!): UpsertPackVariantResponse!
 	deleteItemVariant(storeId: String!, input: DeleteItemVariantInput!): DeleteItemVariantResponse!
+	"""
+	Makes a variant central created to hold a barcode a real one, so it shows
+	in variant lists and pickers. Its id stays the same.
+	"""
+	promoteItemVariant(storeId: String!, id: String!): ItemVariantNode!
 }
 
 type ItemVariantNode {
@@ -5150,6 +5184,11 @@ type ItemVariantNode {
 	"""
 	bundlesWith: [BundledItemNode!]!
 	vvmType: String
+	"""
+	Created on central only to hold a barcode. Left out of variant lists unless
+	asked for.
+	"""
+	isAutoCreated: Boolean!
 }
 
 type ItemsCannotBeOrdered implements UpdatePurchaseOrderErrorInterface {
@@ -6133,6 +6172,10 @@ input PackagingVariantInput {
 	packagingLevel: Int!
 	packSize: Float
 	volumePerUnit: Float
+	"""
+	As scanned or typed. Left as it is when not given.
+	"""
+	barcode: NullableStringUpdate
 }
 
 type PackagingVariantNode {
@@ -6141,6 +6184,10 @@ type PackagingVariantNode {
 	packagingLevel: Int!
 	packSize: Float
 	volumePerUnit: Float
+	"""
+	The confirmed barcode for this packaging, as people read it
+	"""
+	barcode: String
 }
 
 """
@@ -7908,6 +7955,10 @@ type Queries {
 	): VaccineCoursesResponse!
 	vaccineCourse(id: String!): VaccineCourseResponse!
 	vaccineCourseDose(id: String!): VaccineCourseDoseResponse!
+	"""
+	Whether any item has variants. Auto-created variants, which only hold a
+	barcode, don't count.
+	"""
 	itemVariantsConfigured(storeId: String!): Boolean!
 	"""
 	Returns the relevant set of preferences based on context (e.g. current store)
@@ -8960,6 +9011,10 @@ type StockLineNode {
 	The barcode the stock carries, as people read it, e.g. `9506682101352`
 	"""
 	barcode: String
+	"""
+	None for an auto-created variant, which only holds a barcode: it's kept out
+	of sight like it is in variant lists. `itemVariantId` still gives it.
+	"""
 	itemVariant: ItemVariantNode
 	vvmStatus: VvmstatusNode
 	vvmStatusLogs: VvmstatusLogConnector
@@ -9857,15 +9912,6 @@ input UpdateAssetInput {
 }
 
 union UpdateAssetResponse = UpdateAssetError | AssetNode
-
-input UpdateBarcodeInput {
-	id: String!
-	"""
-	Moves the barcode to another item
-	"""
-	itemId: String
-	packSize: NullableFloatUpdate
-}
 
 input UpdateContactTraceInput {
 	"""

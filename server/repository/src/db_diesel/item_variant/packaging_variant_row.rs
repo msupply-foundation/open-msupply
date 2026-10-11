@@ -15,6 +15,7 @@ table! {
         pack_size -> Nullable<Double>,
         volume_per_unit -> Nullable<Double>,
         deleted_datetime -> Nullable<Timestamp>,
+        barcode -> Nullable<Text>,
     }
 }
 
@@ -22,6 +23,7 @@ table! {
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
 #[diesel(table_name = packaging_variant)]
+#[diesel(treat_none_as_null = true)]
 pub struct PackagingVariantRow {
     pub id: String,
     pub name: String,
@@ -30,6 +32,11 @@ pub struct PackagingVariantRow {
     pub pack_size: Option<f64>,
     pub volume_per_unit: Option<f64>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
+    /// A confirmed barcode for this packaging, in its standard form with its
+    /// scheme, e.g. `gtin:09506682101352` (`util::barcode`). Set on central only
+    /// (decisions/2026-09-30_barcodes.md).
+    #[serde(default)]
+    pub barcode: Option<String>,
 }
 pub struct PackagingVariantRowRepository<'a> {
     connection: &'a StorageConnection,

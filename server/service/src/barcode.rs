@@ -1,8 +1,12 @@
-//! Barcodes (decisions/2026-09-30_barcodes.md).
+//! Barcodes (decisions/2026-09-30_barcodes.md, Option 6).
 //!
-//! - A confirmed barcode (`barcode`) says a barcode is for an item. Only central
-//!   writes them, and every site receives them. Several may share a value, one
-//!   per item.
+//! - A confirmed barcode is the `barcode` of a packaging variant: this barcode is
+//!   for this packaging of this item. Only central sets them, and every site
+//!   receives them with the variants. Several items may share a barcode.
+//! - Central confirms a barcode onto an existing packaging variant, as a new
+//!   packaging level of an existing item variant, or, by default, onto the item's
+//!   auto-created variant for the manufacturer: a hidden item variant that only
+//!   holds barcodes, created the first time it's needed.
 //! - A proposal (`barcode_proposal`) is a barcode a store learned: a user picked an
 //!   item for it. It syncs up to central only, where it's reviewed on the item.
 //! - A scan matches confirmed barcodes plus proposals made by stores on this
@@ -14,17 +18,24 @@ use std::collections::{HashMap, HashSet};
 
 use chrono::Utc;
 use repository::{
-    barcode::{Barcode, BarcodeFilter, BarcodeRepository},
     barcode_proposal::{BarcodeProposalFilter, BarcodeProposalRepository},
-    BarcodeProposalRow, BarcodeProposalRowRepository, BarcodeRow, BarcodeRowRepository,
-    EqualFilter, ItemFilter, ItemRepository, ItemRowRepository, RepositoryError, StorageConnection,
-    StoreRowRepository,
+    item_variant::{
+        item_variant::{ItemVariantFilter, ItemVariantRepository},
+        item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
+        packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
+        packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
+    },
+    BarcodeProposalRow, BarcodeProposalRowRepository, EqualFilter, ItemFilter, ItemRepository,
+    ItemRowRepository, NameRowRepository, RepositoryError, StorageConnection, StoreRowRepository,
 };
-use util::{barcode::standard_barcode, uuid::uuid};
+use util::{
+    barcode::{display_barcode, standard_barcode},
+    uuid::uuid,
+};
 
 use crate::{
     item::item::check_item_exists, processors::ProcessorType, service_provider::ServiceContext,
-    sync::CentralServerConfig, NullableUpdate,
+    sync::CentralServerConfig,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,28 +44,55 @@ pub enum BarcodeStatus {
     Proposed,
 }
 
+/// A confirmed barcode: a packaging variant with a barcode, and its item variant
+#[derive(Debug, Clone, PartialEq)]
+pub struct ConfirmedBarcode {
+    pub packaging_variant: PackagingVariantRow,
+    pub item_variant: ItemVariantRow,
+}
+
+impl ConfirmedBarcode {
+    /// The barcode in its standard form
+    pub fn value(&self) -> &str {
+        self.packaging_variant
+            .barcode
+            .as_deref()
+            .unwrap_or_default()
+    }
+}
+
 /// What a scan of a barcode finds: a confirmed barcode, or a proposal made on this
-/// site.
+/// site
 #[derive(Debug, Clone, PartialEq)]
 pub struct BarcodeMatch {
     pub status: BarcodeStatus,
-    /// The confirmed barcode's id, or the proposal's
+    /// The packaging variant's id, or the proposal's
     pub id: String,
     pub value: String,
     pub item_id: String,
+    /// Set for a confirmed barcode
+    pub item_variant_id: Option<String>,
+    /// Set for a confirmed barcode
+    pub packaging_variant_id: Option<String>,
     pub pack_size: Option<f64>,
     pub manufacturer_id: Option<String>,
 }
 
 impl BarcodeMatch {
-    fn confirmed(row: BarcodeRow) -> Self {
+    pub fn confirmed(barcode: ConfirmedBarcode) -> Self {
+        let ConfirmedBarcode {
+            packaging_variant,
+            item_variant,
+        } = barcode;
         BarcodeMatch {
             status: BarcodeStatus::Confirmed,
-            id: row.id,
-            value: row.value,
-            item_id: row.item_id,
-            pack_size: row.pack_size,
-            manufacturer_id: row.manufacturer_id,
+            id: packaging_variant.id.clone(),
+            value: packaging_variant.barcode.unwrap_or_default(),
+            item_id: item_variant.item_id,
+            item_variant_id: Some(item_variant.id),
+            packaging_variant_id: Some(packaging_variant.id),
+            pack_size: packaging_variant.pack_size,
+            manufacturer_id: item_variant.manufacturer_id,
         }
     }
 
@@ -64,10 +102,25 @@ impl BarcodeMatch {
             id: row.id,
             value: row.value,
             item_id: row.item_id,
+            item_variant_id: None,
+            packaging_variant_id: None,
             pack_size: row.pack_size,
             manufacturer_id: row.manufacturer_id,
         }
     }
+}
+
+/// Where central puts a barcode it confirms
+#[derive(Debug, Clone, PartialEq, Default)]
+pub enum BarcodeTarget {
+    /// A new packaging variant on the item's auto-created variant for the
+    /// manufacturer, creating that variant if the item doesn't have one yet
+    #[default]
+    AutoCreated,
+    /// An existing packaging variant of the item, which has no barcode yet
+    PackagingVariant(String),
+    /// A new packaging variant on an existing item variant of the item
+    ItemVariant(String),
 }
 
 pub struct ProposeBarcodeInput {
@@ -93,24 +146,24 @@ pub struct InsertBarcodeInput {
     pub item_id: String,
     pub pack_size: Option<f64>,
     pub manufacturer_id: Option<String>,
-}
-
-pub struct UpdateBarcodeInput {
-    pub id: String,
-    /// Moves the barcode to another item
-    pub item_id: Option<String>,
-    pub pack_size: Option<NullableUpdate<f64>>,
+    pub target: BarcodeTarget,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum ManageBarcodeError {
-    /// Only central confirms, changes or removes barcodes
+    /// Only central confirms or removes barcodes
     NotCentralServer,
     InvalidBarcode,
     InvalidItem,
-    BarcodeDoesNotExist,
     ProposalDoesNotExist,
-    /// Moving the barcode to an item that already has it
+    /// The packaging variant doesn't exist, has no barcode to remove, or isn't
+    /// the item's
+    PackagingVariantDoesNotExist,
+    /// The item variant doesn't exist or isn't the item's
+    ItemVariantDoesNotExist,
+    /// The packaging variant already has a barcode
+    PackagingVariantHasBarcode,
+    /// Another packaging variant of the item already has this barcode
     BarcodeAlreadyExistsForItem,
     DatabaseError(RepositoryError),
 }
@@ -141,18 +194,11 @@ impl From<RepositoryError> for ManageBarcodeError {
 }
 
 pub trait BarcodeServiceTrait: Sync + Send {
-    fn get_barcode(
-        &self,
-        ctx: &ServiceContext,
-        id: &str,
-    ) -> Result<Option<Barcode>, RepositoryError> {
-        get_barcode(&ctx.connection, id)
-    }
-
     /// Everything a scan of `barcode` matches, for items visible in this store or
     /// with stock in it:
-    /// confirmed barcodes first, then proposals made on this site, one match per
-    /// item. Empty for a barcode nobody has mapped yet.
+    /// confirmed barcodes first, then proposals made on this site, one proposal
+    /// per item and none for an item the barcode is confirmed for. Empty for a
+    /// barcode nobody has mapped yet.
     fn barcode_matches(
         &self,
         ctx: &ServiceContext,
@@ -161,14 +207,12 @@ pub trait BarcodeServiceTrait: Sync + Send {
         let Some(value) = standard_barcode(barcode) else {
             return Ok(Vec::new());
         };
-        let confirmed = BarcodeRepository::new(&ctx.connection)
-            .query_by_filter(
-                BarcodeFilter::new()
-                    .value(EqualFilter::equal_to(value.clone()))
-                    .is_deleted(false),
-            )?
-            .into_iter()
-            .map(|barcode| BarcodeMatch::confirmed(barcode.barcode_row));
+        let confirmed = confirmed_barcodes(
+            &ctx.connection,
+            PackagingVariantFilter::new().barcode(EqualFilter::equal_to(value.clone())),
+        )?
+        .into_iter()
+        .map(BarcodeMatch::confirmed);
         let proposed =
             site_proposals(&ctx.connection, &ctx.store_id)?.value(EqualFilter::equal_to(value));
         let proposed = BarcodeProposalRepository::new(&ctx.connection)
@@ -176,10 +220,20 @@ pub trait BarcodeServiceTrait: Sync + Send {
             .into_iter()
             .map(BarcodeMatch::proposed);
 
-        let mut seen_items = HashSet::new();
+        let mut confirmed_items = HashSet::new();
+        let mut proposed_items = HashSet::new();
         let matches: Vec<BarcodeMatch> = confirmed
             .chain(proposed)
-            .filter(|m| seen_items.insert(m.item_id.clone()))
+            .filter(|m| match m.status {
+                BarcodeStatus::Confirmed => {
+                    confirmed_items.insert(m.item_id.clone());
+                    true
+                }
+                BarcodeStatus::Proposed => {
+                    !confirmed_items.contains(&m.item_id)
+                        && proposed_items.insert(m.item_id.clone())
+                }
+            })
             .collect();
 
         let item_ids: Vec<String> = matches.iter().map(|m| m.item_id.clone()).collect();
@@ -200,22 +254,18 @@ pub trait BarcodeServiceTrait: Sync + Send {
             .collect())
     }
 
-    /// The item's confirmed barcodes, not including removed ones
+    /// The item's confirmed barcodes, on auto-created variants or not
     fn item_barcodes(
         &self,
         ctx: &ServiceContext,
         item_id: &str,
-    ) -> Result<Vec<Barcode>, RepositoryError> {
-        BarcodeRepository::new(&ctx.connection).query_by_filter(
-            BarcodeFilter::new()
-                .item_id(EqualFilter::equal_to(item_id.to_string()))
-                .is_deleted(false),
-        )
+    ) -> Result<Vec<ConfirmedBarcode>, RepositoryError> {
+        item_confirmed_barcodes(&ctx.connection, item_id)
     }
 
-    /// Proposals for the item that central hasn't decided on: every store's on
-    /// central, this site's elsewhere. Once a barcode is confirmed for the item, or
-    /// central removes it, its proposals drop out.
+    /// Proposals for the item that central hasn't confirmed: every store's on
+    /// central, this site's elsewhere. Once the barcode is confirmed for the item,
+    /// its proposals drop out.
     fn item_barcode_proposals(
         &self,
         ctx: &ServiceContext,
@@ -228,18 +278,15 @@ pub trait BarcodeServiceTrait: Sync + Send {
         }
         .item_id(EqualFilter::equal_to(item_id.to_string()));
 
-        let decided: HashSet<String> = BarcodeRepository::new(&ctx.connection)
-            .query_by_filter(
-                BarcodeFilter::new().item_id(EqualFilter::equal_to(item_id.to_string())),
-            )?
-            .into_iter()
-            .map(|barcode| barcode.barcode_row.value)
+        let confirmed: HashSet<String> = item_confirmed_barcodes(&ctx.connection, item_id)?
+            .iter()
+            .map(|barcode| barcode.value().to_string())
             .collect();
 
         Ok(BarcodeProposalRepository::new(&ctx.connection)
             .query_by_filter(filter)?
             .into_iter()
-            .filter(|proposal| !decided.contains(&proposal.value))
+            .filter(|proposal| !confirmed.contains(&proposal.value))
             .collect())
     }
 
@@ -261,10 +308,7 @@ pub trait BarcodeServiceTrait: Sync + Send {
                     return Err(ProposeBarcodeError::InvalidItem);
                 }
 
-                if let Some(confirmed) = BarcodeRowRepository::new(connection)
-                    .find_one_by_value_and_item(&value, &input.item_id)?
-                    .filter(|barcode| barcode.deleted_datetime.is_none())
-                {
+                if let Some(confirmed) = find_confirmed(connection, &value, &input.item_id)? {
                     return Ok(BarcodeMatch::confirmed(confirmed));
                 }
 
@@ -330,13 +374,13 @@ pub trait BarcodeServiceTrait: Sync + Send {
             .map_err(|error| error.to_inner_error())
     }
 
-    /// Central adds a confirmed barcode, or brings back a removed one. Adding one
-    /// that's already there updates its pack size and manufacturer.
+    /// Central confirms a barcode for an item without a proposal. Confirming one
+    /// the item already has returns it.
     fn insert_barcode(
         &self,
         ctx: &ServiceContext,
         input: InsertBarcodeInput,
-    ) -> Result<Barcode, ManageBarcodeError> {
+    ) -> Result<ConfirmedBarcode, ManageBarcodeError> {
         ctx.connection
             .transaction_sync(|connection| {
                 check_central()?;
@@ -348,126 +392,89 @@ pub trait BarcodeServiceTrait: Sync + Send {
                 {
                     return Err(ManageBarcodeError::InvalidItem);
                 }
-                let row = confirm(
+                confirm(
                     connection,
-                    &value,
-                    &input.item_id,
-                    input.pack_size,
-                    input.manufacturer_id,
-                )?;
-                read_barcode(connection, &row.id)
+                    &ctx.user_id,
+                    Confirm {
+                        value,
+                        item_id: input.item_id,
+                        pack_size: input.pack_size,
+                        manufacturer_id: input.manufacturer_id,
+                    },
+                    input.target,
+                )
             })
             .map_err(|error| error.to_inner_error())
     }
 
-    /// Central confirms a store's proposal
+    /// Central confirms a store's proposal, so the barcode reaches every site
     fn confirm_barcode_proposal(
         &self,
         ctx: &ServiceContext,
         proposal_id: &str,
-    ) -> Result<Barcode, ManageBarcodeError> {
+        target: BarcodeTarget,
+    ) -> Result<ConfirmedBarcode, ManageBarcodeError> {
         ctx.connection
             .transaction_sync(|connection| {
                 check_central()?;
                 let proposal = BarcodeProposalRowRepository::new(connection)
                     .find_one_by_id(proposal_id)?
                     .ok_or(ManageBarcodeError::ProposalDoesNotExist)?;
-                let row = confirm(
+                confirm(
                     connection,
-                    &proposal.value,
-                    &proposal.item_id,
-                    proposal.pack_size,
-                    proposal.manufacturer_id,
-                )?;
-                read_barcode(connection, &row.id)
+                    &ctx.user_id,
+                    Confirm {
+                        value: proposal.value,
+                        item_id: proposal.item_id,
+                        pack_size: proposal.pack_size,
+                        manufacturer_id: proposal.manufacturer_id,
+                    },
+                    target,
+                )
             })
             .map_err(|error| error.to_inner_error())
     }
 
-    /// Central changes a confirmed barcode's pack size, or moves it to another item
-    fn update_barcode(
+    /// Central removes a confirmed barcode from its packaging variant, everywhere.
+    /// An auto-created variant left with no barcode is deleted; stock and lines
+    /// linked to it stay linked. Returns the packaging variant's id.
+    fn delete_barcode(
         &self,
         ctx: &ServiceContext,
-        input: UpdateBarcodeInput,
-    ) -> Result<Barcode, ManageBarcodeError> {
+        packaging_variant_id: &str,
+    ) -> Result<String, ManageBarcodeError> {
         ctx.connection
             .transaction_sync(|connection| {
                 check_central()?;
-                let repo = BarcodeRowRepository::new(connection);
+                let repo = PackagingVariantRowRepository::new(connection);
                 let existing = repo
-                    .find_one_by_id(&input.id)?
-                    .filter(|barcode| barcode.deleted_datetime.is_none())
-                    .ok_or(ManageBarcodeError::BarcodeDoesNotExist)?;
-                let pack_size = match input.pack_size {
-                    Some(NullableUpdate { value }) => value,
-                    None => existing.pack_size,
-                };
+                    .find_one_by_id(packaging_variant_id)?
+                    .filter(|packaging_variant| {
+                        packaging_variant.deleted_datetime.is_none()
+                            && packaging_variant.barcode.is_some()
+                    })
+                    .ok_or(ManageBarcodeError::PackagingVariantDoesNotExist)?;
+                repo.upsert_one(&PackagingVariantRow {
+                    barcode: None,
+                    ..existing.clone()
+                })?;
 
-                let item_id = match input.item_id {
-                    Some(item_id) if item_id != existing.item_id => item_id,
-                    _ => {
-                        let row = BarcodeRow {
-                            pack_size,
-                            ..existing
-                        };
-                        repo.upsert_one(&row)?;
-                        return read_barcode(connection, &row.id);
-                    }
-                };
-
-                if ItemRowRepository::new(connection)
-                    .find_one_by_id(&item_id)?
-                    .is_none()
-                {
-                    return Err(ManageBarcodeError::InvalidItem);
+                let item_variant_repo = ItemVariantRowRepository::new(connection);
+                let item_variant = item_variant_repo
+                    .find_one_by_id(&existing.item_variant_id)?
+                    .ok_or(ManageBarcodeError::DatabaseError(RepositoryError::NotFound))?;
+                let has_barcodes_left = PackagingVariantRepository::new(connection)
+                    .query_by_filter(
+                        PackagingVariantFilter::new()
+                            .item_variant_id(EqualFilter::equal_to(item_variant.id.clone())),
+                    )?
+                    .iter()
+                    .any(|packaging_variant| packaging_variant.barcode.is_some());
+                if item_variant.is_auto_created && !has_barcodes_left {
+                    item_variant_repo.mark_deleted(&item_variant.id)?;
                 }
 
-                let moved = match repo.find_one_by_value_and_item(&existing.value, &item_id)? {
-                    Some(target) if target.deleted_datetime.is_none() => {
-                        return Err(ManageBarcodeError::BarcodeAlreadyExistsForItem)
-                    }
-                    // The item had this barcode and central removed it: bring that
-                    // row back instead, as (value, item) is unique
-                    Some(removed) => {
-                        repo.upsert_one(&BarcodeRow {
-                            deleted_datetime: Some(Utc::now().naive_utc()),
-                            ..existing.clone()
-                        })?;
-                        BarcodeRow {
-                            pack_size,
-                            manufacturer_id: existing.manufacturer_id,
-                            deleted_datetime: None,
-                            ..removed
-                        }
-                    }
-                    None => BarcodeRow {
-                        item_id,
-                        pack_size,
-                        ..existing
-                    },
-                };
-                repo.upsert_one(&moved)?;
-                read_barcode(connection, &moved.id)
-            })
-            .map_err(|error| error.to_inner_error())
-    }
-
-    /// Central removes a confirmed barcode. The row stays, so stores agreeing on
-    /// it don't confirm it again.
-    fn delete_barcode(&self, ctx: &ServiceContext, id: &str) -> Result<String, ManageBarcodeError> {
-        ctx.connection
-            .transaction_sync(|connection| {
-                check_central()?;
-                let repo = BarcodeRowRepository::new(connection);
-                let existing = repo
-                    .find_one_by_id(id)?
-                    .filter(|barcode| barcode.deleted_datetime.is_none())
-                    .ok_or(ManageBarcodeError::BarcodeDoesNotExist)?;
-                repo.upsert_one(&BarcodeRow {
-                    deleted_datetime: Some(Utc::now().naive_utc()),
-                    ..existing
-                })?;
-                Ok(id.to_string())
+                Ok(existing.id)
             })
             .map_err(|error| error.to_inner_error())
     }
@@ -475,19 +482,6 @@ pub trait BarcodeServiceTrait: Sync + Send {
 
 pub struct BarcodeService {}
 impl BarcodeServiceTrait for BarcodeService {}
-
-pub fn get_barcode(
-    connection: &StorageConnection,
-    id: &str,
-) -> Result<Option<Barcode>, RepositoryError> {
-    Ok(BarcodeRepository::new(connection)
-        .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(id.to_string())))?
-        .pop())
-}
-
-fn read_barcode(connection: &StorageConnection, id: &str) -> Result<Barcode, ManageBarcodeError> {
-    get_barcode(connection, id)?.ok_or(ManageBarcodeError::DatabaseError(RepositoryError::NotFound))
-}
 
 fn check_central() -> Result<(), ManageBarcodeError> {
     if CentralServerConfig::is_central_server() {
@@ -509,34 +503,216 @@ fn site_proposals(
     Ok(BarcodeProposalFilter::new().site_id(site_id))
 }
 
-/// Confirms `value` for the item, bringing back a removed row for it if there is
-/// one
-fn confirm(
+/// Packaging variants matching `filter` that have a barcode, with their item
+/// variants. Deleted variants are left out; auto-created ones are included.
+fn confirmed_barcodes(
+    connection: &StorageConnection,
+    filter: PackagingVariantFilter,
+) -> Result<Vec<ConfirmedBarcode>, RepositoryError> {
+    let packaging_variants: Vec<PackagingVariantRow> = PackagingVariantRepository::new(connection)
+        .query_by_filter(filter)?
+        .into_iter()
+        .filter(|packaging_variant| packaging_variant.barcode.is_some())
+        .collect();
+    let item_variant_ids: Vec<String> = packaging_variants
+        .iter()
+        .map(|packaging_variant| packaging_variant.item_variant_id.clone())
+        .collect();
+    let item_variants: HashMap<String, ItemVariantRow> = ItemVariantRowRepository::new(connection)
+        .find_many_by_id(&item_variant_ids)?
+        .into_iter()
+        .filter(|item_variant| item_variant.deleted_datetime.is_none())
+        .map(|item_variant| (item_variant.id.clone(), item_variant))
+        .collect();
+
+    Ok(packaging_variants
+        .into_iter()
+        .filter_map(|packaging_variant| {
+            let item_variant = item_variants
+                .get(&packaging_variant.item_variant_id)?
+                .clone();
+            Some(ConfirmedBarcode {
+                packaging_variant,
+                item_variant,
+            })
+        })
+        .collect())
+}
+
+fn item_variants(
+    connection: &StorageConnection,
+    item_id: &str,
+) -> Result<Vec<ItemVariantRow>, RepositoryError> {
+    Ok(ItemVariantRepository::new(connection)
+        .query_by_filter(
+            ItemVariantFilter::new()
+                .item_id(EqualFilter::equal_to(item_id.to_string()))
+                .include_auto_created(),
+        )?
+        .into_iter()
+        .map(|item_variant| item_variant.item_variant_row)
+        .collect())
+}
+
+fn item_confirmed_barcodes(
+    connection: &StorageConnection,
+    item_id: &str,
+) -> Result<Vec<ConfirmedBarcode>, RepositoryError> {
+    let item_variant_ids = item_variants(connection, item_id)?
+        .into_iter()
+        .map(|item_variant| item_variant.id)
+        .collect();
+    confirmed_barcodes(
+        connection,
+        PackagingVariantFilter::new().item_variant_id(EqualFilter::equal_any(item_variant_ids)),
+    )
+}
+
+/// The item's packaging variant with this barcode, if it has one
+pub(crate) fn find_confirmed(
     connection: &StorageConnection,
     value: &str,
     item_id: &str,
+) -> Result<Option<ConfirmedBarcode>, RepositoryError> {
+    Ok(confirmed_barcodes(
+        connection,
+        PackagingVariantFilter::new().barcode(EqualFilter::equal_to(value.to_string())),
+    )?
+    .into_iter()
+    .find(|barcode| barcode.item_variant.item_id == item_id))
+}
+
+struct Confirm {
+    value: String,
+    item_id: String,
     pack_size: Option<f64>,
     manufacturer_id: Option<String>,
-) -> Result<BarcodeRow, RepositoryError> {
-    let repo = BarcodeRowRepository::new(connection);
-    let row = match repo.find_one_by_value_and_item(value, item_id)? {
-        Some(existing) => BarcodeRow {
-            pack_size: pack_size.or(existing.pack_size),
-            manufacturer_id: manufacturer_id.or(existing.manufacturer_id),
-            deleted_datetime: None,
-            ..existing
-        },
-        None => BarcodeRow {
-            id: uuid(),
-            value: value.to_string(),
-            item_id: item_id.to_string(),
-            pack_size,
-            manufacturer_id,
-            deleted_datetime: None,
-        },
+}
+
+/// Puts `value` on a packaging variant of the item, per `target`. When the item
+/// already has the barcode, returns it if `target` allows for it.
+fn confirm(
+    connection: &StorageConnection,
+    user_id: &str,
+    Confirm {
+        value,
+        item_id,
+        pack_size,
+        manufacturer_id,
+    }: Confirm,
+    target: BarcodeTarget,
+) -> Result<ConfirmedBarcode, ManageBarcodeError> {
+    // A pack size has to be positive on a packaging variant
+    let pack_size = pack_size.filter(|pack_size| *pack_size > 0.0);
+
+    if let Some(existing) = find_confirmed(connection, &value, &item_id)? {
+        let already_there = match &target {
+            BarcodeTarget::AutoCreated => true,
+            BarcodeTarget::PackagingVariant(id) => existing.packaging_variant.id == *id,
+            BarcodeTarget::ItemVariant(id) => existing.item_variant.id == *id,
+        };
+        if already_there {
+            return Ok(existing);
+        }
+        return Err(ManageBarcodeError::BarcodeAlreadyExistsForItem);
+    }
+
+    let item_variants = item_variants(connection, &item_id)?;
+    let packaging_variant_repo = PackagingVariantRowRepository::new(connection);
+
+    let packaging_variant = match target {
+        BarcodeTarget::PackagingVariant(id) => {
+            let packaging_variant = packaging_variant_repo
+                .find_one_by_id(&id)?
+                .filter(|packaging_variant| {
+                    packaging_variant.deleted_datetime.is_none()
+                        && item_variants.iter().any(|item_variant| {
+                            item_variant.id == packaging_variant.item_variant_id
+                        })
+                })
+                .ok_or(ManageBarcodeError::PackagingVariantDoesNotExist)?;
+            if packaging_variant.barcode.is_some() {
+                return Err(ManageBarcodeError::PackagingVariantHasBarcode);
+            }
+            PackagingVariantRow {
+                barcode: Some(value),
+                ..packaging_variant
+            }
+        }
+        BarcodeTarget::ItemVariant(id) => {
+            let item_variant = item_variants
+                .iter()
+                .find(|item_variant| item_variant.id == id)
+                .ok_or(ManageBarcodeError::ItemVariantDoesNotExist)?;
+            new_packaging_variant(&item_variant.id, value, pack_size)
+        }
+        BarcodeTarget::AutoCreated => {
+            let item_variant = match item_variants.iter().find(|item_variant| {
+                item_variant.is_auto_created && item_variant.manufacturer_id == manufacturer_id
+            }) {
+                Some(item_variant) => item_variant.clone(),
+                None => {
+                    let item_variant = ItemVariantRow {
+                        id: uuid(),
+                        name: auto_created_name(connection, manufacturer_id.as_deref())?,
+                        item_id: item_id.clone(),
+                        manufacturer_id,
+                        created_datetime: Utc::now().naive_utc(),
+                        created_by: Some(user_id.to_string()),
+                        is_auto_created: true,
+                        ..Default::default()
+                    };
+                    ItemVariantRowRepository::new(connection).upsert_one(&item_variant)?;
+                    item_variant
+                }
+            };
+            new_packaging_variant(&item_variant.id, value, pack_size)
+        }
     };
-    repo.upsert_one(&row)?;
-    Ok(row)
+    packaging_variant_repo.upsert_one(&packaging_variant)?;
+
+    find_confirmed(
+        connection,
+        packaging_variant.barcode.as_deref().unwrap_or_default(),
+        &item_id,
+    )?
+    .ok_or(ManageBarcodeError::DatabaseError(RepositoryError::NotFound))
+}
+
+fn new_packaging_variant(
+    item_variant_id: &str,
+    value: String,
+    pack_size: Option<f64>,
+) -> PackagingVariantRow {
+    PackagingVariantRow {
+        id: uuid(),
+        name: display_barcode(&value).to_string(),
+        item_variant_id: item_variant_id.to_string(),
+        // Which packaging level a barcode is for isn't known
+        packaging_level: 1,
+        pack_size,
+        volume_per_unit: None,
+        deleted_datetime: None,
+        barcode: Some(value),
+    }
+}
+
+/// Auto-created variants are hidden on current sites, but older ones list them
+/// like any other variant, so the name says what they are
+fn auto_created_name(
+    connection: &StorageConnection,
+    manufacturer_id: Option<&str>,
+) -> Result<String, RepositoryError> {
+    let manufacturer = match manufacturer_id {
+        Some(manufacturer_id) => NameRowRepository::new(connection)
+            .find_one_by_id(manufacturer_id)?
+            .map(|name| name.name),
+        None => None,
+    };
+    Ok(match manufacturer {
+        Some(manufacturer) => format!("Barcodes: {manufacturer}"),
+        None => "Barcodes".to_string(),
+    })
 }
 
 /// How many different sites must propose a barcode for an item before central
@@ -544,21 +720,21 @@ fn confirm(
 /// share their proposals, so a second store there agreeing checks nothing.
 pub(crate) const SITES_TO_AUTO_CONFIRM: usize = 2;
 
-/// Confirms `value` for the item when enough sites have proposed it, unless
-/// central already confirmed something for the barcode or removed it for this
-/// item. Copies the pack size and manufacturer when every proposal agrees on
-/// them. Returns the new confirmed barcode.
+/// Confirms `value` for the item when enough sites have proposed it, unless a
+/// packaging variant already has the barcode, for any item. Uses the pack size
+/// and manufacturer when every proposal agrees on them. Returns the new
+/// confirmed barcode.
 pub(crate) fn auto_confirm(
     connection: &StorageConnection,
     value: &str,
     item_id: &str,
-) -> Result<Option<BarcodeRow>, RepositoryError> {
-    let barcodes = BarcodeRepository::new(connection)
-        .query_by_filter(BarcodeFilter::new().value(EqualFilter::equal_to(value.to_string())))?;
-    let already_decided = barcodes.iter().any(|barcode| {
-        barcode.barcode_row.deleted_datetime.is_none() || barcode.barcode_row.item_id == item_id
-    });
-    if already_decided {
+) -> Result<Option<ConfirmedBarcode>, ManageBarcodeError> {
+    let already_confirmed = !confirmed_barcodes(
+        connection,
+        PackagingVariantFilter::new().barcode(EqualFilter::equal_to(value.to_string())),
+    )?
+    .is_empty();
+    if already_confirmed {
         return Ok(None);
     }
 
@@ -580,13 +756,18 @@ pub(crate) fn auto_confirm(
     let pack_size =
         agreed(proposals.iter().map(|p| p.pack_size.map(f64::to_bits))).map(f64::from_bits);
     let manufacturer_id = agreed(proposals.iter().map(|p| p.manufacturer_id.clone()));
-    Ok(Some(confirm(
+    confirm(
         connection,
-        value,
-        item_id,
-        pack_size,
-        manufacturer_id,
-    )?))
+        util::constants::SYSTEM_USER_ID,
+        Confirm {
+            value: value.to_string(),
+            item_id: item_id.to_string(),
+            pack_size,
+            manufacturer_id,
+        },
+        BarcodeTarget::AutoCreated,
+    )
+    .map(Some)
 }
 
 /// The value every proposal gives, if they all give the same one

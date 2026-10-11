@@ -1,65 +1,84 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{loader::StoreByIdLoader, ContextExt};
-use repository::{barcode::Barcode, BarcodeProposalRow, BarcodeRow};
-use service::barcode::BarcodeMatch;
+use repository::BarcodeProposalRow;
+use service::barcode::{BarcodeMatch, ConfirmedBarcode};
 use util::barcode::display_barcode;
 
 use super::StoreNode;
 
-/// A confirmed barcode: this barcode is for this item. Confirmed on central and
-/// shared by every site.
+/// A confirmed barcode: the barcode of a packaging variant of an item. Confirmed
+/// on central and shared by every site.
 #[derive(PartialEq, Debug)]
 pub struct BarcodeNode {
-    barcode: Barcode,
+    /// The packaging variant's id, or for the deprecated operations a proposal's
+    id: String,
+    value: String,
+    item_id: String,
+    item_variant_id: Option<String>,
+    packaging_variant_id: Option<String>,
+    is_auto_created: bool,
+    pack_size: Option<f64>,
+    manufacturer_id: Option<String>,
 }
 
 #[Object]
 impl BarcodeNode {
+    /// The packaging variant's id
     pub async fn id(&self) -> &str {
-        &self.row().id
+        &self.id
     }
 
     /// The barcode in its standard form with its scheme, e.g.
     /// `gtin:09506682101352`. Matches the `barcode` of lines and stock lines.
     pub async fn value(&self) -> &str {
-        &self.row().value
+        &self.value
     }
 
     /// The barcode as people read it, e.g. `9506682101352`
     pub async fn barcode(&self) -> &str {
-        display_barcode(&self.row().value)
+        display_barcode(&self.value)
     }
 
     /// The barcode as people read it. Use `barcode`.
     #[graphql(deprecation = "Use `barcode`")]
     pub async fn gtin(&self) -> &str {
-        display_barcode(&self.row().value)
+        display_barcode(&self.value)
     }
 
     pub async fn item_id(&self) -> &str {
-        &self.row().item_id
+        &self.item_id
+    }
+
+    pub async fn item_variant_id(&self) -> Option<&str> {
+        self.item_variant_id.as_deref()
+    }
+
+    pub async fn packaging_variant_id(&self) -> Option<&str> {
+        self.packaging_variant_id.as_deref()
+    }
+
+    /// The barcode is on a variant central created only to hold barcodes
+    pub async fn is_auto_created(&self) -> bool {
+        self.is_auto_created
     }
 
     pub async fn pack_size(&self) -> Option<f64> {
-        self.row().pack_size
+        self.pack_size
     }
 
     pub async fn manufacturer_id(&self) -> Option<&str> {
-        self.row().manufacturer_id.as_deref()
-    }
-
-    pub async fn manufacturer_name(&self) -> Option<&str> {
-        self.barcode
-            .manufacturer_name_row
-            .as_ref()
-            .map(|name| name.name.as_str())
+        self.manufacturer_id.as_deref()
     }
 }
 
 impl BarcodeNode {
-    pub fn from_domain(barcode: Barcode) -> BarcodeNode {
-        BarcodeNode { barcode }
+    pub fn from_domain(barcode: ConfirmedBarcode) -> BarcodeNode {
+        let is_auto_created = barcode.item_variant.is_auto_created;
+        BarcodeNode {
+            is_auto_created,
+            ..BarcodeNode::from_match(BarcodeMatch::confirmed(barcode))
+        }
     }
 
     /// For the deprecated `barcodeByGtin` and `insertBarcode`, which answer with a
@@ -69,27 +88,22 @@ impl BarcodeNode {
             id,
             value,
             item_id,
+            item_variant_id,
+            packaging_variant_id,
             pack_size,
             manufacturer_id,
             status: _,
         } = barcode_match;
         BarcodeNode {
-            barcode: Barcode {
-                barcode_row: BarcodeRow {
-                    id,
-                    value,
-                    item_id,
-                    pack_size,
-                    manufacturer_id,
-                    deleted_datetime: None,
-                },
-                manufacturer_name_row: None,
-            },
+            id,
+            value,
+            item_id,
+            item_variant_id,
+            packaging_variant_id,
+            is_auto_created: false,
+            pack_size,
+            manufacturer_id,
         }
-    }
-
-    pub fn row(&self) -> &BarcodeRow {
-        &self.barcode.barcode_row
     }
 }
 
@@ -178,7 +192,7 @@ pub struct BarcodeMatchNode {
 
 #[Object]
 impl BarcodeMatchNode {
-    /// The confirmed barcode's id, or the proposal's
+    /// The packaging variant's id, or the proposal's
     pub async fn id(&self) -> &str {
         &self.barcode_match.id
     }
@@ -199,6 +213,17 @@ impl BarcodeMatchNode {
 
     pub async fn item_id(&self) -> &str {
         &self.barcode_match.item_id
+    }
+
+    /// The item variant to put on the line, for a confirmed barcode. It may be
+    /// auto-created, so not in the item's variant list.
+    pub async fn item_variant_id(&self) -> Option<&str> {
+        self.barcode_match.item_variant_id.as_deref()
+    }
+
+    /// For a confirmed barcode
+    pub async fn packaging_variant_id(&self) -> Option<&str> {
+        self.barcode_match.packaging_variant_id.as_deref()
     }
 
     pub async fn pack_size(&self) -> Option<f64> {
@@ -246,16 +271,14 @@ mod test {
         impl TestQuery {
             pub async fn test_query(&self) -> BarcodeNode {
                 BarcodeNode {
-                    barcode: Barcode {
-                        barcode_row: BarcodeRow {
-                            id: "CB81F6CD62C1476F9411362053D49E84".to_string(),
-                            value: "gtin:09506682101352".to_string(),
-                            item_id: "AA460A207402434A89B1F6EEAC08DA43".to_string(),
-                            pack_size: Some(1.0),
-                            ..Default::default()
-                        },
-                        manufacturer_name_row: None,
-                    },
+                    id: "CB81F6CD62C1476F9411362053D49E84".to_string(),
+                    value: "gtin:09506682101352".to_string(),
+                    item_id: "AA460A207402434A89B1F6EEAC08DA43".to_string(),
+                    item_variant_id: Some("item_variant".to_string()),
+                    packaging_variant_id: Some("CB81F6CD62C1476F9411362053D49E84".to_string()),
+                    is_auto_created: true,
+                    pack_size: Some(1.0),
+                    manufacturer_id: None,
                 }
             }
         }
@@ -267,6 +290,8 @@ mod test {
                 "value": "gtin:09506682101352",
                 "barcode": "9506682101352",
                 "itemId": "AA460A207402434A89B1F6EEAC08DA43",
+                "itemVariantId": "item_variant",
+                "isAutoCreated": true,
                 "packSize": 1.0
             }
           }
@@ -280,6 +305,8 @@ mod test {
                value
                barcode
                itemId
+               itemVariantId
+               isAutoCreated
                packSize
             }
         }

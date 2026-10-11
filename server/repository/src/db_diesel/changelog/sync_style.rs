@@ -251,14 +251,6 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: false,
             },
-            // Confirmed barcodes (decisions/2026-09-30_barcodes.md): authored on OMS
-            // central and broadcast. v7 only: they no longer sync with legacy mSupply.
-            Barcode => SyncStyle {
-                authoring: vec![Central],
-                distribution: vec![D::Central],
-                transport: V7_ONLY,
-                multi_device_site: false,
-            },
             CustomField | CustomFieldOption | CustomFieldScope => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
