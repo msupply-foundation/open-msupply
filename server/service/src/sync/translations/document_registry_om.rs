@@ -17,11 +17,12 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(OmDocumentRegistryTranslation)
 }
 
-/// Registry entries written on open mSupply central, as installing a form
-/// plugin does, sent to sites that pull from it over v6.
+/// Registry entries a form plugin owns, which installing it writes on open
+/// mSupply central, sent to sites that pull from it over v6.
 ///
-/// The entries legacy central sends arrive through `DocumentRegistryTranslation`
-/// instead, and v7 sites get the bare row without either.
+/// Every other entry comes from legacy central, which sends it to those sites
+/// itself through `DocumentRegistryTranslation`, so it is not sent again here.
+/// v7 sites get the bare row of every entry, without either translator.
 pub(crate) struct OmDocumentRegistryTranslation;
 
 impl SyncTranslation for OmDocumentRegistryTranslation {
@@ -87,6 +88,17 @@ impl SyncTranslation for OmDocumentRegistryTranslation {
             return Ok(PushTranslateResult::NotMatched);
         };
 
+        // Open mSupply central also holds every entry legacy central sent it, and
+        // legacy central sends those to the sites itself. A second copy under the same
+        // id would do harm on a site before 3.4: its sync buffer keeps one row per id,
+        // so this copy, which it cannot read, would replace legacy's.
+        if row.plugin_code.is_none() {
+            return Ok(PushTranslateResult::Ignored(format!(
+                "Entry {} has no form plugin owner, so legacy central sends it",
+                row.id
+            )));
+        }
+
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
@@ -101,9 +113,12 @@ impl SyncTranslation for OmDocumentRegistryTranslation {
 mod tests {
     use super::*;
     use crate::sync::{
+        CentralServerConfig,
         synchroniser::integrate_and_translate_sync_buffer,
         test::test_data::document_registry_om as test_data,
-        translations::{all_translators, pull_integration_order, translate_rows_to_sync_records},
+        translations::{
+            PushSyncRecord, all_translators, pull_integration_order, translate_rows_to_sync_records,
+        },
     };
     use repository::{
         ChangelogFilter, ChangelogRepository, CursorAndLimit, DocumentRegistryCategory,
@@ -142,20 +157,7 @@ mod tests {
     /// row on the site.
     #[actix_rt::test]
     async fn an_entry_written_on_central_reaches_a_v6_site_whole() {
-        let central_site_id = 1;
-        let (_, connection, _, _) = setup_all_with_data(
-            "an_entry_written_on_central_reaches_a_v6_site_whole",
-            MockDataInserts::none().contexts().form_schemas(),
-            MockData {
-                key_value_store_rows: vec![KeyValueStoreRow {
-                    id: KeyType::SettingsSyncSiteId,
-                    value_int: Some(central_site_id),
-                    ..Default::default()
-                }],
-                ..Default::default()
-            },
-        )
-        .await;
+        let connection = central("an_entry_written_on_central_reaches_a_v6_site_whole").await;
         let entry = DocumentRegistryRow {
             id: "demo_program_DemoEncounter".to_string(),
             category: DocumentRegistryCategory::Encounter,
@@ -172,32 +174,7 @@ mod tests {
             .upsert_one(&entry)
             .unwrap();
 
-        // What central's v6 pull selects for a site, as it asks for it.
-        let pulling_site_id = 2;
-        let rows = ChangelogRepository::new(&connection)
-            .query_with_data(
-                ChangelogFilter::all_data_for_site(
-                    pulling_site_id,
-                    false,
-                    Some(SyncVersions {
-                        is_v6: true,
-                        is_v5: false,
-                    }),
-                ),
-                // Rows after the cursor, as a pull reads them.
-                CursorAndLimit {
-                    cursor: cursor as i64,
-                    limit: 100,
-                },
-            )
-            .unwrap()
-            .rows;
-        let sent = translate_rows_to_sync_records(
-            &connection,
-            rows,
-            vec![ToSyncRecordTranslationType::PullFromOmSupplyCentral],
-        )
-        .unwrap();
+        let sent = sent_on_v6_pull(&connection, cursor);
         assert_eq!(sent.len(), 1);
         let sent = &sent[0].record;
         assert_eq!(sent.table_name, "document_registry");
@@ -214,6 +191,60 @@ mod tests {
                 .try_translate_from_upsert_sync_record(&connection, &FkChecker::new(), &received)
                 .unwrap(),
             PullTranslateResult::upsert(entry)
+        );
+    }
+
+    /// An entry open mSupply central got from legacy central has no owner, and legacy
+    /// central sends it to the sites itself, so the v6 pull leaves it out. A site
+    /// before 3.4 keeps one sync buffer row per id, and a second copy there would
+    /// replace legacy's with one the site cannot read.
+    #[actix_rt::test]
+    async fn an_entry_central_got_from_legacy_is_not_sent_again() {
+        let connection = central("an_entry_central_got_from_legacy_is_not_sent_again").await;
+        let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        buffer(&connection, LEGACY_CENTRAL_SITE_ID, legacy_entry());
+        integrate_and_translate_sync_buffer(&connection, None, LEGACY_CENTRAL_SITE_ID, true)
+            .unwrap();
+
+        assert!(
+            DocumentRegistryRowRepository::new(&connection)
+                .find_one_by_id("legacy_encounter")
+                .unwrap()
+                .is_some()
+        );
+        assert!(sent_on_v6_pull(&connection, cursor).is_empty());
+    }
+
+    /// Legacy central sends its old copy of an entry a plugin took over. Open mSupply
+    /// central keeps the plugin's entry and puts it on the v6 pull again, owner and
+    /// all, so it replaces legacy's copy on the sites.
+    #[actix_rt::test]
+    async fn legacy_copy_of_a_plugin_owned_entry_sends_central_copy_out_again() {
+        CentralServerConfig::set_is_central_server_on_startup();
+        let connection =
+            central("legacy_copy_of_a_plugin_owned_entry_sends_central_copy_out_again").await;
+        let entry: DocumentRegistryRow = plugin_entry().deserialize().unwrap();
+        DocumentRegistryRowRepository::new(&connection)
+            .upsert_one(&entry)
+            .unwrap();
+        let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        buffer(
+            &connection,
+            LEGACY_CENTRAL_SITE_ID,
+            legacy_copy_of_plugin_entry(),
+        );
+        integrate_and_translate_sync_buffer(&connection, None, LEGACY_CENTRAL_SITE_ID, true)
+            .unwrap();
+
+        let sent = sent_on_v6_pull(&connection, cursor);
+        assert_eq!(sent.len(), 1);
+        assert_eq!(sent[0].record.table_name, "document_registry");
+        assert_eq!(
+            serde_json::from_value::<DocumentRegistryRow>(sent[0].record.record_data.clone())
+                .unwrap(),
+            entry
         );
     }
 
@@ -313,6 +344,56 @@ mod tests {
         assert_eq!(entry.program_key.as_deref(), Some("demo"));
     }
 
+    const LEGACY_CENTRAL_SITE_ID: i32 = 1;
+
+    /// Open mSupply central's database, with the mock contexts and schemas.
+    async fn central(db_name: &str) -> StorageConnection {
+        let central_site_id = 2;
+        let (_, connection, _, _) = setup_all_with_data(
+            db_name,
+            MockDataInserts::none().contexts().form_schemas(),
+            MockData {
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(central_site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+        connection
+    }
+
+    /// What central's v6 pull sends a site after the cursor, selected and translated
+    /// as the pull does it.
+    fn sent_on_v6_pull(connection: &StorageConnection, cursor: u64) -> Vec<PushSyncRecord> {
+        let pulling_site_id = 3;
+        let rows = ChangelogRepository::new(connection)
+            .query_with_data(
+                ChangelogFilter::all_data_for_site(
+                    pulling_site_id,
+                    false,
+                    Some(SyncVersions {
+                        is_v6: true,
+                        is_v5: false,
+                    }),
+                ),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows;
+        translate_rows_to_sync_records(
+            connection,
+            rows,
+            vec![ToSyncRecordTranslationType::PullFromOmSupplyCentral],
+        )
+        .unwrap()
+    }
+
     /// Adds a pending row to the sync buffer, as a pull leaves it.
     fn buffer(connection: &StorageConnection, source_site_id: i32, row: SyncBufferRow) {
         SyncBufferRepository::new(connection)
@@ -321,6 +402,25 @@ mod tests {
                 ..row
             })])
             .unwrap();
+    }
+
+    /// An entry legacy central holds for a type no plugin has taken over.
+    fn legacy_entry() -> SyncBufferRow {
+        SyncBufferRow {
+            table_name: "om_document_registry".to_string(),
+            record_id: "legacy_encounter".to_string(),
+            data: SyncRecordData(serde_json::json!({
+                "ID": "legacy_encounter",
+                "category": "ENCOUNTER",
+                "document_type": "LegacyEncounter",
+                "context_ID": context_program_a().id,
+                "name": "Legacy encounter",
+                "form_schema_ID": mock_form_schema_simple().id,
+                "config": null
+            })),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        }
     }
 
     /// An entry for a type no other entry has, as open mSupply central sends it.
