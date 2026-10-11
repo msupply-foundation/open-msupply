@@ -930,11 +930,18 @@ export type BarcodeMatchNode = {
   __typename: 'BarcodeMatchNode';
   /** The barcode as people read it */
   barcode: Scalars['String']['output'];
-  /** The confirmed barcode's id, or the proposal's */
+  /** The packaging variant's id, or the proposal's */
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
+  /**
+   * The item variant to put on the line, for a confirmed barcode. It may be
+   * auto-created, so not in the item's variant list.
+   */
+  itemVariantId?: Maybe<Scalars['String']['output']>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
+  /** For a confirmed barcode */
+  packagingVariantId?: Maybe<Scalars['String']['output']>;
   status: BarcodeStatusNode;
   /** The barcode in its standard form with its scheme */
   value: Scalars['String']['output'];
@@ -942,21 +949,29 @@ export type BarcodeMatchNode = {
 
 export type BarcodeMutations = {
   __typename: 'BarcodeMutations';
-  /** Confirms a store's proposal, so the barcode reaches every site */
+  /**
+   * Confirms a store's proposal, so the barcode reaches every site. With no
+   * packaging variant or item variant given, it goes on the item's auto-created
+   * variant for the proposal's manufacturer.
+   */
   confirmBarcodeProposal: BarcodeNode;
   /**
-   * Removes a confirmed barcode everywhere. Stores proposing it again won't
-   * confirm it; only adding it on central brings it back.
+   * Removes the barcode from a packaging variant, everywhere. `id` is the
+   * packaging variant's. An auto-created variant left with no barcode is
+   * deleted.
    */
   deleteBarcode: DeleteResponse;
-  /** Adds a confirmed barcode for an item, or brings back a removed one */
+  /**
+   * Confirms a barcode for an item without a proposal. Confirming one the item
+   * already has returns it.
+   */
   insertBarcode: BarcodeNode;
-  /** Changes a confirmed barcode's pack size, or moves it to another item */
-  updateBarcode: BarcodeNode;
 };
 
 export type BarcodeMutationsConfirmBarcodeProposalArgs = {
   id: Scalars['String']['input'];
+  itemVariantId?: InputMaybe<Scalars['String']['input']>;
+  packagingVariantId?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -970,11 +985,6 @@ export type BarcodeMutationsInsertBarcodeArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type BarcodeMutationsUpdateBarcodeArgs = {
-  input: UpdateBarcodeInput;
-  storeId: Scalars['String']['input'];
-};
-
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
   /** The barcode as people read it, e.g. `9506682101352` */
@@ -984,11 +994,15 @@ export type BarcodeNode = {
    * @deprecated Use `barcode`
    */
   gtin: Scalars['String']['output'];
+  /** The packaging variant's id */
   id: Scalars['String']['output'];
+  /** The barcode is on a variant central created only to hold barcodes */
+  isAutoCreated: Scalars['Boolean']['output'];
   itemId: Scalars['String']['output'];
+  itemVariantId?: Maybe<Scalars['String']['output']>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
-  manufacturerName?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
+  packagingVariantId?: Maybe<Scalars['String']['output']>;
   /**
    * The barcode in its standard form with its scheme, e.g.
    * `gtin:09506682101352`. Matches the `barcode` of lines and stock lines.
@@ -4038,8 +4052,12 @@ export type InsertConfirmedBarcodeInput = {
   /** As scanned or typed; the server puts it in standard form */
   barcode: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
+  /** Add a packaging variant with the barcode to this item variant of the item */
+  itemVariantId?: InputMaybe<Scalars['String']['input']>;
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  /** Put the barcode on this packaging variant of the item, which has none yet */
+  packagingVariantId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertContactFormInput = {
@@ -5786,6 +5804,10 @@ export type ItemNode = {
   unitName?: Maybe<Scalars['String']['output']>;
   universalCode: Scalars['String']['output'];
   userField4: Scalars['Boolean']['output'];
+  /**
+   * The item's variants. Auto-created ones, which central creates only to hold
+   * a barcode, are left out unless `includeAutoCreated` is true.
+   */
   variants: Array<ItemVariantNode>;
   venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
@@ -5822,6 +5844,10 @@ export type ItemNodeStatsArgs = {
 
 export type ItemNodeStockOnHandArgs = {
   storeId: Scalars['String']['input'];
+};
+
+export type ItemNodeVariantsArgs = {
+  includeAutoCreated?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export enum ItemNodeType {
@@ -5883,11 +5909,21 @@ export type ItemStorePropertiesNode = {
 export type ItemVariantMutations = {
   __typename: 'ItemVariantMutations';
   deleteItemVariant: DeleteItemVariantResponse;
+  /**
+   * Makes a variant central created to hold a barcode a real one, so it shows
+   * in variant lists and pickers. Its id stays the same.
+   */
+  promoteItemVariant: ItemVariantNode;
   upsertItemVariant: UpsertPackVariantResponse;
 };
 
 export type ItemVariantMutationsDeleteItemVariantArgs = {
   input: DeleteItemVariantInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type ItemVariantMutationsPromoteItemVariantArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -5903,6 +5939,11 @@ export type ItemVariantNode = {
   /** This item variant is bundled with other (principal) item variants */
   bundlesWith: Array<BundledItemNode>;
   id: Scalars['String']['output'];
+  /**
+   * Created on central only to hold a barcode. Left out of variant lists unless
+   * asked for.
+   */
+  isAutoCreated: Scalars['Boolean']['output'];
   item?: Maybe<ItemNode>;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
@@ -7710,6 +7751,8 @@ export type PackSizeCodeCombinationExists =
   };
 
 export type PackagingVariantInput = {
+  /** As scanned or typed. Left as it is when not given. */
+  barcode?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
   packSize?: InputMaybe<Scalars['Float']['input']>;
@@ -7719,6 +7762,8 @@ export type PackagingVariantInput = {
 
 export type PackagingVariantNode = {
   __typename: 'PackagingVariantNode';
+  /** The confirmed barcode for this packaging, as people read it */
+  barcode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   packSize?: Maybe<Scalars['Float']['output']>;
@@ -8937,6 +8982,10 @@ export type Queries = {
   itemCounts: ItemCounts;
   itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
+  /**
+   * Whether any item has variants. Auto-created variants, which only hold a
+   * barcode, don't count.
+   */
   itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
   items: ItemsResponse;
@@ -10970,6 +11019,10 @@ export type StockLineNode = {
   item: ItemNode;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  /**
+   * None for an auto-created variant, which only holds a barcode: it's kept out
+   * of sight like it is in variant lists. `itemVariantId` still gives it.
+   */
   itemVariant?: Maybe<ItemVariantNode>;
   /** @deprecated Since 2.10.0. Use item_variant.id instead */
   itemVariantId?: Maybe<Scalars['String']['output']>;
@@ -11956,13 +12009,6 @@ export type UpdateAssetInput = {
 };
 
 export type UpdateAssetResponse = AssetNode | UpdateAssetError;
-
-export type UpdateBarcodeInput = {
-  id: Scalars['String']['input'];
-  /** Moves the barcode to another item */
-  itemId?: InputMaybe<Scalars['String']['input']>;
-  packSize?: InputMaybe<NullableFloatUpdate>;
-};
 
 export type UpdateContactTraceInput = {
   /** Contact trace document data */
