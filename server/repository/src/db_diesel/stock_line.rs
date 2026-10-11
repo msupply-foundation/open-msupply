@@ -24,11 +24,7 @@ use crate::{
     ItemSortField, MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
 };
 
-use diesel::{
-    dsl::{sum, IntoBoxed},
-    prelude::*,
-};
-use std::collections::HashMap;
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct StockLine {
@@ -280,31 +276,6 @@ impl<'a> StockLineRepository<'a> {
             .filter(item::id.eq_any(item_id_subquery))
             .count()
             .get_result(self.connection.lock().connection())?)
-    }
-
-    /// Total volume of the store's stock on hand, summed per location type, for
-    /// stock lines in locations of the given types. Location types with no stock
-    /// are absent from the result.
-    pub fn total_volume_by_location_type(
-        &self,
-        store_id: &str,
-        location_type_ids: &[String],
-    ) -> Result<HashMap<String, f64>, RepositoryError> {
-        let rows = stock_line::table
-            .inner_join(location::table)
-            .filter(stock_line::store_id.eq(store_id))
-            .filter(stock_line::total_number_of_packs.gt(0.0))
-            .filter(location::location_type_id.eq_any(location_type_ids))
-            .group_by(location::location_type_id)
-            .select((location::location_type_id, sum(stock_line::total_volume)))
-            .load::<(Option<String>, Option<f64>)>(self.connection.lock().connection())?;
-
-        Ok(rows
-            .into_iter()
-            .filter_map(|(location_type_id, volume)| {
-                Some((location_type_id?, volume.unwrap_or(0.0)))
-            })
-            .collect())
     }
 
     pub fn create_filtered_query(

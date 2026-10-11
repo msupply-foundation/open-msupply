@@ -99,36 +99,49 @@ pub fn get_available_volume_by_location_type(
         .into_iter()
         .collect();
 
-    let mut total_volume_by_type = HashMap::<String, f64>::new();
-    for location in LocationRepository::new(connection).query_by_filter(
+    let location_repo = LocationRepository::new(connection);
+    let locations = location_repo.query_by_filter(
         LocationFilter::new()
             .store_id(EqualFilter::equal_to(store_id.to_string()))
-            .location_type_id(EqualFilter::equal_any(location_type_ids.clone())),
-    )? {
-        if let Some(location_type_id) = location.location_row.location_type_id {
-            *total_volume_by_type.entry(location_type_id).or_default() +=
-                location.location_row.volume;
-        }
-    }
+            .location_type_id(EqualFilter::equal_any(location_type_ids)),
+    )?;
+    let location_ids: Vec<String> = locations
+        .iter()
+        .map(|location| location.location_row.id.clone())
+        .collect();
+    let volume_used_by_location = location_repo.volume_used_by_location(&location_ids)?;
 
-    let used_volume_by_type = StockLineRepository::new(connection)
-        .total_volume_by_location_type(store_id, &location_type_ids)?;
+    let mut available_volume_by_type = HashMap::<String, f64>::new();
+    for location in locations {
+        let LocationRow {
+            id,
+            location_type_id,
+            volume,
+            ..
+        } = location.location_row;
+        let Some(location_type_id) = location_type_id else {
+            continue;
+        };
+        let volume_used = volume_used_by_location
+            .get(&id)
+            .copied()
+            .unwrap_or_default();
+        *available_volume_by_type
+            .entry(location_type_id)
+            .or_default() += volume - volume_used;
+    }
 
     Ok(restricted_location_type_by_item
         .into_iter()
         .filter_map(|(item_id, location_type_id)| {
             // No locations of this type in the store, so no volume to report
-            let total_volume = *total_volume_by_type.get(&location_type_id)?;
-            let used_volume = used_volume_by_type
-                .get(&location_type_id)
-                .copied()
-                .unwrap_or_default();
+            let available_volume = *available_volume_by_type.get(&location_type_id)?;
 
             Some((
                 item_id,
                 AvailableVolumeByType {
                     restricted_location_type_id: Some(location_type_id),
-                    available_volume: Some(total_volume - used_volume),
+                    available_volume: Some(available_volume),
                 },
             ))
         })
