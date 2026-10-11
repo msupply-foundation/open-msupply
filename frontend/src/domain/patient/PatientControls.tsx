@@ -147,6 +147,8 @@ export interface DateOfBirthControlProps {
   required?: boolean;
   error?: string;
   disabled?: boolean;
+  /** `data-testid` for the date; the age takes it with `-age` added. */
+  testId?: string;
 }
 
 /**
@@ -198,6 +200,7 @@ export const DateOfBirthControl = (
         required={props.required}
         error={props.error}
         disabled={props.disabled}
+        testId={props.testId}
         // The Show goes INSIDE the slot, so labelInfo is always present and
         // only the tooltip mounts/unmounts. Toggling the slot itself between
         // an element and undefined would also swap the label between
@@ -224,6 +227,7 @@ export const DateOfBirthControl = (
             max={MAX_AGE}
             value={age()}
             disabled={props.disabled}
+            data-testid={props.testId && `${props.testId}-age`}
             onChange={value => {
               const dob = value === undefined ? null : dobFromAge(value);
               setAgeSource(

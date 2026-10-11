@@ -456,7 +456,10 @@ export {
   SelectInput,
   AutocompleteInput,
   CheckboxInput,
+  DateOfBirthInput,
+  NotesInput,
   FieldGroup,
+  FormDivider,
 } from './lazyComponents';
 // The host's patient fields, for a `patient.form` to compose: lazy from the
 // same chunk.
@@ -484,6 +487,7 @@ export type {
   EnumPath,
   NumberPath,
   BooleanPath,
+  NotesPath,
 } from '../domain/documentForm/paths';
 export type { FieldSchemaInfo } from '../domain/documentForm/schemaNode';
 // Migrations between a document type's schema versions: eager and tiny, since
@@ -508,8 +512,12 @@ export type {
   AutocompleteInputProps,
   AutocompleteOption,
   CheckboxInputProps,
+  DateOfBirthInputProps,
   FieldGroupProps,
+  FormDividerProps,
 } from '../domain/documentForm/fields';
+export type { NotesInputProps } from '../domain/documentForm/NotesInput';
+export type { NoteEditRestrictions } from '../domain/documentForm/notes';
 
 // ── List & table state — the URL and the stored column layout ───────────────
 /*

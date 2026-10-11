@@ -19,8 +19,11 @@ export {
   SelectInput,
   AutocompleteInput,
   CheckboxInput,
+  DateOfBirthInput,
   FieldGroup,
+  FormDivider,
 } from './fields';
+export { NotesInput } from './NotesInput';
 export { validateDocument } from './validation';
 export { baseSchemaFor } from './baseSchemas';
 export { DefaultEnrolmentForm, DefaultEncounterForm } from './defaults';

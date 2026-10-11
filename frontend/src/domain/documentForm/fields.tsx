@@ -23,6 +23,8 @@ import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { Select } from '../../ui/elements/selectors/Select';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { FormSection } from '../../ui/layout/Form/FormSection';
+import { Divider } from '../../ui/elements/display/Divider';
+import { DateOfBirthControl } from '../patient/PatientControls';
 import { utcToLocalDay } from '../../ui/elements/inputs/dateTimeConvert';
 import { t } from '../../intl';
 import type { Draft, HostDraft } from './draft';
@@ -462,4 +464,64 @@ export const FieldGroup = (props: FieldGroupProps): JSX.Element => (
   >
     {props.children}
   </FormSection>
+);
+
+export interface DateOfBirthInputProps<
+  T,
+  P extends TextPath<T>,
+> extends Omit<FieldProps, 'helperText'> {
+  draft: Draft<T>;
+  /** A `format: date` path: the date is stored as `yyyy-MM-dd`. */
+  path: P;
+  /**
+   * Where the record keeps whether the date was estimated from a typed age,
+   * as the base patient's `dateOfBirthIsEstimated` does. An age entry writes
+   * `true` there and a date entered directly removes it. Without one, nothing
+   * is written for it, and the mark beside the label shows only while the
+   * date is the one this session's age entry gave.
+   */
+  estimatedPath?: BooleanPath<T>;
+}
+
+/*
+ * A date of birth with the age beside it, the host patient form's control for
+ * any date of birth a document holds (a child's, a contact's). Either can be
+ * entered: a date gives the age, and a typed age stores the first of January
+ * of that year. Under a year old the age reads as months and days. The age's
+ * label is the host's.
+ */
+export const DateOfBirthInput = <T, P extends TextPath<T>>(
+  props: DateOfBirthInputProps<T, P>
+): JSX.Element => {
+  const d = () => untyped(props.draft);
+  return (
+    <DateOfBirthControl
+      label={props.label}
+      value={(d().get(props.path) as string | undefined) ?? null}
+      estimated={
+        props.estimatedPath === undefined
+          ? undefined
+          : d().get(props.estimatedPath) === true
+      }
+      onChange={(dob, fromAge) => {
+        d().set(props.path, dob ?? undefined);
+        if (props.estimatedPath !== undefined)
+          d().set(props.estimatedPath, fromAge || undefined);
+      }}
+      required={required(d(), props.path)}
+      error={d().errorFor(props.path)}
+      disabled={isDisabled(d(), props)}
+      testId={props.testId}
+    />
+  );
+};
+
+export interface FormDividerProps {
+  /** `data-testid` for the rule (e2e/TESTIDS.md). */
+  testId?: string;
+}
+
+/** A hairline rule between two runs of fields in one group. */
+export const FormDivider = (props: FormDividerProps): JSX.Element => (
+  <Divider data-testid={props.testId} />
 );

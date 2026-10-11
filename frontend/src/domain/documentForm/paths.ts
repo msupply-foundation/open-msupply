@@ -10,9 +10,11 @@
  * AJV's pointers name it (`contactDetails.0.phone`): a deployment's patient
  * form keeps its address in the first contact block, the one the server
  * projects onto the patient record. Any other item, and an array of plain
- * values, is a leaf. Keyed items, the notes list and the generic array
- * controls are later work (implementation-plan H23).
+ * values, is a leaf, except a list of notes, which a path names whole for the
+ * notes list (`NotesPath`). Keyed items and the generic array controls are
+ * later work (implementation-plan H23).
  */
+import type { Note } from '../../plugin-sdk/documents';
 
 // Recursion budget for the path types: deep enough for every base document
 // (Patient reaches `contacts.0.contactDetails.0.phone`, plugin extensions add
@@ -85,7 +87,11 @@ type PathsWhere<T, Test> = {
           ? NonNullable<PathValue<T, P>> extends boolean
             ? P
             : never
-          : never;
+          : Test extends 'notes'
+            ? NonNullable<PathValue<T, P>> extends readonly Note[]
+              ? P
+              : never
+            : never;
 }[Path<T>];
 
 /** Paths whose value is free text (`string`, not a union of literals). */
@@ -96,6 +102,8 @@ export type EnumPath<T> = PathsWhere<T, 'enum'>;
 export type NumberPath<T> = PathsWhere<T, 'number'>;
 /** Paths whose value is a boolean. */
 export type BooleanPath<T> = PathsWhere<T, 'boolean'>;
+/** Paths whose value is a list of notes (`Note[]`). */
+export type NotesPath<T> = PathsWhere<T, 'notes'>;
 
 // Keys that reach an object's prototype rather than its own data. Paths come
 // from plugin code (form paths are compiler-checked, migration paths are

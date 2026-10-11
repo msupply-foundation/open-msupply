@@ -21,6 +21,7 @@ import {
   pointerToPath,
   setAt,
   type EnumPath,
+  type NotesPath,
   type NumberPath,
   type Path,
   type PathValue,
@@ -118,6 +119,13 @@ const typeChecks = () => {
   const retired: RegimenRetired = ['FIRST_LINE'];
   // @ts-expect-error: only a value the enum allows can be retired.
   const retiredTypo: RegimenRetired = ['FIRST_LIN'];
+  const notes: NotesPath<DemoEncounter> = 'notes';
+  // @ts-expect-error: a single note is not the list.
+  const oneNote: NotesPath<DemoEncounter> = 'notes.0';
+  // @ts-expect-error: free text called notes is not a list of notes.
+  const textNotes: NotesPath<DemoEncounter> = 'extension.demo.notes';
+  // @ts-expect-error: an array of other objects is not a list of notes.
+  const blocks: NotesPath<Lists> = 'blocks';
   return [
     text,
     date,
@@ -140,6 +148,10 @@ const typeChecks = () => {
     unlabelled,
     retired,
     retiredTypo,
+    notes,
+    oneNote,
+    textNotes,
+    blocks,
   ];
 };
 
@@ -259,7 +271,7 @@ describe('textFieldError', () => {
 
 describe('paths', () => {
   it('type checks hold', () => {
-    expect(typeChecks()).toHaveLength(21);
+    expect(typeChecks()).toHaveLength(25);
   });
 
   it('reads through missing parents as undefined', () => {

@@ -28,16 +28,20 @@ import type {
   AutocompleteInputProps,
   CheckboxInputProps,
   DateInputProps,
+  DateOfBirthInputProps,
   DateTimeInputProps,
   FieldGroupProps,
+  FormDividerProps,
   NumberInputProps,
   SelectInputProps,
   TextAreaInputProps,
   TextInputProps,
 } from '../domain/documentForm/fields';
+import type { NotesInputProps } from '../domain/documentForm/NotesInput';
 import type {
   BooleanPath,
   EnumPath,
+  NotesPath,
   NumberPath,
   TextPath,
 } from '../domain/documentForm/paths';
@@ -128,7 +132,7 @@ export const FilterDateRange: Component<FilterDateRangeProps> = lazy(() =>
 /*
  * The form component library (kdd/custom-forms/specs.md § Forms in the UI):
  * the fields a plugin form is written with, each bound to the document draft
- * the host hands the form and a path into the document type. All eight come
+ * the host hands the form and a path into the document type. They all come
  * from one host module, which also carries the AJV validator and the host's
  * default forms, so the first form a user opens fetches them as one chunk,
  * shared by the host and every plugin (vite/lazyChunkGuard.ts keeps it out of
@@ -244,9 +248,36 @@ export const CheckboxInput = LazyCheckboxInput as unknown as <
   props: CheckboxInputProps<T, P>
 ) => JSX.Element;
 
+const LazyDateOfBirthInput = formLibraryComponent(
+  m => m.DateOfBirthInput as Component<DateOfBirthInputProps<unknown, never>>
+);
+/** A date of birth at a `format: date` path, with the age beside it. */
+export const DateOfBirthInput = LazyDateOfBirthInput as unknown as <
+  T,
+  P extends TextPath<T>,
+>(
+  props: DateOfBirthInputProps<T, P>
+) => JSX.Element;
+
+const LazyNotesInput = formLibraryComponent(
+  m => m.NotesInput as Component<NotesInputProps<unknown, never>>
+);
+/** Every note of a notes list, each in an accordion item. */
+export const NotesInput = LazyNotesInput as unknown as <
+  T,
+  P extends NotesPath<T>,
+>(
+  props: NotesInputProps<T, P>
+) => JSX.Element;
+
 /** A titled group of fields. */
 export const FieldGroup: Component<FieldGroupProps> = formLibraryComponent(
   m => m.FieldGroup
+);
+
+/** A hairline rule between two runs of fields in one group. */
+export const FormDivider: Component<FormDividerProps> = formLibraryComponent(
+  m => m.FormDivider
 );
 
 /*
