@@ -1,5 +1,5 @@
 use crate::{
-    location::query::get_available_volume_by_location_type,
+    location::query::{get_available_volume_by_location_type, restricted_location_type_id},
     requisition::common::check_requisition_row_exists,
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
@@ -43,8 +43,8 @@ pub fn update_request_requisition_line(
     let requisition_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let updated_requisition_line_row = generate(ctx, requisition_row, input)?;
+            let requisition_line = validate(connection, &ctx.store_id, &input)?;
+            let updated_requisition_line_row = generate(ctx, requisition_line, input)?;
 
             RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
@@ -61,7 +61,7 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateRequestRequisitionLine,
-) -> Result<RequisitionLineRow, OutError> {
+) -> Result<RequisitionLine, OutError> {
     let requisition_line = check_requisition_line_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionLineDoesNotExist)?;
     let requisition_line_row = requisition_line.clone().requisition_line_row;
@@ -108,12 +108,16 @@ fn validate(
         }
     }
 
-    Ok(requisition_line_row)
+    Ok(requisition_line)
 }
 
 fn generate(
     ctx: &ServiceContext,
-    existing: RequisitionLineRow,
+    RequisitionLine {
+        requisition_line_row: existing,
+        item_row,
+        ..
+    }: RequisitionLine,
     UpdateRequestRequisitionLine {
         id: _,
         requested_quantity: updated_requested_quantity,
@@ -121,21 +125,24 @@ fn generate(
         option_id,
     }: UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, RepositoryError> {
-    let available_volume_by_type = get_available_volume_by_location_type(
-        &ctx.connection,
-        &ctx.store_id,
-        &[existing.item_id.clone()],
-    )?
-    .get(&existing.item_id)
-    .cloned()
-    .unwrap_or_default();
+    let location_type_id = restricted_location_type_id(&item_row);
+    let available_volume = match location_type_id {
+        Some(id) => get_available_volume_by_location_type(
+            &ctx.connection,
+            &ctx.store_id,
+            &[id.to_string()],
+        )?
+        .get(id)
+        .copied(),
+        None => None,
+    };
 
     Ok(RequisitionLineRow {
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
         comment: updated_comment.or(existing.comment),
         option_id: option_id.or(existing.option_id),
-        available_volume: available_volume_by_type.available_volume,
-        location_type_id: available_volume_by_type.restricted_location_type_id.clone(),
+        available_volume,
+        location_type_id: location_type_id.map(str::to_string),
         ..existing
     })
 }

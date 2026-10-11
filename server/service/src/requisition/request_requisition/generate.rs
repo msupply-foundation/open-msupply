@@ -1,5 +1,5 @@
 use crate::item_stats::get_item_stats;
-use crate::location::query::get_available_volume_by_location_type;
+use crate::location::query::{get_available_volume_by_location_type, restricted_location_type_id};
 use crate::preference::preferences::DisplayPopulationBasedForecasting;
 use crate::preference::types::Preference;
 use crate::pricing::item_price::{get_pricing_for_items, ItemPriceLookup};
@@ -8,8 +8,8 @@ use crate::requisition::request_requisition::generate_population_forecast::calcu
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
 use chrono::{NaiveDate, Utc};
-use repository::{ItemRowRepository, RequisitionLineRow, RequisitionRow};
-use std::collections::HashMap;
+use repository::{ItemRow, ItemRowRepository, RequisitionLineRow, RequisitionRow};
+use std::collections::{HashMap, HashSet};
 use util::uuid::uuid;
 
 pub struct GenerateSuggestedQuantity {
@@ -60,13 +60,14 @@ pub fn generate_requisition_lines(
         .map(|i| i.item_id.to_string())
         .collect::<Vec<String>>();
 
-    // Item names are denormalised onto the requisition line. Source them from
-    // the item table rather than from stock data — stockless items have no
-    // stock_on_hand row, which previously left item_name empty (#11843).
-    let item_name_by_id: HashMap<String, String> = ItemRowRepository::new(&ctx.connection)
+    // Item names (denormalised onto the requisition line) and location type
+    // restrictions come from the item table rather than from stock data —
+    // stockless items have no stock_on_hand row, which previously left
+    // item_name empty (#11843).
+    let item_by_id: HashMap<String, ItemRow> = ItemRowRepository::new(&ctx.connection)
         .find_many_by_id(&item_ids)?
         .into_iter()
-        .map(|item| (item.id, item.name))
+        .map(|item| (item.id.clone(), item))
         .collect();
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
@@ -79,8 +80,15 @@ pub fn generate_requisition_lines(
     } else {
         None
     };
-    let available_volumes =
-        get_available_volume_by_location_type(&ctx.connection, store_id, &item_ids)?;
+    let location_type_ids: Vec<String> = item_by_id
+        .values()
+        .filter_map(restricted_location_type_id)
+        .map(str::to_string)
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+    let available_volume_by_type =
+        get_available_volume_by_location_type(&ctx.connection, store_id, &location_type_ids)?;
 
     let display_forecasting = DisplayPopulationBasedForecasting
         .load(&ctx.connection, None)
@@ -115,10 +123,10 @@ pub fn generate_requisition_lines(
                         max_months_of_stock: requisition_row.max_months_of_stock,
                     }),
                 };
-                let available_volume_by_type = available_volumes
-                    .get(&item_stats.item_id)
-                    .cloned()
-                    .unwrap_or_default();
+                let item = item_by_id.get(&item_stats.item_id);
+                let location_type_id = item.and_then(restricted_location_type_id);
+                let available_volume =
+                    location_type_id.and_then(|id| available_volume_by_type.get(id).copied());
                 let population_forecast_for_item = population_forecast
                     .get(&item_stats.item_id)
                     .and_then(|opt| opt.as_ref());
@@ -126,10 +134,7 @@ pub fn generate_requisition_lines(
                 Ok(RequisitionLineRow {
                     id: uuid(),
                     requisition_id: requisition_row.id.clone(),
-                    item_name: item_name_by_id
-                        .get(&item_stats.item_id)
-                        .cloned()
-                        .unwrap_or_default(),
+                    item_name: item.map(|item| item.name.clone()).unwrap_or_default(),
                     item_id: item_stats.item_id.clone(),
                     suggested_quantity,
                     available_stock_on_hand,
@@ -144,8 +149,8 @@ pub fn generate_requisition_lines(
                     } else {
                         None
                     },
-                    available_volume: available_volume_by_type.available_volume,
-                    location_type_id: available_volume_by_type.restricted_location_type_id,
+                    available_volume,
+                    location_type_id: location_type_id.map(str::to_string),
                     forecast_total_units,
                     forecast_total_doses: population_forecast_for_item
                         .map(|f| f.forecast_total_doses),

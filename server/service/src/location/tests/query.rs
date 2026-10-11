@@ -3,11 +3,11 @@ mod query {
     use repository::{
         location::{LocationFilter, LocationSortField},
         mock::{
-            mock_asset_b, mock_location_1, mock_store_a, mock_store_b, stock_line_with_volume,
-            MockData, MockDataInserts,
+            mock_asset_b, mock_item_a, mock_location_1, mock_store_a, mock_store_b,
+            stock_line_with_volume, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        ItemRow, ItemType, LocationRow, LocationRowRepository, LocationTypeRow, StockLineRow,
+        ItemRow, LocationRow, LocationRowRepository, LocationTypeRow, StockLineRow,
         StockLineRowRepository,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
@@ -15,7 +15,7 @@ mod query {
     use crate::{
         asset::update::UpdateAsset,
         location::query::{
-            get_available_volume_by_location_type, get_volume_used, AvailableVolumeByType,
+            get_available_volume_by_location_type, get_volume_used, restricted_location_type_id,
         },
         service_provider::ServiceProvider,
         ListError, SingleRecordError,
@@ -335,22 +335,8 @@ mod query {
 
     #[actix_rt::test]
     async fn location_get_available_volume_by_location_type() {
-        let type_x = || LocationTypeRow {
-            id: "type_x".to_string(),
-            ..Default::default()
-        };
-        let type_y = || LocationTypeRow {
-            id: "type_y".to_string(),
-            ..Default::default()
-        };
-        let type_no_locations = || LocationTypeRow {
-            id: "type_no_locations".to_string(),
-            ..Default::default()
-        };
-        let item = |id: &str, location_type: Option<&str>| ItemRow {
+        let location_type = |id: &str| LocationTypeRow {
             id: id.to_string(),
-            r#type: ItemType::Stock,
-            restricted_location_type_id: location_type.map(str::to_string),
             ..Default::default()
         };
         let location = |id: &str, store_id: &str, location_type: &str, volume: f64| LocationRow {
@@ -364,7 +350,7 @@ mod query {
             |id: &str, store_id: &str, location_id: &str, packs: f64, volume: f64| StockLineRow {
                 id: id.to_string(),
                 store_id: store_id.to_string(),
-                item_id: "item_x1".to_string(),
+                item_id: mock_item_a().id,
                 location_id: Some(location_id.to_string()),
                 total_number_of_packs: packs,
                 total_volume: volume,
@@ -375,14 +361,10 @@ mod query {
             "location_get_available_volume_by_location_type",
             MockDataInserts::all(),
             MockData {
-                location_types: vec![type_x(), type_y(), type_no_locations()],
-                items: vec![
-                    // Unrestricted item first: it used to end the lookup for every item
-                    item("item_unrestricted", None),
-                    item("item_x1", Some("type_x")),
-                    item("item_x2", Some("type_x")),
-                    item("item_y", Some("type_y")),
-                    item("item_no_locations", Some("type_no_locations")),
+                location_types: vec![
+                    location_type("type_x"),
+                    location_type("type_y"),
+                    location_type("type_no_locations"),
                 ],
                 locations: vec![
                     location("x_1", &mock_store_a().id, "type_x", 100.0),
@@ -409,36 +391,45 @@ mod query {
         )
         .await;
 
-        let item_ids: Vec<String> = [
-            "item_unrestricted",
-            "item_x1",
-            "item_x2",
-            "item_y",
-            "item_no_locations",
-        ]
-        .iter()
-        .map(|id| id.to_string())
-        .collect();
+        let location_type_ids: Vec<String> = ["type_x", "type_y", "type_no_locations"]
+            .iter()
+            .map(|id| id.to_string())
+            .collect();
 
-        let result =
-            get_available_volume_by_location_type(&connection, &mock_store_a().id, &item_ids)
-                .unwrap();
+        let result = get_available_volume_by_location_type(
+            &connection,
+            &mock_store_a().id,
+            &location_type_ids,
+        )
+        .unwrap();
 
-        let type_x_volume = AvailableVolumeByType {
-            restricted_location_type_id: Some("type_x".to_string()),
-            available_volume: Some(150.0 - 40.0),
-        };
-        assert_eq!(result.get("item_x1"), Some(&type_x_volume));
-        assert_eq!(result.get("item_x2"), Some(&type_x_volume));
-        assert_eq!(
-            result.get("item_y"),
-            Some(&AvailableVolumeByType {
-                restricted_location_type_id: Some("type_y".to_string()),
-                available_volume: Some(200.0),
-            })
+        assert_eq!(result.get("type_x"), Some(&(150.0 - 40.0)));
+        // Locations but no stock: all of it is free
+        assert_eq!(result.get("type_y"), Some(&200.0));
+        assert_eq!(result.get("type_no_locations"), None);
+        assert_eq!(result.len(), 2);
+
+        // No types asked for, nothing to look up
+        assert!(
+            get_available_volume_by_location_type(&connection, &mock_store_a().id, &[])
+                .unwrap()
+                .is_empty()
         );
-        assert_eq!(result.get("item_unrestricted"), None);
-        assert_eq!(result.get("item_no_locations"), None);
-        assert_eq!(result.len(), 3);
+    }
+
+    #[test]
+    fn location_restricted_location_type_id() {
+        let item = |restricted_location_type_id: Option<&str>| ItemRow {
+            restricted_location_type_id: restricted_location_type_id.map(str::to_string),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            restricted_location_type_id(&item(Some("type_x"))),
+            Some("type_x")
+        );
+        assert_eq!(restricted_location_type_id(&item(None)), None);
+        // An empty id means unrestricted
+        assert_eq!(restricted_location_type_id(&item(Some(""))), None);
     }
 }
