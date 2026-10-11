@@ -224,32 +224,34 @@ The reverse proxy in front of every deployment and the deployments dashboard liv
 
 | file | |
 |---|---|
-| `.github/deploy/proxy/compose.proxy.yaml` | the Caddy container, its ports, its CA volume and the shared network |
-| `.github/deploy/proxy/proxy.Caddyfile` | the one route for every deployment, and why it is Caddy (see its comments) |
+| `.github/deploy/proxy/compose.proxy.yaml` | the Caddy container, its two ports and the shared network |
+| `.github/deploy/proxy/proxy.Caddyfile` | the one route for every deployment, the gate on the internet door, and why it is Caddy (see its comments) |
 
 Set up once, outside CI:
 
 1. **A wildcard DNS record** for `*.<DEPLOY_DOMAIN>`, pointing at whatever terminates TLS.
-2. **One vhost on the edge proxy** for `*.<DEPLOY_DOMAIN>`, forwarding to this box on port 80. Skip it if the box is reached directly.
+2. **Two routes on the edge proxy** for `*.<DEPLOY_DOMAIN>`, both forwarding plain HTTP to this box with `Host` kept:
+   - **the internet → port 80**, the gated door: every request needs a GitHub sign-in (see [the gate](#the-gate-in-front-of-every-deployment));
+   - **the office and the VPN → port 8080**, the open door: sync, LAN tablets and CI's route check use it.
+
+   The edge decides which door a request gets, since it knows the real client. It must **never send the internet to 8080**. If office machines reach the edge through the office's public address, that address counts as the office.
 3. **Run `docker-deploy-services.yaml`.** It creates the `oms-edge` network if it is missing and brings the proxy up.
 
-It takes 80 and 443. If something already holds them, set `PROXY_PORT` / `PROXY_TLS_PORT` in `~/proxy/.env` and rerun the workflow — compose sees the changed value and recreates the proxy. CI reads the port back from the container and needs no variable.
+It takes 80 and 8080. If something already holds them, set `PROXY_PORT` / `PROXY_LOCAL_PORT` in `~/proxy/.env` and rerun the workflow — compose sees the changed value and recreates the proxy. `PROXY_LOCAL_BIND` publishes the open door on one address only, the one the edge connects on. CI reads the open door's address back from the container and needs no variable.
 
 Routing is a pure function of the hostname — `pr-470.<domain>` goes to the container `pr-470` on port 8000 — so a new deployment is routable the moment it is up and nothing is ever reloaded. Two consequences: **anything attached to `oms-edge` is reachable as a subdomain**, so attach nothing unrelated; and a deploy creates `oms-edge` if missing but **never the proxy**, so a box without one gives healthy, unroutable deployments (the deploy's route check says so).
 
-#### Local HTTPS
+#### The gate in front of every deployment
 
-The proxy also serves every deployment on 443 with a wildcard certificate from Caddy's own CA — for reaching deployments directly from this network, and for browser features that need a secure context. Trust the root on the machine you browse from:
+Deployments are seeded with datasets whose logins are known, and a logged-in user can download a deployment's whole database — so the internet door lets nothing through without a GitHub sign-in. Caddy puts each request to the dashboard's `/auth/check` first (`forward_auth`), and only the dashboard's own `/auth/*` is let through unasked.
 
-```bash
-docker cp oms-proxy:/data/caddy/pki/authorities/local/root.crt ./caddy-root.crt
-# macOS
-sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain caddy-root.crt
-# Debian/Ubuntu
-sudo cp caddy-root.crt /usr/local/share/ca-certificates/ && sudo update-ca-certificates
-```
+- **Who gets in:** anyone who can see this repository — the dashboard's own rule. Write access is still what the dashboard's buttons need.
+- **How:** signing in sets a second cookie, `oms_gate`, for the whole domain. It holds no token — a deployment runs some branch's code, so nothing sent to one may be worth stealing — and the proxy strips it before a request reaches a deployment. It ends when the dashboard session does: after at most 12 hours, on sign-out, or when the dashboard restarts.
+- **A page load** is sent to sign in and brought back to where it was going. **Anything else** — the app's own requests, a remote site syncing — gets a 401.
+- **No exception for sync:** sync credentials are in the seeded datasets, so they protect nothing. A remote site has to be in the office or on the VPN.
+- **If the dashboard is down**, every deployment is unreachable through the internet door. The open door does not depend on it.
 
-Firefox has its own store: import the root, or set `security.enterprise_roots.enabled`. The CA lives in the `caddy-data` volume, so use plain `docker compose down`, never `down -v`, or every machine has to trust a new root.
+There is no local HTTPS on the box any more: everything comes through the edge, which serves the real certificate. A box set up before this keeps the `oms-proxy_caddy-data` and `oms-proxy_caddy-config` volumes, which held the old internal CA — `docker volume rm` them, and anyone who trusted its root can remove it.
 
 ### Deployments dashboard
 
@@ -277,7 +279,7 @@ EOF
 chmod 600 ~/dashboard/.env
 ```
 
-**3. Run `docker-deploy-services.yaml`**, then open `https://dashboard.<DEPLOY_DOMAIN>`. The client secret is the only credential on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
+**3. Run `docker-deploy-services.yaml`**, then open `https://dashboard.<DEPLOY_DOMAIN>`. The same sign-in is the [gate in front of every deployment](#the-gate-in-front-of-every-deployment) on the internet door. The client secret is the only credential on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
 
 - **No proxy change is needed**: the container is named `dashboard`, listens on 8000 and sits on `oms-edge`.
 - **Reserved names:** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot`, `oms-dashboard-releases` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action, since a teardown is `docker compose -p <name> down -v`. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
@@ -322,6 +324,9 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **Distro `docker.io`, not Docker's own repo.** Nothing these jobs do is version-sensitive, and the distro package updates through normal `apt` with no third-party repo or GPG key on a machine that holds registry credentials.
 - **Lane roles are exclusive.** A lane carries one label so a 19-minute build never queues ahead of a one-minute deploy or teardown. That is why `e2e` became a role of its own rather than borrowing `build`; the reasoning is in the header of `frontend-e2e-nightly.yaml`.
 - **One machine-id per deployment**, not the host's: two deployments sharing one collide when both pair to the same central server. See `docker-deploy.yaml`.
+- **Two front doors split by port, not by client address.** Every request reaches the proxy from the edge's address, so telling the internet from the office there would mean trusting `X-Forwarded-For`, and a mistake in that is a way past the gate. The edge knows the real client and picks the port. The gated door is 80 so that anything assuming "the proxy is on 80" lands on the gate. See the header of `.github/deploy/proxy/proxy.Caddyfile`.
+- **No sync exception in the gate.** Sync credentials ship in the seeded datasets, so letting `/central/*` through would open every deployment's sync to the internet. Remote sites sync from the office or the VPN.
+- **A gate cookie separate from the dashboard's session.** It has to reach every deployment, and deployments run branch code, so it carries nothing but "signed in" — never the GitHub token. See the header of `.github/deploy/dashboard/web.mjs`.
 - **The proxy's host port is read back, not configured.** A `PROXY_PORT` repository variable used to duplicate what the proxy already knew, and a mismatch reported every deployment as unroutable. If it is still set on the repository it is inert. See `docker-deploy.yaml`.
 - **`DEPLOY_SHARED_DAEMON` skips the registry rather than adding a local one.** The image then exists only on this box's disk: a prune or a rebuilt box means recompiling rather than pulling, but costs no data, since databases are volumes. `skip_if_exists` probes the daemon instead of the registry while it is set. See `docker-named-deployment.yaml`.
 - **`e2e`, not `reference1`, as the default dataset.** `reference1` is a 2023 V5/V6 export, and `SyncBufferRow.source_site_id` is a plain `i32` with no `#[serde(default)]`, so it fails to deserialise (`missing field 'source_site_id'`) before integration. Fixing it is a server change: that `#[serde(default)]` plus a re-export. `e2e` is exercised nightly, so it cannot rot unnoticed.
