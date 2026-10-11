@@ -6,7 +6,6 @@ mod add_code_to_location_type;
 mod add_is_auto_created_to_item_variant;
 mod add_line_total_to_purchase_order_line;
 mod barcode_proposals;
-mod barcodes_on_packaging_variants;
 mod seed_barcode_auto_confirm_processor_cursor;
 
 pub(crate) struct V3_04_00;
@@ -24,11 +23,12 @@ impl Migration for V3_04_00 {
         vec![
             Box::new(add_code_to_location_type::Migrate),
             Box::new(add_line_total_to_purchase_order_line::Migrate),
-            Box::new(barcode_proposals::Migrate),
             Box::new(add_barcode_auto_confirm_processor_cursor_pg_enum::Migrate),
+            // Seeded before the proposals below go into the changelog, so the
+            // processor on central looks at its own store's proposals too
             Box::new(seed_barcode_auto_confirm_processor_cursor::Migrate),
             Box::new(add_is_auto_created_to_item_variant::Migrate),
-            Box::new(barcodes_on_packaging_variants::Migrate),
+            Box::new(barcode_proposals::Migrate),
         ]
     }
 }
