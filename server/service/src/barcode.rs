@@ -7,6 +7,8 @@
 //!   packaging level of an existing item variant, or, by default, onto the item's
 //!   auto-created variant for the manufacturer: a hidden item variant that only
 //!   holds barcodes, created the first time it's needed.
+//! - Removing a barcode leaves a deleted packaging variant that keeps it, so
+//!   central's decision is remembered: auto-confirm won't put it back.
 //! - A proposal (`barcode_proposal`) is a barcode a store learned: a user picked an
 //!   item for it. It syncs up to central only, where it's reviewed on the item.
 //! - A scan matches confirmed barcodes plus proposals made by stores on this
@@ -436,8 +438,15 @@ pub trait BarcodeServiceTrait: Sync + Send {
     }
 
     /// Central removes a confirmed barcode from its packaging variant, everywhere.
-    /// An auto-created variant left with no barcode is deleted; stock and lines
-    /// linked to it stay linked. Returns the packaging variant's id.
+    /// The removal is remembered as a deleted packaging variant with the barcode,
+    /// so auto-confirm won't put it back:
+    /// - on an auto-created variant the packaging variant only holds the barcode,
+    ///   so it's deleted, barcode and all. The auto-created variant is deleted too
+    ///   once it has no barcode left; stock and lines linked to it stay linked.
+    /// - a real packaging level stays, without the barcode, and a deleted copy of
+    ///   it keeps the barcode.
+    ///
+    /// Returns the packaging variant's id.
     fn delete_barcode(
         &self,
         ctx: &ServiceContext,
@@ -454,15 +463,25 @@ pub trait BarcodeServiceTrait: Sync + Send {
                             && packaging_variant.barcode.is_some()
                     })
                     .ok_or(ManageBarcodeError::PackagingVariantDoesNotExist)?;
-                repo.upsert_one(&PackagingVariantRow {
-                    barcode: None,
-                    ..existing.clone()
-                })?;
-
                 let item_variant_repo = ItemVariantRowRepository::new(connection);
                 let item_variant = item_variant_repo
                     .find_one_by_id(&existing.item_variant_id)?
                     .ok_or(ManageBarcodeError::DatabaseError(RepositoryError::NotFound))?;
+
+                if !item_variant.is_auto_created {
+                    repo.upsert_one(&PackagingVariantRow {
+                        barcode: None,
+                        ..existing.clone()
+                    })?;
+                    repo.upsert_one(&PackagingVariantRow {
+                        id: uuid(),
+                        deleted_datetime: Some(Utc::now().naive_utc()),
+                        ..existing.clone()
+                    })?;
+                    return Ok(existing.id);
+                }
+
+                repo.mark_deleted(&existing.id)?;
                 let has_barcodes_left = PackagingVariantRepository::new(connection)
                     .query_by_filter(
                         PackagingVariantFilter::new()
@@ -470,7 +489,7 @@ pub trait BarcodeServiceTrait: Sync + Send {
                     )?
                     .iter()
                     .any(|packaging_variant| packaging_variant.barcode.is_some());
-                if item_variant.is_auto_created && !has_barcodes_left {
+                if !has_barcodes_left {
                     item_variant_repo.mark_deleted(&item_variant.id)?;
                 }
 
@@ -582,6 +601,42 @@ pub(crate) fn find_confirmed(
     .find(|barcode| barcode.item_variant.item_id == item_id))
 }
 
+/// Barcodes central removed for the item: deleted packaging variants with the
+/// barcode, or ones whose item variant was deleted
+fn removed_barcodes(
+    connection: &StorageConnection,
+    value: &str,
+    item_id: &str,
+) -> Result<Vec<ConfirmedBarcode>, RepositoryError> {
+    let packaging_variants =
+        PackagingVariantRowRepository::new(connection).find_many_by_barcode(value)?;
+    let item_variant_ids: Vec<String> = packaging_variants
+        .iter()
+        .map(|packaging_variant| packaging_variant.item_variant_id.clone())
+        .collect();
+    let item_variants: HashMap<String, ItemVariantRow> = ItemVariantRowRepository::new(connection)
+        .find_many_by_id(&item_variant_ids)?
+        .into_iter()
+        .filter(|item_variant| item_variant.item_id == item_id)
+        .map(|item_variant| (item_variant.id.clone(), item_variant))
+        .collect();
+
+    Ok(packaging_variants
+        .into_iter()
+        .filter_map(|packaging_variant| {
+            let item_variant = item_variants
+                .get(&packaging_variant.item_variant_id)?
+                .clone();
+            let removed = packaging_variant.deleted_datetime.is_some()
+                || item_variant.deleted_datetime.is_some();
+            removed.then_some(ConfirmedBarcode {
+                packaging_variant,
+                item_variant,
+            })
+        })
+        .collect())
+}
+
 struct Confirm {
     value: String,
     item_id: String,
@@ -646,7 +701,26 @@ fn confirm(
                 .ok_or(ManageBarcodeError::ItemVariantDoesNotExist)?;
             new_packaging_variant(&item_variant.id, value, pack_size)
         }
-        BarcodeTarget::AutoCreated => {
+        BarcodeTarget::AutoCreated => 'auto_created: {
+            // Confirming a barcode central removed from an auto-created variant
+            // brings that packaging variant back, with its item variant, keeping
+            // their ids so stock and lines linked to them are linked again
+            if let Some(removed) = removed_barcodes(connection, &value, &item_id)?
+                .into_iter()
+                .find(|removed| removed.item_variant.is_auto_created)
+            {
+                if removed.item_variant.deleted_datetime.is_some() {
+                    ItemVariantRowRepository::new(connection).upsert_one(&ItemVariantRow {
+                        deleted_datetime: None,
+                        ..removed.item_variant
+                    })?;
+                }
+                break 'auto_created PackagingVariantRow {
+                    deleted_datetime: None,
+                    ..removed.packaging_variant
+                };
+            }
+
             let item_variant = match item_variants.iter().find(|item_variant| {
                 item_variant.is_auto_created && item_variant.manufacturer_id == manufacturer_id
             }) {
@@ -721,7 +795,8 @@ fn auto_created_name(
 pub(crate) const SITES_TO_AUTO_CONFIRM: usize = 2;
 
 /// Confirms `value` for the item when enough sites have proposed it, unless a
-/// packaging variant already has the barcode, for any item. Uses the pack size
+/// packaging variant already has the barcode, for any item, or central removed it
+/// for this item. Uses the pack size
 /// and manufacturer when every proposal agrees on them. Returns the new
 /// confirmed barcode.
 pub(crate) fn auto_confirm(
@@ -734,7 +809,7 @@ pub(crate) fn auto_confirm(
         PackagingVariantFilter::new().barcode(EqualFilter::equal_to(value.to_string())),
     )?
     .is_empty();
-    if already_confirmed {
+    if already_confirmed || !removed_barcodes(connection, value, item_id)?.is_empty() {
         return Ok(None);
     }
 

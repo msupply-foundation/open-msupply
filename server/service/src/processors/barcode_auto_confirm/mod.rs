@@ -16,8 +16,8 @@ const DESCRIPTION: &str = "Confirm a barcode when enough sites propose it for th
 
 /// On central: when a store's barcode proposal arrives, confirms the barcode for
 /// the item once [`SITES_TO_AUTO_CONFIRM`] sites have proposed it, onto the item's
-/// auto-created variant, unless a packaging variant already has the barcode
-/// (decisions/2026-09-30_barcodes.md). Idempotent — a re-run over the same
+/// auto-created variant, unless a packaging variant already has the barcode or
+/// central removed it for the item (decisions/2026-09-30_barcodes.md). Idempotent — a re-run over the same
 /// changelog entry is a no-op.
 pub(crate) struct BarcodeAutoConfirmProcessor;
 

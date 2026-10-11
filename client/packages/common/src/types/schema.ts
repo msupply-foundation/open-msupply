@@ -957,8 +957,9 @@ export type BarcodeMutations = {
   confirmBarcodeProposal: BarcodeNode;
   /**
    * Removes the barcode from a packaging variant, everywhere. `id` is the
-   * packaging variant's. An auto-created variant left with no barcode is
-   * deleted.
+   * packaging variant's. The removal is remembered, so the barcode isn't
+   * auto-confirmed for the item again. An auto-created variant left with no
+   * barcode is deleted; confirming the barcode again brings it back.
    */
   deleteBarcode: DeleteResponse;
   /**
@@ -7751,8 +7752,6 @@ export type PackSizeCodeCombinationExists =
   };
 
 export type PackagingVariantInput = {
-  /** As scanned or typed. Left as it is when not given. */
-  barcode?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
   packSize?: InputMaybe<Scalars['Float']['input']>;

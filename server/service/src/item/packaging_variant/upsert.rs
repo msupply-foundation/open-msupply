@@ -6,11 +6,9 @@ use repository::{
     ActivityLogType, RepositoryError, StorageConnection,
 };
 
-use util::barcode::standard_barcode;
-
 use crate::{
-    activity_log::activity_log_entry_with_diff, barcode::find_confirmed, check_item_variant_exists,
-    service_provider::ServiceContext, NullableUpdate,
+    activity_log::activity_log_entry_with_diff, check_item_variant_exists,
+    service_provider::ServiceContext,
 };
 
 #[derive(PartialEq, Debug)]
@@ -19,10 +17,6 @@ pub enum UpsertPackagingVariantError {
     ItemVariantDoesNotExist,
     CantChangeItemVariant,
     LessThanZero(String),
-    /// Nothing is left of the barcode once trimmed
-    InvalidBarcode,
-    /// Another packaging variant of the item already has this barcode
-    BarcodeAlreadyExistsForItem,
     DatabaseError(RepositoryError),
 }
 
@@ -34,8 +28,6 @@ pub struct UpsertPackagingVariant {
     pub packaging_level: i32,
     pub pack_size: Option<f64>,
     pub volume_per_unit: Option<f64>,
-    /// As scanned or typed. Left as it is when not given.
-    pub barcode: Option<NullableUpdate<String>>,
 }
 
 pub fn upsert_packaging_variant(
@@ -85,7 +77,6 @@ pub fn generate(
         packaging_level,
         pack_size,
         volume_per_unit,
-        barcode: _,
     }: UpsertPackagingVariant,
     barcode: Option<String>,
 ) -> PackagingVariantRow {
@@ -101,8 +92,8 @@ pub fn generate(
     }
 }
 
-/// Returns the existing packaging variant, its item variant, and the barcode to
-/// save in standard form
+/// Returns the existing packaging variant, its item variant, and the barcode it
+/// keeps: barcodes are only set and removed through the barcode service
 fn validate(
     connection: &StorageConnection,
     input: &UpsertPackagingVariant,
@@ -145,24 +136,9 @@ fn validate(
         }
     }
 
-    let barcode = match &input.barcode {
-        None => old_packaging_variant
-            .as_ref()
-            .and_then(|packaging_variant| packaging_variant.barcode.clone()),
-        Some(NullableUpdate { value: None }) => None,
-        Some(NullableUpdate {
-            value: Some(barcode),
-        }) => {
-            let value =
-                standard_barcode(barcode).ok_or(UpsertPackagingVariantError::InvalidBarcode)?;
-            let taken = find_confirmed(connection, &value, &item_variant.item_id)?
-                .is_some_and(|existing| existing.packaging_variant.id != input.id);
-            if taken {
-                return Err(UpsertPackagingVariantError::BarcodeAlreadyExistsForItem);
-            }
-            Some(value)
-        }
-    };
+    let barcode = old_packaging_variant
+        .as_ref()
+        .and_then(|packaging_variant| packaging_variant.barcode.clone());
 
     Ok((old_packaging_variant, item_variant, barcode))
 }

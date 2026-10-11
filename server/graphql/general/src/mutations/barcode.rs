@@ -262,8 +262,9 @@ impl BarcodeMutations {
     }
 
     /// Removes the barcode from a packaging variant, everywhere. `id` is the
-    /// packaging variant's. An auto-created variant left with no barcode is
-    /// deleted.
+    /// packaging variant's. The removal is remembered, so the barcode isn't
+    /// auto-confirmed for the item again. An auto-created variant left with no
+    /// barcode is deleted; confirming the barcode again brings it back.
     pub async fn delete_barcode(
         &self,
         ctx: &Context<'_>,

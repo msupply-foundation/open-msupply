@@ -20,9 +20,6 @@ export type UpsertItemVariantVariables = {
     packagingLevel: number;
     packSize?: number | null;
     volumePerUnit?: number | null;
-    barcode?: {
-    value?: string | null;
-  } | null;
   }>;
     vvmType?: {
     value?: string | null;

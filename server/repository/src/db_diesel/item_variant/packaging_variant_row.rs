@@ -34,7 +34,8 @@ pub struct PackagingVariantRow {
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
     /// A confirmed barcode for this packaging, in its standard form with its
     /// scheme, e.g. `gtin:09506682101352` (`util::barcode`). Set on central only
-    /// (decisions/2026-09-30_barcodes.md).
+    /// (decisions/2026-09-30_barcodes.md). A deleted packaging variant keeps its
+    /// barcode, as the record that central removed the barcode for the item.
     #[serde(default)]
     pub barcode: Option<String>,
 }
@@ -102,6 +103,16 @@ impl<'a> PackagingVariantRowRepository<'a> {
     ) -> Result<Vec<PackagingVariantRow>, RepositoryError> {
         Ok(packaging_variant::table
             .filter(packaging_variant::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    /// Packaging variants with this barcode, deleted ones included
+    pub fn find_many_by_barcode(
+        &self,
+        barcode: &str,
+    ) -> Result<Vec<PackagingVariantRow>, RepositoryError> {
+        Ok(packaging_variant::table
+            .filter(packaging_variant::barcode.eq(barcode))
             .load(self.connection.lock().connection())?)
     }
 }

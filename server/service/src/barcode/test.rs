@@ -12,10 +12,9 @@ use repository::{
 use super::*;
 use crate::{
     invoice_line::stock_in_line::{insert_stock_in_line, InsertStockInLine},
-    item::packaging_variant::{UpsertPackagingVariant, UpsertPackagingVariantError},
+    item::packaging_variant::UpsertPackagingVariant,
     service_provider::ServiceProvider,
     sync::test_util_set_is_central_server,
-    NullableUpdate,
 };
 
 const SCANNED: &str = "9506682101352";
@@ -519,8 +518,11 @@ async fn central_confirms_onto_real_variants() {
     );
 }
 
-/// Removing a barcode clears it from its packaging variant. An auto-created
-/// variant goes once it has no barcode left; a real one stays.
+/// Removing a barcode leaves a deleted packaging variant that keeps it. On an
+/// auto-created variant that's the packaging variant itself, and the item variant
+/// goes once it has no barcode left; confirming the barcode again brings both
+/// back. A real packaging level stays, without the barcode, beside a deleted copy
+/// that keeps it.
 #[actix_rt::test]
 async fn central_removes_barcodes() {
     let (connection, service_provider) =
@@ -545,14 +547,18 @@ async fn central_removes_barcodes() {
     service
         .delete_barcode(&ctx, &first.packaging_variant.id)
         .unwrap();
-    assert_eq!(
-        PackagingVariantRowRepository::new(&connection)
-            .find_one_by_id(&first.packaging_variant.id)
-            .unwrap()
-            .unwrap()
-            .barcode,
-        None
-    );
+    let packaging_variants = PackagingVariantRowRepository::new(&connection);
+    let removed = packaging_variants
+        .find_one_by_id(&first.packaging_variant.id)
+        .unwrap()
+        .unwrap();
+    assert!(removed.deleted_datetime.is_some());
+    assert_eq!(removed.barcode.as_deref(), Some(VALUE));
+    assert!(service
+        .barcode_matches(&ctx, SCANNED)
+        .unwrap()
+        .iter()
+        .all(|m| m.item_id != mock_item_a().id));
     assert_eq!(
         service.delete_barcode(&ctx, &first.packaging_variant.id),
         Err(ManageBarcodeError::PackagingVariantDoesNotExist)
@@ -564,6 +570,15 @@ async fn central_removes_barcodes() {
         .delete_barcode(&ctx, &second.packaging_variant.id)
         .unwrap();
     assert!(auto(&first.item_variant.id).deleted_datetime.is_some());
+
+    // Confirming it again brings back the same packaging variant and item variant
+    let again = confirmed(&connection, VALUE, &mock_item_a().id);
+    assert_eq!(again.packaging_variant.id, first.packaging_variant.id);
+    assert_eq!(again.item_variant.id, first.item_variant.id);
+    assert_eq!(auto(&first.item_variant.id).deleted_datetime, None);
+    service
+        .delete_barcode(&ctx, &again.packaging_variant.id)
+        .unwrap();
 
     // A real variant stays when its barcode goes
     let packaging = real_packaging_variant(&connection);
@@ -581,14 +596,33 @@ async fn central_removes_barcodes() {
         .unwrap();
     service.delete_barcode(&ctx, &packaging.id).unwrap();
     assert_eq!(auto(&mock_item_a_variant_1().id).deleted_datetime, None);
+    let kept = packaging_variants
+        .find_one_by_id(&packaging.id)
+        .unwrap()
+        .unwrap();
+    assert_eq!((kept.barcode, kept.deleted_datetime), (None, None));
+    let copies: Vec<PackagingVariantRow> = packaging_variants
+        .find_many_by_barcode(VALUE)
+        .unwrap()
+        .into_iter()
+        .filter(|row| row.item_variant_id == mock_item_a_variant_1().id)
+        .collect();
+    assert_eq!(copies.len(), 1);
+    assert_ne!(copies[0].id, packaging.id);
+    assert!(copies[0].deleted_datetime.is_some());
+    assert_eq!(copies[0].packaging_level, packaging.packaging_level);
 }
 
 /// Two sites agreeing confirm a barcode onto the item's auto-created variant,
-/// unless a packaging variant already has the barcode. Pack size is used only
-/// when they agree.
+/// unless a packaging variant already has the barcode, or central removed it for
+/// the item. Pack size is used only when they agree.
 #[actix_rt::test]
 async fn auto_confirm_rules() {
-    let (connection, _) = setup("barcode_auto_confirm_rules", MockData::default()).await;
+    let (connection, service_provider) =
+        setup("barcode_auto_confirm_rules", MockData::default()).await;
+    let ctx = service_provider
+        .context(mock_store_a().id, mock_user_account_a().id)
+        .unwrap();
     let proposals = BarcodeProposalRowRepository::new(&connection);
     let item_a = mock_item_a().id;
 
@@ -625,65 +659,65 @@ async fn auto_confirm_rules() {
         .unwrap();
     assert_eq!(auto_confirm(&connection, VALUE, &item_b).unwrap(), None);
 
-    // Once that's removed, the agreeing pack size is used
-    PackagingVariantRowRepository::new(&connection)
-        .upsert_one(&PackagingVariantRow {
-            barcode: None,
-            ..barcode.packaging_variant
-        })
+    // Once central removes it for item_a, item_b's agreeing pack size is used
+    test_util_set_is_central_server(true);
+    service_provider
+        .barcode_service
+        .delete_barcode(&ctx, &barcode.packaging_variant.id)
         .unwrap();
     let barcode = auto_confirm(&connection, VALUE, &item_b).unwrap().unwrap();
     assert_eq!(barcode.packaging_variant.pack_size, Some(5.0));
+
+    // and item_a isn't confirmed again when a site proposes it again
+    service_provider
+        .barcode_service
+        .delete_barcode(&ctx, &barcode.packaging_variant.id)
+        .unwrap();
+    proposals
+        .upsert_one(&proposal("p2", &mock_store_b().id, &item_a, Some(10.0)))
+        .unwrap();
+    assert_eq!(auto_confirm(&connection, VALUE, &item_a).unwrap(), None);
 }
 
-/// Editing a packaging variant on central can set its barcode, in standard form.
-/// Leaving the barcode out keeps it; another packaging variant of the item can't
-/// have it too.
+/// Editing a packaging variant keeps its barcode: barcodes are only set and
+/// removed through the barcode service
 #[actix_rt::test]
-async fn packaging_variant_upsert_sets_barcode() {
+async fn packaging_variant_upsert_keeps_barcode() {
     let (connection, service_provider) =
         setup("barcode_packaging_variant_upsert", MockData::default()).await;
     let ctx = service_provider
         .context(mock_store_a().id, mock_user_account_a().id)
         .unwrap();
     let packaging = real_packaging_variant(&connection);
-    let upsert = |id: &str, barcode: Option<NullableUpdate<String>>| {
-        service_provider.item_service.upsert_packaging_variant(
+    confirm(
+        &connection,
+        &mock_user_account_a().id,
+        Confirm {
+            value: VALUE.to_string(),
+            item_id: mock_item_a().id,
+            pack_size: None,
+            manufacturer_id: None,
+        },
+        BarcodeTarget::PackagingVariant(packaging.id.clone()),
+    )
+    .unwrap();
+
+    let saved = service_provider
+        .item_service
+        .upsert_packaging_variant(
             &ctx,
             UpsertPackagingVariant {
-                id: id.to_string(),
+                id: packaging.id.clone(),
                 item_variant_id: packaging.item_variant_id.clone(),
-                name: packaging.name.clone(),
+                name: "Carton".to_string(),
                 packaging_level: packaging.packaging_level,
                 pack_size: packaging.pack_size,
                 volume_per_unit: None,
-                barcode,
             },
         )
-    };
-    let set = |barcode: &str| {
-        Some(NullableUpdate {
-            value: Some(barcode.to_string()),
-        })
-    };
-
-    let saved = upsert(&packaging.id, set(SCANNED)).unwrap();
+        .unwrap();
+    assert_eq!(saved.name, "Carton");
     assert_eq!(saved.barcode.as_deref(), Some(VALUE));
-
-    let saved = upsert(&packaging.id, None).unwrap();
-    assert_eq!(saved.barcode.as_deref(), Some(VALUE));
-
-    assert_eq!(
-        upsert("other_packaging", set(SCANNED)),
-        Err(UpsertPackagingVariantError::BarcodeAlreadyExistsForItem)
-    );
-    assert_eq!(
-        upsert(&packaging.id, set("  ")),
-        Err(UpsertPackagingVariantError::InvalidBarcode)
-    );
-
-    let saved = upsert(&packaging.id, Some(NullableUpdate { value: None })).unwrap();
-    assert_eq!(saved.barcode, None);
 }
 
 /// Receiving stock with a barcode confirmed for the item puts its item variant

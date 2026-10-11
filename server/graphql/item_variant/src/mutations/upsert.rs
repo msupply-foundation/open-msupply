@@ -34,8 +34,6 @@ pub struct PackagingVariantInput {
     pub packaging_level: u32,
     pub pack_size: Option<f64>,
     pub volume_per_unit: Option<f64>,
-    /// As scanned or typed. Left as it is when not given.
-    pub barcode: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(SimpleObject)]
@@ -120,7 +118,6 @@ impl PackagingVariantInput {
             packaging_level,
             pack_size,
             volume_per_unit,
-            barcode,
         } = self;
 
         UpsertPackagingVariant {
@@ -130,9 +127,6 @@ impl PackagingVariantInput {
             packaging_level: packaging_level as i32,
             pack_size,
             volume_per_unit,
-            barcode: barcode.map(|barcode| NullableUpdate {
-                value: barcode.value,
-            }),
         }
     }
 }
@@ -173,10 +167,6 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
                 }
                 UpsertPackagingVariantError::CantChangeItemVariant => BadUserInput(formatted_error),
                 UpsertPackagingVariantError::LessThanZero(_field) => BadUserInput(formatted_error),
-                UpsertPackagingVariantError::InvalidBarcode
-                | UpsertPackagingVariantError::BarcodeAlreadyExistsForItem => {
-                    BadUserInput(formatted_error)
-                }
 
                 UpsertPackagingVariantError::DatabaseError(_repository_error) => {
                     InternalError(formatted_error)
