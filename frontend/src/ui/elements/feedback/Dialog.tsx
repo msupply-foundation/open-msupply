@@ -12,7 +12,10 @@ import {
 import { CloseIcon } from '../../icons';
 import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
-import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import {
+  useIsCompact,
+  useIsNavOverlay,
+} from '../../utils/createMediaQuery';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { createAction } from '../../utils/keyActions';
 import { ALT_S, ESCAPE } from '../../utils/shortcuts';
@@ -436,9 +439,18 @@ export const Dialog = (props: DialogProps) => {
   // in-between this rule exists to remove. A default or `widthRem` dialog stays
   // a centred card: a confirmation has no business filling a tablet screen, and
   // a caller who wants the sheet asks for the measure it is sized to.
+  //
+  // On a phone (breakpoints.compact) EVERY dialog is a sheet: a centred card
+  // there is already edge-to-edge, so the inset only costs height and floats
+  // the actions mid-screen. Except a bare confirmation (a description and no
+  // body — ConfirmDialog), which stays a small card.
+  // `in` checks, not reads: reading a JSX-element prop constructs it.
   const narrowViewport = useIsNavOverlay();
+  const compact = useIsCompact();
+  const confirmation = 'description' in props && !('children' in props);
   const fullscreen = () =>
-    narrowViewport() && (workbench() || props.width !== undefined);
+    (narrowViewport() && (workbench() || props.width !== undefined)) ||
+    (compact() && !confirmation);
   // The <dialog>'s OWN aria-labelledby/aria-label depend on whether the title
   // is a string, but the title is resolved inside the Provider (DialogContent),
   // not here — so DialogContent reports it back via this signal rather than us

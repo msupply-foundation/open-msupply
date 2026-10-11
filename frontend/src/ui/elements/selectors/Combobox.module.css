@@ -265,6 +265,22 @@
   max-inline-size: min(var(--kb-popper-content-available-width), 32rem);
 }
 
+/* Compact (<600px, breakpoints.compact): every panel holds to the trigger's
+   width (≈ the dialog's) and its rows ellipsize — there is no room to grow
+   into, and the "available width" Kobalte reports ignores the trigger's own
+   inset, so a long option ran off the screen's edge. The min-content floor
+   goes too: a truncating nowrap label (ItemSearch's) still CONTRIBUTES its full
+   width to min-content, and min beats max — so the trigger-width cap above
+   never took, in either mode. */
+@media (max-width: 599px) {
+  .content,
+  .contentGrow {
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: var(--kb-popper-anchor-width, none);
+  }
+}
+
 /* Sticky in-dropdown header (e.g. the location fullness tabs): a non-shrinking
    row above the scrolling listbox. The header content supplies its own bottom
    edge (the tab strip's underline track), so this adds only the gap to the list
