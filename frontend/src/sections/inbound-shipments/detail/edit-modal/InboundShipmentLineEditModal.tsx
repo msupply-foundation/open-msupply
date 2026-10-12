@@ -1833,6 +1833,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             </Show>
             <div class={styles.cards}>
               <DataTable
+                dialogTable
                 columns={columns()}
                 rows={rows()}
                 rowKey={b => b.id}

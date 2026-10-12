@@ -198,8 +198,18 @@ fn append_if_type(
         store_id,
     }: &AppendIfTypeInputs,
 ) -> Result<(), PreferenceError> {
-    if &pref.preference_type() == pref_type {
-        pref_descriptions.push(pref.as_description(connection, store_id.clone())?);
+    // A preference is listed under its own type. A global preference that allows a
+    // store override is also listed under Store, carrying the store's effective
+    // value; under Global it always describes the global row, whatever store the
+    // caller's context names.
+    let listed = pref.preference_type() == *pref_type
+        || (*pref_type == PreferenceType::Store && pref.allows_store_override());
+    if listed {
+        let store_id = match pref_type {
+            PreferenceType::Global => None,
+            PreferenceType::Store => store_id.clone(),
+        };
+        pref_descriptions.push(pref.as_description(connection, store_id)?);
     }
     Ok(())
 }
