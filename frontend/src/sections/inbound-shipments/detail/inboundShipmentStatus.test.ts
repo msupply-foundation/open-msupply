@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   currentStep,
   filterByStatusPreference,
+  trackStages,
 } from '@/domain/invoice/statusGate';
 import {
   canChangeStatus,
@@ -296,26 +297,48 @@ describe('offered flow (OMS-REG-REPL-03.25 — the track offers only preference-
   });
 });
 
-describe('currentStep (OMS-REG-REPL-03.26 — an excluded current status marks the nearest included earlier stage)', () => {
+describe('the track keeps the current stage (OMS-REG-REPL-03.28)', () => {
   const allowed = ['NEW', 'RECEIVED', 'VERIFIED'];
+  const stages = (status: string, allowedList: readonly string[]) =>
+    trackStages(statusFlow('none', status), allowedList, status);
   const step = (status: string, allowedList: readonly string[]) =>
-    currentStep(
-      statusFlow('none', status),
-      offeredFlow('none', status, allowedList),
-      status
-    );
+    currentStep(stages(status, allowedList), status);
 
   it('marks the current status itself when the preference includes it', () => {
     expect(step('RECEIVED', allowed)).toBe(1);
   });
 
-  it('marks the nearest included earlier stage when the current one is excluded', () => {
-    // DELIVERED is excluded → NEW (step 0) lights up.
-    expect(step('DELIVERED', allowed)).toBe(0);
+  it('keeps an excluded current stage on the track, and marks it', () => {
+    // DELIVERED is excluded, yet the shipment IS delivered: the step stays,
+    // between NEW and RECEIVED, rather than the track lying about New.
+    expect(stages('DELIVERED', allowed)).toEqual([
+      'NEW',
+      'DELIVERED',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
+    expect(step('DELIVERED', allowed)).toBe(1);
+  });
+
+  it('keeps a transfer at the sending store’s Picked marked as Picked', () => {
+    // Picked is set by the sender; hiding it says nothing about this shipment
+    const hidePicked = ['NEW', 'SHIPPED', 'DELIVERED', 'RECEIVED', 'VERIFIED'];
+    const flow = statusFlow('transfer', 'PICKED');
+    const stages = trackStages(flow, hidePicked, 'PICKED');
+    expect(stages).toEqual([...flow]);
+    expect(currentStep(stages, 'PICKED')).toBe(1);
+  });
+
+  it('excludes a stage the shipment is not resting on', () => {
+    expect(stages('RECEIVED', allowed)).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
   });
 
   it('tracks the plain flow index while the preference is unrestrictive', () => {
     expect(step('DELIVERED', [])).toBe(1);
+  });
+
+  it('marks nothing for a non-flow status (CANCELLED indexes at −1)', () => {
+    expect(step('CANCELLED', allowed)).toBe(-1);
   });
 });
 

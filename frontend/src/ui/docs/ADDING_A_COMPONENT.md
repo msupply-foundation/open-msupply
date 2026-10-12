@@ -37,6 +37,8 @@ A component isn't done until every doc/surface that indexes it is updated. Miss 
 
 ### Reference-parity primitives — adopt when a real consumer appears, don't pre-build
 
-`ToggleButtonGroup`, `HierarchicalOptionAutocomplete`, content `Skeletons`, `InputModal`, `ListSearch`, linear `InlineProgress`.
+`HierarchicalOptionAutocomplete`, content `Skeletons`, `InputModal`, `ListSearch`, linear `InlineProgress`.
+
+**Closed:** `ToggleButtonGroup` — a real consumer appeared (the store editor's follow-global / on / off row, #907) and it did **not** become a component. The consumer is a single-select exclusive choice, which is what a radio group already is: `RadioGroup` gained an `appearance="segmented"` instead, so the native radios keep supplying roving arrow-key focus, the radiogroup/radio ARIA and single-select grouping, and only the drawing is new. A button-based group would have re-implemented that contract by hand to buy a look. The name stays reserved for a MULTI-select or otherwise non-radio consumer, which is the case radios cannot cover ([`kdd/own-simple-buy-hard`](../../../kdd/own-simple-buy-hard/draft-kdd.md)).
 
 **Closed:** `WizardStepper` — a real consumer appeared (the patient create wizard's step rail) and the existing determinate progress list (`ui/sync/ProgressList`) already fills the role, which is what the reference app does too (its `WizardStepper` is a thin wrapper over the same `HorizontalStepper` its sync stepper uses). The rail's navigation landed there too rather than in a component of its own (2026-10-05): a step marked `navigable` plus an `onStepSelect` makes that marker a button, the consumer owning which steps those are. Two open nits, both in `ProgressList` rather than a new component: the active step's marker ring stays the pale tone where the reference paints it the strong one, and the role lives under `ui/sync/` though it now has non-sync consumers.

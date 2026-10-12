@@ -23,7 +23,11 @@ import { createFlash } from '../../../ui/utils/createFlash';
 import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
-import { currentStep, filterByStatusPreference } from '@/domain/invoice';
+import {
+  currentStep,
+  filterByStatusPreference,
+  trackStages,
+} from '@/domain/invoice';
 import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
   sourceLinkOf,
@@ -87,10 +91,12 @@ export const InboundShipmentStatusFooter: Component<
 
   const sourceLink = () => sourceLinkOf(props.node);
   // Every status surface is limited by the invoice-status-options preference
-  // (spec § preference gates — OMS-REG-REPL-03.25); empty = unrestricted.
+  // (spec § preference gates — OMS-REG-REPL-03.25); empty = unrestricted. The
+  // track also keeps the shipment's OWN stage when the preference hides it, so
+  // a transfer resting at the sending store's Picked still marks Picked.
   const allowed = () => inboundShipmentPreferences().invoiceStatusOptions;
   const flow = () => statusFlow(sourceLink(), props.node.status);
-  const offered = () => filterByStatusPreference(flow(), allowed());
+  const offered = () => trackStages(flow(), allowed(), props.node.status);
   const steps = () =>
     offered().map(status => ({
       label: STATUS_LABELS[status],
@@ -143,12 +149,12 @@ export const InboundShipmentStatusFooter: Component<
         {t('label.hold')}
       </CheckboxButton>
 
-      {/* An excluded current status highlights the nearest included earlier
-          stage (OMS-REG-REPL-03.26). */}
+      {/* The current stage always has a step to mark, hidden or not
+          (OMS-REG-REPL-03.28). */}
       <StatusIndicator
         recordId={props.node.id}
         steps={steps()}
-        current={currentStep(flow(), offered(), props.node.status)}
+        current={currentStep(offered(), props.node.status)}
       />
 
       {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
