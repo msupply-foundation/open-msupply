@@ -11,11 +11,15 @@ export type GlobalPreferencesResult = {
   key: "allowTrackingOfStockByDonor" | "authorisePurchaseOrder" | "customTranslations" | "customTranslationsV2" | "genderOptions" | "preventTransfersMonthsBeforeInitialisation" | "showContactTracing" | "syncRecordsDisplayThreshold" | "adjustForNumberOfDaysOutOfStock" | "daysInMonth" | "expiredStockPreventIssue" | "expiredStockIssueThreshold" | "itemMarginOverridesSupplierMargin" | "transferStockToInternalCustomersAtCostPrice" | "isGaps" | "displayPopulationBasedForecasting" | "globalTableConfigs" | "backdating" | "receivePaymentsFromPrescriptions" | "globalLogo" | "decimalPlacesForNumbers" | "blindStocktake" | "manageVaccinesInDoses" | "manageVvmStatusForStock" | "orderInPacks" | "useProcurementFunctionality" | "sortByVvmStatusThenExpiry" | "useSimplifiedMobileUi" | "disableManualReturns" | "requisitionAutoFinalise" | "inboundShipmentAutoVerify" | "warningForExcessRequest" | "canCreateInternalOrderFromARequisition" | "selectDestinationStoreForAnInternalOrder" | "externalInboundShipmentLinesMustBeAuthorised" | "numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts" | "numberOfMonthsThresholdToShowLowStockAlertsForProducts" | "numberOfMonthsThresholdToShowOverStockAlertsForProducts" | "firstThresholdForExpiringItems" | "secondThresholdForExpiringItems" | "skipIntermediateStatusesInOutbound" | "storeCustomColour" | "warnWhenMissingRecentStocktake" | "invoiceStatusOptions" | "showIndicativePriceInRequisitions" | "doNotPrintPlaceholderLineLabels";
   valueType: "BOOLEAN" | "INTEGER" | "FLOAT" | "MULTI_CHOICE" | "CUSTOM_TRANSLATIONS" | "CUSTOM_TRANSLATIONS_V2" | "WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA" | "BACKDATING_DATA" | "STRING" | "COLOUR" | "IMAGE";
   value: unknown;
+  overridingStores: Array<{
+  storeId: string;
+  storeName: string;
+}> | null;
 }>;
 };
 
 export const GlobalPreferences = {
-  query: "query globalPreferences($storeId: String!) {\n  preferenceDescriptions(storeId: $storeId, prefType: GLOBAL, prefContext: {}) {\n    key\n    valueType\n    value\n  }\n}",
+  query: "query globalPreferences($storeId: String!) {\n  preferenceDescriptions(storeId: $storeId, prefType: GLOBAL, prefContext: {}) {\n    key\n    valueType\n    value\n    overridingStores {\n      storeId\n      storeName\n    }\n  }\n}",
 } as TypedDocument<GlobalPreferencesResult, GlobalPreferencesVariables>;
 
 export type UpsertGlobalPreferencesVariables = {
@@ -23,6 +27,10 @@ export type UpsertGlobalPreferencesVariables = {
   input: {
     allowTrackingOfStockByDonor?: boolean | null;
     authorisePurchaseOrder?: boolean | null;
+    authorisePurchaseOrderStoreOverride?: Array<{
+    storeId: string;
+    value?: boolean | null;
+  }> | null;
     customTranslations?: unknown | null;
     customTranslationsV2?: unknown | null;
     genderOptions?: Array<"FEMALE" | "MALE" | "TRANSGENDER" | "TRANSGENDER_MALE" | "TRANSGENDER_MALE_HORMONE" | "TRANSGENDER_MALE_SURGICAL" | "TRANSGENDER_FEMALE" | "TRANSGENDER_FEMALE_HORMONE" | "TRANSGENDER_FEMALE_SURGICAL" | "UNKNOWN" | "NON_BINARY"> | null;

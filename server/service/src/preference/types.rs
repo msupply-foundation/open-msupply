@@ -5,8 +5,10 @@ use strum::{Display, EnumString};
 use thiserror::Error;
 
 use super::{
-    query_preference::{query_global, query_store},
-    upsert_helpers::{upsert_global, upsert_store},
+    query_preference::{
+        query_global, query_overriding_stores, query_store, query_store_with_global_default,
+    },
+    upsert_helpers::{delete_store, upsert_global, upsert_store},
 };
 
 #[derive(Clone, Display, EnumString)]
@@ -71,6 +73,13 @@ pub enum PreferenceType {
     // Machine,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum Scope {
+    Global,
+    Store(String),
+    StoreOverride(String),
+}
+
 #[derive(Clone, PartialEq)]
 pub enum PreferenceValueType {
     Boolean,
@@ -113,6 +122,8 @@ pub enum UpsertPreferenceError {
     StoreIdNotProvided,
     #[error("Invalid value for preference {0}: {1}")]
     InvalidValue(String, String),
+    #[error("Preference {0} cannot be overridden per store")]
+    NotOverridable(String),
 }
 
 pub trait Preference: Sync + Send {
@@ -126,18 +137,37 @@ pub trait Preference: Sync + Send {
 
     fn preference_type(&self) -> PreferenceType;
 
+    fn allows_store_override(&self) -> bool {
+        false
+    }
+
     fn value_type(&self) -> PreferenceValueType;
+
+    fn scope(&self, store_id: Option<String>) -> Option<Scope> {
+        match (self.preference_type(), store_id) {
+            (PreferenceType::Store, Some(store_id)) => Some(Scope::Store(store_id)),
+            (PreferenceType::Store, None) => None,
+            (PreferenceType::Global, Some(store_id)) if self.allows_store_override() => {
+                Some(Scope::StoreOverride(store_id))
+            }
+            (PreferenceType::Global, _) => Some(Scope::Global),
+        }
+    }
 
     fn query(
         &self,
         connection: &StorageConnection,
         store_id: Option<String>,
     ) -> Result<Option<PreferenceRow>, PreferenceError> {
-        let pref = match self.preference_type() {
-            PreferenceType::Global => query_global(connection, &self.key_str())?,
-            PreferenceType::Store => {
-                let store_id = store_id.ok_or(PreferenceError::StoreIdNotProvided)?;
-                query_store(connection, &self.key_str(), &store_id)?
+        let key = self.key_str();
+        let pref = match self
+            .scope(store_id)
+            .ok_or(PreferenceError::StoreIdNotProvided)?
+        {
+            Scope::Global => query_global(connection, &key)?,
+            Scope::Store(store_id) => query_store(connection, &key, &store_id)?,
+            Scope::StoreOverride(store_id) => {
+                query_store_with_global_default(connection, &key, &store_id)?
             }
         };
 
@@ -183,15 +213,34 @@ pub trait Preference: Sync + Send {
             UpsertPreferenceError::SerializeError(self.key_str().to_string(), e.to_string())
         })?;
 
-        match self.preference_type() {
-            PreferenceType::Global => upsert_global(connection, self.key_str(), serialised_value)?,
-            PreferenceType::Store => {
-                let store_id = store_id.ok_or(UpsertPreferenceError::StoreIdNotProvided)?;
-                upsert_store(connection, self.key_str(), serialised_value, store_id)?;
+        match self
+            .scope(store_id)
+            .ok_or(UpsertPreferenceError::StoreIdNotProvided)?
+        {
+            Scope::Global => upsert_global(connection, self.key_str(), serialised_value)?,
+            Scope::Store(store_id) | Scope::StoreOverride(store_id) => {
+                upsert_store(connection, self.key_str(), serialised_value, store_id)?
             }
         };
 
         Ok(())
+    }
+
+    /// Drop a store's override, returning the store to the global value — the
+    /// only way back once a store has pinned its own. Refused for anything
+    /// else: a plain store preference has no global row to fall back to, so
+    /// clearing it would silently mean "the built-in default" instead.
+    fn clear_store_override(
+        &self,
+        connection: &StorageConnection,
+        store_id: String,
+    ) -> Result<(), UpsertPreferenceError> {
+        match self.scope(Some(store_id)) {
+            Some(Scope::StoreOverride(store_id)) => {
+                delete_store(connection, self.key_str(), store_id)
+            }
+            _ => Err(UpsertPreferenceError::NotOverridable(self.key_str())),
+        }
     }
 
     fn as_description(
@@ -199,16 +248,38 @@ pub trait Preference: Sync + Send {
         connection: &StorageConnection,
         store_id: Option<String>,
     ) -> Result<PreferenceDescription, PreferenceError> {
-        let value = self.load(connection, store_id)?;
+        let to_json = |value: Self::Value| {
+            serde_json::to_value(value).map_err(|e| {
+                PreferenceError::ConversionError(self.key_str().to_string(), e.to_string())
+            })
+        };
+        let value = to_json(self.load(connection, store_id.clone())?)?;
 
-        let value = serde_json::to_value(value).map_err(|e| {
-            PreferenceError::ConversionError(self.key_str().to_string(), e.to_string())
-        })?;
+        // Where the value came from. Only a global preference a store may
+        // override can differ from the global row, so only that one describes
+        // its provenance: for a store, whether this store pins its own value
+        // and what it would return to; globally, which stores pin one.
+        let (store_override, overriding_stores) = match self.scope(store_id) {
+            Some(Scope::StoreOverride(store_id)) => (
+                Some(StoreOverrideDescription {
+                    is_overridden: query_store(connection, &self.key_str(), &store_id)?.is_some(),
+                    global_value: to_json(self.load(connection, None)?)?,
+                }),
+                None,
+            ),
+            Some(Scope::Global) if self.allows_store_override() => (
+                None,
+                Some(query_overriding_stores(connection, &self.key_str())?),
+            ),
+            _ => (None, None),
+        };
 
         Ok(PreferenceDescription {
             key: self.key(),
             value_type: self.value_type(),
             value,
+            store_override,
+            overriding_stores,
         })
     }
 }
@@ -219,6 +290,34 @@ pub struct PreferenceDescription {
     /// WARNING: Type loss - holds any kind of pref value (for edit UI).
     /// Use the PreferenceProvider to load the strictly typed value.
     pub value: serde_json::Value,
+    /// Set only when a STORE listing carries a global preference that store
+    /// may override — how the store arrives at `value`.
+    pub store_override: Option<StoreOverrideDescription>,
+    /// Set only when a GLOBAL listing carries a preference stores may
+    /// override — the stores that pin their own value, empty where none do.
+    /// Carries the stores themselves rather than a count of them: the page
+    /// names them on demand, and a count it had to trust separately could
+    /// disagree with the names it shows.
+    pub overriding_stores: Option<Vec<OverridingStore>>,
+}
+
+/// One store that pins its own value for an overridable global preference,
+/// named for the global listing.
+#[derive(Clone, Debug, PartialEq)]
+pub struct OverridingStore {
+    pub store_id: String,
+    pub store_name: String,
+}
+
+/// How one store arrives at an overridable global preference's value.
+#[derive(Clone, Debug, PartialEq)]
+pub struct StoreOverrideDescription {
+    /// Whether this store pins its own value rather than following the global
+    /// one.
+    pub is_overridden: bool,
+    /// The global value the store follows, or would return to by clearing the
+    /// override. Same type loss as `value`.
+    pub global_value: serde_json::Value,
 }
 
 impl PreferenceError {

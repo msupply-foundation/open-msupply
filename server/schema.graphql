@@ -968,6 +968,16 @@ type BatchStocktakeResponse {
 	deleteStocktakes: [DeleteStocktakeResponseWithId!]
 }
 
+"""
+One store's edit of a global preference it may override. A null `value`
+CLEARS the store's override, returning the store to the global value — the
+only way back once a store has pinned its own.
+"""
+input BoolStoreOverrideInput {
+	storeId: String!
+	value: Boolean
+}
+
 input BoolStorePrefInput {
 	storeId: String!
 	value: Boolean!
@@ -5999,6 +6009,11 @@ input OutboundShipmentLineInput {
 	transferComment: String
 }
 
+type OverridingStoreNode {
+	storeId: String!
+	storeName: String!
+}
+
 type PackSizeCodeCombinationExists implements InsertPurchaseOrderLineErrorInterface {
 	description: String!
 	itemCode: String!
@@ -6297,6 +6312,17 @@ type PreferenceDescriptionNode {
 	Use the PreferencesNode to load the strictly typed value.
 	"""
 	value: JSON!
+	"""
+	How this store arrives at `value`, for a global preference a store may
+	override. Null for every other preference, and in the global listing.
+	"""
+	storeOverride: StoreOverrideNode
+	"""
+	The stores that pin their own value instead of following this global
+	one, by store name. Empty where none do; null unless this is the global
+	listing of an overridable preference.
+	"""
+	overridingStores: [OverridingStoreNode!]
 }
 
 enum PreferenceKey {
@@ -9120,6 +9146,19 @@ type StoreNode {
 	createdDate: NaiveDate
 }
 
+type StoreOverrideNode {
+	"""
+	Whether this store pins its own value rather than following the global
+	one.
+	"""
+	isOverridden: Boolean!
+	"""
+	The global value this store follows, or would return to by clearing the
+	override. Same type loss as `value`.
+	"""
+	globalValue: JSON!
+}
+
 type StorePreferenceNode {
 	id: String!
 	packToOne: Boolean!
@@ -10908,6 +10947,7 @@ union UpsertPackVariantResponse = UpsertItemVariantError | ItemVariantNode
 input UpsertPreferencesInput {
 	allowTrackingOfStockByDonor: Boolean
 	authorisePurchaseOrder: Boolean
+	authorisePurchaseOrderStoreOverride: [BoolStoreOverrideInput!]
 	customTranslations: JSONObject
 	"""
 	v2 custom translations, shape: `language -> namespace -> key -> value`.
