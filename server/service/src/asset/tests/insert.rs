@@ -2,15 +2,15 @@
 mod query {
     use chrono::{Duration, Utc};
     use repository::{
+        EqualFilter, LocationRowRepository, LocationTypeRow, LocationTypeRowRepository,
         asset_internal_location_row::AssetInternalLocationRowRepository,
         asset_log_row::AssetLogType,
         assets::{
             asset_log::{AssetLogFilter, AssetLogRepository},
             asset_row::AssetRowRepository,
         },
-        mock::{mock_store_a, mock_user_account_a, MockDataInserts},
+        mock::{MockDataInserts, mock_store_a, mock_user_account_a},
         test_db::setup_all,
-        EqualFilter, LocationRowRepository, LocationTypeRow, LocationTypeRowRepository,
     };
 
     use crate::{

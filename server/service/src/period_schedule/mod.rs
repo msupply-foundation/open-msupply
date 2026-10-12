@@ -1,4 +1,4 @@
-use crate::{i64_to_u32, ListResult};
+use crate::{ListResult, i64_to_u32};
 
 use repository::{
     PeriodScheduleFilter, PeriodScheduleRepository, PeriodScheduleRow, PeriodScheduleSort,

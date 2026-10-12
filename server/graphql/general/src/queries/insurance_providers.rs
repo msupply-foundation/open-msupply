@@ -1,7 +1,7 @@
 use async_graphql::{Context, Object, Result, SimpleObject, Union};
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use repository::InsuranceProviderRow;
 use service::auth::{Resource, ResourceAccessRequest};

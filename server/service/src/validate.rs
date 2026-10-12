@@ -1,8 +1,8 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    property::{PropertyFilter, PropertyRepository},
     EqualFilter, Name, NameFilter, NameRepository, Patient, PatientFilter, PatientRepository,
     RepositoryError, StorageConnection, StoreRowRepository, StringFilter,
+    property::{PropertyFilter, PropertyRepository},
 };
 
 pub fn check_store_id_matches(store_id_a: &str, store_id_b: &str) -> bool {

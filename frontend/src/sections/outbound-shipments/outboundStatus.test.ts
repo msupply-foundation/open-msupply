@@ -11,8 +11,8 @@ import {
 } from './outboundStatus';
 
 // The status lifecycle helpers (spec/outbound-shipments rules.md § status
-// lifecycle / editability / deletion). Criteria cited from
-// spec/outbound-shipments/acceptance.md.
+// lifecycle / editability / deletion). Behaviour IDs cited from
+// spec/outbound-shipments/cases/.
 
 describe('outboundStatus', () => {
   it('orders the full lifecycle NEW → VERIFIED', () => {

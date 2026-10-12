@@ -84,6 +84,8 @@ pub mod blind_stocktake;
 pub use blind_stocktake::*;
 pub mod global_logo;
 pub use global_logo::*;
+pub mod decimal_places_for_numbers;
+pub use decimal_places_for_numbers::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -109,6 +111,7 @@ pub struct PreferenceProvider {
     pub backdating: Backdating,
     pub receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
     pub global_logo: GlobalLogo,
+    pub decimal_places_for_numbers: DecimalPlacesForNumbers,
 
     // Store preferences
     pub blind_stocktake: BlindStocktake,
@@ -165,6 +168,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         backdating: Backdating,
         receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
         global_logo: GlobalLogo,
+        decimal_places_for_numbers: DecimalPlacesForNumbers,
 
         // Store preferences
         blind_stocktake: BlindStocktake,

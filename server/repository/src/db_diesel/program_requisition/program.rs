@@ -1,5 +1,6 @@
 use super::program_row::program;
 use crate::{
+    DBType, ProgramRow, StorageConnection, StringFilter,
     db_diesel::{
         item_row::item, master_list_line_row::master_list_line, master_list_row::master_list,
         name_row::name, store_row::store,
@@ -7,7 +8,6 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     master_list_name_join::master_list_name_join,
     repository_error::RepositoryError,
-    DBType, ProgramRow, StorageConnection, StringFilter,
 };
 use crate::{EqualFilter, Pagination, Sort};
 
@@ -196,7 +196,7 @@ impl ProgramFilter {
 
 #[cfg(test)]
 mod tests {
-    use crate::{mock::MockDataInserts, test_db, EqualFilter, ProgramFilter, ProgramRepository};
+    use crate::{EqualFilter, ProgramFilter, ProgramRepository, mock::MockDataInserts, test_db};
 
     #[actix_rt::test]
     async fn test_program_repository() {

@@ -13,7 +13,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{to_legacy_time, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, to_legacy_time};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -154,10 +154,10 @@ impl SyncTranslation for TemperatureLogTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_sensor_1, MockDataInserts},
+        SensorRow, SensorRowRepository, SyncAction, SyncRecordData,
+        mock::{MockDataInserts, mock_sensor_1},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::setup_all,
-        SensorRow, SensorRowRepository, SyncAction, SyncRecordData,
     };
 
     #[actix_rt::test]

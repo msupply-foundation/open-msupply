@@ -1,8 +1,8 @@
 use crate::service_provider::ServiceContext;
 
 pub(crate) use self::insert::insert_repack_from_stock_line;
-pub use self::insert::{insert_repack, InsertRepack, InsertRepackError};
-use self::query::{get_repack, get_repacks_by_stock_line, Repack};
+pub use self::insert::{InsertRepack, InsertRepackError, insert_repack};
+use self::query::{Repack, get_repack, get_repacks_by_stock_line};
 use repository::{Invoice, RepositoryError};
 
 pub mod generate;

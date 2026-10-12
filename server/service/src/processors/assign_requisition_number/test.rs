@@ -1,13 +1,13 @@
 use repository::{
-    mock::{MockData, MockDataInserts},
     KeyType, KeyValueStoreRow, NameRow, RequisitionRow, RequisitionRowRepository, RequisitionType,
     StoreRow, SystemLogRowRepository, SystemLogType,
+    mock::{MockData, MockDataInserts},
 };
 use util::uuid::uuid;
 
 use crate::{
     processors::ProcessorType,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 /// Ensure requisition number is always assigned to response requisition

@@ -5,19 +5,19 @@ use repository::{
     PrescriptionRequestStatus, RepositoryError, TransactionError,
 };
 
+use crate::NullableUpdate;
 use crate::activity_log::{activity_log_entry, activity_log_entry_with_diff};
 use crate::custom_field::{
-    apply_custom_fields_patch, check_custom_fields_patch, CustomFieldPatchProblem,
+    CustomFieldPatchProblem, apply_custom_fields_patch, check_custom_fields_patch,
 };
 use crate::service_provider::ServiceContext;
 use crate::validate::check_patient_exists;
-use crate::NullableUpdate;
 
 use super::generate::create_dispensation;
 use super::query::get_prescription_request;
 use super::validate::{
-    check_clinician_exists, check_diagnosis_exists, check_prescription_request_editable,
-    CommonPrescriptionRequestError,
+    CommonPrescriptionRequestError, check_clinician_exists, check_diagnosis_exists,
+    check_prescription_request_editable,
 };
 
 /// Scope prescription_request custom_fields are configured under (see
@@ -108,31 +108,31 @@ pub fn update_prescription_request(
                     CommonPrescriptionRequestError::DatabaseError(e) => DatabaseError(e),
                 })?;
 
-            if let Some(patient_id) = &input.patient_id {
-                if check_patient_exists(connection, patient_id)?.is_none() {
-                    return Err(PatientDoesNotExist);
-                }
+            if let Some(patient_id) = &input.patient_id
+                && check_patient_exists(connection, patient_id)?.is_none()
+            {
+                return Err(PatientDoesNotExist);
             }
             // Only a patch that names one gets checked; clearing it (a
             // NullableUpdate holding None) has nothing to look up.
-            if let Some(clinician_id) = input.clinician_id.as_ref().and_then(|u| u.value.as_ref()) {
-                if !check_clinician_exists(connection, clinician_id)? {
-                    return Err(ClinicianDoesNotExist);
-                }
+            if let Some(clinician_id) = input.clinician_id.as_ref().and_then(|u| u.value.as_ref())
+                && !check_clinician_exists(connection, clinician_id)?
+            {
+                return Err(ClinicianDoesNotExist);
             }
-            if let Some(diagnosis_id) = input.diagnosis_id.as_ref().and_then(|u| u.value.as_ref()) {
-                if !check_diagnosis_exists(connection, diagnosis_id)? {
-                    return Err(DiagnosisDoesNotExist);
-                }
+            if let Some(diagnosis_id) = input.diagnosis_id.as_ref().and_then(|u| u.value.as_ref())
+                && !check_diagnosis_exists(connection, diagnosis_id)?
+            {
+                return Err(DiagnosisDoesNotExist);
             }
-            if let Some(patch) = &input.custom_fields {
-                if let Some(problem) = check_custom_fields_patch(
+            if let Some(patch) = &input.custom_fields
+                && let Some(problem) = check_custom_fields_patch(
                     connection,
                     PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE,
                     patch,
-                )? {
-                    return Err(problem.into());
-                }
+                )?
+            {
+                return Err(problem.into());
             }
 
             let UpdatePrescriptionRequest {
@@ -224,14 +224,14 @@ impl From<RepositoryError> for UpdatePrescriptionRequestError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            clinician_a, mock_item_a, mock_item_b, mock_patient, mock_patient_b, mock_stock_line_a,
-            MockDataInserts,
-        },
-        test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceFilter,
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceStatus, InvoiceType,
         PrescriptionRequestStatus,
+        mock::{
+            MockDataInserts, clinician_a, mock_item_a, mock_item_b, mock_patient, mock_patient_b,
+            mock_stock_line_a,
+        },
+        test_db::setup_all,
     };
     use util::uuid::uuid;
 
@@ -337,7 +337,12 @@ mod test {
         );
 
         // The clinician is the request's own field, set while it is still New
-        // — the hand-over takes no clinician of its own (issue #513).
+        // — the hand-over takes no clinician of its own (issue #513). The
+        // prescription date is set well in the past so the backdating
+        // assertion below has something to bite on: a date equal to the
+        // creation moment would still backdate (it precedes the dispensation's
+        // own creation), but only by milliseconds.
+        let prescribed_three_days_ago = Utc::now().naive_utc() - chrono::Duration::days(3);
         service_provider
             .prescription_request_service
             .update_prescription_request(
@@ -348,6 +353,7 @@ mod test {
                     clinician_id: Some(NullableUpdate {
                         value: Some(clinician_a().id),
                     }),
+                    prescription_datetime: Some(prescribed_three_days_ago),
                     ..Default::default()
                 },
             )
@@ -386,6 +392,13 @@ mod test {
             invoice.invoice_row.clinician_link_id,
             Some(clinician_a().id)
         );
+        // The prescription date stays on the request: the dispensation is NOT
+        // backdated to it (issue #931). A backdate would stamp every later
+        // status time and the stock ledger entry at the prescribing moment
+        // rather than when stock actually moved.
+        assert_eq!(updated.prescription_datetime, prescribed_three_days_ago);
+        assert_eq!(invoice.invoice_row.backdated_datetime, None);
+        assert!(invoice.invoice_row.created_datetime >= updated.ready_datetime.unwrap());
 
         // ...with one unallocated line carrying the prescribed quantity + directions
         let lines = InvoiceLineRowRepository::new(&ctx.connection)
@@ -523,12 +536,15 @@ mod test {
                 .delete_prescription(&ctx, invoice.invoice_row.id.clone()),
             Err(DeletePrescriptionError::CannotDeleteGeneratedDispensation)
         );
-        assert!(InvoiceRepository::new(&ctx.connection)
-            .query_one(
-                InvoiceFilter::new().id(EqualFilter::equal_to(invoice.invoice_row.id.to_string()))
-            )
-            .unwrap()
-            .is_some());
+        assert!(
+            InvoiceRepository::new(&ctx.connection)
+                .query_one(
+                    InvoiceFilter::new()
+                        .id(EqualFilter::equal_to(invoice.invoice_row.id.to_string()))
+                )
+                .unwrap()
+                .is_some()
+        );
     }
 
     /// The prescriber's fields are locked on the dispensation the hand-over
@@ -626,23 +642,27 @@ mod test {
         // Re-sending what it already holds is not a change: it passes, and so
         // does an ordinary edit alongside it. A client that echoes unchanged
         // fields is not refused for fields it never touched.
-        assert!(update(UpdatePrescription {
-            patient_id: Some(mock_patient().id),
-            clinician_id: Some(NullableUpdate {
-                value: Some(clinician_a().id)
-            }),
-            comment: Some("dispenser's note".to_string()),
-            ..Default::default()
-        })
-        .is_ok());
+        assert!(
+            update(UpdatePrescription {
+                patient_id: Some(mock_patient().id),
+                clinician_id: Some(NullableUpdate {
+                    value: Some(clinician_a().id)
+                }),
+                comment: Some("dispenser's note".to_string()),
+                ..Default::default()
+            })
+            .is_ok()
+        );
 
         // The program is NOT the prescriber's: re-scoping the catalogue stays
         // the dispenser's decision.
-        assert!(update(UpdatePrescription {
-            program_id: Some(NullableUpdate { value: None }),
-            ..Default::default()
-        })
-        .is_ok());
+        assert!(
+            update(UpdatePrescription {
+                program_id: Some(NullableUpdate { value: None }),
+                ..Default::default()
+            })
+            .is_ok()
+        );
 
         // The prescribed quantity is the prescriber's too, and is written
         // through its own mutation rather than the header's.

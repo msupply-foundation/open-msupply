@@ -1,9 +1,9 @@
 use async_graphql::*;
 
 use chrono::NaiveDate;
-use graphql_core::simple_generic_errors::{CannotEditStocktake, StocktakeIsLocked};
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_core::simple_generic_errors::{CannotEditStocktake, StocktakeIsLocked};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::generic_errors::{
     SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
 };
@@ -127,22 +127,22 @@ fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::SnapshotCountCurrentCountMismatch(lines) => {
             return Ok(UpdateErrorInterface::SnapshotCountCurrentCountMismatch(
                 SnapshotCountCurrentCountMismatch(lines),
-            ))
+            ));
         }
         ServiceError::StocktakeIsLocked => {
             return Ok(UpdateErrorInterface::StocktakeIsLocked(
                 StocktakeIsLocked {},
-            ))
+            ));
         }
         ServiceError::CannotEditFinalised => {
             return Ok(UpdateErrorInterface::CannotEditStocktake(
                 CannotEditStocktake {},
-            ))
+            ));
         }
         ServiceError::StockLinesReducedBelowZero(lines) => {
             return Ok(UpdateErrorInterface::StockLinesReducedBelowZero(
                 StockLinesReducedBelowZero(lines),
-            ))
+            ));
         }
 
         // Standard Graphql Errors
@@ -197,7 +197,7 @@ impl UpdateStocktakeStatusInput {
 mod graphql {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
-    use repository::{mock::MockDataInserts, StocktakeRow, StorageConnectionManager};
+    use repository::{StocktakeRow, StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},

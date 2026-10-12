@@ -1,10 +1,10 @@
 use super::StorageConnection;
 
-use crate::{
-    clinician_link, ChangelogSyncType, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType,
-    RepositoryError, SourceSiteId, Upsert,
-};
 use crate::{ChangelogRepository, RowActionType};
+use crate::{
+    ChangelogSyncType, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType, RepositoryError,
+    SourceSiteId, Upsert, clinician_link,
+};
 
 use diesel::prelude::*;
 
@@ -194,8 +194,8 @@ mod test {
     use util::assert_matches;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, ClinicianRow, ClinicianRowRepository,
-        ClinicianRowRepositoryTrait, RepositoryError,
+        ClinicianRow, ClinicianRowRepository, ClinicianRowRepositoryTrait, RepositoryError,
+        mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

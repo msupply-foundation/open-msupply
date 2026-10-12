@@ -1,12 +1,12 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     loader::{ItemLoader, ItemVariantByItemVariantIdLoader, ReasonOptionLoader},
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use repository::ItemRow;
-use service::{invoice::customer_return::generate_lines::CustomerReturnLine, ListResult};
+use service::{ListResult, invoice::customer_return::generate_lines::CustomerReturnLine};
 
 use crate::types::ItemVariantNode;
 

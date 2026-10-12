@@ -8,16 +8,20 @@
  * what the greeting proves: its counter is reactive, and its text re-renders on
  * a locale switch, from a module the host never built.
  */
-import { createSignal, onCleanup } from 'solid-js';
+import { createResource, createSignal, onCleanup } from 'solid-js';
 import {
+  CONFIGURATION_IDENTIFIER,
   InfoTooltip,
   PLUGIN_API_VERSION,
   Table,
+  TextField,
   definePlugin,
   formatNumber,
   navigateTo,
+  pluginData,
   pluginIntl,
   storeHref,
+  type ConfigurationEditorProps,
   type InternalOrderLineInfoPanelProps,
 } from '@openmsupply/plugin-sdk';
 
@@ -35,7 +39,7 @@ const intl = pluginIntl(CODE);
  *    click (here, after doing something else first).
  *
  * Neither names the entered store or the app's mount: the same bundle is
- * correct in every store and on every deploy track (AC-PLUG-P3/P4).
+ * correct in every store and on every deploy track (OMS-REG-PLG-04.6/.9).
  *
  * The link's LOOK is the plugin's own, because the host styles no anchor
  * globally — a bare <a> would come out browser-default blue. One host design
@@ -43,11 +47,71 @@ const intl = pluginIntl(CODE);
  * theme (sdk-contract § styling: bespoke styles self-contained, host tokens
  * MAY be consumed — never host class names).
  */
+/*
+ * The CONFIGURATION contribution (plugins sdk-contract § the configuration
+ * contribution): one setting, the greeting below, edited in Manage › Plugins.
+ * The host owns the record — it seeds the editor, holds the draft and saves the
+ * whole value — so the editor is a plain controlled form, and the stat reads
+ * what was saved.
+ *
+ * The value arrives as `unknown` on purpose: the stored record is installation
+ * data that may predate this build, so it is narrowed, never trusted.
+ */
+type HelloConfig = { greeting: string };
+
+const DEFAULT_CONFIG: HelloConfig = { greeting: '' };
+
+const asConfig = (value: unknown): HelloConfig =>
+  typeof value === 'object' &&
+  value !== null &&
+  'greeting' in value &&
+  typeof value.greeting === 'string'
+    ? { greeting: value.greeting }
+    : DEFAULT_CONFIG;
+
+const GreetingSettings = (props: ConfigurationEditorProps) => (
+  <TextField
+    label={intl.t('settings.greeting')}
+    helperText={intl.t('settings.greeting-help')}
+    value={asConfig(props.value).greeting}
+    data-testid="hello-world-settings-greeting"
+    onInput={event =>
+      props.onChange({
+        ...asConfig(props.value),
+        greeting: event.currentTarget.value,
+      })
+    }
+  />
+);
+
+// The saved greeting: the installation-wide record (no store), read afresh on
+// every mount — the plugin-data surface caches nothing, so a save is seen at
+// the next read with no reload.
+const readGreeting = async (): Promise<string> => {
+  const result = await pluginData(CODE).list({
+    filter: { dataIdentifier: { equalTo: CONFIGURATION_IDENTIFIER } },
+  });
+  if (result.kind !== 'success') return '';
+  const record = result.data.nodes.find(node => node.storeId === null);
+  if (!record) return '';
+  try {
+    return asConfig(JSON.parse(record.data)).greeting;
+  } catch {
+    return '';
+  }
+};
+
 const Greeting = () => {
   const [clicks, setClicks] = createSignal(0);
+  // Read through `.state`, never `configured()`: a direct read would suspend
+  // the dashboard around this stat while the record loads.
+  const [configured] = createResource(readGreeting);
+  const greeting = () =>
+    (configured.state === 'ready' ? configured.latest : '') ||
+    intl.t('greeting');
   return (
     <div>
-      <p>{intl.t('greeting')}</p>
+      <p data-testid="hello-world-greeting">{greeting()}</p>
       <button type="button" onClick={() => setClicks(count => count + 1)}>
         {intl.t('clicks', { count: formatNumber(clicks()) })}
       </button>{' '}
@@ -95,10 +159,10 @@ const pagesFlagAtBoot = flag('pluginPages');
  *     settings like a host column. What the real country plugins need.
  *  2. `arrivals` — the BATCHED form. `loadData` runs once per rendered page of
  *     rows, never per cell, and the cell component shows its own loading state
- *     while the batch is in flight (AC-PLUG-K4).
+ *     while the batch is in flight (OMS-REG-PLG-02.5).
  *  3. `orphan` — the DEGRADATION, behind `?pluginBadAnchor`: an anchor naming a
  *     column that does not exist must put the column at the table's end and say
- *     so in diagnostics, never fail the table (AC-PLUG-K2).
+ *     so in diagnostics, never fail the table (OMS-REG-PLG-02.3).
  */
 
 // A stand-in for a real side-fetch: ONE call for the whole page of rows,
@@ -139,7 +203,7 @@ const ArrivalsCell = (props: {
  *     them read-only;
  *  2. a prop change (Save & next) reaches it IN PLACE: the mount stamp and the
  *     click counter below survive the change, because the host must not remount
- *     a contribution to give it new props (AC-PLUG-N2);
+ *     a contribution to give it new props (OMS-REG-PLG-02.14);
  *  3. SDK components carry the host's styling across the boundary: the facts
  *     below are a host `Table`, styled by the host's own stylesheet, and the
  *     gloss is a host `InfoTooltip` — the plugin ships no CSS at all.
@@ -286,6 +350,7 @@ export default definePlugin({
     version: '1.0.0',
     pluginApiVersion: PLUGIN_API_VERSION,
   },
+  configuration: { defaultConfig: DEFAULT_CONFIG, Editor: GreetingSettings },
   // Two catalogues, because one locale cannot prove anything: switching the
   // app's language must re-render this plugin's text, and only a plugin sharing
   // the host's ONE Solid instance can be re-rendered by the host's locale
@@ -294,6 +359,9 @@ export default definePlugin({
     en: {
       greeting: 'Hello from a plugin',
       clicks: 'Clicked {{count}} times',
+      'settings.greeting': 'Greeting',
+      'settings.greeting-help':
+        'Shown on the dashboard in place of the default greeting. Leave blank for the default.',
       loading: '…',
       'nav.stock': 'Stock (link)',
       'nav.items': 'Items (from code)',
@@ -328,6 +396,9 @@ export default definePlugin({
     fr: {
       greeting: 'Bonjour depuis un plugin',
       clicks: 'Cliqué {{count}} fois',
+      'settings.greeting': 'Message d’accueil',
+      'settings.greeting-help':
+        'Affiché sur le tableau de bord à la place du message par défaut. Laisser vide pour le message par défaut.',
       loading: '…',
       'nav.stock': 'Stock (lien)',
       'nav.items': 'Articles (depuis le code)',
@@ -367,10 +438,10 @@ export default definePlugin({
    * What it proves: the page joins the menu and the command palette, the
    * route mounts under the host frame, and the page's code — its own module,
    * inlined into this bundle by the build but a real chunk in dev — is
-   * imported on first navigation, never at startup (AC-PLUG-P2). The gate here
+   * imported on first navigation, never at startup (OMS-REG-PLG-04.4/.5). The gate here
    * is a demo flag; a real plugin gates on the session context it is handed
    * (`ctx.storeMode === 'dispensary'`), and MAY add `permissions` to guard the
-   * nav entry and the URL with one condition (AC-PLUG-P1).
+   * nav entry and the URL with one condition (OMS-REG-PLG-04.1/.2).
    */
   navSections: [
     {
@@ -406,7 +477,7 @@ export default definePlugin({
       // takes a published host section id; `{ root: true }` is a top-level
       // entry of its own; absent means routed with no menu entry (a detail
       // screen). An `in` id the host and the plugin both lack refuses the
-      // plugin at validation, by name (AC-PLUG-P5).
+      // plugin at validation, by name (OMS-REG-PLG-04.11).
       nav: { in: 'helloSection' },
     },
   ],
@@ -478,7 +549,7 @@ export default definePlugin({
       id: 'itemInfo',
       // Behind a flag so the SAME session can show the region both ways: with
       // it, the panel renders below the line's statistics; without it, the
-      // editor has no seam at all (AC-PLUG-N1).
+      // editor has no seam at all (OMS-REG-PLG-02.12).
       when: () => flag('pluginPanel'),
       Component: InfoPanel,
     },

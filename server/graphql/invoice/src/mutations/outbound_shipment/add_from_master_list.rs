@@ -1,10 +1,10 @@
 use crate::mutations::AddToShipmentFromMasterListInput;
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditInvoice, RecordNotFound},
-    standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError,
     ContextExt,
+    simple_generic_errors::{CannotEditInvoice, RecordNotFound},
+    standard_graphql_error::StandardGraphqlError,
+    standard_graphql_error::validate_auth,
 };
 use graphql_types::types::InvoiceLineConnector;
 use service::{
@@ -81,17 +81,17 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::ShipmentDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::CannotEditShipment => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         ServiceError::MasterListNotFoundForThisName => {
             return Ok(DeleteErrorInterface::MasterListNotFoundForThisName(
                 MasterListNotFoundForThisName {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreShipment => BadUserInput(formatted_error),
@@ -110,18 +110,17 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_new_outbound_shipment_no_lines, mock_outbound_shipment_line_a,
-            MockDataInserts,
-        },
         InvoiceLine, InvoiceLineStatsRow, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_new_outbound_shipment_no_lines,
+            mock_outbound_shipment_line_a,
+        },
     };
     use serde_json::json;
     use service::{
         invoice::{
-            common::AddToShipmentFromMasterListInput as ServiceInput,
+            InvoiceServiceTrait, common::AddToShipmentFromMasterListInput as ServiceInput,
             outbound_shipment::AddToOutboundShipmentFromMasterListError as ServiceError,
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

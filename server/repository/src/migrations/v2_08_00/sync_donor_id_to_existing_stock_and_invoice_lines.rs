@@ -74,12 +74,12 @@ impl MigrationFragment for Migrate {
                     .first::<Option<String>>(connection.lock().connection())
                     .optional()?;
 
-                if let Some(existing_donor_id) = current_link_donor_id {
-                    if existing_donor_id.is_none() {
-                        diesel::update(stock_line::table.filter(stock_line::id.eq(&stock_line_id)))
-                            .set(stock_line::donor_link_id.eq(sync_donor_id))
-                            .execute(connection.lock().connection())?;
-                    }
+                if let Some(existing_donor_id) = current_link_donor_id
+                    && existing_donor_id.is_none()
+                {
+                    diesel::update(stock_line::table.filter(stock_line::id.eq(&stock_line_id)))
+                        .set(stock_line::donor_link_id.eq(sync_donor_id))
+                        .execute(connection.lock().connection())?;
                 }
             }
         }
@@ -117,14 +117,14 @@ impl MigrationFragment for Migrate {
                     .first::<Option<String>>(connection.lock().connection())
                     .optional()?;
 
-                if let Some(existing_donor_id) = current_link_donor_id {
-                    if existing_donor_id.is_none() {
-                        diesel::update(
-                            invoice_line::table.filter(invoice_line::id.eq(&invoice_line_id)),
-                        )
-                        .set(invoice_line::donor_link_id.eq(sync_donor_id))
-                        .execute(connection.lock().connection())?;
-                    }
+                if let Some(existing_donor_id) = current_link_donor_id
+                    && existing_donor_id.is_none()
+                {
+                    diesel::update(
+                        invoice_line::table.filter(invoice_line::id.eq(&invoice_line_id)),
+                    )
+                    .set(invoice_line::donor_link_id.eq(sync_donor_id))
+                    .execute(connection.lock().connection())?;
                 }
             }
         }
@@ -140,7 +140,7 @@ mod tests {
         migrations::{v2_07_00::V2_07_00, v2_08_00::V2_08_00},
         test_db::*,
     };
-    use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query, sql_types::Timestamp};
 
     // --- Test Data Setup Helpers --- //
     fn setup_test_dependencies(connection: &StorageConnection) {
@@ -152,19 +152,31 @@ mod tests {
         };
 
         // Donor and customer names and links
-        run("INSERT INTO name (id, type, is_customer, is_supplier, is_donor, code, name) VALUES ('donor_name_id', 'FACILITY', false, false, true, 'DONOR1', 'Test Donor');");
+        run(
+            "INSERT INTO name (id, type, is_customer, is_supplier, is_donor, code, name) VALUES ('donor_name_id', 'FACILITY', false, false, true, 'DONOR1', 'Test Donor');",
+        );
         run("INSERT INTO name_link (id, name_id) VALUES ('donor_name_id', 'donor_name_id');");
-        run("INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('customer_name_id', 'FACILITY', true, false, 'CUST1', 'Test Customer');");
+        run(
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('customer_name_id', 'FACILITY', true, false, 'CUST1', 'Test Customer');",
+        );
         run("INSERT INTO name_link (id, name_id) VALUES ('customer_name_id', 'customer_name_id');");
 
         // Store, item, item_link, currency
-        run("INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'customer_name_id', 'STORE1', 1);");
-        run("INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Test Item', 'ITEM1', 1.0, 'STOCK', '');");
+        run(
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'customer_name_id', 'STORE1', 1);",
+        );
+        run(
+            "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Test Item', 'ITEM1', 1.0, 'STOCK', '');",
+        );
         run("INSERT INTO item_link (id, item_id) VALUES ('item_id', 'item_id');");
-        run("INSERT INTO currency (id, rate, code, is_home_currency, date_updated, is_active) VALUES ('USD', 1.0, 'USD', true, '2023-01-01', true);");
+        run(
+            "INSERT INTO currency (id, rate, code, is_home_currency, date_updated, is_active) VALUES ('USD', 1.0, 'USD', true, '2023-01-01', true);",
+        );
 
         // Invoice
-        run("INSERT INTO invoice (id, name_link_id, store_id, invoice_number, type, status, created_datetime, currency_id, on_hold) VALUES ('invoice_id', 'customer_name_id', 'store_id', 1, 'OUTBOUND_SHIPMENT', 'NEW', '2023-01-01 00:00:00', 'USD', false) ON CONFLICT (id) DO NOTHING;");
+        run(
+            "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, type, status, created_datetime, currency_id, on_hold) VALUES ('invoice_id', 'customer_name_id', 'store_id', 1, 'OUTBOUND_SHIPMENT', 'NEW', '2023-01-01 00:00:00', 'USD', false) ON CONFLICT (id) DO NOTHING;",
+        );
     }
 
     // --- Stock Line Helpers --- //

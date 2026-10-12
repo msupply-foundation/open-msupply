@@ -2,7 +2,6 @@ import { generateUUID } from '../../../../uuid';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, type LocaleKey } from '../../../../intl';
 import { localIsoDaysAgo } from '../../../../ui/elements/inputs/dateTimeConvert';
-import { warningSuppressed } from '@/plugins/warningSuppression';
 import {
   InsertInternalOrder,
   InsertProgramInternalOrder,
@@ -23,9 +22,9 @@ export type CreateResult =
   | { kind: 'error'; message: string }
   | { kind: 'failed' };
 
-// General create (AC-C2): sends only id + otherPartyId with the default
-// thresholds. The picker offers only visible, store-backed suppliers, so the
-// typed supplier rejections are unreachable (contract wire trap) and any
+// General create (OMS-REG-REPL-04.6/.43): sends only id + otherPartyId with the
+// default thresholds. The picker offers only visible, store-backed suppliers,
+// so the typed supplier rejections are unreachable (contract wire trap) and any
 // non-success falls through to the generic mutation path (the global
 // unexpected-error modal) — hence no returnGraphqlErrors here.
 export const createGeneralOrder = async (
@@ -55,10 +54,11 @@ const PROGRAM_ERROR_KEYS: Record<string, LocaleKey> = {
   SupplierNotValid: 'error.program-not-valid-for-supplier',
 };
 
-// Program create (AC-P3): sends the order type + period; the resolver fills the
-// rest. Any rejection must keep the dialog open showing the error (AC-P5), so
-// returnGraphqlErrors surfaces the untyped rejections (already-exists, missing
-// order type) as an inline generic message rather than the global modal.
+// Program create (OMS-REG-REPL-04.48, OMS-REG-REPL-12.2): sends the order type
+// + period; the resolver fills the rest. Any rejection must keep the dialog
+// open showing the error (OMS-REG-REPL-04.50), so returnGraphqlErrors surfaces
+// the untyped rejections (already-exists, missing order type) as an inline
+// generic message rather than the global modal.
 export const createProgramOrder = async (
   storeId: string,
   supplierId: string,
@@ -94,10 +94,11 @@ export const createProgramOrder = async (
   return { kind: 'failed' };
 };
 
-// The recent-stocktake warning test (AC-C5): true when the store's finalised
-// stocktakes within maxAge days cover fewer than minItems DISTINCT items — so
-// New order must confirm before opening the modal. Called only when the
-// preference is enabled. A failed read never blocks creation (returns false).
+// The recent-stocktake warning test (OMS-REG-REPL-04.45): true when the store's
+// finalised stocktakes within maxAge days cover fewer than minItems DISTINCT
+// items — so New order must confirm before opening the modal. Called only when
+// the preference is enabled. A failed read never blocks creation (returns
+// false).
 const recentStocktakeIsInsufficient = async (
   storeId: string,
   maxAge: number,
@@ -115,22 +116,19 @@ const recentStocktakeIsInsufficient = async (
 };
 
 // The whole gate decision, shared by every New-order entry point (the
-// internal-orders list and the dashboard's Order more): the warning shows only
-// when recent stocktakes are insufficient AND no installed plugin's
-// warning-suppression contribution suppresses the store-wide warning with its
-// own item-level measure (rules › creation, OMS-REG-REPL-04.86/.87). The two
-// reads run in parallel, the suppression winning, so a suppressed store never
-// sees the warning however short its stocktakes fall. Called only when the
-// preference is enabled; never rejects (the consult isolates plugin failures
-// and a failed stocktake read answers false).
+// internal-orders list and the dashboard's Order more): the warning shows when
+// recent stocktakes are insufficient (rules › creation, OMS-REG-REPL-04.45).
+// Called only when the preference is enabled; never rejects (a failed
+// stocktake read answers false).
+//
+// No plugin suppression is consulted. The Cook Islands helper used to stand
+// this warning down where a counting cycle was in force, deferring to its own
+// per-item measure on the order (#505) — that measure came from a spec section
+// that was never a real requirement and has been withdrawn, so there is
+// nothing to defer to and this warning is every store's only measure again
+// (#822). The `host.warningSuppression` slot itself remains in the SDK.
 export const recentStocktakeGateShows = async (
   storeId: string,
   maxAge: number,
   minItems: number
-): Promise<boolean> => {
-  const [suppressed, insufficient] = await Promise.all([
-    warningSuppressed('internalOrders.recentStocktake'),
-    recentStocktakeIsInsufficient(storeId, maxAge, minItems),
-  ]);
-  return insufficient && !suppressed;
-};
+): Promise<boolean> => recentStocktakeIsInsufficient(storeId, maxAge, minItems);

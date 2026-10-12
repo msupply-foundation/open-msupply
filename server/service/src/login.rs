@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     activity_log::activity_log_entry,
     apis::{
-        central_user_login::{central_user_login, CentralUserLoginError},
+        central_user_login::{CentralUserLoginError, central_user_login},
         login_v4::{
             LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
         },
@@ -273,12 +273,12 @@ impl LoginService {
                 }
                 Err(err) => match err {
                     FetchUserError::Unauthenticated => {
-                        return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+                        return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials));
                     }
                     FetchUserError::AccountBlocked(timeout_remaining) => {
                         return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
                             timeout_remaining,
-                        )))
+                        )));
                     }
                     FetchUserError::ConnectionError(_) => {
                         info!("{err:?}");
@@ -465,12 +465,12 @@ impl LoginService {
                 LoginV4Error::ConnectionError(_) => {
                     return Err(FetchUserError::ConnectionError(format!(
                         "Failed to reach the central server to fetch data for {username}: {err:?}"
-                    )))
+                    )));
                 }
                 LoginV4Error::ParseError(_) => {
                     return Err(FetchUserError::InternalError(format!(
                         "Failed to parse central server response for {username}: {err:?}"
-                    )))
+                    )));
                 }
             },
         };
@@ -600,13 +600,13 @@ mod test {
 
     use httpmock::{Method::POST, MockServer};
     use repository::{
-        mock::{
-            mock_store_a, mock_user_account_a, mock_user_empty_hashed_password,
-            mock_user_store_join_a_store_a, MockDataInserts,
-        },
-        test_db::setup_all,
         EqualFilter, KeyType, KeyValueStoreRepository, SyncVersion, UserAccountRowRepository,
         UserFilter, UserPermissionFilter, UserPermissionRepository, UserRepository,
+        mock::{
+            MockDataInserts, mock_store_a, mock_user_account_a, mock_user_empty_hashed_password,
+            mock_user_store_join_a_store_a,
+        },
+        test_db::setup_all,
     };
     use util::assert_matches;
 

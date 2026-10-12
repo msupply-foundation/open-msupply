@@ -1,10 +1,10 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::generic_errors::{
     SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
 };
@@ -179,27 +179,27 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::CannotEditFinalised => {
             return Ok(UpdateErrorInterface::CannotEditStocktake(
                 CannotEditStocktake {},
-            ))
+            ));
         }
         ServiceError::StockLineReducedBelowZero(line) => {
             return Ok(UpdateErrorInterface::StockLineReducedBelowZero(
                 StockLineReducedBelowZero::from_domain(line),
-            ))
+            ));
         }
         ServiceError::AdjustmentReasonNotProvided => {
             return Ok(UpdateErrorInterface::AdjustmentReasonNotProvided(
                 AdjustmentReasonNotProvided,
-            ))
+            ));
         }
         ServiceError::AdjustmentReasonNotValid => {
             return Ok(UpdateErrorInterface::AdjustmentReasonNotValid(
                 AdjustmentReasonNotValid,
-            ))
+            ));
         }
         ServiceError::SnapshotCountCurrentCountMismatchLine(line) => {
             return Ok(UpdateErrorInterface::SnapshotCountCurrentCountMismatchLine(
                 SnapshotCountCurrentCountMismatchLine::from_domain(line),
-            ))
+            ));
         }
         // Standard GraphQL Errors
         ServiceError::InvalidStore
@@ -228,8 +228,8 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_item_a, mock_location_1, mock_stock_line_a, MockDataInserts},
         StocktakeLine, StocktakeLineRow, StorageConnectionManager,
+        mock::{MockDataInserts, mock_item_a, mock_location_1, mock_stock_line_a},
     };
     use serde_json::json;
     use service::{

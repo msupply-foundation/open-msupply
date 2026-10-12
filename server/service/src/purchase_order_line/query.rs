@@ -1,5 +1,5 @@
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 use repository::{
     EqualFilter, PaginationOption, PurchaseOrderFilter, PurchaseOrderLine, PurchaseOrderLineFilter,
@@ -96,13 +96,13 @@ pub fn calculate_units_in_other_purchase_orders(
 mod test {
     use crate::service_provider::ServiceProvider;
     use repository::mock::{mock_item_a, mock_item_b, mock_name_a, mock_name_c, mock_store_a};
-    use repository::{db_diesel::PurchaseOrderLineRow, mock::MockDataInserts, test_db::setup_all};
     use repository::{
         EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
         InvoiceStatus, PurchaseOrderLineFilter, PurchaseOrderLineRowRepository,
         PurchaseOrderLineSort, PurchaseOrderLineSortField, PurchaseOrderRow,
         PurchaseOrderRowRepository,
     };
+    use repository::{db_diesel::PurchaseOrderLineRow, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn purchase_order_service_queries() {

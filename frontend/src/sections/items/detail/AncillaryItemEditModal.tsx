@@ -222,6 +222,7 @@ export const AncillaryItemEditModal: Component<
             up exactly. */}
         <HStack gap="sm" align="end">
           <NumberField
+            data-testid="ancillary-item-quantity-input"
             label={t('label.ratio')}
             min={0}
             decimalLimit={4}
@@ -233,6 +234,7 @@ export const AncillaryItemEditModal: Component<
           />
           <Text>:</Text>
           <NumberField
+            data-testid="ancillary-quantity-input"
             label={t('label.ratio')}
             hideLabel
             min={0}

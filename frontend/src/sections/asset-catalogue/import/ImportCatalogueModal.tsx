@@ -52,7 +52,7 @@ import {
   type RefusedRow,
   type RunProgress,
 } from './catalogueImport';
-import { outcomeOf } from '../refusals';
+import { outcomeOf } from '@/domain/selection';
 
 // The catalogue import (spec/asset-catalogue S2 · rules § bulk import):
 // upload → review → import. The upload checks block a file with any failing

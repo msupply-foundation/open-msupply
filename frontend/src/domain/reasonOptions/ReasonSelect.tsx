@@ -23,8 +23,8 @@ import {
 //   (spec/customer-returns/rules.md § line rules): the active return reasons.
 // - 'requisition' — a requisition line's variance reason, required when a
 //   requested quantity departs from the suggestion on a customer-statistics
-//   program order (spec/internal-orders/rules.md § editing lines, AC-R1/R2):
-//   the active requisition-line-variance reasons.
+//   program order (spec/internal-orders/rules.md § editing lines,
+// OMS-REG-REPL-04.79/.80):   the active requisition-line-variance reasons.
 export type ReasonKind = 'positive' | 'negative' | 'return' | 'requisition';
 
 const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {

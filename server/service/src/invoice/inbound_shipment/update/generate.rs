@@ -2,9 +2,9 @@ use chrono::Utc;
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
-    location_movement::{LocationMovementFilter, LocationMovementRepository},
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
     LocationMovementRow, Name, PurchaseOrderLineRowRepository, RepositoryError,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
@@ -14,10 +14,10 @@ use util::uuid::uuid;
 
 use crate::invoice::{
     common::{
-        calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
-        GenerateVVMStatusLogInput,
+        GenerateVVMStatusLogInput, calculate_foreign_currency_total, calculate_total_after_tax,
+        generate_vvm_status_log,
     },
-    stock_effect::{stock_effects, StockEffect},
+    stock_effect::{StockEffect, stock_effects},
 };
 use crate::service_provider::ServiceContext;
 
@@ -363,7 +363,7 @@ fn generate_cost_price_update_for_lines(
     for invoice_line in &invoice_lines {
         let row = &invoice_line.invoice_line_row;
         let po_line_id = &invoice_line.invoice_line_row.purchase_order_line_id;
-        let po_price_local = if let Some(ref po_line_id) = po_line_id {
+        let po_price_local = if let Some(po_line_id) = po_line_id {
             if let Some(po_line) = po_line_repo.find_one_by_id(po_line_id)? {
                 po_line.price_per_pack_after_discount * safe_rate
             } else {

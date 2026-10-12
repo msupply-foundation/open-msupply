@@ -11,7 +11,7 @@ mod query {
     use repository::{
         asset_log_row::{AssetLogStatus, AssetLogType},
         assets::asset_row::AssetRowRepository,
-        mock::{mock_asset_a, mock_store_a, mock_user_account_a, MockDataInserts},
+        mock::{MockDataInserts, mock_asset_a, mock_store_a, mock_user_account_a},
         test_db::setup_all,
     };
 

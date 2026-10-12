@@ -23,11 +23,11 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
     // history beneath it. Otherwise hardware back resurrects a dead document
     // (the serverless bundled app under the discovery page) or re-enters
     // discovery WITHOUT ?autoconnect=false — which immediately reconnects to
-    // the just-remembered server, the bounce AC-DT16 forbids. With history
-    // pinned to the current page, back falls through to the App plugin's
-    // default (leave the app); the designed way back — the login hand-off's
-    // discovery-return link — carries autoconnect=false. Set on and read
-    // from the UI thread.
+    // the just-remembered server, the bounce OMS-REG-DESK-01.21 forbids. With
+    // history pinned to the current page, back falls through to the App
+    // plugin's default (leave the app); the designed way back — the login
+    // hand-off's discovery-return link — carries autoconnect=false. Set on and
+    // read from the UI thread.
     private String pendingHistoryClearPrefix;
 
     // Client mode = no embedded server library and not the dev-server loop.
@@ -89,8 +89,8 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
-                // Host duty (src/discovery/hostContract.ts, AC-DT4): a
-                // connected server whose UI fails to load must land back on
+                // Host duty (src/discovery/hostContract.ts, OMS-REG-DESK-01.5):
+                // a connected server whose UI fails to load must land back on
                 // app-owned content — the discovery page, with the
                 // could-not-connect notice seeded (?timedout) and autoconnect
                 // off. Main frame only (a failed subresource is the page's
@@ -109,15 +109,16 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
             public void onReceivedHttpError(WebView view, WebResourceRequest request,
                     WebResourceResponse errorResponse) {
                 super.onReceivedHttpError(view, request, errorResponse);
-                // The same AC-DT4 duty for a load that REACHED its address and
-                // was answered with an error, which onReceivedError never sees.
-                // An address can pass the reachability check and still have no
-                // app on it — the likeliest is the server's own discovery port,
-                // at port + 1, which answers 404 to everything but a POSTed
-                // query. Landing there is otherwise a dead end: the error page
-                // is the server's own content, so it carries no way back, and
-                // the address is remembered, so the next launch goes straight
-                // there again. Any error status counts; none of them is an app.
+                // The same OMS-REG-DESK-01.5 duty for a load that REACHED its
+                // address and was answered with an error, which onReceivedError
+                // never sees. An address can pass the reachability check and
+                // still have no app on it — the likeliest is the server's own
+                // discovery port, at port + 1, which answers 404 to everything
+                // but a POSTed query. Landing there is otherwise a dead end:
+                // the error page is the server's own content, so it carries no
+                // way back, and the address is remembered, so the next launch
+                // goes straight there again. Any error status counts; none of
+                // them is an app.
                 if (!clientMode || !request.isForMainFrame()) return;
                 if (request.getUrl().toString().startsWith(MainActivity.this.bridge.getLocalUrl())) return;
                 android.util.Log.w("OpenMSupply", "Server answered "
@@ -189,15 +190,15 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
 
     @Override
     public void onDestroy() {
-        // Host duty (src/discovery/hostContract.ts, AC-DT18): the session ends
-        // with the app. In client mode the session belongs to the connected
-        // server and lives in the WebView's cookie jar, which otherwise
-        // survives to the next launch — so signing in would NOT be required
-        // after the auto-reconnect AC-DT1 performs. Clearing all cookies (not
-        // just the non-persistent ones) matches what the Electron shell does
-        // on window close, and in client mode the only origins with cookies
-        // here are servers. Local mode keeps its own cookies: its session is
-        // the device's, not a chosen server's.
+        // Host duty (src/discovery/hostContract.ts, OMS-REG-DESK-01.30): the
+        // session ends with the app. In client mode the session belongs to the
+        // connected server and lives in the WebView's cookie jar, which
+        // otherwise survives to the next launch — so signing in would NOT be
+        // required after the auto-reconnect OMS-REG-DESK-01.1 performs.
+        // Clearing all cookies (not just the non-persistent ones) matches what
+        // the Electron shell does on window close, and in client mode the only
+        // origins with cookies here are servers. Local mode keeps its own
+        // cookies: its session is the device's, not a chosen server's.
         //
         // onDestroy is not guaranteed on a process kill; the same is true of
         // the Electron close handler, and the server's own token expiry is

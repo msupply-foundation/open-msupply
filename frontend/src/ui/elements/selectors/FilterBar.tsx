@@ -316,13 +316,16 @@ export const FilterBar = <
   };
 
   return (
-    <div class={styles.bar}>
+    // The data-filter-* hooks let a host toolbar (DataTable at phone
+    // widths) re-flow the bar's parts into its own row.
+    <div class={styles.bar} data-filter-bar="">
       <FiltersMenu available={menuItems()} focusChip={handOffToChip} />
 
       <For each={main.active()}>
         {f => (
           <FilterChip
             label={f.label()}
+            filterKey={f.key}
             onRemove={() => main.remove(f)}
             focusTarget={chipEditor(f.key)}
           >
@@ -345,6 +348,7 @@ export const FilterBar = <
               {f => (
                 <FilterChip
                   label={f.label()}
+                  filterKey={f.key}
                   onRemove={() => ex.remove(f)}
                   focusTarget={chipEditor(f.key)}
                 >
@@ -363,6 +367,7 @@ export const FilterBar = <
         <button
           type="button"
           class={styles.clearAll}
+          data-filter-clear=""
           // Same id as the current app's "Remove all filters" menu entry — the
           // e2e suites locate the action, not its placement (e2e/TESTIDS.md
           // § Shared ids).
@@ -417,11 +422,13 @@ export const NotChipEditor = (props: { children: JSX.Element }) => (
 // carries it, a seeded default filter's included (#563).
 const FilterChip = (props: {
   label: string;
+  /** The filter's key — stamps the remove button `filter-remove-<key>`. */
+  filterKey: string;
   onRemove: () => void;
   focusTarget: FocusTarget;
   children: JSX.Element;
 }) => (
-  <div class={styles.chip}>
+  <div class={styles.chip} data-filter-chip="">
     <span class={styles.chipLabel}>{props.label}:</span>
     {/* props.children is a getter compiled from the caller's JSX, so the
         control is CONSTRUCTED here — under the provider — not at the <For>. */}
@@ -431,6 +438,7 @@ const FilterChip = (props: {
     <button
       type="button"
       class={styles.remove}
+      data-testid={`filter-remove-${props.filterKey}`}
       aria-label={t('label.clear-filter-detail', { name: props.label })}
       // Keep the caret where it is while the button is pressed: the editor
       // shrinks to its text when it loses the caret, which slides this button
@@ -467,11 +475,12 @@ const FiltersMenu = (props: {
           so avoid opening an empty popover. */}
       <DropdownMenu.Trigger
         class={styles.trigger}
+        data-filter-trigger=""
         data-testid="filters-menu"
         disabled={props.available.length === 0}
       >
         <FilterIcon class={styles.triggerIcon} />
-        <span>{t('label.add-filter')}</span>
+        <span class={styles.triggerLabel}>{t('label.add-filter')}</span>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content

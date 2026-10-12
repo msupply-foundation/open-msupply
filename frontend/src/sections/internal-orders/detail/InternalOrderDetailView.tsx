@@ -6,11 +6,14 @@ import {
   Suspense,
   untrack,
   type Component,
+  type JSX,
 } from 'solid-js';
+import type { CellContext } from '@tanstack/solid-table';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
+import { Num } from '../../../ui/elements/typography/Num';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -199,11 +202,13 @@ const InternalOrderDetailView: Component = () => {
     itemCodeOrName: null,
     hideOverMinimum: null,
   });
-  // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
-  // a non-empty selection swaps the status footer for the bulk-action bar.
+  // Line-table row selection (OMS-REG-REPL-04.71). Owned by the page (like
+  // sort/filter); a non-empty selection swaps the status footer for the
+  // bulk-action bar.
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // Lines a send's reasons-backstop refusal named (AC-R3): their Reason cells
-  // flag until the next send, or until a line edit refetches the table.
+  // Lines a send's reasons-backstop refusal named (OMS-REG-REPL-04.81): their
+  // Reason cells flag until the next send, or until a line edit refetches the
+  // table.
   const [reasonFlaggedIds, setReasonFlaggedIds] = createSignal<Set<string>>(
     new Set()
   );
@@ -320,8 +325,8 @@ const InternalOrderDetailView: Component = () => {
       customerNameId: nameId,
     });
   };
-  // The Export/Print seeds (AC-PR4) — see reportSeedArgs.ts for why they are
-  // not gated on showIndicators().
+  // The Export/Print seeds (rules § printing) — see reportSeedArgs.ts for why
+  // they are not gated on showIndicators().
   const seedArgs = () => reportSeedArgs(info(), ownName.latest);
 
   const [indicators, { mutate: mutateIndicators }] = createResource(
@@ -354,7 +359,7 @@ const InternalOrderDetailView: Component = () => {
     prefs()?.selectDestinationStoreForAnInternalOrder ?? false;
   const requiresAuth = () =>
     storePrefs()?.requestRequisitionRequiresAuthorisation ?? false;
-  // The empty-send guard's keep-zero-lines arm (AC-S4, D20).
+  // The empty-send guard's keep-zero-lines arm (OMS-REG-REPL-05.17, D20).
   const keepZeroLines = () =>
     storePrefs()?.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised ??
     false;
@@ -366,16 +371,18 @@ const InternalOrderDetailView: Component = () => {
       false);
   const showApproval = () =>
     requiresAuth() && (info()?.approvalStatus ?? 'NONE') !== 'NONE';
-  // The side panel's "Created from requisition" row (display-only, AC-RD2).
+  // The side panel's "Created from requisition" row (display-only,
+  // OMS-REG-REPL-04.85).
   const showSourceLink = () =>
     prefs()?.canCreateInternalOrderFromARequisition ?? false;
   // Documents upload/remove are offered on any status, but withheld when the
-  // supplier's store is disabled (AC-F2/F5).
+  // supplier's store is disabled (OMS-REG-REPL-14.2/.5).
   const supplierEnabled = () => !info()?.otherParty.store?.isDisabled;
 
-  // Indicators tab gate (AC-I1): a non-emergency program order, a store-backed
-  // supplier, and the program defines ≥1 indicator. Independent of the
-  // customer-statistics prefs (those only gate the breakdown panel, AC-I10).
+  // Indicators tab gate (OMS-REG-REPL-12.1): a non-emergency program order, a
+  // store-backed supplier, and the program defines ≥1 indicator. Independent of
+  // the customer-statistics prefs (those only gate the breakdown panel,
+  // OMS-REG-REPL-12.9).
   const showIndicators = () =>
     isProgram() &&
     info()?.isEmergency === false &&
@@ -390,16 +397,21 @@ const InternalOrderDetailView: Component = () => {
     const node = info();
     return node ? isOrderEditable(node) : false;
   };
+  // A placeholder (requested 0) on an order that can still change: a Sent
+  // order may keep its zero lines, and those need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    editable() && line.requestedQuantity === 0;
   const isProgram = () => !!info()?.program;
   const orderInPacks = () => prefs()?.orderInPacks ?? false;
-  // The Add-item affordance / add mode (AC-LN1): a Draft general order whose
-  // supplier's store is enabled — program orders' item sets are fixed.
+  // The Add-item affordance / add mode (OMS-REG-REPL-04.63): a Draft general
+  // order whose supplier's store is enabled — program orders' item sets are
+  // fixed.
   const canAddLines = () => editable() && !isProgram();
 
-  // Save & next's walk (AC-LN22): the next line after the current in the
-  // table's current sort/filter order, skipping ones already visited this run.
-  // The client-side table holds every line (the server-paginated walk collapses
-  // to a plain scan here), so no page advance is needed.
+  // Save & next's walk (OMS-REG-REPL-04.77): the next line after the current in
+  // the table's current sort/filter order, skipping ones already visited this
+  // run. The client-side table holds every line (the server-paginated walk
+  // collapses to a plain scan here), so no page advance is needed.
   const resolveNextLine = (
     currentLineId: string,
     covered: Set<string>
@@ -412,21 +424,22 @@ const InternalOrderDetailView: Component = () => {
   };
 
   // The order's existing line for an item (add mode loads it rather than
-  // duplicating, AC-LN2/LN6).
+  // duplicating, OMS-REG-REPL-04.64).
   const findLineForItem = (itemId: string): Line | undefined =>
     info()?.lines.nodes.find(line => line.itemId === itemId);
 
-  // The Add split button's action (AC-LN1): Add item opens the line editor,
-  // Add from master list opens the S7 picker.
+  // The Add split button's action (OMS-REG-REPL-04.63): Add item opens the line
+  // editor, Add from master list opens the S7 picker.
   const onAddAction = (choice: string) => {
     if (choice === 'master-list') setMasterListPickerOpen(true);
     else setEditorLine({ mode: 'add' });
   };
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, because two controls trigger it: the header SplitButton
-  // and the ghost button in the table's empty slot. Each carries
-  // `shortcut={ALT_N}` for its badge; neither owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, because two controls
+  // trigger it: the header SplitButton and the ghost button in the table's
+  // empty slot. Each carries `shortcut={ALT_N}` for its badge; neither owns the
+  // action.
   //
   // `run` is the single-item add, the split button's default option — not its
   // current menu selection, which may be the master-list picker. Same gate as
@@ -445,8 +458,8 @@ const InternalOrderDetailView: Component = () => {
     },
   });
 
-  // The confirmed master-list bulk add (AC-LN7/LN8): add, then refetch the
-  // page; a rejection replaces the confirmation with a notice.
+  // The confirmed master-list bulk add (OMS-REG-REPL-04.26/.27/.67): add, then
+  // refetch the page; a rejection replaces the confirmation with a notice.
   const confirmAddFromMasterList = async () => {
     const list = pendingMasterList();
     const node = info();
@@ -567,7 +580,7 @@ const InternalOrderDetailView: Component = () => {
   };
 
   // The active sort's contribution, where the key names a contributed column
-  // that declares one (AC-PLUG-K7) — the merge put its namespaced id in
+  // that declares one (OMS-REG-PLG-02.10) — the merge put its namespaced id in
   // `sortKey`, so the table hands the same id back through `onSort`.
   const sortContribution = () =>
     lineColumnContributions().find(
@@ -600,12 +613,20 @@ const InternalOrderDetailView: Component = () => {
   // Dose annotation for a unit quantity on a vaccine item under the doses
   // preference — " (N ds)" (label.doses-short), value × doses-per-unit (treated
   // as 1 when the item has none, so the annotation shows for any vaccine).
-  const doseSuffix = (line: Line, value: number): string =>
-    showDoses() && line.item.isVaccine
-      ? ` (${Math.round(value * (line.item.doses || 1))} ${t('label.doses-short')})`
-      : '';
-  const numWithDoses = (line: Line, value: number) =>
-    `${Math.round(value)}${doseSuffix(line, value)}`;
+  const numWithDoses = (line: Line, value: number): JSX.Element => (
+    <>
+      <Num value={value} />
+      <Show when={showDoses() && line.item.isVaccine}>
+        {' '}
+        (<Num value={value * (line.item.doses || 1)} /> {t('label.doses-short')}
+        )
+      </Show>
+    </>
+  );
+
+  // Spread AFTER getCellDefinition, whose number cell it replaces.
+  const dosesCell = (info: CellContext<Line, unknown>): JSX.Element =>
+    numWithDoses(info.row.original, info.getValue<number>());
 
   const crumbs = (node: InternalOrderInfoFragment) => [
     {
@@ -651,7 +672,8 @@ const InternalOrderDetailView: Component = () => {
         wrapLines: 2,
       }),
       // An ancillary line carries an "Ancillary of …" flag naming its
-      // principal item(s) (AC-A8); a non-ancillary line shows a plain name.
+      // principal item(s) (OMS-REG-REPL-13.7); a non-ancillary line shows a
+      // plain name.
       cell: info => {
         const line = info.row.original;
         return (
@@ -696,38 +718,41 @@ const InternalOrderDetailView: Component = () => {
     },
     {
       c: {
-        accessor: line => numWithDoses(line, line.availableStockOnHand),
+        accessor: line => line.availableStockOnHand,
         id: COL.available,
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
       ...getCellDefinition('available'),
+      cell: dosesCell,
     },
     {
       // AMC displayed rounded UP; header reads "Area AMC" under the gate.
       c: {
-        accessor: line =>
-          numWithDoses(line, Math.ceil(line.averageMonthlyConsumption)),
+        accessor: line => Math.ceil(line.averageMonthlyConsumption),
         id: COL.amc,
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
       ...getCellDefinition('amc'),
+      cell: dosesCell,
     },
     {
-      c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
+      // MOS: the raw figure, so the number cell applies display rounding.
+      c: { accessor: line => mos(line), id: COL.mos },
       sortKey: 'mos',
       header: () => t('label.months-of-stock'),
       ...getCellDefinition('mos'),
     },
     {
       c: {
-        accessor: line => numWithDoses(line, targetStock(line)),
+        accessor: line => targetStock(line),
         id: COL.targetStock,
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
       ...getCellDefinition('targetStock'),
+      cell: dosesCell,
     },
     // Target stock (population) — gated on the forecasting preference; the
     // stored forecast rounded up, zero on a forecast-less line.
@@ -735,31 +760,32 @@ const InternalOrderDetailView: Component = () => {
       ? ([
           {
             c: {
-              accessor: line =>
-                numWithDoses(line, Math.ceil(line.forecastTotalUnits ?? 0)),
+              accessor: line => Math.ceil(line.forecastTotalUnits ?? 0),
               id: COL.targetStockPopulation,
             },
             header: () => t('label.target-stock-population'),
             ...getCellDefinition('targetStockPopulation'),
+            cell: dosesCell,
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
     {
       c: {
-        accessor: line => numWithDoses(line, line.suggestedQuantity),
+        accessor: line => line.suggestedQuantity,
         id: COL.suggested,
       },
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
       header: () => t('label.forecast-quantity'),
       ...getCellDefinition('suggested'),
+      cell: dosesCell,
     },
     {
       // Requested — under the excess-request preference a request ≥ 1 unit
       // above the suggestion carries a red alert icon (the line-table
       // counterpart of the editor banner).
       c: {
-        accessor: line => numWithDoses(line, line.requestedQuantity),
+        accessor: line => line.requestedQuantity,
         id: COL.requested,
       },
       sortKey: 'requested',
@@ -813,51 +839,57 @@ const InternalOrderDetailView: Component = () => {
       ? ([
           {
             c: {
-              accessor: l => numWithDoses(l, l.initialStockOnHandUnits),
+              accessor: l => l.initialStockOnHandUnits,
               id: COL.initialSoh,
             },
             header: () => t('label.initial-stock-on-hand'),
             ...getCellDefinition('initialSoh'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.incomingUnits),
+              accessor: l => l.incomingUnits,
               id: COL.incoming,
             },
             header: () => t('label.incoming'),
             ...getCellDefinition('incoming'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.outgoingUnits),
+              accessor: l => l.outgoingUnits,
               id: COL.outgoing,
             },
             header: () => t('label.outgoing'),
             ...getCellDefinition('outgoing'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.lossInUnits),
+              accessor: l => l.lossInUnits,
               id: COL.losses,
             },
             header: () => t('label.losses'),
             ...getCellDefinition('losses'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.additionInUnits),
+              accessor: l => l.additionInUnits,
               id: COL.additions,
             },
             header: () => t('label.additions'),
             ...getCellDefinition('additions'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.expiringUnits),
+              accessor: l => l.expiringUnits,
               id: COL.shortExpiry,
             },
             header: () => t('label.short-expiry'),
             ...getCellDefinition('shortExpiry'),
+            cell: dosesCell,
           },
           {
             c: {
@@ -872,7 +904,8 @@ const InternalOrderDetailView: Component = () => {
             header: () => t('label.reason'),
             ...getCellDefinition('reason'),
             // A send's reasons backstop flags every offending line's Reason
-            // cell (AC-R3): a red alert beside the (usually empty) reason text.
+            // cell (OMS-REG-REPL-04.81): a red alert beside the (usually empty)
+            // reason text.
             cell: info => {
               const line = info.row.original;
               return (
@@ -924,7 +957,7 @@ const InternalOrderDetailView: Component = () => {
   // unrelated update (kdd/solid-reactivity-pitfalls). `visibleContributions`
   // also applies each contribution's `when` gate, so a contribution hidden by
   // the session context never reaches the merge — and therefore never gets a
-  // loader run (AC-PLUG-K3).
+  // loader run (OMS-REG-PLG-02.4).
   const lineColumnContributions = createMemo(() =>
     visibleContributions('internalOrderLine.column')
   );
@@ -946,7 +979,7 @@ const InternalOrderDetailView: Component = () => {
   // the contributed sort reads what they load, so the batch cannot follow it.
   const lineViews = createMemo(() => filteredLines().map(toLineView));
 
-  // The batched per-page column data (AC-PLUG-K4): one loader call per
+  // The batched per-page column data (OMS-REG-PLG-02.5): one loader call per
   // contribution per rendered set of rows, never per cell. The resource key
   // is the MEMBERSHIP — the unsorted row-id list plus the contributing ids —
   // so re-reading the same lines (a header save splicing the node back, a
@@ -1030,7 +1063,7 @@ const InternalOrderDetailView: Component = () => {
         fallback={
           <Show when={!data.loading} fallback={<Spinner center />}>
             {/* Not found (or another store's) — a blocking notice returning to
-                the list (AC-N3). */}
+                the list (OMS-REG-REPL-04.41). */}
             <ConfirmDialog
               open
               title={t('error.order-not-found')}
@@ -1094,7 +1127,7 @@ const InternalOrderDetailView: Component = () => {
                     {/* Add — a split of Add item (line editor) and Add from
                       master list (S7 picker). Shown always but DISABLED on
                       program orders (their item set is fixed at creation) and
-                      on read-only orders, with a reason tooltip (AC-LN1 —
+                      on read-only orders, with a reason tooltip (OMS-REG-REPL-04.63 —
                       "disable with an explanation", not hide). */}
                     <SplitButton
                       icon={<PlusCircleIcon />}
@@ -1115,18 +1148,18 @@ const InternalOrderDetailView: Component = () => {
                       ]}
                     />
                     {/* Use suggested quantities — fills every zero-requested line
-                      with its suggestion (AC-Q1). Available on program orders,
+                      with its suggestion (OMS-REG-REPL-04.28). Available on program orders,
                       so gated on editability alone (not canAddLines); disabled
-                      on read-only orders (AC-Q2). */}
+                      on read-only orders (OMS-REG-REPL-04.54). */}
                     <UseSuggestedQuantitiesAction
                       storeId={params.storeId}
                       orderId={node().id}
                       disabled={!editable()}
                       onApplied={() => void refetch()}
                     />
-                    {/* Export/Print — a read, offered on every status (AC-PR1). */}
+                    {/* Export/Print — a read, offered on every status (OMS-REG-REPL-04.82). */}
                     {/* Sub-context-less forms only: a program R&R form has
-                        its own surface (AC-PR2). No sort — the table's display
+                        its own surface (OMS-REG-REPL-04.30). No sort — the table's display
                         sort never reaches generation. */}
                     <ExportPrintButton
                       context="INTERNAL_ORDER"
@@ -1214,11 +1247,12 @@ const InternalOrderDetailView: Component = () => {
                 </Header>
               }
               contentFooter={
-                // Selection action bar while lines are selected (AC-LN15);
-                // otherwise the order's status footer. Matches OMS, which swaps
-                // the whole footer on selection. A program order's checkboxes are
-                // disabled (no delete offered — D32), so nothing selects there
-                // and this bar only ever appears on a general order.
+                // Selection action bar while lines are selected
+                // (OMS-REG-REPL-04.71); otherwise the order's status footer.
+                // Matches OMS, which swaps the whole footer on selection. A
+                // program order's checkboxes are disabled (no delete offered —
+                // D32), so nothing selects there and this bar only ever appears
+                // on a general order.
                 <Show
                   when={selectedIds().length > 0}
                   fallback={
@@ -1240,7 +1274,7 @@ const InternalOrderDetailView: Component = () => {
                       {selectedIds().length} {t('label.selected')}
                     </strong>
                     {/* On a read-only order the click explains why it can't
-                      proceed rather than confirming (AC-LN16); the whole-order
+                      proceed rather than confirming (OMS-REG-REPL-04.72); the whole-order
                       delete is refused server-side regardless. onDeleted clears
                       the selection (unmounting this bar) and refetches. */}
                     <DeleteLinesAction
@@ -1282,14 +1316,19 @@ const InternalOrderDetailView: Component = () => {
                   loading={data.loading}
                   sort={sort()}
                   onSort={(key, desc) => setSort({ key, desc })}
-                  // A row click opens the line editor on that line (AC-LN11);
-                  // on a read-only order it opens with every control disabled.
+                  // A row click opens the line editor on that line
+                  // (OMS-REG-REPL-04.68); on a read-only order it opens with
+                  // every control disabled.
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
-                  // Placeholder lines (requested 0) read in the info tone —
-                  // whole-row blue text, de-emphasising them (ui-surface S3
-                  // line table), matching outbound's placeholder lines.
-                  rowTone={line =>
-                    line.requestedQuantity === 0 ? 'info' : undefined
+                  // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  cardTone={line =>
+                    isOpenPlaceholder(line) ? 'info' : undefined
                   }
                   emptyMessage={
                     (lineFilter().itemCodeOrName?.like ?? '').trim() ||
@@ -1298,9 +1337,9 @@ const InternalOrderDetailView: Component = () => {
                       : t('error.no-internal-order-items')
                   }
                   // The empty line table offers the single-item add inline
-                  // (AC-LN1), the same add mode as the header split button —
-                  // withheld when a single item can't be added (read-only or a
-                  // program order, whose item set is fixed).
+                  // (OMS-REG-REPL-04.63), the same add mode as the header split
+                  // button — withheld when a single item can't be added
+                  // (read-only or a program order, whose item set is fixed).
                   empty={
                     canAddLines() ? (
                       <Button
@@ -1326,12 +1365,13 @@ const InternalOrderDetailView: Component = () => {
                       ? tableConfig.saveGlobalTableConfig
                       : undefined
                   }
-                  // Row selection for the bulk line delete (AC-LN15). The
-                  // column always shows; on a read-only order the delete is
-                  // refused with an explanation (AC-LN16), and on a program
-                  // order — whose line set is fixed — the checkboxes render
-                  // disabled so the affordance reads as blocked, not missing
-                  // (no delete offered, D32).
+                  // Row selection for the bulk line delete
+                  // (OMS-REG-REPL-04.71). The column always shows; on a
+                  // read-only order the delete is refused with an explanation
+                  // (OMS-REG-REPL-04.72), and on a program order — whose line
+                  // set is fixed — the checkboxes render disabled so the
+                  // affordance reads as blocked, not missing (no delete
+                  // offered, D32).
                   enableSelection
                   selectionDisabled={isProgram()}
                   selectedIds={selectedIds()}
@@ -1347,7 +1387,7 @@ const InternalOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                {/* The shared activity-log surface; oldest first per AC-AL1
+                {/* The shared activity-log surface; oldest first per OMS-REG-REPL-15.1
                     (spec S3 § Log tab). */}
                 <ActivityLogPanel
                   storeId={params.storeId}
@@ -1394,7 +1434,8 @@ const InternalOrderDetailView: Component = () => {
                 infoPanelContributions={infoPanelContributions}
                 onCommitted={() => {
                   // A line edit may have supplied a missing reason — drop the
-                  // send-backstop flags so they don't linger stale (AC-R3).
+                  // send-backstop flags so they don't linger stale
+                  // (OMS-REG-REPL-04.81).
                   setReasonFlaggedIds(new Set<string>());
                   void refetch();
                 }}

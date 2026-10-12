@@ -1,5 +1,5 @@
 use crate::migrations::{
-    templates::add_data_from_sync_buffer::{sync_buffer, SyncAction},
+    templates::add_data_from_sync_buffer::{SyncAction, sync_buffer},
     *,
 };
 use anyhow::Context;
@@ -68,7 +68,7 @@ mod tests {
         migrations::{v2_05_00::V2_05_00, v2_06_00::V2_06_00},
         test_db::*,
     };
-    use diesel::{sql_query, sql_types::Timestamp, RunQueryDsl};
+    use diesel::{RunQueryDsl, sql_query, sql_types::Timestamp};
 
     fn setup_test_dependencies(connection: &StorageConnection) {
         let run = |sql: &str| {
@@ -77,10 +77,18 @@ mod tests {
                 .unwrap()
         };
         // Add some names with all required fields
-        run("INSERT INTO name (id, name, code, type, is_customer, is_supplier, is_manufacturer, is_donor, on_hold) VALUES ('name1', 'Name 1', 'N1', 'FACILITY', false, false, false, false, false) ON CONFLICT (id) DO NOTHING;");
-        run("INSERT INTO name (id, name, code, type, is_customer, is_supplier, is_manufacturer, is_donor, on_hold) VALUES ('name2', 'Name 2', 'N2', 'FACILITY', false, false, false, false, false) ON CONFLICT (id) DO NOTHING;");
-        run("INSERT INTO name (id, name, code, type, is_customer, is_supplier, is_manufacturer, is_donor, on_hold) VALUES ('name3', 'Name 3', 'N3', 'FACILITY', false, false, false, false, false) ON CONFLICT (id) DO NOTHING;");
-        run("INSERT INTO name (id, name, code, type, is_customer, is_supplier, is_manufacturer, is_donor, on_hold) VALUES ('name4', 'Name 4', 'N4', 'FACILITY', false, false, false, false, false) ON CONFLICT (id) DO NOTHING;");
+        run(
+            "INSERT INTO name (id, name, code, type, is_customer, is_supplier, is_manufacturer, is_donor, on_hold) VALUES ('name1', 'Name 1', 'N1', 'FACILITY', false, false, false, false, false) ON CONFLICT (id) DO NOTHING;",
+        );
+        run(
+            "INSERT INTO name (id, name, code, type, is_customer, is_supplier, is_manufacturer, is_donor, on_hold) VALUES ('name2', 'Name 2', 'N2', 'FACILITY', false, false, false, false, false) ON CONFLICT (id) DO NOTHING;",
+        );
+        run(
+            "INSERT INTO name (id, name, code, type, is_customer, is_supplier, is_manufacturer, is_donor, on_hold) VALUES ('name3', 'Name 3', 'N3', 'FACILITY', false, false, false, false, false) ON CONFLICT (id) DO NOTHING;",
+        );
+        run(
+            "INSERT INTO name (id, name, code, type, is_customer, is_supplier, is_manufacturer, is_donor, on_hold) VALUES ('name4', 'Name 4', 'N4', 'FACILITY', false, false, false, false, false) ON CONFLICT (id) DO NOTHING;",
+        );
     }
 
     fn add_name_sync_buffer_entry(

@@ -16,8 +16,9 @@ export interface DeleteLinesActionProps {
    * Whether the order's lines may be deleted (Draft + supplier-store enabled).
    * The button stays clickable regardless; when this is false the click
    * surfaces the "only Draft orders" explanation instead of a confirmation and
-   * nothing is submitted (AC-LN16). Program orders never reach here — their
-   * item set is fixed, so the detail table offers no selection at all (D32).
+   * nothing is submitted (OMS-REG-REPL-04.72). Program orders never reach here
+   * — their item set is fixed, so the detail table offers no selection at all
+   * (D32).
    */
   canDelete: () => boolean;
   /**
@@ -27,15 +28,15 @@ export interface DeleteLinesActionProps {
   onDeleted: () => void;
 }
 
-// The internal-order detail line delete (spec AC-LN15/LN16): a footer button +
-// a blocked | confirm → deleting → error dialog. Mirrors the list's
+// The internal-order detail line delete (spec OMS-REG-REPL-04.71/.72): a footer
+// button + a blocked | confirm → deleting → error dialog. Mirrors the list's
 // DeleteInternalOrdersAction (same atomic batch, same active-and-explaining
 // treatment of a blocked selection): on a read-only order the click opens the
-// dialog already explaining why it can't proceed (AC-LN16), never a silently
-// dead click; the server enforces the same guard regardless. The batch is
-// ATOMIC — any member error rolls the whole batch back and nothing is removed,
-// so on error we show the server's reason with just a Close, keeping the
-// selection.
+// dialog already explaining why it can't proceed (OMS-REG-REPL-04.72), never a
+// silently dead click; the server enforces the same guard regardless. The batch
+// is ATOMIC — any member error rolls the whole batch back and nothing is
+// removed, so on error we show the server's reason with just a Close, keeping
+// the selection.
 //
 // No success phase: a clean delete CLOSES the dialog — closure is the
 // confirmation and the rows gone behind it are the visible result
@@ -129,7 +130,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
           fallback={tPlural('messages.confirm-delete-requisition-lines', count)}
         >
           {/* Blocked: a read-only order — explain why, and never submit
-              (AC-LN16). */}
+              (OMS-REG-REPL-04.72). */}
           <Match when={phase() === 'blocked'}>
             <Alert severity="warning">
               {t('label.cant-delete-disabled-internal-order')}

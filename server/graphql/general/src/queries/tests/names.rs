@@ -5,21 +5,21 @@ mod graphql {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_name_a, mock_name_linked_to_store, mock_name_not_linked_to_store,
-            mock_store_linked_to_name, MockDataInserts,
-        },
         CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
         CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueFilter,
         CustomFieldValueType, EqualFilter, GeneralFilter, Name, NameCondition, NameFilter,
         NameSort, NameSortField, NameType, PaginationOption, StorageConnectionManager,
         StringFilter,
+        mock::{
+            MockDataInserts, mock_name_a, mock_name_linked_to_store, mock_name_not_linked_to_store,
+            mock_store_linked_to_name,
+        },
     };
     use serde_json::json;
     use service::{
+        ListError, ListResult,
         name::NameServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
-        ListError, ListResult,
     };
 
     use crate::GeneralQueries;

@@ -2,13 +2,13 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use graphql_core::{
-    loader::{LocationByIdLoader, SensorByIdLoader},
     ContextExt,
+    loader::{LocationByIdLoader, SensorByIdLoader},
 };
 
 use graphql_types::types::LocationNode;
-use repository::{temperature_breach::TemperatureBreach, TemperatureExcursion};
-use service::{usize_to_u32, ListResult};
+use repository::{TemperatureExcursion, temperature_breach::TemperatureBreach};
+use service::{ListResult, usize_to_u32};
 
 use super::{sensor::SensorNode, temperature_breach::TemperatureBreachConnector};
 

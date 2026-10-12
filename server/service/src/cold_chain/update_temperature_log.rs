@@ -1,9 +1,9 @@
 use super::{query_temperature_log::get_temperature_log, validate::check_temperature_log_exists};
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use chrono::NaiveDateTime;
 use repository::{
-    temperature_log::TemperatureLog, RepositoryError, StorageConnection, TemperatureLogRow,
-    TemperatureLogRowRepository,
+    RepositoryError, StorageConnection, TemperatureLogRow, TemperatureLogRowRepository,
+    temperature_log::TemperatureLog,
 };
 
 #[derive(PartialEq, Debug)]

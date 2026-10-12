@@ -18,9 +18,11 @@ import {
 import { NameDetailForm } from './NameDetailForm';
 
 // S3 — Customer detail modal (read-only), opened in place over the Customer
-// list (AC-N14, AC-N20). Every field is a read-only labelled value and the only
-// footer action is OK (AC-N22). Shows the customer's attributes plus its
-// customer-only supply level, a v1 name property (AC-N25).
+// list (OMS-REG-DIST-08.11, OMS-REG-DIST-08.11/.12/.26). Every field is a
+// read-only labelled value and the only footer action is OK
+// (OMS-REG-DIST-08.12, OMS-REG-REPL-08.12). Shows the customer's attributes
+// plus its customer-only supply level, a v1 name property (OMS-REG-DIST-08.26,
+// OMS-REG-REPL-08.22).
 
 interface Props {
   nameId: string | undefined;
@@ -70,7 +72,7 @@ export const CustomerDetailModal: Component<Props> = props => {
     // Title is the record name (accessible name), hidden because the detail
     // form shows a centred record-name header itself (matches the current app,
     // which renders the same Details body inside the modal). OK is the only
-    // action (read-only — AC-N22).
+    // action (read-only — OMS-REG-DIST-08.12, OMS-REG-REPL-08.12).
     <Dialog
       open={props.open}
       onClose={props.onClose}

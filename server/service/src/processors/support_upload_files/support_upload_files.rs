@@ -367,11 +367,11 @@ fn process_database_files(
 mod tests {
     use anyhow::anyhow;
     use repository::{
-        mock::{mock_store_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
         ChangelogRow, EqualFilter, KeyType, KeyValueStoreRepository, SyncFileReferenceFilter,
         SyncFileReferenceRepository, SyncMessageRow, SyncMessageRowRepository,
         SyncMessageRowStatus, SyncMessageRowType,
+        mock::{MockData, MockDataInserts, mock_store_a},
+        test_db::setup_all_with_data,
     };
 
     use crate::{

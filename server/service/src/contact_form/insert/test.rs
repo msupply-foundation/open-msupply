@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod insert {
-    use repository::mock::{mock_store_a, mock_user_account_a, MockDataInserts};
+    use repository::mock::{MockDataInserts, mock_store_a, mock_user_account_a};
     use repository::test_db::setup_all;
 
     use crate::contact_form::insert::ContactType::Feedback;

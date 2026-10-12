@@ -1,12 +1,12 @@
 use super::{
-    clinician_link_row::{clinician_link, ClinicianLinkRow},
-    clinician_row::{clinician, ClinicianRow},
+    DBType, RepositoryError, StorageConnection,
+    clinician_link_row::{ClinicianLinkRow, clinician_link},
+    clinician_row::{ClinicianRow, clinician},
     name_row::name,
     prescription_request_row::{
-        prescription_request, PrescriptionRequestRow, PrescriptionRequestStatus,
+        PrescriptionRequestRow, PrescriptionRequestStatus, prescription_request,
     },
     user_row::user_account,
-    DBType, RepositoryError, StorageConnection,
 };
 use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,

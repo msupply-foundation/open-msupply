@@ -1,10 +1,10 @@
 use crate::program_settings::has_customer_program_requisition_settings;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
+use graphql_types::types::RequisitionNodeType;
 use graphql_types::types::program_indicator::{
     ProgramIndicatorFilterInput, ProgramIndicatorResponse, ProgramIndicatorSortInput,
 };
-use graphql_types::types::RequisitionNodeType;
 
 pub mod mutations;
 mod program_indicator;
@@ -18,8 +18,8 @@ use mutations::update_indicator_value::{
 };
 use program_indicator::program_indicators;
 use program_settings::{
-    get_program_requisition_settings_by_customer, get_supplier_program_requisition_settings,
     CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
+    get_program_requisition_settings_by_customer, get_supplier_program_requisition_settings,
 };
 
 #[derive(Default, Clone)]

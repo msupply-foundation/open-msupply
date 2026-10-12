@@ -1,5 +1,5 @@
 use crate::{
-    diesel_macros::diesel_json_type, migrations::Version, ChangelogTableName, RepositoryError,
+    ChangelogTableName, RepositoryError, diesel_macros::diesel_json_type, migrations::Version,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;

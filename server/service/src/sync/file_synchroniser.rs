@@ -6,23 +6,23 @@ use tokio::sync::watch;
 use util::format_error;
 
 use repository::{
+    RepositoryError, SyncVersion,
     sync_file_reference_row::{
         SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
     },
     syncv7::SyncError as SyncErrorV7,
-    RepositoryError, SyncVersion,
 };
 
 use crate::static_files::{StaticFile, StaticFileCategory};
 use crate::sync::api::SyncApiV5;
-use crate::sync::api_v6::upload_file::UploadOutcome;
 use crate::sync::api_v6::SyncApiV6;
+use crate::sync::api_v6::upload_file::UploadOutcome;
 use crate::sync::settings::SYNC_V5_VERSION;
 use crate::sync_v7::api::SyncApiV7;
 use crate::{service_provider::ServiceProvider, static_files::StaticFileService};
 
-use super::settings::SyncSettings;
 use super::CentralServerConfig;
+use super::settings::SyncSettings;
 use super::{
     api::SyncApiV5CreatingError,
     api_v6::{SyncApiErrorVariantV6, SyncParsedErrorV6},

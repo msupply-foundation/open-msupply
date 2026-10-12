@@ -1,6 +1,6 @@
 use super::{
-    item_row::item, master_list_line_row::master_list_line::dsl::*, master_list_row::master_list,
-    StorageConnection,
+    StorageConnection, item_row::item, master_list_line_row::master_list_line::dsl::*,
+    master_list_row::master_list,
 };
 use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;

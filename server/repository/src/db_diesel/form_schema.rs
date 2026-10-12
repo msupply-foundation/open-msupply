@@ -1,9 +1,9 @@
-use super::{form_schema_row::form_schema, StorageConnection};
+use super::{StorageConnection, form_schema_row::form_schema};
 
 use crate::{
+    DBType, EqualFilter, FormSchemaJson, FormSchemaRow, Pagination, RepositoryError, Sort,
     diesel_macros::{apply_equal_filter, apply_sort},
-    schema_from_row, DBType, EqualFilter, FormSchemaJson, FormSchemaRow, Pagination,
-    RepositoryError, Sort,
+    schema_from_row,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};

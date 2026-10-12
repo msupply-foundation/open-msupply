@@ -1,7 +1,7 @@
 use std::{future::Future, sync::Arc};
 
 use crate::service_provider::ServiceProvider;
-use crate::sync::{is_initialised, CentralServerConfig};
+use crate::sync::{CentralServerConfig, is_initialised};
 
 use super::file_sync_driver::FileSyncTrigger;
 use super::{settings::SyncSettings, synchroniser_runner::Synchroniser};

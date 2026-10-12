@@ -11,9 +11,9 @@ import {
 // The purchase-order status mapping (spec/purchase-orders ui-surface § status
 // labels): two of the five stored names mislead, so nothing may render the
 // enum. Shared by the list's chip, its status filter, the CSV export and the
-// supplier detail's Purchase Orders tab (spec/names AC-N26), so the mapping is
-// pinned here once. The t() wrapper (poStatusLabel) is a thin call over the key
-// mapping.
+// supplier detail's Purchase Orders tab (spec/names OMS-REG-REPL-08.23), so the
+// mapping is pinned here once. The t() wrapper (poStatusLabel) is a thin call
+// over the key mapping.
 
 describe('purchase-order status labels', () => {
   it('maps every status to its displayed label key', () => {

@@ -1,10 +1,10 @@
+use actix_web::HttpRequest;
 use actix_web::cookie::Cookie;
 use actix_web::http::header::COOKIE;
 use actix_web::web::{self};
-use actix_web::HttpRequest;
 use service::{
     auth::{
-        validate_auth, AuthDeniedKind, AuthError, Resource, ResourceAccessRequest, ValidatedUser,
+        AuthDeniedKind, AuthError, Resource, ResourceAccessRequest, ValidatedUser, validate_auth,
     },
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},

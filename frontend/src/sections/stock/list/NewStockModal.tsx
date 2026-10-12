@@ -45,7 +45,7 @@ import {
   type InsertStockLineVariables,
 } from './newStock.generated';
 
-// The new-stock modal (spec/stock S3, FL5). Item-first: the rest of the form
+// The new-stock modal (spec/stock S3). Item-first: the rest of the form
 // appears once an item is chosen (its defaults seed pack size + sell price; its
 // variants are offered). Mechanically a finalised inventory addition
 // (insertStockLine). Follows the shared dialog lifecycle (busy OK, close on
@@ -297,7 +297,11 @@ const NewStockContent = (props: {
       title={t('heading.stock-line-details')}
       actionsLead={
         <Show when={error()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+          {message => (
+            <Alert severity="error" testId="new-stock-error">
+              {message()}
+            </Alert>
+          )}
         </Show>
       }
       actions={

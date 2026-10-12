@@ -10,6 +10,7 @@ import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
+import { ReorderableList } from '../ui/elements/inputs/ReorderableList';
 import { BareCheckbox } from '../ui/elements/inputs/BareCheckbox';
 import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 import { DateField } from '../ui/elements/inputs/DateField';
@@ -32,6 +33,14 @@ import {
 import { FormPreview, Intro, Lead, Note, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './InputsShowcase.module.css';
+
+// The ReorderableList demo's rows, by id — the order is the state.
+const SHOWCASE_DOSES: Record<string, { label: string; description: string }> = {
+  bcg: { label: 'BCG', description: 'BCG' },
+  'opv-0': { label: 'OPV 0', description: 'Polio' },
+  'penta-1': { label: 'Penta 1', description: 'Pentavalent' },
+  'measles-1': { label: 'Measles 1', description: 'Measles' },
+};
 
 // Mock source for the home-currency selector: the currencies old OMS shipped
 // hand-configured. The real source is the entered store's homeCurrencyCode —
@@ -135,6 +144,11 @@ export const inputsMetadata: PageMetadata = {
       title: 'Checkbox',
       searchTerms: ['checkbox', 'tick', 'boolean'],
     },
+    {
+      id: 'inputs-reorderable',
+      title: 'Reorderable list',
+      searchTerms: ['reorder', 'drag', 'order', 'sort', 'move', 'handle'],
+    },
   ],
 };
 
@@ -143,6 +157,8 @@ export const InputsShowcase = () => {
   // sub-choice — the exact shape the create-stocktake modal uses.
   const [stocktakeType, setStocktakeType] = createSignal('full');
   const [includeAll, setIncludeAll] = createSignal('soh');
+  // Segmented demo: the store editor's follow-global / on / off choice.
+  const [authorise, setAuthorise] = createSignal('global');
   // Checkbox / ToggleSwitch demos.
   const [countZero, setCountZero] = createSignal(true);
   const [confirmed, setConfirmed] = createSignal(false);
@@ -185,6 +201,12 @@ export const InputsShowcase = () => {
   const [unitCost, setUnitCost] = createSignal<number | undefined>(1.5025);
   const [sbdPrice, setSbdPrice] = createSignal<number | undefined>();
   const [password, setPassword] = createSignal('sekret-123');
+  // ReorderableList demo: a vaccine schedule's dose order — the shape the
+  // Afghanistan Daily Tally's configuration editor sets (its Dose order tab).
+  // Only the ORDER is state, and the rows are rebuilt from it on every
+  // reorder: the list holds their identity by id, so this is all a consumer
+  // writes.
+  const [doseOrder, setDoseOrder] = createSignal(Object.keys(SHOWCASE_DOSES));
 
   return (
     <ContentContainer size="form" align="start">
@@ -834,7 +856,13 @@ export const InputsShowcase = () => {
             (the three below decide what the create-stocktake modal shows under
             them); a plain yes/no like <em>Which items</em> stays a bare list.
             The selected state comes from <code>:has(input:checked)</code> — no
-            JS mirrors it, so the box and the dot cannot disagree.
+            JS mirrors it, so the box and the dot cannot disagree.{' '}
+            <code>appearance="segmented"</code> is the third drawing: the same
+            radios joined into one bar, for a short set of exclusive values that
+            all deserve to be on the surface. It fills the selection{' '}
+            <strong>neutral</strong> rather than brand — a settings panel of
+            segmented rows would otherwise be a wall of orange marking nothing,
+            so a row that needs colour marks it beside the control instead.
           </Lead>
           <FormPreview>
             <RadioGroup
@@ -859,6 +887,17 @@ export const InputsShowcase = () => {
                   label: 'Blank stocktake',
                   description: 'Start empty and add items manually.',
                 },
+              ]}
+            />
+            <RadioGroup
+              label='Authorise purchase orders (appearance="segmented")'
+              appearance="segmented"
+              value={authorise()}
+              onChange={setAuthorise}
+              options={[
+                { value: 'global', label: 'Global: On' },
+                { value: 'on', label: 'On' },
+                { value: 'off', label: 'Off' },
               ]}
             />
             <RadioGroup
@@ -998,6 +1037,27 @@ export const InputsShowcase = () => {
             />
             <ToggleSwitch label="Disabled switch" disabled checked />
           </FormPreview>
+        </DashboardCard>
+
+        <DashboardCard
+          id="inputs-reorderable"
+          title="Reorderable list — an order a user rearranges"
+        >
+          <Lead>
+            An ordered set as a real <code>&lt;ol&gt;</code>: drag a row by its
+            handle, or use the four move buttons — to top, up, down, to bottom,
+            each disabled at the end it cannot leave. Native HTML5 drag events,
+            no library: the buttons <em>are</em> the accessible path, so the
+            handle is a pointer-only affordance and nothing depends on a grab
+            mode. Every gesture reports the whole new order, so the list is
+            controlled by its parent.
+          </Lead>
+          <ReorderableList
+            label="Dose order"
+            showPosition
+            items={doseOrder().map(id => ({ id, ...SHOWCASE_DOSES[id] }))}
+            onReorder={setDoseOrder}
+          />
         </DashboardCard>
       </Stack>
     </ContentContainer>

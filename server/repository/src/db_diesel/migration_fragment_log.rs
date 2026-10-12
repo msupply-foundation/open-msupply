@@ -1,7 +1,7 @@
 use crate::migrations::{Migration, MigrationFragment};
 
 use super::{
-    migration_fragment_log::migration_fragment_log::dsl, RepositoryError, StorageConnection,
+    RepositoryError, StorageConnection, migration_fragment_log::migration_fragment_log::dsl,
 };
 
 use chrono::Utc;

@@ -58,14 +58,14 @@ impl From<RepositoryError> for AssignStoresToSiteError {
 #[cfg(test)]
 mod tests {
     use repository::{
-        mock::{mock_store_a, mock_store_b, MockDataInserts},
-        test_db::setup_all,
         StoreRowRepository,
+        mock::{MockDataInserts, mock_store_a, mock_store_b},
+        test_db::setup_all,
     };
 
     use crate::{
         service_provider::ServiceProvider,
-        site::upsert::{upsert_site, UpsertSite},
+        site::upsert::{UpsertSite, upsert_site},
     };
 
     use super::*;

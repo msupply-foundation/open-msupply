@@ -166,10 +166,18 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
   /**
+   * Which rows `onRowClick` applies to, where only some open anything — e.g.
+   * a plugin row opens its settings editor only when the plugin ships one
+   * (spec/plugin-management S1). A row this answers false for gets no pointer
+   * cue, no click and no Enter-to-open: it reads as the inert row it is.
+   * Omitted, every row is clickable whenever `onRowClick` is set.
+   */
+  rowClickable?: (row: T) => boolean;
+  /**
    * Arrow-key row navigation: `ArrowDown`/`ArrowUp` move a row highlight
    * (clamped at the ends, scrolled into view), `Enter` opens the highlighted
    * row through the SAME `onRowClick` a mouse click uses, `Escape` clears the
-   * highlight (spec/keyboard KB-N1/KB-E5, AC-KB37–40; issue #1006).
+   * highlight (spec/keyboard KB-N1/KB-E5, OMS-REG-KBD-02.27–.31; issue #1006).
    *
    * DEFAULTS to whether `onRowClick` is set, so every list table answers the
    * arrows without its page opting in — a table whose rows open nothing has
@@ -199,7 +207,9 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for matching rows: 'info' for lines awaiting an action
-   * (placeholder / uncounted lines), 'warning' for a line needing attention
+   * (in practice via cardTone, on a placeholder card's title — table rows mark
+   * placeholder / uncounted lines with rowTint + rowAccent 'unfinished', never
+   * text colour), 'warning' for a line needing attention
    * before it can proceed (a held batch on an outbound line), 'error' for a
    * line in an error state (expired stock; a server-refused bulk line).
    * Stamps data-tone on the row, mapped to palette tokens in CSS: table view
@@ -401,6 +411,25 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * scroll. So in row view the table keeps its box, whatever this says.
    */
   fitContent?: boolean;
+
+  /**
+   * This table is its dialog's MAIN line table — a line editor's batch grid,
+   * a picker's list. Stamps `data-dialog-table` on the root, which the Dialog
+   * reads in its full-screen state (a workbench dialog on a tablet) to run
+   * the table to the sheet's edges with no frame and no radius, and to its
+   * hairlines on the side(s) where the table ends the body
+   * (Dialog.module.css › data-fullscreen, #246). A card or sheet framed by
+   * the scrim ignores it. Leave it off a secondary table that shares the
+   * dialog with a form (a repack history, a duplicates list): that one keeps
+   * its frame. A table that is the body's only child gets the same treatment
+   * without it; saying so still records the intent.
+   *
+   * If the table sits inside the editor's OWN scroll box, spread
+   * `DIALOG_SCROLL` (from Dialog) on that box too, or the table's first and
+   * last columns are clipped instead of reaching the sheet's edge. All three
+   * hooks and the chain rule: `DialogProps.size`.
+   */
+  dialogTable?: boolean;
 
   // --- Pagination (optional), STATE owned by the page. --- When set, the
   // table's footer bar shows the Pagination control (its default face — the
@@ -742,7 +771,8 @@ export function DataTable<T, K extends string, G extends string = never>(
       const row = table
         .getRowModel()
         .rows.find(candidate => candidate.id === key);
-      if (row) props.onRowClick?.(row.original);
+      if (row && (props.rowClickable?.(row.original) ?? true))
+        props.onRowClick?.(row.original);
     },
   });
 
@@ -759,7 +789,7 @@ export function DataTable<T, K extends string, G extends string = never>(
    * KB-F1: "A list screen seeds its table, making arrow-key row navigation
    * available immediately… It MUST NOT steal focus from a text field that
    * already holds it — an arrival that races a search field or a just-dismissed
-   * palette yields to the field" (AC-KB28/AC-KB29).
+   * palette yields to the field" (OMS-REG-KBD-02.17/.18).
    *
    * Done HERE rather than by each page handing in a focus target (the shape
    * that was removed with the first build): the seed is the same on all ~30
@@ -1467,6 +1497,9 @@ export function DataTable<T, K extends string, G extends string = never>(
       data-fit-content={
         props.fitContent && viewMode() === 'card' ? '' : undefined
       }
+      // The dialog's main line table (see `dialogTable`) — read by the
+      // Dialog's full-screen rules, nothing here.
+      data-dialog-table={props.dialogTable ? '' : undefined}
     >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
@@ -1670,6 +1703,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         enableSelection={props.enableSelection ?? false}
                         selectionDisabled={props.selectionDisabled ?? false}
                         onRowClick={props.onRowClick}
+                        rowClickable={props.rowClickable}
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
@@ -1709,6 +1743,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             enableSelection={props.enableSelection ?? false}
                             selectionDisabled={props.selectionDisabled ?? false}
                             onRowClick={props.onRowClick}
+                            rowClickable={props.rowClickable}
                             rowState={props.rowState}
                             rowTone={props.rowTone}
                             rowTint={props.rowTint}
