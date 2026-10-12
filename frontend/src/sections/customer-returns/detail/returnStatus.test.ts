@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   currentStep,
   filterByStatusPreference,
+  trackStages,
 } from '@/domain/invoice/statusGate';
 import {
   isReturnDisabled,
@@ -142,28 +143,29 @@ describe('statusSteps / statusIndex — the lifecycle indicator', () => {
   });
 });
 
-describe('offered flow / currentStep — pref-filtered lifecycle indicator', () => {
+describe('track stages / currentStep — pref-filtered lifecycle indicator', () => {
   // rules § preference gates: the invoice-status-options preference limits
-  // EVERY status surface, the lifecycle indicator included; the current stage
-  // falls back to the nearest offered status at-or-before the actual one.
-  // Composed through the shared @/domain/invoice helpers exactly as the
-  // footer does.
-  const offered = (allowed: readonly string[]) =>
-    filterByStatusPreference(statusFlow('manual'), allowed);
+  // EVERY status surface, the lifecycle indicator included — except the
+  // return's OWN stage, which the track keeps so the current stage always has
+  // a step to mark. Composed through the shared @/domain/invoice helpers
+  // exactly as the footer does.
+  const stages = (status: string, allowed: readonly string[]) =>
+    trackStages(statusFlow('manual'), allowed, status);
   const step = (status: string, allowed: readonly string[]) =>
-    currentStep(statusFlow('manual'), offered(allowed), status);
+    currentStep(stages(status, allowed), status);
 
-  it('filters the indicator steps and keeps a sensible current stage', () => {
-    expect(offered([])).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
-    expect(offered(['NEW', 'VERIFIED'])).toEqual(['NEW', 'VERIFIED']);
+  it('filters the indicator steps but keeps the return’s own stage', () => {
+    expect(stages('NEW', [])).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
+    expect(stages('NEW', ['NEW', 'VERIFIED'])).toEqual(['NEW', 'VERIFIED']);
+    // A RECEIVED return keeps its Received step even though the pref hides it
+    const offered = stages('RECEIVED', ['NEW', 'VERIFIED']);
+    expect(offered).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
     const steps = statusSteps(
-      offered(['NEW', 'VERIFIED']),
+      offered,
       node({ status: 'RECEIVED', receivedDatetime: '2026-01-02T00:00:00Z' })
     );
-    expect(steps.map(s => s.label)).toHaveLength(2);
-    // Actual status RECEIVED is hidden by the pref → current falls back to
-    // NEW (the nearest offered stage at-or-before).
-    expect(step('RECEIVED', ['NEW', 'VERIFIED'])).toBe(0);
+    expect(steps.map(s => s.label)).toHaveLength(3);
+    expect(step('RECEIVED', ['NEW', 'VERIFIED'])).toBe(1);
     expect(step('RECEIVED', [])).toBe(1);
     expect(step('VERIFIED', ['NEW', 'VERIFIED'])).toBe(1);
   });
