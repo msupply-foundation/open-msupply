@@ -1,4 +1,5 @@
 import { UPLOAD_URL } from '@/config';
+import { postFiles } from '@/api/postFiles';
 import type { GraphqlResult } from '@/api/graphql';
 import type { InstallUploadedReportsResult } from './manageReports.generated';
 
@@ -40,25 +41,24 @@ export type UploadOutcome =
  * is the GraphQL client's job, not this endpoint's.
  */
 export const uploadReportFile = async (file: File): Promise<UploadOutcome> => {
-  const body = new FormData();
-  // Field name "files" — the server's multipart field, singular struct member
-  // notwithstanding.
-  body.append('files', file);
+  // The transport is the shared one — same route, same multipart field, same
+  // never-throwing contract as the plugin bundle and sync-file uploads
+  // (`api/postFiles.ts`). Only what the answer MEANS is this vertical's.
+  const posted = await postFiles(UPLOAD_URL, [file]);
+  if (posted.kind === 'unreachable')
+    return { kind: 'failed', message: posted.message };
+
+  const { response } = posted;
+  if (!response.ok)
+    return { kind: 'failed', message: `HTTP ${response.status}` };
   try {
-    const response = await fetch(UPLOAD_URL, {
-      method: 'POST',
-      headers: { Accept: 'application/json' },
-      credentials: 'same-origin',
-      body,
-    });
-    if (!response.ok)
-      return { kind: 'failed', message: `HTTP ${response.status}` };
-    const payload: unknown = await response.json();
-    const fileId = readFileId(payload);
+    const fileId = readFileId(await response.json());
     return fileId
       ? { kind: 'uploaded', fileId }
       : { kind: 'failed', message: 'missing file-id' };
   } catch (e) {
+    // A 200 whose body is not JSON: still a failed transfer, since no file-id
+    // can be read from it.
     return {
       kind: 'failed',
       message: e instanceof Error ? e.message : String(e),
