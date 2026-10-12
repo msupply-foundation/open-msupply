@@ -15,7 +15,7 @@ _Author to complete._
 <!-- Include all expected breakpoints if relevant e.g. How does it look on tablet, vs desktop? -->
 
 <!-- Please include links to videos/demos of new functionality if possible -->
-<!-- AI AGENTS cannot attach images — leave the line below in place for the author to complete -->
+<!-- AI AGENTS: the pr-create skill replaces the line below with before/after screenshots from the e2e stack; leave it only when capture wasn't possible -->
 
 _Author to attach._
 
