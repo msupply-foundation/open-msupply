@@ -3,6 +3,7 @@ import {
   createResource,
   Match,
   Show,
+  Suspense,
   Switch,
   type Component,
 } from 'solid-js';
@@ -39,6 +40,7 @@ import { DocumentVersionNotice } from '../../domain/documentForm/DocumentVersion
 import { DocumentFormRegion } from '../../plugins/DocumentFormRegion';
 import { documentFormVersioning } from '../../plugins/documentFormSlot';
 import type { Encounter } from '../../plugin-sdk/documents';
+import { VaccinationCardRegion } from '../vaccination-card';
 import {
   EncounterRecord,
   type EncounterRecordFragment,
@@ -235,6 +237,31 @@ const EncounterDetailView: Component = () => {
                   />
                 </Stack>
               </ContentContainer>
+              {/* An immunisation encounter shows its enrolment's vaccination
+                  card beneath the form (spec/vaccination-card S2). Each dose
+                  saves on its own, apart from the encounter's Save. The card
+                  needs the full width, so it sits outside the form measure,
+                  under its own Suspense: loading its chunk suspends only it. */}
+              <Show
+                when={
+                  record()?.programEnrolment?.isImmunisationProgram &&
+                  record()?.programEnrolment
+                }
+              >
+                {enrolment => (
+                  <ContentContainer size="wide" padded>
+                    <Suspense fallback={<Spinner center />}>
+                      <VaccinationCardRegion
+                        storeId={params.storeId}
+                        encounterId={params.encounterId}
+                        patientId={record()?.patientId ?? ''}
+                        programEnrolmentId={enrolment().id}
+                        encounterClinicianId={draft.data.clinician?.id ?? null}
+                      />
+                    </Suspense>
+                  </ContentContainer>
+                )}
+              </Show>
               <ConfirmDialog
                 open={leaveGuard.open()}
                 title={t('heading.are-you-sure')}

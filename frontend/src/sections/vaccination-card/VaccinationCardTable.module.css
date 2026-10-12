@@ -1,0 +1,21 @@
+/*
+ * The card is read BY AGE: one age label per group of doses due together
+ * (spec/vaccination-card ui-surface § the card table). `display: contents`
+ * keeps this wrapper out of the page's layout — it only scopes the selectors.
+ */
+.card {
+  display: contents;
+}
+
+.age {
+  font-weight: var(--weight-semibold);
+}
+
+/*
+ * Inside an age group the Age cell drops its divider, so the label reads as
+ * spanning every dose beneath it. The rest of the row keeps its divider, so
+ * each dose is still its own line.
+ */
+.card td[data-testid='cell-age']:has([data-age-continues]) {
+  border-block-end-color: transparent;
+}

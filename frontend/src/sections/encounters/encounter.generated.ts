@@ -18,6 +18,8 @@ export type EncounterRecordFragment = {
 };
   programEnrolment: {
   __typename: "ProgramEnrolmentNode";
+  id: string;
+  isImmunisationProgram: boolean;
   document: {
   __typename: "DocumentNode";
   documentRegistry: {
@@ -42,5 +44,5 @@ export type EncounterRecordResult = {
 };
 
 export const EncounterRecord = {
-  query: "query encounterRecord($storeId: String!, $id: String!) {\n  encounters(\n    storeId: $storeId\n    filter: {id: {equalTo: $id}, includeDeleted: true}\n  ) {\n    ... on EncounterConnector {\n      __typename\n      nodes {\n        ...EncounterRecord\n      }\n    }\n  }\n}\n\nfragment EncounterRecord on EncounterNode {\n  __typename\n  id\n  type\n  patientId\n  patient {\n    __typename\n    id\n    name\n  }\n  document {\n    __typename\n    name\n  }\n  programEnrolment {\n    __typename\n    document {\n      __typename\n      documentRegistry {\n        __typename\n        name\n      }\n    }\n  }\n}",
+  query: "query encounterRecord($storeId: String!, $id: String!) {\n  encounters(\n    storeId: $storeId\n    filter: {id: {equalTo: $id}, includeDeleted: true}\n  ) {\n    ... on EncounterConnector {\n      __typename\n      nodes {\n        ...EncounterRecord\n      }\n    }\n  }\n}\n\nfragment EncounterRecord on EncounterNode {\n  __typename\n  id\n  type\n  patientId\n  patient {\n    __typename\n    id\n    name\n  }\n  document {\n    __typename\n    name\n  }\n  programEnrolment {\n    __typename\n    id\n    isImmunisationProgram\n    document {\n      __typename\n      documentRegistry {\n        __typename\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<EncounterRecordResult, EncounterRecordVariables>;
