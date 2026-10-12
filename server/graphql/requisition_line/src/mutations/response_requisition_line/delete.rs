@@ -1,11 +1,11 @@
 use async_graphql::*;
 use graphql_core::{
+    ContextExt,
     simple_generic_errors::{
         CannotDeleteLineLinkedToShipment, CannotEditRequisition, ForeignKey, ForeignKeyError,
         RecordNotFound,
     },
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
@@ -91,27 +91,27 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::RequisitionLineDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::RequisitionDoesNotExist => {
             return Ok(DeleteErrorInterface::RequisitionDoesNotExist(
                 ForeignKeyError(ForeignKey::RequisitionId),
-            ))
+            ));
         }
         ServiceError::CannotEditRequisition => {
             return Ok(DeleteErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
-            ))
+            ));
         }
         ServiceError::CannotDeleteLineFromTransferredRequisition => {
             return Ok(DeleteErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
-            ))
+            ));
         }
         ServiceError::CannotDeleteLineLinkedToShipment => {
             return Ok(DeleteErrorInterface::CannotDeleteLineLinkedToShipment(
                 CannotDeleteLineLinkedToShipment {},
-            ))
+            ));
         }
 
         // Standard Graphql Errors
@@ -131,16 +131,16 @@ mod test {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{StorageConnectionManager, mock::MockDataInserts};
     use serde_json::json;
 
     use service::{
         requisition_line::{
+            RequisitionLineServiceTrait,
             response_requisition_line::{
                 DeleteResponseRequisitionLine as ServiceInput,
                 DeleteResponseRequisitionLineError as ServiceError,
             },
-            RequisitionLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

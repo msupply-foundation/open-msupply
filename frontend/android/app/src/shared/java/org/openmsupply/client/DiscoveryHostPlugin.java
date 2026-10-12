@@ -184,8 +184,8 @@ public class DiscoveryHostPlugin extends Plugin {
      * (hostContract.ts § RawAnnouncement): the resolved address and the TXT
      * identity attributes, unmarked and unrewritten — locality and address
      * policy are the page's. IPv4-only because the wire shape carries one
-     * dotted-quad `ip`; the page re-checks completeness (AC-DT7), so partial
-     * TXT records pass through as ''. */
+     * dotted-quad `ip`; the page re-checks completeness
+     * (OMS-REG-DESK-01.10/.11), so partial TXT records pass through as ''. */
     private JSObject toAnnouncement(NsdServiceInfo info) {
         InetAddress address = info.getHost();
         if (!(address instanceof Inet4Address)) return null;
@@ -370,8 +370,8 @@ public class DiscoveryHostPlugin extends Plugin {
         super.getActivity().runOnUiThread(() -> {
             ((DiscoveryHostActivity) super.getActivity())
                 .onServerChosen(url, origin, hardwareId, port, isLocal);
-            // Host duty (AC-DT16): a host-initiated navigation is a fresh
-            // start — once the target commits, drop the WebView history
+            // Host duty (OMS-REG-DESK-01.21): a host-initiated navigation is a
+            // fresh start — once the target commits, drop the WebView history
             // beneath it, or hardware back re-enters discovery flagless and
             // its autoconnect bounces straight back
             // (MainActivity.clearHistoryWhenLoaded).

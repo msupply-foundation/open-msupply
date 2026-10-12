@@ -105,7 +105,8 @@ export const RequisitionSidePanel: Component<
           <span>{localisedDate(props.node.createdDatetime)}</span>
         </FieldRow>
         <FieldRow label={t('label.color')}>
-          {/* The picker while editable, read-only otherwise (AC-T1). */}
+          {/* The picker while editable, read-only otherwise
+              (OMS-REG-DIST-05.27). */}
           <Show
             when={props.editable}
             fallback={<ColourTagDot colour={props.node.colour ?? null} />}

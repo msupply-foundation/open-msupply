@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 
-use super::{get_connection, DBBackendConnection, DBConnection};
+use super::{DBBackendConnection, DBConnection, get_connection};
 
 use crate::db_diesel::changelog::ChangelogCursorTracker;
 use crate::repository_error::RepositoryError;
@@ -47,7 +47,7 @@ impl<'a> LockedConnection<'a> {
                 return Err(TransactionError::Transaction {
                     msg: "Failed to get transaction depth".to_string(),
                     level: -1,
-                })
+                });
             }
         };
         Ok(match level {
@@ -317,18 +317,28 @@ fn map_begin_transaction_error<T>(
 #[derive(Clone)]
 pub struct StorageConnectionManager {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
+    /// What the pool was opened with: the sqlite file path, or the postgres URL. Kept so
+    /// that code needing a connection outside the pool (`ReadOnlySql` on sqlite) opens the
+    /// same database the pool did.
+    database_url: String,
     on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
     /// Shared with every `StorageConnection` produced by this manager.
     changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
 }
 
 impl StorageConnectionManager {
-    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
+    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>, database_url: String) -> Self {
         StorageConnectionManager {
             pool,
+            database_url,
             on_commit: None,
             changelog_cursor_tracker: ChangelogCursorTracker::new(),
         }
+    }
+
+    /// The sqlite file path or postgres URL the pool was opened with.
+    pub fn database_url(&self) -> &str {
+        &self.database_url
     }
 
     pub fn set_on_commit(&mut self, callback: Arc<dyn Fn(&TransactionNotification) + Send + Sync>) {
@@ -357,7 +367,7 @@ impl StorageConnectionManager {
 
 #[cfg(test)]
 mod connection_manager_tests {
-    use crate::{test_db, RepositoryError, TransactionError};
+    use crate::{RepositoryError, TransactionError, test_db};
 
     #[actix_rt::test]
     async fn test_nested_tx() {
@@ -424,13 +434,13 @@ mod connection_manager_tests {
 #[cfg(test)]
 mod on_commit_test {
     use std::sync::{
-        atomic::{AtomicUsize, Ordering},
         Arc,
+        atomic::{AtomicUsize, Ordering},
     };
 
     use crate::{
-        test_db, ActivityLogRow, ActivityLogRowRepository, ActivityLogType, RepositoryError,
-        TransactionError,
+        ActivityLogRow, ActivityLogRowRepository, ActivityLogType, RepositoryError,
+        TransactionError, test_db,
     };
 
     async fn setup(name: &str) -> (super::StorageConnectionManager, Arc<AtomicUsize>) {

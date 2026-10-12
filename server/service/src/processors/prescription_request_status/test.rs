@@ -1,19 +1,19 @@
 use chrono::Utc;
 use repository::{
-    mock::{mock_item_a, mock_patient, MockData, MockDataInserts},
     EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
     InvoiceType, KeyType, KeyValueStoreRow, NameRow, PrescriptionRequestRow,
     PrescriptionRequestRowRepository, PrescriptionRequestStatus, StoreRow,
+    mock::{MockData, MockDataInserts, mock_item_a, mock_patient},
 };
 use util::uuid::uuid;
 
 use crate::{
-    invoice::prescription::{update_prescription, UpdatePrescription, UpdatePrescriptionStatus},
+    invoice::prescription::{UpdatePrescription, UpdatePrescriptionStatus, update_prescription},
     prescription_request::insert::InsertPrescriptionRequest,
     prescription_request::update::{UpdatePrescriptionRequest, UpdatePrescriptionRequestStatus},
     prescription_request_line::upsert::UpsertPrescriptionRequestLine,
     processors::ProcessorType,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 /// When a dispensing invoice generated from a prescription request reaches
@@ -175,6 +175,9 @@ async fn verify_via_dispensing_service_flips_request_immediately() {
         .context("store_a".to_string(), "user_account_a".to_string())
         .unwrap();
 
+    // Prescribed days ago, so the dispensed time below can be told apart from
+    // the prescription date (issue #931).
+    let prescribed_three_days_ago = Utc::now().naive_utc() - chrono::Duration::days(3);
     let request = service_provider
         .prescription_request_service
         .insert_prescription_request(
@@ -183,6 +186,7 @@ async fn verify_via_dispensing_service_flips_request_immediately() {
             InsertPrescriptionRequest {
                 id: uuid(),
                 patient_id: mock_patient().id,
+                prescription_datetime: Some(prescribed_three_days_ago),
                 ..Default::default()
             },
         )
@@ -240,5 +244,21 @@ async fn verify_via_dispensing_service_flips_request_immediately() {
         .unwrap()
         .unwrap();
     assert_eq!(flipped.status, PrescriptionRequestStatus::Dispensed);
-    assert!(flipped.dispensed_datetime.is_some());
+
+    // The dispensed time is the moment the dispensation verified — not the
+    // request's prescription date (issue #931). The generated dispensation is
+    // not backdated, so its verified stamp is the real verify time, and the
+    // request records that: at or after the hand-over, days after prescribing.
+    let verified = InvoiceRowRepository::new(&ctx.connection)
+        .find_one_by_id(&dispensation.invoice_row.id)
+        .unwrap()
+        .unwrap();
+    assert_eq!(verified.backdated_datetime, None);
+    let dispensed_datetime = flipped
+        .dispensed_datetime
+        .expect("dispensed time not recorded");
+    assert_eq!(Some(dispensed_datetime), verified.verified_datetime);
+    assert_eq!(flipped.prescription_datetime, prescribed_three_days_ago);
+    assert!(dispensed_datetime > prescribed_three_days_ago);
+    assert!(dispensed_datetime >= flipped.ready_datetime.unwrap());
 }

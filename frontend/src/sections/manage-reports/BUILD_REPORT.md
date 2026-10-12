@@ -6,7 +6,7 @@ Scoped build: **manage-reports** only, generated from [`spec/manage-reports/`](.
 
 Replaces the "Coming soon" fall-through at `manage/reports`: `'manage/reports': manageReportsRoutes` added to `sectionRoutes` in [`src/App.tsx`](../../App.tsx). The nav entry and its `centralAdmin` gate already existed ([`src/nav/navConfig.ts`](../../nav/navConfig.ts)) and were not touched.
 
-**Zero locale keys added.** All 21 keys the surface names are cited in `ui-surface.md` (resolved against the reference app's own `t()` call sites per reverse-spec §6) and all 21 already exist in `src/intl/locales/en/common.json`. Shared-file edits: `src/config.ts` (+`REPORT_UPLOAD_URL`), `src/App.tsx` (the route entry). `/upload` was already proxied in `vite.config.ts`.
+**Zero locale keys added.** All 21 keys the surface names are cited in `ui-surface.md` (resolved against the reference app's own `t()` call sites per reverse-spec §6) and all 21 already exist in `src/intl/locales/en/common.json`. Shared-file edits: `src/App.tsx` (the route entry). The transfer route is the shared `UPLOAD_URL` in `src/config.ts`, which plugin install also uses. `/upload` was already proxied in `vite.config.ts`.
 
 ## Behaviour coverage
 

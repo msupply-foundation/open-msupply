@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   awaitingReason,
+  compareBatchOrder,
   defaultedPackSize,
   differenceSize,
   isUncounted,
@@ -20,6 +21,8 @@ import {
 //         finer than that is marked rather than rounded away to 0
 //   .86 — a line awaits a reason while its count is off the snapshot in a
 //         direction that demands one and it holds none (.56/.57/.70 → none)
+//   .91 — the editor lists an item's batches soonest expiry first, then by
+//         batch name (numbers as numbers), missing values last
 // Pure count arithmetic — the cheapest layer to pin the exact rule; the detail
 // table's rendering of it (the tint/accent attributes, the absent-value word)
 // is exercised in the e2e suite.
@@ -173,5 +176,110 @@ describe('OMS-REG-INV-03.86 — a line awaits a reason', () => {
         { positive: true, negative: false }
       )
     ).toBe(true);
+  });
+});
+
+describe('OMS-REG-INV-03.91 — the editor lists batches soonest expiry first, then by batch', () => {
+  type Batch = {
+    id?: string;
+    stockLineId?: string;
+    expiryDate: string | null;
+    batch: string | null;
+    location?: { code: string } | null;
+    packSize?: number | null;
+  };
+  // Every row carries an id, the order's last resort; a placeholder where a
+  // test's rows already differ earlier in the order.
+  const sorted = (batches: Batch[]) =>
+    batches
+      .map((b, i) => ({ ...b, id: b.id ?? `row-${i}` }))
+      .sort(compareBatchOrder);
+  const order = (batches: Batch[]) => sorted(batches).map(b => b.batch);
+
+  it('puts the soonest expiry first, whatever the batch names', () => {
+    expect(
+      order([
+        { expiryDate: '2027-06-30', batch: '001' },
+        { expiryDate: '2026-12-31', batch: '003' },
+        { expiryDate: '2027-01-31', batch: '002' },
+      ])
+    ).toEqual(['003', '002', '001']);
+  });
+
+  it('orders batches sharing an expiry by name, digit runs as numbers', () => {
+    expect(
+      order([
+        { expiryDate: '2027-01-31', batch: 'B10' },
+        { expiryDate: '2027-01-31', batch: 'B2' },
+        { expiryDate: '2027-01-31', batch: 'A9' },
+      ])
+    ).toEqual(['A9', 'B2', 'B10']);
+  });
+
+  it('puts a batch with no expiry after every dated one, ordered by name among themselves', () => {
+    expect(
+      order([
+        { expiryDate: null, batch: 'Z' },
+        { expiryDate: null, batch: 'A' },
+        { expiryDate: '2030-01-01', batch: 'M' },
+      ])
+    ).toEqual(['M', 'A', 'Z']);
+  });
+
+  it('puts an unnamed batch after the named ones sharing its expiry', () => {
+    expect(
+      order([
+        { expiryDate: '2027-01-31', batch: null },
+        { expiryDate: '2027-01-31', batch: '' },
+        { expiryDate: '2027-01-31', batch: '001' },
+      ])
+    ).toEqual(['001', null, '']);
+  });
+
+  // The tie-breakers: a batch split across locations or pack sizes, or two
+  // blank batches, must still load in one fixed order — a tie left to the
+  // server's order could swap between visits (#1005).
+  const tied = { expiryDate: '2027-01-31', batch: 'B1' };
+
+  it('breaks an expiry-and-name tie by location code as people read it; an unlocated batch last', () => {
+    expect(
+      sorted([
+        { ...tied, location: { code: 'S10' } },
+        { ...tied, location: null },
+        { ...tied, location: { code: 'S2' } },
+      ]).map(b => b.location?.code ?? null)
+    ).toEqual(['S2', 'S10', null]);
+  });
+
+  it('then by pack size, smallest first; a batch with none last', () => {
+    const located = { ...tied, location: { code: 'S1' } };
+    expect(
+      sorted([
+        { ...located, packSize: 100 },
+        { ...located, packSize: null },
+        { ...located, packSize: 10 },
+      ]).map(b => b.packSize)
+    ).toEqual([10, 100, null]);
+  });
+
+  it('last by a fixed id — the saved line id, or the stock line id for a batch not yet on the stocktake', () => {
+    const blank = {
+      expiryDate: null,
+      batch: null,
+      location: null,
+      packSize: 1,
+    };
+    // A stock batch's draft id is regenerated on every load, so its
+    // stockLineId is the one that holds; a saved line has only its own id.
+    const rows: Batch[] = [
+      { ...blank, id: 'draft-z', stockLineId: 'stock-a' },
+      { ...blank, id: 'line-m' },
+      { ...blank, id: 'draft-a', stockLineId: 'stock-z' },
+    ];
+    const ids = (input: Batch[]) =>
+      sorted(input).map(b => b.stockLineId ?? b.id);
+    expect(ids(rows)).toEqual(['line-m', 'stock-a', 'stock-z']);
+    // The same rows handed over in any other order land the same way.
+    expect(ids([...rows].reverse())).toEqual(['line-m', 'stock-a', 'stock-z']);
   });
 });

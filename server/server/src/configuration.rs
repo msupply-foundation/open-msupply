@@ -1,6 +1,6 @@
 use clap::Args;
 use config::{Config, ConfigError, Environment, File, FileFormat, FileSourceFile};
-use service::settings::{is_develop, Settings};
+use service::settings::{Settings, is_develop};
 use std::{
     env::{self, VarError},
     fmt::{Debug, Display, Formatter, Result as FmtResult},

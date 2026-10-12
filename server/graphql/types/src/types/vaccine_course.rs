@@ -2,11 +2,11 @@ use async_graphql::*;
 
 use dataloader::DataLoader;
 use graphql_core::{
+    ContextExt,
     loader::{
         DemographicLoader, VaccineCourseDoseByVaccineCourseIdLoader,
         VaccineCourseItemByVaccineCourseIdLoader, VaccineCourseStoreConfigByVaccineCourseIdLoader,
     },
-    ContextExt,
 };
 
 use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;

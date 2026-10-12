@@ -1,12 +1,12 @@
-use super::{name_link_row::name_link, name_row::name, store_row::store, StorageConnection};
+use super::{StorageConnection, name_link_row::name_link, name_row::name, store_row::store};
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
-use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    NameRow,
-};
 use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{
+    DBType, EqualFilter, NameRow, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
+};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 

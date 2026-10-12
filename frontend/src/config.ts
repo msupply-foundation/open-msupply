@@ -44,14 +44,15 @@ export const FRIDGE_TAG_URL = '/fridge-tag';
 // (server/server/src/print/mod.rs → test_printer).
 export const PRINT_LABEL_TEST_URL = '/print/label-test';
 
-// Report-bundle transfer (spec/manage-reports/contract.md § installing): a
-// report bundle reaches the server over REST before the GraphQL install names
-// it — POST multipart, field "files", responding { "file-id": … } (hyphenated,
-// the Rust struct is kebab-cased). Shared with plugin upload, so a change here
-// reaches Manage › Plugins too. Answers HTTP 500 — not 401 — when not signed
-// in, so a status check must not read 401 as the signed-out signal. Proxied to
-// the backend in dev (see vite.config.ts).
-export const REPORT_UPLOAD_URL = '/upload';
+// Staged upload (spec/plugin-management/contract.md § file upload,
+// spec/manage-reports/contract.md § installing): POST multipart (part
+// "files") → `{ "file-id" }` (hyphenated — the Rust struct is kebab-cased),
+// which a later GraphQL call consumes. Shared by the plugin install and the
+// report-bundle install, so a change here reaches both. Session auth only, no
+// permission, and it answers HTTP 500 — not 401 — when not signed in, so a
+// status check must not read 401 as the signed-out signal. The server's form
+// caps the body at 50 MB. Proxied to the backend in dev (see vite.config.ts).
+export const UPLOAD_URL = '/upload';
 
 // Installed frontend-plugin bundles (spec/plugins/contract.md § discovery &
 // loading): the server serves each at `<this>/{path}`, where `path` is what
@@ -62,13 +63,6 @@ export const REPORT_UPLOAD_URL = '/upload';
 // the backend in dev AND in preview (see vite.config.ts) — the plugin
 // production path is exercised against a real server.
 export const FRONTEND_PLUGINS_URL = '/frontend_plugins';
-
-// The served bundle's release manifest (spec/startup/contract.md § App
-// version): plain text, `version:`/`package:`/`commit:` lines, written by the
-// release pipeline at the dist root so it always names the ACTIVE bundle.
-// Deliberately NOT proxied in dev — the update watch that polls it is a dev
-// no-op (src/appUpdate.ts).
-export const VERSION_URL = '/VERSION.txt';
 
 export const DEFAULT_SYNC_INTERVAL_SECONDS = 300;
 // The current app's status-poll cadence (spec/sync-modal contract: ~2 s

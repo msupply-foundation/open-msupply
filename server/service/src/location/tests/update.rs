@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::mock_store_a;
     use repository::EqualFilter;
+    use repository::mock::mock_store_a;
     use repository::{
         location::{LocationFilter, LocationRepository},
         mock::MockDataInserts,

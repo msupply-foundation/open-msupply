@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // PERMISSION gates the destination: reading needs none (rules § access), the
 // write permission is mirrored at the click, not the route.
 //
-// Anchors: rules § access (AC-A1, not folded) (reads answer everywhere they
+// Anchors: rules § access (not a behaviour) (reads answer everywhere they
 // are reached), and the navigation half of OMS-REG-IMM-01.74 (every user
 // reaches the screen).
 

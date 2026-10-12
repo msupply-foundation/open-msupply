@@ -126,6 +126,14 @@ export const dispensingListPath = (): string => 'dispensary/dispensing';
 /** @deprecated Use {@link dispensingListPath} — the vertical is "Dispensing". */
 export const prescriptionListPath = dispensingListPath;
 
+/**
+ * One prescription's detail screen, by invoice id — what the Afghanistan
+ * Daily Tally's submitted summary opens per cohort (plugins/afghanistan
+ * ui-surface § S6). URI-encoded like the stocktake builder below.
+ */
+export const prescriptionDetailPath = (prescriptionId: string): string =>
+  `${dispensingListPath()}/${encodeURIComponent(prescriptionId)}`;
+
 export const stocktakeListPath = (): string => 'inventory/stocktakes';
 
 /**

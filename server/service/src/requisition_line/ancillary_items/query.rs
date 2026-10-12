@@ -1,10 +1,10 @@
 use repository::{
-    ancillary_item::{AncillaryItemFilter, AncillaryItemRepository},
     EqualFilter, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
     StorageConnection,
+    ancillary_item::{AncillaryItemFilter, AncillaryItemRepository},
 };
 
-use super::compute::{compute_ancillary_plan, AncillaryPlan};
+use super::compute::{AncillaryPlan, compute_ancillary_plan};
 
 #[derive(Debug, PartialEq)]
 pub enum GetAncillaryPlanError {

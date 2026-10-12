@@ -5597,6 +5597,11 @@ type Mutations {
 	insertEncounter(storeId: String!, input: InsertEncounterInput!): InsertEncounterResponse!
 	updateEncounter(storeId: String!, input: UpdateEncounterInput!): UpdateEncounterResponse!
 	allocateProgramNumber(storeId: String!, input: AllocateProgramNumberInput!): AllocateProgramNumberResponse!
+	"""
+	Allocate the next patient code number for the store. Requires only the
+	patient-mutate permission — see allocate_patient_number (#268).
+	"""
+	allocatePatientNumber(storeId: String!): NumberNode!
 	insertContactTrace(storeId: String!, input: InsertContactTraceInput!): InsertContactTraceResponse!
 	updateContactTrace(storeId: String!, input: UpdateContactTraceInput!): UpdateContactTraceResponse!
 	insertRnrForm(storeId: String!, input: InsertRnRFormInput!): InsertRnRFormResponse!
@@ -6315,6 +6320,7 @@ enum PreferenceKey {
 	backdating
 	receivePaymentsFromPrescriptions
 	globalLogo
+	decimalPlacesForNumbers
 	blindStocktake
 	manageVaccinesInDoses
 	manageVvmStatusForStock
@@ -6392,6 +6398,7 @@ type PreferencesNode {
 	Large - don't add to eagerly-fetched preference queries.
 	"""
 	globalLogo: String!
+	decimalPlacesForNumbers: Int!
 	blindStocktake: Boolean!
 	manageVaccinesInDoses: Boolean!
 	manageVvmStatusForStock: Boolean!
@@ -10924,6 +10931,7 @@ input UpsertPreferencesInput {
 	backdating: BackdatingInput
 	receivePaymentsFromPrescriptions: Boolean
 	globalLogo: String
+	decimalPlacesForNumbers: Int
 	blindStocktake: [BoolStorePrefInput!]
 	manageVaccinesInDoses: [BoolStorePrefInput!]
 	manageVvmStatusForStock: [BoolStorePrefInput!]

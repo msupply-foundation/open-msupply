@@ -1,6 +1,6 @@
 use actix_web::web::Data;
 use async_graphql::*;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     service_provider::ServiceProvider,

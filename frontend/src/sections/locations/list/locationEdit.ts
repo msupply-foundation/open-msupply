@@ -46,7 +46,7 @@ export const EMPTY_FORM: LocationFormState = {
   onHold: false,
 };
 
-/** Seed the edit form from the clicked list row (FL3). */
+/** Seed the edit form from the clicked list row. */
 export const formFromLocation = (location: LocationRow): LocationFormState => ({
   name: location.name,
   code: location.code,

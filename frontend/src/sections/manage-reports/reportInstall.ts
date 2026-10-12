@@ -1,4 +1,4 @@
-import { REPORT_UPLOAD_URL } from '@/config';
+import { UPLOAD_URL } from '@/config';
 import type { GraphqlResult } from '@/api/graphql';
 import type { InstallUploadedReportsResult } from './manageReports.generated';
 
@@ -45,7 +45,7 @@ export const uploadReportFile = async (file: File): Promise<UploadOutcome> => {
   // notwithstanding.
   body.append('files', file);
   try {
-    const response = await fetch(REPORT_UPLOAD_URL, {
+    const response = await fetch(UPLOAD_URL, {
       method: 'POST',
       headers: { Accept: 'application/json' },
       credentials: 'same-origin',

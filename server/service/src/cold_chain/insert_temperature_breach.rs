@@ -1,6 +1,6 @@
 use super::query_temperature_breach::get_temperature_breach;
 use super::validate::check_temperature_breach_does_not_exist;
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use chrono::NaiveDateTime;
 use repository::{
     RepositoryError, StorageConnection, TemperatureBreach, TemperatureBreachRow,

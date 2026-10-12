@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::mock::{
-        mock_period_schedule_1, mock_period_schedule_2, MockData, MockDataInserts,
+        MockData, MockDataInserts, mock_period_schedule_1, mock_period_schedule_2,
     };
     use repository::test_db::setup_all_with_data;
     use repository::{EqualFilter, PeriodScheduleFilter, PeriodScheduleRow};

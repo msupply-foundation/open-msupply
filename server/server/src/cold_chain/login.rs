@@ -1,8 +1,8 @@
 use actix_web::{
+    HttpResponse,
     cookie::Cookie,
     http::header,
     web::{self, Data},
-    HttpResponse,
 };
 use log::error;
 use mime_guess::mime;
@@ -13,7 +13,7 @@ use service::{
     service_provider::ServiceProvider,
 };
 
-use super::{validate_access, COOKIE_NAME, URL_PATH};
+use super::{COOKIE_NAME, URL_PATH, validate_access};
 
 // Fixed login response time in case of an error (see service)
 const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;

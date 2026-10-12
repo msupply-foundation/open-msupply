@@ -18,13 +18,13 @@ import { CreatePatientModal } from '../../patients';
 import { newPrescriptionDate } from '../detail/prescriptionUpdate';
 import { InsertPrescription } from './createPrescription.generated';
 
-// The create-prescription modal (spec/prescriptions/ui-surface.md S2, FL2):
+// The create-prescription modal (spec/prescriptions/ui-surface.md S2):
 // patient (the one required field — the reusable patient picker), date
-// (defaults today, capped at today — AC-B5), reference, clinician (offered
-// options only — the server never validates it at creation, AC-C3), and
-// program. Create is disabled until a patient is chosen; a failure shows
-// in-dialog with input preserved (controls › dialogs); success navigates to
-// the new prescription's detail.
+// (defaults today, capped at today — OMS-REG-DIS-04.7), reference, clinician
+// (offered options only — the server never validates it at creation,
+// OMS-REG-DIS-03.17), and program. Create is disabled until a patient is
+// chosen; a failure shows in-dialog with input preserved (controls › dialogs);
+// success navigates to the new prescription's detail.
 
 export interface CreatePrescriptionModalProps {
   open: boolean;
@@ -44,9 +44,9 @@ export const CreatePrescriptionModal: Component<
   const [programId, setProgramId] = createSignal<string>();
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
-  // The create-patient-on-no-match sub-flow (AC-C5): opens the patients
-  // vertical's create modal over this dialog; on success the new patient is
-  // selected here (modal-in-place — D54).
+  // The create-patient-on-no-match sub-flow (OMS-REG-DIS-03.18): opens the
+  // patients vertical's create modal over this dialog; on success the new
+  // patient is selected here (modal-in-place — D54).
   const [createPatientOpen, setCreatePatientOpen] = createSignal(false);
 
   const reset = () => {
@@ -193,7 +193,7 @@ export const CreatePrescriptionModal: Component<
           onChange={id => setProgramId(id ?? undefined)}
         />
       </FieldRow>
-      {/* Create-patient-on-no-match (AC-C5, D54): modal-in-place over this
+      {/* Create-patient-on-no-match (OMS-REG-DIS-03.18, D54): modal-in-place over this
           dialog; on success the new patient is selected here. */}
       <CreatePatientModal
         open={createPatientOpen()}

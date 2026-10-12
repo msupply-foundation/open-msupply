@@ -1,7 +1,7 @@
 use repository::{
-    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     ChangelogRow, ChangelogTableName, EqualFilter, IndicatorValueRow, IndicatorValueRowDelete, Row,
     StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
 };
 
 use serde::{Deserialize, Serialize};
@@ -181,7 +181,7 @@ impl SyncTranslation for IndicatorValue {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, IndicatorLineRow, IndicatorLineRowRepository,
+        IndicatorLineRow, IndicatorLineRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

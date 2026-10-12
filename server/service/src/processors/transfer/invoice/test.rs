@@ -1,6 +1,5 @@
 use chrono::NaiveDate;
 use repository::{
-    mock::{insert_extra_mock_data, MockData, MockDataInserts},
     EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceRowRepository,
     InvoiceStatus, InvoiceType, ItemRow, ItemRowRepository, ItemStoreJoinRow,
@@ -8,6 +7,7 @@ use repository::{
     LocationRow, NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StockLineRow, StorageConnection,
     StoreRow,
+    mock::{MockData, MockDataInserts, insert_extra_mock_data},
 };
 use util::uuid::uuid;
 
@@ -24,7 +24,7 @@ use crate::{
     processors::{test_helpers::exec_concurrent, transfer::invoice::common::get_cost_plus_margin},
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 /// This test is for requesting and responding store on the same site

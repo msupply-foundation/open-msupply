@@ -70,6 +70,7 @@ import { customFieldsRoutes } from './sections/custom-fields';
 import { demographicsRoutes } from './sections/demographics';
 import { immunisationProgramsRoutes } from './sections/immunisation-programs';
 import { syncMessageRoutes } from './sections/sync-message';
+import { pluginManagementRoutes } from './sections/plugin-management';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -79,8 +80,9 @@ import { Alert } from './ui/elements/feedback/Alert';
 import { Button } from './ui/elements/buttons/Button';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
 import { StaleBundleModal } from './StaleBundleModal';
+import { ManualScanInput } from './platform/ManualScanInput';
+import { CameraScanOverlay } from './platform/CameraScanOverlay';
 import { startStaleBundleWatch } from './staleBundle';
-import { startUpdateWatch } from './appUpdate';
 import { PluginGate } from './plugins/PluginGate';
 import { pluginPageRoutes } from './plugins/pluginPages';
 import styles from './ui/styles/shared.module.css';
@@ -143,6 +145,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   // the program list and each program's course list, under Programs.
   'programs/immunisations': immunisationProgramsRoutes,
   'manage/sync-message': syncMessageRoutes,
+  'manage/plugins': pluginManagementRoutes,
   // The central server's facility register (spec/names S5) — the third list
   // over the name entity, under Manage rather than a store-scoped section.
   'manage/stores': facilityRegisterRoutes,
@@ -236,15 +239,9 @@ export const App: Component = () => {
     void runStartup();
     const stopTracking = startActivityTracking();
     const stopStaleBundleWatch = startStaleBundleWatch();
-    // The served-bundle watch runs for the app's whole life, pre-session
-    // included — the prompt itself only surfaces in the shell's bottom bar
-    // (spec/chrome § update prompt), but a change noticed on the login screen
-    // shows the moment the bar exists.
-    const stopUpdateWatch = startUpdateWatch();
     onCleanup(() => {
       stopTracking();
       stopStaleBundleWatch();
-      stopUpdateWatch();
     });
   });
 
@@ -391,6 +388,16 @@ export const App: Component = () => {
           </Show>
         </Match>
       </Switch>
+      {/* Manual barcode input (spec/settings § Devices — barcode scanner):
+          mounted once for the whole app because any screen that scans can
+          raise it, and it must sit ABOVE an open capture window without
+          covering what that window just filled in. Renders nothing unless
+          the manual source has opened the prompt. */}
+      <ManualScanInput />
+      {/* The camera scan's UI (platform/barcodeSources/camera.ts): the
+          preview is drawn behind the WebView, so this hides the app and is
+          all that shows over the camera while a scan runs. */}
+      <CameraScanOverlay />
       {/* On top of everything, including other modals. */}
       <UnexpectedErrorModal />
       <StaleBundleModal />

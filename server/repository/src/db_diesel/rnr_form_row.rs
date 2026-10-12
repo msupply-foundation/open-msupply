@@ -1,11 +1,10 @@
 use super::{
-    name_row::name, period_row::period, period_schedule_row::period_schedule, program_row::program,
-    store_row::store, StorageConnection,
+    StorageConnection, name_row::name, period_row::period, period_schedule_row::period_schedule,
+    program_row::program, store_row::store,
 };
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
     ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
-    Upsert,
+    Upsert, db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
 };
 
 use chrono::NaiveDateTime;

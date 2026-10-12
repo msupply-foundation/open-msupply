@@ -1,13 +1,13 @@
 use repository::VaccinationRow;
 
 use crate::{
-    vaccination::generate::{generate_create_prescription, CreatePrescription},
     NullableUpdate,
+    vaccination::generate::{CreatePrescription, generate_create_prescription},
 };
 
 use super::{
-    validate::{ChangeStockLine, ChangeToGiven, ChangeToNotGiven, ValidateResult},
     UpdateVaccination,
+    validate::{ChangeStockLine, ChangeToGiven, ChangeToNotGiven, ValidateResult},
 };
 
 #[derive(Debug)]

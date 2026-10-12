@@ -3,12 +3,12 @@ use self::mutations::*;
 
 use async_graphql::*;
 use graphql_core::{
-    pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    pagination::PaginationInput,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::*;
-use repository::{location::LocationFilter, EqualFilter, PaginationOption};
+use repository::{EqualFilter, PaginationOption, location::LocationFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -102,18 +102,18 @@ mod test {
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::mock::mock_locations;
+    use repository::{EqualFilter, PaginationOption, Sort, StringFilter};
     use repository::{
+        LocationRow, StorageConnectionManager,
         location::{Location, LocationFilter, LocationSort, LocationSortField},
         mock::MockDataInserts,
-        LocationRow, StorageConnectionManager,
     };
-    use repository::{EqualFilter, PaginationOption, Sort, StringFilter};
     use serde_json::json;
 
     use service::{
+        ListError, ListResult,
         location::LocationServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
-        ListError, ListResult,
     };
 
     use crate::LocationQueries;

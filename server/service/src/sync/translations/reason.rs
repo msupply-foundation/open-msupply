@@ -1,6 +1,6 @@
 use repository::{
-    reason_option_row::{ReasonOptionRow, ReasonOptionRowDelete, ReasonOptionType},
     StorageConnection, SyncBufferRow,
+    reason_option_row::{ReasonOptionRow, ReasonOptionRowDelete, ReasonOptionType},
 };
 use serde::{Deserialize, Serialize};
 

@@ -3,10 +3,10 @@ import { setDictionaries, setLocale } from '../../intl/intl';
 import commonEn from '../../intl/locales/en/common.json';
 
 // The gender-options gate (spec/patients rules.md § configuration gates,
-// AC-G3; anchor OMS-REG-DIS-01.50): the genderOptions preference defines the
-// exact set every gender picker offers, and gender values render through
-// fixed label keys regardless of which subset is configured (ui-surface §
-// gender labels). The preference read is driven directly, navGates-style.
+// OMS-REG-DIS-01.50; anchor OMS-REG-DIS-01.50): the genderOptions preference
+// defines the exact set every gender picker offers, and gender values render
+// through fixed label keys regardless of which subset is configured (ui-surface
+// § gender labels). The preference read is driven directly, navGates-style.
 const state = {
   genderOptions: [] as string[],
 };

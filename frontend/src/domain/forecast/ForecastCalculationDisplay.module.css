@@ -1,4 +1,4 @@
-/* The population-forecast calculation display (spec/internal-orders S4, AC-PF7):
+/* The population-forecast calculation display (spec/internal-orders S4, OMS-REG-REPL-11.7):
    the bold heading over one collapsible section per course group. Sits in the
    charts region, so it caps and centres the same way. */
 .container {

@@ -1,8 +1,8 @@
-use super::{document::document, program_row::program, StorageConnection};
+use super::{StorageConnection, document::document, program_row::program};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, GenderType,
-    RowActionType, SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, GenderType, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError,
 };
 
 use chrono::{NaiveDate, NaiveDateTime};
@@ -206,10 +206,12 @@ impl Upsert for ContactTraceRow {
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
-        assert!(ContactTraceRowRepository::new(con)
-            .find_one_by_id(&self.id)
-            .unwrap()
-            .is_some())
+        assert!(
+            ContactTraceRowRepository::new(con)
+                .find_one_by_id(&self.id)
+                .unwrap()
+                .is_some()
+        )
     }
 }
 
@@ -218,13 +220,14 @@ mod tests {
     use chrono::NaiveDate;
 
     use crate::{
+        GenderType, Pagination,
         contact_trace::ContactTraceRepository,
         contact_trace_row::ContactTraceRow,
         mock::{
-            document_a, mock_merged_patient_name_link, mock_program_a, mock_store_a,
-            MockDataInserts,
+            MockDataInserts, document_a, mock_merged_patient_name_link, mock_program_a,
+            mock_store_a,
         },
-        test_db, GenderType, Pagination,
+        test_db,
     };
 
     use super::ContactTraceRowRepository;

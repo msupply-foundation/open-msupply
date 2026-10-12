@@ -9,15 +9,15 @@ use repository::{
 use util::{date_now, date_with_offset, format_error};
 
 use crate::{
+    ListError, ListResult, PluginOrRepositoryError,
     common::days_in_a_month,
     get_pagination_or_default, i64_to_u32,
-    item_stats::{get_item_stats_map, ItemStats},
+    item_stats::{ItemStats, get_item_stats_map},
     preference::{
         NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts, Preference,
         PreferenceError,
     },
-    ListError, ListResult, PluginOrRepositoryError,
 };
 
 pub const MAX_LIMIT: u32 = 5000;

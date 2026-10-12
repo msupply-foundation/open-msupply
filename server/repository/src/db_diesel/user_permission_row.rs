@@ -6,7 +6,7 @@ use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, Sourc
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::EnumIter;
-use util::uuid::{deterministic_uuid, Uuid};
+use util::uuid::{Uuid, deterministic_uuid};
 
 table! {
   user_permission (id) {
@@ -313,8 +313,8 @@ impl Upsert for UserPermissionRow {
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, PermissionType, UserPermissionRow,
-        UserPermissionRowRepository,
+        PermissionType, UserPermissionRow, UserPermissionRowRepository, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     #[actix_rt::test]

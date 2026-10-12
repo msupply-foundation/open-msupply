@@ -3,18 +3,18 @@ use std::time::{Duration, SystemTime};
 use crate::{
     cursor_controller::CursorController,
     sync::{
+        ActiveStoresOnSite, GetActiveStoresOnSiteError,
         api_v6::{SyncBatchV6, SyncRecordV6},
         sync_status::logger::SyncStepProgress,
-        ActiveStoresOnSite, GetActiveStoresOnSiteError,
     },
 };
 
 use super::{
-    api::{CommonSyncRecord, ParsingSyncRecordError, SyncApiSettings},
+    api::{CommonSyncRecord, DroppedBodyRetries, ParsingSyncRecordError, SyncApiSettings},
     api_v6::{SyncApiErrorV6, SyncApiV6, SyncApiV6CreatingError},
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
-        translate_rows_to_sync_records, PushTranslationError, ToSyncRecordTranslationType,
+        PushTranslationError, ToSyncRecordTranslationType, translate_rows_to_sync_records,
     },
 };
 
@@ -24,6 +24,33 @@ use repository::{
     SyncBufferRepository,
 };
 use thiserror::Error;
+
+/// Run an idempotent v6 read, retrying it if the response body is cut off mid-read.
+///
+/// Only for reads that can be repeated as-is: each attempt re-requests the same cursor,
+/// which hasn't advanced. Pushes are deliberately not retried this way - central may have
+/// integrated the batch and only lost the acknowledgement.
+async fn with_dropped_body_retries<T, F, Fut>(
+    description: &str,
+    mut request: F,
+) -> Result<T, SyncApiErrorV6>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = Result<T, SyncApiErrorV6>>,
+{
+    let mut retries = DroppedBodyRetries::default();
+    loop {
+        match request().await {
+            Ok(result) => return Ok(result),
+            Err(error) if error.is_dropped_response_body() => {
+                if !retries.wait_before_retry(description, &error).await {
+                    return Err(error);
+                }
+            }
+            Err(error) => return Err(error),
+        }
+    }
+}
 
 #[derive(Error, Debug)]
 pub(crate) enum CentralPullErrorV6 {
@@ -105,15 +132,17 @@ impl SynchroniserV6 {
         loop {
             let start_cursor = cursor_controller.get(connection)?;
 
+            let api = &self.sync_api_v6;
             let SyncBatchV6 {
                 end_cursor,
                 total_records,
                 is_last_batch,
                 records,
-            } = self
-                .sync_api_v6
-                .pull(start_cursor, batch_size, is_initialised)
-                .await?;
+            } = with_dropped_body_retries(
+                &format!("Pulling v6 central records at cursor {}", start_cursor),
+                || api.pull(start_cursor, batch_size, is_initialised),
+            )
+            .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 
@@ -239,9 +268,9 @@ impl SynchroniserV6 {
     }
 }
 
-/// Returns the changelog filter for v6 push: records edited on this site (by
-/// source_site_id null = locally originated, or matching this site_id),
-/// touching one of this site's active stores.
+/// Returns the changelog filter for v6 push: records edited on this site
+/// (source_site_id matching this site_id), touching one of this site's active
+/// stores.
 fn build_v6_push_filter(
     connection: &StorageConnection,
 ) -> Result<ChangelogCondition::Inner, RemotePushErrorV6> {
@@ -250,11 +279,13 @@ fn build_v6_push_filter(
     let active_stores = ActiveStoresOnSite::get(connection)?;
     let store_ids = active_stores.store_ids();
 
-    // Records that originate on this site (no source_site_id set on local edits)
-    // and that affect one of our active stores. Records arriving via sync from
-    // central will have source_site_id set, so this naturally excludes them.
+    // Records that originate on this site are stamped with this site's id, so
+    // these are the ones to send to central over v6. Records arriving via sync
+    // from central carry the sending site's id, so this excludes them. Which
+    // tables actually get sent is decided later, when the rows are translated
+    // with PushToOmSupplyCentral.
     Ok(C::And(vec![
-        C::source_site_id::is_null(),
+        C::source_site_id::equal(active_stores.site_id),
         C::Or(
             store_ids
                 .into_iter()
@@ -263,4 +294,178 @@ fn build_v6_push_filter(
                 .collect(),
         ),
     ]))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sync::api::{
+        SyncApiV5,
+        test_helpers::{ScriptedResponse, ScriptedServer, set_central_server_site_id},
+    };
+    use repository::{
+        ChangeLogInsertRow, ChangelogTableName, RowActionType,
+        mock::{MockDataInserts, mock_store_a, mock_store_b},
+        test_db::setup_all,
+    };
+
+    /// Local edits are stamped with this site's id (SourceSiteId::CurrentSiteId),
+    /// records pulled from central carry the sending site's id. The push filter
+    /// must keep the former and drop the latter.
+    #[actix_rt::test]
+    async fn test_build_v6_push_filter() {
+        let (_, connection, _, _) =
+            setup_all("test_build_v6_push_filter", MockDataInserts::all()).await;
+
+        let this_site_id = mock_store_a().site_id;
+        let central_site_id = 999;
+        assert_ne!(this_site_id, central_site_id);
+
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(this_site_id))
+            .unwrap();
+
+        let changelog_repo = ChangelogRepository::new(&connection);
+        // Ignore changelog rows created by the mock setup
+        let cursor = changelog_repo.max_cursor().unwrap() as i64;
+
+        let insert = |record_id: &str, store_id: Option<String>, source_site_id: Option<i32>| {
+            changelog_repo
+                .insert(&ChangeLogInsertRow {
+                    table_name: ChangelogTableName::NameOmsFields,
+                    record_id: record_id.to_string(),
+                    row_action: RowActionType::Upsert,
+                    store_id,
+                    source_site_id,
+                    ..Default::default()
+                })
+                .unwrap()
+        };
+
+        // Kept: authored here, no store (e.g. name_oms_fields)
+        insert("local_no_store", None, Some(this_site_id));
+        // Kept: authored here, for a store active on this site
+        insert(
+            "local_active_store",
+            Some(mock_store_a().id),
+            Some(this_site_id),
+        );
+        // Dropped: arrived from central
+        insert("from_central", None, Some(central_site_id));
+        // Dropped: authored here, but for a store on another site
+        insert(
+            "local_other_store",
+            Some(mock_store_b().id),
+            Some(this_site_id),
+        );
+
+        let filter = build_v6_push_filter(&connection).unwrap();
+        let mut record_ids: Vec<String> = changelog_repo
+            .query(filter, CursorAndLimit { cursor, limit: 100 })
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| row.record_id)
+            .collect();
+        record_ids.sort();
+
+        assert_eq!(
+            record_ids,
+            vec![
+                "local_active_store".to_string(),
+                "local_no_store".to_string()
+            ]
+        );
+    }
+
+    fn synchroniser(url: &str) -> SynchroniserV6 {
+        let settings = SyncApiV5::new_test(url, "", "", "site_id").settings;
+        SynchroniserV6::new(url, &settings, 1).unwrap()
+    }
+
+    fn truncated() -> ScriptedResponse {
+        ScriptedResponse::TruncatedBody {
+            content_length: 5000,
+            body: r#"{"data": {"end_cursor": 1, "total_rec"#,
+        }
+    }
+
+    /// The last batch, holding one delete record so it can be found in the sync buffer.
+    fn last_batch(record_id: &str) -> ScriptedResponse {
+        ScriptedResponse::Complete(format!(
+            r#"{{
+                "data": {{
+                    "end_cursor": 1,
+                    "total_records": 1,
+                    "records": [
+                        {{
+                            "cursor": 1,
+                            "record": {{
+                                "tableName": "test_table_1",
+                                "recordId": "{record_id}",
+                                "action": "delete"
+                            }}
+                        }}
+                    ],
+                    "is_last_batch": true
+                }}
+            }}"#
+        ))
+    }
+
+    fn is_buffered(connection: &StorageConnection, record_id: &str) -> bool {
+        SyncBufferRepository::new(connection)
+            .find_latest_by_record_id_slow_unindexed(record_id)
+            .unwrap()
+            .is_some()
+    }
+
+    /// Pull V6: a batch body cut off mid-read is re-requested from the same cursor.
+    #[actix_rt::test]
+    async fn test_pull_retries_dropped_response_body() {
+        let (_, connection, _, _) = setup_all(
+            "v6_test_pull_retries_dropped_response_body",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let server = ScriptedServer::start(vec![truncated(), last_batch("record_from_retry")]);
+        set_central_server_site_id(&connection);
+        let mut logger = SyncLogger::start(&connection).unwrap();
+        let result = synchroniser(server.url())
+            .pull(&connection, 100, true, &mut logger)
+            .await;
+
+        assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
+        assert!(
+            is_buffered(&connection, "record_from_retry"),
+            "Batch from the retried request was not saved"
+        );
+    }
+
+    /// A connection that keeps dropping gives up once the retry budget is spent.
+    #[actix_rt::test]
+    async fn test_pull_gives_up_after_dropped_body_retries() {
+        let (_, connection, _, _) = setup_all(
+            "v6_test_pull_gives_up_after_dropped_body_retries",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // The first attempt plus three retries. A fifth request would find the listener
+        // closed and fail to connect instead.
+        let server =
+            ScriptedServer::start(vec![truncated(), truncated(), truncated(), truncated()]);
+        set_central_server_site_id(&connection);
+        let mut logger = SyncLogger::start(&connection).unwrap();
+        let result = synchroniser(server.url())
+            .pull(&connection, 100, true, &mut logger)
+            .await;
+
+        assert!(
+            matches!(&result, Err(CentralPullErrorV6::SyncApiError(error)) if error.is_dropped_response_body()),
+            "Unexpected result: {:#?}",
+            result
+        );
+    }
 }

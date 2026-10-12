@@ -1,5 +1,5 @@
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 use repository::{
     EqualFilter, PaginationOption, PurchaseOrder, PurchaseOrderFilter, PurchaseOrderRepository,
@@ -48,8 +48,8 @@ mod test {
 
     use repository::PurchaseOrderRowRepository;
     use repository::{
-        db_diesel::PurchaseOrderRow, mock::MockDataInserts, test_db::setup_all, EqualFilter,
-        PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField,
+        EqualFilter, PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField,
+        db_diesel::PurchaseOrderRow, mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

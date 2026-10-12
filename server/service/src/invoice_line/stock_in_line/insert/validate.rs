@@ -1,7 +1,7 @@
 use crate::common::check_program_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
-    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
+    NullableUpdate, check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
     invoice::{
         check_invoice_exists, check_invoice_lines_are_editable, check_invoice_type, check_store,
@@ -14,10 +14,9 @@ use crate::{
         },
     },
     validate::{
-        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
-        CheckOtherPartyType, OtherPartyErrors,
+        CheckOtherPartyType, OtherPartyErrors, check_date_is_not_in_future, check_other_party,
+        check_other_party_store_is_disabled,
     },
-    NullableUpdate,
 };
 use repository::{InvoiceRow, ItemRow, PurchaseOrderLineRowRepository, StorageConnection};
 
@@ -46,39 +45,38 @@ pub fn validate(
         return Err(CostPricePerPackBelowZero);
     }
 
-    if let Some(manufacture_date) = &input.manufacture_date {
-        if !check_date_is_not_in_future(manufacture_date) {
-            return Err(CannotSetManufactureDateInFuture);
-        }
+    if let Some(manufacture_date) = &input.manufacture_date
+        && !check_date_is_not_in_future(manufacture_date)
+    {
+        return Err(CannotSetManufactureDateInFuture);
     }
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
 
     if let Some(NullableUpdate {
-        value: Some(ref location),
+        value: Some(location),
     }) = &input.location
     {
         if !check_location_exists(connection, store_id, location)? {
             return Err(LocationDoesNotExist);
         }
-        if let Some(item_restricted_type) = &item.restricted_location_type_id {
-            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
-            {
-                return Err(IncorrectLocationType);
-            }
+        if let Some(item_restricted_type) = &item.restricted_location_type_id
+            && !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+        {
+            return Err(IncorrectLocationType);
         }
     }
 
-    if let Some(item_variant_id) = &input.item_variant_id {
-        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-            return Err(ItemVariantDoesNotExist);
-        }
+    if let Some(item_variant_id) = &input.item_variant_id
+        && check_item_variant_exists(connection, item_variant_id)?.is_none()
+    {
+        return Err(ItemVariantDoesNotExist);
     }
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
-        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
-            return Err(VVMStatusDoesNotExist);
-        }
+    if let Some(vvm_status_id) = &input.vvm_status_id
+        && check_vvm_status_exists(connection, vvm_status_id)?.is_none()
+    {
+        return Err(VVMStatusDoesNotExist);
     }
 
     let invoice =
@@ -90,10 +88,10 @@ pub fn validate(
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
     }
-    if let Some(inbound_type) = inbound_shipment_type {
-        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
-            return Err(WrongInboundShipmentType);
-        }
+    if let Some(inbound_type) = inbound_shipment_type
+        && !inbound_type.matches_input(invoice.purchase_order_id.is_some())
+    {
+        return Err(WrongInboundShipmentType);
     }
     if !check_invoice_lines_are_editable(&invoice) {
         return Err(CannotEditFinalised);
@@ -113,7 +111,7 @@ pub fn validate(
                 OtherPartyErrors::OtherPartyNotVisible => {} // Invisible donors are allowed as it's possible to have a stock in from a donor that is not visible
                 OtherPartyErrors::TypeMismatched => return Err(SelectedDonorPartyIsNotADonor),
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    return Err(DatabaseError(repository_error))
+                    return Err(DatabaseError(repository_error));
                 }
             },
         };
@@ -134,16 +132,16 @@ pub fn validate(
                 OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    return Err(DatabaseError(repository_error))
+                    return Err(DatabaseError(repository_error));
                 }
             },
         };
     };
 
-    if let Some(program_id) = &input.program_id {
-        if check_program_exists(connection, program_id)?.is_none() {
-            return Err(ProgramDoesNotExist);
-        }
+    if let Some(program_id) = &input.program_id
+        && check_program_exists(connection, program_id)?.is_none()
+    {
+        return Err(ProgramDoesNotExist);
     }
 
     // External inbound shipments (with purchase_order_id) require a purchase_order_line_id

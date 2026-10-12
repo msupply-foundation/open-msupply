@@ -2,7 +2,7 @@
 name = "server"
 version = "0.1.0"
 authors = ["mSupply Foundation"]
-edition = "2018"
+edition.workspace = true
 default-run = "remote_server"
 build = "src/set_icon.rs"
 

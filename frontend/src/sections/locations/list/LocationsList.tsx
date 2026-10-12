@@ -19,7 +19,7 @@ import {
 } from '@/ui/elements/table/DataTable';
 import {
   getCellDefinition,
-  getNumberCell,
+  getVolumeCell,
   getTextCell,
 } from '@/ui/elements/table/tableHelpers';
 import { getBooleanCell } from '@/ui/elements/table/BooleanCell';
@@ -74,10 +74,11 @@ const LocationsList: Component = () => {
   // row. Mounted fresh per open (<Show> below), so the form seeds once.
   const [editor, setEditor] = createSignal<EditorState | null>(null);
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the two controls that trigger it (the header button
-  // and the ghost button in the table's empty slot); each carries
-  // `shortcut={ALT_N}` for its badge, neither owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
+  // that trigger it (the header button and the ghost button in the table's
+  // empty slot); each carries `shortcut={ALT_N}` for its badge, neither owns
+  // the action.
   createAddAction({
     name: 'label.new-location',
     run: () => setEditor({ mode: 'create' }),
@@ -199,7 +200,7 @@ const LocationsList: Component = () => {
       header: () => t('label.volume'),
       // Width set at the call site: no CELL_DEF key, and the header
       // "Volume (m³)" is the binding constraint, not the value.
-      ...getNumberCell(),
+      ...getVolumeCell(),
       size: remToPx(7),
     },
     {

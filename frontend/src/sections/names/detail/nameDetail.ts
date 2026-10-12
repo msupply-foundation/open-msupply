@@ -17,7 +17,8 @@ export const detailFromResult = (
 ): NameDetail | undefined => result?.names.nodes[0];
 
 // A name is itself a store when its `store` relation is present — drives the
-// detail header's store indicator (rules › record detail; AC-N8 parity).
+// detail header's store indicator (rules › record detail; OMS-REG-DIST-08.23,
+// OMS-REG-REPL-08.16 parity).
 export const isStoreName = (detail: Pick<NameDetail, 'store'>): boolean =>
   detail.store != null;
 
@@ -45,9 +46,10 @@ export const parseProperties = (
   }
 };
 
-// The supply-level value for the customer detail (AC-N20, AC-N25). Resolves the
-// property key from the matching definition when present, else the well-known
-// key, and reads the value out of the properties blob. Blank when unset.
+// The supply-level value for the customer detail (OMS-REG-DIST-08.11/.12/.26,
+// OMS-REG-DIST-08.26, OMS-REG-REPL-08.22). Resolves the property key from the
+// matching definition when present, else the well-known key, and reads the
+// value out of the properties blob. Blank when unset.
 export const supplyLevelValue = (
   propertiesJson: string | null | undefined,
   defs: NamePropertyDef[] | undefined

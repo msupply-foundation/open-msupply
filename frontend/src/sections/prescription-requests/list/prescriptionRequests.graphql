@@ -33,7 +33,7 @@ query prescriptionRequests(
           username
         }
         # Filtered server-side to the keys visible for the request scope; the
-        # list turns each configured field into a column (AC-CF4).
+        # list turns each configured field into a column (OMS-REG-DIS-08.23).
         customFields
       }
     }
@@ -43,9 +43,9 @@ query prescriptionRequests(
 # List delete (spec/prescription-requests/contract.md § deletion). ONE atomic
 # batch, not a request each: a refusal anywhere rolls the whole thing back, so
 # a selection is never partly deleted and the list behind the dialog stays
-# true. The selection is still pre-checked client-side to New rows (AC-D2);
-# rejections are generic (contract § wire traps) and route to the global error
-# surface.
+# true. The selection is still pre-checked client-side to New rows
+# (OMS-REG-DIS-10.3/.4); rejections are generic (contract § wire traps) and
+# route to the global error surface.
 mutation deletePrescriptionRequests($storeId: String!, $ids: [String!]!) {
   batchPrescriptionRequest(
     storeId: $storeId

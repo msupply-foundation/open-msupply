@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
-use plugin_provider::{call_plugin, call_plugin_async, PluginResult};
+use plugin_provider::{PluginResult, call_plugin, call_plugin_async};
 use repository::PluginType;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;

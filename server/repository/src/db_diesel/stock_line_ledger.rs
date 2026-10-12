@@ -1,10 +1,10 @@
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     EqualFilter, InvoiceType, MasterListLineFilter, MasterListLineRepository, Pagination,
     RepositoryError, Sort,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
 };
 
-use super::{item_row::item, DBType, DatetimeFilter, InvoiceStatus, StorageConnection};
+use super::{DBType, DatetimeFilter, InvoiceStatus, StorageConnection, item_row::item};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -234,8 +234,8 @@ fn create_filtered_query(filter: Option<StockLineLedgerFilter>) -> BoxedLedgerQu
 mod tests {
     use crate::{
         mock::{
-            ledger::{get_test_ledger_datetime, mock_ledger_data},
             MockData, MockDataInserts,
+            ledger::{get_test_ledger_datetime, mock_ledger_data},
         },
         test_db,
     };

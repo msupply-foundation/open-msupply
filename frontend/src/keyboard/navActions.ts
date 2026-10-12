@@ -22,7 +22,7 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  *
  * The gating is the shared `gateNav`, so the dispensary, vaccine-module,
  * central, and query-permission rules are applied once for both surfaces
- * (AC-KB4; spec/navigation § permission gates, D94).
+ * (OMS-REG-KBD-01.5–.7; spec/navigation § permission gates, D94).
  *
  * KB-R2's line about mode and module gates applies exactly here: they
  * "legitimately gate an action whose DESTINATION they gate — Prescriptions and
@@ -64,7 +64,7 @@ const offeredPaths = (): ReadonlySet<string> =>
     ),
     // Plugin pages, through their own two gates — the same menu set, so the
     // palette and the menu agree about contributed destinations too
-    // (spec/navigation § plugin destinations; AC-KB4).
+    // (spec/navigation § plugin destinations; OMS-REG-KBD-01.5–.7).
     ...pluginOfferedPaths(),
   ]);
 
@@ -109,8 +109,8 @@ const DESTINATION_SHORTCUTS: Record<string, Shortcut> = {
  * palette evaluates it per open (the dispatcher per keypress) — so a
  * permission withdrawn mid-session, e.g. by the post-sync context refresh, is
  * gone from the palette at its next open, exactly as the menu's reactive memo
- * drops the entry (AC-KB4; OMS-REG-NAV-01.15). Gating at registration time
- * was the defect: the row outlived the permission.
+ * drops the entry (OMS-REG-KBD-01.5–.7; OMS-REG-NAV-01.15). Gating at
+ * registration time was the defect: the row outlived the permission.
  */
 export const createNavActions = (
   navigate: (path: string) => void

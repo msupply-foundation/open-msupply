@@ -1,10 +1,10 @@
 use async_graphql::*;
+use graphql_core::ContextExt;
 use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::simple_generic_errors::CannotEditInvoice;
 use graphql_core::simple_generic_errors::RecordNotFound;
-use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::auth::ResourceAccessRequest;
@@ -90,12 +90,12 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::InvoiceDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
@@ -115,15 +115,15 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::MockDataInserts, InvoiceRowRepository, RepositoryError, StorageConnectionManager,
+        InvoiceRowRepository, RepositoryError, StorageConnectionManager, mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
         invoice::{
+            InvoiceServiceTrait,
             inbound_shipment::{
                 DeleteInboundShipment as ServiceInput, DeleteInboundShipmentError as ServiceError,
             },
-            InvoiceServiceTrait,
         },
         invoice_line::stock_in_line::DeleteStockInLineError,
         service_provider::{ServiceContext, ServiceProvider},

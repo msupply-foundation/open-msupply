@@ -1,17 +1,17 @@
 use super::{
+    LocationRow, NameRow, ReasonOptionRow, StockLineRow, StocktakeLineRow, StorageConnection,
     item_row::item, location_row::location, name_row::name, reason_option_row::reason_option,
-    stock_line_row::stock_line, stocktake_line_row::stocktake_line, LocationRow, NameRow,
-    ReasonOptionRow, StockLineRow, StocktakeLineRow, StorageConnection,
+    stock_line_row::stock_line, stocktake_line_row::stocktake_line,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
+    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
+    StringFilter,
     diesel_macros::{
         apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
     },
-    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
-    StringFilter,
 };
 
 #[derive(Clone, Default)]
@@ -218,18 +218,18 @@ fn apply_item_filter(
     connection: &StorageConnection,
     store_id: String,
 ) -> BoxedStocktakeLineQuery {
-    if let Some(f) = filter {
-        if let Some(item_code_or_name) = &f.item_code_or_name {
-            let mut item_filter = ItemFilter::new();
-            item_filter.code_or_name = Some(item_code_or_name.clone());
-            item_filter.is_visible = Some(true);
-            let items = ItemRepository::new(connection)
-                .query_by_filter(item_filter, Some(store_id))
-                .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
-            let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
+    if let Some(f) = filter
+        && let Some(item_code_or_name) = &f.item_code_or_name
+    {
+        let mut item_filter = ItemFilter::new();
+        item_filter.code_or_name = Some(item_code_or_name.clone());
+        item_filter.is_visible = Some(true);
+        let items = ItemRepository::new(connection)
+            .query_by_filter(item_filter, Some(store_id))
+            .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
+        let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
-            return query.filter(item::id.eq_any(item_ids));
-        }
+        return query.filter(item::id.eq_any(item_ids));
     }
     query
 }

@@ -1,7 +1,7 @@
 use log::{error, warn};
 use rcgen::generate_simple_self_signed;
 use rustls::ServerConfig;
-use service::settings::{is_develop, ServerSettings};
+use service::settings::{ServerSettings, is_develop};
 use std::{
     fmt::Display,
     io::{BufReader, Write},

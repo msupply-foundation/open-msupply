@@ -21,26 +21,26 @@ export interface DeleteInternalOrdersActionProps {
    * Whether EVERY selected order may be deleted (Draft + supplier-store
    * enabled). The button stays clickable regardless; when this is false the
    * click surfaces the "only Draft orders can be deleted" explanation instead
-   * of a confirmation, and nothing is submitted (AC-D3).
+   * of a confirmation, and nothing is submitted (OMS-REG-REPL-04.60).
    */
   canDelete: () => boolean;
 }
 
-// The internal-orders-list bulk delete (spec AC-D1/D3): footer button + a
-// blocked | confirm → deleting → error dialog. Unlike the inbound/stocktakes
-// lists (whose delete is visible-DISABLED beside the row's status —
-// ui-standards controls.md § blocked affordances, "actionable block"), AC-D3
-// picks the "needs words → active-and-explaining" pattern: the button stays
-// clickable and a click on a selection that includes a non-Draft (or
-// disabled-supplier-store) order opens the dialog already explaining why it
-// can't proceed — never a silently dead click. When every selected order is
-// deletable the click opens the confirmation instead. The server enforces the
-// same guard regardless. The batch is ATOMIC: any member error rolls the whole
-// batch back and nothing is removed, so on error we show the server's reason
-// with just a Close, keeping the selection (the footer, and this dialog, stay
-// mounted). Success closes the dialog and hands back to the list — closure is
-// the confirmation, no announcement follows (ui-standards controls.md §
-// dialogs / § action feedback).
+// The internal-orders-list bulk delete (spec OMS-REG-REPL-04.59/.60): footer
+// button + a blocked | confirm → deleting → error dialog. Unlike the
+// inbound/stocktakes lists (whose delete is visible-DISABLED beside the row's
+// status — ui-standards controls.md § blocked affordances, "actionable block"),
+// OMS-REG-REPL-04.60 picks the "needs words → active-and-explaining" pattern:
+// the button stays clickable and a click on a selection that includes a
+// non-Draft (or disabled-supplier-store) order opens the dialog already
+// explaining why it can't proceed — never a silently dead click. When every
+// selected order is deletable the click opens the confirmation instead. The
+// server enforces the same guard regardless. The batch is ATOMIC: any member
+// error rolls the whole batch back and nothing is removed, so on error we show
+// the server's reason with just a Close, keeping the selection (the footer, and
+// this dialog, stay mounted). Success closes the dialog and hands back to the
+// list — closure is the confirmation, no announcement follows (ui-standards
+// controls.md § dialogs / § action feedback).
 type Phase = 'blocked' | 'confirm' | 'deleting' | 'error';
 
 export const DeleteInternalOrdersAction: Component<
@@ -134,7 +134,7 @@ const Body = (
           fallback={tPlural('messages.confirm-delete-internal-orders', count)}
         >
           {/* Blocked: a non-Draft (or disabled-store) order is in the selection
-              — explain why, and never submit (AC-D3). */}
+              — explain why, and never submit (OMS-REG-REPL-04.60). */}
           <Match when={phase() === 'blocked'}>
             <Alert severity="warning">{t('messages.delete-only-draft')}</Alert>
           </Match>

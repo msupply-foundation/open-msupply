@@ -1,0 +1,105 @@
+/*
+ * Test scanner. The results stream is the page — everything above it is a
+ * strip of facts, not a form. The old label/value rows made the reads (the
+ * only thing anyone comes here for) the smallest thing on screen.
+ */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.hint {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-inline-start-width: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+/* The verdict is carried by the text beside each read; the edge tint is a
+   second, redundant cue so a column of reads can be skimmed. */
+.result[data-verdict='reference'] {
+  border-inline-start-color: var(--info-main);
+}
+
+.result[data-verdict='matches'] {
+  border-inline-start-color: var(--success-main);
+}
+
+.result[data-verdict='differs'],
+.result[data-verdict='error'] {
+  border-inline-start-color: var(--error-main);
+}
+
+.scanText {
+  /* Monospace so a column of reads lines up character for character, and
+     break-all because a barcode is one unbroken token that must never be
+     truncated out of sight. Selectable as a unit for copying. */
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  overflow-wrap: break-word;
+  word-break: break-all;
+  user-select: all;
+}
+
+/* The control pictures standing in for invisible characters (␝ ␣ ␡). */
+.invisible {
+  color: var(--info-main);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.footerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.verdict {
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.errorText {
+  color: var(--error-main);
+  font-size: var(--text-sm);
+}
+
+/* The HID report's own bytes. Present only for reads that came over HID, and
+   only because the report framing is inferred rather than measured — seeing
+   what the hardware actually sent is what makes it correctable. */
+.rawReport {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  overflow-wrap: break-word;
+  word-break: break-all;
+}

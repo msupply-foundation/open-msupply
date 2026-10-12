@@ -1,7 +1,7 @@
 use repository::{
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
     asset_internal_location_row::AssetInternalLocationRow,
-    asset_internal_location_row::AssetInternalLocationRowDelete, ChangelogRow, ChangelogTableName,
-    Row, StorageConnection, SyncBufferRow,
+    asset_internal_location_row::AssetInternalLocationRowDelete,
 };
 
 use crate::sync::translations::{asset::AssetTranslation, location::LocationTranslation};
@@ -117,7 +117,7 @@ mod tests {
 
     use repository::{
         asset_row::{AssetRow, AssetRowRepository},
-        mock::{mock_asset_a, MockDataInserts},
+        mock::{MockDataInserts, mock_asset_a},
         test_db::setup_all,
     };
 

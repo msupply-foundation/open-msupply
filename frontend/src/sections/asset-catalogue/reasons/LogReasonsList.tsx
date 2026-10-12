@@ -39,9 +39,8 @@ import {
   type LogReasonRow,
 } from './logReasons';
 import { CreateLogReasonModal } from './CreateLogReasonModal';
-import { DeleteSelectedAction } from '../DeleteSelectedAction';
 import { REASON_WRITE, guardWrite, writesOffered } from '../access';
-import { outcomeOf } from '../refusals';
+import { DeleteSelectedAction, outcomeOf } from '@/domain/selection';
 
 // Catalogue › Assets › Log reasons (spec/asset-catalogue S3): every live
 // reason in one read (a short configuration list — no pagination footer),
@@ -200,8 +199,8 @@ const LogReasonsList: Component = () => {
               guard={() => guardWrite(REASON_WRITE)}
               deleteOne={deleteOne}
               nameOf={row => row.reason}
-              confirmMessage={count =>
-                tPlural('messages.confirm-delete-reasons', count)
+              confirmMessage={records =>
+                tPlural('messages.confirm-delete-reasons', records.length)
               }
               deletedMessage={count =>
                 tPlural('messages.deleted-reasons', count)

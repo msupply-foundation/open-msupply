@@ -54,9 +54,10 @@ const pageDir = (): string => {
 };
 
 /** Serve the page over loopback HTTP, not file:// — the page hands the server
- * its own address so the login screen can offer a way back (AC-DT23), and that
- * address has to be http(s): the page's own validation drops anything else,
- * and a served page could not navigate to file:// even if it did.
+ * its own address so the login screen can offer a way back
+ * (OMS-REG-DESK-01.22/.23), and that address has to be http(s): the page's own
+ * validation drops anything else, and a served page could not navigate to
+ * file:// even if it did.
  *
  * Resolves the page's URL, which the caller must then treat as the page's
  * origin (electron.ts § pageOrigin) rather than assuming the fixed port: a
@@ -172,7 +173,7 @@ export const machineId = (): string => {
 
 /** Addresses OTHER machines can reach this one at — never loopback or
  * link-local. The page uses them to show its own server at an address it can
- * share (AC-DT22). May be empty (no network). */
+ * share (OMS-REG-DESK-01.34). May be empty (no network). */
 export const lanAddresses = (): string[] =>
   Object.values(os.networkInterfaces())
     .flat()
@@ -180,7 +181,7 @@ export const lanAddresses = (): string[] =>
     .map(i => i?.address ?? '')
     .filter(Boolean);
 
-/** The bounded is-the-app-there check (AC-DT12, AC-DT25). Host-side by
+/** The bounded is-the-app-there check (OMS-REG-DESK-01.16, OMS-REG-DESK-01.26–.28). Host-side by
  * necessity, not convenience: a release server's CORS rejects unknown
  * cross-origins and a self-signed certificate needs host-side trust, so the
  * page's own fetch cannot do this.

@@ -18,10 +18,10 @@ pub fn check_store(invoice: &InvoiceRow, store_id: &str) -> bool {
 }
 
 pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceStatus>) -> bool {
-    if let Some(new_status) = status_option {
-        if new_status != invoice.status {
-            return true;
-        }
+    if let Some(new_status) = status_option
+        && new_status != invoice.status
+    {
+        return true;
     }
     false
 }
