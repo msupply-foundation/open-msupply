@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use repository::{
     EqualFilter, RepositoryError, StorageConnection, StringFilter,
     campaign::campaign::{Campaign, CampaignFilter, CampaignRepository},
-    campaign::campaign_row::{CampaignRow, CampaignRowRepository},
+    campaign::campaign_row::{CampaignKind, CampaignRow, CampaignRowRepository},
 };
 
 use crate::service_provider::ServiceContext;
@@ -22,6 +22,7 @@ pub struct UpsertCampaign {
     pub name: String,
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
+    pub kind: CampaignKind,
 }
 
 pub fn upsert_campaign(
@@ -60,6 +61,7 @@ pub fn generate(
         name,
         start_date,
         end_date,
+        kind,
     }: UpsertCampaign,
 ) -> CampaignRow {
     CampaignRow {
@@ -68,6 +70,7 @@ pub fn generate(
         start_date,
         end_date,
         deleted_datetime: None,
+        kind,
     }
 }
 

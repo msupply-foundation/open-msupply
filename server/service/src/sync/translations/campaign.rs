@@ -87,9 +87,7 @@ mod tests {
         let test_campaign = CampaignRow {
             id: "campaign1".to_string(),
             name: "Test Campaign".to_string(),
-            start_date: None,
-            end_date: None,
-            deleted_datetime: None,
+            ..Default::default()
         };
 
         let sync_buffer_row = SyncBufferRow {
