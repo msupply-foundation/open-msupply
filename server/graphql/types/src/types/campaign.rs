@@ -2,11 +2,15 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, StringFilterInput},
+    map_filter,
     simple_generic_errors::NodeError,
 };
 use repository::{
     EqualFilter, StringFilter,
-    campaign::campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField},
+    campaign::{
+        campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField},
+        campaign_row::CampaignKind,
+    },
 };
 
 use service::{ListResult, usize_to_u32};
@@ -27,10 +31,44 @@ pub struct CampaignSortInput {
     desc: Option<bool>,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum CampaignKindNode {
+    Campaign,
+    Routine,
+}
+
+impl From<&CampaignKind> for CampaignKindNode {
+    fn from(kind: &CampaignKind) -> Self {
+        match kind {
+            CampaignKind::Campaign => CampaignKindNode::Campaign,
+            CampaignKind::Routine => CampaignKindNode::Routine,
+            CampaignKind::Other(_) => CampaignKindNode::Campaign,
+        }
+    }
+}
+
+impl From<CampaignKindNode> for CampaignKind {
+    fn from(kind: CampaignKindNode) -> Self {
+        match kind {
+            CampaignKindNode::Campaign => CampaignKind::Campaign,
+            CampaignKindNode::Routine => CampaignKind::Routine,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterCampaignKindInput {
+    pub equal_to: Option<CampaignKindNode>,
+    pub equal_any: Option<Vec<CampaignKindNode>>,
+    pub not_equal_to: Option<CampaignKindNode>,
+    pub not_equal_all: Option<Vec<CampaignKindNode>>,
+}
+
 #[derive(InputObject, Clone)]
 pub struct CampaignFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<StringFilterInput>,
+    pub kind: Option<EqualFilterCampaignKindInput>,
 }
 
 impl From<CampaignFilterInput> for CampaignFilter {
@@ -38,6 +76,7 @@ impl From<CampaignFilterInput> for CampaignFilter {
         CampaignFilter {
             id: f.id.map(EqualFilter::from),
             name: f.name.map(StringFilter::from),
+            kind: f.kind.map(|t| map_filter!(t, CampaignKind::from)),
         }
     }
 }
@@ -69,6 +108,10 @@ impl CampaignNode {
 
     pub async fn end_date(&self) -> Option<NaiveDate> {
         self.campaign.end_date
+    }
+
+    pub async fn kind(&self) -> CampaignKindNode {
+        CampaignKindNode::from(&self.campaign.kind)
     }
 }
 
