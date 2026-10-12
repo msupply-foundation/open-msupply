@@ -102,3 +102,67 @@
     margin-inline: calc(-1 * var(--space-2));
   }
 }
+
+/* Narrow viewports (≤1023px — Header.module.css's single-row tier): the
+   header is one row, so the trail takes whatever the actions leave and
+   truncates rather than pushing them onto a row of their own — the ancestor
+   crumbs first ("Inbound Sh… / 10244"), so the record's own name or number
+   is the last thing to go. */
+@media (max-width: 1023px) {
+  /* A small basis: in a header that wraps (one with a toolbar row), the
+     ACTIONS take the next line rather than the trail leaving the hamburger
+     alone on the first. */
+  .breadcrumb {
+    flex: 1 1 6rem;
+  }
+
+  .list {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  .list > .crumb {
+    min-inline-size: 0;
+  }
+
+  /* An ancestor crumb has no claim of its own (basis 0): the record's name
+     keeps its width, and the ancestors share whatever is left, truncating.
+     Capped at its own text, so when the header wraps and the trail gets a
+     whole line, the ancestor doesn't stretch across it and push the record's
+     name to the far end. */
+  .list > .crumb:not(:last-child) {
+    flex: 1 1 0;
+    max-inline-size: max-content;
+  }
+
+  .separator {
+    flex-shrink: 0;
+  }
+
+  /* A block, not the base inline-flex: text-overflow can't reach a flex
+     container's bare text. align-content keeps the label centred in the
+     coarse-pointer touch height. */
+  .link {
+    display: block;
+    align-content: center;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .leaf {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Compact (<600px, breakpoints.compact): on a detail page (the trail has an
+   ancestor link) the section icon goes — the parent crumb already names the
+   section, and on a ~320px screen its ~30px is the record number's room. */
+@media (max-width: 599px) {
+  .breadcrumb:has(.link) > .icon {
+    display: none;
+  }
+}

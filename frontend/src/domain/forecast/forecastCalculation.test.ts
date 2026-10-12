@@ -98,7 +98,8 @@ describe('OMS-REG-REPL-11.7 — the three calculation steps substitute the store
     expect(annual.substitution).toBe('10,000 × 1 × (100 / 100) × 1');
     // forecast doses 4,166.67 ÷ 2 doses-per-unit = 2,083.33 units → ceil →
     // 2,084.
-    expect(units.substitution).toBe('4,166.67 / 2');
+    // A rounded figure in the sentence is marked (spec § display rounding).
+    expect(units.substitution).toBe('4,166.67* / 2');
     expect(units.result).toContain('= 2,084');
   });
 });

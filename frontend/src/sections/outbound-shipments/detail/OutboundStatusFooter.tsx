@@ -11,7 +11,7 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { StatusChangeAction, type StatusPreflight } from './actions';
-import { currentStep } from '@/domain/invoice';
+import { currentStep, trackStages } from '@/domain/invoice';
 import { STATUS_FLOW, STATUS_LABELS, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundNode } from './outboundUpdate';
@@ -69,9 +69,11 @@ export const OutboundStatusFooter: Component<
   const editable = () => isEditable(props.node.status);
   const holding = () => props.node.onHold;
 
-  // The lifecycle indicator over the preference-allowed sequence. A status
-  // already reached stays visible even if the preference excludes it later in
-  // the flow (the current status is always shown).
+  // The lifecycle indicator over the preference-allowed sequence, plus the
+  // shipment's own stage when the preference excludes it — the current status
+  // is always shown, and always has a crumb to mark (OMS-REG-DIST-04.29).
+  const stages = () =>
+    trackStages(STATUS_FLOW, allowedStatuses(), props.node.status);
   const steps = () => {
     const stamps: Record<string, string | null | undefined> = {
       NEW: props.node.createdDatetime,
@@ -82,15 +84,12 @@ export const OutboundStatusFooter: Component<
       RECEIVED: props.node.receivedDatetime,
       VERIFIED: props.node.verifiedDatetime,
     };
-    return allowedStatuses().map(status => ({
+    return stages().map(status => ({
       label: STATUS_LABELS[status],
       date: stamps[status],
     }));
   };
-  // OMS-REG-DIST-04.22: an excluded current status displays as the nearest
-  // included earlier one (the shared invoice-status gate's currentStep).
-  const indicatorIndex = () =>
-    currentStep(STATUS_FLOW, allowedStatuses(), props.node.status);
+  const indicatorIndex = () => currentStep(stages(), props.node.status);
 
   // Both of the action's success paths (the confirm, and the on-hold notice's
   // release-and-confirm) come through here.

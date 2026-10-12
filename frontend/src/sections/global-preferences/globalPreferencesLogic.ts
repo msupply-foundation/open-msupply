@@ -199,6 +199,7 @@ const NUMBER_PREFERENCE_KEYS = [
   'syncRecordsDisplayThreshold',
   'daysInMonth',
   'expiredStockIssueThreshold',
+  'decimalPlacesForNumbers',
 ] as const satisfies readonly GlobalPreferenceKeyOf<number>[];
 
 /**

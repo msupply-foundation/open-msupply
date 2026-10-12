@@ -13,7 +13,12 @@ import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
-import { t, tPlural, type LocaleKey } from '../../intl';
+import {
+  MAX_FRACTION_DIGITS,
+  t,
+  tPlural,
+  type LocaleKey,
+} from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
@@ -378,6 +383,12 @@ const GlobalPreferencesPage: Component = () => {
               // A whole number stays whole; days-in-a-month gets two places
               // (rules § Editing).
               decimalLimit={props.preference.valueType === 'FLOAT' ? 2 : 0}
+              // Display rounding can't exceed what the formatter emits.
+              max={
+                props.preference.key === 'decimalPlacesForNumbers'
+                  ? MAX_FRACTION_DIGITS
+                  : undefined
+              }
               disabled={disabled()}
               data-testid={`global-preference-${props.preference.key}`}
               onChange={next => stage(props.preference, next)}

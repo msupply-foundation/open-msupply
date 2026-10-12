@@ -96027,6 +96027,32 @@
    "patient_id": null,
    "reference_id": null,
    "is_integrated": false
+  },
+  {
+   "cursor": 2792,
+   "record_id": "e2e_nsj_einb_name_at_feat",
+   "received_datetime": "2026-10-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "name_store_join",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_nsj_einb_name_at_feat",
+    "name_id": "e2e_inbound_store_name",
+    "name_is_customer": true,
+    "name_is_supplier": false,
+    "store_id": "e2e_feature_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "e2e_feature_store",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
   }
  ],
  "users": [],

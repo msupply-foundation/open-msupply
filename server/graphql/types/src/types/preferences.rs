@@ -126,6 +126,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.global_logo)
     }
 
+    pub async fn decimal_places_for_numbers(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.decimal_places_for_numbers)
+    }
+
     // Store preferences
     pub async fn blind_stocktake(&self) -> Result<bool> {
         self.load_preference(&self.preferences.blind_stocktake)
@@ -376,6 +380,7 @@ pub enum PreferenceKey {
     Backdating,
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,
+    DecimalPlacesForNumbers,
     // Store preferences
     BlindStocktake,
     ManageVaccinesInDoses,
