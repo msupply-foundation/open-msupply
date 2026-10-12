@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getCurrencyInfo, setHomeCurrency, homeCurrency } from './currency';
+import {
+  formatCurrency,
+  getCurrencyInfo,
+  setHomeCurrency,
+  homeCurrency,
+} from './currency';
 
 describe('getCurrencyInfo', () => {
   it('derives minor units from Intl (the old hand-table drifted: KMF is 0)', () => {
@@ -28,6 +33,16 @@ describe('getCurrencyInfo', () => {
     expect(getCurrencyInfo('NZD', 'en', 'symbol').symbol).toBe('NZ$');
   });
 
+  it('labels CFA francs and other ambiguous symbols by their code (#1242)', () => {
+    // CLDR gives "F CFA" / "FCFA" / "£"; old OMS (and its users) show the code.
+    for (const code of ['XOF', 'XAF', 'DJF', 'CDF', 'SSP', 'HTG']) {
+      expect(getCurrencyInfo(code, 'en').symbol).toBe(code);
+      expect(getCurrencyInfo(code, 'fr', 'symbol').symbol).toBe(code);
+    }
+    expect(getCurrencyInfo('XOF', 'fr').side).toBe('end');
+    expect(getCurrencyInfo('XOF', 'en').decimals).toBe(0);
+  });
+
   it('falls back to a self-labelling code for invalid input', () => {
     expect(getCurrencyInfo('NOPE!', 'en')).toEqual({
       symbol: 'NOPE!',
@@ -44,5 +59,25 @@ describe('homeCurrency', () => {
     expect(homeCurrency()).toBe('PGK');
     setHomeCurrency(null);
     expect(homeCurrency()).toBe('USD');
+  });
+});
+
+describe('formatCurrency', () => {
+  it("formats at the currency's minor units with its narrow symbol", () => {
+    expect(formatCurrency(1234.5, 'EUR')).toBe('€1,234.50');
+    expect(formatCurrency(1234.5, 'JPY')).toBe('¥1,235');
+  });
+
+  it('formats a code-labelled home currency with its code (#1242)', () => {
+    setHomeCurrency('XOF');
+    expect(formatCurrency(1234.5)).toBe('XOF 1,235');
+    expect(formatCurrency(0)).toBe('XOF 0');
+    setHomeCurrency('USD');
+  });
+
+  it('falls back to the home currency when none is given', () => {
+    setHomeCurrency('USD');
+    expect(formatCurrency(2, null)).toBe('$2.00');
+    expect(formatCurrency(2)).toBe('$2.00');
   });
 });

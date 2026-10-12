@@ -2,6 +2,7 @@ import type { JSX } from 'solid-js';
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
+import { formatCurrency } from '../../../intl/currency';
 import { Comment } from '../feedback/Comment';
 import { StatusBadge } from '../feedback/StatusBadge';
 import { CheckIcon, MessageSquareIcon } from '../../icons';
@@ -295,23 +296,11 @@ export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
   cell: info => <Comment comment={info.getValue<string | null>()} />,
 });
 
-// Money: symbol + always two decimals (spec/ui-standards/conventions.md),
-// right-aligned, locale-formatted. Grouped parent → SUM of the leaves,
-// formatted the same way. The currency code is fixed at USD — the current
-// app's default store home currency — until store currency preferences are
-// plumbed through; narrowSymbol keeps the symbol a bare "$" in the
-// Latin-script locales (the current app's pattern) — ar has no CLDR narrow
-// form and falls back to "US$".
+// Money in the store's home currency at its minor units, right-aligned,
+// locale-formatted (spec/ui-standards/conventions.md). Grouped parent → SUM
+// of the leaves, formatted the same way.
 export const formatCurrencyCell = (value: number | null | undefined): string =>
-  value == null
-    ? ''
-    : formatNumber(value, {
-        style: 'currency',
-        currency: 'USD',
-        currencyDisplay: 'narrowSymbol',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+  value == null ? '' : formatCurrency(value);
 
 export const getCurrencyCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
