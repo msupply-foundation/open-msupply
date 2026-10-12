@@ -152,7 +152,7 @@ export const ButtonsShowcase = () => {
             these first; drop to the raw variants below only when you need a
             different label or tone. <code>Save</code> carries an icon and{' '}
             <strong>collapses to icon-only on phones</strong> — resize below
-            768px to see it; <code>DialogSaveButton</code>/
+            600px to see it; <code>DialogSaveButton</code>/
             <code>SaveAndNextButton</code> are the icon-less dialog-footer forms
             (ui-standards › controls § dialogs). There is deliberately no{' '}
             <code>CloseButton</code>: a detail screen is left by navigating up
@@ -347,9 +347,9 @@ export const ButtonsShowcase = () => {
         <DashboardCard title="Collapsible — icon-only on phones">
           <Lead>
             Opt-in with <code>collapsible</code> (ui-standards #btn-icons): at
-            phone widths (≤767px) the button sheds its label down to just the
+            phone widths (&lt;600px) the button sheds its label down to just the
             icon, to save toolbar space.{' '}
-            <strong>Resize the window below 768px</strong> to see the first two
+            <strong>Resize the window below 600px</strong> to see the first two
             collapse; the third (no <code>collapsible</code>) keeps its label.
             Only use it on buttons with an <code>icon</code>; the label stays as
             the accessible name. Default is off app-wide — one constant flips it
