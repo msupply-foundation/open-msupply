@@ -18,6 +18,7 @@ import {
   saveRequisitionFields,
 } from './requisitionUpdate';
 import { currentStatusStep, statusSteps } from './requisitionDetailStatus';
+import { statusLabel } from '../list/requisitionStatus';
 import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 
 // The detail footer (spec/requisitions S2 § footer): the labelled Close back
@@ -173,7 +174,7 @@ export const RequisitionStatusFooter: Component<
       props.onReasonsNotProvided([]);
       props.onSaved(result.node);
       setFinaliseOpen(false);
-      saved.show(t('status.finalised'));
+      saved.show(statusLabel(result.node.status));
       return;
     }
     if (result.kind === 'error') {

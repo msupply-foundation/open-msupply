@@ -15,6 +15,7 @@ import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFo
 import { createFlash } from '../../../ui/utils/createFlash';
 import { CheckIcon } from '../../../ui/icons';
 import { sendInternalOrder } from './internalOrderUpdate';
+import { statusLabel } from '../list/internalOrderStatus';
 import {
   currentStatusStep,
   isEmptySend,
@@ -145,7 +146,7 @@ export const InternalOrderStatusFooter: Component<
       props.onReasonsNotProvided([]);
       props.onSent(result.node);
       setOpen(false);
-      saved.show(t('label.sent'));
+      saved.show(statusLabel(result.node.status));
       return;
     }
     if (result.kind === 'error') {

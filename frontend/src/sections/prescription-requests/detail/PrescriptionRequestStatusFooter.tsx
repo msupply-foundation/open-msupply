@@ -92,7 +92,7 @@ export const PrescriptionRequestStatusFooter: Component<
     if (outcome.kind === 'saved') {
       closeDialogs();
       props.onSaved(outcome.node);
-      saved.show(statusLabel('READY_TO_DISPENSE'));
+      saved.show(statusLabel(asRequestStatus(outcome.node.status)));
       return;
     }
     if (outcome.kind === 'rejected') {

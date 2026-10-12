@@ -71,9 +71,9 @@ export interface InboundShipmentStatusFooterProps {
 // rejection (on hold, cannot-reverse, cannot-set-shipped-on-manual, pending
 // lines) returns and is shown inline at the control, the request preserved.
 // A committed advance is reported in the same slot, as a flash of the status
-// it reached, in the crumb's own word — "Received", not "Shipment saved"
-// (issue #1127; spec/ui-standards/controls.md § action feedback): the split
-// button is gone at Verified, and the crumb alone is easy to miss.
+// it reached, in the crumb's own word (issue #1127;
+// spec/ui-standards/controls.md § action feedback): the split button is gone
+// at Verified, and the crumb alone is easy to miss.
 export const InboundShipmentStatusFooter: Component<
   InboundShipmentStatusFooterProps
 > = props => {

@@ -19,6 +19,7 @@ import {
   nextStatuses,
   statusIndex,
   statusSteps,
+  statusLabel,
   zeroQuantityLineCount,
   STATUS_LABEL_KEYS,
   type ForwardStatus,
@@ -161,10 +162,11 @@ export const PrescriptionStatusFooter: Component<
       // Only a WHOLE success flashes. A plugin after-save failure (above)
       // keeps the payment window open to report it; a success chip behind it
       // would contradict that.
+      const reached = asPrescriptionStatus(outcome.node.status);
       saved.show(
-        next === 'VERIFIED'
+        reached === 'VERIFIED'
           ? t('messages.prescription-verified')
-          : t(STATUS_LABEL_KEYS[next])
+          : statusLabel(reached)
       );
       return;
     }

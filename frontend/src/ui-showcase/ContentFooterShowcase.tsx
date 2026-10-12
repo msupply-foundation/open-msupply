@@ -145,10 +145,10 @@ export const ContentFooterShowcase = () => {
             A status change often removes the control that made it: the dialog
             closes and the status button hides at the status it just set.{' '}
             <code>&lt;ContentFooterMessage&gt;</code> is where the footer says
-            what happened instead — a compact success chip carrying the save
-            confirmation, flashed with <code>createFlash</code> so it clears
-            itself, in the bar's one flexible slot beside the actions so nothing
-            moves when it lands. A refusal is not a chip: it keeps the
+            what happened instead — a compact success chip naming the status the
+            record just reached, flashed with <code>createFlash</code> so it
+            clears itself, in the bar's one flexible slot beside the actions so
+            nothing moves when it lands. A refusal is not a chip: it keeps the
             full-width error alert, which stays until the next attempt. The slot
             is a polite live region, so the outcome is announced as well as
             seen. The crumb that just arrived plays its one-shot bloom (reduced
