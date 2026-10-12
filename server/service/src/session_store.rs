@@ -109,6 +109,17 @@ impl SessionStore {
         self.sessions.retain(|_, entry| entry.user_id != user_id);
     }
 
+    /// Remove every session whose user `keep` rejects. Returns how many were removed.
+    ///
+    /// Maintenance mode (#840) calls this with "is a server admin" as it turns on, so users
+    /// who were signed in go back to the login screen on their next request while whoever
+    /// flipped the switch stays signed in.
+    pub fn revoke_all_except(&mut self, keep: impl Fn(&str) -> bool) -> usize {
+        let before = self.sessions.len();
+        self.sessions.retain(|_, entry| keep(&entry.user_id));
+        before - self.sessions.len()
+    }
+
     /// Records the password hash this user's sessions are being issued against, and
     /// revokes every session issued against a different one. Returns whether anything
     /// was revoked.

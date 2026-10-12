@@ -192,18 +192,30 @@ export const toSyncOverview = (
   };
 };
 
-// SYNC-03.18: one status line by precedence — syncing, then a non-zero
-// records-to-push count, then nothing-to-push. 'waiting' covers the first open
-// before any status has arrived.
+// SYNC-03.18: one status line by precedence — syncing, then maintenance mode,
+// then the admin pause, then a non-zero records-to-push count, then
+// nothing-to-push. 'waiting' covers the first open before any status has
+// arrived. A run already in flight when the pause lands finishes, so syncing
+// still leads. Maintenance mode (#840, central only) holds the pause but lets a
+// manual sync through, so it is its own line rather than 'paused'.
 export type StatusLineKind =
-  'waiting' | 'syncing' | 'records-to-push' | 'nothing-to-push';
+  | 'waiting'
+  | 'syncing'
+  | 'maintenance'
+  | 'paused'
+  | 'records-to-push'
+  | 'nothing-to-push';
 
 export const statusLineKind = (
   overview: SyncOverview | undefined,
-  pushQueueCount: number | undefined
+  pushQueueCount: number | undefined,
+  paused = false,
+  maintenance = false
 ): StatusLineKind => {
   if (!overview) return 'waiting';
   if (overview.isSyncing) return 'syncing';
+  if (maintenance) return 'maintenance';
+  if (paused) return 'paused';
   if (pushQueueCount != null && pushQueueCount > 0) return 'records-to-push';
   return 'nothing-to-push';
 };
@@ -309,11 +321,19 @@ export type SyncFooterStatus =
   | { kind: 'waiting'; tone: 'neutral' }
   // A run is in flight.
   | { kind: 'syncing'; tone: 'neutral' }
+  // Central is in maintenance mode (#840): sync, the sync API and processors
+  // are held, and only a server administrator's manual sync runs.
+  | { kind: 'maintenance'; tone: 'warning' }
+  // A server administrator has paused sync; nothing will run until resumed.
+  | { kind: 'paused'; tone: 'warning' }
   // The latest run failed, or the site is critically stale.
   | { kind: 'error'; tone: 'error' }
   // The latest run could not reach the central server, and the site is not yet
   // stale enough for the rungs below to speak for it.
   | { kind: 'unreachable'; tone: 'warning' }
+  // The central server has paused its sync API for maintenance (#717): an
+  // expected state that clears by itself, so a warning line, not a failure.
+  | { kind: 'sync-api-paused'; tone: 'warning' }
   // No failure, but the last success is old enough to warn.
   | { kind: 'warning'; tone: 'warning' }
   // Idle and clean, with records waiting to push.
@@ -328,6 +348,11 @@ export type SyncFooterStatus =
 // link would otherwise sit permanently red. They get their own warning-level
 // line, and a sustained outage still escalates through the staleness rungs.
 const CONNECTION_VARIANT: SyncErrorVariant = 'CONNECTION_ERROR';
+
+// Likewise a paused central server: the site retries on its normal interval and
+// resumes once central is unpaused, so it is not this site's failure to alarm
+// on. A long pause still escalates through the staleness rungs.
+const SYNC_API_PAUSED_VARIANT: SyncErrorVariant = 'SYNC_API_PAUSED';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -347,21 +372,31 @@ const daysSinceSuccess = (overview: SyncOverview, now: Date): number =>
 
 /*
  * The footer sync cell's state (spec/chrome § sync status). Precedence, highest
- * first: a run in flight, a failed run, staleness, an unreachable server, the
- * queue, then the quiet "Synced …" line. Staleness escalates the WHOLE cell —
- * it is the site's one standing sync signal, so an ageing site must say so even
- * with an empty queue.
+ * first: a run in flight, maintenance mode, the admin pause, a failed run,
+ * staleness, an
+ * unreachable server, the queue, then the quiet "Synced …" line. Staleness
+ * escalates the WHOLE cell — it is the site's one standing sync signal, so an
+ * ageing site must say so even with an empty queue. The pause sits above the
+ * fault lines because it is the one state the user can do nothing about from
+ * here: a stale or errored site that is also paused will not sync until an
+ * administrator resumes it, and that is the news.
  */
 export const syncFooterStatus = (
   overview: SyncOverview | undefined,
   pushQueueCount: number | undefined,
   displayThreshold: number,
-  now: Date
+  now: Date,
+  paused = false,
+  maintenance = false
 ): SyncFooterStatus => {
   if (!overview) return { kind: 'waiting', tone: 'neutral' };
   if (overview.isSyncing) return { kind: 'syncing', tone: 'neutral' };
+  if (maintenance) return { kind: 'maintenance', tone: 'warning' };
+  if (paused) return { kind: 'paused', tone: 'warning' };
   const unreachable = overview.error?.variant === CONNECTION_VARIANT;
-  if (overview.error && !unreachable) return { kind: 'error', tone: 'error' };
+  const syncApiPaused = overview.error?.variant === SYNC_API_PAUSED_VARIANT;
+  if (overview.error && !unreachable && !syncApiPaused)
+    return { kind: 'error', tone: 'error' };
 
   const daysStale = daysSinceSuccess(overview, now);
   if (daysStale >= overview.errorThresholdDays)
@@ -372,6 +407,7 @@ export const syncFooterStatus = (
   // spoken for it and the cell would otherwise read "Synced …" while the modal
   // beside it reports the failure.
   if (unreachable) return { kind: 'unreachable', tone: 'warning' };
+  if (syncApiPaused) return { kind: 'sync-api-paused', tone: 'warning' };
 
   const count = pushQueueCount ?? 0;
   if (count > 0 && count >= displayThreshold)
@@ -385,7 +421,8 @@ export const syncFooterStatus = (
 
 /*
  * Whether the cell reads as DIMMED (issue #1087) — sync is not running and
- * cannot, because the central server is out of reach.
+ * cannot: the central server is out of reach, or an administrator has paused
+ * it.
  *
  * Its own level, deliberately not folded into `tone`. By the precedence ladder
  * an unreachable server is a warning, and it must stay one: it MUST NOT read as
@@ -399,4 +436,7 @@ export const syncFooterStatus = (
  * ground.
  */
 export const syncFooterDimmed = (kind: SyncFooterStatus['kind']): boolean =>
-  kind === 'unreachable';
+  kind === 'unreachable' ||
+  kind === 'paused' ||
+  kind === 'maintenance' ||
+  kind === 'sync-api-paused';
