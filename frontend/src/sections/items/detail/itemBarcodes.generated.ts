@@ -12,7 +12,8 @@ export type ItemBarcodesResult = {
   id: string;
   barcode: string;
   packSize: number | null;
-  manufacturerName: string | null;
+  itemVariantId: string | null;
+  isAutoCreated: boolean;
 }>;
   itemBarcodeProposals: Array<{
   id: string;
@@ -25,6 +26,27 @@ export type ItemBarcodesResult = {
   siteId: number;
 } | null;
 }>;
+  items: ({
+  __typename: "ItemConnector";
+} & {
+  nodes: Array<{
+  variants: Array<{
+  id: string;
+  name: string;
+  isAutoCreated: boolean;
+  manufacturer: {
+  id: string;
+  name: string;
+} | null;
+  packagingVariants: Array<{
+  id: string;
+  name: string;
+  packSize: number | null;
+  barcode: string | null;
+}>;
+}>;
+}>;
+});
   store: ({
   __typename: "StoreNode";
 } & {
@@ -35,5 +57,5 @@ export type ItemBarcodesResult = {
 };
 
 export const ItemBarcodes = {
-  query: "query itemBarcodes($storeId: String!, $itemId: String!) {\n  itemBarcodes(storeId: $storeId, itemId: $itemId) {\n    id\n    barcode\n    packSize\n    manufacturerName\n  }\n  itemBarcodeProposals(storeId: $storeId, itemId: $itemId) {\n    id\n    barcode\n    packSize\n    store {\n      id\n      code\n      storeName\n      siteId\n    }\n  }\n  store(id: $storeId) {\n    __typename\n    ... on StoreNode {\n      siteId\n    }\n    ... on NodeError {\n      __typename\n    }\n  }\n}",
+  query: "query itemBarcodes($storeId: String!, $itemId: String!) {\n  itemBarcodes(storeId: $storeId, itemId: $itemId) {\n    id\n    barcode\n    packSize\n    itemVariantId\n    isAutoCreated\n  }\n  itemBarcodeProposals(storeId: $storeId, itemId: $itemId) {\n    id\n    barcode\n    packSize\n    store {\n      id\n      code\n      storeName\n      siteId\n    }\n  }\n  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {\n    ... on ItemConnector {\n      __typename\n      nodes {\n        variants(includeAutoCreated: true) {\n          id\n          name\n          isAutoCreated\n          manufacturer(storeId: $storeId) {\n            id\n            name\n          }\n          packagingVariants {\n            id\n            name\n            packSize\n            barcode\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    __typename\n    ... on StoreNode {\n      siteId\n    }\n    ... on NodeError {\n      __typename\n    }\n  }\n}",
 } as TypedDocument<ItemBarcodesResult, ItemBarcodesVariables>;

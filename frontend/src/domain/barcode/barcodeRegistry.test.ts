@@ -50,7 +50,6 @@ const {
   addBarcode,
   confirmProposal,
   lookUpBarcode,
-  moveBarcode,
   proposeBarcode,
   removeBarcode,
   resolveMappings,
@@ -191,40 +190,68 @@ describe('central — rules § Maintaining barcodes', () => {
     data: { centralServer: { barcode: { [operation]: { id: 'b1' } } } },
   });
 
-  it('.178 adds a confirmed barcode', async () => {
+  const autoCreated = { kind: 'auto-created' } as const;
+
+  it('.178 adds a confirmed barcode, on an auto-created variant by default', async () => {
     answer = saved('insertBarcode');
     const input = { barcode: '5012345678900', itemId: 'item-1' };
-    expect(await addBarcode('store-1', input)).toEqual({ kind: 'saved' });
+    expect(await addBarcode('store-1', input, autoCreated)).toEqual({
+      kind: 'saved',
+    });
     expect(calls[0]).toMatchObject({
       operation: 'insertBarcode',
       variables: { storeId: 'store-1', input },
     });
   });
 
+  it.each([
+    [{ kind: 'item-variant', id: 'iv1' } as const, { itemVariantId: 'iv1' }],
+    [
+      { kind: 'packaging-variant', id: 'pv1' } as const,
+      { packagingVariantId: 'pv1' },
+    ],
+  ])('.235 adds a barcode where central puts it (%j)', async (target, sent) => {
+    answer = saved('insertBarcode');
+    const input = { barcode: '5012345678900', itemId: 'item-1' };
+    await addBarcode('store-1', input, target);
+    expect(calls[0]?.variables).toEqual({
+      storeId: 'store-1',
+      input: { ...input, ...sent },
+    });
+  });
+
   it('refuses an empty barcode rather than sending it', async () => {
     expect(
-      await addBarcode('store-1', { barcode: '', itemId: 'item-1' })
+      await addBarcode(
+        'store-1',
+        { barcode: '', itemId: 'item-1' },
+        autoCreated
+      )
     ).toEqual({ kind: 'no-code' });
     expect(calls).toEqual([]);
   });
 
   it('.174 confirms a proposal', async () => {
     answer = saved('confirmBarcodeProposal');
-    expect(await confirmProposal('store-1', 'p1')).toEqual({ kind: 'saved' });
+    expect(await confirmProposal('store-1', 'p1', autoCreated)).toEqual({
+      kind: 'saved',
+    });
     expect(calls[0]).toMatchObject({
       operation: 'confirmBarcodeProposal',
       variables: { storeId: 'store-1', id: 'p1' },
     });
   });
 
-  it('.228 moves a barcode to another item', async () => {
-    answer = saved('updateBarcode');
-    expect(await moveBarcode('store-1', 'b1', 'item-2')).toEqual({
-      kind: 'saved',
+  it('.235 confirms a proposal onto a packaging level of a variant', async () => {
+    answer = saved('confirmBarcodeProposal');
+    await confirmProposal('store-1', 'p1', {
+      kind: 'packaging-variant',
+      id: 'pv1',
     });
     expect(calls[0]?.variables).toEqual({
       storeId: 'store-1',
-      input: { id: 'b1', itemId: 'item-2' },
+      id: 'p1',
+      packagingVariantId: 'pv1',
     });
   });
 

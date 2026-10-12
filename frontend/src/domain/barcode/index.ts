@@ -25,7 +25,6 @@ export {
   addBarcode,
   confirmProposal,
   lookUpBarcode,
-  moveBarcode,
   proposeBarcode,
   removeBarcode,
   resolveMappings,
@@ -33,6 +32,7 @@ export {
   type BarcodeChange,
   type BarcodeFragment,
   type BarcodeLookup,
+  type BarcodeTarget,
   type ProposeInput,
 } from './barcodeRegistry';
 export {

@@ -1,6 +1,7 @@
 # Barcodes (spec/barcode-scanning/contract.md; decisions/2026-09-30_barcodes.md).
-# A confirmed barcode is central's: shared by every site, and one barcode can be
-# confirmed for several items. A proposal is a barcode a store learned, waiting
+# A confirmed barcode is central's: it lives on one of the item's packaging
+# variants, reaches every site, and one barcode can be confirmed for several
+# items. A proposal is a barcode a store learned, waiting
 # for central. The server stores every barcode in its standard form, so the app
 # sends a scan as it was read and never pads or trims it. `barcode` is the
 # barcode as people read it; `value` is the stored form.
@@ -47,20 +48,22 @@ mutation insertBarcode(
   }
 }
 
-mutation confirmBarcodeProposal($storeId: String!, $id: String!) {
+# With no packaging variant or item variant given, the barcode goes on the
+# item's auto-created variant for the proposal's manufacturer.
+mutation confirmBarcodeProposal(
+  $storeId: String!
+  $id: String!
+  $packagingVariantId: String
+  $itemVariantId: String
+) {
   centralServer {
     barcode {
-      confirmBarcodeProposal(storeId: $storeId, id: $id) {
-        id
-      }
-    }
-  }
-}
-
-mutation updateBarcode($storeId: String!, $input: UpdateBarcodeInput!) {
-  centralServer {
-    barcode {
-      updateBarcode(storeId: $storeId, input: $input) {
+      confirmBarcodeProposal(
+        storeId: $storeId
+        id: $id
+        packagingVariantId: $packagingVariantId
+        itemVariantId: $itemVariantId
+      ) {
         id
       }
     }
@@ -76,6 +79,8 @@ mutation deleteBarcodeProposal($storeId: String!, $id: String!) {
   }
 }
 
+# `id` is the packaging variant's. Central remembers the removal, so the
+# barcode isn't auto-confirmed for the item again.
 mutation deleteBarcode($storeId: String!, $id: String!) {
   centralServer {
     barcode {

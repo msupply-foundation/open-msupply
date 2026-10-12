@@ -49,6 +49,8 @@ export type InsertBarcodeVariables = {
     itemId: string;
     packSize?: number | null;
     manufacturerId?: string | null;
+    packagingVariantId?: string | null;
+    itemVariantId?: string | null;
   };
 };
 
@@ -69,6 +71,8 @@ export const InsertBarcode = {
 export type ConfirmBarcodeProposalVariables = {
   storeId: string;
   id: string;
+  packagingVariantId?: string | null;
+  itemVariantId?: string | null;
 };
 
 export type ConfirmBarcodeProposalResult = {
@@ -82,33 +86,8 @@ export type ConfirmBarcodeProposalResult = {
 };
 
 export const ConfirmBarcodeProposal = {
-  query: "mutation confirmBarcodeProposal($storeId: String!, $id: String!) {\n  centralServer {\n    barcode {\n      confirmBarcodeProposal(storeId: $storeId, id: $id) {\n        id\n      }\n    }\n  }\n}",
+  query: "mutation confirmBarcodeProposal($storeId: String!, $id: String!, $packagingVariantId: String, $itemVariantId: String) {\n  centralServer {\n    barcode {\n      confirmBarcodeProposal(\n        storeId: $storeId\n        id: $id\n        packagingVariantId: $packagingVariantId\n        itemVariantId: $itemVariantId\n      ) {\n        id\n      }\n    }\n  }\n}",
 } as TypedDocument<ConfirmBarcodeProposalResult, ConfirmBarcodeProposalVariables>;
-
-export type UpdateBarcodeVariables = {
-  storeId: string;
-  input: {
-    id: string;
-    itemId?: string | null;
-    packSize?: {
-    value?: number | null;
-  } | null;
-  };
-};
-
-export type UpdateBarcodeResult = {
-  centralServer: {
-  barcode: {
-  updateBarcode: {
-  id: string;
-};
-};
-};
-};
-
-export const UpdateBarcode = {
-  query: "mutation updateBarcode($storeId: String!, $input: UpdateBarcodeInput!) {\n  centralServer {\n    barcode {\n      updateBarcode(storeId: $storeId, input: $input) {\n        id\n      }\n    }\n  }\n}",
-} as TypedDocument<UpdateBarcodeResult, UpdateBarcodeVariables>;
 
 export type DeleteBarcodeProposalVariables = {
   storeId: string;

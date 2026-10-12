@@ -7,7 +7,7 @@ import {
   Switch,
   type Component,
 } from 'solid-js';
-import { graphqlFetch } from '../../../api/graphql';
+import { describeErrors, graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { t } from '../../../intl';
@@ -22,37 +22,70 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import {
-  confirmProposal,
   removeBarcode,
   withdrawProposal,
   type BarcodeChange,
 } from '../../../domain/barcode';
 import { ItemBarcodes } from './itemBarcodes.generated';
+import { PromoteItemVariant } from './itemVariantMutations.generated';
 import { ItemBarcodeModal, type BarcodeEditorState } from './ItemBarcodeModal';
 import {
   barcodeRows,
+  barcodeVariants,
   canWithdraw,
+  manufacturerLabel,
   thisSiteId,
+  variantLabel,
   type BarcodeRow,
   type NamedItem,
 } from './barcodeEdit';
 
 // The Barcodes tab (spec/items/ui-surface.md S2 › Barcodes tab;
 // barcode-scanning rules § Maintaining barcodes): the item's confirmed
-// barcodes, with pack size and manufacturer, then the proposals central
-// hasn't decided on — every store's on central, this site's elsewhere —
-// saying which store made each. Where the user may (`canManage`, rules §
-// Permissions): on central a proposal offers Confirm and a confirmed barcode
-// offers Remove and Move to another item…; elsewhere confirmed barcodes are
-// read-only. A proposal made on this site (on central, by one of its own
+// barcodes, with pack size, manufacturer and the variant each is on, then the
+// proposals central hasn't decided on — every store's on central, this site's
+// elsewhere — saying which store made each. A confirmed barcode lives on one
+// of the item's packaging variants; one central put there on its own is on an
+// auto-created variant, hidden from variant lists, and says "Barcode only"
+// (decisions/2026-09-30_barcodes.md, Option 6). Where the user may
+// (`canManage`, `canMakeVariant`, rules § Permissions): on central a proposal
+// offers Confirm, which asks where the barcode goes, and a confirmed barcode
+// offers Remove, plus Make a variant when it's barcode only; elsewhere confirmed barcodes
+// are read-only. A proposal made on this site (on central, by one of its own
 // stores) also offers Remove, which withdraws it (e.g. it picked the wrong
 // item); another site's proposal is that site's to withdraw. The page header
 // offers Add barcode wherever the user may: on central it confirms the
-// barcode, elsewhere it proposes it. Add and Move open ItemBarcodeModal,
+// barcode, elsewhere it proposes it. Add and Confirm open ItemBarcodeModal,
 // whose state the detail view owns (the Add trigger is a page action, as on
-// the Ancillary items tab); Remove asks first. Removing never touches stock
-// or shipments that already have the barcode. Its own query, so a change
-// refetches only this tab.
+// the Ancillary items tab); Remove and Make a variant ask first. Removing
+// never touches stock or shipments that already have the barcode. A barcode
+// on the wrong item is removed here and added on the right one. Its own
+// query, so a change refetches only this tab.
+
+/**
+ * Central: make the auto-created variant a barcode-only row is on a real one,
+ * so it shows on the Variants tab and in pickers. It keeps its id, so stock
+ * already on it stays linked, and any other barcodes on it go with it.
+ */
+const promoteVariant = async (
+  storeId: string,
+  id: string
+): Promise<BarcodeChange> => {
+  const result = await graphqlFetch(
+    PromoteItemVariant,
+    { storeId, id },
+    { returnGraphqlErrors: true }
+  );
+  if (result.kind === 'success') return { kind: 'saved' };
+  const error =
+    result.kind === 'graphqlError'
+      ? describeErrors(result.errors)
+      : result.kind;
+  return {
+    kind: 'error',
+    message: t('error.unable-to-make-variant', { error }),
+  };
+};
 
 // Room for a 14-digit code.
 const BARCODE_WIDTH_REM = 10;
@@ -62,9 +95,11 @@ const { maxSize: _codeCap, ...codeCell } =
 export const ItemBarcodesPanel: Component<{
   storeId: string;
   item: NamedItem;
-  /** Confirm, move and remove are central's. */
+  /** Confirm, remove and make a variant are central's. */
   isCentral: boolean;
   canManage: boolean;
+  /** Make a variant is variant editing, gated apart from barcodes. */
+  canMakeVariant: boolean;
   editor: BarcodeEditorState | undefined;
   onEditorChange: (editor: BarcodeEditorState | undefined) => void;
 }> = props => {
@@ -77,6 +112,7 @@ export const ItemBarcodesPanel: Component<{
       if (result.kind !== 'success') return undefined;
       return {
         rows: barcodeRows(result.data),
+        variants: barcodeVariants(result.data),
         siteId: thisSiteId(result.data),
       };
     }
@@ -86,12 +122,15 @@ export const ItemBarcodesPanel: Component<{
   // the already-open detail screen's <Suspense> (kdd/solid-reactivity-pitfalls
   // § no remounts on interaction).
   const rows = (): BarcodeRow[] => gated(data)?.rows ?? [];
+  const variants = () => gated(data)?.variants ?? [];
   const siteId = () => gated(data)?.siteId;
 
   const onSaved = () => void refetch();
 
-  // The row whose removal is being asked about, and the last action failure.
+  // The row whose removal is being asked about, the barcode-only row whose
+  // variant is being made a real one, and the last action failure.
   const [removing, setRemoving] = createSignal<BarcodeRow>();
+  const [promoting, setPromoting] = createSignal<BarcodeRow>();
   const [actionError, setActionError] = createSignal<string>();
   const [acting, setActing] = createSignal(false);
 
@@ -131,14 +170,14 @@ export const ItemBarcodesPanel: Component<{
         ...getCellDefinition('packSize'),
       },
       {
-        c: {
-          accessor: row =>
-            row.status === 'confirmed'
-              ? (row.barcode.manufacturerName ?? '')
-              : '',
-          id: 'manufacturer',
-        },
+        c: { accessor: manufacturerLabel, id: 'manufacturer' },
         header: () => t('label.manufacturer'),
+        enableSorting: false,
+        ...getTextCell(),
+      },
+      {
+        c: { accessor: variantLabel, id: 'variant' },
+        header: () => t('label.item-variant'),
         enableSorting: false,
         ...getTextCell(),
       },
@@ -146,7 +185,9 @@ export const ItemBarcodesPanel: Component<{
         c: {
           accessor: row =>
             row.status === 'confirmed'
-              ? t('label.barcode-confirmed')
+              ? row.barcode.isAutoCreated
+                ? t('label.barcode-confirmed-barcode-only')
+                : t('label.barcode-confirmed')
               : t('label.barcode-proposed-by', {
                   store:
                     row.barcode.store?.storeName ??
@@ -160,7 +201,7 @@ export const ItemBarcodesPanel: Component<{
         ...getTextCell(),
       },
     ];
-    if (props.canManage) {
+    if (props.canManage || props.canMakeVariant) {
       cols.push({
         // A structural actions column — never a cell preset
         // (docs/CELL_TYPES.md § Not cell types).
@@ -183,32 +224,44 @@ export const ItemBarcodesPanel: Component<{
               {t('button.remove-barcode')}
             </Button>
           );
-          // Confirmed: central removes or moves it. Proposed: central confirms
-          // it, and this site may withdraw its own (canWithdraw) — on central
-          // only its own stores' proposals.
+          // Confirmed: central removes it, and makes a barcode-only one's
+          // variant a real one. Proposed: central confirms it, and this site
+          // may withdraw its own (canWithdraw) — on central only its own
+          // stores' proposals.
           return (
             <Switch>
               <Match when={row.status === 'confirmed' && props.isCentral}>
                 <HStack gap="sm">
-                  {removeButton()}
-                  <Button
-                    variant="ghost"
-                    size="small"
-                    data-testid="barcode-move-button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      if (row.status === 'confirmed')
-                        props.onEditorChange({
-                          mode: 'move',
-                          row: row.barcode,
-                        });
-                    }}
+                  <Show when={props.canManage}>{removeButton()}</Show>
+                  <Show
+                    when={
+                      props.canMakeVariant &&
+                      row.status === 'confirmed' &&
+                      row.barcode.isAutoCreated
+                    }
                   >
-                    {t('button.move-barcode')}
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="small"
+                      data-testid="barcode-promote-button"
+                      disabled={acting()}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setPromoting(row);
+                      }}
+                    >
+                      {t('button.make-variant')}
+                    </Button>
+                  </Show>
                 </HStack>
               </Match>
-              <Match when={row.status === 'proposed' && props.isCentral}>
+              <Match
+                when={
+                  props.canManage &&
+                  row.status === 'proposed' &&
+                  props.isCentral
+                }
+              >
                 <HStack gap="sm">
                   <Button
                     variant="ghost"
@@ -217,9 +270,11 @@ export const ItemBarcodesPanel: Component<{
                     disabled={acting()}
                     onClick={e => {
                       e.stopPropagation();
-                      const id = row.barcode.id;
-                      const storeId = props.storeId;
-                      void act(() => confirmProposal(storeId, id));
+                      if (row.status === 'proposed')
+                        props.onEditorChange({
+                          mode: 'confirm',
+                          row: row.barcode,
+                        });
                     }}
                   >
                     {t('button.confirm-barcode')}
@@ -229,7 +284,9 @@ export const ItemBarcodesPanel: Component<{
                   </Show>
                 </HStack>
               </Match>
-              <Match when={canWithdraw(row, false, siteId())}>
+              <Match
+                when={props.canManage && canWithdraw(row, false, siteId())}
+              >
                 {removeButton()}
               </Match>
             </Switch>
@@ -305,12 +362,31 @@ export const ItemBarcodesPanel: Component<{
         onClose={() => setRemoving(undefined)}
       />
 
+      <ConfirmDialog
+        open={promoting() !== undefined}
+        title={t('title.make-variant')}
+        message={t('messages.confirm-make-variant', {
+          barcode: promoting()?.barcode.barcode ?? '',
+        })}
+        confirmLabel={t('button.make-variant')}
+        onConfirm={() => {
+          const row = promoting();
+          const storeId = props.storeId;
+          setPromoting(undefined);
+          if (row?.status !== 'confirmed' || !row.barcode.itemVariantId) return;
+          const id = row.barcode.itemVariantId;
+          void act(() => promoteVariant(storeId, id));
+        }}
+        onClose={() => setPromoting(undefined)}
+      />
+
       <Show when={props.editor}>
         {editor => (
           <ItemBarcodeModal
             storeId={props.storeId}
             item={props.item}
             isCentral={props.isCentral}
+            variants={variants()}
             editor={editor()}
             onClose={() => props.onEditorChange(undefined)}
             onSaved={onSaved}

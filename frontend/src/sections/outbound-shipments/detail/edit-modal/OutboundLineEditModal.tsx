@@ -1233,13 +1233,20 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The row-status badges follow (Expired / Near expiry / On hold —
       // ui-standards § table interaction, D111/D112): word chips in table
       // view; cards hide them ([data-row-badges]) and carry the states as
-      // their after-the-title chips instead.
+      // their after-the-title chips instead. A batch on an auto-created
+      // variant, which only holds a barcode, has no marker: the variant list
+      // leaves it out (decisions/2026-09-30_barcodes.md, Option 6).
       cell: info => {
         const line = info.row.original;
         return (
           <span class={styles.batchCell}>
             {line.batch ?? '—'}
-            <Show when={line.itemVariantId}>
+            <Show
+              when={
+                variants().some(variant => variant.id === line.itemVariantId) &&
+                line.itemVariantId
+              }
+            >
               {variantId => (
                 <Popover
                   trigger={<InfoIcon />}

@@ -1,4 +1,4 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createMemo, createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -8,16 +8,17 @@ import {
 } from '../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
+import { Select } from '../../../ui/elements/selectors/Select';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { Stack } from '../../../ui/layout/Stack/Stack';
-import { PlusCircleIcon } from '../../../ui/icons';
+import { CheckIcon, PlusCircleIcon } from '../../../ui/icons';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
-import { ItemSearch } from '../../../domain/item/ItemSearch';
+import { NameSearch } from '../../../domain/name/NameSearch';
 import {
   addBarcode,
+  confirmProposal,
   createScanControl,
   labelFields,
-  moveBarcode,
   proposeBarcode,
   scanCode,
   type BarcodeChange,
@@ -26,22 +27,34 @@ import {
   ScanNotice,
 } from '../../../domain/barcode';
 import {
+  AUTO_CREATED_TARGET,
   EMPTY_DRAFT,
   addInput,
+  asksManufacturer,
+  asksPackSize,
   isDraftValid,
+  targetOptions,
   type BarcodeDraft,
-  type ConfirmedBarcode,
+  type BarcodeProposal,
+  type BarcodeVariant,
   type NamedItem,
 } from './barcodeEdit';
 
 // The Barcodes tab's one dialog (spec/items/ui-surface.md S7; barcode-scanning
 // rules § Maintaining barcodes). Two entries:
 //
-//  - Add barcode: a Barcode field (scannable, exactly as the stock line's is)
-//    and a Pack size. On central it confirms the barcode for this item,
-//    alongside any other items it is confirmed for; elsewhere it proposes it.
-//  - Move to another item (central only): an item search, then Save. Stock and
-//    shipments that already have the barcode keep it.
+//  - Add barcode: a Barcode field (scannable, exactly as the stock line's is),
+//    a Pack size and a Manufacturer. On central it confirms the barcode for
+//    this item, alongside any other items it is confirmed for; elsewhere it
+//    proposes it.
+//  - Confirm (central only, from a proposal): the proposal's barcode, pack size
+//    and store, read-only.
+//
+// On central both ask where the barcode goes (Put it on): on its own by
+// default — an auto-created variant, out of sight of variant lists — or on one
+// of the item's variants (decisions/2026-09-30_barcodes.md, Option 6). An
+// existing packaging level brings its own pack size, and a variant its own
+// manufacturer, so those fields show only where the barcode gets new ones.
 //
 // Cancel closes the dialog with nothing changed. The panel mounts this fresh
 // per open, so the form seeds once (kdd/solid-reactivity-pitfalls § no
@@ -49,7 +62,7 @@ import {
 
 /** What the dialog was opened for. */
 export type BarcodeEditorState =
-  { mode: 'add' } | { mode: 'move'; row: ConfirmedBarcode };
+  { mode: 'add' } | { mode: 'confirm'; row: BarcodeProposal };
 
 export const ItemBarcodeModal: Component<{
   storeId: string;
@@ -57,20 +70,30 @@ export const ItemBarcodeModal: Component<{
   item: NamedItem;
   /** Add confirms on central, proposes elsewhere. */
   isCentral: boolean;
+  /** The item's variants, auto-created ones included: where central can put it. */
+  variants: BarcodeVariant[];
   /** Snapshot at open. */
   editor: BarcodeEditorState;
   onClose: () => void;
   /** A save landed — the panel re-queries. */
   onSaved: () => void;
 }> = props => {
-  const movedRow = (): ConfirmedBarcode | undefined =>
-    props.editor.mode === 'move' ? props.editor.row : undefined;
+  const confirmed = (): BarcodeProposal | undefined =>
+    props.editor.mode === 'confirm' ? props.editor.row : undefined;
   const barcodeField = createFocusTarget();
-  const itemSearch = createFocusTarget();
+  const targetField = createFocusTarget();
 
   const [draft, setDraft] = createSignal<BarcodeDraft>(EMPTY_DRAFT);
-  // Move: the item picked to move the barcode to.
-  const [moveTarget, setMoveTarget] = createSignal<NamedItem>();
+  const options = createMemo(() => targetOptions(props.variants));
+  const [targetValue, setTargetValue] = createSignal(AUTO_CREATED_TARGET);
+  const target = () =>
+    (options().find(option => option.value === targetValue()) ?? options()[0]!)
+      .target;
+  // Away from central nothing is confirmed, so there's nowhere to choose.
+  const showsPackSize = () => !props.isCentral || asksPackSize(target());
+  const showsManufacturer = () =>
+    !props.isCentral || asksManufacturer(target());
+
   const [saving, setSaving] = createSignal(false);
   // The inline save-rejection banner — the dialog stays open with entries
   // intact (ui-standards › controls § dialogs).
@@ -83,11 +106,12 @@ export const ItemBarcodeModal: Component<{
   const scanner = createScanControl({
     owner: 'item-barcodes',
     mode: 'field',
-    disabled: () => movedRow() !== undefined || saving(),
+    disabled: () => confirmed() !== undefined || saving(),
     onScan: scan => {
       const code = scanCode(scan);
       const { packSize } = labelFields(scan);
       setDraft(current => ({
+        ...current,
         barcode: code ?? current.barcode,
         packSize: packSize ?? current.packSize,
       }));
@@ -115,36 +139,37 @@ export const ItemBarcodeModal: Component<{
   };
 
   const title = () =>
-    movedRow() ? t('title.move-barcode') : t('label.add-barcode');
+    confirmed() ? t('title.confirm-barcode') : t('label.add-barcode');
 
   const onSave = () => {
     const storeId = props.storeId;
-    const row = movedRow();
+    const where = target();
+    const row = confirmed();
     if (row) {
-      const target = moveTarget();
-      if (target) void submit(() => moveBarcode(storeId, row.id, target.id));
+      void submit(() => confirmProposal(storeId, row.id, where));
       return;
     }
-    const input = addInput(draft(), props.item.id);
+    const itemId = props.item.id;
     void submit(() =>
       props.isCentral
-        ? addBarcode(storeId, input)
-        : proposeBarcode(storeId, input)
+        ? addBarcode(storeId, addInput(draft(), itemId, where), where)
+        : proposeBarcode(storeId, addInput(draft(), itemId))
     );
   };
-  const canSave = () =>
-    !saving() &&
-    (movedRow() ? moveTarget() !== undefined : isDraftValid(draft()));
+  const canSave = () => !saving() && (!!confirmed() || isDraftValid(draft()));
 
   return (
     <Dialog
       open
       testId="item-barcode-modal"
       width="form"
-      initialFocus={movedRow() ? itemSearch : barcodeField}
+      initialFocus={confirmed() ? targetField : barcodeField}
       title={title()}
-      icon={movedRow() ? undefined : <PlusCircleIcon />}
+      icon={confirmed() ? <CheckIcon /> : <PlusCircleIcon />}
       dismissable={!saving()}
+      // Room for the manufacturer lookup's and Put it on's open listboxes
+      // inside the dialog, as on the variant dialog.
+      minBodyHeightRem={24}
       onClose={props.onClose}
       footer={
         <Show when={rejection()}>
@@ -172,61 +197,88 @@ export const ItemBarcodeModal: Component<{
         </>
       }
     >
-      <Show
-        when={movedRow()}
-        fallback={
-          <Stack gap="md">
-            <TextField
-              ref={barcodeField.ref}
-              label={t('label.barcode')}
-              data-testid="field-barcode"
-              value={draft().barcode}
-              disabled={saving()}
-              onInput={e =>
-                setDraft({ ...draft(), barcode: e.currentTarget.value })
-              }
-              helperText={scanFieldHelper(scanner)}
-              endAction={
-                scanner.needsPress() ? (
-                  <ScanFieldButton control={scanner} />
-                ) : undefined
-              }
-            />
-            <ScanNotice control={scanner} />
-            <NumberField
-              label={t('label.pack-size')}
-              data-testid="field-pack-size"
-              min={0}
-              decimalLimit={4}
-              disabled={saving()}
-              value={draft().packSize}
-              onChange={packSize => setDraft({ ...draft(), packSize })}
-            />
-          </Stack>
-        }
-      >
-        {row => (
-          <Stack gap="md">
-            <LabelledValue variant="field" label={t('label.barcode')}>
-              {row().barcode}
-            </LabelledValue>
-            <ItemSearch
-              label={t('label.move-barcode-to')}
-              storeId={props.storeId}
-              focusTarget={itemSearch}
-              excludeItemIds={[props.item.id]}
-              clearable={false}
-              onSelect={picked =>
-                setMoveTarget(
-                  picked
-                    ? { id: picked.id, code: picked.code, name: picked.name }
-                    : undefined
-                )
-              }
-            />
-          </Stack>
-        )}
-      </Show>
+      <Stack gap="md">
+        <Show
+          when={confirmed()}
+          fallback={
+            <>
+              <TextField
+                ref={barcodeField.ref}
+                label={t('label.barcode')}
+                data-testid="field-barcode"
+                value={draft().barcode}
+                disabled={saving()}
+                onInput={e =>
+                  setDraft({ ...draft(), barcode: e.currentTarget.value })
+                }
+                helperText={scanFieldHelper(scanner)}
+                endAction={
+                  scanner.needsPress() ? (
+                    <ScanFieldButton control={scanner} />
+                  ) : undefined
+                }
+              />
+              <ScanNotice control={scanner} />
+            </>
+          }
+        >
+          {row => (
+            <>
+              <LabelledValue variant="field" label={t('label.barcode')}>
+                {row().barcode}
+              </LabelledValue>
+              <LabelledValue variant="field" label={t('label.pack-size')}>
+                {row().packSize ?? ''}
+              </LabelledValue>
+              <LabelledValue variant="field" label={t('label.barcode-status')}>
+                {t('label.barcode-proposed-by', {
+                  store: row().store?.storeName ?? row().store?.code ?? '',
+                })}
+              </LabelledValue>
+            </>
+          )}
+        </Show>
+        <Show when={props.isCentral}>
+          <Select
+            label={t('label.barcode-target')}
+            testId="field-barcode-target"
+            focusTarget={targetField}
+            options={options()}
+            value={targetValue()}
+            disabled={saving()}
+            onValueChange={setTargetValue}
+          />
+        </Show>
+        <Show when={!confirmed() && showsPackSize()}>
+          <NumberField
+            label={t('label.pack-size')}
+            data-testid="field-pack-size"
+            min={0}
+            decimalLimit={4}
+            disabled={saving()}
+            value={draft().packSize}
+            onChange={packSize => setDraft({ ...draft(), packSize })}
+          />
+        </Show>
+        <Show when={!confirmed() && showsManufacturer()}>
+          <NameSearch
+            label={t('label.manufacturer')}
+            storeId={props.storeId}
+            role="manufacturer"
+            inputTestId="field-manufacturer"
+            disabled={saving()}
+            selected={draft().manufacturer}
+            onSelect={name =>
+              setDraft({
+                ...draft(),
+                manufacturer: name
+                  ? { id: name.id, name: name.name }
+                  : undefined,
+              })
+            }
+          />
+        </Show>
+      </Stack>
     </Dialog>
   );
 };

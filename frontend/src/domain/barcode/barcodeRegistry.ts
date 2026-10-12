@@ -6,8 +6,8 @@
 // confirmed for several items. A store learns a barcode by proposing it: a user
 // picked an item for it, and once the line the scan opened is saved the screen
 // calls `proposeBarcode`; it can withdraw a proposal made on its site with
-// `withdrawProposal`. Central reviews proposals on the item and confirms,
-// moves or removes barcodes. WHEN to look up or propose is each consuming
+// `withdrawProposal`. Central reviews proposals on the item, and confirms or
+// removes barcodes on its packaging variants. WHEN to look up or propose is each consuming
 // screen's decision.
 
 import {
@@ -23,7 +23,6 @@ import {
   DeleteBarcodeProposal,
   InsertBarcode,
   ProposeBarcode,
-  UpdateBarcode,
   type BarcodeFragment,
 } from './barcode.generated';
 
@@ -111,6 +110,8 @@ export type ProposeInput = {
   barcode: string;
   itemId: string;
   packSize?: number;
+  /** Which manufacturer's product the box is, where the user said. */
+  manufacturerId?: string;
 };
 
 /**
@@ -126,7 +127,7 @@ export const proposeBarcode = async (
   storeId: string,
   input: ProposeInput
 ): Promise<BarcodeChange> => {
-  const { barcode, itemId, packSize } = input;
+  const { barcode, itemId, packSize, manufacturerId } = input;
   if (barcode.trim() === '') return { kind: 'no-code' };
   const result = await graphqlFetch(
     ProposeBarcode,
@@ -136,6 +137,7 @@ export const proposeBarcode = async (
         barcode,
         itemId,
         ...(packSize === undefined || packSize <= 0 ? {} : { packSize }),
+        ...(manufacturerId ? { manufacturerId } : {}),
       },
     },
     { returnGraphqlErrors: true }
@@ -160,50 +162,80 @@ export const withdrawProposal = async (
     )
   );
 
-/** Central: confirm a barcode for an item, or bring back a removed one. */
+/**
+ * Where central puts a barcode it adds or confirms. A confirmed barcode lives
+ * on one of the item's packaging variants (decisions/2026-09-30_barcodes.md,
+ * Option 6):
+ *
+ * - `auto-created`: a new packaging variant on the item's auto-created variant
+ *   for the manufacturer, which the server creates if needed. Hidden from
+ *   variant lists, so sites that don't use variants never see it.
+ * - `item-variant`: a new packaging variant on one of the item's variants.
+ * - `packaging-variant`: one of the item's packaging variants without a
+ *   barcode yet.
+ */
+export type BarcodeTarget =
+  | { kind: 'auto-created' }
+  | { kind: 'item-variant'; id: string }
+  | { kind: 'packaging-variant'; id: string };
+
+const targetInput = (target: BarcodeTarget) => {
+  switch (target.kind) {
+    case 'auto-created':
+      return {};
+    case 'item-variant':
+      return { itemVariantId: target.id };
+    case 'packaging-variant':
+      return { packagingVariantId: target.id };
+  }
+};
+
+/**
+ * Central: confirm a barcode for an item, on `target`. Adding one the item
+ * already has where asked returns it; one it has elsewhere is refused.
+ */
 export const addBarcode = async (
   storeId: string,
-  input: { barcode: string; itemId: string; packSize?: number }
+  input: {
+    barcode: string;
+    itemId: string;
+    packSize?: number;
+    manufacturerId?: string;
+  },
+  target: BarcodeTarget
 ): Promise<BarcodeChange> => {
   if (input.barcode.trim() === '') return { kind: 'no-code' };
   const result = await graphqlFetch(
     InsertBarcode,
-    { storeId, input },
+    { storeId, input: { ...input, ...targetInput(target) } },
     { returnGraphqlErrors: true }
   );
   return changed(result);
 };
 
-/** Central: confirm a store's proposal, so the barcode reaches every site. */
+/**
+ * Central: confirm a store's proposal on `target`, so the barcode reaches
+ * every site. The proposal's pack size and manufacturer go on a new packaging
+ * variant.
+ */
 export const confirmProposal = async (
   storeId: string,
-  id: string
+  id: string,
+  target: BarcodeTarget
 ): Promise<BarcodeChange> =>
   changed(
     await graphqlFetch(
       ConfirmBarcodeProposal,
-      { storeId, id },
-      { returnGraphqlErrors: true }
-    )
-  );
-
-/** Central: move a confirmed barcode to another item. */
-export const moveBarcode = async (
-  storeId: string,
-  id: string,
-  itemId: string
-): Promise<BarcodeChange> =>
-  changed(
-    await graphqlFetch(
-      UpdateBarcode,
-      { storeId, input: { id, itemId } },
+      { storeId, id, ...targetInput(target) },
       { returnGraphqlErrors: true }
     )
   );
 
 /**
- * Central: remove a confirmed barcode everywhere. Lines that had the barcode
- * keep it, and stores proposing it again won't confirm it.
+ * Central: remove a confirmed barcode everywhere. `id` is the packaging
+ * variant's. Lines that had the barcode keep it, and stores proposing it again
+ * won't confirm it for the item. A packaging variant that's only there for the
+ * barcode goes with it; a real one stays, without the barcode.
  */
 export const removeBarcode = async (
   storeId: string,

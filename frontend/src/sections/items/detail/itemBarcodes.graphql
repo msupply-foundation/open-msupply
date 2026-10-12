@@ -4,12 +4,18 @@
 # (kdd/state-management), independent of the itemDetail read, so a change
 # refetches only this tab — mirrors ancillaryItems.graphql. The store's site
 # says which proposals this site made, so may withdraw.
+#
+# A confirmed barcode lives on one of the item's packaging variants
+# (decisions/2026-09-30_barcodes.md, Option 6). The item's variants, auto-created
+# ones included, name the variant and manufacturer each barcode is on, and are
+# where central can put a barcode it adds or confirms.
 query itemBarcodes($storeId: String!, $itemId: String!) {
   itemBarcodes(storeId: $storeId, itemId: $itemId) {
     id
     barcode
     packSize
-    manufacturerName
+    itemVariantId
+    isAutoCreated
   }
   itemBarcodeProposals(storeId: $storeId, itemId: $itemId) {
     id
@@ -20,6 +26,28 @@ query itemBarcodes($storeId: String!, $itemId: String!) {
       code
       storeName
       siteId
+    }
+  }
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        variants(includeAutoCreated: true) {
+          id
+          name
+          isAutoCreated
+          manufacturer(storeId: $storeId) {
+            id
+            name
+          }
+          packagingVariants {
+            id
+            name
+            packSize
+            barcode
+          }
+        }
+      }
     }
   }
   store(id: $storeId) {
