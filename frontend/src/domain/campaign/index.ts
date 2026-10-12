@@ -4,6 +4,7 @@
 // ProgramSelect, independent fields written to their own wire columns
 // (spec/ui-standards › activity / item-program selectors; spec/stocktakes S4).
 export { campaignsResource, type Campaign } from './campaignsResource';
+export { campaignKindLabel, type CampaignKind } from './campaignKind';
 export { fetchItemPrograms, type ItemProgram } from './itemProgramsResource';
 export { ActivitySelect, type ActivitySelectProps } from './ActivitySelect';
 export { ProgramSelect, type ProgramSelectProps } from './ProgramSelect';

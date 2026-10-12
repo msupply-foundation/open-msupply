@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphqlResult } from '@/api/graphql';
 import type { UpsertCampaignResult } from './campaigns.generated';
+import type { Campaign } from './campaignRegister';
 import {
   campaignInput,
   campaignSaveOutcome,
@@ -26,9 +27,10 @@ import {
 // shows. The dialog lifecycle itself (stays open, values preserved — `.22`) is
 // the shared Dialog contract, exercised in the UI.
 
-const campaign = {
+const campaign: Campaign = {
   id: 'camp-1',
   name: 'Measles 2026',
+  kind: 'CAMPAIGN',
   startDate: '2026-01-01',
   endDate: '2026-03-31',
 };
@@ -42,6 +44,7 @@ const successResult = (name: string): GraphqlResult<UpsertCampaignResult> => ({
           __typename: 'CampaignNode',
           id: 'camp-1',
           name,
+          kind: 'CAMPAIGN',
           startDate: null,
           endDate: null,
         },
@@ -81,6 +84,7 @@ describe('OMS-REG-MNG-04.10 — New campaign opens a blank editor', () => {
     expect(newCampaignDraft('generated-id')).toEqual({
       id: 'generated-id',
       name: '',
+      kind: 'CAMPAIGN',
     });
   });
 });
@@ -90,9 +94,32 @@ describe('OMS-REG-MNG-04.14 — an edit opens the campaign pre-filled', () => {
     expect(draftFromCampaign(campaign)).toEqual({
       id: 'camp-1',
       name: 'Measles 2026',
+      kind: 'CAMPAIGN',
       startDate: '2026-01-01',
       endDate: '2026-03-31',
     });
+  });
+});
+
+describe('OMS-REG-MNG-04.33 — the kind is chosen in the editor', () => {
+  it('opens a new activity on Campaign, the kind the server also defaults to', () => {
+    expect(newCampaignDraft('generated-id').kind).toBe('CAMPAIGN');
+  });
+
+  it('opens an edit on the activity’s own kind', () => {
+    expect(draftFromCampaign({ ...campaign, kind: 'ROUTINE' }).kind).toBe(
+      'ROUTINE'
+    );
+  });
+
+  // The kind travels on EVERY save: the mutation is a whole-record write with
+  // no nullable-update wrappers, so an omitted kind is not "unchanged" — the
+  // server reads it as CAMPAIGN, silently demoting a Routine.
+  it('sends the kind on every save, and a draft without one as CAMPAIGN', () => {
+    expect(
+      campaignInput({ ...draftFromCampaign(campaign), kind: 'ROUTINE' }).kind
+    ).toBe('ROUTINE');
+    expect(campaignInput({ id: 'id', name: 'X' }).kind).toBe('CAMPAIGN');
   });
 });
 
@@ -119,6 +146,7 @@ describe('OMS-REG-MNG-04.12 — a name and no dates saves', () => {
     expect(campaignInput({ id: 'id', name: 'Polio' })).toEqual({
       id: 'id',
       name: 'Polio',
+      kind: 'CAMPAIGN',
       startDate: undefined,
       endDate: undefined,
     });
@@ -139,6 +167,7 @@ describe('OMS-REG-MNG-04.13 — both dates save', () => {
     expect(campaignInput(draftFromCampaign(campaign))).toEqual({
       id: 'camp-1',
       name: 'Measles 2026',
+      kind: 'CAMPAIGN',
       startDate: '2026-01-01',
       endDate: '2026-03-31',
     });
@@ -155,6 +184,7 @@ describe('OMS-REG-MNG-04.13 — both dates save', () => {
     ).toEqual({
       id: 'id',
       name: 'Backwards',
+      kind: 'CAMPAIGN',
       startDate: '2026-06-01',
       endDate: '2026-01-01',
     });
@@ -175,6 +205,7 @@ describe('OMS-REG-MNG-04.15 — clearing a set date clears it', () => {
     expect(cleared).toEqual({
       id: 'camp-1',
       name: 'Measles 2026 (revised)',
+      kind: 'CAMPAIGN',
       startDate: '2026-01-01',
       endDate: undefined,
     });

@@ -22,6 +22,7 @@ export type CampaignsResult = {
   nodes: Array<{
   id: string;
   name: string;
+  kind: "CAMPAIGN" | "ROUTINE";
   startDate: string | null;
   endDate: string | null;
 }>;
@@ -29,7 +30,7 @@ export type CampaignsResult = {
 };
 
 export const Campaigns = {
-  query: "query campaigns($storeId: String!, $sort: [CampaignSortInput!], $page: PaginationInput) {\n  campaigns(storeId: $storeId, sort: $sort, page: $page) {\n    ... on CampaignConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        name\n        startDate\n        endDate\n      }\n    }\n  }\n}",
+  query: "query campaigns($storeId: String!, $sort: [CampaignSortInput!], $page: PaginationInput) {\n  campaigns(storeId: $storeId, sort: $sort, page: $page) {\n    ... on CampaignConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        name\n        kind\n        startDate\n        endDate\n      }\n    }\n  }\n}",
 } as TypedDocument<CampaignsResult, CampaignsVariables>;
 
 export type UpsertCampaignVariables = {
@@ -50,6 +51,7 @@ export type UpsertCampaignResult = {
 } & {
   id: string;
   name: string;
+  kind: "CAMPAIGN" | "ROUTINE";
   startDate: string | null;
   endDate: string | null;
 }) | ({
@@ -65,7 +67,7 @@ export type UpsertCampaignResult = {
 };
 
 export const UpsertCampaign = {
-  query: "mutation upsertCampaign($input: UpsertCampaignInput!) {\n  centralServer {\n    campaign {\n      upsertCampaign(input: $input) {\n        __typename\n        ... on CampaignNode {\n          id\n          name\n          startDate\n          endDate\n        }\n        ... on UpsertCampaignError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "mutation upsertCampaign($input: UpsertCampaignInput!) {\n  centralServer {\n    campaign {\n      upsertCampaign(input: $input) {\n        __typename\n        ... on CampaignNode {\n          id\n          name\n          kind\n          startDate\n          endDate\n        }\n        ... on UpsertCampaignError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<UpsertCampaignResult, UpsertCampaignVariables>;
 
 export type DeleteCampaignsVariables = {
