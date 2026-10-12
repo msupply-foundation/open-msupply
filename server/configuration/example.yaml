@@ -88,12 +88,12 @@
 # changelog_partition: # postgres-only; controls partitioning of the changelog table
 #   partition_size: 5000000      # cursor values per partition
 #   lookahead: 30000000          # number of insertable records headroom for changelog; also the lower bound — yaml values below this are clamped up
-#   interval:                    # poll period for the runtime top-up task
+#   interval:                    # poll period for the runtime top-up task; defaults to 30 mins if omitted. Omitted fields are 0, total must be > 0
 #     hours: 0
 #     mins: 1
 #     secs: 0
 # changelog_dedup: # central + postgres only; periodically deletes superseded (duplicate) changelog rows
-#   interval:                    # how often the task wakes to consider a dedup run
+#   interval:                    # how often the task wakes to consider a dedup run; defaults to 24 hours if omitted. Omitted fields are 0, total must be > 0
 #     hours: 24
 #     mins: 0
 #     secs: 0
