@@ -19,9 +19,9 @@
  * hand-edited: `pnpm generate` does the export and this run in one step (the
  * counterpart of `yarn generate` in client/). Use plain `pnpm codegen` when
  * only a .graphql document changed — it needs no cargo and no backend. CI
- * enforces both halves: spec/IMPLEMENTING.md § C7 and the two workflows
- * (generate-schema.yml for pin == server, frontend-check-test.yaml for
- * generated types == pin).
+ * enforces both halves: spec/IMPLEMENTING.md § C7 (pin == server is the
+ * `committed_schema_matches_server` test in server/graphql/lib.rs, run by the
+ * server tests; generated types == pin is frontend-check-test.yaml).
  *
  * Host and plugin documents differ in exactly one way: where the emitted file
  * imports `TypedDocument` from. A host document gets a relative path to
