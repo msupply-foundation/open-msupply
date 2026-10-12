@@ -56,6 +56,7 @@ const storedLine = (): InternalOrderLineFragment => ({
   itemId: 'item-1',
   itemName: 'Measles vaccine',
   comment: null,
+  campaign: null,
   item: {
     code: 'MEA',
     unitName: 'vial',
@@ -121,7 +122,7 @@ const success = (data: unknown) => ({ kind: 'success', data }) as never;
 const previewResponse = (node: unknown) =>
   success({ requisitionLineForecastPreview: node });
 
-const draft = { requestedQuantity: 40, comment: 'note' };
+const draft = { requestedQuantity: 40, comment: 'note', campaignId: null };
 
 describe('OMS-REG-REPL-17.6 — a draft method change previews the line under it', () => {
   it('asks for the line under the picked method and saves nothing', async () => {
@@ -303,6 +304,7 @@ describe('OMS-REG-REPL-17.22/.23 — the save sends the draft`s method', () => {
             requestedQuantity: 40,
             comment: 'note',
             optionId: undefined,
+            campaignId: { value: null },
             forecastMethod: 'AMC',
           },
         ],
@@ -334,6 +336,8 @@ describe('OMS-REG-REPL-17.22/.23 — the save sends the draft`s method', () => {
         requestedQuantity: 40,
         comment: 'note',
         optionId: undefined,
+        // Always sent, so a cleared Activity is a clear rather than a no-op.
+        campaignId: { value: null },
         forecastMethod: 'POPULATION',
       },
     });

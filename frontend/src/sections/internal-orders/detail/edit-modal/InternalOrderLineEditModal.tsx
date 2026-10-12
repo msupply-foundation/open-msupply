@@ -33,6 +33,7 @@ import {
   StockEvolutionChart,
 } from '../../../../ui/elements/charts';
 import { ItemSearch } from '../../../../domain/item';
+import { ActivitySelect } from '../../../../domain/campaign';
 import {
   PluginSlotOutlet,
   type PluginSlotContribution,
@@ -160,6 +161,13 @@ const LineEditContent = (
   // its display (OMS-REG-REPL-04.22/.24/.69/.88/.90).
   const [requestedUnits, setRequestedUnits] = createSignal(0);
   const [comment, setComment] = createSignal('');
+  // The line's Activity (issue 595): the chosen campaign id, null for routine.
+  // Stored with its name so a campaign the register no longer offers still
+  // labels itself (spec/campaigns contract › wire trap).
+  const [campaign, setCampaign] = createSignal<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [reasonId, setReasonId] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);
   // A draft method change's preview in flight (rules › choosing a method) —
@@ -263,6 +271,7 @@ const LineEditContent = (
     );
     setRequestedUnits(editorLine.requestedQuantity);
     setComment(editorLine.comment);
+    setCampaign(editorLine.campaign);
     setReasonId(editorLine.reasonId);
     setErrorMessage(undefined);
     if (props.editable) requestedField.focus();
@@ -410,6 +419,7 @@ const LineEditContent = (
       requestedQuantity: requestedUnits(),
       comment: comment(),
       optionId: draftOptionId(),
+      campaignId: campaign()?.id ?? null,
     };
     const result = editorLine.isNew
       ? await saveNewLine(props.storeId, props.requisitionId, editorLine, draft)
@@ -811,6 +821,25 @@ const LineEditContent = (
                     />
                   </FieldRow>
                 </Show>
+
+                {/* The line's Activity (issue 595) — offered on EVERY internal
+                  order, program-based or standard: what the stock is ordered
+                  for is a property of the line, not of the order's kind. */}
+                <FieldRow label={t('label.activity')}>
+                  <ActivitySelect
+                    label={t('label.activity')}
+                    hideLabel
+                    inputTestId="line-activity-field"
+                    disabled={disabled() || saving()}
+                    campaignId={campaign()?.id}
+                    campaign={campaign()}
+                    onChange={chosen =>
+                      setCampaign(
+                        chosen ? { id: chosen.id, name: chosen.name } : null
+                      )
+                    }
+                  />
+                </FieldRow>
 
                 <FieldRow label={t('label.comment')}>
                   <TextArea

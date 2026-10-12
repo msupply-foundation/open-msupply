@@ -81,6 +81,8 @@ export type EditorLine = {
   requestedQuantity: number;
   comment: string;
   reasonId: string | null;
+  /** The line's Activity: its campaign id and name, or null for routine. */
+  campaign: { id: string; name: string } | null;
   /**
    * The stored variance reason's TEXT (the id above is what the editor writes).
    * Carried so the line's published plugin view can be built from the editor's
@@ -283,6 +285,8 @@ export const buildAddPreview = async (
       comment: '',
       reasonId: null,
       reason: null,
+      // A new line starts routine; the editor's Activity picker sets it.
+      campaign: null,
       isNew: true,
       ownForecastMethod: forecast.preview.forecastMethod,
     },
@@ -327,6 +331,7 @@ export const editorLineFromLine = (
   comment: line.comment ?? '',
   reasonId: line.optionId,
   reason: line.reason?.reason ?? null,
+  campaign: line.campaign ?? null,
   isNew: false,
 });
 
@@ -365,6 +370,12 @@ type Draft = {
   // Omitted (undefined) where the order has no reason surface; null/string
   // where it does — null clears the stored reason (D30).
   optionId?: string | null;
+  /**
+   * The line's Activity — its campaign id, or null for routine. Always sent,
+   * on a program order as on a standard one: the wire wraps it so null is a
+   * clear rather than "leave alone".
+   */
+  campaignId: string | null;
 };
 
 // ADD (OMS-REG-REPL-04.65): the draft's first save realises the create — insert
@@ -391,6 +402,7 @@ export const saveNewLine = async (
           requestedQuantity: draft.requestedQuantity,
           comment: draft.comment,
           optionId: draft.optionId,
+          campaignId: { value: draft.campaignId },
           forecastMethod: line.forecast.forecastMethod,
         },
       ],
@@ -431,6 +443,7 @@ export const saveExistingLine = async (
       requestedQuantity: draft.requestedQuantity,
       comment: draft.comment,
       optionId: draft.optionId,
+      campaignId: { value: draft.campaignId },
       forecastMethod: line.forecast.forecastMethod,
     },
   });
