@@ -273,6 +273,17 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   },
 ];
 
+// The grouped-combobox demo's option set: two PINNED standing choices (no
+// group) and a tail of grouped campaigns.
+type ActivityOption = { value: string; label: string; group?: string };
+const ACTIVITY_OPTIONS: ActivityOption[] = [
+  { value: 'none', label: 'None' },
+  { value: 'routine', label: 'Routine' },
+  { value: 'measles', label: 'Measles 2026', group: 'Campaign' },
+  { value: 'covid', label: 'COVID booster', group: 'Campaign' },
+  { value: 'polio', label: 'Polio round 2', group: 'Campaign' },
+];
+
 export const selectorsMetadata: PageMetadata = {
   id: 'selectors',
   title: 'Selectors',
@@ -287,6 +298,11 @@ export const selectorsMetadata: PageMetadata = {
       id: 'selectors-select-clearable',
       title: 'Clearable drop-down',
       searchTerms: ['clearable', 'clear', 'cross', 'empty', 'optional'],
+    },
+    {
+      id: 'selectors-grouped',
+      title: 'Grouped combobox',
+      searchTerms: ['grouped', 'pinned', 'divider', 'section', 'activity'],
     },
     {
       id: 'selectors-label-info',
@@ -374,6 +390,7 @@ export const SelectorsShowcase = () => {
   const [adjustmentType, setAdjustmentType] = createSignal<string | undefined>(
     'addition'
   );
+  const [activity, setActivity] = createSignal('none');
   // The no-options demo: both chips seeded present so they're openable on load.
   const [emptyOptionFilter, setEmptyOptionFilter] =
     createSignal<EmptyOptionFilter>({ category: null, categories: null });
@@ -485,6 +502,40 @@ export const SelectorsShowcase = () => {
             rows-per-page count) where emptiness is meaningless. The ✕ keeps its
             own slot rather than replacing the chevron on hover, exactly as the
             Combobox's clear.
+          </Note>
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-grouped"
+          title="Grouped combobox — pinned options, then groups"
+        >
+          <Lead>
+            One list where the alternative is two controls and an extra click.{' '}
+            <code>itemGroup</code> names the heading an item belongs under, or
+            returns <code>undefined</code> to <em>pin</em> it above the groups:
+            pinned items first, a divider, then each group behind its own
+            small-caps heading. Typing narrows the grouped items only — a pinned
+            choice is never searched for, and a group whose items all fail drops
+            out with its heading.
+          </Lead>
+          <Combobox<ActivityOption>
+            label="Activity"
+            items={ACTIVITY_OPTIONS}
+            itemToString={o => (o.group ? `Campaign · ${o.label}` : o.label)}
+            itemToValue={o => o.value}
+            itemGroup={o => o.group}
+            filter={(o, input) =>
+              o.label.toLocaleLowerCase().includes(input.toLocaleLowerCase())
+            }
+            renderItem={o => o.label}
+            clearable={false}
+            value={activity()}
+            onChange={o => o && setActivity(o.value)}
+            helperText="Pick a campaign to see the group-qualified value in the field"
+          />
+          <Note>
+            The chosen campaign reads back qualified by its tier — the option
+            rows stay bare, because inside the list the heading already says it.
           </Note>
         </DashboardCard>
 
