@@ -11,6 +11,18 @@ import type { InstallUploadedReportsResult } from './manageReports.generated';
 // Pure except for the fetch itself, so the outcome mapping is unit-testable
 // without a server.
 
+/**
+ * The largest file `/upload` will take. The route registers no
+ * `MultipartFormConfig`, so actix's default total of 50 MiB applies and a
+ * larger body is refused with a bare 400 that names neither the size nor the
+ * file (contract.md § /upload body size). The dialog refuses such a file
+ * before sending (OMS-REG-MNG-06.27).
+ *
+ * Not to be confused with `static_files.rs`'s `total_limit(100 * 1024 * 1024)`
+ * — that is the sync-file route, and it does not reach here.
+ */
+export const MAX_BUNDLE_BYTES = 50 * 1024 * 1024;
+
 /** The transfer step's outcome. */
 export type UploadOutcome =
   { kind: 'uploaded'; fileId: string } | { kind: 'failed'; message: string };

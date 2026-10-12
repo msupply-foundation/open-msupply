@@ -6,7 +6,9 @@ import {
   emptyBatch,
   installOutcome,
   readFileId,
+  MAX_BUNDLE_BYTES,
 } from './reportInstall';
+import { partitionFiles } from '@/ui/elements/inputs/uploadFiles';
 import type { GraphqlResult } from '@/api/graphql';
 import type { InstallUploadedReportsResult } from './manageReports.generated';
 
@@ -137,5 +139,26 @@ describe('OMS-REG-MNG-06.23 — choosing a file installs nothing on its own', ()
     expect(batch.installedReportIds).toEqual([]);
     expect(batch.failedFiles).toEqual([]);
     expect(batchInstalledNothing(batch)).toBe(true);
+  });
+});
+
+describe('OMS-REG-MNG-06.27 — an oversized file is refused before sending', () => {
+  it('matches the limit the upload route actually enforces', () => {
+    // actix's default multipart total, which `/upload` never overrides. A
+    // mismatch here means the dialog either refuses files the server would
+    // have taken, or sends ones it refuses with a bare 400.
+    expect(MAX_BUNDLE_BYTES).toBe(50 * 1024 * 1024);
+  });
+
+  it('partitions a file by that ceiling, naming size as the reason', () => {
+    // The shared upload zone is handed MAX_BUNDLE_BYTES as its maxSize, so
+    // this is the judgement the dialog's onRejected receives.
+    const under = { name: 'bundle.json', type: '', size: MAX_BUNDLE_BYTES };
+    const over = { name: 'big.json', type: '', size: MAX_BUNDLE_BYTES + 1 };
+    const { accepted, rejected } = partitionFiles([under, over], {
+      maxSize: MAX_BUNDLE_BYTES,
+    });
+    expect(accepted).toEqual([under]);
+    expect(rejected).toEqual([{ file: over, reason: 'size' }]);
   });
 });

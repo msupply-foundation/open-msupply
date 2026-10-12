@@ -1,7 +1,7 @@
 import { createSignal, For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
-import { t } from '@/intl';
+import { t, formatFileSize } from '@/intl';
 import { translateServerError } from '@/intl/intlUtils';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -16,6 +16,7 @@ import {
   emptyBatch,
   installOutcome,
   uploadReportFile,
+  MAX_BUNDLE_BYTES,
   type BatchOutcome,
 } from './reportInstall';
 
@@ -61,6 +62,13 @@ export const ReportUploadModal: Component<ReportUploadModalProps> = props => {
   //
   // This is why `UploadZone` carries no `accept` list: its matching is
   // extension-or-MIME and cannot express "name ends with json".
+  //
+  // Size is the zone's job, though, and is a real server limit rather than an
+  // advisory one: `/upload` registers no MultipartFormConfig, so actix's
+  // default 50 MiB total applies and a larger body is refused with a bare 400
+  // naming neither the size nor the file (contract.md § /upload body size).
+  // Refusing it here is a DELIBERATE difference from the reference, which
+  // sends it and reports that bare failure (OMS-REG-MNG-06.27).
 
   const install = async () => {
     if (installing() || files().length === 0) return; // re-entry guard
@@ -160,8 +168,21 @@ export const ReportUploadModal: Component<ReportUploadModalProps> = props => {
         <p>{t('messages.report-upload-helper')}</p>
         <UploadZone
           multiple
+          maxSize={MAX_BUNDLE_BYTES}
           disabled={installing()}
           inputTestId="report-upload-input"
+          onRejected={rejections => {
+            // Only 'size' can arrive — no `accept` list is set, so the zone
+            // never judges type (OMS-REG-MNG-06.27).
+            const [rejection] = rejections;
+            if (!rejection) return;
+            setError(
+              t('error.file-exceeds-size-limit', {
+                filename: rejection.file.name,
+                maxSize: formatFileSize(MAX_BUNDLE_BYTES),
+              })
+            );
+          }}
           onFiles={chosen => {
             // The WHOLE pick is refused if any file fails, and nothing is
             // added — the reference app's behaviour, not a per-file filter.
