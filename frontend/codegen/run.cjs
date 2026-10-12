@@ -19,7 +19,7 @@
  * hand-edited: `pnpm generate` does the export and this run in one step (the
  * counterpart of `yarn generate` in client/). Use plain `pnpm codegen` when
  * only a .graphql document changed — it needs no cargo and no backend. CI
- * enforces both halves: spec/IMPLEMENTING.md § C7 (pin == server is the
+ * checks both halves: spec/IMPLEMENTING.md § C7 (pin == server is the
  * `committed_schema_matches_server` test in server/graphql/lib.rs, run by the
  * server tests; generated types == pin is frontend-check-test.yaml).
  *
