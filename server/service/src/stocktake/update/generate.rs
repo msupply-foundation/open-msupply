@@ -351,6 +351,15 @@ fn log_stock_changes(
             new.expiry_date.map(|date| date.to_string()),
         )?;
     }
+    if existing.campaign_id != new.campaign_id {
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockCampaignChange,
+            Some(existing.id.to_string()),
+            Some(existing.campaign_id.unwrap_or_else(|| "-".to_string())),
+            new.campaign_id,
+        )?;
+    }
 
     Ok(())
 }

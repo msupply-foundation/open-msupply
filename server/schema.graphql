@@ -123,6 +123,7 @@ enum ActivityLogNodeType {
 	VVM_STATUS_LOG_UPDATED
 	VOLUME_PER_PACK_CHANGED
 	STOCK_LINE_EDIT
+	STOCK_CAMPAIGN_CHANGE
 	PURCHASE_ORDER_CREATED
 	PURCHASE_ORDER_REQUEST_APPROVAL
 	PURCHASE_ORDER_UNAUTHORISED
@@ -8344,6 +8345,7 @@ type RequisitionLineNode {
 	daysOutOfStock: Float!
 	optionId: String
 	reason: ReasonOptionNode
+	campaign: CampaignNode
 	availableStockOnHand: Float!
 	requisitionNumber: Int!
 	requisitionId: String!
@@ -10688,6 +10690,7 @@ input UpdateRequestRequisitionLineInput {
 	is untouched
 	"""
 	forecastMethod: ForecastMethodNode
+	campaignId: NullableStringUpdate
 }
 
 union UpdateRequestRequisitionLineResponse = UpdateRequestRequisitionLineError | RequisitionLineNode

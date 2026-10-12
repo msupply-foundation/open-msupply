@@ -1,4 +1,6 @@
 use crate::{
+    NullableUpdate,
+    campaign::check_campaign_exists_including_deleted,
     location::query::get_available_volume_by_location_type,
     requisition::{
         common::check_requisition_row_exists,
@@ -30,6 +32,7 @@ pub struct UpdateRequestRequisitionLine {
     /// Changing the method recomputes the line's forecast and suggested quantity, and the
     /// Ancillary-ratio lines it feeds
     pub forecast_method: Option<ForecastMethod>,
+    pub campaign_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -43,6 +46,7 @@ pub enum UpdateRequestRequisitionLineError {
     RequisitionDoesNotExist,
     ReasonNotProvided(RequisitionLine),
     ForecastMethodNotAvailable(ForecastMethodUnavailableReason),
+    CampaignDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -114,6 +118,14 @@ fn validate(
 
     if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(campaign_id),
+    }) = &input.campaign_id
+        && !check_campaign_exists_including_deleted(connection, campaign_id)?
+    {
+        return Err(OutError::CampaignDoesNotExist);
     }
 
     // A method change computes the line's new forecast; choosing its current method changes
@@ -193,6 +205,7 @@ fn generate(
         comment: updated_comment,
         option_id,
         forecast_method: _,
+        campaign_id,
     }: UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, RepositoryError> {
     let mut existing = existing;
@@ -213,6 +226,7 @@ fn generate(
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
         comment: updated_comment.or(existing.comment),
         option_id: option_id.or(existing.option_id),
+        campaign_id: campaign_id.map_or(existing.campaign_id, |update| update.value),
         available_volume: available_volume_by_type.available_volume,
         location_type_id: available_volume_by_type.restricted_location_type_id.clone(),
         ..existing
@@ -228,6 +242,7 @@ impl From<RepositoryError> for UpdateRequestRequisitionLineError {
 #[cfg(test)]
 mod test {
     use crate::{
+        NullableUpdate,
         requisition_line::request_requisition_line::{
             UpdateRequestRequisitionLine, UpdateRequestRequisitionLineError as ServiceError,
         },
@@ -237,12 +252,13 @@ mod test {
         EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
         RequisitionLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
         mock::{
-            MockData, MockDataInserts, mock_full_new_response_requisition_for_update_test,
-            mock_item_a, mock_request_draft_requisition_calculation_test,
-            mock_request_program_requisition, mock_requisition_variance_reason_option,
-            mock_sent_request_requisition_line, mock_store_a, mock_store_b,
+            MockData, MockDataInserts, mock_campaign_a,
+            mock_full_new_response_requisition_for_update_test, mock_item_a,
+            mock_request_draft_requisition_calculation_test, mock_request_program_requisition,
+            mock_requisition_variance_reason_option, mock_sent_request_requisition_line,
+            mock_store_a, mock_store_b,
         },
-        test_db::setup_all_with_data,
+        test_db::{setup_all, setup_all_with_data},
     };
 
     fn progam_request_line() -> RequisitionLineRow {
@@ -359,6 +375,84 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn update_request_requisition_line_campaign() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_request_requisition_line_campaign",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.requisition_line_service;
+
+        let test_line = mock_request_draft_requisition_calculation_test().lines[0].clone();
+        let stored = || {
+            RequisitionLineRowRepository::new(&connection)
+                .find_one_by_id(&test_line.id)
+                .unwrap()
+                .unwrap()
+        };
+        let suggested_before = stored().suggested_quantity;
+
+        service
+            .update_request_requisition_line(
+                &context,
+                UpdateRequestRequisitionLine {
+                    id: test_line.id.clone(),
+                    campaign_id: Some(NullableUpdate {
+                        value: Some(mock_campaign_a().id.clone()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(stored().campaign_id, Some(mock_campaign_a().id));
+
+        service
+            .update_request_requisition_line(
+                &context,
+                UpdateRequestRequisitionLine {
+                    id: test_line.id.clone(),
+                    comment: Some("untouched".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(stored().campaign_id, Some(mock_campaign_a().id));
+
+        service
+            .update_request_requisition_line(
+                &context,
+                UpdateRequestRequisitionLine {
+                    id: test_line.id.clone(),
+                    campaign_id: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(stored().campaign_id, None);
+
+        assert_eq!(
+            service.update_request_requisition_line(
+                &context,
+                UpdateRequestRequisitionLine {
+                    id: test_line.id.clone(),
+                    campaign_id: Some(NullableUpdate {
+                        value: Some("does_not_exist".to_string()),
+                    }),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::CampaignDoesNotExist)
+        );
+
+        assert_eq!(stored().suggested_quantity, suggested_before);
+    }
+
+    #[actix_rt::test]
     async fn update_request_requisition_line_success() {
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_request_requisition_line_success",
@@ -385,8 +479,7 @@ mod test {
                     id: test_line.id.clone(),
                     requested_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
-                    option_id: None,
-                    forecast_method: None,
+                    ..Default::default()
                 },
             )
             .unwrap();

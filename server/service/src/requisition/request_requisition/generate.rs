@@ -127,6 +127,7 @@ pub fn generate_requisition_lines(
                 Ok(RequisitionLineRow {
                     id: uuid(),
                     requisition_id: requisition_row.id.clone(),
+                    campaign_id: None,
                     item_name: item_name_by_id
                         .get(&item_stats.item_id)
                         .cloned()

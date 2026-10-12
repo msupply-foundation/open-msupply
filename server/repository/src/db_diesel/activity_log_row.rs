@@ -106,6 +106,7 @@ pub enum ActivityLogType {
     ItemVariantUpdateVVMType,
     VolumePerPackChanged,
     StockLineEdit,
+    StockCampaignChange,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
