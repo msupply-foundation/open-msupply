@@ -224,6 +224,7 @@ const EncounterDetailView: Component = () => {
                       patientId: record()?.patientId ?? '',
                       documentName: form.document()?.name,
                     }}
+                    participation={form.coordinator.participationFor}
                     fallback={() => <Default draft={draft} />}
                     archivedVersion={archivedVersion()}
                     currentSchemaId={form.registry()?.formSchemaId}

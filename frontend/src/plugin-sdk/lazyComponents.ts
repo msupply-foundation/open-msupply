@@ -40,6 +40,7 @@ import type {
 import type { NotesInputProps } from '../domain/documentForm/NotesInput';
 import type { MultiSelectInputProps } from '../domain/documentForm/MultiSelectInput';
 import type { PreviousEncounterValueProps } from '../domain/documentForm/PreviousEncounterValue';
+import type { PrescriptionInputProps } from '../domain/documentForm/PrescriptionInput';
 import type {
   FormCategoriesProps,
   FormCategoryProps,
@@ -300,6 +301,17 @@ export const PreviousEncounterValue = LazyPreviousEncounterValue as unknown as <
   P extends TextPath<T> | NumberPath<T>,
 >(
   props: PreviousEncounterValueProps<T, P>
+) => JSX.Element;
+
+const LazyPrescriptionInput = formLibraryComponent(
+  m => m.PrescriptionInput as Component<PrescriptionInputProps<unknown, never>>
+);
+/** A prescription written from the form, for stock given at the visit. */
+export const PrescriptionInput = LazyPrescriptionInput as unknown as <
+  T,
+  P extends TextPath<T>,
+>(
+  props: PrescriptionInputProps<T, P>
 ) => JSX.Element;
 
 /** A titled group of fields. */

@@ -460,6 +460,7 @@ export {
   NotesInput,
   MultiSelectInput,
   PreviousEncounterValue,
+  PrescriptionInput,
   FieldGroup,
   FormDivider,
 } from './lazyComponents';
@@ -539,6 +540,7 @@ export type {
 export type { NotesInputProps } from '../domain/documentForm/NotesInput';
 export type { MultiSelectInputProps } from '../domain/documentForm/MultiSelectInput';
 export type { PreviousEncounterValueProps } from '../domain/documentForm/PreviousEncounterValue';
+export type { PrescriptionInputProps } from '../domain/documentForm/PrescriptionInput';
 export type { NoteEditRestrictions } from '../domain/documentForm/notes';
 
 // ── List & table state — the URL and the stored column layout ───────────────
@@ -739,6 +741,17 @@ export { allocateProgramNumber, useActiveProgramEvents } from './programs';
 export type { ProgramEventView, ActiveProgramEventsInput } from './programs';
 export { usePreviousEncounter } from './encounters';
 export type { PreviousEncounterInput, PreviousEncounterView } from './encounters';
+export {
+  createPrescription,
+  useItemBatches,
+  usePrescriptionSummary,
+} from './prescriptions';
+export type {
+  CreatePrescriptionInput,
+  CreatePrescriptionResult,
+  ItemBatchView,
+  PrescriptionSummaryView,
+} from './prescriptions';
 
 // ── Data access — the backend bridge ────────────────────────────────────────
 export { pluginBridge, usePluginQuery } from './bridge';

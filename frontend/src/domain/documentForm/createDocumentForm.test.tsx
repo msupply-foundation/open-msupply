@@ -254,6 +254,89 @@ describe('opening a document pinned to an earlier version', () => {
 });
 
 /*
+ * The form's part in the save (FormParticipation through the encounter slot):
+ * a plugin form's before-save step runs before the document is persisted and
+ * may stop it, its after-save step runs once it is, and its dirty state
+ * counts with the draft's.
+ */
+describe("the form's part in the save", () => {
+  // A participant as a plugin form holds one: under its own owner.
+  const participate = (form: DocumentForm<Encounter>) =>
+    createRoot(d => {
+      const previous = dispose;
+      dispose = () => {
+        d();
+        previous?.();
+      };
+      return form.coordinator.participationFor('plugin.form');
+    });
+
+  const ready = async () => {
+    const form = await open(documentPinnedTo(V1, v1, v1Fixture), []);
+    form.draft.set('extension.demo.regimen' as never, 'SECOND_LINE' as never);
+    return form;
+  };
+
+  const saves = () =>
+    graphqlFetch.mock.calls.filter(([query]) => query === UpdateFormEncounter);
+
+  it('stops the save when a before-save step throws, writing nothing', async () => {
+    const form = await ready();
+    participate(form).onBeforeSave(() => {
+      throw new Error('No stock to give');
+    });
+    expect(await form.save()).toBeUndefined();
+    expect(saves()).toHaveLength(0);
+    expect(form.saveError()).toBe('No stock to give');
+    expect(form.saving()).toBe(false);
+  });
+
+  it('runs the before-save step first and the after-save step with the record', async () => {
+    const form = await ready();
+    const order: string[] = [];
+    const participant = participate(form);
+    participant.onBeforeSave(async () => {
+      order.push(`before:${saves().length}`);
+    });
+    participant.onAfterSave(context => {
+      order.push(`after:${saves().length}:${context.recordId}`);
+    });
+    expect(await form.save()).toBeDefined();
+    expect(order).toEqual(['before:0', 'after:1:encounter-1']);
+    expect(form.saveError()).toBeUndefined();
+  });
+
+  it('shows what an after-save step failed to do, the document saved', async () => {
+    const form = await ready();
+    participate(form).onAfterSave(() => {
+      throw new Error('Could not refresh');
+    });
+    expect(await form.save()).toBeDefined();
+    expect(saves()).toHaveLength(1);
+    expect(form.saveError()).toBe('Could not refresh');
+  });
+
+  it("counts the form's own dirty state and validity", async () => {
+    const form = await open(
+      documentPinnedTo(V2, v2, {
+        ...v1Fixture,
+        extension: { demo: { vitals: { weightKg: 70 } } },
+      }),
+      []
+    );
+    const participant = participate(form);
+    expect(form.isDirty()).toBe(false);
+    participant.setDirty(true);
+    expect(form.isDirty()).toBe(true);
+    expect(form.canSave()).toBe(true);
+    participant.setValidity('batch', { valid: false, message: 'Too many' });
+    expect(await form.save()).toBeUndefined();
+    expect(form.saveError()).toBe('Too many');
+    expect(saves()).toHaveLength(0);
+  });
+});
+
+/*
  * One form host following a route from record to record, as the patient and
  * encounter screens do: the source and the patient change under it.
  */

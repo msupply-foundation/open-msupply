@@ -31,6 +31,7 @@ import {
 } from 'solid-js';
 import type {
   DocumentFormSlotId,
+  FormParticipation,
   FormRecordView,
   SlotPropsMap,
 } from '../plugin-sdk/types';
@@ -52,6 +53,13 @@ export interface DocumentFormRegionProps<S extends DocumentFormSlotId> {
   fallback: () => JSX.Element;
   /** The version whose archived form renders, read-only; else the current. */
   archivedVersion?: number;
+  /**
+   * The form's part in the record's save, from the form host's coordinator
+   * (`createDocumentForm`'s `coordinator.participationFor`): passed to a slot
+   * whose props carry `form`, the encounter's. Called once per mounted form,
+   * under its owner, so a form that leaves releases its handlers.
+   */
+  participation?: (key: string) => FormParticipation;
   /**
    * The registry entry's current schema id. A plugin whose `versions` end
    * elsewhere was built against another install of its types, which is
@@ -162,6 +170,7 @@ export const DocumentFormRegion = <S extends DocumentFormSlotId>(
               get record() {
                 return props.record;
               },
+              form: props.participation?.(form.id),
             } as SlotPropsMap[S])}
           </Suspense>
         </ErrorBoundary>

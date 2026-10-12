@@ -162,6 +162,7 @@ const EncounterFormModalBody = (props: BodyProps): JSX.Element => {
                       patientId: props.patientId,
                       documentName: form.document()?.name,
                     }}
+                    participation={form.coordinator.participationFor}
                     fallback={() => <Default draft={form.draft} />}
                     currentSchemaId={props.registry.formSchemaId}
                   />

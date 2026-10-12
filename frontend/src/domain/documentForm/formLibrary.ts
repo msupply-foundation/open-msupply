@@ -26,6 +26,7 @@ export {
 export { NotesInput } from './NotesInput';
 export { MultiSelectInput } from './MultiSelectInput';
 export { PreviousEncounterValue } from './PreviousEncounterValue';
+export { PrescriptionInput } from './PrescriptionInput';
 // The old client's category tiles, from the plugin SDK, which hold a form's
 // fields in dialogs: they render with the form, so they share its chunk.
 export {
