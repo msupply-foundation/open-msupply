@@ -49,7 +49,7 @@ import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
 import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
-import { CampaignOrProgramSelect } from '../../../domain/campaign';
+import { ActivitySelect, ProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   barcodeFieldFill,
@@ -722,18 +722,24 @@ const StockLineDetailView: Component = () => {
                                 }}
                               />
                             </Show>
-                            <CampaignOrProgramSelect
-                              label={t('label.campaign')}
-                              inputTestId="field-campaign-or-program"
+                            <ProgramSelect
+                              label={t('label.program')}
+                              testId="field-program"
                               storeId={params.storeId}
                               itemId={l().itemId}
-                              campaignId={edit.campaignId ?? undefined}
                               programId={edit.programId ?? undefined}
-                              placeholder={t('label.none')}
-                              onChange={v => {
-                                setEdit('campaignId', v?.campaign?.id ?? null);
-                                setEdit('programId', v?.program?.id ?? null);
-                              }}
+                              onChange={p =>
+                                setEdit('programId', p?.id ?? null)
+                              }
+                            />
+                            <ActivitySelect
+                              label={t('label.activity')}
+                              inputTestId="field-activity"
+                              campaignId={edit.campaignId ?? undefined}
+                              campaign={l().campaign}
+                              onChange={c =>
+                                setEdit('campaignId', c?.id ?? null)
+                              }
                             />
                           </FormRow>
                         </FormSection>

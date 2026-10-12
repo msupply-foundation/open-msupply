@@ -149,11 +149,10 @@ const RnrFormsList: Component = () => {
       ...getCellDefinition('createdDatetime'),
     },
     {
-      // 'campaign' is the documented preset for "a campaign OR program name".
       c: { key: 'programName' },
       sortKey: 'program',
       header: () => t('label.program-name'),
-      ...getCellDefinition('campaign'),
+      ...getCellDefinition('program'),
     },
     {
       c: { key: 'supplierName' },

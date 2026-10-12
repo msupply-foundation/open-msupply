@@ -1259,14 +1259,25 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
+    // Program and Campaign — two independent fields on the batch, so two
+    // read-only columns: one combined column would hide the program on a batch
+    // carrying both.
     {
       c: {
-        accessor: line => line.campaign?.name ?? line.program?.name ?? '',
-        id: 'campaign',
+        accessor: line => line.program?.name ?? '',
+        id: 'program',
       },
-      // Wide enough that the two-word header doesn't wrap mid-word.
       size: remToPx(12.5),
-      header: () => t('label.campaign'),
+      header: () => t('label.program'),
+      cardGroup: 'pricing',
+    },
+    {
+      c: {
+        accessor: line => line.campaign?.name ?? '',
+        id: 'activity',
+      },
+      size: remToPx(12.5),
+      header: () => t('label.activity'),
       cardGroup: 'pricing',
     },
     {

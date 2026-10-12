@@ -128,7 +128,8 @@ export const CELL_DEF = {
   user: { kind: 'shortText' }, // acting user's username (log / ledger tables)
   reason: { kind: 'shortText' }, // a line's variance reason (requisitions)
   donor: { kind: 'shortText' },
-  campaign: { kind: 'shortText' }, // a campaign OR program name
+  activity: { kind: 'shortText' }, // the Activity field (a campaign name)
+  program: { kind: 'shortText' },
   approvalComment: { kind: 'shortText' },
   firstName: { kind: 'shortText' },
   lastName: { kind: 'shortText' },

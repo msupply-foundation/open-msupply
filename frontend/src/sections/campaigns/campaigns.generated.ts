@@ -38,6 +38,7 @@ export type UpsertCampaignVariables = {
     name: string;
     startDate?: string | null;
     endDate?: string | null;
+    kind?: "CAMPAIGN" | "ROUTINE" | null;
   };
 };
 

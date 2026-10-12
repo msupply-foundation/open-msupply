@@ -22,9 +22,10 @@ import {
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import type { LineActionProps } from './DeleteLinesAction';
 
-// Bulk change campaign / program on the selected lines (spec S3 →
+// Bulk change program / activity on the selected lines (spec S3 →
 // line-selection actions). Batch update using the NullableStringUpdate wrappers
-// (empty choice clears). Campaigns + programs are fetched on open.
+// (empty choice clears). Two independent fields, each applied at its own value;
+// programs + campaigns (the Activity field's options) are fetched on open.
 type Phase = 'confirm' | 'working' | 'error';
 
 export const ChangeCampaignProgramAction: Component<
@@ -40,7 +41,7 @@ export const ChangeCampaignProgramAction: Component<
         data-testid="change-campaign-button"
         onClick={() => setOpen(true)}
       >
-        {t('label.campaign-program')}
+        {t('label.program-activity')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -102,9 +103,9 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<EditIcon />}
       testId="change-campaign-modal"
-      title={t('label.campaign-program')}
+      title={t('label.program-activity')}
       // Room for the two selects' open listboxes inside the dialog (#1029) —
-      // the program select is the bottom-most field.
+      // the activity select is the bottom-most field.
       minBodyHeightRem={20}
       actionsLead={
         <Show when={phase() === 'error'}>
@@ -141,18 +142,6 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
     >
       <Show when={!data.loading} fallback={<Spinner center />}>
         <Select
-          label={t('label.campaign')}
-          value={campaignId()}
-          onValueChange={setCampaignId}
-          options={[
-            { value: '', label: t('label.none') },
-            ...(data()?.campaigns ?? []).map(c => ({
-              value: c.id,
-              label: c.name,
-            })),
-          ]}
-        />
-        <Select
           label={t('label.program')}
           value={programId()}
           onValueChange={setProgramId}
@@ -161,6 +150,18 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
             ...(data()?.programs ?? []).map(p => ({
               value: p.id,
               label: p.name,
+            })),
+          ]}
+        />
+        <Select
+          label={t('label.activity')}
+          value={campaignId()}
+          onValueChange={setCampaignId}
+          options={[
+            { value: '', label: t('label.none') },
+            ...(data()?.campaigns ?? []).map(c => ({
+              value: c.id,
+              label: c.name,
             })),
           ]}
         />

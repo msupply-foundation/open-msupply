@@ -27,7 +27,7 @@ import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { VvmStatusSelect } from '../../../domain/vvmStatus';
 import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
-import { CampaignOrProgramSelect } from '../../../domain/campaign';
+import { ActivitySelect, ProgramSelect } from '../../../domain/campaign';
 import {
   barcodeFieldFill,
   createScanControl,
@@ -79,8 +79,8 @@ interface Draft {
   donorId: string | null;
   donorName: string | null;
   reasonOption: Reason | null;
-  // Campaign and program are one mutually-exclusive field (the campaign-or-
-  // program lookup) — never both set at once.
+  // Campaign and program are two INDEPENDENT fields (separate pickers) — a
+  // new line may carry either, both, or neither.
   campaignId: string | null;
   programId: string | null;
 }
@@ -585,18 +585,19 @@ const NewStockContent = (props: {
                         }}
                       />
                     </Show>
-                    <CampaignOrProgramSelect
-                      label={t('label.campaign')}
-                      inputTestId="field-campaign-or-program"
+                    <ProgramSelect
+                      label={t('label.program')}
+                      testId="field-program"
                       storeId={props.storeId}
                       itemId={chosenItem()?.id ?? ''}
-                      campaignId={draft.campaignId ?? undefined}
                       programId={draft.programId ?? undefined}
-                      placeholder={t('label.none')}
-                      onChange={v => {
-                        setDraft('campaignId', v?.campaign?.id ?? null);
-                        setDraft('programId', v?.program?.id ?? null);
-                      }}
+                      onChange={p => setDraft('programId', p?.id ?? null)}
+                    />
+                    <ActivitySelect
+                      label={t('label.activity')}
+                      inputTestId="field-activity"
+                      campaignId={draft.campaignId ?? undefined}
+                      onChange={c => setDraft('campaignId', c?.id ?? null)}
                     />
                   </FormRow>
                 </FormSection>

@@ -171,7 +171,8 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   donor: false,
   manufacturer: false,
   manufactureDate: false,
-  campaignProgram: false,
+  program: false,
+  activity: false,
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
@@ -1042,20 +1043,28 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.manufacture-date'),
         ...getCellDefinition('manufactureDate'),
       },
-      // Campaign/program (spec S1 line-table col 23 / L3) — manual shipments
-      // only; a line carries a campaign OR a program (mutually exclusive).
+      // Program and Campaign (spec S1 line-table cols 26-27 / L3) — manual
+      // shipments only. Two independent fields, so two columns: one combined
+      // column would hide the program on a line carrying both.
       ...(isManual
         ? [
             {
               c: {
-                accessor: line =>
-                  line.campaign?.name ?? line.program?.name ?? '',
-                id: 'campaignProgram',
+                accessor: line => line.program?.name ?? '',
+                id: 'program',
               },
-              header: () => t('label.campaign'),
-              // The `campaign` preset (a campaign OR program name), as the
-              // stocktake line table uses — not the `name` text sink.
-              ...getCellDefinition('campaign'),
+              header: () => t('label.program'),
+              ...getCellDefinition('program'),
+            } satisfies Column<Line, SortKey>,
+            {
+              c: {
+                accessor: line => line.campaign?.name ?? '',
+                id: 'activity',
+              },
+              header: () => t('label.activity'),
+              // The `campaign` preset, as the stocktake line table uses — not
+              // the `name` text sink.
+              ...getCellDefinition('activity'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),

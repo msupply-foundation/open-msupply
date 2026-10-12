@@ -49,7 +49,7 @@ import {
 import { ItemSearch } from '@/domain/item';
 import { VvmStatusSelect } from '@/domain/vvmStatus';
 import { NameSearch } from '@/domain/name';
-import { CampaignOrProgramSelect } from '@/domain/campaign';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
 import {
@@ -965,8 +965,8 @@ const StocktakeLineEditContent = (
           vvmStatusId: line.vvmStatus?.id ?? null,
           donorId: line.donorId ?? null,
           manufacturerId: line.manufacturer?.id ?? null,
-          // Campaign / program (ungated) — plain scalars on INSERT, mutually
-          // exclusive (only one is ever set; the picker clears the other).
+          // Campaign / program (ungated) — plain scalars on INSERT. Two
+          // independent fields: a line may carry either, both or neither.
           campaignId: line.campaign?.id ?? null,
           programId: line.program?.id ?? null,
         });
@@ -993,8 +993,8 @@ const StocktakeLineEditContent = (
         donorId: { value: line.donorId ?? null },
         manufacturerId: { value: line.manufacturer?.id ?? null },
         // Campaign / program (ungated) — NullableStringUpdate wrapper on
-        // UPDATE: { value: id | null } sets/clears. Mutually exclusive: setting
-        // one sends the other as null so a stale opposite value is cleared.
+        // UPDATE: { value: id | null } sets/clears. Two independent fields,
+        // each sent at its own current value.
         campaignId: { value: line.campaign?.id ?? null },
         programId: { value: line.program?.id ?? null },
       });
@@ -1655,34 +1655,47 @@ const StocktakeLineEditContent = (
           } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
-    // Campaign / program (Pricing & additional info) — UNGATED (spec S4 lists
-    // it alongside donor and manufacturer, no store-preference gate). ONE
-    // combined picker
-    // over the store's campaigns + this item's programs; the two are mutually
-    // exclusive on the line, so a choice sets one of campaign/program and
-    // clears the other. buildBatch sends campaignId/programId accordingly.
+    // Program and Campaign (Pricing & additional info) — UNGATED (spec S4 lists
+    // them alongside donor and manufacturer, no store-preference gate). Two
+    // independent pickers: this item's programs, and the store's campaigns.
+    // buildBatch sends programId/campaignId accordingly.
     {
-      c: { id: 'campaignOrProgram' },
-      header: () => t('label.campaign'),
+      c: { id: 'program' },
+      header: () => t('label.program'),
       cardGroup: 'pricing',
       meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
-          <CampaignOrProgramSelect
+          <ProgramSelect
             size="small"
-            label={t('label.campaign')}
+            label={t('label.program')}
             hideLabel
             storeId={props.storeId}
             itemId={line.item.id}
             disabled={!line.countThisLine}
-            campaignId={line.campaign?.id}
             programId={line.program?.id}
-            placeholder={t('label.none')}
-            onChange={choice => {
-              update(line.id, 'campaign', choice?.campaign ?? null);
-              update(line.id, 'program', choice?.program ?? null);
-            }}
+            onChange={program => update(line.id, 'program', program)}
+          />
+        );
+      },
+    },
+    {
+      c: { id: 'activity' },
+      header: () => t('label.activity'),
+      cardGroup: 'pricing',
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <ActivitySelect
+            size="small"
+            label={t('label.activity')}
+            hideLabel
+            disabled={!line.countThisLine}
+            campaignId={line.campaign?.id}
+            campaign={line.campaign}
+            onChange={campaign => update(line.id, 'campaign', campaign)}
           />
         );
       },
