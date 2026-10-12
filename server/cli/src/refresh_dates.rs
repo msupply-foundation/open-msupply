@@ -72,6 +72,8 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("prescription_request", "prescription_datetime"),
         ("prescription_request", "ready_datetime"),
         ("prescription_request", "dispensed_datetime"),
+        ("barcode_proposal", "created_datetime"),
+        ("barcode_proposal", "updated_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
