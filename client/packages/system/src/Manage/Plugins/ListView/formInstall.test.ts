@@ -1,19 +1,24 @@
 import {
   DocumentRegistryCategoryNode,
   ExistingRegistryEntryNode,
+  RegistryOutcomeNode,
   UploadedPluginErrorVariant,
 } from '@openmsupply-client/common';
 import {
   blankOldUiCandidates,
   canInstall,
+  formName,
   initialChoices,
+  installReport,
   installVariables,
   needsChoices,
   NO_CHOICES,
   previewOf,
+  programMoves,
   programOptions,
   refusedTypes,
   takeOverCandidates,
+  typeRefusals,
   unchosenKeys,
   withBlankOldUi,
   withProgram,
@@ -23,7 +28,8 @@ import {
 } from './formInstall';
 
 // spec/plugin-management/cases/OMS-REG-MNG-07 — installing a bundle that
-// carries a form plugin (.67–.72, .74, .77), as this client's modal decides it.
+// carries a form plugin (.67–.72, .74, .76–.80), as this client's modal
+// decides it: what it asks, what it sends, and how it reads the install back.
 
 const HIV = {
   __typename: 'ProgramNode' as const,
@@ -53,7 +59,9 @@ const type = (
   existingEntryId: null,
   existingEntryOwner: null,
   existingEntryCategory: null,
+  existingEntryProgram: null,
   blanksOldUi: false,
+  refusals: [],
   ...rest,
 });
 
@@ -242,5 +250,148 @@ describe('the programs offered are the server’s, by name (.76, .77)', () => {
     const empty = preview({}, []);
     expect(programOptions(empty.programs)).toEqual([]);
     expect(canInstall(empty, NO_CHOICES)).toBe(false);
+  });
+});
+
+describe('a take-over starts its key on the program its forms are in (.78)', () => {
+  // The deployment's own HIV entries, in HIV Care, about to be taken over by
+  // a plugin whose hivCare key no earlier install bound.
+  const deployed = preview({
+    documentTypes: [
+      type('Patient', null),
+      type('HIVEncounter', 'hivCare', {
+        existingEntry: ExistingRegistryEntryNode.Unowned,
+        existingEntryId: 'dep_hiv',
+        existingEntryProgram: HIV,
+      }),
+      type('TBEncounter', 'tb'),
+    ],
+  });
+
+  it('pre-fills the key with that program, as it pre-fills a bound one', () => {
+    expect(initialChoices(deployed).programs).toEqual({
+      hivCare: HIV.id,
+      tb: TB.id,
+    });
+  });
+
+  it('warns, without withholding the install, when another program would move them', () => {
+    const start = withTakeOver(initialChoices(deployed), 'HIVEncounter', true);
+    expect(programMoves(deployed, start, 'hivCare')).toEqual([]);
+    const moved = withProgram(start, 'hivCare', TB.id);
+    expect(programMoves(deployed, moved, 'hivCare')).toEqual([
+      {
+        from: HIV,
+        forms: [expect.objectContaining({ documentType: 'HIVEncounter' })],
+      },
+    ]);
+    expect(canInstall(deployed, moved)).toBe(true);
+  });
+
+  it('leaves the key empty when its forms sit in more than one program', () => {
+    const split = preview({
+      programKeys: [
+        {
+          __typename: 'FormPluginProgramKeyNode',
+          programKey: 'hivCare',
+          documentTypes: ['HIVEnrolment', 'HIVEncounter'],
+          boundProgram: null,
+        },
+      ],
+      documentTypes: [
+        type('HIVEnrolment', 'hivCare', {
+          existingEntry: ExistingRegistryEntryNode.Unowned,
+          existingEntryProgram: HIV,
+        }),
+        type('HIVEncounter', 'hivCare', {
+          existingEntry: ExistingRegistryEntryNode.Unowned,
+          existingEntryProgram: TB,
+        }),
+      ],
+    });
+    expect(initialChoices(split).programs).toEqual({});
+    // Whichever is chosen, the other program's form moves.
+    expect(
+      programMoves(
+        split,
+        withProgram(initialChoices(split), 'hivCare', HIV.id),
+        'hivCare'
+      ).map(move => move.from.id)
+    ).toEqual([TB.id]);
+  });
+});
+
+describe('a refusal no choice gets past is named up front (.79)', () => {
+  it("lists the server's reasons and withholds the install whatever is chosen", () => {
+    const reason =
+      'Schema deployment_HIVEncounter_v1_aaaa is already installed with different content; a published schema version never changes, so the bundle must carry it exactly as installed';
+    const refused = preview({
+      documentTypes: [
+        type('Patient', null),
+        type('HIVEncounter', 'hivCare', { refusals: [reason] }),
+        type('TBEncounter', 'tb'),
+      ],
+    });
+    expect(typeRefusals(refused)).toEqual([
+      {
+        type: expect.objectContaining({ documentType: 'HIVEncounter' }),
+        reason,
+      },
+    ]);
+    const complete = withProgram(initialChoices(refused), 'hivCare', HIV.id);
+    expect(unchosenKeys(refused, complete)).toEqual([]);
+    expect(canInstall(refused, complete)).toBe(false);
+  });
+});
+
+describe('the install says what it did to each form (.80)', () => {
+  it('names each form by its display name, with its outcome, the program chosen for its key and counts', () => {
+    expect(
+      installReport(
+        preview(),
+        withProgram(initialChoices(preview()), 'hivCare', HIV.id),
+        [
+          {
+            __typename: 'InstalledDocumentTypeNode',
+            documentType: 'Patient',
+            programKey: null,
+            contextId: 'Patient',
+            outcome: RegistryOutcomeNode.TakenOver,
+            schemasAdded: 0,
+            uiSchemasUpdated: 0,
+          },
+          {
+            __typename: 'InstalledDocumentTypeNode',
+            documentType: 'HIVEncounter',
+            programKey: 'hivCare',
+            contextId: HIV.id,
+            outcome: RegistryOutcomeNode.Created,
+            schemasAdded: 2,
+            uiSchemasUpdated: 0,
+          },
+        ]
+      )
+    ).toEqual([
+      {
+        documentType: 'Patient',
+        name: 'Patient name',
+        outcome: RegistryOutcomeNode.TakenOver,
+        program: undefined,
+        schemasAdded: 0,
+        uiSchemasUpdated: 0,
+      },
+      {
+        documentType: 'HIVEncounter',
+        name: 'HIVEncounter name',
+        outcome: RegistryOutcomeNode.Created,
+        program: 'HIV Care',
+        schemasAdded: 2,
+        uiSchemasUpdated: 0,
+      },
+    ]);
+  });
+
+  it('falls back to the document type for a form the preview does not name', () => {
+    expect(formName(type('Bare', 'tb', { name: '' }))).toBe('Bare');
   });
 });

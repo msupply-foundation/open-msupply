@@ -59,7 +59,12 @@ query uploadedPluginInfo($fileId: String!) {
                 existingEntryId
                 existingEntryOwner
                 existingEntryCategory
+                existingEntryProgram {
+                  id
+                  name
+                }
                 blanksOldUi
+                refusals
               }
             }
             programs {
@@ -95,6 +100,14 @@ mutation installUploadedPlugin(
         blankOldUi: $blankOldUi
       ) {
         pluginInfo
+        installedDocumentTypes {
+          documentType
+          programKey
+          contextId
+          outcome
+          schemasAdded
+          uiSchemasUpdated
+        }
       }
     }
   }

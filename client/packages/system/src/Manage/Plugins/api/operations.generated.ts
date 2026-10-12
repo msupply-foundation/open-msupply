@@ -79,6 +79,12 @@ export type UploadedPluginInfoQuery = {
                   existingEntryOwner?: string | null;
                   existingEntryCategory?: Types.DocumentRegistryCategoryNode | null;
                   blanksOldUi: boolean;
+                  refusals: Array<string>;
+                  existingEntryProgram?: {
+                    __typename: 'ProgramNode';
+                    id: string;
+                    name: string;
+                  } | null;
                 }>;
               }>;
               programs: Array<{
@@ -115,7 +121,19 @@ export type InstallUploadedPluginMutation = {
     __typename: 'CentralServerMutationNode';
     plugins: {
       __typename: 'CentralPluginMutations';
-      installUploadedPlugin: { __typename: 'PluginInfoNode'; pluginInfo: any };
+      installUploadedPlugin: {
+        __typename: 'PluginInfoNode';
+        pluginInfo: any;
+        installedDocumentTypes?: Array<{
+          __typename: 'InstalledDocumentTypeNode';
+          documentType: string;
+          programKey?: string | null;
+          contextId: string;
+          outcome: Types.RegistryOutcomeNode;
+          schemasAdded: number;
+          uiSchemasUpdated: number;
+        }> | null;
+      };
     };
   };
 };
@@ -232,7 +250,12 @@ export const UploadedPluginInfoDocument = gql`
                   existingEntryId
                   existingEntryOwner
                   existingEntryCategory
+                  existingEntryProgram {
+                    id
+                    name
+                  }
                   blanksOldUi
+                  refusals
                 }
               }
               programs {
@@ -265,6 +288,14 @@ export const InstallUploadedPluginDocument = gql`
           blankOldUi: $blankOldUi
         ) {
           pluginInfo
+          installedDocumentTypes {
+            documentType
+            programKey
+            contextId
+            outcome
+            schemasAdded
+            uiSchemasUpdated
+          }
         }
       }
     }
