@@ -1005,6 +1005,12 @@ export type BarcodeNode = {
   packSize?: Maybe<Scalars['Float']['output']>;
   packagingVariantId?: Maybe<Scalars['String']['output']>;
   /**
+   * Barcodes no longer have a parent; always null. Kept so older clients
+   * that still ask for it keep working.
+   * @deprecated Barcodes no longer have a parent
+   */
+  parentId?: Maybe<Scalars['String']['output']>;
+  /**
    * The barcode in its standard form with its scheme, e.g.
    * `gtin:09506682101352`. Matches the `barcode` of lines and stock lines.
    */

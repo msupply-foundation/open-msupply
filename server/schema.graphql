@@ -877,6 +877,11 @@ type BarcodeNode {
 	isAutoCreated: Boolean!
 	packSize: Float
 	manufacturerId: String
+	"""
+	Barcodes no longer have a parent; always null. Kept so older clients
+	that still ask for it keep working.
+	"""
+	parentId: String @deprecated(reason: "Barcodes no longer have a parent")
 }
 
 type BarcodeProposalNode {

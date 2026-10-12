@@ -119,8 +119,12 @@ impl MigrationFragment for Migrate {
         )?;
 
         // 2. Every old barcode becomes a proposal from the first store on this site.
+        // `id` is the `key_type` enum on Postgres: compare it with a literal,
+        // which Postgres casts, not a bound text value, which it can't compare.
         let site_id: Option<i32> = key_value_store::table
-            .filter(key_value_store::id.eq("SETTINGS_SYNC_SITE_ID"))
+            .filter(diesel::dsl::sql::<diesel::sql_types::Bool>(
+                "id = 'SETTINGS_SYNC_SITE_ID'",
+            ))
             .select(key_value_store::value_int)
             .first::<Option<i32>>(connection.lock().connection())
             .optional()?

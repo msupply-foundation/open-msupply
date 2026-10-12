@@ -70,6 +70,13 @@ impl BarcodeNode {
     pub async fn manufacturer_id(&self) -> Option<&str> {
         self.manufacturer_id.as_deref()
     }
+
+    /// Barcodes no longer have a parent; always null. Kept so older clients
+    /// that still ask for it keep working.
+    #[graphql(deprecation = "Barcodes no longer have a parent")]
+    pub async fn parent_id(&self) -> Option<String> {
+        None
+    }
 }
 
 impl BarcodeNode {
