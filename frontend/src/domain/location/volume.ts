@@ -3,7 +3,7 @@ import type { LocationWithVolume } from './locationResource';
 // The percentage of a location's capacity that is used, or `undefined` when a
 // meaningful figure can't be shown — mirroring the current app's
 // getVolumeUsedPercentage so the list fullness bar and the picker's "% used"
-// agree (spec/locations/acceptance.md AC-V2, spec/ui-standards/components.md).
+// agree (OMS-REG-INV-01.31, spec/ui-standards/components.md).
 //
 // Undefined (no percentage shown) when:
 //   - capacity is 0 (nothing to be a proportion of), or

@@ -3,7 +3,7 @@
 //! [README](./README.md) for the workflow it slots into and the list of
 //! routes implemented.
 
-use actix_web::{web, App, HttpServer};
+use actix_web::{App, HttpServer, web};
 use clap::Parser;
 use std::sync::Arc;
 

@@ -1,7 +1,7 @@
 use super::*;
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use repository::SyncFileReferenceRow;
-use reqwest::{header::HeaderMap, StatusCode};
+use reqwest::{StatusCode, header::HeaderMap};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use tokio::sync::watch;

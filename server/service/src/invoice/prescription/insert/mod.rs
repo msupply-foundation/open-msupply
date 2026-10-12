@@ -1,7 +1,7 @@
+use crate::WithDBError;
 use crate::activity_log::activity_log_entry;
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
-use crate::WithDBError;
 use chrono::NaiveDateTime;
 use repository::{ActivityLogType, Invoice};
 use repository::{InvoiceRowRepository, RepositoryError};
@@ -88,12 +88,12 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceRow, InvoiceRowRepository, NameRow, NameRowType, NameStoreJoinRow,
         mock::{
-            mock_patient, mock_prescription_a, mock_store_a, mock_user_account_a, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_patient, mock_prescription_a, mock_store_a,
+            mock_user_account_a,
         },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceRowRepository, NameRow, NameRowType, NameStoreJoinRow,
     };
 
     use crate::{invoice::prescription::InsertPrescription, service_provider::ServiceProvider};

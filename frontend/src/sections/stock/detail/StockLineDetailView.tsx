@@ -13,7 +13,6 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -51,6 +50,13 @@ import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import {
+  barcodeFieldFill,
+  createScanControl,
+  ScanFieldButton,
+  ScanNotice,
+  scanUnusableReason,
+} from '../../../domain/barcode';
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
 import { totalVolume } from '../stockCalc';
@@ -69,6 +75,7 @@ import { VvmHistoryPanel } from './VvmHistoryPanel';
 import { AdjustModal } from './AdjustModal';
 import { RepackModal } from './RepackModal';
 import { VvmStatusEntryModal } from './VvmStatusEntryModal';
+import { Num } from '../../../ui/elements/typography/Num';
 
 // The stock-line detail view (spec/stock S2). Inspect one line, edit its
 // attributes (buffered locally, committed on an explicit Save with a pre-save
@@ -118,6 +125,24 @@ const StockLineDetailView: Component = () => {
   const [vvmEntry, setVvmEntry] = createSignal<
     { entry?: StockLineVvmLogFragment } | undefined
   >();
+
+  // The Barcode field's scan affordance (spec/stock S2; barcode-scanning
+  // rules § Setting a code on a stock line): a scan fills the code, batch and
+  // expiry into the draft, which saves like any other edit. Ctrl+S answers it
+  // too — but not behind one of this screen's dialogs, where the scan would
+  // land in a form the user cannot see.
+  const scanner = createScanControl({
+    owner: 'stock-line',
+    mode: 'field',
+    disabled: () =>
+      saving() ||
+      confirmSaveOpen() ||
+      discardOpen() ||
+      adjustOpen() ||
+      repackOpen() ||
+      vvmEntry() !== undefined,
+    onScan: scan => setEdit(barcodeFieldFill(scan)),
+  });
 
   // Fetch the line (there is no single-record query — filter stockLines by id).
   // A stocktake-LEVEL save writes back via mutate (no refetch); adjust/repack
@@ -187,7 +212,7 @@ const StockLineDetailView: Component = () => {
   // equivalent in muted small text when the dose gate is on for a vaccine item.
   const qtyValue = (main: number, doseUnits: number) => (
     <>
-      {formatNumber(main)}
+      <Num value={main} />
       <Show when={showDoses()}>
         {' '}
         <span
@@ -196,7 +221,8 @@ const StockLineDetailView: Component = () => {
             'font-size': 'var(--text-xs)',
           }}
         >
-          ({formatNumber(doseUnits * (line()?.item.doses ?? 0))}{' '}
+          (
+          <Num value={doseUnits * (line()?.item.doses ?? 0)} />{' '}
           {t('label.doses')})
         </span>
       </Show>
@@ -269,10 +295,11 @@ const StockLineDetailView: Component = () => {
     (prefs().manageVvmStatusForStock || prefs().sortByVvmStatusThenExpiry);
 
   /*
-   * Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7): the VVM tab's
-   * New status entry, which is the only add this screen offers. The control lives
-   * in VvmHistoryPanel and carries `shortcut={ALT_N}` for its badge; the SCREEN
-   * declares the action, as everywhere else.
+   * Alt+N — this screen's add action (spec/keyboard KB-R2,
+   * OMS-REG-KBD-01.14/.15): the VVM tab's New status entry, which is the only
+   * add this screen offers. The control lives in VvmHistoryPanel and carries
+   * `shortcut={ALT_N}` for its badge; the SCREEN declares the action, as
+   * everywhere else.
    *
    * Disabled — and so unlisted in the palette — unless the VVM tab is both offered
    * and showing, with the permission the control itself requires. KB-R2's
@@ -447,7 +474,11 @@ const StockLineDetailView: Component = () => {
                     </Show>
 
                     <Show when={saveError()}>
-                      {message => <Alert severity="error">{message()}</Alert>}
+                      {message => (
+                        <Alert severity="error" testId="stock-line-save-error">
+                          {message()}
+                        </Alert>
+                      )}
                     </Show>
 
                     {/* The sectioned edit form (spec/ui-standards detail-views):
@@ -512,7 +543,14 @@ const StockLineDetailView: Component = () => {
                             onInput={e =>
                               setEdit('barcode', e.currentTarget.value)
                             }
+                            helperText={scanUnusableReason(scanner)}
+                            endAction={
+                              scanner.available() ? (
+                                <ScanFieldButton control={scanner} />
+                              ) : undefined
+                            }
                           />
+                          <ScanNotice control={scanner} />
                           <FormRow>
                             <DateField
                               label={t('label.expiry-date')}
@@ -603,7 +641,7 @@ const StockLineDetailView: Component = () => {
                               label={t('label.pack-size')}
                               data-testid="field-pack-size"
                             >
-                              {formatNumber(l().packSize)}
+                              <Num value={l().packSize} />
                             </LabelledValue>
                             <Checkbox
                               label={t('label.on-hold')}
@@ -629,12 +667,13 @@ const StockLineDetailView: Component = () => {
                               label={t('label.total-volume')}
                               data-testid="field-total-volume"
                             >
-                              {formatNumber(
-                                totalVolume(
+                              <Num
+                                value={totalVolume(
                                   edit.volumePerPack,
                                   l().totalNumberOfPacks
-                                )
-                              )}
+                                )}
+                                volume
+                              />
                             </LabelledValue>
                           </FormRow>
                         </FormSection>

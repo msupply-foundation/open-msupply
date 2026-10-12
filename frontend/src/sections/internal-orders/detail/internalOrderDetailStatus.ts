@@ -10,9 +10,9 @@ import type { InternalOrderInfoFragment } from './internalOrderDetail.generated'
 export const isOrderEditable = (node: InternalOrderInfoFragment): boolean =>
   node.status === 'DRAFT' && !node.otherParty.store?.isDisabled;
 
-// The empty-send refusal (AC-S4; rules › Lifecycle; D20): an order with no
-// lines is never sendable; an all-zero order is sendable only where the store
-// keeps zero-requested lines on send
+// The empty-send refusal (OMS-REG-REPL-05.17; rules › Lifecycle; D20): an order
+// with no lines is never sendable; an all-zero order is sendable only where the
+// store keeps zero-requested lines on send
 // (keepRequisitionLinesWithZeroRequestedQuantityOnFinalised) — its lines
 // survive the send. The all-zero test scans the loaded lines — currently the
 // full set, since the lines ride the nested connection (see

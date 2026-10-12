@@ -1,13 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
 use super::{
-    custom_field_row::custom_field, custom_field_scope_row::custom_field_scope,
     CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldValueType,
-    StorageConnection,
+    StorageConnection, custom_field_row::custom_field, custom_field_scope_row::custom_field_scope,
 };
 
-use crate::{diesel_macros::apply_equal_filter, EqualFilter};
-use crate::{repository_error::RepositoryError, DBType};
+use crate::{DBType, repository_error::RepositoryError};
+use crate::{EqualFilter, diesel_macros::apply_equal_filter};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 /// A custom_field definition together with its per-scope display mode and order.
@@ -303,9 +302,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        mock::MockDataInserts, test_db, CustomFieldDisplayMode, CustomFieldKind,
-        CustomFieldRowRepository, CustomFieldScopeRow, CustomFieldScopeRowRepository,
-        CustomFieldValueType,
+        CustomFieldDisplayMode, CustomFieldKind, CustomFieldRowRepository, CustomFieldScopeRow,
+        CustomFieldScopeRowRepository, CustomFieldValueType, mock::MockDataInserts, test_db,
     };
 
     fn custom_field(id: &str, key: &str, deleted: bool) -> CustomFieldRow {

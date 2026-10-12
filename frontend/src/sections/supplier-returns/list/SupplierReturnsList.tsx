@@ -247,9 +247,9 @@ const SupplierReturnsList: Component = () => {
     setCreateOpen(true);
   };
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the two controls that trigger it; each carries
-  // `shortcut={ALT_N}` for its badge.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
+  // that trigger it; each carries `shortcut={ALT_N}` for its badge.
   //
   // Never disabled, because the control never is: `onNewReturn` owns the
   // preference and permission gates and reports each in its own way (a notice,
@@ -536,6 +536,7 @@ const SupplierReturnsList: Component = () => {
         <Dialog
           open
           onClose={() => setDisabledNoticeOpen(false)}
+          testId="manual-returns-disabled-notice"
           title={t('button.new-return')}
           description={t('messages.manual-returns-preferences-disabled')}
           actions={

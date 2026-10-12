@@ -43,10 +43,10 @@ pub fn validate(
     let requisition_line = check_requisition_line_exists(connection, &input.requisition_line_id)?
         .ok_or(RequisitionLineDoesNotExist)?;
 
-    if let Some(invoice_req_id) = &invoice.requisition_id {
-        if requisition_line.requisition_row.id != *invoice_req_id {
-            return Err(RequisitionNotLinkedToInvoice);
-        }
+    if let Some(invoice_req_id) = &invoice.requisition_id
+        && requisition_line.requisition_row.id != *invoice_req_id
+    {
+        return Err(RequisitionNotLinkedToInvoice);
     }
 
     let item =

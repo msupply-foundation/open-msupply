@@ -6,7 +6,7 @@ use crate::types::{
 };
 use async_graphql::*;
 use repository::StorageConnection;
-use service::preference::{preferences::PreferenceProvider, Preference, PreferenceDescription};
+use service::preference::{Preference, PreferenceDescription, preferences::PreferenceProvider};
 
 pub struct PreferencesNode {
     pub connection: StorageConnection,
@@ -121,6 +121,10 @@ impl PreferencesNode {
     /// Large - don't add to eagerly-fetched preference queries.
     pub async fn global_logo(&self) -> Result<String> {
         self.load_preference(&self.preferences.global_logo)
+    }
+
+    pub async fn decimal_places_for_numbers(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.decimal_places_for_numbers)
     }
 
     // Store preferences
@@ -318,6 +322,7 @@ pub enum PreferenceKey {
     Backdating,
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,
+    DecimalPlacesForNumbers,
     // Store preferences
     BlindStocktake,
     ManageVaccinesInDoses,

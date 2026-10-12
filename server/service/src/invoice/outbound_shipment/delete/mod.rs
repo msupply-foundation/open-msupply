@@ -5,14 +5,14 @@ pub mod validate;
 use validate::validate;
 
 use crate::{
+    WithDBError,
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
     invoice_line::stock_out_line::{
-        delete::{delete_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError},
         StockOutType,
+        delete::{DeleteStockOutLine, DeleteStockOutLineError, delete_stock_out_line},
     },
     service_provider::ServiceContext,
-    WithDBError,
 };
 
 type OutError = DeleteOutboundShipmentError;
@@ -111,12 +111,12 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        InvoiceRowRepository,
         mock::{
-            mock_inbound_shipment_c, mock_outbound_shipment_b, mock_outbound_shipment_c,
-            mock_store_a, mock_store_c, MockDataInserts,
+            MockDataInserts, mock_inbound_shipment_c, mock_outbound_shipment_b,
+            mock_outbound_shipment_c, mock_store_a, mock_store_c,
         },
         test_db::setup_all,
-        InvoiceRowRepository,
     };
 
     use crate::{

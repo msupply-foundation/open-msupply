@@ -69,8 +69,8 @@ query programIndicatorValues(
   }
 }
 
-# The in-place cell edit (AC-I5): saves as typed, no confirm. Typed errors
-# RecordNotFound / ValueTypeNotCorrect surface as field feedback.
+# The in-place cell edit (OMS-REG-REPL-12.5): saves as typed, no confirm. Typed
+# errors RecordNotFound / ValueTypeNotCorrect surface as field feedback.
 mutation updateIndicatorValue(
   $storeId: String!
   $input: UpdateIndicatorValueInput!

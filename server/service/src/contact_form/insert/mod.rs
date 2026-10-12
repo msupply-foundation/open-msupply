@@ -1,11 +1,11 @@
 use repository::{
-    contact_form_row::{ContactFormRow, ContactFormRowRepository, ContactType},
     RepositoryError, TransactionError,
+    contact_form_row::{ContactFormRow, ContactFormRowRepository, ContactType},
 };
 mod generate;
 mod test;
 mod validate;
-use generate::{generate, GenerateInput};
+use generate::{GenerateInput, generate};
 use validate::validate;
 
 use crate::service_provider::ServiceContext;

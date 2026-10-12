@@ -4,11 +4,11 @@ mod insert;
 mod line;
 mod update;
 
-pub use batch::{batch_prescription_request, BatchInput, BatchResponse};
-pub use delete::{delete_prescription_request, DeleteResponse};
-pub use insert::{insert_prescription_request, InsertInput, InsertResponse};
+pub use batch::{BatchInput, BatchResponse, batch_prescription_request};
+pub use delete::{DeleteResponse, delete_prescription_request};
+pub use insert::{InsertInput, InsertResponse, insert_prescription_request};
 pub use line::{
-    delete_prescription_request_line, map_delete_line_response, upsert_prescription_request_line,
-    DeleteLineResponse, UpsertLineInput, UpsertLineResponse,
+    DeleteLineResponse, UpsertLineInput, UpsertLineResponse, delete_prescription_request_line,
+    map_delete_line_response, upsert_prescription_request_line,
 };
-pub use update::{update_prescription_request, UpdateInput, UpdateResponse};
+pub use update::{UpdateInput, UpdateResponse, update_prescription_request};

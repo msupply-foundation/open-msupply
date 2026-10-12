@@ -1,10 +1,10 @@
 use repository::{
+    EqualFilter, PaginationOption, RepositoryError, StorageConnection,
     asset_type_row::AssetTypeRow,
     assets::asset_type::{AssetTypeFilter, AssetTypeRepository, AssetTypeSort},
-    EqualFilter, PaginationOption, RepositoryError, StorageConnection,
 };
 
-use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
+use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 
 pub fn get_asset_types(
     connection: &StorageConnection,

@@ -2,13 +2,13 @@ use crate::{
     service_provider::ServiceProvider,
     sync::ActiveStoresOnSite,
     sync_v7::{
-        api::{patient_data_for_site, SyncApiV7},
-        validate_translate_integrate::{validate_translate_integrate_in_memory, SyncContext},
+        api::{SyncApiV7, patient_data_for_site},
+        validate_translate_integrate::{SyncContext, validate_translate_integrate_in_memory},
     },
 };
 use chrono::Utc;
 use repository::{
-    syncv7::SyncError, RowActionType, SyncAction, SyncBufferRow, SyncRecordData, SyncVersion,
+    RowActionType, SyncAction, SyncBufferRow, SyncRecordData, SyncVersion, syncv7::SyncError,
 };
 
 pub async fn pull_and_integrate_patient_data(
@@ -80,12 +80,12 @@ mod test {
     use crate::{
         sync::settings::SyncSettings,
         sync_v7::patient_lookup::pull_and_integrate_patient_data,
-        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
     };
-    use actix_web::{web, App, HttpRequest, HttpServer};
+    use actix_web::{App, HttpRequest, HttpServer, web};
     use repository::{
-        mock::{MockData, MockDataInserts},
         KeyType, KeyValueStoreRow, NameRow, NameRowRepository, NameRowType, SyncBufferRepository,
+        mock::{MockData, MockDataInserts},
     };
     use serde_json::json;
     use tokio::sync::Mutex;

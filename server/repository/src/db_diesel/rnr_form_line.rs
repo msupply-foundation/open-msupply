@@ -1,11 +1,11 @@
 use super::{
-    item_row::item, requisition_line_row::requisition_line, rnr_form_line_row::rnr_form_line,
-    DBType, RepositoryError, StorageConnection,
+    DBType, RepositoryError, StorageConnection, item_row::item,
+    requisition_line_row::requisition_line, rnr_form_line_row::rnr_form_line,
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     EqualFilter, ItemRow, Pagination, RequisitionLineRow, RnRFormLineRow, Sort,
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};

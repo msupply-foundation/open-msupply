@@ -198,9 +198,9 @@ mod test {
     use super::*;
     use crate::{service_provider::ServiceProvider, user_account::UserAccountService};
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, EqualFilter, NameRowRepository,
-        SiteRowRepository, StoreRowRepository, UserAccountRowRepository, UserPermissionFilter,
-        UserPermissionRepository,
+        EqualFilter, NameRowRepository, SiteRowRepository, StoreRowRepository,
+        UserAccountRowRepository, UserPermissionFilter, UserPermissionRepository,
+        mock::MockDataInserts, test_db::setup_all,
     };
     use util::assert_matches;
 
@@ -331,8 +331,10 @@ mod test {
             .unwrap();
         let expected = PermissionType::known_iter().count();
         assert_eq!(permissions.len(), expected);
-        assert!(permissions
-            .iter()
-            .all(|p| p.store_id.as_deref() == Some(store.id.as_str())));
+        assert!(
+            permissions
+                .iter()
+                .all(|p| p.store_id.as_deref() == Some(store.id.as_str()))
+        );
     }
 }

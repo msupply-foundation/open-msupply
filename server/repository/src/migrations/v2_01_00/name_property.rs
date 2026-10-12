@@ -1,6 +1,6 @@
 use crate::{
-    migrations::{sql, JSON},
     StorageConnection,
+    migrations::{JSON, sql},
 };
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {

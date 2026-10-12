@@ -5,6 +5,7 @@ use repository::{
 use util::uuid;
 
 use crate::{
+    NullableUpdate,
     invoice_line::{
         outbound_shipment_unallocated_line::{
             DeleteOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLine,
@@ -14,7 +15,6 @@ use crate::{
             DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine,
         },
     },
-    NullableUpdate,
 };
 
 use super::{SaveStockOutInvoiceLine, SaveStockOutItemLines, SaveStockOutItemLinesError};
@@ -51,7 +51,7 @@ pub fn generate(
         InvoiceType::InventoryReduction => StockOutType::InventoryReduction,
         InvoiceType::InboundShipment => return Err(SaveStockOutItemLinesError::InvalidInvoiceType),
         InvoiceType::InventoryAddition => {
-            return Err(SaveStockOutItemLinesError::InvalidInvoiceType)
+            return Err(SaveStockOutItemLinesError::InvalidInvoiceType);
         }
         InvoiceType::Repack => return Err(SaveStockOutItemLinesError::InvalidInvoiceType),
         InvoiceType::SupplierReturn => return Err(SaveStockOutItemLinesError::InvalidInvoiceType),
@@ -237,7 +237,7 @@ mod tests {
     use repository::{InvoiceLine, InvoiceLineRow};
 
     use crate::invoice_line::save_stock_out_item_lines::{
-        generate::remap_ids, SaveStockOutInvoiceLine,
+        SaveStockOutInvoiceLine, generate::remap_ids,
     };
 
     #[test]

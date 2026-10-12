@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LOCALE_META, SUPPORTED_LOCALES } from './locales';
-import { languageOptions } from './intlUtils';
+import { languageName, languageOptions } from './intlUtils';
 
 // The catalogs actually shipped, discovered from the filesystem rather than
 // restated here — the whole point is to catch a catalog and the supported set
@@ -45,5 +45,20 @@ describe('languageOptions', () => {
     const labels = languageOptions.map(o => o.label);
     expect(labels.every(label => label.length > 0)).toBe(true);
     expect(new Set(labels).size).toBe(labels.length);
+  });
+});
+
+describe('languageName', () => {
+  it('gives each language its own name, the active locale notwithstanding', () => {
+    // What a plugin naming a language reads instead of keeping its own
+    // catalogue of language names (plugin-sdk/intl.ts).
+    expect(languageName('prs')).toBe('دری');
+    expect(languageName('ps')).toBe('پښتو');
+    expect(languageName('en')).toBe('English');
+  });
+
+  it('names every locale the app ships', () => {
+    for (const code of SUPPORTED_LOCALES)
+      expect(languageName(code).length).toBeGreaterThan(0);
   });
 });

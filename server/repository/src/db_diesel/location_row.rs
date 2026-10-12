@@ -1,6 +1,7 @@
 use super::{
+    RepositoryError, StorageConnection,
     assets::asset_internal_location_row::asset_internal_location, item_link_row::item_link,
-    store_row::store, RepositoryError, StorageConnection,
+    store_row::store,
 };
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, RowActionType};

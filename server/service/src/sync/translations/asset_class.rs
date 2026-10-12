@@ -1,6 +1,6 @@
 use repository::{
-    asset_class_row::AssetClassRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    asset_class_row::AssetClassRow,
 };
 
 use super::{

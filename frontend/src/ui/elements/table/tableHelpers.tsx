@@ -2,6 +2,12 @@ import type { JSX } from 'solid-js';
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
+import {
+  displayNumber,
+  displayVolume,
+  type DisplayedNumber,
+} from '../../../intl/numberDisplay';
+import { Num } from '../typography/Num';
 import { formatCurrency } from '../../../intl/currency';
 import { Comment } from '../feedback/Comment';
 import { StatusBadge } from '../feedback/StatusBadge';
@@ -61,7 +67,7 @@ const sizing = (
 // reads as data. A real zero is a VALUE and still renders "0"; reserve a
 // literal "N/A" for a field genuinely not applicable to the row (≠ missing),
 // rendered by the page's own cell. (The items list's months-of-stock dash is
-// spec-owned — AC-S2, absence ≠ zero — and deliberately kept.)
+// spec-owned — OMS-REG-CAT-04.34, absence ≠ zero — and deliberately kept.)
 
 // These return a narrow column FRAGMENT — only the fields they set (meta/cell
 // + the grouping aggregationFn), typed off ColumnDefBase (the non-identity
@@ -96,27 +102,46 @@ export const getTextCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
 });
 
-// Numbers: right-aligned, displayed locale-formatted to at most 2 dp
-// (ui-standards § tables; the old app's number-cell default) — derived values
-// carry float dust and raw renders skip digit grouping. Display-only: the
-// underlying value is untouched. Non-number values (a pre-formatted string)
-// pass through; absent renders blank.
-export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> => ({
+// A rounded figure: right-aligned, `display` choosing the places, the exact
+// figure hovered when the rounding dropped digits (ui-standards § tables ›
+// display rounding). Display-only: the underlying value is untouched. A
+// non-number (a pre-formatted string) passes through; absent renders blank.
+const roundedCell = <T,>(
+  display: (value: number) => DisplayedNumber,
+  meta?: Meta
+): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
   cell: info => {
     const value = info.getValue<number | string | null | undefined>();
-    return typeof value === 'number'
-      ? formatNumber(value, { maximumFractionDigits: 2 })
-      : (value ?? '');
+    return typeof value === 'number' ? (
+      <Num value={display(value)} />
+    ) : (
+      (value ?? '')
+    );
   },
 });
 
+// Numbers at the installation's configured decimal places (the global
+// decimalPlacesForNumbers preference) — derived values carry float dust and
+// raw renders skip digit grouping.
+export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> =>
+  roundedCell<T>(value => displayNumber(value), meta);
+
+// Volumes (m³) at a volume's own fixed places — a volume per pack runs orders
+// of magnitude below a count (intl/numberDisplay VOLUME_DECIMALS).
+export const getVolumeCell = <T,>(meta?: Meta): CellFragment<T> =>
+  roundedCell<T>(displayVolume, meta);
+
 // Percentage — a Number variant: right-aligned, value + '%' (blank when null).
+// Its own precision — the 2 dp every percentage input accepts (ui-standards ›
+// conventions) — exempt from the configured places and their mark.
 export const getPercentageCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
   cell: info => {
     const value = info.getValue<number | null | undefined>();
-    return value == null ? '' : `${formatNumber(value)}%`;
+    return value == null
+      ? ''
+      : `${formatNumber(value, { maximumFractionDigits: 2 })}%`;
   },
 });
 
@@ -357,6 +382,8 @@ const kindFragment = <T,>(kind: CellKind, meta?: Meta): CellFragment<T> => {
       return getTextCell<T>({ mono: true, ...meta });
     case 'number':
       return getNumberCell<T>(meta);
+    case 'volume':
+      return getVolumeCell<T>(meta);
     case 'percentage':
       return getPercentageCell<T>(meta);
     case 'currency':

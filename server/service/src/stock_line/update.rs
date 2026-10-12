@@ -1,21 +1,21 @@
 use super::query::get_stock_line;
 use crate::{
+    NullableUpdate, SingleRecordError,
     activity_log::activity_log_entry_with_diff,
     barcode::{self, BarcodeInput},
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
-    common::{check_stock_line_exists, CommonStockLineError},
+    common::{CommonStockLineError, check_stock_line_exists},
     service_provider::ServiceContext,
     validate::{
-        check_date_is_not_in_future, check_other_party, CheckOtherPartyType, OtherPartyErrors,
+        CheckOtherPartyType, OtherPartyErrors, check_date_is_not_in_future, check_other_party,
     },
-    NullableUpdate, SingleRecordError,
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
-    location_movement::{LocationMovementFilter, LocationMovementRepository},
     ActivityLogType, BarcodeRow, BarcodeRowRepository, DatetimeFilter, EqualFilter,
     LocationMovementRow, LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
     StockLineRowRepository, StorageConnection,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
 };
 use util::uuid::uuid;
 
@@ -114,35 +114,32 @@ fn validate(
     if let Some(NullableUpdate {
         value: Some(manufacture_date),
     }) = &input.manufacture_date
+        && !check_date_is_not_in_future(manufacture_date)
     {
-        if !check_date_is_not_in_future(manufacture_date) {
-            return Err(CannotSetManufactureDateInFuture);
-        }
+        return Err(CannotSetManufactureDateInFuture);
     }
 
     if let Some(NullableUpdate {
-        value: Some(ref location),
+        value: Some(location),
     }) = &input.location
     {
         if !check_location_exists(connection, store_id, &location.clone())? {
             return Err(LocationDoesNotExist);
         }
 
-        if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id {
-            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
-            {
-                return Err(IncorrectLocationType);
-            }
+        if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id
+            && !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+        {
+            return Err(IncorrectLocationType);
         }
     }
 
     if let Some(NullableUpdate {
         value: Some(item_variant_id),
     }) = &input.item_variant_id
+        && check_item_variant_exists(connection, item_variant_id)?.is_none()
     {
-        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-            return Err(ItemVariantDoesNotExist);
-        }
+        return Err(ItemVariantDoesNotExist);
     }
 
     if let Some(NullableUpdate {
@@ -179,7 +176,7 @@ fn validate(
                 OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    return Err(DatabaseError(repository_error))
+                    return Err(DatabaseError(repository_error));
                 }
             },
         };

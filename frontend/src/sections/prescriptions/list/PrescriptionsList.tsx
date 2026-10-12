@@ -69,9 +69,10 @@ import {
 
 // The prescriptions list (spec/prescriptions/ui-surface.md S1): the standard
 // list screen over `invoices` pinned to type PRESCRIPTION. Read-only rows
-// (VERIFIED/CANCELLED) are dimmed but stay clickable (AC-L3); the colour
-// swatch on the Name column edits in place while the row is editable; default
-// sort is the prescription date (backdated-or-created), newest first (AC-L1).
+// (VERIFIED/CANCELLED) are dimmed but stay clickable (OMS-REG-DIS-03.51); the
+// colour swatch on the Name column edits in place while the row is editable;
+// default sort is the prescription date (backdated-or-created), newest first
+// (OMS-REG-DIS-03.49).
 
 type PrescriptionRow = PrescriptionsResult['invoices']['nodes'][number];
 type SortKey = NonNullable<PrescriptionsVariables['sort']>[number]['key'];
@@ -108,10 +109,11 @@ const PrescriptionsList: Component = () => {
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the two controls that trigger it (the header button and
-  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
-  // for its badge, neither owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
+  // that trigger it (the header button and the ghost button in the table's
+  // empty slot); each carries `shortcut={ALT_N}` for its badge, neither owns
+  // the action.
   createAddAction({
     name: 'button.new-dispensing-record',
     run: () => setCreateOpen(true),
@@ -185,7 +187,7 @@ const PrescriptionsList: Component = () => {
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
   // Exactly ONE sort key is ever sent (contract wire trap — the server
-  // honours only the last; AC-L2).
+  // honours only the last; OMS-REG-DIS-03.50).
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
@@ -261,8 +263,8 @@ const PrescriptionsList: Component = () => {
       ...getNumberCell(),
     },
     {
-      // The prescription date — backdated when set, else created (AC-L1); its
-      // server sort key is the same coalescence.
+      // The prescription date — backdated when set, else created
+      // (OMS-REG-DIS-03.49); its server sort key is the same coalescence.
       c: { accessor: prescriptionDateOf, id: 'prescriptionDatetime' },
       sortKey: 'invoiceDatetime',
       header: () => t('label.dispensed-date'),
@@ -278,8 +280,8 @@ const PrescriptionsList: Component = () => {
       header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
-    // A column per configured prescription custom field (AC-CF4) — not
-    // sortable; value chosen by kind.
+    // A column per configured prescription custom field (OMS-REG-DIS-03.43) —
+    // not sortable; value chosen by kind.
     ...customFieldColumns<PrescriptionRow, SortKey>(
       cfDefs(),
       row => row.customFields
@@ -358,7 +360,8 @@ const PrescriptionsList: Component = () => {
           />
         }
         // Read-only rows take the disabled state — de-emphasised but legible
-        // and clickable (AC-L3); matches the outbound list post table-styling.
+        // and clickable (OMS-REG-DIS-03.51); matches the outbound list post
+        // table-styling.
         rowState={row => (isReadOnly(rowStatus(row)) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-dispensing-records')}
         empty={

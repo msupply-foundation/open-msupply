@@ -15,10 +15,10 @@ use crate::{
         synchroniser_runner::Synchroniser, translation_and_integration::integrate,
         translations::IntegrationOperation,
     },
-    test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_and_service_provider},
 };
 use central_server_configurations::{ConfigureCentralServer, SiteConfiguration};
-use repository::{mock::MockDataInserts, StorageConnection};
+use repository::{StorageConnection, mock::MockDataInserts};
 use serde::Serialize;
 use std::{error::Error, future::Future};
 

@@ -16,5 +16,9 @@ export interface ToolbarProps {
  * this component only claims the row.
  */
 export const Toolbar = (props: ToolbarProps) => (
-  <div class={styles.toolbar}>{props.children}</div>
+  // data-toolbar: Header's phone-width rule lets a header wrap only when it has
+  // one of these (or a tab bar) to put on its own row.
+  <div class={styles.toolbar} data-toolbar="">
+    {props.children}
+  </div>
 );

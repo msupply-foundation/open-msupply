@@ -39,7 +39,7 @@ const OPEN_PREFS = {
 // domain/allocation/policy.test.ts does) so these read the same in any year.
 const TODAY = new Date('2026-01-01');
 
-describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order, barred verdicts)', () => {
+describe('seedDraftLines (OMS-REG-SMV-11.1/.4–.6 client face — FEFO order, barred verdicts)', () => {
   it('orders earliest expiry first with no-expiry last', () => {
     const seeded = seedDraftLines(
       [
@@ -66,7 +66,7 @@ describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order
     expect(seeded.map(l => l.id)).toEqual(['open']);
   });
 
-  it('keeps a held row already carrying an allocation, manually editable (AC-AL14)', () => {
+  it('keeps a held row already carrying an allocation, manually editable (OMS-REG-SMV-11.35/.36)', () => {
     const seeded = seedDraftLines(
       [line({ id: 'held', stockLineOnHold: true, numberOfPacks: 2 })],
       OPEN_PREFS,
@@ -116,7 +116,7 @@ describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order
   });
 });
 
-describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocation)', () => {
+describe('allocateUnits (OMS-REG-DIS-03.31 — partial packs: exact units, no over-allocation)', () => {
   it('splits a pack to fill the exact requested units', () => {
     // One batch of pack size 100 (the probed dispensing shape: 1 unit from a
     // 100-tab pack persists as 0.01 packs).
@@ -145,7 +145,7 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
     expect(shortfallUnits).toBe(5);
   });
 
-  it('never allocates from an auto-barred batch (expired — prefs off, AC-AL10)', () => {
+  it('never allocates from an auto-barred batch (expired — prefs off, OMS-REG-SMV-11.5/.28)', () => {
     const lines = seedDraftLines(
       [line({ id: 'expired', expiryDate: '2020-01-01', availablePacks: 50 })],
       OPEN_PREFS,
@@ -156,7 +156,7 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
     expect(shortfallUnits).toBe(5);
   });
 
-  it('reports a split pack with the nearest whole-pack quantity above (AC-AL12 — .58)', () => {
+  it('reports a split pack with the nearest whole-pack quantity above (OMS-REG-SMV-11.32 — DIS-03.58)', () => {
     const lines = seedDraftLines(
       [line({ id: 'a', packSize: 10, availablePacks: 10 })],
       OPEN_PREFS,
@@ -179,7 +179,7 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
     expect(warnings).toEqual([]);
   });
 
-  it('reports barred stock passed over, without re-reporting the shortfall (AC-AL2 — .59)', () => {
+  it('reports barred stock passed over, without re-reporting the shortfall (OMS-REG-SMV-11.7 — DIS-03.59)', () => {
     const lines = seedDraftLines(
       [
         line({ id: 'expired', expiryDate: '2020-01-01', availablePacks: 50 }),
@@ -195,7 +195,7 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
     ]);
   });
 
-  it('never reports an on-hold pass-over — held stock is hidden (.60), and the AC-AL14 exception row skips silently', () => {
+  it('never reports an on-hold pass-over — held stock is hidden (DIS-03.60), and the OMS-REG-SMV-11.35/.36 exception row skips silently', () => {
     const lines = seedDraftLines(
       [
         // The exception row: held, carrying an allocation, stock remaining —
@@ -218,7 +218,7 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
   });
 });
 
-describe('buildSaveInput (AC-I7 — the item set-save)', () => {
+describe('buildSaveInput (OMS-REG-DIS-03.24 — the item set-save)', () => {
   const lines = [
     line({ id: 'keep', numberOfPacks: 1.5 }),
     line({ id: 'zeroed', numberOfPacks: 0 }),
@@ -246,7 +246,7 @@ describe('buildSaveInput (AC-I7 — the item set-save)', () => {
     ).not.toHaveProperty('prescribedQuantity');
   });
 
-  it('carries the trimmed directions note only when present (AC-R1 — written to every line server-side)', () => {
+  it('carries the trimmed directions note only when present (OMS-REG-DIS-03.28 — written to every line server-side)', () => {
     expect(
       buildSaveInput('inv', 'item', lines, undefined, '  take with water ').note
     ).toBe('take with water');
@@ -276,7 +276,7 @@ describe('canSave (ui-surface S4 — OK needs an item, a change, and a non-zero 
     ).toBe(false);
   });
 
-  it('needs allocated units OR a prescribed quantity (AC-Q1 — demand without stock still saves)', () => {
+  it('needs allocated units OR a prescribed quantity (OMS-REG-DIS-03.25 — demand without stock still saves)', () => {
     expect(
       canSave({
         itemChosen: true,

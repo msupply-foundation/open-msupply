@@ -49,7 +49,7 @@ export interface NumberFieldProps extends Omit<
    * rounded to `decimalLimit` (pasted over-precision) or clamped to
    * `min`/`max` — with what was entered and what was applied. Consumers that
    * must REPORT an adjusted entry rather than silently bound it (e.g. the
-   * allocation editors' AC-AL13 banner) hook this; arrow-stepping and
+   * allocation editors' OMS-REG-SMV-11.33 banner) hook this; arrow-stepping and
    * programmatic value changes never fire it.
    */
   onClamped?: (entered: number, applied: number) => void;

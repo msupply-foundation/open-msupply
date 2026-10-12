@@ -7,7 +7,7 @@ import {
   type DeleteCourseOutcome,
 } from './courseDelete';
 
-// Anchors: spec/immunisation-programs/acceptance.md — deleting courses and
+// Anchors: spec/immunisation-programs/cases/ — deleting courses and
 // the in-use guard.
 // OMS-REG-IMM-01.61  a course with a vaccination recorded is refused as
 // _course in use_ OMS-REG-IMM-01.17  one unused course deletes

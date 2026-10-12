@@ -1,16 +1,16 @@
 #[cfg(test)]
 mod query {
-    use repository::{
-        location::{LocationFilter, LocationSortField},
-        mock::{mock_asset_b, mock_location_1, stock_line_with_volume, MockDataInserts},
-        test_db::setup_all,
-        LocationRow, LocationRowRepository, StockLineRow, StockLineRowRepository,
-    };
     use repository::{EqualFilter, PaginationOption, Sort};
+    use repository::{
+        LocationRow, LocationRowRepository, StockLineRow, StockLineRowRepository,
+        location::{LocationFilter, LocationSortField},
+        mock::{MockDataInserts, mock_asset_b, mock_location_1, stock_line_with_volume},
+        test_db::setup_all,
+    };
 
     use crate::{
-        asset::update::UpdateAsset, location::query::get_volume_used,
-        service_provider::ServiceProvider, ListError, SingleRecordError,
+        ListError, SingleRecordError, asset::update::UpdateAsset, location::query::get_volume_used,
+        service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]

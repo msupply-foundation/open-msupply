@@ -4,7 +4,7 @@ mod query {
         migrations::constants::{
             COLD_CHAIN_EQUIPMENT_UUID, FREEZER_UUID, REFRIGERATORS_AND_FREEZERS_UUID,
         },
-        mock::{mock_store_a, MockDataInserts},
+        mock::{MockDataInserts, mock_store_a},
         test_db::setup_all,
     };
 
@@ -106,21 +106,23 @@ mod query {
         );
 
         // 5. Check we CAN create an asset_catalogue_item with the same manufacturer and model when the type differs
-        assert!(service
-            .insert_asset_catalogue_item(
-                &ctx,
-                InsertAssetCatalogueItem {
-                    id: "new_id_2".to_string(),
-                    sub_catalogue: "General".to_string(),
-                    category_id: REFRIGERATORS_AND_FREEZERS_UUID.to_string(),
-                    class_id: COLD_CHAIN_EQUIPMENT_UUID.to_string(),
-                    code: "NewCode2".to_string(),
-                    manufacturer: Some("Fisher & Paykel".to_string()),
-                    model: "Kelvinator".to_string(),
-                    type_id: FREEZER_UUID.to_string(),
-                    properties: None
-                },
-            )
-            .is_ok());
+        assert!(
+            service
+                .insert_asset_catalogue_item(
+                    &ctx,
+                    InsertAssetCatalogueItem {
+                        id: "new_id_2".to_string(),
+                        sub_catalogue: "General".to_string(),
+                        category_id: REFRIGERATORS_AND_FREEZERS_UUID.to_string(),
+                        class_id: COLD_CHAIN_EQUIPMENT_UUID.to_string(),
+                        code: "NewCode2".to_string(),
+                        manufacturer: Some("Fisher & Paykel".to_string()),
+                        model: "Kelvinator".to_string(),
+                        type_id: FREEZER_UUID.to_string(),
+                        properties: None
+                    },
+                )
+                .is_ok()
+        );
     }
 }

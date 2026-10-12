@@ -46,7 +46,7 @@ export interface BarrableBatch {
   /**
    * The batch's allocation on the record being edited, AS SEEDED when the
    * editor opened (not live) — an on-hold batch already carrying one stays
-   * manually editable so the allocation can be adjusted (AC-AL14). Omitted =
+   * manually editable so the allocation can be adjusted (OMS-REG-SMV-11.35/.36). Omitted =
    * no exception (on hold always bars).
    */
   numberOfPacks?: number;
@@ -57,7 +57,7 @@ export interface BarrableBatch {
   availablePacks?: number;
   /**
    * Whether the batch's item is a vaccine — the manual unusable-VVM bar
-   * applies to vaccine items only (AC-AL9). Omitted = treated as a vaccine
+   * applies to vaccine items only (OMS-REG-SMV-11.31). Omitted = treated as a vaccine
    * (VVM data only exists on vaccine stock in practice).
    */
   isVaccineItem?: boolean;
@@ -90,7 +90,7 @@ export const isExpired = (
 
 /**
  * Every category BARRING a batch from issue entirely — manual entry included
- * (rules.md § barred batches › barred from all issue; AC-AL8/AC-AL9): on
+ * (rules.md § barred batches › barred from all issue; OMS-REG-SMV-11.26/.31): on
  * hold (batch or location), expired within the guard threshold (only under
  * _prevent issue of expired stock_), unusable VVM (only under _manage VVM
  * status_). Empty result = manually issuable. Auto-distribution applies the
@@ -105,7 +105,7 @@ export const barReasons = (
   const reasons: BarReason[] = [];
   // An on-hold batch that ALREADY holds an allocation on this record (and
   // still has stock) stays manually editable — the hold must not lock in an
-  // allocation made before it (AC-AL14). Judged on the SEEDED allocation the
+  // allocation made before it (OMS-REG-SMV-11.35/.36). Judged on the SEEDED allocation the
   // consumer passes, so zeroing the row mid-edit doesn't lock it.
   const heldButAdjustable =
     (batch.numberOfPacks ?? 0) > 0 && (batch.availablePacks ?? 0) > 0;
@@ -128,7 +128,7 @@ export const barReasons = (
 
 /**
  * Every category excluding a batch from AUTO-distribution (rules.md § barred
- * batches › never auto-allocated; AC-AL2/AC-AL10). Stricter than barReasons
+ * batches › never auto-allocated; OMS-REG-SMV-11.4–.6/.28). Stricter than barReasons
  * and NOT preference-gated:
  *
  * - **expired stock is never auto-allocated** — with _prevent issue of
@@ -156,7 +156,7 @@ export const autoAllocateBarReasons = (
   return reasons;
 };
 
-/** Convenience predicate over barReasons (grid row disabling, AC-AL8). */
+/** Convenience predicate over barReasons (grid row disabling, OMS-REG-SMV-11.26/.31). */
 export const isBarred = (
   batch: BarrableBatch,
   prefs: AllocationPreferences,
@@ -164,7 +164,7 @@ export const isBarred = (
 ): boolean => barReasons(batch, prefs, today).length > 0;
 
 /**
- * Whether the row holds anything allocatable at all (AC-AL15): available
+ * Whether the row holds anything allocatable at all (OMS-REG-SMV-11.37): available
  * stock, and — when on hold — an existing allocation to adjust. Rows failing
  * this sink to the bottom of the batch grid, disabled; judged on the SEEDED
  * values at editor open, like the on-hold exception above.
@@ -182,7 +182,7 @@ export const rowHasAllocatableStock = (batch: {
 };
 
 /**
- * FEFO display/fill order: earliest expiry first, no expiry last (AC-AL1).
+ * FEFO display/fill order: earliest expiry first, no expiry last (OMS-REG-SMV-11.1).
  * The VVM-then-expiry preference variant is fillOrderCompare below.
  */
 export const fefoCompare = (
@@ -201,7 +201,7 @@ export interface OrderableBatch {
 }
 
 /**
- * The display/fill order (rules.md § ordering, AC-AL1): FEFO — or, under the
+ * The display/fill order (rules.md § ordering, OMS-REG-SMV-11.1): FEFO — or, under the
  * _sort by VVM status then expiry_ preference, VVM priority first (ascending,
  * no status last — priority 1 outranks 2) with expiry breaking ties. Matches
  * the server's allocate ordering exactly (StockLineSortField::

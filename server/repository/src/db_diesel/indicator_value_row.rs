@@ -1,8 +1,8 @@
-use super::{name_row::name, ChangelogRepository, RowActionType, StorageConnection};
+use super::{ChangelogRepository, RowActionType, StorageConnection, name_row::name};
 use crate::ChangelogSyncType;
 use crate::SourceSiteId;
 use crate::{
-    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
+    Delete, Upsert, diesel_macros::define_linked_tables, repository_error::RepositoryError,
 };
 use diesel::prelude::*;
 

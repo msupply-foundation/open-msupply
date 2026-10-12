@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{ForeignKey, ForeignKeyError},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{ForeignKey, ForeignKeyError},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
@@ -105,7 +105,7 @@ fn map_error(error: ServiceError) -> Result<SetPrescribedQuantityErrorInterface>
         ServiceError::InvoiceDoesNotExist => {
             return Ok(SetPrescribedQuantityErrorInterface::ForeignKeyError(
                 ForeignKeyError(ForeignKey::InvoiceId),
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::ItemNotFound => BadUserInput(formatted_error),

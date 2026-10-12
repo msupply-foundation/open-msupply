@@ -1,4 +1,5 @@
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
+import { roundedText } from '../../../intl/numberDisplay';
 
 // What a dispensing label says (spec/prescriptions/rules.md § label printing;
 // OMS-REG-DIS-03.47): one label per dispensed ITEM — quantity summary +
@@ -47,7 +48,7 @@ export const buildLabels = (
       0
     );
     return {
-      itemDetails: `${units} ${first.item.unitName ?? ''} ${first.itemName}`,
+      itemDetails: `${roundedText(units)} ${first.item.unitName ?? ''} ${first.itemName}`,
       itemDirections: group.find(line => line.note)?.note ?? '',
       warning: '',
       patientDetails,

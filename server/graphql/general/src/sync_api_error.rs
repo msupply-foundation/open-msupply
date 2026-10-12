@@ -70,7 +70,7 @@ impl SyncErrorNode {
         let sync_v5_error_code = match &error.source {
             SyncApiErrorVariantV5::ParsedError { source, .. } => &source.code,
             SyncApiErrorVariantV5::ConnectionError { .. } => {
-                return Self::from_error_variant(Variant::ConnectionError, error)
+                return Self::from_error_variant(Variant::ConnectionError, error);
             }
             _ => return Self::unknown_error(error),
         };

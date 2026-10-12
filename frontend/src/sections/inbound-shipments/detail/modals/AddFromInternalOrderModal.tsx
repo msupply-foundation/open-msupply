@@ -26,12 +26,12 @@ export interface AddFromInternalOrderModalProps {
   onAdded: () => void;
 }
 
-// Pull lines from the shipment's linked internal order (spec S7 / AC-IO1). A
-// multi-select table of the order's lines — pick one OR many and add them in a
-// single action; each becomes a stock line pre-filled with the item + requested
-// quantity, stock created immediately (server side). Reachable only through the
-// batch's insertFromInternalOrderLines member (an array), so several selected
-// lines go up in one batch call.
+// Pull lines from the shipment's linked internal order (spec S7 /
+// OMS-REG-ISH-01.8/.9). A multi-select table of the order's lines — pick one OR
+// many and add them in a single action; each becomes a stock line pre-filled
+// with the item + requested quantity, stock created immediately (server side).
+// Reachable only through the batch's insertFromInternalOrderLines member (an
+// array), so several selected lines go up in one batch call.
 export const AddFromInternalOrderModal: Component<
   AddFromInternalOrderModalProps
 > = props => (

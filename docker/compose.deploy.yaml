@@ -5,6 +5,14 @@
 # so the difference between the develop deployment, a release candidate, a QA
 # deployment and a per-PR preview is entirely interpolation.
 #
+# It describes the image this repository builds TODAY, and docker-deploy.yaml
+# reads it from the commit whose workflow is running rather than the commit
+# being deployed - so a dispatch from develop deploys an old release tag with
+# this file. A change here must therefore not break an image that is already
+# published. Older release images that need something different get a
+# compose.deploy.pre-*.yaml layered on top; see `deployContract` in
+# .github/scripts/deploy-plan.js for which.
+#
 # OMS_PROJECT is what separates them, and it is the ONLY key. It is at once the
 # compose project (so volumes are namespaced by it), the container name, and the
 # first label of the hostname the proxy routes by. They cannot disagree, because
@@ -103,6 +111,13 @@ services:
       # of server, and anything paired to it is talking to something that is no
       # longer answering as central.
       oms.central: ${OMS_CENTRAL:-false}
+
+      # Who owns this deployment - whoever first deployed it, carried forward by
+      # every redeploy, so a server following a busy branch does not become the
+      # last pusher's. See OMS_OWNER in docker-deploy.yaml. Nothing decides
+      # anything on it, so unlike the labels above an absent one is harmless. It
+      # is what the dashboard shows as "by ...".
+      oms.actor: ${OMS_ACTOR:-}
 
     # The image's own entrypoint, which runs initdb/pg_ctl/createdb against the
     # cluster inside the container and then execs entry.sh. Not a variable: with
@@ -238,7 +253,7 @@ networks:
     # would delete the network out from under the proxy and every deployment
     # still running on it.
     #
-    # A literal name, not a variable: it has to agree with the proxy that was
-    # stood up by hand on the box, and a knob that must match something outside
-    # this repo is worse than no knob.
+    # A literal name, not a variable: it has to agree with the proxy in
+    # .github/deploy/proxy, and a knob that must match another file is worse than
+    # no knob.
     external: true

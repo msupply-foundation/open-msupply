@@ -1,10 +1,10 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use graphql_core::ContextExt;
 use graphql_core::loader::{
     LocationByIdLoader, StockLineByIdLoader, StockRelocationLinesByRelocationIdLoader, UserLoader,
 };
-use graphql_core::ContextExt;
 use graphql_types::types::{LocationNode, StockLineNode, UserNode};
 use repository::{StockRelocation, StockRelocationLineRow, StockRelocationRow};
 use service::ListResult;

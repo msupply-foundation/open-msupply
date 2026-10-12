@@ -1,6 +1,6 @@
 use repository::{
-    name_property_row::NamePropertyRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    name_property_row::NamePropertyRow,
 };
 
 use crate::sync::translations::property::PropertyTranslation;

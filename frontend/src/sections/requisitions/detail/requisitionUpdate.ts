@@ -13,9 +13,9 @@ import {
 // colour — rules › header edits). Every save is validated against the WHOLE
 // record, so it can be rejected for reasons unrelated to the edited field:
 // the variance-reason guard names the offending lines (their Reason cells
-// flag, AC-H4), the emergency cap names the maximum it enforced, and an
-// uneditable requisition answers cannot-edit. Typed rejections are returned
-// for inline display (never a toast — ui-standards › action feedback);
+// flag, OMS-REG-DIST-06.19), the emergency cap names the maximum it enforced,
+// and an uneditable requisition answers cannot-edit. Typed rejections are
+// returned for inline display (never a toast — ui-standards › action feedback);
 // transport failures go through the global unexpected-error modal.
 
 type UpdateInput = UpdateRequisitionVariables['input'];
@@ -26,7 +26,8 @@ export type SaveFieldsResult =
       kind: 'error';
       message: string;
       // The lines a RequisitionReasonsNotProvided rejection named, so the
-      // detail can flag their Reason cells (AC-H4); empty for other errors.
+      // detail can flag their Reason cells (OMS-REG-DIST-06.19); empty for
+      // other errors.
       reasonLineIds: string[];
     }
   | { kind: 'failed' };
@@ -69,7 +70,7 @@ export const saveRequisitionFields = async (
   return { kind: 'error', message: mapError(error), reasonLineIds };
 };
 
-// --- Add from master list (spec S2 § page actions, AC-ML1/ML2) --------------
+// --- Add from master list (spec S2 § page actions, OMS-FUN-DIS-03.19–.21) ----
 
 // The confirmed bulk add: one line per stock item on the chosen list not
 // already on the requisition. Idempotent (a re-run adds nothing). The caller

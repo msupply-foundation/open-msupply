@@ -1,6 +1,7 @@
 import { For, Show, type Component, type JSX } from 'solid-js';
-import { t } from '@/intl';
-import { formatNumber, round } from '@/intl/formatNumber';
+import { measureWord, t } from '@/intl';
+import { formatNumber } from '@/intl/formatNumber';
+import { displayVolume, roundedText } from '@/intl/numberDisplay';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import { InfoIcon } from '@/ui/icons';
 import {
@@ -9,20 +10,21 @@ import {
 } from '@/domain/forecast';
 import {
   figureInMode,
-  modeWord,
   type EntryMode,
   type LineStats,
 } from './requisitionLineEdit';
 import styles from './RequisitionLineStats.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The line editor's two read-only stats tabs (spec S4 § stats tabs): My store
 // — the proportional stacked our-stock / requested bars — and Customer — the
 // target-quantity breakdown (or the population-forecast calculation display,
-// AC-LE13) with the volume block beneath (AC-LE12). Every quantity displays
-// re-expressed in the active representation, rounded UP to a whole number
-// (the figure rows' rounding), and swapping the representation recalculates
-// the bars. Both summaries come from a server read keyed on the SAVED line —
-// a not-yet-saved item has none (D75) and the tabs sit in their empty state.
+// OMS-REG-DIST-05.35) with the volume block beneath (OMS-REG-DIST-05.34).
+// Every quantity displays re-expressed in the active representation, rounded UP
+// to a whole number (the figure rows' rounding), and swapping the
+// representation recalculates the bars. Both summaries come from a server read
+// keyed on the SAVED line — a not-yet-saved item has none (D75) and the tabs
+// sit in their empty state.
 
 // The two sections' relative widths (the reference's calculatePercentage):
 // each section's bar is sized against the OTHER section's total, so the two
@@ -54,10 +56,16 @@ export const RequisitionLineStats: Component<{
   unitName: string | null;
   /** Withholds the other-stores legend row (spec S4 § stats tabs). */
   finalised: boolean;
-  /** The forecast calculation display stands in for the breakdown (AC-LE13). */
+  /**
+   * The forecast calculation display stands in for the breakdown
+   * (OMS-REG-DIST-05.35).
+   */
   showForecast: boolean;
   courses: VaccineCourse[];
-  /** The volume block's live figures (AC-LE12); null on a snapshot-less line. */
+  /**
+   * The volume block's live figures (OMS-REG-DIST-05.34); null on a
+   * snapshot-less line.
+   */
   volume: {
     locationTypeName: string;
     availableVolume: number;
@@ -70,9 +78,9 @@ export const RequisitionLineStats: Component<{
     figureInMode(units, props.entryMode, props.packSize);
   // The heading's measure word is a category (always plural); a legend value's
   // inflects for the figure it suffixes.
-  const measure = () => modeWord(props.entryMode, props.unitName);
+  const measure = () => measureWord(props.entryMode, props.unitName);
   const legendValue = (value: number) =>
-    `${formatNumber(value)} ${modeWord(props.entryMode, props.unitName, value)}`;
+    `${roundedText(value)} ${measureWord(props.entryMode, props.unitName, value)}`;
 
   // One stats section: heading, the proportional stacked bar (sized against
   // the sibling section via `width`), and its legend — or the italic info
@@ -209,8 +217,7 @@ export const RequisitionLineStats: Component<{
     const suggested = () => q(s()?.suggestedQuantity ?? 0);
     const maxMonths = () => s()?.maxMonthsOfStock ?? 0;
     const target = () => maxMonths() * amc();
-    const canCalculate = () =>
-      amc() > 0 && !(soh() === 0 && suggested() === 0);
+    const canCalculate = () => amc() > 0 && !(soh() === 0 && suggested() === 0);
     // The axis shrinks when stock exceeds the target, else spans the row.
     const axisWidth = () =>
       soh() > target() ? Math.round((100 * target()) / soh()) : 100;
@@ -292,7 +299,9 @@ export const RequisitionLineStats: Component<{
               >
                 {/* Text too big for a thin bar stays for screen readers. */}
                 <div class={`${styles.valueFill} ${styles.stockMainFill}`}>
-                  <span class={valueClass(soh())}>{formatNumber(soh())}</span>
+                  <span class={valueClass(soh())}>
+                    <Num value={soh()} />
+                  </span>
                 </div>
                 <div class={labelClass(soh())}>{t('label.stock-on-hand')}</div>
               </div>
@@ -306,7 +315,7 @@ export const RequisitionLineStats: Component<{
               >
                 <div class={`${styles.valueFill} ${styles.otherRequestedFill}`}>
                   <span class={valueClass(suggested())}>
-                    {formatNumber(suggested())}
+                    <Num value={suggested()} />
                   </span>
                 </div>
                 <div class={labelClass(suggested())}>
@@ -321,9 +330,9 @@ export const RequisitionLineStats: Component<{
     );
   };
 
-  // The volume block (AC-LE12), beneath the breakdown — or the forecast
-  // display — on a line carrying the customer's volume snapshot. Guidance
-  // only: the live item volume at the typed supply, then the remaining
+  // The volume block (OMS-REG-DIST-05.34), beneath the breakdown — or the
+  // forecast display — on a line carrying the customer's volume snapshot.
+  // Guidance only: the live item volume at the typed supply, then the remaining
   // capacity or the bold no-capacity message.
   const VolumeBlock = (): JSX.Element => {
     const remaining = () =>
@@ -331,9 +340,16 @@ export const RequisitionLineStats: Component<{
     return (
       <section class={styles.section}>
         <h3 class={styles.sectionHeading}>{t('label.volume')}</h3>
-        <p class={styles.volumeLine}>
+        {/* A volume's own places, not the configured ones (intl/numberDisplay
+            displayVolume; ui-surface § volume block). The hover reading carries
+            whatever those drop — on the line rather than the figure, since the
+            translated sentence leaves no element around the figure alone. */}
+        <p
+          class={styles.volumeLine}
+          title={displayVolume(props.volume!.itemVolume).exact}
+        >
           {t('label.volume-for-item', {
-            itemVolume: round(props.volume!.itemVolume, 5),
+            itemVolume: displayVolume(props.volume!.itemVolume).text,
           })}
         </p>
         <Show
@@ -346,10 +362,10 @@ export const RequisitionLineStats: Component<{
             </p>
           }
         >
-          <p class={styles.volumeLine}>
+          <p class={styles.volumeLine} title={displayVolume(remaining()).exact}>
             {t('label.available-volume-for-location-type', {
               locationType: props.volume!.locationTypeName,
-              availableVolume: round(remaining(), 5),
+              availableVolume: displayVolume(remaining()).text,
             })}
           </p>
         </Show>

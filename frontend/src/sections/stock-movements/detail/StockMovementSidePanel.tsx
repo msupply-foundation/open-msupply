@@ -91,20 +91,26 @@ export const StockMovementSidePanel: Component<
           />
         </FieldRow>
         <FieldRow label={t('label.created')}>
-          <span>{localisedDate(props.node.createdDatetime)}</span>
+          <span data-testid="created-datetime-value">
+            {localisedDate(props.node.createdDatetime)}
+          </span>
         </FieldRow>
         {/* Confirmed / Finalised appear only once reached (ui-surface S2). */}
         <Show when={props.node.confirmedDatetime}>
           {date => (
             <FieldRow label={t('label.confirmed')}>
-              <span>{localisedDate(date())}</span>
+              <span data-testid="confirmed-datetime-value">
+                {localisedDate(date())}
+              </span>
             </FieldRow>
           )}
         </Show>
         <Show when={props.node.finalisedDatetime}>
           {date => (
             <FieldRow label={t('label.finalised')}>
-              <span>{localisedDate(date())}</span>
+              <span data-testid="finalised-datetime-value">
+                {localisedDate(date())}
+              </span>
             </FieldRow>
           )}
         </Show>

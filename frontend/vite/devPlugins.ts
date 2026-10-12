@@ -20,7 +20,7 @@ import { searchForWorkspaceRoot, type Plugin } from 'vite';
  *   };
  *
  * Dynamic imports (not static), so a plugin that fails to evaluate is that
- * plugin's failure — the loader still registers its siblings (AC-PLUG-L3).
+ * plugin's failure — the loader still registers its siblings (OMS-REG-PLG-01.4).
  *
  * Dev plugins are OPT-IN: only the directories named by OMS_PLUGIN_DIRS load
  * (absolute, or relative to the repo root — `OMS_PLUGIN_DIRS=plugins/civ` for

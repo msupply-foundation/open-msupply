@@ -1,11 +1,11 @@
 use chrono::Utc;
 use repository::{
+    EqualFilter, RepositoryError, StringFilter,
     asset::{Asset, AssetFilter, AssetRepository},
     asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemRepository},
-    EqualFilter, RepositoryError, StringFilter,
 };
 use serde::{Deserialize, Serialize};
-use util::{GS1DataElement, GS1};
+use util::{GS1, GS1DataElement};
 
 use crate::service_provider::ServiceContext;
 
@@ -147,7 +147,7 @@ pub fn get_or_create_from_gs1_data(
 mod test {
     use crate::{asset::parse::get_or_create_from_gs1_data, service_provider::ServiceProvider};
     use repository::{
-        mock::{mock_asset_a, mock_store_a, MockDataInserts},
+        mock::{MockDataInserts, mock_asset_a, mock_store_a},
         test_db::setup_all,
     };
     use util::GS1;

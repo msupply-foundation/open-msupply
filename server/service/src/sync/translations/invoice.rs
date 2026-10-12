@@ -1,15 +1,15 @@
 use super::{
-    utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
     FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    utils::{LegacyCustomFieldsBuilder, merge_legacy_custom_fields},
 };
-use crate::sync::central_mapping_custom_fields::keys;
+use crate::sync::CentralServerConfig;
+use crate::sync::central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
     name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
     shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 };
-use crate::sync::CentralServerConfig;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -21,6 +21,7 @@ use repository::{
     UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
     date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
@@ -334,17 +335,26 @@ pub struct LegacyTransactRow {
 /// `central_mapping_custom_fields` asserts it (the migration SQL backfill is the
 /// one copy a test can't reach; a future category-bearing type needs a NEW
 /// migration anyway, since shipped ones are frozen).
-pub(crate) const LEGACY_INVOICE_OWNED_KEYS: &[&str] = &[
-    keys::INBOUND_SHIPMENT_CATEGORY,
-    keys::OUTBOUND_SHIPMENT_CATEGORY,
-    keys::PRESCRIPTION_CATEGORY,
-    keys::SUPPLIER_RETURN_CATEGORY,
-    keys::CUSTOMER_RETURN_CATEGORY,
-    // `transact.category2_ID` is only ever written for prescriptions in OG
-    // (dispensary mode, from the "pi2" category pool), so it maps to a single
-    // prescription-scoped key rather than one per type.
-    keys::PRESCRIPTION_CATEGORY_2,
-];
+/// Derived from the mapping registry rather than retyped, so there is one list of
+/// OG-owned keys (`central_mapping_custom_fields`) instead of a copy here to drift
+/// out of step with it. Each invoice type's category definition is seeded onto that
+/// type's own scope, so the union of the five is the invoice importer's owned set —
+/// including `prescription_category_2`, which is seeded onto `prescription`
+/// alongside `prescription_category` (`transact.category2_ID` is only ever written
+/// for prescriptions in OG — dispensary mode, from the "pi2" category pool — so it
+/// maps to a single prescription-scoped key rather than one per type).
+///
+/// Computed once: the registry is filtered on each call and the import reads this
+/// per invoice row.
+pub(crate) static LEGACY_INVOICE_OWNED_KEYS: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
+    legacy_owned_keys_for_scopes(&[
+        "inbound_shipment",
+        "outbound_shipment",
+        "prescription",
+        "supplier_return",
+        "customer_return",
+    ])
+});
 
 /// The `custom_fields` key holding the transaction category for an invoice of
 /// this type — `None` for types without a mapped category custom field (repack,
@@ -507,7 +517,7 @@ impl SyncTranslation for InvoiceTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "Unsupported invoice type {:?}",
                     data._type
-                )))
+                )));
             }
         };
         let invoice_status = match invoice_status(&invoice_type, &data, is_transfer) {
@@ -516,7 +526,7 @@ impl SyncTranslation for InvoiceTranslation {
                 return Ok(PullTranslateResult::Ignored(format!(
                     "Unsupported invoice status {:?} (type: {:?}",
                     data.status, data._type
-                )))
+                )));
             }
         };
 
@@ -590,7 +600,7 @@ impl SyncTranslation for InvoiceTranslation {
                     data.category_ID.as_deref(),
                     data.category2_ID.as_deref(),
                 ),
-                LEGACY_INVOICE_OWNED_KEYS,
+                &LEGACY_INVOICE_OWNED_KEYS,
             )
         } else {
             existing_custom_fields
@@ -676,16 +686,15 @@ impl SyncTranslation for InvoiceTranslation {
         // Inactive user aren't always synced from mSupply
         // To avoid referential issues we'll create a blank placeholder user
         // If the user is synced later the record will be updated to the correct data
-        if let Some(user_id) = &result.user_id {
-            if UserAccountRowRepository::new(connection)
+        if let Some(user_id) = &result.user_id
+            && UserAccountRowRepository::new(connection)
                 .find_one_by_id(user_id)?
                 .is_none()
-            {
-                UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
-                    id: user_id.clone(),
-                    ..Default::default()
-                })?;
-            }
+        {
+            UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
+                id: user_id.clone(),
+                ..Default::default()
+            })?;
         }
 
         let mut operations = Vec::new();
@@ -814,7 +823,7 @@ impl SyncTranslation for InvoiceTranslation {
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
                     "Unsupported invoice type {type:?}"
-                )))
+                )));
             }
         };
 
@@ -823,7 +832,7 @@ impl SyncTranslation for InvoiceTranslation {
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
                     "Unsupported invoice status: {status:?}"
-                )))
+                )));
             }
         };
 
@@ -1278,16 +1287,16 @@ mod tests {
     use super::*;
     use chrono::NaiveDate;
     use repository::{
-        insurance_provider_row::InsuranceProviderRowRepository,
-        mock::{mock_store_a, MockData, MockDataInserts},
-        name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
-        shipping_method_row::ShippingMethodRowRepository,
-        system_log_row::{SystemLogRowRepository, SystemLogType},
-        test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
         CursorAndLimit, DiagnosisRow, DiagnosisRowRepository, FilterBuilder, InsuranceProviderRow,
         KeyType, KeyValueStoreRow, NameInsuranceJoinRowRepository, RowOrDelete, ShippingMethodRow,
         SyncAction, SyncRecordData,
+        insurance_provider_row::InsuranceProviderRowRepository,
+        mock::{MockData, MockDataInserts, mock_store_a},
+        name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
+        shipping_method_row::ShippingMethodRowRepository,
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::{setup_all, setup_all_with_data},
     };
     use serde_json::json;
 

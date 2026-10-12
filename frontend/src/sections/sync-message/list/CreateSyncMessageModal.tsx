@@ -94,7 +94,7 @@ export const CreateSyncMessageModal: Component<
       title={t('title.create-message')}
       icon={<PlusCircleIcon />}
       width="form"
-      // Blocking while the mutation is in flight (no scrim/Escape exit until
+      // Blocking while the mutation is in flight (no Escape exit until
       // it resolves).
       dismissable={!saving()}
       onClose={props.onClose}

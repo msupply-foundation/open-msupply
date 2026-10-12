@@ -16,7 +16,7 @@ import {
   type TypedDocument,
 } from '@/api/graphql';
 import { gated } from '@/api/gated';
-import { formatNumber, t, tPlural } from '@/intl';
+import { displayNumber, t, tPlural } from '@/intl';
 import { hasPermission, storeContext } from '@/store/storeContext';
 import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '@/ui/elements/dashboard/DashboardCard';
@@ -335,8 +335,8 @@ export const DashboardBuiltInBody: Component = () => {
   // Order more hands off to the internal-orders vertical's create flow —
   // including its recent-stocktake warning gate and the plugin
   // warning-suppression consult, both inside the shared gate decision
-  // (spec/internal-orders AC-C1/C5, OMS-REG-REPL-04.86/.87), so the dashboard
-  // entry behaves exactly like the list's New-order button. The warn
+  // (spec/internal-orders OMS-REG-REPL-04.42/.45), so the dashboard entry
+  // behaves exactly like the list's New-order button. The warn
   // preference rides the guard-3 store context; the gate decision (and its
   // module) load only on click.
   const [internalOrderCreateOpen, setInternalOrderCreateOpen] =
@@ -374,7 +374,7 @@ export const DashboardBuiltInBody: Component = () => {
     }
   };
 
-  const num = (n: number | undefined) => formatNumber(n ?? 0);
+  const num = (n: number | undefined) => displayNumber(n ?? 0);
 
   // Suppression at render (OMS-REG-DB-02.6–.8): a built-in a loaded plugin
   // names by published id is absent, not disabled. Reactive, so a plugin

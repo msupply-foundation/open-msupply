@@ -1,14 +1,14 @@
 use self::{
-    delete::{delete_location, DeleteLocation, DeleteLocationError},
-    insert::{insert_location, InsertLocation, InsertLocationError},
+    delete::{DeleteLocation, DeleteLocationError, delete_location},
+    insert::{InsertLocation, InsertLocationError, insert_location},
     query::{get_location, get_locations},
-    update::{update_location, UpdateLocation, UpdateLocationError},
+    update::{UpdateLocation, UpdateLocationError, update_location},
 };
 
 use super::{ListError, ListResult};
-use crate::{service_provider::ServiceContext, SingleRecordError};
-use repository::location::{Location, LocationFilter, LocationSort};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 use repository::PaginationOption;
+use repository::location::{Location, LocationFilter, LocationSort};
 
 pub mod delete;
 pub mod insert;

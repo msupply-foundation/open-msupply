@@ -1,12 +1,12 @@
 use crate::{
-    db_diesel::changelog::ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository,
 };
 
 use super::{
+    ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
     clinician_link_row::clinician_link, custom_fields_json::JsonValue, item_link_row::item_link,
-    item_row::item::dsl::*, location_type_row::location_type, unit_row::unit, ItemLinkRow,
-    ItemLinkRowRepository, RepositoryError, StorageConnection,
+    item_row::item::dsl::*, location_type_row::location_type, unit_row::unit,
 };
 
 use diesel::prelude::*;
@@ -329,7 +329,7 @@ impl Upsert for ItemRow {
 #[cfg(test)]
 mod test {
 
-    use crate::{mock::MockDataInserts, test_db::setup_all, ItemRow, ItemRowRepository, ItemType};
+    use crate::{ItemRow, ItemRowRepository, ItemType, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn nullable_restricted_item_type() {

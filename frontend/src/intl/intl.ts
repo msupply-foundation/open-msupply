@@ -52,9 +52,9 @@ const [dictionaries, setDictionaries] = createSignal<
 // plugin-English → plugin-locale → host-English → host-locale, which gives the
 // plugin rules two behaviours for free: a plugin key missing from the active
 // locale falls back to the plugin's English string and then to the namespaced
-// key itself (AC-PLUG-I1), and a server custom translation for a namespaced key
+// key itself (OMS-REG-PLG-04.14), and a server custom translation for a namespaced key
 // — which arrives in the HOST dictionary — overrides the plugin's bundled
-// string (AC-PLUG-I2). Keeping the layer separate is also what makes it survive
+// string (OMS-REG-PLG-04.15). Keeping the layer separate is also what makes it survive
 // loadDictionary replacing a whole locale's dictionary.
 //
 // The translator calls this on EVERY t() lookup (a hot path), so the merge is
