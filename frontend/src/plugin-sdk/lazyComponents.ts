@@ -38,8 +38,15 @@ import type {
   TextInputProps,
 } from '../domain/documentForm/fields';
 import type { NotesInputProps } from '../domain/documentForm/NotesInput';
+import type { MultiSelectInputProps } from '../domain/documentForm/MultiSelectInput';
+import type { PreviousEncounterValueProps } from '../domain/documentForm/PreviousEncounterValue';
+import type {
+  FormCategoriesProps,
+  FormCategoryProps,
+} from './formCategories/FormCategories';
 import type {
   BooleanPath,
+  EnumArrayPath,
   EnumPath,
   NotesPath,
   NumberPath,
@@ -49,7 +56,7 @@ import type {
   LabelledPatientFieldProps,
   PatientFieldProps,
 } from '../domain/patient/documentFields';
-import type { Patient } from './documents';
+import type { Encounter, Patient } from './documents';
 
 const LazyDataTable = lazy(() =>
   import('../ui/elements/table/DataTable').then(m => ({
@@ -270,6 +277,31 @@ export const NotesInput = LazyNotesInput as unknown as <
   props: NotesInputProps<T, P>
 ) => JSX.Element;
 
+const LazyMultiSelectInput = formLibraryComponent(
+  m => m.MultiSelectInput as Component<MultiSelectInputProps<unknown, never>>
+);
+/** Several values from an enum, each shown as a removable tag. */
+export const MultiSelectInput = LazyMultiSelectInput as unknown as <
+  T,
+  P extends EnumArrayPath<T>,
+>(
+  props: MultiSelectInputProps<T, P>
+) => JSX.Element;
+
+const LazyPreviousEncounterValue = formLibraryComponent(
+  m =>
+    m.PreviousEncounterValue as Component<
+      PreviousEncounterValueProps<Encounter, never>
+    >
+);
+/** What the previous encounter recorded at a field, shown under it. */
+export const PreviousEncounterValue = LazyPreviousEncounterValue as unknown as <
+  T extends Encounter,
+  P extends TextPath<T> | NumberPath<T>,
+>(
+  props: PreviousEncounterValueProps<T, P>
+) => JSX.Element;
+
 /** A titled group of fields. */
 export const FieldGroup: Component<FieldGroupProps> = formLibraryComponent(
   m => m.FieldGroup
@@ -279,6 +311,18 @@ export const FieldGroup: Component<FieldGroupProps> = formLibraryComponent(
 export const FormDivider: Component<FormDividerProps> = formLibraryComponent(
   m => m.FormDivider
 );
+
+/** The row of a form's category tiles. */
+export const FormCategories: Component<FormCategoriesProps> =
+  formLibraryComponent(m => m.FormCategories);
+
+const LazyFormCategory = formLibraryComponent(
+  m => m.FormCategory as Component<FormCategoryProps<unknown>>
+);
+/** One category's tile, opening its fields in a dialog. */
+export const FormCategory = LazyFormCategory as unknown as <T>(
+  props: FormCategoryProps<T>
+) => JSX.Element;
 
 /*
  * The host's patient fields (kdd/custom-forms/specs.md § Host-owned surfaces,

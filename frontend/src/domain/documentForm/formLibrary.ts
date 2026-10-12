@@ -24,6 +24,14 @@ export {
   FormDivider,
 } from './fields';
 export { NotesInput } from './NotesInput';
+export { MultiSelectInput } from './MultiSelectInput';
+export { PreviousEncounterValue } from './PreviousEncounterValue';
+// The old client's category tiles, from the plugin SDK, which hold a form's
+// fields in dialogs: they render with the form, so they share its chunk.
+export {
+  FormCategories,
+  FormCategory,
+} from '../../plugin-sdk/formCategories/FormCategories';
 export { validateDocument } from './validation';
 export { baseSchemaFor } from './baseSchemas';
 export { DefaultEnrolmentForm, DefaultEncounterForm } from './defaults';

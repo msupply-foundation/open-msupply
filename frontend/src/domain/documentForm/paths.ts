@@ -11,8 +11,9 @@
  * form keeps its address in the first contact block, the one the server
  * projects onto the patient record. Any other item, and an array of plain
  * values, is a leaf, except a list of notes, which a path names whole for the
- * notes list (`NotesPath`). Keyed items and the generic array controls are
- * later work (implementation-plan H23).
+ * notes list (`NotesPath`), and a list of enum values, which it names whole
+ * for the multi-select (`EnumArrayPath`). Keyed items and the generic array
+ * controls are later work (implementation-plan H23).
  */
 import type { Note } from '../../plugin-sdk/documents';
 
@@ -91,7 +92,15 @@ type PathsWhere<T, Test> = {
             ? NonNullable<PathValue<T, P>> extends readonly Note[]
               ? P
               : never
-            : never;
+            : Test extends 'enumArray'
+              ? NonNullable<PathValue<T, P>> extends readonly (infer E)[]
+                ? E extends string
+                  ? string extends E
+                    ? never
+                    : P
+                  : never
+                : never
+              : never;
 }[Path<T>];
 
 /** Paths whose value is free text (`string`, not a union of literals). */
@@ -104,6 +113,11 @@ export type NumberPath<T> = PathsWhere<T, 'number'>;
 export type BooleanPath<T> = PathsWhere<T, 'boolean'>;
 /** Paths whose value is a list of notes (`Note[]`). */
 export type NotesPath<T> = PathsWhere<T, 'notes'>;
+/**
+ * Paths whose value is a list of values from an enum (an array whose items
+ * are a union of string literals).
+ */
+export type EnumArrayPath<T> = PathsWhere<T, 'enumArray'>;
 
 // Keys that reach an object's prototype rather than its own data. Paths come
 // from plugin code (form paths are compiler-checked, migration paths are

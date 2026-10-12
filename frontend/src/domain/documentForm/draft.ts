@@ -61,6 +61,11 @@ export interface HostDraft<T> extends Draft<T> {
    * none or a failure the caller found itself.
    */
   failedRule(path: Path<T>): string | undefined;
+  /**
+   * The paths of the errors on show beside their fields, in author order:
+   * what a summary of several fields counts (a form category's tile).
+   */
+  visibleErrorPaths(): readonly string[];
 }
 
 export interface DraftSchema {
@@ -228,6 +233,7 @@ export const createDraft = <T extends object>(
     },
     errorFor: path => validation.errorFor(path),
     failedRule: path => errors().find(e => e.id === path)?.rule,
+    visibleErrorPaths: () => validation.visible().map(e => e.id),
     unresolved: path => unresolvedValues()[path]?.value,
     readOnly: () => options.readOnly?.() ?? false,
   };

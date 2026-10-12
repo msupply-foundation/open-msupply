@@ -21,6 +21,7 @@ import {
   pointerToPath,
   setAt,
   type EnumPath,
+  type EnumArrayPath,
   type NotesPath,
   type NumberPath,
   type Path,
@@ -50,6 +51,8 @@ interface DemoEncounter extends Encounter {
 interface Lists {
   tags?: string[];
   blocks?: { phone?: string; address?: string }[];
+  methods?: ('DIU' | 'POP')[];
+  method?: 'DIU' | 'POP';
 }
 
 const listsSchema: JsonSchema = {
@@ -126,6 +129,11 @@ const typeChecks = () => {
   const textNotes: NotesPath<DemoEncounter> = 'extension.demo.notes';
   // @ts-expect-error: an array of other objects is not a list of notes.
   const blocks: NotesPath<Lists> = 'blocks';
+  const methods: EnumArrayPath<Lists> = 'methods';
+  // @ts-expect-error: a list of free text is not a list of enum values.
+  const freeTags: EnumArrayPath<Lists> = 'tags';
+  // @ts-expect-error: one enum value is not a list of them.
+  const oneMethod: EnumArrayPath<Lists> = 'method';
   return [
     text,
     date,
@@ -152,6 +160,9 @@ const typeChecks = () => {
     oneNote,
     textNotes,
     blocks,
+    methods,
+    freeTags,
+    oneMethod,
   ];
 };
 
@@ -271,7 +282,7 @@ describe('textFieldError', () => {
 
 describe('paths', () => {
   it('type checks hold', () => {
-    expect(typeChecks()).toHaveLength(25);
+    expect(typeChecks()).toHaveLength(28);
   });
 
   it('reads through missing parents as undefined', () => {
@@ -530,6 +541,25 @@ describe('createDraft', () => {
       expect(c.draft.errorFor('startDatetime')).toBe(
         'error.document-invalid-date-time'
       );
+      dispose();
+    });
+  });
+
+  it('lists the paths of the errors on show, for a summary of several fields', () => {
+    createRoot(dispose => {
+      const c = createDraft<Lists>({
+        schema: () => ({ id: 'lists-v1', jsonSchema: listsSchema }),
+        validate: () => validateDocument,
+      });
+      c.reset({});
+      expect(c.draft.visibleErrorPaths()).toEqual([]);
+      c.draft.set('blocks.0.address', 'Rue de Venise');
+      // The missing phone waits for a save attempt, as its field's error does.
+      expect(c.draft.visibleErrorPaths()).toEqual([]);
+      c.validation.arm();
+      expect(c.draft.visibleErrorPaths()).toEqual(['blocks.0.phone']);
+      c.draft.set('blocks.0.phone', '55501234');
+      expect(c.draft.visibleErrorPaths()).toEqual([]);
       dispose();
     });
   });
