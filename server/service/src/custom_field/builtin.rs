@@ -111,6 +111,11 @@ fn builtin_custom_fields() -> Vec<BuiltinCustomField> {
             scopes: &[PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE],
             options: &[],
         },
+        // Seeded VISIBLE until f15c79bbfd (7 Sep 2026). Because `display_mode`
+        // is the deployment's once the row exists, changing it here reached
+        // no seeded database — the v3_04_00 migration
+        // `prescription_request_occupation_prominent` lifts rows still holding
+        // that default (issue #932).
         BuiltinCustomField {
             key: PRESCRIPTION_REQUEST_OCCUPATION,
             name: "Occupation",
