@@ -6320,6 +6320,7 @@ enum PreferenceKey {
 	backdating
 	receivePaymentsFromPrescriptions
 	globalLogo
+	decimalPlacesForNumbers
 	blindStocktake
 	manageVaccinesInDoses
 	manageVvmStatusForStock
@@ -6397,6 +6398,7 @@ type PreferencesNode {
 	Large - don't add to eagerly-fetched preference queries.
 	"""
 	globalLogo: String!
+	decimalPlacesForNumbers: Int!
 	blindStocktake: Boolean!
 	manageVaccinesInDoses: Boolean!
 	manageVvmStatusForStock: Boolean!
@@ -10929,6 +10931,7 @@ input UpsertPreferencesInput {
 	backdating: BackdatingInput
 	receivePaymentsFromPrescriptions: Boolean
 	globalLogo: String
+	decimalPlacesForNumbers: Int
 	blindStocktake: [BoolStorePrefInput!]
 	manageVaccinesInDoses: [BoolStorePrefInput!]
 	manageVvmStatusForStock: [BoolStorePrefInput!]

@@ -21,6 +21,7 @@ import {
 import { formatRatio, invertRatio } from './bundledItemEdit';
 import type { ItemVariantRow } from './itemVariantEdit';
 import { BundledItemModal } from './BundledItemModal';
+import { Num } from '../../../ui/elements/typography/Num';
 
 // One variant, as a card (spec/items S2 › Variants tab). Built on the new
 // DetailCard: header = name + Edit/Delete; body = the read-only field set (the
@@ -152,8 +153,18 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
                   <tr data-testid="item-variant-packaging-row">
                     <td>{row.packagingLevel}</td>
                     <td>{row.name}</td>
-                    <td data-numeric>{row.packSize}</td>
-                    <td data-numeric>{row.volumePerUnit}</td>
+                    {/* Blank when unset — a cell, not a labelled field
+                        (ui-standards § tables › absent values). */}
+                    <td data-numeric>
+                      {row.packSize == null ? '' : <Num value={row.packSize} />}
+                    </td>
+                    <td data-numeric>
+                      {row.volumePerUnit == null ? (
+                        ''
+                      ) : (
+                        <Num value={row.volumePerUnit} volume />
+                      )}
+                    </td>
                   </tr>
                 )}
               </For>
