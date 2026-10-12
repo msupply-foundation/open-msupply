@@ -301,6 +301,9 @@ export const overrideChoice = (selection: unknown): OverrideChoice =>
 export const overrideSelection = (choice: string): boolean | null =>
   choice === 'on' ? true : choice === 'off' ? false : null;
 
+export const overrideGlobalValue = (preference: StorePreference): boolean =>
+  asBool(preference.storeOverride?.globalValue);
+
 // Defensive readers from the untyped value — a wrong-typed value reads as the
 // kind's zero, which is also what the server fabricates for "unset".
 export const asBool = (value: unknown): boolean => value === true;

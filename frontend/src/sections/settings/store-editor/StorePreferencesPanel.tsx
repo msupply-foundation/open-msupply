@@ -41,6 +41,7 @@ import {
   isOverridable,
   OUTBOUND_STATUS_OPTIONS,
   overrideChoice,
+  overrideGlobalValue,
   overrideSelection,
   preferenceValue,
   toggleInvoiceStatus,
@@ -248,7 +249,11 @@ export const StorePreferencesPanel = (props: {
           options={[
             {
               value: 'global',
-              label: t('label.global'),
+              label: t('label.preference-global-value', {
+                value: overrideGlobalValue(preference())
+                  ? t('label.on')
+                  : t('label.off'),
+              }),
               testId: `store-preference-${preference().key}-global`,
             },
             {

@@ -9,6 +9,7 @@ import {
   groupStorePreferences,
   isOverridable,
   overrideChoice,
+  overrideGlobalValue,
   overrideSelection,
   preferenceValue,
   stagePreference,
@@ -296,6 +297,14 @@ describe('the three states of an overridable preference (SET-05.59)', () => {
     expect(overrideSelection('global')).toBeNull();
     expect(overrideSelection('on')).toBe(true);
     expect(overrideSelection('off')).toBe(false);
+  });
+
+  it('reads the global value, not the value the store shows', () => {
+    expect(overrideGlobalValue(overridable(true, false, true))).toBe(true);
+    expect(overrideGlobalValue(overridable(true, true, false))).toBe(false);
+    expect(
+      overrideGlobalValue(preference('blindStocktake', 'BOOLEAN', true))
+    ).toBe(false);
   });
 });
 

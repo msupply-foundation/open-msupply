@@ -895,7 +895,7 @@ export const InputsShowcase = () => {
               value={authorise()}
               onChange={setAuthorise}
               options={[
-                { value: 'global', label: 'Global' },
+                { value: 'global', label: 'Global: On' },
                 { value: 'on', label: 'On' },
                 { value: 'off', label: 'Off' },
               ]}
