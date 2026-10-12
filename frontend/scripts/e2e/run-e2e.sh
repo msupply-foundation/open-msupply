@@ -350,7 +350,11 @@ fi
 # 9930+2n (+1 of it for discovery), FE 3115+n. Seeding the probe order from
 # the checkout path means concurrent worktrees start at different slots even
 # when launched at the same instant; doing it here — after the possibly
-# minutes-long cargo build — keeps the pick-to-bind window small.
+# minutes-long cargo build — keeps the pick-to-bind window small. A run with
+# E2E_RUN_TAG shares the checkout with another run (e.g. pr-create's
+# screenshots beside its e2e run, both waiting on the same cargo build), so
+# its probe starts at a different slot from an untagged run's: otherwise both
+# see the first slot free, take it, and restore the same database.
 slot_taken() {
   local port
   for port in ${SERVER_PORTS[@]+"${SERVER_PORTS[@]}"}; do
@@ -363,6 +367,9 @@ if [[ -n "$SERVER_PORT" ]]; then
   FE_PORTS=("$FE_PORT")
 else
   SEED=$(( $(cksum <<<"$FE_DIR" | cut -d' ' -f1) % 100 ))
+  if [[ -n "${E2E_RUN_TAG:-}" ]]; then
+    SEED=$(( (SEED + 1 + $(cksum <<<"$E2E_RUN_TAG" | cut -d' ' -f1) % 99) % 100 ))
+  fi
   for i in $(seq 0 99); do
     [[ ${#SERVER_PORTS[@]} -ge "$SERVERS" ]] && break
     slot=$(( (SEED + i) % 100 ))
