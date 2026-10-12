@@ -173,7 +173,7 @@ Adding a build lane is installing and registering `actions-runner-5`, then `syst
 
 Every deployment runs here: the named ones from `docker-named-deployment.yaml` (`develop`, the RC servers, ad-hoc ones) and every PR preview from `docker-pr-preview.yaml`. How to *use* them is on the [Docker page](../../docker/).
 
-Each is its own compose project — one container running the server and its own postgres, plus volumes — reached at `https://<name>.<DEPLOY_DOMAIN>`, where `<name>` is also the container name. A deployment costs one image however often it redeploys (superseded tags are removed once the new one is routable); teardown and `docker-expire.yaml` remove the rest.
+Each is its own compose project — one container running the server and its own postgres, plus volumes — reached at `https://<name>.<DEPLOY_DOMAIN>` (`http://` while they are [on the VPN only](#vpn-only-deployments)), where `<name>` is also the container name. A deployment costs one image however often it redeploys (superseded tags are removed once the new one is routable); teardown and `docker-expire.yaml` remove the rest.
 
 **Today `build`, `deploy` and `e2e` share one machine and one daemon.** The workflows assume nothing about that — splitting them is moving the deploy lane, not changing a workflow — but while they share:
 
@@ -185,6 +185,7 @@ Each is its own compose project — one container running the server and its own
 | variable | default | what it does |
 |---|---|---|
 | `DEPLOY_DOMAIN` | *none — required* | the base every hostname hangs off, e.g. `preview.example.com`. Must match the proxy's `.env`. |
+| `DEPLOY_SCHEME` | `https` | how deployments are reached, for every link to one: the deploy's URL, the PR comment and the dashboard. `http` while they are [on the VPN only](#vpn-only-deployments); the dashboard itself is always `https`. |
 | `DEPLOY_STATE_DIR` | `/opt/omsupply/deployments` | where each deployment's `machine-id` file is kept; must exist and be writable by the runner user |
 | `DEPLOY_REFERENCE_FILE` | `e2e` | the dataset a new deployment is seeded from. `reference1` does not load on current servers. |
 | `DEPLOY_SHARED_DAEMON` | unset | see above |
@@ -227,19 +228,37 @@ The reverse proxy in front of every deployment and the deployments dashboard liv
 | `.github/deploy/proxy/compose.proxy.yaml` | the Caddy container, its two ports and the shared network |
 | `.github/deploy/proxy/proxy.Caddyfile` | the one route for every deployment, the gate on the internet door, and why it is Caddy (see its comments) |
 
-Set up once, outside CI:
+Set up once, outside CI. This is the full setup, with deployments on the internet behind the gate; for the dashboard alone on the internet, see [VPN-only deployments](#vpn-only-deployments).
 
 1. **A wildcard DNS record** for `*.<DEPLOY_DOMAIN>`, pointing at whatever terminates TLS.
-2. **Two routes on the edge proxy** for `*.<DEPLOY_DOMAIN>`, both forwarding plain HTTP to this box with `Host` kept:
-   - **the internet → port 80**, the gated door: every request needs a GitHub sign-in (see [the gate](#the-gate-in-front-of-every-deployment));
-   - **the office and the VPN → port 8080**, the open door: sync, LAN tablets and CI's route check use it.
+2. **The two doors**, both plain HTTP with `Host` kept:
+   - **the office and the VPN → port 80**, the open door: sync, LAN tablets and CI's route check use it. People reach it directly, which is why it is on 80 — its addresses carry no port.
+   - **the internet → the edge → port 8080**, the gated door: every request needs a GitHub sign-in (see [the gate](#the-gate-in-front-of-every-deployment)). Only the edge connects here, so the port can be anything.
 
-   The edge decides which door a request gets, since it knows the real client. It must **never send the internet to 8080**. If office machines reach the edge through the office's public address, that address counts as the office.
+   The edge must **never send the internet to 80**. If office machines reach the edge through the office's public address, that address counts as the office.
 3. **Run `docker-deploy-services.yaml`.** It creates the `oms-edge` network if it is missing and brings the proxy up.
 
-It takes 80 and 8080. If something already holds them, set `PROXY_PORT` / `PROXY_LOCAL_PORT` in `~/proxy/.env` and rerun the workflow — compose sees the changed value and recreates the proxy. `PROXY_LOCAL_BIND` publishes the open door on one address only, the one the edge connects on. CI reads the open door's address back from the container and needs no variable.
+It takes 80 and 8080. If something already holds them, set `PROXY_PORT` (open) / `PROXY_GATED_PORT` (gated) in `~/proxy/.env` and rerun the workflow — compose sees the changed value and recreates the proxy. `PROXY_BIND` publishes the open door on one address only; it is only needed if the box has an interface the internet can reach, since docker's published ports bypass `ufw`/firewalld. Behind NAT, leave it unset. CI reads the open door's address back from the container and needs no variable.
 
 Routing is a pure function of the hostname — `pr-470.<domain>` goes to the container `pr-470` on port 8000 — so a new deployment is routable the moment it is up and nothing is ever reloaded. Two consequences: **anything attached to `oms-edge` is reachable as a subdomain**, so attach nothing unrelated; and a deploy creates `oms-edge` if missing but **never the proxy**, so a box without one gives healthy, unroutable deployments (the deploy's route check says so).
+
+#### VPN-only deployments
+
+The setup without a wildcard: the dashboard is on the internet, the deployments are reachable from the office and the VPN only. The gate still stands in front of the dashboard, and is ready for the deployments when they follow — the wildcard record, its certificate and one more edge route, with nothing on the box changing.
+
+`DEPLOY_DOMAIN` is still the public domain — it names both the dashboard and the deployments — and the office and VPN DNS answers for the deployments itself.
+
+1. **Public DNS and a certificate for `dashboard.<DEPLOY_DOMAIN>` alone.** No wildcard, no DNS-01.
+2. **One edge route**, for that hostname only, to port 8080 with `Host` kept.
+3. **Office and VPN DNS:** a wildcard to the box, and the dashboard to the edge's internal address. The override is required — the wildcard covers the dashboard too, and on the box it would be ungated plain http, with sign-in broken.
+
+   ```
+   address=/<DEPLOY_DOMAIN>/<box internal address>
+   address=/dashboard.<DEPLOY_DOMAIN>/<edge internal address>
+   ```
+4. **Set the `DEPLOY_SCHEME` repository variable to `http`**, and rerun `docker-deploy-services.yaml` so the dashboard's links follow.
+
+Deployments are plain HTTP on the VPN, which encrypts the hop already. What that costs is the browser's secure-context features — in practice the copy-to-clipboard buttons, which fail on http. There is deliberately no local certificate: one from a private CA works only on machines that trust its root, and nobody installs it.
 
 #### The gate in front of every deployment
 
@@ -324,7 +343,8 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **Distro `docker.io`, not Docker's own repo.** Nothing these jobs do is version-sensitive, and the distro package updates through normal `apt` with no third-party repo or GPG key on a machine that holds registry credentials.
 - **Lane roles are exclusive.** A lane carries one label so a 19-minute build never queues ahead of a one-minute deploy or teardown. That is why `e2e` became a role of its own rather than borrowing `build`; the reasoning is in the header of `frontend-e2e-nightly.yaml`.
 - **One machine-id per deployment**, not the host's: two deployments sharing one collide when both pair to the same central server. See `docker-deploy.yaml`.
-- **Two front doors split by port, not by client address.** Every request reaches the proxy from the edge's address, so telling the internet from the office there would mean trusting `X-Forwarded-For`, and a mistake in that is a way past the gate. The edge knows the real client and picks the port. The gated door is 80 so that anything assuming "the proxy is on 80" lands on the gate. See the header of `.github/deploy/proxy/proxy.Caddyfile`.
+- **No local HTTPS.** There was a site on the box with Caddy's internal CA, for secure-context features when reaching a deployment directly. It needed every machine to trust its root, which nobody did, so VPN-only deployments are plain HTTP and the real certificate is the edge's.
+- **Two front doors split by port, not by client address.** Every request reaches the proxy from the edge's address, so telling the internet from the office there would mean trusting `X-Forwarded-For`, and a mistake in that is a way past the gate. The edge knows the real client and picks the port. The open door is 80 because people reach it directly and type its addresses; the gated door is 8080 because only the edge connects to it, and is told the port once. See the header of `.github/deploy/proxy/proxy.Caddyfile`.
 - **No sync exception in the gate.** Sync credentials ship in the seeded datasets, so letting `/central/*` through would open every deployment's sync to the internet. Remote sites sync from the office or the VPN.
 - **A gate cookie separate from the dashboard's session.** It has to reach every deployment, and deployments run branch code, so it carries nothing but "signed in" — never the GitHub token. See the header of `.github/deploy/dashboard/web.mjs`.
 - **The proxy's host port is read back, not configured.** A `PROXY_PORT` repository variable used to duplicate what the proxy already knew, and a mismatch reported every deployment as unroutable. If it is still set on the repository it is inert. See `docker-deploy.yaml`.
