@@ -2290,6 +2290,7 @@
   "log.rnr-form-updated": "Updated",
   "log.sensor-location-changed": "Location changed",
   "log.stock-batch-change": "Batch changed",
+  "log.stock-campaign-change": "Activity changed",
   "log.stock-cost-price-change": "Cost price changed",
   "log.stock-expiry-date-change": "Expiry date changed",
   "log.stock-line-edit": "Stock line edited",
