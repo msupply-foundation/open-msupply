@@ -230,7 +230,7 @@ The reverse proxy in front of every deployment and the deployments dashboard liv
 
 Set up once, outside CI. This is the full setup, with deployments on the internet behind the gate; for the dashboard alone on the internet, see [VPN-only deployments](#vpn-only-deployments).
 
-1. **A wildcard DNS record** for `*.<DEPLOY_DOMAIN>`, pointing at whatever terminates TLS.
+1. **DNS records** for `<DEPLOY_DOMAIN>` (the dashboard) and `*.<DEPLOY_DOMAIN>` (the deployments), both pointing at whatever terminates TLS.
 2. **The two doors**, both plain HTTP with `Host` kept:
    - **the office and the VPN → port 80**, the open door: sync, LAN tablets and CI's route check use it. People reach it directly, which is why it is on 80 — its addresses carry no port.
    - **the internet → the edge → port 8080**, the gated door: every request needs a GitHub sign-in (see [the gate](#the-gate-in-front-of-every-deployment)). Only the edge connects here, so the port can be anything.
@@ -240,21 +240,21 @@ Set up once, outside CI. This is the full setup, with deployments on the interne
 
 It takes 80 and 8080. If something already holds them, set `PROXY_PORT` (open) / `PROXY_GATED_PORT` (gated) in `~/proxy/.env` and rerun the workflow — compose sees the changed value and recreates the proxy. `PROXY_BIND` publishes the open door on one address only; it is only needed if the box has an interface the internet can reach, since docker's published ports bypass `ufw`/firewalld. Behind NAT, leave it unset. CI reads the open door's address back from the container and needs no variable.
 
-Routing is a pure function of the hostname — `pr-470.<domain>` goes to the container `pr-470` on port 8000 — so a new deployment is routable the moment it is up and nothing is ever reloaded. Two consequences: **anything attached to `oms-edge` is reachable as a subdomain**, so attach nothing unrelated; and a deploy creates `oms-edge` if missing but **never the proxy**, so a box without one gives healthy, unroutable deployments (the deploy's route check says so).
+Routing is a pure function of the hostname — `pr-470.<domain>` goes to the container `pr-470` on port 8000, and the bare `<domain>` to the dashboard — so a new deployment is routable the moment it is up and nothing is ever reloaded. Two consequences: **anything attached to `oms-edge` is reachable as a subdomain**, so attach nothing unrelated; and a deploy creates `oms-edge` if missing but **never the proxy**, so a box without one gives healthy, unroutable deployments (the deploy's route check says so).
 
 #### VPN-only deployments
 
 The setup without a wildcard: the dashboard is on the internet, the deployments are reachable from the office and the VPN only. The gate still stands in front of the dashboard, and is ready for the deployments when they follow — the wildcard record, its certificate and one more edge route, with nothing on the box changing.
 
-`DEPLOY_DOMAIN` is still the public domain — it names both the dashboard and the deployments — and the office and VPN DNS answers for the deployments itself.
+`DEPLOY_DOMAIN` is still the public domain — the dashboard is the domain itself, the deployments are one label under it — and the office and VPN DNS answers for the deployments itself.
 
-1. **Public DNS and a certificate for `dashboard.<DEPLOY_DOMAIN>` alone.** No wildcard, no DNS-01.
+1. **Public DNS and a certificate for `<DEPLOY_DOMAIN>` alone.** No wildcard, no DNS-01.
 2. **One edge route**, for that hostname only, to port 8080 with `Host` kept.
-3. **Office and VPN DNS:** a wildcard to the box, and the dashboard to the edge's internal address. The override is required — the wildcard covers the dashboard too, and on the box it would be ungated plain http, with sign-in broken.
+3. **Office and VPN DNS:** `*.<DEPLOY_DOMAIN>` to the box, and the bare `<DEPLOY_DOMAIN>` left to public DNS (or pointed at the edge's internal address). It must not go to the box: there the dashboard is ungated plain http, and sign-in comes back to https and breaks. dnsmasq's `address=` covers the bare domain along with its subdomains, so with dnsmasq override the bare domain with a `host-record`, which wins over `address=`:
 
    ```
    address=/<DEPLOY_DOMAIN>/<box internal address>
-   address=/dashboard.<DEPLOY_DOMAIN>/<edge internal address>
+   host-record=<DEPLOY_DOMAIN>,<edge internal address>
    ```
 4. **Set the `DEPLOY_SCHEME` repository variable to `http`**, and rerun `docker-deploy-services.yaml` so the dashboard's links follow.
 
@@ -282,7 +282,7 @@ Its files are in `.github/deploy/dashboard/`. How it works and why — the conta
 
 **1. Create the GitHub App** people sign in through, once, under the organisation (Settings → Developer settings → GitHub Apps → New):
 
-- **Callback URL:** `https://dashboard.<DEPLOY_DOMAIN>/auth/callback` (add `http://localhost:8000/auth/callback` to try it locally)
+- **Callback URL:** `https://<DEPLOY_DOMAIN>/auth/callback` (add `http://localhost:8000/auth/callback` to try it locally)
 - **Webhook:** off. **Installable:** only this account. Leave token expiry on.
 - **Repository permissions:** Actions read & write (the runs, and the buttons), Contents read (commit subjects, "behind"). Nothing else.
 - **Install** it on the organisation for this repository only, and **generate a client secret**.
@@ -298,15 +298,15 @@ EOF
 chmod 600 ~/dashboard/.env
 ```
 
-**3. Run `docker-deploy-services.yaml`**, then open `https://dashboard.<DEPLOY_DOMAIN>`. The same sign-in is the [gate in front of every deployment](#the-gate-in-front-of-every-deployment) on the internet door. The client secret is the only credential on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
+**3. Run `docker-deploy-services.yaml`**, then open `https://<DEPLOY_DOMAIN>`. Its old address, `https://dashboard.<DEPLOY_DOMAIN>`, redirects there. The same sign-in is the [gate in front of every deployment](#the-gate-in-front-of-every-deployment) on the internet door. The client secret is the only credential on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
 
-- **No proxy change is needed**: the container is named `dashboard`, listens on 8000 and sits on `oms-edge`.
+- **The proxy finds it by name**: the bare domain goes to the container `dashboard` on port 8000, on `oms-edge`.
 - **Reserved names:** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot`, `oms-dashboard-releases` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action, since a teardown is `docker compose -p <name> down -v`. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
 - **Buttons that dispatch a workflow branch** before it merges: add `DISPATCH_REF=<branch>` to `~/dashboard/.env` and rerun the workflow. The buttons dispatch on `develop` otherwise.
 
 ### Plugin bundles
 
-The dashboard's **Plugin bundles** tab (`https://dashboard.<DEPLOY_DOMAIN>/plugins`) lists ready-to-install bundles of the country plugins in `frontend/plugins/`, **one version line per plugin**: its released versions newest first, which version `develop` and each RC carry, and branch builds as pre-releases. Each has a download button; the file installs through the server's plugin upload or `remote_server_cli install-plugin-bundle`.
+The dashboard's **Plugin bundles** tab (`https://<DEPLOY_DOMAIN>/plugins`) lists ready-to-install bundles of the country plugins in `frontend/plugins/`, **one version line per plugin**: its released versions newest first, which version `develop` and each RC carry, and branch builds as pre-releases. Each has a download button; the file installs through the server's plugin upload or `remote_server_cli install-plugin-bundle`.
 
 They come from **`publish-bundles.yaml`**:
 
