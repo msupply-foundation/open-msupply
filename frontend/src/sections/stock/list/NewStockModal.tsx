@@ -291,342 +291,337 @@ const NewStockContent = (props: {
   };
 
   return (
-    <>
-      <Dialog
-        open
-        onClose={props.onClose}
-        dismissable={!saving()}
-        // A form dialog, not a workbench (#771): fixed at the width the
-        // two-column form needs, growing downward as the sections reveal once
-        // an item is chosen. The body reserves enough height to OWN the item
-        // search's open suggestions list (the create/search-modal convention —
-        // CustomerSearchModal et al), which otherwise dangles past the card:
-        // header + field + the listbox's 18rem cap + padding (#1029 — the old
-        // 24 left the bottom ~2rem of a full listbox hanging past the
-        // dialog).
-        widthRem={56}
-        minBodyHeightRem={27}
-        testId="new-stock-modal"
-        initialFocus={itemSearch}
-        title={t('heading.stock-line-details')}
-        actionsLead={
-          <Show when={error()}>
-            {message => (
-              <Alert severity="error" testId="new-stock-error">
-                {message()}
-              </Alert>
-            )}
-          </Show>
-        }
-        actions={
-          <>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
-              confirms="cancel"
-              disabled={saving()}
-              data-testid="dialog-button-cancel"
-              onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
-            <Button
-              icon={<CheckIcon />}
-              loading={saving()}
-              confirms="plain"
-              disabled={!canConfirm()}
-              data-testid="dialog-button-ok"
-              onClick={() => void commit()}
-            >
-              {t('button.ok')}
-            </Button>
-          </>
-        }
-      >
-        <ContentContainer size="form">
-          <Stack>
-            {/* Item first — the rest of the form appears once an item is chosen. */}
-            <Stack gap="sm">
-              <ItemSearch
-                label={t('label.item')}
-                required
-                storeId={props.storeId}
-                focusTarget={itemSearch}
-                value={item()?.id}
-                selectedItem={item()}
-                onSelect={picked => {
-                  // Picking (or clearing) an item resets the form, so the newly
-                  // chosen item's defaults (pack size, sell price) seed cleanly
-                  // rather than carrying over the previous item's typed values.
-                  setItem(picked ?? undefined);
-                  setDraft({ ...EMPTY_DRAFT });
-                }}
-                placeholder={t('placeholder.enter-an-item-code-or-name')}
+    <Dialog
+      open
+      onClose={props.onClose}
+      dismissable={!saving()}
+      // A form dialog, not a workbench (#771): fixed at the width the
+      // two-column form needs, growing downward as the sections reveal once
+      // an item is chosen. The body reserves enough height to OWN the item
+      // search's open suggestions list (the create/search-modal convention —
+      // CustomerSearchModal et al), which otherwise dangles past the card:
+      // header + field + the listbox's 18rem cap + padding (#1029 — the old
+      // 24 left the bottom ~2rem of a full listbox hanging past the
+      // dialog).
+      widthRem={56}
+      minBodyHeightRem={27}
+      testId="new-stock-modal"
+      initialFocus={itemSearch}
+      title={t('heading.stock-line-details')}
+      actionsLead={
+        <Show when={error()}>
+          {message => (
+            <Alert severity="error" testId="new-stock-error">
+              {message()}
+            </Alert>
+          )}
+        </Show>
+      }
+      actions={
+        <>
+          <Button
+            variant="secondary"
+            icon={<XCircleIcon />}
+            confirms="cancel"
+            disabled={saving()}
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          >
+            {t('button.cancel')}
+          </Button>
+          <Button
+            icon={<CheckIcon />}
+            loading={saving()}
+            confirms="plain"
+            disabled={!canConfirm()}
+            data-testid="dialog-button-ok"
+            onClick={() => void commit()}
+          >
+            {t('button.ok')}
+          </Button>
+        </>
+      }
+    >
+      <ContentContainer size="form">
+        <Stack>
+          {/* Item first — the rest of the form appears once an item is chosen. */}
+          <Stack gap="sm">
+            <ItemSearch
+              label={t('label.item')}
+              required
+              storeId={props.storeId}
+              focusTarget={itemSearch}
+              value={item()?.id}
+              selectedItem={item()}
+              onSelect={picked => {
+                // Picking (or clearing) an item resets the form, so the newly
+                // chosen item's defaults (pack size, sell price) seed cleanly
+                // rather than carrying over the previous item's typed values.
+                setItem(picked ?? undefined);
+                setDraft({ ...EMPTY_DRAFT });
+              }}
+              placeholder={t('placeholder.enter-an-item-code-or-name')}
+            />
+            <Show when={variants().length > 0}>
+              <Combobox<ItemVariant>
+                label={t('label.item-variant')}
+                items={variants()}
+                itemToString={v => v.name}
+                itemToValue={v => v.id}
+                value={draft.itemVariantId ?? undefined}
+                placeholder={t('label.none')}
+                onChange={chooseVariant}
               />
-              <Show when={variants().length > 0}>
-                <Combobox<ItemVariant>
-                  label={t('label.item-variant')}
-                  items={variants()}
-                  itemToString={v => v.name}
-                  itemToValue={v => v.id}
-                  value={draft.itemVariantId ?? undefined}
-                  placeholder={t('label.none')}
-                  onChange={chooseVariant}
-                />
-              </Show>
-            </Stack>
+            </Show>
+          </Stack>
 
-            <Show when={chosenItem()}>
-              {/* The sectioned edit form (spec/ui-standards detail-views): S2's
-              sections adapted to this field set (spec/stock S3 Layout). */}
-              <FormColumns>
-                <FormColumn>
-                  <FormSection title={t('heading.stock-levels')}>
-                    <FormRow>
-                      {/* NumberField's default min is 0 (no negatives), so the pack
-                      count can't go negative from the input
-                          (spec OMS-REG-SMV-02.34). */}
-                      <NumberField
-                        label={t('label.pack-qty')}
-                        data-testid="field-pack-quantity"
-                        required
-                        decimalLimit={2}
-                        value={draft.numberOfPacks}
-                        onChange={v => setDraft('numberOfPacks', v)}
-                      />
-                      <NumberField
-                        label={t('label.pack-size')}
-                        data-testid="field-pack-size"
-                        required
-                        min={1}
-                        decimalLimit={2}
-                        value={draft.packSize}
-                        error={
-                          draft.packSize != null &&
-                          !packSizeValid(draft.packSize)
-                            ? t('error.pack-size-min')
-                            : undefined
-                        }
-                        onChange={v => setDraft('packSize', v)}
-                      />
-                    </FormRow>
-                  </FormSection>
-
-                  <FormSection title={t('heading.batches-and-dates')}>
-                    <TextField
-                      label={t('label.batch')}
-                      data-testid="field-batch"
-                      value={draft.batch}
-                      onInput={e => setDraft('batch', e.currentTarget.value)}
+          <Show when={chosenItem()}>
+            {/* The sectioned edit form (spec/ui-standards detail-views): S2's
+            sections adapted to this field set (spec/stock S3 Layout). */}
+            <FormColumns>
+              <FormColumn>
+                <FormSection title={t('heading.stock-levels')}>
+                  <FormRow>
+                    {/* NumberField's default min is 0 (no negatives), so the pack
+                    count can't go negative from the input
+                        (spec OMS-REG-SMV-02.34). */}
+                    <NumberField
+                      label={t('label.pack-qty')}
+                      data-testid="field-pack-quantity"
+                      required
+                      decimalLimit={2}
+                      value={draft.numberOfPacks}
+                      onChange={v => setDraft('numberOfPacks', v)}
                     />
-                    <TextField
-                      label={t('label.barcode')}
-                      data-testid="field-barcode"
-                      value={draft.barcode}
-                      onInput={e => setDraft('barcode', e.currentTarget.value)}
-                      helperText={scanFieldHelper(scanner)}
-                      endAction={
-                        scanner.needsPress() ? (
-                          <ScanFieldButton control={scanner} />
-                        ) : undefined
+                    <NumberField
+                      label={t('label.pack-size')}
+                      data-testid="field-pack-size"
+                      required
+                      min={1}
+                      decimalLimit={2}
+                      value={draft.packSize}
+                      error={
+                        draft.packSize != null && !packSizeValid(draft.packSize)
+                          ? t('error.pack-size-min')
+                          : undefined
                       }
+                      onChange={v => setDraft('packSize', v)}
                     />
-                    <ScanNotice control={scanner} />
-                    <FormRow>
-                      <DateField
-                        label={t('label.expiry-date')}
-                        testId="field-expiry-date"
-                        value={draft.expiryDate}
-                        onChange={v => setDraft('expiryDate', v)}
-                      />
-                      <DateField
-                        label={t('label.manufacture-date')}
-                        testId="field-manufacture-date"
-                        max={today}
-                        value={draft.manufactureDate}
-                        onChange={v => setDraft('manufactureDate', v)}
-                      />
-                    </FormRow>
-                    {/* VVM status editable when the gate is on
-                      (spec OMS-REG-INV-06.11: the field
-                    shows when manageVvmStatusForStock OR sortByVvmStatusThenExpiry). */}
-                    <Show
-                      when={
-                        prefs().manageVvmStatusForStock ||
-                        prefs().sortByVvmStatusThenExpiry
-                      }
-                    >
-                      <VvmStatusSelect
-                        label={t('label.vvm-status')}
-                        inputTestId="field-vvm-status"
-                        value={draft.vvmStatus?.id}
-                        placeholder={t('label.none')}
-                        onChange={s =>
-                          setDraft(
-                            'vvmStatus',
-                            s
-                              ? {
-                                  id: s.id,
-                                  description: s.description,
-                                  code: s.code,
-                                }
-                              : null
-                          )
-                        }
-                      />
-                    </Show>
-                  </FormSection>
+                  </FormRow>
+                </FormSection>
 
-                  <FormSection title={t('heading.pricing')}>
-                    <FormRow>
-                      <CurrencyField
-                        label={t('label.cost-price')}
-                        data-testid="field-cost-price"
-                        value={draft.costPricePerPack}
-                        onChange={v => setDraft('costPricePerPack', v)}
-                      />
-                      <CurrencyField
-                        label={t('label.sell-price')}
-                        data-testid="field-sell-price"
-                        value={draft.sellPricePerPack}
-                        onChange={v => setDraft('sellPricePerPack', v)}
-                      />
-                    </FormRow>
-                    {/* Required iff active positive reasons are configured (spec
-                    OMS-REG-SMV-02.36) — the same condition that gates OK,
-                    marked on the
-                    field so a disabled OK is explained rather than mysterious
-                    (#601). */}
-                    <ReasonSelect
-                      kind="positive"
-                      label={t('label.reason')}
-                      inputTestId="field-reason"
-                      required={positiveReasonsRequired()}
-                      value={draft.reasonOption?.id}
-                      placeholder={t('label.select-reason')}
-                      onChange={r =>
+                <FormSection title={t('heading.batches-and-dates')}>
+                  <TextField
+                    label={t('label.batch')}
+                    data-testid="field-batch"
+                    value={draft.batch}
+                    onInput={e => setDraft('batch', e.currentTarget.value)}
+                  />
+                  <TextField
+                    label={t('label.barcode')}
+                    data-testid="field-barcode"
+                    value={draft.barcode}
+                    onInput={e => setDraft('barcode', e.currentTarget.value)}
+                    helperText={scanFieldHelper(scanner)}
+                    endAction={
+                      scanner.needsPress() ? (
+                        <ScanFieldButton control={scanner} />
+                      ) : undefined
+                    }
+                  />
+                  <ScanNotice control={scanner} />
+                  <FormRow>
+                    <DateField
+                      label={t('label.expiry-date')}
+                      testId="field-expiry-date"
+                      value={draft.expiryDate}
+                      onChange={v => setDraft('expiryDate', v)}
+                    />
+                    <DateField
+                      label={t('label.manufacture-date')}
+                      testId="field-manufacture-date"
+                      max={today}
+                      value={draft.manufactureDate}
+                      onChange={v => setDraft('manufactureDate', v)}
+                    />
+                  </FormRow>
+                  {/* VVM status editable when the gate is on
+                    (spec OMS-REG-INV-06.11: the field
+                  shows when manageVvmStatusForStock OR sortByVvmStatusThenExpiry). */}
+                  <Show
+                    when={
+                      prefs().manageVvmStatusForStock ||
+                      prefs().sortByVvmStatusThenExpiry
+                    }
+                  >
+                    <VvmStatusSelect
+                      label={t('label.vvm-status')}
+                      inputTestId="field-vvm-status"
+                      value={draft.vvmStatus?.id}
+                      placeholder={t('label.none')}
+                      onChange={s =>
                         setDraft(
-                          'reasonOption',
-                          r
-                            ? { id: r.id, type: r.type, reason: r.reason }
+                          'vvmStatus',
+                          s
+                            ? {
+                                id: s.id,
+                                description: s.description,
+                                code: s.code,
+                              }
                             : null
                         )
                       }
                     />
-                  </FormSection>
-                </FormColumn>
+                  </Show>
+                </FormSection>
 
-                <FormColumn>
-                  <FormSection title={t('heading.storage-and-pack')}>
-                    <LocationVolumeSelect
-                      label={t('label.location')}
-                      inputTestId="field-location"
-                      locations={locations()}
-                      loading={allLocations.loading}
-                      value={draft.location?.id}
-                      placeholder={t('label.none')}
-                      // The volume this new line will occupy, so "Available"
-                      // means "has room for it" (spec/stock/rules.md › location
-                      // fields).
-                      requiredVolume={
-                        (draft.volumePerPack ?? 0) * (draft.numberOfPacks ?? 0)
-                      }
-                      onChange={l =>
-                        setDraft(
-                          'location',
-                          l ? { id: l.id, code: l.code, name: l.name } : null
-                        )
-                      }
+                <FormSection title={t('heading.pricing')}>
+                  <FormRow>
+                    <CurrencyField
+                      label={t('label.cost-price')}
+                      data-testid="field-cost-price"
+                      value={draft.costPricePerPack}
+                      onChange={v => setDraft('costPricePerPack', v)}
                     />
-                    <FormRow>
-                      <Checkbox
-                        label={t('label.on-hold')}
-                        testId="field-on-hold"
-                        checked={draft.onHold}
-                        onChange={v => setDraft('onHold', v)}
-                      />
-                      <NumberField
-                        label={t('label.volume-per-pack')}
-                        data-testid="field-volume-per-pack"
-                        decimalLimit={10}
-                        value={draft.volumePerPack}
-                        onChange={v => setDraft('volumePerPack', v)}
-                      />
-                    </FormRow>
-                  </FormSection>
+                    <CurrencyField
+                      label={t('label.sell-price')}
+                      data-testid="field-sell-price"
+                      value={draft.sellPricePerPack}
+                      onChange={v => setDraft('sellPricePerPack', v)}
+                    />
+                  </FormRow>
+                  {/* Required iff active positive reasons are configured (spec
+                  OMS-REG-SMV-02.36) — the same condition that gates OK,
+                  marked on the
+                  field so a disabled OK is explained rather than mysterious
+                  (#601). */}
+                  <ReasonSelect
+                    kind="positive"
+                    label={t('label.reason')}
+                    inputTestId="field-reason"
+                    required={positiveReasonsRequired()}
+                    value={draft.reasonOption?.id}
+                    placeholder={t('label.select-reason')}
+                    onChange={r =>
+                      setDraft(
+                        'reasonOption',
+                        r ? { id: r.id, type: r.type, reason: r.reason } : null
+                      )
+                    }
+                  />
+                </FormSection>
+              </FormColumn>
 
-                  <FormSection title={t('heading.supply-chain')}>
-                    <NameSearch
-                      label={t('label.manufacturer')}
-                      inputTestId="field-manufacturer"
-                      storeId={props.storeId}
-                      role="manufacturer"
-                      selected={
-                        draft.manufacturer
-                          ? {
-                              id: draft.manufacturer.id,
-                              name: draft.manufacturer.name,
-                            }
-                          : undefined
-                      }
-                      placeholder={t('label.none')}
-                      onSelect={name => {
-                        // Changing the manufacturer clears the item variant
-                        // (spec/stock S2 manufacturer note).
-                        setDraft(d => ({
-                          ...d,
-                          manufacturer: name
-                            ? { id: name.id, name: name.name }
-                            : null,
-                          itemVariantId: null,
-                        }));
-                      }}
+              <FormColumn>
+                <FormSection title={t('heading.storage-and-pack')}>
+                  <LocationVolumeSelect
+                    label={t('label.location')}
+                    inputTestId="field-location"
+                    locations={locations()}
+                    loading={allLocations.loading}
+                    value={draft.location?.id}
+                    placeholder={t('label.none')}
+                    // The volume this new line will occupy, so "Available"
+                    // means "has room for it" (spec/stock/rules.md › location
+                    // fields).
+                    requiredVolume={
+                      (draft.volumePerPack ?? 0) * (draft.numberOfPacks ?? 0)
+                    }
+                    onChange={l =>
+                      setDraft(
+                        'location',
+                        l ? { id: l.id, code: l.code, name: l.name } : null
+                      )
+                    }
+                  />
+                  <FormRow>
+                    <Checkbox
+                      label={t('label.on-hold')}
+                      testId="field-on-hold"
+                      checked={draft.onHold}
+                      onChange={v => setDraft('onHold', v)}
                     />
-                    <FormRow>
-                      {/* Donor field gated by allowTrackingOfStockByDonor
-                        (spec OMS-REG-SMV-02.40). */}
-                      <Show when={prefs().allowTrackingOfStockByDonor}>
-                        <NameSearch
-                          label={t('label.donor')}
-                          inputTestId="field-donor"
-                          storeId={props.storeId}
-                          role="donor"
-                          selected={
-                            draft.donorId
-                              ? {
-                                  id: draft.donorId,
-                                  name: draft.donorName ?? '',
-                                }
-                              : undefined
+                    <NumberField
+                      label={t('label.volume-per-pack')}
+                      data-testid="field-volume-per-pack"
+                      decimalLimit={10}
+                      value={draft.volumePerPack}
+                      onChange={v => setDraft('volumePerPack', v)}
+                    />
+                  </FormRow>
+                </FormSection>
+
+                <FormSection title={t('heading.supply-chain')}>
+                  <NameSearch
+                    label={t('label.manufacturer')}
+                    inputTestId="field-manufacturer"
+                    storeId={props.storeId}
+                    role="manufacturer"
+                    selected={
+                      draft.manufacturer
+                        ? {
+                            id: draft.manufacturer.id,
+                            name: draft.manufacturer.name,
                           }
-                          placeholder={t('label.none')}
-                          onSelect={name => {
-                            setDraft('donorId', name?.id ?? null);
-                            setDraft('donorName', name?.name ?? null);
-                          }}
-                        />
-                      </Show>
-                      <CampaignOrProgramSelect
-                        label={t('label.campaign')}
-                        inputTestId="field-campaign-or-program"
+                        : undefined
+                    }
+                    placeholder={t('label.none')}
+                    onSelect={name => {
+                      // Changing the manufacturer clears the item variant
+                      // (spec/stock S2 manufacturer note).
+                      setDraft(d => ({
+                        ...d,
+                        manufacturer: name
+                          ? { id: name.id, name: name.name }
+                          : null,
+                        itemVariantId: null,
+                      }));
+                    }}
+                  />
+                  <FormRow>
+                    {/* Donor field gated by allowTrackingOfStockByDonor
+                      (spec OMS-REG-SMV-02.40). */}
+                    <Show when={prefs().allowTrackingOfStockByDonor}>
+                      <NameSearch
+                        label={t('label.donor')}
+                        inputTestId="field-donor"
                         storeId={props.storeId}
-                        itemId={chosenItem()?.id ?? ''}
-                        campaignId={draft.campaignId ?? undefined}
-                        programId={draft.programId ?? undefined}
+                        role="donor"
+                        selected={
+                          draft.donorId
+                            ? {
+                                id: draft.donorId,
+                                name: draft.donorName ?? '',
+                              }
+                            : undefined
+                        }
                         placeholder={t('label.none')}
-                        onChange={v => {
-                          setDraft('campaignId', v?.campaign?.id ?? null);
-                          setDraft('programId', v?.program?.id ?? null);
+                        onSelect={name => {
+                          setDraft('donorId', name?.id ?? null);
+                          setDraft('donorName', name?.name ?? null);
                         }}
                       />
-                    </FormRow>
-                  </FormSection>
-                </FormColumn>
-              </FormColumns>
-            </Show>
-          </Stack>
-        </ContentContainer>
-      </Dialog>
-    </>
+                    </Show>
+                    <CampaignOrProgramSelect
+                      label={t('label.campaign')}
+                      inputTestId="field-campaign-or-program"
+                      storeId={props.storeId}
+                      itemId={chosenItem()?.id ?? ''}
+                      campaignId={draft.campaignId ?? undefined}
+                      programId={draft.programId ?? undefined}
+                      placeholder={t('label.none')}
+                      onChange={v => {
+                        setDraft('campaignId', v?.campaign?.id ?? null);
+                        setDraft('programId', v?.program?.id ?? null);
+                      }}
+                    />
+                  </FormRow>
+                </FormSection>
+              </FormColumn>
+            </FormColumns>
+          </Show>
+        </Stack>
+      </ContentContainer>
+    </Dialog>
   );
 };

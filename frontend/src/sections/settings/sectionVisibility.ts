@@ -1,6 +1,6 @@
 // Section/row visibility (spec/settings/rules.md § Access) — pure, so the
 // non-uniform gating is unit-testable (OMS-REG-SET-01.14, -02.11, -03.14,
-// -05.20, -05.23, -05.24).
+// -05.20, -05.24, -05.56).
 // Visibility is a UX convenience, never the only guard: every write is
 // independently checked server-side (rules § Access), and Configuration's
 // actions carry finer permissions past this section-level gate

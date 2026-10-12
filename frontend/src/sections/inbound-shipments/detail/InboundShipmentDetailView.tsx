@@ -523,10 +523,11 @@ const InboundShipmentDetailView: Component = () => {
     disabled: () => !current() || isDisabled(),
   });
 
-  // Receiving by scanning (spec/barcode-scanning rules § Learning a code while
-  // receiving; ui-surface S2): a scan opens the capture window, and each scan
-  // after that saves what it holds and loads the next box. The scanner arms on
-  // arrival; the action is disabled while the shipment is not editable (R1).
+  // Receiving by scanning (spec/barcode-scanning rules § Receiving by
+  // scanning; ui-surface S2): a scan opens the capture window, and each scan
+  // after that saves what it holds and loads the next box. A hardware scanner
+  // listens from arrival while the shipment is editable; a camera scans per
+  // press (R1).
   const [scanNotice, setScanNotice] = createSignal<ScanNoticeShown>();
   const capture = createCaptureWindow({
     storeId: () => params.storeId,

@@ -96,11 +96,12 @@ import styles from './TestScannerPage.module.css';
  *  - SHOWS EVERY CHARACTER, including the invisible ones, as control
  *    pictures. A GS1 separator, a stray space, a terminator the scanner
  *    appended: exactly the characters a plain list hides, and exactly the
- *    ones that matter, because the registry keys on the code character for
- *    character and has no screen anywhere that can correct a wrong one.
+ *    ones that matter, because barcodes are matched character for character,
+ *    and a wrong one stays until someone removes it on the item's Barcodes
+ *    tab.
  *  - COMPARES AGAINST A REFERENCE READ. One label read in USB report mode
  *    and again in keyboard-wedge mode must give identical characters, or the
- *    same physical label is learned into the registry twice. Making that a
+ *    same physical label is proposed as two barcodes. Making that a
  *    glance rather than an exercise is most of why this screen exists.
  */
 
