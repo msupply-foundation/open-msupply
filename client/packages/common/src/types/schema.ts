@@ -7927,6 +7927,7 @@ export enum PreferenceKey {
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
+  DecimalPlacesForNumbers = 'decimalPlacesForNumbers',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
@@ -8005,6 +8006,7 @@ export type PreferencesNode = {
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
+  decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
@@ -13126,6 +13128,7 @@ export type UpsertPreferencesInput = {
    */
   customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
+  decimalPlacesForNumbers?: InputMaybe<Scalars['Int']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
