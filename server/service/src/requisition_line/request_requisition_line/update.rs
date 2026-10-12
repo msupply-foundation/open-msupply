@@ -125,24 +125,26 @@ fn generate(
         option_id,
     }: UpdateRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, RepositoryError> {
-    let location_type_id = restricted_location_type_id(&item_row);
-    let available_volume = match location_type_id {
+    // The line records its item's location type only where the store has
+    // locations of that type to report volume for (see generate_requisition_lines)
+    let (location_type_id, available_volume) = match restricted_location_type_id(&item_row) {
         Some(id) => get_available_volume_by_location_type(
             &ctx.connection,
             &ctx.store_id,
             &[id.to_string()],
         )?
         .get(id)
-        .copied(),
+        .map(|volume| (id.to_string(), *volume)),
         None => None,
-    };
+    }
+    .unzip();
 
     Ok(RequisitionLineRow {
         requested_quantity: updated_requested_quantity.unwrap_or(existing.requested_quantity),
         comment: updated_comment.or(existing.comment),
         option_id: option_id.or(existing.option_id),
         available_volume,
-        location_type_id: location_type_id.map(str::to_string),
+        location_type_id,
         ..existing
     })
 }

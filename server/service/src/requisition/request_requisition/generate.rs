@@ -124,9 +124,14 @@ pub fn generate_requisition_lines(
                     }),
                 };
                 let item = item_by_id.get(&item_stats.item_id);
-                let location_type_id = item.and_then(restricted_location_type_id);
-                let available_volume =
-                    location_type_id.and_then(|id| available_volume_by_type.get(id).copied());
+                // The line records its item's location type only where the
+                // store has locations of that type to report volume for: the
+                // supplier's response line reads a location type without a
+                // volume as no capacity left
+                let (location_type_id, available_volume) = item
+                    .and_then(restricted_location_type_id)
+                    .and_then(|id| Some((id.to_string(), *available_volume_by_type.get(id)?)))
+                    .unzip();
                 let population_forecast_for_item = population_forecast
                     .get(&item_stats.item_id)
                     .and_then(|opt| opt.as_ref());
@@ -150,7 +155,7 @@ pub fn generate_requisition_lines(
                         None
                     },
                     available_volume,
-                    location_type_id: location_type_id.map(str::to_string),
+                    location_type_id,
                     forecast_total_units,
                     forecast_total_doses: population_forecast_for_item
                         .map(|f| f.forecast_total_doses),
