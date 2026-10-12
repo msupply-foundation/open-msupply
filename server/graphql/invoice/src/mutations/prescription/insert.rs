@@ -1,8 +1,8 @@
 use async_graphql::*;
 
 use chrono::{DateTime, Utc};
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
@@ -107,16 +107,16 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_patient, mock_prescription_a, mock_store_a, MockDataInserts},
         Invoice, StorageConnectionManager,
+        mock::{MockDataInserts, mock_patient, mock_prescription_a, mock_store_a},
     };
     use serde_json::json;
     use service::{
         invoice::{
+            InvoiceServiceTrait,
             prescription::{
                 InsertPrescription as ServiceInput, InsertPrescriptionError as ServiceError,
             },
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

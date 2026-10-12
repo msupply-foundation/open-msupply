@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use repository::{BarcodeProposalRowRepository, ChangelogRow, ChangelogTableName, KeyType};
 
 use crate::{
-    barcode::{auto_confirm, ManageBarcodeError, SITES_TO_AUTO_CONFIRM},
+    barcode::{ManageBarcodeError, SITES_TO_AUTO_CONFIRM, auto_confirm},
     cursor_controller::CursorType,
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},

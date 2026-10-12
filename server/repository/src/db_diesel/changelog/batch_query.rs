@@ -855,8 +855,8 @@ mod test {
     use util::assert_matches;
 
     use crate::{
-        dynamic_query_filter::FilterBuilder, mock::MockDataInserts, test_db::setup_all,
-        ChangeLogInsertRow,
+        ChangeLogInsertRow, dynamic_query_filter::FilterBuilder, mock::MockDataInserts,
+        test_db::setup_all,
     };
 
     fn unit_filter() -> ChangelogCondition::Inner {

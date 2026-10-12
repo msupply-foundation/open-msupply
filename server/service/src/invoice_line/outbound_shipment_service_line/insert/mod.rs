@@ -5,7 +5,7 @@ use generate::generate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
+use crate::{WithDBError, invoice_line::query::get_invoice_line, service_provider::ServiceContext};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct InsertOutboundShipmentServiceLine {
@@ -81,13 +81,13 @@ where
 mod test {
 
     use repository::{
+        InvoiceLineRowRepository, ItemFilter, ItemRepository, StringFilter,
         mock::{
-            mock_full_draft_outbound_shipment_a, mock_inbound_shipment_c, mock_item_a,
-            mock_item_service_item, mock_outbound_shipment_shipped, mock_store_a, mock_store_c,
-            MockDataInserts,
+            MockDataInserts, mock_full_draft_outbound_shipment_a, mock_inbound_shipment_c,
+            mock_item_a, mock_item_service_item, mock_outbound_shipment_shipped, mock_store_a,
+            mock_store_c,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository, ItemFilter, ItemRepository, StringFilter,
     };
     use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 

@@ -1,12 +1,12 @@
 use async_graphql::*;
 
 use graphql_core::{
+    ContextExt,
     simple_generic_errors::{
         DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound, UniqueValueKey,
         UniqueValueViolation,
     },
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::LocationNode;
 use service::{
@@ -106,17 +106,17 @@ fn map_error(error: ServiceError) -> Result<UpdateLocationErrorInterface> {
         ServiceError::LocationDoesNotExist => {
             return Ok(UpdateLocationErrorInterface::LocationNotFound(
                 RecordNotFound,
-            ))
+            ));
         }
         ServiceError::CodeAlreadyExists => {
             return Ok(UpdateLocationErrorInterface::UniqueValueViolation(
                 UniqueValueViolation(UniqueValueKey::Code),
-            ))
+            ));
         }
         ServiceError::LocationDoesNotBelongToCurrentStore => {
             return Ok(UpdateLocationErrorInterface::RecordBelongsToAnotherStore(
                 RecordBelongsToAnotherStore,
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),

@@ -142,7 +142,7 @@ export const fetchNameById = async (
  *             internal-order create picker needs it — the create resolver
  *             rejects a non-store supplier, so offering only internal ones
  *             keeps that rejection unreachable from the UI
- *             (spec/internal-orders AC-C3).
+ *             (spec/internal-orders OMS-REG-REPL-04.44).
  *   external  only parties outside the system. The purchase-order create
  *             picker needs it — an order goes to an external supplier
  *             (spec/purchase-orders § S2).

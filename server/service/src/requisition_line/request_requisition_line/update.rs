@@ -8,9 +8,9 @@ use crate::{
 };
 
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     ReasonOptionFilter, ReasonOptionRepository, ReasonOptionType, RepositoryError, RequisitionLine,
     RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -155,15 +155,15 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            mock_full_new_response_requisition_for_update_test, mock_item_a,
-            mock_request_draft_requisition_calculation_test, mock_request_program_requisition,
-            mock_requisition_variance_reason_option, mock_sent_request_requisition_line,
-            mock_store_a, mock_store_b, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
         RequisitionLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
+        mock::{
+            MockData, MockDataInserts, mock_full_new_response_requisition_for_update_test,
+            mock_item_a, mock_request_draft_requisition_calculation_test,
+            mock_request_program_requisition, mock_requisition_variance_reason_option,
+            mock_sent_request_requisition_line, mock_store_a, mock_store_b,
+        },
+        test_db::setup_all_with_data,
     };
 
     fn progam_request_line() -> RequisitionLineRow {

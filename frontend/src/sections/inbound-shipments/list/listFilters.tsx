@@ -169,8 +169,8 @@ const FILTERS: Filter<InboundListFilter>[] =
           label={t('label.status')}
           testId={props.testId}
           placeholder={t('label.any')}
-          // Multi-select → status.equalAny (spec AC-L1: matches ANY of the
-          // chosen statuses). The generated element type is the
+          // Multi-select → status.equalAny (spec OMS-REG-REPL-01.15: matches
+          // ANY of the chosen statuses). The generated element type is the
           // InvoiceNodeStatus union, so the string values narrow at the
           // boundary.
           values={props.filter().status?.equalAny ?? []}

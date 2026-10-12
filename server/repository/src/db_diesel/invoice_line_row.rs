@@ -1,7 +1,7 @@
 use super::{
-    campaign_row::campaign, invoice_line_row::invoice_line::dsl::*, invoice_row::invoice,
-    location_row::location, reason_option_row::reason_option, stock_line_row::stock_line,
-    vvm_status::vvm_status_row::vvm_status, StorageConnection,
+    StorageConnection, campaign_row::campaign, invoice_line_row::invoice_line::dsl::*,
+    invoice_row::invoice, location_row::location, reason_option_row::reason_option,
+    stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status,
 };
 
 use crate::db_diesel::requisition_line::requisition_line_row::requisition_line;
@@ -9,8 +9,8 @@ use crate::diesel_macros::define_linked_tables;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, ChangelogRepository, ChangelogSyncType, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::changelog::RowOrId,
 };
 
 use diesel::prelude::*;

@@ -41,7 +41,7 @@ export interface PluginRegionOutletProps {
  * so an empty region renders nothing and reserves no space. Each contribution
  * sits in its own error boundary: one throwing contribution shows a neutral
  * muted text line in its own slot only, and every sibling keeps working
- * (dashboard AC-D6, plugins rules § error isolation).
+ * (dashboard OMS-REG-DB-02.10/.11, plugins rules § error isolation).
  */
 export const PluginRegionOutlet = (props: PluginRegionOutletProps) => (
   <For each={props.contributions}>

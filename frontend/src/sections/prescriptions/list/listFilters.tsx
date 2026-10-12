@@ -22,10 +22,11 @@ import type { PrescriptionsVariables } from './prescriptions.generated';
 // made (the stocktakes listFilters pattern).
 export type PrescriptionFilter = NonNullable<PrescriptionsVariables['filter']>;
 
-// The status filter's option set (AC-PR2): the lifecycle statuses limited by
-// the invoice-status-options preference — an unresolved/empty preference
-// restricts nothing (the permissive default, D7's precedent) — with CANCELLED
-// always offered (it is a real list state regardless of the preference).
+// The status filter's option set (OMS-REG-DIS-03.54): the lifecycle statuses
+// limited by the invoice-status-options preference — an unresolved/empty
+// preference restricts nothing (the permissive default, D7's precedent) — with
+// CANCELLED always offered (it is a real list state regardless of the
+// preference).
 const statusOptions = (): {
   value: PrescriptionStatus;
   label: string;
@@ -60,8 +61,8 @@ const FILTERS: Filter<PrescriptionFilter>[] =
       ),
     },
     // Prescription date — a DateTime field (created-or-backdated coalescence,
-    // AC-L1); FilterDateRange (type="dateTime") owns the local ⇄ UTC
-    // conversion (#456). A recorded fact, so future days are unselectable
+    // OMS-REG-DIS-03.49); FilterDateRange (type="dateTime") owns the local ⇄
+    // UTC conversion (#456). A recorded fact, so future days are unselectable
     // (ui-standards/list-views.md § Filters).
     createdOrBackdatedDatetime: {
       label: () => t('label.dispensed-date'),

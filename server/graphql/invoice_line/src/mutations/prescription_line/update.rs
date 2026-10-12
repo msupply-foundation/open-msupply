@@ -1,9 +1,9 @@
 use async_graphql::*;
 
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_core::{
-    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
     ContextExt,
+    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
 };
 use graphql_types::types::InvoiceLineNode;
 
@@ -122,37 +122,37 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         InvoiceDoesNotExist => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         CannotEditFinalised | OtherPartyStoreDisabled => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         StockLineNotFound => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::StockLineId,
-            )))
+            )));
         }
         LocationIsOnHold => {
             return Ok(UpdateErrorInterface::LocationIsOnHold(
                 line::LocationIsOnHold {},
-            ))
+            ));
         }
         LocationNotFound => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::LocationId,
-            )))
+            )));
         }
         StockLineAlreadyExistsInInvoice(line_id) => {
             return Ok(UpdateErrorInterface::StockLineAlreadyExistsInInvoice(
                 line::StockLineAlreadyExistsInInvoice(line_id),
-            ))
+            ));
         }
         BatchIsOnHold => {
             return Ok(UpdateErrorInterface::StockLineIsOnHold(
                 StockLineIsOnHold {},
-            ))
+            ));
         }
         LineDoesNotExist => return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {})),
         ReductionBelowZero {
@@ -164,7 +164,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                     stock_line_id,
                     line_id: Some(line_id),
                 },
-            ))
+            ));
         }
         // Standard Graphql Errors
         NotThisStoreInvoice
@@ -195,20 +195,20 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{
-            mock_item_a, mock_location_1, mock_prescription_a, mock_prescription_a_invoice_lines,
-            MockDataInserts,
-        },
         InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
+        mock::{
+            MockDataInserts, mock_item_a, mock_location_1, mock_prescription_a,
+            mock_prescription_a_invoice_lines,
+        },
     };
     use serde_json::json;
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait,
             stock_out_line::{
                 StockOutType, UpdateStockOutLine as ServiceInput,
                 UpdateStockOutLineError as ServiceError,
             },
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

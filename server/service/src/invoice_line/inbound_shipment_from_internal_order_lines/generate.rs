@@ -1,6 +1,6 @@
 use crate::{
     invoice::common::generate_invoice_user_id_update,
-    invoice_line::stock_in_line::{generate_batch, should_update_stock, StockLineInput},
+    invoice_line::stock_in_line::{StockLineInput, generate_batch, should_update_stock},
 };
 use repository::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, RequisitionLineRow,

@@ -3,7 +3,7 @@ use repository::{
     RepositoryError, TransactionError,
 };
 
-use crate::custom_field::{check_custom_fields_patch, merge_patch, CustomFieldPatchProblem};
+use crate::custom_field::{CustomFieldPatchProblem, check_custom_fields_patch, merge_patch};
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
 /// `custom_field_scope.table_name` scope for patient custom custom_fields. Patients
@@ -116,7 +116,7 @@ mod test {
     use serde_json::json;
     use util::uuid::uuid;
 
-    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_and_service_provider};
 
     use super::{UpdatePatientCustomFields, UpdatePatientCustomFieldsError};
 

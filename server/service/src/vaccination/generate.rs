@@ -2,9 +2,9 @@ use repository::{ItemRow, StockLine, StockLineRow};
 use util::uuid::uuid;
 
 use crate::{
+    NullableUpdate,
     invoice::{InsertPrescription, UpdatePrescription, UpdatePrescriptionStatus},
     invoice_line::stock_out_line::{InsertStockOutLine, StockOutType},
-    NullableUpdate,
 };
 
 #[derive(Debug)]

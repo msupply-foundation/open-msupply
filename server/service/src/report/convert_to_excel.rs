@@ -5,9 +5,9 @@ use csv::{Reader, StringRecord};
 use scraper::{ElementRef, Html, Selector};
 use std::{collections::HashMap, fs, time::SystemTime};
 use umya_spreadsheet::{
+    Cell, FontSize, Spreadsheet, Worksheet,
     helper::coordinate::{column_index_from_string, coordinate_from_index, index_from_coordinate},
     writer::xlsx,
-    Cell, FontSize, Spreadsheet, Worksheet,
 };
 use util::sanitize_filename;
 

@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf, str::FromStr};
 
-use headless_chrome::{types::PrintToPdfOptions, Browser, LaunchOptionsBuilder};
+use headless_chrome::{Browser, LaunchOptionsBuilder, types::PrintToPdfOptions};
 
 /// Converts a HTML report to a PDF file and returns the PDF bytes.
 ///

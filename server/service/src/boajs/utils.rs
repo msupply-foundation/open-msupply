@@ -1,4 +1,4 @@
-use boa_engine::{js_string, Context, JsError, JsValue};
+use boa_engine::{Context, JsError, JsValue, js_string};
 use serde::de::DeserializeOwned;
 use std::error::Error as StandardError;
 use std::thread::JoinHandle;

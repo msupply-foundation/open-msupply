@@ -1,18 +1,18 @@
 use super::{
-    invoice_line_row::invoice_line, invoice_line_stats, invoice_row::invoice, item_row::item,
-    location_row::location, reason_option_row::reason_option,
-    requisition_line::requisition_line_row::requisition_line, stock_line_row::stock_line, DBType,
-    DatetimeFilter, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType, InvoiceRow, LocationRow,
-    ReasonOptionRow, StorageConnection,
+    DBType, DatetimeFilter, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType, InvoiceRow,
+    LocationRow, ReasonOptionRow, StorageConnection, invoice_line_row::invoice_line,
+    invoice_line_stats, invoice_row::invoice, item_row::item, location_row::location,
+    reason_option_row::reason_option, requisition_line::requisition_line_row::requisition_line,
+    stock_line_row::stock_line,
 };
 
 use crate::{
+    EqualFilter, InvoiceStatus, InvoiceType, ItemRow, Pagination, Sort, StockLineRow, StringFilter,
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
         apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    EqualFilter, InvoiceStatus, InvoiceType, ItemRow, Pagination, Sort, StockLineRow, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -506,13 +506,13 @@ impl InvoiceLineType {
 mod test {
     use super::*;
     use crate::{
+        InvoiceLineRow, InvoiceRow, InvoiceType, RequisitionLineRow,
         mock::{
-            mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_item_a, mock_item_b, mock_item_c, mock_name_a,
+            mock_store_a,
         },
         requisition_row::{RequisitionRow, RequisitionType},
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceRow, InvoiceType, RequisitionLineRow,
     };
 
     /// Sorting by requested quantity reads the linked requisition's line for

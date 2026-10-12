@@ -227,11 +227,51 @@
    it the fill + a column context so that inner child gets a bounded height.
    overflow: auto lets a panel whose content is NOT itself a scroller (the
    documents list) scroll within that bounded height; it's inert for a
-   self-scrolling child like the DataTable, which fills the panel exactly. */
-.bodyFill [role='tabpanel'] {
+   self-scrolling child like the DataTable, which fills the panel exactly.
+
+   `:not(dialog *)` for the same reason as the frame rule above: a tabbed modal
+   mounted in the body subtree is a DOM descendant of .bodyFill, and without it
+   the modal's panel becomes a scroller too — one with no ring room at its
+   edges, so a table flush with the panel's bottom loses its bottom border to
+   the clip (#984). A dialog's tabs scroll in the dialog's own scroll region. */
+.bodyFill [role='tabpanel']:not(dialog *) {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-block-size: 0;
   overflow: auto;
+}
+
+/* Compact (<600px, breakpoints.compact): the WHOLE main column scrolls. On a
+   ~533px-tall scanner screen the pinned bands (header, tabs, table toolbar,
+   content footer) left the lines a third of the height; here they all scroll
+   with the lines — the header above them, the content footer (status + the
+   primary action) after the last one. The fill-mode table stops owning its
+   scroll box to match (DataTable.module.css, same breakpoint). */
+@media (max-width: 599px) {
+  .main {
+    overflow: hidden auto;
+  }
+
+  .main > * {
+    flex-shrink: 0;
+  }
+
+  .middle {
+    flex: 1 0 auto;
+  }
+
+  .body,
+  .bodyFill {
+    overflow: visible;
+  }
+
+  .bodyFill [role='tabpanel'] {
+    flex: 1 0 auto;
+    overflow: visible;
+  }
+
+  .bodyFill [data-datatable]:not(dialog *) {
+    flex: 1 0 auto;
+  }
 }

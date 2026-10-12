@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    pagination::PaginationInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    pagination::PaginationInput,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::encounter::{EncounterFilterInput, EncounterNode, EncounterSortInput};
 use repository::{EncounterFilter, PaginationOption};

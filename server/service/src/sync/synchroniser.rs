@@ -2,7 +2,8 @@ use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        sync_buffer::get_sync_buffer_for_table, sync_status::logger::SyncStep, CentralServerConfig,
+        CentralServerConfig, repair_source_site_id::repair_source_site_id,
+        sync_buffer::get_sync_buffer_for_table, sync_status::logger::SyncStep,
     },
 };
 use log::warn;
@@ -27,11 +28,11 @@ use super::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
     },
-    settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
+    settings::{SYNC_V5_VERSION, SYNC_V6_VERSION, SyncSettings},
     sync_on_central::adjust_v6_cursor,
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
-    translations::{all_translators, pull_integration_order, SyncTranslators},
+    translations::{SyncTranslators, all_translators, pull_integration_order},
 };
 
 const INTEGRATION_BATCH_SIZE: i64 = 10_000;
@@ -209,6 +210,10 @@ impl SynchroniserV5V6 {
             KeyType::SettingsSyncCentralServerSiteId,
             Some(site_info.msupply_central_site_id),
         )?;
+
+        // Must run after the central site id is known and before the push and integration
+        // below, which both read what it corrects - see `repair_source_site_id`.
+        repair_source_site_id(&ctx.connection, central_sync_server_id)?;
 
         // First check sync status
 
@@ -662,7 +667,7 @@ impl<'a> SyncBufferIntegrator<'a> {
 mod tests {
     use repository::mock::MockDataInserts;
 
-    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_and_service_provider};
 
     use super::*;
 

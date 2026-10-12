@@ -1,4 +1,4 @@
-use repository::{rnr_form_row::RnRFormRow, RnRFormDelete, RnRFormStatus};
+use repository::{RnRFormDelete, RnRFormStatus, rnr_form_row::RnRFormRow};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};

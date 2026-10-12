@@ -1,10 +1,10 @@
-use super::item_variant_row::{item_variant, ItemVariantRow};
+use super::item_variant_row::{ItemVariantRow, item_variant};
 use crate::{
+    DBType, EqualFilter, ItemRow, LocationTypeRow, NameRow, Pagination, Sort, StorageConnection,
+    StringFilter,
     db_diesel::{item_row::item, location_type_row::location_type, name_row::name},
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    DBType, EqualFilter, ItemRow, LocationTypeRow, NameRow, Pagination, Sort, StorageConnection,
-    StringFilter,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -180,12 +180,13 @@ mod tests {
     use chrono::NaiveDate;
 
     use crate::{
+        EqualFilter, StringFilter,
         item_variant::{
             item_variant::ItemVariantRepository,
             item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
         },
-        mock::{mock_item_a, MockDataInserts},
-        test_db, EqualFilter, StringFilter,
+        mock::{MockDataInserts, mock_item_a},
+        test_db,
     };
 
     use super::ItemVariantFilter;

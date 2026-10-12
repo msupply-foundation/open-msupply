@@ -7,12 +7,12 @@ use graphql_core::loader::{
     BundledItemByBundledItemVariantIdLoader, BundledItemByPrincipalItemVariantIdLoader, ItemLoader,
     LocationTypeLoader, NameByIdLoader, NameByIdLoaderInput,
 };
-use graphql_core::{loader::PackagingVariantRowLoader, ContextExt};
+use graphql_core::{ContextExt, loader::PackagingVariantRowLoader};
+use repository::ItemRow;
 use repository::item_variant::item_variant::ItemVariant;
 use repository::item_variant::{
     item_variant_row::ItemVariantRow, packaging_variant_row::PackagingVariantRow,
 };
-use repository::ItemRow;
 use util::barcode::display_barcode;
 pub struct PackagingVariantNode {
     pub packaging_variant: PackagingVariantRow,

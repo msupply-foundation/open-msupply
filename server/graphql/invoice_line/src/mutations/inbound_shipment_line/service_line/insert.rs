@@ -1,9 +1,9 @@
 use async_graphql::*;
 
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_core::{
-    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError},
     ContextExt,
+    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError},
 };
 use graphql_types::types::InvoiceLineNode;
 
@@ -121,12 +121,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::InvoiceDoesNotExist => {
             return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         ServiceError::CannotEditInvoice => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
@@ -152,15 +152,15 @@ mod test {
     };
 
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, StorageConnectionManager,
+        InvoiceLine, InvoiceLineRow, StorageConnectionManager, mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait,
             inbound_shipment_service_line::{
                 InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError,
             },
-            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

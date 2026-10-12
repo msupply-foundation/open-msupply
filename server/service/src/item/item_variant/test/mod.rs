@@ -4,20 +4,20 @@ mod query {
     use repository::item_variant::bundled_item::BundledItemFilter;
     use repository::item_variant::item_variant::ItemVariantFilter;
     use repository::mock::{
-        mock_item_a, mock_item_b, mock_name_c, mock_name_store_b, mock_store_a,
-        mock_user_account_a, MockDataInserts,
+        MockDataInserts, mock_item_a, mock_item_b, mock_name_c, mock_name_store_b, mock_store_a,
+        mock_user_account_a,
     };
     use repository::test_db::setup_all;
     use repository::{ActivityLogType, EqualFilter, StringFilter};
     use util::uuid::uuid;
 
+    use crate::NullableUpdate;
     use crate::activity_log::get_activity_logs;
     use crate::item::bundled_item::UpsertBundledItem;
     use crate::item::item_variant::{
         DeleteItemVariant, UpsertItemVariantError, UpsertItemVariantWithPackaging,
     };
     use crate::service_provider::ServiceProvider;
-    use crate::NullableUpdate;
 
     #[actix_rt::test]
     async fn create_edit_delete_item_variant() {
@@ -410,12 +410,14 @@ mod query {
         let promoted = service.promote_item_variant(&context, "auto").unwrap();
         assert_eq!(promoted.item_variant_row.id, "auto");
         assert!(!promoted.item_variant_row.is_auto_created);
-        assert!(service
-            .get_item_variants(&context, None, None, None)
-            .unwrap()
-            .rows
-            .iter()
-            .any(|v| v.item_variant_row.id == "auto"));
+        assert!(
+            service
+                .get_item_variants(&context, None, None, None)
+                .unwrap()
+                .rows
+                .iter()
+                .any(|v| v.item_variant_row.id == "auto")
+        );
 
         assert_eq!(
             service.promote_item_variant(&context, "missing"),

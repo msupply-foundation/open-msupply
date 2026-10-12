@@ -5,8 +5,8 @@ use repository::{
     StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
-use crate::invoice::stock_effect::{stock_effects, StockEffect};
-use crate::invoice_line::stock_in_line::{generate_batch, StockLineInput};
+use crate::invoice::stock_effect::{StockEffect, stock_effects};
+use crate::invoice_line::stock_in_line::{StockLineInput, generate_batch};
 
 use super::{UpdateCustomerReturn, UpdateCustomerReturnError, UpdateCustomerReturnStatus};
 

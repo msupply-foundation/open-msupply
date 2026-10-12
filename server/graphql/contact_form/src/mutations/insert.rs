@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
 use repository::contact_form_row::{ContactFormRow, ContactType};
 use serde::Serialize;
 use service::{

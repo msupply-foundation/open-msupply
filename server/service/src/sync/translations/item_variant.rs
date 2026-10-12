@@ -6,9 +6,9 @@ use crate::sync::translations::location_type::LocationTypeTranslation;
 use crate::sync::translations::name::NameTranslation;
 
 use super::{
-    utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
     ToSyncRecordTranslationType,
+    utils::{RenamedKeys, from_renamed_keys_str, to_renamed_keys_value},
 };
 
 /// FK columns renamed during the entity-link abstraction. Central emits both the canonical
@@ -126,8 +126,8 @@ impl SyncTranslation for ItemVariantTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository, NameLinkRow,
-        NameLinkRowRepository,
+        ItemLinkRow, ItemLinkRowRepository, NameLinkRow, NameLinkRowRepository,
+        mock::MockDataInserts, test_db::setup_all,
     };
 
     #[actix_rt::test]

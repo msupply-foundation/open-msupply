@@ -1,10 +1,10 @@
 use super::{
-    barcode_proposal_row::barcode_proposal, store_row::store, BarcodeProposalRow, DBType,
-    StorageConnection,
+    BarcodeProposalRow, DBType, StorageConnection, barcode_proposal_row::barcode_proposal,
+    store_row::store,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-use crate::{diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter};
+use crate::{EqualFilter, diesel_macros::apply_equal_filter, repository_error::RepositoryError};
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct BarcodeProposalFilter {

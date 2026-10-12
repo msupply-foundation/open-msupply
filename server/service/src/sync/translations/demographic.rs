@@ -1,6 +1,6 @@
 use repository::{
-    demographic_row::DemographicRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    demographic_row::DemographicRow,
 };
 
 use super::{

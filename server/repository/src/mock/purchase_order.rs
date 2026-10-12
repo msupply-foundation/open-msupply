@@ -1,7 +1,6 @@
 use crate::{
-    db_diesel,
+    PurchaseOrderRow, db_diesel,
     mock::{mock_store_a, mock_store_b},
-    PurchaseOrderRow,
 };
 
 pub fn mock_purchase_order_a() -> PurchaseOrderRow {

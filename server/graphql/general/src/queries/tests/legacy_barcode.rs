@@ -2,7 +2,7 @@ mod graphql {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         item_variant::packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
-        mock::{mock_item_a_variant_1, MockData, MockDataInserts},
+        mock::{MockData, MockDataInserts, mock_item_a_variant_1},
     };
     use serde_json::json;
     use service::sync::test_util_set_is_central_server;

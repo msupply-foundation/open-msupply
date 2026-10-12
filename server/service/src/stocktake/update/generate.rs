@@ -1,15 +1,16 @@
 use chrono::Utc;
 use repository::{
-    location_movement::{LocationMovementFilter, LocationMovementRepository},
-    vvm_status::vvm_status_log_row::VVMStatusLogRow,
     ActivityLogType, CurrencyFilter, CurrencyRepository, DatetimeFilter, EqualFilter, InvoiceRow,
     InvoiceStatus, InvoiceType, LocationMovementRow, NameRowRepository, NumberRowType,
     RepositoryError, StockLineRow, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StocktakeRow, StocktakeStatus, StorageConnection,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, uuid::uuid};
 
 use crate::{
+    NullableUpdate,
     activity_log::activity_log_entry,
     invoice::inventory_adjustment::UpdateInventoryAdjustmentReason,
     invoice_line::{
@@ -18,7 +19,6 @@ use crate::{
     },
     number::next_number,
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 
 use super::{UpdateStocktake, UpdateStocktakeError};
@@ -315,27 +315,27 @@ fn log_stock_changes(
             new.batch,
         )?;
     }
-    if let Some(cost_price_per_pack) = new.cost_price_per_pack {
-        if existing.cost_price_per_pack != cost_price_per_pack {
-            activity_log_entry(
-                ctx,
-                ActivityLogType::StockCostPriceChange,
-                Some(existing.id.to_string()),
-                Some(existing.cost_price_per_pack.to_string()),
-                Some(cost_price_per_pack.to_string()),
-            )?;
-        }
+    if let Some(cost_price_per_pack) = new.cost_price_per_pack
+        && existing.cost_price_per_pack != cost_price_per_pack
+    {
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockCostPriceChange,
+            Some(existing.id.to_string()),
+            Some(existing.cost_price_per_pack.to_string()),
+            Some(cost_price_per_pack.to_string()),
+        )?;
     }
-    if let Some(sell_price_per_pack) = new.sell_price_per_pack {
-        if existing.sell_price_per_pack != sell_price_per_pack {
-            activity_log_entry(
-                ctx,
-                ActivityLogType::StockSellPriceChange,
-                Some(existing.id.to_string()),
-                Some(existing.sell_price_per_pack.to_string()),
-                Some(sell_price_per_pack.to_string()),
-            )?;
-        }
+    if let Some(sell_price_per_pack) = new.sell_price_per_pack
+        && existing.sell_price_per_pack != sell_price_per_pack
+    {
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockSellPriceChange,
+            Some(existing.id.to_string()),
+            Some(existing.sell_price_per_pack.to_string()),
+            Some(sell_price_per_pack.to_string()),
+        )?;
     }
     if existing.expiry_date != new.expiry_date {
         let previous_expiry_date = if let Some(expiry_date) = existing.expiry_date {

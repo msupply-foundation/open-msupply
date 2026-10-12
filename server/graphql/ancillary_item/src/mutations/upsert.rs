@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, InternalError},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    simple_generic_errors::{DatabaseError, InternalError},
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::AncillaryItemNode;
 use repository::ancillary_item_row::AncillaryItemRow;
@@ -143,19 +143,19 @@ fn map_error(error: ServiceError) -> Result<UpsertAncillaryItemErrorInterface> {
         ServiceError::DuplicateAncillaryItem => {
             return Ok(UpsertAncillaryItemErrorInterface::DuplicateAncillaryItem(
                 DuplicateAncillaryItem,
-            ))
+            ));
         }
         ServiceError::CycleDetected => {
             return Ok(UpsertAncillaryItemErrorInterface::AncillaryCycleDetected(
                 AncillaryCycleDetected,
-            ))
+            ));
         }
         ServiceError::MaxDepthExceeded { max, actual } => {
             return Ok(
                 UpsertAncillaryItemErrorInterface::AncillaryMaxDepthExceeded(
                     AncillaryMaxDepthExceeded { max, actual },
                 ),
-            )
+            );
         }
         // Internal errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),

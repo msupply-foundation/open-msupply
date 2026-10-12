@@ -1,8 +1,8 @@
-use super::packaging_variant_row::{packaging_variant, PackagingVariantRow};
+use super::packaging_variant_row::{PackagingVariantRow, packaging_variant};
 use crate::{
+    DBType, EqualFilter, Pagination, Sort, StorageConnection,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -136,13 +136,14 @@ mod tests {
     use chrono::NaiveDate;
 
     use crate::{
+        EqualFilter,
         item_variant::{
             item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
             packaging_variant::PackagingVariantRepository,
             packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
         },
-        mock::{mock_item_a, MockDataInserts},
-        test_db, EqualFilter,
+        mock::{MockDataInserts, mock_item_a},
+        test_db,
     };
 
     use super::PackagingVariantFilter;

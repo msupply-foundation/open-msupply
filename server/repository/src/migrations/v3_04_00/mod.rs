@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_barcode_auto_confirm_processor_cursor_pg_enum;
@@ -39,7 +39,7 @@ mod test {
         migrations::{v3_02_00::V3_02_00, v3_04_00::V3_04_00, *},
         test_db::*,
     };
-    use diesel::{prelude::*, sql_query, RunQueryDsl};
+    use diesel::{RunQueryDsl, prelude::*, sql_query};
 
     table! {
         purchase_order_line (id) {
@@ -88,23 +88,38 @@ mod test {
         })
         .await;
 
-        run(&connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('supplier_name', 'FACILITY', false, true, 'SUP1', 'Supplier');");
+        run(
+            &connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('supplier_name', 'FACILITY', false, true, 'SUP1', 'Supplier');",
+        );
         run(
             &connection,
             "INSERT INTO name_link (id, name_id) VALUES ('supplier_name_link', 'supplier_name');",
         );
-        run(&connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');");
+        run(
+            &connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');",
+        );
         run(
             &connection,
             "INSERT INTO name_link (id, name_id) VALUES ('store_name_link', 'store_name');",
         );
-        run(&connection, "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name_link', 'STORE1', 1);");
-        run(&connection, "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Item', 'ITEM1', 1.0, 'STOCK', '');");
+        run(
+            &connection,
+            "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('store_id', 'store_name_link', 'STORE1', 1);",
+        );
+        run(
+            &connection,
+            "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('item_id', 'Item', 'ITEM1', 1.0, 'STOCK', '');",
+        );
         run(
             &connection,
             "INSERT INTO item_link (id, item_id) VALUES ('item_link', 'item_id');",
         );
-        run(&connection, "INSERT INTO purchase_order (id, store_id, supplier_name_link_id, purchase_order_number, status, created_datetime, foreign_exchange_rate) VALUES ('po', 'store_id', 'supplier_name_link', 1, 'NEW', '2026-01-01 00:00:00', 1.0);");
+        run(
+            &connection,
+            "INSERT INTO purchase_order (id, store_id, supplier_name_link_id, purchase_order_number, status, created_datetime, foreign_exchange_rate) VALUES ('po', 'store_id', 'supplier_name_link', 1, 'NEW', '2026-01-01 00:00:00', 1.0);",
+        );
 
         // 100 units at pack size 10 = 10 packs at 6.00 → 60.00
         insert_line(&connection, "pol_requested", 10.0, 100.0, None, 6.0);
@@ -185,17 +200,30 @@ mod test {
             &connection,
             "INSERT INTO key_value_store (id, value_int) VALUES ('SETTINGS_SYNC_SITE_ID', 1);",
         );
-        run(&connection, "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');");
+        run(
+            &connection,
+            "INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES ('store_name', 'FACILITY', true, false, 'STORE', 'Store');",
+        );
         run(
             &connection,
             "INSERT INTO name_link (id, name_id) VALUES ('store_name_link', 'store_name');",
         );
         // The proposals go to the first store on this site
         for (store, site) in [("a_other_site", 2), ("b_store", 1), ("c_store", 1)] {
-            run(&connection, &format!("INSERT INTO store (id, name_link_id, code, site_id) VALUES ('{store}', 'store_name_link', '{store}', {site});"));
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO store (id, name_link_id, code, site_id) VALUES ('{store}', 'store_name_link', '{store}', {site});"
+                ),
+            );
         }
         for item in ["item_a", "item_b"] {
-            run(&connection, &format!("INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('{item}', '{item}', '{item}', 1.0, 'STOCK', '');"));
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO item (id, name, code, default_pack_size, type, legacy_record) VALUES ('{item}', '{item}', '{item}', 1.0, 'STOCK', '');"
+                ),
+            );
             run(
                 &connection,
                 &format!("INSERT INTO item_link (id, item_id) VALUES ('{item}', '{item}');"),
@@ -203,7 +231,10 @@ mod test {
         }
 
         // EAN-13 and its GTIN-14 form, for the same item: one proposal
-        run(&connection, "INSERT INTO barcode (id, gtin, item_id, pack_size) VALUES ('b1', '9506682101352', 'item_a', 10);");
+        run(
+            &connection,
+            "INSERT INTO barcode (id, gtin, item_id, pack_size) VALUES ('b1', '9506682101352', 'item_a', 10);",
+        );
         run(
             &connection,
             "INSERT INTO barcode (id, gtin, item_id) VALUES ('b2', '09506682101352', 'item_a');",
@@ -224,12 +255,25 @@ mod test {
             "INSERT INTO barcode (id, gtin, item_id) VALUES ('b5', '  ', 'item_b');",
         );
         for id in ["b1", "b2", "b3", "b4", "b5"] {
-            run(&connection, &format!("INSERT INTO changelog (table_name, record_id, row_action) VALUES ('barcode', '{id}', 'UPSERT');"));
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO changelog (table_name, record_id, row_action) VALUES ('barcode', '{id}', 'UPSERT');"
+                ),
+            );
         }
         for (stock_line, barcode) in [("s1", "b2"), ("s2", "b4")] {
-            run(&connection, &format!("INSERT INTO stock_line (id, item_link_id, store_id, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold, barcode_id) VALUES ('{stock_line}', 'item_a', 'b_store', 1, 0, 0, 1, 1, false, '{barcode}');"));
+            run(
+                &connection,
+                &format!(
+                    "INSERT INTO stock_line (id, item_link_id, store_id, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold, barcode_id) VALUES ('{stock_line}', 'item_a', 'b_store', 1, 0, 0, 1, 1, false, '{barcode}');"
+                ),
+            );
         }
-        run(&connection, "INSERT INTO stock_line (id, item_link_id, store_id, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold) VALUES ('s3', 'item_a', 'b_store', 1, 0, 0, 1, 1, false);");
+        run(
+            &connection,
+            "INSERT INTO stock_line (id, item_link_id, store_id, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold) VALUES ('s3', 'item_a', 'b_store', 1, 0, 0, 1, 1, false);",
+        );
 
         migrate(
             &connection,

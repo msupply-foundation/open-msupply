@@ -3,7 +3,7 @@ use crate::sync::CentralServerConfig;
 use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use repository::assets::asset_internal_location_row::AssetInternalLocationRowRepository;
 use repository::{
-    assets::asset_row::AssetRowRepository, ActivityLogType, RepositoryError, StorageConnection,
+    ActivityLogType, RepositoryError, StorageConnection, assets::asset_row::AssetRowRepository,
 };
 
 #[derive(PartialEq, Debug)]
@@ -55,10 +55,11 @@ pub fn validate(
         None => return Err(DeleteAssetError::AssetDoesNotExist),
     };
 
-    if let Some(store_id) = &asset_row.store_id {
-        if ctx_store_id != store_id && !CentralServerConfig::is_central_server() {
-            return Err(DeleteAssetError::AssetDoesNotBelongToCurrentStore);
-        }
+    if let Some(store_id) = &asset_row.store_id
+        && ctx_store_id != store_id
+        && !CentralServerConfig::is_central_server()
+    {
+        return Err(DeleteAssetError::AssetDoesNotBelongToCurrentStore);
     }
 
     Ok(())

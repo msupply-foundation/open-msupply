@@ -3,11 +3,11 @@
 mod query {
     use repository::PaginationOption;
     use repository::{
-        mock::{asset_log::mock_asset_log_a, MockDataInserts},
+        mock::{MockDataInserts, asset_log::mock_asset_log_a},
         test_db::setup_all,
     };
 
-    use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
+    use crate::{ListError, SingleRecordError, service_provider::ServiceProvider};
 
     #[actix_rt::test]
 

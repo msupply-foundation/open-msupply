@@ -181,10 +181,11 @@ export const DialogShowcase = () => {
             library — the platform gives the focus trap (top layer + inert
             page), focus restore, Escape and <code>::backdrop</code>; the RnD
             prototype bought Radix for exactly this contract, and the "hard to
-            drive from React" objection doesn't exist in Solid. Scrim click and
-            Escape both cancel. Watch focus return to the Save button on close.
-            The confirm is <code>primary</code> by default; a destructive
-            confirm passes <code>confirmVariant="danger"</code> — try Delete.
+            drive from React" objection doesn't exist in Solid. Escape cancels;
+            a click on the scrim does nothing. Watch focus return to the Save
+            button on close. The confirm is <code>primary</code> by default; a
+            destructive confirm passes <code>confirmVariant="danger"</code> —
+            try Delete.
           </Lead>
           <Row>
             <SaveButton onClick={() => setConfirmOpen(true)} />
@@ -634,8 +635,8 @@ export const DialogShowcase = () => {
             <code>
               dismissable={'{'}false{'}'}
             </code>{' '}
-            Dialog — blocking (no scrim/Escape dismiss, an answer is required);
-            in the app it fills the routed store-selection screen's login frame.
+            Dialog — blocking (no Escape dismiss, an answer is required); in the
+            app it fills the routed store-selection screen's login frame.
           </Lead>
           <Row>
             <Button onClick={() => setStoreOpen(true)}>

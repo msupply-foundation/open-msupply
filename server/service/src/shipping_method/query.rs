@@ -1,4 +1,4 @@
-use crate::{i64_to_u32, service_provider::ServiceContext, ListError, ListResult};
+use crate::{ListError, ListResult, i64_to_u32, service_provider::ServiceContext};
 use repository::shipping_method::{ShippingMethod, ShippingMethodFilter, ShippingMethodRepository};
 
 pub fn get_shipping_methods(
@@ -16,10 +16,10 @@ pub fn get_shipping_methods(
 #[cfg(test)]
 mod test {
     use repository::{
+        EqualFilter, StringFilter,
         mock::MockDataInserts,
         shipping_method_row::{ShippingMethodRow, ShippingMethodRowRepository},
         test_db::setup_all,
-        EqualFilter, StringFilter,
     };
 
     use crate::service_provider::ServiceProvider;

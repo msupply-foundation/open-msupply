@@ -1,6 +1,6 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
-use graphql_core::{loader::StoreByIdLoader, ContextExt};
+use graphql_core::{ContextExt, loader::StoreByIdLoader};
 use repository::BarcodeProposalRow;
 use service::barcode::{BarcodeMatch, ConfirmedBarcode};
 use util::barcode::display_barcode;

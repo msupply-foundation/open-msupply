@@ -9,6 +9,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     loader::{
         CampaignByIdLoader, ItemLoader, NameByIdLoader, NameByIdLoaderInput,
         OrderTypesByProgramIdInput, OrderTypesByProgramIdLoader, ProgramByIdLoader,
@@ -16,14 +17,13 @@ use graphql_core::{
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 
 use repository::{
-    item_variant::item_variant::ItemVariant, location::Location, ItemRow, StockLine, StockLineRow,
+    ItemRow, StockLine, StockLineRow, item_variant::item_variant::ItemVariant, location::Location,
 };
 use service::{
-    service_provider::ServiceContext, stock_line::query::get_stock_line, usize_to_u32, ListResult,
+    ListResult, service_provider::ServiceContext, stock_line::query::get_stock_line, usize_to_u32,
 };
 
 pub struct StockLineNode {

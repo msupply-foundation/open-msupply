@@ -8,7 +8,7 @@ use graphql_core::simple_generic_errors::{
     ErrorWrapper, NodeError, NodeErrorInterface, RecordNotFound,
 };
 use graphql_core::standard_graphql_error::{list_error_to_gql_err, validate_auth};
-use graphql_core::{map_filter, ContextExt};
+use graphql_core::{ContextExt, map_filter};
 use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
 use repository::StocktakeSortField;
 use repository::*;
@@ -231,15 +231,15 @@ mod test {
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::PaginationOption;
     use repository::{
-        mock::{mock_stocktake_a, MockDataInserts},
         Stocktake, StocktakeFilter, StocktakeRow, StocktakeSort, StocktakeStatus,
         StorageConnectionManager,
+        mock::{MockDataInserts, mock_stocktake_a},
     };
     use serde_json::json;
     use service::{
+        ListError, ListResult,
         service_provider::{ServiceContext, ServiceProvider},
         stocktake::StocktakeServiceTrait,
-        ListError, ListResult,
     };
 
     use crate::StocktakeQueries;

@@ -1,16 +1,16 @@
 use chrono::Utc;
 use repository::{
+    BarcodeProposalRow, BarcodeProposalRowRepository, EqualFilter,
     item_variant::packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
     mock::{
-        mock_item_a, mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
+        MockData, MockDataInserts, mock_item_a, mock_store_a, mock_store_b, mock_user_account_a,
     },
-    BarcodeProposalRow, BarcodeProposalRowRepository, EqualFilter,
 };
 
 use crate::{
     processors::ProcessorType,
     sync::test_util_set_is_central_server,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 const VALUE: &str = "gtin:09506682101352";

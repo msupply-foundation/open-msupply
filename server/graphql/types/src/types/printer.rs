@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::simple_generic_errors::InternalError;
-use repository::{printer::Printer, PrinterRow};
+use repository::{PrinterRow, printer::Printer};
 
 #[derive(PartialEq, Debug)]
 pub struct PrinterNode {

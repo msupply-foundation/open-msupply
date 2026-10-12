@@ -1,17 +1,17 @@
 use chrono::Utc;
 use repository::{
+    BarcodeProposalRow, BarcodeProposalRowRepository, StockLineRow, StoreRow,
     mock::{
-        mock_customer_return_a, mock_item_a, mock_item_a_variant_1, mock_item_b,
-        mock_item_b_variant_1, mock_name_c, mock_store_a, mock_store_b, mock_user_account_a,
-        MockData, MockDataInserts,
+        MockData, MockDataInserts, mock_customer_return_a, mock_item_a, mock_item_a_variant_1,
+        mock_item_b, mock_item_b_variant_1, mock_name_c, mock_store_a, mock_store_b,
+        mock_user_account_a,
     },
     test_db::setup_all_with_data,
-    BarcodeProposalRow, BarcodeProposalRowRepository, StockLineRow, StoreRow,
 };
 
 use super::*;
 use crate::{
-    invoice_line::stock_in_line::{insert_stock_in_line, InsertStockInLine},
+    invoice_line::stock_in_line::{InsertStockInLine, insert_stock_in_line},
     item::packaging_variant::UpsertPackagingVariant,
     service_provider::ServiceProvider,
     sync::test_util_set_is_central_server,
@@ -393,9 +393,11 @@ async fn central_confirms_onto_auto_created_variants() {
         .get_item_variants(&ctx, None, None, None)
         .unwrap()
         .rows;
-    assert!(listed
-        .iter()
-        .all(|variant| variant.item_variant_row.id != barcode.item_variant.id));
+    assert!(
+        listed
+            .iter()
+            .all(|variant| variant.item_variant_row.id != barcode.item_variant.id)
+    );
 
     // Confirming it again gives the same barcode
     assert_eq!(insert(SCANNED, None).unwrap(), barcode);
@@ -554,11 +556,13 @@ async fn central_removes_barcodes() {
         .unwrap();
     assert!(removed.deleted_datetime.is_some());
     assert_eq!(removed.barcode.as_deref(), Some(VALUE));
-    assert!(service
-        .barcode_matches(&ctx, SCANNED)
-        .unwrap()
-        .iter()
-        .all(|m| m.item_id != mock_item_a().id));
+    assert!(
+        service
+            .barcode_matches(&ctx, SCANNED)
+            .unwrap()
+            .iter()
+            .all(|m| m.item_id != mock_item_a().id)
+    );
     assert_eq!(
         service.delete_barcode(&ctx, &first.packaging_variant.id),
         Err(ManageBarcodeError::PackagingVariantDoesNotExist)

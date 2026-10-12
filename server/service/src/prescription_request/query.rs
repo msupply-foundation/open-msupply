@@ -1,5 +1,5 @@
 use crate::{
-    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    ListError, ListResult, get_pagination_or_default, i64_to_u32, service_provider::ServiceContext,
 };
 use repository::{
     EqualFilter, PaginationOption, PrescriptionRequest, PrescriptionRequestFilter,
@@ -41,11 +41,11 @@ pub fn get_prescription_request(
 mod test {
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_patient, MockDataInserts},
-        test_db::setup_all,
         CustomFieldValueFilter, DatetimeFilter, GeneralFilter, PrescriptionRequestCondition,
         PrescriptionRequestRow, PrescriptionRequestRowRepository, PrescriptionRequestStatus,
         StringFilter,
+        mock::{MockDataInserts, mock_patient},
+        test_db::setup_all,
     };
     use serde_json::json;
 

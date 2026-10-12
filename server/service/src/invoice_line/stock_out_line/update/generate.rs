@@ -1,14 +1,14 @@
 use super::{BatchPair, UpdateStockOutLine, UpdateStockOutLineError};
 use crate::{
     invoice::common::{
-        calculate_total_after_tax, generate_vvm_status_log, GenerateVVMStatusLogInput,
+        GenerateVVMStatusLogInput, calculate_total_after_tax, generate_vvm_status_log,
     },
     invoice_line::{stock_in_line::get_existing_vvm_status_log_id, stock_out_line::StockOutType},
     service_provider::ServiceContext,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLineRow, InvoiceRow, InvoiceStatus,
-    ItemRow, StockLine, StockLineRow,
+    InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StockLine, StockLineRow,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 
 pub struct GenerateResult {

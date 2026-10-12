@@ -7,11 +7,12 @@ import {
   getVolumeUsedPercentage,
 } from '@/domain/location/volume';
 
-// AC-citing tests for the volume criteria (spec/locations/acceptance.md
-// § volume) over the SHARED helpers in src/domain/location/volume.ts — the one
-// rule both this vertical's list fullness display and the volume-aware
-// location picker read (their own unit coverage is volume.test.ts; these pin
-// the vertical's criteria against the same functions).
+// Behaviour-citing tests for the volume behaviours (spec/locations/cases/
+// OMS-REG-INV-01, rules § volume) over the SHARED helpers in
+// src/domain/location/volume.ts — the one rule both this vertical's list
+// fullness display and the volume-aware location picker read (their own unit
+// coverage is volume.test.ts; these pin the vertical's criteria against the
+// same functions).
 
 const loc = (volume: number, volumeUsed: number, totalCount: number) => ({
   volume,

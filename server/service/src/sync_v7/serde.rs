@@ -12,7 +12,7 @@ use crate::sync_v7::{
         sync_file_reference::translate_sync_file_reference,
         temperature_log::translate_temperature_log,
     },
-    validate_translate_integrate::{create_changelog, SyncContext},
+    validate_translate_integrate::{SyncContext, create_changelog},
 };
 
 fn from_value<T: DeserializeOwned + Upsert + 'static>(
@@ -165,7 +165,7 @@ pub(crate) fn deserialize(
         // Special
         ChangelogTableName::Store => return translate_store(connection, changelog_insert, data),
         ChangelogTableName::SyncFileReference => {
-            return translate_sync_file_reference(connection, changelog_insert, data)
+            return translate_sync_file_reference(connection, changelog_insert, data);
         }
         ChangelogTableName::InvoiceLine => {
             return translate_invoice_line(
@@ -173,10 +173,10 @@ pub(crate) fn deserialize(
                 row.store_id.as_deref(),
                 data,
                 sync_context,
-            )
+            );
         }
         ChangelogTableName::TemperatureLog => {
-            return translate_temperature_log(connection, changelog_insert, data)
+            return translate_temperature_log(connection, changelog_insert, data);
         }
         // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
@@ -300,7 +300,7 @@ pub(crate) fn deserialize(
         ChangelogTableName::Other(unknown) => {
             return Err(SyncRecordSerializeError::SerdeError(format!(
                 "No translator for unrecognised table `{unknown}`"
-            )))
+            )));
         }
     }?;
 

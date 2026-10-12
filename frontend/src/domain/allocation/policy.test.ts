@@ -30,7 +30,7 @@ const prefs = (over: Partial<AllocationPreferences> = {}) => ({
 });
 
 describe('barReasons / isBarred', () => {
-  // AC-AL2 — on hold bars, batch or location.
+  // OMS-REG-SMV-11.4 — on hold bars, batch or location.
   it('bars on-hold batches and on-hold locations', () => {
     expect(barReasons({ stockLineOnHold: true }, prefs())).toEqual(['on-hold']);
     expect(
@@ -42,7 +42,7 @@ describe('barReasons / isBarred', () => {
     expect(isBarred({ stockLineOnHold: false }, prefs())).toBe(false);
   });
 
-  // AC-AL2/AC-AL9 — unusable VVM bars only under the preference.
+  // OMS-REG-SMV-11.6/.31 — unusable VVM bars only under the preference.
   it('bars unusable VVM only when the preference is on', () => {
     const batch = { stockLineOnHold: false, vvmStatus: { unusable: true } };
     expect(barReasons(batch, prefs())).toEqual([]);
@@ -51,7 +51,7 @@ describe('barReasons / isBarred', () => {
     );
   });
 
-  // AC-AL8 — the expired-issue guard bars within the threshold, gated by the
+  // OMS-REG-SMV-11.26/.27 — the expired-issue guard bars within the threshold, gated by the
   // preference. The clock is injected so the boundary is exact.
   it('bars expiry within the threshold only when the guard is on', () => {
     const today = new Date('2026-07-17T09:30:00');
@@ -129,10 +129,10 @@ describe('isExpired (D112 — the display predicate)', () => {
   });
 });
 
-describe('autoAllocateBarReasons (AC-AL2/AL10)', () => {
+describe('autoAllocateBarReasons (OMS-REG-SMV-11.4–.6/.28)', () => {
   const today = new Date('2025-12-15T12:00:00');
 
-  it('AC-AL10: expired stock is never auto-allocated, preference off or on', () => {
+  it('OMS-REG-SMV-11.5/.28: expired stock is never auto-allocated, preference off or on', () => {
     const expired = { stockLineOnHold: false, expiryDate: '2023-01-01' };
     // Preference OFF — the cutoff is the expiry date itself.
     expect(autoAllocateBarReasons(expired, prefs(), today)).toEqual([
@@ -185,8 +185,8 @@ describe('autoAllocateBarReasons (AC-AL2/AL10)', () => {
 // The manual-bar refinements (old-app parity): the on-hold exception for a
 // seeded allocation, the vaccine gate on the manual VVM bar, and the
 // non-allocatable row predicate behind the grid's sunk rows.
-describe('barReasons refinements (AC-AL14 / AC-AL9)', () => {
-  it('AC-AL14: an on-hold batch with a seeded allocation and stock stays manually editable', () => {
+describe('barReasons refinements (OMS-REG-SMV-11.35/.36/.31)', () => {
+  it('OMS-REG-SMV-11.35/.36: an on-hold batch with a seeded allocation and stock stays manually editable', () => {
     const held = {
       stockLineOnHold: true,
       numberOfPacks: 2,
@@ -214,7 +214,7 @@ describe('barReasons refinements (AC-AL14 / AC-AL9)', () => {
     expect(barReasons({ stockLineOnHold: true }, prefs())).toEqual(['on-hold']);
   });
 
-  it('AC-AL9: the manual VVM bar applies to vaccine items only; the auto bar regardless', () => {
+  it('OMS-REG-SMV-11.31/.6: the manual VVM bar applies to vaccine items only; the auto bar regardless', () => {
     const guard = prefs({ manageVvmStatusForStock: true });
     const unusable = {
       stockLineOnHold: false,
@@ -234,7 +234,7 @@ describe('barReasons refinements (AC-AL14 / AC-AL9)', () => {
   });
 });
 
-describe('rowHasAllocatableStock (AC-AL15)', () => {
+describe('rowHasAllocatableStock (OMS-REG-SMV-11.37)', () => {
   it('needs available stock, and on hold additionally a seeded allocation', () => {
     expect(
       rowHasAllocatableStock({
@@ -275,7 +275,7 @@ describe('rowHasAllocatableStock (AC-AL15)', () => {
   });
 });
 
-describe('clampManualPacks (AC-AL6 — the manual-entry clamp)', () => {
+describe('clampManualPacks (OMS-REG-SMV-11.15–.18 — the manual-entry clamp)', () => {
   it('whole-pack mode rounds a fractional entry UP', () => {
     expect(clampManualPacks(2.5, 10)).toBe(3);
     expect(clampManualPacks(3, 10)).toBe(3);
@@ -300,7 +300,7 @@ describe('clampManualPacks (AC-AL6 — the manual-entry clamp)', () => {
 });
 
 describe('fefoCompare', () => {
-  // AC-AL1 — earliest expiry first, no expiry last.
+  // OMS-REG-SMV-11.1 — earliest expiry first, no expiry last.
   it('orders earliest expiry first with no-expiry last', () => {
     const sorted = [
       { id: 'none', expiryDate: null },
@@ -320,7 +320,7 @@ describe('fillOrderCompare', () => {
     { id: 'none-none', expiryDate: null },
   ];
 
-  // AC-AL1 — the preference OFF leaves pure FEFO (VVM priority ignored).
+  // OMS-REG-SMV-11.2 — the preference OFF leaves pure FEFO (VVM priority ignored).
   it('is pure FEFO while the preference is off', () => {
     const sorted = [...lines].sort((a, b) => fillOrderCompare(a, b, prefs()));
     expect(sorted.map(line => line.id)).toEqual([
@@ -332,7 +332,7 @@ describe('fillOrderCompare', () => {
     ]);
   });
 
-  // AC-AL1 (VVM-then-expiry variant) — priority ascending (1 before 2),
+  // OMS-REG-SMV-11.2 (VVM-then-expiry variant) — priority ascending (1 before 2),
   // no-status last, expiry breaking ties within a priority; matches the
   // server's `priority asc nulls last, expiry asc nulls last`.
   it('orders VVM priority then expiry under the preference', () => {
@@ -350,7 +350,7 @@ describe('fillOrderCompare', () => {
 });
 
 describe('lensToUnits', () => {
-  // AC-AL7 — packs-of-‹size› converts; AC-AL6 — negatives and non-finite
+  // OMS-REG-SMV-11.19 — packs-of-‹size› converts; OMS-REG-SMV-11.15–.18 — negatives and non-finite
   // values distribute nothing.
   it('converts the packs lens and rejects negatives and non-finite input', () => {
     expect(lensToUnits(3, { kind: 'packs', size: 10 })).toBe(30);
@@ -363,7 +363,7 @@ describe('lensToUnits', () => {
     ).toBeUndefined();
   });
 
-  // AC-AL7 — the doses lens converts by the item's doses-per-unit (doses =
+  // OMS-REG-SMV-11.19 — the doses lens converts by the item's doses-per-unit (doses =
   // units × dosesPerUnit), zero/missing rate falling back to 1; the policy
   // still distributes in units.
   it('converts the doses lens both ways', () => {
@@ -461,7 +461,10 @@ describe('isExpired', () => {
     expect(
       autoAllocateBarReasons(
         { stockLineOnHold: false, expiryDate: soon },
-        prefs({ expiredStockPreventIssue: true, expiredStockIssueThreshold: 14 }),
+        prefs({
+          expiredStockPreventIssue: true,
+          expiredStockIssueThreshold: 14,
+        }),
         today
       )
     ).toContain('expired');

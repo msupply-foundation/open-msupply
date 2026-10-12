@@ -1,9 +1,9 @@
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError,
     item_variant::{
         item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
         item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
     },
-    ActivityLogType, EqualFilter, RepositoryError,
 };
 
 use crate::{activity_log::activity_log_entry_with_diff, service_provider::ServiceContext};

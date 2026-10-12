@@ -86,13 +86,13 @@ mod test {
     use std::{collections::HashSet, env};
 
     use repository::{
-        mock::{
-            mock_inbound_shipment_number_store_a, mock_name_a, mock_name_c,
-            mock_outbound_shipment_number_store_a, mock_store_c, MockData, MockDataInserts,
-        },
-        test_db::{self, setup_all, setup_all_with_data},
         InvoiceRow, InvoiceType, NumberRowType, RepositoryError, RequisitionRow, RequisitionType,
         TransactionError,
+        mock::{
+            MockData, MockDataInserts, mock_inbound_shipment_number_store_a, mock_name_a,
+            mock_name_c, mock_outbound_shipment_number_store_a, mock_store_c,
+        },
+        test_db::{self, setup_all, setup_all_with_data},
     };
 
     const TEST_SLEEP_TIME: u64 = 100;

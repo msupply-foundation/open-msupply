@@ -32,17 +32,17 @@ export interface DeleteInboundShipmentsActionProps {
   clearSelection: () => void;
 }
 
-// The inbound-shipments-list bulk delete (spec AC-L3): footer button + a
-// confirm → deleting → error dialog. Mirrors DeleteStocktakesAction. The server
-// is the source of truth and the action is SUBMITTED rather than pre-screened —
-// no client-side copy of the server's delete window, and the button is never
-// disabled because the selection "might" contain an undeletable row
-// (spec/ui-standards/validation.md § actions; issue #1134). Each scope's batch
-// is atomic (AC-BA1): if any row can't be deleted that whole batch fails and
-// nothing in it is removed, so on error we show the server's reason (a per-line
-// lock can surface here too, per rules → deletion) — which is strictly more
-// informative than the old blanket "Only New shipments can be deleted" hover
-// text.
+// The inbound-shipments-list bulk delete (spec OMS-REG-REPL-01.11/.21): footer
+// button + a confirm → deleting → error dialog. Mirrors DeleteStocktakesAction.
+// The server is the source of truth and the action is SUBMITTED rather than
+// pre-screened — no client-side copy of the server's delete window, and the
+// button is never disabled because the selection "might" contain an undeletable
+// row (spec/ui-standards/validation.md § actions; issue #1134). Each scope's
+// batch is atomic (OMS-REG-REPL-01.21): if any row can't be deleted that whole
+// batch fails and nothing in it is removed, so on error we show the server's
+// reason (a per-line lock can surface here too, per rules → deletion) — which
+// is strictly more informative than the old blanket "Only New shipments can be
+// deleted" hover text.
 //
 // The selection is submitted as ONE BATCH PER SCOPE, because the batch mutation
 // is twinned like every other inbound write (issue #1213 — see

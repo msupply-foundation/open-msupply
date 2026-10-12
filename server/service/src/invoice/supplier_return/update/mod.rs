@@ -148,23 +148,23 @@ impl UpdateSupplierReturn {
 mod test {
     use crate::{
         invoice::{
+            UpdateSupplierReturnStatus,
             supplier_return::update::{
                 UpdateSupplierReturn, UpdateSupplierReturnError as ServiceError,
             },
-            UpdateSupplierReturnStatus,
         },
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{
-            currency_a, mock_item_a, mock_name_store_b, mock_outbound_shipment_a, mock_store_a,
-            mock_store_b, mock_supplier_return_a, mock_supplier_return_a_invoice_line_a,
-            mock_supplier_return_b, mock_supplier_return_b_invoice_line_a, mock_user_account_a,
-            MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
         StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, currency_a, mock_item_a, mock_name_store_b,
+            mock_outbound_shipment_a, mock_store_a, mock_store_b, mock_supplier_return_a,
+            mock_supplier_return_a_invoice_line_a, mock_supplier_return_b,
+            mock_supplier_return_b_invoice_line_a, mock_user_account_a,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     #[actix_rt::test]

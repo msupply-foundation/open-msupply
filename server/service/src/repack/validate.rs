@@ -1,6 +1,6 @@
 use repository::{RepositoryError, StockLine, StockLineRow, StorageConnection};
 
-use crate::common::{check_stock_line_exists, CommonStockLineError};
+use crate::common::{CommonStockLineError, check_stock_line_exists};
 
 use super::insert::{InsertRepack, InsertRepackError};
 

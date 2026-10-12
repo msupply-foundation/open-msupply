@@ -1,16 +1,16 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    generic_inputs::NullableUpdateInput,
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    generic_inputs::NullableUpdateInput,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use graphql_types::types::{AdjustmentReasonNotProvided, StockLineNode};
 use repository::StockLine;
 use service::{
+    NullableUpdate,
     auth::{Resource, ResourceAccessRequest},
     invoice::inventory_adjustment::add_new_stock_line::{AddNewStockLine, AddNewStockLineError},
-    NullableUpdate,
 };
 
 #[derive(InputObject)]
@@ -153,7 +153,7 @@ fn map_error(error: AddNewStockLineError) -> Result<InsertErrorInterface> {
         AddNewStockLineError::AdjustmentReasonNotProvided => {
             return Ok(InsertErrorInterface::AdjustmentReasonNotProvided(
                 AdjustmentReasonNotProvided,
-            ))
+            ));
         }
 
         // Standard Graphql Errors
@@ -175,20 +175,20 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_item_a, mock_stock_line_a, MockDataInserts},
         StockLine, StorageConnectionManager,
+        mock::{MockDataInserts, mock_item_a, mock_stock_line_a},
     };
     use serde_json::json;
 
     use service::{
+        NullableUpdate,
         invoice::{
+            InvoiceServiceTrait,
             inventory_adjustment::add_new_stock_line::{
                 AddNewStockLine as ServiceInput, AddNewStockLineError as ServiceError,
             },
-            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
-        NullableUpdate,
     };
 
     type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<StockLine, ServiceError> + Sync + Send;

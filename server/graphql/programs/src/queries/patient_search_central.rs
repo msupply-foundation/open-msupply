@@ -104,7 +104,7 @@ pub fn map_central_patient_search_result(
                                 ConnectionError,
                             ),
                         },
-                    ))
+                    ));
                 }
             };
 

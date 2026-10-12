@@ -69,6 +69,7 @@ import { customFieldsRoutes } from './sections/custom-fields';
 import { demographicsRoutes } from './sections/demographics';
 import { immunisationProgramsRoutes } from './sections/immunisation-programs';
 import { syncMessageRoutes } from './sections/sync-message';
+import { pluginManagementRoutes } from './sections/plugin-management';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -81,7 +82,6 @@ import { StaleBundleModal } from './StaleBundleModal';
 import { ManualScanInput } from './platform/ManualScanInput';
 import { CameraScanOverlay } from './platform/CameraScanOverlay';
 import { startStaleBundleWatch } from './staleBundle';
-import { startUpdateWatch } from './appUpdate';
 import { PluginGate } from './plugins/PluginGate';
 import { pluginPageRoutes } from './plugins/pluginPages';
 import styles from './ui/styles/shared.module.css';
@@ -143,6 +143,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   // the program list and each program's course list, under Programs.
   'programs/immunisations': immunisationProgramsRoutes,
   'manage/sync-message': syncMessageRoutes,
+  'manage/plugins': pluginManagementRoutes,
   // The central server's facility register (spec/names S5) — the third list
   // over the name entity, under Manage rather than a store-scoped section.
   'manage/stores': facilityRegisterRoutes,
@@ -236,15 +237,9 @@ export const App: Component = () => {
     void runStartup();
     const stopTracking = startActivityTracking();
     const stopStaleBundleWatch = startStaleBundleWatch();
-    // The served-bundle watch runs for the app's whole life, pre-session
-    // included — the prompt itself only surfaces in the shell's bottom bar
-    // (spec/chrome § update prompt), but a change noticed on the login screen
-    // shows the moment the bar exists.
-    const stopUpdateWatch = startUpdateWatch();
     onCleanup(() => {
       stopTracking();
       stopStaleBundleWatch();
-      stopUpdateWatch();
     });
   });
 

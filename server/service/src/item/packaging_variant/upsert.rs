@@ -1,9 +1,9 @@
 use repository::{
+    ActivityLogType, RepositoryError, StorageConnection,
     item_variant::{
         item_variant_row::ItemVariantRow,
         packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
     },
-    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 use crate::{
@@ -108,10 +108,10 @@ fn validate(
 
     let old_packaging_variant =
         PackagingVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
-    if let Some(old_packaging_variant) = &old_packaging_variant {
-        if old_packaging_variant.item_variant_id != input.item_variant_id {
-            return Err(UpsertPackagingVariantError::CantChangeItemVariant);
-        }
+    if let Some(old_packaging_variant) = &old_packaging_variant
+        && old_packaging_variant.item_variant_id != input.item_variant_id
+    {
+        return Err(UpsertPackagingVariantError::CantChangeItemVariant);
     }
 
     if input.packaging_level <= 0 {
@@ -120,20 +120,20 @@ fn validate(
         ));
     }
 
-    if let Some(pack_size) = input.pack_size {
-        if pack_size <= 0.0 {
-            return Err(UpsertPackagingVariantError::LessThanZero(
-                "pack_size".to_string(),
-            ));
-        }
+    if let Some(pack_size) = input.pack_size
+        && pack_size <= 0.0
+    {
+        return Err(UpsertPackagingVariantError::LessThanZero(
+            "pack_size".to_string(),
+        ));
     }
 
-    if let Some(volume_per_unit) = input.volume_per_unit {
-        if volume_per_unit <= 0.0 {
-            return Err(UpsertPackagingVariantError::LessThanZero(
-                "volume_per_unit".to_string(),
-            ));
-        }
+    if let Some(volume_per_unit) = input.volume_per_unit
+        && volume_per_unit <= 0.0
+    {
+        return Err(UpsertPackagingVariantError::LessThanZero(
+            "volume_per_unit".to_string(),
+        ));
     }
 
     let barcode = old_packaging_variant

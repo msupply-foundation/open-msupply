@@ -14,14 +14,14 @@
 use std::marker::PhantomData;
 
 use diesel::{
-    expression::{is_aggregate, ValidGrouping},
+    expression::{ValidGrouping, is_aggregate},
     prelude::*,
     query_builder::{AstPass, QueryFragment, QueryId},
     sql_types::{Bool, Double, Nullable, Text},
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{dynamic_query_filter::GeneralFilter, DBType};
+use crate::{DBType, dynamic_query_filter::GeneralFilter};
 
 /// One condition on one custom_field key. Serde shape (externally tagged, like the
 /// rest of the dynamic filter AST):
@@ -489,8 +489,8 @@ mod tests {
 
     use super::{CustomFieldValueFilter as Value, *};
     use crate::{
-        db_diesel::name_row::name, mock::MockDataInserts, test_db, NameCondition, NameRow,
-        NameRowRepository, StorageConnection,
+        NameCondition, NameRow, NameRowRepository, StorageConnection, db_diesel::name_row::name,
+        mock::MockDataInserts, test_db,
     };
 
     fn name_row(id: &str, custom_fields: Option<serde_json::Value>) -> NameRow {
@@ -635,11 +635,13 @@ mod tests {
             ["name1", "name4"]
         );
         // Nothing shared.
-        assert!(ids(
-            &connection,
-            custom_field("multi_key", any_of(&["option_z"]))
-        )
-        .is_empty());
+        assert!(
+            ids(
+                &connection,
+                custom_field("multi_key", any_of(&["option_z"]))
+            )
+            .is_empty()
+        );
         // An empty set overlaps nothing.
         assert!(ids(&connection, custom_field("multi_key", any_of(&[]))).is_empty());
         // Equal is overlap with a single id.
@@ -662,14 +664,16 @@ mod tests {
             ["name1", "name2", "name4"]
         );
         // Substring has no meaning over a set.
-        assert!(ids(
-            &connection,
-            custom_field(
-                "multi_key",
-                Value::MultiOption(GeneralFilter::Like("option".to_string()))
+        assert!(
+            ids(
+                &connection,
+                custom_field(
+                    "multi_key",
+                    Value::MultiOption(GeneralFilter::Like("option".to_string()))
+                )
             )
-        )
-        .is_empty());
+            .is_empty()
+        );
     }
 
     #[actix_rt::test]
@@ -911,9 +915,9 @@ mod repository_integration_tests {
 
     use super::CustomFieldValueFilter as Value;
     use crate::{
-        dynamic_query_filter::GeneralFilter, mock::MockDataInserts, test_db, ItemCondition,
-        ItemFilter, ItemRepository, ItemRow, ItemRowRepository, NameCondition, NameFilter,
-        NameRepository, NameRow, NameRowRepository, NameRowType, PatientFilter, PatientRepository,
+        ItemCondition, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, NameCondition,
+        NameFilter, NameRepository, NameRow, NameRowRepository, NameRowType, PatientFilter,
+        PatientRepository, dynamic_query_filter::GeneralFilter, mock::MockDataInserts, test_db,
     };
 
     /// dynamic_filter applied through each repository's create_filtered_query:

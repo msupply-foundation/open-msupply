@@ -20,6 +20,8 @@ use std::collections::{HashMap, HashSet};
 
 use chrono::Utc;
 use repository::{
+    BarcodeProposalRow, BarcodeProposalRowRepository, EqualFilter, ItemFilter, ItemRepository,
+    ItemRowRepository, NameRowRepository, RepositoryError, StorageConnection, StoreRowRepository,
     barcode_proposal::{BarcodeProposalFilter, BarcodeProposalRepository},
     item_variant::{
         item_variant::{ItemVariantFilter, ItemVariantRepository},
@@ -27,8 +29,6 @@ use repository::{
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
     },
-    BarcodeProposalRow, BarcodeProposalRowRepository, EqualFilter, ItemFilter, ItemRepository,
-    ItemRowRepository, NameRowRepository, RepositoryError, StorageConnection, StoreRowRepository,
 };
 use util::{
     barcode::{display_barcode, standard_barcode},

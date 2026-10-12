@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_ignore_for_orders_to_item_store_join;

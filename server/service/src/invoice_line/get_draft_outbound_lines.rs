@@ -1,8 +1,9 @@
 use crate::{
+    ListError,
     invoice::query::get_invoice,
     pricing::{
         calculate_sell_price::{calculate_sell_price, issue_at_cost_price},
-        item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup},
+        item_price::{ItemPrice, ItemPriceLookup, get_pricing_for_items},
     },
     service_provider::ServiceContext,
     stock_line::{
@@ -11,7 +12,6 @@ use crate::{
         },
         query::get_stock_lines,
     },
-    ListError,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
@@ -432,12 +432,12 @@ mod test {
         service_provider::ServiceProvider,
     };
     use repository::{
+        InvoiceLineRow, InvoiceLineType, StockLineRow,
         mock::{
-            mock_item_b, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
-            mock_store_b, MockData, MockDataInserts,
+            MockData, MockDataInserts, mock_item_b, mock_outbound_shipment_a,
+            mock_outbound_shipment_a_invoice_lines, mock_store_b,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineType, StockLineRow,
     };
 
     #[test]

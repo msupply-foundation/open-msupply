@@ -1,20 +1,20 @@
 use crate::{
     barcode::find_confirmed,
     invoice::common::{
-        calculate_foreign_currency_total, calculate_total_after_tax,
-        generate_invoice_user_id_update, generate_vvm_status_log, GenerateVVMStatusLogInput,
+        GenerateVVMStatusLogInput, calculate_foreign_currency_total, calculate_total_after_tax,
+        generate_invoice_user_id_update, generate_vvm_status_log,
     },
     invoice_line::stock_in_line::{
-        convert_invoice_line_to_single_pack, generate_batch, should_update_stock, StockInType,
-        StockLineInput,
+        StockInType, StockLineInput, convert_invoice_line_to_single_pack, generate_batch,
+        should_update_stock,
     },
     preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference, PreferenceError},
     store_preference::get_store_preferences,
 };
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLineRow, InvoiceLineStatus,
-    InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, StockLineRow, StockLineRowRepository,
-    StorageConnection,
+    InvoiceLineRow, InvoiceLineStatus, InvoiceLineType, InvoiceRow, ItemRow, RepositoryError,
+    StockLineRow, StockLineRowRepository, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 use util::barcode::standard_barcode;
 

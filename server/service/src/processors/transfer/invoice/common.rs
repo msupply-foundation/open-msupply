@@ -8,8 +8,8 @@ use util::uuid::uuid;
 
 use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
-    update_inbound_shipment, InboundShipmentType, UpdateInboundShipment,
-    UpdateInboundShipmentError, UpdateInboundShipmentStatus,
+    InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError,
+    UpdateInboundShipmentStatus, update_inbound_shipment,
 };
 use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
 use crate::pricing::calculate_sell_price::issue_at_cost_price;
@@ -357,13 +357,13 @@ mod test {
     use super::{generate_inbound_lines, get_cost_plus_margin, get_default_price_for_pack};
 
     use repository::{
-        mock::{
-            mock_item_a_join_store_a, mock_name_store_a, mock_store_a, mock_store_b, mock_store_c,
-            MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         Invoice, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow,
         ItemStoreJoinRow, PreferenceRow, PreferenceRowRepository, StockLineRow, StorageConnection,
+        mock::{
+            MockData, MockDataInserts, mock_item_a_join_store_a, mock_name_store_a, mock_store_a,
+            mock_store_b, mock_store_c,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     use crate::{

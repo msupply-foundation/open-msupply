@@ -1,7 +1,7 @@
 use super::{
-    goods_received::GoodsReceivedTranslation, invoice_line::InvoiceLineTranslation,
-    item::ItemTranslation, purchase_order_line::PurchaseOrderLineTranslation, FkField,
-    PullTranslateResult, SyncTranslation,
+    FkField, PullTranslateResult, SyncTranslation, goods_received::GoodsReceivedTranslation,
+    invoice_line::InvoiceLineTranslation, item::ItemTranslation,
+    purchase_order_line::PurchaseOrderLineTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -102,7 +102,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
                     return Ok(PullTranslateResult::Ignored(format!(
                         "goods_received_line {} has no order_line_ID, skipping PO line link",
                         data.id
-                    )))
+                    )));
                 }
             };
 
@@ -194,9 +194,9 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_purchase_order_a_line_1, MockDataInserts},
-        test_db::setup_all,
         PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
+        mock::{MockDataInserts, mock_purchase_order_a_line_1},
+        test_db::setup_all,
     };
 
     #[actix_rt::test]
