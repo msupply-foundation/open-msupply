@@ -89,6 +89,58 @@ export interface PatientDocumentEditor {
   resetDraft: () => void;
 }
 
+/** What the two editors below share: the document form and its code check. */
+interface PatientDocumentFormCore {
+  form: DocumentForm<Patient>;
+  codeCheck: ReturnType<typeof createCodeTakenCheck>;
+  canMutate: () => boolean;
+}
+
+const createPatientDocumentFormCore = (params: {
+  storeId: Accessor<string>;
+  patientId: Accessor<string>;
+  source: Accessor<DocumentFormSource | undefined>;
+  /** The code as last saved, which the duplicate-code check leaves alone. */
+  savedCode: Accessor<string>;
+  /** The patient whose own code the check ignores; none while creating. */
+  existingPatientId: Accessor<string | undefined>;
+}): PatientDocumentFormCore => {
+  const canMutate = () => hasPermission('PATIENT_MUTATE');
+
+  // The duplicate-code check (spec/patients § generating a code): whoever
+  // renders the code, the host's field or a plugin's, the save attempt checks
+  // it. Declared before the form, which shows its answer as an error; its
+  // code accessor reads the form's draft once both exist.
+  let form: DocumentForm<Patient> | undefined;
+  const codeCheck = createCodeTakenCheck({
+    storeId: params.storeId,
+    code: () => form?.draft.data.code ?? '',
+    savedCode: params.savedCode,
+    patientId: params.existingPatientId,
+  });
+
+  form = createDocumentForm<Patient>({
+    storeId: params.storeId,
+    patientId: params.patientId,
+    source: params.source,
+    labels: patientFieldLabels,
+    extraErrors: () => [
+      {
+        id: 'code',
+        label: t('label.code'),
+        failed: codeCheck.taken(),
+        message: t('error.duplicated-code', {
+          code: (form?.draft.data.code ?? '').trim(),
+        }),
+      },
+    ],
+    readOnly: () => !canMutate(),
+    versioning: type => documentFormVersioning('patient.form', type),
+  });
+
+  return { form, codeCheck, canMutate };
+};
+
 export const createPatientDocumentEditor = (
   params: PatientDocumentEditorParams
 ): PatientDocumentEditor => {
@@ -113,39 +165,17 @@ export const createPatientDocumentEditor = (
     return { kind: 'new', registry, data: seedPatientDocument(node) };
   });
 
-  const canMutate = () => hasPermission('PATIENT_MUTATE');
-
-  // The duplicate-code check (spec/patients § generating a code): whoever
-  // renders the code, the host's field or a plugin's, the save attempt checks
-  // it. Declared before the form, which shows its answer as an error; its
-  // code accessor reads the form's draft once both exist.
-  let form: DocumentForm<Patient> | undefined;
-  const codeCheck = createCodeTakenCheck({
-    storeId: params.storeId,
-    code: () => form?.draft.data.code ?? '',
-    savedCode: () => params.node()?.code ?? '',
-    patientId: () => params.node()?.id,
-  });
-
-  form = createDocumentForm<Patient>({
+  const {
+    form: documentForm,
+    codeCheck,
+    canMutate,
+  } = createPatientDocumentFormCore({
     storeId: params.storeId,
     patientId: () => params.node()?.id ?? '',
     source,
-    labels: patientFieldLabels,
-    extraErrors: () => [
-      {
-        id: 'code',
-        label: t('label.code'),
-        failed: codeCheck.taken(),
-        message: t('error.duplicated-code', {
-          code: (form?.draft.data.code ?? '').trim(),
-        }),
-      },
-    ],
-    readOnly: () => !canMutate(),
-    versioning: type => documentFormVersioning('patient.form', type),
+    savedCode: () => params.node()?.code ?? '',
+    existingPatientId: () => params.node()?.id,
   });
-  const documentForm = form;
 
   const [checking, setChecking] = createSignal(false);
   const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
@@ -187,5 +217,70 @@ export const createPatientDocumentEditor = (
     attemptSave,
     doSave,
     resetDraft: documentForm.discard,
+  };
+};
+
+export interface NewPatientDocumentParams {
+  storeId: Accessor<string>;
+  /** The identifier minted for the patient being created. */
+  patientId: Accessor<string>;
+  /** The store's Patient registry entry; undefined off the document path. */
+  registry: Accessor<FormRegistryFragment | undefined>;
+  /** The new patient's first data; undefined until the wizard reaches it. */
+  seed: Accessor<Patient | undefined>;
+}
+
+export interface NewPatientDocumentEditor {
+  form: DocumentForm<Patient>;
+  saving: () => boolean;
+  saveError: () => string;
+  /**
+   * Arms validation, checks the code and, when both pass, writes the new
+   * patient with its first document. Resolves true once written.
+   */
+  create: () => Promise<boolean>;
+}
+
+/*
+ * The create wizard's last step on the document path (spec/patients › effects
+ * of creation; implementation-plan H17): a new patient's first document, in
+ * the same document form host and with the same code check as the Details
+ * tab, seeded from the wizard's first step. It saves without the Details
+ * tab's confirm, as the plain path's wizard does.
+ */
+export const createNewPatientDocumentEditor = (
+  params: NewPatientDocumentParams
+): NewPatientDocumentEditor => {
+  const source = createMemo((): DocumentFormSource | undefined => {
+    const registry = params.registry();
+    const seed = params.seed();
+    return registry && seed ? { kind: 'new', registry, data: seed } : undefined;
+  });
+
+  const { form, codeCheck } = createPatientDocumentFormCore({
+    storeId: params.storeId,
+    patientId: params.patientId,
+    source,
+    savedCode: () => '',
+    existingPatientId: () => undefined,
+  });
+
+  const [checking, setChecking] = createSignal(false);
+
+  const create = async () => {
+    form.validation.arm();
+    if (!form.validation.valid() || checking() || form.saving()) return false;
+    setChecking(true);
+    const taken = await codeCheck.check();
+    setChecking(false);
+    if (taken) return false;
+    return (await form.save()) !== undefined;
+  };
+
+  return {
+    form,
+    saving: () => checking() || form.saving(),
+    saveError: () => form.saveError() ?? '',
+    create,
   };
 };

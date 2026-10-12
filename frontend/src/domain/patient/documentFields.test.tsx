@@ -12,13 +12,21 @@ import type { Patient } from '../../plugin-sdk/documents';
  * falls back to the host's own inside itself.
  */
 
+const textFieldProps = vi.fn();
 vi.mock('../../ui/elements/inputs/TextField', () => ({
-  TextField: (p: { label: string }) => p.label,
+  TextField: (p: { label: string }) => {
+    textFieldProps(p);
+    return p.label;
+  },
 }));
+const codeControlProps = vi.fn();
 vi.mock('./PatientControls', () => {
   const echo = (p: { label?: string }) => p.label;
   return {
-    PatientCodeControl: echo,
+    PatientCodeControl: (p: { label?: string }) => {
+      codeControlProps(p);
+      return p.label;
+    },
     DateOfBirthControl: echo,
     GenderControl: echo,
     NextOfKinControl: echo,
@@ -92,4 +100,52 @@ describe("the host's patient fields", () => {
       expect(render(Field)).toBe(host);
     }
   );
+});
+
+// Remaining work item 17: the code field hands its control the schema's
+// pattern, which leaves Generate out where generated codes cannot match it.
+describe("the host's code field", () => {
+  it("passes the schema's pattern for the code to its control", () => {
+    const patterned = {
+      ...draft,
+      schemaFor: (path: string) =>
+        path === 'code'
+          ? { required: false, pattern: '^[0-9]{6}$' }
+          : undefined,
+    } as unknown as Draft<Patient>;
+    createRoot(dispose => {
+      const out = <PatientCodeField draft={patterned} />;
+      dispose();
+      return out;
+    });
+    expect(codeControlProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ pattern: '^[0-9]{6}$', required: false })
+    );
+  });
+});
+
+// A required name cleared must fail the schema's required, which an empty
+// string would pass under `type: string`: the field removes the property, as
+// the form library's text fields do.
+describe("the host's name fields", () => {
+  it.each([
+    ['first name', PatientFirstNameField, 'firstName'],
+    ['last name', PatientLastNameField, 'lastName'],
+  ] as const)('remove the %s when it is cleared', (_name, Field, path) => {
+    const set = vi.fn();
+    const editable = { ...draft, set } as unknown as Draft<Patient>;
+    textFieldProps.mockClear();
+    createRoot(dispose => {
+      const out = <Field draft={editable} />;
+      dispose();
+      return out;
+    });
+    const props = textFieldProps.mock.lastCall?.[0] as {
+      onInput: (e: { currentTarget: { value: string } }) => void;
+    };
+    props.onInput({ currentTarget: { value: '' } });
+    expect(set).toHaveBeenLastCalledWith(path, undefined);
+    props.onInput({ currentTarget: { value: 'Ali' } });
+    expect(set).toHaveBeenLastCalledWith(path, 'Ali');
+  });
 });

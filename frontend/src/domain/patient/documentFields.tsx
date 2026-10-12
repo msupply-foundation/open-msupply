@@ -67,7 +67,10 @@ const disabled = (field: {
 const required = (draft: Draft<Patient>, path: 'code' | 'code2') =>
   draft.schemaFor(path)?.required ?? false;
 
-/** The patient code, with the host's generator beside it. */
+/**
+ * The patient code, with the host's generator beside it where the codes it
+ * makes fit the schema's pattern for the code.
+ */
 export const PatientCodeField = <T extends Patient>(
   props: LabelledPatientFieldProps<T>
 ): JSX.Element => {
@@ -80,8 +83,10 @@ export const PatientCodeField = <T extends Patient>(
       value={d().data.code ?? ''}
       onChange={code => d().set('code', code || undefined)}
       required={required(d(), 'code')}
+      pattern={d().schemaFor('code')?.pattern}
       error={d().errorFor('code')}
       disabled={disabled(props)}
+      testId="patient-code"
     />
   );
 };
@@ -112,11 +117,14 @@ export const PatientFirstNameField = <T extends Patient>(
     <TextField
       label={props.label ?? t('label.first-name')}
       value={d().data.firstName ?? ''}
-      // The base type requires the property, so a cleared box keeps it, empty.
-      onInput={e => d().set('firstName', e.currentTarget.value)}
+      // A cleared box removes the property, as the form library's text
+      // fields do, so the schema's required refuses an empty name; an empty
+      // string would pass a schema that only says `type: string`.
+      onInput={e => d().set('firstName', e.currentTarget.value || undefined)}
       required
       error={d().errorFor('firstName')}
       disabled={disabled(props)}
+      data-testid="patient-first-name"
     />
   );
 };
@@ -130,10 +138,12 @@ export const PatientLastNameField = <T extends Patient>(
     <TextField
       label={props.label ?? t('label.last-name')}
       value={d().data.lastName ?? ''}
-      onInput={e => d().set('lastName', e.currentTarget.value)}
+      // Cleared, removed, as the first name is.
+      onInput={e => d().set('lastName', e.currentTarget.value || undefined)}
       required
       error={d().errorFor('lastName')}
       disabled={disabled(props)}
+      data-testid="patient-last-name"
     />
   );
 };

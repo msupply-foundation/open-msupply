@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { seedPatientDocument } from './patientDocumentSeed';
+import {
+  seedNewPatientDocument,
+  seedPatientDocument,
+} from './patientDocumentSeed';
 import type { PatientResult } from './patient.generated';
 
 type PatientNode = NonNullable<PatientResult['patient']>;
@@ -79,5 +82,65 @@ describe('seedPatientDocument (a name row, as the first document)', () => {
     expect(seed.firstName).toBe('');
     expect(seed.lastName).toBe('');
     expect(seed.code).toBeUndefined();
+  });
+});
+
+// The create wizard's last step on the document path (spec/patients › effects
+// of creation): the first step's fields carried into the new document.
+describe('seedNewPatientDocument', () => {
+  const fields = {
+    firstName: 'Amina',
+    lastName: 'Hassan',
+    dateOfBirth: null,
+    gender: null,
+    address: '',
+    phone: '',
+  };
+
+  it('carries the names under the minted id, and nothing left empty', () => {
+    expect(seedNewPatientDocument('patient-9', fields, false)).toEqual({
+      id: 'patient-9',
+      firstName: 'Amina',
+      lastName: 'Hassan',
+    });
+  });
+
+  it('carries the date of birth and gender when given', () => {
+    expect(
+      seedNewPatientDocument(
+        'patient-9',
+        { ...fields, dateOfBirth: '1990-04-02', gender: 'FEMALE' },
+        false
+      )
+    ).toMatchObject({ dateOfBirth: '1990-04-02', gender: 'FEMALE' });
+  });
+
+  it('puts the address and phone in the first contact block', () => {
+    expect(
+      seedNewPatientDocument(
+        'patient-9',
+        { ...fields, address: ' Rue de Venise ', phone: '77889900' },
+        false
+      ).contactDetails
+    ).toEqual([{ address1: 'Rue de Venise', phone: '77889900' }]);
+    expect(
+      seedNewPatientDocument(
+        'patient-9',
+        { ...fields, phone: '77889900' },
+        false
+      ).contactDetails
+    ).toEqual([{ phone: '77889900' }]);
+  });
+
+  // As the old client's create starts every new patient, so a field the
+  // deployment requires inside `extension` is required from the start, where
+  // a plugin form draws it; the default form draws none, so it is left out.
+  it('starts an empty extension only for a plugin form', () => {
+    expect(seedNewPatientDocument('patient-9', fields, true).extension).toEqual(
+      {}
+    );
+    expect(
+      seedNewPatientDocument('patient-9', fields, false)
+    ).not.toHaveProperty('extension');
   });
 });

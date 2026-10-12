@@ -20,7 +20,7 @@ import {
   type Gender,
   type GenderOption,
 } from './gender';
-import { generatePatientCode } from './patientCode';
+import { generatedCodeFits, generatePatientCode } from './patientCode';
 import { ageFromDob, ageMonthsAndDays, dobFromAge } from './age';
 import styles from './PatientControls.module.css';
 
@@ -52,6 +52,13 @@ export interface PatientCodeControlProps {
   required?: boolean;
   error?: string;
   disabled?: boolean;
+  /**
+   * The schema's `pattern` for the code, on the document path: Generate is
+   * left out where the codes it makes would never match it.
+   */
+  pattern?: string;
+  /** `data-testid` for the code; Generate takes it with `-generate` added. */
+  testId?: string;
 }
 
 /**
@@ -60,7 +67,9 @@ export interface PatientCodeControlProps {
  * very thing `disabled` already carries, so the button rides the form's own
  * state (#268). A read-only viewer gets the button disabled rather than
  * absent, like every other control on the form — the shortcut is unavailable
- * for exactly the reason the field itself is.
+ * for exactly the reason the field itself is. A code the generator would
+ * make that the schema's pattern refuses leaves the button out, rather than
+ * offering a code that blocks the save (spec/patients § generating a code).
  */
 export const PatientCodeControl = (
   props: PatientCodeControlProps
@@ -91,6 +100,9 @@ export const PatientCodeControl = (
     else void generate();
   };
 
+  const canGenerate = () =>
+    generatedCodeFits(currentStoreName() ?? '', props.pattern);
+
   return (
     <>
       <FormRow>
@@ -100,17 +112,21 @@ export const PatientCodeControl = (
           error={props.error}
           value={props.value}
           disabled={props.disabled}
+          data-testid={props.testId}
           onInput={e => props.onChange(e.currentTarget.value)}
         />
-        <Button
-          class={styles.generate}
-          variant="secondary"
-          disabled={props.disabled}
-          loading={generating()}
-          onClick={onGenerate}
-        >
-          {t('label.generate')}
-        </Button>
+        <Show when={canGenerate()}>
+          <Button
+            class={styles.generate}
+            variant="secondary"
+            data-testid={props.testId && `${props.testId}-generate`}
+            disabled={props.disabled}
+            loading={generating()}
+            onClick={onGenerate}
+          >
+            {t('label.generate')}
+          </Button>
+        </Show>
       </FormRow>
       <ConfirmDialog
         open={confirmRegenerate()}

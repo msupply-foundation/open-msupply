@@ -2,6 +2,7 @@ import { generateUUID } from '../../../uuid';
 import {
   createEffect,
   createMemo,
+  createResource,
   createSignal,
   Show,
   Switch,
@@ -55,27 +56,33 @@ import {
   type PatientDraft,
 } from '../detail/patientEdit';
 import { createCodeTakenCheck } from '../../../domain/patient/patientCode';
+import type { Patient } from '../../../plugin-sdk/documents';
+import { gated } from '../../../api/gated';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
+import { PatientDocumentFormView } from '../detail/PatientDocumentFormView';
+import { createNewPatientDocumentEditor } from '../detail/patientDocumentEditor';
+import {
+  seedNewPatientDocument,
+  type NewPatientFields,
+} from '../detail/patientDocumentSeed';
+import { fetchPatientRegistry } from '../detail/programs/programsApi';
+import { documentFormFor } from '../../../plugins/documentFormSlot';
 import { FetchFromCentralModal } from './FetchFromCentralModal';
 
 // S2 — the create wizard (spec/patients). A blocking modal with a
 // three-step flow: ① details + search → ② the mandatory local + central
-// duplicate check → ③ the full plain-path details form. A fresh patient
-// identifier is minted when the modal opens (OMS-REG-DIS-01.4/.7/.32), so a
-// duplicate-id rejection is unreachable. The step rail is a section-local
+// duplicate check → ③ the full details form, on the store's persistence path:
+// the plain-path form over the patient record, or, where the store has a
+// Patient registry entry, its patient form over the new patient's first
+// document (spec/patients › effects of creation). A fresh patient identifier
+// is minted when the modal opens (OMS-REG-DIS-01.4/.7/.32), so a duplicate-id
+// rejection is unreachable. The step rail is a section-local
 // presentational stepper — the "wizard stepper" role is not in the component
 // registry (see the implementation flags).
 
 type Step = 1 | 2 | 3;
 
-interface SearchForm {
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string | null;
-  gender: Gender | null;
-  address: string;
-  phone: string;
-}
+type SearchForm = NewPatientFields;
 
 // A unified duplicate-check row: a local patient or a central-only candidate.
 interface MatchRow {
@@ -130,6 +137,41 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const [fetchCandidate, setFetchCandidate] = createSignal<CentralPatient>();
   const [fetchOpen, setFetchOpen] = createSignal(false);
 
+  // The store's Patient registry entry decides step ③'s path, as it decides
+  // the Details tab's (patientDetails.ts). Read each time the modal opens,
+  // non-suspending, since the modal is already open.
+  const [registryData] = createResource(
+    () => (props.open ? props.storeId : undefined),
+    fetchPatientRegistry
+  );
+  const registry = () => gated(registryData);
+  const onDocumentPath = () => registry()?.entry !== undefined;
+
+  // The document path's step ③: the new patient's first document, seeded
+  // from step ① when the wizard reaches it, the way the form that edits it
+  // needs (seedNewPatientDocument): a plugin's patient form, or the host's
+  // default one.
+  const [seedFields, setSeedFields] = createSignal<NewPatientFields>();
+  const pluginForm = createMemo(() => {
+    const type = registry()?.entry?.documentType;
+    return (
+      type !== undefined &&
+      documentFormFor('patient.form', type).occupant !== undefined
+    );
+  });
+  const documentSeed = createMemo((): Patient | undefined => {
+    const fields = seedFields();
+    return fields
+      ? seedNewPatientDocument(patientId(), fields, pluginForm())
+      : undefined;
+  });
+  const newDocument = createNewPatientDocumentEditor({
+    storeId: () => props.storeId,
+    patientId,
+    registry: () => registry()?.entry,
+    seed: documentSeed,
+  });
+
   // Duplicate-code check (spec/patients § generating a code), run on the save
   // attempt below. No saved code to compare against while creating, so every
   // non-empty code is checked.
@@ -155,6 +197,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
       setPatientId(generateUUID());
       setSearch(emptySearch());
       setDraft(emptyDraft());
+      setSeedFields(undefined);
       setLocalMatches([]);
       setCentralMatches([]);
       setCentralUnreachable(false);
@@ -251,9 +294,11 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const openMatch = (row: MatchRow) =>
     row.kind === 'central' ? openFetch(row) : openExisting(row.id);
 
-  // Advance to the details step, seeding the plain form from the entered search
-  // details (spec/patients step ③).
+  // Advance to the details step, seeding its form from the entered search
+  // details (spec/patients step ③): the plain form's draft, and the new
+  // document's seed for the document path.
   const advanceToDetails = () => {
+    setSeedFields({ ...search });
     setDraft({
       ...emptyDraft(),
       firstName: search.firstName,
@@ -266,7 +311,29 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     setStep(3);
   };
 
+  // Hand the new patient back to the caller and close
+  // (OMS-REG-DIS-01.4/.7/.32), or open its detail.
+  const finish = (id: string, firstName: string, lastName: string) => {
+    if (props.onCreated) {
+      const name = [lastName, firstName].filter(Boolean).join(', ');
+      props.onClose();
+      props.onCreated(minimalPatientOption(id, name));
+      return;
+    }
+    props.onClose();
+    navigate(`/${props.storeId}/dispensary/patients/${id}`);
+  };
+
+  // The document path's create: the editor validates against the installed
+  // schema, checks the code and writes the patient with its first document.
+  const saveDocument = async () => {
+    if (!(await newDocument.create())) return;
+    const data = newDocument.form.draft.data;
+    finish(patientId(), data.firstName, data.lastName);
+  };
+
   const save = async () => {
+    if (onDocumentPath()) return saveDocument();
     if (saving()) return;
     validation.arm();
     if (!validation.valid()) return;
@@ -288,17 +355,12 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
       setSaveError(outcome.message);
       return;
     }
-    // Create-and-return (OMS-REG-DIS-01.4/.7/.32): hand the new patient back to
-    // the caller and close, rather than navigating away to its detail.
-    if (props.onCreated) {
-      const name = [draft.lastName, draft.firstName].filter(Boolean).join(', ');
-      props.onClose();
-      props.onCreated(minimalPatientOption(outcome.id, name));
-      return;
-    }
-    props.onClose();
-    navigate(`/${props.storeId}/dispensary/patients/${outcome.id}`);
+    finish(outcome.id, draft.firstName, draft.lastName);
   };
+
+  const busy = () => saving() || newDocument.saving();
+  const stepThreeError = () =>
+    onDocumentPath() ? newDocument.saveError() : saveError();
 
   // Cell-type presets carry the rendering AND the width
   // (ui/docs/CELL_TYPES.md). Deceased reads as a word here, not the list's
@@ -440,7 +502,8 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           icon={<SaveIcon />}
           confirms="plain"
           data-testid="dialog-button-ok"
-          loading={saving()}
+          loading={busy()}
+          disabled={!registry()}
           onClick={() => void save()}
         >
           {t('button.save')}
@@ -456,7 +519,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         testId="create-patient-modal"
         title={t('label.create-patient')}
         icon={<PlusCircleIcon />}
-        dismissable={!searching() && !saving()}
+        dismissable={!searching() && !busy()}
         onClose={props.onClose}
         // ONE width for every step — the shared form measure, so the dialog is
         // a steady box the flow moves through rather than one that jumps wider
@@ -585,20 +648,33 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           </Match>
 
           <Match when={step() === 3}>
-            <Show when={saveError()}>
-              <Alert severity="error">{saveError()}</Alert>
+            <Show when={stepThreeError()}>
+              <Alert severity="error">{stepThreeError()}</Alert>
             </Show>
-            <PatientDetailsForm
-              storeId={props.storeId}
-              patientId={patientId()}
-              draft={draft}
-              setField={setDraftField}
-              errorFor={validation.errorFor}
-            />
-            <FormErrorSummary
-              errors={validation.visible()}
-              testId="create-patient-error-summary"
-            />
+            <Switch fallback={<Spinner center />}>
+              <Match when={registry() && !onDocumentPath()}>
+                <PatientDetailsForm
+                  storeId={props.storeId}
+                  patientId={patientId()}
+                  draft={draft}
+                  setField={setDraftField}
+                  errorFor={validation.errorFor}
+                />
+                <FormErrorSummary
+                  errors={validation.visible()}
+                  testId="create-patient-error-summary"
+                />
+              </Match>
+              <Match
+                when={onDocumentPath() && newDocument.form.status() === 'ready'}
+              >
+                <PatientDocumentFormView
+                  patientId={patientId()}
+                  form={newDocument.form}
+                  errorSummaryTestId="create-patient-error-summary"
+                />
+              </Match>
+            </Switch>
           </Match>
         </Switch>
       </Dialog>

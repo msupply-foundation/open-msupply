@@ -393,6 +393,7 @@ describe('fieldSchemaInfo', () => {
       required: true,
       format: 'date-time',
       enum: undefined,
+      pattern: undefined,
     });
     expect(fieldSchemaInfo(encounterSchema, 'endDatetime')?.required).toBe(
       false
@@ -411,6 +412,20 @@ describe('fieldSchemaInfo', () => {
     ).toBe('date-time');
   });
 
+  it("reads a text field's pattern", () => {
+    const schema: JsonSchema = {
+      allOf: [{ $ref: '#/definitions/Coded' }],
+      definitions: {
+        Coded: {
+          type: 'object',
+          properties: { code: { type: 'string', pattern: '^[0-9]{6}$' } },
+        },
+      },
+    };
+    expect(fieldSchemaInfo(schema, 'code')?.pattern).toBe('^[0-9]{6}$');
+    expect(fieldSchemaInfo(encounterSchema, 'status')?.pattern).toBeUndefined();
+  });
+
   it('is undefined for a path the schema does not have', () => {
     expect(fieldSchemaInfo(encounterSchema, 'extension.other')).toBeUndefined();
   });
@@ -421,6 +436,7 @@ describe('fieldSchemaInfo', () => {
       required: false,
       format: undefined,
       enum: undefined,
+      pattern: undefined,
     });
     expect(fieldSchemaInfo(patient, 'contactDetails.0.other')).toBeUndefined();
     expect(fieldSchemaInfo(patient, 'firstName.0')).toBeUndefined();
@@ -707,6 +723,25 @@ describe('the base schema behind a thin registry schema', () => {
         format: 'date-time',
         enum: undefined,
       });
+      dispose();
+    });
+  });
+
+  it("keeps the registry schema's pattern over the base type's field", () => {
+    const coded = {
+      id: 'coded',
+      jsonSchema: {
+        type: 'object',
+        properties: { code: { type: 'string', pattern: '^[0-9]{6}$' } },
+      },
+    };
+    createRoot(dispose => {
+      const c = createDraft<{ code?: string }>({
+        schema: () => coded,
+        baseSchema: () => baseSchemaFor('PATIENT'),
+        validate: () => validateDocument,
+      });
+      expect(c.draft.schemaFor('code')?.pattern).toBe('^[0-9]{6}$');
       dispose();
     });
   });

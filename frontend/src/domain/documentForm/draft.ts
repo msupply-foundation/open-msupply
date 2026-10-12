@@ -229,6 +229,7 @@ export const createDraft = <T extends object>(
         required: own.required || fallback.required,
         format: own.format ?? fallback.format,
         enum: own.enum ?? fallback.enum,
+        pattern: own.pattern ?? fallback.pattern,
       };
     },
     errorFor: path => validation.errorFor(path),
