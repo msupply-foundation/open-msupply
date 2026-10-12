@@ -3590,9 +3590,24 @@ export type FormPluginDocumentTypeNode = {
   existingEntryId?: Maybe<Scalars['String']['output']>;
   /** The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`. */
   existingEntryOwner?: Maybe<Scalars['String']['output']>;
+  /**
+   * The program the existing entry is in (`OWNED` or `UNOWNED`), where its
+   * context is a program's: what a take-over keeps the type under unless
+   * its key is moved, so a screen can start the key on it.
+   */
+  existingEntryProgram?: Maybe<ProgramNode>;
   name: Scalars['String']['output'];
   /** `None` for the Patient type, whose context is fixed. */
   programKey?: Maybe<Scalars['String']['output']>;
+  /**
+   * The refusals no choice in `installUploadedPlugin` can get past, in the
+   * words that mutation would refuse with: a schema version already
+   * installed with other content, a version documents are pinned to left
+   * out, a take-over that changes the deployment's rules or lacks its
+   * current version, a second patient type. Empty when install could go
+   * ahead with the right choices.
+   */
+  refusals: Array<Scalars['String']['output']>;
 };
 
 export type FormPluginPreviewNode = {
@@ -4980,6 +4995,27 @@ export type InsertVaccineCourseInput = {
 export type InsertVaccineCourseResponse =
   | InsertVaccineCourseError
   | VaccineCourseNode;
+
+/**
+ * One registry entry as an install left it: the report the CLI prints,
+ * typed for a screen.
+ */
+export type InstalledDocumentTypeNode = {
+  __typename: 'InstalledDocumentTypeNode';
+  contextId: Scalars['String']['output'];
+  documentType: Scalars['String']['output'];
+  formSchemaId: Scalars['String']['output'];
+  outcome: RegistryOutcomeNode;
+  pluginCode: Scalars['String']['output'];
+  programKey?: Maybe<Scalars['String']['output']>;
+  /**
+   * Schema versions this install added; versions already present keep
+   * their schema.
+   */
+  schemasAdded: Scalars['Int']['output'];
+  /** Versions already present whose legacy UI schema this install replaced. */
+  uiSchemasUpdated: Scalars['Int']['output'];
+};
 
 export type InstalledPluginConnector = {
   __typename: 'InstalledPluginConnector';
@@ -7968,6 +8004,13 @@ export type PluginInfoNode = {
    * result.
    */
   formInstallPreview?: Maybe<FormInstallPreviewNode>;
+  /**
+   * What the install did to each form plugin's registry entries: the
+   * report the CLI prints, one node per declared type. Null for an
+   * uploaded bundle not yet installed, and empty for a bundle with no form
+   * plugin.
+   */
+  installedDocumentTypes?: Maybe<Array<InstalledDocumentTypeNode>>;
   pluginInfo: Scalars['JSON']['output'];
 };
 
@@ -10007,6 +10050,14 @@ export type RefreshTokenErrorInterface = {
 };
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
+
+/** What an install did to one registry entry. */
+export enum RegistryOutcomeNode {
+  Created = 'CREATED',
+  TakenOver = 'TAKEN_OVER',
+  Unchanged = 'UNCHANGED',
+  Updated = 'UPDATED',
+}
 
 export type RepackConnector = {
   __typename: 'RepackConnector';

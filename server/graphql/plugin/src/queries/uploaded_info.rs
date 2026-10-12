@@ -170,10 +170,63 @@ pub struct FormPluginDocumentTypeNode {
     pub existing_entry_owner: Option<String>,
     /// The existing entry's category, for `CATEGORY_MISMATCH`.
     pub existing_entry_category: Option<DocumentRegistryCategoryNode>,
+    /// The program the existing entry is in (`OWNED` or `UNOWNED`), where its
+    /// context is a program's: what a take-over keeps the type under unless
+    /// its key is moved, so a screen can start the key on it.
+    pub existing_entry_program: Option<ProgramNode>,
     /// True when installing would leave the type's form blank on sites still
     /// running the old client, which install refuses unless the type is named
     /// in `blankOldUi`.
     pub blanks_old_ui: bool,
+    /// The refusals no choice in `installUploadedPlugin` can get past, in the
+    /// words that mutation would refuse with: a schema version already
+    /// installed with other content, a version documents are pinned to left
+    /// out, a take-over that changes the deployment's rules or lacks its
+    /// current version, a second patient type. Empty when install could go
+    /// ahead with the right choices.
+    pub refusals: Vec<String>,
+}
+
+/// What an install did to one registry entry.
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "service::plugin::form_plugin::RegistryOutcome")]
+pub enum RegistryOutcomeNode {
+    Created,
+    Updated,
+    TakenOver,
+    Unchanged,
+}
+
+/// One registry entry as an install left it: the report the CLI prints,
+/// typed for a screen.
+#[derive(SimpleObject)]
+pub struct InstalledDocumentTypeNode {
+    pub plugin_code: String,
+    pub document_type: String,
+    pub program_key: Option<String>,
+    pub context_id: String,
+    pub form_schema_id: String,
+    pub outcome: RegistryOutcomeNode,
+    /// Schema versions this install added; versions already present keep
+    /// their schema.
+    pub schemas_added: u32,
+    /// Versions already present whose legacy UI schema this install replaced.
+    pub ui_schemas_updated: u32,
+}
+
+impl InstalledDocumentTypeNode {
+    fn from_domain(installed: InstalledDocumentType) -> Self {
+        InstalledDocumentTypeNode {
+            plugin_code: installed.plugin_code,
+            document_type: installed.document_type,
+            program_key: installed.program_key,
+            context_id: installed.context_id,
+            form_schema_id: installed.form_schema_id,
+            outcome: RegistryOutcomeNode::from(installed.outcome),
+            schemas_added: installed.schemas_added as u32,
+            ui_schemas_updated: installed.ui_schemas_updated as u32,
+        }
+    }
 }
 
 /// One of a form plugin's program keys, with the program an earlier install
@@ -302,7 +355,11 @@ impl FormPluginDocumentTypeNode {
             existing_entry_id,
             existing_entry_owner,
             existing_entry_category,
+            existing_entry_program: preview
+                .existing_entry_program
+                .map(|program_row| ProgramNode { program_row }),
             blanks_old_ui: preview.blanks_old_ui,
+            refusals: preview.refusals,
         }
     }
 }
@@ -347,5 +404,18 @@ impl PluginInfoNode {
         self.form_install_preview
             .clone()
             .map(FormInstallPreviewNode::from_domain)
+    }
+
+    /// What the install did to each form plugin's registry entries: the
+    /// report the CLI prints, one node per declared type. Null for an
+    /// uploaded bundle not yet installed, and empty for a bundle with no form
+    /// plugin.
+    pub async fn installed_document_types(&self) -> Option<Vec<InstalledDocumentTypeNode>> {
+        self.installed_document_types.clone().map(|types| {
+            types
+                .into_iter()
+                .map(InstalledDocumentTypeNode::from_domain)
+                .collect()
+        })
     }
 }

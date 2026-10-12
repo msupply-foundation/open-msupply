@@ -147,11 +147,22 @@ pub struct DocumentTypePreview {
     pub name: String,
     pub program_key: Option<String>,
     pub existing_entry: ExistingEntry,
+    /// The program the existing entry is in, where its context is a program's:
+    /// what a take-over keeps the type under unless its key is moved, so a
+    /// screen can start the key on it. `None` without an entry, for the
+    /// Patient context, and where install could not write the entry.
+    pub existing_entry_program: Option<ProgramRow>,
     /// True when the install would move the type's entry to a version with no
     /// UI schema over one that has it, leaving the form blank on sites still
     /// on the old client; install refuses that unless the type is named as
     /// allowed to go blank.
     pub blanks_old_ui: bool,
+    /// The refusals no choice can get past, as install words them: a schema
+    /// version already installed with other content, a version documents are
+    /// pinned to left out, a take-over that changes the deployment's rules or
+    /// lacks its current version, a second patient type. Install stops at
+    /// the first of these; a screen shows them all before asking anything.
+    pub refusals: Vec<String>,
 }
 
 /// One program key a declared type names. A key the sidecar declares but no
@@ -431,13 +442,35 @@ pub(crate) fn preview_form_plugins(
                     Some(row) => would_blank_old_ui(connection, row, declaration)?,
                     None => false,
                 };
+                // The program the entry is in, so a take-over can start its
+                // key there (the Patient context matches no program).
+                let existing_entry_program = match &row {
+                    Some(row) => ProgramRepository::new(connection).query_one(
+                        ProgramFilter::new()
+                            .context_id(EqualFilter::equal_to(row.context_id.clone())),
+                    )?,
+                    None => None,
+                };
+                // What install would refuse whatever is chosen: for an unowned
+                // entry, as the take-over the choices would make it.
+                let taken_over = matches!(existing_entry, ExistingEntry::Unowned { .. });
+                let refusals = choice_free_refusals(
+                    connection,
+                    declaration,
+                    row.as_ref().map(|row| (row, taken_over)),
+                )?
+                .iter()
+                .map(ToString::to_string)
+                .collect();
                 Ok(DocumentTypePreview {
                     document_type: declaration.document_type.clone(),
                     category: declaration.category.clone(),
                     name: declaration.name.clone(),
                     program_key: declaration.program_key.clone(),
                     existing_entry,
+                    existing_entry_program,
                     blanks_old_ui,
+                    refusals,
                 })
             })
             // As above: one entry per declared type, or the first error.
@@ -617,14 +650,19 @@ fn install_document_type(
         Some(key) => contexts[key].clone(),
     };
 
-    if declaration.category == DocumentRegistryCategory::Patient {
-        if let Some(other) = registry_repo
-            .find_many_by_category(DocumentRegistryCategory::Patient)?
-            .into_iter()
-            .find(|row| row.document_type != *document_type)
-        {
-            return Err(Error::OnlyOnePatientEntryAllowed(other.document_type));
-        }
+    // What no choice could have got past, first: the preview names the same
+    // refusals before a screen asks anything.
+    if let Some(refusal) = choice_free_refusals(
+        connection,
+        declaration,
+        existing
+            .as_ref()
+            .map(|(row, taken_over)| (row, *taken_over)),
+    )?
+    .into_iter()
+    .next()
+    {
+        return Err(refusal);
     }
 
     // Saved records carry their own copy of the program, so re-pointing the
@@ -647,31 +685,8 @@ fn install_document_type(
         }
     }
 
-    // A document opens in the version of the form its schema id names, so a
-    // version that documents are pinned to can never leave the list.
-    let declared: HashSet<&String> = declaration.versions.iter().map(|v| &v.id).collect();
-    let missing: Vec<String> = DocumentRepository::new(connection)
-        .count_by_form_schema_id(document_type)?
-        .into_iter()
-        .filter(|(schema_id, _)| !declared.contains(schema_id))
-        .map(|(schema_id, count)| {
-            let noun = if count == 1 { "document" } else { "documents" };
-            format!("{schema_id} ({count} {noun})")
-        })
-        .collect();
-    if !missing.is_empty() {
-        return Err(Error::PinnedSchemaVersionsMissing {
-            document_type: document_type.clone(),
-            pinned: missing.join(", "),
-        });
-    }
-
-    if let Some((row, taken_over)) = &existing {
+    if let Some((row, _)) = &existing {
         refuse_blanking_old_ui(connection, row, declaration, options)?;
-        if *taken_over {
-            refuse_another_deployments_versions(row, declaration)?;
-            refuse_changing_config(row, declaration)?;
-        }
     }
 
     let (schemas_added, ui_schemas_updated) = install_schema_versions(connection, declaration)?;
@@ -743,6 +758,74 @@ fn install_document_type(
         schemas_added,
         ui_schemas_updated,
     })
+}
+
+/// The install refusals that depend on nothing the installer chooses: the
+/// bundle against this server's entries, schemas and documents. Install stops
+/// at the first; the preview names them all, so a screen can show them before
+/// any choice is made. `existing` is the entry install would write, with
+/// whether writing it is a take-over.
+fn choice_free_refusals(
+    connection: &StorageConnection,
+    declaration: &DocumentTypeDeclaration,
+    existing: Option<(&DocumentRegistryRow, bool)>,
+) -> Result<Vec<FormPluginInstallError>, RepositoryError> {
+    use FormPluginInstallError as Error;
+
+    let document_type = &declaration.document_type;
+    let mut refusals = Vec::new();
+
+    // One Patient entry per server, whatever its type.
+    if declaration.category == DocumentRegistryCategory::Patient
+        && let Some(other) = DocumentRegistryRowRepository::new(connection)
+            .find_many_by_category(DocumentRegistryCategory::Patient)?
+            .into_iter()
+            .find(|row| row.document_type != *document_type)
+    {
+        refusals.push(Error::OnlyOnePatientEntryAllowed(other.document_type));
+    }
+
+    // A document opens in the version of the form its schema id names, so a
+    // version that documents are pinned to can never leave the list.
+    let declared: HashSet<&String> = declaration.versions.iter().map(|v| &v.id).collect();
+    let missing: Vec<String> = DocumentRepository::new(connection)
+        .count_by_form_schema_id(document_type)?
+        .into_iter()
+        .filter(|(schema_id, _)| !declared.contains(schema_id))
+        .map(|(schema_id, count)| {
+            let noun = if count == 1 { "document" } else { "documents" };
+            format!("{schema_id} ({count} {noun})")
+        })
+        .collect();
+    if !missing.is_empty() {
+        refusals.push(Error::PinnedSchemaVersionsMissing {
+            document_type: document_type.clone(),
+            pinned: missing.join(", "),
+        });
+    }
+
+    // A published version never changes: a declared id already installed
+    // must carry the installed schema exactly.
+    let schema_repo = FormSchemaRowRepository::new(connection);
+    for version in &declaration.versions {
+        if let Some(installed) = schema_repo.find_one_by_id(&version.id)?
+            && installed.json_schema != version.json_schema
+        {
+            refusals.push(Error::SchemaIdConflict(version.id.clone()));
+        }
+    }
+
+    // A take-over must carry the deployment's own versions and its config.
+    if let Some((row, true)) = existing {
+        if let Err(refusal) = refuse_another_deployments_versions(row, declaration) {
+            refusals.push(refusal);
+        }
+        if let Err(refusal) = refuse_changing_config(row, declaration) {
+            refusals.push(refusal);
+        }
+    }
+
+    Ok(refusals)
 }
 
 /// The entry install will update, with whether updating it is a take-over:
@@ -2378,6 +2461,9 @@ mod test {
             plugin.document_types[2].program_key.as_deref(),
             Some("demo")
         );
+        // The Patient context is no program's; nothing refuses a fresh install.
+        assert_eq!(plugin.document_types[0].existing_entry_program, None);
+        assert!(plugin.document_types.iter().all(|t| t.refusals.is_empty()));
         assert_eq!(plugin.document_types[2].name, "DemoEncounter name");
         assert_eq!(
             plugin.document_types[2].category,
@@ -2418,6 +2504,92 @@ mod test {
                 .all(|t| t.existing_entry == ExistingEntry::Owned && !t.blanks_old_ui),
             "{:?}",
             plugin.document_types
+        );
+    }
+
+    /// What a take-over would meet is named up front, in install's own words:
+    /// the program the deployment's entry is in (so the key can start there),
+    /// a version already installed with other content, and a take-over that
+    /// would change the deployment's event rules or leaves its current
+    /// version out. Install refuses the same bundle with the first of them.
+    #[actix_rt::test]
+    async fn preview_names_the_refusals_no_choice_gets_past() {
+        let connection = setup("form_plugin_preview_refusals").await;
+        // The deployment's own encounter entry, in program A, with event rules
+        // the bundle does not carry, on a version the bundle does not declare.
+        insert_unowned_entry(
+            &connection,
+            "deployed_encounter_entry",
+            "DemoEncounter",
+            DocumentRegistryCategory::Encounter,
+            &context_program_a().id,
+        );
+        let registry = DocumentRegistryRowRepository::new(&connection);
+        let mut entry = registry
+            .find_one_by_id("deployed_encounter_entry")
+            .unwrap()
+            .unwrap();
+        entry.config = Some(
+            json!({ "events": [{ "type": "Field", "conditions": [], "event": {
+                "documentType": "DemoProgramEnrolment", "type": "x", "dataField": "extension.demo.regimen"
+            } }] })
+            .to_string(),
+        );
+        registry.upsert_one(&entry).unwrap();
+        // One of the bundle's own versions already installed with other content.
+        FormSchemaRowRepository::new(&connection)
+            .upsert_one(&FormSchemaJson {
+                id: "demo_program_DemoEncounter_v1_hash".to_string(),
+                r#type: "JsonForms".to_string(),
+                json_schema: json!({ "type": "object", "title": "something else" }),
+                ui_schema: json!({}),
+            })
+            .unwrap();
+
+        let mut sidecar = demo_sidecar();
+        sidecar.document_types[2].versions[0].deployed = true;
+        let preview = preview_form_plugins(&connection, &[sidecar.clone()]).unwrap();
+        let encounter = &preview.form_plugins[0].document_types[2];
+        assert_eq!(
+            encounter.existing_entry,
+            ExistingEntry::Unowned {
+                id: "deployed_encounter_entry".to_string()
+            }
+        );
+        assert_eq!(
+            encounter
+                .existing_entry_program
+                .as_ref()
+                .map(|p| p.id.as_str()),
+            Some("program_a")
+        );
+        let refusals = encounter.refusals.join("\n");
+        assert!(
+            refusals.contains(
+                "demo_program_DemoEncounter_v1_hash is already installed with different content"
+            ),
+            "{refusals}"
+        );
+        assert!(
+            refusals.contains("declares versions under a deployment's own ids, but not deployed_encounter_entry_schema"),
+            "{refusals}"
+        );
+        assert!(
+            refusals.contains("taken over with a registry config other than the deployment's"),
+            "{refusals}"
+        );
+        assert_eq!(encounter.refusals.len(), 3);
+
+        // Install meets the first of them.
+        let error = install_form_plugins(
+            &connection,
+            &[sidecar],
+            &options(&[("demo", "program_a")], &["DemoEncounter", PATIENT_TYPE]),
+        )
+        .unwrap_err();
+        assert!(
+            matches!(error, Error::SchemaIdConflict(ref id) if id == "demo_program_DemoEncounter_v1_hash"),
+            "{error:?}"
         );
     }
 

@@ -3001,11 +3001,26 @@ type FormPluginDocumentTypeNode {
 	"""
 	existingEntryCategory: DocumentRegistryCategoryNode
 	"""
+	The program the existing entry is in (`OWNED` or `UNOWNED`), where its
+	context is a program's: what a take-over keeps the type under unless
+	its key is moved, so a screen can start the key on it.
+	"""
+	existingEntryProgram: ProgramNode
+	"""
 	True when installing would leave the type's form blank on sites still
 	running the old client, which install refuses unless the type is named
 	in `blankOldUi`.
 	"""
 	blanksOldUi: Boolean!
+	"""
+	The refusals no choice in `installUploadedPlugin` can get past, in the
+	words that mutation would refuse with: a schema version already
+	installed with other content, a version documents are pinned to left
+	out, a take-over that changes the deployment's rules or lacks its
+	current version, a second patient type. Empty when install could go
+	ahead with the right choices.
+	"""
+	refusals: [String!]!
 }
 
 type FormPluginPreviewNode {
@@ -4306,6 +4321,28 @@ input InsertVaccineCourseInput {
 }
 
 union InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode
+
+"""
+One registry entry as an install left it: the report the CLI prints,
+typed for a screen.
+"""
+type InstalledDocumentTypeNode {
+	pluginCode: String!
+	documentType: String!
+	programKey: String
+	contextId: String!
+	formSchemaId: String!
+	outcome: RegistryOutcomeNode!
+	"""
+	Schema versions this install added; versions already present keep
+	their schema.
+	"""
+	schemasAdded: Int!
+	"""
+	Versions already present whose legacy UI schema this install replaced.
+	"""
+	uiSchemasUpdated: Int!
+}
 
 type InstalledPluginConnector {
 	nodes: [InstalledPluginNode!]!
@@ -6396,6 +6433,13 @@ type PluginInfoNode {
 	result.
 	"""
 	formInstallPreview: FormInstallPreviewNode
+	"""
+	What the install did to each form plugin's registry entries: the
+	report the CLI prints, one node per declared type. Null for an
+	uploaded bundle not yet installed, and empty for a bundle with no form
+	plugin.
+	"""
+	installedDocumentTypes: [InstalledDocumentTypeNode!]
 }
 
 """
@@ -8039,6 +8083,16 @@ interface RefreshTokenErrorInterface {
 }
 
 union RefreshTokenResponse = RefreshTokenError | RefreshToken
+
+"""
+What an install did to one registry entry.
+"""
+enum RegistryOutcomeNode {
+	CREATED
+	UPDATED
+	TAKEN_OVER
+	UNCHANGED
+}
 
 type RepackConnector {
 	totalCount: Int!
