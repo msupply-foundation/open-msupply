@@ -57,7 +57,12 @@ query UploadedPluginInfo($fileId: String!) {
                 existingEntryId
                 existingEntryOwner
                 existingEntryCategory
+                existingEntryProgram {
+                  id
+                  name
+                }
                 blanksOldUi
+                refusals
               }
             }
             programs {
@@ -75,8 +80,8 @@ query UploadedPluginInfo($fileId: String!) {
 }
 
 # Installs a bundle already sent to POST /upload. `pluginInfo` is untyped JSON
-# the screen never reads: success is the call answering at all
-# (contract § install). The three optional arguments are a form plugin's
+# the screen never reads; for a plain bundle success is the call answering at
+# all (contract § install). The three optional arguments are a form plugin's
 # installer choices (contract § install): the program for each program key,
 # the document types whose existing entry it may take over, and the types
 # whose form may go blank on sites still running the old client.
@@ -95,6 +100,16 @@ mutation InstallUploadedPlugin(
         blankOldUi: $blankOldUi
       ) {
         pluginInfo
+        # What the install did to each form plugin registry entry, shown
+        # before the dialog closes (contract § install).
+        installedDocumentTypes {
+          documentType
+          programKey
+          contextId
+          outcome
+          schemasAdded
+          uiSchemasUpdated
+        }
       }
     }
   }

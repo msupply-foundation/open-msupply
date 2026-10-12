@@ -2,13 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   blankOldUiCandidates,
   canInstall,
+  formName,
   initialChoices,
+  installReport,
   installVariables,
   needsChoices,
   previewOf,
+  programMoves,
   programOptions,
   refusedTypes,
   takeOverCandidates,
+  typeRefusals,
   unchosenKeys,
   withBlankOldUi,
   withProgram,
@@ -19,8 +23,8 @@ import {
 } from './formInstall';
 
 // spec/plugin-management/cases/OMS-REG-MNG-07 — installing a bundle that
-// carries a form plugin (.67–.72, .74): what the dialog asks, and what it
-// sends, decided from the server's preview.
+// carries a form plugin (.67–.72, .74, .76–.80): what the dialog asks, what it
+// sends, and how it reads the install back, decided from the server's preview.
 
 const HIV = { id: 'hiv_program', name: 'HIV Care' };
 const TB = { id: 'tb_program', name: 'TB' };
@@ -39,7 +43,9 @@ const type = (
   existingEntryId: null,
   existingEntryOwner: null,
   existingEntryCategory: null,
+  existingEntryProgram: null,
   blanksOldUi: false,
+  refusals: [],
   ...rest,
 });
 
@@ -227,5 +233,145 @@ describe('OMS-REG-MNG-07.76 — the programs offered are the server’s, by name
     const empty = preview({}, []);
     expect(programOptions(empty.programs)).toEqual([]);
     expect(canInstall(empty, none)).toBe(false);
+  });
+});
+
+describe('OMS-REG-MNG-07.78 — a take-over starts its key on the program its forms are in', () => {
+  // The deployment's own HIV entries, in HIV Care, about to be taken over by
+  // a plugin whose hivCare key no earlier install bound.
+  const deployed = preview({
+    documentTypes: [
+      type('Patient', null),
+      type('HIVEncounter', 'hivCare', {
+        existingEntry: 'UNOWNED',
+        existingEntryId: 'dep_hiv',
+        existingEntryProgram: HIV,
+      }),
+      type('TBEncounter', 'tb'),
+    ],
+  });
+
+  it('pre-fills the key with that program, as it pre-fills a bound one', () => {
+    expect(initialChoices(deployed).programs).toEqual({
+      hivCare: HIV.id,
+      tb: TB.id,
+    });
+  });
+
+  it('warns, without withholding the install, when another program would move them', () => {
+    const start = withTakeOver(initialChoices(deployed), 'HIVEncounter', true);
+    expect(programMoves(deployed, start, 'hivCare')).toEqual([]);
+    const moved = withProgram(start, 'hivCare', TB.id);
+    expect(programMoves(deployed, moved, 'hivCare')).toEqual([
+      {
+        from: HIV,
+        forms: [expect.objectContaining({ documentType: 'HIVEncounter' })],
+      },
+    ]);
+    expect(canInstall(deployed, moved)).toBe(true);
+  });
+
+  it('leaves the key empty when its forms sit in more than one program', () => {
+    const split = preview({
+      programKeys: [
+        {
+          programKey: 'hivCare',
+          documentTypes: ['HIVEnrolment', 'HIVEncounter'],
+          boundProgram: null,
+        },
+      ],
+      documentTypes: [
+        type('HIVEnrolment', 'hivCare', {
+          existingEntry: 'UNOWNED',
+          existingEntryProgram: HIV,
+        }),
+        type('HIVEncounter', 'hivCare', {
+          existingEntry: 'UNOWNED',
+          existingEntryProgram: TB,
+        }),
+      ],
+    });
+    expect(initialChoices(split).programs).toEqual({});
+    // Whichever is chosen, the other program's form moves.
+    expect(
+      programMoves(
+        split,
+        withProgram(initialChoices(split), 'hivCare', HIV.id),
+        'hivCare'
+      ).map(move => move.from.id)
+    ).toEqual([TB.id]);
+  });
+});
+
+describe('OMS-REG-MNG-07.79 — a refusal no choice gets past is named up front', () => {
+  it("lists the server's reasons and withholds the install whatever is chosen", () => {
+    const reason =
+      'Schema deployment_HIVEncounter_v1_aaaa is already installed with different content; a published schema version never changes, so the bundle must carry it exactly as installed';
+    const refused = preview({
+      documentTypes: [
+        type('Patient', null),
+        type('HIVEncounter', 'hivCare', { refusals: [reason] }),
+        type('TBEncounter', 'tb'),
+      ],
+    });
+    expect(typeRefusals(refused)).toEqual([
+      {
+        type: expect.objectContaining({ documentType: 'HIVEncounter' }),
+        reason,
+      },
+    ]);
+    const complete = withProgram(initialChoices(refused), 'hivCare', HIV.id);
+    expect(unchosenKeys(refused, complete)).toEqual([]);
+    expect(canInstall(refused, complete)).toBe(false);
+  });
+});
+
+describe('OMS-REG-MNG-07.80 — the install says what it did to each form', () => {
+  it('names each form by its display name, with its outcome, the program chosen for its key and counts', () => {
+    expect(
+      installReport(
+        preview(),
+        withProgram(initialChoices(preview()), 'hivCare', HIV.id),
+        [
+          {
+            documentType: 'Patient',
+            programKey: null,
+            contextId: 'Patient',
+            outcome: 'TAKEN_OVER',
+            schemasAdded: 0,
+            uiSchemasUpdated: 0,
+          },
+          {
+            documentType: 'HIVEncounter',
+            programKey: 'hivCare',
+            contextId: HIV.id,
+            outcome: 'CREATED',
+            schemasAdded: 2,
+            uiSchemasUpdated: 0,
+          },
+        ]
+      )
+    ).toEqual([
+      {
+        documentType: 'Patient',
+        name: 'Patient name',
+        outcome: 'TAKEN_OVER',
+        program: undefined,
+        schemasAdded: 0,
+        uiSchemasUpdated: 0,
+      },
+      {
+        documentType: 'HIVEncounter',
+        name: 'HIVEncounter name',
+        outcome: 'CREATED',
+        program: 'HIV Care',
+        schemasAdded: 2,
+        uiSchemasUpdated: 0,
+      },
+    ]);
+  });
+
+  it('falls back to the document type for a form the preview does not name', () => {
+    expect(formName(type('Bare', 'tb', { name: '' }))).toBe('Bare');
   });
 });

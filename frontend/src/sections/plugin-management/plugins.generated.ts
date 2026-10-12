@@ -56,7 +56,12 @@ export type UploadedPluginInfoResult = {
   existingEntryId: string | null;
   existingEntryOwner: string | null;
   existingEntryCategory: "PATIENT" | "PROGRAM_ENROLMENT" | "ENCOUNTER" | "CONTACT_TRACE" | "CUSTOM" | null;
+  existingEntryProgram: {
+  id: string;
+  name: string;
+} | null;
   blanksOldUi: boolean;
+  refusals: Array<string>;
 }>;
 }>;
   programs: Array<{
@@ -74,7 +79,7 @@ export type UploadedPluginInfoResult = {
 };
 
 export const UploadedPluginInfo = {
-  query: "query UploadedPluginInfo($fileId: String!) {\n  centralServer {\n    plugin {\n      uploadedPluginInfo(fileId: $fileId) {\n        __typename\n        ... on PluginInfoNode {\n          formInstallPreview {\n            formPlugins {\n              pluginCode\n              programKeys {\n                programKey\n                documentTypes\n                boundProgram {\n                  id\n                  name\n                }\n              }\n              documentTypes {\n                documentType\n                name\n                category\n                programKey\n                existingEntry\n                existingEntryId\n                existingEntryOwner\n                existingEntryCategory\n                blanksOldUi\n              }\n            }\n            programs {\n              id\n              name\n            }\n          }\n        }\n        ... on UploadedPluginError {\n          error\n        }\n      }\n    }\n  }\n}",
+  query: "query UploadedPluginInfo($fileId: String!) {\n  centralServer {\n    plugin {\n      uploadedPluginInfo(fileId: $fileId) {\n        __typename\n        ... on PluginInfoNode {\n          formInstallPreview {\n            formPlugins {\n              pluginCode\n              programKeys {\n                programKey\n                documentTypes\n                boundProgram {\n                  id\n                  name\n                }\n              }\n              documentTypes {\n                documentType\n                name\n                category\n                programKey\n                existingEntry\n                existingEntryId\n                existingEntryOwner\n                existingEntryCategory\n                existingEntryProgram {\n                  id\n                  name\n                }\n                blanksOldUi\n                refusals\n              }\n            }\n            programs {\n              id\n              name\n            }\n          }\n        }\n        ... on UploadedPluginError {\n          error\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<UploadedPluginInfoResult, UploadedPluginInfoVariables>;
 
 export type InstallUploadedPluginVariables = {
@@ -92,13 +97,21 @@ export type InstallUploadedPluginResult = {
   plugins: {
   installUploadedPlugin: {
   pluginInfo: unknown;
+  installedDocumentTypes: Array<{
+  documentType: string;
+  programKey: string | null;
+  contextId: string;
+  outcome: "CREATED" | "UPDATED" | "TAKEN_OVER" | "UNCHANGED";
+  schemasAdded: number;
+  uiSchemasUpdated: number;
+}> | null;
 };
 };
 };
 };
 
 export const InstallUploadedPlugin = {
-  query: "mutation InstallUploadedPlugin($fileId: String!, $programs: [PluginProgramInput!], $takeOver: [String!], $blankOldUi: [String!]) {\n  centralServer {\n    plugins {\n      installUploadedPlugin(\n        fileId: $fileId\n        programs: $programs\n        takeOver: $takeOver\n        blankOldUi: $blankOldUi\n      ) {\n        pluginInfo\n      }\n    }\n  }\n}",
+  query: "mutation InstallUploadedPlugin($fileId: String!, $programs: [PluginProgramInput!], $takeOver: [String!], $blankOldUi: [String!]) {\n  centralServer {\n    plugins {\n      installUploadedPlugin(\n        fileId: $fileId\n        programs: $programs\n        takeOver: $takeOver\n        blankOldUi: $blankOldUi\n      ) {\n        pluginInfo\n        installedDocumentTypes {\n          documentType\n          programKey\n          contextId\n          outcome\n          schemasAdded\n          uiSchemasUpdated\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<InstallUploadedPluginResult, InstallUploadedPluginVariables>;
 
 export type UninstallPluginVariables = {
