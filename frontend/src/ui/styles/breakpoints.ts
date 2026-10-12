@@ -13,10 +13,21 @@ export const breakpoints = {
    * Below this, the menu bar becomes a hamburger overlay instead of docked (and
    * the side panel an off-canvas drawer). Also the "narrow viewport" line —
    * tablet portrait and below — at which modal dialogs expand to full screen
-   * (ui-standards responsive: tablet portrait / small screen is 600–1023px).
+   * (ui-standards responsive: tablet portrait / small screen is 600–1023px),
+   * and the page header becomes one row beside a truncating breadcrumb (its
+   * actions shed their labels to icons when they don't fit — measured by
+   * Header, not tied to this line).
    */
   navOverlay: 1024,
-  /** Below this = phone-ish; index.css drops the root font-size here. */
+  /**
+   * Below this = phone-ish — handheld scanners included (a Honeywell CK65 is
+   * ~320×533 CSS px; no line of its own). index.css drops the root font-size
+   * here, and the chrome renders its single-row forms so content gets the
+   * screen: the app bar's cells shed their labels to icons, the list toolbar
+   * is one row, card lists drop empty fields, header fields fold behind a
+   * disclosure, every dialog is a sheet, and the whole page scrolls as one
+   * rather than pinning its bands. Also the `collapsible` Button tier.
+   */
   compact: 600,
   /**
    * At/above this, a page's side panel defaults open (a default-state

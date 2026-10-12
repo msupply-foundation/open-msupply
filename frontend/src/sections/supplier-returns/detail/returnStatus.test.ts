@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   currentStep,
   filterByStatusPreference,
+  trackStages,
 } from '@/domain/invoice/statusGate';
 import {
   hasOriginalShipment,
@@ -109,20 +110,25 @@ describe('statusSteps — the lifecycle indicator', () => {
   });
 });
 
-describe('offered flow / currentStep — pref-filtered lifecycle indicator (rules § preference gates)', () => {
+describe('track stages / currentStep — pref-filtered lifecycle indicator (rules § preference gates)', () => {
   // Composed through the shared @/domain/invoice helpers exactly as the
-  // footer does.
-  const offered = (allowed: readonly string[]) =>
-    filterByStatusPreference(STATUS_FLOW, allowed);
+  // footer does: the preference filters the stages, except the return's own,
+  // which the track keeps so the current stage always has a step to mark.
+  const stages = (status: string, allowed: readonly string[]) =>
+    trackStages(STATUS_FLOW, allowed, status);
   const step = (status: string, allowed: readonly string[]) =>
-    currentStep(STATUS_FLOW, offered(allowed), status);
+    currentStep(stages(status, allowed), status);
 
-  it('filters the indicator to the offered statuses and keeps a sensible current stage', () => {
-    expect(offered([])).toEqual(STATUS_FLOW);
-    expect(offered(['NEW', 'SHIPPED'])).toEqual(['NEW', 'SHIPPED']);
-    // Actual status PICKED is hidden by the pref → current falls back to NEW
-    // (the nearest offered stage at-or-before).
-    expect(step('PICKED', ['NEW', 'SHIPPED'])).toBe(0);
+  it('filters the indicator to the offered statuses, plus the return’s own', () => {
+    expect(stages('NEW', [])).toEqual(STATUS_FLOW);
+    expect(stages('NEW', ['NEW', 'SHIPPED'])).toEqual(['NEW', 'SHIPPED']);
+    // A PICKED return keeps its Picked step even though the pref hides it
+    expect(stages('PICKED', ['NEW', 'SHIPPED'])).toEqual([
+      'NEW',
+      'PICKED',
+      'SHIPPED',
+    ]);
+    expect(step('PICKED', ['NEW', 'SHIPPED'])).toBe(1);
     expect(step('PICKED', [])).toBe(1);
     expect(step('SHIPPED', ['NEW', 'SHIPPED'])).toBe(1);
   });

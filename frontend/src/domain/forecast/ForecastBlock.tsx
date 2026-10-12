@@ -1,6 +1,7 @@
 import { For, Match, Show, Switch, type JSX } from 'solid-js';
 import { measureWord, t } from '../../intl';
-import { formatNumber, roundTo } from '../../intl/formatNumber';
+import { formatNumber } from '../../intl/formatNumber';
+import { roundedText } from '../../intl/numberDisplay';
 import {
   Accordion,
   AccordionItem,
@@ -54,12 +55,11 @@ export interface ForecastBlockProps {
   /**
    * A stock quantity (units) in the editor's active entry mode, with its
    * measure word — so monthly demand and target stock re-express like the
-   * panels' figures (OMS-REG-REPL-04.74). Rounded to up to `fractionDigits`
-   * places:
-   * the block's figures keep two, so monthly demand × target months visibly
-   * makes target stock.
+   * panels' figures (OMS-REG-REPL-04.74). Rounded to the configured decimal
+   * places (marked when rounded), not up to whole units, so monthly demand ×
+   * target months visibly makes target stock.
    */
-  formatQuantity: (units: number, fractionDigits: number) => string;
+  formatQuantity: (units: number) => string;
   /**
    * The method select's options. Omitted → the read-only form: the method as
    * text, no select.
@@ -138,21 +138,17 @@ export const ForecastBlock = (props: ForecastBlockProps): JSX.Element => {
       };
     });
 
-  // Monthly demand and target stock to the same two places, so the caption's
-  // arithmetic reads true (a whole-number demand rounded up would not).
-  const FRACTION_DIGITS = 2;
-  const quantity = (units: number) =>
-    props.formatQuantity(units, FRACTION_DIGITS);
+  // Monthly demand and target stock to the same configured places, so the
+  // caption's arithmetic reads true (a whole-number demand rounded up would
+  // not).
+  const quantity = (units: number) => props.formatQuantity(units);
   const monthlyDemand = () => quantity(props.line.forecastMonthlyConsumption);
 
   // A principal's own monthly demand, in its own units: the entry mode's packs
   // and doses are the ancillary item's, not the principal's.
   const principalDemand = (principal: AncillaryRatioPrincipal) => {
-    const figure = roundTo(
-      principal.principalMonthlyConsumption,
-      FRACTION_DIGITS
-    );
-    return `${formatNumber(figure)} ${measureWord('units', principal.item?.unitName ?? null, figure)}`;
+    const figure = principal.principalMonthlyConsumption;
+    return `${roundedText(figure)} ${measureWord('units', principal.item?.unitName ?? null, figure)}`;
   };
 
   return (

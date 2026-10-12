@@ -119,6 +119,13 @@ services:
       # is what the dashboard shows as "by ...".
       oms.actor: ${OMS_ACTOR:-}
 
+      # Which sample dataset the database was seeded from - `e2e`,
+      # `reference1` - or `none` for one that started empty. Carried forward
+      # like the owner, since only the deploy that creates the database knows.
+      # Like the owner, nothing decides anything on it: the dashboard reads it
+      # to say how to log in. Empty means a database from before the label.
+      oms.dataset: ${OMS_DATASET:-}
+
     # The image's own entrypoint, which runs initdb/pg_ctl/createdb against the
     # cluster inside the container and then execs entry.sh. Not a variable: with
     # external postgres support removed there is exactly one correct value, and
@@ -253,7 +260,7 @@ networks:
     # would delete the network out from under the proxy and every deployment
     # still running on it.
     #
-    # A literal name, not a variable: it has to agree with the proxy that was
-    # stood up by hand on the box, and a knob that must match something outside
-    # this repo is worse than no knob.
+    # A literal name, not a variable: it has to agree with the proxy in
+    # .github/deploy/proxy, and a knob that must match another file is worse than
+    # no knob.
     external: true

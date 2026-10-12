@@ -1,5 +1,5 @@
 import { t } from '../../../../intl';
-import { formatNumber } from '../../../../intl/formatNumber';
+import { roundedText } from '../../../../intl/numberDisplay';
 import type { DraftStockMovementLineFragment } from './stockMovementDraftLines.generated';
 
 // Pure derivations for the line editor (spec/stock-movements/rules.md § lines,
@@ -35,8 +35,8 @@ export const isCandidateDisabled = (
 // packs figure is the batch's TOTAL packs (ui-surface § S3).
 export const candidateLabelParams = (c: DraftStockMovementLineFragment) => ({
   batch: c.batch ?? '-',
-  packSize: formatNumber(c.packSize),
-  packs: formatNumber(c.totalNumberOfPacks),
+  packSize: roundedText(c.packSize),
+  packs: roundedText(c.totalNumberOfPacks),
   location: c.sourceLocation?.code ?? '-',
 });
 

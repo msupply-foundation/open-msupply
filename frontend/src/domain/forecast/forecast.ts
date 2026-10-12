@@ -1,5 +1,6 @@
 import { t, tPlural } from '../../intl';
 import { formatNumber, round } from '../../intl/formatNumber';
+import { roundedText } from '../../intl/numberDisplay';
 import type {
   ForecastLineFragment,
   ForecastMethodOptionFragment,
@@ -80,8 +81,9 @@ export const courseTitle = (course: PopulationCourse): string =>
 // One arithmetic step of a Population course: its figures substituted into the
 // formula, then the emphasised result. The step's title and formula wording are
 // static locale keys held by the component; this pure function owns only the
-// arithmetic. Rounding: the loss factor to 3 dp, the annual doses and the
-// monthly units to 2 dp — monthly demand keeps its fraction.
+// arithmetic. Rounding: the loss factor keeps 3 dp — a rate, not a count of
+// things; the annual doses and the monthly units follow the configured decimal
+// places — monthly demand keeps its fraction.
 export type ForecastStep = { substitution: string; result: string };
 
 export const populationSteps = (
@@ -91,12 +93,12 @@ export const populationSteps = (
     // 1. Annual target doses = target population × doses × (coverage/100) ×
     // loss factor.
     substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
-    result: `= ${round(course.annualTargetDoses, 2)} ${t('label.doses-per-year')}`,
+    result: `= ${roundedText(course.annualTargetDoses)} ${t('label.doses-per-year')}`,
   },
   {
     // 2. Monthly units = annual target doses / 12 / doses per unit.
-    substitution: `${round(course.annualTargetDoses, 2)} / 12 / ${formatNumber(course.dosesPerUnit)}`,
-    result: `= ${round(course.monthlyUnits, 2)} ${t('label.units-per-month')}`,
+    substitution: `${roundedText(course.annualTargetDoses)} / 12 / ${formatNumber(course.dosesPerUnit)}`,
+    result: `= ${roundedText(course.monthlyUnits)} ${t('label.units-per-month')}`,
   },
 ];
 

@@ -66,7 +66,7 @@ Both callers share the build cache. BuildKit keys on the build's content, not on
 
 There is no separate client or server build job and no artifact hand-off between jobs. That shape suited GitHub-hosted runners, where each job gets a fresh VM; on a self-hosted box the jobs serialise on a lane and the artifacts move ~100MB between two steps on the same disk. BuildKit runs the frontend build concurrently with the server compile inside one job instead. Use `--progress plain` (already set) rather than splitting it back out for per-step visibility.
 
-Everything publishes to `msupplyfoundation/omsupply`. Deployment builds (`docker-named-deployment.yaml`) are tagged `deploy_<sha>-<db>-amd64` (plus `-debug` for a debug build) — keyed on the commit, not the deployment, so every server on one commit shares one image — and get **no** floating tag: `latest-develop*` is the nightly pointer that demo servers follow, and repointing it on every merge would push unvetted commits at them several times a day. Deployment tags are immutable and the nightly cleanup sweeps them after 30 days like any other non-release tag.
+Everything publishes to `msupplyfoundation/omsupply`. Deployment builds (`docker-named-deployment.yaml` and `docker-pr-preview.yaml`) are tagged `deploy_<sha>-<db>-amd64` (plus `-debug` for a debug build) — content-addressed, keyed on the commit, not the deployment, so every server on one commit and profile shares one image, a PR preview included — and get **no** floating tag: `latest-develop*` is the nightly pointer that demo servers follow, and repointing it on every merge would push unvetted commits at them several times a day. Deployment tags are immutable and the nightly cleanup sweeps them after 30 days like any other non-release tag.
 
 ### Image tags
 
@@ -188,7 +188,7 @@ Two situations need a clean database, and both are the same fix — run the work
 
 Previews only work for branches in this repository. A PR from a fork gets a read-only token and no secrets, so the workflow says so and stops rather than failing at the registry twenty minutes later.
 
-Preview images are swept from Docker Hub after 7 days rather than the usual 30 — one push makes one tag, and a tag is dead as soon as the next push supersedes it.
+A preview's image is the same `deploy_<sha>-postgres-amd64-debug` a named debug deployment of that commit uses, so if one also follows the PR's branch, each push is built once between them. Neither removes the image while the other is still running it. Because the image already exists, re-running a preview's workflow for the same push redeploys it without rebuilding — delete the tag (or the local image, when the box doesn't push) to force a fresh build.
 
 ### What every deployment has in common
 
@@ -245,8 +245,8 @@ A separate `cleanup-docker-tags.yaml` workflow runs nightly to remove old non-re
 
 | tags                                                     | swept after | why                                                                                    |
 | -------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
-| per-PR previews, `pr-<number>-<sha>`                     | 7 days      | one tag per push, and a tag is dead as soon as the next push supersedes it             |
-| every other non-release tag, including named deployments | 30 days     | also the reason `days` is capped at 30 — a deployment cannot outlive its own image tag |
+| legacy per-PR previews, `pr-<number>-<sha>`              | 7 days      | from before previews shared `deploy_<sha>` images; none are minted any more            |
+| every other non-release tag, including all deployments   | 30 days     | also the reason `days` is capped at 30 — a deployment cannot outlive its own image tag |
 
 Both are configurable. A variant marker (`-dev`, `-debug`) is stripped before the release check and before the preview match, so a debug build stays in the same retention class as its release equivalent.
 

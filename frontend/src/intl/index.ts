@@ -33,7 +33,22 @@ export {
   roundTo,
   parseNumber,
   intlNumberFormat,
+  MAX_FRACTION_DIGITS,
 } from './formatNumber';
+export {
+  decimalPlaces,
+  setDecimalPlaces,
+  displayNumber,
+  displayTotal,
+  displayVolume,
+  roundedText,
+  exactText,
+  isRounded,
+  DEFAULT_DECIMAL_PLACES,
+  VOLUME_DECIMALS,
+  ROUNDED_MARK,
+} from './numberDisplay';
+export type { DisplayedNumber } from './numberDisplay';
 export {
   localisedDate,
   localisedTime,

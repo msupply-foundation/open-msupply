@@ -6,11 +6,14 @@ import {
   Suspense,
   untrack,
   type Component,
+  type JSX,
 } from 'solid-js';
+import type { CellContext } from '@tanstack/solid-table';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
+import { Num } from '../../../ui/elements/typography/Num';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -620,12 +623,20 @@ const InternalOrderDetailView: Component = () => {
   // Dose annotation for a unit quantity on a vaccine item under the doses
   // preference — " (N ds)" (label.doses-short), value × doses-per-unit (treated
   // as 1 when the item has none, so the annotation shows for any vaccine).
-  const doseSuffix = (line: Line, value: number): string =>
-    showDoses() && line.item.isVaccine
-      ? ` (${Math.round(value * (line.item.doses || 1))} ${t('label.doses-short')})`
-      : '';
-  const numWithDoses = (line: Line, value: number) =>
-    `${Math.round(value)}${doseSuffix(line, value)}`;
+  const numWithDoses = (line: Line, value: number): JSX.Element => (
+    <>
+      <Num value={value} />
+      <Show when={showDoses() && line.item.isVaccine}>
+        {' '}
+        (<Num value={value * (line.item.doses || 1)} /> {t('label.doses-short')}
+        )
+      </Show>
+    </>
+  );
+
+  // Spread AFTER getCellDefinition, whose number cell it replaces.
+  const dosesCell = (info: CellContext<Line, unknown>): JSX.Element =>
+    numWithDoses(info.row.original, info.getValue<number>());
 
   const crumbs = (node: InternalOrderInfoFragment) => [
     {
@@ -717,26 +728,28 @@ const InternalOrderDetailView: Component = () => {
     },
     {
       c: {
-        accessor: line => numWithDoses(line, line.availableStockOnHand),
+        accessor: line => line.availableStockOnHand,
         id: COL.available,
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
       ...getCellDefinition('available'),
+      cell: dosesCell,
     },
     {
       // AMC displayed rounded UP; header reads "Area AMC" under the gate.
       c: {
-        accessor: line =>
-          numWithDoses(line, Math.ceil(line.averageMonthlyConsumption)),
+        accessor: line => Math.ceil(line.averageMonthlyConsumption),
         id: COL.amc,
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
       ...getCellDefinition('amc'),
+      cell: dosesCell,
     },
     {
-      c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
+      // MOS: the raw figure, so the number cell applies display rounding.
+      c: { accessor: line => mos(line), id: COL.mos },
       sortKey: 'mos',
       // Stock ÷ the line's FORECAST monthly demand, so headed as such beside
       // the measured AMC column (#12082); the published column id stays `mos`.
@@ -745,29 +758,31 @@ const InternalOrderDetailView: Component = () => {
     },
     {
       c: {
-        accessor: line => numWithDoses(line, targetStock(line)),
+        accessor: line => targetStock(line),
         id: COL.targetStock,
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
       ...getCellDefinition('targetStock'),
+      cell: dosesCell,
     },
     {
       c: {
-        accessor: line => numWithDoses(line, line.suggestedQuantity),
+        accessor: line => line.suggestedQuantity,
         id: COL.suggested,
       },
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
       header: () => t('label.forecast-quantity'),
       ...getCellDefinition('suggested'),
+      cell: dosesCell,
     },
     {
       // Requested — under the excess-request preference a request ≥ 1 unit
       // above the suggestion carries a red alert icon (the line-table
       // counterpart of the editor banner).
       c: {
-        accessor: line => numWithDoses(line, line.requestedQuantity),
+        accessor: line => line.requestedQuantity,
         id: COL.requested,
       },
       sortKey: 'requested',
@@ -821,51 +836,57 @@ const InternalOrderDetailView: Component = () => {
       ? ([
           {
             c: {
-              accessor: l => numWithDoses(l, l.initialStockOnHandUnits),
+              accessor: l => l.initialStockOnHandUnits,
               id: COL.initialSoh,
             },
             header: () => t('label.initial-stock-on-hand'),
             ...getCellDefinition('initialSoh'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.incomingUnits),
+              accessor: l => l.incomingUnits,
               id: COL.incoming,
             },
             header: () => t('label.incoming'),
             ...getCellDefinition('incoming'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.outgoingUnits),
+              accessor: l => l.outgoingUnits,
               id: COL.outgoing,
             },
             header: () => t('label.outgoing'),
             ...getCellDefinition('outgoing'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.lossInUnits),
+              accessor: l => l.lossInUnits,
               id: COL.losses,
             },
             header: () => t('label.losses'),
             ...getCellDefinition('losses'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.additionInUnits),
+              accessor: l => l.additionInUnits,
               id: COL.additions,
             },
             header: () => t('label.additions'),
             ...getCellDefinition('additions'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.expiringUnits),
+              accessor: l => l.expiringUnits,
               id: COL.shortExpiry,
             },
             header: () => t('label.short-expiry'),
             ...getCellDefinition('shortExpiry'),
+            cell: dosesCell,
           },
           {
             c: {

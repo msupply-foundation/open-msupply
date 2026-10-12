@@ -323,3 +323,46 @@
     animation: none;
   }
 }
+
+/* Compact (<600px, breakpoints.compact): six steps across ~270px gave each
+   column ~45px, and the labels ran into each other ("Pull V6ntegrate"). The
+   stepper turns vertical there — marker at the inline-start, label beside it,
+   count/elapsed after the label — with each connector dropping from the
+   previous marker to this one. */
+@media (max-width: 599px) {
+  .list {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--space-3);
+    text-align: start;
+  }
+
+  .label {
+    margin-block-start: 0;
+    font-size: var(--text-sm);
+  }
+
+  .count,
+  .elapsed {
+    min-block-size: 0;
+    grid-column: 3;
+  }
+
+  .count:empty,
+  .elapsed:empty {
+    display: none;
+  }
+
+  .step + .step::before {
+    inset-block: calc(-1 * var(--space-2)) auto;
+    inset-inline: calc(1.125rem - 2px) auto;
+    inline-size: 4px;
+    block-size: var(--space-2);
+  }
+}
