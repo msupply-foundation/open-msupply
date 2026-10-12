@@ -640,6 +640,15 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         },
       },
       {
+        // The batch's Activity — read-only context while dispensing, so a
+        // campaign batch is recognisable before it is issued.
+        c: {
+          accessor: line => line.campaign?.name ?? '',
+          id: 'activity',
+        },
+        header: () => t('label.activity'),
+      },
+      {
         c: {
           accessor: line =>
             line.stockLineOnHold || (line.location?.onHold ?? false),
