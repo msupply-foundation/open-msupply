@@ -273,11 +273,10 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   },
 ];
 
-// The grouped-combobox demo's option set: two PINNED standing choices (no
-// group) and a tail of grouped campaigns.
+// The grouped-combobox demo's option set: a PINNED standing choice (no group)
+// and a tail of grouped campaigns. Emptying the field is the ✕, not a row.
 type ActivityOption = { value: string; label: string; group?: string };
 const ACTIVITY_OPTIONS: ActivityOption[] = [
-  { value: 'none', label: 'None' },
   { value: 'routine', label: 'Routine' },
   { value: 'measles', label: 'Measles 2026', group: 'Campaign' },
   { value: 'covid', label: 'COVID booster', group: 'Campaign' },
@@ -390,7 +389,7 @@ export const SelectorsShowcase = () => {
   const [adjustmentType, setAdjustmentType] = createSignal<string | undefined>(
     'addition'
   );
-  const [activity, setActivity] = createSignal('none');
+  const [activity, setActivity] = createSignal<string | undefined>();
   // The no-options demo: both chips seeded present so they're openable on load.
   const [emptyOptionFilter, setEmptyOptionFilter] =
     createSignal<EmptyOptionFilter>({ category: null, categories: null });
@@ -528,9 +527,9 @@ export const SelectorsShowcase = () => {
               o.label.toLocaleLowerCase().includes(input.toLocaleLowerCase())
             }
             renderItem={o => o.label}
-            clearable={false}
+            placeholder="None"
             value={activity()}
-            onChange={o => o && setActivity(o.value)}
+            onChange={o => setActivity(o?.value)}
             helperText="Pick a campaign to see the group-qualified value in the field"
           />
           <Note>

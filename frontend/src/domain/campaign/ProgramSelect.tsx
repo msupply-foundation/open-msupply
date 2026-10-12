@@ -4,10 +4,6 @@ import { t } from '../../intl';
 import { Select } from '../../ui/elements/selectors/Select';
 import { fetchItemPrograms, type ItemProgram } from './itemProgramsResource';
 
-// "No program" as a Select value — an explicit first option rather than a
-// placeholder, so the field can always be emptied again.
-const NONE = '';
-
 export interface ProgramSelectProps {
   /** The store, for the per-item program fetch. */
   storeId: string;
@@ -17,7 +13,7 @@ export interface ProgramSelectProps {
   programId?: string;
   /**
    * Fires with the chosen program (the full node, so callers can store id+name
-   * for display), or null when None is picked.
+   * for display), or null when the field is cleared.
    */
   onChange: (program: ItemProgram | null) => void;
   /** Field label (required for a11y). */
@@ -59,11 +55,12 @@ export const ProgramSelect = (props: ProgramSelectProps): JSX.Element => {
   const programList = (): ItemProgram[] => gated(programs) ?? [];
 
   // Nothing to pick: an item with no programs configured for this store leaves
-  // the field disabled rather than offering a one-option list of None. Gated on
-  // the fetch having settled, so the control doesn't flicker disabled→enabled
-  // while the first per-item read is in flight.
+  // the field disabled rather than opening on an empty list. Gated on the fetch
+  // having settled, so the control doesn't flicker disabled→enabled while the
+  // first per-item read is in flight — and on the field being EMPTY, since a
+  // line that carries a program must keep its clear affordance.
   const noPrograms = (): boolean =>
-    !programs.loading && programList().length === 0;
+    !programs.loading && programList().length === 0 && !props.programId;
 
   return (
     <Select
@@ -73,11 +70,15 @@ export const ProgramSelect = (props: ProgramSelectProps): JSX.Element => {
       width={props.width}
       disabled={props.disabled || noPrograms()}
       testId={props.testId}
-      value={props.programId ?? NONE}
-      options={[
-        { value: NONE, label: t('label.none') },
-        ...programList().map(p => ({ value: p.id, label: p.name })),
-      ]}
+      // An OPTIONAL pick clears through the ✕, as every other optional lookup
+      // does (ui-standards › controls: clearability follows optionality) —
+      // never through a None row in the list. Empty reads as "None" in the
+      // placeholder's grey.
+      clearable
+      onClear={() => props.onChange(null)}
+      placeholder={t('label.none')}
+      value={props.programId}
+      options={programList().map(p => ({ value: p.id, label: p.name }))}
       onValueChange={v =>
         props.onChange(programList().find(p => p.id === v) ?? null)
       }
