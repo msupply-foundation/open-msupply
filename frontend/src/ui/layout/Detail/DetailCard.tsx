@@ -23,6 +23,8 @@ export interface DetailCardProps {
    * separation only needs stating once per edge.
    */
   surface?: 'raised' | 'bordered';
+  /** `data-testid` on the card's root (e2e/TESTIDS.md). */
+  testId?: string;
 }
 
 /*
@@ -43,7 +45,11 @@ export const DetailCard = (props: DetailCardProps): JSX.Element => {
   // (kdd/solid-reactivity-pitfalls §3).
   const actions = children(() => props.actions);
   return (
-    <section class={styles.card} data-surface={props.surface ?? 'raised'}>
+    <section
+      class={styles.card}
+      data-surface={props.surface ?? 'raised'}
+      data-testid={props.testId}
+    >
       <div class={styles.header}>
         <h2 class={styles.title} dir="auto">
           {props.title}

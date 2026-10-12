@@ -13,6 +13,7 @@ import { CloseIcon } from '../../icons';
 import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
 import {
+  useIsCompact,
   useIsNavOverlay,
   useIsShortViewport,
 } from '../../utils/createMediaQuery';
@@ -146,7 +147,9 @@ export interface DialogProps {
    * below the narrow-viewport line (tablet portrait and phones, breakpoints.ts
    * › navOverlay), since a measure describes a page-sized surface — but not
    * below the short-viewport line, which only the workbench sizes answer to
-   * (see `size`). `widthRem` does not: it stays a centred card at every width.
+   * (see `size`). `widthRem` does not: it stays a centred card down to the
+   * compact line (breakpoints.ts › compact, a phone), where every dialog but a
+   * bare confirmation is a sheet.
    */
   width?: 'prose' | 'form' | 'wide';
   /**
@@ -459,10 +462,10 @@ export const Dialog = (props: DialogProps) => {
   // Both workbench sizes share every rule except width, so almost everything
   // that asks "is this large?" means this.
   const workbench = () => props.size === 'large' || props.size === 'full';
-  // Full screen is decided per AXIS, and each axis has its own line — both
+  // Full screen is decided per AXIS, and each axis has its own line — all
   // shared with the rest of the shell (the nav overlay, the outbound totals
-  // fold), so no breakpoint is minted here: the cutoffs live once in
-  // breakpoints.ts (createMediaQuery). data-fullscreen drives the CSS.
+  // fold, the phone chrome), so no breakpoint is minted here: the cutoffs live
+  // once in breakpoints.ts (createMediaQuery). data-fullscreen drives the CSS.
   //
   // NARROW (navOverlay — tablet portrait and phones): modals whose width is a
   // page-sized SURFACE, i.e. either workbench size (`large`/`full`) and any
@@ -480,14 +483,24 @@ export const Dialog = (props: DialogProps) => {
   // and stretching a `form` to a landscape tablet's full width would pull
   // labels away from their values (#617).
   //
-  // A default or `widthRem` dialog stays a centred card on both axes: a
-  // confirmation has no business filling a tablet screen, and a caller who
-  // wants the sheet asks for the measure it is sized to.
+  // COMPACT (breakpoints.compact — a phone): EVERY dialog is a sheet. A
+  // centred card there is already edge-to-edge, so the inset only costs
+  // height and floats the actions mid-screen. Except a bare confirmation (a
+  // description and no body — ConfirmDialog), which stays a small card.
+  // `in` checks, not reads: reading a JSX-element prop constructs it.
+  //
+  // Above the compact line a default or `widthRem` dialog stays a centred
+  // card on both axes: a confirmation has no business filling a tablet
+  // screen, and a caller who wants the sheet asks for the measure it is
+  // sized to.
   const narrowViewport = useIsNavOverlay();
   const shortViewport = useIsShortViewport();
+  const compact = useIsCompact();
+  const confirmation = 'description' in props && !('children' in props);
   const fullscreen = () =>
     (narrowViewport() && (workbench() || props.width !== undefined)) ||
-    (shortViewport() && workbench());
+    (shortViewport() && workbench()) ||
+    (compact() && !confirmation);
   // The <dialog>'s OWN aria-labelledby/aria-label depend on whether the title
   // is a string, but the title is resolved inside the Provider (DialogContent),
   // not here — so DialogContent reports it back via this signal rather than us

@@ -386,7 +386,9 @@ export const DialogShowcase = () => {
             tablet: shorten the window under 800px), where vertical room is what
             a workbench spends and the gutters would cost it rows (#246). A{' '}
             <code>width</code> measure does not follow it there, and a default
-            or <code>widthRem</code> dialog stays a centred card at every size.
+            or <code>widthRem</code> dialog stays a centred card down to the{' '}
+            <strong>compact</strong> line (600px, a phone), where every dialog
+            but a bare confirmation becomes a sheet.
           </Lead>
           <Row>
             <Button
@@ -463,7 +465,10 @@ export const DialogShowcase = () => {
             short-viewport line (breakpoints.ts › shortViewport, 800px tall — a
             landscape tablet): shorten the window instead and only{' '}
             <code>size="large"</code> and <code>size="full"</code> go full
-            screen; the measures stay cards there (#246).
+            screen; the measures stay cards there (#246). Below the compact line
+            (breakpoints.ts › compact, 600px — a phone) every dialog but a bare
+            confirmation is a sheet, <code>default</code> and{' '}
+            <code>widthRem</code> included.
           </Lead>
           <Row>
             <Button variant="secondary" onClick={() => setSizeDemo('default')}>
