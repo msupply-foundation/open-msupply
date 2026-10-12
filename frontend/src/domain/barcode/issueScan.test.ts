@@ -46,7 +46,9 @@ vi.mock('@/api/graphql', async importOriginal => {
   };
 });
 
-const { resolveIssueScan, scanExclusions } = await import('./issueScan');
+const { resolveIssueScan, scanExclusions, batchLabelNarrowing } =
+  await import('./issueScan');
+const { createBarcodeChooser } = await import('./createBarcodeChooser');
 
 const GS = '\u001d';
 const GTIN = '05012345678900';
@@ -331,6 +333,41 @@ describe('resolveIssueScan', () => {
   });
 });
 
+describe('createBarcodeChooser — before it asks', () => {
+  const several = mappings(mapping('b1', 'item-1'), mapping('b2', 'item-2'));
+  const noItem = {
+    kind: 'success',
+    data: {
+      items: { __typename: 'ItemConnector', totalCount: 0, nodes: [] },
+    },
+  } as const;
+  const resolve = () =>
+    resolveIssueScan('store', readText(GTIN), {
+      chooser: createBarcodeChooser(),
+    });
+
+  it('a failed item lookup opens nothing — the barcode is not taken as unknown', async () => {
+    answers = {
+      barcodeMatches: several,
+      itemsWithStock: { kind: 'unexpectedError' },
+    };
+    expect(await resolve()).toBeUndefined();
+  });
+
+  it('only one of the items found here is chosen without asking', async () => {
+    answers = { barcodeMatches: several, itemsWithStock: [item, noItem] };
+    expect(await resolve()).toMatchObject({
+      known: true,
+      item: { id: 'item-1' },
+    });
+  });
+
+  it('none of the items found here opens as an unknown barcode', async () => {
+    answers = { barcodeMatches: several, itemsWithStock: [noItem, noItem] };
+    expect(await resolve()).toMatchObject({ known: false, code: GTIN });
+  });
+});
+
 describe('scanExclusions — the label batch', () => {
   const lines = [
     { id: 'a', batch: 'AB12', numberOfPacks: 0 },
@@ -405,5 +442,45 @@ describe('scanExclusions', () => {
       { id: 'b', batch: 'AB12', barcode: OTHER, numberOfPacks: 2 },
     ];
     expect(scanExclusions(issued, { code: GTIN })).toEqual(new Set());
+  });
+});
+
+describe('batchLabelNarrowing — a batch label into an open editor (.192)', () => {
+  const seeded = new Map([
+    ['a', 0],
+    ['b', 0],
+  ]);
+
+  it('a quantity entered since opening keeps no row in, and moves to the label batch', () => {
+    // The user typed a quantity that went to batch A, then scanned B's label.
+    const lines = [
+      { id: 'a', batch: 'A', numberOfPacks: 3 },
+      { id: 'b', batch: 'B', numberOfPacks: 0 },
+    ];
+    expect(batchLabelNarrowing(lines, seeded, { batch: 'B' })).toEqual({
+      excluded: new Set(['a']),
+      redistribute: true,
+    });
+  });
+
+  it('a row the record already issued from when the editor opened stays in', () => {
+    const lines = [
+      { id: 'a', batch: 'A', numberOfPacks: 3 },
+      { id: 'b', batch: 'B', numberOfPacks: 0 },
+    ];
+    expect(
+      batchLabelNarrowing(lines, new Map([['a', 3]]), { batch: 'B' })
+    ).toEqual({ excluded: new Set(), redistribute: false });
+  });
+
+  it('nothing to move where the ruled-out rows hold nothing', () => {
+    const lines = [
+      { id: 'a', batch: 'A', numberOfPacks: 0 },
+      { id: 'b', batch: 'B', numberOfPacks: 2 },
+    ];
+    expect(batchLabelNarrowing(lines, seeded, { batch: 'B' })).toEqual({
+      excluded: new Set(['a']),
+      redistribute: false,
+    });
   });
 });

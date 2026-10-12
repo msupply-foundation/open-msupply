@@ -125,7 +125,11 @@ export const ItemBarcodesPanel: Component<{
   const variants = () => gated(data)?.variants ?? [];
   const siteId = () => gated(data)?.siteId;
 
-  const onSaved = () => void refetch();
+  // A success elsewhere (the add/edit modal) also clears an earlier failure.
+  const onSaved = () => {
+    setActionError(undefined);
+    void refetch();
+  };
 
   // The row whose removal is being asked about, the barcode-only row whose
   // variant is being made a real one, and the last action failure.

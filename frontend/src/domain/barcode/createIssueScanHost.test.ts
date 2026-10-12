@@ -118,6 +118,26 @@ describe('createIssueScanHost', () => {
     expect(opened).toHaveLength(1);
   });
 
+  it('.200 the dropped-scan notice goes once the editor it led to closes', async () => {
+    const { host, setEditorOpen } = mount();
+    onScan?.(READ);
+    onScan?.(READ);
+    pending[0].resolve(ITEM_SCAN);
+    await settle();
+    setEditorOpen(false);
+    host.editorClosed();
+    expect(host.noticeShown()).toBeUndefined();
+  });
+
+  it('a lookup resolving after the screen has gone opens nothing', async () => {
+    const { opened } = mount();
+    onScan?.(READ);
+    dispose?.();
+    pending[0].resolve(ITEM_SCAN);
+    await settle();
+    expect(opened).toEqual([]);
+  });
+
   it('.213 a scan into an editor that already has an item is discarded, and told inside it', () => {
     const { host, setEditorOpen } = mount();
     setEditorOpen(true);

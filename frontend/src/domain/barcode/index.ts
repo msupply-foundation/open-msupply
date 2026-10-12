@@ -61,6 +61,7 @@ export {
   proposeIssuedBarcode,
   resolveIssueScan,
   scanExclusions,
+  batchLabelNarrowing,
   type IssueScan,
   type IssueScanItem,
 } from './issueScan';

@@ -63,7 +63,7 @@ import {
 } from './lineEditLogic';
 import {
   proposeIssuedBarcode,
-  scanExclusions,
+  batchLabelNarrowing,
   ScanNarrowedNotice,
   type BatchLabelReceiver,
   type IssueScan,
@@ -121,10 +121,10 @@ export interface PrescriptionLineEditModalProps {
    */
   lockPrescribedQuantity?: boolean;
   /**
-   * Opened by a scan (spec/barcode-scanning rules § Learning a code while
-   * issuing) — add mode, on the scan's item where the code resolved, else
-   * empty with the no-match warning. The editor carries it until its first
-   * successful save, which learns the code.
+   * Opened by a scan (spec/barcode-scanning rules § Issuing by scanning) —
+   * add mode, on the scan's item where the code resolved, else empty with the
+   * no-match warning. The editor carries it until its first successful save,
+   * which proposes the barcode.
    */
   scan?: IssueScan;
   /**
@@ -260,6 +260,8 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const [note, setNote] = createSignal('');
   const [abbrevEntry, setAbbrevEntry] = createSignal('');
   const [issueUnits, setIssueUnits] = createSignal<number>();
+  // Each row's packs as seeded — what a batch label's narrowing keeps in.
+  let seededPacksById = new Map<string, number>();
   const [shortfall, setShortfall] = createSignal(0);
   // The other distribution/manual-entry reports (stock-allocation §
   // reporting): barred stock skipped (.59), the split-pack warning (.58), an
@@ -310,6 +312,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
       scan()
     );
     setLines(reconcile(seeded, { key: 'id' }));
+    seededPacksById = new Map(
+      seeded.map(line => [line.id, line.numberOfPacks])
+    );
     setPrescribedQuantity(draft.prescribedQuantity ?? undefined);
     setNote(draft.note ?? '');
     // Re-opening a dispensed line shows its saved state: the issue field
@@ -622,10 +627,20 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   // A batch label scanned while the editor is open on an item narrows its
   // rows to that batch, replacing any batch a scan narrowed to (.192) —
-  // in place, without re-fetching the grid the dispenser may be filling in.
+  // in place, without re-fetching the grid the dispenser may be filling in;
+  // a quantity entered since the editor opened moves onto the label's batch.
   const receiveBatchLabel: BatchLabelReceiver = batch => {
-    const excluded = scanExclusions(lines, { batch, code: scan()?.code });
+    const { excluded, redistribute } = batchLabelNarrowing(
+      lines,
+      seededPacksById,
+      { batch, code: scan()?.code }
+    );
     setLines({}, line => ({ scanExcluded: excluded.has(line.id) }));
+    const units = issueUnits();
+    if (redistribute && units !== undefined) {
+      cancelAllocate();
+      runAllocation(units);
+    }
   };
   createEffect(() => {
     const ready =

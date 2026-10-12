@@ -117,7 +117,8 @@ export const resolveIssueScan = async (
       const choice = await options.chooser.choose(storeId, lookup.barcodes, {
         masterListId: options.masterListId,
       });
-      if (choice.kind === 'cancelled') return undefined;
+      if (choice.kind === 'cancelled' || choice.kind === 'failed')
+        return undefined;
       if (choice.kind === 'none')
         return { code: itemNumber(scan), known: false, batch };
       return {
@@ -193,4 +194,36 @@ export const scanExclusions = (
       )
       .map(line => line.id)
   );
+};
+
+/**
+ * A batch label scanned into an editor already open on an item (.192): the
+ * rows it rules out, judged on each row's packs AS SEEDED — a quantity the
+ * user entered since keeps no row in — and whether a row it rules out now
+ * holds packs, in which case the entered quantity is redistributed onto the
+ * batch the label named.
+ */
+export const batchLabelNarrowing = (
+  lines: readonly {
+    id: string;
+    batch?: string | null;
+    barcode?: string | null;
+    numberOfPacks: number;
+  }[],
+  seededPacksById: ReadonlyMap<string, number>,
+  scan: Pick<IssueScan, 'batch' | 'code'>
+): { excluded: Set<string>; redistribute: boolean } => {
+  const excluded = scanExclusions(
+    lines.map(line => ({
+      ...line,
+      numberOfPacks: seededPacksById.get(line.id) ?? 0,
+    })),
+    scan
+  );
+  return {
+    excluded,
+    redistribute: lines.some(
+      line => excluded.has(line.id) && line.numberOfPacks > 0
+    ),
+  };
 };

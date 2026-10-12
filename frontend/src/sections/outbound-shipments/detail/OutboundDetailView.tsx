@@ -282,17 +282,11 @@ const OutboundDetailView: Component = () => {
   // - { item, lineId }: opened from a ROW click — update mode.
   // - {}: opened from "Add item" — add mode (item search focused).
   // - { scan }: opened by a scan — add mode, on the scanned item where the
-  //   code resolved (spec/barcode-scanning rules § Learning a code while
-  //   issuing).
+  //   code resolved (spec/barcode-scanning rules § Issuing by scanning).
   type EditState =
     { item?: LineEditItem; lineId?: string; scan?: IssueScan } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
-  // Every open goes through here: a stale learn-failure notice from an
-  // earlier scan describes a save the user has moved on from.
-  const openEditor = (state: NonNullable<EditState>) => {
-    issueScan.editorOpened();
-    setEditState(state);
-  };
+  const openEditor = (state: NonNullable<EditState>) => setEditState(state);
   const [serviceOpen, setServiceOpen] = createSignal(false);
   // Customer-change rejection — shown on the lookup itself (controls › action
   // feedback: inline, keyed to its cause).
@@ -674,8 +668,8 @@ const OutboundDetailView: Component = () => {
     },
   });
 
-  // Issuing by scanning (spec/barcode-scanning rules § Learning a code while
-  // issuing; ui-surface S3 page actions "Add from scanner"): a scan opens the
+  // Issuing by scanning (spec/barcode-scanning rules § Issuing by scanning;
+  // ui-surface S3 page actions "Add from scanner"): a scan opens the
   // line editor on the item its code means, or empty with a warning when it
   // means nothing yet. With a hardware scanner the screen listens from
   // arrival while the shipment is editable; a camera scans per press. Gated

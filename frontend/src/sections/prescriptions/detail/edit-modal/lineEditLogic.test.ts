@@ -308,7 +308,7 @@ describe('canSave (ui-surface S4 — OK needs an item, a change, and a non-zero 
   });
 });
 
-describe('scanned batch narrowing (spec/barcode-scanning rules § Learning a code while issuing)', () => {
+describe('scanned batch narrowing (spec/barcode-scanning rules § Issuing by scanning)', () => {
   it('.44 rules out every other batch where the item holds the scanned one', () => {
     const lines = seedDraftLines(
       [

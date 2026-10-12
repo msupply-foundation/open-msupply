@@ -24,7 +24,9 @@ export type BarcodeChoice =
   /** The user closed the chooser without picking. */
   | { kind: 'cancelled' }
   /** None of the mapped items could be found; treat the barcode as unknown. */
-  | { kind: 'none' };
+  | { kind: 'none' }
+  /** Looking the items up failed (already reported): open nothing. */
+  | { kind: 'failed' };
 
 export type BarcodeChooser = {
   choose: (
@@ -73,14 +75,12 @@ export const createBarcodeChooser = (): BarcodeChooser => {
     options
   ) => {
     const candidates = await resolveCandidates(storeId, barcodes, options);
-    if (candidates === 'failed' || candidates.length === 0)
-      return { kind: 'none' };
+    if (candidates === 'failed') return { kind: 'failed' };
+    if (candidates.length === 0) return { kind: 'none' };
     if (candidates.length === 1) {
       const [only] = candidates;
       return { kind: 'chosen', barcode: only!.barcode, item: only!.item };
     }
-    // A second scan while the chooser is open replaces the question.
-    pending()?.resolve({ kind: 'cancelled' });
     return new Promise(resolve => setPending({ candidates, resolve }));
   };
 

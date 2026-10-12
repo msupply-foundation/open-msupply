@@ -94,6 +94,7 @@ import { issueWarningMessages } from './allocationWarnings';
 import {
   proposeIssuedBarcode,
   scanExclusions,
+  batchLabelNarrowing,
   ScanNarrowedNotice,
   type BatchLabelReceiver,
   type IssueScan,
@@ -286,9 +287,9 @@ interface OutboundLineEditModalProps {
   /** A save committed — the view refetches the lines page. */
   onCommitted: () => void;
   /**
-   * Opened by a scan (spec/barcode-scanning rules § Learning a code while
-   * issuing) — add mode, on the scan's item where the code resolved. The
-   * editor carries it until its first successful save, which learns the code.
+   * Opened by a scan (spec/barcode-scanning rules § Issuing by scanning) —
+   * add mode, on the scan's item where the code resolved. The editor carries
+   * it until its first successful save, which proposes the barcode.
    */
   scan?: IssueScan;
   /**
@@ -302,7 +303,7 @@ interface OutboundLineEditModalProps {
    * A scan arrived while this editor was open (or while the scan that opened
    * it was still being looked up) and was discarded — say so here, where the
    * user is looking, rather than behind the dialog (spec/barcode-scanning
-   * rules § Learning a code while issuing: "the user is told to close the
+   * rules § Issuing by scanning: "the user is told to close the
    * line editor to scan"; OMS-REG-BAC-01.141).
    */
   scanDiscarded?: boolean;
@@ -674,9 +675,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   });
 
   // A scan while waiting for an item picks it, as the scan that opened the
-  // editor would have (spec/barcode-scanning rules § Learning a code while
-  // issuing): locked where the code resolved, else the no-match warning over
-  // the still-choosable picker. The scan is then this editor's to learn.
+  // editor would have (spec/barcode-scanning rules § Issuing by scanning):
+  // locked where the code resolved, else the no-match warning over the
+  // still-choosable picker. The scan is then this editor's to propose.
   const receiveScan: IssueScanReceiver = next => {
     setScan(next);
     if (next.item) void seedItem(next.item);
@@ -691,10 +692,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // A batch label scanned while the editor is open on an item narrows its
   // stock to that batch, replacing any batch a scan narrowed to (.192). The
   // rows are not re-fetched or reordered — the user may already be entering
-  // quantities — only disabled or re-enabled in place.
+  // quantities — only disabled or re-enabled in place; a quantity entered
+  // since the editor opened moves onto the label's batch.
   const receiveBatchLabel: BatchLabelReceiver = batch => {
-    const excluded = scanExclusions(draft, { batch, code: scan()?.code });
+    const { excluded, redistribute } = batchLabelNarrowing(
+      draft,
+      seededPacksById,
+      { batch, code: scan()?.code }
+    );
     setScanExcludedIds(excluded);
+    if (redistribute)
+      distribute(lensToUnits(issueValue() ?? null, allocateIn()) ?? 0);
     const row =
       excluded.size > 0
         ? draft.find(line => !excluded.has(line.id))?.id

@@ -120,19 +120,14 @@ const PrescriptionDetailView: Component = () => {
   const [activeTab, setActiveTab] = createSignal('details');
   // What the S4 line editor is open on: a row's item (edit), nothing (Add
   // item), or a scan (add mode on the scanned item — spec/barcode-scanning
-  // rules § Learning a code while issuing).
+  // rules § Issuing by scanning).
   type EditState = {
     itemId?: string;
     item?: { id: string; code: string; name: string };
     scan?: IssueScan;
   };
   const [editState, setEditState] = createSignal<EditState>();
-  // Every open goes through here: a stale learn-failure notice from an
-  // earlier scan describes a save the user has moved on from.
-  const openEditor = (state: EditState) => {
-    issueScan.editorOpened();
-    setEditState(state);
-  };
+  const openEditor = (state: EditState) => setEditState(state);
   // S4's read-only face (.73) — the item it's open for; undefined = closed.
   const [viewItemId, setViewItemId] = createSignal<string>();
   // The patient picker's edit-patient modal (#1038) — the id it's currently

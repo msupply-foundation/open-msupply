@@ -8,9 +8,11 @@
 // with an entry on screen, the entry stays as it is, unsaved (.202, .195).
 //
 // One scan is worked at a time, so a lookup and a save never interleave. A
-// scan arriving while one is in flight is dropped with a notice, not queued
-// (.200); so is one whose scan-on is refused or fails — the entry stays, and
-// the user scans again once it is sorted (.201).
+// scan arriving while one is in flight — or while OK saves — is dropped with
+// a notice, not queued (.200); so is one whose scan-on is refused or fails —
+// the entry stays, and the user scans again once it is sorted (.201). A save
+// waits for the item's lines, so it adds to the matching line rather than
+// inserting a second one (.176).
 //
 // The primitive half: the detail view creates ONE with createCaptureWindow,
 // hands `receive` to its scan control's onScan, and renders <CaptureWindow>
@@ -95,7 +97,8 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
   // The raw content of the last scan, where it was neither known nor a
   // product code — the notice replaces the message until the next scan.
   const [unrecognised, setUnrecognised] = createSignal<string>();
-  // A scan is being worked — looked up, chosen, or saved on (.200).
+  // A scan is being worked — looked up, chosen, or saved on — or OK is
+  // saving (.200).
   let busy = false;
   const saved = createFlash<string>();
   const quantityField = createFocusTarget();
@@ -108,12 +111,17 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
   });
 
   // Fetch the item's lines, then borrow the match's dates for the blanks.
-  // A request superseded by a later item is ignored.
+  // A request superseded by a later item is ignored. `linesReady` settles once
+  // the current item's lines are in, so a save never matches against none.
   let linesFor: string | undefined;
-  const loadItemLines = async (itemId: string | undefined) => {
+  let linesReady: Promise<void> = Promise.resolve();
+  const loadItemLines = (itemId: string | undefined) => {
     linesFor = itemId;
     setItemLines([]);
-    if (!itemId) return;
+    linesReady = itemId ? fetchItemLines(itemId) : Promise.resolve();
+    return linesReady;
+  };
+  const fetchItemLines = async (itemId: string) => {
     const result = await graphqlFetch(InboundShipmentLines, {
       storeId: options.storeId(),
       filter: {
@@ -165,6 +173,7 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
    * on success, else the refusal text to show.
    */
   const save = async (): Promise<string | undefined> => {
+    await linesReady;
     const current = draft();
     if (!current) return undefined;
     const refused = saveRefusal(current);
@@ -237,6 +246,9 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
       if (choice.kind === 'chosen') {
         lookup = { kind: 'known', barcode: choice.barcode };
         item = choice.item;
+      } else if (choice.kind === 'failed') {
+        // As a failed lookup: the entry opens with nothing to propose.
+        lookup = { kind: 'failed' };
       } else lookup = { kind: 'unknown' };
     } else if (lookup.kind === 'known') {
       const resolved = await lookUpItemById(
@@ -256,9 +268,11 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
     setUnrecognised(undefined);
     setOpen(true);
     setWorking(false);
+    // Not awaited: the entry is usable while its item's lines load, and a
+    // save waits for them (linesReady).
     if (item) {
       quantityField.focus();
-      await loadItemLines(item.id);
+      void loadItemLines(item.id);
     } else itemField.focus();
   };
 
@@ -366,9 +380,15 @@ export const createCaptureWindow = (options: CaptureWindowOptions) => {
   const finish = () => close();
 
   const confirm = async () => {
-    const refused = await save();
-    if (refused) setRefusal(refused);
-    else finish();
+    if (busy) return;
+    busy = true;
+    try {
+      const refused = await save();
+      if (refused) setRefusal(refused);
+      else finish();
+    } finally {
+      busy = false;
+    }
   };
 
   const pickItem = (option: ItemOption | null) => {

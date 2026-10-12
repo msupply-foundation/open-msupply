@@ -13,14 +13,20 @@
 //    waiting for an item (add mode, nothing chosen — "Add item", or after
 //    Save & next); a batch label's batch into an editor open on an item
 //    (.192); else discarded with "close the line editor to scan";
-//  - the notices beside the scan action: a scanner failure, and a discarded
-//    scan once the editor has closed;
+//  - the notices beside the scan action: a scanner failure, and a scan
+//    dropped while another was being looked up (until the next scan is
+//    taken or the editor closes);
 //  - the item chooser, which the screen renders once (`Chooser`).
 //
 // What the screen keeps: when it can use a scan at all (`disabled`), whether
 // its editor is open, and opening it.
 
-import { createSignal, type Accessor, type Component } from 'solid-js';
+import {
+  createSignal,
+  onCleanup,
+  type Accessor,
+  type Component,
+} from 'solid-js';
 import { t } from '@/intl';
 import {
   createScanControl,
@@ -66,8 +72,7 @@ export type IssueScanHost = {
   noticeShown: Accessor<ScanNoticeShown | undefined>;
   /**
    * A scan was discarded while the editor was open on an item. The editor
-   * shows it while open; once closed the toolbar notice does, until the next
-   * scan or open.
+   * shows it; closing the editor clears it.
    */
   discarded: Accessor<boolean>;
   /** "Which item is this barcode?" — render once in the screen. */
@@ -83,9 +88,7 @@ export type IssueScanHost = {
    * batch; `undefined` when it cannot (no item yet, saving, or closed).
    */
   setBatchLabelReceiver: (receiver: BatchLabelReceiver | undefined) => void;
-  /** Every editor open goes through here: a stale notice is dropped. */
-  editorOpened: () => void;
-  /** The editor closed: a discarded-scan notice no longer applies. */
+  /** The editor closed: a discarded or dropped-scan notice no longer applies. */
   editorClosed: () => void;
 };
 
@@ -100,6 +103,9 @@ export const createIssueScanHost = (
   let receiver: IssueScanReceiver | undefined;
   let batchLabelReceiver: BatchLabelReceiver | undefined;
   let resolving = false;
+  // A lookup resolving after the screen has gone opens nothing.
+  let disposed = false;
+  onCleanup(() => (disposed = true));
 
   const control = createScanControl({
     owner: options.owner,
@@ -139,6 +145,7 @@ export const createIssueScanHost = (
         chooser,
       })
         .then(result => {
+          if (disposed) return;
           if (!result) {
             // A failed lookup opens nothing; a scan discarded meanwhile has
             // no editor to close, so its notice would mislead.
@@ -182,11 +189,11 @@ export const createIssueScanHost = (
     setBatchLabelReceiver: next => {
       batchLabelReceiver = next;
     },
-    editorOpened: () => undefined,
     editorClosed: () => {
       receiver = undefined;
       batchLabelReceiver = undefined;
       setDiscarded(false);
+      setDropped(false);
     },
   };
 };

@@ -342,6 +342,74 @@ describe('createCaptureWindow', () => {
     dispose();
   });
 
+  it('.200 a scan arriving while OK saves is dropped, and the line saved once', async () => {
+    answers = {
+      barcodeMatches: known,
+      itemsWithStock: item,
+      inboundShipmentLines: noLines,
+      batchInboundShipment: batchSaved,
+    };
+    const { capture, onSaved, dispose } = setup();
+    await capture.receive(LABEL);
+    calls.length = 0;
+    const ok = capture.confirm();
+    await capture.receive(NEXT);
+    await ok;
+    expect(operations().filter(op => op === 'batchInboundShipment')).toEqual([
+      'batchInboundShipment',
+    ]);
+    expect(onSaved).toHaveBeenCalledOnce();
+    expect(capture.open()).toBe(false);
+    dispose();
+  });
+
+  it(".176 OK before the item's lines arrive still adds to the matching line", async () => {
+    let release!: () => void;
+    const lines = new Promise(resolve => {
+      release = () =>
+        resolve({
+          kind: 'success',
+          data: {
+            invoiceLines: {
+              __typename: 'InvoiceLineConnector',
+              totalCount: 1,
+              nodes: [
+                {
+                  id: 'line-1',
+                  batch: 'AB12',
+                  packSize: 1,
+                  numberOfPacks: 5,
+                  barcode: GTIN,
+                  expiryDate: '2027-12-31',
+                  manufactureDate: null,
+                },
+              ],
+            },
+          },
+        });
+    });
+    answers = {
+      barcodeMatches: known,
+      itemsWithStock: item,
+      // A pending answer: the lines are still on their way when OK lands.
+      inboundShipmentLines: lines as unknown as GraphqlResult<unknown>,
+      batchInboundShipment: batchSaved,
+    };
+    const { capture, dispose } = setup();
+    await capture.receive(LABEL);
+    capture.update({ quantity: 2 });
+    const ok = capture.confirm();
+    release();
+    await ok;
+    const save = calls.find(c => c.operation === 'batchInboundShipment');
+    expect(save?.variables).toMatchObject({
+      input: {
+        updateInboundShipmentLines: [{ id: 'line-1', numberOfPacks: 7 }],
+      },
+    });
+    dispose();
+  });
+
   it('.67 a label without an item number opens without a lookup', async () => {
     const { capture, dispose } = setup();
     await capture.receive(scanOf(`${GS}10AB12${GS}17271231`));
