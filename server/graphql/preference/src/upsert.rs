@@ -91,6 +91,7 @@ pub struct UpsertPreferencesInput {
     pub backdating: Option<BackdatingInput>,
     pub receive_payments_from_prescriptions: Option<bool>,
     pub global_logo: Option<String>,
+    pub decimal_places_for_numbers: Option<i32>,
 
     // Store preferences
     pub blind_stocktake: Option<Vec<BoolStorePrefInput>>,
@@ -175,6 +176,7 @@ impl UpsertPreferencesInput {
             backdating,
             receive_payments_from_prescriptions,
             global_logo,
+            decimal_places_for_numbers,
             // Store preferences
             blind_stocktake,
             manage_vaccines_in_doses,
@@ -234,6 +236,7 @@ impl UpsertPreferencesInput {
             }),
             receive_payments_from_prescriptions: *receive_payments_from_prescriptions,
             global_logo: global_logo.clone(),
+            decimal_places_for_numbers: *decimal_places_for_numbers,
             // Store preferences
             blind_stocktake: blind_stocktake
                 .as_ref()

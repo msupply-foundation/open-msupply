@@ -34,6 +34,7 @@ pub enum PrefKey {
     Backdating,
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,
+    DecimalPlacesForNumbers,
 
     // Store preferences
     BlindStocktake,

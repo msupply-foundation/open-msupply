@@ -86,6 +86,12 @@ query storeContext($storeId: String!) {
     # text; unset/unparseable leaves the bar's default. Set from the store
     # editor's Preferences tab (spec/settings § the store editor).
     storeCustomColour
+    # Display rounding for numbers (spec/ui-standards § tables › display
+    # rounding): the decimal places a shown figure keeps. Read globally — every
+    # table number cell and quantity readout formats through it, so it cannot
+    # ride any one screen's query. Money is NOT covered: it follows its own
+    # currency's minor units.
+    decimalPlacesForNumbers
     # Internal-orders create gate (spec/internal-orders OMS-REG-REPL-04.42/.45),
     # read by the dashboard's Order-more shortcut so it runs the same
     # recent-stocktake warning as the list's New-order button (which fetches it

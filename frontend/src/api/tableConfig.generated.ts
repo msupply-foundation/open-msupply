@@ -44,6 +44,7 @@ export type SaveGlobalTableConfigsVariables = {
   } | null;
     receivePaymentsFromPrescriptions?: boolean | null;
     globalLogo?: string | null;
+    decimalPlacesForNumbers?: number | null;
     blindStocktake?: Array<{
     storeId: string;
     value: boolean;

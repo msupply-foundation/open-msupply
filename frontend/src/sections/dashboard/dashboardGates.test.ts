@@ -29,6 +29,7 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   authorisePurchaseOrder: false,
   externalInboundShipmentLinesMustBeAuthorised: false,
   storeCustomColour: '',
+  decimalPlacesForNumbers: 2,
   backdating: {
     inventoryAdjustmentsEnabled: false,
     shipmentsEnabled: false,
