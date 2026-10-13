@@ -6,9 +6,7 @@
   "packageManager": "yarn@4.13.0",
   "workspaces": [
     "client",
-    "client/packages/*",
-    "standard_reports",
-    "standard_forms"
+    "client/packages/*"
   ],
   "scripts": {
     "start": "cd ./server && cargo run & cd ./client && yarn start-local",

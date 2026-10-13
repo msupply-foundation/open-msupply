@@ -22,7 +22,10 @@
 
 .group {
   display: inline-flex;
-  flex-shrink: 0;
+  /* Shrinkable, so on a squeezed bar the age (.detail) and then the state
+     truncate rather than the bar wrapping (AppShell's .footer never wraps). */
+  flex-shrink: 1;
+  min-inline-size: 0;
   align-items: center;
   gap: var(--space-1);
   /* The cell runs the bar's full height and out to its inline-end edge, so
@@ -61,6 +64,7 @@
   font: inherit;
   white-space: nowrap;
   cursor: pointer;
+  min-inline-size: 0;
 }
 
 .cell:hover {
@@ -125,6 +129,8 @@
  * the age only qualifies it.
  */
 .detail {
+  /* Gives way long before the state does (the state's shrink factor is 1). */
+  flex-shrink: 100;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -144,6 +150,7 @@
 
 /* The details button carries no text, so it keeps a square footprint. */
 .details {
+  flex-shrink: 0;
   padding: var(--space-1);
 }
 
@@ -182,4 +189,19 @@
 
 .icon[data-syncing] svg {
   animation: sync-spin var(--motion-spin) linear infinite;
+}
+
+/* Compact (<600px): glyph only — see AppShell.module.css. The glyph's SHAPE
+   already carries the tone (toneIcon), the label and age stay as the button's
+   accessible name, and the details button still opens the full run. */
+@media (max-width: 599px) {
+  .label,
+  .detail {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
