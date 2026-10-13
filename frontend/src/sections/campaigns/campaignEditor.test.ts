@@ -112,9 +112,9 @@ describe('OMS-REG-MNG-04.33 — the kind is chosen in the editor', () => {
     );
   });
 
-  // The kind travels on EVERY save: the mutation is a whole-record write with
-  // no nullable-update wrappers, so an omitted kind is not "unchanged" — the
-  // server reads it as CAMPAIGN, silently demoting a Routine.
+  // The kind travels on EVERY save: the editor asked for it, so the answer is
+  // part of the record being written. The server would keep the stored kind if
+  // it were left out, which is the backstop, not the reason.
   it('sends the kind on every save, and a draft without one as CAMPAIGN', () => {
     expect(
       campaignInput({ ...draftFromCampaign(campaign), kind: 'ROUTINE' }).kind

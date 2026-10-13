@@ -63,8 +63,9 @@ export const canSaveCampaign = (draft: CampaignDraft): boolean =>
 export const campaignInput = (draft: CampaignDraft): CampaignDraft => ({
   id: draft.id,
   name: draft.name.trim(),
-  // Kind travels every time too: an omitted kind is not "unchanged", it is
-  // CAMPAIGN (the server's default), so leaving it out would demote a Routine.
+  // Kind travels every time too — the editor owns the field and the user has
+  // just answered it. Omitting it would be safe (the server keeps the stored
+  // kind), but it would also drop the answer.
   kind: draft.kind ?? 'CAMPAIGN',
   startDate: draft.startDate || undefined,
   endDate: draft.endDate || undefined,

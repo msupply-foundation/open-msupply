@@ -70,7 +70,7 @@ impl UpsertCampaignInput {
             name: self.name,
             start_date: self.start_date,
             end_date: self.end_date,
-            kind: self.kind.map(Into::into).unwrap_or_default(),
+            kind: self.kind.map(Into::into),
         }
     }
 }
