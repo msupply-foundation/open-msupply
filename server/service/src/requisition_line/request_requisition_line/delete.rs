@@ -4,8 +4,8 @@ use crate::{
     validate::check_other_party_store_is_disabled,
 };
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     RepositoryError, RequisitionLineRowRepository, StorageConnection,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -83,13 +83,13 @@ impl From<RepositoryError> for DeleteRequestRequisitionLineError {
 #[cfg(test)]
 mod test {
     use repository::{
+        RequisitionLineRowRepository,
         mock::{
-            mock_full_new_response_requisition_for_update_test,
+            MockDataInserts, mock_full_new_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition_line,
-            mock_store_a, mock_store_b, MockDataInserts,
+            mock_store_a, mock_store_b,
         },
         test_db::setup_all,
-        RequisitionLineRowRepository,
     };
 
     use crate::{

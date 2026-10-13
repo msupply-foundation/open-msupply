@@ -77,7 +77,7 @@ const DEFAULT_STATE: LedgerState = {
 // unit figure.
 const STATUS_WIDTH_REM = 7.5;
 const CHANGE_WIDTH_REM = 5;
-// "Inventory adjustment" / "Outbound shipment" are the long ones.
+// "Inventory reduction" / "Outbound shipment" are the long ones.
 const TYPE_WIDTH_REM = 11;
 // The shared `invoiceNumber` preset is 3.5rem — right for the other consumer,
 // whose header is just "#" — but this table spells out "Invoice number", which
@@ -89,8 +89,9 @@ const INVOICE_NUMBER_WIDTH_REM = 9;
 
 // The document-type / status labels (spec ui-surface.md § Ledger tab
 // columns) — explicit per-vertical lookups (kdd/explicit-composition), not a
-// shared cross-vertical mapper; INVENTORY_ADDITION/_REDUCTION both render via
-// the single "Inventory adjustment" label (captured as-is).
+// shared cross-vertical mapper. INVENTORY_ADDITION/_REDUCTION each name their
+// direction — one shared "Inventory adjustment" label made the Type filter
+// offer two indistinguishable options (#1256).
 const TYPE_LABEL: Record<InvoiceType, string> = {
   get OUTBOUND_SHIPMENT() {
     return t('label.outbound-shipment');
@@ -102,10 +103,10 @@ const TYPE_LABEL: Record<InvoiceType, string> = {
     return t('label.prescription');
   },
   get INVENTORY_ADDITION() {
-    return t('label.inventory-adjustment');
+    return t('label.inventory-addition');
   },
   get INVENTORY_REDUCTION() {
-    return t('label.inventory-adjustment');
+    return t('label.inventory-reduction');
   },
   get SUPPLIER_RETURN() {
     return t('label.supplier-return');

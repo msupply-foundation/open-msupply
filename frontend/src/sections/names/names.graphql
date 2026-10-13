@@ -26,7 +26,8 @@ query names(
         isSupplier
         isVisible
         # store is non-null only when the name is itself a store — drives the
-        # row's store indicator (spec/names columns; AC-N8).
+        # row's store indicator (spec/names columns; OMS-REG-DIST-08.23,
+        # OMS-REG-REPL-08.16).
         store {
           id
           code
@@ -77,7 +78,8 @@ query nameById($storeId: String!, $nameId: String!) {
         properties
         # Custom-field values (JSON object as string; see domain/customFields).
         customFields
-        # Supplier-only trade terms (S4 Details tab; AC-N25).
+        # Supplier-only trade terms (S4 Details tab; OMS-REG-DIST-08.26,
+        # OMS-REG-REPL-08.22).
         hshCode
         hshName
         email
@@ -119,10 +121,11 @@ query nameProperties {
 }
 
 # Consumed read (CROSS-VERTICAL — owned by the purchase-order vertical, named
-# here only to populate the supplier detail's Purchase Orders tab; AC-N26).
-# Filtered by supplier NAME (the PurchaseOrderFilterInput.supplier StringFilter
-# matches the supplier's name — confirmed against the current app); selecting a
-# row navigates into the purchase-order area.
+# here only to populate the supplier detail's Purchase Orders tab;
+# OMS-REG-REPL-08.23). Filtered by supplier NAME (the
+# PurchaseOrderFilterInput.supplier StringFilter matches the supplier's name —
+# confirmed against the current app); selecting a row navigates into the
+# purchase-order area.
 query supplierPurchaseOrders($storeId: String!, $supplierName: String!) {
   purchaseOrders(
     storeId: $storeId

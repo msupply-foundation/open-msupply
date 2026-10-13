@@ -1,9 +1,9 @@
 use repository::{
+    EqualFilter, RepositoryError, StorageConnection,
     campaign::{
         campaign::{CampaignFilter, CampaignRepository},
         campaign_row::CampaignRowRepository,
     },
-    EqualFilter, RepositoryError, StorageConnection,
 };
 
 pub fn check_campaign_exists(

@@ -2,6 +2,7 @@ import React from 'react';
 import {
   NothingHere,
   PreferenceDescriptionNode,
+  PreferenceKey,
   PreferenceValueNodeType,
   UpsertPreferencesInput,
 } from '@openmsupply-client/common';
@@ -10,6 +11,12 @@ import {
   PreferenceSearchInput,
   usePreferenceSearch,
 } from '../../../Manage/Preferences';
+
+const STORE_OVERRIDE_FIELD: Partial<
+  Record<PreferenceKey, keyof UpsertPreferencesInput>
+> = {
+  [PreferenceKey.AuthorisePurchaseOrder]: 'authorisePurchaseOrderStoreOverride',
+};
 
 interface EditStorePreferencesProps {
   storeId: string;
@@ -48,7 +55,9 @@ export const EditStorePreferences = ({
                     ? 0
                     : value;
                 update({
-                  [pref.key]: [{ storeId, value: finalValue }],
+                  [STORE_OVERRIDE_FIELD[pref.key] ?? pref.key]: [
+                    { storeId, value: finalValue },
+                  ],
                 });
                 return true;
               }}

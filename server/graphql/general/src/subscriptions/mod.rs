@@ -14,7 +14,7 @@ use tokio::sync::broadcast;
 use crate::queries::initialisation_status::InitialisationStatusNode;
 
 use initialisation_status::initialisation_status_stream;
-use sync_info::{sync_info_stream, SyncInfoUpdatedNode};
+use sync_info::{SyncInfoUpdatedNode, sync_info_stream};
 
 fn get_subscription_broadcast(
     ctx: &Context<'_>,
@@ -46,7 +46,7 @@ impl SyncStatusSubscriptions {
     async fn sync_info_updated(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<impl Stream<Item = SyncInfoUpdatedNode>> {
+    ) -> Result<impl Stream<Item = SyncInfoUpdatedNode> + use<>> {
         validate_sync_auth(ctx)?;
         Ok(sync_info_stream(get_subscription_broadcast(ctx)?))
     }
@@ -54,7 +54,7 @@ impl SyncStatusSubscriptions {
     async fn initialisation_status_updated(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<impl Stream<Item = InitialisationStatusNode>> {
+    ) -> Result<impl Stream<Item = InitialisationStatusNode> + use<>> {
         validate_sync_auth(ctx)?;
         Ok(initialisation_status_stream(get_subscription_broadcast(
             ctx,
@@ -72,14 +72,14 @@ impl InitialisationSubscriptions {
     async fn sync_info_updated(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<impl Stream<Item = SyncInfoUpdatedNode>> {
+    ) -> Result<impl Stream<Item = SyncInfoUpdatedNode> + use<>> {
         Ok(sync_info_stream(get_subscription_broadcast(ctx)?))
     }
 
     async fn initialisation_status_updated(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<impl Stream<Item = InitialisationStatusNode>> {
+    ) -> Result<impl Stream<Item = InitialisationStatusNode> + use<>> {
         Ok(initialisation_status_stream(get_subscription_broadcast(
             ctx,
         )?))

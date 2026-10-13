@@ -1,20 +1,20 @@
 use crate::{
-    activity_log::activity_log_entry_with_diff,
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
     NullableUpdate, WithDBError,
+    activity_log::activity_log_entry_with_diff,
+    invoice_line::{ShipmentTaxUpdate, query::get_invoice_line},
+    service_provider::ServiceContext,
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, ActivityLogType, InvoiceLine,
-    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository,
+    ActivityLogType, InvoiceLine, InvoiceLineRowRepository, InvoiceLineStatus,
+    InvoiceRowRepository, RepositoryError, StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod generate;
 mod validate;
 
-use generate::{generate, GenerateResult};
+use generate::{GenerateResult, generate};
 use validate::validate;
 
 use crate::invoice::inbound_shipment::InboundShipmentType;
@@ -163,8 +163,11 @@ where
 mod test {
     use chrono::NaiveDate;
     use repository::{
+        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+        InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow, InvoiceStatus,
+        InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
         mock::{
-            currency_b, mock_customer_return_a_invoice_line_a,
+            MockData, MockDataInserts, currency_b, mock_customer_return_a_invoice_line_a,
             mock_customer_return_a_invoice_line_b, mock_immunisation_program_a,
             mock_inbound_shipment_a, mock_item_a, mock_item_b,
             mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
@@ -172,22 +175,18 @@ mod test {
             mock_shipment_variance_reason_option, mock_store_a, mock_store_b,
             mock_supplier_return_a_invoice_line_a, mock_transferred_inbound_shipment_a,
             mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, mock_vvm_status_b,
-            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-        InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow, InvoiceStatus,
-        InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
     };
 
     use crate::{
+        NullableUpdate,
         invoice_line::stock_in_line::{
-            insert_stock_in_line, update::UpdateStockInLine, update_stock_in_line,
             InsertStockInLine, StockInType, UpdateStockInLineError as ServiceError,
+            insert_stock_in_line, update::UpdateStockInLine, update_stock_in_line,
         },
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -344,17 +343,19 @@ mod test {
         );
 
         // Zero is allowed, donated and free of charge stock has no price
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: mock_customer_return_a_invoice_line_a().id,
-                sell_price_per_pack: Some(0.0),
-                cost_price_per_pack: Some(0.0),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    sell_price_per_pack: Some(0.0),
+                    cost_price_per_pack: Some(0.0),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
 
         // ItemNotFound
         assert_eq!(
@@ -814,19 +815,21 @@ mod test {
         );
 
         // Setting the same status should NOT trigger the error (no actual change)
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: passed_line().id,
-                r#type: StockInType::InboundShipment,
-                status: Some(NullableUpdate {
-                    value: Some(InvoiceLineStatus::Passed),
-                }),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: passed_line().id,
+                    r#type: StockInType::InboundShipment,
+                    status: Some(NullableUpdate {
+                        value: Some(InvoiceLineStatus::Passed),
+                    }),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
     }
 
     // Expected cost price editability by case:
@@ -936,44 +939,50 @@ mod test {
         );
 
         // Submitting the same cost price should succeed (not a real change)
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: line.id.clone(),
-                r#type: StockInType::InboundShipment,
-                cost_price_per_pack: Some(100_000.0),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: line.id.clone(),
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(100_000.0),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
 
         // A value within floating-point tolerance of the original should also succeed
         // (simulates round-trip through JSON serialization)
         let nearly_same = 100_000.0 + (f64::EPSILON * 100_000.0 * 5.0);
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: line.id.clone(),
-                r#type: StockInType::InboundShipment,
-                cost_price_per_pack: Some(nearly_same),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: line.id.clone(),
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(nearly_same),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
 
         // No cost_price_per_pack in input should skip the check entirely
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: line.id.clone(),
-                r#type: StockInType::InboundShipment,
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: line.id.clone(),
+                    r#type: StockInType::InboundShipment,
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
     }
 
     #[actix_rt::test]
@@ -1013,29 +1022,33 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: line.id,
-                r#type: StockInType::InboundShipment,
-                cost_price_per_pack: Some(999.0),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: line.id,
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(999.0),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
 
-        assert!(update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: internal_supplier_line.id,
-                r#type: StockInType::InboundShipment,
-                cost_price_per_pack: Some(999.0),
-                ..Default::default()
-            },
-            None
-        )
-        .is_ok());
+        assert!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: internal_supplier_line.id,
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(999.0),
+                    ..Default::default()
+                },
+                None
+            )
+            .is_ok()
+        );
     }
 
     /// OMS-REG-ISH-01.17 — nothing on an inbound shipment can set, change or

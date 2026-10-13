@@ -17,7 +17,7 @@ pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptio
 
 use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
-use graphql_core::{pagination::PaginationInput, ContextExt};
+use graphql_core::{ContextExt, pagination::PaginationInput};
 use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
@@ -27,43 +27,43 @@ use graphql_types::types::{
     PeriodScheduleRowResponse, StorePreferenceNode,
 };
 use mutations::{
-    barcode::{insert_barcode, BarcodeInput},
+    barcode::{BarcodeInput, insert_barcode},
     common::SyncSettingsInput,
     display_settings::{
-        update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
+        DisplaySettingsInput, UpdateDisplaySettingsResponse, update_display_settings,
     },
     initialise_as_central_server::{
-        initialise_as_central_server, InitialiseAsCentralServerInputNode,
-        InitialiseAsCentralServerResponse,
+        InitialiseAsCentralServerInputNode, InitialiseAsCentralServerResponse,
+        initialise_as_central_server,
     },
-    initialise_site::{initialise_site, InitialiseSiteResponse},
-    insert_insurance::{insert_insurance, InsertInsuranceInput, InsertInsuranceResponse},
+    initialise_site::{InitialiseSiteResponse, initialise_site},
+    insert_insurance::{InsertInsuranceInput, InsertInsuranceResponse, insert_insurance},
     label_printer_settings::{
-        update_label_printer_settings, LabelPrinterSettingsInput,
-        UpdateLabelPrinterSettingsResponse,
+        LabelPrinterSettingsInput, UpdateLabelPrinterSettingsResponse,
+        update_label_printer_settings,
     },
-    log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
+    log::{LogLevelInput, UpsertLogLevelResponse, update_log_level},
     manual_sync::manual_sync,
-    sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
-    update_insurance::{update_insurance, UpdateInsuranceInput, UpdateInsuranceResponse},
+    sync_settings::{UpdateSyncSettingsResponse, update_sync_settings},
+    update_insurance::{UpdateInsuranceInput, UpdateInsuranceResponse, update_insurance},
     update_name_properties::{
-        update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
+        UpdateNamePropertiesInput, UpdateNamePropertiesResponse, update_name_properties,
     },
 };
 use queries::{
     abbreviation::AbbreviationFilterInput,
     currency::currencies,
-    display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
-    initialisation_status::{initialisation_status, InitialisationStatusNode},
+    display_settings::{DisplaySettingsHash, DisplaySettingsNode, display_settings},
+    initialisation_status::{InitialisationStatusNode, initialisation_status},
     insurance_policies::{
-        insurance_policies, insurance_policy, InsuranceResponse, InsuranceSortInput,
-        InsurancesResponse,
+        InsuranceResponse, InsuranceSortInput, InsurancesResponse, insurance_policies,
+        insurance_policy,
     },
-    insurance_providers::{insurance_providers, InsuranceProvidersResponse},
-    migration_status::{migration_status, MigrationStatusNode},
+    insurance_providers::{InsuranceProvidersResponse, insurance_providers},
+    migration_status::{MigrationStatusNode, migration_status},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
-    shipping_method::{get_shipping_methods, ShippingMethodFilterInput, ShippingMethodsResponse},
-    sync_settings::{sync_settings, SyncSettingsNode},
+    shipping_method::{ShippingMethodFilterInput, ShippingMethodsResponse, get_shipping_methods},
+    sync_settings::{SyncSettingsNode, sync_settings},
 };
 
 #[derive(Default, Clone)]

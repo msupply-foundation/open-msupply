@@ -5,10 +5,10 @@ use repository::{
 };
 
 use crate::{
+    NullableUpdate,
     activity_log::{activity_log_entry, log_type_from_purchase_order_status},
     purchase_order::update::generate::GenerateResult,
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 
 mod generate;

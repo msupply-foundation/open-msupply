@@ -1,4 +1,4 @@
-use super::{version::Version, Migration, MigrationFragment};
+use super::{Migration, MigrationFragment, version::Version};
 
 mod abbreviation_create_table;
 mod add_contact_form_processor_pg_enum_type;

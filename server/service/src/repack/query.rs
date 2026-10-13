@@ -91,10 +91,10 @@ pub fn get_repacks_by_stock_line(
             .clone();
 
         // Skip invoice if 'repacked to' stock line is same as the queried stock line
-        if let Some(stock_line_id_to) = &invoice_line_to.invoice_line_row.stock_line_id {
-            if stock_line_id_to == stock_line_id {
-                continue;
-            }
+        if let Some(stock_line_id_to) = &invoice_line_to.invoice_line_row.stock_line_id
+            && stock_line_id_to == stock_line_id
+        {
+            continue;
         }
 
         repacks.push(Repack {
@@ -117,19 +117,19 @@ pub fn get_repacks_by_stock_line(
 #[cfg(test)]
 mod test {
     use crate::{
-        repack::{query::Repack, InsertRepack},
+        repack::{InsertRepack, query::Repack},
         service_provider::ServiceProvider,
     };
     use chrono::NaiveDate;
     use repository::{
-        mock::{
-            currency_a, mock_item_a, mock_location_1, mock_location_on_hold, mock_store_a,
-            mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
         InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
         StockLineRowRepository,
+        mock::{
+            MockData, MockDataInserts, currency_a, mock_item_a, mock_location_1,
+            mock_location_on_hold, mock_store_a, mock_user_account_a,
+        },
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]

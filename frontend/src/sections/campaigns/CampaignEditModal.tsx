@@ -106,7 +106,7 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
       open
       testId="campaign-edit-modal"
       title={isEdit() ? t('title.edit-campaign') : t('title.create-campaign')}
-      // Blocking while the mutation is in flight: no scrim/Escape exit until it
+      // Blocking while the mutation is in flight: no Escape exit until it
       // resolves.
       dismissable={!saving()}
       onClose={props.onClose}

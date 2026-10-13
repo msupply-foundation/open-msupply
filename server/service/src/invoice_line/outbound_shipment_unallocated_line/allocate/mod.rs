@@ -1,8 +1,8 @@
 use crate::{
     invoice_line::{
         stock_out_line::{
-            insert_stock_out_line, update_stock_out_line, InsertStockOutLine,
-            InsertStockOutLineError, UpdateStockOutLine, UpdateStockOutLineError,
+            InsertStockOutLine, InsertStockOutLineError, UpdateStockOutLine,
+            UpdateStockOutLineError, insert_stock_out_line, update_stock_out_line,
         },
         validate::check_line_exists,
     },
@@ -11,14 +11,14 @@ use crate::{
 use repository::{InvoiceLine, InvoiceLineType, RepositoryError, StockLine, StorageConnection};
 
 use super::{
-    delete_outbound_shipment_unallocated_line, update_outbound_shipment_unallocated_line,
     DeleteOutboundShipmentUnallocatedLine, DeleteOutboundShipmentUnallocatedLineError,
     UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
+    delete_outbound_shipment_unallocated_line, update_outbound_shipment_unallocated_line,
 };
 
 mod generate;
 mod test;
-use generate::{generate, GenerateOutput};
+use generate::{GenerateOutput, generate};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct InputWithError<I, E>

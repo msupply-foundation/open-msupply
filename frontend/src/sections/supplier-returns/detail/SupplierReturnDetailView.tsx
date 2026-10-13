@@ -368,11 +368,12 @@ const SupplierReturnDetailView: Component = () => {
     setEditState({ mode: 'update', itemId: line.item.id, lineId: line.id });
   const openAdd = () => setEditState({ mode: 'add' });
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
-  // declaration for the two controls that trigger it; each carries
-  // `shortcut={ALT_N}` for its badge, neither owns the action. Gated on `.state`
-  // rather than on `info()`, which suspends (kdd/keyboard-layer — an action's
-  // `disabled` MUST NOT read a suspending source; the palette evaluates it).
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). One declaration for the two controls that trigger
+  // it; each carries `shortcut={ALT_N}` for its badge, neither owns the action.
+  // Gated on `.state` rather than on `info()`, which suspends
+  // (kdd/keyboard-layer — an action's `disabled` MUST NOT read a suspending
+  // source; the palette evaluates it).
   createAddAction({
     name: 'button.add-item',
     run: openAdd,

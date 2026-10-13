@@ -317,7 +317,7 @@ mutation deleteOutboundLines(
   }
 }
 
-# Auto-allocate one placeholder (FEFO — the shared policy, spec/stock-allocation AC-AL1..AL5). The warning connectors feed
+# Auto-allocate one placeholder (FEFO — the shared policy, stock-allocation OMS-REG-SMV-11.1–.14). The warning connectors feed
 # the skip/expiring-soon notices; the view refetches the shipment afterwards
 # (placeholder, lines, and pricing all move server-side).
 mutation allocateOutboundLine($storeId: String!, $lineId: String!) {

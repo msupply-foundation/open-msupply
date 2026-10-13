@@ -2,11 +2,11 @@ use std::time::Duration;
 
 use chrono::NaiveDate;
 use repository::{
-    mock::{insert_extra_mock_data, MockData, MockDataInserts},
     ApprovalStatusType, EqualFilter, ItemRow, KeyType, KeyValueStoreRow, NameRow,
     RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRepository, RequisitionRow, RequisitionRowRepository,
     RequisitionStatus, RequisitionType, StorageConnection, StoreRow,
+    mock::{MockData, MockDataInserts, insert_extra_mock_data},
 };
 use util::uuid::uuid;
 
@@ -17,7 +17,7 @@ use crate::{
         response_requisition::{UpdateResponseRequisition, UpdateResponseRequisitionStatus},
     },
     service_provider::ServiceProvider,
-    test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
 };
 
 /// This test is for requesting and responding store on the same site

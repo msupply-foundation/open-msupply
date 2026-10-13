@@ -1,6 +1,6 @@
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     Requisition, StorageConnection,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 use crate::requisition::requisition_supply_status::RequisitionLineSupplyStatus;

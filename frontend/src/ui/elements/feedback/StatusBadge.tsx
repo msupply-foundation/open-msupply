@@ -17,12 +17,14 @@ import styles from './StatusBadge.module.css';
 export interface StatusBadgeProps {
   /** The state, as a word — "On hold", "Expired"… Already translated. */
   label: string;
-  tone?: 'neutral' | 'success' | 'warning' | 'error';
+  tone?: 'neutral' | 'info' | 'success' | 'warning' | 'error';
   /** 'solid' (default) = tone-tinted fill; 'outline' = dashed border, no fill. */
   appearance?: 'solid' | 'outline';
   /** Optional marker icon, decorative (the label carries the meaning). */
   icon?: JSX.Element;
   class?: string;
+  /** Test hook (e2e/TESTIDS.md) — a caller naming the state it renders. */
+  testId?: string;
 }
 
 export const StatusBadge = (props: StatusBadgeProps) => (
@@ -30,6 +32,7 @@ export const StatusBadge = (props: StatusBadgeProps) => (
     class={props.class ? `${styles.badge} ${props.class}` : styles.badge}
     data-tone={props.tone ?? 'neutral'}
     data-appearance={props.appearance ?? 'solid'}
+    data-testid={props.testId}
   >
     <Show when={props.icon}>
       {icon => (

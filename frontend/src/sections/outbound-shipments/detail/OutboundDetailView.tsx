@@ -30,7 +30,7 @@ import {
   AbsentValue,
   getCellDefinition,
   getFlagCell,
-  getNumberCell,
+  getVolumeCell,
   isNearOrPastExpiry,
 } from '../../../ui/elements/table/tableHelpers';
 import {
@@ -659,10 +659,11 @@ const OutboundDetailView: Component = () => {
     });
   const openAdd = () => openEditor({});
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the two controls that trigger it (the header button and
-  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
-  // for its badge, neither owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
+  // that trigger it (the header button and the ghost button in the table's
+  // empty slot); each carries `shortcut={ALT_N}` for its badge, neither owns
+  // the action.
   //
   // Gated on `.state`, NOT through `editable()` — that reads `data.latest`, which
   // suspends on the first pending read, and the palette evaluates every action's
@@ -1063,10 +1064,10 @@ const OutboundDetailView: Component = () => {
           id: 'volume',
         },
         header: () => t('label.volume'),
-        // Same display rounding as the column's cells (ui-standards § tables'
-        // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
-        // mismatch.
-        ...getNumberCell(),
+        // A volume's own places (ui-standards § display rounding), the same
+        // as the totals strip beneath — a footer at one precision under cells
+        // at another reads as a mismatch.
+        ...getVolumeCell(),
         // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
         size: remToPx(6),
       },

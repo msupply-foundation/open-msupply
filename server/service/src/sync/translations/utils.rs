@@ -3,7 +3,6 @@ use std::collections::HashSet;
 
 use chrono::Utc;
 use repository::{
-    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     AssetCatalogueItemRowRepository, AssetCategoryRowRepository, AssetClassRowRepository,
     AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, BarcodeRowRepository,
     CampaignRowRepository, CategoryRowRepository, ChangelogRow, ClinicianLinkRowRepository,
@@ -21,23 +20,9 @@ use repository::{
     StorageConnection, StoreRowRepository, SyncVersion, TemperatureBreachRowRepository,
     UnitRowRepository, VVMStatusRowRepository, VaccineCourseDoseRowRepository,
     VaccineCourseRowRepository, WarningRowRepository,
+    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
 };
 use util::uuid::uuid;
-
-/// Custom fields is a v7-era feature: the OG→OMS legacy import runs on the
-/// central server only. A V5V6 remote (which still syncs v5 directly to OG
-/// during transition) must not derive custom fields locally — it would surface
-/// custom fields without the v7 infrastructure. Remotes receive `custom_fields`
-/// from central via v7 instead. `build` is only invoked on the central server.
-pub(crate) fn legacy_custom_fields_if_central(
-    build: impl FnOnce() -> Option<serde_json::Value>,
-) -> Option<serde_json::Value> {
-    if crate::sync::CentralServerConfig::is_central_server() {
-        build()
-    } else {
-        None
-    }
-}
 
 /// On central, decides whether a `name`/`name_store_join` changelog row should be
 /// skipped (`true`, reason logged) rather than relayed to legacy (OG) central,
@@ -205,6 +190,14 @@ impl LegacyCustomFieldsBuilder {
 ///  - overlay `legacy_derived` (the fresh owned-key values; absent ones stay dropped),
 ///  - return `None` when the result is empty so an untouched row's `custom_fields`
 ///    stays NULL rather than carrying an empty `{}`.
+///
+/// **Central only.** Custom fields is a v7-era feature: the OG→OMS legacy import
+/// runs on the central server only. A V5V6 remote (which still syncs v5 directly to
+/// OG during transition) must not derive custom fields locally — it would surface
+/// custom fields without the v7 infrastructure. Remotes receive `custom_fields` from
+/// central via v7 instead. So every caller gates this on
+/// `CentralServerConfig::is_central_server()` and keeps the existing blob untouched
+/// off central — never blanking it, since v7 is what put it there.
 pub(crate) fn merge_legacy_custom_fields(
     existing: Option<serde_json::Value>,
     legacy_derived: Option<serde_json::Value>,
@@ -431,7 +424,7 @@ impl FkChecker {
         connection: &'a StorageConnection,
         record_table: &'a str,
         record_id: &str,
-    ) -> impl Fn(Option<String>, &str, FkField) -> Result<Option<String>, RepositoryError> + 'a
+    ) -> impl Fn(Option<String>, &str, FkField) -> Result<Option<String>, RepositoryError> + 'a + use<'a>
     {
         let record_id = record_id.to_string();
         move |fk_id, fk_field_name, fk_field| {
@@ -458,7 +451,7 @@ impl FkChecker {
         connection: &'a StorageConnection,
         record_table: &'a str,
         record_id: &str,
-    ) -> impl Fn(String, &str, FkField) -> anyhow::Result<String> + 'a {
+    ) -> impl Fn(String, &str, FkField) -> anyhow::Result<String> + 'a + use<'a> {
         let record_id = record_id.to_string();
         move |fk_id, fk_field_name, fk_field| {
             self.check_fk(

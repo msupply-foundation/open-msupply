@@ -1,9 +1,9 @@
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use repository::StorageConnection;
 
 use crate::preference::{
-    upsert_helpers::upsert_global, PrefKey, Preference, PreferenceType, PreferenceValueType,
-    UpsertPreferenceError,
+    PrefKey, Preference, PreferenceType, PreferenceValueType, UpsertPreferenceError,
+    upsert_helpers::upsert_global,
 };
 
 /// Max length of the stored data-URL string (~342KB, fits a 250KB file after
@@ -86,7 +86,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        preference::{upsert_preferences, UpsertPreferences},
+        preference::{UpsertPreferences, upsert_preferences},
         service_provider::ServiceProvider,
         sync::test_util_set_is_central_server,
     };

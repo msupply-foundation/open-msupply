@@ -11,7 +11,7 @@ import { Dialog } from './Dialog';
 
 export interface ConfirmDialogProps {
   open: boolean;
-  /** Every close path — Cancel, scrim, Escape. OK runs onConfirm first. */
+  /** Every close path — Cancel, Escape. OK runs onConfirm first. */
   onClose: () => void;
   title?: string;
   message: JSX.Element;

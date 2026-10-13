@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod query {
     use repository::mock::{mock_item_a, mock_item_b, mock_name_store_a};
-    use repository::{mock::MockDataInserts, test_db::setup_all};
     use repository::{
         MasterListLineRow, MasterListLineRowRepository, MasterListRow, MasterListRowRepository,
     };
+    use repository::{mock::MockDataInserts, test_db::setup_all};
 
     use crate::pricing::item_price::ItemPriceLookup;
     use crate::service_provider::ServiceProvider;

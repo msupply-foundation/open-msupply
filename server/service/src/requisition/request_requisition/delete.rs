@@ -2,17 +2,17 @@ use crate::{
     activity_log::activity_log_entry,
     requisition::common::check_requisition_row_exists,
     requisition_line::request_requisition_line::{
-        delete_request_requisition_line, DeleteRequestRequisitionLine,
-        DeleteRequestRequisitionLineError,
+        DeleteRequestRequisitionLine, DeleteRequestRequisitionLineError,
+        delete_request_requisition_line,
     },
     service_provider::ServiceContext,
     validate::check_other_party_store_is_disabled,
 };
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, RepositoryError, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
     SyncFileReferenceFilter, SyncFileReferenceRepository, SyncFileReferenceRowRepository,
+    requisition_row::{RequisitionStatus, RequisitionType},
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -146,13 +146,13 @@ impl From<RepositoryError> for DeleteRequestRequisitionError {
 mod test_delete {
 
     use repository::{
+        RequisitionRowRepository,
         mock::{
-            mock_draft_request_requisition_for_update_test,
+            MockDataInserts, mock_draft_request_requisition_for_update_test,
             mock_full_new_response_requisition_for_update_test, mock_sent_request_requisition,
-            mock_store_a, mock_store_b, MockDataInserts,
+            mock_store_a, mock_store_b,
         },
         test_db::setup_all,
-        RequisitionRowRepository,
     };
 
     use crate::{

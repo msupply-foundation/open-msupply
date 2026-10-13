@@ -10,6 +10,8 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import {
   asPrescriptionStatus,
   hasDispensedLines,
@@ -26,15 +28,18 @@ import { PaymentsModal } from './PaymentsModal';
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
 
 // The detail status footer (spec/prescriptions/ui-surface.md S3 § status
-// footer): the lifecycle crumbs (CANCELLED only once cancelled — AC-V2),
-// Close, and the status-change split button — primary "Confirm ‹next›",
-// options the allowed FORWARD transitions only (D40), hidden entirely once
-// read-only (D39). One client pre-flight only: no dispensed lines → a
-// blocking notice, no server call (AC-S6, the captured server gap). The
-// confirmation warns when zero-quantity rows will be removed (AC-S5); with
-// insurance providers configured and a charged total the payment window
-// opens instead (AC-Y1). A typed rejection surfaces in the same dialog as a
-// blocking notice — never a toast (S7, D21).
+// footer): the lifecycle crumbs (CANCELLED only once cancelled —
+// OMS-REG-DIS-04.24), Close, and the status-change split button — primary
+// "Confirm ‹next›", options the allowed FORWARD transitions only (D40), hidden
+// entirely once read-only (D39). One client pre-flight only: no dispensed lines
+// → a blocking notice, no server call (OMS-REG-DIS-04.22, the captured server
+// gap). The confirmation warns when zero-quantity rows will be removed
+// (OMS-REG-DIS-04.21); with insurance providers configured and a charged total
+// the payment window opens instead (OMS-REG-DIS-04.27). A typed rejection
+// surfaces in the same dialog as a blocking notice — never a toast (S7, D21). A
+// change that lands closes the dialog, so the bar's message slot flashes the
+// save confirmation (spec/ui-standards/controls.md § action feedback) — the
+// split button is gone at Verified.
 
 export interface PrescriptionStatusFooterProps {
   storeId: string;
@@ -55,6 +60,7 @@ export const PrescriptionStatusFooter: Component<
   const [rejection, setRejection] = createSignal<string>();
   const [noLinesOpen, setNoLinesOpen] = createSignal(false);
   const [paymentStatus, setPaymentStatus] = createSignal<ForwardStatus>();
+  const saved = createFlash<string>();
 
   const status = () => asPrescriptionStatus(props.node.status);
   const options = () =>
@@ -110,12 +116,12 @@ export const PrescriptionStatusFooter: Component<
   };
 
   const openConfirm = (next: ForwardStatus) => {
-    // The one sanctioned pre-flight (AC-S6): nothing dispensed —
+    // The one sanctioned pre-flight (OMS-REG-DIS-04.22): nothing dispensed —
     // placeholder-only
     // counts as nothing — blocks with a notice and no server call.
     if (!hasDispensedLines(props.node.lines.nodes)) return setNoLinesOpen(true);
     // The payment window replaces the plain confirmation when the store has
-    // providers and the prescription carries a charge (AC-Y1).
+    // providers and the prescription carries a charge (OMS-REG-DIS-04.27).
     if (props.hasInsuranceProviders && props.node.pricing.totalAfterTax > 0)
       return setPaymentStatus(next);
     setPendingStatus(next);
@@ -151,6 +157,10 @@ export const PrescriptionStatusFooter: Component<
       }
       closeDialogs();
       props.onSaved(outcome.node);
+      // Only a WHOLE success flashes. A plugin after-save failure (above)
+      // keeps the payment window open to report it; a success chip behind it
+      // would contradict that.
+      saved.show(t('messages.prescription-saved'));
       return;
     }
     setWorking(false);
@@ -171,9 +181,12 @@ export const PrescriptionStatusFooter: Component<
   return (
     <ContentFooter>
       <StatusIndicator
+        recordId={props.node.id}
         steps={statusSteps(props.node)}
         current={statusIndex(status())}
       />
+
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       <ContentFooterActions>
         {/* No Close here (D103): leaving the prescription is the breadcrumb's
@@ -202,7 +215,7 @@ export const PrescriptionStatusFooter: Component<
         </Show>
       </ContentFooterActions>
 
-      {/* The no-lines blocking notice (AC-S6) — a notice, never a toast. */}
+      {/* The no-lines blocking notice (OMS-REG-DIS-04.22) — a notice, never a toast. */}
       <Dialog
         open={noLinesOpen()}
         onClose={() => setNoLinesOpen(false)}
@@ -220,7 +233,7 @@ export const PrescriptionStatusFooter: Component<
         }
       />
 
-      {/* The status confirmation — zero-quantity removal warned (AC-S5); a
+      {/* The status confirmation — zero-quantity removal warned (OMS-REG-DIS-04.21); a
           typed rejection swaps the message for the blocking notice. */}
       <Show when={pendingStatus()}>
         {next => (
@@ -280,7 +293,7 @@ export const PrescriptionStatusFooter: Component<
         )}
       </Show>
 
-      {/* The payment window (AC-Y1/Y2) — confirming saves policy + discounts
+      {/* The payment window (OMS-REG-DIS-04.27/.28) — confirming saves policy + discounts
           together with the status change. */}
       <Show when={paymentStatus()}>
         {next => (

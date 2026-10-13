@@ -1,7 +1,7 @@
 use crate::db_diesel::name_row::name;
 use crate::{
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, Delete,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert, diesel_macros::define_linked_tables,
 };
 use diesel::prelude::*;
 

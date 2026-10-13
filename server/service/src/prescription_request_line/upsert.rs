@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::prescription_request::validate::{
-    check_prescription_request_editable, CommonPrescriptionRequestError,
+    CommonPrescriptionRequestError, check_prescription_request_editable,
 };
 use crate::service_provider::ServiceContext;
 
@@ -57,10 +57,10 @@ pub fn upsert_prescription_request_line(
             })?;
 
             let repo = PrescriptionRequestLineRowRepository::new(connection);
-            if let Some(existing_line) = repo.find_one_by_id(&input.id)? {
-                if existing_line.prescription_request_id != input.prescription_request_id {
-                    return Err(LineBelongsToAnotherPrescriptionRequest);
-                }
+            if let Some(existing_line) = repo.find_one_by_id(&input.id)?
+                && existing_line.prescription_request_id != input.prescription_request_id
+            {
+                return Err(LineBelongsToAnotherPrescriptionRequest);
             }
 
             check_item(connection, &input.item_id)?;
@@ -108,9 +108,9 @@ impl From<RepositoryError> for UpsertPrescriptionRequestLineError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_item_a, mock_item_b, mock_item_service_item, mock_patient, MockDataInserts},
-        test_db::setup_all,
         PrescriptionRequestRow,
+        mock::{MockDataInserts, mock_item_a, mock_item_b, mock_item_service_item, mock_patient},
+        test_db::setup_all,
     };
     use util::uuid::uuid;
 

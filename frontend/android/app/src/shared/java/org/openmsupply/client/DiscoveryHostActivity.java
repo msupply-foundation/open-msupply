@@ -12,8 +12,8 @@ package org.openmsupply.client;
 public interface DiscoveryHostActivity {
     /**
      * Drop the WebView's history once a page whose URL starts with
-     * {@code urlPrefix} has loaded (host duty AC-DT16 — see the plugin's
-     * navigate()). Called on the UI thread.
+     * {@code urlPrefix} has loaded (host duty OMS-REG-DESK-01.21 — see the
+     * plugin's navigate()). Called on the UI thread.
      */
     void clearHistoryWhenLoaded(String urlPrefix);
 
@@ -40,9 +40,9 @@ public interface DiscoveryHostActivity {
      * and let the rest of the page fall to the default refusal. The old front
      * end's path has always matched by origin
      * (CertWebViewClient.onReceivedSslError).</li>
-     * <li>{@code url} for the failed-load duty (AC-DT4), which is about THIS
-     * hand-off failing to serve — deliberately not any later navigation on a
-     * server the user is already signed in to.</li>
+     * <li>{@code url} for the failed-load duty (OMS-REG-DESK-01.5), which is
+     * about THIS hand-off failing to serve — deliberately not any later
+     * navigation on a server the user is already signed in to.</li>
      * </ul>
      *
      * Default no-op: a shell with no certificate trust to key — the new

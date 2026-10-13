@@ -66,10 +66,10 @@ type PatientsListState = {
   first: number;
 };
 
-// Default sort: newest by creation (AC-L1). Filter seeds the three
+// Default sort: newest by creation (OMS-REG-DIS-01.43). Filter seeds the three
 // default-shown chips (First name / Last name / Patient ID) present-as-null so
-// they render on a pristine list (AC-L2); stripEmpty drops them from the query
-// until typed.
+// they render on a pristine list (OMS-REG-DIS-01.18–.20/.44); stripEmpty drops
+// them from the query until typed.
 const DEFAULT_STATE: PatientsListState = {
   filter: { firstName: null, lastName: null, identifier: null },
   sort: [{ key: 'createdDatetime', desc: true }],
@@ -86,16 +86,16 @@ const PatientsList: Component = () => {
   });
   const [createOpen, setCreateOpen] = createSignal(false);
 
-  // Create/edit affordances are gated on patient-mutate permission (AC-E1);
-  // hidden when absent (spec/patients cross-cutting).
+  // Create/edit affordances are gated on patient-mutate permission
+  // (OMS-REG-DIS-02.40); hidden when absent (spec/patients cross-cutting).
   const canMutate = () => hasPermission('PATIENT_MUTATE');
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
-  // the SCREEN, once, for the two controls that trigger it (the header button
-  // and the ghost button in the table's empty slot); each carries
-  // `shortcut={ALT_N}` for its badge. Gated on the same permission that hides
-  // both, and on nothing else — KB-R2's "gated on the thing it acts on being
-  // present".
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
+  // that trigger it (the header button and the ghost button in the table's
+  // empty slot); each carries `shortcut={ALT_N}` for its badge. Gated on the
+  // same permission that hides both, and on nothing else — KB-R2's "gated on
+  // the thing it acts on being present".
   createAddAction({
     name: 'button.new-patient',
     run: () => setCreateOpen(true),
@@ -172,10 +172,10 @@ const PatientsList: Component = () => {
   const openRow = (row: PatientRow) =>
     navigate(`/${params.storeId}/dispensary/patients/${row.id}`);
 
-  // The program-enrolments chip column (program module only, AC-G2): one chip
-  // per enrolment as "{registry name} ({enrolment id})". The registry name is
-  // the enrolment `type`; the document `name` carries a `p/{patientId}/` prefix
-  // and is never shown.
+  // The program-enrolments chip column (program module only, OMS-REG-DIS-02.53,
+  // OMS-REG-DIS-01.20/.44): one chip per enrolment as "{registry name}
+  // ({enrolment id})". The registry name is the enrolment `type`; the document
+  // `name` carries a `p/{patientId}/` prefix and is never shown.
   const enrolmentLabels = (row: PatientRow): string[] =>
     row.programEnrolments.nodes.map(n =>
       n.programEnrolmentId ? `${n.type} (${n.programEnrolmentId})` : n.type

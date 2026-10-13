@@ -1,6 +1,6 @@
 use super::{
-    store::StoreTranslation, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    store::StoreTranslation,
 };
 use repository::{
     ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow, SyncMessageRow,
@@ -70,7 +70,9 @@ impl SyncTranslation for OmSyncMessageTranslation {
         // both translators emit for every sync_message changelog and the same
         // row gets pushed to both centrals.
         if !matches!(row.r#type, SyncMessageRowType::SupportUpload) {
-            return Ok(PushTranslateResult::NotMatched);
+            return Ok(PushTranslateResult::Ignored(
+                "Not a SupportUpload message".to_string(),
+            ));
         }
 
         Ok(PushTranslateResult::upsert(

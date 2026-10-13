@@ -122,6 +122,7 @@ export const ItemAncillaryPanel: Component<{
         header: () => t('label.delete'),
         cell: info => (
           <IconButton
+            data-testid="ancillary-item-delete-button"
             icon={<TrashIcon />}
             label={t('label.delete')}
             variant="danger"
@@ -165,6 +166,7 @@ export const ItemAncillaryPanel: Component<{
         empty={
           <Show when={props.isCentral}>
             <Button
+              data-testid="nothing-here-create-button"
               variant="ghost"
               onClick={() => props.onEditorChange({ mode: 'create' })}
             >

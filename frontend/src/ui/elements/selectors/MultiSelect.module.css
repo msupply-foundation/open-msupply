@@ -44,6 +44,12 @@
   color: var(--field-label-color);
 }
 
+/* Required marker — the asterisk TextField and Combobox put on their labels. */
+.required {
+  margin-inline-start: 0.125em;
+  color: var(--error-main);
+}
+
 .control {
   display: flex;
   align-items: flex-start;

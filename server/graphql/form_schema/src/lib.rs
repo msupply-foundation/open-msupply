@@ -1,8 +1,8 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::FormSchemaFilterInput;
-use insert_form_schema::{insert_form_schema, InsertFormSchemaInput, InsertFormSchemaResponse};
-use query::{form_schemas, FormSchemaResponse, FormSchemaSortInput};
+use insert_form_schema::{InsertFormSchemaInput, InsertFormSchemaResponse, insert_form_schema};
+use query::{FormSchemaResponse, FormSchemaSortInput, form_schemas};
 
 mod insert_form_schema;
 mod query;

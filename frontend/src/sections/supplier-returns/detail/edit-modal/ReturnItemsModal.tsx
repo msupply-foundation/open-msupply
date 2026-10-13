@@ -422,7 +422,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             <Show when={step() === 'reason' && hasNext()}>
               {/* SaveAndNextButton claims the CONTINUING confirm: while present
                   and enabled, Enter activates it in preference to plain Save
-                  (KB-E2, AC-KB23). */}
+                  (KB-E2, OMS-REG-KBD-02.9/.10). */}
               <SaveAndNextButton
                 loading={saving()}
                 data-testid="dialog-button-next-and-ok"
@@ -507,6 +507,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           when={step() === 'reason'}
           fallback={
             <DataTable
+              dialogTable
               columns={quantityColumns(update, quantityFields, {
                 showItem: false,
               })}
@@ -522,6 +523,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           }
         >
           <DataTable
+            dialogTable
             columns={reasonColumns(update, reasonFields, { showItem: false })}
             rows={reasonRows()}
             rowKey={line => line.id}

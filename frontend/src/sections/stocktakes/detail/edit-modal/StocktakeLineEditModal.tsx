@@ -54,6 +54,7 @@ import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
 import {
   awaitingReason,
+  compareBatchOrder,
   defaultedPackSize,
   differenceSize,
   lineDifference,
@@ -222,6 +223,8 @@ const probePresentItems = async (
 // it). countThisLine for the stock lines is `countByDefault`: opt-in (false)
 // when the item already has lines on the stocktake, all-counted (true) for a
 // brand-new item (adding it means counting all its batches) — matching OMS.
+// The two sets are listed together in batch order (compareBatchOrder,
+// OMS-REG-INV-03.91) — the server returns either in no set order.
 const buildDraft = async (
   storeId: string,
   item: StocktakeLineEditItem,
@@ -293,7 +296,7 @@ const buildDraft = async (
     campaign: sl.campaign,
     program: sl.program,
   }));
-  return [...fromExisting, ...fromStock];
+  return [...fromExisting, ...fromStock].sort(compareBatchOrder);
 };
 
 // The card body groups. The modal now defaults to the TABLE view on a wide
@@ -798,7 +801,9 @@ const StocktakeLineEditContent = (
     }
   };
 
-  // Add a new batch (a fresh draft line) — prepended, count blank.
+  // Add a new batch (a fresh draft line), count blank — appended and focused,
+  // so batches added one after another keep the order they were added in
+  // (OMS-REG-INV-03.92; the load order of .91 is never re-applied mid-visit).
   /*
    * `+` adds a batch (spec/keyboard KB-L1/KB-L2) — the app's one BARE-CHARACTER
    * binding, and the only member of the `always` tier.
@@ -808,7 +813,7 @@ const StocktakeLineEditContent = (
    * character only where that character is not itself valid input to its fields;
    * `+` is safe among quantity, price, and date fields for exactly that reason."
    * That safety is a property of THIS surface's fields, not a general one, which
-   * is why the binding is declared here and nowhere else (AC-KB45).
+   * is why the binding is declared here and nowhere else (OMS-REG-KBD-01.30).
    *
    * Unlisted: the palette already offers the action under its own name via the
    * header control, so a second entry would be noise. Disabled until an item is
@@ -825,10 +830,11 @@ const StocktakeLineEditContent = (
   const addBatch = () => {
     const item = currentItem();
     if (!item) return;
+    const id = generateUUID();
     setDraft(
       produce(lines =>
-        lines.unshift({
-          id: generateUUID(),
+        lines.push({
+          id,
           isNew: true,
           countThisLine: true,
           stockLine: null,
@@ -870,6 +876,7 @@ const StocktakeLineEditContent = (
         })
       )
     );
+    batchFields.focus(id);
   };
 
   // Soft-delete a row (isNew splices out; existing flagged deleted → sent as a
@@ -1808,6 +1815,7 @@ const StocktakeLineEditContent = (
               bordered
               size="small"
               icon={<CopyIcon />}
+              data-testid="duplicate-batch-button"
               label={t('label.duplicate-batch')}
               onClick={() => duplicateLine(line)}
             />
@@ -1816,6 +1824,7 @@ const StocktakeLineEditContent = (
               size="small"
               variant="danger"
               icon={<TrashIcon />}
+              data-testid="remove-batch-button"
               label={t('button.delete')}
               onClick={() => removeLine(line)}
             />
@@ -1973,7 +1982,7 @@ const StocktakeLineEditContent = (
                   undiscoverable from the UI. Naming it inline was one of the two
                   presentations spec/keyboard ui-surface S2 allows; the other is a
                   `shortcut` badge, which is the way to bring it back if the
-                  binding should be visible again. AC-KB15 forbids only having
+                  binding should be visible again. OMS-REG-KBD-01.26 forbids only having
                   BOTH, so neither is also permitted. */}
               {t('label.add-batch')}
             </Button>
@@ -1983,7 +1992,12 @@ const StocktakeLineEditContent = (
       actionsLead={
         <Show when={footerSummary()}>
           {summary => (
-            <Alert severity={summary().severity}>{summary().message}</Alert>
+            <Alert
+              severity={summary().severity}
+              testId="stocktake-line-summary"
+            >
+              {summary().message}
+            </Alert>
           )}
         </Show>
       }
@@ -2026,6 +2040,7 @@ const StocktakeLineEditContent = (
         }
       >
         <DataTable
+          dialogTable
           columns={columns()}
           rows={rows()}
           rowKey={line => line.id}
@@ -2035,6 +2050,12 @@ const StocktakeLineEditContent = (
           showFullScreen={false}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
+          configIsDefault={tableConfig.isConfigDefault()}
+          onSaveGlobalDefault={
+            tableConfig.canSaveGlobalDefault()
+              ? tableConfig.saveGlobalTableConfig
+              : undefined
+          }
           controlsMount={tableControls()}
           emptyMessage={t('label.add-new-line')}
           // Controls hold their line when a cell grows a message beneath it —

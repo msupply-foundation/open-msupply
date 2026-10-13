@@ -1,11 +1,18 @@
-import { ErrorBoundary, lazy, Suspense } from 'solid-js';
+import { ErrorBoundary, lazy, Show, Suspense } from 'solid-js';
+import { pageActions, pageFooter, pageTrail } from './pageSlots';
+import { storeHref } from '../plugin-sdk/navigation';
 import type { Component } from 'solid-js';
 import { t, type LocaleKey } from '../intl';
 import { FileIcon, type IconProps } from '../ui/icons';
 import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
-import { upperNav, type NavItem, type NavLeaf } from '../ui/layout/AppShell/navModel';
+import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
+import {
+  upperNav,
+  type NavItem,
+  type NavLeaf,
+} from '../ui/layout/AppShell/navModel';
 import { anchorMerge, type AnchorDiagnostic } from './anchorMerge';
 import type { RouteAccess } from '../nav/navGates';
 import { namespacedPluginKey } from '../plugin-sdk/intl';
@@ -119,7 +126,7 @@ export const recordPagePathCollisions = (): void => {
  *                landing screen.
  *   permissions  permission-class — the function exists, this user lacks it,
  *                so the entries are absent and a page URL shows the
- *                no-permission notice in place of the screen (AC-PLUG-P1: the
+ *                no-permission notice in place of the screen (OMS-REG-PLG-04.1/.2: the
  *                one condition behind both doors).
  *
  * A page placed in one of its plugin's own nav sections composes the section's
@@ -543,7 +550,7 @@ const pageComponent = (registered: RegisteredPage): Component => {
   const cached = pageComponentCache.get(page);
   if (cached) return cached;
   // The lazy() call is what defers the plugin's page code to first navigation
-  // (AC-PLUG-P2): `load` is not invoked here, only when the route first
+  // (OMS-REG-PLG-04.4/.5): `load` is not invoked here, only when the route first
   // renders, behind the Suspense boundary below (sdk-contract § code
   // splitting). A rejected load evicts the cache entry: lazy() memoises the
   // import promise, so without the eviction one transient network failure
@@ -565,8 +572,50 @@ const pageComponent = (registered: RegisteredPage): Component => {
     <Page
       header={
         <Header>
-          <Breadcrumb crumbs={[{ label: t(labelKey) }]} />
+          {/* The page's crumb, then whatever trail the page sets below itself
+              (pageSlots.ts): with a trail the page's own crumb becomes the
+              parent link, so a record screen under a plugin list is left the
+              way a host record screen is. */}
+          <Breadcrumb
+            crumbs={[
+              {
+                label: t(labelKey),
+                to:
+                  pageTrail.value().length > 0
+                    ? storeHref(page.path)
+                    : undefined,
+              },
+              ...pageTrail.value().map(crumb => ({
+                label: crumb.label,
+                to: crumb.path ? storeHref(crumb.path) : undefined,
+              })),
+            ]}
+          />
+          {/* The page's action cluster (pageSlots.ts), top-end like a host
+              page's; a throwing cluster is contained like the body. */}
+          <Show when={pageActions.value()}>
+            {actions => (
+              <HeaderButtons>
+                <ErrorBoundary
+                  fallback={<p>{t('error.plugin-unavailable')}</p>}
+                >
+                  {actions()()}
+                </ErrorBoundary>
+              </HeaderButtons>
+            )}
+          </Show>
         </Header>
+      }
+      contentFooter={
+        /* The page's pinned action bar (pageSlots.ts), below the scrolling
+           body like a host detail screen's. */
+        <Show when={pageFooter.value()}>
+          {footer => (
+            <ErrorBoundary fallback={<p>{t('error.plugin-unavailable')}</p>}>
+              {footer()()}
+            </ErrorBoundary>
+          )}
+        </Show>
       }
     >
       {/* A throwing page is contained to its body — the frame, the menu and
@@ -587,7 +636,7 @@ const pageComponent = (registered: RegisteredPage): Component => {
  * One route per plugin page, ready for the router (App.tsx). UNGATED, like the
  * host's own generated routes: the gate is ShellLayout's reactive routeAccess
  * verdict, which blocks or denies BEFORE the route's component renders, so
- * registering a route is not offering it (AC-PLUG-P1's second door).
+ * registering a route is not offering it (OMS-REG-PLG-04.2, the second door).
  */
 export const pluginPageRoutes = (): {
   path: string;

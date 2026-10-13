@@ -5,10 +5,10 @@ import { NamesList } from './NamesList';
 import { CustomerDetailModal } from '../detail/CustomerDetailModal';
 
 // S1 — Customer list (from Distribution). The standard names list scoped to the
-// active store's customers (AC-N1); a row opens the customer's detail IN PLACE,
-// as a modal over the list (AC-N14). The modal stays mounted and is driven by
-// the selected id so its native <dialog> close path (focus restore) runs
-// cleanly.
+// active store's customers (OMS-REG-DIST-08.1, OMS-FUN-CUS-001.1); a row opens
+// the customer's detail IN PLACE, as a modal over the list
+// (OMS-REG-DIST-08.11). The modal stays mounted and is driven by the selected
+// id so its native <dialog> close path (focus restore) runs cleanly.
 const CustomersList: Component = () => {
   const [selectedId, setSelectedId] = createSignal<string>();
 

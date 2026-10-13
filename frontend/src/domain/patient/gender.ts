@@ -29,9 +29,9 @@ export interface GenderOption {
 }
 
 // The gender options every picker offers — the store's configured subset
-// (spec/patients AC-G3: 7 of 11 on the reference store), each with its display
-// label. Reactive (reads patientPreferences), so a post-sync preference change
-// re-offers in place.
+// (spec/patients OMS-REG-DIS-01.50: 7 of 11 on the reference store), each with
+// its display label. Reactive (reads patientPreferences), so a post-sync
+// preference change re-offers in place.
 export const genderOptions = (): GenderOption[] =>
   patientPreferences().genderOptions.map(value => ({
     value,

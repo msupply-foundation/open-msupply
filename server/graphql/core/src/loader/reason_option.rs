@@ -1,6 +1,6 @@
 use repository::{
-    reason_option::{ReasonOption, ReasonOptionFilter, ReasonOptionRepository},
     EqualFilter,
+    reason_option::{ReasonOption, ReasonOptionFilter, ReasonOptionRepository},
 };
 use repository::{RepositoryError, StorageConnectionManager};
 

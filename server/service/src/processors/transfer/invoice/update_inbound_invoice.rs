@@ -7,16 +7,16 @@ use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
     invoice::common::get_lines_for_invoice,
     processors::transfer::invoice::{
-        common::auto_verify_if_store_preference, InvoiceTransferOutput,
+        InvoiceTransferOutput, common::auto_verify_if_store_preference,
     },
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
 };
 
 use super::{
+    InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation,
     common::{convert_invoice_line_to_single_pack, generate_inbound_lines},
     create_inbound_invoice::InboundInvoiceType,
-    InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation,
 };
 
 const DESCRIPTION: &str = "Update inbound invoice from outbound invoice";
@@ -177,13 +177,13 @@ mod test {
     use crate::{preference::PrefKey, service_provider::ServiceProvider};
     use chrono::Utc;
     use repository::{
-        mock::{
-            mock_item_a, mock_name_a, mock_name_b, mock_outbound_shipment_a, mock_store_a,
-            mock_store_b, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         EqualFilter, Invoice, InvoiceFilter, InvoiceLineRow, InvoiceLineType, InvoiceRepository,
         PreferenceRow, StorageConnection,
+        mock::{
+            MockData, MockDataInserts, mock_item_a, mock_name_a, mock_name_b,
+            mock_outbound_shipment_a, mock_store_a, mock_store_b,
+        },
+        test_db::setup_all_with_data,
     };
 
     #[actix_rt::test]

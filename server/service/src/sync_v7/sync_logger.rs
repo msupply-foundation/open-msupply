@@ -1,7 +1,7 @@
 use log::{error, info};
 use repository::{
-    syncv7::SyncError, Description, RepositoryError, StorageConnection, SyncLogV7Repository,
-    SyncLogV7Row,
+    Description, RepositoryError, StorageConnection, SyncLogV7Repository, SyncLogV7Row,
+    syncv7::SyncError,
 };
 use util::format_error;
 

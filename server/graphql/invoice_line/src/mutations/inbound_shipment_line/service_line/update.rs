@@ -1,21 +1,21 @@
 use async_graphql::*;
 
 use graphql_core::generic_inputs::TaxInput;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_core::{
-    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
     ContextExt,
+    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
 };
 use graphql_types::types::InvoiceLineNode;
 
 use graphql_core::generic_inputs::InboundShipmentType;
 use repository::InvoiceLine;
 use service::auth::ResourceAccessRequest;
+use service::invoice_line::ShipmentTaxUpdate;
 use service::invoice_line::inbound_shipment_service_line::{
     UpdateInboundShipmentServiceLine as ServiceInput,
     UpdateInboundShipmentServiceLineError as ServiceError,
 };
-use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentServiceLineInput")]
@@ -121,17 +121,17 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LineDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}));
         }
         ServiceError::InvoiceDoesNotExist => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
-            )))
+            )));
         }
         ServiceError::CannotEditInvoice => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
-            ))
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
@@ -156,15 +156,15 @@ mod test {
     };
 
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, StorageConnectionManager,
+        InvoiceLine, InvoiceLineRow, StorageConnectionManager, mock::MockDataInserts,
     };
     use serde_json::json;
     use service::{
         invoice_line::{
+            InvoiceLineServiceTrait, ShipmentTaxUpdate,
             inbound_shipment_service_line::{
                 UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError,
             },
-            InvoiceLineServiceTrait, ShipmentTaxUpdate,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

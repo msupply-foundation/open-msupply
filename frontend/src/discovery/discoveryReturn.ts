@@ -1,6 +1,6 @@
 // The discovery hand-off's return path (spec/desktop § server selection:
 // "the user MUST be able to leave the current server and return to
-// discovery", AC-DT16).
+// discovery", OMS-REG-DESK-01.21).
 //
 // The screen the hand-off LANDS on is the connected server's app, which may
 // run under any shell or none and can't assume a host exists — so the way
@@ -9,7 +9,8 @@
 // `login?discovery-return=<discovery page URL>`, and the pre-session screens
 // (login, initialisation) that see the parameter offer "Change server" as a
 // plain navigation back. The return URL carries `autoconnect=false`, so
-// arriving back never bounces straight to the server just left (AC-DT16).
+// arriving back never bounces straight to the server just left
+// (OMS-REG-DESK-01.21).
 //
 // Split from ./discovery.ts because BOTH pages read it: the discovery page
 // writes the parameter, the app's login/initialisation screens read it — and
@@ -89,9 +90,9 @@ const defaultSessionStorage = (): Storage | undefined =>
  * `discoveryReturnUrl` above only sees it while it is still on the URL, and
  * that is just the moment of arrival: the served app then routes within
  * itself, and a sign-out renders login back over whatever route the user was
- * on ([spec/startup] AC-SF2), by which point the query is long gone. So the
- * way back was offered on first boot and had quietly vanished by the time
- * anyone signed out and actually wanted it.
+ * on ([spec/startup] OMS-REG-LGN-01.3/.4), by which point the query is long
+ * gone. So the way back was offered on first boot and had quietly vanished by
+ * the time anyone signed out and actually wanted it.
  *
  * Remembered on arrival, and re-validated on the way out through the same
  * check as the URL — one validation path, so a stored value is no more

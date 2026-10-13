@@ -1,8 +1,8 @@
 use async_graphql::*;
 use chrono::Utc;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, InternalError},
     ContextExt,
+    simple_generic_errors::{DatabaseError, InternalError},
 };
 use service::session_store::SESSION_LIFETIME;
 
@@ -106,7 +106,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
         None => {
             return RefreshTokenResponse::Error(RefreshTokenError {
                 error: RefreshTokenErrorInterface::NoRefreshTokenProvided(NoRefreshTokenProvided),
-            })
+            });
         }
     };
 
@@ -118,7 +118,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
                     error: RefreshTokenErrorInterface::InternalError(InternalError(format!(
                         "Session store lock poisoned: {e}"
                     ))),
-                })
+                });
             }
         };
         if store.validate_and_slide(&token).is_none() {

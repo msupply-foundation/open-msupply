@@ -58,9 +58,9 @@ impl From<RepositoryError> for UpdateNamePropertiesError {
 
 #[cfg(test)]
 mod test {
-    use repository::mock::{mock_name_a, MockDataInserts};
+    use repository::mock::{MockDataInserts, mock_name_a};
 
-    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
+    use crate::test_helpers::{ServiceTestContext, setup_all_and_service_provider};
 
     use super::{UpdateNameProperties, UpdateNamePropertiesError};
 
