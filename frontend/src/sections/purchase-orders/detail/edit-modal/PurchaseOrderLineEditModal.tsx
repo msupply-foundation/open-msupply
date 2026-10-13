@@ -544,7 +544,7 @@ const LineEditContent = (
                 width="full"
                 testId="line-requested-delivery-date-field"
                 value={draft()!.requestedDeliveryDate}
-                disabled={closed(gates().dates)}
+                disabled={closed(gates().requestedDate)}
                 onChange={value => patch(requestedDateEntered(draft()!, value))}
               />
             </FieldRow>
@@ -555,7 +555,7 @@ const LineEditContent = (
                 width="full"
                 testId="line-expected-delivery-date-field"
                 value={draft()!.expectedDeliveryDate}
-                disabled={closed(gates().dates)}
+                disabled={closed(gates().expectedDate)}
                 onChange={value => patch({ expectedDeliveryDate: value })}
               />
             </FieldRow>

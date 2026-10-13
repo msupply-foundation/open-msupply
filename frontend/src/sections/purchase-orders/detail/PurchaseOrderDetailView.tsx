@@ -98,6 +98,7 @@ import {
   canAttachDocuments,
   canAuthorLines,
   canCloseLines,
+  canSetExpectedDate,
   isOpenToChange,
 } from './purchaseOrderLadder';
 import { formatCurrency } from '@/intl/currency';
@@ -467,11 +468,13 @@ const PurchaseOrderDetailView: Component = () => {
   // expected date has no order-level field at all. The other date follows only
   // where the lines still agree on it (rules § the two delivery dates), and
   // the order's requested date moves whenever it does; one re-read covers all.
+  // Past the authoring window only the expected date is still open, and it
+  // then travels alone — the agreed requested date is not dragged with it.
   const cascadeDate = async (
     field: DeliveryDateField,
     date: string
   ): Promise<SaveFieldResult> => {
-    const fields = cascadedDateFields(lineSet(), field);
+    const fields = cascadedDateFields(lineSet(), field, !isDisabled());
     const orderWrite = fields.includes('requestedDeliveryDate')
       ? await updatePurchaseOrder(params.storeId, {
           id: params.id,
@@ -782,6 +785,7 @@ const PurchaseOrderDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={isDisabled()}
+                      expectedDateDisabled={!canSetExpectedDate(status())}
                       edit={edit}
                       latestExpectedDate={latestExpectedDate()}
                       datesVary={field => deliveryDatesVary(lineSet(), field)}

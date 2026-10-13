@@ -228,8 +228,14 @@ export type LineGates = {
   packs: boolean;
   /** Pack size, both prices, the supplier's code and the manufacturer. */
   drafting: boolean;
-  /** Both delivery dates. */
-  dates: boolean;
+  /** The requested delivery date — the agreed date, fixed once Sent. */
+  requestedDate: boolean;
+  /**
+   * The expected delivery date — our estimate of arrival, which keeps moving
+   * after the order is sent, so it stays open until the order is Finalised
+   * (OMS-REG-PO-01.24).
+   */
+  expectedDate: boolean;
   /** The comment for the supplier and the internal note. */
   text: boolean;
   /** Never: nothing here changes a line's status (OMS-FUN-PO-02.22). */
@@ -239,9 +245,10 @@ export type LineGates = {
 /**
  * What the editor leaves open, over and above the domain's own gates (spec
  * S10): everything closes on a closed line or a Finalised order; the drafting
- * fields close from Ready for sending; the dates close once Sent; the packs
- * follow the quantity rule — requested while drafting, adjusted with the
- * authorise permission from Ready for sending.
+ * fields close from Ready for sending; the requested date closes once Sent
+ * while the expected date stays open; the packs follow the quantity rule —
+ * requested while drafting, adjusted with the authorise permission from Ready
+ * for sending.
  */
 export const lineGates = (options: {
   status: PurchaseOrderStatus;
@@ -256,7 +263,8 @@ export const lineGates = (options: {
     item: options.addMode,
     packs: open && (isDrafting(options.status) || options.canAuthorise),
     drafting,
-    dates: open && options.status !== 'SENT',
+    requestedDate: open && options.status !== 'SENT',
+    expectedDate: open,
     text: open,
     status: false,
   };
