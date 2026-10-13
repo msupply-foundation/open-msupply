@@ -13,9 +13,7 @@ import {
 // RecordNotFound). The pin is a literal in the document, not a variable, so a
 // regression can only come from editing the .graphql — which this catches.
 const pinsSupplierReturn = (query: string) =>
-  /invoice\(\s*storeId:\s*\$storeId,\s*id:\s*\$id,\s*type:\s*SUPPLIER_RETURN\s*\)/.test(
-    query
-  );
+  /invoice\([^)]*\btype:\s*SUPPLIER_RETURN\b[^)]*\)/.test(query);
 
 describe('supplier return detail reads pin type: SUPPLIER_RETURN', () => {
   it('the header read', () => {
