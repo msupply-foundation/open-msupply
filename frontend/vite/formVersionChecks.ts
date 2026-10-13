@@ -18,6 +18,10 @@ import {
  * plugin whose versions do not fit together is never packed or installed:
  *
  *   - every `$ref` in every version resolves within its schema;
+ *   - the current version compiles in the host's validator, which checks
+ *     every draft against it, so its documents can be saved here (an earlier
+ *     version is only migrated from, so one that does not compile is skipped
+ *     where a fixture would be validated against it);
  *   - every event rule's field paths name a field of the current schema, and
  *     a schedule's base time a date-time field;
  *   - for a type with more than one version, each version's hop to the next
@@ -116,6 +120,7 @@ interface Step {
 /** The host modules the checks reuse, typed by the part they call. */
 interface HostModules {
   unresolvedRefs: (schema: unknown) => string[];
+  schemaCompileError: (schema: unknown) => string | undefined;
   flattenSchema: (
     schema: unknown
   ) => Map<string, { types: string[]; format?: string }>;
@@ -553,10 +558,24 @@ const checkMigrations = async (
 
   const currentFile = entry.versions[current - 1].file;
 
+  /*
+   * A fixture's problems against a version. The host validates drafts against
+   * the current version only, so an earlier one its validator cannot compile
+   * costs no document its save: the version is the deployment's, frozen, and
+   * a fixture is simply not checked against it.
+   */
+  const compiles = schemas.map(
+    schema => host.schemaCompileError(schema) === undefined
+  );
+  const fits = (version: number, data: unknown) =>
+    compiles[version - 1]
+      ? validate(host, schemas[version - 1], data)
+      : undefined;
+
   const checkFixture = (fixture: string, version: number) => {
     const data = readJson(fixture, problems);
     if (data === undefined) return;
-    const own = validate(host, schemas[version - 1], data);
+    const own = fits(version, data);
     if (own) {
       problems.push(
         `${fixture}: does not validate against v${version} ` +
@@ -578,7 +597,7 @@ const checkMigrations = async (
         at = target;
         continue;
       }
-      const errors = validate(host, schemas[at], carried);
+      const errors = fits(at + 1, carried);
       if (errors) {
         problems.push(
           `${fixture}: v${at} → v${at + 1} has no migration step, so the ` +
@@ -594,7 +613,7 @@ const checkMigrations = async (
     }
 
     const migrated = host.applyMigrations(data, version, current, steps)?.data;
-    const errors = validate(host, schemas[current - 1], migrated);
+    const errors = fits(current, migrated);
     const lastHopAdditive =
       at === current - 1 && !host.nextStep(steps, at, current);
     if (errors && lastHopAdditive) {
@@ -695,6 +714,25 @@ export const checkFormVersions = async (
       }
     });
     if (!refsResolve) continue;
+    // Every draft is validated against the current version, so one the
+    // validator cannot compile leaves no document of the type saveable here,
+    // and every fixture check would fail on it, blaming the fixture.
+    const current = entry.versions[schemas.length - 1];
+    const compileError = host.schemaCompileError(schemas[schemas.length - 1]);
+    if (compileError) {
+      problems.push(
+        `${join(dir, current.file)}: the validator this frontend checks ` +
+          `every draft with (AJV) cannot compile v${schemas.length}, so no ` +
+          `${entry.documentType} could be saved here: ${firstLine(compileError)} — ` +
+          (current.id === undefined
+            ? `fix it in ${current.source ? join(dir, current.source) : 'the type'}; a \`@pattern\` must ` +
+              'be a valid JavaScript Unicode regular expression, which ' +
+              'refuses an escape such as `\\-` outside a class'
+            : "it is the deployment's own schema, so add a version whose " +
+              'schema compiles')
+      );
+      continue;
+    }
     if (entry.events) {
       problems.push(
         ...checkEventRules(

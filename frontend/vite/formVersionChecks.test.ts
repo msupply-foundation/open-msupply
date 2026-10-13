@@ -244,6 +244,53 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
     ]);
   });
 
+  // A pattern the server's regex engine accepts and AJV, compiling it as a
+  // JavaScript Unicode regular expression, refuses.
+  const escapedHyphen = schema({
+    code: { type: 'string', pattern: '^[A-Z]\\-[0-9]+$' },
+  });
+
+  it('names a current version the validator cannot compile', async () => {
+    const dir = fixture({ 'forms/Visit/v1.json': escapedHyphen });
+    const declaration = declare({
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        new RegExp(
+          `^${visit(dir, 'v1.json')}: the validator this frontend checks ` +
+            'every draft with \\(AJV\\) cannot compile v1, so no Visit could ' +
+            'be saved here: .+ — fix it in ' +
+            `${visit(dir, 'type.ts')}; a \`@pattern\` must be a valid ` +
+            'JavaScript Unicode regular expression'
+        )
+      ),
+    ]);
+  });
+
+  it("says to add a version when the deployment's own current version cannot compile", async () => {
+    const dir = fixture({ 'forms/Visit/v1.json': escapedHyphen });
+    const declaration = declare({
+      versions: [
+        { file: 'v1.json', source: 'type.ts', type: 'Visit', id: 'deployed' },
+      ],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        /cannot compile v1, so no Visit could be saved here: .+ — it is the deployment's own schema, so add a version whose schema compiles$/
+      ),
+    ]);
+  });
+
+  it('skips validating a fixture against an earlier version the validator cannot compile', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': escapedHyphen,
+      'forms/Visit/v2.json': schema({ code: { type: 'string' } }),
+      'forms/Visit/fixtures/v1.json': { extension: { demo: { code: 'A-1' } } },
+    });
+    expect(await checkFormVersions(dir, declare())).toEqual([]);
+  });
+
   it('names a missing fixture for an earlier version', async () => {
     const dir = fixture({
       'forms/Visit/v1.json': v1,
