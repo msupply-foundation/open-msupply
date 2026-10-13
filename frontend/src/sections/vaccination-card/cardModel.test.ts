@@ -9,7 +9,6 @@ vi.mock('@/intl', () => ({
 }));
 
 const {
-  ageGroupLabel,
   canGiveToday,
   cardCounts,
   confirmsSkip,
@@ -24,6 +23,7 @@ const {
   waitsFor,
   wouldSkip,
 } = await import('./cardModel');
+const { groupPositions } = await import('@/ui/elements/table/rowGroups');
 type CardRow = import('./cardModel').CardRow;
 
 // A card row as the server answers it (spec/vaccination-card contract § what
@@ -131,6 +131,9 @@ describe('OMS-REG-DIS-06.39 — the skip question', () => {
 });
 
 describe('OMS-REG-DIS-06.25 / OMS-REG-DIS-06.67 — the card reads by age across its courses', () => {
+  // The Age column's value is the dose's age label, and the table groups a
+  // run of equal values (meta.groupRows): each age shows once, on the first
+  // dose of its group, in the server's order.
   it('keeps the server order, showing each age once on the first dose of its group', () => {
     const rows = [
       row({ id: 'bcg', vaccineCourseId: 'B', customAgeLabel: 'At birth' }),
@@ -139,12 +142,20 @@ describe('OMS-REG-DIS-06.25 / OMS-REG-DIS-06.67 — the card reads by age across
       row({ id: 'penta1', vaccineCourseId: 'P', minAgeMonths: 1.5 }),
       row({ id: 'mr1', vaccineCourseId: 'M', minAgeMonths: 9 }),
     ];
-    expect(rows.map((_, i) => ageGroupLabel(rows, i))).toEqual([
+    const ages = rows.map(doseAgeLabel);
+    expect(ages).toEqual([
       'At birth',
-      '',
+      'At birth',
       'label.age-weeks-count#6',
-      '',
+      'label.age-weeks-count#6',
       'label.age-months-count#9',
+    ]);
+    expect(groupPositions(ages).map(p => p.continuesPrevious)).toEqual([
+      false,
+      true,
+      false,
+      true,
+      false,
     ]);
   });
 });

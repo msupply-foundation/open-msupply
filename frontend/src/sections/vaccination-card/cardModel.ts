@@ -137,20 +137,6 @@ export const doseAgeLabel = (row: CardRow): string => {
   return tPlural('label.age-months-count', row.minAgeMonths);
 };
 
-/**
- * The Age cell: the label on the first row of its age group only, blank on
- * the rows that repeat it.
- */
-export const ageGroupLabel = (rows: CardRow[], index: number): string => {
-  const label = doseAgeLabel(rows[index]);
-  return index > 0 && doseAgeLabel(rows[index - 1]) === label ? '' : label;
-};
-
-/** Whether the next row continues this row's age group. */
-export const ageGroupContinues = (rows: CardRow[], index: number): boolean =>
-  index + 1 < rows.length &&
-  doseAgeLabel(rows[index + 1]) === doseAgeLabel(rows[index]);
-
 const STATUS_KEY: Record<DoseStatus, LocaleKey> = {
   GIVEN: 'label.status-given',
   NOT_GIVEN: 'label.status-not-given',

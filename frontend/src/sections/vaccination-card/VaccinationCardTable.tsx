@@ -12,10 +12,9 @@ import { Stack } from '@/ui/layout/Stack/Stack';
 import { AlertTriangleIcon } from '@/ui/icons';
 import { remToPx } from '@/ui/utils/rem';
 import {
-  ageGroupContinues,
-  ageGroupLabel,
   canGiveToday,
   cardCounts,
+  doseAgeLabel,
   noStatusLabel,
   reasonLabel,
   STATUS_COLOUR,
@@ -83,26 +82,17 @@ export const VaccinationCardNotices: Component<{ rows: CardRow[] }> = props => {
 export const VaccinationCardTable: Component<
   VaccinationCardTableProps
 > = props => {
-  const indexOf = (row: CardRow) => props.rows.indexOf(row);
-
   const columns = (): Column<CardRow, never>[] => [
     {
-      // Read down this column: each age once, on the first dose of its group.
-      c: { accessor: r => ageGroupLabel(props.rows, indexOf(r)), id: 'age' },
+      // Read down this column: the table shows each age once, on the first
+      // dose of its group, joins the group's Age cells, and rules the column
+      // off from the doses (ui-standards § tables › grouped rows).
+      c: { accessor: r => doseAgeLabel(r), id: 'age' },
       header: () => t('label.age'),
-      ...getTextCell(),
+      ...getTextCell({ groupRows: true, dividerEnd: true }),
       size: remToPx(8),
       cell: info => (
-        <span
-          class={styles.age}
-          data-age-continues={
-            ageGroupContinues(props.rows, indexOf(info.row.original))
-              ? ''
-              : undefined
-          }
-        >
-          {ageGroupLabel(props.rows, indexOf(info.row.original))}
-        </span>
+        <span class={styles.age}>{doseAgeLabel(info.row.original)}</span>
       ),
     },
     {
