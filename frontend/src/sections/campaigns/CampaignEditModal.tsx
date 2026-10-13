@@ -11,6 +11,7 @@ import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { Select } from '@/ui/elements/selectors/Select';
+import { campaignKindLabel } from '@/domain/campaign';
 import {
   CancelButton,
   DialogSaveButton,
@@ -173,9 +174,11 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
             testId="campaign-kind-input"
             disabled={saving()}
             value={draft().kind ?? 'CAMPAIGN'}
+            // Labelled by the shared kind→name map, so the editor, the
+            // register column and the Activity picker never drift apart.
             options={[
-              { value: 'CAMPAIGN', label: t('label.campaign') },
-              { value: 'ROUTINE', label: t('label.routine') },
+              { value: 'CAMPAIGN', label: campaignKindLabel('CAMPAIGN') },
+              { value: 'ROUTINE', label: campaignKindLabel('ROUTINE') },
             ]}
             onValueChange={value =>
               setDraft({

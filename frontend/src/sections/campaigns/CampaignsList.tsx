@@ -216,6 +216,7 @@ const CampaignsList: Component = () => {
       c: { accessor: row => campaignKindLabel(row.kind), id: 'kind' },
       header: () => t('label.kind'),
       // No sortKey: `CampaignSortFieldInput` offers only `name`.
+      ...getCellDefinition('kind'),
     },
     {
       c: { key: 'startDate' },

@@ -1,25 +1,20 @@
-import { createMemo, type JSX } from 'solid-js';
+import { createMemo, createSignal, type JSX } from 'solid-js';
 import { t } from '../../intl';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
+import { Tabs, TabList, type TabDef } from '../../ui/elements/tabs/Tabs';
 import { campaignsResource, type Campaign } from './campaignsResource';
+import { campaignKindLabel } from './campaignKind';
+import {
+  activityOptions,
+  spansBothTiers,
+  type ActivityOption,
+  type KindFilter,
+  type SelectedCampaign,
+} from './activityOptions';
 
-/**
- * The name + id of the record's CURRENT campaign, as the record itself carries
- * it. Only the two fields a label needs, so a caller's own line fragment
- * satisfies it without a re-lookup.
- */
-export interface SelectedCampaign {
-  id: string;
-  name: string;
-}
+export type { SelectedCampaign };
 
-// One row of the Activity list. Every row is a register row; its kind decides
-// the tier — Routine pinned above the divider, campaigns grouped under it.
-// Empty is not a row: it clears through the ✕, as every other optional lookup
-// does.
-type Option = { kind: 'routine' | 'campaign'; node: SelectedCampaign };
-
-const optionValue = (o: Option): string => o.node.id;
+const optionValue = (o: ActivityOption): string => o.node.id;
 
 export interface ActivitySelectProps {
   /** The currently-selected campaign id (undefined = none). */
@@ -38,8 +33,11 @@ export interface ActivitySelectProps {
    * id+name for display), or null when the field is cleared.
    */
   onChange: (campaign: Campaign | null) => void;
-  /** Field label (required for a11y). */
-  label: string;
+  /**
+   * Field label (required for a11y). Defaults to the field's own name —
+   * every caller wants `label.activity`; pass one only to rename it.
+   */
+  label?: string;
   hideLabel?: boolean;
   disabled?: boolean;
   /**
@@ -56,46 +54,69 @@ export interface ActivitySelectProps {
 /*
  * The ACTIVITY picker — what a line's stock is being held for. ONE combined
  * list, so the choice costs one click wherever it falls: **Routine** pinned at
- * the top, then a divider, then the campaigns under a Campaign heading (the
- * grouped Combobox's `itemGroup`). Typing narrows the campaigns only; Routine
- * never leaves the list.
+ * the top under their own heading, then the campaigns under theirs. An
+ * installation may configure SEVERAL routine entries, so Routine is a tier like
+ * Campaign rather than one pinned row — which also means it is searchable and
+ * can be scoped to.
  *
- * Every value is a row of the campaign register: Routine is the row whose
- * `kind` is ROUTINE (an installation configures one, so an installation
- * without it simply offers its campaigns). Carrying no campaign is the EMPTY
- * field, reached through the ✕ and read back as the placeholder's "None" — not
- * a row of its own, since clearability follows optionality here as everywhere
- * else (ui-standards › controls). A domain widget (src/domain): it knows the
- * data and the tiers, and is composed from the pure ui/ Combobox.
+ * A register holding both tiers gets a **kind filter** pinned inside the
+ * dropdown (the location picker's fullness strip, same mechanism): All ·
+ * Routine · Campaign, opening on All. It only appears where it has something to
+ * do — a register of one tier scopes to nothing — and the current selection is
+ * exempt from it, since a value shown in the field must be present in the list
+ * that claims to offer the options.
+ *
+ * Headings earn their place only when BOTH tiers are on screen: scoped to one,
+ * a heading over every row says nothing the filter has not already said.
+ *
+ * Every value is a row of the campaign register. Carrying no campaign is the
+ * EMPTY field, reached through the ✕ and read back as the placeholder's "None"
+ * — not a row of its own, since clearability follows optionality here as
+ * everywhere else (ui-standards › controls). A domain widget (src/domain): it
+ * knows the data and the tiers, and is composed from the pure ui/ Combobox.
  */
 export const ActivitySelect = (props: ActivitySelectProps): JSX.Element => {
   const campaigns = () => campaignsResource.noSuspense();
+  const [kindFilter, setKindFilter] = createSignal<KindFilter>('all');
 
-  const options = createMemo<Option[]>(() => [
-    ...campaigns()
-      .filter(c => c.kind === 'ROUTINE')
-      .map(node => ({ kind: 'routine' as const, node })),
-    ...campaigns()
-      .filter(c => c.kind !== 'ROUTINE')
-      .map(node => ({ kind: 'campaign' as const, node })),
-  ]);
+  // Does the register hold both tiers at all? The filter and the headings are
+  // both answers to that question, so they ask it of the WHOLE register rather
+  // than of the filtered list — otherwise scoping to Routine would hide the
+  // strip that scoped it.
+  const hasBothTiers = createMemo(() => spansBothTiers(campaigns()));
 
-  // A chosen campaign reads back qualified by its tier — "Campaign · ‹name›" —
-  // since a campaign and the routine entry are otherwise two bare names with
-  // no hint of which is which. The option ROWS stay bare (renderItem below):
-  // inside the list the heading already says it.
-  const label = (o: Option): string =>
-    o.kind === 'routine'
-      ? o.node.name
-      : `${t('label.campaign')} · ${o.node.name}`;
+  // ROUTINE first, every other kind after, each keeping the register's own
+  // order within its tier — one pass, since the kind IS the tier. The filter
+  // narrows to one tier, EXEMPTING the current selection: a value the field
+  // displays has to be in the list, or picking the field's own value back
+  // would be impossible and the Combobox would pin it above the strip.
+  const options = createMemo<ActivityOption[]>(() =>
+    activityOptions(campaigns(), kindFilter(), props.campaignId)
+  );
+
+  // A chosen activity reads back qualified by its tier — "Campaign · ‹name›",
+  // "Routine · ‹name›" — since with several of each they are otherwise bare
+  // names with no hint of which is which. The option ROWS stay bare
+  // (renderItem below): inside the list the heading already says it.
+  const label = (o: ActivityOption): string =>
+    `${campaignKindLabel(o.kind)} · ${o.node.name}`;
 
   // A selection the register no longer offers — a soft-deleted campaign the
   // record still carries. Labelled from the record's own node so it reads
   // back, and absent from the options so it cannot be re-picked.
-  const selectedItem = (): Option | undefined =>
+  const selectedItem = (): ActivityOption | undefined =>
     props.campaign && !campaigns().some(c => c.id === props.campaign?.id)
-      ? { kind: 'campaign', node: props.campaign }
+      ? // The record carries a name, never a kind — a soft-deleted row is a
+        // campaign by definition, since Routine is not deletable in practice.
+        { kind: 'CAMPAIGN', node: props.campaign }
       : undefined;
+
+  // Group only while both tiers are on screen — the pinned selection included,
+  // since the Combobox lists it alongside the options.
+  const grouped = createMemo(() => {
+    const pinned = selectedItem();
+    return spansBothTiers(pinned ? [...options(), pinned] : options());
+  });
 
   // Nothing to pick: an empty register leaves the field disabled rather than
   // opening on an empty list. Gated on the fetch having settled, so the control
@@ -107,9 +128,35 @@ export const ActivitySelect = (props: ActivitySelectProps): JSX.Element => {
     campaigns().length === 0 &&
     !props.campaignId;
 
+  // The kind filter as a tab strip, pinned inside the dropdown as its listbox
+  // header — so it scopes the options in place, exactly as the location
+  // picker's fullness strip does.
+  const kindTabs = (): TabDef[] => [
+    { value: 'all', label: t('label.all'), testId: 'activity-kind-all' },
+    {
+      value: 'ROUTINE',
+      label: campaignKindLabel('ROUTINE'),
+      testId: 'activity-kind-routine',
+    },
+    {
+      value: 'CAMPAIGN',
+      label: campaignKindLabel('CAMPAIGN'),
+      testId: 'activity-kind-campaign',
+    },
+  ];
+
+  const filterHeader = (
+    <Tabs
+      value={kindFilter()}
+      onValueChange={value => setKindFilter(value as KindFilter)}
+    >
+      <TabList label={t('label.filter-activities-by-kind')} tabs={kindTabs()} />
+    </Tabs>
+  );
+
   return (
-    <Combobox<Option>
-      label={props.label}
+    <Combobox<ActivityOption>
+      label={props.label ?? t('label.activity')}
       hideLabel={props.hideLabel}
       size={props.size}
       width={props.width}
@@ -119,8 +166,11 @@ export const ActivitySelect = (props: ActivitySelectProps): JSX.Element => {
       loading={campaignsResource.loading()}
       itemToString={label}
       itemToValue={optionValue}
-      itemGroup={o => (o.kind === 'campaign' ? t('label.campaign') : undefined)}
-      // Search the campaign's own NAME, not the tier-qualified label — typing
+      // Undefined turns grouping OFF entirely, which is what a single tier
+      // wants: a flat list under the one heading the filter already names.
+      itemGroup={grouped() ? o => campaignKindLabel(o.kind) : undefined}
+      listboxHeader={hasBothTiers() ? filterHeader : undefined}
+      // Search the activity's own NAME, not the tier-qualified label — typing
       // "campaign" should not match every campaign there is.
       filter={(o, input) =>
         o.node.name.toLocaleLowerCase().includes(input.toLocaleLowerCase())

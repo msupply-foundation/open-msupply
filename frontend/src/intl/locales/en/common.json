@@ -1426,6 +1426,7 @@
   "label.file-size": "File size",
   "label.filename": "Filename",
   "label.files": "Files",
+  "label.filter-activities-by-kind": "Filter activities by kind",
   "label.filter-locations-by-fullness": "Filter locations by available space",
   "label.filter-preferences": "Filter preferences",
   "label.filters": "Filters",

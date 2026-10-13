@@ -464,20 +464,26 @@
   min-inline-size: 10rem;
 }
 
-/* GROUPED mode only (see Combobox's `itemGroup`): a section heading, and with
-   it the divider that separates the grouped tier from the pinned items above.
-   The rule rides on the heading rather than a separate element, so a group
-   filtered away takes its divider with it and the list never ends on a rule. */
+/* GROUPED mode only (see Combobox's `itemGroup`): a section heading. */
 .section {
   flex: none;
-  margin-block-start: var(--space-2);
   padding: var(--space-2) var(--space-2) var(--space-1);
-  border-block-start: 1px solid var(--color-divider);
   color: var(--text-secondary);
   font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* The divider belongs BETWEEN tiers, so it rides a heading that actually has
+   options above it rather than every heading. The FIRST heading in the list
+   draws none — a rule with nothing above it reads as a stray line under the
+   popup's top edge (or under a listboxHeader) — and a group filtered away
+   takes its divider with it, so the list never ends on a rule either. Kobalte
+   renders headings and options as SIBLINGS, which is what `+` reaches. */
+.item + .section {
+  margin-block-start: var(--space-2);
+  border-block-start: 1px solid var(--color-divider);
 }
 
 /* A grouped item sits in from its heading, so the tier reads as one block
@@ -491,8 +497,8 @@
 
 /* The PINNED tier's own section carries no heading (see PINNED_SECTION): it is
    a section only because Kobalte will not mix bare options with sections. With
-   no text it renders as nothing — no rule, no space — so the divider belongs to
-   the first REAL heading below it. */
+   no text it renders as nothing — no rule, no space — and its options still
+   count as the `.item` that earns the next heading its divider. */
 .section:empty {
   display: none;
 }

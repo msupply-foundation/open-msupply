@@ -130,6 +130,10 @@ export const CELL_DEF = {
   donor: { kind: 'shortText' },
   activity: { kind: 'shortText' }, // the Activity field (a campaign name)
   program: { kind: 'shortText' },
+  // A record's own kind — a short enum label (the Activity register's
+  // Campaign / Routine; the plugin list's). The outer `kind` is the column
+  // key, the inner one its cell kind.
+  kind: { kind: 'shortText' },
   approvalComment: { kind: 'shortText' },
   firstName: { kind: 'shortText' },
   lastName: { kind: 'shortText' },
