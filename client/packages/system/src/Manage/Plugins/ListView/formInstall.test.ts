@@ -20,9 +20,11 @@ import {
   takeOverCandidates,
   typeRefusals,
   unchosenKeys,
-  withBlankOldUi,
+  withBlankOldUis,
+  blankOldUisAcknowledged,
   withProgram,
-  withTakeOver,
+  withTakeOvers,
+  takeOversConfirmed,
   DocumentTypePreview,
   FormInstallPreview,
 } from './formInstall';
@@ -157,52 +159,73 @@ describe('Install plugin waits for every program key (.69)', () => {
   });
 });
 
-describe('an unowned entry needs its take-over confirmed (.70)', () => {
+describe('the forms to take over are confirmed together, with one checkbox (.70)', () => {
   const unowned = preview({
     documentTypes: [
       type('Patient', null, {
         existingEntry: ExistingRegistryEntryNode.Unowned,
         existingEntryId: 'C319',
       }),
-      type('HIVEncounter', 'hivCare'),
+      type('HIVEncounter', 'hivCare', {
+        existingEntry: ExistingRegistryEntryNode.Unowned,
+        existingEntryId: 'dep_hiv',
+      }),
       type('TBEncounter', 'tb'),
     ],
   });
   const programs = withProgram(initialChoices(unowned), 'hivCare', HIV.id);
 
-  it('lists the type and withholds the install until confirmed', () => {
+  it('lists every such form and withholds the install until the one checkbox is ticked', () => {
     expect(takeOverCandidates(unowned).map(t => t.documentType)).toEqual([
       'Patient',
+      'HIVEncounter',
     ]);
+    expect(takeOversConfirmed(unowned, programs)).toBe(false);
     expect(canInstall(unowned, programs)).toBe(false);
-    const confirmed = withTakeOver(programs, 'Patient', true);
+    const confirmed = withTakeOvers(unowned, programs, true);
+    expect(takeOversConfirmed(unowned, confirmed)).toBe(true);
     expect(canInstall(unowned, confirmed)).toBe(true);
-    expect(installVariables('f', confirmed).takeOver).toEqual(['Patient']);
-    expect(withTakeOver(confirmed, 'Patient', false).takeOver).toEqual([]);
+    expect(installVariables('f', confirmed).takeOver).toEqual([
+      'Patient',
+      'HIVEncounter',
+    ]);
+    expect(withTakeOvers(unowned, confirmed, false).takeOver).toEqual([]);
+  });
+
+  it('counts as confirmed when there is nothing to take over', () => {
+    expect(takeOversConfirmed(preview(), initialChoices(preview()))).toBe(true);
   });
 });
 
-describe('a blanked old-interface form needs acknowledging (.71)', () => {
+describe('the forms the old interface would show empty are acknowledged together (.71)', () => {
   const blanking = preview({
     documentTypes: [
       type('Patient', null, {
         existingEntry: ExistingRegistryEntryNode.Owned,
         blanksOldUi: true,
       }),
-      type('HIVEncounter', 'hivCare'),
+      type('HIVEncounter', 'hivCare', {
+        existingEntry: ExistingRegistryEntryNode.Owned,
+        blanksOldUi: true,
+      }),
       type('TBEncounter', 'tb'),
     ],
   });
   const programs = withProgram(initialChoices(blanking), 'hivCare', HIV.id);
 
-  it('lists the type and withholds the install until acknowledged', () => {
+  it('lists every such form and withholds the install until the one checkbox is ticked', () => {
     expect(blankOldUiCandidates(blanking).map(t => t.documentType)).toEqual([
       'Patient',
+      'HIVEncounter',
     ]);
     expect(canInstall(blanking, programs)).toBe(false);
-    const acknowledged = withBlankOldUi(programs, 'Patient', true);
+    const acknowledged = withBlankOldUis(blanking, programs, true);
+    expect(blankOldUisAcknowledged(blanking, acknowledged)).toBe(true);
     expect(canInstall(blanking, acknowledged)).toBe(true);
-    expect(installVariables('f', acknowledged).blankOldUi).toEqual(['Patient']);
+    expect(installVariables('f', acknowledged).blankOldUi).toEqual([
+      'Patient',
+      'HIVEncounter',
+    ]);
   });
 });
 
@@ -276,7 +299,7 @@ describe('a take-over starts its key on the program its forms are in (.78)', () 
   });
 
   it('warns, without withholding the install, when another program would move them', () => {
-    const start = withTakeOver(initialChoices(deployed), 'HIVEncounter', true);
+    const start = withTakeOvers(deployed, initialChoices(deployed), true);
     expect(programMoves(deployed, start, 'hivCare')).toEqual([]);
     const moved = withProgram(start, 'hivCare', TB.id);
     expect(programMoves(deployed, moved, 'hivCare')).toEqual([

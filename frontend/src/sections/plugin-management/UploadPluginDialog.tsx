@@ -47,9 +47,11 @@ import {
   takeOverCandidates,
   typeRefusals,
   typesUnderKey,
-  withBlankOldUi,
+  withBlankOldUis,
+  blankOldUisAcknowledged,
   withProgram,
-  withTakeOver,
+  withTakeOvers,
+  takeOversConfirmed,
   type DocumentTypePreview,
   type FormInstallPreview,
   type InstallChoices,
@@ -474,11 +476,15 @@ export const UploadPluginDialog = (props: {
                 onProgram={(key, id) =>
                   setChoices(current => withProgram(current, key, id))
                 }
-                onTakeOver={(type, on) =>
-                  setChoices(current => withTakeOver(current, type, on))
+                onTakeOvers={on =>
+                  setChoices(current =>
+                    withTakeOvers(stagedBundle().preview, current, on)
+                  )
                 }
-                onBlankOldUi={(type, on) =>
-                  setChoices(current => withBlankOldUi(current, type, on))
+                onBlankOldUis={on =>
+                  setChoices(current =>
+                    withBlankOldUis(stagedBundle().preview, current, on)
+                  )
                 }
               />
             )}
@@ -514,8 +520,9 @@ export const UploadPluginDialog = (props: {
  * install will refuse whatever is chosen; then, per plugin, a program select
  * for each of its program keys, with a warning where the program chosen moves
  * forms out of the one they are in; then the forms already on this server to
- * take over, and the forms the old interface would show empty, each as one
- * message over a checkbox per form, unticked.
+ * take over, and the forms the old interface would show empty, each listed
+ * by name under one message with one checkbox for the list, unticked
+ * (OMS-REG-MNG-07.70, .71).
  */
 const FormPluginChoices = (props: {
   preview: FormInstallPreview;
@@ -524,8 +531,8 @@ const FormPluginChoices = (props: {
   keyHelper: (key: ProgramKeyPreview) => string;
   refusedText: (type: DocumentTypePreview) => string;
   onProgram: (programKey: string, programId: string) => void;
-  onTakeOver: (documentType: string, confirmed: boolean) => void;
-  onBlankOldUi: (documentType: string, acknowledged: boolean) => void;
+  onTakeOvers: (confirmed: boolean) => void;
+  onBlankOldUis: (acknowledged: boolean) => void;
 }) => {
   const options = () => programOptions(props.preview.programs);
   const takeOvers = () => takeOverCandidates(props.preview);
@@ -604,34 +611,48 @@ const FormPluginChoices = (props: {
           <Stack gap="sm">
             <Text variant="subtitle">{t('heading.forms-on-server')}</Text>
             <Text variant="bodySmall">{t('messages.forms-on-server')}</Text>
-            <For each={takeOvers()}>
-              {type => (
-                <Checkbox
-                  label={formName(type)}
-                  checked={props.choices.takeOver.includes(type.documentType)}
-                  onChange={on => props.onTakeOver(type.documentType, on)}
-                  disabled={props.disabled}
-                  testId={`upload-plugin-take-over-${type.documentType}`}
-                />
-              )}
-            </For>
+            <ul data-testid="upload-plugin-take-over-forms">
+              <For each={takeOvers()}>
+                {type => (
+                  <li
+                    data-testid={`upload-plugin-take-over-form-${type.documentType}`}
+                  >
+                    {formName(type)}
+                  </li>
+                )}
+              </For>
+            </ul>
+            <Checkbox
+              label={t('label.take-over-forms')}
+              checked={takeOversConfirmed(props.preview, props.choices)}
+              onChange={on => props.onTakeOvers(on)}
+              disabled={props.disabled}
+              testId="upload-plugin-take-over"
+            />
           </Stack>
         </Show>
         <Show when={blanks().length > 0}>
           <Stack gap="sm">
             <Text variant="subtitle">{t('heading.forms-blank-old-ui')}</Text>
             <Text variant="bodySmall">{t('messages.forms-blank-old-ui')}</Text>
-            <For each={blanks()}>
-              {type => (
-                <Checkbox
-                  label={formName(type)}
-                  checked={props.choices.blankOldUi.includes(type.documentType)}
-                  onChange={on => props.onBlankOldUi(type.documentType, on)}
-                  disabled={props.disabled}
-                  testId={`upload-plugin-blank-old-ui-${type.documentType}`}
-                />
-              )}
-            </For>
+            <ul data-testid="upload-plugin-blank-old-ui-forms">
+              <For each={blanks()}>
+                {type => (
+                  <li
+                    data-testid={`upload-plugin-blank-old-ui-form-${type.documentType}`}
+                  >
+                    {formName(type)}
+                  </li>
+                )}
+              </For>
+            </ul>
+            <Checkbox
+              label={t('label.accept-blank-old-ui')}
+              checked={blankOldUisAcknowledged(props.preview, props.choices)}
+              onChange={on => props.onBlankOldUis(on)}
+              disabled={props.disabled}
+              testId="upload-plugin-blank-old-ui"
+            />
           </Stack>
         </Show>
       </Stack>

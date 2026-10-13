@@ -41,9 +41,11 @@ import {
   takeOverCandidates,
   typeRefusals,
   typesUnderKey,
-  withBlankOldUi,
+  withBlankOldUis,
+  blankOldUisAcknowledged,
   withProgram,
-  withTakeOver,
+  withTakeOvers,
+  takeOversConfirmed,
   DocumentTypePreview,
   FormInstallPreview,
   InstallChoices,
@@ -333,11 +335,11 @@ export const PluginUploadModal = ({
             onProgram={(key, id) =>
               setChoices(current => withProgram(current, key, id))
             }
-            onTakeOver={(type, on) =>
-              setChoices(current => withTakeOver(current, type, on))
+            onTakeOvers={on =>
+              setChoices(current => withTakeOvers(held.preview, current, on))
             }
-            onBlankOldUi={(type, on) =>
-              setChoices(current => withBlankOldUi(current, type, on))
+            onBlankOldUis={on =>
+              setChoices(current => withBlankOldUis(held.preview, current, on))
             }
           />
         )}
@@ -404,23 +406,24 @@ const InstallReport = ({ report }: { report: Report }) => {
  * refuse whatever is chosen; then, per plugin, a program select for each of
  * its program keys, with a warning where the program chosen moves forms out
  * of the one they are in; then the forms already on this server to take
- * over, and the forms the old interface would show empty, each as one message
- * over a checkbox per form, unticked.
+ * over, and the forms the old interface would show empty, each listed by
+ * name under one message with one checkbox for the list, unticked
+ * (OMS-REG-MNG-07.70, .71).
  */
 const FormPluginChoices = ({
   preview,
   choices,
   disabled,
   onProgram,
-  onTakeOver,
-  onBlankOldUi,
+  onTakeOvers,
+  onBlankOldUis,
 }: {
   preview: FormInstallPreview;
   choices: InstallChoices;
   disabled: boolean;
   onProgram: (programKey: string, programId: string) => void;
-  onTakeOver: (documentType: string, confirmed: boolean) => void;
-  onBlankOldUi: (documentType: string, acknowledged: boolean) => void;
+  onTakeOvers: (confirmed: boolean) => void;
+  onBlankOldUis: (acknowledged: boolean) => void;
 }) => {
   const t = useTranslation();
   const options = programOptions(preview.programs);
@@ -581,20 +584,27 @@ const FormPluginChoices = ({
           <Typography variant="body2" color="text.secondary">
             {t('messages.forms-on-server')}
           </Typography>
-          {takeOvers.map(type => (
-            <FormControlLabel
-              key={type.documentType}
-              control={
-                <Checkbox
-                  checked={choices.takeOver.includes(type.documentType)}
-                  onChange={(_, on) => onTakeOver(type.documentType, on)}
-                  disabled={disabled}
-                  testId={`upload-plugin-take-over-${type.documentType}`}
-                />
-              }
-              label={formName(type)}
-            />
-          ))}
+          <Box component="ul" data-testid="upload-plugin-take-over-forms">
+            {takeOvers.map(type => (
+              <li
+                key={type.documentType}
+                data-testid={`upload-plugin-take-over-form-${type.documentType}`}
+              >
+                <Typography variant="body2">{formName(type)}</Typography>
+              </li>
+            ))}
+          </Box>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={takeOversConfirmed(preview, choices)}
+                onChange={(_, on) => onTakeOvers(on)}
+                disabled={disabled}
+                testId="upload-plugin-take-over"
+              />
+            }
+            label={t('label.take-over-forms')}
+          />
         </Box>
       )}
       {blanks.length > 0 && (
@@ -605,20 +615,27 @@ const FormPluginChoices = ({
           <Typography variant="body2" color="text.secondary">
             {t('messages.forms-blank-old-ui')}
           </Typography>
-          {blanks.map(type => (
-            <FormControlLabel
-              key={type.documentType}
-              control={
-                <Checkbox
-                  checked={choices.blankOldUi.includes(type.documentType)}
-                  onChange={(_, on) => onBlankOldUi(type.documentType, on)}
-                  disabled={disabled}
-                  testId={`upload-plugin-blank-old-ui-${type.documentType}`}
-                />
-              }
-              label={formName(type)}
-            />
-          ))}
+          <Box component="ul" data-testid="upload-plugin-blank-old-ui-forms">
+            {blanks.map(type => (
+              <li
+                key={type.documentType}
+                data-testid={`upload-plugin-blank-old-ui-form-${type.documentType}`}
+              >
+                <Typography variant="body2">{formName(type)}</Typography>
+              </li>
+            ))}
+          </Box>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={blankOldUisAcknowledged(preview, choices)}
+                onChange={(_, on) => onBlankOldUis(on)}
+                disabled={disabled}
+                testId="upload-plugin-blank-old-ui"
+              />
+            }
+            label={t('label.accept-blank-old-ui')}
+          />
         </Box>
       )}
     </Box>

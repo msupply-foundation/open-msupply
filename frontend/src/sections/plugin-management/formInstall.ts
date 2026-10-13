@@ -159,8 +159,8 @@ export const programMoves = (
 };
 
 /**
- * The types whose existing entry no plugin installed: each needs a take-over
- * confirmed.
+ * The types whose existing entry no plugin installed: listed for the
+ * installer to confirm taking over, all together.
  */
 export const takeOverCandidates = (
   preview: FormInstallPreview
@@ -170,8 +170,8 @@ export const takeOverCandidates = (
   );
 
 /**
- * The types whose old-client form the install would blank: each needs
- * acknowledging.
+ * The types whose old-client form the install would blank: listed for the
+ * installer to acknowledge, all together.
  */
 export const blankOldUiCandidates = (
   preview: FormInstallPreview
@@ -222,12 +222,8 @@ export const canInstall = (
   choices: InstallChoices
 ): boolean =>
   unchosenKeys(preview, choices).length === 0 &&
-  takeOverCandidates(preview).every(type =>
-    choices.takeOver.includes(type.documentType)
-  ) &&
-  blankOldUiCandidates(preview).every(type =>
-    choices.blankOldUi.includes(type.documentType)
-  ) &&
+  takeOversConfirmed(preview, choices) &&
+  blankOldUisAcknowledged(preview, choices) &&
   refusedTypes(preview).length === 0 &&
   typeRefusals(preview).length === 0;
 
@@ -315,33 +311,51 @@ export const withProgram = (
   programs: { ...choices.programs, [programKey]: programId },
 });
 
-/** The choices with one type's take-over confirmed or withdrawn. */
-export const withTakeOver = (
+/**
+ * The choices with every listed take-over confirmed, or none: the forms to
+ * take over are confirmed together, with one checkbox for the list
+ * (OMS-REG-MNG-07.70).
+ */
+export const withTakeOvers = (
+  preview: FormInstallPreview,
   choices: InstallChoices,
-  documentType: string,
   confirmed: boolean
 ): InstallChoices => ({
   ...choices,
-  takeOver: toggled(choices.takeOver, documentType, confirmed),
+  takeOver: confirmed
+    ? takeOverCandidates(preview).map(type => type.documentType)
+    : [],
 });
 
-/** The choices with one type's blanking acknowledged or withdrawn. */
-export const withBlankOldUi = (
+/**
+ * The choices with every listed blanking acknowledged, or none: one checkbox
+ * for the list (OMS-REG-MNG-07.71).
+ */
+export const withBlankOldUis = (
+  preview: FormInstallPreview,
   choices: InstallChoices,
-  documentType: string,
   acknowledged: boolean
 ): InstallChoices => ({
   ...choices,
-  blankOldUi: toggled(choices.blankOldUi, documentType, acknowledged),
+  blankOldUi: acknowledged
+    ? blankOldUiCandidates(preview).map(type => type.documentType)
+    : [],
 });
 
-const toggled = (
-  list: readonly string[],
-  item: string,
-  present: boolean
-): string[] =>
-  present
-    ? list.includes(item)
-      ? [...list]
-      : [...list, item]
-    : list.filter(entry => entry !== item);
+/** Whether the take-over list's one checkbox is ticked. */
+export const takeOversConfirmed = (
+  preview: FormInstallPreview,
+  choices: InstallChoices
+): boolean =>
+  takeOverCandidates(preview).every(type =>
+    choices.takeOver.includes(type.documentType)
+  );
+
+/** Whether the blank-old-interface list's one checkbox is ticked. */
+export const blankOldUisAcknowledged = (
+  preview: FormInstallPreview,
+  choices: InstallChoices
+): boolean =>
+  blankOldUiCandidates(preview).every(type =>
+    choices.blankOldUi.includes(type.documentType)
+  );
