@@ -206,11 +206,11 @@ pub struct LoggingSettings {
     pub mode: LogMode,
     ///  Off | Error | Warn | Info (default) | Debug | Trace
     pub level: Level,
-    /// Max number of temp logfiles to retain
     pub directory: Option<String>,
     pub filename: Option<String>,
+    /// Max number of rotated (gzip compressed) logfiles to retain, in addition to the active logfile
     pub max_file_count: Option<i64>,
-    /// Max logfile size in MB
+    /// Max logfile size in MB before it is rotated
     pub max_file_size: Option<usize>,
 }
 

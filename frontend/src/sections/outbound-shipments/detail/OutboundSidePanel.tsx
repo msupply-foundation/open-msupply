@@ -347,6 +347,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <NumberField
             label={t('label.tax')}
             hideLabel
+            data-testid="shipment-tax-input"
             size="small"
             width="compact"
             min={0}

@@ -47,15 +47,16 @@ describe('OMS-REG-REPL-11.11 — each course walks annual target doses → month
     expect(monthly.result).toContain('= 1,000');
   });
 
-  it('keeps monthly units to two decimals rather than rounding up', () => {
+  it('keeps monthly units to the configured places rather than rounding up', () => {
     const [, monthly] = populationSteps({
       ...measles,
       annualTargetDoses: 6666.666666666667,
       lossFactor: 1.1111111111111112,
       monthlyUnits: 277.77777777777777,
     });
-    expect(monthly.substitution).toBe('6,666.67 / 12 / 2');
-    expect(monthly.result).toContain('= 277.78');
+    // A rounded figure in the sentence is marked (spec § display rounding).
+    expect(monthly.substitution).toBe('6,666.67* / 12 / 2');
+    expect(monthly.result).toContain('= 277.78*');
   });
 });
 

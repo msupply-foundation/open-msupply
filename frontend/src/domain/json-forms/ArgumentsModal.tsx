@@ -423,6 +423,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       onClose={() => props.onClose()}
       title={t('label.report-filters')}
       description={t('message.arguments')}
+      testId="report-arguments-modal"
       widthRem={30}
       actions={
         <>
@@ -433,7 +434,11 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
           >
             {t('button.cancel')}
           </Button>
-          <Button confirms="plain" onClick={submit}>
+          <Button
+            confirms="plain"
+            data-testid="report-arguments-ok"
+            onClick={submit}
+          >
             {t('button.ok')}
           </Button>
         </>
@@ -465,7 +470,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match when={field.kind === 'number' ? field : undefined} keyed>
                 {numberField => (
-                  /* 
+                  /*
                    * Constrained numeric entry (OMS-REG-RPT-10.6): NumberField
                    * gates keystrokes and raises the decimal keypad. The schema
                    * declares no precision; two decimal places covers the
@@ -651,7 +656,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {nameField => (
-                  /* 
+                  /*
                    * OMS-REG-RPT-10.25: the party picker writes the scoped key
                    * = the name's id, nothing else; the picked object lives in
                    * pickedNames for label display only.
@@ -674,7 +679,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {itemField => (
-                  /* 
+                  /*
                    * OMS-REG-RPT-10.28: the item picker's two-key write — the
                    * scoped key = the item's id plus the hard-coded sibling
                    * `itemName` shipped templates print (contract "Arguments").
@@ -721,7 +726,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {periodField => (
-                  /* 
+                  /*
                    * OMS-REG-RPT-10.31: the write forks on the scoped key — id
                    * at `periodId`, span (+ `before` companion) anywhere else
                    * (periodSearchWrites).
@@ -743,7 +748,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 keyed
               >
                 {sfField => (
-                  /* 
+                  /*
                    * OMS-REG-RPT-10.35: the cascade ignores its scoped key and
                    * writes the five flat keys via scheduleCascadeWrites; the
                    * schema's required list gates the keys it renders (see

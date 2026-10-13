@@ -38,6 +38,7 @@ export const RowStatusBadges = (props: {
     <Show when={props.notIssued}>
       <StatusBadge
         label={t('label.not-issued')}
+        testId="row-badge-not-issued"
         tone="warning"
         icon={<CircleDashedIcon />}
       />
@@ -45,6 +46,7 @@ export const RowStatusBadges = (props: {
     <Show when={props.expired}>
       <StatusBadge
         label={t('label.expired')}
+        testId="row-badge-expired"
         tone="error"
         icon={<AlertCircleIcon />}
       />
@@ -52,6 +54,7 @@ export const RowStatusBadges = (props: {
     <Show when={props.nearExpiry}>
       <StatusBadge
         label={t('label.near-expiry')}
+        testId="row-badge-near-expiry"
         tone="error"
         icon={<AlertTriangleIcon />}
       />
@@ -59,6 +62,7 @@ export const RowStatusBadges = (props: {
     <Show when={props.held}>
       <StatusBadge
         label={t('label.on-hold')}
+        testId="row-badge-on-hold"
         tone="warning"
         icon={<PauseIcon />}
       />
