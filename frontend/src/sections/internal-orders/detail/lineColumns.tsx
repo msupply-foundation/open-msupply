@@ -68,6 +68,7 @@ export const INTERNAL_ORDER_LINE_COLUMNS = {
   shortExpiry: 'shortExpiry',
   daysOutOfStock: 'daysOutOfStock',
   reason: 'reason',
+  activity: 'activity',
   approvedPacks: 'approvedPacks',
   approvalComment: 'approvalComment',
 } as const;

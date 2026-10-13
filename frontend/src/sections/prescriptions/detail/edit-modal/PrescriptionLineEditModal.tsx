@@ -35,6 +35,7 @@ import {
 } from '../../../../ui/elements/accordion/Accordion';
 import styles from './PrescriptionLineEditModal.module.css';
 import {
+  getCellDefinition,
   getExpiryDateCell,
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
@@ -647,6 +648,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           id: 'activity',
         },
         header: () => t('label.activity'),
+        ...getCellDefinition('activity'),
       },
       {
         c: {

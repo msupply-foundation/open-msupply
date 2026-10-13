@@ -60,10 +60,22 @@ afterEach(() => {
 });
 
 describe('published column ids (OMS-REG-REPL-16.2)', () => {
-  it('publishes the 24 line-table column ids, all unique', () => {
+  it('publishes the 25 line-table column ids, all unique', () => {
     const all = publishedLineColumnIds();
-    expect(all).toHaveLength(24);
+    expect(all).toHaveLength(25);
     expect(new Set(all).size).toBe(all.length);
+  });
+
+  // Activity is ungated, so it always has a rendered position to anchor
+  // against — unlike the gated columns either side of it (ui-surface S3 #24).
+  it('publishes Activity between Reason and the approval pair', () => {
+    const all = publishedLineColumnIds();
+    expect(all.slice(all.indexOf('reason'))).toEqual([
+      'reason',
+      'activity',
+      'approvedPacks',
+      'approvalComment',
+    ]);
   });
 
   it('names the two anchors the extended-consumption surfaces depend on', () => {
