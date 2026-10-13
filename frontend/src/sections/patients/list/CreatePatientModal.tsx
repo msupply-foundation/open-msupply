@@ -7,9 +7,11 @@ import {
   Show,
   Switch,
   Match,
+  untrack,
   type Component,
 } from 'solid-js';
 import { createStore } from 'solid-js/store';
+import { Dynamic } from 'solid-js/web';
 import { useNavigate } from '@solidjs/router';
 import { t, tPlural } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -59,8 +61,6 @@ import { createCodeTakenCheck } from '../../../domain/patient/patientCode';
 import type { Patient } from '../../../plugin-sdk/documents';
 import { gated } from '../../../api/gated';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
-import { PatientDocumentFormView } from '../detail/PatientDocumentFormView';
-import { createNewPatientDocumentEditor } from '../detail/patientDocumentEditor';
 import {
   seedNewPatientDocument,
   type NewPatientFields,
@@ -105,6 +105,34 @@ const emptySearch = (): SearchForm => ({
   address: '',
   phone: '',
 });
+
+// The document path's form host and its view, loaded the first time step ③
+// takes that path rather than with this module: the startup bundle reaches
+// the wizard through the dashboard's new prescription request, and the form
+// host must stay out of it (vite/lazyChunkGuard.ts). One load, shared by
+// every opening of the modal; a failed one is forgotten, so the next tries
+// again.
+interface DocumentPathModules {
+  createEditor: typeof import('../detail/patientDocumentEditor').createNewPatientDocumentEditor;
+  View: typeof import('../detail/PatientDocumentFormView').PatientDocumentFormView;
+}
+let documentPathModules: DocumentPathModules | undefined;
+let documentPathLoading: Promise<DocumentPathModules> | undefined;
+const loadDocumentPath = () =>
+  (documentPathLoading ??= Promise.all([
+    import('../detail/patientDocumentEditor'),
+    import('../detail/PatientDocumentFormView'),
+  ]).then(
+    ([editor, view]) =>
+      (documentPathModules = {
+        createEditor: editor.createNewPatientDocumentEditor,
+        View: view.PatientDocumentFormView,
+      }),
+    error => {
+      documentPathLoading = undefined;
+      throw error;
+    }
+  ));
 
 export interface CreatePatientModalProps {
   open: boolean;
@@ -165,11 +193,27 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
       ? seedNewPatientDocument(patientId(), fields, pluginForm())
       : undefined;
   });
-  const newDocument = createNewPatientDocumentEditor({
-    storeId: () => props.storeId,
-    patientId,
-    registry: () => registry()?.entry,
-    seed: documentSeed,
+  const [documentPath, setDocumentPath] = createSignal(documentPathModules);
+  createEffect(() => {
+    if (onDocumentPath() && !documentPath()) {
+      void loadDocumentPath().then(modules => setDocumentPath(() => modules));
+    }
+  });
+  // Made once, when the modules arrive, and untracked, so nothing the editor
+  // reads as it is made can remake it and lose the draft; undefined on the
+  // plain path.
+  const newDocument = createMemo(() => {
+    const modules = documentPath();
+    return modules
+      ? untrack(() =>
+          modules.createEditor({
+            storeId: () => props.storeId,
+            patientId,
+            registry: () => registry()?.entry,
+            seed: documentSeed,
+          })
+        )
+      : undefined;
   });
 
   // Duplicate-code check (spec/patients § generating a code), run on the save
@@ -327,8 +371,9 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   // The document path's create: the editor validates against the installed
   // schema, checks the code and writes the patient with its first document.
   const saveDocument = async () => {
-    if (!(await newDocument.create())) return;
-    const data = newDocument.form.draft.data;
+    const editor = newDocument();
+    if (!editor || !(await editor.create())) return;
+    const data = editor.form.draft.data;
     finish(patientId(), data.firstName, data.lastName);
   };
 
@@ -358,9 +403,16 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     finish(outcome.id, draft.firstName, draft.lastName);
   };
 
-  const busy = () => saving() || newDocument.saving();
+  const busy = () => saving() || (newDocument()?.saving() ?? false);
   const stepThreeError = () =>
-    onDocumentPath() ? newDocument.saveError() : saveError();
+    onDocumentPath() ? newDocument()?.saveError() : saveError();
+  // Step ③'s document form, once its modules have loaded and its form is
+  // ready to edit.
+  const readyDocument = () => {
+    const View = documentPath()?.View;
+    const form = newDocument()?.form;
+    return View && form?.status() === 'ready' ? { View, form } : undefined;
+  };
 
   // Cell-type presets carry the rendering AND the width
   // (ui/docs/CELL_TYPES.md). Deceased reads as a word here, not the list's
@@ -665,14 +717,15 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                   testId="create-patient-error-summary"
                 />
               </Match>
-              <Match
-                when={onDocumentPath() && newDocument.form.status() === 'ready'}
-              >
-                <PatientDocumentFormView
-                  patientId={patientId()}
-                  form={newDocument.form}
-                  errorSummaryTestId="create-patient-error-summary"
-                />
+              <Match when={onDocumentPath() && readyDocument()}>
+                {ready => (
+                  <Dynamic
+                    component={ready().View}
+                    patientId={patientId()}
+                    form={ready().form}
+                    errorSummaryTestId="create-patient-error-summary"
+                  />
+                )}
               </Match>
             </Switch>
           </Match>
