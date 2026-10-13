@@ -320,17 +320,17 @@ They come from **`publish-bundles.yaml`**:
 
 ### Report bundles
 
-The dashboard's **Report bundles** tab (`https://<DEPLOY_DOMAIN>/reports`) lists each client's custom reports from `private/reports/clients/`, ready to install: **one `reports.json` per client per build**, holding every version of each of the client's reports, since a server picks the version of each report that suits it. It installs through the central server's report upload (**Manage → Reports**) or `remote_server_cli upsert-reports`.
+The dashboard's **Reports** page (`https://<DEPLOY_DOMAIN>/reports`) lists each client's custom reports from `private/reports/clients/`, ready to install: **one `reports.json` per client per build**, holding every version of each of the client's reports, since a server picks the version of each report that suits it. It installs through the central server's report upload (**Manage → Reports**) or `remote_server_cli upsert-reports`.
 
 They come from **`publish-reports.yaml`**:
 
 - **What is kept:** the newest build of `develop`, of each RC branch and of each release tag, for good. A push there publishes when `private/reports/` or the bundler (`scripts/reports/`) changed; a release tag always does.
 - **Branch builds:** the Reports page's **Build from a branch** button (for anyone with write access), or the workflow run by hand. The newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
 - **A client that fails to build** keeps its last bundle for that ref, and the run warns; the other clients still publish. A client removed from the tree loses its bundle for that ref.
-- **Version bumps still matter.** A server installs a report by its id (`<code>_<version>_<is_custom>`) and keeps one it already has, so a report changed without a new version never reaches servers that had it. The store remembers the first `develop`/RC/tag build of each report version, and a later build that changes it is flagged on the page ("needs a version bump") and warned about in the run.
+- **Version bumps still matter.** A server installs a report by its id (`<code>_<version>_<is_custom>`) and keeps one it already has, so a report changed without a new version never reaches servers that had it. The store remembers the first `develop`/RC/tag build of each report version, and a later build that changes it is flagged on the page ("needs a version bump") and warned about in the run, naming the ref it differs from. Reports are compared as built, so a bundler or dependency change flags every report it changes. Two reports in one client with the same id are flagged too ("shares an id"): only one of them installs.
 - **How:** the build runs `scripts/reports/build-reports.mjs --each private/reports/clients` on the `build` lane, in a pinned `node` container (pnpm's store in `/cache/pnpm`), as `build-standard-reports.yaml` does. A short job on the `deploy` lane then runs `publish-reports.mjs` in a throwaway `node` container, which writes into the same **`oms-bundles` volume** as the plugin bundles, under `reports/`, and takes the same lock. Nothing to set up by hand.
 
-The store is a cache here too: the report build is reproducible, so anything lost is rebuilt by running the workflow on the commit it came from.
+The store is a cache here too: the report build is reproducible, so anything lost is rebuilt by running the workflow on the commit it came from. The run builds the ref's reports with its own copy of the bundler, so that works for any ref from the move to pnpm (#1444) on; nothing older can be built.
 
 ## Verifying
 

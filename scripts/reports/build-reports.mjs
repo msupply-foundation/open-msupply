@@ -458,14 +458,17 @@ export function buildEach(dir, outDir, options) {
     .filter(d => d.isDirectory() && !d.name.startsWith('.') && !IGNORED_DIRS.includes(d.name))
     .map(d => d.name)
     .sort();
-  const taken = new Set();
+  // clients.json is this run's own file, so no client may be written as it.
+  const taken = new Set(['clients.json']);
   for (const client of folders) {
-    const reportDirs = findReports(join(dir, client));
-    if (!reportDirs.length) continue;
     try {
+      // Inside the try: a folder that cannot be read is that client failing,
+      // not the run.
+      const reportDirs = findReports(join(dir, client));
+      if (!reportDirs.length) continue;
       const reports = reportDirs.map(reportDir => buildReport(reportDir, options));
       const file = bundleFileName(client);
-      if (taken.has(file)) fail(`${client} would be written as ${file}, which another folder already is`);
+      if (taken.has(file)) fail(`${client} would be written as ${file}, which is already taken`);
       taken.add(file);
       writeFileSync(join(outDir, file), `${JSON.stringify({ reports }, null, 2)}\n`);
       console.log(`Built ${client}: ${reports.length} report${reports.length === 1 ? '' : 's'}`);

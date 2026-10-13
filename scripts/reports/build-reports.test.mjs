@@ -189,6 +189,18 @@ try {
   eq('clients.json is written beside them', JSON.parse(readFileSync(join(bundles, 'clients.json'), 'utf8')), results);
   eq('nothing else is written', readdirSync(bundles).sort(), ['Nigeria-UNICEF.json', 'clients.json']);
   eq('a file name keeps only safe characters', bundleFileName('São Tomé/x'), 'S-o-Tom--x.json');
+
+  // A client called `clients` would overwrite clients.json: it fails instead.
+  const named = join(scratch, 'named');
+  report(join(named, 'clients', 'r', 'latest'), {}, { 'template.html': 't' });
+  console.error = () => {};
+  let clash;
+  try {
+    clash = buildEach(named, join(scratch, 'named-out'), { convertData: noConvertData, warn: () => {} });
+  } finally {
+    console.error = quiet;
+  }
+  eq('a client may not be written as clients.json', /is already taken/.test(clash[0].error ?? ''), true);
   eq('a dir builds into generated/', out, join(tree, 'generated', 'reports.json'));
 } finally {
   rmSync(scratch, { recursive: true, force: true });
