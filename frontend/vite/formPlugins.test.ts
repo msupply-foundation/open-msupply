@@ -240,6 +240,36 @@ describe('parseFormsDeclaration', () => {
     ).toThrow(/version id "same" is listed twice/);
   });
 
+  it("reads a version's acknowledged narrowings, each with its reason", () => {
+    const tightening = (tightens: unknown, onFirst = false) =>
+      parseFormsDeclaration(
+        {
+          programKeys: ['demo'],
+          documentTypes: [
+            {
+              ...encounterEntry,
+              versions: [
+                { file: 'v1.json', ...(onFirst ? { tightens } : {}) },
+                { file: 'v2.json', source: 'type.ts', type: 'Visit', tightens },
+              ],
+            },
+          ],
+        },
+        'forms.json'
+      );
+    expect(
+      tightening({ code: 'six digits, as the old client enforces' })
+        .documentTypes[0].versions[1].tightens
+    ).toEqual({ code: 'six digits, as the old client enforces' });
+    expect(() => tightening({ code: '' })).toThrow(
+      /versions\[1\]: "tightens" must map each field path to why/
+    );
+    expect(() => tightening(['code'])).toThrow(/"tightens" must map/);
+    expect(() => tightening({ code: 'why' }, true)).toThrow(
+      /versions\[0\]: "tightens" is for a version narrowing the one before it/
+    );
+  });
+
   it('refuses a legacy UI schema that is not a .json file in the type directory', () => {
     const withUi = (legacyUiSchema: unknown) => () =>
       parseFormsDeclaration(

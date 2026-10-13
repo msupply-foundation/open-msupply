@@ -6,6 +6,7 @@ import { runnerImport, type InlineConfig, type Plugin } from 'vite';
 import {
   BASE_DOCUMENT_TYPES,
   BASE_SCHEMA_DIR,
+  FORMS_DECLARATION,
   typeDir,
   type DocumentTypeDeclaration,
   type FormsDeclaration,
@@ -28,6 +29,11 @@ import {
  *     is either a step in `forms/<dir>/migrations.ts` whose coverage map
  *     accounts for every difference between the two schemas, or an additive
  *     change needing no step;
+ *   - every narrowing between versions (a field newly required, given an
+ *     enum, format or pattern, or a stricter limit, inside arrays too) is
+ *     acknowledged in `forms.json`, under the narrower version's `tightens`,
+ *     unless its step clears the field whole; and every acknowledgement names
+ *     a narrowing, so a misspelt path is not taken as one;
  *   - each earlier version has at least one fixture, a document as that
  *     version recorded it: `forms/<dir>/fixtures/v<n>.json`, or one
  *     `v<n>.<case>.json` for each case a deployment's documents show. Each
@@ -129,6 +135,11 @@ interface HostModules {
     newSchema: unknown,
     step: Step
   ) => string[];
+  findNarrowings: (
+    oldSchema: unknown,
+    newSchema: unknown,
+    step: Step
+  ) => { path: string; changes: string[] }[];
   nextStep: (
     steps: readonly Step[],
     at: number,
@@ -189,10 +200,13 @@ const readJson = (path: string, problems: string[]): unknown => {
 const validate = (
   host: HostModules,
   schema: Record<string, unknown>,
-  data: unknown
+  data: unknown,
+  accepted: (path: string) => boolean = () => false
 ): string | undefined => {
   const id = `check:${createHash('sha256').update(JSON.stringify(schema)).digest('hex')}`;
-  const errors = host.validateDocument(id, schema, data);
+  const errors = host
+    .validateDocument(id, schema, data)
+    .filter(error => !accepted(error.path));
   if (errors.length === 0) return undefined;
   return errors
     .map(error => `${error.path || '(the document)'} (${error.keyword})`)
@@ -476,6 +490,7 @@ const checkMigrations = async (
   host: HostModules,
   entry: DocumentTypeDeclaration,
   dir: string,
+  formsFile: string,
   schemas: Record<string, unknown>[],
   fixtures: Fixtures,
   base: unknown
@@ -556,6 +571,58 @@ const checkMigrations = async (
     }
   }
 
+  /*
+   * Every narrowing on each version's hop towards the current one, as the
+   * coverage loop above takes them, must be acknowledged on a version the hop
+   * reaches. Collected across the hops, so an acknowledgement is unused only
+   * when no hop narrows its path.
+   */
+  const acknowledged = new Set<string>();
+  const ackKey = (version: number, path: string) => `${version}\0${path}`;
+  for (let at = 1; at < current; at += 1) {
+    const step = host.nextStep(steps, at, current);
+    const target = step ? host.stepTarget(step) : at + 1;
+    const narrowings = host.findNarrowings(
+      schemas[at - 1],
+      schemas[target - 1],
+      step ?? { from: at }
+    );
+    for (const { path, changes } of narrowings) {
+      let ackAt: number | undefined;
+      for (let version = at + 1; version <= target; version += 1) {
+        if (entry.versions[version - 1].tightens?.[path] !== undefined) {
+          ackAt = version;
+        }
+      }
+      if (ackAt !== undefined) {
+        acknowledged.add(ackKey(ackAt, path));
+        continue;
+      }
+      problems.push(
+        `${formsFile}: ${entry.documentType} v${at} → v${target}: ${path} ` +
+          `${changes.join(', and ')}, so a document v${at} saved may not ` +
+          `validate against v${target} until someone edits it — if that is ` +
+          `meant, acknowledge it on v${target}, "tightens": ` +
+          `{ ${JSON.stringify(path)}: "<why>" }${
+            step || !additiveOnly(target)
+              ? `, or clear the old value in a step in ${file} ` +
+                "(unresolved 'any')"
+              : ''
+          }`
+      );
+    }
+  }
+  entry.versions.forEach((version, i) => {
+    for (const path of Object.keys(version.tightens ?? {})) {
+      if (i === 0 || acknowledged.has(ackKey(i + 1, path))) continue;
+      problems.push(
+        `${formsFile}: ${entry.documentType} v${i + 1}: "tightens" names ` +
+          `${path}, which v${i + 1} does not narrow — remove it, or fix the ` +
+          'path'
+      );
+    }
+  });
+
   const currentFile = entry.versions[current - 1].file;
 
   /*
@@ -567,10 +634,28 @@ const checkMigrations = async (
   const compiles = schemas.map(
     schema => host.schemaCompileError(schema) === undefined
   );
-  const fits = (version: number, data: unknown) =>
+  const fits = (
+    version: number,
+    data: unknown,
+    accepted?: (path: string) => boolean
+  ) =>
     compiles[version - 1]
-      ? validate(host, schemas[version - 1], data)
+      ? validate(host, schemas[version - 1], data, accepted)
       : undefined;
+  /*
+   * Where a version after the fixture's acknowledges a narrowing, the
+   * fixture failing there is what the acknowledgement accepts. An error
+   * names an array's item by its index (`contactDetails.0.region`), a
+   * narrowing by `[]`.
+   */
+  const acceptedAfter = (version: number) => {
+    const paths = new Set(
+      entry.versions
+        .slice(version)
+        .flatMap(later => Object.keys(later.tightens ?? {}))
+    );
+    return (path: string) => paths.has(path.replace(/\.\d+(?=\.|$)/g, '[]'));
+  };
 
   const checkFixture = (fixture: string, version: number) => {
     const data = readJson(fixture, problems);
@@ -597,7 +682,7 @@ const checkMigrations = async (
         at = target;
         continue;
       }
-      const errors = fits(at + 1, carried);
+      const errors = fits(at + 1, carried, acceptedAfter(version));
       if (errors) {
         problems.push(
           `${fixture}: v${at} → v${at + 1} has no migration step, so the ` +
@@ -613,7 +698,7 @@ const checkMigrations = async (
     }
 
     const migrated = host.applyMigrations(data, version, current, steps)?.data;
-    const errors = fits(current, migrated);
+    const errors = fits(current, migrated, acceptedAfter(version));
     const lastHopAdditive =
       at === current - 1 && !host.nextStep(steps, at, current);
     if (errors && lastHopAdditive) {
@@ -748,7 +833,15 @@ export const checkFormVersions = async (
       fixtures.size > 0 ? readBaseSchema(entry, problems) : undefined;
     if (schemas.length > 1) {
       problems.push(
-        ...(await checkMigrations(host, entry, dir, schemas, fixtures, base))
+        ...(await checkMigrations(
+          host,
+          entry,
+          dir,
+          join(pluginDir, FORMS_DECLARATION),
+          schemas,
+          fixtures,
+          base
+        ))
       );
     }
     for (const fixture of fixtures.get(schemas.length) ?? []) {

@@ -577,6 +577,9 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
       ],
     });
     expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        /forms\.json: Visit v1 → v2: extension\.demo\.weightKg is newly required/
+      ),
       `${visit(dir, 'fixtures/v1.json')}: v1 → v2 has no migration step, so ` +
         'the document must validate unchanged against v2, and it does not: ' +
         'extension.demo.weightKg (required) — add a step from v1 to ' +
@@ -614,11 +617,153 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
       ],
     });
     expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        /forms\.json: Visit v1 → v2: extension\.demo\.weightKg is newly required/
+      ),
       `${visit(dir, 'fixtures/v1.json')}: v1 → v2 has no migration step, so ` +
         'the document must validate unchanged against v2 (v2.json), and it ' +
         'does not: extension.demo.weightKg (required) — the change is not ' +
         `additive, so add a step from v1 to ${visit(dir, 'migrations.ts')}`,
     ]);
+  });
+
+  describe('narrowings', () => {
+    const before = schema({ code: { type: 'string' } });
+    const after = schema({ code: { type: 'string', pattern: '^[0-9]{6}$' } });
+    const files = {
+      'forms/Visit/v1.json': before,
+      'forms/Visit/v2.json': after,
+      'forms/Visit/fixtures/v1.json': { extension: { demo: {} } },
+    };
+    const versions = (tightens?: Record<string, string>) => [
+      { file: 'v1.json' },
+      {
+        file: 'v2.json',
+        source: 'type.ts',
+        type: 'Visit',
+        ...(tightens ? { tightens } : {}),
+      },
+    ];
+    const formsJson = (dir: string) => join(dir, 'forms/forms.json');
+    const narrowed =
+      'Visit v1 → v2: extension.demo.code gains pattern "^[0-9]{6}$", so a ' +
+      'document v1 saved may not validate against v2 until someone edits ' +
+      'it — if that is meant, acknowledge it on v2, "tightens": ' +
+      '{ "extension.demo.code": "<why>" }';
+
+    it('names one not acknowledged', async () => {
+      const dir = fixture(files);
+      expect(
+        await checkFormVersions(dir, declare({ versions: versions() }))
+      ).toEqual([
+        `${formsJson(dir)}: ${narrowed}, or clear the old value in a step ` +
+          `in ${visit(dir, 'migrations.ts')} (unresolved 'any')`,
+      ]);
+    });
+
+    it('passes one acknowledged on the narrower version', async () => {
+      const dir = fixture(files);
+      const declaration = declare({
+        versions: versions({ 'extension.demo.code': 'six-digit codes' }),
+      });
+      expect(await checkFormVersions(dir, declaration)).toEqual([]);
+    });
+
+    it('accepts a fixture failing where the narrowing is acknowledged', async () => {
+      const dir = fixture({
+        ...files,
+        'forms/Visit/fixtures/v1.json': {
+          extension: { demo: { code: 'A-1' } },
+        },
+        'forms/Visit/fixtures/v1.listed.json': {
+          extension: { demo: { code: 'A-1', listed: [{ region: 'Nord' }] } },
+        },
+        'forms/Visit/v1.json': schema({
+          code: { type: 'string' },
+          listed: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { region: { type: 'string' } },
+            },
+          },
+        }),
+        'forms/Visit/v2.json': schema({
+          code: { type: 'string', pattern: '^[0-9]{6}$' },
+          listed: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { region: { type: 'string', enum: ['NORTH'] } },
+            },
+          },
+        }),
+      });
+      const acknowledged = declare({
+        versions: versions({
+          'extension.demo.code': 'six-digit codes',
+          'extension.demo.listed[].region': 'regions from the list',
+        }),
+      });
+      expect(await checkFormVersions(dir, acknowledged)).toEqual([]);
+      // Unacknowledged, the same fixture fails as the narrowing does.
+      const problems = await checkFormVersions(
+        dir,
+        declare({
+          versions: versions({ 'extension.demo.code': 'six-digit codes' }),
+        })
+      );
+      expect(problems).toEqual([
+        expect.stringMatching(
+          /extension\.demo\.listed\[\]\.region is given an enum/
+        ),
+        expect.stringMatching(
+          /fixtures\/v1\.listed\.json: v1 → v2 has no migration step, .* extension\.demo\.listed\.0\.region \(enum\)/
+        ),
+      ]);
+    });
+
+    it('passes one a step clears whole', async () => {
+      const dir = fixture({
+        ...files,
+        'forms/Visit/migrations.ts': `
+          export const migrations = [
+            { from: 1, unresolved: { 'extension.demo.code': 'any' } },
+          ];
+        `,
+      });
+      expect(
+        await checkFormVersions(dir, declare({ versions: versions() }))
+      ).toEqual([]);
+    });
+
+    it('offers no step where the old client draws the type', async () => {
+      const dir = fixture({
+        ...files,
+        'forms/Visit/legacy-ui.json': { type: 'VerticalLayout', elements: [] },
+      });
+      const declaration = declare({
+        legacyUiSchema: 'legacy-ui.json',
+        versions: versions(),
+      });
+      expect(await checkFormVersions(dir, declaration)).toEqual([
+        `${formsJson(dir)}: ${narrowed}`,
+      ]);
+    });
+
+    it('names an acknowledgement of a field the version does not narrow', async () => {
+      const dir = fixture(files);
+      const declaration = declare({
+        versions: versions({
+          'extension.demo.code': 'six-digit codes',
+          'extension.demo.cod': 'a misspelt path',
+        }),
+      });
+      expect(await checkFormVersions(dir, declaration)).toEqual([
+        `${formsJson(dir)}: Visit v2: "tightens" names extension.demo.cod, ` +
+          'which v2 does not narrow — remove it, or fix the path',
+      ]);
+    });
   });
 
   it('refuses a step outside the versions, before walking the chain', async () => {

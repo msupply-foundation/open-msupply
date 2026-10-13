@@ -9,7 +9,7 @@ import {
   type Migration,
   type MigrationStep,
 } from './migration';
-import { checkCoverage, flattenSchema } from './schemaDiff';
+import { checkCoverage, findNarrowings, flattenSchema } from './schemaDiff';
 
 // The demo's v1 → v2 step, restated: the app tsconfig cannot resolve the
 // plugin's own modules (worklog, chunk 4), only its emitted JSON.
@@ -333,6 +333,138 @@ describe('checkCoverage', () => {
     expect(
       checkCoverage(old, next, { from: 1, unresolved: { bp: 'any' } })
     ).toEqual([]);
+  });
+});
+
+describe('findNarrowings', () => {
+  // A document schema whose properties are the given ones.
+  const doc = (
+    properties: Record<string, unknown>,
+    required: string[] = []
+  ) => ({ type: 'object', properties, required });
+  const additive = { from: 1 };
+
+  it('finds nothing between a version and itself, or in a widening', () => {
+    expect(findNarrowings(v1, v1, additive)).toEqual([]);
+    expect(
+      findNarrowings(
+        doc({ code: { type: 'string', pattern: '^[0-9]+$' } }, ['code']),
+        doc({ code: { type: 'string' }, notes: { type: 'string' } }),
+        additive
+      )
+    ).toEqual([]);
+  });
+
+  it('names each way a field accepts less', () => {
+    const before = doc({
+      code: { type: 'string' },
+      born: { type: 'string', format: 'date-time' },
+      region: { type: 'string' },
+      visits: { type: 'number', minimum: 0, maximum: 100 },
+    });
+    const after = doc(
+      {
+        code: { type: 'string', pattern: '^[0-9]{6}$' },
+        born: { type: 'string', format: 'date' },
+        region: { type: 'string', enum: ['NORTH', 'SOUTH'] },
+        visits: { type: 'number', minimum: 1, maximum: 50, minLength: 0 },
+      },
+      ['code']
+    );
+    expect(findNarrowings(before, after, additive)).toEqual([
+      {
+        path: 'code',
+        changes: ['is newly required', 'gains pattern "^[0-9]{6}$"'],
+      },
+      {
+        path: 'born',
+        changes: ['changes format from "date-time" to "date"'],
+      },
+      { path: 'region', changes: ['is given an enum'] },
+      {
+        path: 'visits',
+        changes: [
+          'raises minimum from 0 to 1',
+          'gains minLength 0',
+          'lowers maximum from 100 to 50',
+        ],
+      },
+    ]);
+  });
+
+  it('counts a new required field only where old documents hold its object', () => {
+    const before = doc({ contact: { type: 'object', properties: {} } });
+    const after = doc({
+      contact: doc({ phone: { type: 'string' } }, ['phone']),
+      referral: doc({ reason: { type: 'string' } }, ['reason']),
+      consent: { type: 'boolean' },
+    });
+    // `referral` is new, so no old document holds one to lack its reason.
+    expect(
+      findNarrowings(before, { ...after, required: ['consent'] }, additive)
+    ).toEqual([
+      { path: 'contact.phone', changes: ['is newly required'] },
+      { path: 'consent', changes: ['is newly required'] },
+    ]);
+  });
+
+  it("looks inside an array's items", () => {
+    const item = (region: Record<string, unknown>) => ({
+      type: 'array',
+      items: { type: 'object', properties: { region } },
+    });
+    expect(
+      findNarrowings(
+        doc({ contactDetails: item({ type: 'string' }) }),
+        doc({ contactDetails: item({ type: 'string', enum: ['NORTH'] }) }),
+        additive
+      )
+    ).toEqual([
+      { path: 'contactDetails[].region', changes: ['is given an enum'] },
+    ]);
+  });
+
+  it('compares a field where the step moves it, and skips one it clears', () => {
+    const before = doc({ phone: { type: 'string' } });
+    const after = doc({
+      contact: doc({ phone: { type: 'string', pattern: '^[0-9]{8}$' } }),
+    });
+    expect(
+      findNarrowings(before, after, {
+        from: 1,
+        moved: { phone: 'contact.phone' },
+      })
+    ).toEqual([
+      { path: 'contact.phone', changes: ['gains pattern "^[0-9]{8}$"'] },
+    ]);
+    expect(
+      findNarrowings(before, after, {
+        from: 1,
+        moved: { phone: 'contact.phone' },
+        unresolved: { 'contact.phone': 'any' },
+      })
+    ).toEqual([]);
+  });
+
+  it('lets a step map the free text of a field given an enum', () => {
+    const before = doc({ region: { type: 'string' } });
+    const after = doc({ region: { type: 'string', enum: ['NORTH'] } });
+    expect(
+      checkCoverage(before, after, {
+        from: 1,
+        mapped: { region: { North: 'NORTH', 'the north': 'NORTH' } },
+        unresolved: { region: ['Nord?'] },
+      })
+    ).toEqual([]);
+    // A value the enum allows is not one to map.
+    expect(
+      checkCoverage(before, after, {
+        from: 1,
+        mapped: { region: { NORTH: 'NORTH' } },
+      })
+    ).toEqual([
+      'v1 → v2: mapped names region value "NORTH", which is not retired',
+    ]);
   });
 });
 
