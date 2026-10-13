@@ -33,7 +33,7 @@ import {
   StockEvolutionChart,
 } from '../../../../ui/elements/charts';
 import { ItemSearch } from '../../../../domain/item';
-import { ActivitySelect } from '../../../../domain/campaign';
+import { ActivitySelect } from '@/domain/campaign';
 import {
   PluginSlotOutlet,
   type PluginSlotContribution,
@@ -56,7 +56,9 @@ import {
   statInMode,
   saveNewLine,
   saveExistingLine,
+  previewActivity,
   previewForecastMethod,
+  type ForecastPreviewResult,
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
@@ -172,7 +174,7 @@ const LineEditContent = (
   const [saving, setSaving] = createSignal(false);
   // A draft method change's preview in flight (rules › choosing a method) —
   // Save waits for it, so the method it sends is the one the editor shows.
-  const [previewingMethod, setPreviewingMethod] = createSignal(false);
+  const [previewing, setPreviewing] = createSignal(false);
   const [advancing, setAdvancing] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
@@ -434,29 +436,50 @@ const LineEditContent = (
     return false;
   };
 
-  // Picking a method is a draft edit (rules › choosing a method): the line is
-  // re-previewed under it — forecast and suggestion recomputed as the save will
-  // recompute them — leaving the draft's quantity, comment and reason as typed.
-  // Nothing is saved until Save; Cancel discards it with the rest of the draft.
-  const onMethodChange = async (method: ForecastMethod) => {
+  // The shared body of a draft preview: run it against the line on screen, and
+  // land it only if that is still the line on screen.
+  const runPreview = async (
+    preview: (line: EditorLine) => Promise<ForecastPreviewResult>
+  ) => {
     const editorLine = current();
     if (!editorLine) return;
-    setPreviewingMethod(true);
+    setPreviewing(true);
     setErrorMessage(undefined);
-    const result = await previewForecastMethod(
-      props.storeId,
-      props.requisitionId,
-      editorLine,
-      method
-    );
+    const result = await preview(editorLine);
     if (disposed) return;
-    setPreviewingMethod(false);
+    setPreviewing(false);
     // The editor moved on (another item, or Save & next) while it was in
     // flight: the preview is for a line no longer shown.
     if (current()?.lineId !== editorLine.lineId) return;
     if (result.kind === 'previewed') setLine(result.line);
     else if (result.kind === 'error') setErrorMessage(result.message);
     else setErrorMessage(t('error.unable-to-load-data'));
+  };
+
+  // Picking a method is a draft edit (rules › choosing a method): the line is
+  // re-previewed under it — forecast and suggestion recomputed as the save will
+  // recompute them — leaving the draft's quantity, comment and reason as typed.
+  // Nothing is saved until Save; Cancel discards it with the rest of the draft.
+  const onMethodChange = (method: ForecastMethod) =>
+    runPreview(editorLine =>
+      previewForecastMethod(
+        props.storeId,
+        props.requisitionId,
+        editorLine,
+        method
+      )
+    );
+
+  // Picking an Activity is a draft edit too (issue 595): the line is re-previewed
+  // as held for it — stock on hand narrowed to that campaign's stock, and the
+  // suggestion recomputed against it — so the editor SHOWS what the save will
+  // store rather than the whole-store figures it opened on. The picker's own
+  // value is the draft's; the preview follows it.
+  const onActivityChange = (chosen: { id: string; name: string } | null) => {
+    setCampaign(chosen);
+    void runPreview(editorLine =>
+      previewActivity(props.storeId, props.requisitionId, editorLine, chosen)
+    );
   };
 
   const onOk = () =>
@@ -591,9 +614,7 @@ const LineEditContent = (
           />
           <DialogSaveButton
             data-testid="dialog-button-ok"
-            disabled={
-              !current() || saving() || previewingMethod() || !props.editable
-            }
+            disabled={!current() || saving() || previewing() || !props.editable}
             loading={saving()}
             onClick={onOk}
           />
@@ -602,7 +623,7 @@ const LineEditContent = (
           <Show when={current() && props.editable}>
             <SaveAndNextButton
               data-testid="dialog-button-next-and-ok"
-              disabled={previewingMethod()}
+              disabled={previewing()}
               loading={saving() || advancing()}
               onClick={onOkNext}
             />
@@ -827,14 +848,13 @@ const LineEditContent = (
                   for is a property of the line, not of the order's kind. */}
                 <FieldRow label={t('label.activity')}>
                   <ActivitySelect
-                    label={t('label.activity')}
                     hideLabel
                     inputTestId="line-activity-field"
-                    disabled={disabled() || saving()}
+                    disabled={disabled() || saving() || previewing()}
                     campaignId={campaign()?.id}
                     campaign={campaign()}
                     onChange={chosen =>
-                      setCampaign(
+                      onActivityChange(
                         chosen ? { id: chosen.id, name: chosen.name } : null
                       )
                     }
@@ -884,7 +904,7 @@ const LineEditContent = (
               formatQuantity={forecastQuantity}
               options={editorLine().forecastMethodOptions}
               ownMethod={editorLine().ownForecastMethod}
-              disabled={disabled() || saving() || previewingMethod()}
+              disabled={disabled() || saving() || previewing()}
               onMethodChange={method => void onMethodChange(method)}
               testId="line-forecast"
             />

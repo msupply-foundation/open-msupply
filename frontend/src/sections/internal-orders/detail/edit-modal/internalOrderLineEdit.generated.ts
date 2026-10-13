@@ -188,6 +188,9 @@ export type InternalOrderLineForecastPreviewVariables = {
     requisitionId: string;
     itemId: string;
     forecastMethod?: "AMC" | "POPULATION" | "ANCILLARY_RATIO" | null;
+    campaignId?: {
+    value?: string | null;
+  } | null;
   };
 };
 

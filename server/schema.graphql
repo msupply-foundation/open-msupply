@@ -8250,6 +8250,12 @@ input RequisitionLineForecastPreviewInput {
 	new line would take
 	"""
 	forecastMethod: ForecastMethodNode
+	"""
+	The activity to preview the line as held for — its stock on hand, and the suggestion
+	computed against it, are scoped to that campaign's stock. Null keeps the line's own;
+	`{ value: null }` previews it as held for nothing in particular
+	"""
+	campaignId: NullableStringUpdate
 }
 
 type RequisitionLineForecastPreviewNode {
