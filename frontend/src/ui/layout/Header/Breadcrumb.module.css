@@ -65,12 +65,11 @@
 /*
  * An ancestor crumb is the screen's way OUT — the detail → list exit — so it is
  * a real target, not merely styled text. inline-flex (an inline box would
- * ignore the touch min-block-size below) + a gap for the back marker.
+ * ignore the touch min-block-size below).
  */
 .link {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
   color: inherit;
   font-weight: var(--weight-bold);
   text-decoration: none;
@@ -84,26 +83,6 @@
 .link:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-}
-
-/*
- * The parent crumb's back marker. Shown only where the trail alone is a weak
- * exit — a coarse pointer, or a narrow viewport (1023px = breakpoints.navOverlay
- * - 1, the tablet-portrait-and-below line) where the crumb is the only way out
- * on screen. At desk width with a mouse, the trail plus its hover underline
- * already reads as navigable and a chevron there is chrome for nothing.
- * Mirrored in RTL by the icon's own data-flip-rtl (index.css).
- */
-.backChevron {
-  display: none;
-  flex-shrink: 0;
-  font-size: 1.125rem;
-}
-
-@media (pointer: coarse), (max-width: 1023px) {
-  .backChevron {
-    display: inline-flex;
-  }
 }
 
 /*
@@ -121,5 +100,69 @@
     min-block-size: var(--touch-target);
     padding-inline: var(--space-2);
     margin-inline: calc(-1 * var(--space-2));
+  }
+}
+
+/* Narrow viewports (≤1023px — Header.module.css's single-row tier): the
+   header is one row, so the trail takes whatever the actions leave and
+   truncates rather than pushing them onto a row of their own — the ancestor
+   crumbs first ("Inbound Sh… / 10244"), so the record's own name or number
+   is the last thing to go. */
+@media (max-width: 1023px) {
+  /* A small basis: in a header that wraps (one with a toolbar row), the
+     ACTIONS take the next line rather than the trail leaving the hamburger
+     alone on the first. */
+  .breadcrumb {
+    flex: 1 1 6rem;
+  }
+
+  .list {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  .list > .crumb {
+    min-inline-size: 0;
+  }
+
+  /* An ancestor crumb has no claim of its own (basis 0): the record's name
+     keeps its width, and the ancestors share whatever is left, truncating.
+     Capped at its own text, so when the header wraps and the trail gets a
+     whole line, the ancestor doesn't stretch across it and push the record's
+     name to the far end. */
+  .list > .crumb:not(:last-child) {
+    flex: 1 1 0;
+    max-inline-size: max-content;
+  }
+
+  .separator {
+    flex-shrink: 0;
+  }
+
+  /* A block, not the base inline-flex: text-overflow can't reach a flex
+     container's bare text. align-content keeps the label centred in the
+     coarse-pointer touch height. */
+  .link {
+    display: block;
+    align-content: center;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .leaf {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Compact (<600px, breakpoints.compact): on a detail page (the trail has an
+   ancestor link) the section icon goes — the parent crumb already names the
+   section, and on a ~320px screen its ~30px is the record number's room. */
+@media (max-width: 599px) {
+  .breadcrumb:has(.link) > .icon {
+    display: none;
   }
 }

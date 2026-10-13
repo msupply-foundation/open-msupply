@@ -12,7 +12,11 @@ import {
 import { CloseIcon } from '../../icons';
 import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
-import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import {
+  useIsCompact,
+  useIsNavOverlay,
+  useIsShortViewport,
+} from '../../utils/createMediaQuery';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { createAction } from '../../utils/keyActions';
 import { ALT_S, ESCAPE } from '../../utils/shortcuts';
@@ -141,8 +145,11 @@ export interface DialogProps {
    *
    * A measure also opts the dialog into the shared **full-screen** treatment
    * below the narrow-viewport line (tablet portrait and phones, breakpoints.ts
-   * › navOverlay), since a measure describes a page-sized surface. `widthRem`
-   * does not: it stays a centred card at every width.
+   * › navOverlay), since a measure describes a page-sized surface — but not
+   * below the short-viewport line, which only the workbench sizes answer to
+   * (see `size`). `widthRem` does not: it stays a centred card down to the
+   * compact line (breakpoints.ts › compact, a phone), where every dialog but a
+   * bare confirmation is a sheet.
    */
   width?: 'prose' | 'form' | 'wide';
   /**
@@ -183,8 +190,9 @@ export interface DialogProps {
    * — #771's win: a two-batch item is a short modal, not an empty full-screen
    * box — and both flex the body so a scrolling child (a DataTable) fills the
    * tall space once content passes the ceiling, and both go full-screen below
-   * the narrow-viewport line like a `width` measure. They differ in how far
-   * they may GROW:
+   * the narrow-viewport line like a `width` measure — and, unlike a measure,
+   * below the short-viewport line too (a landscape tablet, #246; breakpoints.ts
+   * › shortViewport). They differ in how far they may GROW:
    *  - `'large'` — a centred CARD: 56rem wide by default, or a `width`
    *    measure (the internal-order line editor takes `wide`), or `widthRem`
    *    for a bespoke width such as a wider table; ceiling ~80vh
@@ -204,6 +212,27 @@ export interface DialogProps {
    *    contributes there is not ours to measure. The internal-order editor's
    *    card is the recorded exception (ui/docs/DESIGN_STANDARDS.md, #617).
    *    `widthRem` is ignored.
+   *
+   * **Full-screen line tables** (#246). In the full-screen state a workbench
+   * dialog runs its main line table to the sheet's edges with no frame, and
+   * to its hairlines on the side(s) where the table ends the body. Three
+   * opt-in hooks drive it. This Dialog's stylesheet is the only thing that
+   * reads them (Dialog.module.css › data-fullscreen):
+   *  - `dialogTable` on the `DataTable`, or on the `Accordion` that holds it:
+   *    this is the dialog's MAIN line table. A table that is the body's only
+   *    child is treated this way without it. A secondary table left unmarked
+   *    (a repack history, a duplicates list) keeps its frame.
+   *  - `dialogHeader` on an `InsetPanel`: the editor's header cluster stands in
+   *    for a hidden title, so it becomes the heading strip.
+   *  - `{...DIALOG_SCROLL}` (exported below) on an editor's OWN scroll box
+   *    between the body and its table.
+   *
+   * The chain rule: the bleed is a negative margin, so it only shows through
+   * boxes that let it. A plain wrapper does. A box that scrolls or clips
+   * (any `overflow` but `visible`) cuts it off. So an editor that puts its
+   * table inside its own scroller must spread `DIALOG_SCROLL` on that
+   * scroller, or the table's first and last columns are clipped instead of
+   * reaching the edge. The outbound line editor's work area is the example.
    */
   size?: 'auto' | 'large' | 'full';
   /**
@@ -238,6 +267,15 @@ export interface DialogProps {
    * e2e/TESTIDS.md). */
   testId?: string;
 }
+
+/**
+ * Spread on a line editor's OWN scroll box, the one between the dialog body
+ * and its main table: `<div class={styles.workArea} {...DIALOG_SCROLL}>`. In
+ * the full-screen state the Dialog widens that box to the sheet's edges the
+ * way it widens its own scroll region, so the table's bleed reaches them
+ * instead of being clipped. See the chain rule on `DialogProps.size`.
+ */
+export const DIALOG_SCROLL = { 'data-dialog-scroll': '' } as const;
 
 /*
  * Input types that ACTIVATE THEMSELVES on Enter, as the keydown's default
@@ -424,21 +462,45 @@ export const Dialog = (props: DialogProps) => {
   // Both workbench sizes share every rule except width, so almost everything
   // that asks "is this large?" means this.
   const workbench = () => props.size === 'large' || props.size === 'full';
-  // Modals whose width is a page-sized SURFACE go full-screen on tablet
-  // portrait and phones — the same "narrow viewport" line as the nav overlay, so
-  // we reuse navOverlay (1024) rather than mint a fourth breakpoint.
-  // data-fullscreen drives the CSS; the cutoff lives once in breakpoints.ts
-  // (createMediaQuery).
+  // Full screen is decided per AXIS, and each axis has its own line — all
+  // shared with the rest of the shell (the nav overlay, the outbound totals
+  // fold, the phone chrome), so no breakpoint is minted here: the cutoffs live
+  // once in breakpoints.ts (createMediaQuery). data-fullscreen drives the CSS.
   //
-  // That is either workbench size (`large`/`full`) and any `width` MEASURE: the
-  // widest measure is wider than the line itself, so below it a measure dialog
-  // would otherwise be an edge-to-edge card holding a 1rem margin — the
-  // in-between this rule exists to remove. A default or `widthRem` dialog stays
-  // a centred card: a confirmation has no business filling a tablet screen, and
-  // a caller who wants the sheet asks for the measure it is sized to.
+  // NARROW (navOverlay — tablet portrait and phones): modals whose width is a
+  // page-sized SURFACE, i.e. either workbench size (`large`/`full`) and any
+  // `width` MEASURE. The widest measure is wider than the line itself, so
+  // below it a measure dialog would otherwise be an edge-to-edge card holding
+  // a 1rem margin — the in-between this rule exists to remove.
+  //
+  // SHORT (shortViewport — a landscape tablet, or a windowed laptop): the
+  // workbench sizes only. A landscape tablet is WIDE, so the narrow line never
+  // fires on one, and the sheet sat there as a floating card with a 2rem
+  // gutter all round — with the on-screen keyboard up, a card showing one
+  // table row (#246). Height is the axis a workbench is built around (a vh
+  // band with a flex body), so a short viewport is where its gutters cost
+  // rows. A measure dialog stays a card here: its height is its content's,
+  // and stretching a `form` to a landscape tablet's full width would pull
+  // labels away from their values (#617).
+  //
+  // COMPACT (breakpoints.compact — a phone): EVERY dialog is a sheet. A
+  // centred card there is already edge-to-edge, so the inset only costs
+  // height and floats the actions mid-screen. Except a bare confirmation (a
+  // description and no body — ConfirmDialog), which stays a small card.
+  // `in` checks, not reads: reading a JSX-element prop constructs it.
+  //
+  // Above the compact line a default or `widthRem` dialog stays a centred
+  // card on both axes: a confirmation has no business filling a tablet
+  // screen, and a caller who wants the sheet asks for the measure it is
+  // sized to.
   const narrowViewport = useIsNavOverlay();
+  const shortViewport = useIsShortViewport();
+  const compact = useIsCompact();
+  const confirmation = 'description' in props && !('children' in props);
   const fullscreen = () =>
-    narrowViewport() && (workbench() || props.width !== undefined);
+    (narrowViewport() && (workbench() || props.width !== undefined)) ||
+    (shortViewport() && workbench()) ||
+    (compact() && !confirmation);
   // The <dialog>'s OWN aria-labelledby/aria-label depend on whether the title
   // is a string, but the title is resolved inside the Provider (DialogContent),
   // not here — so DialogContent reports it back via this signal rather than us
