@@ -33,7 +33,7 @@ sudo systemctl enable --now docker
 
 The distro `docker.io` package is enough: nothing here is version-sensitive, and it updates through normal `apt` with no third-party repo on a machine that holds registry credentials.
 
-**binfmt is host state.** Release tags also build `linux/arm64`. The compile stages cross-compile natively, but the runtime stages' `RUN` steps are emulated, and without binfmt they fail with `exec format error`. The distro packages register it via systemd so it survives a reboot (the `tonistiigi/binfmt` container does not). Only release tags build arm64, so a box without it passes everything else and fails the first real release. Check:
+**binfmt is host state.** Release tags also build `linux/arm64`. The compile stages cross-compile natively, but the runtime stages' `RUN` steps are emulated, and without binfmt they fail with `exec format error`. The distro packages register it via systemd so it survives a reboot (the `tonistiigi/binfmt` container does not). Only release tags build arm64, so a box without it passes everything else and fails the first real release. The image workflow's `Check arm64 emulation` step now fails an arm64 build up front with an error naming the runner and these packages, rather than with `exec format error` deep in the build log. Check:
 
 ```bash
 docker --version && docker buildx version
