@@ -43,9 +43,9 @@ The automated real-backend leg is the e2e suite (#1372), on the hermetic stack's
 - **Library gaps (worked around, not improvised):**
   - `RadioGroup` takes no `error`: the given / not-given "required" shows as a compact error `Alert` beneath it.
   - The static `Table` has no cell tone for "danger": the expired date's colour is a section CSS class on a span.
-  - `DataTable` has no row-group spanning: the Age column drops its divider inside an age group through a section CSS selector on `cell-age` (as Product's prototype does).
-- **Row identity:** the card keys its rows and finds a dose's neighbours by `VaccinationCardItemNode.id`, which contract § what the card holds warns is unique only while the one-record-per-dose rule holds — two sites syncing a record for the same dose would give two rows one id. `DataTable` keys rows by a value of the row, not its position; left as is until that case is seen.
-- **Library trap hit:** a `Dialog` forwards its native `close` to `onClose` while its `open` prop is true — so swapping one `Dialog` for another (loading → loaded) closed the editor. The loading dialog now forwards a close only while still loading. Worth a note in the Dialog's docs.
+  - `DataTable` has no row-group spanning: the Age column drops its divider inside an age group through a section CSS selector on the cell holding the age label's own marker (as Product's prototype does) — not on its test id. Row grouping in `DataTable` itself would retire it.
+- **Row identity:** the card keys its rows and finds a dose's neighbours by `VaccinationCardItemNode.id`, which contract § what the card holds warns is unique only while the one-record-per-dose rule holds — two sites syncing a record for the same dose would give two rows one id. `DataTable` keys rows by a value of the row, not its position; left as is (decided after the independent review): both records stay visible and nothing is lost, though both open read-only. The server's one-record-per-dose rule has no database constraint behind it — a follow-up for the backend.
+- **Library trap hit:** a `Dialog` forwards its native `close` to `onClose` while its `open` prop is true — so swapping one `Dialog` for another (loading → loaded) closed the editor. The loading dialog now forwards a close only while still loading. The hand-over between the two dialogs shows as a brief blink on each open (the backdrop drops while the form fades in); left as is (decided after the independent review) — one dialog with a loading body, as `EditPatientModal` has, would remove it. Worth a note in the Dialog's docs.
 
 ## Decisions the spec should make
 
@@ -58,4 +58,4 @@ The automated real-backend leg is the e2e suite (#1372), on the hermetic stack's
 
 - Two findings the e2e suite raised were fixed (`exploratory/reports/2026-10-13/vaccination-card-findings.md` § found while authoring): VC-20261013-F5 — choosing given on a recorded not-given dose now presets the course's only item (`doseDraft.chooseGiven`); VC-20261013-F6 — a save refused for a missing permission raises the permission-denied notice instead of the editor's generic error (`saveDose` returns `forbidden`). The spec should still say which surface a permission refusal of a save uses.
 - #746 / H26 — the encounter screen's visited prompt and next-encounter scheduling, then `.65`/`.66`.
-- Backend — `notGivenReason` on the card row.
+- Backend — `notGivenReason` on the card row; a database constraint for one vaccination per dose per enrolment.

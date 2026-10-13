@@ -2736,7 +2736,7 @@
   "messages.document-unknown-version": "Recorded with a version of this form this app does not know, most likely on a site with a newer version. It can be read here, but not edited.",
   "messages.dose-catch-up": "This dose is past its window; recording it as a catch-up is fine.",
   "messages.dose-date-not-future": "A dose cannot be recorded in the future.",
-  "messages.dose-due-at": "Due at {{age}}.",
+  "messages.dose-due-at": "Due: {{age}}.",
   "messages.doses-can-be-given-today_one": "{{count}} dose can be given today.",
   "messages.doses-can-be-given-today_other": "{{count}} doses can be given today.",
   "messages.doses-past-age-window_one": "{{count}} dose past its age window — give as catch-up.",

@@ -14,8 +14,9 @@
 /*
  * Inside an age group the Age cell drops its divider, so the label reads as
  * spanning every dose beneath it. The rest of the row keeps its divider, so
- * each dose is still its own line.
+ * each dose is still its own line. The cell is found by the marker its own
+ * label carries — only an Age cell holds one — not by its test id.
  */
-.card td[data-testid='cell-age']:has([data-age-continues]) {
+.card td:has([data-age-continues]) {
   border-block-end-color: transparent;
 }
