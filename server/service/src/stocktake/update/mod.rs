@@ -822,9 +822,15 @@ mod test {
             .iter()
             .find(|l| l.activity_log_row.r#type == ActivityLogType::StockCampaignChange)
             .expect("the campaign change is logged");
+        // The trail names the activity, not its id — the entry is read by people
         assert_eq!(
             campaign_log.activity_log_row.changed_to,
-            Some(mock_campaign_a().id)
+            Some(mock_campaign_a().name)
+        );
+        // The line held no activity before, as the other stock logs write an absent value
+        assert_eq!(
+            campaign_log.activity_log_row.changed_from,
+            Some("-".to_string())
         );
     }
 
