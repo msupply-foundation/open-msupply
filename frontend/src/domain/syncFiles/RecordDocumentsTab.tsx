@@ -21,9 +21,6 @@ export interface RecordDocument {
   fileName: string;
   createdDatetime?: string | null;
   totalBytes?: number | null;
-  /** The server's version number, where the record's fragment reads it
-   * (versioned lists). */
-  versionNumber?: number | null;
   /** The uploader, where the record's fragment reads it (versioned lists). */
   user?: { username: string } | null;
 }
@@ -109,11 +106,11 @@ export const RecordDocumentsTab: Component<RecordDocumentsTabProps> = props => {
           createdDatetime: group.createdDatetime,
           modifiedBy: group.modifiedBy,
           modifiedDatetime: group.modifiedDatetime,
-          version: group.latest.versionNumber ?? undefined,
+          version: group.version,
           previousVersions: group.previous.map(previous => ({
-            ...toFile(previous),
-            createdBy: previous.user?.username,
-            version: previous.versionNumber ?? undefined,
+            ...toFile(previous.document),
+            createdBy: previous.document.user?.username,
+            version: previous.version,
           })),
         }))
       : props.documents.map(toFile);

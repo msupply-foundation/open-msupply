@@ -15,8 +15,7 @@ use repository::SyncFileDirection;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
 use repository::{
-    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus,
-    RepositoryError, TransactionError,
+    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
 };
 use serde::Deserialize;
 
@@ -293,34 +292,21 @@ async fn upload_sync_file_inner(
         None,
     )?;
 
-    // Atomic, not serialised: nothing locks the name, so a concurrent upload of
-    // it can reach the same number (see `next_version_number`).
-    db_connection
-        .transaction_sync(|connection| {
-            let repo = SyncFileReferenceRowRepository::new(connection);
-
-            // against the stored (sanitised) name, which versions are grouped by
-            let version_number =
-                repo.next_version_number(&table_name, &record_id, &static_file.name)?;
-
-            repo.upsert_one(&SyncFileReferenceRow {
-                id: static_file.id.clone(),
-                file_name: static_file.name.clone(),
-                table_name,
-                total_bytes,
-                mime_type,
-                record_id,
-                uploaded_bytes: 0, // This is how many bytes are uploaded to the central server
-                created_datetime: chrono::Utc::now().naive_utc(),
-                deleted_datetime: None,
-                status: SyncFileStatus::New,
-                direction: SyncFileDirection::Upload,
-                user_id: Some(user_id.to_string()),
-                version_number,
-                ..Default::default()
-            })
-        })
-        .map_err(TransactionError::to_inner_error)?;
+    SyncFileReferenceRowRepository::new(&db_connection).upsert_one(&SyncFileReferenceRow {
+        id: static_file.id.clone(),
+        file_name: static_file.name.clone(),
+        table_name,
+        total_bytes,
+        mime_type,
+        record_id,
+        uploaded_bytes: 0, // This is how many bytes are uploaded to the central server
+        created_datetime: chrono::Utc::now().naive_utc(),
+        deleted_datetime: None,
+        status: SyncFileStatus::New,
+        direction: SyncFileDirection::Upload,
+        user_id: Some(user_id.to_string()),
+        ..Default::default()
+    })?;
 
     Ok(static_file)
 }
@@ -554,13 +540,12 @@ mod test {
         );
     }
 
-    /// The upload is what stamps the uploader and claims the version number
-    /// (spec/purchase-orders OMS-FUN-PO-04 `.28`, `.31`); `next_version_number`
-    /// is tested on its own, this covers the two being written for real.
+    /// The upload is what stamps the uploader
+    /// (spec/purchase-orders OMS-FUN-PO-04 `.28`).
     #[actix_rt::test]
-    async fn upload_stamps_the_uploader_and_the_next_version_of_the_name() {
+    async fn upload_stamps_the_uploader() {
         let (service_provider, settings, _base_dir) =
-            upload_harness("upload_sync_file_stamps_uploader_and_version").await;
+            upload_harness("upload_sync_file_stamps_uploader").await;
         let record = ("purchase_order".to_string(), "po1".to_string());
 
         let upload = async |name: &str, user_id: &str| {
@@ -576,57 +561,15 @@ mod test {
         };
 
         let first = upload("po.pdf", "user1").await;
+        // The same name again is a new version of the document, its own reference.
         let second = upload("po.pdf", "user2").await;
-        // A different name starts its own numbering.
-        let other = upload("quote.pdf", "user2").await;
 
         let connection = service_provider.connection().unwrap();
         let repo = SyncFileReferenceRowRepository::new(&connection);
-        let row = |file: &StaticFile| {
-            let row = repo.find_one_by_id(&file.id).unwrap().unwrap();
-            (row.user_id, row.version_number)
-        };
+        let uploader = |file: &StaticFile| repo.find_one_by_id(&file.id).unwrap().unwrap().user_id;
 
         assert_ne!(first.id, second.id, "each upload is its own reference");
-        assert_eq!(row(&first), (Some("user1".to_string()), 1));
-        assert_eq!(row(&second), (Some("user2".to_string()), 2));
-        assert_eq!(row(&other), (Some("user2".to_string()), 1));
-    }
-
-    /// Removing a version does not free its number: the next upload of the name
-    /// follows the highest ever issued, deleted or not (`.30`).
-    #[actix_rt::test]
-    async fn a_removed_version_does_not_free_its_number() {
-        let (service_provider, settings, _base_dir) =
-            upload_harness("upload_sync_file_removed_version_keeps_number").await;
-        let record = ("purchase_order".to_string(), "po1".to_string());
-
-        let upload = async || {
-            upload_sync_file_inner(
-                &service_provider,
-                &settings,
-                record.clone(),
-                temp_file("po.pdf", 1),
-                "user1",
-            )
-            .await
-            .unwrap()
-        };
-
-        upload().await;
-        let second = upload().await;
-
-        let connection = service_provider.connection().unwrap();
-        let repo = SyncFileReferenceRowRepository::new(&connection);
-        repo.delete(&second.id).unwrap();
-
-        let third = upload().await;
-        assert_eq!(
-            repo.find_one_by_id(&third.id)
-                .unwrap()
-                .unwrap()
-                .version_number,
-            3
-        );
+        assert_eq!(uploader(&first), Some("user1".to_string()));
+        assert_eq!(uploader(&second), Some("user2".to_string()));
     }
 }

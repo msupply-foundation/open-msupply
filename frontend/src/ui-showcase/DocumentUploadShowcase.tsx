@@ -80,8 +80,7 @@ const VERSIONED_DOCUMENTS: DocumentFile[] = [
     createdDatetime: '2026-06-10',
     modifiedBy: 'carol',
     modifiedDatetime: '2026-06-24',
-    // Version 3 was removed: the numbers the others carry do not close up.
-    version: 4,
+    version: 3,
     totalBytes: 620 * 1024,
     url: '#',
     previousVersions: [
@@ -197,9 +196,8 @@ export const DocumentUploadShowcase = () => {
             uploads one document — <code>groupDocumentVersions</code> in{' '}
             <code>domain/syncFiles</code>); the panel presents the latest and
             unfolds the rest from the chevron beside the version number. Each
-            earlier version opens and removes on its own. Numbers are the
-            server's and are never reissued — this document lost its version 3,
-            so it reads 4, 2, 1.
+            earlier version opens and removes on its own. The number is a
+            version's place in the document's upload order.
           </Lead>
           <div class={styles.frame}>
             <DocumentUploadPanel

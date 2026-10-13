@@ -9475,10 +9475,6 @@ type SyncFileReferenceNode {
 	error: String
 	status: SyncFileReferenceNodeStatus!
 	userId: String
-	"""
-	Assigned at upload, never reissued: deleting version 3 of 4 leaves 1, 2, 4.
-	"""
-	versionNumber: Int!
 	user: UserNode
 }
 

@@ -128,9 +128,7 @@ export const confirmDeleteMessage = (
     return t('messages.confirm-delete-document');
   if (pending.earlierVersion)
     return t('messages.confirm-delete-document-version', { version });
-  // The version that becomes current is the next one DOWN THE LIST, by its
-  // own number — not "version minus one": numbers are never reissued, so
-  // removing version 4 above versions 2 and 1 makes 2 current.
+  // The version that becomes current is the next one down the list.
   const next = pending.document.previousVersions?.[0];
   if (!next) return t('messages.confirm-delete-document');
   return t('messages.confirm-delete-document-latest-version', {

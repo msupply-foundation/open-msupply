@@ -75,11 +75,6 @@ impl SyncFileReferenceNode {
         &self.row().sync_file_reference_row.user_id
     }
 
-    /// Assigned at upload, never reissued: deleting version 3 of 4 leaves 1, 2, 4.
-    pub async fn version_number(&self) -> i32 {
-        self.row().sync_file_reference_row.version_number
-    }
-
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let Some(user_id) = &self.row().sync_file_reference_row.user_id else {
             return Ok(None);

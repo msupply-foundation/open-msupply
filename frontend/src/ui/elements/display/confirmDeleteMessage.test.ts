@@ -8,8 +8,7 @@ import commonEn from '../../../intl/locales/en/common.json';
 
 // Anchors: spec/purchase-orders/cases/OMS-FUN-PO-04.
 //   .29 — an earlier version is removable on the same terms as the latest
-//   .30 — removing a version leaves the others' numbers as they were, and the
-//         highest remaining becomes current
+//   .30 — removing the latest version makes the one beneath it current
 // The wording is what tells the user which of those two happens, so it is
 // asserted here rather than left to the dialog.
 
@@ -26,9 +25,8 @@ const version = (number: number): DocumentFile => ({
   version: number,
 });
 
-// Version 3 was removed earlier, so the numbers below 4 are 2 and 1.
 const latest: DocumentFile = {
-  ...version(4),
+  ...version(3),
   previousVersions: [version(2), version(1)],
 };
 
@@ -38,10 +36,10 @@ describe('confirmDeleteMessage', () => {
       { document: latest, earlierVersion: false },
       true
     );
-    // 2, not 3: numbers are never reissued, so it is the next one DOWN THE
-    // LIST by its own number, never "version minus one".
+    // The one that becomes current is read from the list, not counted down
+    // from the number, so the panel presents whatever numbers it is given.
     expect(message).toBe(
-      'This will remove version 4 of this document. Version 2 becomes the current one.'
+      'This will remove version 3 of this document. Version 2 becomes the current one.'
     );
   });
 

@@ -74,15 +74,14 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   contractSignedDate
   advancePaidDate
   # Documents tab (S12) — the shared sync-file list over the order, grouped
-  # by file name on the client into versions; the server's version number is
-  # each row's "Version" and the uploader its "Created by".
+  # by file name on the client into versions, which are numbered by their
+  # place in that name's upload order; the uploader is each row's "Created by".
   documents {
     nodes {
       id
       fileName
       createdDatetime
       totalBytes
-      versionNumber
       user {
         username
       }
