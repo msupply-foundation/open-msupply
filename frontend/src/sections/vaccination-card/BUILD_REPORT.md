@@ -22,17 +22,19 @@ Unit tests cite their behaviour in the `describe` title.
 | `OMS-REG-DIS-06.3`–`.5`, `.8`–`.11`, `.14`–`.21`, `.43`, `.44`, `.46`, `.51`–`.59`, `.61`; `OMS-FUN-VAC-002.5` | `doseDraft.test.ts` |
 | `OMS-REG-DIS-06.45`, `.48`, `.60`, `.63`, `.64`                                                                | `cardApi.test.ts`   |
 
+Every behaviour except `.65`/`.66` is also asserted end to end, against the real backend, by [`e2e/specs/vaccination-card-regression.spec.ts`](../../../e2e/specs/vaccination-card-regression.spec.ts) (#1372) — screen and wire, stock included.
+
 **Not covered by a unit test — and why** (each was exercised in the live drive unless noted):
 
 | Behaviours                                                                                    | Why                                                                                                                                                                                                                                                                                                                                   |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `OMS-REG-DIS-06.1`, `.6`, `.7`, `.12`, `.23`, `.24`, `.47`, `.62`, `.76`                      | Rendered-screen outcomes (the card on the encounter, the row after a save, the row opening the card, the read-only card, the prescription link, a cancelled question, the field order). For the e2e suite, #1372. `.62` not driven.                                                                                                   |
-| `OMS-REG-DIS-06.22`, `.30`–`.33`, `.40`–`.42`, `.49`, `.50`; `OMS-FUN-VAC-002.3`, `.9`, `.10` | The server's: suggested dates, the order guards, the issued dose and its prescription. The front end only shows them; they need the real backend (C2), #1372.                                                                                                                                                                         |
+| `OMS-REG-DIS-06.1`, `.6`, `.7`, `.12`, `.23`, `.24`, `.47`, `.62`, `.76`                      | Rendered-screen outcomes (the card on the encounter, the row after a save, the row opening the card, the read-only card, the prescription link, a cancelled question, the field order). In the e2e suite.                                                                                                                             |
+| `OMS-REG-DIS-06.22`, `.30`–`.33`, `.40`–`.42`, `.49`, `.50`; `OMS-FUN-VAC-002.3`, `.9`, `.10` | The server's: suggested dates, the order guards, the issued dose and its prescription. The front end only shows them; the e2e suite asserts them against the real backend (C2).                                                                                                                                                       |
 | `OMS-REG-DIS-06.65`, `.66`                                                                    | **Pending (#746)**, marked so in the case: the encounter screen on `feature/custom-forms` has no "mark as visited on leaving" prompt and no "schedule next encounter" flow — its leave guard covers unsaved changes only. The region exposes `onDoseSaved` for the screen to arm the prompt once it has one (`kdd/custom-forms` H26). |
 
 ## C2 — real backend
 
-No automated real-backend leg yet (#1372). Driven by hand, headless, against a develop server (`:8190`, throwaway copy of `e2e_617_demo` with a seeded immunisation program): the card from the patient; the card on an encounter; a new dose — the required checks, given, item, the batch list in doses, Record dose, one dose issued (DPT-A 59 → 58 doses), the reopened dose keeping its batch with no Save; not given with the reason required and shown in the reason column; a skip on a course that allows it (no Not given, the warning, the skip question, the earlier dose filled as Not given with the server's sentence); a dose at another facility (name required, clinician and batch gone). No console errors.
+The automated real-backend leg is the e2e suite (#1372), on the hermetic stack's EVAX clinic and `e2e_vax_card` program (`server/data/e2e/README.md`). Before it, driven by hand, headless, against a develop server (`:8190`, throwaway copy of `e2e_617_demo` with a seeded immunisation program): the card from the patient; the card on an encounter; a new dose — the required checks, given, item, the batch list in doses, Record dose, one dose issued (DPT-A 59 → 58 doses), the reopened dose keeping its batch with no Save; not given with the reason required and shown in the reason column; a skip on a course that allows it (no Not given, the warning, the skip question, the earlier dose filled as Not given with the server's sentence); a dose at another facility (name required, clinician and batch gone). No console errors.
 
 ## Flags
 
@@ -53,7 +55,6 @@ No automated real-backend leg yet (#1372). Driven by hand, headless, against a d
 
 ## Follow-ups
 
-- #1372 — the e2e suite (ids registered in `e2e/TESTIDS.md` § Patients › Vaccination card); seeded data must use a program whose id equals its context id (`contract § where the card opens`).
-- #1373 — exploratory workflow and first run.
+- Two findings the e2e suite raised (`exploratory/runs/vaccination-card-findings.md`): VC-20261013-F5 — a recorded Not given dose switched to Given does not preset its course's only item (`.3`; guarded by a `test.fixme`); VC-20261013-F6 — a save refused for a missing permission shows the generic error, because `saveDose` opts into GraphQL errors and so receives Forbidden as one (`cardApi.test.ts`'s `.64` case mocks a result the real call never returns).
 - #746 / H26 — the encounter screen's visited prompt and next-encounter scheduling, then `.65`/`.66`.
 - Backend — `notGivenReason` on the card row.

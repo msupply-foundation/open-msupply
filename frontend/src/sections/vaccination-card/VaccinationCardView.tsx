@@ -76,19 +76,31 @@ const VaccinationCardView: Component = () => {
         <Header>
           <Breadcrumb crumbs={crumbs()} />
           <HeaderToolbar alert={<VaccinationCardNotices rows={rows()} />}>
-            <LabelledValue label={t('label.age')} size="small">
+            <LabelledValue
+              label={t('label.age')}
+              size="small"
+              data-testid="vaccination-card-age"
+            >
               {/* An absent value beside a label shows a dash
                   (ui-standards › detail views). */}
               <Show when={dateOfBirth()} fallback="—">
                 {dob => patientAgeLabel(dob(), localTodayIso())}
               </Show>
             </LabelledValue>
-            <LabelledValue label={t('label.date-of-birth')} size="small">
+            <LabelledValue
+              label={t('label.date-of-birth')}
+              size="small"
+              data-testid="vaccination-card-date-of-birth"
+            >
               <Show when={dateOfBirth()} fallback="—">
                 {dob => localisedDate(dob())}
               </Show>
             </LabelledValue>
-            <LabelledValue label={t('label.doses-given')} size="small">
+            <LabelledValue
+              label={t('label.doses-given')}
+              size="small"
+              data-testid="vaccination-card-doses-given"
+            >
               {t('label.doses-given-of', {
                 given: cardCounts(rows()).given,
                 total: cardCounts(rows()).total,
