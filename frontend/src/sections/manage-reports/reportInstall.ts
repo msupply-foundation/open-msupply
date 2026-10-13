@@ -1,6 +1,7 @@
 import { UPLOAD_URL } from '@/config';
 import { postFiles } from '@/api/postFiles';
 import type { GraphqlResult } from '@/api/graphql';
+import type { FileLike, FileRejection } from '@/ui/elements/inputs/uploadFiles';
 import type { InstallUploadedReportsResult } from './manageReports.generated';
 
 // Installing a report bundle (spec/manage-reports rules.md § installing,
@@ -16,13 +17,57 @@ import type { InstallUploadedReportsResult } from './manageReports.generated';
  * The largest file `/upload` will take. The route registers no
  * `MultipartFormConfig`, so actix's default total of 50 MiB applies and a
  * larger body is refused with a bare 400 that names neither the size nor the
- * file (contract.md § /upload body size). The dialog refuses such a file
+ * file (contract.md § choosing the files). The dialog refuses such a file
  * before sending (OMS-REG-MNG-06.27).
  *
  * Not to be confused with `static_files.rs`'s `total_limit(100 * 1024 * 1024)`
  * — that is the sync-file route, and it does not reach here.
  */
 export const MAX_BUNDLE_BYTES = 50 * 1024 * 1024;
+
+/** What one pick in the upload dialog does to the chosen files. */
+export type PickOutcome<T> =
+  /**
+   * The files taken, which become the whole selection. `tooLarge` names a
+   * file from the same pick that was refused for its size.
+   */
+  | { kind: 'accepted'; files: T[]; tooLarge?: string }
+  /** A name not ending in "json": the whole pick is refused. */
+  | { kind: 'invalidName' }
+  /** Every file in the pick was over the size limit: nothing is taken. */
+  | { kind: 'tooLarge'; fileName: string }
+  /** A drop that carried nothing — leaves everything as it was. */
+  | { kind: 'empty' };
+
+/**
+ * Judge one pick, given the upload zone's split of it (rules.md § choosing
+ * the files).
+ *
+ * The NAME is judged on the whole pick: one name not ending in "json" refuses
+ * all of it, and the files already chosen stay as they were
+ * (OMS-REG-MNG-06.29). The test is the reference app's own — a name ending in
+ * "json" passes, extension or not (OMS-REG-MNG-06.30).
+ *
+ * The SIZE is judged per file, as every size-limited upload in both apps
+ * does: a file over the limit is refused and the rest of the pick is still
+ * taken (OMS-REG-MNG-06.27, .34).
+ *
+ * Whatever is taken REPLACES the files already chosen rather than adding to
+ * them (OMS-REG-MNG-06.33).
+ */
+export const judgePick = <T extends FileLike>(
+  accepted: T[],
+  rejected: FileRejection<T>[]
+): PickOutcome<T> => {
+  const all = [...accepted, ...rejected.map(r => r.file)];
+  if (all.length === 0) return { kind: 'empty' };
+  if (all.some(file => !file.name.endsWith('json')))
+    return { kind: 'invalidName' };
+  const tooLarge = rejected.find(r => r.reason === 'size')?.file.name;
+  if (accepted.length === 0 && tooLarge)
+    return { kind: 'tooLarge', fileName: tooLarge };
+  return { kind: 'accepted', files: accepted, tooLarge };
+};
 
 /** The transfer step's outcome. */
 export type UploadOutcome =

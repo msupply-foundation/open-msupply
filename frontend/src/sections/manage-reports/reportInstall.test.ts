@@ -5,6 +5,7 @@ import {
   batchIsPartial,
   emptyBatch,
   installOutcome,
+  judgePick,
   readFileId,
   MAX_BUNDLE_BYTES,
 } from './reportInstall';
@@ -19,6 +20,11 @@ import type { InstallUploadedReportsResult } from './manageReports.generated';
 //   .24 — the first failure ends the attempt
 //   .26 — a failure reports the server's own words
 //   .23 — a file chosen but not confirmed leaves the register unchanged
+//   .27 — a file over 50 MiB is refused before sending
+//   .29 — a pick with a name not ending in "json" is refused whole
+//   .30 — a name ending in "json" without a ".json" extension is accepted
+//   .33 — an accepted pick replaces the files already chosen
+//   .34 — the rest of a pick with an oversized file is still taken
 
 const ok = (ids: string[]): GraphqlResult<InstallUploadedReportsResult> => ({
   kind: 'success',
@@ -152,7 +158,7 @@ describe('OMS-REG-MNG-06.27 — an oversized file is refused before sending', ()
 
   it('partitions a file by that ceiling, naming size as the reason', () => {
     // The shared upload zone is handed MAX_BUNDLE_BYTES as its maxSize, so
-    // this is the judgement the dialog's onRejected receives.
+    // this is the split the dialog's onPick receives.
     const under = { name: 'bundle.json', type: '', size: MAX_BUNDLE_BYTES };
     const over = { name: 'big.json', type: '', size: MAX_BUNDLE_BYTES + 1 };
     const { accepted, rejected } = partitionFiles([under, over], {
@@ -160,5 +166,69 @@ describe('OMS-REG-MNG-06.27 — an oversized file is refused before sending', ()
     });
     expect(accepted).toEqual([under]);
     expect(rejected).toEqual([{ file: over, reason: 'size' }]);
+  });
+
+  it('refuses an oversized file on its own, naming it', () => {
+    // Nothing else in the pick, so nothing is taken and the files already
+    // chosen stay.
+    const over = { name: 'big.json', type: '', size: MAX_BUNDLE_BYTES + 1 };
+    expect(judgePick([], [{ file: over, reason: 'size' }])).toEqual({
+      kind: 'tooLarge',
+      fileName: 'big.json',
+    });
+  });
+});
+
+describe('OMS-REG-MNG-06.34 — the rest of a pick with an oversized file is still taken', () => {
+  it('takes the files under the limit and names the one refused', () => {
+    const under = { name: 'bundle.json', type: '', size: 10 };
+    const over = { name: 'big.json', type: '', size: MAX_BUNDLE_BYTES + 1 };
+    expect(judgePick([under], [{ file: over, reason: 'size' }])).toEqual({
+      kind: 'accepted',
+      files: [under],
+      tooLarge: 'big.json',
+    });
+  });
+});
+
+const named = (name: string) => ({ name, type: '', size: 10 });
+
+describe('OMS-REG-MNG-06.29 — a pick with a name not ending in "json" is refused whole', () => {
+  it('refuses a pick mixing a bundle with a non-json name', () => {
+    expect(judgePick([named('report.json'), named('notes.txt')], [])).toEqual({
+      kind: 'invalidName',
+    });
+  });
+
+  it('refuses on the name even when that file was also oversized', () => {
+    const over = { name: 'big.txt', type: '', size: MAX_BUNDLE_BYTES + 1 };
+    expect(judgePick([], [{ file: over, reason: 'size' }])).toEqual({
+      kind: 'invalidName',
+    });
+  });
+});
+
+describe('OMS-REG-MNG-06.30 — a name ending in "json" passes, extension or not', () => {
+  it('accepts a name with no ".json" extension', () => {
+    const bare = named('bundlejson');
+    expect(judgePick([bare], [])).toEqual({ kind: 'accepted', files: [bare] });
+  });
+
+  it('accepts a ".geojson" name', () => {
+    const geo = named('reports.geojson');
+    expect(judgePick([geo], [])).toEqual({ kind: 'accepted', files: [geo] });
+  });
+});
+
+describe('OMS-REG-MNG-06.33 — an accepted pick replaces the files already chosen', () => {
+  it('yields only the new pick, which the dialog sets as the chosen files', () => {
+    // judgePick never sees the earlier selection: what it accepts IS the new
+    // selection, so nothing from an earlier pick can carry over.
+    const second = [named('b.json'), named('c.json')];
+    expect(judgePick(second, [])).toEqual({ kind: 'accepted', files: second });
+  });
+
+  it('leaves the chosen files alone for a drop that carried nothing', () => {
+    expect(judgePick([], [])).toEqual({ kind: 'empty' });
   });
 });

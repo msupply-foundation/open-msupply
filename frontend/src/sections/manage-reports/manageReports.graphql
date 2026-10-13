@@ -10,8 +10,8 @@
 #
 # `sort` is a list but the resolver POPS it and applies only the LAST entry, so
 # exactly one entry ever travels (contract.md ⚠️ wire trap). `version` sorts as
-# TEXT, not as a version number — `2.9.1` orders above `2.17.3` — which is the
-# register's stated ordering, not a bug to correct client-side (rules.md § the
+# TEXT, not as a version number — ascending puts `2.17.3` before `2.9.1` — and
+# the client passes that through rather than re-sorting (contract.md § the
 # register).
 #
 # `ReportsResponse` carries a `QueryReportsError` member (FailedTranslation),

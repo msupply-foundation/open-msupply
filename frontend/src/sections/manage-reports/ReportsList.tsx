@@ -156,10 +156,10 @@ const ReportsList: Component = () => {
     },
     {
       c: { key: 'version' },
-      // Sorts as TEXT, so `2.9.1` orders above `2.17.3`. That is the
-      // register's stated ordering (rules.md § the register) — the column is
-      // not re-sorted client-side, which would disagree with the server's
-      // paging and show a different order per page.
+      // The server sorts this as TEXT — ascending puts `2.17.3` before
+      // `2.9.1` (contract.md § the register). The column is not re-sorted
+      // client-side, which would disagree with the server's paging and show
+      // a different order per page.
       sortKey: 'version',
       header: () => t('label.version'),
     },

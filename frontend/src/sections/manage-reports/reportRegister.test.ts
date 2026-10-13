@@ -9,8 +9,7 @@ import {
 // Anchors: spec/manage-reports/cases/OMS-REG-MNG-06.
 //   .2 — inactive versions are listed alongside active ones
 //   .3 — the same rows appear whichever store the reader is in
-//   .4 — sorting by version orders textually
-//   .5 — name and code are the only filters; active state cannot be filtered
+//   .5 — name and code are the only filters; no control filters by active state
 // The register's read is pure state → variables, so the wire traps it steers
 // around (contract.md § the register) are pinned here rather than by driving
 // the screen. What is testable at this layer is what the client SENDS.

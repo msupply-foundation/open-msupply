@@ -15,6 +15,7 @@ import {
   batchInstalledNothing,
   emptyBatch,
   installOutcome,
+  judgePick,
   uploadReportFile,
   MAX_BUNDLE_BYTES,
   type BatchOutcome,
@@ -31,8 +32,8 @@ import {
 // What the dialog does NOT do, deliberately: warn that installing replaces a
 // version already present. Nothing on the wire can opt out of the overwrite
 // and the reference app offers no confirmation, so inventing one here would be
-// a deliberate difference rather than a reverse spec (rules.md § replacement).
-// The consequence is recorded as a known gap, not papered over.
+// a deliberate difference rather than a reverse spec (rules.md § replacement,
+// OMS-REG-MNG-06.10).
 
 export interface ReportUploadModalProps {
   onClose: () => void;
@@ -66,7 +67,7 @@ export const ReportUploadModal: Component<ReportUploadModalProps> = props => {
   // Size is the zone's job, though, and is a real server limit rather than an
   // advisory one: `/upload` registers no MultipartFormConfig, so actix's
   // default 50 MiB total applies and a larger body is refused with a bare 400
-  // naming neither the size nor the file (contract.md § /upload body size).
+  // naming neither the size nor the file (contract.md § choosing the files).
   // Refusing it here is a DELIBERATE difference from the reference, which
   // sends it and reports that bare failure (OMS-REG-MNG-06.27).
 
@@ -171,27 +172,29 @@ export const ReportUploadModal: Component<ReportUploadModalProps> = props => {
           maxSize={MAX_BUNDLE_BYTES}
           disabled={installing()}
           inputTestId="report-upload-input"
-          onRejected={rejections => {
-            // Only 'size' can arrive — no `accept` list is set, so the zone
-            // never judges type (OMS-REG-MNG-06.27).
-            const [rejection] = rejections;
-            if (!rejection) return;
-            setError(
-              t('error.file-exceeds-size-limit', {
-                filename: rejection.file.name,
-                maxSize: formatFileSize(MAX_BUNDLE_BYTES),
-              })
-            );
-          }}
-          onFiles={chosen => {
-            // The WHOLE pick is refused if any file fails, and nothing is
-            // added — the reference app's behaviour, not a per-file filter.
-            if (chosen.some(file => !file.name.endsWith('json'))) {
+          onPick={(accepted, rejected) => {
+            // One judgement per pick: a bad name refuses all of it, an
+            // oversized file is refused on its own while the rest is taken,
+            // and what is taken replaces the files already chosen
+            // (OMS-REG-MNG-06.27, .29, .33, .34). Only 'size' can be rejected
+            // by the zone — no `accept` list is set.
+            const pick = judgePick(accepted, rejected);
+            if (pick.kind === 'empty') return;
+            if (pick.kind === 'invalidName') {
               setError(t('error.report-invalid-file'));
               return;
             }
-            setError(undefined);
-            setFiles([...files(), ...chosen]);
+            const tooLarge =
+              pick.kind === 'tooLarge' ? pick.fileName : pick.tooLarge;
+            setError(
+              tooLarge
+                ? t('error.file-exceeds-size-limit', {
+                    filename: tooLarge,
+                    maxSize: formatFileSize(MAX_BUNDLE_BYTES),
+                  })
+                : undefined
+            );
+            if (pick.kind === 'accepted') setFiles(pick.files);
           }}
         />
         {/* The chosen files, each removable before confirming. */}
