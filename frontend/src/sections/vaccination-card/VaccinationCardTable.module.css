@@ -13,10 +13,13 @@
 
 /*
  * Inside an age group the Age cell drops its divider, so the label reads as
- * spanning every dose beneath it. The rest of the row keeps its divider, so
- * each dose is still its own line. The cell is found by the marker its own
- * label carries — only an Age cell holds one — not by its test id.
+ * spanning every dose beneath it — the treatment of the current app's card
+ * and Product's prototype. The rest of the row keeps its divider, so each dose
+ * is still its own line. The divider is removed, not made transparent: the
+ * table's borders are collapsed, so a transparent one shows the white behind
+ * the table — a seam across a toned group's Age cell. The cell is found by the
+ * marker its own label carries (only an Age cell holds one), not its test id.
  */
 .card td:has([data-age-continues]) {
-  border-block-end-color: transparent;
+  border-block-end-style: none;
 }
