@@ -123,7 +123,7 @@ describe('decimal padding (decimalMin)', () => {
 
   it('handles decimalLimit < decimalMin', () => {
     const tight = o({ decimalLimit: 1, decimalMin: 3 });
-    // Typing past the limit is repaired by rounding…
+    // A paste past the limit is repaired by rounding…
     expect(processInput('1.11', tight, 'en')).toEqual({
       accepted: true,
       text: '1.1',
@@ -202,18 +202,23 @@ describe('gate and repair', () => {
   });
 
   it('ignores a typed decimal point in an integer field', () => {
-    expect(processInput('1.', o(), 'en')).toEqual({
-      accepted: true,
-      text: '1',
-      commit: { value: 1 },
-    });
+    expect(processInput('1.', o(), 'en', '1')).toEqual({ accepted: false });
   });
 
   it('drops a letter typed into a number', () => {
-    expect(processInput('12a', o(), 'en')).toEqual({
+    expect(processInput('12a', o(), 'en', '12')).toEqual({ accepted: false });
+  });
+
+  it('drops a minus typed in front of a number when negatives are banned', () => {
+    // A repair would strip it and report the entry as clamped from -5.
+    expect(processInput('-5', o(), 'en', '5')).toEqual({ accepted: false });
+  });
+
+  it('repairs a paste over a selection', () => {
+    expect(processInput('-5', o(), 'en', '12')).toEqual({
       accepted: true,
-      text: '12',
-      commit: { value: 12 },
+      text: '5',
+      commit: { value: 5, adjustedFrom: -5 },
     });
   });
 
@@ -222,6 +227,34 @@ describe('gate and repair', () => {
     expect(processInput('1.2.3', o({ decimalLimit: 2 }), 'en')).toEqual({
       accepted: false,
     });
+  });
+});
+
+describe('a keystroke past the decimal limit', () => {
+  const dec2 = o({ decimalLimit: 2 });
+
+  // Each step is one keystroke: the text before it and the text after it.
+  const type = (keys: string) => {
+    let text = '';
+    const seen: string[] = [];
+    for (const key of keys) {
+      const r = processInput(text + key, dec2, 'en', text);
+      if (r.accepted) text = r.text;
+      seen.push(text);
+    }
+    return seen;
+  };
+
+  it('is dropped, so typing 0.0001 stays at 0.00 (#1261)', () => {
+    expect(type('0.0001')).toEqual(['0', '0.', '0.0', '0.00', '0.00', '0.00']);
+  });
+
+  it('never rounds the text up', () => {
+    expect(type('0.159')).toEqual(['0', '0.', '0.1', '0.15', '0.15']);
+  });
+
+  it('never trims trailing zeros', () => {
+    expect(type('0.105')).toEqual(['0', '0.', '0.1', '0.10', '0.10']);
   });
 });
 

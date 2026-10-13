@@ -228,7 +228,7 @@ export const NumberField = (props: NumberFieldProps) => {
     const el = e.currentTarget;
     const raw = el.value;
     const caret = el.selectionStart ?? raw.length;
-    const result = processInput(raw, constraints(), locale());
+    const result = processInput(raw, constraints(), locale(), text());
     if (!result.accepted) {
       // Rejected: the text signal didn't change, so Solid won't touch the
       // DOM — put the previous value (and the caret) back ourselves.
