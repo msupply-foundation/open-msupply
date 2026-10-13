@@ -80,5 +80,5 @@ encoding with no user-observable counterpart, so per AUTHORING it stays out of t
 ## Follow-ups
 
 - **`e2e/` suite + `client/` testids** — PR 2. Screen-specific ids placed here: `upload-reports-button`, `report-edit-modal`, `report-enabled-checkbox`, `report-name` / `-version` / `-custom`, `report-save-error`, `report-upload-modal`, `report-upload-input`, `report-upload-file-list`, `report-upload-remove-<file>`, `report-upload-error`. These need adding to [`e2e/TESTIDS.md`](../../../e2e/TESTIDS.md) with the suite, per C8.
-- **Exploratory workflow** at `exploratory/workflows/manage-reports.md` — still owed (reconcile step 2), and it runs before the suite is authored.
+- **Exploratory workflow** at [`exploratory/workflows/manage-reports.md`](../../../exploratory/workflows/manage-reports.md), first run [2026-10-13](../../../exploratory/reports/2026-10-13/manage-reports-findings.md).
 - Blocked on no shared component.
