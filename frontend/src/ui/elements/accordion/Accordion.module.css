@@ -153,9 +153,25 @@
    (Last in the file: these compound selectors outrank every base selector
    for the same elements, and stylelint's no-descending-specificity wants
    the base forms first.) */
+/* The card's chrome as knobs a HOST may turn — declared HERE with the
+   standard values and consumed by the item, trigger and content below, so a
+   host changes them only by setting them on this root. The full-screen
+   Dialog runs a `dialogTable` accordion to the sheet edges this way: bleed
+   by its inline inset, no radius, the trigger keeping the dialog's inset and
+   the content none, so the table inside sits flush under the trigger row
+   (Dialog.module.css › data-fullscreen, #246). */
+.root[data-variant='card'] {
+  --accordion-bleed-inline: 0px;
+  --accordion-radius: var(--radius-lg);
+  --accordion-trigger-inset: var(--space-4);
+  --accordion-content-inset: var(--space-4);
+  --accordion-content-pad-end: var(--space-3);
+}
+
 .root[data-variant='card'] .item {
+  margin-inline: calc(-1 * var(--accordion-bleed-inline));
   background: var(--bg-menu);
-  border-radius: var(--radius-lg);
+  border-radius: var(--accordion-radius);
 }
 
 .root[data-variant='card'] .item + .item {
@@ -164,13 +180,14 @@
 }
 
 .root[data-variant='card'] .trigger {
-  padding-inline: var(--space-4);
+  padding-inline: var(--accordion-trigger-inset);
 }
 
 .root[data-variant='card'] .trigger:focus-visible {
-  border-radius: var(--radius-lg);
+  border-radius: var(--accordion-radius);
 }
 
 .root[data-variant='card'] .contentInner {
-  padding-inline: var(--space-4);
+  padding-inline: var(--accordion-content-inset);
+  padding-block-end: var(--accordion-content-pad-end);
 }

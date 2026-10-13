@@ -60,7 +60,7 @@ const draft = (over: Partial<LineDraft> = {}): LineDraft => ({
   ...over,
 });
 
-describe('OMS-FUN-PO-02.7 — what a new line is born as', () => {
+describe('OMS-FUN-PO-02.7 / .24 — what a new line is born as', () => {
   it('carries the default pack size, no quantity, no prices, and the order’s dates', () => {
     const born = newLineDraft(
       { defaultPackSize: 100 },
@@ -110,7 +110,7 @@ describe('OMS-FUN-PO-07.4 — packs are units over pack size', () => {
   });
 });
 
-describe('OMS-FUN-PO-02.12 — which quantity the packs write', () => {
+describe('OMS-FUN-PO-02.12 / .25 — which quantity the packs write', () => {
   it('writes requested and adjusted alike while New', () => {
     expect(packsEntered('NEW', draft(), 20)).toEqual({
       requestedNumberOfUnits: 200,
@@ -165,7 +165,7 @@ describe('OMS-FUN-PO-02.12 — one input, two labels', () => {
   });
 });
 
-describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
+describe('OMS-REG-PO-01.1 / .2, OMS-FUN-PO-02.22 — the editor’s gates', () => {
   it('opens the packs as the requested quantity while drafting, whoever the user is', () => {
     const gates = lineGates({
       status: 'NEW',
@@ -264,7 +264,7 @@ describe('OMS-FUN-PO-02.13 / .22 — the editor’s gates', () => {
   });
 });
 
-describe('OMS-FUN-PO-02.14 / OMS-FUN-PO-07.2 — the three prices settle', () => {
+describe('OMS-FUN-PO-07.2 — the three prices settle', () => {
   it('a new before-price recomputes the after-price at the held percentage', () => {
     expect(
       repriced('pricePerPackBeforeDiscount', {
@@ -363,7 +363,7 @@ describe('OMS-FUN-PO-02.20 — the requested date fills an empty expected date',
   });
 });
 
-describe('OMS-FUN-PO-02.15 — an untouched line saves nothing', () => {
+describe('OMS-FUN-PO-02.26 — an untouched line saves nothing', () => {
   it('reports no change for an identical draft', () => {
     expect(lineChanges(draft(), draft())).toBeUndefined();
   });

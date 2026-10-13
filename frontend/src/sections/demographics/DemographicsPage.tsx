@@ -30,6 +30,7 @@ import {
   type DraftIndicator,
   type Year,
 } from './draft';
+import { Num } from '@/ui/elements/typography/Num';
 
 // S1 — the demographics grid (spec/demographics ui-surface S1): the general
 // population baseline, the indicators' shares, the yearly growth rates in the
@@ -168,7 +169,7 @@ const DemographicsPage: Component = () => {
           <Show
             when={isGeneralRow(row)}
             // Every other row's current population derives from the baseline.
-            fallback={formatNumber(figures(row).current)}
+            fallback={<Num value={figures(row).current} />}
           >
             {/* The baseline — the one editable current population, a whole
                 number of people (rules § input bounds). */}
@@ -217,7 +218,7 @@ const DemographicsPage: Component = () => {
         textLabel: () => yearLabel(year),
       },
       size: remToPx(11),
-      cell: info => formatNumber(figures(info.row.original).years[year - 1]),
+      cell: info => <Num value={figures(info.row.original).years[year - 1]} />,
     })),
   ];
 

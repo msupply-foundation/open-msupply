@@ -141,3 +141,29 @@ pub struct ReportData {
     pub form_schema: Option<FormSchemaJson>,
     pub excel_template_buffer: Option<Vec<u8>>,
 }
+
+#[cfg(test)]
+mod test {
+    use super::{EmbeddedStandardForms, EmbeddedStandardReports, ReportsData};
+
+    /// The generated reports are written by scripts/reports/build-reports.mjs, not by these
+    /// types, so hold each one to them. A change here that the bundler has not caught up with
+    /// (a renamed field, a new entry type) fails this rather than a server loading the reports.
+    #[test]
+    fn generated_reports_read_as_reports_data() {
+        let files = EmbeddedStandardReports::iter()
+            .map(|name| (name.clone(), EmbeddedStandardReports::get(&name)))
+            .chain(
+                EmbeddedStandardForms::iter()
+                    .map(|name| (name.clone(), EmbeddedStandardForms::get(&name))),
+            );
+        let mut checked = 0;
+        for (name, file) in files {
+            let reports: ReportsData = serde_json::from_slice(&file.unwrap().data)
+                .unwrap_or_else(|e| panic!("{name} does not read as ReportsData: {e}"));
+            assert!(!reports.reports.is_empty(), "{name} has no reports");
+            checked += 1;
+        }
+        assert!(checked > 0, "no generated reports are embedded");
+    }
+}
