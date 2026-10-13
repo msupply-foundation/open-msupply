@@ -388,9 +388,6 @@ const parseDocumentType = (
           'the front of the list, before any version the plugin published'
       );
     }
-    if (id !== undefined && declaredIds.indexOf(id) !== i) {
-      problems.push(`${at}: version id "${id}" is listed twice`);
-    }
   });
   const current = parsed.at(-1);
   if (current && (!current.source || !current.type)) {
@@ -473,6 +470,29 @@ export const parseFormsDeclaration = (
       problems.push(`${where}: directory "forms/${dir}" is used twice`);
     }
   });
+  /*
+   * A schema id names one version on the server, so a deployment's id is
+   * declared once in the whole plugin. Copying a version block to another
+   * type and keeping its id would otherwise pass until install refused the
+   * second version as a conflicting schema.
+   */
+  const declaredAt = new Map<string, string>();
+  for (const entry of documentTypes) {
+    entry.versions.forEach((version, i) => {
+      if (version.id === undefined) return;
+      const place = `${entry.documentType} v${i + 1}`;
+      const first = declaredAt.get(version.id);
+      if (first) {
+        problems.push(
+          `${where}: version id "${version.id}" is declared on ${first} and ` +
+            `on ${place} — a schema id names one version, so give each its ` +
+            "deployment's own id"
+        );
+      } else {
+        declaredAt.set(version.id, place);
+      }
+    });
+  }
   if (problems.length > 0) {
     throw new Error(
       `invalid form plugin declaration:\n  - ${problems.join('\n  - ')}`

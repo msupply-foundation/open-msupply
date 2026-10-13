@@ -237,7 +237,44 @@ describe('parseFormsDeclaration', () => {
         { file: 'v1.json', id: 'same' },
         { file: 'v2.json', source: 'type.ts', type: 'Visit', id: 'same' },
       ])
-    ).toThrow(/version id "same" is listed twice/);
+    ).toThrow(/version id "same" is declared on Visit v1 and on Visit v2/);
+  });
+
+  it("refuses a deployment's id declared on two types", () => {
+    const declare = () =>
+      parseFormsDeclaration(
+        {
+          programKeys: ['demo'],
+          documentTypes: [
+            {
+              ...encounterEntry,
+              versions: [
+                { file: 'v1.json', id: 'deployed-a' },
+                { file: 'v2.json', source: 'type.ts', type: 'Visit' },
+              ],
+            },
+            {
+              ...encounterEntry,
+              documentType: 'Checkup',
+              name: 'Checkup',
+              versions: [
+                {
+                  file: 'v1.json',
+                  source: 'type.ts',
+                  type: 'Checkup',
+                  id: 'deployed-a',
+                },
+              ],
+            },
+          ],
+        },
+        'forms.json'
+      );
+    expect(declare).toThrow(
+      'forms.json: version id "deployed-a" is declared on Visit v1 and on ' +
+        'Checkup v1 — a schema id names one version, so give each its ' +
+        "deployment's own id"
+    );
   });
 
   it("reads a version's acknowledged narrowings, each with its reason", () => {
