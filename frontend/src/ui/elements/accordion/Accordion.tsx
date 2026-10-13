@@ -37,6 +37,17 @@ export interface AccordionProps {
    * form or dialog body.
    */
   variant?: 'card';
+  /**
+   * This disclosure holds its dialog's MAIN line table (the prescription
+   * editor's Batches). Stamps `data-dialog-table` on the root, which the
+   * Dialog reads in its full-screen state to run the card to the sheet's
+   * edges with no radius — its trigger row keeping the dialog's inset, its
+   * content none — so the table inside sits flush under the trigger
+   * (Dialog.module.css › data-fullscreen, #246). The `card` variant's chrome
+   * is what moves; a dialog that is not full screen ignores it. All three
+   * full-screen hooks and the chain rule: `DialogProps.size`.
+   */
+  dialogTable?: boolean;
   class?: string;
   children: JSX.Element;
 }
@@ -71,6 +82,7 @@ export const Accordion = (props: AccordionProps) => (
     collapsible={props.collapsible}
     class={props.class ? `${styles.root} ${props.class}` : styles.root}
     data-variant={props.variant}
+    data-dialog-table={props.dialogTable ? '' : undefined}
   >
     {props.children}
   </KAccordion.Root>

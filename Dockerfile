@@ -254,8 +254,6 @@ FROM --platform=$BUILDPLATFORM node:${NODE_VERSION} AS frontend-build
 WORKDIR /src
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY client client
-COPY standard_reports standard_reports
-COPY standard_forms standard_forms
 COPY frontend frontend
 RUN corepack enable
 # Old UI, served under /old-ui/ - the PUBLIC_PATH is what rewrites asset URLs
@@ -391,8 +389,6 @@ RUN apt-get update && apt-get install -y curl rsync git && \
 
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY client client
-COPY standard_reports standard_reports
-COPY standard_forms standard_forms
 
 RUN yarn install --immutable && yarn cache clean
 

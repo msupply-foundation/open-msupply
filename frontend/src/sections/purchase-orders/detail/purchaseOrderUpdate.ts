@@ -1,6 +1,7 @@
 import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
 import { translateServerError } from '../../../intl/intlUtils';
 import { t } from '../../../intl';
+import { roundedText } from '../../../intl/numberDisplay';
 import {
   AddPurchaseOrderFromMasterList,
   InsertPurchaseOrderLine,
@@ -131,7 +132,7 @@ export const insertPurchaseOrderLine = async (
       error.__typename === 'PackSizeCodeCombinationExists'
         ? t('error.purchase-order-line-duplicate', {
             code: error.itemCode,
-            packSize: error.requestedPackSize,
+            packSize: roundedText(error.requestedPackSize),
           })
         : error.description,
   };
