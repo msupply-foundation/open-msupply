@@ -43,7 +43,7 @@ mod query_catalogue_item {
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.catalogue_service;
 
-        static TOTAL_CATALOGUE_ITEM_ROWS: u32 = 168;
+        static TOTAL_CATALOGUE_ITEM_ROWS: u32 = 255;
 
         // id equal_any
         let mut result = service
@@ -96,7 +96,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 98);
+        assert_eq!(result.count, 167);
 
         // category filter - equal like
         result = service
@@ -108,7 +108,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 98);
+        assert_eq!(result.count, 167);
 
         // category filter - no matches
 
@@ -139,7 +139,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 30);
+        assert_eq!(result.count, 53);
 
         // type filter - equal like
         result = service
@@ -151,7 +151,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 81);
+        assert_eq!(result.count, 141);
 
         // type filter - no matches
         result = service
@@ -258,7 +258,7 @@ mod query_catalogue_item {
                 }),
             )
             .unwrap();
-        assert_eq!(result.count, 2);
+        assert_eq!(result.count, 4);
         assert_eq!(result.rows[0].code, "E003/125");
 
         // add query which combines special-type filters which conflict

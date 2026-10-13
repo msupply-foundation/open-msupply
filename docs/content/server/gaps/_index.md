@@ -22,6 +22,27 @@ Based on the pqs_catalogue.csv file, this was exported from a spreadsheet in goo
 The `pqs_catalogue_properties.py` script, used the same data and updated the asset_catalogue_items with the properties based on their PQS Catalogue Code.
 This one is more re-usable...
 
+### Refreshing the WHO PQS catalogue
+
+`refresh_who_pqs_catalogue.py` is the script to use for later refreshes. It was first used in October 2026 (#1285).
+It compares the WHO PQS CCE master data workbook with the catalogue a database already holds and writes:
+
+- a migration fragment that adds the products WHO have prequalified since the last refresh and moves the products WHO no longer list, or have suspended, to the `WHO PQS (withdrawn)` sub-catalogue. Nothing is deleted, because withdrawn equipment is still installed and in service.
+- a CSV listing every change, with the reason each type was chosen.
+
+```bash
+python3 refresh_who_pqs_catalogue.py \
+    --who who_pqs_catalogue.csv \
+    --db path/to/an/omsupply-database.sqlite \
+    --migration ../../repository/src/migrations/<version>/refresh_who_pqs_catalogue.rs \
+    --summary who_pqs_catalogue_changes.csv
+```
+
+`--who` is a CSV export of the workbook's "WHO PQS catalogue database" sheet. `--db` can be any SQLite database at the current version; the script only reads its catalogue.
+Ids are derived from the catalogue code, so running the script again gives the same ids.
+WHO's feed doesn't give every product one of our types, and it has some mis-entered values. The script keeps the type decisions, manufacturer spellings and value corrections in tables at the top of the file. Check those tables first when a new export brings products the script can't place.
+Before a second refresh, change the fragment's identifier and the target file name: a migration fragment only runs once.
+
 ## Items
 
 WARNING: Ideally when importing this data access to the Open-mSupply Central server should be blocked from remote sites to avoid an issue with items not being available on the remote site when they download item variant.
