@@ -249,13 +249,102 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
       'forms/Visit/v1.json': v1,
       'forms/Visit/v2.json': v2,
       'forms/Visit/migrations.ts': covered,
+      // A fixture of the current version stands in for none of v1's.
+      'forms/Visit/fixtures/v2.json': { extension: { demo: {} } },
     });
     expect(await checkFormVersions(dir, declare())).toEqual([
       expect.stringMatching(
         new RegExp(
-          `^${visit(dir, 'fixtures/v1.json')}: not found — every earlier ` +
-            'version needs a fixture'
+          `^${visit(dir, 'fixtures')}: no fixture of v1 — every earlier ` +
+            'version needs at least one'
         )
+      ),
+    ]);
+  });
+
+  it('checks every fixture of a version, naming each by its own file', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v1,
+      'forms/Visit/v2.json': v2,
+      'forms/Visit/migrations.ts': covered,
+      'forms/Visit/fixtures/v1.json': v1Document,
+      'forms/Visit/fixtures/v1.first-line.json': {
+        extension: { demo: { regimen: 'FIRST_LINE' } },
+      },
+      'forms/Visit/fixtures/v1.text-weight.json': {
+        extension: { demo: { weightKg: 'heavy' } },
+      },
+    });
+    expect(await checkFormVersions(dir, declare())).toEqual([
+      expect.stringMatching(
+        new RegExp(
+          `^${visit(dir, 'fixtures/v1.text-weight.json')}: does not ` +
+            'validate against v1 \\(v1\\.json\\): extension\\.demo\\.weightKg ' +
+            '\\(type\\)'
+        )
+      ),
+    ]);
+  });
+
+  it('passes an earlier version whose fixtures are all named cases', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v1,
+      'forms/Visit/v2.json': v2,
+      'forms/Visit/migrations.ts': covered,
+      'forms/Visit/fixtures/v1.legacy-trial.json': v1Document,
+    });
+    expect(await checkFormVersions(dir, declare())).toEqual([]);
+  });
+
+  it('names a file in fixtures/ the build would not read as a fixture', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v1,
+      'forms/Visit/v2.json': v2,
+      'forms/Visit/migrations.ts': covered,
+      'forms/Visit/fixtures/v1.json': v1Document,
+      'forms/Visit/fixtures/visit-1.json': v1Document,
+      'forms/Visit/fixtures/v3.json': v1Document,
+      'forms/Visit/fixtures/.DS_Store': '',
+    });
+    expect(await checkFormVersions(dir, declare())).toEqual([
+      `${visit(dir, 'fixtures/v3.json')}: a fixture of v3, which Visit does ` +
+        'not have (v1 to v2) — name it after the version that recorded it',
+      `${visit(dir, 'fixtures/visit-1.json')}: not a fixture name, so the ` +
+        'build would never read it — name it v<n>.json or v<n>.<case>.json, ' +
+        'after the version that recorded it',
+    ]);
+  });
+
+  it('checks a fixture of the current version as it is, in a type with one version', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v2,
+      'forms/Visit/fixtures/v1.json': { extension: { demo: { vitals: {} } } },
+      'forms/Visit/fixtures/v1.text-weight.json': {
+        extension: { demo: { vitals: { weightKg: 'heavy' } } },
+      },
+    });
+    const declaration = declare({
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      `${visit(dir, 'fixtures/v1.text-weight.json')}: does not validate ` +
+        'against v1 (v1.json): extension.demo.vitals.weightKg (type) — a ' +
+        'fixture is a document as v1 recorded it',
+    ]);
+  });
+
+  it("names a fixture of the current version that fails its category's base schema", async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v2,
+      'forms/Visit/fixtures/v1.json': { extension: { demo: {} } },
+    });
+    const declaration = declare({
+      category: 'Encounter',
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        /fixtures\/v1\.json: does not validate against the Encounter base schema, which the host checks every draft against as well: .*createdDatetime \(required\).* — fix the fixture, or the type if v1 lets through a document the base schema refuses$/
       ),
     ]);
   });
