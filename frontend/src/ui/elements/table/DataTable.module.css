@@ -32,10 +32,28 @@
   flex-direction: column;
   min-block-size: 0;
   min-inline-size: 0;
-  border: 1px solid var(--color-border-value);
-  border-radius: var(--radius-md);
+  margin-inline: calc(-1 * var(--table-bleed-inline));
+  margin-block: calc(-1 * var(--table-bleed-block-start))
+    calc(-1 * var(--table-bleed-block-end));
+  border: var(--table-frame-width) solid var(--color-border-value);
+  border-radius: var(--table-frame-radius);
   background: var(--bg-white);
   overflow: clip;
+
+  /* The frame as knobs a HOST may turn on a table it holds as its main line
+     table — declared HERE with the standard values, so a host changes them
+     only by setting them on this element (a descendant selector of its own),
+     and a table nested inside a host's own layout (a panel, an accordion, a
+     grid wrapper) keeps the frame. The full-screen Dialog runs its body table
+     to the sheet edges and to its two hairlines this way: bleed = its inline
+     inset and its block gap on the side(s) the table ends the body, frame and
+     radius 0 — on the table that IS the body, or one marked `dialogTable`
+     (Dialog.module.css › data-fullscreen, #246). */
+  --table-bleed-inline: 0px;
+  --table-bleed-block-start: 0px;
+  --table-bleed-block-end: 0px;
+  --table-frame-width: 1px;
+  --table-frame-radius: var(--radius-md);
 
   /* Width of each leading fixed column (expander / select). The ONE source of
      truth for that box — the .selectCell/.expanderCell rules size to it, and
@@ -110,6 +128,22 @@
 .root[data-fit-content] .tableScroll {
   flex: 0 0 auto;
   overflow: visible;
+}
+
+/* Compact (<600px, breakpoints.compact): outside a dialog, a card list lays
+   out at its content height like fitContent, so the PAGE's main column (which
+   scrolls as a whole there — Page.module.css) moves the cards together with
+   the header above them. A dialog's table keeps its own scroll box. */
+@media (max-width: 599px) {
+  .root:not(dialog *):has(> .tableArea > .tableScroll[data-view='card']) {
+    overflow: visible;
+  }
+
+  .root:not(dialog *) .tableArea:has(> .tableScroll[data-view='card']),
+  .root:not(dialog *) .tableScroll[data-view='card'] {
+    flex: 1 0 auto;
+    overflow: visible;
+  }
 }
 
 /* Empty (or initial-loading) table: become a flex column so the empty state /
@@ -1240,6 +1274,12 @@ tr[data-accent='error'] > :first-child::before {
    intrinsically (no breakpoints). It sits outside the scroll region, so
    it never moves when the table scrolls (either axis). */
 .toolbar {
+  /* A size container (CLAUDE.md #7 — container queries for content): how much
+     of the toolbar a control may spend is a question about THIS bar's width,
+     not the viewport's — FilterBar sheds its Add filter label against it.
+     Safe: the bar is a full-width row whose inline size comes from its
+     parent, never its contents. */
+  container: table-toolbar / inline-size;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1285,6 +1325,66 @@ tr[data-accent='error'] > :first-child::before {
    follow it. */
 .toolbarCount + .toolbarControls {
   margin-inline-start: 0;
+}
+
+/* Compact (<600px, breakpoints.compact): ONE control row. The filter bar
+   and the control cluster dissolve (display: contents) so their parts become
+   this row's own items, re-ordered: Add filter (icon-only there), then the
+   same order as the wide bar — the row count, the sort control (which grows
+   into the free width and truncates first), the icon controls.
+   Active chips and Clear all follow on the rows below — the ::after is a
+   full-width line break, drawn only while a chip exists so an unfiltered list
+   spends no extra row. */
+@media (max-width: 599px) {
+  .toolbar {
+    gap: var(--space-2) var(--space-1);
+    padding-inline: var(--space-3);
+  }
+
+  .toolbarFilters,
+  .toolbarFilters > [data-filter-bar],
+  .toolbarControls {
+    display: contents;
+  }
+
+  .toolbar > *,
+  .toolbarControls > * {
+    order: 3;
+  }
+
+  .toolbar [data-filter-trigger] {
+    order: 0;
+  }
+
+  /* A small basis, so the row's wrap decision counts the pill at its floor;
+     it then grows into whatever the row leaves and truncates its label. */
+  .toolbarControls > .sortTrigger {
+    order: 2;
+    flex: 1 1 4rem;
+    min-inline-size: 0;
+    margin-inline-end: 0;
+  }
+
+  .sortTriggerLabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .toolbarCount {
+    order: 1;
+  }
+
+  .toolbar:has([data-filter-chip])::after {
+    content: '';
+    flex-basis: 100%;
+    order: 4;
+  }
+
+  .toolbar [data-filter-chip],
+  .toolbar [data-filter-clear] {
+    order: 5;
+  }
 }
 
 /* Inline loading spinner sitting just left of the toolbar's icon controls (a
@@ -1821,6 +1921,17 @@ tr[data-accent='error'] > :first-child::before {
     }
   }
 }
+/* Compact (<600px, breakpoints.compact): a card field with no value is a
+   caption over nothing — on a 533px-tall scanner screen four of them cost a
+   card. Drop them there; the field is back the moment it holds a value, and
+   the record itself shows every field. (data-layout is LabelledValue's own
+   attribute; its value is its last child.) */
+@media (max-width: 599px) {
+  .cardFields > [data-layout]:has(> :last-child:empty) {
+    display: none;
+  }
+}
+
 /* --- Card body groups ------------------------------------------------------- */
 
 /* A body group's block (non-disclosure): its optional caption then its field

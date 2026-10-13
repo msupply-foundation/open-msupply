@@ -6,7 +6,10 @@ use crate::types::{
 };
 use async_graphql::*;
 use repository::StorageConnection;
-use service::preference::{Preference, PreferenceDescription, preferences::PreferenceProvider};
+use service::preference::{
+    OverridingStore, Preference, PreferenceDescription, StoreOverrideDescription,
+    preferences::PreferenceProvider,
+};
 
 pub struct PreferencesNode {
     pub connection: StorageConnection,
@@ -121,6 +124,10 @@ impl PreferencesNode {
     /// Large - don't add to eagerly-fetched preference queries.
     pub async fn global_logo(&self) -> Result<String> {
         self.load_preference(&self.preferences.global_logo)
+    }
+
+    pub async fn decimal_places_for_numbers(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.decimal_places_for_numbers)
     }
 
     // Store preferences
@@ -290,6 +297,61 @@ impl PreferenceDescriptionNode {
     pub async fn value(&self) -> &serde_json::Value {
         &self.pref.value
     }
+
+    /// How this store arrives at `value`, for a global preference a store may
+    /// override. Null for every other preference, and in the global listing.
+    pub async fn store_override(&self) -> Option<StoreOverrideNode<'_>> {
+        self.pref
+            .store_override
+            .as_ref()
+            .map(|store_override| StoreOverrideNode { store_override })
+    }
+
+    /// The stores that pin their own value instead of following this global
+    /// one, by store name. Empty where none do; null unless this is the global
+    /// listing of an overridable preference.
+    pub async fn overriding_stores(&self) -> Option<Vec<OverridingStoreNode<'_>>> {
+        self.pref.overriding_stores.as_ref().map(|stores| {
+            stores
+                .iter()
+                .map(|store| OverridingStoreNode { store })
+                .collect()
+        })
+    }
+}
+
+pub struct OverridingStoreNode<'a> {
+    pub store: &'a OverridingStore,
+}
+
+#[Object]
+impl OverridingStoreNode<'_> {
+    pub async fn store_id(&self) -> &str {
+        &self.store.store_id
+    }
+
+    pub async fn store_name(&self) -> &str {
+        &self.store.store_name
+    }
+}
+
+pub struct StoreOverrideNode<'a> {
+    pub store_override: &'a StoreOverrideDescription,
+}
+
+#[Object]
+impl StoreOverrideNode<'_> {
+    /// Whether this store pins its own value rather than following the global
+    /// one.
+    pub async fn is_overridden(&self) -> bool {
+        self.store_override.is_overridden
+    }
+
+    /// The global value this store follows, or would return to by clearing the
+    /// override. Same type loss as `value`.
+    pub async fn global_value(&self) -> &serde_json::Value {
+        &self.store_override.global_value
+    }
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -318,6 +380,7 @@ pub enum PreferenceKey {
     Backdating,
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,
+    DecimalPlacesForNumbers,
     // Store preferences
     BlindStocktake,
     ManageVaccinesInDoses,

@@ -2,7 +2,6 @@ import { createMemo, createSignal, onCleanup, Show, type JSX } from 'solid-js';
 import { generateUUID } from '@/uuid';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import { formatCurrency } from '@/intl/currency';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -50,6 +49,7 @@ import {
   type Prices,
 } from './purchaseOrderLineEdit';
 import styles from './PurchaseOrderLineEditModal.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The line editor (spec/purchase-orders S10): one surface that both adds a
 // line and edits one. Nothing is saved until the confirming action; an
@@ -384,7 +384,7 @@ const LineEditContent = (
               valueAlign="end"
               valueTestId="stock-on-hand-value"
             >
-              {formatNumber(facts()!.stockOnHand)}
+              <Num value={facts()!.stockOnHand} />
             </FieldRow>
             <FieldRow
               label={t('label.unit')}
@@ -465,7 +465,7 @@ const LineEditContent = (
               valueAlign="end"
               valueTestId="requested-units-value"
             >
-              {formatNumber(draft()!.requestedNumberOfUnits)}
+              <Num value={draft()!.requestedNumberOfUnits} />
             </FieldRow>
             <Show when={showsAdjustedUnits(status())}>
               <FieldRow
@@ -476,9 +476,11 @@ const LineEditContent = (
                 valueAlign="end"
                 valueTestId="adjusted-units-value"
               >
-                {draft()!.adjustedNumberOfUnits == null
-                  ? '-'
-                  : formatNumber(draft()!.adjustedNumberOfUnits!)}
+                {draft()!.adjustedNumberOfUnits == null ? (
+                  '-'
+                ) : (
+                  <Num value={draft()!.adjustedNumberOfUnits!} />
+                )}
               </FieldRow>
             </Show>
             <FieldRow label={t('label.price-per-pack-before-discount')}>

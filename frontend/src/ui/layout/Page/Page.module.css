@@ -241,3 +241,37 @@
   min-block-size: 0;
   overflow: auto;
 }
+
+/* Compact (<600px, breakpoints.compact): the WHOLE main column scrolls. On a
+   ~533px-tall scanner screen the pinned bands (header, tabs, table toolbar,
+   content footer) left the lines a third of the height; here they all scroll
+   with the lines — the header above them, the content footer (status + the
+   primary action) after the last one. The fill-mode table stops owning its
+   scroll box to match (DataTable.module.css, same breakpoint). */
+@media (max-width: 599px) {
+  .main {
+    overflow: hidden auto;
+  }
+
+  .main > * {
+    flex-shrink: 0;
+  }
+
+  .middle {
+    flex: 1 0 auto;
+  }
+
+  .body,
+  .bodyFill {
+    overflow: visible;
+  }
+
+  .bodyFill [role='tabpanel'] {
+    flex: 1 0 auto;
+    overflow: visible;
+  }
+
+  .bodyFill [data-datatable]:not(dialog *) {
+    flex: 1 0 auto;
+  }
+}

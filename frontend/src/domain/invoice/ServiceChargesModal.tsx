@@ -363,6 +363,7 @@ const ServiceChargesContent = (
         >
           <div class={styles.chargesGrid}>
             <DataTable
+              dialogTable
               columns={columns()}
               rows={rows()}
               rowKey={charge => charge.id}

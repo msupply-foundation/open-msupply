@@ -366,6 +366,7 @@ const Body = (props: BodyProps): JSX.Element => {
         when={step() === 'reason'}
         fallback={
           <DataTable
+            dialogTable
             columns={quantityColumns(update, quantityFields, {
               showItem: true,
             })}
@@ -381,6 +382,7 @@ const Body = (props: BodyProps): JSX.Element => {
         }
       >
         <DataTable
+          dialogTable
           columns={reasonColumns(update, reasonFields, { showItem: true })}
           rows={reasonRows()}
           rowKey={line => line.id}

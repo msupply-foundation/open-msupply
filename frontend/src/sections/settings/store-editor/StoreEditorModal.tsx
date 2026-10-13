@@ -46,6 +46,7 @@ import {
   propertyFields,
   serialiseProperties,
   setProperty,
+  stagePreference,
   type PreferenceDraft,
   type PropertyDraft,
 } from './storeEditorLogic';
@@ -70,7 +71,7 @@ import {
  * the draft intact, and Save is disabled while the session can edit nothing
  * (D79).
  *
- * The Preferences tab lists the store's 23 operational preferences —
+ * The Preferences tab lists the store's operational preferences —
  * editable only on a central server with the central-data permission
  * (rules § The store editor › Preferences, OMS-REG-SET-05.33–.39). Its edits
  * stage per-preference (the write is per-preference, unlike the wholesale
@@ -158,7 +159,7 @@ export const StoreEditorModal = (props: {
   );
   const definitions = () => gated(definitionsData) ?? [];
 
-  // The store's 23 preference descriptions — served in display order, with a
+  // The store's preference descriptions — served in display order, with a
   // fabricated default standing in for any unset preference (contract § The
   // store editor). Same interaction-opened read as the two above, so the same
   // non-suspending gate.
@@ -418,8 +419,10 @@ export const StoreEditorModal = (props: {
               draft={prefDraft()}
               disabled={!prefsEditable()}
               loading={preferencesData.loading}
-              onStage={(key, value) =>
-                setPrefDraft(current => ({ ...current, [key]: value }))
+              onStage={(preference, value) =>
+                setPrefDraft(current =>
+                  stagePreference(current, preference, value)
+                )
               }
             />
           </TabPanel>
