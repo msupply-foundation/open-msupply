@@ -26,11 +26,88 @@ query installedPlugins {
   }
 }
 
-mutation installUploadedPlugin($fileId: String!) {
+# Reads a bundle already uploaded, before installing it. A bundle carrying a
+# form plugin needs the installer's choices, which the server names here: the
+# program for each program key (with the one an earlier install bound it to),
+# each document type's existing registry entry and whether installing it would
+# blank the old client's form, and the programs on this server to choose from
+# (plugin-management contract › preview). A bundle with no form plugin has an
+# empty formPlugins and installs with nothing asked.
+query uploadedPluginInfo($fileId: String!) {
+  centralServer {
+    plugin {
+      uploadedPluginInfo(fileId: $fileId) {
+        __typename
+        ... on PluginInfoNode {
+          formInstallPreview {
+            formPlugins {
+              pluginCode
+              programKeys {
+                programKey
+                documentTypes
+                boundProgram {
+                  id
+                  name
+                }
+              }
+              documentTypes {
+                documentType
+                name
+                category
+                programKey
+                existingEntry
+                existingEntryId
+                existingEntryOwner
+                existingEntryCategory
+                existingEntryProgram {
+                  id
+                  name
+                }
+                blanksOldUi
+                refusals
+              }
+            }
+            programs {
+              id
+              name
+            }
+          }
+        }
+        ... on UploadedPluginError {
+          error
+        }
+      }
+    }
+  }
+}
+
+# The three optional arguments are a form plugin's installer choices: the
+# program for each program key, the document types whose existing entry it may
+# take over, and the types whose form may go blank on sites still running the
+# old client (plugin-management contract › install).
+mutation installUploadedPlugin(
+  $fileId: String!
+  $programs: [PluginProgramInput!]
+  $takeOver: [String!]
+  $blankOldUi: [String!]
+) {
   centralServer {
     plugins {
-      installUploadedPlugin(fileId: $fileId) {
+      installUploadedPlugin(
+        fileId: $fileId
+        programs: $programs
+        takeOver: $takeOver
+        blankOldUi: $blankOldUi
+      ) {
         pluginInfo
+        installedDocumentTypes {
+          documentType
+          programKey
+          contextId
+          outcome
+          schemasAdded
+          uiSchemasUpdated
+        }
       }
     }
   }
