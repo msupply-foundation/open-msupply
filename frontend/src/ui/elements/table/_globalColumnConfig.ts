@@ -37,6 +37,7 @@ export type CellKind =
   | 'shortText'
   | 'code'
   | 'number'
+  | 'volume'
   | 'percentage'
   | 'currency'
   | 'date'
@@ -65,6 +66,8 @@ export const KIND_WIDTH: Record<CellKind, { size: number; maxSize?: number }> =
     // No maxSize on numbers/percentages/dates: `size` is a good default and the
     // user should be free to drag them as wide as they like (Carl 2026-07-24).
     number: { size: 4.5 },
+    // Five decimals of m³ plus grouping: "1,234.56789".
+    volume: { size: 7 },
     percentage: { size: 4.5 },
     currency: { size: 7.5 },
     date: { size: 8.125 },
@@ -203,7 +206,7 @@ export const CELL_DEF = {
   snapshotNumberOfPacks: { kind: 'number', size: 8 },
   receivedNumberOfPacks: { kind: 'number', size: 8 },
   availablePacks: { kind: 'number', size: 7 },
-  volumePerPack: { kind: 'number', size: 7 },
+  volumePerPack: { kind: 'volume' },
   units: { kind: 'number' },
   dosesPerUnit: { kind: 'number', size: 7 },
   doses: { kind: 'number' },

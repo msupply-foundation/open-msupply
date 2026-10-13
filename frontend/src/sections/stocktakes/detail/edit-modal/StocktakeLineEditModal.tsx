@@ -2051,6 +2051,7 @@ const StocktakeLineEditContent = (
         }
       >
         <DataTable
+          dialogTable
           columns={columns()}
           rows={rows()}
           rowKey={line => line.id}

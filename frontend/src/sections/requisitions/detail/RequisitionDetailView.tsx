@@ -5,11 +5,14 @@ import {
   Show,
   Suspense,
   type Component,
+  type JSX,
 } from 'solid-js';
+import type { CellContext } from '@tanstack/solid-table';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { t } from '@/intl';
+import { Num } from '@/ui/elements/typography/Num';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -501,12 +504,20 @@ const RequisitionDetailView: Component = () => {
   // preference — " (N ds)" (label.doses-short), value × doses-per-unit
   // (treated as 1 when the item has none, so the annotation shows for any
   // vaccine).
-  const doseSuffix = (line: Line, value: number): string =>
-    showDoses() && line.item.isVaccine
-      ? ` (${Math.round(value * (line.item.doses || 1))} ${t('label.doses-short')})`
-      : '';
-  const numWithDoses = (line: Line, value: number) =>
-    `${Math.round(value)}${doseSuffix(line, value)}`;
+  const numWithDoses = (line: Line, value: number): JSX.Element => (
+    <>
+      <Num value={value} />
+      <Show when={showDoses() && line.item.isVaccine}>
+        {' '}
+        (<Num value={value * (line.item.doses || 1)} /> {t('label.doses-short')}
+        )
+      </Show>
+    </>
+  );
+
+  // Spread AFTER getCellDefinition, whose number cell it replaces.
+  const dosesCell = (info: CellContext<Line, unknown>): JSX.Element =>
+    numWithDoses(info.row.original, info.getValue<number>());
 
   // App bar breadcrumbs (spec S2): the Distribution truck icon (the group is
   // the icon, not a text crumb), Requisitions, the requisition number.
@@ -581,7 +592,7 @@ const RequisitionDetailView: Component = () => {
     {
       // Our stock on hand — THIS store's current stock of the item.
       c: {
-        accessor: line => numWithDoses(line, line.itemStats.stockOnHand),
+        accessor: line => line.itemStats.stockOnHand,
         id: 'ourSoh',
       },
       sortKey: 'ourSoh',
@@ -589,6 +600,7 @@ const RequisitionDetailView: Component = () => {
         <span title={t('description.our-soh')}>{t('label.our-soh')}</span>
       ),
       ...getCellDefinition('ourSoh'),
+      cell: dosesCell,
     },
     // Their avail. stock — the customer's available stock as requested;
     // NON-program requisitions only (the extended set replaces it).
@@ -596,7 +608,7 @@ const RequisitionDetailView: Component = () => {
       ? ([
           {
             c: {
-              accessor: line => numWithDoses(line, line.availableStockOnHand),
+              accessor: line => line.availableStockOnHand,
               id: 'customerSoh',
             },
             sortKey: 'customerSoh',
@@ -606,6 +618,7 @@ const RequisitionDetailView: Component = () => {
               </span>
             ),
             ...getCellDefinition('customerSoh'),
+            cell: dosesCell,
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -615,7 +628,7 @@ const RequisitionDetailView: Component = () => {
       ? ([
           {
             c: {
-              accessor: l => numWithDoses(l, l.initialStockOnHandUnits),
+              accessor: l => l.initialStockOnHandUnits,
               id: 'initialSoh',
             },
             header: () => (
@@ -624,43 +637,48 @@ const RequisitionDetailView: Component = () => {
               </span>
             ),
             ...getCellDefinition('initialSoh'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.incomingUnits),
+              accessor: l => l.incomingUnits,
               id: 'incoming',
             },
             header: () => t('label.incoming'),
             ...getCellDefinition('incoming'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.outgoingUnits),
+              accessor: l => l.outgoingUnits,
               id: 'outgoing',
             },
             header: () => t('label.outgoing'),
             ...getCellDefinition('outgoing'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.lossInUnits),
+              accessor: l => l.lossInUnits,
               id: 'losses',
             },
             header: () => t('label.losses'),
             ...getCellDefinition('losses'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.additionInUnits),
+              accessor: l => l.additionInUnits,
               id: 'additions',
             },
             header: () => t('label.additions'),
             ...getCellDefinition('additions'),
+            cell: dosesCell,
           },
           {
             // Derived: initial + incoming + additions − losses − outgoing.
             c: {
-              accessor: l => numWithDoses(l, available(l)),
+              accessor: l => available(l),
               id: 'available',
             },
             header: () => (
@@ -669,14 +687,16 @@ const RequisitionDetailView: Component = () => {
               </span>
             ),
             ...getCellDefinition('available'),
+            cell: dosesCell,
           },
           {
             c: {
-              accessor: l => numWithDoses(l, l.expiringUnits),
+              accessor: l => l.expiringUnits,
               id: 'shortExpiry',
             },
             header: () => t('label.short-expiry'),
             ...getCellDefinition('shortExpiry'),
+            cell: dosesCell,
           },
           {
             c: {
@@ -689,16 +709,17 @@ const RequisitionDetailView: Component = () => {
           {
             // AMC displays rounded UP (spec S2 › columns).
             c: {
-              accessor: l =>
-                numWithDoses(l, Math.ceil(l.averageMonthlyConsumption)),
+              accessor: l => Math.ceil(l.averageMonthlyConsumption),
               id: 'amc',
             },
             header: () => t('label.amc'),
             ...getCellDefinition('amc'),
+            cell: dosesCell,
           },
           {
-            // MOS: available ÷ AMC, one decimal, zero without consumption.
-            c: { accessor: l => mos(l).toFixed(1), id: 'mos' },
+            // MOS: available ÷ AMC, zero without consumption — the raw figure,
+            // so the number cell applies display rounding.
+            c: { accessor: l => mos(l), id: 'mos' },
             header: () => t('label.months-of-stock'),
             ...getCellDefinition('mos'),
           },
@@ -715,18 +736,19 @@ const RequisitionDetailView: Component = () => {
     },
     {
       c: {
-        accessor: line => numWithDoses(line, line.suggestedQuantity),
+        accessor: line => line.suggestedQuantity,
         id: 'suggested',
       },
       header: () => t('label.suggested'),
       ...getCellDefinition('suggested'),
+      cell: dosesCell,
     },
     {
       // Requested — what the customer asked for; under the excess-request
       // preference a request ≥ 1 unit above the suggestion carries a red
       // alert icon.
       c: {
-        accessor: line => numWithDoses(line, line.requestedQuantity),
+        accessor: line => line.requestedQuantity,
         id: 'requested',
       },
       sortKey: 'requested',
@@ -757,12 +779,13 @@ const RequisitionDetailView: Component = () => {
       ? ([
           {
             c: {
-              accessor: l => numWithDoses(l, l.approvedQuantity),
+              accessor: l => l.approvedQuantity,
               id: 'approvedQuantity',
             },
             sortKey: 'approved',
             header: () => t('label.approved-quantity'),
             ...getCellDefinition('approvedQuantity'),
+            cell: dosesCell,
           },
           {
             c: {
@@ -777,12 +800,13 @@ const RequisitionDetailView: Component = () => {
     {
       // Units to supply — the ledger's supply quantity.
       c: {
-        accessor: line => numWithDoses(line, line.supplyQuantity),
+        accessor: line => line.supplyQuantity,
         id: 'supplyQuantity',
       },
       sortKey: 'supply',
       header: () => t('label.supply-quantity'),
       ...getCellDefinition('supplyQuantity'),
+      cell: dosesCell,
     },
     // Reason — the line's variance reason; extended gate. Flagged when a
     // header save was rejected for a missing reason (OMS-REG-DIST-06.19).
@@ -815,7 +839,7 @@ const RequisitionDetailView: Component = () => {
     {
       // Issued — units already on shipments (the ledger).
       c: {
-        accessor: line => numWithDoses(line, line.alreadyIssued),
+        accessor: line => line.alreadyIssued,
         id: 'alreadyIssued',
       },
       sortKey: 'issued',
@@ -825,11 +849,12 @@ const RequisitionDetailView: Component = () => {
         </span>
       ),
       ...getCellDefinition('alreadyIssued'),
+      cell: dosesCell,
     },
     {
       // Remaining — the ledger's remainder (never negative).
       c: {
-        accessor: line => numWithDoses(line, line.remainingQuantityToSupply),
+        accessor: line => line.remainingQuantityToSupply,
         id: 'remaining',
       },
       sortKey: 'remaining',
@@ -839,6 +864,7 @@ const RequisitionDetailView: Component = () => {
         </span>
       ),
       ...getCellDefinition('remaining'),
+      cell: dosesCell,
     },
     // Indicative pricing — the preference. Per-unit shows a dash when
     // priceless; the line total is per-unit × UNITS TO SUPPLY (zero when

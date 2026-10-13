@@ -19,7 +19,7 @@ import {
 } from '@/ui/elements/table/DataTable';
 import {
   getCellDefinition,
-  getNumberCell,
+  getVolumeCell,
   getTextCell,
 } from '@/ui/elements/table/tableHelpers';
 import { getBooleanCell } from '@/ui/elements/table/BooleanCell';
@@ -200,7 +200,7 @@ const LocationsList: Component = () => {
       header: () => t('label.volume'),
       // Width set at the call site: no CELL_DEF key, and the header
       // "Volume (m³)" is the binding constraint, not the value.
-      ...getNumberCell(),
+      ...getVolumeCell(),
       size: remToPx(7),
     },
     {

@@ -87,7 +87,7 @@ interface SplitButtonProps {
   disabledTitle?: string;
   /**
    * Collapse the MAIN half to just its icon to save space (the `<Button>`
-   * `collapsible` contract, same two tiers — `true` for phone widths ≤767px,
+   * `collapsible` contract, same two tiers — `true` for phone widths <600px,
    * `'narrow'` for the whole narrow-viewport range ≤1023px). Only meaningful
    * with an `icon`. The caret half never collapses: it is already icon-only,
    * and its menu keeps every option's full label, so the collapsed control

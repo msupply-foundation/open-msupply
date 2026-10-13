@@ -134,14 +134,15 @@
    button sheds its label down to just the icon, to save toolbar space. The
    label stays in the DOM but visually hidden (not display:none), so the button
    keeps its accessible name with no aria-label. Only meaningful with an icon.
+   Phone widths = below breakpoints.compact (600), the app's one phone line.
    Placed after the base .label rule so specificity ascends. */
-@media (max-width: 767px) {
-  .button[data-collapsible] {
+@media (max-width: 599px) {
+  .button[data-collapsible]:not([data-header-buttons] *) {
     min-inline-size: 3rem;
     padding-inline: 0.75rem;
   }
 
-  .button[data-collapsible] .label {
+  .button[data-collapsible]:not([data-header-buttons] *) .label {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -158,14 +159,14 @@
    at which the nav becomes an overlay and dialogs go full screen). For a page
    header whose action cluster would otherwise wrap onto a row of its own on a
    tablet: labels there cost a whole row of the screen's height, which is the
-   scarcer resource. The phone block above already covers ≤767px. */
+   scarcer resource. The phone block above already covers <600px. */
 @media (max-width: 1023px) {
-  .button[data-collapsible='narrow'] {
+  .button[data-collapsible='narrow']:not([data-header-buttons] *) {
     min-inline-size: 3rem;
     padding-inline: 0.75rem;
   }
 
-  .button[data-collapsible='narrow'] .label {
+  .button[data-collapsible='narrow']:not([data-header-buttons] *) .label {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -175,6 +176,26 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
+}
+
+/* A page header whose labelled actions don't fit beside its title — Header
+   MEASURES that and sets data-actions-collapsed (no breakpoint): every
+   icon-bearing button in the cluster sheds its label to the icon, opted in or
+   not. Labels stay while they fit, so a tablet with room keeps them. */
+[data-actions-collapsed] > [data-header-buttons] .button:has(.icon) {
+  min-inline-size: 3rem;
+  padding-inline: 0.75rem;
+}
+
+[data-actions-collapsed] > [data-header-buttons] .button:has(.icon) .label {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* --- Variant tone at rest -------------------------------------------- */

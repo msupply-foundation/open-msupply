@@ -297,7 +297,11 @@ const NewStockContent = (props: {
       title={t('heading.stock-line-details')}
       actionsLead={
         <Show when={error()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+          {message => (
+            <Alert severity="error" testId="new-stock-error">
+              {message()}
+            </Alert>
+          )}
         </Show>
       }
       actions={

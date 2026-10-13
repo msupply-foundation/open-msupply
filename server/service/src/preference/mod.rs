@@ -51,6 +51,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             // functionality is implemented (#6179)
             receive_payments_from_prescriptions: _,
             global_logo,
+            decimal_places_for_numbers,
 
             // Store preferences
             blind_stocktake,
@@ -114,6 +115,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(backdating, &mut prefs, &input)?;
         append_if_type(global_logo, &mut prefs, &input)?;
+        append_if_type(decimal_places_for_numbers, &mut prefs, &input)?;
         // TODO: receive_payments_from_prescriptions intentionally omitted, hidden from
         // the edit UI until prescription payment functionality exists
 
@@ -196,8 +198,18 @@ fn append_if_type(
         store_id,
     }: &AppendIfTypeInputs,
 ) -> Result<(), PreferenceError> {
-    if &pref.preference_type() == pref_type {
-        pref_descriptions.push(pref.as_description(connection, store_id.clone())?);
+    // A preference is listed under its own type. A global preference that allows a
+    // store override is also listed under Store, carrying the store's effective
+    // value; under Global it always describes the global row, whatever store the
+    // caller's context names.
+    let listed = pref.preference_type() == *pref_type
+        || (*pref_type == PreferenceType::Store && pref.allows_store_override());
+    if listed {
+        let store_id = match pref_type {
+            PreferenceType::Global => None,
+            PreferenceType::Store => store_id.clone(),
+        };
+        pref_descriptions.push(pref.as_description(connection, store_id)?);
     }
     Ok(())
 }

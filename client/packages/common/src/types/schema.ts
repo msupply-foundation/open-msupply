@@ -1231,6 +1231,16 @@ export type BatchStocktakeResponse = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
+/**
+ * One store's edit of a global preference it may override. A null `value`
+ * CLEARS the store's override, returning the store to the global value — the
+ * only way back once a store has pinned its own.
+ */
+export type BoolStoreOverrideInput = {
+  storeId: Scalars['String']['input'];
+  value?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type BoolStorePrefInput = {
   storeId: Scalars['String']['input'];
   value: Scalars['Boolean']['input'];
@@ -7663,6 +7673,12 @@ export type OutboundShipmentLineInput = {
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type OverridingStoreNode = {
+  __typename: 'OverridingStoreNode';
+  storeId: Scalars['String']['output'];
+  storeName: Scalars['String']['output'];
+};
+
 export type PackSizeCodeCombinationExists =
   InsertPurchaseOrderLineErrorInterface & {
     __typename: 'PackSizeCodeCombinationExists';
@@ -7992,6 +8008,17 @@ export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   key: PreferenceKey;
   /**
+   * The stores that pin their own value instead of following this global
+   * one, by store name. Empty where none do; null unless this is the global
+   * listing of an overridable preference.
+   */
+  overridingStores?: Maybe<Array<OverridingStoreNode>>;
+  /**
+   * How this store arrives at `value`, for a global preference a store may
+   * override. Null for every other preference, and in the global listing.
+   */
+  storeOverride?: Maybe<StoreOverrideNode>;
+  /**
    * WARNING: Type loss - holds any kind of pref value (for edit UI).
    * Use the PreferencesNode to load the strictly typed value.
    */
@@ -8010,6 +8037,7 @@ export enum PreferenceKey {
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
+  DecimalPlacesForNumbers = 'decimalPlacesForNumbers',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
@@ -8089,6 +8117,7 @@ export type PreferencesNode = {
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
+  decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
@@ -11335,6 +11364,20 @@ export type StoreNodeNameArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type StoreOverrideNode = {
+  __typename: 'StoreOverrideNode';
+  /**
+   * The global value this store follows, or would return to by clearing the
+   * override. Same type loss as `value`.
+   */
+  globalValue: Scalars['JSON']['output'];
+  /**
+   * Whether this store pins its own value rather than following the global
+   * one.
+   */
+  isOverridden: Scalars['Boolean']['output'];
+};
+
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   editPrescribedQuantityOnPrescription: Scalars['Boolean']['output'];
@@ -13261,6 +13304,9 @@ export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
+  authorisePurchaseOrderStoreOverride?: InputMaybe<
+    Array<BoolStoreOverrideInput>
+  >;
   backdating?: InputMaybe<BackdatingInput>;
   blindStocktake?: InputMaybe<Array<BoolStorePrefInput>>;
   canChangeTargetMonthsOfStock?: InputMaybe<Array<BoolStorePrefInput>>;
@@ -13274,6 +13320,7 @@ export type UpsertPreferencesInput = {
    */
   customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
+  decimalPlacesForNumbers?: InputMaybe<Scalars['Int']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
