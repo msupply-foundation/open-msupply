@@ -311,7 +311,7 @@ export const navConfig: NavItem[] = [
         gate: 'vaccineModule',
         permission: 'ASSET_QUERY',
       },
-      { labelKey: 'label.activity', path: 'manage/campaigns' },
+      { labelKey: 'label.activities', path: 'manage/campaigns' },
       {
         labelKey: 'custom-fields',
         path: 'manage/custom-fields',

@@ -233,7 +233,7 @@ const CampaignsList: Component = () => {
 
   // The destination's own name, under the Manage section (the trail comes from
   // the nav registry; this list's crumb is its own name).
-  const crumbs = () => [{ label: t('label.activity') }];
+  const crumbs = () => [{ label: t('label.activities') }];
 
   return (
     <Page
