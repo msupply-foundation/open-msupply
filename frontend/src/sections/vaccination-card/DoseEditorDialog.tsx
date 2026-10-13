@@ -51,6 +51,7 @@ import {
 import {
   batchChoosable,
   batchDoses,
+  batchRows,
   chooseGiven,
   confirmations,
   draftDiffers,
@@ -79,6 +80,12 @@ export interface DoseEditorDialogProps {
   onClose: () => void;
   /** A save landed: the caller closes the editor and refreshes the card. */
   onSaved: () => void;
+  /**
+   * The server refused a save: the card may be out of date (another user
+   * recorded the dose meanwhile), so the caller refreshes it once the editor
+   * closes.
+   */
+  onRefused?: () => void;
 }
 
 /*
@@ -198,7 +205,12 @@ const DoseEditorForm: Component<
     const itemId = batchItem();
     return itemId ? { storeId: props.storeId, itemId } : false;
   }, fetchBatches);
-  const batches = () => gated(batchData);
+  // Only the chosen item's batches: while another item's load, the gated read
+  // still holds the previous item's, which must neither show nor be preset.
+  const batches = () => {
+    const loaded = gated(batchData);
+    return loaded && loaded.itemId === draft.itemId ? loaded : undefined;
+  };
 
   // A newly given dose gets the only batch holding a dose (OMS-REG-DIS-06.46),
   // once per item — clearing it again is the user's choice to keep.
@@ -259,6 +271,8 @@ const DoseEditorForm: Component<
     // The app's permission-denied notice; the editor keeps the draft.
     else if (outcome.kind === 'forbidden')
       reportPermissionDenied(outcome.permissions);
+    if (outcome.kind !== 'saved' && outcome.kind !== 'failed')
+      props.onRefused?.();
   };
 
   const onSavePressed = () => {
@@ -391,10 +405,20 @@ const DoseEditorForm: Component<
             label={t('label.vaccination')}
             orientation="horizontal"
             options={[
-              { value: 'given', label: t('label.vaccine-given') },
+              {
+                value: 'given',
+                label: t('label.vaccine-given'),
+                testId: 'dose-editor-given',
+              },
               ...(skipping()
                 ? []
-                : [{ value: 'notGiven', label: t('label.vaccine-not-given') }]),
+                : [
+                    {
+                      value: 'notGiven',
+                      label: t('label.vaccine-not-given'),
+                      testId: 'dose-editor-not-given',
+                    },
+                  ]),
             ]}
             value={
               draft.given === undefined
@@ -521,7 +545,13 @@ const DoseEditorForm: Component<
                     </tr>
                   </thead>
                   <tbody>
-                    <For each={loadedBatches().batches}>
+                    <For
+                      each={batchRows(
+                        loadedBatches().batches,
+                        draft,
+                        ctx.vaccination?.stockLine
+                      )}
+                    >
                       {batch => {
                         const doses = () =>
                           batchDoses(loadedBatches().dosesPerUnit, batch);

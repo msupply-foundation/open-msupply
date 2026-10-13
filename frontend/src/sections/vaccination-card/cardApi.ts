@@ -102,7 +102,11 @@ export const fetchDose = async (args: {
   };
 };
 
-/** The store's batches of an item, with the item's doses per unit. */
+/**
+ * The store's batches of an item, with the item's doses per unit — and the
+ * item they are of, so a reader can tell them from a previous item's still
+ * showing while the next item's load.
+ */
 export const fetchBatches = async (args: {
   storeId: string;
   itemId: string;
@@ -111,6 +115,7 @@ export const fetchBatches = async (args: {
   if (result.kind !== 'success') return undefined;
   const item = result.data.items.nodes[0];
   return {
+    itemId: args.itemId,
     // A vaccine with no configured doses per unit counts as one.
     dosesPerUnit: item?.doses || 1,
     batches: item?.availableBatches.nodes ?? [],
@@ -168,7 +173,7 @@ export const saveDose = async (args: {
     InsertVaccination,
     {
       storeId: args.ctx.storeId,
-      input: insertInput(args.draft, {
+      input: insertInput(args.draft, args.ctx, {
         id: generateUUID(),
         encounterId: args.encounterId,
         vaccineCourseDoseId: args.vaccineCourseDoseId,

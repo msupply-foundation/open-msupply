@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   batchChoosable,
   batchDoses,
+  batchRows,
   chooseGiven,
   confirmations,
   draftDiffers,
@@ -14,6 +15,7 @@ import {
   presetBatch,
   showsBatch,
   switchLabel,
+  touchesStock,
   updateInput,
   type DoseDraft,
   type DoseVaccination,
@@ -53,6 +55,10 @@ const recorded = (over: Partial<DoseVaccination> = {}): DoseVaccination => ({
     id: 'sl-a',
     batch: 'A',
     itemId: 'dpt',
+    expiryDate: '2027-01-01',
+    availableNumberOfPacks: 10,
+    packSize: 1,
+    onHold: false,
   },
   invoice: { __typename: 'InvoiceNode', id: 'rx-1' },
   ...over,
@@ -173,7 +179,7 @@ describe('OMS-REG-DIS-06.9 / OMS-REG-DIS-06.10 — not given carries no item or 
     });
     expect(showsBatch(draft, ctxFor())).toBe(false);
     expect(
-      insertInput(draft, {
+      insertInput(draft, ctxFor(), {
         id: 'n',
         encounterId: 'e',
         vaccineCourseDoseId: 'd',
@@ -200,10 +206,11 @@ describe('OMS-REG-DIS-06.14 / OMS-REG-DIS-06.56 — given at another facility', 
   });
   it('sends the facility as free text, with no batch and no clinician', () => {
     expect(
-      insertInput(
-        { ...draft, stockLineId: 'sl-a' },
-        { id: 'n', encounterId: 'e', vaccineCourseDoseId: 'd' }
-      )
+      insertInput({ ...draft, stockLineId: 'sl-a' }, ctxFor(), {
+        id: 'n',
+        encounterId: 'e',
+        vaccineCourseDoseId: 'd',
+      })
     ).toMatchObject({
       facilityNameId: null,
       facilityFreeText: 'Hogsmeade',
@@ -223,17 +230,95 @@ describe('OMS-REG-DIS-06.15 / OMS-REG-DIS-06.16 / OMS-REG-DIS-06.17 — a past-d
     const off = { ...past, createTransactions: false, stockLineId: 'sl-a' };
     expect(showsBatch(off, ctxFor())).toBe(false);
     expect(
-      insertInput(off, { id: 'n', encounterId: 'e', vaccineCourseDoseId: 'd' })
-        .stockLineId
+      insertInput(off, ctxFor(), {
+        id: 'n',
+        encounterId: 'e',
+        vaccineCourseDoseId: 'd',
+      }).stockLineId
     ).toBeNull();
   });
   it('with the switch on and a batch, sends the batch — the server issues the dose', () => {
     const on = { ...past, stockLineId: 'sl-a' };
     expect(showsBatch(on, ctxFor())).toBe(true);
     expect(
-      insertInput(on, { id: 'n', encounterId: 'e', vaccineCourseDoseId: 'd' })
-        .stockLineId
+      insertInput(on, ctxFor(), {
+        id: 'n',
+        encounterId: 'e',
+        vaccineCourseDoseId: 'd',
+      }).stockLineId
     ).toBe('sl-a');
+  });
+});
+
+describe('OMS-REG-DIS-06.42 — the switch counts only while it shows', () => {
+  // A past date with the switch turned off, then set back to today: the
+  // switch goes away (no label applies) but the draft keeps it off. A batch
+  // ticked now must still issue the dose — the screen shows no switch saying
+  // otherwise.
+  it('a new dose dated today again sends its batch, though the switch was left off', () => {
+    const draft = newDraft({
+      given: true,
+      itemId: 'dpt',
+      createTransactions: false,
+      stockLineId: 'sl-a',
+    });
+    expect(switchLabel(draft, ctxFor())).toBeNull();
+    expect(touchesStock(draft, ctxFor())).toBe(true);
+    expect(
+      insertInput(draft, ctxFor(), {
+        id: 'n',
+        encounterId: 'e',
+        vaccineCourseDoseId: 'd',
+      }).stockLineId
+    ).toBe('sl-a');
+  });
+  it('an edit no switch applies to touches no stock, whatever the draft holds', () => {
+    const ctx = ctxFor({ vaccination: recorded() });
+    const draft = {
+      ...initialDraft(ctx),
+      comment: 'x',
+      createTransactions: true,
+    };
+    expect(switchLabel(draft, ctx)).toBeNull();
+    expect(updateInput(draft, ctx).updateTransactions).toBe(false);
+  });
+});
+
+describe('OMS-REG-DIS-06.16 — an edit sends no batch the list does not show', () => {
+  it('a past-dated record with no batch, the switch turned off again, keeps no batch', () => {
+    const ctx = ctxFor({
+      vaccination: recorded({ stockLine: null, invoice: null }),
+    });
+    // Switch on, a batch ticked, switch off: the list hides the batch.
+    const draft = {
+      ...initialDraft(ctx),
+      stockLineId: 'sl-a',
+      createTransactions: false,
+    };
+    expect(showsBatch(draft, ctx)).toBe(false);
+    expect(updateInput(draft, ctx).stockLineId).toEqual({ value: null });
+  });
+});
+
+describe('OMS-REG-DIS-06.55 — a recorded dose shows its batch, used up or not', () => {
+  const listed = [{ id: 'sl-b' }];
+  it("adds the record's batch when the store no longer lists it", () => {
+    const ctx = ctxFor({ vaccination: recorded() });
+    expect(
+      batchRows(listed, initialDraft(ctx), ctx.vaccination?.stockLine).map(
+        b => b.id
+      )
+    ).toEqual(['sl-b', 'sl-a']);
+  });
+  it('adds nothing when listed, or for another item', () => {
+    const ctx = ctxFor({ vaccination: recorded() });
+    const held = ctx.vaccination?.stockLine;
+    expect(batchRows([{ id: 'sl-a' }], initialDraft(ctx), held)).toHaveLength(
+      1
+    );
+    expect(
+      batchRows(listed, { ...initialDraft(ctx), itemId: 'vax-a' }, held)
+    ).toHaveLength(1);
   });
 });
 
@@ -241,7 +326,7 @@ describe('OMS-REG-DIS-06.43 / OMS-REG-DIS-06.4 — a dose given here without a b
   it('sends no batch', () => {
     const draft = newDraft({ given: true, itemId: 'dpt' });
     expect(
-      insertInput(draft, {
+      insertInput(draft, ctxFor(), {
         id: 'n',
         encounterId: 'e',
         vaccineCourseDoseId: 'd',

@@ -24,6 +24,10 @@ export type DoseEditorVaccinationFragment = {
   id: string;
   batch: string | null;
   itemId: string;
+  expiryDate: string | null;
+  availableNumberOfPacks: number;
+  packSize: number;
+  onHold: boolean;
 } | null;
   invoice: {
   __typename: "InvoiceNode";
@@ -73,7 +77,7 @@ export type DoseVaccinationResult = {
 };
 
 export const DoseVaccination = {
-  query: "query doseVaccination($storeId: String!, $id: String!) {\n  vaccination(storeId: $storeId, id: $id) {\n    ...DoseEditorVaccination\n  }\n}\n\nfragment DoseEditorVaccination on VaccinationNode {\n  __typename\n  id\n  vaccinationDate\n  clinicianId\n  given\n  givenStoreId\n  notGivenReason\n  comment\n  facilityNameId\n  facilityFreeText\n  facilityName\n  item {\n    __typename\n    id\n    name\n  }\n  stockLine {\n    __typename\n    id\n    batch\n    itemId\n  }\n  invoice {\n    __typename\n    id\n  }\n}",
+  query: "query doseVaccination($storeId: String!, $id: String!) {\n  vaccination(storeId: $storeId, id: $id) {\n    ...DoseEditorVaccination\n  }\n}\n\nfragment DoseEditorVaccination on VaccinationNode {\n  __typename\n  id\n  vaccinationDate\n  clinicianId\n  given\n  givenStoreId\n  notGivenReason\n  comment\n  facilityNameId\n  facilityFreeText\n  facilityName\n  item {\n    __typename\n    id\n    name\n  }\n  stockLine {\n    __typename\n    id\n    batch\n    itemId\n    expiryDate\n    availableNumberOfPacks\n    packSize\n    onHold\n  }\n  invoice {\n    __typename\n    id\n  }\n}",
 } as TypedDocument<DoseVaccinationResult, DoseVaccinationVariables>;
 
 export type VaccineBatchesVariables = {

@@ -182,6 +182,33 @@ export const switchLabel = (
   return null;
 };
 
+/**
+ * Whether this save touches stock: the switch decides where it shows; where it
+ * doesn't, a new dose issues from its batch and an edit touches no stock
+ * (rules § the stock-transaction switch). The draft keeps the switch's last
+ * position after the switch goes away — a past date set back to today — so
+ * the position counts only while the switch applies.
+ */
+export const touchesStock = (draft: DoseDraft, ctx: DraftContext): boolean =>
+  switchLabel(draft, ctx) !== null
+    ? draft.createTransactions
+    : !ctx.vaccination;
+
+/**
+ * The batches the batch list shows: the store's batches of the item, and the
+ * record's own batch when it is of that item but no longer listed — a batch
+ * used up drops out of the store's list, and a recorded dose still opens
+ * showing it (OMS-REG-DIS-06.55).
+ */
+export const batchRows = <B extends { id: string }>(
+  listed: B[],
+  draft: DoseDraft,
+  held: (B & { itemId: string }) | null | undefined
+): B[] =>
+  held && held.itemId === draft.itemId && !listed.some(b => b.id === held.id)
+    ? [...listed, held]
+    : listed;
+
 /** The fields a save checks, each missing one marked in place. */
 export type DraftCheck = 'given' | 'notGivenReason' | 'facilityFreeText';
 
@@ -234,11 +261,12 @@ export const confirmations = (
 
 /**
  * The insert for a new dose (contract § recording a dose). The item and batch
- * go only with a given dose, the batch only at this store with the switch on;
- * the reason only with a dose not given.
+ * go only with a given dose, the batch only at this store when the save
+ * touches stock; the reason only with a dose not given.
  */
 export const insertInput = (
   draft: DoseDraft,
+  ctx: DraftContext,
   ids: { id: string; encounterId: string; vaccineCourseDoseId: string }
 ): InsertVaccinationVariables['input'] => {
   const free = draft.facility === OTHER_FACILITY;
@@ -254,14 +282,15 @@ export const insertInput = (
     notGivenReason: given ? null : draft.notGivenReason,
     itemId: given ? draft.itemId : null,
     stockLineId:
-      given && !free && draft.createTransactions ? draft.stockLineId : null,
+      given && !free && touchesStock(draft, ctx) ? draft.stockLineId : null,
   };
 };
 
 /**
  * The update for a recorded dose (contract § editing a recorded dose). A dose
  * given at another store sends its comment alone; any other sends every field,
- * clearing what no longer applies, with the switch as `updateTransactions`.
+ * clearing what no longer applies — a batch the list no longer shows included —
+ * with whether the save touches stock as `updateTransactions`.
  */
 export const updateInput = (
   draft: DoseDraft,
@@ -279,10 +308,10 @@ export const updateInput = (
     notGivenReason: given ? null : draft.notGivenReason,
     clinicianId: { value: free ? null : draft.clinicianId },
     itemId: { value: given ? draft.itemId : null },
-    stockLineId: { value: given && !free ? draft.stockLineId : null },
+    stockLineId: { value: showsBatch(draft, ctx) ? draft.stockLineId : null },
     facilityNameId: { value: free ? null : draft.facility },
     facilityFreeText: { value: free ? draft.facilityFreeText.trim() : null },
-    updateTransactions: draft.createTransactions,
+    updateTransactions: touchesStock(draft, ctx),
   };
 };
 

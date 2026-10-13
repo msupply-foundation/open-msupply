@@ -48,6 +48,10 @@ export const VaccinationCardRegion: Component<
   );
   const rows = () => gated(cardData)?.rows ?? [];
   const [opened, setOpened] = createSignal<CardRow>();
+  // A refused save can mean the card is out of date (the dose recorded
+  // meanwhile elsewhere): read it again once the editor closes — not while it
+  // is open, where new rows would change the draft's rules under the user.
+  let stale = false;
 
   return (
     <div data-testid="vaccination-card">
@@ -67,7 +71,16 @@ export const VaccinationCardRegion: Component<
             encounterClinicianId={props.encounterClinicianId}
             row={row()}
             rows={rows()}
-            onClose={() => setOpened(undefined)}
+            onClose={() => {
+              setOpened(undefined);
+              if (stale) {
+                stale = false;
+                void refetch();
+              }
+            }}
+            onRefused={() => {
+              stale = true;
+            }}
             onSaved={() => {
               setOpened(undefined);
               void refetch();

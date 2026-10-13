@@ -25,6 +25,10 @@ fragment DoseEditorVaccination on VaccinationNode {
     id
     batch
     itemId
+    expiryDate
+    availableNumberOfPacks
+    packSize
+    onHold
   }
   invoice {
     __typename
