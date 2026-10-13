@@ -48,6 +48,19 @@ export const useIsShortViewport = () =>
   createMediaQuery(mediaQuery.shortViewport);
 
 /**
+ * True where a detail view's totals band should give way to its headline
+ * figure riding the status bar instead — a narrow viewport OR a short one.
+ * Both the outbound shipment's and the purchase order's bands make the same
+ * trade, and it is one decision rather than two: a band that folded on one
+ * screen and not the other would read as a bug.
+ */
+export const useFoldTotalsIntoBar = () => {
+  const narrow = useIsNavOverlay();
+  const short = useIsShortViewport();
+  return () => narrow() || short();
+};
+
+/**
  * True on phone-ish widths (below the compact breakpoint) — where the DataTable
  * switches to its card layout and index.css drops the root font-size. Keeps the
  * 600px cutoff living once in breakpoints.ts (a CSS media query can't read a

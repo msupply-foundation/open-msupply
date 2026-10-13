@@ -4,6 +4,7 @@ import {
   createSignal,
   Show,
   Suspense,
+  type Accessor,
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
@@ -42,6 +43,7 @@ import {
 } from '@/ui/elements/table/Pagination';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { remToPx } from '@/ui/utils/rem';
+import { useFoldTotalsIntoBar } from '@/ui/utils/createMediaQuery';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
 import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
 import { createAddAction } from '@/ui/utils/keyActions';
@@ -91,6 +93,7 @@ import {
 import { PurchaseOrderDetailToolbar } from './PurchaseOrderDetailToolbar';
 import { PurchaseOrderSidePanel } from './PurchaseOrderSidePanel';
 import { PurchaseOrderStatusFooter } from './PurchaseOrderStatusFooter';
+import { PurchaseOrderTotalsStrip } from './PurchaseOrderTotalsStrip';
 import { PurchaseOrderDetailsTab } from './tabs/PurchaseOrderDetailsTab';
 import { PurchaseOrderShipmentsTab } from './tabs/PurchaseOrderShipmentsTab';
 import { PurchaseOrderDocumentsTab } from './tabs/PurchaseOrderDocumentsTab';
@@ -516,6 +519,17 @@ const PurchaseOrderDetailView: Component = () => {
     refetchAll();
   };
 
+  // Where height is scarce the band gives way to the order total alone, on
+  // the bar the screen already has (spec S7 § totals band).
+  const foldTotalsIntoBar = useFoldTotalsIntoBar();
+  // Takes the node accessor as an argument because `node` is the <Show>'s own
+  // binding below, not in scope here.
+  const inlineTotals = (node: Accessor<PurchaseOrderInfoFragment>) => (
+    <Show when={foldTotalsIntoBar()}>
+      <PurchaseOrderTotalsStrip inline node={node()} lineCount={lineCount()} />
+    </Show>
+  );
+
   const linePagination = (): PaginationProps => ({
     offset: query().offset,
     pageSize: query().first,
@@ -794,55 +808,67 @@ const PurchaseOrderDetailView: Component = () => {
                 </Header>
               }
               contentFooter={
-                <Show
-                  when={selectedIds().length > 0}
-                  fallback={
-                    <PurchaseOrderStatusFooter
+                <>
+                  {/* Above BOTH footer faces — an order-level fact, so a
+                      row selection doesn't take it away. */}
+                  <Show when={!foldTotalsIntoBar()}>
+                    <PurchaseOrderTotalsStrip
                       node={node()}
-                      authorisationRequired={prefs().authorisePurchaseOrder}
                       lineCount={lineCount()}
-                      emptyLineCount={emptyLineCount()}
-                      stockStillOwed={stockStillOwed()}
-                      pagination={linePagination()}
-                      onMove={onMove}
                     />
-                  }
-                >
-                  {/* Selecting lines swaps the ladder for the bulk-action bar
-                      (spec S7 § line-selection actions). Each action carries
-                      its own window: removal while drafting, closing for
-                      receipt on a Sent order only. The two bulk delivery-date
-                      actions belong to S15, which this pass does not build. */}
-                  <ContentFooter testId="actions-footer">
-                    <strong data-testid="selected-rows-count">
-                      {selectedIds().length} {t('label.selected')}
-                    </strong>
-                    <DeleteLinesAction
-                      storeId={params.storeId}
-                      selectedIds={selectedIds}
-                      disabled={!canAuthorLines(status())}
-                      onChanged={onLinesChanged}
-                    />
-                    <CloseLinesAction
-                      storeId={params.storeId}
-                      selectedIds={selectedIds}
-                      disabled={!canCloseLines(status())}
-                      onChanged={onLinesChanged}
-                    />
-                    {/* The pager rides the selection face too: ticking a row
-                        must not strip the way to the rest of the lines. */}
-                    <Pagination {...linePagination()} inBar />
-                    <ContentFooterActions>
-                      <Button
-                        variant="secondary"
-                        icon={<CloseIcon />}
-                        onClick={() => setSelectedIds([])}
-                      >
-                        {t('label.clear-selection')}
-                      </Button>
-                    </ContentFooterActions>
-                  </ContentFooter>
-                </Show>
+                  </Show>
+                  <Show
+                    when={selectedIds().length > 0}
+                    fallback={
+                      <PurchaseOrderStatusFooter
+                        node={node()}
+                        authorisationRequired={prefs().authorisePurchaseOrder}
+                        lineCount={lineCount()}
+                        emptyLineCount={emptyLineCount()}
+                        stockStillOwed={stockStillOwed()}
+                        pagination={linePagination()}
+                        totals={inlineTotals(node)}
+                        onMove={onMove}
+                      />
+                    }
+                  >
+                    {/* Selecting lines swaps the ladder for the bulk-action bar
+                        (spec S7 § line-selection actions). Each action carries
+                        its own window: removal while drafting, closing for
+                        receipt on a Sent order only. The two bulk delivery-date
+                        actions belong to S15, which this pass does not build. */}
+                    <ContentFooter testId="actions-footer">
+                      {inlineTotals(node)}
+                      <strong data-testid="selected-rows-count">
+                        {selectedIds().length} {t('label.selected')}
+                      </strong>
+                      <DeleteLinesAction
+                        storeId={params.storeId}
+                        selectedIds={selectedIds}
+                        disabled={!canAuthorLines(status())}
+                        onChanged={onLinesChanged}
+                      />
+                      <CloseLinesAction
+                        storeId={params.storeId}
+                        selectedIds={selectedIds}
+                        disabled={!canCloseLines(status())}
+                        onChanged={onLinesChanged}
+                      />
+                      {/* The pager rides the selection face too: ticking a row
+                          must not strip the way to the rest of the lines. */}
+                      <Pagination {...linePagination()} inBar />
+                      <ContentFooterActions>
+                        <Button
+                          variant="secondary"
+                          icon={<CloseIcon />}
+                          onClick={() => setSelectedIds([])}
+                        >
+                          {t('label.clear-selection')}
+                        </Button>
+                      </ContentFooterActions>
+                    </ContentFooter>
+                  </Show>
+                </>
               }
             >
               <TabPanel value="general">
