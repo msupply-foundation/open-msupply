@@ -325,6 +325,21 @@
   transition: background-color var(--motion-base);
 }
 
+/* Grouped rows (meta.groupRows; ui-standards § tables › grouped rows): a cell
+   the next row continues joins it — no divider between them, so the run reads
+   as one block and a row tint runs straight through. The divider is removed,
+   not made transparent: the borders are collapsed, so a transparent one would
+   show the table's own background as a seam across a tinted run. */
+.td[data-group-continues] {
+  border-block-end-style: none;
+}
+
+/* A column rule (meta.dividerEnd): down the column's inline-end edge, header
+   to footer — for a column that heads the ones after it. */
+:is(.th, .td, .tf)[data-divider-end] {
+  border-inline-end: 1px solid var(--color-divider);
+}
+
 /* The one body cell that must NOT clip absolutely: a frozen block's outer edge
    carries the freeze shadow as a strip drawn entirely OUTSIDE its box
    ([data-frozen-edge]::after, left/right: 100%), and .td's ellipsis clipping
@@ -1028,8 +1043,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
 
 /* Hover deepens whichever selection tint is showing (spec: blue 8 → 12%,
    verified 8 → 12%, warning 10 → 15%). Disabled has no deepen — flat. */
-:where(tbody) tr[data-selected]:not([data-row-state]):is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr[data-selected]:not([data-row-state]):is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr[data-selected]:not([data-row-state]):is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr[data-selected]:not([data-row-state]):is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(
     in srgb,
     var(--secondary-main) 12%,
@@ -1037,8 +1056,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-row-state='verified']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr[data-selected][data-row-state='verified']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr[data-selected][data-row-state='verified']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr[data-selected][data-row-state='verified']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(
     in srgb,
     var(--status-verified) 12%,
@@ -1046,8 +1069,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-row-state='warning']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr[data-selected][data-row-state='warning']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr[data-selected][data-row-state='warning']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr[data-selected][data-row-state='warning']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(
     in srgb,
     var(--color-warning) 15%,
@@ -1058,8 +1085,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
 /* Selected + status-tinted rows keep their own deepened tint on hover too —
    without these the blue hover rule above (same specificity, earlier… but
    matching :not([data-row-state])) would flash blue over the status tint. */
-:where(tbody) tr[data-selected][data-tint='success']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr[data-selected][data-tint='success']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr[data-selected][data-tint='success']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr[data-selected][data-tint='success']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(
     in srgb,
     var(--success-main) 12%,
@@ -1067,8 +1098,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-tint='warning']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr[data-selected][data-tint='warning']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr[data-selected][data-tint='warning']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr[data-selected][data-tint='warning']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(
     in srgb,
     var(--warning-main) 15%,
@@ -1076,8 +1111,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-tint='unfinished']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr[data-selected][data-tint='unfinished']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr[data-selected][data-tint='unfinished']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr[data-selected][data-tint='unfinished']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(
     in srgb,
     var(--marking-unfinished) 21%,
@@ -1085,8 +1124,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-tint='error']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr[data-selected][data-tint='error']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr[data-selected][data-tint='error']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr[data-selected][data-tint='error']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
 }
 
@@ -1096,8 +1139,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
    onRowClick) keep flat tints — hover means nothing there. Deeper than the
    selected mixes above so the pointer's row stands out of a selection too;
    AFTER them so the hover wins on a selected clickable row. */
-:where(tbody) tr.rowClickable[data-tint='success']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr.rowClickable[data-tint='success']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr.rowClickable[data-tint='success']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr.rowClickable[data-tint='success']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(
     in srgb,
     var(--success-main) 14%,
@@ -1105,8 +1152,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr.rowClickable[data-tint='warning']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr.rowClickable[data-tint='warning']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr.rowClickable[data-tint='warning']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr.rowClickable[data-tint='warning']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(
     in srgb,
     var(--warning-main) 17%,
@@ -1114,8 +1165,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr.rowClickable[data-tint='unfinished']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr.rowClickable[data-tint='unfinished']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr.rowClickable[data-tint='unfinished']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr.rowClickable[data-tint='unfinished']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(
     in srgb,
     var(--marking-unfinished) 16%,
@@ -1123,8 +1178,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr.rowClickable[data-tint='error']:is(:hover, [data-row-focused]) > .td,
-:where(tbody) tr.rowClickable[data-tint='error']:is(:hover, [data-row-focused]) > .selectCell {
+:where(tbody)
+  tr.rowClickable[data-tint='error']:is(:hover, [data-row-focused])
+  > .td,
+:where(tbody)
+  tr.rowClickable[data-tint='error']:is(:hover, [data-row-focused])
+  > .selectCell {
   background: color-mix(in srgb, var(--error-main) 14%, var(--surface-raised));
 }
 
@@ -1140,7 +1199,9 @@ tr[data-selected][data-tint='error'] > .selectCell {
    focus (rowNavigation defaults to `onRowClick !== undefined`, the same
    condition that stamps the class), and it lands the rule at the specificity
    its neighbours here carry, which is what keeps the file's ascending order. */
-:where(tbody) tr.rowClickable[data-row-state='disabled'][data-row-focused] > .td,
+:where(tbody)
+  tr.rowClickable[data-row-state='disabled'][data-row-focused]
+  > .td,
 :where(tbody)
   tr.rowClickable[data-row-state='disabled'][data-row-focused]
   > .selectCell {

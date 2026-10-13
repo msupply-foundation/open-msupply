@@ -17,6 +17,7 @@ import {
   createSolidTable,
   functionalUpdate,
   getCoreRowModel,
+  type Cell,
   type Column as TanColumn,
   type ColumnOrderState,
   type ColumnPinningState,
@@ -36,6 +37,7 @@ import {
   type ToolbarInputs,
 } from './toolbarState';
 import { autoFitWidth } from './autoFitWidth';
+import { groupPositions, type GroupPosition } from './rowGroups';
 import {
   resolveColumnVisibility,
   toColumnDef,
@@ -766,6 +768,24 @@ export function DataTable<T, K extends string, G extends string = never>(
   const rowNavigation = () =>
     props.rowNavigation ?? props.onRowClick !== undefined;
   const rowKeys = createMemo(() => table.getRowModel().rows.map(row => row.id));
+
+  // Grouped rows (meta.groupRows; ui-standards § tables › grouped rows): each
+  // grouped column's runs of equal values over the rows AS RENDERED — sorted,
+  // paged — keyed by row and column. Recomputed when the rows change; read by
+  // each table row's cells.
+  const groupRuns = createMemo(() => {
+    const rows = table.getRowModel().rows;
+    const runs = new Map<string, GroupPosition>();
+    for (const column of table.getAllLeafColumns()) {
+      if (!column.columnDef.meta?.groupRows) continue;
+      groupPositions(rows.map(row => row.getValue(column.id))).forEach(
+        (position, i) => runs.set(`${rows[i].id}\u0000${column.id}`, position)
+      );
+    }
+    return runs;
+  });
+  const groupPosition = (cell: Cell<T, unknown>): GroupPosition | undefined =>
+    groupRuns().get(`${cell.row.id}\u0000${cell.column.id}`);
   const rowFocus = createRowFocus({
     onOpenRow: key => {
       const row = table
@@ -1752,6 +1772,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             leadingPinnedStyle={leadingPinnedStyle}
                             frozenEdge={frozenEdge}
                             leadingIsFrozenEdge={leadingIsFrozenEdge()}
+                            groupPosition={groupPosition}
                             cellVisible={cell =>
                               showInTableView(cell.column.columnDef)
                             }
@@ -1793,6 +1814,11 @@ export function DataTable<T, K extends string, G extends string = never>(
                               <td
                                 class={styles.tf}
                                 data-align={header.column.columnDef.meta?.align}
+                                data-divider-end={
+                                  header.column.columnDef.meta?.dividerEnd
+                                    ? ''
+                                    : undefined
+                                }
                                 data-testid={`footer-${header.column.id}`}
                               >
                                 {renderTemplate(
