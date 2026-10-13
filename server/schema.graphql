@@ -1038,7 +1038,6 @@ type CampaignConnector {
 input CampaignFilterInput {
 	id: EqualFilterStringInput
 	name: StringFilterInput
-	kind: EqualFilterCampaignKindInput
 }
 
 enum CampaignKindNode {
@@ -2762,13 +2761,6 @@ input EqualFilterBigNumberInput {
 	notEqualTo: Int
 	equalAnyOrNull: [Int!]
 	notEqualAll: [Int!]
-}
-
-input EqualFilterCampaignKindInput {
-	equalTo: CampaignKindNode
-	equalAny: [CampaignKindNode!]
-	notEqualTo: CampaignKindNode
-	notEqualAll: [CampaignKindNode!]
 }
 
 input EqualFilterDocumentRegistryCategoryInput {

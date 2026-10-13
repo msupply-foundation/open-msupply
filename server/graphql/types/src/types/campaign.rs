@@ -2,7 +2,6 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, StringFilterInput},
-    map_filter,
     simple_generic_errors::NodeError,
 };
 use repository::{
@@ -57,18 +56,9 @@ impl From<CampaignKindNode> for CampaignKind {
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterCampaignKindInput {
-    pub equal_to: Option<CampaignKindNode>,
-    pub equal_any: Option<Vec<CampaignKindNode>>,
-    pub not_equal_to: Option<CampaignKindNode>,
-    pub not_equal_all: Option<Vec<CampaignKindNode>>,
-}
-
-#[derive(InputObject, Clone)]
 pub struct CampaignFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<StringFilterInput>,
-    pub kind: Option<EqualFilterCampaignKindInput>,
 }
 
 impl From<CampaignFilterInput> for CampaignFilter {
@@ -76,7 +66,6 @@ impl From<CampaignFilterInput> for CampaignFilter {
         CampaignFilter {
             id: f.id.map(EqualFilter::from),
             name: f.name.map(StringFilter::from),
-            kind: f.kind.map(|t| map_filter!(t, CampaignKind::from)),
         }
     }
 }

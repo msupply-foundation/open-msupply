@@ -1,4 +1,4 @@
-use super::campaign_row::{CampaignKind, CampaignRow, campaign};
+use super::campaign_row::{CampaignRow, campaign};
 use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -19,7 +19,6 @@ pub type CampaignSort = Sort<CampaignSortField>;
 pub struct CampaignFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
-    pub kind: Option<EqualFilter<CampaignKind>>,
 }
 
 impl CampaignFilter {
@@ -34,11 +33,6 @@ impl CampaignFilter {
 
     pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
-        self
-    }
-
-    pub fn kind(mut self, filter: EqualFilter<CampaignKind>) -> Self {
-        self.kind = Some(filter);
         self
     }
 }
@@ -111,10 +105,9 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
     let mut query = campaign::table.into_boxed();
 
     if let Some(f) = filter {
-        let CampaignFilter { id, name, kind } = f;
+        let CampaignFilter { id, name } = f;
 
         apply_equal_filter!(query, id, campaign::id);
-        apply_equal_filter!(query, kind, campaign::kind);
 
         if let Some(name_filter) = name
             && let Some(name_to_match) = name_filter.equal_to
@@ -207,6 +200,8 @@ mod tests {
         .unwrap();
 
         let repo = CampaignRepository::new(&storage_connection);
+        // The register's read is UNFILTERED — both kinds come back together, and the
+        // Activity picker tiers them client-side from this one list
         let kinds_of = |filter: CampaignFilter| {
             let mut rows = repo
                 .query_by_filter(filter)
@@ -228,14 +223,6 @@ mod tests {
                 ),
                 ("routine".to_string(), CampaignKind::Routine),
             ]
-        );
-        assert_eq!(
-            kinds_of(CampaignFilter::new().kind(EqualFilter::equal_to(CampaignKind::Routine))),
-            vec![("routine".to_string(), CampaignKind::Routine)]
-        );
-        assert_eq!(
-            kinds_of(CampaignFilter::new().kind(EqualFilter::equal_to(CampaignKind::Campaign))),
-            vec![("a_campaign".to_string(), CampaignKind::Campaign)]
         );
     }
 }
