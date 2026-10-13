@@ -15,6 +15,9 @@
         <td>{{t(k="report.pack-size", f="Pack size")}}</td>
         <td>{{t(k="report.pack-quantity", f="Pack quantity")}}</td>
         <td>{{t(k="label.soh", f="SOH")}}</td>
+        {% if data.showDoses %}
+        <td>{{t(k="label.doses", f="Doses")}}</td>
+        {% endif %}
         <td>{{t(k="label.supplier", f="Supplier")}}</td>
       </tr>
     </thead>
@@ -39,6 +42,9 @@
         <td style="text-align: right">{{
           stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)
         }}</td>
+        {% if data.showDoses %}
+        <td style="text-align: right">{{stockLine.dosesOnHand | default(value='')}}</td>
+        {% endif %}
         <td>{{stockLine.supplierName | default(value='')}}</td>    
       </tr>
       {% endfor %}

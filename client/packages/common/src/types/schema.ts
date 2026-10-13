@@ -1204,6 +1204,16 @@ export type BatchStocktakeResponse = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
+/**
+ * One store's edit of a global preference it may override. A null `value`
+ * CLEARS the store's override, returning the store to the global value — the
+ * only way back once a store has pinned its own.
+ */
+export type BoolStoreOverrideInput = {
+  storeId: Scalars['String']['input'];
+  value?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type BoolStorePrefInput = {
   storeId: Scalars['String']['input'];
   value: Scalars['Boolean']['input'];
@@ -3471,6 +3481,25 @@ export type ExistingLinesInput = {
   returnId: Scalars['String']['input'];
 };
 
+/** How this server's registry stands for a document type the bundle declares. */
+export enum ExistingRegistryEntryNode {
+  /** Several entries for the type: install is refused. */
+  Ambiguous = 'AMBIGUOUS',
+  /**
+   * An entry of another category (`existingEntryCategory`) than the one
+   * declared: install is refused.
+   */
+  CategoryMismatch = 'CATEGORY_MISMATCH',
+  /** No entry: install creates one. */
+  None = 'NONE',
+  /** The plugin's own entry, from an earlier install. */
+  Owned = 'OWNED',
+  /** Another plugin's entry (`existingEntryOwner`): install is refused. */
+  OwnedByAnotherPlugin = 'OWNED_BY_ANOTHER_PLUGIN',
+  /** An entry no plugin installed: install needs the type named in `takeOver`. */
+  Unowned = 'UNOWNED',
+}
+
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String']['output'];
@@ -3539,6 +3568,80 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
     description: Scalars['String']['output'];
     key: ForeignKey;
   };
+
+/**
+ * What installing the uploaded bundle's form plugins would meet on this
+ * server, for the choices `installUploadedPlugin` takes: the program for
+ * each key, the types to take over, and the types whose old-client form may
+ * go blank.
+ */
+export type FormInstallPreviewNode = {
+  __typename: 'FormInstallPreviewNode';
+  formPlugins: Array<FormPluginPreviewNode>;
+  /** The programs on this server, one to choose for each program key. */
+  programs: Array<ProgramNode>;
+};
+
+/** One document type a form plugin declares, checked against this server. */
+export type FormPluginDocumentTypeNode = {
+  __typename: 'FormPluginDocumentTypeNode';
+  /**
+   * True when installing would leave the type's form blank on sites still
+   * running the old client, which install refuses unless the type is named
+   * in `blankOldUi`.
+   */
+  blanksOldUi: Scalars['Boolean']['output'];
+  category: DocumentRegistryCategoryNode;
+  documentType: Scalars['String']['output'];
+  existingEntry: ExistingRegistryEntryNode;
+  /** The existing entry's category, for `CATEGORY_MISMATCH`. */
+  existingEntryCategory?: Maybe<DocumentRegistryCategoryNode>;
+  /** The unowned entry's id, for `UNOWNED`. */
+  existingEntryId?: Maybe<Scalars['String']['output']>;
+  /** The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`. */
+  existingEntryOwner?: Maybe<Scalars['String']['output']>;
+  /**
+   * The program the existing entry is in (`OWNED` or `UNOWNED`), where its
+   * context is a program's: what a take-over keeps the type under unless
+   * its key is moved, so a screen can start the key on it.
+   */
+  existingEntryProgram?: Maybe<ProgramNode>;
+  name: Scalars['String']['output'];
+  /** `None` for the Patient type, whose context is fixed. */
+  programKey?: Maybe<Scalars['String']['output']>;
+  /**
+   * The refusals no choice in `installUploadedPlugin` can get past, in the
+   * words that mutation would refuse with: a schema version already
+   * installed with other content, a version documents are pinned to left
+   * out, a take-over that changes the deployment's rules or lacks its
+   * current version, a second patient type. Empty when install could go
+   * ahead with the right choices.
+   */
+  refusals: Array<Scalars['String']['output']>;
+};
+
+export type FormPluginPreviewNode = {
+  __typename: 'FormPluginPreviewNode';
+  documentTypes: Array<FormPluginDocumentTypeNode>;
+  pluginCode: Scalars['String']['output'];
+  programKeys: Array<FormPluginProgramKeyNode>;
+};
+
+/**
+ * One of a form plugin's program keys, with the program an earlier install
+ * bound it to.
+ */
+export type FormPluginProgramKeyNode = {
+  __typename: 'FormPluginProgramKeyNode';
+  /**
+   * The program the key is already bound to; `None` on a first install,
+   * when `programs` must choose one.
+   */
+  boundProgram?: Maybe<ProgramNode>;
+  /** The declared document types that name this key. */
+  documentTypes: Array<Scalars['String']['output']>;
+  programKey: Scalars['String']['output'];
+};
 
 export type FormSchemaConnector = {
   __typename: 'FormSchemaConnector';
@@ -4902,6 +5005,27 @@ export type InsertVaccineCourseInput = {
 export type InsertVaccineCourseResponse =
   | InsertVaccineCourseError
   | VaccineCourseNode;
+
+/**
+ * One registry entry as an install left it: the report the CLI prints,
+ * typed for a screen.
+ */
+export type InstalledDocumentTypeNode = {
+  __typename: 'InstalledDocumentTypeNode';
+  contextId: Scalars['String']['output'];
+  documentType: Scalars['String']['output'];
+  formSchemaId: Scalars['String']['output'];
+  outcome: RegistryOutcomeNode;
+  pluginCode: Scalars['String']['output'];
+  programKey?: Maybe<Scalars['String']['output']>;
+  /**
+   * Schema versions this install added; versions already present keep
+   * their schema.
+   */
+  schemasAdded: Scalars['Int']['output'];
+  /** Versions already present whose legacy UI schema this install replaced. */
+  uiSchemasUpdated: Scalars['Int']['output'];
+};
 
 export type InstalledPluginConnector = {
   __typename: 'InstalledPluginConnector';
@@ -7589,6 +7713,12 @@ export type OutboundShipmentLineInput = {
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type OverridingStoreNode = {
+  __typename: 'OverridingStoreNode';
+  storeId: Scalars['String']['output'];
+  storeName: Scalars['String']['output'];
+};
+
 export type PackSizeCodeCombinationExists =
   InsertPurchaseOrderLineErrorInterface & {
     __typename: 'PackSizeCodeCombinationExists';
@@ -7882,6 +8012,21 @@ export type PluginDataSortInput = {
 
 export type PluginInfoNode = {
   __typename: 'PluginInfoNode';
+  /**
+   * How the bundle's form plugins stand against this server, read before
+   * installing: each program key's current program, each document type's
+   * existing registry entry and whether installing it would blank the old
+   * client's form, and the programs to choose from. Null on an install's
+   * result.
+   */
+  formInstallPreview?: Maybe<FormInstallPreviewNode>;
+  /**
+   * What the install did to each form plugin's registry entries: the
+   * report the CLI prints, one node per declared type. Null for an
+   * uploaded bundle not yet installed, and empty for a bundle with no form
+   * plugin.
+   */
+  installedDocumentTypes?: Maybe<Array<InstalledDocumentTypeNode>>;
   pluginInfo: Scalars['JSON']['output'];
 };
 
@@ -7900,6 +8045,17 @@ export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   key: PreferenceKey;
   /**
+   * The stores that pin their own value instead of following this global
+   * one, by store name. Empty where none do; null unless this is the global
+   * listing of an overridable preference.
+   */
+  overridingStores?: Maybe<Array<OverridingStoreNode>>;
+  /**
+   * How this store arrives at `value`, for a global preference a store may
+   * override. Null for every other preference, and in the global listing.
+   */
+  storeOverride?: Maybe<StoreOverrideNode>;
+  /**
    * WARNING: Type loss - holds any kind of pref value (for edit UI).
    * Use the PreferencesNode to load the strictly typed value.
    */
@@ -7917,6 +8073,7 @@ export enum PreferenceKey {
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
+  DecimalPlacesForNumbers = 'decimalPlacesForNumbers',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
@@ -7995,6 +8152,7 @@ export type PreferencesNode = {
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
+  decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
@@ -9922,6 +10080,14 @@ export type RefreshTokenErrorInterface = {
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
 
+/** What an install did to one registry entry. */
+export enum RegistryOutcomeNode {
+  Created = 'CREATED',
+  TakenOver = 'TAKEN_OVER',
+  Unchanged = 'UNCHANGED',
+  Updated = 'UPDATED',
+}
+
 export type RepackConnector = {
   __typename: 'RepackConnector';
   nodes: Array<RepackNode>;
@@ -11172,6 +11338,20 @@ export type StoreNode = {
 
 export type StoreNodeNameArgs = {
   storeId: Scalars['String']['input'];
+};
+
+export type StoreOverrideNode = {
+  __typename: 'StoreOverrideNode';
+  /**
+   * The global value this store follows, or would return to by clearing the
+   * override. Same type loss as `value`.
+   */
+  globalValue: Scalars['JSON']['output'];
+  /**
+   * Whether this store pins its own value rather than following the global
+   * one.
+   */
+  isOverridden: Scalars['Boolean']['output'];
 };
 
 export type StorePreferenceNode = {
@@ -13087,6 +13267,9 @@ export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
+  authorisePurchaseOrderStoreOverride?: InputMaybe<
+    Array<BoolStoreOverrideInput>
+  >;
   backdating?: InputMaybe<BackdatingInput>;
   blindStocktake?: InputMaybe<Array<BoolStorePrefInput>>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
@@ -13099,6 +13282,7 @@ export type UpsertPreferencesInput = {
    */
   customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
+  decimalPlacesForNumbers?: InputMaybe<Scalars['Int']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;

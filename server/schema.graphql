@@ -968,6 +968,16 @@ type BatchStocktakeResponse {
 	deleteStocktakes: [DeleteStocktakeResponseWithId!]
 }
 
+"""
+One store's edit of a global preference it may override. A null `value`
+CLEARS the store's override, returning the store to the global value — the
+only way back once a store has pinned its own.
+"""
+input BoolStoreOverrideInput {
+	storeId: String!
+	value: Boolean
+}
+
 input BoolStorePrefInput {
 	storeId: String!
 	value: Boolean!
@@ -2892,6 +2902,37 @@ input ExistingLinesInput {
 	returnId: String!
 }
 
+"""
+How this server's registry stands for a document type the bundle declares.
+"""
+enum ExistingRegistryEntryNode {
+	"""
+	No entry: install creates one.
+	"""
+	NONE
+	"""
+	The plugin's own entry, from an earlier install.
+	"""
+	OWNED
+	"""
+	An entry no plugin installed: install needs the type named in `takeOver`.
+	"""
+	UNOWNED
+	"""
+	Another plugin's entry (`existingEntryOwner`): install is refused.
+	"""
+	OWNED_BY_ANOTHER_PLUGIN
+	"""
+	Several entries for the type: install is refused.
+	"""
+	AMBIGUOUS
+	"""
+	An entry of another category (`existingEntryCategory`) than the one
+	declared: install is refused.
+	"""
+	CATEGORY_MISMATCH
+}
+
 type FailedToFetchReportData implements PrintReportErrorInterface {
 	description: String!
 	errors: JSON!
@@ -2929,6 +2970,90 @@ enum ForeignKey {
 type ForeignKeyError implements InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & InsertInboundShipmentLineErrorInterface & UpdateInboundShipmentLineErrorInterface & DeleteInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdatePrescriptionLineErrorInterface & DeletePrescriptionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & DeleteResponseRequisitionLineErrorInterface & SetPrescribedQuantityErrorInterface & RefreshAncillaryItemsErrorInterface & InsertResponseRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & InsertPurchaseOrderLineErrorInterface {
 	description: String!
 	key: ForeignKey!
+}
+
+"""
+What installing the uploaded bundle's form plugins would meet on this
+server, for the choices `installUploadedPlugin` takes: the program for
+each key, the types to take over, and the types whose old-client form may
+go blank.
+"""
+type FormInstallPreviewNode {
+	formPlugins: [FormPluginPreviewNode!]!
+	"""
+	The programs on this server, one to choose for each program key.
+	"""
+	programs: [ProgramNode!]!
+}
+
+"""
+One document type a form plugin declares, checked against this server.
+"""
+type FormPluginDocumentTypeNode {
+	documentType: String!
+	name: String!
+	category: DocumentRegistryCategoryNode!
+	"""
+	`None` for the Patient type, whose context is fixed.
+	"""
+	programKey: String
+	existingEntry: ExistingRegistryEntryNode!
+	"""
+	The unowned entry's id, for `UNOWNED`.
+	"""
+	existingEntryId: String
+	"""
+	The owning plugin's code, for `OWNED_BY_ANOTHER_PLUGIN`.
+	"""
+	existingEntryOwner: String
+	"""
+	The existing entry's category, for `CATEGORY_MISMATCH`.
+	"""
+	existingEntryCategory: DocumentRegistryCategoryNode
+	"""
+	The program the existing entry is in (`OWNED` or `UNOWNED`), where its
+	context is a program's: what a take-over keeps the type under unless
+	its key is moved, so a screen can start the key on it.
+	"""
+	existingEntryProgram: ProgramNode
+	"""
+	True when installing would leave the type's form blank on sites still
+	running the old client, which install refuses unless the type is named
+	in `blankOldUi`.
+	"""
+	blanksOldUi: Boolean!
+	"""
+	The refusals no choice in `installUploadedPlugin` can get past, in the
+	words that mutation would refuse with: a schema version already
+	installed with other content, a version documents are pinned to left
+	out, a take-over that changes the deployment's rules or lacks its
+	current version, a second patient type. Empty when install could go
+	ahead with the right choices.
+	"""
+	refusals: [String!]!
+}
+
+type FormPluginPreviewNode {
+	pluginCode: String!
+	programKeys: [FormPluginProgramKeyNode!]!
+	documentTypes: [FormPluginDocumentTypeNode!]!
+}
+
+"""
+One of a form plugin's program keys, with the program an earlier install
+bound it to.
+"""
+type FormPluginProgramKeyNode {
+	programKey: String!
+	"""
+	The declared document types that name this key.
+	"""
+	documentTypes: [String!]!
+	"""
+	The program the key is already bound to; `None` on a first install,
+	when `programs` must choose one.
+	"""
+	boundProgram: ProgramNode
 }
 
 type FormSchemaConnector {
@@ -4206,6 +4331,28 @@ input InsertVaccineCourseInput {
 }
 
 union InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode
+
+"""
+One registry entry as an install left it: the report the CLI prints,
+typed for a screen.
+"""
+type InstalledDocumentTypeNode {
+	pluginCode: String!
+	documentType: String!
+	programKey: String
+	contextId: String!
+	formSchemaId: String!
+	outcome: RegistryOutcomeNode!
+	"""
+	Schema versions this install added; versions already present keep
+	their schema.
+	"""
+	schemasAdded: Int!
+	"""
+	Versions already present whose legacy UI schema this install replaced.
+	"""
+	uiSchemasUpdated: Int!
+}
 
 type InstalledPluginConnector {
 	nodes: [InstalledPluginNode!]!
@@ -6007,6 +6154,11 @@ input OutboundShipmentLineInput {
 	transferComment: String
 }
 
+type OverridingStoreNode {
+	storeId: String!
+	storeName: String!
+}
+
 type PackSizeCodeCombinationExists implements InsertPurchaseOrderLineErrorInterface {
 	description: String!
 	itemCode: String!
@@ -6288,6 +6440,21 @@ input PluginDataSortInput {
 
 type PluginInfoNode {
 	pluginInfo: JSON!
+	"""
+	How the bundle's form plugins stand against this server, read before
+	installing: each program key's current program, each document type's
+	existing registry entry and whether installing it would blank the old
+	client's form, and the programs to choose from. Null on an install's
+	result.
+	"""
+	formInstallPreview: FormInstallPreviewNode
+	"""
+	What the install did to each form plugin's registry entries: the
+	report the CLI prints, one node per declared type. Null for an
+	uploaded bundle not yet installed, and empty for a bundle with no form
+	plugin.
+	"""
+	installedDocumentTypes: [InstalledDocumentTypeNode!]
 }
 
 """
@@ -6313,6 +6480,17 @@ type PreferenceDescriptionNode {
 	Use the PreferencesNode to load the strictly typed value.
 	"""
 	value: JSON!
+	"""
+	How this store arrives at `value`, for a global preference a store may
+	override. Null for every other preference, and in the global listing.
+	"""
+	storeOverride: StoreOverrideNode
+	"""
+	The stores that pin their own value instead of following this global
+	one, by store name. Empty where none do; null unless this is the global
+	listing of an overridable preference.
+	"""
+	overridingStores: [OverridingStoreNode!]
 }
 
 enum PreferenceKey {
@@ -6336,6 +6514,7 @@ enum PreferenceKey {
 	backdating
 	receivePaymentsFromPrescriptions
 	globalLogo
+	decimalPlacesForNumbers
 	blindStocktake
 	manageVaccinesInDoses
 	manageVvmStatusForStock
@@ -6413,6 +6592,7 @@ type PreferencesNode {
 	Large - don't add to eagerly-fetched preference queries.
 	"""
 	globalLogo: String!
+	decimalPlacesForNumbers: Int!
 	blindStocktake: Boolean!
 	manageVaccinesInDoses: Boolean!
 	manageVvmStatusForStock: Boolean!
@@ -7932,6 +8112,16 @@ interface RefreshTokenErrorInterface {
 
 union RefreshTokenResponse = RefreshTokenError | RefreshToken
 
+"""
+What an install did to one registry entry.
+"""
+enum RegistryOutcomeNode {
+	CREATED
+	UPDATED
+	TAKEN_OVER
+	UNCHANGED
+}
+
 type RepackConnector {
 	totalCount: Int!
 	nodes: [RepackNode!]!
@@ -9132,6 +9322,19 @@ type StoreNode {
 	"""
 	logo: String
 	createdDate: NaiveDate
+}
+
+type StoreOverrideNode {
+	"""
+	Whether this store pins its own value rather than following the global
+	one.
+	"""
+	isOverridden: Boolean!
+	"""
+	The global value this store follows, or would return to by clearing the
+	override. Same type loss as `value`.
+	"""
+	globalValue: JSON!
 }
 
 type StorePreferenceNode {
@@ -10922,6 +11125,7 @@ union UpsertPackVariantResponse = UpsertItemVariantError | ItemVariantNode
 input UpsertPreferencesInput {
 	allowTrackingOfStockByDonor: Boolean
 	authorisePurchaseOrder: Boolean
+	authorisePurchaseOrderStoreOverride: [BoolStoreOverrideInput!]
 	customTranslations: JSONObject
 	"""
 	v2 custom translations, shape: `language -> namespace -> key -> value`.
@@ -10945,6 +11149,7 @@ input UpsertPreferencesInput {
 	backdating: BackdatingInput
 	receivePaymentsFromPrescriptions: Boolean
 	globalLogo: String
+	decimalPlacesForNumbers: Int
 	blindStocktake: [BoolStorePrefInput!]
 	manageVaccinesInDoses: [BoolStorePrefInput!]
 	manageVvmStatusForStock: [BoolStorePrefInput!]

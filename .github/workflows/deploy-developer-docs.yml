@@ -9,6 +9,20 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/deploy-developer-docs.yml'
+      # The UI showcase is published into this site at /showcase/, so the
+      # sources it is built from have to redeploy it. Narrow on purpose: the
+      # component library and the showcase's own entry points, not all of
+      # frontend/ — a Pages deploy is whole-artifact, so every match here pays
+      # for the docs build too.
+      - 'frontend/src/ui/**'
+      - 'frontend/src/ui-showcase/**'
+      - 'frontend/src/showcase.tsx'
+      - 'frontend/showcase.html'
+      - 'frontend/vite/**'
+      - 'frontend/vite.config.ts'
+      - 'frontend/vite.showcase.config.ts'
+      - 'frontend/package.json'
+      - 'frontend/pnpm-lock.yaml'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -28,20 +42,70 @@ concurrency:
 jobs:
   # Single deploy job since we're just deploying
   deploy:
+    # This file lives in both the internal repo and its public mirror, but the
+    # site is only published from the public one: that repo's GitHub Pages is
+    # the public dev-docs site. Internally the job is skipped, so a change
+    # merged here goes live only after mirror-public.yaml syncs it out.
+    if: github.repository == 'msupply-foundation/open-msupply'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     # ubuntu-latest, not the self-hosted mac: shalzz/zola-deploy-action is a
     # Docker container action, which GitHub only schedules on Linux runners.
     runs-on: ubuntu-latest
+    # Was ~50s for the docs alone; the showcase build dominates now.
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      # ── The UI showcase, published at /showcase/ ───────────────────────────
+      # Built BEFORE Zola so a broken showcase fails the run early and cheaply,
+      # but copied in AFTER, because `zola build` clears its output directory.
+      # No `continue-on-error`: a broken showcase is a broken site, and
+      # frontend PRs are already gated by frontend-check-test.yaml.
+      - uses: pnpm/action-setup@v4
+        with:
+          # The repo root package.json declares yarn (legacy client
+          # workspace) — read the pnpm version from the frontend's.
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # Deliberately NOT setup-node's `cache: pnpm`; see the same step in
+      # frontend-check-test.yaml for why (corepack refuses to run pnpm from the
+      # repo root, where package.json declares yarn).
+      - name: Locate the pnpm store
+        working-directory: frontend
+        run: echo "PNPM_STORE=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+      - uses: actions/cache@v5
+        with:
+          path: ${{ env.PNPM_STORE }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+      - name: pnpm install
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      - name: Build the UI showcase
+        working-directory: frontend
+        # The trailing slash is required: Vite concatenates `base` + filename
+        # directly. Hash routing means Pages needs no rewrite rules, and the
+        # build carries no backend (src/ui-showcase/README.md).
+        env:
+          VITE_BASE_PATH: /showcase/
+        run: pnpm build:showcase
+
       - name: Zola Build
         uses: shalzz/zola-deploy-action@v0.22.1
         env:
           BUILD_DIR: ./docs
           BUILD_ONLY: true
+      - name: Add the showcase to the site
+        # docs/public is created by the Zola step, a Docker container action
+        # running as root — hence sudo.
+        run: sudo cp -r frontend/dist-showcase docs/public/showcase
+
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact

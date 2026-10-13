@@ -1,4 +1,4 @@
-import { formatNumber, tPlural, type LocaleKey } from '@/intl';
+import { roundedText, tPlural, type LocaleKey } from '@/intl';
 import type { PurchaseOrderStatus } from '../../purchaseOrderStatus';
 import type {
   InsertPurchaseOrderLineVariables,
@@ -86,7 +86,7 @@ export const draftFromLine = (
 });
 
 /**
- * What a new line is born as (OMS-FUN-PO-02.7): the item's default pack size,
+ * What a new line is born as (OMS-FUN-PO-02.7, OMS-FUN-PO-02.24): the item's default pack size,
  * no quantity, no prices, and its dates seeded from the order — the order's
  * requested delivery date and the latest expected date already on its lines.
  */
@@ -114,7 +114,7 @@ export const newLineDraft = (
 // ─── Quantities ─────────────────────────────────────────────────────────────
 
 /**
- * Which quantity a units figure writes (OMS-FUN-PO-02.12): both, equal, while
+ * Which quantity a units figure writes (OMS-FUN-PO-02.12, .25): both, equal, while
  * drafting; the adjusted one alone from Ready for sending.
  */
 export const quantityPatch = (
@@ -175,10 +175,10 @@ export type Prices = Pick<
 >;
 
 /**
- * Editing any one of the three recomputes the others (OMS-FUN-PO-02.14,
- * OMS-FUN-PO-07.2): a new before-price or percentage recomputes the
- * after-price; a new after-price recomputes the percentage. The percentage is
- * held between 0 and 100.
+ * Editing any one of the three recomputes the others (OMS-FUN-PO-07.2): a
+ * new before-price or percentage recomputes the after-price; a new
+ * after-price recomputes the percentage. The percentage is held between 0
+ * and 100.
  */
 export const repriced = (changed: keyof Prices, prices: Prices): Prices => {
   const { pricePerPackBeforeDiscount, pricePerPackAfterDiscount } = prices;
@@ -224,7 +224,7 @@ export type LineGates = {
    * opened from its row (OMS-FUN-PO-02.11).
    */
   item: boolean;
-  /** The packs input (OMS-FUN-PO-02.13). */
+  /** The packs input (OMS-REG-PO-01.1, OMS-REG-PO-01.2). */
   packs: boolean;
   /** Pack size, both prices, the supplier's code and the manufacturer. */
   drafting: boolean;
@@ -271,7 +271,7 @@ const nullable = (value: string) => ({ value: value || null });
 
 /**
  * What a save sends: only the fields that moved, so an untouched line sends
- * nothing at all (OMS-FUN-PO-02.15) and an unchanged quantity never trips a
+ * nothing at all (OMS-FUN-PO-02.26) and an unchanged quantity never trips a
  * gate that fires on change alone. Undefined when nothing moved.
  */
 export const lineChanges = (
@@ -340,4 +340,4 @@ export const orderedElsewhere = (
   units: number,
   unitName: string | null
 ): string =>
-  `${formatNumber(units)} ${unitName || tPlural('label.units-plural', units)}`;
+  `${roundedText(units)} ${unitName || tPlural('label.units-plural', units)}`;
