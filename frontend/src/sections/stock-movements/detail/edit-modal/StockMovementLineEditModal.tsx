@@ -8,7 +8,6 @@ import {
   type Component,
 } from 'solid-js';
 import { t } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import { generateUUID } from '@/uuid';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
@@ -40,6 +39,8 @@ import {
   isCandidateDisabled,
 } from './stockMovementLineEdit';
 import type { StockMovementLineFragment } from '../stockMovementDetail.generated';
+import { roundedText } from '@/intl/numberDisplay';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The line editor (spec/stock-movements/ui-surface.md S3): one move per line —
 // item → batch → destination → quantity, progressively disclosed. Add mode
@@ -440,10 +441,10 @@ export const StockMovementLineEditModal: Component<
             </FieldRow>
             <FieldRow label={t('label.for-reference')}>
               <span data-testid="for-reference-field">
-                {t('label.pack-size')} {formatNumber(batch().packSize)}
+                {t('label.pack-size')} <Num value={batch().packSize} />
                 {' · '}
                 {t('label.packs-in-stock')}{' '}
-                {formatNumber(batch().totalNumberOfPacks)}
+                <Num value={batch().totalNumberOfPacks} />
               </span>
             </FieldRow>
             <FieldRow label={t('label.packs-to-move')}>
@@ -462,7 +463,7 @@ export const StockMovementLineEditModal: Component<
                 decimalLimit={10}
                 value={packs()}
                 helperText={t('messages.move-all-or-partial', {
-                  max: formatNumber(batch().availableNumberOfPacks),
+                  max: roundedText(batch().availableNumberOfPacks),
                 })}
                 onChange={value => setEnteredPacks(value ?? null)}
               />
