@@ -1,11 +1,12 @@
 /*
  * Pure conversions shared by DateField / DateTimeField / TimeField. All local
  * arithmetic uses the device timezone (see ui-standards/inputs.md § Dates &
- * times); no date library — plain JS Date, so nothing is added to the bundle.
- * Month names and the default pattern follow the APP language (`locale()` and
- * `localeDateFormat()`, accepted src/intl boundary imports like NumberField's
- * — src/ui/CLAUDE.md), not the device locale: a French UI shows "juil.",
- * whatever the OS is set to.
+ * times) on plain JS Dates; the parsing and formatting here use no date
+ * library. The default pattern is the app language's date-fns short date
+ * (`localeDateFormat()`), the same `P` the table cells render, and month names
+ * come from `locale()`: both are src/intl boundary imports recorded in
+ * src/ui/CLAUDE.md. They follow the APP language, not the device locale: a
+ * French UI shows "juil.", whatever the OS is set to.
  */
 
 import { locale, localeDateFormat } from '../../../intl';

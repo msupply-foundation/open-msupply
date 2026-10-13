@@ -34,14 +34,13 @@ import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated'
 // "MOHAMED, DJIBRIL ABDULLAHI" is 26 characters — so they take the biggest
 // shares; the date is a fixed format that can never use more than its 9rem, so
 // it's pinned (weight 0) instead of claiming a sixth of the strip; Program sits
-// between. The 9rem is measured against the format, not guessed: 9rem leaves
-// 95px of value room, which held the former `dd MMM yyyy` default at 74px in
-// English, 77px in French ("30 juil. 2026") and 80px in Arabic ("٣٠ سبتمبر
-// ٢٠٢٦" — no abbreviation exists), the widest shipped locale; the numeric
-// default (#774, "30/07/2026") is narrower still in every language. A caller
-// configuring a long-month format would need a wider floor. The prominent
-// custom fields carry their own narrower share (CustomFieldsToolbar's `field`
-// layout).
+// between. The 9rem is measured against the format, not guessed: it leaves
+// 95px of value room. The default numeric date ("30/07/2026") fits it in every
+// language, and so does a `dd MMM yyyy` format: 74px in English, 77px in
+// French ("30 juil. 2026"), 80px in Arabic ("٣٠ سبتمبر ٢٠٢٦" — no
+// abbreviation exists), the widest shipped locale. A caller configuring a
+// long-month format would need a wider floor. The prominent custom fields
+// carry their own narrower share (CustomFieldsToolbar's `field` layout).
 //
 // The FLOORS are chosen so this row's total is no larger than the unweighted
 // row's was (11 + 10 + 9 + 10 + 9.5 + 9.5 = 59rem against 6 × 10rem), because a

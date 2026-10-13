@@ -1313,12 +1313,11 @@ const StocktakeLineEditContent = (
       c: { key: 'expiryDate' },
       header: () => t('label.expiry-date'),
       cardGroup: 'batch',
-      // 11, not the 10 the width table lists for a date: 10rem was measured
+      // 11, not the 10 the width table lists for a date: that 10 is measured
       // against a rendered VALUE, but an empty DateField shows its all-caps
-      // placeholder, which is wider than the digits it stands for — at 10rem
-      // the then-default `DD MMM YYYY` clipped to "DD MMM YYY". The numeric
-      // default (#774) hints `DD/MM/YYYY`, 93px to the old 104px at 14px, so
-      // the floor has slack it did not have; it is kept until re-measured.
+      // hint, which is wider than the digits it stands for. At the small
+      // size's 13px `DD/MM/YYYY` is 87px; a 10rem cell leaves the input 79px
+      // of text room and clips it to "DD/MM/YYY", and 11rem leaves 95px.
       meta: { cardWidth: { min: 11, max: 12.5, weight: 1 }, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;
@@ -1524,8 +1523,8 @@ const StocktakeLineEditContent = (
       c: { key: 'manufactureDate' },
       header: () => t('label.manufacture-date'),
       cardGroup: 'batch',
-      // 11 for the placeholder, as the expiry date above — and this is the field
-      // where it showed, since it is usually the empty one.
+      // 11 for the empty field's hint, as the expiry date above; this is the
+      // date that is usually empty.
       meta: { cardWidth: { min: 11, max: 12.5, weight: 1 }, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;

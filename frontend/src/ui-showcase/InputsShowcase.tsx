@@ -28,6 +28,7 @@ import {
   getCurrencyInfo,
   homeCurrency,
   locale,
+  localisedDate,
   setHomeCurrency,
 } from '../intl';
 import { FormPreview, Intro, Lead, Note, SectionTOC } from './common';
@@ -686,7 +687,9 @@ export const InputsShowcase = () => {
             <strong>type the date</strong> (e.g. <code>23/04/2023</code>) or
             pick it; the calendar header opens{' '}
             <strong>month &amp; year grids</strong> (no giant native dropdown).
-            The <code>format</code> prop drives both display and parsing (
+            By default a field shows and parses the app language's numeric short
+            date — the same pattern the table cells render — and the{' '}
+            <code>format</code> prop overrides it for both display and parsing (
             <code>dd/MM/yyyy</code>, <code>dd MMM yyyy</code>, …). Time is{' '}
             <strong>Kobalte's segmented TimeField</strong> (type or arrow-step,
             no invalid values), with an optional <code>hourCycle</code> for
@@ -696,7 +699,7 @@ export const InputsShowcase = () => {
             <strong>local wall-clock</strong> time.
           </Lead>
           <div class={styles.grid}>
-            <Field caption="Date — type or pick">
+            <Field caption="Default — the language's numeric short date">
               <DateField
                 label="Expiry date"
                 value={expiry()}
@@ -817,7 +820,7 @@ export const InputsShowcase = () => {
               />
             </FieldRow>
             <FieldRow label="Created" readOnly>
-              12 Mar 2026
+              {localisedDate('2026-03-12')}
             </FieldRow>
             <FieldRow label="Stock on hand" readOnly valueAlign="end">
               4,200

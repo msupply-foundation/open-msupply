@@ -1,4 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { setLocale, type SupportedLocale } from '../../../intl';
+import {
+  DATE_FNS_LOADERS,
+  loadDateFnsLocale,
+} from '../../../intl/formatDateTime';
 import {
   addDays,
   dateToIsoDate,
@@ -181,6 +186,37 @@ describe('default date format (numeric, #774)', () => {
     expect(formatIsoDate('2026-09-19', 'dd MMM yyyy')).toBe('19 Sep 2026');
     expect(formatIsoDate('2026-09-19', 'MM/dd/yyyy')).toBe('09/19/2026');
     expect(parseDateInput('09/19/2026', 'MM/dd/yyyy')).toBe('2026-09-19');
+  });
+
+  // Every language the app can be read in, so a date-fns locale added later is
+  // covered too: its default must be one day, one month and one year token
+  // between separators, and a date shown in it must read back as that day.
+  it('round-trips the default of every language', async () => {
+    const tokens = /yyyy|yy|MM|M|dd|d/g;
+    try {
+      for (const language of Object.keys(
+        DATE_FNS_LOADERS
+      ) as SupportedLocale[]) {
+        await loadDateFnsLocale(language);
+        setLocale(language);
+        const pattern = defaultDateFormat();
+        const kinds = (pattern.match(tokens) ?? []).map(token => token[0]);
+        expect(kinds.sort(), `${language}: ${pattern}`).toEqual([
+          'M',
+          'd',
+          'y',
+        ]);
+        expect(pattern.replace(tokens, ''), `${language}: ${pattern}`).toMatch(
+          /^[^\p{L}]+$/u
+        );
+        const shown = formatIsoDate('2026-09-14');
+        expect(parseDateInput(shown), `${language}: "${shown}"`).toBe(
+          '2026-09-14'
+        );
+      }
+    } finally {
+      setLocale('en');
+    }
   });
 });
 
