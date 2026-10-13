@@ -2,11 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRoot, createSignal } from 'solid-js';
 
 /*
- * The program data functions (spec/plugins/sdk-contract.md § data access;
- * implementation-plan K1, K2). The transport and the entered store are the
- * mocked edges; the mapping, the request shape and the read's gating run for
- * real. `.tsx` for the client Solid build (vitest.workspace.ts): the reactive
- * read only tracks there.
+ * The program data functions (spec/plugins/sdk-contract.md § data access). The
+ * transport and the entered store are the mocked edges; the mapping, the
+ * request shape and the read's gating run for real. `.tsx` for the client Solid
+ * build (vitest.workspace.ts): the reactive read only tracks there.
  */
 
 const graphqlFetch = vi.fn();

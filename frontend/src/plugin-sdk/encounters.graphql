@@ -1,6 +1,5 @@
 # The encounter data functions the SDK offers form plugins (./encounters.ts;
-# kdd/custom-forms/specs.md § Opening an older document; implementation-plan
-# K4).
+# kdd/custom-forms/specs.md § Opening an older document).
 
 # A patient's latest encounter of one type that started before a moment, with
 # its document and the schema version the document is pinned to. Deleted

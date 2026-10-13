@@ -1,11 +1,11 @@
 /*
  * The document form slots' region: the body of an enrolment or encounter,
  * filled with the plugin form contributed for the document's type or, with
- * none, the host's default form (kdd/custom-forms/specs.md § Forms in the UI;
- * implementation-plan H5, H10). A screen-level region like the dashboard body
- * (sections/dashboard/DashboardBody.tsx): the form IS the body, so a form
- * that throws falls back to the default form rather than to the neutral
- * piece fallback, which would leave the record with no fields at all.
+ * none, the host's default form (kdd/custom-forms/specs.md § Forms in the UI).
+ * A screen-level region like the dashboard body
+ * (sections/dashboard/DashboardBody.tsx): the form IS the body, so a form that
+ * throws falls back to the default form rather than to the neutral piece
+ * fallback, which would leave the record with no fields at all.
  *
  * The plugin form is mounted once per contribution and fed its props through
  * getters, so a prop change (the record's name arriving with the first save)

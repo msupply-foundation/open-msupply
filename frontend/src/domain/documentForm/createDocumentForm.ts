@@ -1,11 +1,11 @@
 /*
- * The document form host (kdd/custom-forms/specs.md § Forms in the UI;
- * implementation-plan H4, the edit path): given a document by name, or a new
- * one's registry entry and seed, it loads the document and the form library,
- * owns the draft, validates it against the entry's current schema, and saves
- * it through its category's mutation pinned to that schema. The screen that
- * mounts it (a record screen, a modal) renders the form body with the draft
- * and binds its own Save, Cancel and leave guard to what this returns.
+ * The document form host (kdd/custom-forms/specs.md § Forms in the UI; the edit
+ * path): given a document by name, or a new one's registry entry and seed, it
+ * loads the document and the form library, owns the draft, validates it against
+ * the entry's current schema, and saves it through its category's mutation
+ * pinned to that schema. The screen that mounts it (a record screen, a modal)
+ * renders the form body with the draft and binds its own Save, Cancel and leave
+ * guard to what this returns.
  *
  * Every read here is non-suspending (api/gated): a host opened by an
  * interaction (the enrolment modal) sits under an already-open screen, which

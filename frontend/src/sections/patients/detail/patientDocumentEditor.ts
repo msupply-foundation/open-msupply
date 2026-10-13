@@ -25,10 +25,10 @@ type PatientNode = NonNullable<PatientResult['patient']>;
 
 /*
  * The Details tab's editor on the document path (kdd/custom-forms/specs.md §
- * Host-owned surfaces, Patient; implementation-plan H9): the patient document
- * in the document form host, with the save surface the plain-path editor
- * gives the screen (patientEditor.ts), so the screen's footer, confirm prompt
- * and leave guard work the same on both paths.
+ * Host-owned surfaces, Patient): the patient document in the document form
+ * host, with the save surface the plain-path editor gives the screen
+ * (patientEditor.ts), so the screen's footer, confirm prompt and leave guard
+ * work the same on both paths.
  *
  * A patient with a document is edited from the server's `documentDraft` (the
  * latest version with later changes to the name row merged in), read here
@@ -243,10 +243,10 @@ export interface NewPatientDocumentEditor {
 
 /*
  * The create wizard's last step on the document path (spec/patients › effects
- * of creation; implementation-plan H17): a new patient's first document, in
- * the same document form host and with the same code check as the Details
- * tab, seeded from the wizard's first step. It saves without the Details
- * tab's confirm, as the plain path's wizard does.
+ * of creation): a new patient's first document, in the same document form host
+ * and with the same code check as the Details tab, seeded from the wizard's
+ * first step. It saves without the Details tab's confirm, as the plain path's
+ * wizard does.
  */
 export const createNewPatientDocumentEditor = (
   params: NewPatientDocumentParams

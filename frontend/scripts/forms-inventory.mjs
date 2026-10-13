@@ -1,12 +1,12 @@
 /*
  * The take-over inventory: what a deployment's database holds for its program
  * forms, read before (and to check) moving them into a form plugin
- * (plugins/MIGRATING-PROGRAMS.md § 3, kdd/custom-forms/remaining-work.md
- * item 6). It reads a Postgres copy of the deployment's central server, with
- * `psql` and the connection psql takes from PGHOST, PGPORT, PGUSER,
- * PGDATABASE and PGPASSWORD. Every query runs in a read-only transaction, so
- * it cannot change the database, and nothing it prints or writes holds a
- * record's values, except a fixture's, which `fixture` anonymises first.
+ * (plugins/MIGRATING-PROGRAMS.md § 3). It reads a Postgres copy of the
+ * deployment's central server, with `psql` and the connection psql takes from
+ * PGHOST, PGPORT, PGUSER, PGDATABASE and PGPASSWORD. Every query runs in a
+ * read-only transaction, so it cannot change the database, and nothing it
+ * prints or writes holds a record's values, except a fixture's, which `fixture`
+ * anonymises first.
  *
  *   report    the registry entries (name, category, program, current schema,
  *             event rules); every schema id the records are pinned to, with

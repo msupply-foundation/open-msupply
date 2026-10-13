@@ -1,9 +1,8 @@
 /*
- * The prescription data functions the SDK offers form plugins
- * (implementation-plan K3; remaining work item 23): a prescription written
- * from a form, giving the patient stock from the store's batches, as the old
- * client's `Prescription` control writes one from an encounter. The form
- * library's `PrescriptionInput` is built on them. They act in the entered
+ * The prescription data functions the SDK offers form plugins: a prescription
+ * written from a form, giving the patient stock from the store's batches, as
+ * the old client's `Prescription` control writes one from an encounter. The
+ * form library's `PrescriptionInput` is built on them. They act in the entered
  * store, like every SDK call.
  */
 import { createMemo, createResource } from 'solid-js';

@@ -11,9 +11,11 @@
  * form keeps its address in the first contact block, the one the server
  * projects onto the patient record. Any other item, and an array of plain
  * values, is a leaf, except a list of notes, which a path names whole for the
- * notes list (`NotesPath`), and a list of enum values, which it names whole
- * for the multi-select (`EnumArrayPath`). Keyed items and the generic array
- * controls are later work (implementation-plan H23).
+ * notes list (`NotesPath`), and a list of enum values, which it names whole for
+ * the multi-select (`EnumArrayPath`).
+ *
+ * TO-DO: keyed array items and the generic array controls (implementation-plan
+ * H23).
  */
 import type { Note } from '../../plugin-sdk/documents';
 

@@ -4,11 +4,11 @@ import patientSchema from '../../../plugins/examples/demo_program/forms/Patient/
 
 /*
  * A patient document through the form host (kdd/custom-forms/specs.md §
- * Host-owned surfaces, Patient; implementation-plan H9): a patient with no
- * document gets one on its first save by insert, a saved one is edited from
- * the source's seed (the server's documentDraft) and saved as the next
- * version, and after a save the form stands on the version it saved. The
- * GraphQL edge is mocked; AJV and the base schemas run for real.
+ * Host-owned surfaces, Patient): a patient with no document gets one on its
+ * first save by insert, a saved one is edited from the source's seed (the
+ * server's documentDraft) and saved as the next version, and after a save the
+ * form stands on the version it saved. The GraphQL edge is mocked; AJV and the
+ * base schemas run for real.
  */
 
 const graphqlFetch = vi.fn();

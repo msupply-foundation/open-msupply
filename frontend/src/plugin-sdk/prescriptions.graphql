@@ -1,6 +1,6 @@
 # The prescription data functions the SDK offers form plugins
-# (./prescriptions.ts; implementation-plan K3; remaining work item 23): a
-# prescription written from a form, for the stock it gives the patient.
+# (./prescriptions.ts): a prescription written from a form, for the stock it
+# gives the patient.
 
 # An item's batches available now in the store, for choosing how much of each
 # to give. Read before any prescription exists, which the prescription

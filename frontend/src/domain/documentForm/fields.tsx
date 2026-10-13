@@ -1,10 +1,10 @@
 /*
- * The form component library, minimal set (kdd/custom-forms/specs.md § Forms
- * in the UI; implementation-plan H3): one field per kind of value a document
- * holds, each a thin wrapper over the host input of that kind. A field takes
- * the draft and a path into the document type; the path's type decides which
- * fields accept it (a NumberInput only takes a number path), so a typo or a
- * wrong kind of field fails to compile.
+ * The form component library, minimal set (kdd/custom-forms/specs.md § Forms in
+ * the UI): one field per kind of value a document holds, each a thin wrapper
+ * over the host input of that kind. A field takes the draft and a path into the
+ * document type; the path's type decides which fields accept it (a NumberInput
+ * only takes a number path), so a typo or a wrong kind of field fails to
+ * compile.
  *
  * What a field does not take as a prop comes from the draft: the value, the
  * required asterisk (the schema's `required`), the error (AJV, or a

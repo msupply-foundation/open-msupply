@@ -1,10 +1,10 @@
 /*
- * The form library's multi-select (remaining work item 7): several values
- * from an enum, the JSON Forms `EnumArray` control, over the UI library's
- * `MultiSelect`. It writes the chosen values at its path as an array, in the
- * order they were chosen, and removes the property when the last one goes,
- * as the old client's control does. The options are listed by label,
- * alphabetically in the session's language, as the old client lists them.
+ * The form library's multi-select: several values from an enum, the JSON Forms
+ * `EnumArray` control, over the UI library's `MultiSelect`. It writes the
+ * chosen values at its path as an array, in the order they were chosen, and
+ * removes the property when the last one goes, as the old client's control
+ * does. The options are listed by label, alphabetically in the session's
+ * language, as the old client lists them.
  *
  * With `confirmRemove`, taking a value off (its tag's cross, Backspace, or
  * unticking it in the list) asks first, as the old client's control does;

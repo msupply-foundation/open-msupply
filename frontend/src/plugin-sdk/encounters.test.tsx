@@ -2,11 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRoot } from 'solid-js';
 
 /*
- * The encounter data functions (implementation-plan K4): the previous
- * encounter of a type, migrated to the current one. The transport, the
- * entered store and the plugin registry are the mocked edges; the request
- * shape and the migration run for real. `.tsx` for the client Solid build
- * (vitest.workspace.ts), where the read tracks.
+ * The encounter data functions: the previous encounter of a type, migrated to
+ * the current one. The transport, the entered store and the plugin registry are
+ * the mocked edges; the request shape and the migration run for real. `.tsx`
+ * for the client Solid build (vitest.workspace.ts), where the read tracks.
  */
 
 const graphqlFetch = vi.fn();

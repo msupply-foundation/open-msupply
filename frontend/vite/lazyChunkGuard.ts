@@ -2,7 +2,7 @@ import type { Plugin } from 'vite';
 
 /*
  * Keeps the heavy lazy-only modules out of the eager entry (kdd/bundling,
- * kdd/custom-forms/specs.md § Forms in the UI; implementation-plan H1).
+ * kdd/custom-forms/specs.md § Forms in the UI).
  *
  * The form library (its fields, the AJV validator and the host's default
  * forms) must load only when a form first opens: the host and every plugin

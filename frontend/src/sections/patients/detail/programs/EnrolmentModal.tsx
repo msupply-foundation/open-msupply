@@ -40,11 +40,11 @@ export interface EnrolmentModalProps {
 
 /*
  * The enrolment form in a modal (kdd/custom-forms/specs.md § Forms in the UI:
- * the modal mount point; implementation-plan H8): the document form host over
- * one ProgramEnrolment document, new or saved. The body is the plugin form
- * contributed for the enrolment's type, or the host's default enrolment form
- * (DocumentFormRegion). Opened from the program picker to enrol, and from a
- * Programs row to edit. Remounts per open, so each open loads afresh.
+ * the modal mount point): the document form host over one ProgramEnrolment
+ * document, new or saved. The body is the plugin form contributed for the
+ * enrolment's type, or the host's default enrolment form (DocumentFormRegion).
+ * Opened from the program picker to enrol, and from a Programs row to edit.
+ * Remounts per open, so each open loads afresh.
  */
 export const EnrolmentModal = (props: EnrolmentModalProps): JSX.Element => (
   <Show when={props.target} keyed>

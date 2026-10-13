@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /*
- * The prescription data functions (implementation-plan K3): a prescription
- * written idempotently from a form. The transport and the entered store are
- * the mocked edges; the order of the writes and what they carry run for real.
+ * The prescription data functions: a prescription written idempotently from a
+ * form. The transport and the entered store are the mocked edges; the order of
+ * the writes and what they carry run for real.
  */
 
 const graphqlFetch = vi.fn();

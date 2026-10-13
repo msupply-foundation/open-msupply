@@ -3,11 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /*
  * The create wizard's last step on the document path (spec/patients › effects
- * of creation, OMS-REG-DIS-01.31/.33; implementation-plan H17): a new
- * patient's first document, seeded from the first step, validated against the
- * installed schema and written by insert, pinned to the registry entry's
- * schema. The GraphQL edge and the patient search are mocked; AJV and the
- * base schemas run for real.
+ * of creation, OMS-REG-DIS-01.31/.33): a new patient's first document, seeded
+ * from the first step, validated against the installed schema and written by
+ * insert, pinned to the registry entry's schema. The GraphQL edge and the
+ * patient search are mocked; AJV and the base schemas run for real.
  */
 
 const graphqlFetch = vi.fn();

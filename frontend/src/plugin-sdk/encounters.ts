@@ -1,11 +1,10 @@
 /*
  * The encounter data functions the SDK offers form plugins (kdd/custom-forms/
- * specs.md § Opening an older document; implementation-plan K4; remaining
- * work item 21): reads of a patient's other encounters, so a form can show or
- * start from what an earlier visit recorded (the old client's
- * `displayPrevious` and `defaultToPrevious`). Each document is run through
- * its type's migrations before it is returned, so plugin code only ever sees
- * the current type. They act in the entered store, like every SDK call.
+ * specs.md § Opening an older document): reads of a patient's other encounters,
+ * so a form can show or start from what an earlier visit recorded (the old
+ * client's `displayPrevious` and `defaultToPrevious`). Each document is run
+ * through its type's migrations before it is returned, so plugin code only ever
+ * sees the current type. They act in the entered store, like every SDK call.
  */
 import { createMemo, createResource } from 'solid-js';
 import { graphqlFetch } from '../api/graphql';

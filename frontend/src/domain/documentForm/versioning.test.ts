@@ -12,7 +12,7 @@ import {
 import { checkCoverage, findNarrowings, flattenSchema } from './schemaDiff';
 
 // The demo's v1 → v2 step, restated: the app tsconfig cannot resolve the
-// plugin's own modules (worklog, chunk 4), only its emitted JSON.
+// plugin's own modules, only its emitted JSON.
 const v1ToV2: MigrationStep = {
   from: 1,
   moved: {

@@ -54,13 +54,12 @@ const fetchEncounterRecord = async (variables: {
 };
 
 /*
- * The encounter record screen (kdd/custom-forms/specs.md § Forms in the UI:
- * the host record screen; implementation-plan H7). The host owns the route,
- * the frame, the toolbar and the save; the body is the plugin form
- * contributed for the encounter's type, or the host's default encounter form
- * (DocumentFormRegion). The toolbar's visit date, clinician and status and the
- * body's fields edit one draft, the document form host's, saved in one go by
- * Save.
+ * The encounter record screen (kdd/custom-forms/specs.md § Forms in the UI: the
+ * host record screen). The host owns the route, the frame, the toolbar and the
+ * save; the body is the plugin form contributed for the encounter's type, or
+ * the host's default encounter form (DocumentFormRegion). The toolbar's visit
+ * date, clinician and status and the body's fields edit one draft, the document
+ * form host's, saved in one go by Save.
  *
  * Opened from a patient's Encounters row, and after "New encounter" creates
  * one whose visit is under way. Every read is non-suspending: the screen

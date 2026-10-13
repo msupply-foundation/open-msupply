@@ -1,8 +1,8 @@
 /*
- * The form library's prescription control (remaining work item 23): the old
- * client's `Prescription` control, which gives the patient stock from inside
- * a program form (a reproductive health encounter's contraceptive method).
- * Built on the SDK's prescription data functions and the core library.
+ * The form library's prescription control: the old client's `Prescription`
+ * control, which gives the patient stock from inside a program form (a
+ * reproductive health encounter's contraceptive method). Built on the SDK's
+ * prescription data functions and the core library.
  *
  * Until the record's prescription is written: an item search, limited to one
  * category when the form names one (the method chosen), then the item's
