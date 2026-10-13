@@ -1,9 +1,9 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use graphql_core::ContextExt;
 use graphql_core::loader::UserLoader;
 use graphql_core::simple_generic_errors::NodeError;
-use graphql_core::ContextExt;
 use repository::sync_file_reference::SyncFileReference;
 use service::{ListResult, usize_to_u32};
 

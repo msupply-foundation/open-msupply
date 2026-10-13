@@ -9474,21 +9474,11 @@ type SyncFileReferenceNode {
 	createdDatetime: DateTime!
 	error: String
 	status: SyncFileReferenceNodeStatus!
-	"""
-	The account that uploaded the file. Absent for a file recorded before
-	uploaders were kept, or attached by a process rather than a user.
-	"""
 	userId: String
 	"""
-	Which version of its name this file is on its record: one more than the
-	highest the name had carried there when it was uploaded, deleted versions
-	included, so a number is never reissued.
+	Assigned at upload, never reissued: deleting version 3 of 4 leaves 1, 2, 4.
 	"""
 	versionNumber: Int!
-	"""
-	The uploader, where this site holds that user account. A reference that
-	arrived by synchronisation may name a user this site has never seen.
-	"""
 	user: UserNode
 }
 
