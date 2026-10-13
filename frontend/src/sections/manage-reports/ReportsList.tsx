@@ -131,8 +131,10 @@ const ReportsList: Component = () => {
     void refetch();
   };
 
+  // Refresh only: the upload dialog closes itself, and only when every file
+  // installed — a partial failure re-reads the register behind a dialog that
+  // stays open (OMS-REG-MNG-06.25).
   const onInstalled = () => {
-    setUploading(false);
     void refetch();
   };
 

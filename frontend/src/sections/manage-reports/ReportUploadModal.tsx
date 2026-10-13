@@ -12,7 +12,7 @@ import { CancelButton, OkButton } from '@/ui/elements/buttons/StandardButtons';
 import { InstallUploadedReports } from './manageReports.generated';
 import {
   addToBatch,
-  batchInstalledNothing,
+  attemptEnd,
   emptyBatch,
   installOutcome,
   judgePick,
@@ -37,7 +37,10 @@ import {
 
 export interface ReportUploadModalProps {
   onClose: () => void;
-  /** At least one report installed: the owner refreshes the register. */
+  /**
+   * At least one report installed: the owner re-reads the register. Must NOT
+   * close the dialog — a partial failure calls it and stays open.
+   */
   onInstalled: () => void;
 }
 
@@ -108,14 +111,16 @@ export const ReportUploadModal: Component<ReportUploadModalProps> = props => {
 
     setInstalling(false);
 
-    if (batch.failedFiles.length > 0) {
-      // The attempt failed. Whatever installed before it stays installed, so
-      // the register is refreshed either way; the dialog stays OPEN with the
-      // chosen files untouched, ready to correct and retry
-      // (OMS-REG-MNG-06.25).
-      if (!batchInstalledNothing(batch)) props.onInstalled();
-      // The server's own words, appended to the generic message — nothing
-      // names which file failed, because the server does not say
+    // Whatever installed stays installed, so the register is re-read whether
+    // or not the attempt failed (OMS-REG-MNG-06.16).
+    const end = attemptEnd(batch);
+    if (end.refresh) props.onInstalled();
+
+    if (!end.close) {
+      // The attempt failed: the dialog stays OPEN with the chosen files
+      // untouched, ready to correct and retry (OMS-REG-MNG-06.25), showing the
+      // server's own words appended to the generic message — nothing names
+      // which file failed, because the server does not say
       // (OMS-REG-MNG-06.26).
       setError(
         rejection
@@ -128,7 +133,7 @@ export const ReportUploadModal: Component<ReportUploadModalProps> = props => {
     // Every file installed. Closing plus the refreshed register IS the
     // confirmation — no announcement follows (ui-standards controls.md
     // § action feedback).
-    props.onInstalled();
+    props.onClose();
   };
 
   return (

@@ -205,3 +205,18 @@ export const batchInstalledNothing = (batch: BatchOutcome): boolean =>
 /** Some arrived and some did not — the partial case worth reporting plainly. */
 export const batchIsPartial = (batch: BatchOutcome): boolean =>
   batch.installedReportIds.length > 0 && batch.failedFiles.length > 0;
+
+/**
+ * What the dialog does once an attempt ends (rules.md § several files at
+ * once). Re-reading the register and closing the dialog are SEPARATE: the
+ * register is re-read whenever anything arrived, but the dialog closes only
+ * when every file installed. A partial failure therefore refreshes behind a
+ * dialog that stays open, with the chosen files and the server's words
+ * (OMS-REG-MNG-06.16, .25, .26).
+ */
+export const attemptEnd = (
+  batch: BatchOutcome
+): { refresh: boolean; close: boolean } => ({
+  refresh: !batchInstalledNothing(batch),
+  close: batch.failedFiles.length === 0,
+});

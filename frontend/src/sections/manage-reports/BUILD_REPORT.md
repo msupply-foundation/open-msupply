@@ -21,6 +21,7 @@ Anchors are `OMS-REG-MNG-06.<n>` from [`cases/OMS-REG-MNG-06`](../../../spec/man
 | .9 installing adds every report in a bundle  | `reportInstall.test.ts` — all returned ids surfaced, not just the first                       |
 | .15 rejections indistinguishable             | `reportInstall.test.ts` — all three causes fold onto one `rejected` outcome                   |
 | .16 / .24 / .26 failure ends the attempt     | `reportInstall.test.ts` — at most one failed file; server's words carried through             |
+| .25 a failed attempt keeps the dialog open   | `reportInstall.test.ts` — `attemptEnd`: refresh whenever anything arrived, close only when all did |
 | .17 save needs an actual change              | `reportEditor.test.ts` — incl. toggling back to the stored value                              |
 | .18 abandoned edit writes nothing            | `reportEditor.test.ts` — the draft is a copy; Cancel fires no mutation                        |
 | .21 active state the only mutable property   | `reportEditor.test.ts` — input and draft carry exactly `{id, isActive}`                       |

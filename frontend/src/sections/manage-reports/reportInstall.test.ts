@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addToBatch,
+  attemptEnd,
   batchInstalledNothing,
   batchIsPartial,
   emptyBatch,
@@ -18,6 +19,7 @@ import type { InstallUploadedReportsResult } from './manageReports.generated';
 //   .15 — an unreadable file is rejected without identifying the cause
 //   .16 — reports installed before a failure stay installed
 //   .24 — the first failure ends the attempt
+//   .25 — a failed attempt leaves the chosen files, ready to retry
 //   .26 — a failure reports the server's own words
 //   .23 — a file chosen but not confirmed leaves the register unchanged
 //   .27 — a file over 50 MiB is refused before sending
@@ -134,6 +136,38 @@ describe('OMS-REG-MNG-06.16 / .24 — a failure ends the attempt', () => {
     });
     expect(batchInstalledNothing(batch)).toBe(false);
     expect(batchIsPartial(batch)).toBe(false);
+  });
+});
+
+describe('OMS-REG-MNG-06.25 / .26 — a failed attempt keeps the dialog open', () => {
+  const rejected = { kind: 'rejected', serverError: 'Invalid file' } as const;
+
+  it('re-reads the register but stays open when a later file fails', () => {
+    // The partial case: refreshing and closing must not travel together, or
+    // the dialog closes as a success and the failure notice is lost.
+    let batch = addToBatch(emptyBatch(), 'first.json', {
+      kind: 'installed',
+      reportIds: ['r1'],
+    });
+    batch = addToBatch(batch, 'second.json', rejected);
+    expect(attemptEnd(batch)).toEqual({ refresh: true, close: false });
+  });
+
+  it('stays open without re-reading when the first file fails', () => {
+    const batch = addToBatch(emptyBatch(), 'only.json', rejected);
+    expect(attemptEnd(batch)).toEqual({ refresh: false, close: false });
+  });
+
+  it('re-reads and closes only when every file installed', () => {
+    let batch = addToBatch(emptyBatch(), 'first.json', {
+      kind: 'installed',
+      reportIds: ['r1'],
+    });
+    batch = addToBatch(batch, 'second.json', {
+      kind: 'installed',
+      reportIds: ['r2'],
+    });
+    expect(attemptEnd(batch)).toEqual({ refresh: true, close: true });
   });
 });
 
