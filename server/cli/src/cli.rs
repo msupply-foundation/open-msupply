@@ -39,7 +39,6 @@ use service::{
 };
 use std::{
     env::current_dir,
-    ffi::OsStr,
     fs,
     path::{Path, PathBuf},
     process::Command,
@@ -58,9 +57,9 @@ use cli::LoadTest;
 use cli::{
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
     ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
-    TestData, UninstallPlugin, all_tests, generate_and_install_plugin_bundle,
-    generate_plugin_bundle, generate_plugin_typescript_types, generate_report_data,
-    generate_reports_recursive, install_plugin_bundle, list_installed_plugins, uninstall_plugin,
+    TestData, UninstallPlugin, all_tests, build_report, generate_and_install_plugin_bundle,
+    generate_plugin_bundle, generate_plugin_typescript_types, install_plugin_bundle,
+    list_installed_plugins, uninstall_plugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -193,12 +192,6 @@ enum Action {
     /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
-    BuildReports {
-        /// Optional reports path. If supplied, this dir should be the same structure as per standard reports.
-        /// Will generate a json of all reports within this directory
-        #[clap(short, long, num_args=0..)]
-        path: Option<Vec<PathBuf>>,
-    },
     /// Will generate a plugin bundle
     GeneratePluginBundle(GeneratePluginBundle),
     /// Will insert generated plugin bundle
@@ -747,59 +740,6 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {result:#?}");
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::BuildReports { path } => {
-            let dir_list = match path.clone() {
-                Some(path) => path,
-                None => vec![
-                    PathBuf::new().join("../standard_reports"),
-                    PathBuf::new().join("../standard_forms"),
-                ],
-            };
-
-            for base_dir in dir_list {
-                let mut reports_data = ReportsData { reports: vec![] };
-                let ignore_paths = vec![OsStr::new("node_modules")];
-                let manifest_name = OsStr::new("report-manifest.json");
-
-                generate_reports_recursive(
-                    &mut reports_data,
-                    &ignore_paths,
-                    manifest_name,
-                    &base_dir,
-                )?;
-
-                let output_name = if path.is_some() {
-                    "reports.json"
-                } else {
-                    // Name the output after the base_dir
-                    // standard_reports.json and standard_forms.json
-                    &format!("{}.json", base_dir.file_stem().unwrap().to_str().unwrap())
-                };
-
-                let output_path = base_dir.join("generated").join(output_name);
-
-                fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
-                    "Invalid output path: {output_path:?}"
-                )))?)?;
-
-                fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
-                    |_| {
-                        anyhow::Error::msg(format!(
-                            "Failed to write to {output_path:?}. Does output dir exist?"
-                        ))
-                    },
-                )?;
-
-                if path.is_some() {
-                    info!("All reports built in custom path {:?}", base_dir.display());
-                } else {
-                    info!(
-                        "All standard reports built in path {:?}",
-                        base_dir.display()
-                    )
-                };
-            }
-        }
         Action::UpsertReports { path, overwrite } => {
             let standard_reports_dir = Path::new("../standard_reports")
                 .join("generated")
@@ -921,7 +861,7 @@ async fn main() -> anyhow::Result<()> {
             config,
             format,
         } => {
-            let report_data: ReportData = generate_report_data(&path)?;
+            let report_data: ReportData = build_report(&path)?;
 
             let report_json =
                 serde_json::to_value(report_data.template).expect("fail to convert report to json");

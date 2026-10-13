@@ -13,10 +13,23 @@ export const breakpoints = {
    * Below this, the menu bar becomes a hamburger overlay instead of docked (and
    * the side panel an off-canvas drawer). Also the "narrow viewport" line —
    * tablet portrait and below — at which modal dialogs expand to full screen
-   * (ui-standards responsive: tablet portrait / small screen is 600–1023px).
+   * (ui-standards responsive: tablet portrait / small screen is 600–1023px),
+   * and the page header becomes one row beside a truncating breadcrumb (its
+   * actions shed their labels to icons when they don't fit — measured by
+   * Header, not tied to this line). A landscape tablet is wider than this, so
+   * for it the dialog's full-screen rule turns on shortViewport below instead
+   * (#246).
    */
   navOverlay: 1024,
-  /** Below this = phone-ish; index.css drops the root font-size here. */
+  /**
+   * Below this = phone-ish — handheld scanners included (a Honeywell CK65 is
+   * ~320×533 CSS px; no line of its own). index.css drops the root font-size
+   * here, and the chrome renders its single-row forms so content gets the
+   * screen: the app bar's cells shed their labels to icons, the list toolbar
+   * is one row, card lists drop empty fields, header fields fold behind a
+   * disclosure, every dialog is a sheet, and the whole page scrolls as one
+   * rather than pinning its bands. Also the `collapsible` Button tier.
+   */
   compact: 600,
   /**
    * At/above this, a page's side panel defaults open (a default-state
@@ -50,6 +63,13 @@ export const breakpoints = {
    * 800 sits above the fleet's landscape tablets (~715px of viewport once
    * browser chrome is off a 768px screen) and this class of laptop window,
    * and below a normal desktop (~950px), which keeps its roomier layout.
+   *
+   * Also the line below which a WORKBENCH dialog (`size="large" | "full"`,
+   * the line editors) goes full screen — the landscape-tablet counterpart of
+   * navOverlay's rule, since a landscape tablet is wide and never crosses
+   * that one (#246, Dialog.tsx). Note it is a line on the VIEWPORT: a
+   * 1280×800 tablet presents ~728px once its system bars are on screen, so
+   * it falls below; an emulator set to a bare 800 sits on the line.
    */
   shortViewport: 800,
 } as const;

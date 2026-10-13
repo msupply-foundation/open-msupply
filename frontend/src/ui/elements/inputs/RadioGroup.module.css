@@ -170,3 +170,118 @@
   margin-inline-start: 0.35em;
   font-size: var(--text-sm);
 }
+
+/*
+ * Segmented appearance (RadioGroup appearance="segmented") — the options
+ * joined into one bar, each a labelled segment rather than a dot beside a
+ * word. For a SHORT set of exclusive values that all deserve to be on the
+ * surface: in a settings row, opening a select to read three words costs more
+ * than the width the segments take.
+ *
+ * The native radios are unchanged underneath — roving arrow-key focus, the
+ * radiogroup/radio ARIA and single-select grouping all still come from the
+ * browser. Only the drawing differs, which is the whole reason this is an
+ * appearance of RadioGroup and not a button group of its own
+ * (kdd/own-simple-buy-hard).
+ *
+ * The selection fills NEUTRAL, not brand. A segmented control sits in a row
+ * beside other controls, and a brand fill on whichever segment happens to be
+ * the DEFAULT reads as emphasis that choice has not earned — a panel of them
+ * becomes a wall of orange marking nothing. A row whose selection does carry
+ * meaning marks it BESIDE the control instead, which spends the accent only
+ * where it says something.
+ *
+ * A segment carries its OWN class rather than being reached as `.item`: with
+ * two appearances in one file, each variant's base rules would otherwise
+ * follow the other's state rules and no ordering of `.item` can ascend in
+ * both (stylelint's no-descending-specificity compares the last compound
+ * selector). `.segment` sorts in its own group, so each block stays whole and
+ * readable.
+ */
+.items[data-appearance='segmented'] {
+  /* A row whatever the orientation says — a wrapped segmented bar is a broken
+     one. Shrinkable so a narrow dialog column never scrolls sideways. */
+  flex-flow: row nowrap;
+  gap: 0;
+  min-inline-size: 0;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  /* The segments' own corners are square; the bar clips them. */
+  overflow: hidden;
+}
+
+.segment {
+  /* `position: relative` CONTAINS the visually-hidden radio below: with no
+     positioned ancestor it escapes to document space and stretches the
+     viewport's scrollHeight into a second, document-level scrollbar (the same
+     trap as ToggleSwitch and TextField's hidden label). */
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-block-size: var(--input-height-sm);
+  padding-inline: var(--space-3);
+  background: var(--surface-raised);
+  transition:
+    background var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+.segment + .segment {
+  border-inline-start: 1px solid var(--input-border);
+}
+
+/* A segment is a word: a description would break the bar onto two lines, so
+   the variant takes labels only (documented on the prop). */
+.items[data-appearance='segmented'] .segment .description {
+  display: none;
+}
+
+.items[data-appearance='segmented'] .segment .label {
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+/* The native control stays in the DOM and keeps focus — it is just not drawn
+   (the app-wide visually-hidden technique; the segment is the visible mark). */
+.items[data-appearance='segmented'] .segment .input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.segment:hover:not([data-disabled]) {
+  background: var(--bg-input);
+}
+
+/* :has() on the native radio — no JS mirror of the checked state, so the
+   segment and the radio can never disagree.
+
+   A TONAL fill, and deliberately the group-dark step rather than the lighter
+   input fill: it is the one token pair that separates from --surface-raised
+   in BOTH themes (light #e2e2e9 on #fff, dark #33333f on #2b2b3a). The hover
+   fill sits a step below it so hovering an unselected segment never reads as
+   selecting it. */
+.segment:has(.input:checked) {
+  background: var(--bg-group-dark);
+}
+
+.items[data-appearance='segmented'] .segment:has(.input:checked) .label {
+  color: var(--text-body);
+  font-weight: var(--weight-semibold);
+}
+
+/* Focus lands on the clipped radio; it is DRAWN on the segment, inset so the
+   bar's own clipping can't swallow it (WCAG 2.2 SC 2.4.11). */
+.segment:has(.input:focus-visible) {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: -2px;
+}

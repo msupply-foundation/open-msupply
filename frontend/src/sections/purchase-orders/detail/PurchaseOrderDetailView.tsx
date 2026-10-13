@@ -30,11 +30,11 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
-  type CellFragment,
   getCellDefinition,
   getCurrencyCell,
   getDateCell,
   getNumberCell,
+  type CellFragment,
 } from '@/ui/elements/table/tableHelpers';
 import {
   Pagination,
@@ -101,7 +101,6 @@ import {
   isOpenToChange,
 } from './purchaseOrderLadder';
 import { formatCurrency } from '@/intl/currency';
-import { formatNumber } from '@/intl/formatNumber';
 import { linePacks } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
 import {
@@ -109,6 +108,7 @@ import {
   type LineLookup,
 } from './edit-modal/PurchaseOrderLineEditModal';
 import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
+import { Num } from '@/ui/elements/typography/Num';
 
 // An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
 // Details tab, S9's side panel, S10's line editor, S11-S13's remaining tabs,
@@ -171,7 +171,7 @@ const NARROW_HIDDEN: Record<string, boolean> = {
 
 const exactQuantity: CellFragment<Line>['cell'] = info => {
   const value = info.getValue<number | null | undefined>();
-  return value == null ? '' : formatNumber(value);
+  return value == null ? '' : <Num value={value} />;
 };
 
 const PurchaseOrderDetailView: Component = () => {
