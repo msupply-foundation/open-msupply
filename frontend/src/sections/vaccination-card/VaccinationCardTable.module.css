@@ -23,3 +23,12 @@
 .card td:has([data-age-continues]) {
   border-block-end-style: none;
 }
+
+/*
+ * A rule down the Age column's right edge sets the ages apart from the doses
+ * they head (ui-surface § the card table), header to last row — this table
+ * only. Age is the table's first column (no selection, nothing pinned).
+ */
+.card :is(th, td):first-child {
+  border-inline-end: 1px solid var(--color-divider);
+}
