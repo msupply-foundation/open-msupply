@@ -1,7 +1,7 @@
 // Public surface of the i18n module. Import from '../intl' everywhere else.
 
 // Core
-export { t, tPlural, locale, setLocale } from './intl';
+export { t, tPlural, hasTranslation, locale, setLocale } from './intl';
 export type { LocaleKey, SupportedLocale, FlatDict } from './locales';
 export {
   SUPPORTED_LOCALES,
