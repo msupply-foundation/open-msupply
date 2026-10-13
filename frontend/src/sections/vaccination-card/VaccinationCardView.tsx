@@ -50,21 +50,24 @@ const VaccinationCardView: Component = () => {
   const patient = () => gated(patientData)?.patient ?? undefined;
   const dateOfBirth = () => patient()?.dateOfBirth ?? null;
 
-  const crumbs = () => [
-    {
-      label: t('label.patients'),
-      onClick: () => navigate(`/${params.storeId}/dispensary/patients`),
-    },
-    {
-      label: patient()?.name ?? '',
-      onClick: () =>
-        navigate(
-          `/${params.storeId}/dispensary/patients/${params.patientId}?tab=vaccinations`
-        ),
-    },
-    { label: t('label.vaccination-card') },
-    { label: card()?.programName ?? '' },
-  ];
+  // The program's name is the page heading; an unknown enrolment has none,
+  // so the trail ends at "Vaccination card" rather than an empty crumb.
+  const crumbs = () =>
+    [
+      {
+        label: t('label.patients'),
+        onClick: () => navigate(`/${params.storeId}/dispensary/patients`),
+      },
+      {
+        label: patient()?.name ?? '',
+        onClick: () =>
+          navigate(
+            `/${params.storeId}/dispensary/patients/${params.patientId}?tab=vaccinations`
+          ),
+      },
+      { label: t('label.vaccination-card') },
+      { label: card()?.programName ?? '' },
+    ].filter(crumb => crumb.label !== '');
 
   return (
     <Page
@@ -74,12 +77,16 @@ const VaccinationCardView: Component = () => {
           <Breadcrumb crumbs={crumbs()} />
           <HeaderToolbar alert={<VaccinationCardNotices rows={rows()} />}>
             <LabelledValue label={t('label.age')} size="small">
-              <Show when={dateOfBirth()}>
+              {/* An absent value beside a label shows a dash
+                  (ui-standards › detail views). */}
+              <Show when={dateOfBirth()} fallback="—">
                 {dob => patientAgeLabel(dob(), localTodayIso())}
               </Show>
             </LabelledValue>
             <LabelledValue label={t('label.date-of-birth')} size="small">
-              <Show when={dateOfBirth()}>{dob => localisedDate(dob())}</Show>
+              <Show when={dateOfBirth()} fallback="—">
+                {dob => localisedDate(dob())}
+              </Show>
             </LabelledValue>
             <LabelledValue label={t('label.doses-given')} size="small">
               {t('label.doses-given-of', {

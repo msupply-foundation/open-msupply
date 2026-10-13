@@ -343,6 +343,29 @@ describe('OMS-REG-DIS-06.21 — changing a not-given dose to given', () => {
   });
 });
 
+describe('OMS-REG-DIS-06.21 — a not-given dose given today with a batch', () => {
+  it('offers "Update stock transactions" (rules § the stock-transaction switch)', () => {
+    const ctx = ctxFor({
+      vaccination: recorded({
+        vaccinationDate: TODAY,
+        given: false,
+        givenStoreId: null,
+        notGivenReason: 'REFUSED',
+        item: null,
+        stockLine: null,
+        invoice: null,
+      }),
+    });
+    const draft = {
+      ...initialDraft(ctx),
+      given: true,
+      itemId: 'dpt',
+      stockLineId: 'sl-a',
+    };
+    expect(switchLabel(draft, ctx)).toBe('label.update-transactions');
+  });
+});
+
 describe('OMS-REG-DIS-06.52 / OMS-REG-DIS-06.53 — a dose given at another store', () => {
   const ctx = ctxFor({
     vaccination: recorded({ givenStoreId: 'store-other' }),

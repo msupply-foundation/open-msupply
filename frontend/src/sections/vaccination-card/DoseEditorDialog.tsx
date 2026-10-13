@@ -267,10 +267,22 @@ const DoseEditorForm: Component<
     else setAsking(asks);
   };
 
+  // The confirmation dialog's OK calls onConfirm and then onClose. The close
+  // that follows a confirm must not drop the questions still to ask
+  // (VC-20261013-F1): only a Cancel or Escape empties the queue.
+  let confirmed = false;
   const confirmOne = () => {
+    confirmed = true;
     const [, ...rest] = asking();
     setAsking(rest);
     if (rest.length === 0) void save();
+  };
+  const cancelAsking = () => {
+    if (confirmed) {
+      confirmed = false;
+      return;
+    }
+    setAsking([]);
   };
 
   const confirmMessage = (ask: Confirmation): string => {
@@ -304,7 +316,10 @@ const DoseEditorForm: Component<
       testId="dose-editor"
       actions={
         <>
-          <CancelButton onClick={props.onClose} />
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          />
           <Show when={offersSave()}>
             <Show
               when={ctx.vaccination}
@@ -322,6 +337,7 @@ const DoseEditorForm: Component<
               }
             >
               <DialogSaveButton
+                data-testid="dialog-button-save"
                 loading={saving()}
                 disabled={saving()}
                 onClick={onSavePressed}
@@ -605,7 +621,7 @@ const DoseEditorForm: Component<
         title={t('heading.are-you-sure')}
         message={confirmMessage(asking()[0] ?? 'skip')}
         onConfirm={confirmOne}
-        onClose={() => setAsking([])}
+        onClose={cancelAsking}
       />
     </Dialog>
   );
