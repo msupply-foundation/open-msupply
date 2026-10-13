@@ -7,6 +7,7 @@ mod add_exclude_principal_wastage_to_ancillary_item;
 mod add_forecast_method_to_requisition_line;
 mod add_kind_to_campaign;
 mod add_line_total_to_purchase_order_line;
+mod add_stock_campaign_change_activity_log_type;
 
 pub(crate) struct V3_04_00;
 
@@ -27,6 +28,7 @@ impl Migration for V3_04_00 {
             Box::new(add_exclude_principal_wastage_to_ancillary_item::Migrate),
             Box::new(add_kind_to_campaign::Migrate),
             Box::new(add_campaign_to_requisition_line::Migrate),
+            Box::new(add_stock_campaign_change_activity_log_type::Migrate),
         ]
     }
 }
