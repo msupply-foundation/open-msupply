@@ -46,7 +46,7 @@ The register's sort handling (one entry, passed through, no client re-sort) is t
 | .19 / .20 deactivation promotes the next version    | The runner's version selection, owned by `spec/reports/`. Observable only by reading the runner's own query after a change here. C2 gap.                 |
 | .22 no operation removes a version                  | Proven by absence — `CentralReportMutations` declares only install and update, so no delete can be called. Nothing to assert beyond the schema.          |
 
-**C2 real-backend leg:** owed to this vertical's `e2e/` suite (see follow-ups), which runs against a real server like the other verticals' regression suites. Every behaviour above marked "C2 gap" was verified by hand against a live central server and a remote server (install, replacement, inheritance, promotion, both refusal paths) — recorded here rather than faked with a mock.
+**C2 real-backend leg:** delivered by this vertical's `e2e/` suite (see follow-ups), which runs against a real server like the other verticals' regression suites — every row above except .7 / .8, which need a remote server the harness cannot provide. Every behaviour above marked "C2 gap" was verified by hand against a live central server and a remote server (install, replacement, inheritance, promotion, both refusal paths) — recorded here rather than faked with a mock.
 
 ## Flags
 
@@ -80,6 +80,6 @@ encoding with no user-observable counterpart, so per AUTHORING it stays out of t
 
 ## Follow-ups
 
-- **`e2e/` suite + `client/` testids** — PR 2. Screen-specific ids placed here: `upload-reports-button`, `report-edit-modal`, `report-enabled-checkbox`, `report-name` / `-version` / `-custom`, `report-save-error`, `report-upload-modal`, `report-upload-input`, `report-upload-file-list`, `report-upload-remove-<file>`, `report-upload-error`. These need adding to [`e2e/TESTIDS.md`](../../../e2e/TESTIDS.md) with the suite, per C8.
+- **`e2e/` suite** — [`e2e/specs/manage-reports-regression.spec.ts`](../../../e2e/specs/manage-reports-regression.spec.ts), with the screen's ids in [`e2e/TESTIDS.md` § Manage › Reports](../../../e2e/TESTIDS.md#manage--reports).
 - **Exploratory workflow** at [`exploratory/workflows/manage-reports.md`](../../../exploratory/workflows/manage-reports.md), first run [2026-10-13](../../../exploratory/reports/2026-10-13/manage-reports-findings.md).
 - Blocked on no shared component.
