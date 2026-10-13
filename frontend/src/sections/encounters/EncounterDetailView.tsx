@@ -1,6 +1,7 @@
 import {
   createMemo,
   createResource,
+  createSignal,
   Match,
   Show,
   Switch,
@@ -24,9 +25,15 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
+import { Dialog } from '../../ui/elements/feedback/Dialog';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../ui/elements/buttons/StandardButtons';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
 import { SaveIcon, XCircleIcon } from '../../ui/icons';
 import { createConfirmOnLeave } from '../../domain/confirmOnLeave';
+import { suggestsVisited, visitedFields } from '../../domain/encounter/visited';
 import {
   EncounterClinicianField,
   EncounterStatusField,
@@ -70,6 +77,11 @@ const fetchEncounterRecord = async (variables: {
  * its archived form, with Edit to bring it into the current one, or in the
  * current form after migration.
  *
+ * Save on an encounter still Pending whose visit date has passed asks first
+ * whether to record it as visited (domain/encounter/visited.ts): Save keeps
+ * it Pending; Save as visited sets the status and, where none is recorded,
+ * the end time.
+ *
  * TO-DO: write this screen's spec (implementation-plan H26).
  */
 const EncounterDetailView: Component = () => {
@@ -112,6 +124,27 @@ const EncounterDetailView: Component = () => {
     isDirty: form.isDirty,
     onDiscard: form.discard,
   });
+
+  const [askingVisited, setAskingVisited] = createSignal(false);
+  const onSave = () => {
+    const saved = form.document()?.data as Partial<Encounter> | undefined;
+    if (suggestsVisited(saved, draft.data.status, new Date())) {
+      setAskingVisited(true);
+    } else {
+      void form.save();
+    }
+  };
+  const saveAsIs = () => {
+    setAskingVisited(false);
+    void form.save();
+  };
+  const saveAsVisited = () => {
+    const fields = visitedFields(draft.data.endDatetime, new Date());
+    draft.set('status', fields.status);
+    draft.set('endDatetime', fields.endDatetime);
+    setAskingVisited(false);
+    void form.save();
+  };
 
   const typeName = () => form.registry()?.name ?? record()?.type ?? '';
   const crumbs = () => {
@@ -198,7 +231,7 @@ const EncounterDetailView: Component = () => {
                       data-testid="save-button"
                       loading={form.saving()}
                       disabled={!form.canSave() || form.saving()}
-                      onClick={() => void form.save()}
+                      onClick={onSave}
                     >
                       {t('button.save')}
                     </Button>
@@ -235,6 +268,34 @@ const EncounterDetailView: Component = () => {
                   />
                 </Stack>
               </ContentContainer>
+              <Show when={askingVisited()}>
+                <Dialog
+                  open
+                  onClose={() => setAskingVisited(false)}
+                  title={t('messages.save-encounter-as-visited')}
+                  testId="save-as-visited-dialog"
+                  actions={
+                    <>
+                      <CancelButton
+                        data-testid="dialog-button-cancel"
+                        onClick={() => setAskingVisited(false)}
+                      />
+                      <DialogSaveButton
+                        data-testid="dialog-button-save"
+                        onClick={saveAsIs}
+                      />
+                      <Button
+                        variant="primary"
+                        confirms="continuing"
+                        data-testid="dialog-button-save-as-visited"
+                        onClick={saveAsVisited}
+                      >
+                        {t('button-save-as-visited')}
+                      </Button>
+                    </>
+                  }
+                />
+              </Show>
               <ConfirmDialog
                 open={leaveGuard.open()}
                 title={t('heading.are-you-sure')}
