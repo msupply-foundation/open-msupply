@@ -1,12 +1,12 @@
 use repository::RepositoryError;
 
 use crate::{
-    service_provider::ServiceContext, BatchMutationsProcessor, InputWithResult, WithDBError,
+    BatchMutationsProcessor, InputWithResult, WithDBError, service_provider::ServiceContext,
 };
 
-use super::delete::{delete_prescription_request, DeletePrescriptionRequestError};
+use super::delete::{DeletePrescriptionRequestError, delete_prescription_request};
 use crate::prescription_request_line::delete::{
-    delete_prescription_request_line, DeletePrescriptionRequestLineError,
+    DeletePrescriptionRequestLineError, delete_prescription_request_line,
 };
 
 /// The two mass deletes this vertical has: requests from the list, and lines

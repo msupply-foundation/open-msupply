@@ -1,7 +1,7 @@
 use log::{error, info};
 use repository::{
-    syncv7::SyncError, Description, RepositoryError, StorageConnection, SyncLogV7Repository,
-    SyncLogV7Row,
+    Description, RepositoryError, StorageConnection, SyncLogV7Repository, SyncLogV7Row,
+    syncv7::SyncError,
 };
 use util::format_error;
 
@@ -204,11 +204,16 @@ impl<'a> SyncLogger<'a> {
     }
 
     pub(crate) fn error(&mut self, error: &SyncError) -> Result<(), RepositoryError> {
-        error!(
-            "Error in sync: {}, During step {:?}",
-            format_error(error),
-            self.step
-        );
+        // An expected maintenance state, not a fault on this site
+        if let SyncError::SyncApiPaused = error {
+            info!("Sync skipped: {}", format_error(error));
+        } else {
+            error!(
+                "Error in sync: {}, During step {:?}",
+                format_error(error),
+                self.step
+            );
+        }
 
         self.row = SyncLogV7Row {
             error: Some(error.to_owned()),

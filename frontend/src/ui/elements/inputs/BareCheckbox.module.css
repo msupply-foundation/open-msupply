@@ -59,8 +59,8 @@
 .box {
   display: grid;
   place-items: center;
-  inline-size: 1.125rem;
-  block-size: 1.125rem;
+  inline-size: var(--checkbox-size);
+  block-size: var(--checkbox-size);
   border: 1px solid var(--input-border);
   border-radius: var(--radius-sm);
   background: var(--bg-white);

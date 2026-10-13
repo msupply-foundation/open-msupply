@@ -18,9 +18,16 @@ export interface RadioOption {
   testId?: string;
 }
 
-interface RadioGroupProps {
+export interface RadioGroupProps {
   /** Group label — a <legend> for the fieldset (visually a small heading). */
   label?: string;
+  /**
+   * Name the group via `aria-label` instead of rendering a visible <legend> —
+   * for a group whose own row or cell already names it (the store editor's
+   * preference rows, where the row label IS the preference's name). The
+   * accessible name is unchanged. Mirrors TextField/Select/ToggleSwitch.
+   */
+  hideLabel?: boolean;
   /**
    * An affordance rendered inline after the group label — the InfoTooltip help
    * icon whose bubble explains the group. It has to live INSIDE the <legend>
@@ -45,8 +52,16 @@ interface RadioGroupProps {
    * small dot. For a short set of MUTUALLY EXCLUSIVE MODES that reshape the
    * screen (the stocktake create modal's full / filtered / blank); an ordinary
    * yes/no or a long option list stays `plain`.
+   *
+   * `segmented` joins the options into one bar, each a labelled segment — for
+   * a SHORT set of exclusive values that all deserve to be on the surface, in
+   * a row where opening a select to read two or three words costs more than
+   * the width the segments take (the store editor's follow-global / on / off).
+   * It takes LABELS ONLY: a `description` is not rendered, and the bar is a
+   * row whatever `orientation` says. The selection fills neutral rather than
+   * brand — see the CSS module for why.
    */
-  appearance?: 'plain' | 'card';
+  appearance?: 'plain' | 'card' | 'segmented';
   /**
    * Inline-start indent, in rem — to line the options up under a sibling
    * control's text (e.g. the include-all radios sitting beneath a Combobox
@@ -71,20 +86,23 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
   // together.
   const name = createUniqueId();
   const labelId = `${name}-label`;
+  const appearance = () => props.appearance ?? 'plain';
+  const showLabel = () => Boolean(props.label) && !props.hideLabel;
   return (
     <fieldset
       class={props.class ? `${styles.root} ${props.class}` : styles.root}
       // Name the group from the label TEXT, not the whole legend: with a
       // labelInfo present the legend also holds the tooltip's trigger button,
       // whose accessible name would otherwise be concatenated into this one.
-      aria-labelledby={props.label ? labelId : undefined}
+      aria-labelledby={showLabel() ? labelId : undefined}
+      aria-label={props.hideLabel ? props.label : undefined}
       style={
         props.indentRem
           ? { 'padding-inline-start': `${props.indentRem}rem` }
           : undefined
       }
     >
-      <Show when={props.label}>
+      <Show when={showLabel()}>
         <legend class={styles.groupLabel}>
           <span id={labelId}>{props.label}</span>
           {props.labelInfo}
@@ -93,19 +111,33 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
       <div
         class={styles.items}
         data-orientation={props.orientation ?? 'vertical'}
-        data-appearance={props.appearance ?? 'plain'}
+        data-appearance={appearance()}
       >
         <For each={props.options}>
           {option => (
             <label
-              class={styles.item}
+              class={
+                appearance() === 'segmented'
+                  ? `${styles.item} ${styles.segment}`
+                  : styles.item
+              }
+              // In `segmented` the native radio is visually hidden and the
+              // LABEL is the visible target, so the option's test hook rides
+              // the label there — a hook on a clipped input is neither
+              // clickable nor visible to a test. Elsewhere it stays on the
+              // input, which is what the existing suites drive.
+              data-testid={
+                appearance() === 'segmented' ? option.testId : undefined
+              }
               data-disabled={props.disabled || option.disabled ? '' : undefined}
             >
               <input
                 type="radio"
                 class={styles.input}
                 name={name}
-                data-testid={option.testId}
+                data-testid={
+                  appearance() === 'segmented' ? undefined : option.testId
+                }
                 value={option.value}
                 checked={props.value === option.value}
                 disabled={props.disabled || option.disabled}

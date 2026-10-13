@@ -1,5 +1,5 @@
 use crate::{
-    diesel_macros::diesel_json_type, migrations::Version, ChangelogTableName, RepositoryError,
+    ChangelogTableName, RepositoryError, diesel_macros::diesel_json_type, migrations::Version,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -61,6 +61,9 @@ diesel_json_type! {
         WaitingForCentralV7Upgrade,
         #[error("Request site authentication error: {0}")]
         RequestSiteAuthError(String),
+        /// Central has paused its sync API for maintenance; remotes retry on their normal interval
+        #[error("Central server sync is paused")]
+        SyncApiPaused,
         #[error("Unmatched error {0}")]
         Other(String),
     }

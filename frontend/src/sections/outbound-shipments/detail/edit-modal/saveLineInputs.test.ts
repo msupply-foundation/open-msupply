@@ -38,10 +38,15 @@ describe('toSaveLineInputs', () => {
     ]);
   });
 
-  it('echoes the batch\'s stored VVM status — an omitted id STRIPS it (contract wire trap)', () => {
+  it("echoes the batch's stored VVM status — an omitted id STRIPS it (contract wire trap)", () => {
     const [input] = toSaveLineInputs([
       line({
-        vvmStatus: { id: 'v1', description: 'Stage 1', unusable: false, priority: 1 },
+        vvmStatus: {
+          id: 'v1',
+          description: 'Stage 1',
+          unusable: false,
+          priority: 1,
+        },
       }),
     ]);
     expect(input?.vvmStatusId).toBe('v1');

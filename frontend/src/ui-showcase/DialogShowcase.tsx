@@ -95,6 +95,8 @@ export const dialogMetadata: PageMetadata = {
         'full screen',
         'fullscreen',
         'tablet',
+        'landscape',
+        'short viewport',
         'size full',
         'sheet',
         'breakpoint',
@@ -181,10 +183,11 @@ export const DialogShowcase = () => {
             library — the platform gives the focus trap (top layer + inert
             page), focus restore, Escape and <code>::backdrop</code>; the RnD
             prototype bought Radix for exactly this contract, and the "hard to
-            drive from React" objection doesn't exist in Solid. Scrim click and
-            Escape both cancel. Watch focus return to the Save button on close.
-            The confirm is <code>primary</code> by default; a destructive
-            confirm passes <code>confirmVariant="danger"</code> — try Delete.
+            drive from React" objection doesn't exist in Solid. Escape cancels;
+            a click on the scrim does nothing. Watch focus return to the Save
+            button on close. The confirm is <code>primary</code> by default; a
+            destructive confirm passes <code>confirmVariant="danger"</code> —
+            try Delete.
           </Lead>
           <Row>
             <SaveButton onClick={() => setConfirmOpen(true)} />
@@ -378,9 +381,14 @@ export const DialogShowcase = () => {
             the header, <code>footer</code> and <code>actions</code> stay pinned
             to the edges. Below the narrow-viewport line (tablet portrait and
             phones) it goes <strong>full-screen</strong>, edge to edge with no
-            radius — as does any dialog sized by a <code>width</code> measure. A
-            default or <code>widthRem</code> dialog stays a centred card at
-            every width.
+            radius — as does any dialog sized by a <code>width</code> measure —
+            and below the <strong>short-viewport</strong> line too (a landscape
+            tablet: shorten the window under 800px), where vertical room is what
+            a workbench spends and the gutters would cost it rows (#246). A{' '}
+            <code>width</code> measure does not follow it there, and a default
+            or <code>widthRem</code> dialog stays a centred card down to the{' '}
+            <strong>compact</strong> line (600px, a phone), where every dialog
+            but a bare confirmation becomes a sheet.
           </Lead>
           <Row>
             <Button
@@ -453,7 +461,14 @@ export const DialogShowcase = () => {
             <code>default</code> and <code>widthRem</code> stay centred cards,
             since a confirmation was never wide enough to feel cramped. Resize
             the window across 1024px <em>with a dialog open</em> and watch it
-            flip live.
+            flip live. The two workbench sizes also flip below the
+            short-viewport line (breakpoints.ts › shortViewport, 800px tall — a
+            landscape tablet): shorten the window instead and only{' '}
+            <code>size="large"</code> and <code>size="full"</code> go full
+            screen; the measures stay cards there (#246). Below the compact line
+            (breakpoints.ts › compact, 600px — a phone) every dialog but a bare
+            confirmation is a sheet, <code>default</code> and{' '}
+            <code>widthRem</code> included.
           </Lead>
           <Row>
             <Button variant="secondary" onClick={() => setSizeDemo('default')}>
@@ -634,8 +649,8 @@ export const DialogShowcase = () => {
             <code>
               dismissable={'{'}false{'}'}
             </code>{' '}
-            Dialog — blocking (no scrim/Escape dismiss, an answer is required);
-            in the app it fills the routed store-selection screen's login frame.
+            Dialog — blocking (no Escape dismiss, an answer is required); in the
+            app it fills the routed store-selection screen's login frame.
           </Lead>
           <Row>
             <Button onClick={() => setStoreOpen(true)}>

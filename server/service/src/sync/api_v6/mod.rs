@@ -3,7 +3,7 @@ pub mod download_file;
 pub mod upload_file;
 use repository::RepositoryError;
 use reqwest::{Response, Url};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 use util::{format_error, log_body_read};
 
@@ -46,6 +46,11 @@ pub enum SyncParsedErrorV6 {
     /// worth knowing when one does.
     #[error("Site is not allowed to author records for table: {0}")]
     TableNotAuthoredBySite(String),
+    /// Central has paused its sync API (Admin > Sync settings) for maintenance. Remotes treat it
+    /// as a known, non-alarming state and retry on their normal interval. Like
+    /// `TableNotAuthoredBySite`, a remote built before this variant reports a parse error instead.
+    #[error("Central server sync is paused")]
+    SyncApiPaused,
 }
 
 impl From<anyhow::Error> for SyncParsedErrorV6 {
@@ -120,16 +125,41 @@ pub struct SyncApiErrorV6 {
     pub(crate) route: String,
 }
 
+impl SyncApiErrorV6 {
+    /// Central refused the request because its sync API is paused for maintenance.
+    pub(crate) fn is_sync_api_paused(&self) -> bool {
+        matches!(
+            self.source,
+            SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncApiPaused)
+        )
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum SyncApiErrorVariantV6 {
     #[error("Connection problem")]
     ConnectionError(#[from] reqwest::Error),
     #[error("Could not parse response")]
     ParsedError(#[from] SyncParsedErrorV6),
-    #[error("Could not parse response")]
+    // See sync v5's equivalent: let the inner variant speak.
+    #[error(transparent)]
     ParsingResponseError(#[from] ParsingResponseError),
     #[error("Unknown api error")]
     Other(#[from] anyhow::Error),
+}
+
+impl SyncApiErrorV6 {
+    /// The connection dropped part-way through reading the response body. Mirrors
+    /// `SyncApiError::is_dropped_response_body` for sync v5.
+    ///
+    /// Connect errors, timeouts and request-phase drops aren't included: `with_retries`
+    /// has already retried those for v6 before this error is returned.
+    pub(crate) fn is_dropped_response_body(&self) -> bool {
+        matches!(
+            &self.source,
+            SyncApiErrorVariantV6::ParsingResponseError(ParsingResponseError::ConnectionDropped(_))
+        )
+    }
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -202,6 +232,9 @@ pub struct SiteStatusRequestV6 {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct SiteStatusV6 {
     pub(crate) is_integrating: bool,
+    /// Central has paused its sync API. Defaults to false when talking to an older central.
+    #[serde(default)]
+    pub(crate) is_sync_api_paused: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -264,10 +297,21 @@ async fn response_or_err<T: DeserializeOwned>(
     let url = util::redact_url_for_log(response.url());
     let started = std::time::Instant::now();
     // Not checking for status, expecting 200 only, even if there is error
-    let response_text = response
-        .text()
-        .await
-        .map_err(ParsingResponseError::CannotGetTextResponse)?;
+    let response_text = match response.text().await {
+        Ok(text) => text,
+        // Same as sync v5's `to_json`: classify the drop where it happens, and say so in
+        // the log rather than leaving a gap after the successful-headers line.
+        Err(error) => {
+            let error = ParsingResponseError::from_body_read_error(error);
+            log::warn!(
+                "API body read failed: url '{}', after {:.1}s: {}",
+                url,
+                started.elapsed().as_secs_f64(),
+                format_error(&error),
+            );
+            return Err(error.into());
+        }
+    };
     log_body_read(&url, response_text.len(), started.elapsed());
 
     let result = serde_json::from_str(&response_text).map_err(|source| {

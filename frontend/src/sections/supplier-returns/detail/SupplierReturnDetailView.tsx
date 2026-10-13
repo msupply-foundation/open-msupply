@@ -149,20 +149,20 @@ const SupplierReturnDetailView: Component = () => {
 
   const tableConfig = createTableConfig({ tableId: 'supplier-return-detail' });
 
-  // Fetch the return's HEADER (the lines are their own query below). A
-  // non-return / bad id resolves to undefined — the not-found deep-link alert
-  // renders below (ui-surface S3 § tabs). The resource IS the local state for
-  // the header: every return-level save writes back with `mutate`
-  // (kdd/state-management).
+  // Fetch the return's HEADER (the lines are their own query below). The read
+  // pins `type: SUPPLIER_RETURN` (supplierReturnDetail.graphql), so a
+  // non-return id, another store's return, and a bad id all come back as a
+  // NodeError (RecordNotFound) and resolve to undefined — the not-found
+  // deep-link alert renders below (ui-surface S3 § tabs; #1044). That NodeError
+  // is deliberately NOT routed to the global unexpected-error modal (no
+  // mapSuccessToError): it would offer a useless reload of the same bad id and
+  // shadow the local notice — the same call the outbound detail makes. The
+  // resource IS the local state for the header: every return-level save
+  // writes back with `mutate` (kdd/state-management).
   const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, id: params.returnId }),
     async variables => {
-      const result = await graphqlFetch(SupplierReturnDetail, variables, {
-        mapSuccessToError: d =>
-          d.invoice.__typename === 'NodeError'
-            ? d.invoice.error.description
-            : undefined,
-      });
+      const result = await graphqlFetch(SupplierReturnDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
@@ -368,11 +368,12 @@ const SupplierReturnDetailView: Component = () => {
     setEditState({ mode: 'update', itemId: line.item.id, lineId: line.id });
   const openAdd = () => setEditState({ mode: 'add' });
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
-  // declaration for the two controls that trigger it; each carries
-  // `shortcut={ALT_N}` for its badge, neither owns the action. Gated on `.state`
-  // rather than on `info()`, which suspends (kdd/keyboard-layer — an action's
-  // `disabled` MUST NOT read a suspending source; the palette evaluates it).
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). One declaration for the two controls that trigger
+  // it; each carries `shortcut={ALT_N}` for its badge, neither owns the action.
+  // Gated on `.state` rather than on `info()`, which suspends
+  // (kdd/keyboard-layer — an action's `disabled` MUST NOT read a suspending
+  // source; the palette evaluates it).
   createAddAction({
     name: 'button.add-item',
     run: openAdd,
@@ -507,6 +508,7 @@ const SupplierReturnDetailView: Component = () => {
         fallback={
           <Dialog
             open
+            testId="return-not-found-notice"
             icon={<InfoIcon />}
             title={t('error.return-not-found')}
             description={t('messages.click-to-return-to-returns')}

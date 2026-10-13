@@ -2,10 +2,10 @@
 mod update {
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_name_a, MockDataInserts},
+        InsuranceProviderRow, InsuranceProviderRowRepository,
+        mock::{MockDataInserts, mock_name_a},
         name_insurance_join_row::InsurancePolicyType,
         test_db::setup_all,
-        InsuranceProviderRow, InsuranceProviderRowRepository,
     };
 
     use crate::{

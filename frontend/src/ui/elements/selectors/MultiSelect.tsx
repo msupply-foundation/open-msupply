@@ -11,7 +11,7 @@ import { usePortalMount } from '../../utils/portalMount';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import styles from './MultiSelect.module.css';
 
-interface MultiSelectProps<T> {
+export interface MultiSelectProps<T> {
   label: string;
   items: T[];
   itemToString: (item: T) => string;
@@ -72,6 +72,12 @@ interface MultiSelectProps<T> {
    * #581).
    */
   disabled?: boolean;
+  /**
+   * Marks the field required: an asterisk on the label plus `aria-required`
+   * on the input. As <Combobox>'s required — indication only, the gating
+   * stays with the form's own confirm rule.
+   */
+  required?: boolean;
   class?: string;
 }
 
@@ -120,6 +126,20 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       ? t('label.no-options')
       : t('control.search.no-results-label');
 
+  // The label element itself (text + required asterisk). A local component so
+  // it renders fresh in either branch (bare, or beside labelInfo). As
+  // <Combobox>.
+  const Label = () => (
+    <KCombobox.Label class={styles.label}>
+      {props.label}
+      <Show when={props.required}>
+        <span class={styles.required} aria-hidden="true">
+          *
+        </span>
+      </Show>
+    </KCombobox.Label>
+  );
+
   return (
     <KCombobox.Root<T>
       multiple
@@ -162,9 +182,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
         when={props.labelInfo}
         fallback={
           <Show when={!props.hideLabel}>
-            <KCombobox.Label class={styles.label}>
-              {props.label}
-            </KCombobox.Label>
+            <Label />
           </Show>
         }
       >
@@ -172,7 +190,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
             its accessible name would leak into the input's (the
             name-from-label computation concatenates descendant controls). */}
         <span class={styles.labelRow}>
-          <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+          <Label />
           {props.labelInfo}
         </span>
       </Show>
@@ -207,6 +225,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
                 data-testid={props.inputTestId}
                 aria-label={props.hideLabel ? props.label : undefined}
                 aria-invalid={props.error ? 'true' : undefined}
+                aria-required={props.required ? 'true' : undefined}
               />
             </div>
             <KCombobox.Trigger
@@ -226,7 +245,10 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
         when={props.error}
         fallback={
           <Show when={props.helperText}>
-            <KCombobox.Description class={styles.helper}>
+            <KCombobox.Description
+              class={styles.helper}
+              data-field-message="helper"
+            >
               {props.helperText}
             </KCombobox.Description>
           </Show>
@@ -234,6 +256,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       >
         <KCombobox.Description
           class={styles.error}
+          data-field-message="error"
           data-testid={props.errorTestId}
         >
           <AlertTriangleIcon class={styles.errorIcon} />

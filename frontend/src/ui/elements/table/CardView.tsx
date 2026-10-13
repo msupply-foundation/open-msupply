@@ -359,6 +359,8 @@ export function CardView<T, G extends string>(props: {
   enableSelection: boolean;
   selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
+  /** Whether `onRowClick` applies to a row (see DataTable's prop). */
+  rowClickable?: (row: T) => boolean;
   /**
    * Semantic text tone (see DataTable's rowTone) — in card view the tone
    * paints the card's IDENTITY title only (a whole-card repaint would
@@ -428,9 +430,12 @@ export function CardView<T, G extends string>(props: {
         // This row's keyboard-focus handle, re-resolved on each read like every
         // other per-row fact here (see the bindings below).
         const rowFocus = () => props.rowFocus?.(row);
+        const clickable = () =>
+          props.onRowClick !== undefined &&
+          (props.rowClickable?.(row.original) ?? true);
         return (
           <tr
-            class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
+            class={`${styles.cardRow} ${clickable() ? styles.rowClickable : ''}`}
             data-selected={row.getIsSelected() ? '' : undefined}
             data-tone={props.rowTone?.(row.original)}
             // The same attribute TableRow stamps, so one selector addresses a
@@ -453,7 +458,9 @@ export function CardView<T, G extends string>(props: {
             onFocus={event => {
               if (isKeyboardFocus(event)) rowFocus()?.onFocus();
             }}
-            onClick={() => props.onRowClick?.(row.original)}
+            onClick={() => {
+              if (clickable()) props.onRowClick?.(row.original);
+            }}
           >
             <td class={styles.cardCell}>
               <div class={styles.card}>

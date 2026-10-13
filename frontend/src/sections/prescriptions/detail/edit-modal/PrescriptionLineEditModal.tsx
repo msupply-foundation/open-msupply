@@ -7,7 +7,7 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
-import { getPlural, t, tPlural } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
@@ -41,7 +41,7 @@ import {
 import { getBooleanCell } from '../../../../ui/elements/table/BooleanCell';
 import { ItemSearch } from '../../../../domain/item';
 import { prescriptionPreferences } from '../../../../store/storeContext';
-import { formatNumber, round } from '../../../../intl';
+import { round, roundedText } from '../../../../intl';
 import {
   clampManualPacks,
   issuedUnits,
@@ -70,15 +70,17 @@ import {
   SavePrescriptionItemLines,
   type PrescriptionEditLinesResult,
 } from './prescriptionLineEdit.generated';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The prescription line editor (spec/prescriptions/ui-surface.md S4 — the
 // D53 modal replacing the real app's full-page route): item lookup (locked in
 // edit mode, EVERY item offered in add mode — an already-dispensed item loads
 // its existing allocation, never a duplicate), the allocation editor body
-// with the prescription deltas — partial packs (AC-A1), no placeholder,
-// nothing allocated on open (AC-A2) — the preference-gated prescribed
-// quantity (AC-Q1–Q3), and the directions block (AC-R1–R3). Save is the item
-// set-save (AC-I7): every rejection is non-typed (contract wire trap), shown
+// with the prescription deltas — partial packs (OMS-REG-DIS-03.31), no
+// placeholder, nothing allocated on open (OMS-REG-DIS-03.32) — the
+// preference-gated prescribed quantity (OMS-REG-DIS-03.25–.27), and the
+// directions block (OMS-REG-DIS-03.28–.30). Save is the item set-save
+// (OMS-REG-DIS-03.24): every rejection is non-typed (contract wire trap), shown
 // in-dialog. OK & next (add mode) saves then reopens on a fresh item.
 
 export interface PrescriptionLineEditModalProps {
@@ -153,8 +155,8 @@ const banner = (
     case 'messages.over-allocated-line':
       return {
         text: t(message.key, {
-          quantity: formatNumber(message.quantity),
-          issueQuantity: formatNumber(message.issueQuantity),
+          quantity: roundedText(message.quantity),
+          issueQuantity: roundedText(message.issueQuantity),
         }),
         testId: 'prescription-adjusted-entry-warning',
         severity: 'warning',
@@ -163,7 +165,7 @@ const banner = (
     case 'messages.partial-pack-warning-doses':
       return {
         text: t(message.key, {
-          nearestAbove: formatNumber(message.nearestAbove),
+          nearestAbove: roundedText(message.nearestAbove),
         }),
         testId: 'prescription-partial-pack-warning',
         severity: 'warning',
@@ -222,12 +224,13 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string>();
   // The allocate-in lens: units, or doses for a vaccine item under the
-  // preference (AC-AL7 via stock-allocation; prescriptions has no pack lens).
+  // preference (OMS-REG-SMV-11.19/.20 via stock-allocation; prescriptions has no pack lens).
   const [lens, setLens] = createSignal<'units' | 'doses'>('units');
 
   // The item's draft grid + info, fetched when an item is chosen — nothing
-  // allocates on open (AC-A2); the grid just renders. Read non-suspending so
-  // the open modal never remounts (kdd/solid-reactivity-pitfalls).
+  // allocates on open (OMS-REG-DIS-03.32); the grid just renders. Read
+  // non-suspending so the open modal never remounts
+  // (kdd/solid-reactivity-pitfalls).
   const [gridData] = createResource(itemId, async id => {
     const result = await graphqlFetch(PrescriptionEditLines, {
       storeId: props.storeId,
@@ -279,7 +282,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     return result.data;
   });
 
-  // The abbreviation dictionary (AC-R1), fetched once per open.
+  // The abbreviation dictionary (OMS-REG-DIS-03.28), fetched once per open.
   const [abbrevData] = createResource(async () => {
     const result = await graphqlFetch(Abbreviations, {});
     return result.kind === 'success' ? result.data.abbreviations : undefined;
@@ -315,14 +318,14 @@ const Body = (props: PrescriptionLineEditModalProps) => {
   // or an item switch supersedes any pending call outright.
   let pendingAllocator: 'issue' | 'prescribed' | undefined;
 
-  // Distribute FEFO with partial packs (AC-A1); callers hand in UNITS — the
-  // lens converts at the field boundary (AC-AL7/.63). Runs DEBOUNCED behind
-  // both quantity fields (the current app's AutoAllocate fields — their
-  // #2727/#3532: distributing per keystroke rewrites the entry under the
-  // user's fingers). Once the entry settles, the issue field snaps to what
-  // was ACTUALLY allocated — a request stock can't cover reads as the
-  // allocated 10, not the typed 20 (.62); the shortfall banner carries the
-  // full request.
+  // Distribute FEFO with partial packs (OMS-REG-DIS-03.31); callers hand in
+  // UNITS — the lens converts at the field boundary (OMS-REG-SMV-11.19/.20,
+  // DIS-03.63). Runs DEBOUNCED behind both quantity fields (the current app's
+  // AutoAllocate fields — their #2727/#3532: distributing per keystroke
+  // rewrites the entry under the user's fingers). Once the entry settles, the
+  // issue field snaps to what was ACTUALLY allocated — a request stock can't
+  // cover reads as the allocated 10, not the typed 20 (.62); the shortfall
+  // banner carries the full request.
   const runAllocation = (requestedUnits: number) => {
     pendingAllocator = undefined;
     const {
@@ -380,8 +383,8 @@ const Body = (props: PrescriptionLineEditModalProps) => {
 
   // The prescribed quantity drives allocation of the same quantity, capped
   // by the distribution (.62); the prescribed value itself keeps the full
-  // request — it's the demand record (AC-Q1–Q3), not the issue figure.
-  // Entered through the lens, held and saved as units (.63).
+  // request — it's the demand record (OMS-REG-DIS-03.25–.27), not the issue
+  // figure. Entered through the lens, held and saved as units (.63).
   const onPrescribedChange = (value: number | undefined) => {
     const units = lensToUnits(value, allocateLens());
     setPrescribedQuantity(units);
@@ -390,9 +393,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
     else cancelAllocate('prescribed');
   };
 
-  // A manual per-row entry, clamped 0…available (AC-I5 — the client is the
-  // only negative guard, and auto-pick raises the stakes). Its reports
-  // REPLACE the distribution's (AC-AL13): the split-pack warning when the
+  // A manual per-row entry, clamped 0…available (OMS-REG-DIS-03.22 — the client
+  // is the only negative guard, and auto-pick raises the stakes). Its reports
+  // REPLACE the distribution's (OMS-REG-SMV-11.33/.34): the split-pack warning when the
   // entry leaves a fractional pack (.58) — and, via onRowClamped below, the
   // applied quantity when the entry was adjusted (.19).
   const setRowPacks = (id: string, value: number | undefined) => {
@@ -469,9 +472,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
         (sum, line) => sum + line.numberOfPacks * line.packSize,
         0
       );
-      // Pluralised on the TOTAL: the name labels the whole summary, not just
-      // the entry it trails.
-      const unit = getPlural(unitName(), total);
+      const unit = unitName();
       if (batches.length > 3)
         return `${tPlural('label.batch-count', batches.length)} · ${round(
           total,
@@ -715,7 +716,8 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           <Show when={!isEdit && saveEnabled()}>
             <Button
               // The CONTINUING confirm: while present and enabled, Enter
-              // activates it in preference to plain OK (KB-E2, AC-KB23).
+              // activates it in preference to plain OK (KB-E2,
+              // OMS-REG-KBD-02.9/.10).
               confirms="continuing"
               data-testid="dialog-button-next-and-ok"
               loading={saving()}
@@ -848,7 +850,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   ? 'warning.cannot-create-placeholder-doses'
                   : 'warning.cannot-create-placeholder-units',
                 {
-                  allocatedQuantity: formatNumber(
+                  allocatedQuantity: roundedText(
                     unitsToLens(allocatedUnits(), allocateLens())
                   ),
                 }
@@ -890,7 +892,14 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               closed, the trigger row summarises the drawn batches
               (OMS-REG-DIS-03.57) so the picked batch — usually one — is
               visible without expanding. */}
-            <Accordion collapsible variant="card">
+            <Accordion
+              collapsible
+              variant="card"
+              // The dialog's main line table lives in here: in the
+              // full-screen sheet the card runs to the sheet edges and the
+              // table sits flush under the trigger row (#246).
+              dialogTable
+            >
               <AccordionItem value="batches">
                 <AccordionTrigger
                   // h4: this disclosure sits INSIDE the Quantity section,
@@ -901,14 +910,11 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                   // its own line above the fields) — always visible, no
                   // vertical cost. UNLIKE the batch summary beside it this
                   // follows the allocate-in lens (it's the Issue field's
-                  // headroom); the unit name is pluralised so the two agree.
-                  // `label.doses` is already plural.
+                  // headroom).
                   end={
                     <>
-                      {t('label.available')}: {formatNumber(availableInLens())}{' '}
-                      {dosesMode()
-                        ? t('label.doses')
-                        : getPlural(unitName(), availableInLens())}
+                      {t('label.available')}: <Num value={availableInLens()} />{' '}
+                      {dosesMode() ? t('label.doses') : unitName()}
                     </>
                   }
                 >
@@ -934,7 +940,7 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           </Show>
         </FormSection>
 
-        {/* Directions (AC-R1–R3): unavailable until something is allocated —
+        {/* Directions (OMS-REG-DIS-03.28–.30): unavailable until something is allocated —
             the section keeps its heading either way, so the block never
             disappears without saying why. */}
         <FormSection

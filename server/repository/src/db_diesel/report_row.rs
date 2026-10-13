@@ -1,6 +1,6 @@
-use super::{form_schema_row::form_schema, ChangelogRepository, RowActionType, StorageConnection};
+use super::{ChangelogRepository, RowActionType, StorageConnection, form_schema_row::form_schema};
 
-use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert, repository_error::RepositoryError};
 use clap::ValueEnum;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -207,8 +207,23 @@ mod test {
     use util::assert_matches;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, FormSchemaJson, FormSchemaRowRepository,
+        FormSchemaJson, FormSchemaRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
+
+    /// scripts/reports/build-reports.mjs refuses a report whose context it does not know,
+    /// from its own list. Every context here must be on it.
+    #[test]
+    fn report_bundler_knows_every_context() {
+        let bundler = include_str!("../../../../scripts/reports/build-reports.mjs");
+        for context in ContextType::iter() {
+            let name = serde_json::to_value(&context).unwrap();
+            let name = name.as_str().unwrap();
+            assert!(
+                bundler.contains(&format!("'{name}'")),
+                "{name} is missing from CONTEXT_TYPES in scripts/reports/build-reports.mjs"
+            );
+        }
+    }
 
     #[actix_rt::test]
     async fn report_context_enum_postgres() {

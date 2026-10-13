@@ -12,7 +12,11 @@ import {
   type SyncStatusFragment,
 } from '../api/initialisation.generated';
 import { subscribe } from '../api/subscription';
-import { isCentralServer, serverVersion } from '../api/serverInfo';
+import {
+  isCentralServer,
+  serverVersion,
+  serverVersionDiffers,
+} from '../api/serverInfo';
 import {
   toSyncOverview,
   type SyncError,
@@ -368,10 +372,11 @@ export const InitialisationPage: Component<{
   const locked = () => submitting() || syncStarted();
   const busy = () => locked() && syncError() == null;
 
-  // Spec (App version, OMS-REG-LGN-03.27–.29): the running build's version and
-  // — once the startup pass has fetched it, never as a placeholder — the
-  // server's, on one line at the bottom of the page's left half. Same line, and
-  // same reasoning, as the login page's.
+  // Spec (App version, OMS-REG-LGN-03.27–.29): the running build's version on
+  // one line at the bottom of the page's left half — a single "Version" while
+  // it matches the server's (or the server's is not yet known), split into
+  // Interface / Server only once the startup pass finds they differ (#574).
+  // Same line, and same reasoning, as the login page's.
   //
   // ONE element, rendered either in the hero or, below the compact breakpoint
   // where the hero doesn't render at all, in the panel. Never both, so
@@ -380,10 +385,17 @@ export const InitialisationPage: Component<{
   // decides which element renders).
   const versionLine = (placement: string) => (
     <p class={`${styles.versionBar} ${placement}`} data-testid="init-version">
-      <span>
-        <strong>{t('label.version-interface')}</strong> {APP_VERSION}
-      </span>
-      <Show when={serverVersion()}>
+      <Show
+        when={serverVersionDiffers()}
+        fallback={
+          <span>
+            <strong>{t('label.version')}</strong> {APP_VERSION}
+          </span>
+        }
+      >
+        <span>
+          <strong>{t('label.version-interface')}</strong> {APP_VERSION}
+        </span>
         <span>
           <strong>{t('label.version-server')}</strong> {serverVersion()}
         </span>
@@ -580,7 +592,10 @@ export const InitialisationPage: Component<{
             return h ? t(h) : undefined;
           };
           return (
-            <Alert severity="error" testId="initialise-error">
+            <Alert
+              severity={errorSummary().severity ?? 'error'}
+              testId="initialise-error"
+            >
               <div>{t(errorSummary().summary)}</div>
               <ErrorDetails detail={err().fullError} hint={hintText()} />
             </Alert>
@@ -773,7 +788,7 @@ export const InitialisationPage: Component<{
                   noticeClass={styles.actionNotice}
                 />
                 {/* Arriving from the desktop discovery page (spec/desktop §
-                    server selection, AC-DT16): a not-yet-initialised server
+                    server selection, OMS-REG-DESK-01.21): a not-yet-initialised server
                     may simply be the wrong one — the hand-off's return URL is
                     the way back to choose another. Same affordance as the
                     login page's; renders nothing without the parameter. */}

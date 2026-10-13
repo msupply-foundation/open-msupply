@@ -1,7 +1,7 @@
 import type { GraphqlResult } from '@/api/graphql';
 import type { DeleteLocationResult } from './locations.generated';
 
-// Pure logic behind the delete flow (spec/locations S3, FL4). There is no
+// Pure logic behind the delete flow (spec/locations S3). There is no
 // batch mutation: a multi-select delete is N independent deleteLocation calls
 // (contract.md § deletion), each succeeding or failing on its own
 // (OMS-REG-INV-01.33). These helpers map each call's discriminated result to an

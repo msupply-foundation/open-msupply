@@ -1,6 +1,6 @@
 use repository::{
-    campaign::campaign_row::CampaignRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    campaign::campaign_row::CampaignRow,
 };
 
 use crate::sync::translations::{
@@ -76,7 +76,7 @@ impl SyncTranslation for CampaignTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all, SyncRecordData};
+    use repository::{SyncRecordData, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn test_campaign_pull_translation() {

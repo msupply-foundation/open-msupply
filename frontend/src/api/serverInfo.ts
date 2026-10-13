@@ -24,6 +24,31 @@ const [serverVersion, setServerVersion] = createSignal<string | undefined>(
 
 export { serverVersion };
 
+// Whether the server reports a version other than the running build's (issue
+// #574). While front end and server release on one version line, naming both
+// is noise — the version surfaces show a single "Version" line and only split
+// into Interface / Server when they genuinely disagree. Compared on the
+// release tag (buildTag drops the commit stamp), ignoring the tag's leading
+// "v" and case: a release build "v3.04.00 (2ae7bd2)" matches a server
+// "3.04.00". Unknown server version ⇒ no disagreement to show.
+const normaliseVersion = (version: string): string =>
+  version.trim().replace(/^v/i, '').toLowerCase();
+
+// APP_VERSION is "<tag> (<short sha>)" from a pipeline release; any other build
+// is a git-describe string (or bare package version) with no commit stamp.
+const buildTag = (appVersion: string): string =>
+  /^(\S+) \([0-9a-f]+\)$/i.exec(appVersion)?.[1] ?? appVersion;
+
+export const versionsMatch = (
+  buildVersion: string,
+  server: string | undefined
+): boolean =>
+  server === undefined ||
+  normaliseVersion(buildTag(buildVersion)) === normaliseVersion(server);
+
+export const serverVersionDiffers = (): boolean =>
+  !versionsMatch(APP_VERSION, serverVersion());
+
 export const fetchServerInfo = async (): Promise<void> => {
   const [role, version] = await Promise.all([
     graphqlFetch(IsCentralServer, {}, { background: true }),

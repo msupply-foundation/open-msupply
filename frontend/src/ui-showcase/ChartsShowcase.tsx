@@ -42,6 +42,16 @@ const consumptionData: ConsumptionHistoryPoint[] = (() => {
   });
 })();
 
+// The same months at a national warehouse's scale, so the y-axis labels run
+// into the millions and the label gutter has to widen to hold them.
+const largeConsumptionData: ConsumptionHistoryPoint[] = consumptionData.map(
+  p => ({
+    ...p,
+    consumption: p.consumption * 40_000,
+    averageMonthlyConsumption: p.averageMonthlyConsumption * 40_000,
+  })
+);
+
 const stockData: StockEvolutionPoint[] = (() => {
   const raw = [
     { d: '2026-05-01', v: 210, historic: true },
@@ -102,7 +112,10 @@ export const ChartsShowcase = () => (
           value bars for stock on hand + suggested order, proportioned to the
           target. When stock exceeds the target the axis shrinks and the stock
           bar fills the row. With no average monthly consumption it shows an{' '}
-          <em>Unable to calculate</em> line instead (second panel).
+          <em>Unable to calculate</em> line instead (second panel). The third
+          panel has stock far above the target, so the axis is a sliver and its
+          cells size to their numbers; the fourth has a 24-month target, so each
+          cell is too narrow for text and shows its number alone.
         </Lead>
         <Row>
           <TargetQuantityBreakdown
@@ -119,6 +132,20 @@ export const ChartsShowcase = () => (
             thresholdMonths={1}
             targetMonths={3}
           />
+          <TargetQuantityBreakdown
+            averageMonthlyConsumption={36.6}
+            availableStockOnHand={4127}
+            suggestedQuantity={0}
+            thresholdMonths={1}
+            targetMonths={3}
+          />
+          <TargetQuantityBreakdown
+            averageMonthlyConsumption={15.5}
+            availableStockOnHand={21}
+            suggestedQuantity={351}
+            thresholdMonths={6}
+            targetMonths={24}
+          />
         </Row>
       </DashboardCard>
 
@@ -129,9 +156,14 @@ export const ChartsShowcase = () => (
         <Lead>
           Bars for monthly consumption, coloured by historic / current /
           projected, with a moving-average line overlaid, plus a per-band hover
-          cursor + tooltip. Hover a bar to see the per-month readout.
+          cursor + tooltip. Hover a bar to see the per-month readout. The second
+          chart has values in the millions: the y-axis label gutter widens so
+          the labels stay inside the chart.
         </Lead>
-        <ConsumptionHistoryChart data={consumptionData} />
+        <Row>
+          <ConsumptionHistoryChart data={consumptionData} />
+          <ConsumptionHistoryChart data={largeConsumptionData} />
+        </Row>
       </DashboardCard>
 
       <DashboardCard

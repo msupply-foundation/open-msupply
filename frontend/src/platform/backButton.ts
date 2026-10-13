@@ -1,4 +1,5 @@
 import { isAndroid } from './index';
+import { cameraOverlayOpen, cancelCameraScan } from './barcodeSources/camera';
 
 // Android hardware/gesture back (spec/android § hardware back,
 // kdd/capacitor-plugins): registering a backButton listener takes over from
@@ -32,7 +33,10 @@ export const registerAndroidBackButton = async (): Promise<void> => {
   const bootIndex = historyIndex();
   const { App } = await import('@capacitor/app');
   await App.addListener('backButton', () => {
-    if (historyIndex() > bootIndex) window.history.back();
+    // Back during a camera scan cancels the scan. The app is hidden behind
+    // the camera, so navigating it would change a screen the user cannot see.
+    if (cameraOverlayOpen()) cancelCameraScan();
+    else if (historyIndex() > bootIndex) window.history.back();
     else void App.minimizeApp();
   });
 };

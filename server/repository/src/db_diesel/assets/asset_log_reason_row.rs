@@ -1,11 +1,11 @@
 use super::asset_log_reason_row::asset_log_reason::dsl::*;
 
-use crate::asset_log_row::AssetLogStatus;
 use crate::ChangelogRepository;
 use crate::RepositoryError;
 use crate::RowActionType;
 use crate::SourceSiteId;
 use crate::StorageConnection;
+use crate::asset_log_row::AssetLogStatus;
 use crate::{ChangelogSyncType, Upsert};
 
 use chrono::NaiveDateTime;

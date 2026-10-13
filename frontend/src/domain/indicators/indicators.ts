@@ -7,7 +7,8 @@ import {
 
 // Shared Indicators-tab domain logic (spec/internal-orders S3 § Indicators
 // tab owns the surface; spec/requisitions § indicator values consumes it):
-// the line merge (AC-I4) and the per-cell save (AC-I5–I7).
+// the line merge (OMS-REG-REPL-12.4) and the per-cell save
+// (OMS-REG-REPL-12.5/.6; the status guard is contract § indicator values).
 
 type IndicatorConnector = Extract<
   ProgramIndicatorValuesResult['programIndicators'],
@@ -24,10 +25,13 @@ export type IndicatorCell = {
   label: string;
   type: 'NUMBER' | 'STRING';
   value: string;
+  /** The cell's own source line is active — an inactive line freezes only
+   *  its own cells, even when merged with an active line of the same code. */
+  isActive: boolean;
 };
 
-// One customer-breakdown row for a line (AC-I10): a supplied customer store,
-// its figures per column, and the period-end date (or null).
+// One customer-breakdown row for a line (OMS-REG-REPL-12.9): a supplied
+// customer store, its figures per column, and the period-end date (or null).
 export type IndicatorCustomerRow = {
   /** Unique per ROW, not per customer: a merged line repeats its customers
    *  once per source indicator, so the source line qualifies the id. */
@@ -37,12 +41,16 @@ export type IndicatorCustomerRow = {
   values: Record<string, string>;
 };
 
-// A merged indicator line (AC-I4): one entry per line code, its cells combined
-// across the program's indicators, its customer rows repeated per source.
+// A merged indicator line (OMS-REG-REPL-12.4): one entry per line code, its
+// cells combined across the program's indicators, its customer rows repeated
+// per source.
 export type IndicatorEntry = {
   code: string;
   name: string;
   lineNumber: number;
+  /** Every displayed cell's source line is active — NOT one line's status: a
+   *  merged entry can mix an active and an inactive line of the same code.
+   *  False shows the inactive-line notice; each cell freezes on its own flag. */
   isActive: boolean;
   cells: IndicatorCell[];
   customerRows: IndicatorCustomerRow[];
@@ -74,11 +82,14 @@ const effectiveType = (
   line: 'NUMBER' | 'STRING' | null
 ): 'NUMBER' | 'STRING' => ((column ?? line) === 'NUMBER' ? 'NUMBER' : 'STRING');
 
-// Merge the program's indicator lines into one entry per line code (AC-I4):
-// indicators ordered alphabetically by code (so the first's columns lead),
-// lines grouped by code, columns combined; a cell with no stored value is
-// dropped, and a line with no stored cell is absent. Entries order by line
-// number.
+// Merge the program's indicator lines into one entry per line code
+// (OMS-REG-REPL-12.4): indicators ordered alphabetically by code (so the
+// first's columns lead), lines grouped by code, columns combined; a cell with
+// no stored value is dropped, and a line with no stored cell is absent. Entries
+// order by line number. Only source lines with a stored cell take part: an
+// inactive line sharing its code with an active one seeds nothing on a new
+// order, and must not lend the entry its name or inactive status
+// (OMS-REG-REPL-12.11).
 export const mergeIndicatorLines = (
   nodes: readonly IndicatorNode[]
 ): IndicatorEntry[] => {
@@ -95,9 +106,11 @@ export const mergeIndicatorLines = (
 
   const entries: IndicatorEntry[] = [];
   for (const [code, sources] of byCode) {
+    const populated = sources.filter(lc => lc.columns.some(c => c.value));
+    if (populated.length === 0) continue; // a line with no stored cell is absent
     const cells: IndicatorCell[] = [];
     const customerRows: IndicatorCustomerRow[] = [];
-    for (const lc of sources) {
+    for (const lc of populated) {
       for (const column of [...lc.columns].sort(
         (a, b) => a.columnNumber - b.columnNumber
       )) {
@@ -108,6 +121,7 @@ export const mergeIndicatorLines = (
           label: cellLabel(column.name),
           type: effectiveType(column.valueType, lc.line.valueType),
           value: column.value.value,
+          isActive: lc.line.isActive,
         });
       }
       for (const info of lc.customerIndicatorInfo)
@@ -120,13 +134,12 @@ export const mergeIndicatorLines = (
           ),
         });
     }
-    if (cells.length === 0) continue; // a line with no stored cell is absent
-    const first = sources[0].line;
+    const lead = (populated.find(lc => lc.line.isActive) ?? populated[0]).line;
     entries.push({
       code,
-      name: first.name,
-      lineNumber: first.lineNumber,
-      isActive: sources.every(source => source.line.isActive),
+      name: lead.name,
+      lineNumber: lead.lineNumber,
+      isActive: cells.every(cell => cell.isActive),
       cells,
       customerRows,
     });
@@ -161,8 +174,8 @@ export const applySavedIndicatorValue = (
     ),
   }));
 
-// The per-cell save (AC-I5): updateIndicatorValue, mapping the typed errors —
-// RecordNotFound → messages.record-not-found, anything else →
+// The per-cell save (OMS-REG-REPL-12.5): updateIndicatorValue, mapping the
+// typed errors — RecordNotFound → messages.record-not-found, anything else →
 // error.value-type-not-correct (the client's mapping, contract › edit). A save
 // answers with the stored value, which the caller writes back into the nodes.
 export type CellSaveResult =

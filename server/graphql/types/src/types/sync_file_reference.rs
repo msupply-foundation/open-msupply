@@ -5,7 +5,7 @@ use graphql_core::loader::UserLoader;
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::ContextExt;
 use repository::sync_file_reference::SyncFileReference;
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 use super::UserNode;
 

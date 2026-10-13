@@ -1,4 +1,5 @@
 use repository::{
+    EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
     vaccine_course::{
         vaccine_course_dose::{
             VaccineCourseDose, VaccineCourseDoseFilter, VaccineCourseDoseRepository,
@@ -6,7 +7,6 @@ use repository::{
         vaccine_course_dose_row::VaccineCourseDoseRowRepository,
         vaccine_course_row::VaccineCourseRowRepository,
     },
-    EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
 };
 
 use crate::service_provider::ServiceContext;

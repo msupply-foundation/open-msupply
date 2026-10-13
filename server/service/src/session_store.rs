@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use chrono::{DateTime, Duration, Utc};
 use rand::RngExt;
 
@@ -107,6 +107,17 @@ impl SessionStore {
     /// Remove all sessions for a user (e.g. password change, admin force-logout).
     pub fn revoke_all_for_user(&mut self, user_id: &str) {
         self.sessions.retain(|_, entry| entry.user_id != user_id);
+    }
+
+    /// Remove every session whose user `keep` rejects. Returns how many were removed.
+    ///
+    /// Maintenance mode (#840) calls this with "is a server admin" as it turns on, so users
+    /// who were signed in go back to the login screen on their next request while whoever
+    /// flipped the switch stays signed in.
+    pub fn revoke_all_except(&mut self, keep: impl Fn(&str) -> bool) -> usize {
+        let before = self.sessions.len();
+        self.sessions.retain(|_, entry| keep(&entry.user_id));
+        before - self.sessions.len()
     }
 
     /// Records the password hash this user's sessions are being issued against, and
@@ -310,9 +321,11 @@ mod tests {
 
         // Central accepts a password the stored hash does not verify against
         assert!(store.revoke_for_credentials_changed_at_central("u"));
-        assert!(store
-            .validate_and_slide(&issued_under_the_old_password)
-            .is_none());
+        assert!(
+            store
+                .validate_and_slide(&issued_under_the_old_password)
+                .is_none()
+        );
         assert!(store.validate_and_slide(&other_user).is_some());
 
         // Sync still hasn't landed the new hash, and a second device logs in with the

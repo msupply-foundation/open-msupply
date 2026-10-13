@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     activity_log::activity_log_entry,
     apis::{
-        central_user_login::{central_user_login, CentralUserLoginError},
+        central_user_login::{CentralUserLoginError, central_user_login},
         login_v4::{
             LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
         },
@@ -21,7 +21,7 @@ use crate::{
     },
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::CentralServerConfig,
+    sync::{CentralServerConfig, maintenance_mode::is_locked_out},
     user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
 };
 
@@ -67,6 +67,8 @@ pub enum LoginFailure {
     AccountBlocked(u64),
     /// User account does not have login rights to any stores on this site
     NoSiteAccess,
+    /// The server is in maintenance mode and the user is not a server admin (#840)
+    MaintenanceMode,
 }
 
 #[derive(Debug)]
@@ -236,6 +238,13 @@ impl LoginService {
             Err(err) => return Err(err.into()),
         };
 
+        // Maintenance mode lets only server admins in. The caller re-checks this after creating
+        // the session, which closes the window where the mode is turned on between this check
+        // and the session existing (see `maintenance_mode::set_maintenance_mode`).
+        if is_locked_out(&service_ctx.connection, &user_account.id)? {
+            return Err(LoginError::LoginFailure(LoginFailure::MaintenanceMode));
+        }
+
         service_ctx.user_id.clone_from(&user_account.id);
 
         activity_log_entry(
@@ -273,12 +282,12 @@ impl LoginService {
                 }
                 Err(err) => match err {
                     FetchUserError::Unauthenticated => {
-                        return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+                        return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials));
                     }
                     FetchUserError::AccountBlocked(timeout_remaining) => {
                         return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
                             timeout_remaining,
-                        )))
+                        )));
                     }
                     FetchUserError::ConnectionError(_) => {
                         info!("{err:?}");
@@ -465,12 +474,12 @@ impl LoginService {
                 LoginV4Error::ConnectionError(_) => {
                     return Err(FetchUserError::ConnectionError(format!(
                         "Failed to reach the central server to fetch data for {username}: {err:?}"
-                    )))
+                    )));
                 }
                 LoginV4Error::ParseError(_) => {
                     return Err(FetchUserError::InternalError(format!(
                         "Failed to parse central server response for {username}: {err:?}"
-                    )))
+                    )));
                 }
             },
         };
@@ -600,13 +609,13 @@ mod test {
 
     use httpmock::{Method::POST, MockServer};
     use repository::{
-        mock::{
-            mock_store_a, mock_user_account_a, mock_user_empty_hashed_password,
-            mock_user_store_join_a_store_a, MockDataInserts,
-        },
-        test_db::setup_all,
         EqualFilter, KeyType, KeyValueStoreRepository, SyncVersion, UserAccountRowRepository,
         UserFilter, UserPermissionFilter, UserPermissionRepository, UserRepository,
+        mock::{
+            MockDataInserts, mock_store_a, mock_user_account_a, mock_user_empty_hashed_password,
+            mock_user_store_join_a_store_a,
+        },
+        test_db::setup_all,
     };
     use util::assert_matches;
 
@@ -797,6 +806,54 @@ mod test {
             user.hashed_password = hashed_password;
             repo.upsert_one(&user).unwrap();
         }
+    }
+
+    /// Maintenance mode (#840) lets only server admins log in, and says why to everyone else
+    /// rather than reporting bad credentials.
+    #[actix_rt::test]
+    async fn maintenance_mode_only_lets_server_admins_log_in() {
+        let fixture =
+            SessionFixture::new_v7("maintenance_mode_only_lets_server_admins_log_in").await;
+        let login = || {
+            LoginService::login(
+                &fixture.service_provider,
+                &fixture.auth_data,
+                LoginInput {
+                    username: fixture.username.clone(),
+                    password: "password".to_string(),
+                    central_server_url: fixture.central_server_url.clone(),
+                },
+                0,
+            )
+        };
+
+        KeyValueStoreRepository::new(&fixture.context.connection)
+            .set_bool(KeyType::SettingsMaintenanceModeIsOn, Some(true))
+            .unwrap();
+        assert_matches!(
+            login().await,
+            Err(LoginError::LoginFailure(LoginFailure::MaintenanceMode))
+        );
+
+        repository::UserPermissionRowRepository::new(&fixture.context.connection)
+            .upsert_one(&repository::UserPermissionRow {
+                id: "user_a_server_admin".to_string(),
+                user_id: fixture.user_id.clone(),
+                store_id: Some(mock_store_a().id),
+                permission: repository::PermissionType::ServerAdmin,
+                context_id: None,
+            })
+            .unwrap();
+        assert!(login().await.is_ok());
+
+        // Off again: everyone can log in.
+        KeyValueStoreRepository::new(&fixture.context.connection)
+            .set_bool(KeyType::SettingsMaintenanceModeIsOn, Some(false))
+            .unwrap();
+        repository::UserPermissionRowRepository::new(&fixture.context.connection)
+            .delete("user_a_server_admin")
+            .unwrap();
+        assert!(login().await.is_ok());
     }
 
     /// Security audit DS-4: a session issued against the old credentials must not

@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
@@ -103,10 +103,10 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::MaxOrdersReachedForPeriod => {
             return Ok(InsertErrorInterface::MaxOrdersReachedForPeriod(
                 MaxOrdersReachedForPeriod,
-            ))
+            ));
         }
         ServiceError::SupplierNotValid => {
-            return Ok(InsertErrorInterface::SupplierNotValid(SupplierNotValid))
+            return Ok(InsertErrorInterface::SupplierNotValid(SupplierNotValid));
         }
         // Standard Graphql Errors
         ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
@@ -154,17 +154,17 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::{mock_program_request_draft_requisition, MockDataInserts},
         Requisition, StorageConnectionManager,
+        mock::{MockDataInserts, mock_program_request_draft_requisition},
     };
     use serde_json::json;
     use service::{
         requisition::{
+            RequisitionServiceTrait,
             request_requisition::{
                 InsertProgramRequestRequisition,
                 InsertProgramRequestRequisitionError as ServiceError,
             },
-            RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };

@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
+    standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
 use repository::{KeyType, KeyValueStoreRepository};
 use service::{
@@ -42,6 +42,17 @@ impl SyncSettingsNode {
                 )
                 .extend()
             })
+    }
+
+    /// Admin pause (Admin > Sync settings). While true no scheduled or manual sync runs on an
+    /// initialised site; set with `setSyncPaused`.
+    pub async fn is_paused(&self, ctx: &Context<'_>) -> Result<bool> {
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.basic_context()?;
+        service_provider
+            .settings
+            .is_sync_paused(&service_context)
+            .map_err(StandardGraphqlError::from_debug)
     }
 
     pub async fn sync_site_id(&self, ctx: &Context<'_>) -> Result<Option<i32>> {

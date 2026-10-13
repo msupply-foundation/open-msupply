@@ -1,5 +1,5 @@
-use repository::demographic::{DemographicFilter, DemographicRepository};
 use repository::DemographicRow;
+use repository::demographic::{DemographicFilter, DemographicRepository};
 use repository::{EqualFilter, RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;

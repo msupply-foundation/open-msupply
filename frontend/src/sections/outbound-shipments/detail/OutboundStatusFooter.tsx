@@ -4,12 +4,14 @@ import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterMessage } from '../../../ui/layout/ContentFooter/ContentFooterMessage';
+import { createFlash } from '../../../ui/utils/createFlash';
 import {
   Pagination,
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { StatusChangeAction, type StatusPreflight } from './actions';
-import { currentStep } from '@/domain/invoice';
+import { currentStep, trackStages } from '@/domain/invoice';
 import { STATUS_FLOW, STATUS_LABELS, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundNode } from './outboundUpdate';
@@ -20,7 +22,10 @@ import type { OutboundNode } from './outboundUpdate';
 // invoice-status-options preference — OMS-REG-DIST-04.22), Close (back to
 // the list), and the status-change split button (its own action component).
 // Replaced by the bulk-action bar while lines are selected
-// (OMS-REG-DIST-04.20).
+// (OMS-REG-DIST-04.20). A status change that lands is reported in the bar's
+// message slot, as a flash of the save confirmation
+// (spec/ui-standards/controls.md § action feedback) — the split button is gone
+// at Shipped, and the crumb alone is easy to miss.
 
 export interface OutboundStatusFooterProps {
   storeId: string;
@@ -59,13 +64,16 @@ export const OutboundStatusFooter: Component<
   OutboundStatusFooterProps
 > = props => {
   const [holdConfirm, setHoldConfirm] = createSignal(false);
+  const saved = createFlash<string>();
 
   const editable = () => isEditable(props.node.status);
   const holding = () => props.node.onHold;
 
-  // The lifecycle indicator over the preference-allowed sequence. A status
-  // already reached stays visible even if the preference excludes it later in
-  // the flow (the current status is always shown).
+  // The lifecycle indicator over the preference-allowed sequence, plus the
+  // shipment's own stage when the preference excludes it — the current status
+  // is always shown, and always has a crumb to mark (OMS-REG-DIST-04.29).
+  const stages = () =>
+    trackStages(STATUS_FLOW, allowedStatuses(), props.node.status);
   const steps = () => {
     const stamps: Record<string, string | null | undefined> = {
       NEW: props.node.createdDatetime,
@@ -76,18 +84,25 @@ export const OutboundStatusFooter: Component<
       RECEIVED: props.node.receivedDatetime,
       VERIFIED: props.node.verifiedDatetime,
     };
-    return allowedStatuses().map(status => ({
+    return stages().map(status => ({
       label: STATUS_LABELS[status],
       date: stamps[status],
     }));
   };
-  // OMS-REG-DIST-04.22: an excluded current status displays as the nearest
-  // included earlier one (the shared invoice-status gate's currentStep).
-  const indicatorIndex = () =>
-    currentStep(STATUS_FLOW, allowedStatuses(), props.node.status);
+  const indicatorIndex = () => currentStep(stages(), props.node.status);
+
+  // Both of the action's success paths (the confirm, and the on-hold notice's
+  // release-and-confirm) come through here.
+  const onSaved = (node: OutboundNode) => {
+    props.onSaved(node);
+    saved.show(t('messages.shipment-saved'));
+  };
 
   return (
-    <ContentFooter>
+    // The shared `table-footer` id (e2e/TESTIDS.md): this bar is the table's
+    // default footer face — the pager docks in it — and gives way to the
+    // `actions-footer` selection bar, exactly as DataTable's own footer does.
+    <ContentFooter testId="table-footer">
       {/* The totals, on the bar itself rather than above it (narrow
           viewports only — the prop is undefined on a wide screen). */}
       {props.totals}
@@ -104,7 +119,13 @@ export const OutboundStatusFooter: Component<
         </CheckboxButton>
       </Show>
 
-      <StatusIndicator steps={steps()} current={indicatorIndex()} />
+      <StatusIndicator
+        recordId={props.node.id}
+        steps={steps()}
+        current={indicatorIndex()}
+      />
+
+      <ContentFooterMessage message={saved.value()} recordId={props.node.id} />
 
       {/* The status-change split button, which hides entirely when read-only
           (spec S3 § status footer). No Close beside it (D103): leaving the
@@ -113,7 +134,7 @@ export const OutboundStatusFooter: Component<
         storeId={props.storeId}
         node={props.node}
         preflight={props.preflight}
-        onSaved={props.onSaved}
+        onSaved={onSaved}
         leading={
           <>
             {/* The line pager, docked in the action cluster (`inBar` — it

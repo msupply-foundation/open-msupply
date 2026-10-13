@@ -43,7 +43,7 @@ export const startKeyboardDispatcher = (): (() => void) => {
     // A rung above us already claimed the key.
     if (event.defaultPrevented) return;
     // A held or repeating key must not re-run an action. Same reasoning as
-    // AC-KB26 for Enter: one press, one action.
+    // OMS-REG-KBD-02.14/.15 for Enter: one press, one action.
     if (event.repeat) return;
     // Mid-IME-composition keys belong to the composition, never to a command
     // (the Android GBoard trap StoreSelector already documents).

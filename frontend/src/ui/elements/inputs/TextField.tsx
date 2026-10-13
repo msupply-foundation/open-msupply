@@ -31,6 +31,8 @@ export interface TextFieldProps extends Omit<
    * e2e/TESTIDS.md) — e.g. the line-edit modal's per-line errors.
    */
   errorTestId?: string;
+  /** `data-testid` for the warning message (e2e/TESTIDS.md). */
+  warningTestId?: string;
   required?: boolean;
   /** Spec: 2.5rem (40px) default, 2.25rem (36px) small. */
   size?: 'default' | 'small';
@@ -94,6 +96,7 @@ export const TextField = (props: TextFieldProps) => {
     'error',
     'invalid',
     'warning',
+    'warningTestId',
     'errorTestId',
     'required',
     'size',
@@ -193,7 +196,11 @@ export const TextField = (props: TextFieldProps) => {
             when={local.warning}
             fallback={
               <Show when={local.helperText}>
-                <p id={messageId()} class={styles.helper}>
+                <p
+                  id={messageId()}
+                  class={styles.helper}
+                  data-field-message="helper"
+                >
                   {local.helperText}
                 </p>
               </Show>
@@ -202,7 +209,13 @@ export const TextField = (props: TextFieldProps) => {
             {/* role="status": the warning appears while the user is typing
                 (the caps-lock notice), so it's announced politely rather than
                 relying on them to glance down mid-entry. */}
-            <p id={messageId()} class={styles.warning} role="status">
+            <p
+              id={messageId()}
+              class={styles.warning}
+              data-field-message="warning"
+              role="status"
+              data-testid={local.warningTestId}
+            >
               <AlertTriangleIcon class={styles.messageIcon} />
               {local.warning}
             </p>
@@ -212,6 +225,7 @@ export const TextField = (props: TextFieldProps) => {
         <p
           id={messageId()}
           class={styles.error}
+          data-field-message="error"
           data-testid={local.errorTestId}
         >
           <AlertTriangleIcon class={styles.messageIcon} />

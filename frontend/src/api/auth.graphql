@@ -56,9 +56,9 @@ fragment UserInfo on UserNode {
   username
   firstName
   lastName
-  # Sender identity for the internal-order send auto-comment (AC-S7,
-  # template.requisition-sent). Nullable on UserNode; the builder falls back to
-  # a dash for a missing email / phone.
+  # Sender identity for the internal-order send auto-comment
+  # (OMS-REG-REPL-05.5/.15/.18, template.requisition-sent). Nullable on
+  # UserNode; the builder falls back to a dash for a missing email / phone.
   email
   jobTitle
   phoneNumber
@@ -78,10 +78,10 @@ fragment UserInfo on UserNode {
       # response, like storeMode, rather than costing a query.
       nameId
       name
-      # The store's mode (spec/patients § configuration gates › AC-G1):
-      # dispensary mode gates the whole patient surface. UserStoreNode carries
-      # storeMode per store, so the entered store's mode is known from the
-      # me/login response — no extra query.
+      # The store's mode (spec/patients § configuration gates ›
+      # OMS-REG-DIS-01.49): dispensary mode gates the whole patient surface.
+      # UserStoreNode carries storeMode per store, so the entered store's mode
+      # is known from the me/login response — no extra query.
       storeMode
       homeCurrencyCode
       # Spec (Store Login, SL-8): a disabled store cannot be logged into, and
@@ -90,4 +90,11 @@ fragment UserInfo on UserNode {
       isDisabled
     }
   }
+}
+
+# Central maintenance mode (#840): only server administrators can log in while
+# it is on. Unauthenticated, so the login screen can say so before anyone
+# tries.
+query isMaintenanceMode {
+  isMaintenanceMode
 }

@@ -4,8 +4,9 @@ import styles from './FormColumn.module.css';
 export interface FormColumnProps extends JSX.HTMLAttributes<HTMLDivElement> {
   /**
    * The min inline size this column keeps before the row of columns wraps to a
-   * single stack. Any CSS length; defaults to `22rem`. Two default columns +
-   * the FormColumns gap collapse to one at roughly 46rem of body width.
+   * single stack. Any CSS length; defaults to the `--measure-form-column`
+   * token (22rem). Two default columns + the FormColumns gap collapse to one
+   * at roughly 46rem of body width.
    */
   minWidth?: string;
 }
@@ -21,7 +22,9 @@ export const FormColumn = (props: FormColumnProps) => {
   return (
     <div
       class={local.class ? `${styles.column} ${local.class}` : styles.column}
-      style={{ '--form-column-min': local.minWidth ?? '22rem' }}
+      style={
+        local.minWidth ? { '--form-column-min': local.minWidth } : undefined
+      }
       {...rest}
     >
       {local.children}

@@ -2,15 +2,15 @@ use crate::types::{ItemNode, NameNode, PurchaseOrderNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{
+    ContextExt,
     loader::{
         ItemLoader, NameByIdLoader, NameByIdLoaderInput, PurchaseOrderByIdLoader,
         UnitsInOtherPurchaseOrdersLoader,
     },
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use repository::{PurchaseOrderLine, PurchaseOrderLineRow, PurchaseOrderLineStatsRow};
-use service::{usize_to_u32, ListResult};
+use service::{ListResult, usize_to_u32};
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderLineNode {
@@ -47,6 +47,9 @@ impl PurchaseOrderLineNode {
     }
     pub async fn price_per_pack_after_discount(&self) -> f64 {
         self.row().price_per_pack_after_discount
+    }
+    pub async fn line_total(&self) -> f64 {
+        self.row().line_total
     }
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment

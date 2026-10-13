@@ -34,8 +34,8 @@ import {
 import styles from './ProgramIndicatorsTab.module.css';
 
 // The shared Indicators tab (spec/internal-orders S3 § Indicators tab,
-// AC-I4–I11, owns the surface; spec/requisitions § indicator values consumes
-// it with no customer breakdown and the requisition's editability).
+// OMS-REG-REPL-12.4–.10, owns the surface; spec/requisitions § indicator values
+// consumes it with no customer breakdown and the requisition's editability).
 // Left: the merged line list (one entry per code), selection URL-persisted.
 // Right: the selected line as the standard sectioned edit form — the cells as
 // label-above inputs down two columns (the shape the custom-fields tab and the
@@ -43,12 +43,12 @@ import styles from './ProgramIndicatorsTab.module.css';
 // breakdown as a DataTable, and Previous/Next.
 
 // One cell input — a stored value row edited in place, saved 500 ms after the
-// last keystroke (AC-I5). Number vs text by the cell's declared type; a save
-// error shows as field feedback. Local state holds the typed value (no refetch
-// on save), so the input is its own source of truth for its lifetime; what it
-// STARTS from is the cell it is handed, which is why a landed save is reported
-// back to the owner of the nodes (#957 — otherwise the next mount of this cell
-// shows the figure the screen loaded with).
+// last keystroke (OMS-REG-REPL-12.5). Number vs text by the cell's declared
+// type; a save error shows as field feedback. Local state holds the typed value
+// (no refetch on save), so the input is its own source of truth for its
+// lifetime; what it STARTS from is the cell it is handed, which is why a landed
+// save is reported back to the owner of the nodes (#957 — otherwise the next
+// mount of this cell shows the figure the screen loaded with).
 const IndicatorCellInput: Component<{
   storeId: string;
   cell: IndicatorCell;
@@ -129,9 +129,9 @@ export const ProgramIndicatorsTab: Component<{
   storeId: string;
   /** The programIndicators nodes (definitions + this period's values). */
   nodes: readonly IndicatorNode[];
-  /** The record's editability — read-only disables every cell (AC-I8). */
+  /** The record's editability — read-only disables every cell (OMS-REG-REPL-12.7). */
   editable: boolean;
-  /** Both customer-statistics prefs on → the customer breakdown (AC-I10);
+  /** Both customer-statistics prefs on → the customer breakdown (OMS-REG-REPL-12.9);
    *  always false on the response side (no breakdown on any config). */
   showCustomerBreakdown: boolean;
   /** A landed save — the owner writes the figure back into `nodes` (mutating
@@ -178,9 +178,10 @@ export const ProgramIndicatorsTab: Component<{
     cells().slice(Math.ceil(cells().length / 2))
   );
 
-  // The breakdown's columns follow the displayed cells (AC-I10), so they are
-  // rebuilt per selection — memoized because TanStack keys its own internal
-  // caches off this array's identity (kdd/solid-reactivity-pitfalls § 8).
+  // The breakdown's columns follow the displayed cells (OMS-REG-REPL-12.9), so
+  // they are rebuilt per selection — memoized because TanStack keys its own
+  // internal caches off this array's identity (kdd/solid-reactivity-pitfalls §
+  // 8).
   const breakdownColumns = createMemo(
     (): Column<IndicatorCustomerRow, never>[] => [
       { c: { key: 'name' }, header: () => t('label.name') },
@@ -254,7 +255,7 @@ export const ProgramIndicatorsTab: Component<{
                             <IndicatorCellInput
                               storeId={props.storeId}
                               cell={cell}
-                              disabled={!props.editable || !entry().isActive}
+                              disabled={!props.editable || !cell.isActive}
                               autofocus={index() === 0}
                               onSaved={props.onSaved}
                             />
@@ -272,7 +273,7 @@ export const ProgramIndicatorsTab: Component<{
                               <IndicatorCellInput
                                 storeId={props.storeId}
                                 cell={cell}
-                                disabled={!props.editable || !entry().isActive}
+                                disabled={!props.editable || !cell.isActive}
                                 autofocus={false}
                                 onSaved={props.onSaved}
                               />

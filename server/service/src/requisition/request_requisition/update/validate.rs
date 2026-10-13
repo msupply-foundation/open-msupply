@@ -1,21 +1,21 @@
 use super::{OutError, UpdateRequestRequisition};
 use crate::{
+    NullableUpdate,
     requisition::common::{
-        check_emergency_order_within_max_items_limit, check_requisition_row_exists,
-        OrderTypeNotFoundError,
+        OrderTypeNotFoundError, check_emergency_order_within_max_items_limit,
+        check_requisition_row_exists,
     },
     store_preference::get_store_preferences,
     validate::{
-        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
-        OtherPartyErrors,
+        CheckOtherPartyType, OtherPartyErrors, check_other_party,
+        check_other_party_store_is_disabled,
     },
-    NullableUpdate,
 };
 use repository::{
-    reason_option_row::ReasonOptionType,
-    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     EqualFilter, ReasonOptionFilter, ReasonOptionRepository, RequisitionLineFilter,
     RequisitionLineRepository, StorageConnection,
+    reason_option_row::ReasonOptionType,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
 };
 
 pub fn validate(

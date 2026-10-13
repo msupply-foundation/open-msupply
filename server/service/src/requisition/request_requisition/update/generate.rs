@@ -3,15 +3,15 @@ use crate::{
     nullable_update,
     requisition::{
         common::get_lines_for_requisition,
-        request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
+        request_requisition::{GenerateSuggestedQuantity, generate_suggested_quantity},
     },
     store_preference::get_store_preferences,
 };
 use chrono::Utc;
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionStatus},
     EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, StorageConnection, StoreFilter, StoreRepository,
+    requisition_row::{RequisitionRow, RequisitionStatus},
 };
 
 pub struct GenerateResult {

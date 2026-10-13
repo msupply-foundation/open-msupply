@@ -30,8 +30,9 @@ query inboundPrograms($storeId: String!) {
 }
 
 # The lines of a linked internal order — the add-from-internal-order picker
-# (spec S7 / AC-IO1). Each pulled line pre-fills the item + requested quantity;
-# the picker multi-selects, adding every chosen line in one batch.
+# (spec S7 / OMS-REG-ISH-01.8/.9). Each pulled line pre-fills the item +
+# requested quantity; the picker multi-selects, adding every chosen line in one
+# batch.
 fragment InternalOrderLineRow on RequisitionLineNode {
   id
   itemName
@@ -58,8 +59,8 @@ query internalOrderLines($storeId: String!, $requisitionId: String!) {
 }
 
 # The lines of the linked purchase order — the line editor's PO-line picker on
-# a PO-linked shipment (spec S4 / AC-E3: a PO-linked line must cite an order
-# line). Excludes lines already assigned client-side.
+# a PO-linked shipment (spec S4 / OMS-REG-REPL-09.6: a PO-linked line must cite
+# an order line). Excludes lines already assigned client-side.
 query purchaseOrderLines($storeId: String!, $purchaseOrderId: String!) {
   purchaseOrder(storeId: $storeId, id: $purchaseOrderId) {
     __typename

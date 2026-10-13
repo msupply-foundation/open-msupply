@@ -2,7 +2,7 @@ pub mod generate;
 pub mod validate;
 
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext};
-use generate::{generate, GenerateResult};
+use generate::{GenerateResult, generate};
 use repository::{
     ActivityLogRowRepository, Invoice, InvoiceLineRowRepository, InvoiceRowRepository,
     RepositoryError,
@@ -86,13 +86,13 @@ impl From<RepositoryError> for UpdateSupplierReturnOtherPartyError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{
-            mock_inbound_shipment_a, mock_name_a, mock_store_a, mock_store_b, mock_store_c,
-            mock_supplier_return_a, mock_supplier_return_b, MockData, MockDataInserts,
-        },
-        test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, NameRow, NameStoreJoinRow,
+        mock::{
+            MockData, MockDataInserts, mock_inbound_shipment_a, mock_name_a, mock_store_a,
+            mock_store_b, mock_store_c, mock_supplier_return_a, mock_supplier_return_b,
+        },
+        test_db::setup_all_with_data,
     };
 
     use crate::{

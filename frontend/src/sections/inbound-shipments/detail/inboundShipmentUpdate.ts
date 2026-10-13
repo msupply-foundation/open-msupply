@@ -20,6 +20,7 @@ import {
   type BatchInboundShipmentVariables,
   type BatchResultFragment,
 } from './inboundShipmentDetail.generated';
+import { deleteRefusalMessage } from './inboundShipmentStatus';
 
 // Update/batch helpers for the inbound-shipment detail view. Every mutation is
 // TWINNED (plain vs `...External`): the external variant is required whenever
@@ -45,7 +46,7 @@ import {
 // reported shipped: a line added but not yet received. It carries no received
 // quantity and is trimmed the first time the shipment advances out of New
 // (rules → placeholder trimming), so the detail table de-emphasises it in the
-// info tone (spec ui-surface → Line table, AC-V3). Mirrors the reference app's
+// info tone (spec ui-surface → Line table). Mirrors the reference app's
 // `isInboundPlaceholderRow`. Structural param — no fragment import needed.
 export const isPlaceholderLine = (line: {
   type: string;
@@ -224,7 +225,9 @@ const summariseBatch = (batch: BatchResultFragment): BatchOutcome => {
 export const deleteInboundShipment = async (
   storeId: string,
   isExternal: boolean,
-  id: string
+  id: string,
+  /** The shipment's status — names the cause of a typed refusal. */
+  status: string
 ): Promise<{
   ok: boolean;
   message?: string;
@@ -258,11 +261,12 @@ export const deleteInboundShipment = async (
       ? result.data.deleteInboundShipmentExternal
       : result.data.deleteInboundShipment;
   if (response.__typename === 'DeleteResponse') return { ok: true };
-  return { ok: false, message: response.error.description };
+  return { ok: false, message: deleteRefusalMessage(response.error, status) };
 };
 
-// Bulk-add empty stock lines from a master list (spec AC-ML1). Returns the
-// count added, or a rejection message (typed member OR untyped top-level).
+// Bulk-add empty stock lines from a master list (spec OMS-REG-ISH-01.10).
+// Returns the count added, or a rejection message (typed member OR untyped
+// top-level).
 export const addFromMasterList = async (
   storeId: string,
   shipmentId: string,

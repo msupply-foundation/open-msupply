@@ -9,11 +9,11 @@ import styles from './ShortcutBadge.module.css';
  * them again. The discoverability path for a user already looking at the
  * control, alongside the palette's for a user browsing.
  *
- * It takes the SHORTCUT VALUE, never a string. That is what makes AC-KB15 — "it
- * MUST be driven by the same declared shortcut the control exposes to assistive
- * technology, never a second, hand-maintained copy that can drift" — a property
- * of the types rather than a rule: the badge and the control's
- * `aria-keyshortcuts` render from one object (see Button).
+ * It takes the SHORTCUT VALUE, never a string. That is what makes
+ * OMS-REG-KBD-01.26 — "it MUST be driven by the same declared shortcut the
+ * control exposes to assistive technology, never a second, hand-maintained copy
+ * that can drift" — a property of the types rather than a rule: the badge and
+ * the control's `aria-keyshortcuts` render from one object (see Button).
  *
  * aria-hidden: the shortcut is already on the carrier as `aria-keyshortcuts`,
  * which is how assistive technology is meant to learn it. Exposing the badge

@@ -108,7 +108,7 @@ const STATUS_STEPS: StatusStep[] = [
 // — a stock-in line with nothing received and nothing shipped. Reproduced here
 // (a 3-line pure predicate) so the dev-only showcase doesn't pull in the
 // vertical's mutation module. The detail table de-emphasises these in the info
-// tone (spec AC-V3).
+// tone (spec/inbound-shipments ui-surface § line table).
 const isPlaceholderLine = (
   line: Pick<Line, 'type' | 'numberOfPacks' | 'shippedNumberOfPacks'>
 ): boolean =>
@@ -163,7 +163,7 @@ const monthsFromNow = (months: number, day: number): string => {
 };
 
 // A deterministic ~50-line dataset exercising every cell type: numbers,
-// currency, dates, wrapping names, blank cells, placeholder (info-tone) rows,
+// currency, dates, wrapping names, blank cells, placeholder (teal-marked) rows,
 // and a couple of transfer-linked lines whose code reads in the error tone.
 const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
   const item = ITEMS[i % ITEMS.length];
@@ -219,7 +219,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
     volumePerPack: Number(((i % 5) * 0.25 + 0.1).toFixed(2)),
     status: null,
     // A line that arrived via another store's transfer can't be independently
-    // deleted; its code flags in the error tone (spec AC-E9).
+    // deleted; its code flags in the error tone (spec OMS-REG-REPL-09.19/.20).
     linkedInvoiceId: i % 24 === 7 ? `inv-${i}` : null,
     locationId: loc ? `loc-${i}` : null,
     location: loc ? { id: `loc-${i}`, code: loc.code, name: loc.name } : null,
@@ -252,7 +252,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
 });
 
 // A line the last bulk operation failed on — reads in the error tone (spec S8);
-// error wins over the placeholder info tone.
+// on a card, error wins over the placeholder info title.
 const ERROR_IDS = new Set(['line-4']);
 
 const sortValue = (l: Line, key: SortKey): string | number => {
@@ -683,7 +683,6 @@ export const DetailTableShowcase = () => {
               <DateField
                 label={t('label.received')}
                 size="small"
-                format="dd MMM yyyy"
                 value="2026-05-19"
                 disabled
               />
@@ -756,9 +755,17 @@ export const DetailTableShowcase = () => {
                 unitName: line.item?.unitName ?? null,
               })
             }
-            // A failed-bulk-op line reads in the error tone; an untouched
-            // placeholder in the info tone. Error wins when both hold.
-            rowTone={line =>
+            // A failed-bulk-op line reads in the error tone.
+            rowTone={line => (ERROR_IDS.has(line.id) ? 'error' : undefined)}
+            // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
+            rowTint={line =>
+              isPlaceholderLine(line) ? 'unfinished' : undefined
+            }
+            rowAccent={line =>
+              isPlaceholderLine(line) ? 'unfinished' : undefined
+            }
+            // Error wins when both hold.
+            cardTone={line =>
               ERROR_IDS.has(line.id)
                 ? 'error'
                 : isPlaceholderLine(line)

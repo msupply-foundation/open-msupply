@@ -48,6 +48,16 @@ declare module '@tanstack/solid-table' {
      */
     mono?: boolean;
     /**
+     * Hold this column's body cells to the row's control line — for a SHORT
+     * cell (a row number, an icon button) in an editor table whose cells are
+     * top-aligned (`cellAlign="start"`). There, anything shorter than the
+     * row's inputs rides the top of its cell while the inputs beside it sit on
+     * their own line; set, the cell's content sits in a box one input tall and
+     * centres on that line, the way the table already centres a checkbox.
+     * Table view only, and inert in a centre-aligned table.
+     */
+    controlLine?: boolean;
+    /**
      * Where this column's cell renders in the CARD HEADER (card view). The
      * header is the card's top row: a big identity/title inline-start and a
      * badge/chip inline-end, both rendered WITHOUT their label. A column has a
@@ -414,7 +424,7 @@ export type CardGroup<T, G extends string> = {
    *
    * **N is a consequence of the group's own fields, not a house number.** Work it
    * out, don't guess: the finest track has to be coarse enough that the widest
-   * field which MUST fit (usually a date, ~11rem for `DD MMM YYYY` plus its
+   * field which MUST fit (usually a date, ~11rem for its all-caps hint plus its
    * trigger) can be reached by a whole number of tracks, and N has to divide into
    * each row's intended field grouping. Two worked examples, both on a ~41rem
    * panel:

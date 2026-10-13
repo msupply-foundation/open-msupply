@@ -16,15 +16,15 @@ export interface DeletePrescriptionsActionProps {
   storeId: string;
   /** The currently-selected prescription ids. */
   selectedIds: () => string[];
-  /** id → status off the loaded rows, for the selection pre-check (AC-D3). */
+  /** id → status off the loaded rows, for the selection pre-check (OMS-REG-DIS-03.45). */
   statusOf: (id: string) => string | undefined;
   /** Deletion succeeded — clear the selection and re-query. */
   onDeleted: () => void;
 }
 
-// The prescriptions-list delete action (spec/prescriptions AC-D3), the
-// stocktakes delete-action shape with one deliberate extra: the selection is
-// PRE-CHECKED client-side. A VERIFIED/CANCELLED row in the selection refuses
+// The prescriptions-list delete action (spec/prescriptions OMS-REG-DIS-03.45),
+// the stocktakes delete-action shape with one deliberate extra: the selection
+// is PRE-CHECKED client-side. A VERIFIED/CANCELLED row in the selection refuses
 // the WHOLE batch — a blocking notice in place of the confirmation, no server
 // call — because this is a sanctioned UI-only guard (ui-standards §
 // validation): the server batch is all-or-nothing AND its response reports

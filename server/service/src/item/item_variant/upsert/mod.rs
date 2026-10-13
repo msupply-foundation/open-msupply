@@ -1,20 +1,20 @@
 use repository::{
+    ActivityLogType, EqualFilter, RepositoryError, TransactionError,
     item_variant::{
         item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
         item_variant_row::ItemVariantRowRepository,
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::PackagingVariantRowRepository,
     },
-    ActivityLogType, EqualFilter, RepositoryError, TransactionError,
 };
 
 use crate::{
+    NullableUpdate,
     activity_log::activity_log_entry,
     item::packaging_variant::{
-        upsert_packaging_variant, UpsertPackagingVariant, UpsertPackagingVariantError,
+        UpsertPackagingVariant, UpsertPackagingVariantError, upsert_packaging_variant,
     },
     service_provider::ServiceContext,
-    NullableUpdate,
 };
 mod generate;
 mod validate;

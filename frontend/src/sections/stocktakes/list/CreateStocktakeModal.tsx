@@ -15,7 +15,7 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
-import { RadioGroup } from '@/ui/elements/inputs/RadioGroup';
+import { RadioGroup, type RadioOption } from '@/ui/elements/inputs/RadioGroup';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { masterListsResource, MasterListSelect } from '@/domain/masterList';
@@ -327,16 +327,27 @@ export const CreateStocktakeModal = (props: {
   // leak in).
   const setType = (type: StocktakeType) => setForm({ ...EMPTY_FORM, type });
 
-  const includeAllOptions = () => [
+  // Built once. RadioGroup's <For> is keyed by option object, so options
+  // rebuilt on every read would remount both radios on each form change,
+  // taking focus from the one just picked (kdd/solid-reactivity-pitfalls § no
+  // remounts rule 5). `label` and `disabled` are getters, read in RadioGroup's
+  // JSX, so they still follow the language and the form.
+  const includeAllOptions: RadioOption[] = [
     {
       value: 'soh',
-      label: t('stocktake.items-with-soh'),
+      get label() {
+        return t('stocktake.items-with-soh');
+      },
       testId: 'stocktake-items-with-soh',
     },
     {
       value: 'all',
-      label: t('label.all-items'),
-      disabled: allItemsDisabled(),
+      get label() {
+        return t('label.all-items');
+      },
+      get disabled() {
+        return allItemsDisabled();
+      },
       testId: 'stocktake-all-items',
     },
   ];
@@ -350,12 +361,12 @@ export const CreateStocktakeModal = (props: {
       testId="create-stocktake-modal"
       title={t('label.new-stocktake')}
       icon={<PlusCircleIcon />}
-      // Blocking while the mutation is in flight (no scrim/Escape exit until
-      // it resolves).
+      // Blocking while the mutation is in flight (no Escape exit until it
+      // resolves).
       dismissable={!creating()}
       // An explicit dismiss affordance in the top corner, beside the heading
-      // (#837) — the same close path as Escape and the scrim, and ignored while
-      // the create is in flight (dismissable above).
+      // (#837) — the same close path as Escape, and ignored while the create
+      // is in flight (dismissable above).
       closeButton
       onClose={close}
       widthRem={42}
@@ -442,7 +453,7 @@ export const CreateStocktakeModal = (props: {
                 panel's fields, so the two panels read the same way (#837). */}
             <FieldRow label={t('label.include')}>
               <RadioGroup
-                options={includeAllOptions()}
+                options={includeAllOptions}
                 value={includeAllValue()}
                 orientation="horizontal"
                 disabled={creating()}
@@ -463,6 +474,7 @@ export const CreateStocktakeModal = (props: {
                 hideLabel
                 disabled={creating()}
                 placeholder={t('label.any')}
+                inputTestId="stocktake-master-list-input"
                 value={form().masterListId || undefined}
                 onChange={id => setForm({ ...form(), masterListId: id ?? '' })}
               />
@@ -472,7 +484,7 @@ export const CreateStocktakeModal = (props: {
                 rather than as an unlabelled appendage to the master list. */}
             <FieldRow label={t('label.include')}>
               <RadioGroup
-                options={includeAllOptions()}
+                options={includeAllOptions}
                 value={includeAllValue()}
                 orientation="horizontal"
                 disabled={creating()}
@@ -489,6 +501,7 @@ export const CreateStocktakeModal = (props: {
                 loading={locationsData.loading}
                 disabled={creating()}
                 placeholder={t('label.any')}
+                inputTestId="stocktake-location-input"
                 value={form().locationId || undefined}
                 onChange={l => setForm({ ...form(), locationId: l?.id ?? '' })}
               />
@@ -498,6 +511,7 @@ export const CreateStocktakeModal = (props: {
                 label={t('label.items-expiring-before')}
                 hideLabel
                 disabled={creating()}
+                testId="stocktake-expires-before-input"
                 value={form().expiryDate || null}
                 onChange={v => setForm({ ...form(), expiryDate: v ?? '' })}
               />
@@ -514,6 +528,7 @@ export const CreateStocktakeModal = (props: {
                   hideLabel
                   disabled={creating()}
                   placeholder={t('label.any')}
+                  inputTestId="stocktake-vvm-status-input"
                   value={form().vvmStatusId || undefined}
                   onChange={s =>
                     setForm({ ...form(), vvmStatusId: s?.id ?? '' })

@@ -1,8 +1,8 @@
 use super::{
-    clinician_row::clinician, invoice_line_row::invoice_line, invoice_row::invoice, name_row::name,
-    program_row::program, store_row::store, StorageConnection,
+    StorageConnection, clinician_row::clinician, invoice_line_row::invoice_line,
+    invoice_row::invoice, name_row::name, program_row::program, store_row::store,
 };
-use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
+use crate::{ChangelogSyncType, Upsert, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 

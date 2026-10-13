@@ -1,5 +1,5 @@
 use super::{
-    generate::{generate, GenerateRepack},
+    generate::{GenerateRepack, generate},
     validate,
 };
 use crate::{activity_log::activity_log_entry_with_diff, service_provider::ServiceContext};
@@ -125,17 +125,17 @@ impl From<RepositoryError> for InsertRepackError {
 mod test {
     use crate::service_provider::ServiceProvider;
     use repository::{
-        activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository},
-        location_movement::{LocationMovement, LocationMovementFilter, LocationMovementRepository},
-        mock::{
-            mock_item_b_lines, mock_location_1, mock_stock_line_a, mock_stock_line_b,
-            mock_stock_line_ci_c, mock_stock_line_si_d, mock_store_a, mock_store_c,
-            mock_user_account_a, stock_line_with_volume, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
         ActivityLogRow, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRepository,
         InvoiceLineRow, InvoiceLineType, InvoiceRowRepository, LocationMovementRow,
         StockLineFilter, StockLineRepository, StockLineRow, StorageConnection,
+        activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository},
+        location_movement::{LocationMovement, LocationMovementFilter, LocationMovementRepository},
+        mock::{
+            MockData, MockDataInserts, mock_item_b_lines, mock_location_1, mock_stock_line_a,
+            mock_stock_line_b, mock_stock_line_ci_c, mock_stock_line_si_d, mock_store_a,
+            mock_store_c, mock_user_account_a, stock_line_with_volume,
+        },
+        test_db::{setup_all, setup_all_with_data},
     };
 
     use super::{InsertRepack, InsertRepackError};

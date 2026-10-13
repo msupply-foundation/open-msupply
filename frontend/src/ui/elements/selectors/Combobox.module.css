@@ -265,6 +265,22 @@
   max-inline-size: min(var(--kb-popper-content-available-width), 32rem);
 }
 
+/* Compact (<600px, breakpoints.compact): every panel holds to the trigger's
+   width (≈ the dialog's) and its rows ellipsize — there is no room to grow
+   into, and the "available width" Kobalte reports ignores the trigger's own
+   inset, so a long option ran off the screen's edge. The min-content floor
+   goes too: a truncating nowrap label (ItemSearch's) still CONTRIBUTES its full
+   width to min-content, and min beats max — so the trigger-width cap above
+   never took, in either mode. */
+@media (max-width: 599px) {
+  .content,
+  .contentGrow {
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: var(--kb-popper-anchor-width, none);
+  }
+}
+
 /* Sticky in-dropdown header (e.g. the location fullness tabs): a non-shrinking
    row above the scrolling listbox. The header content supplies its own bottom
    edge (the tab strip's underline track), so this adds only the gap to the list
@@ -372,11 +388,25 @@
   color: var(--error-main);
 }
 
-/* The glyph takes the error text's own colour (inherited from .error) — it is
-   part of the error line, not a caution of its own. It used to be
-   --color-warning, which rendered an amber triangle above red text and read as
-   a second, milder severity sitting on the same message. */
-.errorIcon {
+/* Advisory warning — the error line's anatomy in the warning colour, as
+   TextField's .warning: only the message line changes (no border shift, no
+   aria-invalid), and the colour is Alert's warning-text derivation, which holds
+   AA in both themes where raw --warning-main cannot. */
+.warning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
+}
+
+/* The glyph takes its message line's own colour (inherited from .error /
+   .warning) — it is part of the line, not a caution of its own, so an error
+   never shows an amber triangle beside red text. Named as TextField names the
+   same class. */
+.messageIcon {
   font-size: 0.875em;
   color: inherit;
   flex-shrink: 0;

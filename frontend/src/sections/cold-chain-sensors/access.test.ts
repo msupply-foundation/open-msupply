@@ -10,8 +10,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // The client half only. The server stays the real guard — rules § permissions
 // names the server refusal, and that leg is recorded as a C2 gap in
 // BUILD_REPORT. The gate itself is navigation's, so it carries no
-// OMS-REG-CCE-03 behaviour of its own (spec/cold-chain-sensors/acceptance.md,
-// where the retired AC-G1/AC-G2 are mapped).
+// OMS-REG-CCE-03 behaviour of its own (spec/navigation owns the destination
+// gate; the change permission is rules § permissions, server-only).
 
 const state = { vaccineModule: false, permissions: new Set<string>() };
 

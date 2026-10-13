@@ -1,6 +1,6 @@
 use crate::{
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, RepositoryError,
-    RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert, diesel_macros::define_linked_tables,
 };
 
 use chrono::NaiveDateTime;

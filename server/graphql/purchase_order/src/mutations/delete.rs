@@ -1,7 +1,7 @@
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
 use graphql_core::{
-    simple_generic_errors::{CannotDeletePurchaseOrder, RecordNotFound},
     ContextExt,
+    simple_generic_errors::{CannotDeletePurchaseOrder, RecordNotFound},
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
@@ -69,14 +69,14 @@ fn map_error(error: ServiceError) -> Result<DeletePurchaseOrderErrorInterface> {
         ServiceError::PurchaseOrderDoesNotExist => {
             return Ok(DeletePurchaseOrderErrorInterface::RecordNotFound(
                 RecordNotFound {},
-            ))
+            ));
         }
         ServiceError::CannotDeletePurchaseOrder => {
             return Ok(
                 DeletePurchaseOrderErrorInterface::CannotDeletePurchaseOrder(
                     CannotDeletePurchaseOrder {},
                 ),
-            )
+            );
         }
         // Standard Graphql Errors
         ServiceError::NotThisStorePurchaseOrder => BadUserInput(formatted_error),
@@ -92,8 +92,8 @@ mod graphql {
     use graphql_core::test_helpers::setup_graphql_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
 
-    use repository::mock::{mock_purchase_order_a, MockDataInserts};
     use repository::PurchaseOrderRowRepository;
+    use repository::mock::{MockDataInserts, mock_purchase_order_a};
     use serde_json::json;
 
     use crate::{PurchaseOrderMutations, PurchaseOrderQueries};

@@ -2,10 +2,10 @@ use std::error::Error;
 
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
-    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     ActivityLogRow, ActivityLogRowRepository, ActivityLogType, InvoiceStatus, KeyType,
     KeyValueStoreRepository, PurchaseOrderStatus, StorageConnection, StorageConnectionManager,
+    activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
+    system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
 };
 
 use repository::{PaginationOption, RepositoryError};
@@ -15,7 +15,7 @@ use util::{constants::SYSTEM_USER_ID, format_error};
 
 use crate::service_provider::ServiceContext;
 
-use super::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
+use super::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
 
 pub fn get_activity_logs(
     connection_manager: &StorageConnectionManager,
@@ -218,6 +218,29 @@ pub fn system_log(
     Ok(())
 }
 
+/// [`system_log`] on its own connection on Tokio's blocking pool, so the caller never waits on it.
+/// Must be called from within the Tokio runtime (every caller is a GraphQL resolver).
+///
+/// A system log row also writes a changelog row, so it queues behind anything holding
+/// `changelog`: for example a long integration transaction, with the changelog dedup task's
+/// `DROP INDEX` waiting behind that (open-msupply#11920). Switches whose effect must not wait for
+/// that (the sync pauses, maintenance mode) commit their flag first and record who changed it
+/// here; the entry lands once the lock clears. A failure to write it goes to the server log.
+pub fn system_log_in_background(
+    connection_manager: StorageConnectionManager,
+    log_type: SystemLogType,
+    message: String,
+) {
+    tokio::task::spawn_blocking(move || {
+        let result = connection_manager
+            .connection()
+            .and_then(|connection| system_log(&connection, log_type, &message));
+        if let Err(error) = result {
+            log::error!("Failed to write system log entry '{message}': {error:?}");
+        }
+    });
+}
+
 pub fn add_migration_results_to_system_log(
     connection: &StorageConnection,
     migration_result: Vec<(String, NaiveDateTime)>,
@@ -270,17 +293,17 @@ mod test {
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
-        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+        test_helpers::{ServiceTestContext, setup_all_with_data_and_service_provider},
     };
     use chrono::{NaiveDate, Utc};
     use repository::{
-        mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
+        ActivityLogType, InvoiceRow, InvoiceStatus, InvoiceType,
+        mock::{MockData, MockDataInserts, mock_name_a, mock_store_a},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::setup_all,
-        ActivityLogType, InvoiceRow, InvoiceStatus, InvoiceType,
     };
 
-    use super::{get_activity_logs, system_log_entry, SystemLogMessage};
+    use super::{SystemLogMessage, get_activity_logs, system_log_entry};
 
     #[actix_rt::test]
     async fn invoice_activity_log_status() {

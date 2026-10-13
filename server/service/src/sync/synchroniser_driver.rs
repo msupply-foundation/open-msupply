@@ -1,9 +1,16 @@
-use std::{future::Future, sync::Arc};
+use std::{
+    future::Future,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+};
 
 use crate::service_provider::ServiceProvider;
-use crate::sync::{is_initialised, CentralServerConfig};
+use crate::sync::{CentralServerConfig, is_initialised, maintenance_mode::is_maintenance_mode};
 
 use super::file_sync_driver::FileSyncTrigger;
+use super::sync_pause::is_sync_paused;
 use super::{settings::SyncSettings, synchroniser_runner::Synchroniser};
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
@@ -13,11 +20,15 @@ use tokio::{
 pub struct SynchroniserDriver {
     receiver: Receiver<()>,
     file_sync_trigger: FileSyncTrigger,
+    forced: Arc<AtomicBool>,
 }
 
 #[derive(Clone)]
 pub struct SyncTrigger {
     sender: Sender<()>,
+    /// Set by `trigger_forced`: the next run may go ahead despite the sync pause, as long as
+    /// maintenance mode is still on when it starts. Consumed at the start of every run.
+    forced: Arc<AtomicBool>,
 }
 
 /// Used to 'drive' synchronisation, it's tasks:
@@ -30,12 +41,17 @@ impl SynchroniserDriver {
         // Worst-case scenario, we produce an infinite stream of sync instructions and always go
         // straight from one sync to the next, but that's OK.
         let (sender, receiver) = mpsc::channel(1);
+        let forced = Arc::new(AtomicBool::new(false));
 
         (
-            SyncTrigger { sender },
+            SyncTrigger {
+                sender,
+                forced: forced.clone(),
+            },
             SynchroniserDriver {
                 receiver,
                 file_sync_trigger,
+                forced,
             },
         )
     }
@@ -60,7 +76,7 @@ impl SynchroniserDriver {
         }
 
         if force_run || is_initialised(&service_provider) {
-            self.sync(service_provider.clone()).await;
+            self.sync_unless_paused(service_provider.clone()).await;
         }
 
         loop {
@@ -85,8 +101,30 @@ impl SynchroniserDriver {
                 }
             }
 
-            self.sync(service_provider.clone()).await;
+            self.sync_unless_paused(service_provider.clone()).await;
         }
+    }
+
+    /// The admin pause (Admin > Sync settings) applies to every scheduled and manual run of an
+    /// initialised site, including a central server's outbound sync to legacy central. A site
+    /// still initialising is never paused: the flag only takes effect once the first sync has
+    /// completed. The manual-sync mutation refuses while paused, so a trigger arriving here on
+    /// a paused site is the scheduled interval or a race with the switch.
+    ///
+    /// The one exception is a forced run in maintenance mode (#840): a server admin starts it
+    /// with manual sync, and it runs the full cycle so OMS central integrates its own buffer
+    /// without the outer transaction. Maintenance mode is re-checked here, so a forced trigger
+    /// left over from before the mode was turned off does not run.
+    async fn sync_unless_paused(&self, service_provider: Arc<ServiceProvider>) {
+        let forced = self.forced.swap(false, Ordering::SeqCst);
+        if is_initialised(&service_provider) && is_sync_paused(&service_provider) {
+            if !(forced && is_maintenance_mode_or_log(&service_provider)) {
+                log::info!("Sync is paused, skipping scheduled sync");
+                return;
+            }
+            log::info!("Maintenance mode: running a forced sync despite the sync pause");
+        }
+        self.sync(service_provider).await;
     }
 
     pub async fn sync(&self, service_provider: Arc<ServiceProvider>) {
@@ -118,9 +156,17 @@ impl SyncTrigger {
         }
     }
 
+    /// Trigger a run that goes ahead despite the sync pause, as long as maintenance mode is on
+    /// when it starts (#840). Callers check maintenance mode first; the driver checks again.
+    pub fn trigger_forced(&self) {
+        self.forced.store(true, Ordering::SeqCst);
+        self.trigger();
+    }
+
     pub(crate) fn new_void() -> SyncTrigger {
         SyncTrigger {
             sender: mpsc::channel(1).0,
+            forced: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -129,7 +175,26 @@ impl SyncTrigger {
     #[cfg(test)]
     pub(crate) fn new_test() -> (SyncTrigger, mpsc::Receiver<()>) {
         let (sender, receiver) = mpsc::channel(1);
-        (SyncTrigger { sender }, receiver)
+        (
+            SyncTrigger {
+                sender,
+                forced: Arc::new(AtomicBool::new(false)),
+            },
+            receiver,
+        )
+    }
+}
+
+fn is_maintenance_mode_or_log(service_provider: &ServiceProvider) -> bool {
+    let result = service_provider
+        .basic_context()
+        .and_then(|ctx| is_maintenance_mode(&ctx.connection));
+    match result {
+        Ok(on) => on,
+        Err(error) => {
+            log::error!("Failed to read maintenance mode, not forcing sync: {error:#?}");
+            false
+        }
     }
 }
 

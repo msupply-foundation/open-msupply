@@ -46,7 +46,7 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    * needed; pass `title` too, since the standard asks an icon-only button to
    * carry a tooltip.
    *
-   *   true     — phone widths (≤767px).
+   *   true     — phone widths (<600px, breakpoints.compact).
    *   'narrow' — the whole narrow-viewport range (≤1023px, breakpoints
    *              .navOverlay). For a header whose action cluster would
    *              otherwise wrap onto a row of its own on a tablet: a row of
@@ -60,7 +60,7 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    * The key binding this button answers (spec/keyboard KB-H1, S2). ONE prop
    * drives both the accessible name of the binding (`aria-keyshortcuts`) and
    * the hint badge revealed while Alt or Ctrl is held, so the two can never
-   * drift apart (AC-KB15).
+   * drift apart (OMS-REG-KBD-01.26).
    *
    * The button does NOT dispatch the key — the screen registers the action
    * (`createAction` / `createAddAction`) and the dispatcher runs it. That
@@ -171,7 +171,7 @@ export const Button = (props: ButtonProps) => {
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}
       // The ARIA grammar, not the platform spelling — the badge renders the
-      // human form from the same value (KB-M1, AC-KB15).
+      // human form from the same value (KB-M1, OMS-REG-KBD-01.26).
       aria-keyshortcuts={shortcut() ? ariaKeyshortcuts(shortcut()!) : undefined}
       // The badge positions itself against this button; `.button` is already
       // `position: relative` for the ripple, so it is already the positioning

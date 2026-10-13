@@ -33,7 +33,8 @@ query itemsWithStock(
         doses
         # defaultPackSize + the store's default sell price prefill a new inbound
         # line's pack size, cost price, and sell price (spec/inbound-shipments
-        # AC-H6), carried from the picker onto the line without a re-fetch.
+        # OMS-REG-REPL-09.10/.11), carried from the picker onto the line without
+        # a re-fetch.
         defaultPackSize
         itemStoreProperties(storeId: $storeId) {
           defaultSellPricePerPack

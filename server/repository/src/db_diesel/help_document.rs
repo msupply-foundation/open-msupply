@@ -1,4 +1,4 @@
-use super::{help_document_row::help_document, DBType, HelpDocumentRow, StorageConnection};
+use super::{DBType, HelpDocumentRow, StorageConnection, help_document_row::help_document};
 use diesel::prelude::*;
 
 use crate::{

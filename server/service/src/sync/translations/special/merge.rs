@@ -141,12 +141,12 @@ pub(crate) fn apply_name_merge(
             // storeK joined to nameD
             // nameD merged into nameK
             // storeK joined to nameK (delete the join before this happens, stores shouldn't be visible to themselves)
-            if let Some(store) = &store {
-                if nsj_delete.name_store_join.store_id == store.store_row.id {
-                    return Some(IntegrationOperation::delete(NameStoreJoinRowDelete(
-                        nsj_delete.name_store_join.id.clone(),
-                    )));
-                }
+            if let Some(store) = &store
+                && nsj_delete.name_store_join.store_id == store.store_row.id
+            {
+                return Some(IntegrationOperation::delete(NameStoreJoinRowDelete(
+                    nsj_delete.name_store_join.id.clone(),
+                )));
             }
 
             // Delete duplicate name_store_joins. Avoids:

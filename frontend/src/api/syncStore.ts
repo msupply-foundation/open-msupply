@@ -23,15 +23,35 @@ import { invalidateCustomTranslations } from '../intl';
 // from spec — not baked in here.
 
 const [syncStatus, setSyncStatus] = createSignal<SyncStatusFragment>();
-// Records to push. Fed by the subscription (current-run remaining work) or, on
-// the polling fallback, by the query — which is a DIFFERENT derivation that
-// never drains on a current-generation site. Captured wire trap:
-// spec/sync-modal/contract.md § Records to push.
+// Records to push. Fed by the subscription or, on the polling fallback, by the
+// query — the same server value either way (spec/sync-modal/contract.md
+// § Records to push).
 const [pushQueueCount, setPushQueueCount] = createSignal<number>();
 // Whether the live channel is delivering; consumers poll only while it isn't.
 const [liveConnected, setLiveConnected] = createSignal(false);
+// The admin pause (Admin > Sync settings). Carried on every poll and every
+// live frame — the server re-emits a frame when the switch flips, since a
+// paused site produces no sync frames of its own to carry the change.
+const [syncPaused, setSyncPaused] = createSignal(false);
+// Central maintenance mode (#840), carried beside the pause: while on, a manual
+// sync runs despite the pause, so the sync controls stay available.
+const [maintenanceMode, setMaintenanceMode] = createSignal(false);
+// Central's sync API pause (central only; always false on a remote), carried
+// and re-emitted the same way.
+const [syncApiPaused, setSyncApiPaused] = createSignal(false);
 
-export { syncStatus, pushQueueCount, liveConnected };
+export {
+  syncStatus,
+  pushQueueCount,
+  liveConnected,
+  syncPaused,
+  maintenanceMode,
+  syncApiPaused,
+};
+
+/** Whether a manual sync would be refused: paused, and not in maintenance mode
+ * (where the server forces a manual sync past the pause). */
+export const syncBlocked = (): boolean => syncPaused() && !maintenanceMode();
 
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
@@ -92,6 +112,9 @@ const connect = () => {
       liveDeliveries++;
       setLiveConnected(true);
       setPushQueueCount(data.syncInfoUpdated.numberOfRecordsInPushQueue);
+      setSyncPaused(data.syncInfoUpdated.isSyncPaused);
+      setMaintenanceMode(data.syncInfoUpdated.isMaintenanceMode);
+      setSyncApiPaused(data.syncInfoUpdated.isSyncApiPaused);
       handleStatus(data.syncInfoUpdated.syncStatus);
     },
     onFailure: () => {
@@ -146,6 +169,9 @@ export const pollSyncStatus = async (): Promise<void> => {
   if (generation !== pollGeneration || liveDeliveries !== deliveriesAtStart)
     return;
   setPushQueueCount(result.data.numberOfRecordsInPushQueue);
+  setSyncPaused(result.data.isSyncPaused);
+  setMaintenanceMode(result.data.isMaintenanceMode);
+  setSyncApiPaused(result.data.isSyncApiPaused);
   handleStatus(result.data.latestSyncStatus);
 };
 

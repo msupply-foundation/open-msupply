@@ -103,58 +103,65 @@ export const AddFromMasterListAction: Component<
       >
         {t('button.add-from-master-list')}
       </Button>
-      <Dialog
-        open={open()}
-        initialFocus={picker}
-        dismissable={!adding()}
-        onClose={() => setOpen(false)}
-        title={t('button.add-from-master-list')}
-        widthRem={32}
-        minBodyHeightRem={20}
-        actions={
-          <>
-            <CancelButton
-              data-testid="dialog-button-cancel"
-              disabled={adding()}
-              onClick={() => setOpen(false)}
-            />
-            {/* Save commits the bulk add directly (spec S3 Layout, D46) —
+      {/* Mounted only while open: a closed native <dialog> stays in the DOM,
+          and its dialog-button-* ids would then collide with every other
+          transient surface on the detail (e2e/TESTIDS.md — transient ids are
+          unique while they apply). */}
+      <Show when={open()}>
+        <Dialog
+          open={open()}
+          initialFocus={picker}
+          dismissable={!adding()}
+          onClose={() => setOpen(false)}
+          title={t('button.add-from-master-list')}
+          testId="master-list-picker-modal"
+          widthRem={32}
+          minBodyHeightRem={20}
+          actions={
+            <>
+              <CancelButton
+                data-testid="dialog-button-cancel"
+                disabled={adding()}
+                onClick={() => setOpen(false)}
+              />
+              {/* Save commits the bulk add directly (spec S3 Layout, D46) —
                 disabled until a list is chosen, and showing a spinner until the
                 add resolves. No separate "add all items?" confirmation. */}
-            <DialogSaveButton
-              data-testid="dialog-button-ok"
-              disabled={!selected()}
-              loading={adding()}
-              onClick={() => {
-                const chosen = selected();
-                if (chosen) void add(chosen);
+              <DialogSaveButton
+                data-testid="dialog-button-ok"
+                disabled={!selected()}
+                loading={adding()}
+                onClick={() => {
+                  const chosen = selected();
+                  if (chosen) void add(chosen);
+                }}
+              />
+            </>
+          }
+        >
+          <Show
+            when={listOptions().length > 0 || lists.loading}
+            fallback={<p>{t('error.no-master-lists')}</p>}
+          >
+            <Combobox
+              label={t('label.master-list')}
+              focusTarget={picker}
+              items={listOptions()}
+              loading={lists.loading}
+              itemToString={list => list.name}
+              itemToValue={list => list.id}
+              value={selected() ?? ''}
+              disabled={adding()}
+              onChange={list => {
+                if (list) setSelected(list.id);
               }}
             />
-          </>
-        }
-      >
-        <Show
-          when={listOptions().length > 0 || lists.loading}
-          fallback={<p>{t('error.no-master-lists')}</p>}
-        >
-          <Combobox
-            label={t('label.master-list')}
-            focusTarget={picker}
-            items={listOptions()}
-            loading={lists.loading}
-            itemToString={list => list.name}
-            itemToValue={list => list.id}
-            value={selected() ?? ''}
-            disabled={adding()}
-            onChange={list => {
-              if (list) setSelected(list.id);
-            }}
-          />
-        </Show>
-        <Show when={error()}>
-          {message => <Alert severity="error">{message()}</Alert>}
-        </Show>
-      </Dialog>
+          </Show>
+          <Show when={error()}>
+            {message => <Alert severity="error">{message()}</Alert>}
+          </Show>
+        </Dialog>
+      </Show>
     </Show>
   );
 };

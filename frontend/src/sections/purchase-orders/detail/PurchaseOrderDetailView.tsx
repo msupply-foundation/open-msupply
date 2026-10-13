@@ -30,11 +30,11 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
-  type CellFragment,
   getCellDefinition,
   getCurrencyCell,
   getDateCell,
   getNumberCell,
+  type CellFragment,
 } from '@/ui/elements/table/tableHelpers';
 import {
   Pagination,
@@ -101,14 +101,14 @@ import {
   isOpenToChange,
 } from './purchaseOrderLadder';
 import { formatCurrency } from '@/intl/currency';
-import { formatNumber } from '@/intl/formatNumber';
-import { linePacks, lineCost } from './purchaseOrderPricing';
+import { linePacks } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
 import {
   PurchaseOrderLineEditModal,
   type LineLookup,
 } from './edit-modal/PurchaseOrderLineEditModal';
 import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
+import { Num } from '@/ui/elements/typography/Num';
 
 // An order's own screen (spec/purchase-orders S6, with S7's line table, S8's
 // Details tab, S9's side panel, S10's line editor, S11-S13's remaining tabs,
@@ -171,7 +171,7 @@ const NARROW_HIDDEN: Record<string, boolean> = {
 
 const exactQuantity: CellFragment<Line>['cell'] = info => {
   const value = info.getValue<number | null | undefined>();
-  return value == null ? '' : formatNumber(value);
+  return value == null ? '' : <Num value={value} />;
 };
 
 const PurchaseOrderDetailView: Component = () => {
@@ -409,6 +409,12 @@ const PurchaseOrderDetailView: Component = () => {
   // here because the refusal names no cause (contract ⚠️), so a control left
   // enabled would fail into a bare toast.
   const isDisabled = () => !isOpenToChange(status());
+  // A line with no quantity — not yet ordered (spec S7) — on an order and a
+  // line that can still change. Sent orders and closed lines need no more work.
+  const isOpenPlaceholder = (line: Line) =>
+    !isDisabled() &&
+    line.status !== 'CLOSED' &&
+    line.requestedNumberOfUnits === 0;
 
   const refetchAll = () => {
     void refetchInfo();
@@ -655,15 +661,15 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(7),
     },
     {
-      // Packs × the after-line-discount pack price, at the order currency's
-      // precision. Its footer sums the rows ON SCREEN — the page, which is
-      // what a paginated table can total; the order's whole subtotal is the
-      // side panel's Subtotal row.
-      c: { accessor: line => lineCost(line), id: 'lineCost' },
+      // The line's STORED total, as the server wrote it — never re-multiplied
+      // here (rules § pricing and totals). Its footer sums the rows ON SCREEN
+      // — the page, which is what a paginated table can total; the order's
+      // whole subtotal is the side panel's Subtotal row.
+      c: { accessor: line => line.lineTotal, id: 'lineCost' },
       header: () => t('label.line-cost'),
       ...getCurrencyCell(undefined, () => info()?.currency?.code),
       footer: () =>
-        money(rows().reduce((sum, line) => sum + lineCost(line), 0)),
+        money(rows().reduce((sum, line) => sum + line.lineTotal, 0)),
     },
     {
       c: { key: 'requestedDeliveryDate' },
@@ -870,13 +876,22 @@ const PurchaseOrderDetailView: Component = () => {
                     line.status === 'CLOSED' ? 'disabled' : undefined
                   }
                   // A line named by a blocked state move reads in the error
-                  // tone so it can be found and removed (spec S18); a line
-                  // with no quantity reads as a placeholder — not yet ordered
-                  // (spec S7). Error wins when both hold.
+                  // tone so it can be found and removed (spec S18).
                   rowTone={line =>
+                    blockedLines().includes(line.id) ? 'error' : undefined
+                  }
+                  // Placeholder rows: see CARD_TABLE_MODEL.md § rowAccent.
+                  rowTint={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  rowAccent={line =>
+                    isOpenPlaceholder(line) ? 'unfinished' : undefined
+                  }
+                  // Error wins when both hold.
+                  cardTone={line =>
                     blockedLines().includes(line.id)
                       ? 'error'
-                      : line.requestedNumberOfUnits === 0
+                      : isOpenPlaceholder(line)
                         ? 'info'
                         : undefined
                   }

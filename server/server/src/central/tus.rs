@@ -24,17 +24,17 @@
 use std::{collections::HashMap, fmt::Display};
 
 use actix_web::{
+    HttpRequest, HttpResponse, ResponseError,
     dev::HttpServiceFactory,
     head,
     http::{
-        header::{HeaderMap, AUTHORIZATION},
         StatusCode,
+        header::{AUTHORIZATION, HeaderMap},
     },
     options, patch, post,
     web::{self, Bytes, Data, Payload},
-    HttpRequest, HttpResponse, ResponseError,
 };
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use chrono::Utc;
 use futures::StreamExt;
 use repository::{
@@ -46,8 +46,10 @@ use service::{
     settings::Settings,
     static_files::{InvalidFilePath, StaticFileCategory, StaticFileService},
     sync::{
-        api::{validate_site_auth, SyncApiSettings},
         CentralServerConfig,
+        api::{SyncApiSettings, validate_site_auth},
+        api_v6::SyncParsedErrorV6,
+        sync_api_pause::is_sync_api_paused,
     },
     sync_v7::sync_on_central::validate_v7_site_auth,
 };
@@ -122,6 +124,7 @@ async fn create(
     let metadata = parse_metadata(req.headers())?;
 
     let ctx = service_provider.basic_context().map_err(internal)?;
+    require_sync_api_unpaused(&ctx)?;
     authenticate(&req, &metadata, &ctx, &service_provider).await?;
 
     let file_id = require_metadata(&metadata, "file_id")?;
@@ -180,6 +183,7 @@ async fn head_offset(
     let metadata = parse_metadata(req.headers())?;
 
     let ctx = service_provider.basic_context().map_err(internal)?;
+    require_sync_api_unpaused(&ctx)?;
     authenticate(&req, &metadata, &ctx, &service_provider).await?;
 
     let file_id = path.into_inner();
@@ -219,6 +223,7 @@ async fn patch_chunk(
     let metadata = parse_metadata(req.headers())?;
 
     let ctx = service_provider.basic_context().map_err(internal)?;
+    require_sync_api_unpaused(&ctx)?;
     authenticate(&req, &metadata, &ctx, &service_provider).await?;
 
     let file_id = path.into_inner();
@@ -243,7 +248,7 @@ async fn patch_chunk(
             return Err(TusError::NotFound(format!(
                 "no partial file for {} — POST first",
                 file_id
-            )))
+            )));
         }
     };
 
@@ -305,6 +310,17 @@ async fn patch_chunk(
 fn require_central() -> Result<(), TusError> {
     if !CentralServerConfig::is_central_server() {
         return Err(TusError::Forbidden("not a central server".into()));
+    }
+    Ok(())
+}
+
+/// Refuse uploads while central has paused its sync API. The body is the JSON of
+/// `SyncParsedErrorV6::SyncApiPaused` so the remote's tus client can recognise it.
+fn require_sync_api_unpaused(ctx: &ServiceContext) -> Result<(), TusError> {
+    if is_sync_api_paused(&ctx.connection).map_err(internal)? {
+        return Err(TusError::ServiceUnavailable(
+            serde_json::to_string(&SyncParsedErrorV6::SyncApiPaused).map_err(internal)?,
+        ));
     }
     Ok(())
 }
@@ -464,6 +480,7 @@ pub enum TusError {
     NotFound(String),
     Conflict(String),
     PreconditionFailed(String),
+    ServiceUnavailable(String),
     Internal(String),
 }
 
@@ -476,6 +493,7 @@ impl Display for TusError {
             TusError::NotFound(m) => write!(f, "{m}"),
             TusError::Conflict(m) => write!(f, "{m}"),
             TusError::PreconditionFailed(m) => write!(f, "{m}"),
+            TusError::ServiceUnavailable(m) => write!(f, "{m}"),
             TusError::Internal(m) => write!(f, "{m}"),
         }
     }
@@ -490,6 +508,7 @@ impl ResponseError for TusError {
             TusError::NotFound(_) => StatusCode::NOT_FOUND,
             TusError::Conflict(_) => StatusCode::CONFLICT,
             TusError::PreconditionFailed(_) => StatusCode::PRECONDITION_FAILED,
+            TusError::ServiceUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
             TusError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -643,10 +662,10 @@ mod tests {
     /// central's DB); otherwise the legacy `sync_v5_settings` metadata path runs.
     mod auth_dispatch {
         use super::*;
-        use actix_web::{http::header::AUTHORIZATION, test, App};
+        use actix_web::{App, http::header::AUTHORIZATION, test};
         use repository::{
-            migrations::Version, mock::MockDataInserts, test_db::setup_all, SiteRow,
-            SiteRowRepository, SyncVersion,
+            SiteRow, SiteRowRepository, SyncVersion, migrations::Version, mock::MockDataInserts,
+            test_db::setup_all,
         };
         use service::{settings::test_settings, sync::test_util_set_is_central_server};
 
@@ -766,6 +785,33 @@ mod tests {
 
             let response = test::call_service(&app, create_request().to_request()).await;
             assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        }
+
+        // The body is the typed v6 error so the remote's tus client can tell "paused" apart
+        // from a real failure and not burn an upload attempt on it.
+        #[actix_rt::test]
+        async fn create_refuses_while_sync_api_paused() {
+            let (sp, settings, _temp_dir) = app_parts("tus_inbound_paused").await;
+            repository::KeyValueStoreRepository::new(&sp.basic_context().unwrap().connection)
+                .set_bool(repository::KeyType::SettingsSyncApiIsPaused, Some(true))
+                .unwrap();
+            let app = test::init_service(
+                App::new()
+                    .app_data(sp)
+                    .app_data(settings)
+                    .service(tus_on_central()),
+            )
+            .await;
+
+            let response = test::call_service(
+                &app,
+                with_v7_auth(create_request(), "test_token").to_request(),
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+            let body = test::read_body(response).await;
+            let error: SyncParsedErrorV6 = serde_json::from_slice(&body).unwrap();
+            assert!(matches!(error, SyncParsedErrorV6::SyncApiPaused));
         }
     }
 }

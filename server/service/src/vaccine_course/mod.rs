@@ -1,12 +1,12 @@
 use super::{ListError, ListResult};
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{SingleRecordError, service_provider::ServiceContext};
 
 use repository::{
+    PaginationOption, StorageConnection,
     vaccine_course::{
         vaccine_course::{VaccineCourseFilter, VaccineCourseSort},
         vaccine_course_row::VaccineCourseRow,
     },
-    PaginationOption, StorageConnection,
 };
 
 pub mod delete;

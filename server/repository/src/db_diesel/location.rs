@@ -1,16 +1,17 @@
-use super::{location_row::location, LocationRow, StorageConnection};
+use super::{LocationRow, StorageConnection, location_row::location, stock_line_row::stock_line};
 
 use crate::{
+    StringFilter,
     asset_internal_location_row::asset_internal_location,
     diesel_extensions::OrderByExtensions,
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
-    StringFilter,
 };
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
-use diesel::prelude::*;
+use crate::{DBType, EqualFilter, Pagination, Sort, repository_error::RepositoryError};
+use diesel::{dsl::sum, prelude::*};
+use std::collections::HashMap;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Location {
@@ -94,6 +95,26 @@ impl<'a> LocationRepository<'a> {
             .load::<LocationRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
+    }
+
+    /// Volume taken up by stock on hand in each of the given locations. A
+    /// location with no stock has no entry: read a missing location as zero
+    /// volume used.
+    pub fn volume_used_by_location(
+        &self,
+        location_ids: &[String],
+    ) -> Result<HashMap<String, f64>, RepositoryError> {
+        let rows = stock_line::table
+            .filter(stock_line::location_id.eq_any(location_ids))
+            .filter(stock_line::total_number_of_packs.gt(0.0))
+            .group_by(stock_line::location_id)
+            .select((stock_line::location_id, sum(stock_line::total_volume)))
+            .load::<(Option<String>, Option<f64>)>(self.connection.lock().connection())?;
+
+        Ok(rows
+            .into_iter()
+            .filter_map(|(location_id, volume)| Some((location_id?, volume.unwrap_or(0.0))))
+            .collect())
     }
 
     pub fn create_filtered_query(filter: Option<LocationFilter>) -> BoxedLocationQuery {

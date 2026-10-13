@@ -1,10 +1,10 @@
 use crate::service_provider::ServiceContext;
 use repository::{
+    EqualFilter, NameRowRepository, RepositoryError, StorageConnection, StoreRowRepository,
+    VaccinationCourseRepository, VaccinationCourseRow,
     vaccine_course::vaccine_course_store_config::{
         VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
     },
-    EqualFilter, NameFilter, NameRepository, RepositoryError, StorageConnection, StoreFilter,
-    VaccinationCourseRepository, VaccinationCourseRow,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -57,14 +57,16 @@ fn get_store_properties_and_validate(
     connection: &StorageConnection,
     store_id: &str,
 ) -> Result<Option<StoreProperties>, RepositoryError> {
-    let store_properties: Map<String, Value> = NameRepository::new(connection)
-        .query_by_filter(
-            store_id,
-            NameFilter::new()
-                .store(StoreFilter::new().id(EqualFilter::equal_to(store_id.to_string()))),
-        )?
-        .pop()
-        .and_then(|n| n.properties)
+    // The store's own name row, read directly: the name query would also build
+    // every name visible in the store on SQLite (#1355). As before, a disabled
+    // store's properties are ignored.
+    let store_properties: Map<String, Value> = StoreRowRepository::new(connection)
+        .find_one_by_id(store_id)?
+        .filter(|store| !store.is_disabled)
+        .map(|store| NameRowRepository::new(connection).find_one_oms_fields_by_id(&store.name_id))
+        .transpose()?
+        .flatten()
+        .and_then(|name| name.properties)
         .and_then(|json_str| serde_json::from_str(&json_str).ok())
         .unwrap_or_default();
 
@@ -249,8 +251,8 @@ mod tests {
     use crate::service_provider::ServiceProvider;
     use repository::{
         mock::{
-            mock_demographic_a, mock_vaccine_course_a, mock_vaccine_item_a, MockData,
-            MockDataInserts,
+            MockData, MockDataInserts, mock_demographic_a, mock_vaccine_course_a,
+            mock_vaccine_item_a,
         },
         test_db::setup_all_with_data,
         vaccine_course::vaccine_course_row::VaccineCourseRow,

@@ -1,16 +1,22 @@
 import {
   children,
+  createComputed,
   createEffect,
   createSignal,
   createUniqueId,
   onCleanup,
   Show,
+  untrack,
   type JSX,
 } from 'solid-js';
 import { CloseIcon } from '../../icons';
 import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
-import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import {
+  useIsCompact,
+  useIsNavOverlay,
+  useIsShortViewport,
+} from '../../utils/createMediaQuery';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { createAction } from '../../utils/keyActions';
 import { ALT_S, ESCAPE } from '../../utils/shortcuts';
@@ -27,18 +33,28 @@ import styles from './Dialog.module.css';
 export interface DialogProps {
   open: boolean;
   /**
-   * Fired on every close path — Escape, scrim click, or an action button
-   * calling it. The parent owns `open`; the dialog never closes itself
-   * without reporting here.
+   * Fired on every close path — Escape, the corner close, a scrim click where
+   * `scrimDismiss` allows one, or an action button calling it. The parent owns
+   * `open`; the dialog never closes itself without reporting here.
    */
   onClose: () => void;
   /**
-   * `false` makes the dialog blocking: Escape is swallowed and scrim clicks
-   * ignored, so the only ways out are the actions (or the flow resolving
-   * `open`). For the modals a user must answer — re-login, store selection,
-   * the unexpected-error modal. Default: dismissable.
+   * `false` makes the dialog blocking: Escape is swallowed, so the only ways
+   * out are the actions (or the flow resolving `open`). For the modals a user
+   * must answer — re-login, store selection, the unexpected-error modal.
+   * Default: dismissable.
    */
   dismissable?: boolean;
+  /**
+   * `true` lets a click on the scrim (the dimmed page around the dialog) close
+   * it, through the same onClose path as Escape. Off by default: one stray
+   * click beside an editor would throw away everything typed into it (#1002),
+   * so a dialog closes by Escape, Cancel or its corner close (ui-standards ›
+   * controls § dialogs). Only for an overlay that holds nothing to lose and
+   * reads as a light popup over the page — the command palette. Ignored when
+   * `dismissable` is false.
+   */
+  scrimDismiss?: boolean;
   /**
    * The dialog heading. A string is rendered as the <h2> AND used as the
    * accessible name (aria-labelledby). A JSX element (e.g. an inline selector)
@@ -61,7 +77,7 @@ export interface DialogProps {
   /**
    * Renders an icon-only close button pinned to the dialog's top corner (an
    * explicit dismiss affordance for informational dialogs, e.g. the sync
-   * modal). Closes via the same onClose path as Escape/scrim. Ignored when
+   * modal). Closes via the same onClose path as Escape. Ignored when
    * `dismissable` is false — a blocking dialog offers no dismiss affordance.
    */
   closeButton?: boolean;
@@ -120,16 +136,20 @@ export interface DialogProps {
    * measure keeps the box steady across a multi-step flow: the width belongs to
    * the dialog frame, so capping the CONTENT with a `ContentContainer` inside
    * would leave the frame (and its title + actions rows) at its old width with
-   * the body floating in the middle. Ignored in `size="large"`, whose working
-   * width is a rem number (see `widthRem`) rather than a content measure — a
-   * workbench is sized by the table it holds, not by reading comfort. If both
-   * are passed the rem number wins — it sets the custom property inline, which
-   * beats the preset's rule.
+   * the body floating in the middle. Also sets the working width of a
+   * `size="large"` card, overriding its 56rem default — the way to size a
+   * workbench whose content fits a measure. Ignored in `size="full"`, whose
+   * width is the sheet's own. If both this and `widthRem` are passed the rem
+   * number wins — it sets the custom property inline, which beats the preset's
+   * rule.
    *
    * A measure also opts the dialog into the shared **full-screen** treatment
    * below the narrow-viewport line (tablet portrait and phones, breakpoints.ts
-   * › navOverlay), since a measure describes a page-sized surface. `widthRem`
-   * does not: it stays a centred card at every width.
+   * › navOverlay), since a measure describes a page-sized surface — but not
+   * below the short-viewport line, which only the workbench sizes answer to
+   * (see `size`). `widthRem` does not: it stays a centred card down to the
+   * compact line (breakpoints.ts › compact, a phone), where every dialog but a
+   * bare confirmation is a sheet.
    */
   width?: 'prose' | 'form' | 'wide';
   /**
@@ -156,25 +176,63 @@ export interface DialogProps {
    */
   minBodyHeightRem?: number;
   /**
+   * While true, the dialog stays at least as tall as it was the moment this
+   * turned true — for a flow whose content shrinks mid-action (an import's
+   * review → progress → refused rows), so the box, and with it the centred
+   * footer, holds still under the pointer. Dialog measures itself; the floor
+   * never passes the viewport cap. Released when it turns false.
+   */
+  holdHeight?: boolean;
+  /**
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
    * by widthRem + the viewport cap). The two WORKBENCH sizes are for
    * content-heavy modals like the line-edit table. Both start at a ~60vh FLOOR
    * — #771's win: a two-batch item is a short modal, not an empty full-screen
    * box — and both flex the body so a scrolling child (a DataTable) fills the
    * tall space once content passes the ceiling, and both go full-screen below
-   * the narrow-viewport line like a `width` measure. They differ in how far
-   * they may GROW:
-   *  - `'large'` — a centred CARD: 56rem wide by default (`widthRem` for a
-   *    wider table), ceiling ~80vh so the scrim still frames it top and bottom.
-   *  - `'full'` — a SHEET: fills the viewport in both axes bar a 2rem gutter.
+   * the narrow-viewport line like a `width` measure — and, unlike a measure,
+   * below the short-viewport line too (a landscape tablet, #246; breakpoints.ts
+   * › shortViewport). They differ in how far they may GROW:
+   *  - `'large'` — a centred CARD: 56rem wide by default, or a `width`
+   *    measure (the internal-order line editor takes `wide`), or `widthRem`
+   *    for a bespoke width such as a wider table; ceiling ~80vh
+   *    so the scrim still frames it top and bottom. Mind that height cap when
+   *    picking a card over the sheet: tall content scrolls sooner (the
+   *    requisition editor tried a card and lost its stats tabs below the fold
+   *    on a landscape tablet, #617).
+   *  - `'full'` — a SHEET: fills the viewport bar a 2rem gutter in both axes,
+   *    up to a 90rem width ceiling (a laptop's sheet, so a large monitor gets
+   *    the same box rather than one spreading its content across the screen).
    *    For content no card width fits: a table too wide (the shipment and
    *    stocktake line editors run to ~20 columns, where narrowing hides columns
-   *    without removing any empty space), a region that caps itself wider than
-   *    a card's body (the internal-order editor's 64rem charts row, the
-   *    requisition editor's three-column figure grid), or a row count that
-   *    wants every row it can show before scrolling. Also the right choice for
-   *    a modal hosting a PLUGIN SLOT: what a deployment contributes there is
-   *    not ours to measure, so no card width is safe. `widthRem` is ignored.
+   *    without removing any empty space), a region wider than a card's body
+   *    that is also tall (the requisition editor's three-column figure grid),
+   *    or a row count that wants every row it can show before scrolling. The
+   *    default too for a modal hosting a PLUGIN SLOT: what a deployment
+   *    contributes there is not ours to measure. The internal-order editor's
+   *    card is the recorded exception (ui/docs/DESIGN_STANDARDS.md, #617).
+   *    `widthRem` is ignored.
+   *
+   * **Full-screen line tables** (#246). In the full-screen state a workbench
+   * dialog runs its main line table to the sheet's edges with no frame, and
+   * to its hairlines on the side(s) where the table ends the body. Three
+   * opt-in hooks drive it. This Dialog's stylesheet is the only thing that
+   * reads them (Dialog.module.css › data-fullscreen):
+   *  - `dialogTable` on the `DataTable`, or on the `Accordion` that holds it:
+   *    this is the dialog's MAIN line table. A table that is the body's only
+   *    child is treated this way without it. A secondary table left unmarked
+   *    (a repack history, a duplicates list) keeps its frame.
+   *  - `dialogHeader` on an `InsetPanel`: the editor's header cluster stands in
+   *    for a hidden title, so it becomes the heading strip.
+   *  - `{...DIALOG_SCROLL}` (exported below) on an editor's OWN scroll box
+   *    between the body and its table.
+   *
+   * The chain rule: the bleed is a negative margin, so it only shows through
+   * boxes that let it. A plain wrapper does. A box that scrolls or clips
+   * (any `overflow` but `visible`) cuts it off. So an editor that puts its
+   * table inside its own scroller must spread `DIALOG_SCROLL` on that
+   * scroller, or the table's first and last columns are clipped instead of
+   * reaching the edge. The outbound line editor's work area is the example.
    */
   size?: 'auto' | 'large' | 'full';
   /**
@@ -182,7 +240,7 @@ export interface DialogProps {
    * so the content floats directly over the scrim. For an overlay whose own
    * children already carry surfaces (the command palette: a text field and an
    * option list, nothing behind them). Everything else <Dialog> gives stays:
-   * top layer, inert page, Escape, focus restore, scrim-click dismiss.
+   * top layer, inert page, Escape, focus restore.
    */
   chromeless?: boolean;
   /**
@@ -209,6 +267,15 @@ export interface DialogProps {
    * e2e/TESTIDS.md). */
   testId?: string;
 }
+
+/**
+ * Spread on a line editor's OWN scroll box, the one between the dialog body
+ * and its main table: `<div class={styles.workArea} {...DIALOG_SCROLL}>`. In
+ * the full-screen state the Dialog widens that box to the sheet's edges the
+ * way it widens its own scroll region, so the table's bleed reaches them
+ * instead of being clipped. See the chain rule on `DialogProps.size`.
+ */
+export const DIALOG_SCROLL = { 'data-dialog-scroll': '' } as const;
 
 /*
  * Input types that ACTIVATE THEMSELVES on Enter, as the keydown's default
@@ -355,9 +422,10 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
  * close, Escape (`cancel` event), role=dialog + aria-modal, and ::backdrop.
  * The prototype's other objection — "imperative to drive from React" — doesn't
  * apply in Solid: one createEffect maps the `open` prop onto
- * showModal()/close(). We hand-roll the two small gaps: scrim-click dismiss
- * (the native `closedby="any"` is still limited-availability) and a one-line
- * scroll lock in the CSS.
+ * showModal()/close(). We hand-roll the two small gaps: the opt-in
+ * scrim-click dismiss (`scrimDismiss`; the native `closedby="any"` is still
+ * limited-availability) and a one-line scroll lock in the CSS. By default a
+ * scrim click does nothing, which is the platform's own default for a modal.
  *
  * Usage pattern: keep `open` state in the component that owns the action,
  * render this declaratively next to it. For confirmations use <ConfirmDialog>.
@@ -394,21 +462,45 @@ export const Dialog = (props: DialogProps) => {
   // Both workbench sizes share every rule except width, so almost everything
   // that asks "is this large?" means this.
   const workbench = () => props.size === 'large' || props.size === 'full';
-  // Modals whose width is a page-sized SURFACE go full-screen on tablet
-  // portrait and phones — the same "narrow viewport" line as the nav overlay, so
-  // we reuse navOverlay (1024) rather than mint a fourth breakpoint.
-  // data-fullscreen drives the CSS; the cutoff lives once in breakpoints.ts
-  // (createMediaQuery).
+  // Full screen is decided per AXIS, and each axis has its own line — all
+  // shared with the rest of the shell (the nav overlay, the outbound totals
+  // fold, the phone chrome), so no breakpoint is minted here: the cutoffs live
+  // once in breakpoints.ts (createMediaQuery). data-fullscreen drives the CSS.
   //
-  // That is either workbench size (`large`/`full`) and any `width` MEASURE: the
-  // widest measure is wider than the line itself, so below it a measure dialog
-  // would otherwise be an edge-to-edge card holding a 1rem margin — the
-  // in-between this rule exists to remove. A default or `widthRem` dialog stays
-  // a centred card: a confirmation has no business filling a tablet screen, and
-  // a caller who wants the sheet asks for the measure it is sized to.
+  // NARROW (navOverlay — tablet portrait and phones): modals whose width is a
+  // page-sized SURFACE, i.e. either workbench size (`large`/`full`) and any
+  // `width` MEASURE. The widest measure is wider than the line itself, so
+  // below it a measure dialog would otherwise be an edge-to-edge card holding
+  // a 1rem margin — the in-between this rule exists to remove.
+  //
+  // SHORT (shortViewport — a landscape tablet, or a windowed laptop): the
+  // workbench sizes only. A landscape tablet is WIDE, so the narrow line never
+  // fires on one, and the sheet sat there as a floating card with a 2rem
+  // gutter all round — with the on-screen keyboard up, a card showing one
+  // table row (#246). Height is the axis a workbench is built around (a vh
+  // band with a flex body), so a short viewport is where its gutters cost
+  // rows. A measure dialog stays a card here: its height is its content's,
+  // and stretching a `form` to a landscape tablet's full width would pull
+  // labels away from their values (#617).
+  //
+  // COMPACT (breakpoints.compact — a phone): EVERY dialog is a sheet. A
+  // centred card there is already edge-to-edge, so the inset only costs
+  // height and floats the actions mid-screen. Except a bare confirmation (a
+  // description and no body — ConfirmDialog), which stays a small card.
+  // `in` checks, not reads: reading a JSX-element prop constructs it.
+  //
+  // Above the compact line a default or `widthRem` dialog stays a centred
+  // card on both axes: a confirmation has no business filling a tablet
+  // screen, and a caller who wants the sheet asks for the measure it is
+  // sized to.
   const narrowViewport = useIsNavOverlay();
+  const shortViewport = useIsShortViewport();
+  const compact = useIsCompact();
+  const confirmation = 'description' in props && !('children' in props);
   const fullscreen = () =>
-    narrowViewport() && (workbench() || props.width !== undefined);
+    (narrowViewport() && (workbench() || props.width !== undefined)) ||
+    (shortViewport() && workbench()) ||
+    (compact() && !confirmation);
   // The <dialog>'s OWN aria-labelledby/aria-label depend on whether the title
   // is a string, but the title is resolved inside the Provider (DialogContent),
   // not here — so DialogContent reports it back via this signal rather than us
@@ -496,7 +588,7 @@ export const Dialog = (props: DialogProps) => {
    * KB-E2's choice: "where a continuing action (Save & next) is present and
    * enabled, Enter activates THAT; otherwise it activates the plain confirming
    * action. A disabled action MUST NOT be activated, and Enter then does
-   * nothing" (AC-KB23, AC-KB24).
+   * nothing" (OMS-REG-KBD-02.9/.10, OMS-REG-KBD-02.11).
    */
   const enterTarget = (): ConfirmClaim | undefined => {
     const continuing = claims.get('continuing');
@@ -514,9 +606,10 @@ export const Dialog = (props: DialogProps) => {
    *   <textarea>  Enter inserts a newline (KB-E2 says "from anywhere in its
    *               FORM", and a textarea's Enter is its own).
    *   buttons/links  they self-activate as the keydown's default action, so
-   *               confirming here too would double-fire (KB-E4, AC-KB26).
-   *   listboxes/comboboxes with an open popup  they preventDefault, caught by
-   *               the defaultPrevented guard (KB-E1, AC-KB21).
+   *               confirming here too would double-fire (KB-E4,
+   * OMS-REG-KBD-02.14/.15).   listboxes/comboboxes with an open popup  they
+   * preventDefault, caught by               the defaultPrevented guard (KB-E1,
+   * OMS-REG-KBD-02.7).
    */
   const enterConfirmsFrom = (target: EventTarget | null): boolean => {
     if (!(target instanceof Element)) return false;
@@ -546,6 +639,16 @@ export const Dialog = (props: DialogProps) => {
     } else if (!props.open && dialog.open) dialog.close();
   });
 
+  // holdHeight: measured in a COMPUTATION, which runs before this update's DOM
+  // work (inserts are render effects), so it reads the height the dialog had
+  // BEFORE the content that turned the hold on replaced what was there.
+  const [heldHeight, setHeldHeight] = createSignal<number>();
+  createComputed(() => {
+    if (!props.holdHeight) return setHeldHeight(undefined);
+    if (untrack(heldHeight) === undefined && dialog?.open)
+      setHeldHeight(dialog.getBoundingClientRect().height);
+  });
+
   // Solid removes the node on unmount, but close() while still connected also
   // releases the top layer + restores focus deterministically.
   onCleanup(() => dialog.open && dialog.close());
@@ -564,16 +667,16 @@ export const Dialog = (props: DialogProps) => {
    * (kdd/keyboard-layer).
    *
    * Alt+S is `surface` tier, so it fires from inside a text field — the whole
-   * point of the dialog tier (AC-KB2). Escape needs no action to work: the
-   * UA's close request handles it, and the binding is declared on CancelButton
-   * purely so the badge and this entry can render it.
+   * point of the dialog tier (OMS-REG-KBD-01.2/.3). Escape needs no action to
+   * work: the UA's close request handles it, and the binding is declared on
+   * CancelButton purely so the badge and this entry can render it.
    *
    * Alt+S targets the PLAIN confirm, never `enterTarget()`. KB-E2's "a
    * continuing action wins" is about ENTER, whose target is implicit — the
    * user pressed a general "go on" key and the footer decides what that means.
    * Alt+S is the Save button's OWN binding: it is the key that button
-   * advertises on its badge (AC-KB15), so running Save & next from it would
-   * fire an action the user did not aim at, and one whose badge sits on a
+   * advertises on its badge (OMS-REG-KBD-01.26), so running Save & next from it
+   * would fire an action the user did not aim at, and one whose badge sits on a
    * different button.
    */
   const saveTarget = (): ConfirmClaim | undefined => {
@@ -612,8 +715,10 @@ export const Dialog = (props: DialogProps) => {
       }}
       data-testid={props.testId}
       data-fullscreen={fullscreen() ? '' : undefined}
-      // The measure preset has nothing to say at either workbench size.
-      data-width={workbench() ? undefined : props.width}
+      // A measure sizes a default dialog or a `large` card; the `full` sheet
+      // has its own width.
+      data-width={props.size === 'full' ? undefined : props.width}
+      data-hold-height={heldHeight() !== undefined ? '' : undefined}
       style={{
         // Sets the working width in `large` too, overriding the .large class's
         // 56rem default (#771). In `full` it is inert: .bleed sets `width`
@@ -621,6 +726,9 @@ export const Dialog = (props: DialogProps) => {
         ...(props.widthRem ? { '--dialog-width': `${props.widthRem}rem` } : {}),
         ...(props.minBodyHeightRem
           ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
+          : {}),
+        ...(heldHeight() !== undefined
+          ? { '--dialog-held-height': `${heldHeight()}px` }
           : {}),
       }}
       // A string title labels via aria-labelledby (the <h2 id={titleId}>); a
@@ -637,6 +745,27 @@ export const Dialog = (props: DialogProps) => {
       // dialog swallows it here, so the element never closes underneath the
       // parent's `open` state.
       onCancel={event => props.dismissable === false && event.preventDefault()}
+      // A focused control that is disabled or removed while the dialog is
+      // open — a confirm turning into its busy spinner, a Cancel hidden for
+      // the length of a run — drops focus to <body>, OUTSIDE the dialog. Keys
+      // then skip every handler here: Escape reaches the app's navigate-up
+      // rung (keyboardDispatcher) and leaves the screen, dialog and all. Put
+      // focus back on the panel, where showModal() parks it on open. Both
+      // drops arrive with no relatedTarget; so does the window losing focus,
+      // but that leaves activeElement in place, which the check below skips.
+      onFocusOut={event => {
+        if (event.relatedTarget !== null) return;
+        queueMicrotask(() => {
+          // The element's own state: the effect above closes it the moment
+          // `open` turns false, so this also covers a dialog being dismissed.
+          if (!dialog.open) return;
+          const active = document.activeElement;
+          if (active !== null && active !== document.body) return;
+          dialog
+            .querySelector<HTMLElement>(`:scope > .${styles.body ?? ''}`)
+            ?.focus({ preventScroll: true });
+        });
+      }}
       // A modal dialog is an event boundary for Escape: the dialog renders in
       // place (not portaled), so the keydown would bubble on into ancestor
       // key handlers — e.g. Kobalte's accordion root, whose Escape clears the
@@ -653,17 +782,18 @@ export const Dialog = (props: DialogProps) => {
         if (event.key !== 'Enter') return;
         if (props.enterConfirms === false) return;
         // A rung inside the dialog already claimed it: an open picker selecting
-        // its highlighted option (KB-E1/AC-KB21), or a field claiming Enter for
-        // its own completion — the prescription abbreviation field expanding
-        // into directions (KB-E6/AC-KB27). Solid's delegated walk reaches the
-        // field before this handler, so its preventDefault lands first.
+        // its highlighted option (KB-E1/OMS-REG-KBD-02.7), or a field claiming
+        // Enter for its own completion — the prescription abbreviation field
+        // expanding into directions (KB-E6/OMS-REG-KBD-02.16). Solid's
+        // delegated walk reaches the field before this handler, so its
+        // preventDefault lands first.
         if (event.defaultPrevented) return;
-        // A held key must not submit twice (AC-KB26).
+        // A held key must not submit twice (OMS-REG-KBD-02.14/.15).
         if (event.repeat || event.isComposing) return;
         if (!enterConfirmsFrom(event.target)) return;
-        // From here Enter is ours, so consume it either way — with every confirm
-        // disabled, "Enter then does nothing" (AC-KB24) and it must not fall
-        // through to an implicit form submission either.
+        // From here Enter is ours, so consume it either way — with every
+        // confirm disabled, "Enter then does nothing" (OMS-REG-KBD-02.11) and
+        // it must not fall through to an implicit form submission either.
         event.preventDefault();
         // A nested dialog (a ConfirmDialog inside a line editor) is a DOM
         // DESCENDANT of the outer one, so without this the outer dialog would
@@ -674,10 +804,10 @@ export const Dialog = (props: DialogProps) => {
       // Native close paths (Escape now; browser `closedby` UI later) land
       // here — report them so the parent's `open` stays the source of truth.
       onClose={() => props.open && props.onClose()}
-      // Scrim-click dismiss. An event whose target is the <dialog> itself hit
-      // the ::backdrop: the inner .body covers the dialog box completely (the
-      // dialog has zero padding for exactly this reason), so content clicks
-      // can't match.
+      // Scrim-click dismiss, for a dialog that opts in (`scrimDismiss`). An
+      // event whose target is the <dialog> itself hit the ::backdrop: the
+      // inner .body covers the dialog box completely (the dialog has zero
+      // padding for exactly this reason), so content clicks can't match.
       //
       // The dismiss must land on `click`, and NOT on pointerdown/pointerup —
       // both of those close the dialog mid-gesture, and on touch that
@@ -704,7 +834,12 @@ export const Dialog = (props: DialogProps) => {
       onClick={event => {
         const fromScrim = scrimGesture;
         scrimGesture = false;
-        if (fromScrim && event.target === dialog && props.dismissable !== false)
+        if (
+          fromScrim &&
+          event.target === dialog &&
+          props.scrimDismiss === true &&
+          props.dismissable !== false
+        )
           props.onClose();
       }}
     >

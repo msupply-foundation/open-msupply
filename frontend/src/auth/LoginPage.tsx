@@ -1,11 +1,21 @@
-import { createSignal, onMount, Show } from 'solid-js';
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
 import { submitStateAfter, type SubmitState } from './submitState';
 import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { getLastLoginUsername } from '../appData';
 import { recordPrefersOldUi } from '../preferredFrontend';
-import { serverVersion } from '../api/serverInfo';
+import { serverVersion, serverVersionDiffers } from '../api/serverInfo';
+import { graphqlFetch } from '../api/graphql';
+import { gated } from '../api/gated';
+import { IsMaintenanceMode } from '../api/auth.generated';
 import { createFocusTarget } from '../ui/utils/createFocusTarget';
 import { useIsCompact } from '../ui/utils/createMediaQuery';
 import { TextField } from '../ui/elements/inputs/TextField';
@@ -19,6 +29,8 @@ import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
 import { createDocumentTitle } from '../documentTitle';
 import styles from '../ui/styles/LoginInitLayout.module.css';
+
+const MAINTENANCE_RECHECK_MS = 30_000;
 
 // The login screen: the design-system Login (gradient hero + form panel,
 // recreated from the current app — see kdd/page-composition) composed with
@@ -65,6 +77,37 @@ export const LoginPage: Component = () => {
     kind: 'idle',
   });
 
+  // Central maintenance mode (#840): only server administrators can log in, so
+  // say so before anyone tries — including a user just signed out by the
+  // switch, who lands here on their next request. Unauthenticated; a failed
+  // read shows nothing (a refused login still carries the server's message).
+  // Gated so the read never suspends the page (kdd/solid-reactivity-pitfalls).
+  const [maintenanceData, { refetch: refetchMaintenance }] = createResource(
+    async () => {
+      const result = await graphqlFetch(
+        IsMaintenanceMode,
+        {},
+        { background: true }
+      );
+      return result.kind === 'success' && result.data.isMaintenanceMode;
+    }
+  );
+  const maintenanceMode = () => gated(maintenanceData) ?? false;
+
+  // While the notice shows, re-read the flag every so often and when the
+  // window regains focus, so a user waiting here sees it clear once the mode
+  // is turned off without reloading.
+  createEffect(() => {
+    if (!maintenanceMode()) return;
+    const recheck = () => void refetchMaintenance();
+    const timer = setInterval(recheck, MAINTENANCE_RECHECK_MS);
+    window.addEventListener('focus', recheck);
+    onCleanup(() => {
+      clearInterval(timer);
+      window.removeEventListener('focus', recheck);
+    });
+  });
+
   // Only decides WHERE the version line renders — see versionLine() below.
   const compact = useIsCompact();
 
@@ -93,9 +136,10 @@ export const LoginPage: Component = () => {
     setSubmitState(submitStateAfter(result));
   };
 
-  // Spec (App version, OMS-REG-LGN-01.18/.20): the running build's version and
-  // — once the startup pass has fetched it, never as a placeholder — the
-  // server's, on one line at the bottom of the page's left half.
+  // Spec (App version, OMS-REG-LGN-01.18/.20): the running build's version on
+  // one line at the bottom of the page's left half — a single "Version" while
+  // it matches the server's (or the server's is not yet known), split into
+  // Interface / Server only once the startup pass finds they differ (#574).
   //
   // ONE element, rendered either in the hero or, below the compact breakpoint
   // where the hero doesn't render at all, in the panel. Never both, so
@@ -104,10 +148,17 @@ export const LoginPage: Component = () => {
   // breakpoint decides which element renders).
   const versionLine = (placement: string) => (
     <p class={`${styles.versionBar} ${placement}`} data-testid="login-version">
-      <span>
-        <strong>{t('label.version-interface')}</strong> {APP_VERSION}
-      </span>
-      <Show when={serverVersion()}>
+      <Show
+        when={serverVersionDiffers()}
+        fallback={
+          <span>
+            <strong>{t('label.version')}</strong> {APP_VERSION}
+          </span>
+        }
+      >
+        <span>
+          <strong>{t('label.version-interface')}</strong> {APP_VERSION}
+        </span>
         <span>
           <strong>{t('label.version-server')}</strong> {serverVersion()}
         </span>
@@ -143,6 +194,11 @@ export const LoginPage: Component = () => {
               {t('login.form-heading')}
             </h2>
             <AppLogo class={styles.logo} />
+            <Show when={maintenanceMode()}>
+              <Alert severity="warning" testId="login-maintenance-mode">
+                {t('login.maintenance-mode')}
+              </Alert>
+            </Show>
             <TextField
               label={t('heading.username')}
               type="text"
@@ -211,7 +267,7 @@ export const LoginPage: Component = () => {
                   {t('login.use-old-interface')}
                 </a>
                 {/* Arriving from the desktop discovery page (spec/desktop §
-                    server selection, AC-DT16): the hand-off names its return
+                    server selection, OMS-REG-DESK-01.21): the hand-off names its return
                     URL in the query string, and this becomes the way to leave
                     this server for another. A plain anchor — the discovery
                     page may be a different origin (the shell's own bundled

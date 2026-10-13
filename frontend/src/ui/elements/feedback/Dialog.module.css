@@ -12,6 +12,8 @@
      .body — a default on .body would shadow the inherited value. */
   --dialog-width: 30rem;
   --dialog-min-body-height: 0;
+  /* holdHeight's measured floor — set inline, read only under [data-hold-height]. */
+  --dialog-held-height: 0px;
 
   /* Fixed width (steady box), clamped down to the viewport on narrow screens. */
   width: min(var(--dialog-width), calc(100vw - 2rem));
@@ -51,12 +53,26 @@
 }
 
 /* The DEFAULT working width for size="large" — #771's "~900px if the tables fit". A
-   caller whose table is column-heavy overrides it with widthRem, which lands inline on
-   the element and so beats this ("wider if the column set forces it"). Higher specificity
-   than .dialog's 30rem default; the data-width measures never collide, since Dialog omits
-   data-width entirely in large mode. */
+   caller overrides it with a content measure (`width`, below) or, for a bespoke width,
+   with widthRem, which lands inline on the element and so beats both. Higher specificity
+   than .dialog's 30rem default. */
 .dialog.large {
   --dialog-width: 56rem;
+}
+
+/* A measure on a `large` card. Three selectors, so they outrank the 56rem default
+   above; widthRem, being inline, still beats them. `full` never receives data-width
+   (Dialog.tsx), so these only ever size a card. */
+.dialog.large[data-width='prose'] {
+  --dialog-width: var(--measure-prose);
+}
+
+.dialog.large[data-width='form'] {
+  --dialog-width: var(--measure-form);
+}
+
+.dialog.large[data-width='wide'] {
+  --dialog-width: var(--measure-wide);
 }
 
 /* Large / "workbench" size (Dialog size="large") — for content-heavy modals like the
@@ -96,7 +112,15 @@
    top-left by fullscreen's margin:0, the whole 4rem gutter landed on the right/bottom
    edge (#918's tablet gap). */
 .dialog.large.bleed:not([data-fullscreen]) {
-  width: calc(100vw - 4rem);
+  /* A CEILING on the sheet (#617): as wide as the viewport allows, up to
+     --measure-sheet — the width this sheet has on a standard 1512px laptop — so
+     every screen from a laptop up sees the same box. A line table wider than
+     that (the outbound table is ~1766px) scrolls sideways inside it, as it
+     does on a laptop. A modal whose content is narrower can take a card
+     (`size="large"` with a `width` measure) — mind that a card also caps its
+     HEIGHT at 80vh. The reasoning and measurements are in
+     ui/docs/DESIGN_STANDARDS.md. */
+  width: min(calc(100vw - 4rem), var(--measure-sheet));
   max-block-size: calc(100vh - 4rem);
 }
 
@@ -129,7 +153,12 @@
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  /* The block gap between the header, the scroll region and the bottom region
+     — a custom property so the full-screen rules below can reclaim exactly it
+     (#246), the way .bottom[data-divider] tracks --dialog-pad-inline. */
+  --dialog-gap: var(--space-4);
+
+  gap: var(--dialog-gap);
 
   /* The panel takes initial focus on open (tabindex=-1 + autofocus, see
      Dialog.tsx) — a container holding programmatic focus shows no ring. */
@@ -392,10 +421,15 @@
   }
 }
 
+/* A fade and a short rise, with no scale. Chrome paints the dialog's content
+   while the animation runs, and from a scale it keeps paint made at that
+   fractional size afterwards, so a 1px line at a fractional offset (a table
+   frame's top or bottom edge) comes out shifted or dropped until the content
+   remounts (#984). A translate alone settles exactly as no animation would. */
 @keyframes content-in {
   from {
     opacity: 0;
-    transform: translateY(0.25rem) scale(0.97);
+    transform: translateY(0.25rem);
   }
 
   to {
@@ -431,17 +465,21 @@
   outline-offset: 2px;
 }
 
-/* Full-screen on tablet portrait and phones — driven by data-fullscreen, which
-   Dialog.tsx sets on a size="large" dialog OR one sized by a width MEASURE
-   (width="prose|form|wide") when useIsNavOverlay matches (createMediaQuery reads
-   the navOverlay breakpoint from breakpoints.ts, the single source of truth —
-   reused as the shared "narrow viewport" line). A media query can't read a CSS
-   var, so the cutoff stays in JS as the repo prefers (CLAUDE.md #7); this is the
-   CSS analogue of the "which layout" createMediaQuery branches. A default or
-   widthRem dialog stays a centred card (its width cap already fits a
-   tablet-portrait viewport, and a confirmation shouldn't fill the screen) —
-   whereas the form and wide measures are wider than the line itself, so below it
-   they would be edge-to-edge cards clinging to a 1rem margin.
+/* Full-screen — driven by data-fullscreen, which Dialog.tsx sets from three
+   shared lines (createMediaQuery reads them from breakpoints.ts, the single
+   source of truth): below the NARROW line (navOverlay — tablet portrait and
+   phones) on a workbench dialog (size="large|full") OR one sized by a width
+   MEASURE (width="prose|form|wide"); below the SHORT line (shortViewport —
+   a landscape tablet, a windowed laptop) on a workbench dialog only, where the
+   sheet's 2rem gutters cost the rows it exists to show (#246); and below the
+   COMPACT line (a phone) on every dialog but a bare confirmation. A media query
+   can't read a CSS var, so the cutoffs stay in JS as the repo prefers
+   (CLAUDE.md #7); this is the CSS analogue of the "which layout"
+   createMediaQuery branches. Above the compact line a default or widthRem
+   dialog stays a centred card (its width cap already fits a tablet-portrait
+   viewport, and a confirmation shouldn't fill the screen) — whereas the form
+   and wide measures are wider than the narrow line itself, so below it they
+   would be edge-to-edge cards clinging to a 1rem margin.
    Higher specificity than .large so these rules override its width/height.
    dvh/dvw track the visible viewport as the mobile browser chrome shows/hides;
    plain 100vh would tuck the actions behind the address bar. */
@@ -471,4 +509,228 @@
   flex: 1;
   min-block-size: 0;
   max-block-size: none;
+}
+
+/* holdHeight: the height Dialog measured when the hold began, as a floor. Clamped to the
+   viewport cap itself, because min-block-size beats max-block-size — a viewport that shrinks
+   mid-hold must not push the box off screen. Two selectors, so it outranks .large's floor. */
+.dialog[data-hold-height] {
+  min-block-size: min(var(--dialog-held-height), calc(100vh - 2rem));
+}
+
+/* …and the panel fills the held box, as a workbench's does: a flex column so the footer stays
+   at the bottom where it was, instead of riding up with shorter content and leaving bare
+   <dialog> below it — which a click reads as the scrim. Scoped to [open], like .large[open]. */
+.dialog[data-hold-height][open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog[data-hold-height][open] .body {
+  flex: 1;
+}
+
+/* Full screen is the one state where the dialog's inset is spent on nothing:
+   the sheet's edges already bound the content, and on a tablet with the
+   keyboard up every row counts (#246). So two things tighten here, and ONLY
+   here — a card or sheet framed by the scrim keeps the standard chrome.
+   (Last in the file: the :has() rule outranks the hold-height rules above,
+   and stylelint wants specificity to ascend.)
+
+   1. The action row: --space-2 above and below the buttons, the body yielding
+   its bottom inset to the row (hairline → 0.5rem → buttons → 0.5rem → edge),
+   from 0.75rem above plus the body's 1rem below. The buttons keep their own
+   height (--touch-target under a coarse pointer); it is the band that
+   tightens, never the targets. */
+.dialog[data-fullscreen] .actions {
+  padding-block: var(--space-2);
+}
+
+.dialog[data-fullscreen] .body:has(> .bottom > .actions) {
+  padding-block-end: 0;
+}
+
+/* 2. The body's MAIN line table runs edge to edge — and hairline to hairline
+   where the layout allows. Which table: the scroll region's sole child (the
+   table IS the body — the stocktake editor, the pickers), or a surface that
+   carries data-dialog-table: DataTable's and Accordion's `dialogTable` prop,
+   set by a line editor whose body holds other things too — the inbound
+   editor's notices, the outbound editor's header panel and advisories, the
+   returns editors' stepper and reference field, the prescription editor's
+   Batches disclosure in the middle of its form. Explicit on purpose: a table
+   that shares a dialog with a form is not always the body (the create-patient
+   duplicates list, a repack history), so only an editor that says so gets
+   the treatment, and a secondary table it leaves unmarked keeps its frame.
+
+   The scroll region's padding box is widened to the sheet edges inline and
+   to the two hairlines block-wise (margin out, padding back in — the content
+   sits where it did, the inline inset and the body's gap now doubling as the
+   focus-ring room), so a child may bleed into that padding without the
+   scrollport clipping it. Then the surface is handed its frame's knobs —
+   declared with their defaults on DataTable's .root and on the card
+   Accordion's root — and set ON that element, so they beat the component's
+   own defaults only there: a table nested elsewhere declares the defaults on
+   its root and keeps its frame and its spacing.
+
+   Inline: bleed by the inset, no frame, no radius. A marked accordion bleeds
+   the same way, drops its radius, keeps the dialog's inset on its trigger
+   row (so "Batches" lines up with the form above it) and gives its content
+   none; the table inside it drops its frame and radius but does NOT bleed —
+   the accordion already reaches the edge.
+
+   Block: the END bleed goes to a table that ends the region — the sole
+   child; a marked table that is the region's last child, or the last child
+   of its last child (the inbound editor's display:contents wrapper, the
+   service-charges grid) — so its last row meets the actions' rule. The START
+   bleed goes only to a table that is the whole region (the sole child, or
+   the sole child of a sole-child wrapper), so its header row sits on the
+   heading's rule. A marked table mid-flow — under the outbound editor's
+   header panel with advisories after it, under the returns editors' field
+   cluster — keeps the 1rem gap on the side it shares with a neighbour. The
+   header, the footer banner and the actions keep their inset: a picker or a
+   button against the sheet edge gains nothing. A hidden title (.header
+   .srOnly, out of flow) leaves no rule to meet — unless the editor's own
+   header panel stands in for it (data-dialog-header, below).
+
+   THE CHAIN RULE. A bleed is a negative margin, and it only shows if every
+   box between the table and the sheet lets it through: the scroll region
+   does (margin out + padding back in, above), a plain wrapper does, but a
+   wrapper that SCROLLS or clips (overflow other than visible) cuts it off —
+   the first cut of this did exactly that to the outbound editor, whose grid
+   lives in its own scroll box: the table measured at the sheet edges, and
+   its first and last 24px (the row tick, the On-hold column) were simply
+   hidden. So a table is only bled through boxes that have widened their
+   padding box the same way, and an editor's own scroller between the body
+   and its table says so with data-dialog-scroll (spread DIALOG_SCROLL from
+   Dialog.tsx, where the three hooks are documented): the Dialog widens it to the
+   sheet edges inline, and block-wise to the rule it starts at (the heading
+   strip, when it follows one or is the region's first child) and to the
+   actions' rule (when it is the region's last child); the table's block
+   bleed is then handed down that chain and no other. The editor's
+   advisories inside the same scroller keep its inset. */
+.dialog[data-fullscreen][open] .scroll {
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  margin-block: calc(-1 * var(--dialog-gap));
+  padding-inline: var(--dialog-pad-inline);
+  padding-block: var(--dialog-gap);
+}
+
+.dialog[data-fullscreen][open] .scroll > :only-child,
+.dialog[data-fullscreen][open] .scroll [data-dialog-table] {
+  --table-bleed-inline: var(--dialog-pad-inline);
+  --table-frame-width: 0;
+  --table-frame-radius: 0;
+  --accordion-bleed-inline: var(--dialog-pad-inline);
+  --accordion-radius: 0;
+  --accordion-trigger-inset: var(--dialog-pad-inline);
+  --accordion-content-inset: 0px;
+  --accordion-content-pad-end: 0px;
+}
+
+/* The table inside a marked accordion: unframed, not bled. */
+.dialog[data-fullscreen][open] .scroll [data-dialog-table] [data-datatable] {
+  --table-bleed-inline: 0px;
+  --table-frame-width: 0;
+  --table-frame-radius: 0;
+}
+
+/* An editor's own scroll box between the body and its table (the chain
+   rule above): widened to the sheet edges the way .scroll is, so the table's
+   inline bleed shows instead of being clipped; its content — the editor's
+   advisories under the grid — keeps the inset. */
+.dialog[data-fullscreen][open] .scroll [data-dialog-scroll] {
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  padding-inline: var(--dialog-pad-inline);
+}
+
+/* An editor's header panel that stands in for the hidden title row (the
+   outbound editor's Item · Issue · Units · Available cluster, a grouping card
+   in the body on a desktop): in full screen it IS the heading strip — the
+   same place, inset and rule as .header, so the editor reads like one whose
+   picker sits in the title slot — and its card chrome goes. */
+.dialog[data-fullscreen][open] .scroll > [data-dialog-header] {
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  padding: 0 var(--dialog-pad-inline) var(--space-3);
+  border: 0;
+  border-block-end: 1px solid var(--color-divider);
+  border-radius: 0;
+  background: none;
+}
+
+/* …and the scroller's block edges: to the rule it starts at, to the actions'
+   rule it ends at. */
+.dialog[data-fullscreen][open] .scroll > [data-dialog-scroll]:first-child,
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-header]
+  + [data-dialog-scroll] {
+  margin-block-start: calc(-1 * var(--dialog-gap));
+  padding-block-start: var(--dialog-gap);
+}
+
+.dialog[data-fullscreen][open] .scroll > [data-dialog-scroll]:last-child {
+  margin-block-end: calc(-1 * var(--dialog-gap));
+  padding-block-end: var(--dialog-gap);
+}
+
+/* Block bleed of the table (one rule per position; specificity ascends for
+   stylelint). Each selector is a chain of boxes that have all widened the
+   same edge — never a shortcut through one that has not. */
+.dialog[data-fullscreen][open] .scroll > :only-child {
+  --table-bleed-block-start: var(--dialog-gap);
+  --table-bleed-block-end: var(--dialog-gap);
+}
+
+.dialog[data-fullscreen][open] .scroll > [data-dialog-table]:last-child {
+  --table-bleed-block-end: var(--dialog-gap);
+}
+
+.dialog[data-fullscreen][open]
+  .scroll
+  > :only-child
+  > [data-dialog-table]:only-child {
+  --table-bleed-block-start: var(--dialog-gap);
+  --table-bleed-block-end: var(--dialog-gap);
+}
+
+.dialog[data-fullscreen][open]
+  .scroll
+  > :last-child
+  > [data-dialog-table]:last-child {
+  --table-bleed-block-end: var(--dialog-gap);
+}
+
+/* Through a marked scroller: its first content starts at the rule it was
+   widened to… */
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-scroll]:first-child
+  > [data-dialog-table]:first-child,
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-header]
+  + [data-dialog-scroll]
+  > [data-dialog-table]:first-child,
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-scroll]:first-child
+  > :first-child
+  > [data-dialog-table]:first-child,
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-header]
+  + [data-dialog-scroll]
+  > :first-child
+  > [data-dialog-table]:first-child {
+  --table-bleed-block-start: var(--dialog-gap);
+}
+
+/* …and its last content ends at the actions' rule (the direct-child case is
+   the generic last-child chain above). */
+.dialog[data-fullscreen][open]
+  .scroll
+  > [data-dialog-scroll]:last-child
+  > :last-child
+  > [data-dialog-table]:last-child {
+  --table-bleed-block-end: var(--dialog-gap);
 }

@@ -9,7 +9,6 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
-import { formatNumber } from '@/intl/formatNumber';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -89,6 +88,7 @@ import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
 import { isUncounted, lineDifference } from './lines/stocktakeLine';
 import styles from './StocktakeDetailView.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
 // editable description + filters), the lines in a SERVER-paginated DataTable
@@ -463,10 +463,10 @@ const StocktakeDetailView: Component = () => {
 
   const current = () => info();
 
-  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
-  // declaration for the two controls that trigger it (the toolbar button and the
-  // ghost button in the table's empty slot); each carries `shortcut={ALT_N}` for
-  // its badge, neither owns the action.
+  // Alt+N — this screen's add action (spec/keyboard KB-R2,
+  // OMS-REG-KBD-01.14/.15). One declaration for the two controls that trigger
+  // it (the toolbar button and the ghost button in the table's empty slot);
+  // each carries `shortcut={ALT_N}` for its badge, neither owns the action.
   //
   // Reads `current()` rather than the `node` the JSX binds: that one is a <Show>
   // render-prop accessor scoped inside the tree, while the action is declared at
@@ -794,7 +794,7 @@ const StocktakeDetailView: Component = () => {
               const value = info.getValue<number | null | undefined>();
               return (
                 <>
-                  {formatNumber(value, { maximumFractionDigits: 2 })}
+                  {value == null ? '' : <Num value={value} />}
                   <Show
                     when={
                       lineErrors().get(info.row.original.id) ===
@@ -844,9 +844,7 @@ const StocktakeDetailView: Component = () => {
         isUncounted(info.row.original) ? (
           <AbsentValue label={t('label.not-counted')} />
         ) : (
-          formatNumber(info.getValue<number | null | undefined>(), {
-            maximumFractionDigits: 2,
-          })
+          <Num value={info.getValue<number | null | undefined>() ?? 0} />
         ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
@@ -1161,15 +1159,7 @@ const StocktakeDetailView: Component = () => {
                   // down one edge rather than reading every Counted cell. These
                   // are the lines trimmed on finalise. Flat table, so a
                   // leaf-row predicate is enough (no grouped parents to
-                  // propagate to).
-                  //
-                  // This replaces the earlier whole-row action-blue TEXT tone:
-                  // blue text is the colour row SELECTION already spends, it
-                  // recoloured every value in the row (so a counted-looking
-                  // number and a missing one differed only in hue), and it left
-                  // the at-a-glance channel — the row background — unused. The
-                  // shared marking is the outbound line table's, same tokens
-                  // and same CSS (kdd/ui-styling; --marking-unfinished).
+                  // propagate to). See CARD_TABLE_MODEL.md § rowAccent.
                   rowTint={line =>
                     isUncounted(line) ? 'unfinished' : undefined
                   }
@@ -1248,6 +1238,7 @@ const StocktakeDetailView: Component = () => {
                 onClose={() => setEditState(undefined)}
                 storeId={params.storeId}
                 stocktakeId={node().id}
+                isInitialStocktake={node().isInitialStocktake}
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 locations={locations()}

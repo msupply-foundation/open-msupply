@@ -968,6 +968,16 @@ type BatchStocktakeResponse {
 	deleteStocktakes: [DeleteStocktakeResponseWithId!]
 }
 
+"""
+One store's edit of a global preference it may override. A null `value`
+CLEARS the store's override, returning the store to the global value — the
+only way back once a store has pinned its own.
+"""
+input BoolStoreOverrideInput {
+	storeId: String!
+	value: Boolean
+}
+
 input BoolStorePrefInput {
 	storeId: String!
 	value: Boolean!
@@ -1120,6 +1130,22 @@ type CannotReverseInvoiceStatus implements UpdateErrorInterface & UpdateInboundS
 
 type CentralGeneralMutations {
 	configureNameProperties(input: [ConfigureNamePropertyInput!]!): ConfigureNamePropertiesResponse!
+	"""
+	Pause or resume the v6/v7 sync API remote sites sync through, e.g. during central maintenance.
+	Returns the new state.
+	"""
+	setSyncApiPaused(paused: Boolean!): SyncApiPausedNode!
+	"""
+	Pause or resume the transfer and general processors. Resuming triggers each one so the
+	backlog is picked up. Returns the new state.
+	"""
+	setProcessorsPaused(paused: Boolean!): ProcessorsPausedNode!
+	"""
+	Turn maintenance mode on or off. On pauses sync, the sync API and processors and signs out
+	every user who is not a server admin. Off is refused while OMS central's own sync buffer
+	has records left to integrate.
+	"""
+	setMaintenanceMode(on: Boolean!): SetMaintenanceModeResponse!
 }
 
 type CentralPatientNode {
@@ -4296,6 +4322,11 @@ input IntegerStorePrefInput {
 	value: Int!
 }
 
+type IntegrationIncomplete implements SetMaintenanceModeErrorInterface {
+	pendingIntegrationRecords: Int!
+	description: String!
+}
+
 type InternalError implements RefreshTokenErrorInterface & ScannedDataParseErrorInterface & InsertLocationErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpsertItemVariantErrorInterface & UpsertBundledItemErrorInterface & UpsertAncillaryItemErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpsertCampaignErrorInterface & InsertHelpDocumentErrorInterface & DeleteHelpDocumentErrorInterface & InsertAssetErrorInterface & UpdateAssetErrorInterface & InsertAssetLogErrorInterface {
 	description: String!
 	fullError: String!
@@ -5305,6 +5336,23 @@ enum LowStockStatus {
 	OK
 }
 
+type MaintenanceMode implements AuthTokenErrorInterface {
+	description: String!
+}
+
+"""
+State of central's maintenance mode.
+"""
+type MaintenanceModeNode {
+	isOn: Boolean!
+	"""
+	Rows in OMS central's own sync buffer (pulled from the legacy mSupply central server)
+	still waiting to be integrated. Maintenance mode cannot be turned off while this is above
+	zero.
+	"""
+	pendingIntegrationRecords: Int!
+}
+
 type MasterListConnector {
 	totalCount: Int!
 	nodes: [MasterListNode!]!
@@ -5550,6 +5598,10 @@ type Mutations {
 	initialiseSite(input: SyncSettingsInput!): InitialiseSiteResponse!
 	initialiseAsCentralServer(input: InitialiseAsCentralServerInputNode!): InitialiseAsCentralServerResponse!
 	manualSync(fetchPatientId: String): String!
+	"""
+	Pause or resume sync (server admin only). See `SyncPausedNode`.
+	"""
+	setSyncPaused(paused: Boolean!): SyncPausedNode!
 	updateDisplaySettings(input: DisplaySettingsInput!): UpdateDisplaySettingsResponse!
 	insertBarcode(storeId: String!, input: InsertBarcodeInput!): InsertBarcodeResponse!
 	updateLogLevel(storeId: String!, input: UpsertLogLevelInput!): UpsertLogLevelResponse!
@@ -5597,6 +5649,11 @@ type Mutations {
 	insertEncounter(storeId: String!, input: InsertEncounterInput!): InsertEncounterResponse!
 	updateEncounter(storeId: String!, input: UpdateEncounterInput!): UpdateEncounterResponse!
 	allocateProgramNumber(storeId: String!, input: AllocateProgramNumberInput!): AllocateProgramNumberResponse!
+	"""
+	Allocate the next patient code number for the store. Requires only the
+	patient-mutate permission — see allocate_patient_number (#268).
+	"""
+	allocatePatientNumber(storeId: String!): NumberNode!
 	insertContactTrace(storeId: String!, input: InsertContactTraceInput!): InsertContactTraceResponse!
 	updateContactTrace(storeId: String!, input: UpdateContactTraceInput!): UpdateContactTraceResponse!
 	insertRnrForm(storeId: String!, input: InsertRnRFormInput!): InsertRnRFormResponse!
@@ -5994,6 +6051,11 @@ input OutboundShipmentLineInput {
 	transferComment: String
 }
 
+type OverridingStoreNode {
+	storeId: String!
+	storeName: String!
+}
+
 type PackSizeCodeCombinationExists implements InsertPurchaseOrderLineErrorInterface {
 	description: String!
 	itemCode: String!
@@ -6292,6 +6354,17 @@ type PreferenceDescriptionNode {
 	Use the PreferencesNode to load the strictly typed value.
 	"""
 	value: JSON!
+	"""
+	How this store arrives at `value`, for a global preference a store may
+	override. Null for every other preference, and in the global listing.
+	"""
+	storeOverride: StoreOverrideNode
+	"""
+	The stores that pin their own value instead of following this global
+	one, by store name. Empty where none do; null unless this is the global
+	listing of an overridable preference.
+	"""
+	overridingStores: [OverridingStoreNode!]
 }
 
 enum PreferenceKey {
@@ -6315,6 +6388,7 @@ enum PreferenceKey {
 	backdating
 	receivePaymentsFromPrescriptions
 	globalLogo
+	decimalPlacesForNumbers
 	blindStocktake
 	manageVaccinesInDoses
 	manageVvmStatusForStock
@@ -6392,6 +6466,7 @@ type PreferencesNode {
 	Large - don't add to eagerly-fetched preference queries.
 	"""
 	globalLogo: String!
+	decimalPlacesForNumbers: Int!
 	blindStocktake: Boolean!
 	manageVaccinesInDoses: Boolean!
 	manageVvmStatusForStock: Boolean!
@@ -6615,6 +6690,13 @@ type PrinterNode {
 	port: Int!
 	labelWidth: Int!
 	labelHeight: Int!
+}
+
+"""
+State of central's processor pause.
+"""
+type ProcessorsPausedNode {
+	isPaused: Boolean!
 }
 
 type ProgramConnector {
@@ -6918,6 +7000,7 @@ type PurchaseOrderLineNode {
 	lineNumber: Int!
 	pricePerPackBeforeDiscount: Float!
 	pricePerPackAfterDiscount: Float!
+	lineTotal: Float!
 	comment: String
 	supplierItemCode: String
 	item: ItemNode!
@@ -7200,6 +7283,11 @@ type Queries {
 	refreshToken: RefreshTokenResponse!
 	me: UserResponse!
 	isCentralServer: Boolean!
+	"""
+	Whether central is in maintenance mode, when only server admins can log in. Available
+	without authentication so the login screen can say so before anyone tries.
+	"""
+	isMaintenanceMode: Boolean!
 	isCentralStandalone: Boolean!
 	featureFlags: JSONObject!
 	"""
@@ -7362,7 +7450,24 @@ type Queries {
 	migrationStatus: MigrationStatusNode!
 	latestSyncStatus: FullSyncStatusNode
 	numberOfRecordsInPushQueue: Int!
+	"""
+	Admin pause flag (Admin > Sync settings); any signed-in user may read it.
+	"""
+	isSyncPaused: Boolean!
 	syncSettings: SyncSettingsNode
+	"""
+	Central only: whether the sync API is paused, refusing sync from remote sites (always false on a remote)
+	"""
+	isSyncApiPaused: Boolean!
+	"""
+	Central only: whether the transfer and general processors are paused (always false on a remote)
+	"""
+	areProcessorsPaused: Boolean!
+	"""
+	Central only: maintenance mode, and how much of OMS central's own sync buffer is left to
+	integrate before it can be turned off (server admin only)
+	"""
+	maintenanceMode: MaintenanceModeNode!
 	displaySettings(input: DisplaySettingsHash!): DisplaySettingsNode!
 	responseRequisitionStats(storeId: String!, requisitionLineId: String!): RequisitionLineStatsResponse!
 	inventoryAdjustmentReasons(
@@ -8580,6 +8685,16 @@ input SensorSortInput {
 
 union SensorsResponse = SensorConnector
 
+type SetMaintenanceModeError {
+	error: SetMaintenanceModeErrorInterface!
+}
+
+interface SetMaintenanceModeErrorInterface {
+	description: String!
+}
+
+union SetMaintenanceModeResponse = MaintenanceModeNode | SetMaintenanceModeError
+
 type SetPrescribedQuantityError {
 	error: SetPrescribedQuantityErrorInterface!
 }
@@ -9112,6 +9227,19 @@ type StoreNode {
 	createdDate: NaiveDate
 }
 
+type StoreOverrideNode {
+	"""
+	Whether this store pins its own value rather than following the global
+	one.
+	"""
+	isOverridden: Boolean!
+	"""
+	The global value this store follows, or would return to by clearing the
+	override. Same type loss as `value`.
+	"""
+	globalValue: JSON!
+}
+
 type StorePreferenceNode {
 	id: String!
 	packToOne: Boolean!
@@ -9266,6 +9394,14 @@ input SupplyRequestedQuantityInput {
 
 union SupplyRequestedQuantityResponse = SupplyRequestedQuantityError | RequisitionLineConnector
 
+"""
+State of central's sync API pause. Separate from `SyncPausedNode` (this server's own sync
+client pause) so the two can grow their own fields.
+"""
+type SyncApiPausedNode {
+	isPaused: Boolean!
+}
+
 type SyncErrorNode {
 	variant: SyncErrorVariant!
 	fullError: String!
@@ -9292,6 +9428,7 @@ enum SyncErrorVariant {
 	V6_API_VERSION_INCOMPATIBLE
 	INTEGRATION_ERROR
 	V7_UPGRADE_FAILED
+	SYNC_API_PAUSED
 }
 
 enum SyncErrorVariantV7 {
@@ -9318,6 +9455,7 @@ enum SyncErrorVariantV7 {
 	SITE_IS_NOT_V7
 	WAITING_FOR_CENTRAL_V7_UPGRADE
 	REQUEST_SITE_AUTH_ERROR
+	SYNC_API_PAUSED
 	OTHER
 }
 
@@ -9365,6 +9503,20 @@ enum SyncFileReferenceNodeStatus {
 type SyncInfoUpdatedNode {
 	syncStatus: FullSyncStatusNode
 	numberOfRecordsInPushQueue: Int!
+	"""
+	Admin pause (Admin > Sync settings): while true no scheduled or manual sync runs.
+	"""
+	isSyncPaused: Boolean!
+	"""
+	Central maintenance mode (#840): only server admins are signed in, and a manual sync is
+	forced past the sync pause.
+	"""
+	isMaintenanceMode: Boolean!
+	"""
+	Central's sync API pause: while true central refuses remote sites' sync. Always false on
+	a remote.
+	"""
+	isSyncApiPaused: Boolean!
 }
 
 type SyncMessageConnector {
@@ -9429,6 +9581,10 @@ input SyncMessageSortInput {
 	desc: Boolean
 }
 
+type SyncPausedNode {
+	isPaused: Boolean!
+}
+
 union SyncRequestDescriptionNode = AllStoreDataDescription | TableNameDescription
 
 input SyncSettingsInput {
@@ -9464,6 +9620,11 @@ type SyncSettingsNode {
 	"""
 	intervalSeconds: Int!
 	centralServerSiteId: Int!
+	"""
+	Admin pause (Admin > Sync settings). While true no scheduled or manual sync runs on an
+	initialised site; set with `setSyncPaused`.
+	"""
+	isPaused: Boolean!
 	syncSiteId: Int
 	"""
 	Configured sync batch size. Returns Some only when all three underlying
@@ -10916,6 +11077,7 @@ union UpsertPackVariantResponse = UpsertItemVariantError | ItemVariantNode
 input UpsertPreferencesInput {
 	allowTrackingOfStockByDonor: Boolean
 	authorisePurchaseOrder: Boolean
+	authorisePurchaseOrderStoreOverride: [BoolStoreOverrideInput!]
 	customTranslations: JSONObject
 	"""
 	v2 custom translations, shape: `language -> namespace -> key -> value`.
@@ -10939,6 +11101,7 @@ input UpsertPreferencesInput {
 	backdating: BackdatingInput
 	receivePaymentsFromPrescriptions: Boolean
 	globalLogo: String
+	decimalPlacesForNumbers: Int
 	blindStocktake: [BoolStorePrefInput!]
 	manageVaccinesInDoses: [BoolStorePrefInput!]
 	manageVvmStatusForStock: [BoolStorePrefInput!]

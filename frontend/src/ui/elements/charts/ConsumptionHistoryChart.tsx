@@ -1,10 +1,10 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
+import { roundedText } from '../../../intl/numberDisplay';
 import { SvgPlot, linePath } from './svgPlot';
 
-const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
+const fmt = (n: number) => roundedText(n);
 import { ChartLegend } from './ChartLegend';
 import styles from './plotChart.module.css';
 
@@ -35,7 +35,11 @@ export const ConsumptionHistoryChart = (props: {
     )
   );
   const barClass = (d: ConsumptionHistoryPoint) =>
-    d.isHistoric ? styles.historic : d.isCurrent ? styles.current : styles.projected;
+    d.isHistoric
+      ? styles.historic
+      : d.isCurrent
+        ? styles.current
+        : styles.projected;
 
   return (
     <Show

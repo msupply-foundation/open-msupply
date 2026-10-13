@@ -6,9 +6,9 @@
 // an in-flight upload; resetting `status` would lose the synced Done/Error state).
 
 use repository::{
+    ChangeLogInsertRow, StorageConnection, Upsert,
     sync_file_reference_row::{SyncFileReferenceRowRepository, SyncFileReferenceWire},
     syncv7::SyncRecordSerializeError,
-    ChangeLogInsertRow, StorageConnection, Upsert,
 };
 
 use crate::sync_v7::serde::DeserializeResult;
@@ -34,10 +34,10 @@ pub fn translate_sync_file_reference(
 mod tests {
     use super::*;
     use repository::{
+        ChangelogSyncType, Row,
         mock::MockDataInserts,
         sync_file_reference_row::{SyncFileDirection, SyncFileReferenceRow, SyncFileStatus},
         test_db::setup_all,
-        ChangelogSyncType, Row,
     };
 
     use crate::sync_v7::serde::serialize;

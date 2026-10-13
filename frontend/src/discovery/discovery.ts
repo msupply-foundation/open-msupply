@@ -15,12 +15,12 @@ import type {
 
 // The current shell's cadence (open-msupply useNativeClient/types.ts): poll
 // found servers every 2 s; if nothing has landed after 7 s the bounded wait
-// elapses and the page states no server was found (AC-DT9).
+// elapses and the page states no server was found (OMS-REG-DESK-01.13).
 export const DISCOVERY_POLL_MS = 2000;
 export const DISCOVERY_TIMEOUT_MS = 7000;
 
-// The bounded answer check's budget (AC-DT12) — the page's constant, passed
-// to every host's probe(), so no host carries its own copy to drift.
+// The bounded answer check's budget (OMS-REG-DESK-01.16) — the page's constant,
+// passed to every host's probe(), so no host carries its own copy to drift.
 export const ANSWER_CHECK_TIMEOUT_MS = 5000;
 
 /** A listable server as the page computes it from a raw announcement plus
@@ -32,20 +32,21 @@ export type FrontEndHost = RawAnnouncement & {
   // whole difference between a fact a host stated and a server the page will
   // act on.
   protocol: 'http' | 'https';
-  // This server runs on this machine (AC-DT5) — a hardware-id match,
-  // § isLocalServer below. The one field the page adds.
+  // This server runs on this machine (OMS-REG-DESK-01.6/.7) — a hardware-id
+  // match, § isLocalServer below. The one field the page adds.
   isLocal: boolean;
 };
 
 // --- Announcement → listable server ----------------------------------------
 
-// ONE locality predicate (spec/android § server discovery, AC-DT5): a server
-// is this machine's own iff its announced hardware_id is this machine's —
-// never an address compare, which any multi-interface machine defeats (its
-// own announcement may resolve to any of its interfaces). Case-insensitive:
-// the server's machine_uid and a shell's own reading of the same OS id can
-// differ in casing. A host that cannot know its id ('' — the mark just never
-// shows) or an announcement without one never matches.
+// ONE locality predicate (spec/android § server discovery,
+// OMS-REG-DESK-01.6/.7): a server is this machine's own iff its announced
+// hardware_id is this machine's — never an address compare, which any
+// multi-interface machine defeats (its own announcement may resolve to any of
+// its interfaces). Case-insensitive: the server's machine_uid and a shell's own
+// reading of the same OS id can differ in casing. A host that cannot know its
+// id ('' — the mark just never shows) or an announcement without one never
+// matches.
 export const isLocalServer = (
   announcement: RawAnnouncement,
   info: HostInfo
@@ -55,14 +56,14 @@ export const isLocalServer = (
   announcement.hardwareId.toLowerCase() === info.hardwareId.toLowerCase();
 
 // ONE rewrite predicate (spec/desktop/behaviours.md § address rewriting,
-// AC-DT22): this machine's own server must be shown — and remembered, and
-// handed off — at an address OTHER machines can reach, so rewrite whenever
-// the resolved address isn't already one of them. That covers both hosts'
-// old special cases (a loopback resolution on desktop, an arbitrary-interface
-// NsdManager resolution on Android) with no per-host code. With no reachable
-// address to offer (offline), the resolved one is kept rather than nothing.
-// A standalone install never passes through here — it connects to
-// STANDALONE_LOCAL_SERVER at loopback deliberately (AC-DT21).
+// OMS-REG-DESK-01.34): this machine's own server must be shown — and
+// remembered, and handed off — at an address OTHER machines can reach, so
+// rewrite whenever the resolved address isn't already one of them. That covers
+// both hosts' old special cases (a loopback resolution on desktop, an
+// arbitrary-interface NsdManager resolution on Android) with no per-host code.
+// With no reachable address to offer (offline), the resolved one is kept rather
+// than nothing. A standalone install never passes through here — it connects to
+// STANDALONE_LOCAL_SERVER at loopback deliberately (OMS-REG-DESK-01.33).
 export const toFrontEndHost = (
   announcement: RawAnnouncement,
   info: HostInfo
@@ -90,8 +91,8 @@ export const toFrontEndHost = (
 export const serverUrl = ({ protocol, ip, port }: FrontEndHost): string =>
   `${protocol}://${ip}:${port}`;
 
-/** What the answer check asks: is the app served at this address (AC-DT12,
- * AC-DT25)?
+/** What the answer check asks: is the app served at this address (OMS-REG-DESK-01.16,
+ * OMS-REG-DESK-01.26–.28)?
  *
  * The server's ROOT, which is the same catch-all route the hand-off then
  * navigates to (server/server/src/serve_frontend.rs answers every
@@ -117,17 +118,18 @@ export const connectedServer = ({
   isLocal,
 }: FrontEndHost): ConnectedServer => ({ hardwareId, port, isLocal });
 
-/** Where a successful connection navigates: the server's UI (AC-DT19) at the
+/** Where a successful connection navigates: the server's UI (OMS-REG-DESK-01.31) at the
  * given path — the login hand-off (./discoveryReturn.ts § handoffPath), an
  * argument rather than a FrontEndHost field because it is per-ATTEMPT data
  * (it carries the return URL and the language active at click time,
- * AC-DT23/24), never part of a server's identity or its remembered record. */
+ * OMS-REG-DESK-01.22/.23/24), never part of a server's identity or its
+ * remembered record. */
 export const connectUrl = (server: FrontEndHost, path: string): string =>
   `${serverUrl(server)}/${path}`;
 
 // A standalone install's own server: always reached at loopback, which
 // survives the machine moving between networks (spec/desktop/behaviours.md §
-// address rewriting, AC-DT21). Port 8000 is the server's default.
+// address rewriting, OMS-REG-DESK-01.33). Port 8000 is the server's default.
 export const STANDALONE_LOCAL_SERVER: FrontEndHost = {
   protocol: 'https',
   port: 8000,
@@ -137,16 +139,16 @@ export const STANDALONE_LOCAL_SERVER: FrontEndHost = {
   isLocal: true,
 };
 
-// One entry per server (AC-DT8): the announcement's hardware id, plus port so
-// several instances on one machine stay distinguishable (matches the current
-// app's matchUniqueServer).
+// One entry per server (OMS-REG-DESK-01.12): the announcement's hardware id,
+// plus port so several instances on one machine stay distinguishable (matches
+// the current app's matchUniqueServer).
 export const serverKey = (server: FrontEndHost): string =>
   `${server.hardwareId}:${server.port}`;
 
-// AC-DT7: an announcement missing any identity attribute, or offering no
-// address, is ignored rather than listed as an unusable entry. Hosts hand
-// announcements over verbatim (hostContract.ts § RawAnnouncement), so this
-// is THE filter, not a defensive copy of a host's.
+// OMS-REG-DESK-01.10/.11: an announcement missing any identity attribute, or
+// offering no address, is ignored rather than listed as an unusable entry.
+// Hosts hand announcements over verbatim (hostContract.ts § RawAnnouncement),
+// so this is THE filter, not a defensive copy of a host's.
 export const isCompleteAnnouncement = (server: FrontEndHost): boolean =>
   (server.protocol === 'http' || server.protocol === 'https') &&
   server.ip !== '' &&
@@ -156,8 +158,8 @@ export const isCompleteAnnouncement = (server: FrontEndHost): boolean =>
   server.clientVersion !== '';
 
 // The list accumulates as announcements arrive and never shows the same
-// server twice (AC-DT8). Returns `current` ITSELF when nothing new arrived,
-// so a poll that found nothing fresh publishes no change (kdd/
+// server twice (OMS-REG-DESK-01.12). Returns `current` ITSELF when nothing new
+// arrived, so a poll that found nothing fresh publishes no change (kdd/
 // solid-reactivity-pitfalls §16 — identity churn re-runs every consumer).
 export const mergeServers = (
   current: FrontEndHost[],
@@ -221,18 +223,18 @@ export const parseManualServer = (
 // How the shell launched this page, carried as query parameters (the same
 // contract the current shell's discovery screen reads):
 // - autoconnect=false — the user chose to leave a server and return here
-//   (AC-DT16), or the shell already failed its own launch check; either way
-//   the page must not immediately reconnect.
+//   (OMS-REG-DESK-01.21), or the shell already failed its own launch check;
+// either way   the page must not immediately reconnect.
 // - timedout=true — the shell's bounded launch check on the remembered server
-//   elapsed (AC-DT2): tell the user, and do not reconnect to it.
-// - standalone=true — this install carries its own server (AC-DT20): connect
-//   to it without asking, and never offer a choice.
+//   elapsed (OMS-REG-DESK-01.2/.3): tell the user, and do not reconnect to it.
+// - standalone=true — this install carries its own server (OMS-REG-DESK-01.32):
+// connect   to it without asking, and never offer a choice.
 // - canhost=true — this machine COULD run the server everyone uses, but which
 //   role it plays has not been decided by the install (spec/android §
 //   deployment modes: "the role is a deployment fact, not a build"). Only
 //   then is the mode chooser offered, once, and the answer remembered
 //   (§ install mode below). A desktop client install never sets it, so it
-//   goes straight to the list as it always has (AC-DT3).
+//   goes straight to the list as it always has (OMS-REG-DESK-01.4).
 export type DiscoveryFlags = {
   autoconnect: boolean;
   timedout: boolean;
@@ -251,14 +253,15 @@ export const parseDiscoveryFlags = (search: string): DiscoveryFlags => {
 };
 
 // Which server (if any) this page-load connects to without being asked.
-// - A standalone install always uses its own server (AC-DT20) — a remembered
-//   record never redirects it elsewhere.
-// - Otherwise the remembered previous server (AC-DT1) — the LAST successful
-//   connection, chosen or manually entered alike (AC-DT13–15).
+// - A standalone install always uses its own server (OMS-REG-DESK-01.32) — a
+// remembered   record never redirects it elsewhere.
+// - Otherwise the remembered previous server (OMS-REG-DESK-01.1) — the LAST
+// successful   connection, chosen or manually entered alike
+// (OMS-REG-DESK-01.17–.20).
 // - Never after a failed launch check (timedout) or an explicit return to
 //   discovery (autoconnect=false): reconnecting immediately to the server the
-//   user just left, or that just failed, is exactly what AC-DT2/AC-DT16
-//   forbid.
+//   user just left, or that just failed, is exactly what
+// OMS-REG-DESK-01.2/.3/.21   forbid.
 export const autoconnectTarget = (
   flags: DiscoveryFlags,
   previous: FrontEndHost | undefined
@@ -269,12 +272,12 @@ export const autoconnectTarget = (
 };
 
 // Where a landing screen's "change server" link sends the user: back to THIS
-// page, told not to bounce straight back to the server just left (AC-DT16) —
-// and told the install's mode. standalone=true is a launch fact, not session
-// state: without it the way back would land a standalone install in client
-// mode and offer the chooser AC-DT20 forbids. timedout is deliberately NOT
-// carried — it described the launch that brought the user here, not the
-// return.
+// page, told not to bounce straight back to the server just left
+// (OMS-REG-DESK-01.21) — and told the install's mode. standalone=true is a
+// launch fact, not session state: without it the way back would land a
+// standalone install in client mode and offer the chooser OMS-REG-DESK-01.32
+// forbids. timedout is deliberately NOT carried — it described the launch that
+// brought the user here, not the return.
 export const discoveryReturnAddress = (
   { origin, pathname }: { origin: string; pathname: string },
   flags: DiscoveryFlags
@@ -288,8 +291,8 @@ export const discoveryReturnAddress = (
 // is seeded so the page states it with a retry, symmetric with client mode's
 // ?timedout seeding of the could-not-connect notice. Unseeded, the standalone
 // arm would sit on a "connecting" spinner nothing is driving (spec §
-// standalone auto-connection: say so, don't present a choice — and AC-DT9's
-// bounded-wait principle: never an unbounded spinner).
+// standalone auto-connection: say so, don't present a choice — and
+// OMS-REG-DESK-01.13's bounded-wait principle: never an unbounded spinner).
 export const standaloneSeededFailure = (flags: DiscoveryFlags): boolean =>
   flags.standalone && (!flags.autoconnect || flags.timedout);
 
@@ -357,7 +360,7 @@ export const recordPreviousServer = (
  * server outright and a stale `false` quietly downgrades this machine's own.
  *
  * Not for STANDALONE_LOCAL_SERVER, which is deliberately local with no
- * announced id to compare (AC-DT21) — this would unmark it. */
+ * announced id to compare (OMS-REG-DESK-01.33) — this would unmark it. */
 export const withLocality = (
   server: FrontEndHost,
   info: HostInfo
@@ -374,7 +377,7 @@ export const withLocality = (
 // boots this page and THIS decides what renders, so no host carries mode
 // logic that could drift from the other's. The desktop's `standalone=true` is
 // a different thing — a launch fact from an install built that way
-// (AC-DT20) — and it always wins over anything stored here.
+// (OMS-REG-DESK-01.32) — and it always wins over anything stored here.
 //
 // Key and encoding match the legacy screen's (`preference/mode`, a
 // JSON-encoded string), so an upgrade keeps its answer. The legacy 'none'
@@ -408,7 +411,7 @@ export const recordInstallMode = (
   }
 };
 
-/** Whether to put the role question on screen (AC-AN21).
+/** Whether to put the role question on screen (OMS-REG-INS-01.40–.45).
  *
  * Only where the machine could genuinely be either (`canHostServer`), and
  * then in two cases: nobody has answered yet, or the user answered "this
@@ -425,8 +428,8 @@ export const recordInstallMode = (
  * answer that can be given is the other one.
  *
  * A launch flag is a different thing: a standalone INSTALL decided for itself
- * and is never offered the question (AC-DT20). Client mode returns straight to
- * the list, as it always has. */
+ * and is never offered the question (OMS-REG-DESK-01.32). Client mode returns
+ * straight to the list, as it always has. */
 export const shouldAskInstallMode = (
   flags: DiscoveryFlags,
   mode: InstallMode | undefined,
@@ -446,9 +449,10 @@ export const shouldAskInstallMode = (
  * `autoconnect` is re-opened by an answer given on THIS page-load, and that
  * is not a detail: the launch flag says whether the user was sent back here
  * deliberately, which is a reason not to bounce them to the server they just
- * left (AC-DT16) — it is not a reason to refuse the role they have just this
- * moment chosen. Without it, answering "this device runs the server" on a
- * return lands on the seeded could-not-connect notice with no attempt made. */
+ * left (OMS-REG-DESK-01.21) — it is not a reason to refuse the role they have
+ * just this moment chosen. Without it, answering "this device runs the server"
+ * on a return lands on the seeded could-not-connect notice with no attempt
+ * made. */
 export const effectiveFlags = (
   flags: DiscoveryFlags,
   mode: InstallMode | undefined,
@@ -502,16 +506,16 @@ export const adoptLegacyPreferences = (
 
 /** One connection attempt, its ordering owned here so it is testable and no
  * host can get it wrong: probe first — a failed check resolves false and the
- * window stays on the page, list intact (AC-DT12); then record the choice —
- * only a server that ANSWERED is ever remembered (AC-DT13/14, and
- * spec/desktop/README.md § Status: the legacy shell's remember-at-choice gap,
- * deliberately not reproduced); then navigate. Recording BEFORE navigation is
- * the point: the old bridge resolved a fused check-and-navigate and every
- * host invented its own grace delay (50/0/400 ms) for the page to persist
- * under teardown — here there is nothing to race.
+ * window stays on the page, list intact (OMS-REG-DESK-01.16); then record the
+ * choice — only a server that ANSWERED is ever remembered
+ * (OMS-REG-DESK-01.17/14, and spec/desktop/README.md § Status: the legacy
+ * shell's remember-at-choice gap, deliberately not reproduced); then navigate.
+ * Recording BEFORE navigation is the point: the old bridge resolved a fused
+ * check-and-navigate and every host invented its own grace delay (50/0/400 ms)
+ * for the page to persist under teardown — here there is nothing to race.
  *
  * `remember: false` is the standalone install's arm: it always reconnects to
- * its own server, so there is nothing to record (AC-DT20/21). */
+ * its own server, so there is nothing to record (OMS-REG-DESK-01.32/21). */
 export const connectToServer = async (
   host: Pick<DiscoveryHostApi, 'probe' | 'navigate'>,
   server: FrontEndHost,
