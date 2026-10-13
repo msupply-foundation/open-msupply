@@ -555,12 +555,14 @@ const LineEditContent = (
     value: string;
     caption?: string;
     highlight?: boolean;
+    /** `data-testid` on the VALUE, for a figure a test has to read. */
+    testId?: string;
   }): JSX.Element => (
     <FieldRow
       label={rowProps.label}
       class={rowProps.highlight ? styles.highlight : undefined}
     >
-      <span class={styles.statValue}>
+      <span class={styles.statValue} data-testid={rowProps.testId}>
         {rowProps.value}
         <Show when={rowProps.caption}>
           {caption => <span class={styles.statCaption}>{caption()}</span>}
@@ -699,6 +701,9 @@ const LineEditContent = (
                   />
                 </Show>
                 <StatRow
+                  // Read by the activity-scoping test: this is the figure the
+                  // draft preview narrows (issue 595).
+                  testId="line-soh-value"
                   label={t('label.our-soh')}
                   value={stat(editorLine().availableStockOnHand)}
                   caption={statCaption(editorLine().availableStockOnHand)}
