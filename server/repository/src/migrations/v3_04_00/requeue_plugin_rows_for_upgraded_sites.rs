@@ -32,7 +32,10 @@ impl MigrationFragment for Migrate {
     /// touches those rows and they are still pending when the site reaches 3.4. That
     /// holds while the site syncs over v5/v6: one that moved to v7 on an earlier 3.x
     /// never runs the v5/v6 integration again, so remotes are upgraded together with
-    /// OMS central.
+    /// OMS central. It also covers only entries OMS central sent once `DocumentRegistry`
+    /// had the V6 sync style. An entry installed on a central that had plugin install but
+    /// not that style is behind every v6 site's pull cursor by the time the style
+    /// changes, so it is never sent, and nothing here reaches it.
     ///
     /// Skipped on a site already on v7, which no longer runs the v5/v6 integration, so
     /// the rows would stay pending for good. On central nothing matches, since central
