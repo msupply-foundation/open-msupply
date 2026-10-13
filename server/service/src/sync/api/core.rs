@@ -317,8 +317,8 @@ impl DroppedBodyRetries {
 
 #[derive(Error, Debug)]
 pub enum ParsingResponseError {
-    /// The connection dropped part-way through the response body (reset, incomplete
-    /// message). Nothing was parsed - the body never arrived in full - so this is a
+    /// The connection dropped part-way through the response body (incomplete message, reset,
+    /// abort, broken pipe, early EOF). Nothing was parsed - the body never arrived in full - so this is a
     /// transport failure and the request can be retried.
     #[error("Connection dropped while reading response body")]
     ConnectionDropped(#[source] reqwest::Error),
