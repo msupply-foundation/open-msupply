@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod add_code_to_location_type;
 mod add_line_total_to_purchase_order_line;
 mod prescription_request_occupation_prominent;
+mod update_default_asset_log_reasons;
 
 pub(crate) struct V3_04_00;
 
@@ -21,6 +22,7 @@ impl Migration for V3_04_00 {
             Box::new(add_code_to_location_type::Migrate),
             Box::new(add_line_total_to_purchase_order_line::Migrate),
             Box::new(prescription_request_occupation_prominent::Migrate),
+            Box::new(update_default_asset_log_reasons::Migrate),
         ]
     }
 }
@@ -139,6 +141,64 @@ mod test {
                 ("pol_adjusted".to_string(), 30.0),
                 ("pol_requested".to_string(), 60.0),
                 ("pol_zero_pack".to_string(), 0.0),
+            ]
+        );
+    }
+
+    /// The Not functioning reasons match UNICEF's list: the temperature
+    /// reason moves over from Not in use under its new name, and the two
+    /// missing reasons are added alongside the existing ones.
+    #[actix_rt::test]
+    async fn migration_3_04_00_asset_log_reasons() {
+        use crate::{AssetLogReasonRowRepository, asset_log_row::AssetLogStatus};
+
+        let previous_version = V3_02_00.version();
+        let version = V3_04_00.version();
+
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: &format!("migration_{version}_asset_log_reasons"),
+            version: Some(previous_version.clone()),
+            ..Default::default()
+        })
+        .await;
+
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
+
+        let reasons = |status: AssetLogStatus| {
+            let mut reasons: Vec<String> = AssetLogReasonRowRepository::new(&connection)
+                .find_all()
+                .unwrap()
+                .into_iter()
+                .filter(|row| row.asset_log_status == status)
+                .map(|row| row.reason)
+                .collect();
+            reasons.sort();
+            reasons
+        };
+
+        assert_eq!(
+            reasons(AssetLogStatus::NotFunctioning),
+            vec![
+                "Lack of power",
+                "Multiple temperature excursions",
+                "Needs spare parts",
+                "Other",
+                "Solar panel failure",
+            ]
+        );
+        assert_eq!(
+            reasons(AssetLogStatus::NotInUse),
+            vec![
+                "Awaiting decommissioning",
+                "Awaiting installation",
+                "Offsite for repairs",
+                "Stored",
+                "Unknown",
             ]
         );
     }
