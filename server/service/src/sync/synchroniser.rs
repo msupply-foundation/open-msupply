@@ -350,9 +350,16 @@ impl SynchroniserV5V6 {
             // the move to v7 was refused. Legacy central refuses it until every store on
             // the site has moved to open mSupply central, and the site keeps syncing over
             // v5/v6 until then, so the processors those records need still run:
-            // transfers, reloading plugins, numbering. The one-off initialisation
-            // triggers below wait for a cycle that completes.
-            trigger_post_sync_processors(ctx);
+            // transfers, reloading plugins, numbering, support uploads. Not on a site
+            // that hasn't finished initialising, though: its next cycle moves the push
+            // cursors past anything they write (`advance_push_cursor` above), so those
+            // rows would never be pushed. There they wait, with the one-off
+            // initialisation triggers below, for a cycle that completes.
+            if is_initialised {
+                trigger_post_sync_processors(ctx);
+                ctx.processors_trigger
+                    .trigger_processor(ProcessorType::SupportUploadFiles);
+            }
             return Err(error);
         }
 
@@ -423,8 +430,8 @@ pub(crate) fn run_post_sync_triggers(
     trigger_post_sync_processors(ctx);
 }
 
-/// The processors that run on what a sync brought in. Also run on a v5/v6 site
-/// whose request to move to v7 was refused, see `SynchroniserV5V6::sync_inner`.
+/// The processors that run on what a sync brought in. Also run on an initialised
+/// v5/v6 site whose request to move to v7 was refused, see `SynchroniserV5V6::sync_inner`.
 fn trigger_post_sync_processors(ctx: &ServiceContext) {
     ctx.processors_trigger
         .trigger_requisition_transfer_processors();
