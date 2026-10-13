@@ -112,6 +112,31 @@ export type OutboundLineFragment = {
   volumePerPack: number;
 };
 
+export type OutboundRequestedActivitiesVariables = {
+  storeId: string;
+  requisitionId: string;
+};
+
+export type OutboundRequestedActivitiesResult = {
+  requisition: ({
+  __typename: "RequisitionNode";
+} & {
+  lines: {
+  nodes: Array<{
+  itemId: string;
+  campaign: {
+  id: string;
+  name: string;
+} | null;
+}>;
+};
+});
+};
+
+export const OutboundRequestedActivities = {
+  query: "query outboundRequestedActivities($storeId: String!, $requisitionId: String!) {\n  requisition(storeId: $storeId, id: $requisitionId) {\n    __typename\n    ... on RequisitionNode {\n      lines {\n        nodes {\n          itemId\n          campaign {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<OutboundRequestedActivitiesResult, OutboundRequestedActivitiesVariables>;
+
 export type OutboundDetailVariables = {
   storeId: string;
   id: string;

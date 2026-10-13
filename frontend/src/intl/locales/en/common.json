@@ -2759,6 +2759,8 @@
   "messages.internal-order-created-on": "Internal order created on {{date}}",
   "messages.invalid-file": "Invalid file",
   "messages.inventory-adjustment-saved": "Inventory adjustment saved 🥳",
+  "messages.issued-stock-not-for-activity_one": "1 batch issued is not held for {{activity}}. This is allowed, but check it is intended.",
+  "messages.issued-stock-not-for-activity_other": "{{count}} batches issued are not held for {{activity}}. This is allowed, but check it is intended.",
   "messages.item-not-on-internal-order": "This item is not on the linked internal order",
   "messages.item-variant-saved": "Item variant saved successfully",
   "messages.last-successful-sync-time-and-duration": "Last successful sync {{time}} (completed in {{duration}})",

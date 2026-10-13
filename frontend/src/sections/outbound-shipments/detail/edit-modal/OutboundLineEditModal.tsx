@@ -12,7 +12,7 @@ import {
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -90,7 +90,7 @@ import {
   type IssueWarning,
 } from '../../../../domain/allocation';
 import { outboundShipmentPreferences } from '@/store/storeContext';
-import { issueWarningMessages } from './allocationWarnings';
+import { activityMismatch, issueWarningMessages } from './allocationWarnings';
 import {
   learnIssueScan,
   scannedBatchExclusions,
@@ -241,6 +241,16 @@ interface OutboundLineEditModalProps {
    * current item as the user advances with "OK & next".
    */
   initialItem?: LineEditItem;
+  /**
+   * The Activity the originating requisition asked this item be supplied FOR
+   * (issue 595), or undefined when the shipment has no requisition, the item
+   * is not on it, or the customer asked for nothing in particular. Resolved by
+   * the detail view, which already holds the requisition's lines — the editor
+   * only compares against it.
+   */
+  requestedActivity?: (
+    itemId: string
+  ) => { id: string; name: string } | undefined;
   /**
    * The clicked LINE id for a row-click open — the editor scrolls its batch
    * into view and focuses its packs input (OMS-REG-DIST-03.31; draft rows
@@ -781,6 +791,21 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // (no remount / focus loss — kdd/solid-reactivity-pitfalls).
   const draftRows = createMemo(() => [...draft]);
   const issuedUnits = createMemo(() => sumIssuedUnits(draft));
+
+  // The requisition asked for this item to be supplied for a particular
+  // Activity (issue 595). Issuing stock held for anything else — another
+  // campaign, or nothing at all — is ALLOWED: the warning informs, it never
+  // gates the save, which is why it sits with the advisory banners and not in
+  // the footer's message slot. Derived rather than pushed into `warnings`,
+  // since it must answer to every allocation — a typed pack count as much as
+  // an auto-distribution.
+  const activityMismatchBanner = createMemo(() => {
+    const currentItem = item();
+    return activityMismatch(
+      draft,
+      currentItem && props.requestedActivity?.(currentItem.id)
+    );
+  });
   const distinctPackSizes = createMemo(() => packSizesIn(draft));
 
   const unitName = () => item()?.unitName ?? t('label.unit');
@@ -1267,18 +1292,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         accessor: line => line.program?.name ?? '',
         id: 'program',
       },
-      size: remToPx(12.5),
       header: () => t('label.program'),
       cardGroup: 'pricing',
+      ...getCellDefinition('program'),
     },
     {
       c: {
         accessor: line => line.campaign?.name ?? '',
         id: 'activity',
       },
-      size: remToPx(12.5),
       header: () => t('label.activity'),
       cardGroup: 'pricing',
+      ...getCellDefinition('activity'),
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
@@ -1958,6 +1983,26 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                   placeholderQuantity: formatNumber(placeholderUnits()),
                 })}
               </Alert>
+            </Show>
+
+            {/* Issuing stock that is not held for the Activity the customer
+                asked for — advisory only (issue 595). */}
+            <Show when={activityMismatchBanner()}>
+              {mismatch => (
+                <Alert
+                  severity="warning"
+                  testId="outbound-activity-mismatch-warning"
+                >
+                  {tPlural(
+                    'messages.issued-stock-not-for-activity',
+                    mismatch().batches,
+                    {
+                      count: mismatch().batches,
+                      activity: mismatch().activity,
+                    }
+                  )}
+                </Alert>
+              )}
             </Show>
 
             {/* Stacked warning banners (spec S4 § warnings). */}
