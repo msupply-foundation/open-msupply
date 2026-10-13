@@ -9,6 +9,7 @@ import {
   compileGlob,
   diffSnapshots,
   effectiveConfig,
+  isGitPush,
   nextGreen,
   planRun,
   profileSuites,
@@ -638,5 +639,35 @@ describe('serversFor', () => {
   it('never overrides an E2E_SERVERS the user set', () => {
     expect(serversFor(1, config, { E2E_SERVERS: 'auto' })).toBeNull();
     expect(serversFor(20, config, { E2E_SERVERS: '1' })).toBeNull();
+  });
+});
+
+describe('isGitPush', () => {
+  it('spots a push however the command is wrapped', () => {
+    for (const c of [
+      'git push',
+      'git push -u origin HEAD',
+      'cd frontend && git push',
+      'git -C ../other push --force-with-lease',
+      'GIT_TRACE=1 git push',
+      'env FOO=bar git push origin x',
+      'pnpm check; git push',
+      '/usr/bin/git push',
+    ])
+      expect(isGitPush(c), c).toBe(true);
+  });
+
+  it('ignores every other command', () => {
+    for (const c of [
+      'git status',
+      'git commit -m "push the fix"',
+      'git log --grep push',
+      'echo git push',
+      'git stash push -u -m tag',
+      'ls $(git rev-parse --show-toplevel)',
+      'gh pr view',
+      'pnpm e2e:affected --run',
+    ])
+      expect(isGitPush(c), c).toBe(false);
   });
 });

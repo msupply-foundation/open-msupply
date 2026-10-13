@@ -25,6 +25,7 @@ mod update {
         purchase_order_line::{
             insert::InsertPurchaseOrderLineInput, update::UpdatePurchaseOrderLineInput,
         },
+        sync::test_util_set_is_central_server,
     };
 
     #[actix_rt::test]
@@ -514,6 +515,75 @@ mod update {
 
         assert_eq!(lines[0].status, PurchaseOrderLineStatus::Closed);
         assert_eq!(lines[1].status, PurchaseOrderLineStatus::Sent);
+    }
+
+    #[actix_rt::test]
+    async fn update_purchase_order_authorisation_store_override() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_purchase_order_authorisation_store_override",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.purchase_order_service;
+        let store_id = &mock_store_a().id;
+        // Written through the preference itself, as the real editor does; the
+        // write path only opens on a central server.
+        test_util_set_is_central_server(true);
+        let set_pref = |value: bool, store_id: Option<&String>| {
+            AuthorisePurchaseOrder
+                .upsert(&context.connection, value, store_id.cloned())
+                .unwrap();
+        };
+        let request_approval = |purchase_order_id: &str| {
+            service
+                .insert_purchase_order(
+                    &context,
+                    store_id,
+                    InsertPurchaseOrderInput {
+                        id: purchase_order_id.to_string(),
+                        supplier_id: mock_name_a().id,
+                    },
+                )
+                .unwrap();
+            service
+                .update_purchase_order(
+                    &context,
+                    store_id,
+                    UpdatePurchaseOrderInput {
+                        id: purchase_order_id.to_string(),
+                        status: Some(PurchaseOrderStatus::RequestApproval),
+                        ..Default::default()
+                    },
+                )
+                .unwrap();
+            PurchaseOrderRowRepository::new(&context.connection)
+                .find_one_by_id(purchase_order_id)
+                .unwrap()
+                .unwrap()
+                .status
+        };
+
+        // Authorisation required globally, but this store opts out: asking for
+        // approval lands the order straight at Confirmed.
+        set_pref(true, None);
+        set_pref(false, Some(store_id));
+        assert_eq!(
+            request_approval("purchase_order_override_off"),
+            PurchaseOrderStatus::Confirmed
+        );
+
+        // The reverse: not required globally, but this store opts in.
+        set_pref(false, None);
+        set_pref(true, Some(store_id));
+        assert_eq!(
+            request_approval("purchase_order_override_on"),
+            PurchaseOrderStatus::RequestApproval
+        );
     }
 
     #[actix_rt::test]
