@@ -6,6 +6,7 @@ import {
   fetchSharedItemPrograms,
   type ItemProgram,
 } from './itemProgramsResource';
+import { NONE_OPTION } from './noneOption';
 
 export interface ProgramSelectProps {
   /** The store, for the per-item program fetch. */
@@ -17,13 +18,24 @@ export interface ProgramSelectProps {
    * item) count once.
    */
   itemIds: readonly string[];
-  /** The currently-selected program id (undefined = none). */
+  /**
+   * The currently-selected program id (undefined = none, or — under
+   * `noneOption` — not being changed). {@link NONE_OPTION} shows the explicit
+   * None row as the pick.
+   */
   programId?: string;
   /**
    * Fires with the chosen program (the full node, so callers can store id+name
-   * for display), or null when the field is cleared.
+   * for display), or null for no program — the `×` under the ordinary
+   * contract, the explicit None row under `noneOption`.
    */
   onChange: (program: ItemProgram | null) => void;
+  /**
+   * Offer an explicit **None** row in place of the `×` — see
+   * {@link NONE_OPTION}. For a BULK edit, where an empty field means the field
+   * is not being changed and so cannot double as "no program".
+   */
+  noneOption?: boolean;
   /**
    * Field label (required for a11y). Defaults to the field's own name —
    * every caller wants `label.program`; pass one only to rename it.
@@ -31,6 +43,12 @@ export interface ProgramSelectProps {
   label?: string;
   hideLabel?: boolean;
   disabled?: boolean;
+  /**
+   * Placeholder for the EMPTY field. Defaults to _None_, which is what empty
+   * means on a record's own field. A BULK edit overrides it, because there
+   * empty means the field is not being changed at all.
+   */
+  placeholder?: string;
   /**
    * `data-testid` for the field (locale-stable test hook, e2e/TESTIDS.md).
    * Named as {@link ActivitySelect}'s and every other domain lookup's, so the
@@ -83,9 +101,14 @@ export const ProgramSelect = (props: ProgramSelectProps): JSX.Element => {
   // the field disabled rather than opening on an empty list. Gated on the fetch
   // having settled, so the control doesn't flicker disabled→enabled while the
   // first per-item read is in flight — and on the field being EMPTY, since a
-  // line that carries a program must keep its clear affordance.
+  // line that carries a program must keep its clear affordance. Under
+  // `noneOption` the list is never empty and never pointless: None is itself
+  // the instruction to take the program OFF the selected records.
   const noPrograms = (): boolean =>
-    !programs.loading && programList().length === 0 && !props.programId;
+    !props.noneOption &&
+    !programs.loading &&
+    programList().length === 0 &&
+    !props.programId;
 
   // Why a SELECTION's list is shorter than the user expected. Only a selection
   // can be narrowed — asked of one item the list is simply that item's, and a
@@ -109,14 +132,25 @@ export const ProgramSelect = (props: ProgramSelectProps): JSX.Element => {
       // An OPTIONAL pick clears through the ✕, as every other optional lookup
       // does (ui-standards › controls: clearability follows optionality) —
       // never through a None row in the list. Empty reads as "None" in the
-      // placeholder's grey.
-      clearable
+      // placeholder's grey. A BULK edit inverts that: there empty already
+      // means "not being changed", so None has to be a row and the ✕ would
+      // only say the same thing twice.
+      clearable={!props.noneOption}
       onClear={() => props.onChange(null)}
-      placeholder={t('label.none')}
+      placeholder={props.placeholder ?? t('label.none')}
       value={props.programId}
-      options={programList().map(p => ({ value: p.id, label: p.name }))}
+      options={[
+        ...(props.noneOption
+          ? [{ value: NONE_OPTION, label: t('label.none') }]
+          : []),
+        ...programList().map(p => ({ value: p.id, label: p.name })),
+      ]}
       onValueChange={v =>
-        props.onChange(programList().find(p => p.id === v) ?? null)
+        props.onChange(
+          v === NONE_OPTION
+            ? null
+            : (programList().find(p => p.id === v) ?? null)
+        )
       }
     />
   );

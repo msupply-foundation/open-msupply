@@ -105,7 +105,8 @@ export interface ComboboxProps<T> {
    * above the groups. Passing it turns one flat list into two tiers — the
    * pinned items, a divider, then each group behind its own small-caps
    * heading — so a set with a few standing choices and a long tail stays ONE
-   * control and one click (the Activity field's None / Routine / campaigns).
+   * control and one click (the bulk Activity field's None above its Routine and
+   * Campaign tiers).
    *
    * Pinned items are never filtered: they are the choices that must always be
    * reachable, whatever is typed. Typing narrows the GROUPED items only, and a

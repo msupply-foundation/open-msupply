@@ -6,6 +6,7 @@
 // (spec/ui-standards › activity / item-program selectors; spec/stocktakes S4).
 export { campaignsResource, type Campaign } from './campaignsResource';
 export { campaignKindLabel, type CampaignKind } from './campaignKind';
+export { NONE_OPTION } from './noneOption';
 export {
   fetchItemPrograms,
   fetchSharedItemPrograms,
