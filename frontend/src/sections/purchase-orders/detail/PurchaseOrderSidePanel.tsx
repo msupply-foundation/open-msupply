@@ -22,7 +22,7 @@ import {
   type SaveFieldResult,
 } from './purchaseOrderEdit';
 import { formatCurrency } from '@/intl/currency';
-import { chargesTotal, finalCost } from './purchaseOrderPricing';
+import { orderTotals } from './purchaseOrderPricing';
 import {
   canDelete,
   canEnterSentDate,
@@ -102,7 +102,10 @@ export const PurchaseOrderSidePanel: Component<
   // order's own screen, confirmed live). So the amount input closes at a zero
   // subtotal rather than taking an edit the server will silently drop; the
   // percentage input stays open, since it is the figure actually stored.
-  const subtotal = () => props.node.orderTotalBeforeDiscount;
+  // One source with the totals band below the lines, so the two surfaces
+  // cannot drift (rules § pricing and totals).
+  const totals = () => orderTotals(props.node);
+  const subtotal = () => totals().subtotal;
   // An order with no lines has NO totals — the server fabricates 0.0 for both
   // (contract ⚠️), so the line count decides whether a figure exists at all
   // (rules § pricing and totals). The charges are real whatever the lines.
@@ -134,7 +137,7 @@ export const PurchaseOrderSidePanel: Component<
           readOnly
           valueTestId="cost-additional-fees-value"
         >
-          {money(chargesTotal(props.node))}
+          {money(totals().charges)}
         </FieldRow>
 
         {/* The two discount inputs are two views of ONE stored figure: only
@@ -174,16 +177,15 @@ export const PurchaseOrderSidePanel: Component<
           />
         </FieldRow>
 
-        {/* The discounted total PLUS the charges — the only place the figure a
-            user reads as the order's final cost appears anywhere. No field
-            carries it (contract ⚠️ the five charges reach no total on the
-            server). */}
+        {/* The discounted total PLUS the charges — the same figure the totals
+            band reads as Order total. No field carries it (contract ⚠️ the
+            five charges reach no total on the server). */}
         <FieldRow
           label={t('label.cost-final')}
           readOnly
           valueTestId="cost-final-value"
         >
-          <strong>{total(finalCost(props.node))}</strong>
+          <strong>{total(totals().total)}</strong>
         </FieldRow>
       </SidePanelSection>
 
