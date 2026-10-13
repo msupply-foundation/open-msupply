@@ -44,7 +44,7 @@ describe('OMS-REG-MNG-06.3 — the row set does not vary by store', () => {
   });
 });
 
-describe('OMS-REG-MNG-06.4 — version ordering is the server’s', () => {
+describe('sort — one entry, passed through to the server (contract § the register)', () => {
   it('defaults to a single code-ascending sort entry', () => {
     expect(state.sort).toEqual([{ key: 'code', desc: false }]);
   });
