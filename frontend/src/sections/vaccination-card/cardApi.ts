@@ -1,4 +1,9 @@
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  type GraphqlResult,
+} from '@/api/graphql';
 import { generateUUID } from '@/uuid';
 import {
   VaccinationCard,
@@ -116,13 +121,27 @@ export type SaveOutcome =
   | { kind: 'saved' }
   | { kind: 'notMostRecentGivenDose' }
   | { kind: 'refused' }
+  | { kind: 'forbidden'; permissions: string[] }
   | { kind: 'failed' };
+
+/**
+ * A save the server refused. The save takes its GraphQL errors itself, and so
+ * receives a missing permission among them: that one is the permission-denied
+ * notice's (contract § access), not a refusal shown in the editor.
+ */
+const refusal = (
+  result: Extract<GraphqlResult<unknown>, { kind: 'graphqlError' }>
+): SaveOutcome =>
+  isForbidden(result.errors)
+    ? { kind: 'forbidden', permissions: missingPermissions(result.errors) }
+    : { kind: 'refused' };
 
 /**
  * Saves the draft: an insert for a new dose (every refusal is a top-level
  * error — contract § recording a dose), an update for a recorded one (whose
  * only typed refusal is NotMostRecentGivenDose). Refusals come back to the
- * editor to show in place, never the global error modal.
+ * editor to show in place, never the global error modal; a missing permission
+ * comes back as `forbidden`, for the permission-denied notice.
  */
 export const saveDose = async (args: {
   draft: DoseDraft;
@@ -139,7 +158,7 @@ export const saveDose = async (args: {
       },
       { returnGraphqlErrors: true }
     );
-    if (result.kind === 'graphqlError') return { kind: 'refused' };
+    if (result.kind === 'graphqlError') return refusal(result);
     if (result.kind !== 'success') return { kind: 'failed' };
     return result.data.updateVaccination.__typename === 'VaccinationNode'
       ? { kind: 'saved' }
@@ -157,7 +176,7 @@ export const saveDose = async (args: {
     },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError') return { kind: 'refused' };
+  if (result.kind === 'graphqlError') return refusal(result);
   if (result.kind !== 'success') return { kind: 'failed' };
   return { kind: 'saved' };
 };

@@ -10,7 +10,9 @@ const state: { next: GraphqlResult<unknown> } = {
 };
 const calls: { variables: unknown; options: unknown }[] = [];
 
-vi.mock('@/api/graphql', () => ({
+vi.mock('@/api/graphql', async () => ({
+  // The real error readers: the save classifies what the server sent.
+  ...(await vi.importActual<typeof import('@/api/graphql')>('@/api/graphql')),
   graphqlFetch: (_doc: unknown, variables: unknown, options: unknown) => {
     calls.push({ variables, options });
     return Promise.resolve(state.next);
@@ -111,8 +113,26 @@ describe('OMS-REG-DIS-06.48 — un-giving a dose while the next is given', () =>
 });
 
 describe('OMS-REG-DIS-06.64 — without the document-write permission', () => {
-  it('leaves the refusal to the permission-denied path and saves nothing', async () => {
-    state.next = { kind: 'forbidden' };
-    expect(await save(ctx())).toEqual({ kind: 'failed' });
+  // The save takes its GraphQL errors itself, so a missing permission arrives
+  // as one — not as graphqlFetch's `forbidden`, which only the default path
+  // returns (VC-20261013-F6).
+  it('reads a Forbidden among the errors as the permission-denied outcome, naming the permission', async () => {
+    state.next = {
+      kind: 'graphqlError',
+      message: 'Forbidden',
+      errors: [
+        {
+          message: 'Forbidden',
+          extensions: {
+            details:
+              'Missing access to store: X, Required permissions: And([HasStoreAccess, HasPermission(DocumentMutate)])',
+          },
+        },
+      ],
+    };
+    expect(await save(ctx())).toEqual({
+      kind: 'forbidden',
+      permissions: ['DocumentMutate'],
+    });
   });
 });

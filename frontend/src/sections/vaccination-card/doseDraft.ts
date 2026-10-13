@@ -103,6 +103,25 @@ const FIELDS: (keyof DoseDraft)[] = [
 export const draftDiffers = (draft: DoseDraft, initial: DoseDraft): boolean =>
   FIELDS.some(f => draft[f] !== initial[f]);
 
+/**
+ * The draft's change when given or not given is chosen. The facility goes back
+ * to this store unless another facility is named in free text. Choosing given
+ * with no item yet takes the course's only item, as a new dose starts with it
+ * (OMS-REG-DIS-06.3) — a recorded not-given dose carries none.
+ */
+export const chooseGiven = (
+  draft: DoseDraft,
+  ctx: DraftContext,
+  given: boolean
+): Partial<DoseDraft> => ({
+  given,
+  facility:
+    draft.facility === OTHER_FACILITY ? OTHER_FACILITY : ctx.storeNameId,
+  ...(given && draft.itemId === null && ctx.courseItemIds.length === 1
+    ? { itemId: ctx.courseItemIds[0] }
+    : {}),
+});
+
 /** Another facility — free text, or a facility a record was entered at. */
 export const isOtherFacility = (draft: DoseDraft, ctx: DraftContext): boolean =>
   draft.facility !== ctx.storeNameId;

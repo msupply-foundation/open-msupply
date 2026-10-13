@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   batchChoosable,
   batchDoses,
+  chooseGiven,
   confirmations,
   draftDiffers,
   givenAtOtherStore,
@@ -85,6 +86,35 @@ describe('OMS-REG-DIS-06.3 — the item choice', () => {
   });
   it('presets nothing when the course has several', () => {
     expect(initialDraft(ctxFor()).itemId).toBeNull();
+  });
+  // VC-20261013-F5: a recorded not-given dose carries no item, so choosing
+  // given on it left the course's only item unchosen.
+  it("presets the course's only item when a not-given dose is changed to given", () => {
+    const ctx = ctxFor({
+      courseItemIds: ['dpt'],
+      vaccination: recorded({
+        given: false,
+        notGivenReason: 'REFUSED',
+        item: null,
+        stockLine: null,
+        invoice: null,
+      }),
+    });
+    const draft = initialDraft(ctx);
+    expect(draft.itemId).toBeNull();
+    expect(chooseGiven(draft, ctx, true).itemId).toBe('dpt');
+  });
+  it('keeps an item already chosen, presets nothing among several, and none for not given', () => {
+    const one = ctxFor({ courseItemIds: ['dpt'] });
+    expect(
+      chooseGiven(newDraft({ itemId: 'held' }, one), one, true)
+    ).not.toHaveProperty('itemId');
+    expect(
+      chooseGiven(newDraft({ itemId: null }), ctxFor(), true)
+    ).not.toHaveProperty('itemId');
+    expect(
+      chooseGiven(newDraft({ itemId: null }, one), one, false)
+    ).not.toHaveProperty('itemId');
   });
 });
 

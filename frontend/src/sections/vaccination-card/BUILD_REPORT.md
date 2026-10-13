@@ -55,6 +55,6 @@ The automated real-backend leg is the e2e suite (#1372), on the hermetic stack's
 
 ## Follow-ups
 
-- Two findings the e2e suite raised (`exploratory/runs/vaccination-card-findings.md`): VC-20261013-F5 — a recorded Not given dose switched to Given does not preset its course's only item (`.3`; guarded by a `test.fixme`); VC-20261013-F6 — a save refused for a missing permission shows the generic error, because `saveDose` opts into GraphQL errors and so receives Forbidden as one (`cardApi.test.ts`'s `.64` case mocks a result the real call never returns).
+- Two findings the e2e suite raised were fixed (`exploratory/runs/vaccination-card-findings.md`): VC-20261013-F5 — choosing given on a recorded not-given dose now presets the course's only item (`doseDraft.chooseGiven`); VC-20261013-F6 — a save refused for a missing permission raises the permission-denied notice instead of the editor's generic error (`saveDose` returns `forbidden`). The spec should still say which surface a permission refusal of a save uses.
 - #746 / H26 — the encounter screen's visited prompt and next-encounter scheduling, then `.65`/`.66`.
 - Backend — `notGivenReason` on the card row.

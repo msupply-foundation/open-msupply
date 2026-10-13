@@ -14,6 +14,7 @@ import {
 import { createStore } from 'solid-js/store';
 import { A } from '@solidjs/router';
 import { gated } from '@/api/gated';
+import { reportPermissionDenied } from '@/api/graphql';
 import { t } from '@/intl';
 import { localisedDate } from '@/intl/formatDateTime';
 import { authUser } from '@/auth/authContext';
@@ -50,6 +51,7 @@ import {
 import {
   batchChoosable,
   batchDoses,
+  chooseGiven,
   confirmations,
   draftDiffers,
   givenAtOtherStore,
@@ -254,6 +256,9 @@ const DoseEditorForm: Component<
     else if (outcome.kind === 'notMostRecentGivenDose')
       setRefusal(t('error.not-most-recent-given-dose'));
     else if (outcome.kind === 'refused') setRefusal(t('error.something-wrong'));
+    // The app's permission-denied notice; the editor keeps the draft.
+    else if (outcome.kind === 'forbidden')
+      reportPermissionDenied(outcome.permissions);
   };
 
   const onSavePressed = () => {
@@ -295,13 +300,7 @@ const DoseEditorForm: Component<
   };
 
   const choose = (value: string) =>
-    setDraft({
-      given: value === 'given',
-      // Back to this store when the choice changes, unless the dose is named
-      // at another facility in free text.
-      facility:
-        draft.facility === OTHER_FACILITY ? OTHER_FACILITY : ctx.storeNameId,
-    });
+    setDraft(chooseGiven(draft, ctx, value === 'given'));
 
   const description = createMemo(() => doseEditorDescription(props.row));
 
