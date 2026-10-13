@@ -1669,10 +1669,9 @@ const StocktakeLineEditContent = (
         return (
           <ProgramSelect
             size="small"
-            label={t('label.program')}
             hideLabel
             storeId={props.storeId}
-            itemId={line.item.id}
+            itemIds={[line.item.id]}
             disabled={!line.countThisLine}
             programId={line.program?.id}
             onChange={program => update(line.id, 'program', program)}
@@ -1690,7 +1689,6 @@ const StocktakeLineEditContent = (
         return (
           <ActivitySelect
             size="small"
-            label={t('label.activity')}
             hideLabel
             disabled={!line.countThisLine}
             campaignId={line.campaign?.id}

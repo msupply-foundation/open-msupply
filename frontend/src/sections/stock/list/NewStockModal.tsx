@@ -27,7 +27,7 @@ import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { VvmStatusSelect } from '../../../domain/vvmStatus';
 import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
-import { ActivitySelect, ProgramSelect } from '../../../domain/campaign';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import {
   barcodeFieldFill,
   createScanControl,
@@ -586,15 +586,15 @@ const NewStockContent = (props: {
                       />
                     </Show>
                     <ProgramSelect
-                      label={t('label.program')}
-                      testId="field-program"
+                      inputTestId="field-program"
                       storeId={props.storeId}
-                      itemId={chosenItem()?.id ?? ''}
+                      itemIds={[chosenItem()?.id].filter(
+                        id => id !== undefined
+                      )}
                       programId={draft.programId ?? undefined}
                       onChange={p => setDraft('programId', p?.id ?? null)}
                     />
                     <ActivitySelect
-                      label={t('label.activity')}
                       inputTestId="field-activity"
                       campaignId={draft.campaignId ?? undefined}
                       onChange={c => setDraft('campaignId', c?.id ?? null)}

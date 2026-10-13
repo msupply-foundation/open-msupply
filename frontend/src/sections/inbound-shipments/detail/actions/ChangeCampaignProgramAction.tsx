@@ -1,35 +1,33 @@
-import {
-  createResource,
-  createSignal,
-  Match,
-  Show,
-  Switch,
-  type Component,
-} from 'solid-js';
+import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
-import { Select } from '../../../../ui/elements/selectors/Select';
-import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { EditIcon } from '../../../../ui/icons';
-import {
-  InboundCampaigns,
-  InboundPrograms,
-} from '../inboundShipmentLookups.generated';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import type { LineActionProps } from './DeleteLinesAction';
 
 // Bulk change program / activity on the selected lines (spec S3 →
 // line-selection actions). Batch update using the NullableStringUpdate wrappers
-// (empty choice clears). Two independent fields, each applied at its own value;
-// programs + campaigns (the Activity field's options) are fetched on open.
+// (an empty field clears). Two independent fields, each applied at its own
+// value — and the SAME two pickers the line editor uses, asked of the selection
+// instead of one line: Program narrows to the selected items (offering only
+// what they all share), Activity is the store-wide register either way.
 type Phase = 'confirm' | 'working' | 'error';
 
+export interface ChangeCampaignProgramActionProps extends LineActionProps {
+  /**
+   * The items of the selected lines — what the program list is narrowed to,
+   * exactly as the line editor narrows to the one item it edits. Campaigns are
+   * store-wide, so the Activity field takes nothing from this.
+   */
+  selectedItemIds: () => string[];
+}
+
 export const ChangeCampaignProgramAction: Component<
-  LineActionProps
+  ChangeCampaignProgramActionProps
 > = props => {
   const [open, setOpen] = createSignal(false);
   return (
@@ -50,30 +48,15 @@ export const ChangeCampaignProgramAction: Component<
   );
 };
 
-const Body = (props: LineActionProps & { onClose: () => void }) => {
+const Body = (
+  props: ChangeCampaignProgramActionProps & { onClose: () => void }
+) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  const [campaignId, setCampaignId] = createSignal('');
-  const [programId, setProgramId] = createSignal('');
+  // Empty is "no program" / "no activity" — applying clears the field on every
+  // selected line, as the pickers' own ✕ clears it on one.
+  const [campaignId, setCampaignId] = createSignal<string>();
+  const [programId, setProgramId] = createSignal<string>();
   const [errorMessage, setErrorMessage] = createSignal<string>();
-
-  const [data] = createResource(async () => {
-    const [campaigns, programs] = await Promise.all([
-      graphqlFetch(InboundCampaigns, { storeId: props.storeId }),
-      graphqlFetch(InboundPrograms, { storeId: props.storeId }),
-    ]);
-    return {
-      campaigns:
-        campaigns.kind === 'success' &&
-        campaigns.data.campaigns.__typename === 'CampaignConnector'
-          ? campaigns.data.campaigns.nodes
-          : [],
-      programs:
-        programs.kind === 'success' &&
-        programs.data.programs.__typename === 'ProgramConnector'
-          ? programs.data.programs.nodes
-          : [],
-    };
-  });
 
   const run = async () => {
     if (phase() !== 'confirm') return;
@@ -81,8 +64,8 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
     const outcome = await runInboundBatch(props.storeId, props.isExternal, {
       updateInboundShipmentLines: props.selectedIds().map(id => ({
         id,
-        campaignId: { value: campaignId() || null },
-        programId: { value: programId() || null },
+        campaignId: { value: campaignId() ?? null },
+        programId: { value: programId() ?? null },
       })),
     });
     if (!outcome) return setPhase('confirm'); // handled globally
@@ -140,32 +123,18 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
         </Switch>
       }
     >
-      <Show when={!data.loading} fallback={<Spinner center />}>
-        <Select
-          label={t('label.program')}
-          value={programId()}
-          onValueChange={setProgramId}
-          options={[
-            { value: '', label: t('label.none') },
-            ...(data()?.programs ?? []).map(p => ({
-              value: p.id,
-              label: p.name,
-            })),
-          ]}
-        />
-        <Select
-          label={t('label.activity')}
-          value={campaignId()}
-          onValueChange={setCampaignId}
-          options={[
-            { value: '', label: t('label.none') },
-            ...(data()?.campaigns ?? []).map(c => ({
-              value: c.id,
-              label: c.name,
-            })),
-          ]}
-        />
-      </Show>
+      <ProgramSelect
+        storeId={props.storeId}
+        itemIds={props.selectedItemIds()}
+        programId={programId()}
+        onChange={program => setProgramId(program?.id)}
+        inputTestId="field-program"
+      />
+      <ActivitySelect
+        campaignId={campaignId()}
+        onChange={campaign => setCampaignId(campaign?.id)}
+        inputTestId="field-activity"
+      />
     </Dialog>
   );
 };

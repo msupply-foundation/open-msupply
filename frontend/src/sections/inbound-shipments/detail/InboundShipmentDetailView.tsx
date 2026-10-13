@@ -359,6 +359,23 @@ const InboundShipmentDetailView: Component = () => {
       .reduce((total, r) => total + r.volumePerPack * r.numberOfPacks, 0);
   };
 
+  // The items of the selected lines — the bulk program picker's narrowing, so
+  // it offers what those items are in rather than every program in the store
+  // (the line editor's rule, applied to a selection). Distinct ids; the fetch
+  // dedupes too, but the count is what the dialog's message counts.
+  // Read from the loaded page, as selectedVolume is — a selection carried
+  // across a page change contributes only the items still on screen.
+  const selectedItemIds = (): string[] => {
+    const ids = new Set(selectedIds());
+    return [
+      ...new Set(
+        rows()
+          .filter(r => ids.has(r.id))
+          .map(r => r.itemId)
+      ),
+    ];
+  };
+
   // Volume-aware: inbound places received stock at a location, so the picker
   // shows each location's % used and offers the All / Empty / Available filter
   // (same picker as stocktakes). A plain (non-cached) read, so the figures are
@@ -1267,6 +1284,7 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       isExternal={isExternal()}
                       selectedIds={selectedIds}
+                      selectedItemIds={selectedItemIds}
                       disabled={bulkLocked()}
                       onChanged={onLinesChanged}
                       onError={stampErrors}

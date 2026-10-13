@@ -1,33 +1,8 @@
 # Auxiliary lookups for the inbound-shipment detail surfaces that need option
-# sets the header/line queries don't carry: the foreign-currency picker, the
-# campaign/program bulk-edit pickers, and the add-from-internal-order line
-# picker. Kept out of inboundShipmentDetail.graphql (no shared fragments).
-
-# Campaigns for the bulk change-campaign action.
-query inboundCampaigns($storeId: String!) {
-  campaigns(storeId: $storeId) {
-    ... on CampaignConnector {
-      __typename
-      nodes {
-        id
-        name
-      }
-    }
-  }
-}
-
-# Programs for the bulk change-program action.
-query inboundPrograms($storeId: String!) {
-  programs(storeId: $storeId) {
-    ... on ProgramConnector {
-      __typename
-      nodes {
-        id
-        name
-      }
-    }
-  }
-}
+# sets the header/line queries don't carry: the foreign-currency picker and the
+# add-from-internal-order line picker. Kept out of inboundShipmentDetail.graphql
+# (no shared fragments). The bulk program/activity pickers need nothing here —
+# they are the shared domain pickers, which own their own reads.
 
 # The lines of a linked internal order — the add-from-internal-order picker
 # (spec S7 / OMS-REG-ISH-01.8/.9). Each pulled line pre-fills the item +

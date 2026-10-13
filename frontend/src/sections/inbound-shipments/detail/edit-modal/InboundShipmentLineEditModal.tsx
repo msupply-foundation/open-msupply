@@ -49,7 +49,7 @@ import {
 } from '../../../../domain/location';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
 import { NameSearch } from '../../../../domain/name';
-import { ActivitySelect, ProgramSelect } from '../../../../domain/campaign';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import {
   InboundShipmentLines,
@@ -1464,11 +1464,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = info.row.original;
         return (
           <ProgramSelect
-            label={t('label.program')}
             hideLabel
             size="small"
             storeId={props.storeId}
-            itemId={item()?.id ?? ''}
+            itemIds={[item()?.id].filter(id => id !== undefined)}
             programId={b.programId ?? undefined}
             onChange={p => updateBatch(b.id, 'programId', p?.id ?? null)}
           />
@@ -1484,7 +1483,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         const b = info.row.original;
         return (
           <ActivitySelect
-            label={t('label.activity')}
             hideLabel
             size="small"
             campaignId={b.campaignId ?? undefined}

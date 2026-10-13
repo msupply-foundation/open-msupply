@@ -49,7 +49,7 @@ import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
 import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
-import { ActivitySelect, ProgramSelect } from '../../../domain/campaign';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   barcodeFieldFill,
@@ -723,17 +723,15 @@ const StockLineDetailView: Component = () => {
                               />
                             </Show>
                             <ProgramSelect
-                              label={t('label.program')}
-                              testId="field-program"
+                              inputTestId="field-program"
                               storeId={params.storeId}
-                              itemId={l().itemId}
+                              itemIds={[l().itemId]}
                               programId={edit.programId ?? undefined}
                               onChange={p =>
                                 setEdit('programId', p?.id ?? null)
                               }
                             />
                             <ActivitySelect
-                              label={t('label.activity')}
                               inputTestId="field-activity"
                               campaignId={edit.campaignId ?? undefined}
                               campaign={l().campaign}
