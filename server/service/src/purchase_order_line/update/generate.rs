@@ -1,9 +1,10 @@
-use repository::{PurchaseOrderLineRow, RepositoryError};
+use repository::{ItemRow, PurchaseOrderLineRow, RepositoryError};
 
 use crate::purchase_order_line::update::UpdatePurchaseOrderLineInput;
 
 pub fn generate(
     purchase_order_line: PurchaseOrderLineRow,
+    item: &ItemRow,
     UpdatePurchaseOrderLineInput {
         id: _,
         item_id,
@@ -24,6 +25,7 @@ pub fn generate(
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     let mut row = PurchaseOrderLineRow {
         item_id: item_id.clone().unwrap_or(purchase_order_line.item_id),
+        item_name: item.name.clone(),
         requested_pack_size: requested_pack_size.unwrap_or(purchase_order_line.requested_pack_size),
         requested_number_of_units: requested_number_of_units
             .unwrap_or(purchase_order_line.requested_number_of_units),

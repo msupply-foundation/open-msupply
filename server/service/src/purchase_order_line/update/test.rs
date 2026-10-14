@@ -12,6 +12,7 @@ mod update {
     };
 
     use crate::{
+        NullableUpdate,
         purchase_order::update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
         purchase_order_line::{
             insert::{InsertPurchaseOrderLineInput, PackSizeCodeCombination},
@@ -19,6 +20,7 @@ mod update {
         },
         service_provider::ServiceProvider,
     };
+    use chrono::NaiveDate;
 
     #[actix_rt::test]
     async fn update_purchase_order_line_errors() {
@@ -342,14 +344,192 @@ mod update {
         );
         assert_eq!(result.item_row.id, mock_item_d().id.clone());
 
-        let log = ActivityLogRowRepository::new(&context.connection)
-            .find_many_by_record_id(&result.purchase_order_line_row.purchase_order_id)
-            .unwrap()
-            .into_iter()
-            .find(|l| l.r#type == ActivityLogType::PurchaseOrderLineUpdated)
+        let updated_logs = || {
+            ActivityLogRowRepository::new(&context.connection)
+                .find_many_by_record_id(&result.purchase_order_line_row.purchase_order_id)
+                .unwrap()
+                .into_iter()
+                .filter(|l| l.r#type == ActivityLogType::PurchaseOrderLineUpdated)
+                .collect::<Vec<_>>()
+        };
+        let logs = updated_logs();
+        assert_eq!(logs.len(), 1);
+        let log = &logs[0];
+
+        // The entry names the line and carries each changed field's old and new value
+        let from: serde_json::Value =
+            serde_json::from_str(log.changed_from.as_ref().unwrap()).unwrap();
+        let to: serde_json::Value = serde_json::from_str(log.changed_to.as_ref().unwrap()).unwrap();
+        assert_eq!(result.purchase_order_line_row.item_name, mock_item_d().name);
+        assert_eq!(
+            from,
+            serde_json::json!({
+                "item-code": mock_item_a().code,
+                "item-name": mock_item_a().name,
+                "pack-size": 5.0,
+                "requested-units": 0.0,
+                "adjusted-units": null,
+            })
+        );
+        assert_eq!(
+            to,
+            serde_json::json!({
+                "item-code": mock_item_d().code,
+                "item-name": mock_item_d().name,
+                "pack-size": 10.0,
+                "requested-units": 5.0,
+                "adjusted-units": 5.0,
+            })
+        );
+        // The line's identity leads, so the entry reads line-first
+        assert!(
+            log.changed_to
+                .as_ref()
+                .unwrap()
+                .starts_with(r#"{"item-code":"#)
+        );
+
+        // An update that changes nothing writes no entry
+        service
+            .update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    requested_pack_size: Some(10.0),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        assert_eq!(updated_logs().len(), 1);
+
+        // Clearing a field records its old value alone
+        service
+            .update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    expected_delivery_date: Some(NullableUpdate {
+                        value: Some(NaiveDate::from_ymd_opt(2026, 9, 30).unwrap()),
+                    }),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        service
+            .update_purchase_order_line(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderLineInput {
+                    id: "purchase_order_line_id_1".to_string(),
+                    expected_delivery_date: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        let logs = updated_logs();
+        assert_eq!(logs.len(), 3);
+        let from: serde_json::Value =
+            serde_json::from_str(logs[2].changed_from.as_ref().unwrap()).unwrap();
+        let to: serde_json::Value =
+            serde_json::from_str(logs[2].changed_to.as_ref().unwrap()).unwrap();
+        assert_eq!(
+            from,
+            serde_json::json!({ "expected-delivery-date": "2026-09-30" })
+        );
+        assert_eq!(
+            to,
+            serde_json::json!({
+                "item-code": mock_item_d().code,
+                "item-name": mock_item_d().name,
+                "expected-delivery-date": null,
+            })
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_purchase_order_line_logs_closure_once() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_purchase_order_line_logs_closure_once",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = &service_provider.purchase_order_line_service;
+
+        service
+            .insert_purchase_order_line(
+                &context,
+                InsertPurchaseOrderLineInput {
+                    id: "closing_line".to_string(),
+                    purchase_order_id: "test_purchase_order_a".to_string(),
+                    item_id_or_code: mock_item_a().id.to_string(),
+                    requested_pack_size: Some(3.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        service_provider
+            .purchase_order_service
+            .update_purchase_order(
+                &context,
+                &mock_store_a().id,
+                UpdatePurchaseOrderInput {
+                    id: "test_purchase_order_a".to_string(),
+                    status: Some(repository::PurchaseOrderStatus::Sent),
+                    ..Default::default()
+                },
+            )
             .unwrap();
 
-        assert_eq!(log.r#type, ActivityLogType::PurchaseOrderLineUpdated);
+        let logs_of = |log_type: ActivityLogType| {
+            ActivityLogRowRepository::new(&context.connection)
+                .find_many_by_record_id("test_purchase_order_a")
+                .unwrap()
+                .into_iter()
+                .filter(|l| l.r#type == log_type)
+                .count()
+        };
+
+        service
+            .update_purchase_order_line(
+                &context,
+                &mock_store_a().id,
+                UpdatePurchaseOrderLineInput {
+                    id: "closing_line".to_string(),
+                    status: Some(PurchaseOrderLineStatus::Closed),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        assert_eq!(logs_of(ActivityLogType::PurchaseOrderLineStatusClosed), 1);
+
+        // A later edit of the closed line is an update, not another closure
+        service
+            .update_purchase_order_line(
+                &context,
+                &mock_store_a().id,
+                UpdatePurchaseOrderLineInput {
+                    id: "closing_line".to_string(),
+                    comment: Some(NullableUpdate {
+                        value: Some("late".to_string()),
+                    }),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        assert_eq!(logs_of(ActivityLogType::PurchaseOrderLineStatusClosed), 1);
+        assert_eq!(logs_of(ActivityLogType::PurchaseOrderLineUpdated), 1);
     }
 
     /// The stored total is recomputed on every update from the merged figures:

@@ -27,6 +27,7 @@ use repository::{
 
 pub mod delete;
 pub mod insert;
+pub mod log;
 pub mod update;
 
 pub trait PurchaseOrderLineServiceTrait: Sync + Send {
