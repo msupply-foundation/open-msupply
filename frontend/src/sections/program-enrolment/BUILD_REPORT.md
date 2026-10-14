@@ -1,0 +1,107 @@
+# Build report — program-enrolment
+
+**Target stack:** SolidJS + Vite; shared component library `src/ui/`, every slot resolved through the roles in [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
+
+Scoped build of [`spec/program-enrolment`](../../../spec/program-enrolment/README.md) (#1490, on top of the spec branch `fe/890-program-enrolment-spec`). The picker and the enrolment dialog already existed on `feature/custom-forms`, built ahead of their spec (custom-forms plan H8, H10); this build moves them into this section, brings them to the spec, and adds the host's enrolment ID field. Status history and closing (`OMS-REG-PAT-04.40`–`.50`) are #1491 and stay pending.
+
+**Gates: green.** `pnpm check` · `pnpm test` (all files, including 60 new tests: 20 in this section, 40 in `src/domain/documentForm/`) · `pnpm build` (the field and its query sit in the lazy form library chunk, 42.36 kB gzip; nothing reaches the eager entry, which `vite/lazyChunkGuard.ts` checks) · ESLint on every changed file · the `check-reactivity` review (below).
+
+## Built
+
+- **S2 program picker** (`ProgramPickerDialog.tsx`, moved from `sections/patients/detail/programs/`). Options are now in **name order**: the server lists them by registry id. Enrolled programs stay listed, disabled, and marked Enrolled. When there are none, the no-programs notice shows. Enrol is disabled until a program is chosen.
+- **S3 enrolment** (`EnrolmentModal.tsx`, moved). Two save guards, both opt-in options on the shared document form host, so encounters and the patient document are unchanged:
+  - `refuseNewerVersion` re-reads the enrolment's newest version just before an update. A different version id refuses the save and sends nothing. `newerVersion()` then drives a warning banner, `enrolment-newer-version`.
+  - `onForbidden` takes a `Forbidden` refusal to `reportPermissionDenied`, the app's permission-denied modal, instead of the inline banner.
+
+  Every other refusal shows "Failed to save program enrolment" (`error.failed-to-save-program-enrolment`), with the server's reason behind an `ErrorDetails` disclosure (`enrolment-save-error`). Both banners sit in the dialog's `footer` slot, above the actions rule, so the buttons stay at the inline end.
+
+- **S4 default form**: unchanged (`domain/documentForm/defaults.tsx`).
+- **S5 enrolment ID field** (`domain/documentForm/EnrolmentIdField.tsx`, `enrolmentId.ts`, `enrolmentId.graphql`), in the form library chunk.
+  - **What it does:**
+    - On a new enrolment, it generates the ID as the form opens.
+    - It asks before replacing an ID.
+    - It skips a generated ID another enrolment holds.
+    - Typing is allowed only with `allowTyping`.
+    - A typed ID is checked once typing pauses (500 ms). A duplicate is flagged and not taken into the draft.
+  - **How it is reached:** the SDK exports it as a lazy wrapper, `EnrolmentIdField` with `EnrolmentIdFieldProps`. The demo program's enrolment form now places it in place of its own Generate button. Two demo plugin strings are gone, `heading.replace-enrolment-id` and `message.replace-enrolment-id`.
+- **Engine:** `Draft.fill(path, value)` writes as part of the starting state, so the generated ID is not an edit (rules § leaving with unsaved changes). `SaveOutcome.refused` carries `forbidden` with the permission names.
+- **Wiring:** `PatientDetailView` imports the two components from here. Its TO-DO now covers only New encounter and the encounter screens (H26, #789).
+- **Locale:** one new key, `messages.enrolment-changed-since-opened`, in `en/` only.
+- **Test ids** ([`e2e/TESTIDS.md`](../../../e2e/TESTIDS.md)): `enrolment-save-error`, `enrolment-newer-version`, `enrolment-id`, `enrolment-id-generate`.
+
+## Spec refinements the build exposed (made on this branch)
+
+1. **`EnrolmentIdField` takes `record`** (and `testId`), as [sdk-contract § the enrolment form](../../../spec/plugins/sdk-contract.md#the-document-form-slots-specified-in-full) now says. The field needs the form's record view for two things: whether this open is a new enrolment, and which enrolment holds its own ID.
+2. **`draft.fill`** is in the sdk-contract's draft paragraph. Generating on open would otherwise make every new enrolment read as changed, and closing it would ask to discard.
+3. **The `(pending: #1490)` markers** came off `OMS-REG-PAT-04`, and `spec/PROGRESS.md`'s Build cell is ticked.
+
+## The reactivity review (`check-reactivity`), and what live use found besides
+
+- **Found and fixed:** a duplicate check still running when typing resumed could answer late, write the shorter ID, and overwrite what was being typed. Every keystroke now outdates a running check. Test: "a check still running when typing resumes never overwrites what is typed".
+- **Found live, which the review missed:** the field captured the enrolment's ID once, in its local text signal. On a second open the form library is already loaded, so the field mounts in the same pass that seeds the draft. The seed then landed before the field's sync effect first ran, so a reopened enrolment showed an empty ID box. The box now reads the draft live, with only un-taken typing held locally. Test: "shows the ID the form seeds after the field has mounted", which failed before the fix.
+- **Benign:** `openedNew` is read once (`untrack`) on purpose, since `record.documentName` changes in place after the first save. The picker's options re-map only when the registries or the patient's enrolments change, never on a pick.
+- **Not a reactivity issue, noted:** if the field remounted while a draw was in flight, a second draw would spend a second counter number. The dialog does not remount its body on interaction, and nothing like it was seen live.
+
+## Behaviour coverage (`OMS-REG-PAT-04.*`, spec/program-enrolment/cases/)
+
+**Verified live** means driven through this build's own UI in a headless browser, with the demo program plugin loaded from source. The server was a debug build of this branch (port 8196) on a throwaway copy of the e2e reference datafile, with a Demo Program seeded by SQL: its context, program and registry entry on the plugin's v1 schema, plus the user's document permissions.
+
+| Anchor                                          | Automated test                                                                          | Live                                                                                          |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `.1` name order                                 | `ProgramPickerDialog.test.tsx`                                                          | ✅ Demo Program · E2E Immunisation… · HIV Care… · Rspec Immunisation… · Status History…       |
+| `.2` enrolled listed, disabled, marked          | `ProgramPickerDialog.test.tsx`                                                          | ✅                                                                                            |
+| `.3` a program the user may not view is absent  | — (the server's narrowing)                                                              | ✅ Family Planning and the TestProgram entries absent                                         |
+| `.4` no-programs notice                         | `ProgramPickerDialog.test.tsx`                                                          | —                                                                                             |
+| `.5` Enrol disabled until chosen                | `ProgramPickerDialog.test.tsx`                                                          | ✅                                                                                            |
+| `.6` Cancel closes the picker                   | `ProgramPickerDialog.test.tsx`                                                          | —                                                                                             |
+| `.7` Enrol opens, titled with the program       | `ProgramPickerDialog.test.tsx`, `EnrolmentModal.test.tsx`                               | ✅ "Demo Program"                                                                             |
+| `.8` enrolled now                               | `EnrolmentModal.test.tsx`                                                               | ✅ today's date                                                                               |
+| `.9` this store recorded, nothing else seeded   | `EnrolmentModal.test.tsx`                                                               | —                                                                                             |
+| `.10` the program's own form                    | `src/plugins/DocumentFormRegion.test.tsx` (resolution)                                  | ✅ the demo form                                                                              |
+| `.11` default form fields                       | — (unchanged; built with H6)                                                            | —                                                                                             |
+| `.12` enrolment date changeable                 | — (the form library's date field)                                                       | —                                                                                             |
+| `.13` cleared date blocks the save              | `documentForm.test.ts` (validation)                                                     | —                                                                                             |
+| `.14` save closes, row appears                  | —                                                                                       | ✅ "Demo Program · GRY-0002 · · 14/10/2026"                                                   |
+| `.15` default form's note round-trips           | —                                                                                       | —                                                                                             |
+| `.16` untouched closes without asking           | `EnrolmentModal.test.tsx`, `EnrolmentIdField.test.tsx`, `documentForm.test.ts` (`fill`) | ✅ no prompt after Cancel                                                                     |
+| `.17` changed asks to discard                   | `EnrolmentModal.test.tsx`                                                               | ✅                                                                                            |
+| `.18` discard closes unsaved                    | `EnrolmentModal.test.tsx`                                                               | ✅                                                                                            |
+| `.19` declining keeps the entries               | `EnrolmentModal.test.tsx`                                                               | —                                                                                             |
+| `.20` already enrolled → notice, entries kept   | `createDocumentForm.saveGuards.test.tsx`, `EnrolmentModal.test.tsx`                     | ✅ "Failed to save program enrolment · Bad user input: ProgramEnrolmentExists", typed ID kept |
+| `.21` view-only → permission-denied modal       | `createDocumentForm.saveGuards.test.tsx`, `EnrolmentModal.test.tsx`                     | ✅ "Permission denied" over the open enrolment, no inline banner                              |
+| `.22` a row opens the newest version            | —                                                                                       | ✅                                                                                            |
+| `.23` Save only once changed                    | — (`canSave`, built with H4)                                                            | ✅                                                                                            |
+| `.24` a saved change shows on the tab           | —                                                                                       | —                                                                                             |
+| `.25` still one enrolment per program           | — (the server's)                                                                        | —                                                                                             |
+| `.26` a save over a newer version is refused    | `createDocumentForm.saveGuards.test.tsx`, `EnrolmentModal.test.tsx`                     | ✅ banner; the other user's version still newest                                              |
+| `.27` reopening shows the newer version         | `createDocumentForm.saveGuards.test.tsx`                                                | ✅ "OTHER-USER-1"                                                                             |
+| `.28` not found                                 | — (built with H8)                                                                       | —                                                                                             |
+| `.29` generated as a new enrolment opens        | `EnrolmentIdField.test.tsx`                                                             | ✅ GRY-0001                                                                                   |
+| `.30` Generate asks first; declining keeps      | `EnrolmentIdField.test.tsx`                                                             | ✅ "Are you sure? · This will create a new ID and cannot be undone."                          |
+| `.31` confirming replaces                       | `EnrolmentIdField.test.tsx`                                                             | ✅ GRY-0002 → GRY-0003                                                                        |
+| `.32` a number is never reused                  | — (the server's counter)                                                                | ✅ cancelled GRY-0001, next open GRY-0002                                                     |
+| `.33` typing where allowed                      | `EnrolmentIdField.test.tsx`                                                             | ✅                                                                                            |
+| `.34` read-only where not                       | `EnrolmentIdField.test.tsx`                                                             | — (the demo allows typing)                                                                    |
+| `.35` a held generated ID is skipped            | `enrolmentId.test.ts`, `EnrolmentIdField.test.tsx`                                      | —                                                                                             |
+| `.36` a typed duplicate is flagged, any program | `enrolmentId.test.ts`, `EnrolmentIdField.test.tsx`                                      | ✅ "Duplicated ID: WIRE-DUP-1", held in another program                                       |
+| `.37` a flagged ID is not taken                 | `EnrolmentIdField.test.tsx`                                                             | ✅ saved with GRY-0005, not WIRE-DUP-1                                                        |
+| `.38` its own ID is not a duplicate             | `enrolmentId.test.ts`                                                                   | —                                                                                             |
+| `.39` default form: typed ID, no Generate       | — (unchanged)                                                                           | —                                                                                             |
+| `.40`–`.50` status history and closing          | pending #1491                                                                           | —                                                                                             |
+
+The unit tests mock the GraphQL edge. `C2`'s real-backend half is the deterministic suite (#1492), which has none of these anchors yet.
+
+## Left for later
+
+- **Product re-check of generate-on-open** (decided 2026-10-14, [spec README § status](../../../spec/program-enrolment/README.md#status)). Every opened new enrolment draws a counter number, cancelled or not. The live run spent GRY-0001 that way.
+- **Djibouti's own enrolment ID field** (`EnrolmentIdField.tsx` on `custom-forms/misc-open-tasks`, not on this base) should move onto the host field when that branch lands.
+- **#1491**: status history through the form library's list control (#1148), and closing.
+- **#1492**: the e2e suite, whose datafile needs a dispensary store with the program module on and an enrolment program; **#1493**: exploratory.
+
+## Probe residue
+
+On the throwaway copy behind port 8196 (`server/rspec_890.sqlite` in this worktree, gitignored):
+
+- the `DemoProgram` context, program, registry entry `live890_reg_demo_enrol` and two `live890-DemoProgram-*` permission rows;
+- patients `live-890-a` … `d` and their Demo Program enrolments;
+- the `PROGRAM_DemoProgramEnrolment` counter.

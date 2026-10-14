@@ -367,6 +367,24 @@ describe('createDraft', () => {
     });
   });
 
+  // OMS-REG-PAT-04.16: a value the form fills in itself (a new enrolment's
+  // generated ID) is not a change the user must be asked to discard.
+  it('fills a value as part of the starting state, not as an edit', () => {
+    createRoot(dispose => {
+      const c = draftFor();
+      c.reset({ ...validEncounter } as DemoEncounter);
+      c.draft.fill('extension.demo.vitals.weightKg', 70);
+      expect(c.draft.get('extension.demo.vitals.weightKg')).toBe(70);
+      expect(c.isDirty()).toBe(false);
+      // An edit after it is measured from the filled value.
+      c.draft.set('extension.demo.vitals.weightKg', 71);
+      expect(c.isDirty()).toBe(true);
+      c.draft.set('extension.demo.vitals.weightKg', 70);
+      expect(c.isDirty()).toBe(false);
+      dispose();
+    });
+  });
+
   it('keeps a missing value quiet until armed; a bad value shows at once', () => {
     createRoot(dispose => {
       const c = draftFor();

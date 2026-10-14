@@ -1,0 +1,11 @@
+/*
+ * The Generate button beside the enrolment ID, level with the input rather
+ * than its label: dropped by one field-label line, from the same tokens
+ * TextField lays its label out with (as the patient Code field's is).
+ */
+.generate {
+  margin-block-start: calc(
+    var(--field-label-font-size) * var(--field-label-line-height) +
+      var(--input-field-gap)
+  );
+}

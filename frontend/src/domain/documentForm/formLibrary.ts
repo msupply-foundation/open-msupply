@@ -23,6 +23,8 @@ export {
 export { validateDocument } from './validation';
 export { baseSchemaFor } from './baseSchemas';
 export { DefaultEnrolmentForm, DefaultEncounterForm } from './defaults';
+// The host's enrolment ID field, for a `programEnrolment.form` to place.
+export { EnrolmentIdField } from './EnrolmentIdField';
 // The host's patient fields over a patient document, and the default patient
 // form they make up: a form on the document path needs them together.
 export {

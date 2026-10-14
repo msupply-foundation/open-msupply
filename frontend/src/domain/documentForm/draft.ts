@@ -35,6 +35,13 @@ export interface Draft<T> {
   get<P extends Path<T>>(path: P): PathValue<T, P> | undefined;
   /** Writes `value` at `path`; `undefined` removes the property. */
   set<P extends Path<T>>(path: P, value: PathValue<T, P> | undefined): void;
+  /**
+   * Writes `value` at `path` as part of the document's starting state, so it
+   * is not an edit: a form unchanged before stays unchanged. For a value the
+   * form fills in itself as it opens, such as a new enrolment's generated ID
+   * (spec/program-enrolment rules § leaving with unsaved changes).
+   */
+  fill<P extends Path<T>>(path: P, value: PathValue<T, P> | undefined): void;
   /** What the schema says about the field: required, format, enum. */
   schemaFor(path: Path<T>): FieldSchemaInfo | undefined;
   /** The message to show beside the field, when it has one to show. */
@@ -194,6 +201,16 @@ export const createDraft = <T extends object>(
     get: path => getAt(store, path) as never,
     set: (path, value) => {
       setStore(produce(s => setAt(s, path, value)));
+      setVersion(v => v + 1);
+    },
+    fill: (path, value) => {
+      setStore(produce(s => setAt(s, path, value)));
+      // The same write on the seed the dirty check compares against.
+      setSeed(previous => {
+        const next = structuredClone(previous) as Record<string, unknown>;
+        setAt(next, path, structuredClone(value));
+        return next;
+      });
       setVersion(v => v + 1);
     },
     schemaFor: path => {

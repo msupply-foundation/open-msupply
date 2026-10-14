@@ -1,11 +1,11 @@
 import { createSignal, Show, type JSX } from 'solid-js';
-import { t } from '../../../../intl';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { RadioGroup } from '../../../../ui/elements/inputs/RadioGroup';
-import { XCircleIcon } from '../../../../ui/icons';
-import type { FormRegistryFragment } from '../../../../domain/documentForm/documentForm.generated';
+import { t } from '@/intl';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Button } from '@/ui/elements/buttons/Button';
+import { RadioGroup } from '@/ui/elements/inputs/RadioGroup';
+import { XCircleIcon } from '@/ui/icons';
+import type { FormRegistryFragment } from '@/domain/documentForm/documentForm.generated';
 
 export interface ProgramPickerDialogProps {
   open: boolean;
@@ -18,12 +18,12 @@ export interface ProgramPickerDialogProps {
 }
 
 /*
- * The first step of "New program" (implementation-plan H8, as the old
- * client's program search): the programs the registry offers, one to enrol
- * in. A program the patient is already enrolled in stays listed, disabled and
- * marked, rather than hidden, so the list reads the same for every patient;
- * the server refuses a second enrolment in any case. Picking opens the
- * enrolment form.
+ * The program picker, New program's first step (spec/program-enrolment
+ * ui-surface S2, rules § enrolling a patient): the programs the user may view
+ * at this store, by name, one to enrol in. A program the patient is already
+ * enrolled in stays listed, disabled and marked Enrolled, rather than hidden,
+ * so the list reads the same for every patient; the server refuses a second
+ * enrolment in any case. Enrol opens the enrolment (./EnrolmentModal.tsx).
  */
 export const ProgramPickerDialog = (
   props: ProgramPickerDialogProps
@@ -33,14 +33,21 @@ export const ProgramPickerDialog = (
   </Show>
 );
 
+const programName = (r: FormRegistryFragment): string =>
+  r.name ?? r.documentType;
+
+const byName = (a: FormRegistryFragment, b: FormRegistryFragment): number =>
+  programName(a).localeCompare(programName(b));
+
 const ProgramPickerBody = (props: ProgramPickerDialogProps): JSX.Element => {
   const [picked, setPicked] = createSignal<string>();
+  // In name order (PAT-04 `.1`); the server lists them by id.
   const options = () =>
-    props.registries.map(r => {
+    [...props.registries].sort(byName).map(r => {
       const enrolled = props.enrolledTypes.has(r.documentType);
       return {
         value: r.id,
-        label: r.name ?? r.documentType,
+        label: programName(r),
         description: enrolled ? t('label.enrolled') : undefined,
         disabled: enrolled,
         testId: `program-option-${r.documentType}`,

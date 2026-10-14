@@ -41,7 +41,8 @@ import type {
   TextPath,
 } from '../domain/documentForm/paths';
 import type { PatientFieldProps } from '../domain/patient/documentFields';
-import type { Patient } from './documents';
+import type { EnrolmentIdFieldProps } from '../domain/documentForm/EnrolmentIdField';
+import type { Patient, ProgramEnrolment } from './documents';
 
 const LazyDataTable = lazy(() =>
   import('../ui/elements/table/DataTable').then(m => ({
@@ -349,6 +350,23 @@ export const PatientDeceasedFields = LazyPatientDeceasedFields as unknown as <
   T extends Patient,
 >(
   props: PatientFieldProps<T>
+) => JSX.Element;
+
+/*
+ * The host's enrolment ID field, for a `programEnrolment.form` to place where
+ * it wants the ID (spec/plugins/sdk-contract.md § the enrolment form). The
+ * program passes its ID format as `generate`; the field generates as a new
+ * enrolment opens, regenerates on request, and checks for duplicates. From
+ * the form library's chunk.
+ */
+const LazyEnrolmentIdField = formLibraryComponent(
+  m => m.EnrolmentIdField as Component<EnrolmentIdFieldProps>
+);
+/** The enrolment ID, generated from the program's format and checked. */
+export const EnrolmentIdField = LazyEnrolmentIdField as unknown as <
+  T extends ProgramEnrolment,
+>(
+  props: EnrolmentIdFieldProps<T>
 ) => JSX.Element;
 
 /*

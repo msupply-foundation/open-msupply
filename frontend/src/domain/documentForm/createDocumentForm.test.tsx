@@ -17,6 +17,8 @@ const graphqlFetch = vi.fn();
 vi.mock('../../api/graphql', () => ({
   graphqlFetch: (...args: unknown[]) => graphqlFetch(...args),
   describeErrors: () => 'refused',
+  isForbidden: () => false,
+  missingPermissions: () => [],
 }));
 
 // The library's fields reach for `window`; the host needs only its validator

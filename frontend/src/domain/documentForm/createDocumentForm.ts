@@ -31,6 +31,8 @@ import {
 import {
   describeErrors,
   graphqlFetch,
+  isForbidden,
+  missingPermissions,
   type GraphqlResult,
 } from '../../api/graphql';
 import { gated } from '../../api/gated';
@@ -133,6 +135,21 @@ export interface CreateDocumentFormOptions {
    * registry reactively.
    */
   versioning?: (documentType: string) => FormVersioning | undefined;
+  /**
+   * Takes a save the server refuses as Forbidden, with the permission names
+   * it gives, in place of showing it as `saveError`: the screen routes it to
+   * the app's permission-denied modal (ui-standards/validation.md). Absent, a
+   * Forbidden shows as any other refusal.
+   */
+  onForbidden?: (permissions: string[]) => void;
+  /**
+   * Refuses to save a saved document when a newer version was saved after
+   * the one opened (spec/program-enrolment rules § editing an enrolment):
+   * the server would take the save and lose the other change. Checked just
+   * before the save; `newerVersion` then reads true. Absent, the last save
+   * wins, as the server allows.
+   */
+  refuseNewerVersion?: boolean;
 }
 
 export type DocumentFormStatus = 'idle' | 'loading' | 'ready' | 'not-found';
@@ -160,6 +177,11 @@ export interface DocumentForm<T> {
   saving: Accessor<boolean>;
   saveError: Accessor<string | undefined>;
   /**
+   * True after a save refused because a newer version exists (only with
+   * `refuseNewerVersion`), until the draft is seeded again.
+   */
+  newerVersion: Accessor<boolean>;
+  /**
    * Arms validation and, when the draft is valid, saves it. Resolves with the
    * saved version, or undefined when nothing was saved (invalid, refused, or a
    * failure the app's global error handling already reported).
@@ -179,7 +201,12 @@ export type SaveOutcome =
        */
       recordId: string;
     }
-  | { kind: 'refused'; message: string }
+  | {
+      kind: 'refused';
+      message: string;
+      /** The permission names, when the refusal is a Forbidden. */
+      forbidden?: string[];
+    }
   /** Reported by the app's global handling (a lost session, an outage). */
   | { kind: 'reported' };
 
@@ -224,7 +251,13 @@ export const persistDocument = async (
         : { kind: 'reported' };
     }
     if (result.kind === 'graphqlError') {
-      return { kind: 'refused', message: describeErrors(result.errors) };
+      return {
+        kind: 'refused',
+        message: describeErrors(result.errors),
+        forbidden: isForbidden(result.errors)
+          ? missingPermissions(result.errors)
+          : undefined,
+      };
     }
     return { kind: 'reported' };
   };
@@ -463,6 +496,7 @@ export const createDocumentForm = <T extends object>(
 
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string>();
+  const [newerVersion, setNewerVersion] = createSignal(false);
 
   const controller = createDraft<T>({
     schema: () => {
@@ -504,6 +538,7 @@ export const createDocumentForm = <T extends object>(
     untrack(() => {
       const seed = seedFor() ?? { data: {}, unresolved: {} };
       setSaveError(undefined);
+      setNewerVersion(false);
       controller.reset(seed.data as T, seed.unresolved);
     });
   });
@@ -534,18 +569,42 @@ export const createDocumentForm = <T extends object>(
     // The source the save was made from: by the time it returns the screen
     // may show another record, which this version must not stand for.
     const key = currentKey();
+    const opened = document();
     setSaving(true);
     setSaveError(undefined);
+    if (options.refuseNewerVersion && opened) {
+      const latest = await graphqlFetch(FormDocumentByName, {
+        storeId: options.storeId(),
+        name: opened.name,
+      });
+      // A failed read was reported globally; nothing is saved behind it.
+      const newer =
+        latest.kind !== 'success' ||
+        (latest.data.document !== null &&
+          latest.data.document !== undefined &&
+          latest.data.document.id !== opened.id);
+      if (newer) {
+        setSaving(false);
+        if (latest.kind === 'success' && key === currentKey()) {
+          setNewerVersion(true);
+        }
+        return undefined;
+      }
+    }
     const result = await persistDocument({
       storeId: options.storeId(),
       patientId: options.patientId(),
       registry: r,
-      parent: document()?.id,
+      parent: opened?.id,
       data: controller.snapshot(),
     });
     setSaving(false);
     if (result.kind === 'refused') {
-      if (key === currentKey()) setSaveError(result.message);
+      if (result.forbidden && options.onForbidden) {
+        options.onForbidden(result.forbidden);
+      } else if (key === currentKey()) {
+        setSaveError(result.message);
+      }
       return undefined;
     }
     if (result.kind === 'reported') return undefined;
@@ -557,6 +616,7 @@ export const createDocumentForm = <T extends object>(
     const seed = seedFor();
     if (seed) controller.reset(seed.data as T, seed.unresolved);
     setSaveError(undefined);
+    setNewerVersion(false);
   };
 
   return {
@@ -577,6 +637,7 @@ export const createDocumentForm = <T extends object>(
     kept,
     saving,
     saveError,
+    newerVersion,
     save,
     discard,
   };

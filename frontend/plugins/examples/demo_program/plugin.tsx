@@ -117,9 +117,6 @@ export default definePlugin({
       'field.enrolment-date': 'Enrolment date',
       'field.enrolment-id': 'Enrolment ID',
       'button.generate': 'Generate',
-      'heading.replace-enrolment-id': 'Replace the enrolment ID?',
-      'message.replace-enrolment-id':
-        'This enrolment already has the ID {{ id }}. Generating a new one replaces it, and {{ id }} is not issued again.',
       'button.replace': 'Replace',
       'field.referred-from': 'Referred from',
       'referral.SELF': 'Self-referred',

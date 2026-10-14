@@ -6,22 +6,24 @@ import {
   Switch,
   type JSX,
 } from 'solid-js';
-import { t } from '../../../../intl';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { ConfirmDialog } from '../../../../ui/elements/feedback/ConfirmDialog';
-import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Spinner } from '../../../../ui/elements/feedback/Spinner';
-import { Button } from '../../../../ui/elements/buttons/Button';
-import { SaveIcon, XCircleIcon } from '../../../../ui/icons';
-import { FormErrorSummary } from '../../../../ui/layout/Form/FormErrorSummary';
-import { Stack } from '../../../../ui/layout/Stack/Stack';
-import type { ProgramEnrolment } from '../../../../plugin-sdk/documents';
-import { createDocumentForm } from '../../../../domain/documentForm/createDocumentForm';
-import { DocumentKeptValues } from '../../../../domain/documentForm/DocumentKeptValues';
-import { DocumentVersionNotice } from '../../../../domain/documentForm/DocumentVersionNotice';
-import { DocumentFormRegion } from '../../../../plugins/DocumentFormRegion';
-import { documentFormVersioning } from '../../../../plugins/documentFormSlot';
-import type { FormRegistryFragment } from '../../../../domain/documentForm/documentForm.generated';
+import { reportPermissionDenied } from '@/api/graphql';
+import { t } from '@/intl';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
+import { Spinner } from '@/ui/elements/feedback/Spinner';
+import { Button } from '@/ui/elements/buttons/Button';
+import { SaveIcon, XCircleIcon } from '@/ui/icons';
+import { FormErrorSummary } from '@/ui/layout/Form/FormErrorSummary';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import type { ProgramEnrolment } from '@/plugin-sdk/documents';
+import { createDocumentForm } from '@/domain/documentForm/createDocumentForm';
+import { DocumentKeptValues } from '@/domain/documentForm/DocumentKeptValues';
+import { DocumentVersionNotice } from '@/domain/documentForm/DocumentVersionNotice';
+import { DocumentFormRegion } from '@/plugins/DocumentFormRegion';
+import { documentFormVersioning } from '@/plugins/documentFormSlot';
+import type { FormRegistryFragment } from '@/domain/documentForm/documentForm.generated';
 
 /** What the modal opens: a program to enrol in, or a saved enrolment. */
 export type EnrolmentTarget =
@@ -39,12 +41,16 @@ export interface EnrolmentModalProps {
 }
 
 /*
- * The enrolment form in a modal (kdd/custom-forms/specs.md § Forms in the UI:
- * the modal mount point; implementation-plan H8): the document form host over
- * one ProgramEnrolment document, new or saved. The body is the plugin form
- * contributed for the enrolment's type, or the host's default enrolment form
- * (DocumentFormRegion). Opened from the program picker to enrol, and from a
- * Programs row to edit. Remounts per open, so each open loads afresh.
+ * The enrolment (spec/program-enrolment ui-surface S3): the document form host
+ * over one ProgramEnrolment document, new or saved, in a modal. The body is
+ * the plugin form contributed for the enrolment's type, or the host's default
+ * enrolment form (DocumentFormRegion; spec/plugins/sdk-contract.md §
+ * resolution). Opened from the program picker to enrol, and from a Programs
+ * row to edit. Remounts per open, so each open loads afresh.
+ *
+ * A save over a newer version is refused (rules § editing an enrolment), a
+ * Forbidden goes to the permission-denied modal, and any other refusal shows
+ * in the dialog with the server's reason behind a disclosure (rules § saving).
  */
 export const EnrolmentModal = (props: EnrolmentModalProps): JSX.Element => (
   <Show when={props.target} keyed>
@@ -87,6 +93,8 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
     patientId: () => props.patientId,
     source,
     versioning: type => documentFormVersioning('programEnrolment.form', type),
+    onForbidden: reportPermissionDenied,
+    refuseNewerVersion: true,
   });
   const archivedVersion = () => {
     const v = form.version();
@@ -120,10 +128,24 @@ const EnrolmentModalBody = (props: BodyProps): JSX.Element => {
         onClose={close}
         title={title()}
         testId="enrolment-modal"
-        actionsLead={
-          <Show when={form.saveError()}>
-            <Alert severity="error">{form.saveError()}</Alert>
-          </Show>
+        // Above the actions rule, the buttons staying at the inline end
+        // (ui-standards › dialogs § chrome).
+        footer={
+          <Switch>
+            <Match when={form.newerVersion()}>
+              <Alert severity="warning" testId="enrolment-newer-version">
+                {t('messages.enrolment-changed-since-opened')}
+              </Alert>
+            </Match>
+            <Match when={form.saveError()}>
+              {reason => (
+                <Alert severity="error" testId="enrolment-save-error">
+                  {t('error.failed-to-save-program-enrolment')}
+                  <ErrorDetails detail={reason()} />
+                </Alert>
+              )}
+            </Match>
+          </Switch>
         }
         actions={
           <>

@@ -1,0 +1,16 @@
+# The enrolments holding one enrolment ID, oldest first: the enrolment ID
+# field's duplicate check (spec/program-enrolment contract § typing an ID, and
+# duplicates). No type filter, so it spans every program the caller may view.
+query enrolmentsHoldingId($storeId: String!, $id: String!) {
+  programEnrolments(
+    storeId: $storeId
+    filter: { programEnrolmentId: { equalTo: $id } }
+    sort: { key: enrolmentDatetime, desc: false }
+  ) {
+    ... on ProgramEnrolmentConnector {
+      nodes {
+        name
+      }
+    }
+  }
+}

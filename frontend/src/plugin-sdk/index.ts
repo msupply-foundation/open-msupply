@@ -472,6 +472,9 @@ export {
   PatientDeceasedFields,
 } from './lazyComponents';
 export type { PatientFieldProps } from '../domain/patient/documentFields';
+// The host's enrolment ID field, for a `programEnrolment.form` to place.
+export { EnrolmentIdField } from './lazyComponents';
+export type { EnrolmentIdFieldProps } from '../domain/documentForm/EnrolmentIdField';
 export type { Draft } from '../domain/documentForm/draft';
 export type {
   Path,

@@ -2727,6 +2727,7 @@
   "messages.empty-unallocated-lines_one": "{{count}} of the selected placeholder lines has a quantity of 0. Automatic allocation will remove this line. Do you want to continue?",
   "messages.empty-unallocated-lines_other": "{{count}} of the selected placeholder lines have a quantity of 0. Automatic allocation will remove these lines. Do you want to continue?",
   "messages.enrol-before-encounter": "Enrol the patient in a program to record an encounter.",
+  "messages.enrolment-changed-since-opened": "This enrolment has been changed since you opened it. Close it and open it again to see the latest version.",
   "messages.error-campaign-name-already-exists": "A campaign with same name already exists 🥺",
   "messages.error-converting-csv-to-excel": "Unable to convert CSV to Excel",
   "messages.error-deleting-assets_one": "{{count}} asset could not be deleted",

@@ -59,11 +59,11 @@ import {
   fetchPatientProgramEnrolments,
   fetchPatientEncounters,
 } from './programs/programsApi';
-import { ProgramPickerDialog } from './programs/ProgramPickerDialog';
+import { ProgramPickerDialog } from '@/sections/program-enrolment/ProgramPickerDialog';
 import {
   EnrolmentModal,
   type EnrolmentTarget,
-} from './programs/EnrolmentModal';
+} from '@/sections/program-enrolment/EnrolmentModal';
 import {
   CreateEncounterDialog,
   type CreatedEncounter,
@@ -83,12 +83,13 @@ import { patientPreferences } from '../../../store/storeContext';
 // plain-path built-in form. The Insurance tab lists the patient's
 // policies and adds/edits them (gated on configured providers). The Programs /
 // Encounters / Vaccinations tabs are lists gated on the program module: a
-// Programs row opens the enrolment modal, an Encounters row navigates to the
-// encounter's record screen, and Vaccinations rows are non-clickable. Under
-// the program module the header's split button carries the record-create
-// actions, New program and New encounter (kdd/custom-forms
-// implementation-plan H8), beside Add insurance. The Log tab reuses the shared
-// activity-log surface.
+// Programs row opens the enrolment (spec/program-enrolment, whose picker and
+// enrolment live in sections/program-enrolment/), an Encounters row navigates
+// to the encounter's record screen, and Vaccinations rows are non-clickable.
+// Under the program module the header's split button carries the
+// record-create actions, New program and New encounter (kdd/custom-forms
+// implementation-plan H8), beside Add insurance. The Log tab reuses the
+// shared activity-log surface.
 //
 // The header also carries the triggers plugins contribute to
 // `patient.toolbarTrigger` (implementation-plan H10b); `openDocumentForm`
@@ -97,9 +98,8 @@ import { patientPreferences } from '../../../store/storeContext';
 // NOT built here: the Contact-tracing tab, and the vaccination card a
 // Vaccinations row would open.
 //
-// TO-DO: spec/patients describes the create actions and the enrolment modal
-// as another vertical's; the record-screen spec (implementation-plan H26)
-// brings them into it.
+// TO-DO: New encounter and the encounter screens are still unspecced; the
+// record-screen spec (implementation-plan H26, #789) brings them into spec.
 
 const PatientDetailView: Component = () => {
   const params = useParams<{ storeId: string; patientId: string }>();
