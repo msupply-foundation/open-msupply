@@ -658,7 +658,7 @@ const BatchReadFailed: Component = () => (
  * The batch list: a batch is chosen by selecting its row, and selecting the
  * chosen row again clears it. A batch under one dose cannot be chosen, unless
  * it is the chosen one — a recorded batch that has run down stays chosen and
- * can still be cleared (rules § zero doses; ui-surface § S3).
+ * can still be cleared (rules § given at this store; ui-surface § S3).
  */
 const BatchTable: Component<{
   rows: Batch[];

@@ -138,7 +138,7 @@ describe('OMS-REG-DIS-06.64 — without the document-write permission', () => {
 });
 
 describe('OMS-REG-DIS-06.44 — a vaccine with zero doses per unit', () => {
-  it('reads as configured, never as one dose per unit (rules § zero doses)', async () => {
+  it('reads as configured, never as one dose per unit (rules § given at this store)', async () => {
     const batch = {
       id: 'sl-a',
       batch: 'A',

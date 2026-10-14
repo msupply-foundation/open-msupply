@@ -117,7 +117,7 @@ export const fetchBatches = async (args: {
   return {
     itemId: args.itemId,
     // Taken as configured: a vaccine with zero doses per unit has no batch
-    // holding a dose, so none can be chosen (rules § zero doses).
+    // holding a dose, so none can be chosen (rules § given at this store).
     dosesPerUnit: item?.doses ?? 0,
     batches: item?.availableBatches.nodes ?? [],
   };
