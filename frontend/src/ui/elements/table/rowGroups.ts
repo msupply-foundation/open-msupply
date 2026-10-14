@@ -23,3 +23,9 @@ export const groupPositions = (values: readonly unknown[]): GroupPosition[] => {
     continuesNext: key !== null && i + 1 < keys.length && keys[i + 1] === key,
   }));
 };
+
+/**
+ * The runs of a table with no grouped column: one shared empty map, so such a
+ * table hands its rows the same answer however its rows change.
+ */
+export const NO_GROUP_RUNS: ReadonlyMap<string, GroupPosition> = new Map();
