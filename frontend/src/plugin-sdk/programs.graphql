@@ -1,6 +1,5 @@
 # The program data functions the SDK offers form plugins (./programs.ts;
-# kdd/custom-forms/specs.md § Generated identifiers, § Program events;
-# implementation-plan K1, K2).
+# kdd/custom-forms/specs.md § Generated identifiers, § Program events).
 
 # The next number of a named counter in the store, for a generated
 # identifier. Gated on MutateProgram in the store.

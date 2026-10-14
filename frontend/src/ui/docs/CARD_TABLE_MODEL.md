@@ -86,7 +86,7 @@ A group's fields default to **equal auto-fit tracks** — fine for a list card's
 
 Two notes on the reference:
 
-- The site's date range (`10–11.5rem`) floors at `DD/MM/YYYY` plus the calendar icon. Our `DateField`'s empty state shows the all-caps `DD MMM YYYY` placeholder, which is wider than the digits it stands for and clips at 10 — so a **usually-empty** date (the stocktake dates) floors at `11`, its ceiling riding up with it.
+- The site's date range (`10–11.5rem`) floors at `DD/MM/YYYY` plus the calendar icon. Our `DateField`'s empty state shows an all-caps hint, wider than the digits it stands for: `DD/MM/YYYY` clips to `DD/MM/YYY` at 10 — so a **usually-empty** date (the stocktake dates) floors at `11`, its ceiling riding up with it.
 - [header-field-width.html](https://msupply-foundation.github.io/ux-testing/header-field-width.html) — the weighted-columns worked example — **rejects letting the row wrap**. That rule protects a fixed-height page header; a card body must wrap, which is what the narrow fallback is for, and the site's § Field Widths itself sizes a wrapping row by these ranges.
 
 **Body labels use the dense scale.** A card body field renders its caption through `LabelledValue size="small"` (0.8125rem — ui-standards § inputs' `.field-label--small`). At the 14px default the caption sat a step _larger_ than a `size="small"` control's 13px text, i.e. above the value it captions. The card's identity row (`headerPosition: 'primary'`, a `FieldRow`) deliberately keeps the full-size label — it reads as the card's heading.

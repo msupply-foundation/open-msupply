@@ -310,6 +310,22 @@ describe('statusLineKind — status-line precedence (SYNC-03.18)', () => {
     expect(statusLineKind(idle, 0)).toBe('nothing-to-push');
     expect(statusLineKind(idle, undefined)).toBe('nothing-to-push');
   });
+  it('paused outranks the queue when idle — the count is moot until resumed', () => {
+    expect(statusLineKind(idle, 12, true)).toBe('paused');
+    expect(statusLineKind(idle, 0, true)).toBe('paused');
+  });
+  it('a run already in flight still reads as syncing while paused', () => {
+    expect(statusLineKind(syncing, 0, true)).toBe('syncing');
+  });
+  // Issue #840: maintenance mode holds the pause but lets a manual sync run,
+  // so it reads as its own line rather than 'paused'.
+  it('maintenance mode outranks the pause and the queue when idle', () => {
+    expect(statusLineKind(idle, 12, true, true)).toBe('maintenance');
+    expect(statusLineKind(idle, 0, false, true)).toBe('maintenance');
+  });
+  it('the forced run in maintenance mode still reads as syncing', () => {
+    expect(statusLineKind(syncing, 0, true, true)).toBe('syncing');
+  });
 });
 
 describe('records-to-push drains on success (SYNC-03.6)', () => {
@@ -510,7 +526,8 @@ describe('a later successful run clears the error (SYNC-03.30)', () => {
 describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync status)", () => {
   const now = new Date('2026-01-10T00:00:00Z');
   const errored = (
-    variant: 'CONNECTION_ERROR' | 'INVALID_SITE_NAME_OR_PASSWORD'
+    variant:
+      'CONNECTION_ERROR' | 'INVALID_SITE_NAME_OR_PASSWORD' | 'SYNC_API_PAUSED'
   ) =>
     toSyncOverview(
       v7({ error: { variantV7: variant, fullError: 'x' } }),
@@ -553,10 +570,94 @@ describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync s
     ).toEqual({ kind: 'error', tone: 'error' });
   });
 
+  it('reports the admin pause above faults, staleness and the queue', () => {
+    // A paused site will not sync whatever else is true of it, so the pause is
+    // the news — an error or a backlog can wait for the resume.
+    expect(
+      syncFooterStatus(
+        errored('INVALID_SITE_NAME_OR_PASSWORD'),
+        12,
+        0,
+        now,
+        true
+      )
+    ).toEqual({ kind: 'paused', tone: 'warning' });
+    expect(syncFooterStatus(staleBy(10), 0, 0, now, true)).toEqual({
+      kind: 'paused',
+      tone: 'warning',
+    });
+    expect(syncFooterStatus(staleBy(0), 14, 0, now, true)).toEqual({
+      kind: 'paused',
+      tone: 'warning',
+    });
+  });
+
+  it('reports maintenance mode above the pause it holds (#840)', () => {
+    expect(syncFooterStatus(staleBy(0), 14, 0, now, true, true)).toEqual({
+      kind: 'maintenance',
+      tone: 'warning',
+    });
+    expect(
+      syncFooterStatus(
+        errored('INVALID_SITE_NAME_OR_PASSWORD'),
+        0,
+        0,
+        now,
+        true,
+        true
+      )
+    ).toEqual({ kind: 'maintenance', tone: 'warning' });
+    // The forced run it allows reads as syncing like any other.
+    const syncing = toSyncOverview(v7({ isSyncing: true }), MODAL);
+    expect(syncFooterStatus(syncing, 0, 0, now, true, true)).toEqual({
+      kind: 'syncing',
+      tone: 'neutral',
+    });
+  });
+
+  it('lets a run already in flight finish before reading as paused', () => {
+    const syncing = toSyncOverview(v7({ isSyncing: true }), MODAL);
+    expect(syncFooterStatus(syncing, 0, 0, now, true)).toEqual({
+      kind: 'syncing',
+      tone: 'neutral',
+    });
+  });
+
   it('reports an unreachable server at warning level, not as a failure', () => {
     expect(syncFooterStatus(errored('CONNECTION_ERROR'), 0, 0, now)).toEqual({
       kind: 'unreachable',
       tone: 'warning',
+    });
+  });
+
+  it('reports a paused central server at warning level, not as a failure', () => {
+    // Issue #717: central refuses sync during maintenance; the site retries on
+    // its normal interval, so this is a state to report, not an alarm.
+    expect(syncFooterStatus(errored('SYNC_API_PAUSED'), 0, 0, now)).toEqual({
+      kind: 'sync-api-paused',
+      tone: 'warning',
+    });
+    // A V5/V6 site reports the same variant through the other error node.
+    const v5v6Paused = toSyncOverview(
+      v5v6({ error: { variant: 'SYNC_API_PAUSED', fullError: 'x' } }),
+      MODAL
+    );
+    expect(syncFooterStatus(v5v6Paused, 0, 0, now).kind).toBe(
+      'sync-api-paused'
+    );
+  });
+
+  it('lets staleness overtake a long central pause', () => {
+    const staleAndPaused = toSyncOverview(
+      v7({
+        error: { variantV7: 'SYNC_API_PAUSED', fullError: 'x' },
+        lastSuccessfulSync: { started: 'a', finished: finishedDaysAgo(3) },
+      }),
+      MODAL
+    );
+    expect(syncFooterStatus(staleAndPaused, 0, 0, now)).toEqual({
+      kind: 'error',
+      tone: 'error',
     });
   });
 
@@ -646,8 +747,11 @@ describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync s
 });
 
 describe('syncFooterDimmed — the offline level (OMS-REG-FTR-03.21)', () => {
-  it('dims only while the central server is out of reach', () => {
+  it('dims only while sync cannot happen — the server out of reach, this server paused or in maintenance mode, or the central sync API paused', () => {
     expect(syncFooterDimmed('unreachable')).toBe(true);
+    expect(syncFooterDimmed('paused')).toBe(true);
+    expect(syncFooterDimmed('maintenance')).toBe(true);
+    expect(syncFooterDimmed('sync-api-paused')).toBe(true);
     for (const kind of [
       'waiting',
       'syncing',

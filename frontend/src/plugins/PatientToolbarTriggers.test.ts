@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /*
  * The patient toolbar trigger slot's decisions (kdd/custom-forms/specs.md §
- * Forms in the UI, trigger slots; implementation-plan H10b): whether a
- * trigger shows for the patient, and what its click runs. The buttons are
- * the host's own; these are the parts a plugin's code decides.
+ * Forms in the UI, trigger slots): whether a trigger shows for the patient, and
+ * what its click runs. The buttons are the host's own; these are the parts a
+ * plugin's code decides.
  */
 
 vi.mock('../ui/elements/buttons/Button', () => ({ Button: () => null }));

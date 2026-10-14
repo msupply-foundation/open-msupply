@@ -25,10 +25,10 @@ import type { Encounter } from '../plugin-sdk/documents';
 
 /*
  * Form resolution for the document form slots (kdd/custom-forms/specs.md §
- * Forms in the UI; implementation-plan H5, H10): the plugin form contributed
- * for the opened document's type, else the host's default form, which also
- * renders in place of a plugin form that throws. The registry runs for real;
- * the session facts `when` reads are the one mocked edge.
+ * Forms in the UI): the plugin form contributed for the opened document's type,
+ * else the host's default form, which also renders in place of a plugin form
+ * that throws. The registry runs for real; the session facts `when` reads are
+ * the one mocked edge.
  *
  * The fixtures return strings rather than elements, so this runs in the node
  * environment against the client Solid build (vitest.workspace.ts), with

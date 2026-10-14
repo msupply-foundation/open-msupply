@@ -3,11 +3,8 @@ import { t } from '../../../intl';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
-import { Stack } from '../../../ui/layout/Stack/Stack';
-import { DocumentKeptValues } from '../../../domain/documentForm/DocumentKeptValues';
-import { DocumentVersionNotice } from '../../../domain/documentForm/DocumentVersionNotice';
-import { DocumentFormRegion } from '../../../plugins/DocumentFormRegion';
 import { PatientDetailsForm } from './PatientDetailsForm';
+import { PatientDocumentFormView } from './PatientDocumentFormView';
 import type { PatientDetails } from './patientDetails';
 
 export interface PatientDetailsBodyProps {
@@ -28,10 +25,6 @@ export interface PatientDetailsBodyProps {
  */
 export const PatientDetailsBody: Component<PatientDetailsBodyProps> = props => {
   const form = () => props.details.documentEditor.form;
-  const archivedVersion = () => {
-    const v = form().version();
-    return v.kind === 'archived' ? v.version : undefined;
-  };
 
   return (
     <>
@@ -66,35 +59,12 @@ export const PatientDetailsBody: Component<PatientDetailsBodyProps> = props => {
         >
           <Alert severity="error">{t('messages.record-not-found')}</Alert>
         </Match>
-        <Match when={form().status() === 'ready' && form().library()}>
-          {lib => {
-            const Default = lib().DefaultPatientForm;
-            return (
-              <Stack>
-                <DocumentVersionNotice
-                  version={form().version()}
-                  onEdit={form().edit}
-                />
-                <DocumentFormRegion
-                  slot="patient.form"
-                  documentType={form().registry()?.documentType ?? ''}
-                  draft={form().draft}
-                  record={{
-                    patientId: props.patientId,
-                    documentName: form().document()?.name,
-                  }}
-                  fallback={() => <Default draft={form().draft} />}
-                  archivedVersion={archivedVersion()}
-                  currentSchemaId={form().registry()?.formSchemaId}
-                />
-                <DocumentKeptValues values={form().kept()} />
-                <FormErrorSummary
-                  errors={form().validation.visible()}
-                  testId={props.errorSummaryTestId}
-                />
-              </Stack>
-            );
-          }}
+        <Match when={form().status() === 'ready'}>
+          <PatientDocumentFormView
+            patientId={props.patientId}
+            form={form()}
+            errorSummaryTestId={props.errorSummaryTestId}
+          />
         </Match>
       </Switch>
     </>

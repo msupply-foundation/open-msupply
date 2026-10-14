@@ -66,6 +66,7 @@ describe('password always starts blank (SET-02.12)', () => {
         username: 'site-1',
         intervalSeconds: 60,
         batchSize: 50,
+        isPaused: false,
       })
     ).toEqual({
       url: 'https://central.example',
@@ -103,6 +104,7 @@ describe('batch size is an optional override (SET-02.15/.16)', () => {
         username: 'site-1',
         intervalSeconds: 60,
         batchSize: null,
+        isPaused: false,
       }).batchSize
     ).toBeUndefined();
   });

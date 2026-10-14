@@ -1,19 +1,19 @@
 import React, { useRef } from 'react';
 import {
   DetailContainer,
-  IndicatorColumnNode,
   NothingHere,
   TableSkeleton,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
-import {
-  IndicatorLineWithColumnsFragment,
-  ProgramIndicatorFragment,
-} from '../../RequestRequisition/api';
+import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
 import { PageLayout } from '../PageLayout';
 import { ListIndicatorLines } from '../ListIndicators';
-import { mergeIndicatorLines } from './mergeIndicatorLines';
+import {
+  MergedIndicatorColumn,
+  MergedIndicatorLine,
+  mergeIndicatorLines,
+} from './mergeIndicatorLines';
 import { IndicatorLineEdit } from './IndicatorLineEdit';
 import { UseUpdateIndicatorValue, usePreviousNextIndicatorLine } from './hooks';
 
@@ -23,8 +23,8 @@ interface IndicatorTabProps {
   disabled: boolean;
   useUpdateIndicatorValue: UseUpdateIndicatorValue;
   belowInputs?: (
-    columns: IndicatorColumnNode[],
-    currentLine: IndicatorLineWithColumnsFragment
+    columns: MergedIndicatorColumn[],
+    currentLine: MergedIndicatorLine
   ) => React.ReactNode;
 }
 
@@ -47,11 +47,11 @@ export const IndicatorsTab = ({
   // the same code (one per indicator) are collapsed into a single entry with
   // columns from both indicators combined, base-indicator columns first.
   const linesAndColumns = mergeIndicatorLines(indicators ?? []);
-  // Values are fetched via loader; a line only appears if at least one column
-  // has a value for it.
-  const populatedLinesAndColumns = linesAndColumns
-    .filter(l => l.columns.some(c => c.value))
-    .sort((a, b) => a.line.lineNumber - b.line.lineNumber);
+  // Values are fetched via loader; mergeIndicatorLines already drops lines
+  // with no value for the period.
+  const populatedLinesAndColumns = linesAndColumns.sort(
+    (a, b) => a.line.lineNumber - b.line.lineNumber
+  );
   const sortedLines = populatedLinesAndColumns.map(l => l.line);
 
   const queryLineId = urlQuery[INDICATOR_LINE_QUERY_KEY] as string | undefined;

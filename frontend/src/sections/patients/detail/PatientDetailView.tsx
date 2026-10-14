@@ -74,25 +74,23 @@ import { patientPreferences } from '../../../store/storeContext';
 // S3 — the patient detail screen (spec/patients). Summary header + tabs
 // (Details / Programs / Encounters / Vaccinations / Insurance / Log). The
 // Details tab edits the patient on one of two paths (spec/patients rules › two
-// persistence paths), buffered locally and committed on an explicit Save
-// behind a confirmation, with a discard prompt when leaving dirty (the
-// StockLineDetailView model). With a Patient registry entry installed it is
-// the document path: the patient document in the document form host, its body
-// the plugin form contributed to `patient.form` or the host's default patient
-// form (kdd/custom-forms implementation-plan H9). Without one it is the
-// plain-path built-in form. The Insurance tab lists the patient's
-// policies and adds/edits them (gated on configured providers). The Programs /
-// Encounters / Vaccinations tabs are lists gated on the program module: a
-// Programs row opens the enrolment modal, an Encounters row navigates to the
-// encounter's record screen, and Vaccinations rows are non-clickable. Under
-// the program module the header's split button carries the record-create
-// actions, New program and New encounter (kdd/custom-forms
-// implementation-plan H8), beside Add insurance. The Log tab reuses the shared
-// activity-log surface.
+// persistence paths), buffered locally and committed on an explicit Save behind
+// a confirmation, with a discard prompt when leaving dirty (the
+// StockLineDetailView model). With a Patient registry entry installed it is the
+// document path: the patient document in the document form host, its body the
+// plugin form contributed to `patient.form` or the host's default patient form.
+// Without one it is the plain-path built-in form. The Insurance tab lists the
+// patient's policies and adds/edits them (gated on configured providers). The
+// Programs / Encounters / Vaccinations tabs are lists gated on the program
+// module: a Programs row opens the enrolment modal, an Encounters row navigates
+// to the encounter's record screen, and Vaccinations rows are non-clickable.
+// Under the program module the header's split button carries the record-create
+// actions, New program and New encounter, beside Add insurance. The Log tab
+// reuses the shared activity-log surface.
 //
 // The header also carries the triggers plugins contribute to
-// `patient.toolbarTrigger` (implementation-plan H10b); `openDocumentForm`
-// opens a new encounter in the encounter form modal.
+// `patient.toolbarTrigger`; `openDocumentForm` opens a new encounter in the
+// encounter form modal.
 //
 // NOT built here: the Contact-tracing tab, and the vaccination card a
 // Vaccinations row would open.
@@ -221,10 +219,10 @@ const PatientDetailView: Component = () => {
   const openEncounter = (encounter: { id: string }) =>
     navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);
 
-  // The record-create actions (kdd/custom-forms implementation-plan H8), over
-  // the registry entries the server lets this user see: every enrolment type,
-  // and the encounter types of the programs the patient is enrolled in, since
-  // the server refuses an encounter in any other program.
+  // The record-create actions, over the registry entries the server lets this
+  // user see: every enrolment type, and the encounter types of the programs the
+  // patient is enrolled in, since the server refuses an encounter in any other
+  // program.
   const [registriesData] = createResource(
     () => (hasProgramModule() ? params.storeId : undefined),
     fetchFormRegistries
@@ -241,10 +239,9 @@ const PatientDetailView: Component = () => {
   };
   const canAddEncounter = () => enrolments().length > 0;
 
-  // A trigger's `openDocumentForm` (implementation-plan H10b): a new
-  // encounter of a type in a program the patient is enrolled in, which is
-  // all the server accepts. Anything else is refused and named against the
-  // plugin that asked.
+  // A trigger's `openDocumentForm`: a new encounter of a type in a program the
+  // patient is enrolled in, which is all the server accepts. Anything else is
+  // refused and named against the plugin that asked.
   const [encounterFormType, setEncounterFormType] =
     createSignal<FormRegistryFragment>();
   const openDocumentForm = (documentType: string, pluginCode: string) => {

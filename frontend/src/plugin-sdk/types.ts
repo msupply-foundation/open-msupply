@@ -564,7 +564,9 @@ export interface FormRecordView {
  *
  * `record` updates IN PLACE (its `documentName` arrives with the first save),
  * so a form reads it through `props` rather than destructuring it once. The
- * draft is one stable object for the form's life.
+ * draft is one stable object for the form's life. `form` is the form's own
+ * part in the enrolment's save, as an encounter form has it (a check that
+ * may stop the save, such as an enrolment number another enrolment holds).
  *
  * A `type`, not an interface, so it carries an implicit index signature and
  * is usable as the `P` of the uniform `Contribution<P>`.
@@ -574,17 +576,23 @@ export type ProgramEnrolmentFormProps<
 > = {
   readonly draft: Draft<T>;
   readonly record: FormRecordView;
+  readonly form: FormParticipation;
 };
 
 /**
  * The props an `encounter.form` contribution receives: the encounter
  * record screen's body. The screen's toolbar edits the visit date, the
- * clinician and the status on the same draft. Otherwise as
- * {@link ProgramEnrolmentFormProps}.
+ * clinician and the status on the same draft. `form` is the form's own part
+ * in the record's save, as an editable slot's contribution has it: a step to
+ * run before the encounter is saved (writing a record the encounter refers
+ * to, such as a prescription), which may stop the save, one after, and dirty
+ * state and validity that count with the draft's. One stable object for the
+ * form's life. Otherwise as {@link ProgramEnrolmentFormProps}.
  */
 export type EncounterFormProps<T extends Encounter = Encounter> = {
   readonly draft: Draft<T>;
   readonly record: FormRecordView;
+  readonly form: FormParticipation;
 };
 
 /**

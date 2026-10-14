@@ -3,6 +3,7 @@ import { t } from '../../../intl';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { FormRowItem } from '../../../ui/layout/Form/FormRowItem';
 import { NameSearch } from '../../../domain/name';
+import { CampaignSelect } from '../../../domain/campaign';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
 import type { OutboundNode } from './outboundUpdate';
 import type { OutboundFieldEdit } from './outboundEdit';
@@ -31,6 +32,8 @@ export interface OutboundDetailToolbarProps {
   /** A rejected customer change, surfaced on the lookup itself. */
   customerError?: string;
   onChangeCustomer: (customerId: string) => void;
+  /** Saves the shipment's campaign (null = routine). */
+  onChangeCampaign: (campaignId: string | null) => void;
   /** Prominent custom fields save through the same field-save path. */
   onSaveCustomFields: (patch: Record<string, unknown>) => void;
 }
@@ -98,6 +101,20 @@ export const OutboundDetailToolbar: Component<
             props.edit.setField('theirReference', e.currentTarget.value)
           }
           onBlur={() => props.edit.flush()}
+        />
+      </FormRowItem>
+
+      {/* The campaign this shipment issues for (none = routine). Lines keep
+          their batch's own campaign — this never retags stock. */}
+      <FormRowItem weight={1} minWidth="8rem" maxWidth="16rem">
+        <CampaignSelect
+          label={t('label.campaign-only')}
+          size="small"
+          inputTestId="outbound-campaign-input"
+          value={props.node.campaign}
+          placeholder={t('label.none')}
+          disabled={props.disabled}
+          onChange={campaign => props.onChangeCampaign(campaign?.id ?? null)}
         />
       </FormRowItem>
 

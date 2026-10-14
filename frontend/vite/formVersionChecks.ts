@@ -1,11 +1,13 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runnerImport, type InlineConfig, type Plugin } from 'vite';
 import {
   BASE_DOCUMENT_TYPES,
   BASE_SCHEMA_DIR,
+  FORMS_DECLARATION,
+  canonicalJson,
   typeDir,
   type DocumentTypeDeclaration,
   type FormsDeclaration,
@@ -18,16 +20,31 @@ import {
  * plugin whose versions do not fit together is never packed or installed:
  *
  *   - every `$ref` in every version resolves within its schema;
+ *   - the current version compiles in the host's validator, which checks
+ *     every draft against it, so its documents can be saved here (an earlier
+ *     version is only migrated from, so one that does not compile is skipped
+ *     where a fixture would be validated against it);
  *   - every event rule's field paths name a field of the current schema, and
  *     a schedule's base time a date-time field;
  *   - for a type with more than one version, each version's hop to the next
  *     is either a step in `forms/<dir>/migrations.ts` whose coverage map
  *     accounts for every difference between the two schemas, or an additive
  *     change needing no step;
- *   - each earlier version has a fixture, `forms/<dir>/fixtures/v<n>.json`,
- *     that validates against its own version and, migrated to the current
- *     one, against the current schema and the category's base schema, both
- *     of which the host checks every draft against.
+ *   - every narrowing between versions (a field newly required, given an
+ *     enum, format or pattern, or a stricter limit, inside arrays too) is
+ *     acknowledged in `forms.json`, under the narrower version's `tightens`,
+ *     unless its step clears the field whole; and every acknowledgement names
+ *     a narrowing, so a misspelt path is not taken as one;
+ *   - each earlier version has at least one fixture, a document as that
+ *     version recorded it: `forms/<dir>/fixtures/v<n>.json`, or one
+ *     `v<n>.<case>.json` for each case a deployment's documents show. Each
+ *     validates against its own version and, migrated to the current one,
+ *     against the current schema and the category's base schema, both of
+ *     which the host checks every draft against;
+ *   - a fixture of the current version, which none needs, validates against
+ *     the current schema and the base schema as it is;
+ *   - every file in `fixtures/` is named as a fixture of a version the type
+ *     has, so none is skipped unread.
  *
  * (The frozen-file and `versions.ts` checks need the schema generator, so
  * they are part of the emit in vite/formPlugins.ts.)
@@ -110,6 +127,7 @@ interface Step {
 /** The host modules the checks reuse, typed by the part they call. */
 interface HostModules {
   unresolvedRefs: (schema: unknown) => string[];
+  schemaCompileError: (schema: unknown) => string | undefined;
   flattenSchema: (
     schema: unknown
   ) => Map<string, { types: string[]; format?: string }>;
@@ -118,6 +136,11 @@ interface HostModules {
     newSchema: unknown,
     step: Step
   ) => string[];
+  findNarrowings: (
+    oldSchema: unknown,
+    newSchema: unknown,
+    step: Step
+  ) => { path: string; changes: string[]; keywords: string[] }[];
   nextStep: (
     steps: readonly Step[],
     at: number,
@@ -178,10 +201,13 @@ const readJson = (path: string, problems: string[]): unknown => {
 const validate = (
   host: HostModules,
   schema: Record<string, unknown>,
-  data: unknown
+  data: unknown,
+  accepted: (path: string, keyword: string) => boolean = () => false
 ): string | undefined => {
   const id = `check:${createHash('sha256').update(JSON.stringify(schema)).digest('hex')}`;
-  const errors = host.validateDocument(id, schema, data);
+  const errors = host
+    .validateDocument(id, schema, data)
+    .filter(error => !accepted(error.path, error.keyword));
   if (errors.length === 0) return undefined;
   return errors
     .map(error => `${error.path || '(the document)'} (${error.keyword})`)
@@ -307,6 +333,99 @@ const checkEventRules = (
   return problems;
 };
 
+// ── Fixtures ────────────────────────────────────────────────────────────────
+
+// `v<n>.json`, or `v<n>.<case>.json` naming the case it is an example of.
+const FIXTURE_NAME = /^v(\d+)(\.[^.]+)?\.json$/;
+
+/** A type's fixture files, by the version that recorded them. */
+type Fixtures = Map<number, string[]>;
+
+/*
+ * Every file in the type's `fixtures/`, by version. A file the build would
+ * not read as a fixture is a problem rather than skipped, since its author
+ * expects it checked. Dotfiles (a Finder `.DS_Store`) are not the author's.
+ */
+const listFixtures = (
+  entry: DocumentTypeDeclaration,
+  dir: string,
+  problems: string[]
+): Fixtures => {
+  const fixtures: Fixtures = new Map();
+  const folder = join(dir, FIXTURES_DIR);
+  if (!existsSync(folder)) return fixtures;
+  const versions = entry.versions.length;
+  for (const name of readdirSync(folder).sort()) {
+    if (name.startsWith('.')) continue;
+    const file = join(folder, name);
+    const match = FIXTURE_NAME.exec(name);
+    if (!match) {
+      problems.push(
+        `${file}: not a fixture name, so the build would never read it — ` +
+          'name it v<n>.json or v<n>.<case>.json, after the version that ' +
+          'recorded it'
+      );
+      continue;
+    }
+    const version = Number(match[1]);
+    if (version < 1 || version > versions) {
+      problems.push(
+        `${file}: a fixture of v${version}, which ${entry.documentType} ` +
+          `does not have (v1 to v${versions}) — name it after the version ` +
+          'that recorded it'
+      );
+      continue;
+    }
+    fixtures.set(version, [...(fixtures.get(version) ?? []), file]);
+  }
+  return fixtures;
+};
+
+/** The category's base schema, for a category that has one. */
+const readBaseSchema = (
+  entry: DocumentTypeDeclaration,
+  problems: string[]
+): unknown =>
+  (BASE_DOCUMENT_TYPES as readonly string[]).includes(entry.category)
+    ? readJson(join(BASE_SCHEMA_DIR, `${entry.category}.json`), problems)
+    : undefined;
+
+/*
+ * A fixture of the current version needs no migration, so it is checked as it
+ * is: against the current schema and the base schema.
+ */
+const checkCurrentFixture = (
+  host: HostModules,
+  entry: DocumentTypeDeclaration,
+  fixture: string,
+  schemas: Record<string, unknown>[],
+  base: unknown
+): string[] => {
+  const problems: string[] = [];
+  const current = schemas.length;
+  const data = readJson(fixture, problems);
+  if (data === undefined) return problems;
+  const own = validate(host, schemas[current - 1], data);
+  if (own) {
+    problems.push(
+      `${fixture}: does not validate against v${current} ` +
+        `(${entry.versions[current - 1].file}): ${own} — a fixture is a ` +
+        `document as v${current} recorded it`
+    );
+    return problems;
+  }
+  const baseErrors = isRecord(base) ? validate(host, base, data) : undefined;
+  if (baseErrors) {
+    problems.push(
+      `${fixture}: does not validate against the ${entry.category} base ` +
+        'schema, which the host checks every draft against as well: ' +
+        `${baseErrors} — fix the fixture, or the type if v${current} lets ` +
+        'through a document the base schema refuses'
+    );
+  }
+  return problems;
+};
+
 // ── Migrations ──────────────────────────────────────────────────────────────
 
 /** The steps `migrations.ts` exports, or the problems that stop reading them. */
@@ -372,7 +491,10 @@ const checkMigrations = async (
   host: HostModules,
   entry: DocumentTypeDeclaration,
   dir: string,
-  schemas: Record<string, unknown>[]
+  formsFile: string,
+  schemas: Record<string, unknown>[],
+  fixtures: Fixtures,
+  base: unknown
 ): Promise<string[]> => {
   const current = schemas.length;
   const file = join(dir, MIGRATIONS_FILE);
@@ -450,33 +572,117 @@ const checkMigrations = async (
     }
   }
 
-  const base = (BASE_DOCUMENT_TYPES as readonly string[]).includes(
-    entry.category
-  )
-    ? readJson(join(BASE_SCHEMA_DIR, `${entry.category}.json`), problems)
-    : undefined;
+  /*
+   * Every narrowing on each version's hop towards the current one, as the
+   * coverage loop above takes them, must be acknowledged on a version the hop
+   * reaches. Collected across the hops, with the keywords each narrows by,
+   * so an acknowledgement is unused only when no hop narrows its path, and a
+   * fixture failing there is accepted only for those keywords.
+   */
+  const acknowledged = new Map<string, Set<string>>();
+  const ackKey = (version: number, path: string) => `${version}\0${path}`;
+  for (let at = 1; at < current; at += 1) {
+    const step = host.nextStep(steps, at, current);
+    const target = step ? host.stepTarget(step) : at + 1;
+    const narrowings = host.findNarrowings(
+      schemas[at - 1],
+      schemas[target - 1],
+      step ?? { from: at }
+    );
+    for (const { path, changes, keywords } of narrowings) {
+      // Every version the hop reaches that acknowledges it: a step across
+      // several versions makes each one's acknowledgement this narrowing's.
+      let found = false;
+      for (let version = at + 1; version <= target; version += 1) {
+        if (entry.versions[version - 1].tightens?.[path] === undefined) {
+          continue;
+        }
+        found = true;
+        const key = ackKey(version, path);
+        const held = acknowledged.get(key) ?? new Set<string>();
+        for (const keyword of keywords) held.add(keyword);
+        acknowledged.set(key, held);
+      }
+      if (found) continue;
+      problems.push(
+        `${formsFile}: ${entry.documentType} v${at} → v${target}: ${path} ` +
+          `${changes.join(', and ')}, so a document v${at} saved may not ` +
+          `validate against v${target} until someone edits it — if that is ` +
+          `meant, acknowledge it on v${target}, "tightens": ` +
+          `{ ${JSON.stringify(path)}: "<why>" }${
+            step || !additiveOnly(target)
+              ? `, or clear the old value in a step in ${file} ` +
+                "(unresolved 'any')"
+              : ''
+          }`
+      );
+    }
+  }
+  entry.versions.forEach((version, i) => {
+    for (const path of Object.keys(version.tightens ?? {})) {
+      if (i === 0 || acknowledged.has(ackKey(i + 1, path))) continue;
+      problems.push(
+        `${formsFile}: ${entry.documentType} v${i + 1}: "tightens" names ` +
+          `${path}, which no hop into v${i + 1} narrows — remove it, or fix ` +
+          'the path'
+      );
+    }
+  });
+
   const currentFile = entry.versions[current - 1].file;
 
-  for (let version = 1; version < current; version += 1) {
-    const fixture = join(dir, FIXTURES_DIR, `v${version}.json`);
-    if (!existsSync(fixture)) {
-      problems.push(
-        `${fixture}: not found — every earlier version needs a fixture, a ` +
-          `document as v${version} recorded it, which the build migrates to ` +
-          `v${current} and validates; add one`
-      );
-      continue;
-    }
+  /*
+   * A fixture's problems against a version. The host validates drafts against
+   * the current version only, so an earlier one its validator cannot compile
+   * costs no document its save: the version is the deployment's, frozen, and
+   * a fixture is simply not checked against it.
+   */
+  const compiles = schemas.map(
+    schema => host.schemaCompileError(schema) === undefined
+  );
+  const fits = (
+    version: number,
+    data: unknown,
+    accepted?: (path: string, keyword: string) => boolean
+  ) =>
+    compiles[version - 1]
+      ? validate(host, schemas[version - 1], data, accepted)
+      : undefined;
+  /*
+   * Where a version after the fixture's acknowledges a narrowing, the
+   * fixture failing there by the narrowing's own keyword is what the
+   * acknowledgement accepts; failing there another way (a migration writing
+   * the wrong type) is not. An error names an array's item by its index
+   * (`contactDetails.0.region`), a narrowing by `[]`.
+   */
+  const acceptedAfter = (version: number) => {
+    const keywordsAt = new Map<string, Set<string>>();
+    entry.versions.forEach((later, i) => {
+      if (i + 1 <= version) return;
+      for (const path of Object.keys(later.tightens ?? {})) {
+        const keywords = acknowledged.get(ackKey(i + 1, path));
+        if (!keywords) continue;
+        const held = keywordsAt.get(path) ?? new Set<string>();
+        for (const keyword of keywords) held.add(keyword);
+        keywordsAt.set(path, held);
+      }
+    });
+    return (path: string, keyword: string) =>
+      keywordsAt.get(path.replace(/\.\d+(?=\.|$)/g, '[]'))?.has(keyword) ??
+      false;
+  };
+
+  const checkFixture = (fixture: string, version: number) => {
     const data = readJson(fixture, problems);
-    if (data === undefined) continue;
-    const own = validate(host, schemas[version - 1], data);
+    if (data === undefined) return;
+    const own = fits(version, data);
     if (own) {
       problems.push(
         `${fixture}: does not validate against v${version} ` +
           `(${entry.versions[version - 1].file}): ${own} — a fixture is a ` +
           `document as v${version} recorded it`
       );
-      continue;
+      return;
     }
 
     // An additive hop carries the data unchanged, so it must validate as it
@@ -491,7 +697,7 @@ const checkMigrations = async (
         at = target;
         continue;
       }
-      const errors = validate(host, schemas[at], carried);
+      const errors = fits(at + 1, carried, acceptedAfter(version));
       if (errors) {
         problems.push(
           `${fixture}: v${at} → v${at + 1} has no migration step, so the ` +
@@ -507,7 +713,7 @@ const checkMigrations = async (
     }
 
     const migrated = host.applyMigrations(data, version, current, steps)?.data;
-    const errors = validate(host, schemas[current - 1], migrated);
+    const errors = fits(current, migrated, acceptedAfter(version));
     const lastHopAdditive =
       at === current - 1 && !host.nextStep(steps, at, current);
     if (errors && lastHopAdditive) {
@@ -539,6 +745,20 @@ const checkMigrations = async (
           `the migration in ${file} (or the fixture)`
       );
     }
+  };
+
+  for (let version = 1; version < current; version += 1) {
+    const files = fixtures.get(version) ?? [];
+    if (files.length === 0) {
+      problems.push(
+        `${join(dir, FIXTURES_DIR)}: no fixture of v${version} — every ` +
+          'earlier version needs at least one, a document as ' +
+          `v${version} recorded it (v${version}.json, or ` +
+          `v${version}.<case>.json for each case), which the build migrates ` +
+          `to v${current} and validates; add one`
+      );
+    }
+    for (const fixture of files) checkFixture(fixture, version);
   }
   return problems;
 };
@@ -550,11 +770,48 @@ const checkMigrations = async (
  * to do; empty when its versions fit together. A type whose schema files
  * cannot be read is skipped: the emit and the pack report those.
  */
+/*
+ * A deployment's schema id declared on two types, as two registry entries
+ * may share one schema row, names one schema on the server: install refuses
+ * the second where its content differs, so the build does too.
+ */
+const sharedSchemaIdProblems = (
+  pluginDir: string,
+  declaration: FormsDeclaration
+): string[] => {
+  const problems: string[] = [];
+  const first = new Map<string, { place: string; content: string }>();
+  for (const entry of declaration.documentTypes) {
+    entry.versions.forEach((version, i) => {
+      if (version.id === undefined) return;
+      const file = join(typeDir(pluginDir, entry), version.file);
+      if (!existsSync(file)) return;
+      const schema = readJson(file, problems);
+      if (schema === undefined) return;
+      const place = `${entry.documentType} v${i + 1}`;
+      const content = canonicalJson(schema);
+      const earlier = first.get(version.id);
+      if (!earlier) {
+        first.set(version.id, { place, content });
+      } else if (earlier.content !== content) {
+        problems.push(
+          `${join(pluginDir, FORMS_DECLARATION)}: version id ` +
+            `"${version.id}" is declared on ${earlier.place} and on ` +
+            `${place} with different schemas — one id names one schema on ` +
+            'the server, so install would refuse the second'
+        );
+      }
+    });
+  }
+  return problems;
+};
+
 export const checkFormVersions = async (
   pluginDir: string,
   declaration: FormsDeclaration
 ): Promise<string[]> => {
   const problems: string[] = [];
+  problems.push(...sharedSchemaIdProblems(pluginDir, declaration));
   for (const entry of declaration.documentTypes) {
     const dir = typeDir(pluginDir, entry);
     // Read only at pack time otherwise, so a missing or broken one would pass
@@ -594,6 +851,25 @@ export const checkFormVersions = async (
       }
     });
     if (!refsResolve) continue;
+    // Every draft is validated against the current version, so one the
+    // validator cannot compile leaves no document of the type saveable here,
+    // and every fixture check would fail on it, blaming the fixture.
+    const current = entry.versions[schemas.length - 1];
+    const compileError = host.schemaCompileError(schemas[schemas.length - 1]);
+    if (compileError) {
+      problems.push(
+        `${join(dir, current.file)}: the validator this frontend checks ` +
+          `every draft with (AJV) cannot compile v${schemas.length}, so no ` +
+          `${entry.documentType} could be saved here: ${firstLine(compileError)} — ` +
+          (current.id === undefined
+            ? `fix it in ${current.source ? join(dir, current.source) : 'the type'}; a \`@pattern\` must ` +
+              'be a valid JavaScript Unicode regular expression, which ' +
+              'refuses an escape such as `\\-` outside a class'
+            : "it is the deployment's own schema, so add a version whose " +
+              'schema compiles')
+      );
+      continue;
+    }
     if (entry.events) {
       problems.push(
         ...checkEventRules(
@@ -604,8 +880,26 @@ export const checkFormVersions = async (
         )
       );
     }
+    const fixtures = listFixtures(entry, dir, problems);
+    const base =
+      fixtures.size > 0 ? readBaseSchema(entry, problems) : undefined;
     if (schemas.length > 1) {
-      problems.push(...(await checkMigrations(host, entry, dir, schemas)));
+      problems.push(
+        ...(await checkMigrations(
+          host,
+          entry,
+          dir,
+          join(pluginDir, FORMS_DECLARATION),
+          schemas,
+          fixtures,
+          base
+        ))
+      );
+    }
+    for (const fixture of fixtures.get(schemas.length) ?? []) {
+      problems.push(
+        ...checkCurrentFixture(host, entry, fixture, schemas, base)
+      );
     }
   }
   return problems;

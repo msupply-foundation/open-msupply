@@ -1,10 +1,9 @@
 /*
  * The program data functions a form plugin calls (spec/plugins/sdk-contract.md
  * § data access; kdd/custom-forms/specs.md § Generated identifiers, § Program
- * events; implementation-plan K1, K2): a server counter for generated
- * identifiers, and the program events the server derives from documents.
- * Both act in the entered store, like every SDK call, so a plugin never
- * handles a store id.
+ * events): a server counter for generated identifiers, and the program events
+ * the server derives from documents. Both act in the entered store, like every
+ * SDK call, so a plugin never handles a store id.
  */
 import { createMemo, createResource } from 'solid-js';
 import { graphqlFetch, type GraphqlResult } from '../api/graphql';
