@@ -72,7 +72,9 @@ export const FormCategory = <T,>(props: FormCategoryProps<T>): JSX.Element => {
   const [open, setOpen] = createSignal(false);
   const missing = () =>
     categoryErrorCount(
-      (props.draft as unknown as HostDraft<T>).visibleErrorPaths(),
+      // The host's draft has it; a plugin test's stub draft need not.
+      (props.draft as unknown as Partial<HostDraft<T>>).visibleErrorPaths?.() ??
+        [],
       props.paths as readonly string[]
     );
   return (
