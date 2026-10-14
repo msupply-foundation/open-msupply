@@ -7,7 +7,8 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { formatNumber, t } from '../../../../intl';
+import { t } from '../../../../intl';
+import { roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -65,6 +66,7 @@ import {
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import { requestedQuantityForItem } from '../internalOrderContext';
 import styles from './InboundShipmentLineEditModal.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // One line of the linked purchase order — the PO-line picker's options (derived
 // from the generated result, not restated).
@@ -741,9 +743,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     const units = b.numberOfPacks * b.packSize;
     if (!units) return '';
     const unit = item()?.unitName;
-    return unit
-      ? `${formatNumber(units, { maximumFractionDigits: 2 })} ${unit}`
-      : formatNumber(units, { maximumFractionDigits: 2 });
+    return unit ? `${roundedText(units)} ${unit}` : roundedText(units);
   };
 
   // Seed on mount: a row open (update mode) loads its item — focusing the
@@ -952,9 +952,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // (kdd/solid-reactivity-pitfalls).
   const declaredValue = (value: () => number | undefined) => (
     <span class={styles.statValue}>
-      {value() === undefined
-        ? '—'
-        : formatNumber(value()!, { maximumFractionDigits: 2 })}
+      {value() === undefined ? '—' : <Num value={value()!} />}
     </span>
   );
 
@@ -1103,16 +1101,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                       against. An em dash rather than blank, matching every
                       other read-only "no value" in the vertical (the side
                       panel's Currency / Shipping method / Transport ref). */}
-                  {diff() === undefined
-                    ? '—'
-                    : // An explicit + on an over-receipt (a negative
-                      // already carries its own sign), so the direction of the
-                      // discrepancy reads without any colour doing the work.
-                      // The mismatch Alert above the cards carries the alarm;
-                      // this stays a figure among figures.
-                      `${diff()! > 0 ? '+' : ''}${formatNumber(diff()!, {
-                        maximumFractionDigits: 2,
-                      })}`}
+                  <Show when={diff() !== undefined} fallback="—">
+                    {/* An explicit + on an over-receipt (a negative already
+                        carries its own sign), so the direction of the
+                        discrepancy reads without any colour doing the work.
+                        The mismatch Alert above the cards carries the alarm;
+                        this stays a figure among figures. */}
+                    {diff()! > 0 ? '+' : ''}
+                    <Num value={diff()!} />
+                  </Show>
                 </span>
               );
             },
@@ -1686,7 +1683,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   value: l.id,
                   label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
                     'label.pack-size'
-                  ).toLowerCase()} ${l.requestedPackSize}`,
+                  ).toLowerCase()} ${roundedText(l.requestedPackSize)}`,
                 }))}
               />
             ) : (
@@ -1820,8 +1817,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                             const unit = item()?.unitName;
                             const requested = context().requested;
                             return unit
-                              ? `${formatNumber(requested)} ${unit}`
-                              : formatNumber(requested);
+                              ? `${roundedText(requested)} ${unit}`
+                              : roundedText(requested);
                           })()}
                         </LabelledValue>
                       )}
@@ -1848,6 +1845,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             </Show>
             <div class={styles.cards}>
               <DataTable
+                dialogTable
                 columns={columns()}
                 rows={rows()}
                 rowKey={b => b.id}
