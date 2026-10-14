@@ -13,9 +13,9 @@ import {
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
-import { formatNumber } from '../../../../intl/formatNumber';
+import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
-import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { Dialog, DIALOG_SCROLL } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
@@ -91,6 +91,7 @@ import {
 } from '../../../../domain/allocation';
 import { outboundShipmentPreferences } from '@/store/storeContext';
 import { issueWarningMessages } from './allocationWarnings';
+import { Num } from '@/ui/elements/typography/Num';
 import {
   learnIssueScan,
   scannedBatchExclusions,
@@ -377,8 +378,8 @@ const warningMessages = (
       ? {
           testId: 'outbound-over-allocated-warning',
           message: t(message.key, {
-            quantity: formatNumber(message.quantity),
-            issueQuantity: formatNumber(message.issueQuantity),
+            quantity: roundedText(message.quantity),
+            issueQuantity: roundedText(message.issueQuantity),
           }),
         }
       : {
@@ -921,8 +922,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             {
               testId: 'outbound-adjusted-entry-warning',
               message: t('messages.over-allocated-line', {
-                quantity: formatNumber(appliedQuantity),
-                issueQuantity: formatNumber(value),
+                quantity: roundedText(appliedQuantity),
+                issueQuantity: roundedText(value),
               }),
             },
           ]
@@ -1475,12 +1476,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         const line = info.row.original;
         return (
           <>
-            {formatNumber(
-              dosesView()
-                ? line.numberOfPacks
-                : line.numberOfPacks * line.packSize,
-              { maximumFractionDigits: 2 }
-            )}
+            <Num
+              value={
+                dosesView()
+                  ? line.numberOfPacks
+                  : line.numberOfPacks * line.packSize
+              }
+            />
           </>
         );
       },
@@ -1524,12 +1526,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 <>
                   {/* Displayed to 2 dp (the old app's number-cell default) —
                       the raw subtraction carries float dust (2.34 − 3). */}
-                  {line.receivedNumberOfPacks == null
-                    ? ''
-                    : formatNumber(
-                        line.receivedNumberOfPacks - line.numberOfPacks,
-                        { maximumFractionDigits: 2 }
-                      )}
+                  {line.receivedNumberOfPacks == null ? (
+                    ''
+                  ) : (
+                    <Num
+                      value={line.receivedNumberOfPacks - line.numberOfPacks}
+                    />
+                  )}
                 </>
               );
             },
@@ -1549,9 +1552,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         const line = info.row.original;
         return (
           <>
-            {formatNumber((line.volumePerPack ?? 0) * line.numberOfPacks, {
-              maximumFractionDigits: 2,
-            })}
+            <Num
+              value={(line.volumePerPack ?? 0) * line.numberOfPacks}
+              volume
+            />
           </>
         );
       },
@@ -1690,11 +1694,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <Show when={item()}>
               <HStack gap="md">
                 <span data-testid="outbound-unallocated-units">
-                  {t('label.unallocated')}: {formatNumber(placeholderUnits())}
+                  {t('label.unallocated')}: <Num value={placeholderUnits()} />
                 </span>
                 <span data-testid="outbound-total-units">
                   {t('label.total-units')}:{' '}
-                  {formatNumber(issuedUnits() + placeholderUnits())}
+                  <Num value={issuedUnits() + placeholderUnits()} />
                 </span>
               </HStack>
             </Show>
@@ -1764,8 +1768,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           drops to its own row as space runs out (see the module CSS). The
           registry's inset grouping panel holds them, so the cluster reads as one
           thing the modal acts on rather than four controls loose against the
-          panel (#872). */}
-      <InsetPanel class={styles.headerPanel}>
+          panel (#872). In the full-screen sheet the panel is the dialog's
+          heading strip instead (`dialogHeader`, #246): the title is hidden,
+          so this cluster stands where the stocktake editor's picker does. */}
+      <InsetPanel class={styles.headerPanel} dialogHeader>
         <div class={styles.headerRow}>
           {/* The shared server-searched item lookup (spec S4 — the registry's
             async catalogue-lookup; no client-side cached cap), locked in
@@ -1823,7 +1829,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     : []),
                   ...distinctPackSizes().map(size => ({
                     value: `packs-${size}`,
-                    label: t('label.packs-of-pack-size', { packSize: size }),
+                    label: t('label.packs-of-pack-size', {
+                      packSize: roundedText(size),
+                    }),
                   })),
                 ]}
                 onValueChange={value => {
@@ -1850,7 +1858,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     than a labelled input, and the row's end-alignment would
                     otherwise drop its label below theirs. */}
                 <span class={styles.availableValue}>
-                  {formatNumber(availableUnits())} {unitName()}
+                  <Num value={availableUnits()} /> {unitName()}
                 </span>
               </LabelledValue>
             </div>
@@ -1918,11 +1926,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             TOGETHER, so a message costs nothing until you reach the end of the
             cards (the table lays out at content height here — DataTable's
             `fitContent` — instead of owning a scroll box of its own). */}
-        <div class={styles.workArea}>
+        {/* DIALOG_SCROLL: this is the editor's OWN scroll box between the
+            dialog body and its main table, so in the full-screen sheet the
+            Dialog widens it to the sheet edges the way it widens its own
+            scroll region — otherwise the grid's edge-to-edge bleed would be
+            clipped here, hiding the first and last columns (the chain rule on
+            DialogProps.size, #246). */}
+        <div class={styles.workArea} {...DIALOG_SCROLL}>
           {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
               disabled (OMS-REG-SMV-11.26/.31). */}
           <div class={styles.batchGrid}>
             <DataTable
+              dialogTable
               columns={columns()}
               rows={draftRows()}
               rowKey={line => line.id}
@@ -1972,10 +1987,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <Show when={placeholderUnits() > 0}>
               <Alert severity="info" testId="outbound-placeholder-notice">
                 {t('messages.placeholder-allocated-units', {
-                  requestedQuantity: formatNumber(
+                  requestedQuantity: roundedText(
                     issuedUnits() + placeholderUnits()
                   ),
-                  placeholderQuantity: formatNumber(placeholderUnits()),
+                  placeholderQuantity: roundedText(placeholderUnits()),
                 })}
               </Alert>
             </Show>

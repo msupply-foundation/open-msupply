@@ -7,7 +7,8 @@ import {
   type Component,
 } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { formatNumber, t } from '../../../../intl';
+import { t } from '../../../../intl';
+import { roundedText } from '../../../../intl/numberDisplay';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -65,6 +66,7 @@ import {
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import { requestedQuantityForItem } from '../internalOrderContext';
 import styles from './InboundShipmentLineEditModal.module.css';
+import { Num } from '@/ui/elements/typography/Num';
 
 // One line of the linked purchase order — the PO-line picker's options (derived
 // from the generated result, not restated).
@@ -116,7 +118,7 @@ export interface InboundShipmentLineEditModalProps {
    * with it, and the user can change or clear it per batch. Existing lines
    * keep their own.
    */
-  campaignId: string | null;
+  campaign: { id: string; name: string } | null;
   /**
    * The shipment's linked internal order. Presence alone gates the
    * internal-order banner (spec S4); undefined where there is no such link, or
@@ -191,6 +193,9 @@ type DraftBatch = {
   manufacturerId: string | null;
   manufacturerName: string | null;
   campaignId: string | null;
+  // Kept beside the id so a campaign deleted from the register still labels
+  // the picker (spec/campaigns › Deleting a campaign).
+  campaignName: string | null;
   programId: string | null;
   /**
    * Whether the user has hand-edited the cost / sell price
@@ -247,6 +252,7 @@ const emptyBatch = (): DraftBatch => ({
   manufacturerId: null,
   manufacturerName: null,
   campaignId: null,
+  campaignName: null,
   programId: null,
   costOverridden: false,
   sellOverridden: false,
@@ -275,6 +281,7 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   manufacturerId: line.manufacturer?.id ?? null,
   manufacturerName: line.manufacturer?.name ?? null,
   campaignId: line.campaign?.id ?? null,
+  campaignName: line.campaign?.name ?? null,
   programId: line.program?.id ?? null,
   // Existing lines aren't subject to the prefill-clear (OMS-REG-REPL-09.10/.11
   // is about adding); mark both overridden so a pack-size edit never wipes a
@@ -501,7 +508,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // A blank batch carrying the shipment's default campaign (issue #996).
   const newBatch = (): DraftBatch => ({
     ...emptyBatch(),
-    campaignId: props.campaignId,
+    campaignId: props.campaign?.id ?? null,
+    campaignName: props.campaign?.name ?? null,
   });
 
   // A fresh batch for `chosen`, price-prefilled per OMS-REG-REPL-09.10/.11:
@@ -741,9 +749,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     const units = b.numberOfPacks * b.packSize;
     if (!units) return '';
     const unit = item()?.unitName;
-    return unit
-      ? `${formatNumber(units, { maximumFractionDigits: 2 })} ${unit}`
-      : formatNumber(units, { maximumFractionDigits: 2 });
+    return unit ? `${roundedText(units)} ${unit}` : roundedText(units);
   };
 
   // Seed on mount: a row open (update mode) loads its item — focusing the
@@ -952,9 +958,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // (kdd/solid-reactivity-pitfalls).
   const declaredValue = (value: () => number | undefined) => (
     <span class={styles.statValue}>
-      {value() === undefined
-        ? '—'
-        : formatNumber(value()!, { maximumFractionDigits: 2 })}
+      {value() === undefined ? '—' : <Num value={value()!} />}
     </span>
   );
 
@@ -1103,16 +1107,15 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                       against. An em dash rather than blank, matching every
                       other read-only "no value" in the vertical (the side
                       panel's Currency / Shipping method / Transport ref). */}
-                  {diff() === undefined
-                    ? '—'
-                    : // An explicit + on an over-receipt (a negative
-                      // already carries its own sign), so the direction of the
-                      // discrepancy reads without any colour doing the work.
-                      // The mismatch Alert above the cards carries the alarm;
-                      // this stays a figure among figures.
-                      `${diff()! > 0 ? '+' : ''}${formatNumber(diff()!, {
-                        maximumFractionDigits: 2,
-                      })}`}
+                  <Show when={diff() !== undefined} fallback="—">
+                    {/* An explicit + on an over-receipt (a negative already
+                        carries its own sign), so the direction of the
+                        discrepancy reads without any colour doing the work.
+                        The mismatch Alert above the cards carries the alarm;
+                        this stays a figure among figures. */}
+                    {diff()! > 0 ? '+' : ''}
+                    <Num value={diff()!} />
+                  </Show>
                 </span>
               );
             },
@@ -1477,9 +1480,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             storeId={props.storeId}
             itemId={item()?.id ?? ''}
             campaignId={b.campaignId ?? undefined}
+            campaignName={b.campaignName}
             programId={b.programId ?? undefined}
             onChange={choice => {
               updateBatch(b.id, 'campaignId', choice?.campaign?.id ?? null);
+              updateBatch(b.id, 'campaignName', choice?.campaign?.name ?? null);
               updateBatch(b.id, 'programId', choice?.program?.id ?? null);
             }}
           />
@@ -1686,7 +1691,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   value: l.id,
                   label: `#${l.lineNumber} ${l.item.name} (${l.item.code}) — ${t(
                     'label.pack-size'
-                  ).toLowerCase()} ${l.requestedPackSize}`,
+                  ).toLowerCase()} ${roundedText(l.requestedPackSize)}`,
                 }))}
               />
             ) : (
@@ -1820,8 +1825,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                             const unit = item()?.unitName;
                             const requested = context().requested;
                             return unit
-                              ? `${formatNumber(requested)} ${unit}`
-                              : formatNumber(requested);
+                              ? `${roundedText(requested)} ${unit}`
+                              : roundedText(requested);
                           })()}
                         </LabelledValue>
                       )}
@@ -1848,6 +1853,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             </Show>
             <div class={styles.cards}>
               <DataTable
+                dialogTable
                 columns={columns()}
                 rows={rows()}
                 rowKey={b => b.id}

@@ -3437,8 +3437,6 @@ else
 	config = config .. "  level: Info\r\n";
 	config = config .. "  directory: log\r\n";
 	config = config .. "  filename: omsupply.log\r\n";
-	config = config .. "  max_file_count: 10\r\n";
-	config = config .. "  max_file_size: 1\r\n";
 	TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\server\\configuration\\local.yaml"), config, false);
 
 	-- Create omSupply Server keys in registry

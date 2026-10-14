@@ -24,6 +24,17 @@ export interface InsetPanelProps {
   gap?: 'sm' | 'md' | 'lg';
   children: JSX.Element;
   class?: string;
+  /**
+   * This panel is a dialog's header cluster, standing in for a hidden title
+   * row (the outbound line editor's Item · Issue · Units · Available). Stamps
+   * `data-dialog-header`, which the Dialog reads in its full-screen state to
+   * make the panel the heading strip — the dialog's inset and hairline, no
+   * card chrome — so the editor reads like one whose picker sits in the
+   * title slot (Dialog.module.css › data-fullscreen, #246). A dialog that is
+   * not full screen ignores it: the grouping card stays. All three full-screen
+   * hooks and the chain rule: `DialogProps.size`.
+   */
+  dialogHeader?: boolean;
 }
 
 /*
@@ -42,6 +53,7 @@ export const InsetPanel = (props: InsetPanelProps): JSX.Element => {
     <div
       class={props.class ? `${styles.panel} ${props.class}` : styles.panel}
       data-gap={props.gap}
+      data-dialog-header={props.dialogHeader ? '' : undefined}
     >
       <Show when={head()}>
         <div class={styles.head}>{head()}</div>

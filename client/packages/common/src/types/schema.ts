@@ -1209,6 +1209,16 @@ export type BatchStocktakeResponse = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
+/**
+ * One store's edit of a global preference it may override. A null `value`
+ * CLEARS the store's override, returning the store to the global value — the
+ * only way back once a store has pinned its own.
+ */
+export type BoolStoreOverrideInput = {
+  storeId: Scalars['String']['input'];
+  value?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type BoolStorePrefInput = {
   storeId: Scalars['String']['input'];
   value: Scalars['Boolean']['input'];
@@ -1465,10 +1475,38 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface &
 export type CentralGeneralMutations = {
   __typename: 'CentralGeneralMutations';
   configureNameProperties: ConfigureNamePropertiesResponse;
+  /**
+   * Turn maintenance mode on or off. On pauses sync, the sync API and processors and signs out
+   * every user who is not a server admin. Off is refused while OMS central's own sync buffer
+   * has records left to integrate.
+   */
+  setMaintenanceMode: SetMaintenanceModeResponse;
+  /**
+   * Pause or resume the transfer and general processors. Resuming triggers each one so the
+   * backlog is picked up. Returns the new state.
+   */
+  setProcessorsPaused: ProcessorsPausedNode;
+  /**
+   * Pause or resume the v6/v7 sync API remote sites sync through, e.g. during central maintenance.
+   * Returns the new state.
+   */
+  setSyncApiPaused: SyncApiPausedNode;
 };
 
 export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
   input: Array<ConfigureNamePropertyInput>;
+};
+
+export type CentralGeneralMutationsSetMaintenanceModeArgs = {
+  on: Scalars['Boolean']['input'];
+};
+
+export type CentralGeneralMutationsSetProcessorsPausedArgs = {
+  paused: Scalars['Boolean']['input'];
+};
+
+export type CentralGeneralMutationsSetSyncApiPausedArgs = {
+  paused: Scalars['Boolean']['input'];
 };
 
 export type CentralPatientNode = {
@@ -4999,6 +5037,12 @@ export type IntegerStorePrefInput = {
   value: Scalars['Int']['input'];
 };
 
+export type IntegrationIncomplete = SetMaintenanceModeErrorInterface & {
+  __typename: 'IntegrationIncomplete';
+  description: Scalars['String']['output'];
+  pendingIntegrationRecords: Scalars['Int']['output'];
+};
+
 export type InternalError = DeleteHelpDocumentErrorInterface &
   InsertAssetCatalogueItemErrorInterface &
   InsertAssetErrorInterface &
@@ -6103,6 +6147,23 @@ export enum LowStockStatus {
   Ok = 'OK',
 }
 
+export type MaintenanceMode = AuthTokenErrorInterface & {
+  __typename: 'MaintenanceMode';
+  description: Scalars['String']['output'];
+};
+
+/** State of central's maintenance mode. */
+export type MaintenanceModeNode = {
+  __typename: 'MaintenanceModeNode';
+  isOn: Scalars['Boolean']['output'];
+  /**
+   * Rows in OMS central's own sync buffer (pulled from the legacy mSupply central server)
+   * still waiting to be integrated. Maintenance mode cannot be turned off while this is above
+   * zero.
+   */
+  pendingIntegrationRecords: Scalars['Int']['output'];
+};
+
 export type MasterListConnector = {
   __typename: 'MasterListConnector';
   nodes: Array<MasterListNode>;
@@ -6349,6 +6410,8 @@ export type Mutations = {
   responseAddFromMasterList: ResponseAddFromMasterListResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
+  /** Pause or resume sync (server admin only). See `SyncPausedNode`. */
+  setSyncPaused: SyncPausedNode;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
   updateAsset: UpdateAssetResponse;
@@ -6948,6 +7011,10 @@ export type MutationsSaveOutboundShipmentItemLinesArgs = {
 export type MutationsSavePrescriptionItemLinesArgs = {
   input: SavePrescriptionLinesInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsSetSyncPausedArgs = {
+  paused: Scalars['Boolean']['input'];
 };
 
 export type MutationsSupplyRequestedQuantityArgs = {
@@ -7589,6 +7656,12 @@ export type OutboundShipmentLineInput = {
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type OverridingStoreNode = {
+  __typename: 'OverridingStoreNode';
+  storeId: Scalars['String']['output'];
+  storeName: Scalars['String']['output'];
+};
+
 export type PackSizeCodeCombinationExists =
   InsertPurchaseOrderLineErrorInterface & {
     __typename: 'PackSizeCodeCombinationExists';
@@ -7894,6 +7967,17 @@ export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   key: PreferenceKey;
   /**
+   * The stores that pin their own value instead of following this global
+   * one, by store name. Empty where none do; null unless this is the global
+   * listing of an overridable preference.
+   */
+  overridingStores?: Maybe<Array<OverridingStoreNode>>;
+  /**
+   * How this store arrives at `value`, for a global preference a store may
+   * override. Null for every other preference, and in the global listing.
+   */
+  storeOverride?: Maybe<StoreOverrideNode>;
+  /**
    * WARNING: Type loss - holds any kind of pref value (for edit UI).
    * Use the PreferencesNode to load the strictly typed value.
    */
@@ -7911,6 +7995,7 @@ export enum PreferenceKey {
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
+  DecimalPlacesForNumbers = 'decimalPlacesForNumbers',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
@@ -7989,6 +8074,7 @@ export type PreferencesNode = {
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
+  decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
@@ -8226,6 +8312,12 @@ export type PrinterNode = {
   labelHeight: Scalars['Int']['output'];
   labelWidth: Scalars['Int']['output'];
   port: Scalars['Int']['output'];
+};
+
+/** State of central's processor pause. */
+export type ProcessorsPausedNode = {
+  __typename: 'ProcessorsPausedNode';
+  isPaused: Scalars['Boolean']['output'];
 };
 
 export type ProgramConnector = {
@@ -8698,6 +8790,8 @@ export type Queries = {
   /** Queries all reports and their respective versions */
   allReportVersions: ReportsResponse;
   apiVersion: Scalars['String']['output'];
+  /** Central only: whether the transfer and general processors are paused (always false on a remote) */
+  areProcessorsPaused: Scalars['Boolean']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
   assetCategories: AssetCategoriesResponse;
@@ -8796,6 +8890,15 @@ export type Queries = {
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
   isCentralStandalone: Scalars['Boolean']['output'];
+  /**
+   * Whether central is in maintenance mode, when only server admins can log in. Available
+   * without authentication so the login screen can say so before anyone tries.
+   */
+  isMaintenanceMode: Scalars['Boolean']['output'];
+  /** Central only: whether the sync API is paused, refusing sync from remote sites (always false on a remote) */
+  isSyncApiPaused: Scalars['Boolean']['output'];
+  /** Admin pause flag (Admin > Sync settings); any signed-in user may read it. */
+  isSyncPaused: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
   itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
@@ -8822,6 +8925,11 @@ export type Queries = {
   logFileNames: LogNode;
   logLevel: LogLevelNode;
   logout: LogoutResponse;
+  /**
+   * Central only: maintenance mode, and how much of OMS central's own sync buffer is left to
+   * integrate before it can be turned off (server admin only)
+   */
+  maintenanceMode: MaintenanceModeNode;
   masterListLines: MasterListLinesResponse;
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
@@ -10590,6 +10698,19 @@ export type SensorSortInput = {
 
 export type SensorsResponse = SensorConnector;
 
+export type SetMaintenanceModeError = {
+  __typename: 'SetMaintenanceModeError';
+  error: SetMaintenanceModeErrorInterface;
+};
+
+export type SetMaintenanceModeErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type SetMaintenanceModeResponse =
+  | MaintenanceModeNode
+  | SetMaintenanceModeError;
+
 export type SetPrescribedQuantityError = {
   __typename: 'SetPrescribedQuantityError';
   error: SetPrescribedQuantityErrorInterface;
@@ -11168,6 +11289,20 @@ export type StoreNodeNameArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type StoreOverrideNode = {
+  __typename: 'StoreOverrideNode';
+  /**
+   * The global value this store follows, or would return to by clearing the
+   * override. Same type loss as `value`.
+   */
+  globalValue: Scalars['JSON']['output'];
+  /**
+   * Whether this store pins its own value rather than following the global
+   * one.
+   */
+  isOverridden: Scalars['Boolean']['output'];
+};
+
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   editPrescribedQuantityOnPrescription: Scalars['Boolean']['output'];
@@ -11327,6 +11462,15 @@ export type SupplyRequestedQuantityResponse =
   | RequisitionLineConnector
   | SupplyRequestedQuantityError;
 
+/**
+ * State of central's sync API pause. Separate from `SyncPausedNode` (this server's own sync
+ * client pause) so the two can grow their own fields.
+ */
+export type SyncApiPausedNode = {
+  __typename: 'SyncApiPausedNode';
+  isPaused: Scalars['Boolean']['output'];
+};
+
 export type SyncErrorNode = {
   __typename: 'SyncErrorNode';
   fullError: Scalars['String']['output'];
@@ -11352,6 +11496,7 @@ export enum SyncErrorVariant {
   SiteHasNoStore = 'SITE_HAS_NO_STORE',
   SiteNameNotFound = 'SITE_NAME_NOT_FOUND',
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
+  SyncApiPaused = 'SYNC_API_PAUSED',
   Unknown = 'UNKNOWN',
   V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE',
   V7UpgradeFailed = 'V7_UPGRADE_FAILED',
@@ -11376,6 +11521,7 @@ export enum SyncErrorVariantV7 {
   SiteIdNotSet = 'SITE_ID_NOT_SET',
   SiteIsNotV7 = 'SITE_IS_NOT_V7',
   SiteLockError = 'SITE_LOCK_ERROR',
+  SyncApiPaused = 'SYNC_API_PAUSED',
   SyncFileNotFound = 'SYNC_FILE_NOT_FOUND',
   SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
   SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
@@ -11413,6 +11559,18 @@ export enum SyncFileReferenceNodeStatus {
 
 export type SyncInfoUpdatedNode = {
   __typename: 'SyncInfoUpdatedNode';
+  /**
+   * Central maintenance mode (#840): only server admins are signed in, and a manual sync is
+   * forced past the sync pause.
+   */
+  isMaintenanceMode: Scalars['Boolean']['output'];
+  /**
+   * Central's sync API pause: while true central refuses remote sites' sync. Always false on
+   * a remote.
+   */
+  isSyncApiPaused: Scalars['Boolean']['output'];
+  /** Admin pause (Admin > Sync settings): while true no scheduled or manual sync runs. */
+  isSyncPaused: Scalars['Boolean']['output'];
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
   syncStatus?: Maybe<FullSyncStatusNode>;
 };
@@ -11494,6 +11652,11 @@ export type SyncMessageSortInput = {
   key: SyncMessageSortFieldInput;
 };
 
+export type SyncPausedNode = {
+  __typename: 'SyncPausedNode';
+  isPaused: Scalars['Boolean']['output'];
+};
+
 export type SyncRequestDescriptionNode =
   | AllStoreDataDescription
   | TableNameDescription;
@@ -11524,6 +11687,11 @@ export type SyncSettingsNode = {
   centralServerSiteId: Scalars['Int']['output'];
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
+  /**
+   * Admin pause (Admin > Sync settings). While true no scheduled or manual sync runs on an
+   * initialised site; set with `setSyncPaused`.
+   */
+  isPaused: Scalars['Boolean']['output'];
   syncSiteId?: Maybe<Scalars['Int']['output']>;
   /** Central server url */
   url: Scalars['String']['output'];
@@ -13089,6 +13257,9 @@ export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
+  authorisePurchaseOrderStoreOverride?: InputMaybe<
+    Array<BoolStoreOverrideInput>
+  >;
   backdating?: InputMaybe<BackdatingInput>;
   blindStocktake?: InputMaybe<Array<BoolStorePrefInput>>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
@@ -13101,6 +13272,7 @@ export type UpsertPreferencesInput = {
    */
   customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
+  decimalPlacesForNumbers?: InputMaybe<Scalars['Int']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;

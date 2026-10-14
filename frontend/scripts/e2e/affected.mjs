@@ -10,7 +10,9 @@
  *   pnpm e2e:affected --status           # which still need a run (exit 3)
  *   node scripts/e2e/affected.mjs --push-hook
  *                                        # the same, as a warn-only PreToolUse
- *                                        # hook (.claude/settings.json)
+ *                                        # hook (.claude/settings.json) — only
+ *                                        # on `git push` from a branch with an
+ *                                        # open PR
  *   pnpm e2e:affected --json             # machine-readable (CI)
  *   pnpm e2e:affected --list             # suite names only, one per line
  *   pnpm e2e:affected --check            # lint the config (in `pnpm check`)
@@ -985,6 +987,61 @@ export const checkConfig = (config, files) => {
   return problems;
 };
 
+// --- Push hook --------------------------------------------------------------
+
+// Git's global options that take a separate value (`git -C dir push`).
+const GIT_OPTS_WITH_VALUE = new Set([
+  '-C',
+  '-c',
+  '--git-dir',
+  '--work-tree',
+  '--namespace',
+  '--exec-path',
+]);
+
+// Does this Bash command run `git push`? The hook's `if: Bash(git push*)` is
+// not enough on its own: Claude Code before 2.1.85 ignores `if`, and until
+// 2.1.243 it matched any command containing `$()` or `$VAR` — so the hook
+// fired on most Bash calls. Checked here too, so the script decides.
+export const isGitPush = command =>
+  command.split(/&&|\|\||[;|&\n()`]/).some(segment => {
+    const tokens = segment.trim().split(/\s+/).filter(Boolean);
+    let i = 0;
+    // Leading `FOO=bar` assignments and `env`/`command`/`exec` wrappers.
+    while (/^(\w+=.*|env|command|exec)$/.test(tokens[i] ?? '')) i++;
+    if (!/(^|\/)git$/.test(tokens[i] ?? '')) return false;
+    for (i++; i < tokens.length; i++) {
+      if (GIT_OPTS_WITH_VALUE.has(tokens[i])) i++;
+      else if (!tokens[i].startsWith('-')) return tokens[i] === 'push';
+    }
+    return false;
+  });
+
+// The hook warns only on a push to a branch that already has an open PR:
+// before the PR, pr-create runs the suites itself, so a warning mid-
+// implementation is noise. Anything that can't be confirmed (no hook input,
+// another command, no `gh`, offline, no PR) stays silent.
+const pushHookApplies = () => {
+  if (process.stdin.isTTY) return false;
+  let command;
+  try {
+    command = JSON.parse(readFileSync(0, 'utf8'))?.tool_input?.command;
+  } catch {
+    return false;
+  }
+  if (typeof command !== 'string' || !isGitPush(command)) return false;
+  const pr = spawnSync(
+    'gh',
+    ['pr', 'view', '--json', 'state', '-q', '.state'],
+    {
+      cwd: FE_DIR,
+      encoding: 'utf8',
+      timeout: 10_000,
+    }
+  );
+  return pr.status === 0 && pr.stdout.trim() === 'OPEN';
+};
+
 // --- CLI --------------------------------------------------------------------
 
 const git = (args, cwd) =>
@@ -1210,6 +1267,7 @@ const report = (sel, meta) => {
 
 const main = async () => {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.pushHook && !pushHookApplies()) return;
   const root = git(['rev-parse', '--show-toplevel'], FE_DIR).trim();
   const configPath = path.join(FE_DIR, 'e2e/affected.config.mjs');
   // e2e/ is kept out of the public mirror (.github/mirror/rules.txt); there

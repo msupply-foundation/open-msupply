@@ -10,12 +10,27 @@ export type SyncSettingsResult = {
   username: string;
   intervalSeconds: number;
   batchSize: number | null;
+  isPaused: boolean;
 } | null;
 };
 
 export const SyncSettings = {
-  query: "query syncSettings {\n  syncSettings {\n    url\n    username\n    intervalSeconds\n    batchSize\n  }\n}",
+  query: "query syncSettings {\n  syncSettings {\n    url\n    username\n    intervalSeconds\n    batchSize\n    isPaused\n  }\n}",
 } as TypedDocument<SyncSettingsResult, SyncSettingsVariables>;
+
+export type SetSyncPausedVariables = {
+  paused: boolean;
+};
+
+export type SetSyncPausedResult = {
+  setSyncPaused: {
+  isPaused: boolean;
+};
+};
+
+export const SetSyncPaused = {
+  query: "mutation setSyncPaused($paused: Boolean!) {\n  setSyncPaused(paused: $paused) {\n    isPaused\n  }\n}",
+} as TypedDocument<SetSyncPausedResult, SetSyncPausedVariables>;
 
 export type UpdateSyncSettingsVariables = {
   input: {
@@ -35,12 +50,12 @@ export type UpdateSyncSettingsResult = {
 }) | ({
   __typename: "SyncErrorNode";
 } & {
-  variant: "CONNECTION_ERROR" | "SITE_UUID_IS_BEING_CHANGED" | "SITE_NAME_NOT_FOUND" | "INCORRECT_PASSWORD" | "HARDWARE_ID_MISMATCH" | "SITE_HAS_NO_STORE" | "SITE_AUTH_TIMEOUT" | "INTEGRATION_TIMEOUT_REACHED" | "INVALID_URL" | "UNKNOWN" | "API_VERSION_INCOMPATIBLE" | "CENTRAL_V6_NOT_CONFIGURED" | "V6_API_VERSION_INCOMPATIBLE" | "INTEGRATION_ERROR" | "V7_UPGRADE_FAILED";
+  variant: "CONNECTION_ERROR" | "SITE_UUID_IS_BEING_CHANGED" | "SITE_NAME_NOT_FOUND" | "INCORRECT_PASSWORD" | "HARDWARE_ID_MISMATCH" | "SITE_HAS_NO_STORE" | "SITE_AUTH_TIMEOUT" | "INTEGRATION_TIMEOUT_REACHED" | "INVALID_URL" | "UNKNOWN" | "API_VERSION_INCOMPATIBLE" | "CENTRAL_V6_NOT_CONFIGURED" | "V6_API_VERSION_INCOMPATIBLE" | "INTEGRATION_ERROR" | "V7_UPGRADE_FAILED" | "SYNC_API_PAUSED";
   fullError: string;
 }) | ({
   __typename: "SyncErrorV7Node";
 } & {
-  variantV7: "DATABASE_ERROR" | "SYNC_RECORD_SERIALIZE_ERROR" | "RECORD_NOT_FOUND" | "SYNC_FILE_NOT_FOUND" | "SYNC_VERSION_MISMATCH" | "NOT_A_CENTRAL_SERVER" | "AUTHENTICATION" | "INVALID_SITE_NAME_OR_PASSWORD" | "TOKEN_ALREADY_ALLOCATED" | "TOKEN_NOT_FOUND" | "HARDWARE_ID_MISMATCH" | "FAILED_TO_GET_HARDWARE_ID" | "MISSING_AUTH_HEADER" | "SITE_LOCK_ERROR" | "CONNECTION_ERROR" | "PARSING_ERROR" | "INTEGRATION_TIMEOUT_REACHED" | "SITE_ID_NOT_SET" | "GET_CURRENT_SITE_ID_ERROR" | "SITE_ID_MISMATCH" | "SITE_IS_NOT_V7" | "WAITING_FOR_CENTRAL_V7_UPGRADE" | "REQUEST_SITE_AUTH_ERROR" | "OTHER";
+  variantV7: "DATABASE_ERROR" | "SYNC_RECORD_SERIALIZE_ERROR" | "RECORD_NOT_FOUND" | "SYNC_FILE_NOT_FOUND" | "SYNC_VERSION_MISMATCH" | "NOT_A_CENTRAL_SERVER" | "AUTHENTICATION" | "INVALID_SITE_NAME_OR_PASSWORD" | "TOKEN_ALREADY_ALLOCATED" | "TOKEN_NOT_FOUND" | "HARDWARE_ID_MISMATCH" | "FAILED_TO_GET_HARDWARE_ID" | "MISSING_AUTH_HEADER" | "SITE_LOCK_ERROR" | "CONNECTION_ERROR" | "PARSING_ERROR" | "INTEGRATION_TIMEOUT_REACHED" | "SITE_ID_NOT_SET" | "GET_CURRENT_SITE_ID_ERROR" | "SITE_ID_MISMATCH" | "SITE_IS_NOT_V7" | "WAITING_FOR_CENTRAL_V7_UPGRADE" | "REQUEST_SITE_AUTH_ERROR" | "SYNC_API_PAUSED" | "OTHER";
   fullError: string;
 });
 };
@@ -48,3 +63,103 @@ export type UpdateSyncSettingsResult = {
 export const UpdateSyncSettings = {
   query: "mutation updateSyncSettings($input: SyncSettingsInput!) {\n  updateSyncSettings(input: $input) {\n    ... on SyncSettingsNode {\n      __typename\n      username\n    }\n    ... on SyncErrorNode {\n      __typename\n      variant\n      fullError\n    }\n    ... on SyncErrorV7Node {\n      __typename\n      variantV7: variant\n      fullError\n    }\n  }\n}",
 } as TypedDocument<UpdateSyncSettingsResult, UpdateSyncSettingsVariables>;
+
+export type IsSyncApiPausedVariables = Record<string, never>;
+
+export type IsSyncApiPausedResult = {
+  isSyncApiPaused: boolean;
+};
+
+export const IsSyncApiPaused = {
+  query: "query isSyncApiPaused {\n  isSyncApiPaused\n}",
+} as TypedDocument<IsSyncApiPausedResult, IsSyncApiPausedVariables>;
+
+export type SetSyncApiPausedVariables = {
+  paused: boolean;
+};
+
+export type SetSyncApiPausedResult = {
+  centralServer: {
+  general: {
+  setSyncApiPaused: {
+  isPaused: boolean;
+};
+};
+};
+};
+
+export const SetSyncApiPaused = {
+  query: "mutation setSyncApiPaused($paused: Boolean!) {\n  centralServer {\n    general {\n      setSyncApiPaused(paused: $paused) {\n        isPaused\n      }\n    }\n  }\n}",
+} as TypedDocument<SetSyncApiPausedResult, SetSyncApiPausedVariables>;
+
+export type AreProcessorsPausedVariables = Record<string, never>;
+
+export type AreProcessorsPausedResult = {
+  areProcessorsPaused: boolean;
+};
+
+export const AreProcessorsPaused = {
+  query: "query areProcessorsPaused {\n  areProcessorsPaused\n}",
+} as TypedDocument<AreProcessorsPausedResult, AreProcessorsPausedVariables>;
+
+export type SetProcessorsPausedVariables = {
+  paused: boolean;
+};
+
+export type SetProcessorsPausedResult = {
+  centralServer: {
+  general: {
+  setProcessorsPaused: {
+  isPaused: boolean;
+};
+};
+};
+};
+
+export const SetProcessorsPaused = {
+  query: "mutation setProcessorsPaused($paused: Boolean!) {\n  centralServer {\n    general {\n      setProcessorsPaused(paused: $paused) {\n        isPaused\n      }\n    }\n  }\n}",
+} as TypedDocument<SetProcessorsPausedResult, SetProcessorsPausedVariables>;
+
+export type MaintenanceModeVariables = Record<string, never>;
+
+export type MaintenanceModeResult = {
+  maintenanceMode: {
+  isOn: boolean;
+  pendingIntegrationRecords: number;
+};
+};
+
+export const MaintenanceMode = {
+  query: "query maintenanceMode {\n  maintenanceMode {\n    isOn\n    pendingIntegrationRecords\n  }\n}",
+} as TypedDocument<MaintenanceModeResult, MaintenanceModeVariables>;
+
+export type SetMaintenanceModeVariables = {
+  on: boolean;
+};
+
+export type SetMaintenanceModeResult = {
+  centralServer: {
+  general: {
+  setMaintenanceMode: ({
+  __typename: "MaintenanceModeNode";
+} & {
+  isOn: boolean;
+  pendingIntegrationRecords: number;
+}) | ({
+  __typename: "SetMaintenanceModeError";
+} & {
+  error: ({
+  __typename: "IntegrationIncomplete";
+} & {
+  pendingIntegrationRecords: number;
+} & {
+  description: string;
+});
+});
+};
+};
+};
+
+export const SetMaintenanceMode = {
+  query: "mutation setMaintenanceMode($on: Boolean!) {\n  centralServer {\n    general {\n      setMaintenanceMode(on: $on) {\n        __typename\n        ... on MaintenanceModeNode {\n          isOn\n          pendingIntegrationRecords\n        }\n        ... on SetMaintenanceModeError {\n          error {\n            __typename\n            description\n            ... on IntegrationIncomplete {\n              pendingIntegrationRecords\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<SetMaintenanceModeResult, SetMaintenanceModeVariables>;

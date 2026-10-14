@@ -1,13 +1,15 @@
 /*
  * Pure conversions shared by DateField / DateTimeField / TimeField. All local
  * arithmetic uses the device timezone (see ui-standards/inputs.md § Dates &
- * times); no date library — plain JS Date, so nothing is added to the bundle.
- * Month names follow the APP language (`locale()`, an accepted src/intl
- * boundary import like NumberField's — src/ui/CLAUDE.md), not the device
- * locale: a French UI shows "juil.", whatever the OS is set to.
+ * times) on plain JS Dates; the parsing and formatting here use no date
+ * library. The default pattern is the app language's date-fns short date
+ * (`localeDateFormat()`), the same `P` the table cells render, and month names
+ * come from `locale()`: both are src/intl boundary imports recorded in
+ * src/ui/CLAUDE.md. They follow the APP language, not the device locale: a
+ * French UI shows "juil.", whatever the OS is set to.
  */
 
-import { locale } from '../../../intl';
+import { locale, localeDateFormat } from '../../../intl';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
@@ -152,8 +154,14 @@ export const addDays = (d: Date, days: number): Date => {
 export const startOfWeek = (d: Date): Date =>
   addDays(d, -((d.getDay() + 6) % 7)); // getDay(): 0 Sun … 6 Sat
 
-/** Default display/parse format for the date fields (medium, day-first). */
-export const DEFAULT_DATE_FORMAT = 'dd MMM yyyy';
+/**
+ * Default display/parse format for the date fields: the app language's numeric
+ * short date (`dd/MM/yyyy` in English) — the same pattern the read-only
+ * `localisedDate` renders in tables and panels, so a date looks the same typed
+ * as displayed, and the empty hint reads `DD/MM/YYYY` (#774). A function, not
+ * a constant: it reads the locale.
+ */
+export const defaultDateFormat = (): string => localeDateFormat();
 
 const TOKEN = /yyyy|yy|MMMM|MMM|MM|M|dd|d/g;
 
@@ -177,7 +185,7 @@ const PLACEHOLDER_LETTERS: Record<string, Record<string, string>> = {
 /**
  * A token `format` → the empty-field HINT the user sees (ui-standards/inputs.md
  * § Dates & times): the format's token letters localised to the app language
- * and presented UPPERCASE (`dd MMM yyyy` → `DD MMM YYYY`, French `JJ MMM
+ * and presented UPPERCASE (`dd/MM/yyyy` → `DD/MM/YYYY`, French `JJ/MM/
  * AAAA`) — never the raw format string, whose lowercase English mnemonics mean
  * nothing in French. Display-only: typed parsing still follows the format.
  */
@@ -197,7 +205,7 @@ export const formatPlaceholder = (format: string): string => {
  */
 export const formatIsoDate = (
   iso: string | null | undefined,
-  format = DEFAULT_DATE_FORMAT
+  format = defaultDateFormat()
 ): string => {
   const d = isoDateToDate(iso);
   if (!d) return '';
@@ -234,7 +242,7 @@ export const formatIsoDate = (
  */
 export const parseDateInput = (
   text: string,
-  format = DEFAULT_DATE_FORMAT
+  format = defaultDateFormat()
 ): string | null | undefined => {
   const s = text.trim();
   if (!s) return null;

@@ -3,13 +3,19 @@ import { A } from '@solidjs/router';
 import { t } from '../../../intl';
 import { InfoTooltip } from '../feedback/InfoTooltip';
 import { StatusChip } from '../feedback/StatusChip';
+import { Num } from '../typography/Num';
+import type { DisplayedNumber } from '../../../intl/numberDisplay';
 import styles from './Statistic.module.css';
 
 export interface StatisticProps {
   /** Short label describing the metric, already translated. */
   label: string;
-  /** The value, already locale-formatted for display. */
-  value: string;
+  /**
+   * The value, already locale-formatted — or a displayed number (a rounded
+   * figure's text with its exact value), which then hovers and announces the
+   * exact figure like any Num.
+   */
+  value: string | DisplayedNumber;
   /**
    * Link target — the list this metric drills into. OMIT it for a stat with no
    * drill-down: the row then renders as plain text, not a link. Never pass a
@@ -54,9 +60,13 @@ export const Statistic = (props: StatisticProps) => {
   // One body, rendered inside whichever container the href decides. A function
   // (not a stored element) so each branch instantiates its own — only one ever
   // mounts (kdd/solid-reactivity-pitfalls §3: never reuse a JSX value twice).
+  const shown = (): DisplayedNumber =>
+    typeof props.value === 'string' ? { text: props.value } : props.value;
   const body = () => (
     <>
-      <span class={styles.value}>{props.value}</span>
+      <span class={styles.value}>
+        <Num value={shown()} />
+      </span>
       <span class={styles.label}>{props.label}</span>
     </>
   );
@@ -77,7 +87,7 @@ export const Statistic = (props: StatisticProps) => {
             <A
               href={href()}
               class={styles.main}
-              aria-label={`${props.value} ${props.label}${
+              aria-label={`${shown().exact ?? shown().text} ${props.label}${
                 props.alert && props.alertLabel ? `, ${props.alertLabel}` : ''
               }`}
             >

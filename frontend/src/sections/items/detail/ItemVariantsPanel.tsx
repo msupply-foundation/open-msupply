@@ -62,8 +62,12 @@ export const ItemVariantsPanel: Component<{
           fallback={
             // A ghost, icon-less CTA — the app's empty-state create affordance
             // (the ancillary tab and the stocktakes list read the same).
-            <EmptyState message={t('messages.no-item-variants')}>
+            <EmptyState
+              data-testid="nothing-here"
+              message={t('messages.no-item-variants')}
+            >
               <Button
+                data-testid="nothing-here-create-button"
                 variant="ghost"
                 onClick={() => props.onEditorChange({ mode: 'create' })}
               >

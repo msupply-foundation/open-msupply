@@ -11,7 +11,7 @@ import {
 import { graphqlFetch } from '../../../../api/graphql';
 import { gated } from '../../../../api/gated';
 import { measureWord, t, tPlural } from '../../../../intl';
-import { formatNumber } from '../../../../intl/formatNumber';
+import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -60,6 +60,7 @@ import {
 } from './internalOrderLineEdit';
 import { ForecastCalculationDisplay } from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
+import { Num } from '../../../../ui/elements/typography/Num';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
 // mode, general orders only — OMS-REG-REPL-04.63) or fill one line (edit mode,
@@ -318,9 +319,14 @@ const LineEditContent = (
 
   // A statistic (units) rendered in the active mode with its measure word,
   // inflected for the figure it suffixes ("1 pack" / "61 packs").
-  const stat = (units: number, roundUp = false): string => {
+  const stat = (units: number, roundUp = false): JSX.Element => {
     const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
-    return `${formatNumber(figure)} ${measureWord(entryMode(), current()?.unitName ?? null, figure)}`;
+    return (
+      <>
+        <Num value={figure} />{' '}
+        {measureWord(entryMode(), current()?.unitName ?? null, figure)}
+      </>
+    );
   };
 
   // A unit quantity re-expressed in the OTHER measure (OMS-REG-REPL-04.75):
@@ -329,10 +335,10 @@ const LineEditContent = (
   const otherMeasure = (units: number): string => {
     if (entryMode() === 'doses') {
       const unitCount = Math.round(units);
-      return `${formatNumber(unitCount)} ${measureWord('units', current()?.unitName ?? null, unitCount)}`;
+      return `${roundedText(unitCount)} ${measureWord('units', current()?.unitName ?? null, unitCount)}`;
     }
     const doseCount = Math.round(units * doses());
-    return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
+    return `${roundedText(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
 
   // The dose caption beneath the requested number (OMS-REG-REPL-04.75).
@@ -446,7 +452,7 @@ const LineEditContent = (
   // aligned with the column.
   const StatRow = (rowProps: {
     label: string;
-    value: string;
+    value: JSX.Element;
     caption?: string;
     highlight?: boolean;
   }): JSX.Element => (
@@ -582,13 +588,13 @@ const LineEditContent = (
                 <Show when={editorLine().defaultPackSize > 0}>
                   <StatRow
                     label={t('label.default-pack-size')}
-                    value={formatNumber(editorLine().defaultPackSize)}
+                    value={<Num value={editorLine().defaultPackSize} />}
                   />
                 </Show>
                 <Show when={dosesApply()}>
                   <StatRow
                     label={t('label.doses-per-unit')}
-                    value={formatNumber(editorLine().doses)}
+                    value={<Num value={editorLine().doses} />}
                   />
                 </Show>
                 <StatRow
@@ -607,7 +613,12 @@ const LineEditContent = (
                 />
                 <StatRow
                   label={t('label.months-of-stock')}
-                  value={`${editorLine().monthsOfStock.toFixed(1)} ${t('label.months')}`}
+                  value={
+                    <>
+                      <Num value={editorLine().monthsOfStock} />{' '}
+                      {t('label.months')}
+                    </>
+                  }
                 />
                 <Show
                   when={
@@ -666,7 +677,7 @@ const LineEditContent = (
                   />
                   <StatRow
                     label={t('label.days-out-of-stock')}
-                    value={`${formatNumber(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
+                    value={`${roundedText(Math.round(editorLine().daysOutOfStock))} ${t('label.days')}`}
                   />
                 </InsetPanel>
               </Show>

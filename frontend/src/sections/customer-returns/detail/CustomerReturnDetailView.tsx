@@ -22,6 +22,8 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import {
   Tabs,
@@ -30,6 +32,7 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import {
+  InfoIcon,
   MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
@@ -168,20 +171,20 @@ const CustomerReturnDetailView: Component = () => {
     },
   });
 
-  // Fetch the return's HEADER (no lines — they are their own query below). A
-  // NodeError (bad id) is promoted to the global unexpected-error modal; a
-  // non-return invoice id is treated the same. The resource IS the local state
-  // for the header: every return-level save writes back with `mutate`
-  // (kdd/state-management).
+  // Fetch the return's HEADER (no lines — they are their own query below). The
+  // read pins `type: CUSTOMER_RETURN` (customerReturnDetail.graphql), so a
+  // non-return id, another store's return, and a bad id all come back as a
+  // NodeError (RecordNotFound) and resolve to undefined — the not-found
+  // deep-link alert renders below (#1044). That NodeError is deliberately NOT
+  // routed to the global unexpected-error modal (no mapSuccessToError): it
+  // would offer a useless reload of the same bad id and shadow the local
+  // notice — the same call the outbound and supplier return details make. The
+  // resource IS the local state for the header: every return-level save writes
+  // back with `mutate` (kdd/state-management).
   const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, id: params.returnId }),
     async variables => {
-      const result = await graphqlFetch(CustomerReturnDetail, variables, {
-        mapSuccessToError: d =>
-          d.invoice.__typename === 'NodeError'
-            ? d.invoice.error.description
-            : undefined,
-      });
+      const result = await graphqlFetch(CustomerReturnDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
@@ -583,8 +586,31 @@ const CustomerReturnDetailView: Component = () => {
   return (
     <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show (kdd/solid-reactivity-pitfalls): every save sets a
-          fresh node object; keyed would remount the page and drop focus. */}
-      <Show when={info()}>
+          fresh node object; keyed would remount the page and drop focus. The
+          resolved-undefined fallback is the not-found deep-link alert. */}
+      <Show
+        when={info()}
+        fallback={
+          <Dialog
+            open
+            testId="return-not-found-notice"
+            icon={<InfoIcon />}
+            title={t('error.return-not-found')}
+            description={t('messages.click-to-return-to-returns')}
+            onClose={() =>
+              navigate(`/${params.storeId}/distribution/customer-return`)
+            }
+            actions={
+              <OkButton
+                data-testid="dialog-button-ok"
+                onClick={() =>
+                  navigate(`/${params.storeId}/distribution/customer-return`)
+                }
+              />
+            }
+          />
+        }
+      >
         {node => {
           const disabled = createMemo(() => isReturnDisabled(node()));
           return (

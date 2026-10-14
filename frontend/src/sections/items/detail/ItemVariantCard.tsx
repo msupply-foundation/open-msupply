@@ -21,6 +21,7 @@ import {
 import { formatRatio, invertRatio } from './bundledItemEdit';
 import type { ItemVariantRow } from './itemVariantEdit';
 import { BundledItemModal } from './BundledItemModal';
+import { Num } from '../../../ui/elements/typography/Num';
 
 // One variant, as a card (spec/items S2 › Variants tab). Built on the new
 // DetailCard: header = name + Edit/Delete; body = the read-only field set (the
@@ -88,15 +89,18 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
   return (
     <>
       <DetailCard
+        testId="item-variant-card"
         title={props.variant.name}
         actions={
           <>
             <IconButton
+              data-testid="item-variant-edit-button"
               icon={<EditIcon />}
               label={t('label.edit')}
               onClick={props.onEdit}
             />
             <IconButton
+              data-testid="item-variant-delete-button"
               icon={<TrashIcon />}
               label={t('label.delete')}
               variant="danger"
@@ -112,10 +116,16 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
         </Show>
 
         <FormRow>
-          <LabelledValue label={t('label.location-type')}>
+          <LabelledValue
+            data-testid="item-variant-location-type"
+            label={t('label.location-type')}
+          >
             {props.variant.locationType?.name ?? ''}
           </LabelledValue>
-          <LabelledValue label={t('label.manufacturer')}>
+          <LabelledValue
+            data-testid="item-variant-manufacturer"
+            label={t('label.manufacturer')}
+          >
             {props.variant.manufacturer?.name ?? ''}
           </LabelledValue>
           <Show when={props.isVaccine}>
@@ -140,11 +150,21 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
             <tbody>
               <For each={props.variant.packagingVariants}>
                 {row => (
-                  <tr>
+                  <tr data-testid="item-variant-packaging-row">
                     <td>{row.packagingLevel}</td>
                     <td>{row.name}</td>
-                    <td data-numeric>{row.packSize}</td>
-                    <td data-numeric>{row.volumePerUnit}</td>
+                    {/* Blank when unset — a cell, not a labelled field
+                        (ui-standards § tables › absent values). */}
+                    <td data-numeric>
+                      {row.packSize == null ? '' : <Num value={row.packSize} />}
+                    </td>
+                    <td data-numeric>
+                      {row.volumePerUnit == null ? (
+                        ''
+                      ) : (
+                        <Num value={row.volumePerUnit} volume />
+                      )}
+                    </td>
                   </tr>
                 )}
               </For>
@@ -175,7 +195,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
               <tbody>
                 <For each={props.variant.bundledItemVariants}>
                   {bundle => (
-                    <tr>
+                    <tr data-testid="bundled-item-row">
                       <td>
                         {bundle.bundledItemVariant
                           ? `${bundle.bundledItemVariant.itemName} - ${bundle.bundledItemVariant.name}`
@@ -184,6 +204,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
                       <td data-numeric>{formatRatio(bundle.ratio)}</td>
                       <td data-check>
                         <IconButton
+                          data-testid="bundled-item-delete-button"
                           icon={<TrashIcon />}
                           label={t('label.delete')}
                           variant="danger"
@@ -202,6 +223,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
             </Alert>
           </Show>
           <Button
+            data-testid="add-bundled-item-button"
             icon={<PlusCircleIcon />}
             disabled={isBundledOnOthers()}
             onClick={() => setBundleModalOpen(true)}
@@ -211,7 +233,9 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
           {/* Why Add is disabled (ui-surface S2, OMS-REG-CAT-06.13/.16) — the caption the
               reference app shows beside the withheld action. */}
           <Show when={isBundledOnOthers()}>
-            <Text variant="bodySmall">{t('messages.cannot-bundle')}</Text>
+            <Text variant="bodySmall" data-testid="cannot-bundle-message">
+              {t('messages.cannot-bundle')}
+            </Text>
           </Show>
         </FormSection>
 
@@ -237,7 +261,7 @@ export const ItemVariantCard: Component<ItemVariantCardProps> = props => {
               <tbody>
                 <For each={props.variant.bundlesWith}>
                   {bundle => (
-                    <tr>
+                    <tr data-testid="bundled-on-row">
                       <td>
                         <Show when={bundle.principalItemVariant}>
                           {principal => (
