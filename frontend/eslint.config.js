@@ -161,7 +161,8 @@ export default tseslint.config(
   },
 
   /*
-   * The in-repo country plugins (plugins/<code>/src). Same rules as app source —
+   * The in-repo country plugins (plugins/<code>/src, and a form plugin's root
+   * module, catalogues and `forms/` tree). Same rules as app source —
    * they are Solid components in the host's runtime, so the reactivity and
    * browser-compat rules apply identically — plus the import boundary
    * (spec/plugins/sdk-contract.md § imports): a plugin may import ONLY the SDK
@@ -170,7 +171,12 @@ export default tseslint.config(
    * this makes the failure say why.
    */
   {
-    files: ['plugins/*/src/**/*.{ts,tsx}'],
+    files: [
+      'plugins/*/src/**/*.{ts,tsx}',
+      'plugins/*/*.{ts,tsx}',
+      'plugins/*/translations/**/*.ts',
+      'plugins/*/forms/**/*.{ts,tsx}',
+    ],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -206,7 +212,8 @@ export default tseslint.config(
           patterns: [
             {
               // `@/…`; any path reaching into src/; and any escape above the
-              // plugin's own tree (plugins/<dir>/src/x sits 3 levels down, so
+              // plugin's own tree (plugins/<dir>/src/x and
+              // plugins/<dir>/forms/<Type>/x sit 3 levels down, so
               // four-or-more `../` can only mean leaving the plugin).
               group: ['@/*', '**/src/*', '../../../../*'],
               message:

@@ -20,7 +20,7 @@ import {
   type Gender,
   type GenderOption,
 } from './gender';
-import { generatePatientCode } from './patientCode';
+import { generatedCodeFits, generatePatientCode } from './patientCode';
 import { ageFromDob, ageMonthsAndDays, dobFromAge } from './age';
 import styles from './PatientControls.module.css';
 
@@ -47,9 +47,18 @@ export interface PatientCodeControlProps {
   patientId?: string;
   value: string;
   onChange: (code: string) => void;
+  /** The field's label, already translated; the host's own when absent. */
+  label?: string;
   required?: boolean;
   error?: string;
   disabled?: boolean;
+  /**
+   * The schema's `pattern` for the code, on the document path: Generate is
+   * left out where the codes it makes would never match it.
+   */
+  pattern?: string;
+  /** `data-testid` for the code; Generate takes it with `-generate` added. */
+  testId?: string;
 }
 
 /**
@@ -58,7 +67,9 @@ export interface PatientCodeControlProps {
  * very thing `disabled` already carries, so the button rides the form's own
  * state (#268). A read-only viewer gets the button disabled rather than
  * absent, like every other control on the form — the shortcut is unavailable
- * for exactly the reason the field itself is.
+ * for exactly the reason the field itself is. A code the generator would
+ * make that the schema's pattern refuses leaves the button out, rather than
+ * offering a code that blocks the save (spec/patients § generating a code).
  */
 export const PatientCodeControl = (
   props: PatientCodeControlProps
@@ -89,26 +100,33 @@ export const PatientCodeControl = (
     else void generate();
   };
 
+  const canGenerate = () =>
+    generatedCodeFits(currentStoreName() ?? '', props.pattern);
+
   return (
     <>
       <FormRow>
         <TextField
-          label={t('label.code')}
+          label={props.label ?? t('label.code')}
           required={props.required}
           error={props.error}
           value={props.value}
           disabled={props.disabled}
+          data-testid={props.testId}
           onInput={e => props.onChange(e.currentTarget.value)}
         />
-        <Button
-          class={styles.generate}
-          variant="secondary"
-          disabled={props.disabled}
-          loading={generating()}
-          onClick={onGenerate}
-        >
-          {t('label.generate')}
-        </Button>
+        <Show when={canGenerate()}>
+          <Button
+            class={styles.generate}
+            variant="secondary"
+            data-testid={props.testId && `${props.testId}-generate`}
+            disabled={props.disabled}
+            loading={generating()}
+            onClick={onGenerate}
+          >
+            {t('label.generate')}
+          </Button>
+        </Show>
       </FormRow>
       <ConfirmDialog
         open={confirmRegenerate()}
@@ -137,9 +155,16 @@ export interface DateOfBirthControlProps {
   estimated?: boolean;
   /** `fromAge` is true when the date was back-filled from a typed age. */
   onChange: (dob: string | null, fromAge: boolean) => void;
+  /**
+   * The date of birth's label, already translated; the host's own when
+   * absent. The age beside it keeps the host's.
+   */
+  label?: string;
   required?: boolean;
   error?: string;
   disabled?: boolean;
+  /** `data-testid` for the date; the age takes it with `-age` added. */
+  testId?: string;
 }
 
 /**
@@ -185,12 +210,13 @@ export const DateOfBirthControl = (
   return (
     <FormRow>
       <DateField
-        label={t('label.date-of-birth')}
+        label={props.label ?? t('label.date-of-birth')}
         max={today}
         value={props.value}
         required={props.required}
         error={props.error}
         disabled={props.disabled}
+        testId={props.testId}
         // The Show goes INSIDE the slot, so labelInfo is always present and
         // only the tooltip mounts/unmounts. Toggling the slot itself between
         // an element and undefined would also swap the label between
@@ -217,6 +243,7 @@ export const DateOfBirthControl = (
             max={MAX_AGE}
             value={age()}
             disabled={props.disabled}
+            data-testid={props.testId && `${props.testId}-age`}
             onChange={value => {
               const dob = value === undefined ? null : dobFromAge(value);
               setAgeSource(
@@ -240,6 +267,8 @@ export const DateOfBirthControl = (
 export interface GenderControlProps {
   value: Gender | null;
   onChange: (gender: Gender | null) => void;
+  /** The field's label, already translated; the host's own when absent. */
+  label?: string;
   error?: string;
   disabled?: boolean;
 }
@@ -247,7 +276,7 @@ export interface GenderControlProps {
 /** Gender, from the store's configured subset (spec/patients § gender). */
 export const GenderControl = (props: GenderControlProps): JSX.Element => (
   <Combobox<GenderOption>
-    label={t('label.gender')}
+    label={props.label ?? t('label.gender')}
     items={genderOptions()}
     itemToString={o => o.label}
     itemToValue={o => o.value}
@@ -268,13 +297,15 @@ export interface NextOfKinControlProps {
   id: string | null;
   name: string;
   onChange: (id: string | null, name: string) => void;
+  /** The field's label, already translated; the host's own when absent. */
+  label?: string;
   disabled?: boolean;
 }
 
 /** The next of kin, picked from the store's patients. */
 export const NextOfKinControl = (props: NextOfKinControlProps): JSX.Element => (
   <PatientSearch
-    label={t('label.next-of-kin')}
+    label={props.label ?? t('label.next-of-kin')}
     storeId={props.storeId}
     disabled={props.disabled}
     selected={props.id ? minimalPatientOption(props.id, props.name) : undefined}

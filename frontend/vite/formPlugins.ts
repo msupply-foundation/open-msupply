@@ -92,6 +92,13 @@ export interface SchemaVersionDeclaration {
    * build's content-hash id (`schemaVersionId`).
    */
   id?: string;
+  /**
+   * The fields this version accepts less of than the one before it, each
+   * with why that is accepted: path → reason. A document the earlier version
+   * saved may fail here until someone edits it, so the build refuses every
+   * narrowing not listed (vite/formVersionChecks.ts).
+   */
+  tightens?: Record<string, string>;
 }
 
 export interface DocumentTypeDeclaration {
@@ -190,7 +197,7 @@ const DOCUMENT_TYPE_KEYS = new Set([
   'nextEncounter',
   'legacyUiSchema',
 ]);
-const VERSION_KEYS = new Set(['file', 'source', 'type', 'id']);
+const VERSION_KEYS = new Set(['file', 'source', 'type', 'id', 'tightens']);
 
 // An unknown key is refused rather than ignored: a misspelt `programKey`
 // would otherwise read as "no program key" and fail far from the typo.
@@ -215,7 +222,7 @@ const parseVersion = (
     return undefined;
   }
   unknownKeys(raw, VERSION_KEYS, where, problems);
-  const { file, source, type, id } = raw;
+  const { file, source, type, id, tightens } = raw;
   if (!isNonEmptyString(file) || !file.endsWith('.json')) {
     problems.push(`${where}: "file" must name a .json file`);
     return undefined;
@@ -237,11 +244,20 @@ const parseVersion = (
   if (id !== undefined && !isNonEmptyString(id)) {
     problems.push(`${where}: "id" must be a non-empty string`);
   }
+  const isTightens = (value: unknown): value is Record<string, string> =>
+    isRecord(value) && Object.values(value).every(isNonEmptyString);
+  if (tightens !== undefined && !isTightens(tightens)) {
+    problems.push(
+      `${where}: "tightens" must map each field path to why its narrowing ` +
+        'is accepted, a non-empty string'
+    );
+  }
   return {
     file,
     ...(isNonEmptyString(source) ? { source } : {}),
     ...(isNonEmptyString(type) ? { type } : {}),
     ...(isNonEmptyString(id) ? { id } : {}),
+    ...(isTightens(tightens) ? { tightens } : {}),
   };
 };
 
@@ -347,6 +363,12 @@ const parseDocumentType = (
   const parsed = versions.map((version, i) =>
     parseVersion(version, `${at} versions[${i}]`, problems)
   );
+  if (parsed[0]?.tightens) {
+    problems.push(
+      `${at} versions[0]: "tightens" is for a version narrowing the one ` +
+        'before it, and the first has none'
+    );
+  }
   const files = parsed.map(version => version?.file);
   files.forEach((file, i) => {
     if (file !== undefined && files.indexOf(file) !== i) {
@@ -365,9 +387,6 @@ const parseDocumentType = (
         `${at} versions[${i}]: "id" is only for the deployment's versions at ` +
           'the front of the list, before any version the plugin published'
       );
-    }
-    if (id !== undefined && declaredIds.indexOf(id) !== i) {
-      problems.push(`${at}: version id "${id}" is listed twice`);
     }
   });
   const current = parsed.at(-1);
@@ -451,6 +470,29 @@ export const parseFormsDeclaration = (
       problems.push(`${where}: directory "forms/${dir}" is used twice`);
     }
   });
+  /*
+   * A schema id names one version on the server, so a deployment's id is
+   * declared once in the whole plugin. Copying a version block to another
+   * type and keeping its id would otherwise pass until install refused the
+   * second version as a conflicting schema.
+   */
+  const declaredAt = new Map<string, string>();
+  for (const entry of documentTypes) {
+    entry.versions.forEach((version, i) => {
+      if (version.id === undefined) return;
+      const place = `${entry.documentType} v${i + 1}`;
+      const first = declaredAt.get(version.id);
+      if (first) {
+        problems.push(
+          `${where}: version id "${version.id}" is declared on ${first} and ` +
+            `on ${place} — a schema id names one version, so give each its ` +
+            "deployment's own id"
+        );
+      } else {
+        declaredAt.set(version.id, place);
+      }
+    });
+  }
   if (problems.length > 0) {
     throw new Error(
       `invalid form plugin declaration:\n  - ${problems.join('\n  - ')}`

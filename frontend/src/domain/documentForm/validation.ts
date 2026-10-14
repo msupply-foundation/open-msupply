@@ -70,6 +70,23 @@ const validatorFor = (
   }
 };
 
+/**
+ * Why this validator cannot compile `schema`, or undefined when it can. For
+ * the build (vite/formVersionChecks.ts), which refuses a form plugin whose
+ * current version would leave every document of its type unsaveable here:
+ * AJV compiles a `pattern` as a JavaScript Unicode regular expression, which
+ * refuses some the server's regex engine accepts (an escaped hyphen outside
+ * a class, `\-`).
+ */
+export const schemaCompileError = (schema: JsonSchema): string | undefined => {
+  try {
+    ajv.compile(schema);
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+};
+
 const FORMAT_MESSAGES: Record<string, LocaleKey> = {
   'date-time': 'error.document-invalid-date-time',
   date: 'error.document-invalid-date',
@@ -85,6 +102,8 @@ const messageFor = (e: ErrorObject): string => {
     }
     case 'enum':
       return t('error.document-invalid-option');
+    case 'pattern':
+      return t('error.document-invalid-format');
     case 'type':
       return e.params['type'] === 'number' || e.params['type'] === 'integer'
         ? t('error.document-invalid-number')

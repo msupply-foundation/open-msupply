@@ -41,13 +41,13 @@ export interface EncounterFormModalProps {
 
 /*
  * A new encounter's form in a modal (kdd/custom-forms/specs.md § Forms in the
- * UI: the modal mount point; implementation-plan H10b), opened by a trigger on
- * the patient screen's header (`openDocumentForm`). The document form host
- * over one new Encounter document: the visit date, clinician and status the
- * record screen's toolbar edits, above the form contributed for the type or
- * the host's default encounter form (DocumentFormRegion), so the form is the
- * same one the record screen shows and receives the same draft. Nothing is
- * written until Save; the modal remounts per open.
+ * UI: the modal mount point), opened by a trigger on the patient screen's
+ * header (`openDocumentForm`). The document form host over one new Encounter
+ * document: the visit date, clinician and status the record screen's toolbar
+ * edits, above the form contributed for the type or the host's default
+ * encounter form (DocumentFormRegion), so the form is the same one the record
+ * screen shows and receives the same draft. Nothing is written until Save; the
+ * modal remounts per open.
  */
 export const EncounterFormModal = (
   props: EncounterFormModalProps
@@ -162,6 +162,7 @@ const EncounterFormModalBody = (props: BodyProps): JSX.Element => {
                       patientId: props.patientId,
                       documentName: form.document()?.name,
                     }}
+                    participation={form.coordinator.participationFor}
                     fallback={() => <Default draft={form.draft} />}
                     currentSchemaId={props.registry.formSchemaId}
                   />

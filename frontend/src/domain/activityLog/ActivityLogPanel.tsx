@@ -2,9 +2,8 @@ import { createResource, type Component, type JSX } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
 import { gated } from '../../api/gated';
 import { createTableConfig } from '../../api/createTableConfig';
-import { t } from '../../intl';
+import { hasTranslation, t } from '../../intl';
 import type { LocaleKey } from '../../intl/locales';
-import { dictionaries, locale } from '../../intl/intl';
 import { DataTable, type Column } from '../../ui/elements/table/DataTable';
 import {
   getCellDefinition,
@@ -38,12 +37,11 @@ const LOG_PAGE_SIZE = 1000;
 
 // The event name: the enum maps to a `log.<kebab>` translation key (OMS
 // Formatter.logTypeTranslation parity — TYPE → `log.<lower, _→->`). t() has no
-// react-i18next `defaultValue`, so look the key up in the active dictionary
+// react-i18next `defaultValue`, so look the key up on the translation ladder
 // first and fall back to the raw enum value when unmapped.
 const eventLabel = (type: Log['type']): string => {
   const key = `log.${type.toLowerCase().replace(/_/g, '-')}` as LocaleKey;
-  const dict = dictionaries()[locale()];
-  return dict?.[key] !== undefined ? t(key) : type;
+  return hasTranslation(key) ? t(key) : type;
 };
 
 const tryParseObject = (
@@ -62,8 +60,7 @@ const tryParseObject = (
 
 const fieldLabel = (key: string): string => {
   const localeKey = `label.${key}` as LocaleKey;
-  const dict = dictionaries()[locale()];
-  return dict?.[localeKey] !== undefined ? t(localeKey) : key;
+  return hasTranslation(localeKey) ? t(localeKey) : key;
 };
 
 // A change's before/after detail (`from`/`to`). When `to` parses to a JSON

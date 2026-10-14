@@ -7,14 +7,13 @@ import { contributionId, visibleContributions } from './PluginSlot';
 
 /*
  * Form resolution for the document form slots (kdd/custom-forms/specs.md §
- * Forms in the UI; implementation-plan H5): which form renders the body of a
- * document, given its type. The plugin form contributed for the type if one
- * is, else the host's default form for the category, which is also what
- * renders in place of a plugin form that throws (DocumentFormRegion.tsx).
- * Within the plugin form, the document's schema version picks between its
- * archived form for that version, read-only, and the current form after
- * migration; the form host works that out from the contribution's
- * versioning (`documentFormVersioning`, createDocumentForm.ts).
+ * Forms in the UI): which form renders the body of a document, given its type.
+ * The plugin form contributed for the type if one is, else the host's default
+ * form for the category, which is also what renders in place of a plugin form
+ * that throws (DocumentFormRegion.tsx). Within the plugin form, the document's
+ * schema version picks between its archived form for that version, read-only,
+ * and the current form after migration; the form host works that out from the
+ * contribution's versioning (`documentFormVersioning`, createDocumentForm.ts).
  *
  * Pure over its candidate list, like the dashboard body's resolver
  * (sections/dashboard/bodyRegion.ts), so the rule is testable as data.
@@ -23,9 +22,9 @@ import { contributionId, visibleContributions } from './PluginSlot';
  * document no form can show (implementation-plan H12).
  *
  * TO-DO: name a plugin form's fields in the error summary in the user's
- * language, from keys in the plugin's catalogue that its contribution
- * declares, joined into the `labels` the screen passes the form host.
- * `pathLabel` names them from their paths (worklog decision 2026-09-25).
+ * language, from keys in the plugin's catalogue that its contribution declares,
+ * joined into the `labels` the screen passes the form host. `pathLabel` names
+ * them from their paths.
  */
 
 /** A plugin form as the host renders it. */

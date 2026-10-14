@@ -1,0 +1,97 @@
+# The prescription data functions the SDK offers form plugins
+# (./prescriptions.ts): a prescription written from a form, for the stock it
+# gives the patient.
+
+# An item's batches available now in the store, for choosing how much of each
+# to give. Read before any prescription exists, which the prescription
+# screen's own draft lines need.
+query sdkItemBatches($storeId: String!, $itemId: String!) {
+  historicalStockLines(storeId: $storeId, itemId: $itemId) {
+    ... on StockLineConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        batch
+        expiryDate
+        packSize
+        availableNumberOfPacks
+        onHold
+      }
+    }
+  }
+}
+
+# A prescription as a form shows it once written: its number, when it was
+# made and where, and what it gives.
+query sdkPrescriptionSummary($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id) {
+    __typename
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+      status
+      createdDatetime
+      pickedDatetime
+      store {
+        __typename
+        id
+      }
+      lines {
+        __typename
+        nodes {
+          __typename
+          itemId
+          itemName
+          numberOfPacks
+          packSize
+        }
+      }
+    }
+  }
+}
+
+mutation sdkInsertPrescription(
+  $storeId: String!
+  $input: InsertPrescriptionInput!
+) {
+  insertPrescription(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+    }
+  }
+}
+
+# One item's lines as a set, with the prescribed quantity.
+mutation sdkSavePrescriptionItemLines(
+  $storeId: String!
+  $input: SavePrescriptionLinesInput!
+) {
+  savePrescriptionItemLines(storeId: $storeId, input: $input) {
+    __typename
+    id
+  }
+}
+
+mutation sdkPickPrescription($storeId: String!, $id: String!) {
+  updatePrescription(storeId: $storeId, input: { id: $id, status: PICKED }) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on UpdatePrescriptionError {
+      error {
+        __typename
+        description
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

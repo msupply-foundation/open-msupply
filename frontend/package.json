@@ -11,6 +11,7 @@
     "build:plugins": "node scripts/build-plugins.mjs",
     "forms:emit": "node scripts/emit-form-schemas.mjs",
     "forms:check": "node scripts/emit-form-schemas.mjs --check",
+    "forms:inventory": "node scripts/forms-inventory.mjs",
     "plugin:install": "node scripts/install-plugin.mjs",
     "electron": "pnpm build && electron desktop/main.cjs",
     "electron:package": "pnpm build && bash scripts/package-desktop.sh",

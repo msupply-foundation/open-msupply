@@ -2,7 +2,7 @@ import type { Plugin } from 'vite';
 
 /*
  * Keeps the heavy lazy-only modules out of the eager entry (kdd/bundling,
- * kdd/custom-forms/specs.md § Forms in the UI; implementation-plan H1).
+ * kdd/custom-forms/specs.md § Forms in the UI).
  *
  * The form library (its fields, the AJV validator and the host's default
  * forms) must load only when a form first opens: the host and every plugin
@@ -30,6 +30,11 @@ export const LAZY_ONLY_MODULES: readonly string[] = [
   // The host's patient fields, which the library carries for patient forms.
   '/src/domain/patient/documentFields.tsx',
   '/src/domain/documentForm/baseSchemas/',
+  // The old client's category tiles, carried in the form library's chunk.
+  '/src/plugin-sdk/formCategories/',
+  // The program icons' shapes, loaded by ProgramIcon when one first renders.
+  '/src/plugin-sdk/programIcons/programIconData.ts',
+  '/src/plugin-sdk/programIcons/ProgramIconSvg.tsx',
   '/node_modules/ajv/',
   '/node_modules/ajv-formats/',
 ];

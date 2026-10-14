@@ -454,9 +454,33 @@ export {
   DateInput,
   DateTimeInput,
   SelectInput,
+  AutocompleteInput,
   CheckboxInput,
+  DateOfBirthInput,
+  NotesInput,
+  MultiSelectInput,
+  PreviousEncounterValue,
+  PrescriptionInput,
   FieldGroup,
+  FormDivider,
 } from './lazyComponents';
+/*
+ * The old client's category tiles and its program icons: a form's categories
+ * as tiles that open their fields in dialogs, replicating the old client's
+ * look until program forms move onto the core library's layout. The tiles are
+ * lazy from the form library's chunk; `ProgramIcon` is a small eager wrapper
+ * that loads the icons' shapes, their own chunk, when the first one renders.
+ */
+export { FormCategories, FormCategory } from './lazyComponents';
+export { ProgramIcon } from './programIcons/ProgramIcon';
+export type {
+  ProgramIconName,
+  ProgramIconProps,
+} from './programIcons/ProgramIcon';
+export type {
+  FormCategoriesProps,
+  FormCategoryProps,
+} from './formCategories/FormCategories';
 // The host's patient fields, for a `patient.form` to compose: lazy from the
 // same chunk.
 export {
@@ -471,7 +495,10 @@ export {
   PatientNextOfKinField,
   PatientDeceasedFields,
 } from './lazyComponents';
-export type { PatientFieldProps } from '../domain/patient/documentFields';
+export type {
+  LabelledPatientFieldProps,
+  PatientFieldProps,
+} from '../domain/patient/documentFields';
 // The host's enrolment ID field, for a `programEnrolment.form` to place.
 export { EnrolmentIdField } from './lazyComponents';
 export type { EnrolmentIdFieldProps } from '../domain/documentForm/EnrolmentIdField';
@@ -483,6 +510,8 @@ export type {
   EnumPath,
   NumberPath,
   BooleanPath,
+  NotesPath,
+  EnumArrayPath,
 } from '../domain/documentForm/paths';
 export type { FieldSchemaInfo } from '../domain/documentForm/schemaNode';
 // Migrations between a document type's schema versions: eager and tiny, since
@@ -504,9 +533,18 @@ export type {
   DateInputProps,
   DateTimeInputProps,
   SelectInputProps,
+  AutocompleteInputProps,
+  AutocompleteOption,
   CheckboxInputProps,
+  DateOfBirthInputProps,
   FieldGroupProps,
+  FormDividerProps,
 } from '../domain/documentForm/fields';
+export type { NotesInputProps } from '../domain/documentForm/NotesInput';
+export type { MultiSelectInputProps } from '../domain/documentForm/MultiSelectInput';
+export type { PreviousEncounterValueProps } from '../domain/documentForm/PreviousEncounterValue';
+export type { PrescriptionInputProps } from '../domain/documentForm/PrescriptionInput';
+export type { NoteEditRestrictions } from '../domain/documentForm/notes';
 
 // ── List & table state — the URL and the stored column layout ───────────────
 /*
@@ -704,6 +742,19 @@ export { gated } from '../api/gated';
 // derives from documents (./programs.ts).
 export { allocateProgramNumber, useActiveProgramEvents } from './programs';
 export type { ProgramEventView, ActiveProgramEventsInput } from './programs';
+export { usePreviousEncounter } from './encounters';
+export type { PreviousEncounterInput, PreviousEncounterView } from './encounters';
+export {
+  createPrescription,
+  useItemBatches,
+  usePrescriptionSummary,
+} from './prescriptions';
+export type {
+  CreatePrescriptionInput,
+  CreatePrescriptionResult,
+  ItemBatchView,
+  PrescriptionSummaryView,
+} from './prescriptions';
 
 // ── Data access — the backend bridge ────────────────────────────────────────
 export { pluginBridge, usePluginQuery } from './bridge';

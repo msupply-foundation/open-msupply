@@ -1,11 +1,10 @@
 /*
  * The patient toolbar trigger slot's region (kdd/custom-forms/specs.md § Forms
- * in the UI, trigger slots; implementation-plan H10b): the buttons plugins
- * place on the patient screen's header. The host owns the place and draws
- * each button in its own style from the contribution's label and icon; the
- * plugin supplies the entry, which gates on the session (`when`, as on every
- * slot) and on the patient (`visible`), and a handler the host runs with the
- * actions it offers here.
+ * in the UI, trigger slots): the buttons plugins place on the patient screen's
+ * header. The host owns the place and draws each button in its own style from
+ * the contribution's label and icon; the plugin supplies the entry, which gates
+ * on the session (`when`, as on every slot) and on the patient (`visible`), and
+ * a handler the host runs with the actions it offers here.
  *
  * A trigger's label is a key in its plugin's catalogue, resolved under the
  * plugin's namespace. A `visible` or `onClick` that throws hides or does

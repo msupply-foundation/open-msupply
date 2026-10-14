@@ -1,11 +1,11 @@
 /*
- * The document form host (kdd/custom-forms/specs.md § Forms in the UI;
- * implementation-plan H4, the edit path): given a document by name, or a new
- * one's registry entry and seed, it loads the document and the form library,
- * owns the draft, validates it against the entry's current schema, and saves
- * it through its category's mutation pinned to that schema. The screen that
- * mounts it (a record screen, a modal) renders the form body with the draft
- * and binds its own Save, Cancel and leave guard to what this returns.
+ * The document form host (kdd/custom-forms/specs.md § Forms in the UI; the edit
+ * path): given a document by name, or a new one's registry entry and seed, it
+ * loads the document and the form library, owns the draft, validates it against
+ * the entry's current schema, and saves it through its category's mutation
+ * pinned to that schema. The screen that mounts it (a record screen, a modal)
+ * renders the form body with the draft and binds its own Save, Cancel and leave
+ * guard to what this returns.
  *
  * Every read here is non-suspending (api/gated): a host opened by an
  * interaction (the enrolment modal) sits under an already-open screen, which
@@ -41,6 +41,10 @@ import type {
   FieldError,
   FormValidation,
 } from '../../ui/layout/Form/formValidation';
+import {
+  createSaveCoordinator,
+  type SaveCoordinator,
+} from '../../plugins/formParticipation';
 import { createDraft, type Draft } from './draft';
 import {
   applyMigrations,
@@ -159,6 +163,14 @@ export interface DocumentForm<T> {
   /** The loaded form library, to render its fields and default forms from. */
   library: Accessor<FormLibrary | undefined>;
   draft: Draft<T>;
+  /**
+   * The form's own part in the save (FormParticipation), for the plugin form
+   * to take through its slot: a form's dirty state and validity count with
+   * the draft's, its before-save handlers run before the document is
+   * persisted (a throw stops the save and shows its message), and its
+   * after-save handlers once it is.
+   */
+  coordinator: SaveCoordinator;
   /** The document's registry entry: its type, category and current schema. */
   registry: Accessor<FormRegistryFragment | undefined>;
   /** The latest saved version, or undefined for a document never saved. */
@@ -561,6 +573,9 @@ export const createDocumentForm = <T extends object>(
     if (version().kind === 'archived') setEditing(document()?.id);
   };
 
+  const coordinator = createSaveCoordinator();
+  const isDirty = () => controller.isDirty() || coordinator.dirty();
+
   const save = async () => {
     if (saving() || readingOnly()) return undefined;
     // A check a field is still running (draft.wait) decides first.
@@ -572,6 +587,11 @@ export const createDocumentForm = <T extends object>(
     controller.validation.arm();
     const r = registry();
     if (!r || !controller.validation.valid()) return undefined;
+    const invalid = coordinator.invalidMessage();
+    if (invalid !== undefined) {
+      setSaveError(invalid);
+      return undefined;
+    }
     // The source the save was made from: by the time it returns the screen
     // may show another record, which this version must not stand for.
     const key = currentKey();
@@ -597,6 +617,13 @@ export const createDocumentForm = <T extends object>(
         return undefined;
       }
     }
+    // Before the snapshot, so a handler's own writes to the draft are saved.
+    const veto = await coordinator.runBeforeSave();
+    if (veto.kind === 'vetoed') {
+      setSaving(false);
+      if (key === currentKey()) setSaveError(veto.message);
+      return undefined;
+    }
     const result = await persistDocument({
       storeId: options.storeId(),
       patientId: options.patientId(),
@@ -615,6 +642,11 @@ export const createDocumentForm = <T extends object>(
     }
     if (result.kind === 'reported') return undefined;
     if (key) setSaved({ key, document: result.document });
+    const after = await coordinator.runAfterSave({ recordId: result.recordId });
+    // The document is saved either way; what a handler failed to do is shown.
+    if (after.kind === 'failed' && key === currentKey()) {
+      setSaveError(after.message);
+    }
     return result.document;
   };
 
@@ -629,14 +661,15 @@ export const createDocumentForm = <T extends object>(
     status,
     library: () => gated(library),
     draft: controller.draft,
+    coordinator,
     registry,
     document,
     isNew,
-    isDirty: controller.isDirty,
+    isDirty,
     // A migrated document may be saved untouched: the save re-pins it.
     canSave: () =>
       !readingOnly() &&
-      (isNew() || controller.isDirty() || version().kind === 'migrated'),
+      (isNew() || isDirty() || version().kind === 'migrated'),
     validation: controller.validation,
     version,
     edit,

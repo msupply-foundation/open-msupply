@@ -77,6 +77,12 @@ const backendProxy = (proxyTarget: string) => ({
   '/coldchain': { target: proxyTarget, changeOrigin: true },
   // Support tools.
   '/support': { target: proxyTarget, changeOrigin: true },
+  // The legacy React UI, served by the backend from its frontend dir's old-ui/
+  // subdirectory (server/server/src/serve_frontend.rs). The login page's "Use
+  // old interface" link leads here; left to the SPA fallback, this app would
+  // load in its place and App.tsx's old-UI preference would redirect it back
+  // to /old-ui/ endlessly.
+  '/old-ui': { target: proxyTarget, changeOrigin: true },
 });
 
 export default defineConfig(({ mode }) => {

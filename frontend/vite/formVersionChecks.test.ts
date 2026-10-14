@@ -244,18 +244,154 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
     ]);
   });
 
+  // A pattern the server's regex engine accepts and AJV, compiling it as a
+  // JavaScript Unicode regular expression, refuses.
+  const escapedHyphen = schema({
+    code: { type: 'string', pattern: '^[A-Z]\\-[0-9]+$' },
+  });
+
+  it('names a current version the validator cannot compile', async () => {
+    const dir = fixture({ 'forms/Visit/v1.json': escapedHyphen });
+    const declaration = declare({
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        new RegExp(
+          `^${visit(dir, 'v1.json')}: the validator this frontend checks ` +
+            'every draft with \\(AJV\\) cannot compile v1, so no Visit could ' +
+            'be saved here: .+ — fix it in ' +
+            `${visit(dir, 'type.ts')}; a \`@pattern\` must be a valid ` +
+            'JavaScript Unicode regular expression'
+        )
+      ),
+    ]);
+  });
+
+  it("says to add a version when the deployment's own current version cannot compile", async () => {
+    const dir = fixture({ 'forms/Visit/v1.json': escapedHyphen });
+    const declaration = declare({
+      versions: [
+        { file: 'v1.json', source: 'type.ts', type: 'Visit', id: 'deployed' },
+      ],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        /cannot compile v1, so no Visit could be saved here: .+ — it is the deployment's own schema, so add a version whose schema compiles$/
+      ),
+    ]);
+  });
+
+  it('skips validating a fixture against an earlier version the validator cannot compile', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': escapedHyphen,
+      'forms/Visit/v2.json': schema({ code: { type: 'string' } }),
+      'forms/Visit/fixtures/v1.json': { extension: { demo: { code: 'A-1' } } },
+    });
+    expect(await checkFormVersions(dir, declare())).toEqual([]);
+  });
+
   it('names a missing fixture for an earlier version', async () => {
     const dir = fixture({
       'forms/Visit/v1.json': v1,
       'forms/Visit/v2.json': v2,
       'forms/Visit/migrations.ts': covered,
+      // A fixture of the current version stands in for none of v1's.
+      'forms/Visit/fixtures/v2.json': { extension: { demo: {} } },
     });
     expect(await checkFormVersions(dir, declare())).toEqual([
       expect.stringMatching(
         new RegExp(
-          `^${visit(dir, 'fixtures/v1.json')}: not found — every earlier ` +
-            'version needs a fixture'
+          `^${visit(dir, 'fixtures')}: no fixture of v1 — every earlier ` +
+            'version needs at least one'
         )
+      ),
+    ]);
+  });
+
+  it('checks every fixture of a version, naming each by its own file', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v1,
+      'forms/Visit/v2.json': v2,
+      'forms/Visit/migrations.ts': covered,
+      'forms/Visit/fixtures/v1.json': v1Document,
+      'forms/Visit/fixtures/v1.first-line.json': {
+        extension: { demo: { regimen: 'FIRST_LINE' } },
+      },
+      'forms/Visit/fixtures/v1.text-weight.json': {
+        extension: { demo: { weightKg: 'heavy' } },
+      },
+    });
+    expect(await checkFormVersions(dir, declare())).toEqual([
+      expect.stringMatching(
+        new RegExp(
+          `^${visit(dir, 'fixtures/v1.text-weight.json')}: does not ` +
+            'validate against v1 \\(v1\\.json\\): extension\\.demo\\.weightKg ' +
+            '\\(type\\)'
+        )
+      ),
+    ]);
+  });
+
+  it('passes an earlier version whose fixtures are all named cases', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v1,
+      'forms/Visit/v2.json': v2,
+      'forms/Visit/migrations.ts': covered,
+      'forms/Visit/fixtures/v1.legacy-trial.json': v1Document,
+    });
+    expect(await checkFormVersions(dir, declare())).toEqual([]);
+  });
+
+  it('names a file in fixtures/ the build would not read as a fixture', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v1,
+      'forms/Visit/v2.json': v2,
+      'forms/Visit/migrations.ts': covered,
+      'forms/Visit/fixtures/v1.json': v1Document,
+      'forms/Visit/fixtures/visit-1.json': v1Document,
+      'forms/Visit/fixtures/v3.json': v1Document,
+      'forms/Visit/fixtures/.DS_Store': '',
+    });
+    expect(await checkFormVersions(dir, declare())).toEqual([
+      `${visit(dir, 'fixtures/v3.json')}: a fixture of v3, which Visit does ` +
+        'not have (v1 to v2) — name it after the version that recorded it',
+      `${visit(dir, 'fixtures/visit-1.json')}: not a fixture name, so the ` +
+        'build would never read it — name it v<n>.json or v<n>.<case>.json, ' +
+        'after the version that recorded it',
+    ]);
+  });
+
+  it('checks a fixture of the current version as it is, in a type with one version', async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v2,
+      'forms/Visit/fixtures/v1.json': { extension: { demo: { vitals: {} } } },
+      'forms/Visit/fixtures/v1.text-weight.json': {
+        extension: { demo: { vitals: { weightKg: 'heavy' } } },
+      },
+    });
+    const declaration = declare({
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      `${visit(dir, 'fixtures/v1.text-weight.json')}: does not validate ` +
+        'against v1 (v1.json): extension.demo.vitals.weightKg (type) — a ' +
+        'fixture is a document as v1 recorded it',
+    ]);
+  });
+
+  it("names a fixture of the current version that fails its category's base schema", async () => {
+    const dir = fixture({
+      'forms/Visit/v1.json': v2,
+      'forms/Visit/fixtures/v1.json': { extension: { demo: {} } },
+    });
+    const declaration = declare({
+      category: 'Encounter',
+      versions: [{ file: 'v1.json', source: 'type.ts', type: 'Visit' }],
+    });
+    expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        /fixtures\/v1\.json: does not validate against the Encounter base schema, which the host checks every draft against as well: .*createdDatetime \(required\).* — fix the fixture, or the type if v1 lets through a document the base schema refuses$/
       ),
     ]);
   });
@@ -441,6 +577,9 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
       ],
     });
     expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        /forms\.json: Visit v1 → v2: extension\.demo\.weightKg is newly required/
+      ),
       `${visit(dir, 'fixtures/v1.json')}: v1 → v2 has no migration step, so ` +
         'the document must validate unchanged against v2, and it does not: ' +
         'extension.demo.weightKg (required) — add a step from v1 to ' +
@@ -478,11 +617,153 @@ describe('checkFormVersions', { timeout: 60_000 }, () => {
       ],
     });
     expect(await checkFormVersions(dir, declaration)).toEqual([
+      expect.stringMatching(
+        /forms\.json: Visit v1 → v2: extension\.demo\.weightKg is newly required/
+      ),
       `${visit(dir, 'fixtures/v1.json')}: v1 → v2 has no migration step, so ` +
         'the document must validate unchanged against v2 (v2.json), and it ' +
         'does not: extension.demo.weightKg (required) — the change is not ' +
         `additive, so add a step from v1 to ${visit(dir, 'migrations.ts')}`,
     ]);
+  });
+
+  describe('narrowings', () => {
+    const before = schema({ code: { type: 'string' } });
+    const after = schema({ code: { type: 'string', pattern: '^[0-9]{6}$' } });
+    const files = {
+      'forms/Visit/v1.json': before,
+      'forms/Visit/v2.json': after,
+      'forms/Visit/fixtures/v1.json': { extension: { demo: {} } },
+    };
+    const versions = (tightens?: Record<string, string>) => [
+      { file: 'v1.json' },
+      {
+        file: 'v2.json',
+        source: 'type.ts',
+        type: 'Visit',
+        ...(tightens ? { tightens } : {}),
+      },
+    ];
+    const formsJson = (dir: string) => join(dir, 'forms/forms.json');
+    const narrowed =
+      'Visit v1 → v2: extension.demo.code gains pattern "^[0-9]{6}$", so a ' +
+      'document v1 saved may not validate against v2 until someone edits ' +
+      'it — if that is meant, acknowledge it on v2, "tightens": ' +
+      '{ "extension.demo.code": "<why>" }';
+
+    it('names one not acknowledged', async () => {
+      const dir = fixture(files);
+      expect(
+        await checkFormVersions(dir, declare({ versions: versions() }))
+      ).toEqual([
+        `${formsJson(dir)}: ${narrowed}, or clear the old value in a step ` +
+          `in ${visit(dir, 'migrations.ts')} (unresolved 'any')`,
+      ]);
+    });
+
+    it('passes one acknowledged on the narrower version', async () => {
+      const dir = fixture(files);
+      const declaration = declare({
+        versions: versions({ 'extension.demo.code': 'six-digit codes' }),
+      });
+      expect(await checkFormVersions(dir, declaration)).toEqual([]);
+    });
+
+    it('accepts a fixture failing where the narrowing is acknowledged', async () => {
+      const dir = fixture({
+        ...files,
+        'forms/Visit/fixtures/v1.json': {
+          extension: { demo: { code: 'A-1' } },
+        },
+        'forms/Visit/fixtures/v1.listed.json': {
+          extension: { demo: { code: 'A-1', listed: [{ region: 'Nord' }] } },
+        },
+        'forms/Visit/v1.json': schema({
+          code: { type: 'string' },
+          listed: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { region: { type: 'string' } },
+            },
+          },
+        }),
+        'forms/Visit/v2.json': schema({
+          code: { type: 'string', pattern: '^[0-9]{6}$' },
+          listed: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { region: { type: 'string', enum: ['NORTH'] } },
+            },
+          },
+        }),
+      });
+      const acknowledged = declare({
+        versions: versions({
+          'extension.demo.code': 'six-digit codes',
+          'extension.demo.listed[].region': 'regions from the list',
+        }),
+      });
+      expect(await checkFormVersions(dir, acknowledged)).toEqual([]);
+      // Unacknowledged, the same fixture fails as the narrowing does.
+      const problems = await checkFormVersions(
+        dir,
+        declare({
+          versions: versions({ 'extension.demo.code': 'six-digit codes' }),
+        })
+      );
+      expect(problems).toEqual([
+        expect.stringMatching(
+          /extension\.demo\.listed\[\]\.region is given an enum/
+        ),
+        expect.stringMatching(
+          /fixtures\/v1\.listed\.json: v1 → v2 has no migration step, .* extension\.demo\.listed\.0\.region \(enum\)/
+        ),
+      ]);
+    });
+
+    it('passes one a step clears whole', async () => {
+      const dir = fixture({
+        ...files,
+        'forms/Visit/migrations.ts': `
+          export const migrations = [
+            { from: 1, unresolved: { 'extension.demo.code': 'any' } },
+          ];
+        `,
+      });
+      expect(
+        await checkFormVersions(dir, declare({ versions: versions() }))
+      ).toEqual([]);
+    });
+
+    it('offers no step where the old client draws the type', async () => {
+      const dir = fixture({
+        ...files,
+        'forms/Visit/legacy-ui.json': { type: 'VerticalLayout', elements: [] },
+      });
+      const declaration = declare({
+        legacyUiSchema: 'legacy-ui.json',
+        versions: versions(),
+      });
+      expect(await checkFormVersions(dir, declaration)).toEqual([
+        `${formsJson(dir)}: ${narrowed}`,
+      ]);
+    });
+
+    it('names an acknowledgement of a field the version does not narrow', async () => {
+      const dir = fixture(files);
+      const declaration = declare({
+        versions: versions({
+          'extension.demo.code': 'six-digit codes',
+          'extension.demo.cod': 'a misspelt path',
+        }),
+      });
+      expect(await checkFormVersions(dir, declaration)).toEqual([
+        `${formsJson(dir)}: Visit v2: "tightens" names extension.demo.cod, ` +
+          'which v2 does not narrow — remove it, or fix the path',
+      ]);
+    });
   });
 
   it('refuses a step outside the versions, before walking the chain', async () => {

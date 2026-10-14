@@ -1,11 +1,11 @@
 /*
  * The document form slots' region: the body of an enrolment or encounter,
  * filled with the plugin form contributed for the document's type or, with
- * none, the host's default form (kdd/custom-forms/specs.md § Forms in the UI;
- * implementation-plan H5, H10). A screen-level region like the dashboard body
- * (sections/dashboard/DashboardBody.tsx): the form IS the body, so a form
- * that throws falls back to the default form rather than to the neutral
- * piece fallback, which would leave the record with no fields at all.
+ * none, the host's default form (kdd/custom-forms/specs.md § Forms in the UI).
+ * A screen-level region like the dashboard body
+ * (sections/dashboard/DashboardBody.tsx): the form IS the body, so a form that
+ * throws falls back to the default form rather than to the neutral piece
+ * fallback, which would leave the record with no fields at all.
  *
  * The plugin form is mounted once per contribution and fed its props through
  * getters, so a prop change (the record's name arriving with the first save)
@@ -31,6 +31,7 @@ import {
 } from 'solid-js';
 import type {
   DocumentFormSlotId,
+  FormParticipation,
   FormRecordView,
   SlotPropsMap,
 } from '../plugin-sdk/types';
@@ -52,6 +53,13 @@ export interface DocumentFormRegionProps<S extends DocumentFormSlotId> {
   fallback: () => JSX.Element;
   /** The version whose archived form renders, read-only; else the current. */
   archivedVersion?: number;
+  /**
+   * The form's part in the record's save, from the form host's coordinator
+   * (`createDocumentForm`'s `coordinator.participationFor`): passed to a slot
+   * whose props carry `form`, the encounter's. Called once per mounted form,
+   * under its owner, so a form that leaves releases its handlers.
+   */
+  participation?: (key: string) => FormParticipation;
   /**
    * The registry entry's current schema id. A plugin whose `versions` end
    * elsewhere was built against another install of its types, which is
@@ -162,6 +170,7 @@ export const DocumentFormRegion = <S extends DocumentFormSlotId>(
               get record() {
                 return props.record;
               },
+              form: props.participation?.(form.id),
             } as SlotPropsMap[S])}
           </Suspense>
         </ErrorBoundary>

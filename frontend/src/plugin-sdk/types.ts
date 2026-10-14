@@ -579,12 +579,17 @@ export type ProgramEnrolmentFormProps<
 /**
  * The props an `encounter.form` contribution receives: the encounter
  * record screen's body. The screen's toolbar edits the visit date, the
- * clinician and the status on the same draft. Otherwise as
- * {@link ProgramEnrolmentFormProps}.
+ * clinician and the status on the same draft. `form` is the form's own part
+ * in the record's save, as an editable slot's contribution has it: a step to
+ * run before the encounter is saved (writing a record the encounter refers
+ * to, such as a prescription), which may stop the save, one after, and dirty
+ * state and validity that count with the draft's. One stable object for the
+ * form's life. Otherwise as {@link ProgramEnrolmentFormProps}.
  */
 export type EncounterFormProps<T extends Encounter = Encounter> = {
   readonly draft: Draft<T>;
   readonly record: FormRecordView;
+  readonly form: FormParticipation;
 };
 
 /**

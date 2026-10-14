@@ -1,0 +1,31 @@
+# The encounter data functions the SDK offers form plugins (./encounters.ts;
+# kdd/custom-forms/specs.md § Opening an older document).
+
+# A patient's latest encounter of one type that started before a moment, with
+# its document and the schema version the document is pinned to. Deleted
+# encounters are left out, as the encounters query leaves them by default.
+query sdkPreviousEncounter($storeId: String!, $filter: EncounterFilterInput) {
+  encounters(
+    storeId: $storeId
+    filter: $filter
+    sort: { key: startDatetime, desc: true }
+    page: { first: 1 }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        __typename
+        startDatetime
+        status
+        document {
+          __typename
+          data
+          schema {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+}
