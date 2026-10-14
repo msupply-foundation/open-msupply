@@ -438,10 +438,13 @@ mod test {
 
     #[actix_rt::test]
     async fn allocate_unallocated_line_matches_campaign() {
+        // Deleted: a delete only removes the campaign as a future choice, so
+        // stock already tagged with it is still that campaign's stock
         fn campaign_b() -> CampaignRow {
             CampaignRow {
                 id: "campaign_b".to_string(),
                 name: "Campaign B".to_string(),
+                deleted_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..Default::default()
             }
         }

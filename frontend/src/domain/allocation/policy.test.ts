@@ -200,6 +200,30 @@ describe('autoAllocateBarReasons (OMS-REG-SMV-11.4–.6/.28)', () => {
     // …and manual entry is never barred by campaign.
     expect(barReasons(routine, forA, today)).toEqual([]);
   });
+
+  it("another campaign's batch reports only other-campaign, not its other reasons", () => {
+    const heldExpiredCampaignB = {
+      stockLineOnHold: true,
+      expiryDate: '2000-01-01',
+      vvmStatus: { unusable: true },
+      campaign: { id: 'b' },
+    };
+    expect(
+      autoAllocateBarReasons(
+        heldExpiredCampaignB,
+        prefs({ issueCampaignId: null }),
+        today
+      )
+    ).toEqual(['other-campaign']);
+    // Its own campaign's record still sees every reason.
+    expect(
+      autoAllocateBarReasons(
+        heldExpiredCampaignB,
+        prefs({ issueCampaignId: 'b' }),
+        today
+      )
+    ).toEqual(['on-hold', 'expired', 'unusable-vvm']);
+  });
 });
 
 // The manual-bar refinements (old-app parity): the on-hold exception for a
