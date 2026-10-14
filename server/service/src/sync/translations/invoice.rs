@@ -725,6 +725,7 @@ impl SyncTranslation for InvoiceTranslation {
                     store_id: result.store_id.clone(),
                     name_is_customer: true,
                     name_is_supplier: false,
+                    inactive: false,
                 }));
             }
         }
@@ -1876,6 +1877,7 @@ mod tests {
                 store_id: "store_b".to_string(),
                 name_is_customer: true,
                 name_is_supplier: false,
+                inactive: false,
             })
             .unwrap();
 

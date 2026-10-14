@@ -9,6 +9,7 @@ pub fn store_a_join_name_b() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: false,
+        inactive: false,
     }
 }
 
@@ -19,6 +20,7 @@ pub fn store_a_join_name_c() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: false,
         name_is_supplier: true,
+        inactive: false,
     }
 }
 
@@ -29,6 +31,7 @@ pub fn store_a_join_name_d() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: false,
         name_is_supplier: true,
+        inactive: false,
     }
 }
 
@@ -39,6 +42,7 @@ pub fn store_a_join_name_e() -> NameStoreJoinRow {
         store_id: String::from("store_c"),
         name_is_customer: false,
         name_is_supplier: true,
+        inactive: false,
     }
 }
 
@@ -49,6 +53,7 @@ pub fn mock_name_store_join_customer_a() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: false,
+        inactive: false,
     }
 }
 
@@ -59,6 +64,7 @@ pub fn store_a_join_test_id() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: true,
+        inactive: false,
     }
 }
 
@@ -69,6 +75,7 @@ pub fn mock_patient_store_join_b() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: true,
+        inactive: false,
     }
 }
 
@@ -79,6 +86,7 @@ pub fn name_store_join_program_a() -> NameStoreJoinRow {
         name_id: mock_name_store_a().id,
         name_is_customer: true,
         name_is_supplier: false,
+        inactive: false,
     }
 }
 
@@ -89,6 +97,7 @@ pub fn name_store_join_program_b() -> NameStoreJoinRow {
         name_id: mock_name_store_b().id,
         name_is_customer: false,
         name_is_supplier: true,
+        inactive: false,
     }
 }
 
@@ -99,6 +108,7 @@ pub fn name_store_join_program_a_name_a() -> NameStoreJoinRow {
         name_id: mock_name_a().id,
         name_is_customer: false,
         name_is_supplier: true,
+        inactive: false,
     }
 }
 
@@ -109,6 +119,7 @@ pub fn store_a_donor_a() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: false,
         name_is_supplier: false,
+        inactive: false,
     }
 }
 
@@ -119,6 +130,7 @@ pub fn store_a_donor_b() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: false,
         name_is_supplier: false,
+        inactive: false,
     }
 }
 

@@ -108,6 +108,7 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
                     name_id: name_id.clone(),
                     name_is_customer: false,
                     name_is_supplier: false,
+                    inactive: false,
                 })?;
 
                 let user_service = UserAccountService::new(con);

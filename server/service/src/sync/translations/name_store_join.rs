@@ -134,6 +134,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             // remaining as null, for now always names properties for name_is_supplier/customer
             name_is_customer: name.is_customer,
             name_is_supplier: name.is_supplier,
+            inactive: false,
         };
 
         // On central, keep the incoming OG join for a patient and delete any other
@@ -193,6 +194,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
                     store_id,
                     name_is_customer,
                     name_is_supplier,
+                    inactive: _,
                 },
             name,
         } = NameStoreJoinRepository::new(connection)
@@ -314,6 +316,7 @@ mod tests {
             name_id: "name_store_a".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
+            inactive: false,
         };
         NameStoreJoinRepository::new(&connection)
             .upsert_one_without_changelog(&join)
@@ -389,6 +392,7 @@ mod tests {
                 name_id: "name_store_a".to_string(),
                 name_is_customer: false,
                 name_is_supplier: true,
+                inactive: false,
             })
             .unwrap();
 
@@ -491,6 +495,7 @@ mod tests {
                 name_id: "testId".to_string(),
                 name_is_customer: true,
                 name_is_supplier: false,
+                inactive: false,
             })
             .unwrap();
 
@@ -516,6 +521,7 @@ mod tests {
                     name_id: "testId".to_string(),
                     name_is_customer: patient.is_customer,
                     name_is_supplier: patient.is_supplier,
+                    inactive: false,
                 }),
                 IntegrationOperation::delete(NameStoreJoinRowDelete(synthesized_id)),
             ])
@@ -529,6 +535,7 @@ mod tests {
                 name_id: "patient2".to_string(),
                 name_is_customer: true,
                 name_is_supplier: false,
+                inactive: false,
             })
             .unwrap();
 
@@ -554,6 +561,7 @@ mod tests {
                     name_id: "patient2".to_string(),
                     name_is_customer: patient.is_customer,
                     name_is_supplier: patient.is_supplier,
+                    inactive: false,
                 }),
                 IntegrationOperation::delete(NameStoreJoinRowDelete("og_join_old".to_string())),
             ])
@@ -576,6 +584,7 @@ mod tests {
                 name_id: "patient2".to_string(),
                 name_is_customer: patient.is_customer,
                 name_is_supplier: patient.is_supplier,
+                inactive: false,
             })
         );
 
@@ -587,6 +596,7 @@ mod tests {
                 name_id: "name_store_a".to_string(),
                 name_is_customer: false,
                 name_is_supplier: true,
+                inactive: false,
             })
             .unwrap();
 
@@ -611,6 +621,7 @@ mod tests {
                 name_id: "name_store_a".to_string(),
                 name_is_customer: facility_name.is_customer,
                 name_is_supplier: facility_name.is_supplier,
+                inactive: false,
             })
         );
     }
@@ -635,6 +646,7 @@ mod tests {
                 name_id: "name_store_a".to_string(),
                 name_is_customer: false,
                 name_is_supplier: true,
+                inactive: false,
             })
             .unwrap();
 

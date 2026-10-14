@@ -2,6 +2,7 @@ use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_code_to_location_type;
+mod add_inactive_to_name_store_join;
 mod add_line_total_to_purchase_order_line;
 mod prescription_request_occupation_prominent;
 
@@ -21,6 +22,7 @@ impl Migration for V3_04_00 {
             Box::new(add_code_to_location_type::Migrate),
             Box::new(add_line_total_to_purchase_order_line::Migrate),
             Box::new(prescription_request_occupation_prominent::Migrate),
+            Box::new(add_inactive_to_name_store_join::Migrate),
         ]
     }
 }

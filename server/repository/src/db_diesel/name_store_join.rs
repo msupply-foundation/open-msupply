@@ -19,6 +19,7 @@ define_linked_tables!(
         store_id -> Text,
         name_is_customer -> Bool,
         name_is_supplier -> Bool,
+        inactive -> Bool,
     },
     links: {
         name_link_id -> name_id,
@@ -34,6 +35,8 @@ pub struct NameStoreJoinRow {
     pub store_id: String,
     pub name_is_customer: bool,
     pub name_is_supplier: bool,
+    #[serde(default)]
+    pub inactive: bool,
     pub name_id: String,
 }
 

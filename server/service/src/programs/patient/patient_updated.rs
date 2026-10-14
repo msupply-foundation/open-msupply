@@ -36,6 +36,7 @@ pub fn create_patient_name_store_join(
         store_id: store_id.to_string(),
         name_is_customer: true,
         name_is_supplier: false,
+        inactive: false,
     })?;
     Ok(id)
 }
