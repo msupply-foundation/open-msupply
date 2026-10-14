@@ -19,12 +19,21 @@ export type SdkItemBatchesResult = {
   packSize: number;
   availableNumberOfPacks: number;
   onHold: boolean;
+  location: {
+  __typename: "LocationNode";
+  onHold: boolean;
+} | null;
+  vvmStatus: {
+  __typename: "VvmstatusNode";
+  unusable: boolean;
+  priority: number;
+} | null;
 }>;
 });
 };
 
 export const SdkItemBatches = {
-  query: "query sdkItemBatches($storeId: String!, $itemId: String!) {\n  historicalStockLines(storeId: $storeId, itemId: $itemId) {\n    ... on StockLineConnector {\n      __typename\n      nodes {\n        __typename\n        id\n        batch\n        expiryDate\n        packSize\n        availableNumberOfPacks\n        onHold\n      }\n    }\n  }\n}",
+  query: "query sdkItemBatches($storeId: String!, $itemId: String!) {\n  historicalStockLines(storeId: $storeId, itemId: $itemId) {\n    ... on StockLineConnector {\n      __typename\n      nodes {\n        __typename\n        id\n        batch\n        expiryDate\n        packSize\n        availableNumberOfPacks\n        onHold\n        location {\n          __typename\n          onHold\n        }\n        vvmStatus {\n          __typename\n          unusable\n          priority\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<SdkItemBatchesResult, SdkItemBatchesVariables>;
 
 export type SdkPrescriptionSummaryVariables = {

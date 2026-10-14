@@ -3,8 +3,9 @@
 # gives the patient.
 
 # An item's batches available now in the store, for choosing how much of each
-# to give. Read before any prescription exists, which the prescription
-# screen's own draft lines need.
+# to give, with what the store's dispensing rules bar a batch on. Read before
+# any prescription exists, which the prescription screen's own draft lines
+# need.
 query sdkItemBatches($storeId: String!, $itemId: String!) {
   historicalStockLines(storeId: $storeId, itemId: $itemId) {
     ... on StockLineConnector {
@@ -17,6 +18,15 @@ query sdkItemBatches($storeId: String!, $itemId: String!) {
         packSize
         availableNumberOfPacks
         onHold
+        location {
+          __typename
+          onHold
+        }
+        vvmStatus {
+          __typename
+          unusable
+          priority
+        }
       }
     }
   }

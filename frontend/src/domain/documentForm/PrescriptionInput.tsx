@@ -33,7 +33,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { formatNumber, localisedDate, t } from '../../intl';
-import { unitsToLens } from '../allocation/units';
+import { unitsToLens } from '../allocation';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { Table } from '../../ui/elements/table/Table';

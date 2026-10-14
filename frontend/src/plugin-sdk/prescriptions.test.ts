@@ -23,7 +23,7 @@ import {
   SdkPrescriptionSummary,
   SdkSavePrescriptionItemLines,
 } from './prescriptions.generated';
-import { createPrescription } from './prescriptions';
+import { createPrescription, issuableBatches } from './prescriptions';
 
 beforeEach(() => {
   graphqlFetch.mockReset();
@@ -195,5 +195,78 @@ describe('createPrescription', () => {
     });
     expect(reportPermissionDenied).toHaveBeenCalledTimes(1);
     expect(queries()).not.toContain(SdkSavePrescriptionItemLines);
+  });
+});
+
+describe('issuableBatches', () => {
+  const TODAY = new Date('2026-10-14T12:00:00');
+  const line = (id: string, fields: Record<string, unknown> = {}) => ({
+    __typename: 'StockLineNode' as const,
+    id,
+    batch: id,
+    expiryDate: '2027-06-30',
+    packSize: 1,
+    availableNumberOfPacks: 10,
+    onHold: false,
+    location: null,
+    vvmStatus: null,
+    ...fields,
+  });
+  const prefs = {
+    expiredStockPreventIssue: false,
+    expiredStockIssueThreshold: 0,
+    manageVvmStatusForStock: false,
+    sortByVvmStatusThenExpiry: false,
+  };
+  const ids = (
+    lines: ReturnType<typeof line>[],
+    overrides: Partial<typeof prefs> = {}
+  ) => issuableBatches(lines, { ...prefs, ...overrides }, TODAY).map(b => b.id);
+
+  it('leaves out a batch with nothing available, or on hold itself or by its location', () => {
+    expect(
+      ids([
+        line('ok'),
+        line('empty', { availableNumberOfPacks: 0 }),
+        line('held', { onHold: true }),
+        line('held-location', {
+          location: { __typename: 'LocationNode', onHold: true },
+        }),
+      ])
+    ).toEqual(['ok']);
+  });
+
+  it('leaves out expired stock only under the store preference', () => {
+    const lines = [line('ok'), line('expired', { expiryDate: '2026-10-01' })];
+    expect(ids(lines)).toEqual(['expired', 'ok']);
+    expect(ids(lines, { expiredStockPreventIssue: true })).toEqual(['ok']);
+  });
+
+  it('leaves out an unusable VVM status only under VVM management', () => {
+    const lines = [
+      line('ok'),
+      line('unusable', {
+        vvmStatus: { __typename: 'VvmstatusNode', unusable: true, priority: 3 },
+      }),
+    ];
+    expect(ids(lines)).toEqual(['ok', 'unusable']);
+    expect(ids(lines, { manageVvmStatusForStock: true })).toEqual(['ok']);
+  });
+
+  it("lists them in the prescription screen's order", () => {
+    const vvm = (priority: number) => ({
+      __typename: 'VvmstatusNode',
+      unusable: false,
+      priority,
+    });
+    const lines = [
+      line('late', { expiryDate: '2027-09-30', vvmStatus: vvm(1) }),
+      line('soon', { expiryDate: '2027-03-31', vvmStatus: vvm(2) }),
+    ];
+    expect(ids(lines)).toEqual(['soon', 'late']);
+    expect(ids(lines, { sortByVvmStatusThenExpiry: true })).toEqual([
+      'late',
+      'soon',
+    ]);
   });
 });

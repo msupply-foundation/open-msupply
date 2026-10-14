@@ -8,6 +8,11 @@
  */
 import { createMemo, createResource } from 'solid-js';
 import {
+  barReasons,
+  fillOrderCompare,
+  type AllocationPreferences,
+} from '../domain/allocation';
+import {
   graphqlFetch,
   isForbidden,
   missingPermissions,
@@ -15,7 +20,7 @@ import {
   type GraphqlResult,
 } from '../api/graphql';
 import { t } from '../intl';
-import { currentStoreId } from '../store/storeContext';
+import { currentStoreId, prescriptionPreferences } from '../store/storeContext';
 import { generateUUID } from '../uuid';
 import type { PluginQuery } from './bridge';
 import {
@@ -24,6 +29,7 @@ import {
   SdkPickPrescription,
   SdkPrescriptionSummary,
   SdkSavePrescriptionItemLines,
+  type SdkItemBatchesResult,
   type SdkPrescriptionSummaryResult,
 } from './prescriptions.generated';
 
@@ -59,7 +65,11 @@ export interface PrescriptionSummaryView {
 /**
  * The batches of an item the store can give now, read reactively: refetched
  * when the item changes, paused while it is `undefined`, never suspending.
- * Batches on hold and those with nothing available are left out.
+ * Left out, as the prescription screen bars them: a batch with nothing
+ * available, on hold (itself or its location), expired under the store's
+ * _prevent issue of expired stock_, or with an unusable VVM status under
+ * _manage VVM status_. In the prescription screen's order: soonest expiry
+ * first, or VVM status first under its preference.
  */
 export const useItemBatches = (
   itemId: () => string | undefined
@@ -75,25 +85,44 @@ export const useItemBatches = (
       storeId,
       itemId: id,
     });
-    if (result.kind !== 'success') return undefined;
-    return result.data.historicalStockLines.nodes
-      .filter(line => !line.onHold && line.availableNumberOfPacks > 0)
-      .map((line): ItemBatchView => ({
-        id: line.id,
-        batch: line.batch ?? undefined,
-        expiryDate: line.expiryDate ?? undefined,
-        packSize: line.packSize,
-        availablePacks: line.availableNumberOfPacks,
-      }));
+    return result.kind === 'success'
+      ? result.data.historicalStockLines.nodes
+      : undefined;
   });
-  return {
-    data: () =>
+  // Judged on reading, so the store's preferences apply as they stand.
+  const batches = createMemo(() => {
+    const lines =
       resource.state === 'ready' || resource.state === 'refreshing'
         ? resource.latest
-        : undefined,
-    loading: () => resource.loading,
-  };
+        : undefined;
+    return lines && issuableBatches(lines, prescriptionPreferences());
+  });
+  return { data: batches, loading: () => resource.loading };
 };
+
+type StockLine = SdkItemBatchesResult['historicalStockLines']['nodes'][number];
+
+/** The stock lines the store may give, in its order, in the SDK's view. */
+export const issuableBatches = (
+  lines: readonly StockLine[],
+  prefs: AllocationPreferences,
+  today: Date = new Date()
+): ItemBatchView[] =>
+  lines
+    .filter(
+      line =>
+        line.availableNumberOfPacks > 0 &&
+        barReasons({ ...line, stockLineOnHold: line.onHold }, prefs, today)
+          .length === 0
+    )
+    .sort((a, b) => fillOrderCompare(a, b, prefs))
+    .map((line): ItemBatchView => ({
+      id: line.id,
+      batch: line.batch ?? undefined,
+      expiryDate: line.expiryDate ?? undefined,
+      packSize: line.packSize,
+      availablePacks: line.availableNumberOfPacks,
+    }));
 
 type InvoiceNode = Extract<
   SdkPrescriptionSummaryResult['invoice'],
