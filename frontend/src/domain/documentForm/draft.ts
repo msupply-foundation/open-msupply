@@ -42,6 +42,20 @@ export interface Draft<T> {
    * (spec/program-enrolment rules § leaving with unsaved changes).
    */
   fill<P extends Path<T>>(path: P, value: PathValue<T, P> | undefined): void;
+  /**
+   * Fails the field at `path` with `message`: a check the form makes itself,
+   * beyond the schema's, such as an ID another record holds. `undefined`
+   * clears it. A failing field shows its message at once and blocks the save,
+   * as a schema error does; `label` names it in the error summary. Cleared
+   * when the draft is seeded again.
+   */
+  setError(path: Path<T>, message: string | undefined, label?: string): void;
+  /**
+   * Work the form is doing that a save must wait for, such as a check still
+   * running on what was just typed. A save waits for every such piece of
+   * work to settle, then validates.
+   */
+  wait(work: Promise<unknown>): void;
   /** What the schema says about the field: required, format, enum. */
   schemaFor(path: Path<T>): FieldSchemaInfo | undefined;
   /** The message to show beside the field, when it has one to show. */
@@ -72,6 +86,10 @@ export interface DraftController<T> {
   /** A plain copy of the document, for the save. */
   snapshot: () => T;
   isDirty: Accessor<boolean>;
+  /** True while work the form handed to `draft.wait` is still running. */
+  busy: () => boolean;
+  /** Settles once every piece of work handed to `draft.wait` has. */
+  settled: () => Promise<void>;
   /** Validation timing and the error list (ui/layout/Form/formValidation). */
   validation: FormValidation;
 }
@@ -138,6 +156,12 @@ export const createDraft = <T extends object>(
   const [unresolvedValues, setUnresolvedValues] = createSignal<
     Record<string, UnresolvedValue>
   >({});
+  // The failures fields find themselves (draft.setError), by path.
+  const [fieldErrors, setFieldErrors] = createSignal<
+    Record<string, { message: string; label?: string }>
+  >({});
+  // Work a save waits for (draft.wait).
+  const pending = new Set<Promise<unknown>>();
   // Bumped on every write. Validation and the dirty check read the whole
   // document through `unwrap`, which the store cannot track, so they depend on
   // this instead of on every property they happen to read.
@@ -178,6 +202,15 @@ export const createDraft = <T extends object>(
         message: t('error.document-previously-recorded', {
           value: old.label?.() ?? displayValue(old.value),
         }),
+      });
+    }
+    for (const [path, failure] of Object.entries(fieldErrors())) {
+      if (found.some(f => f.id === path)) continue;
+      found.push({
+        id: path,
+        label: failure.label ?? labelFor(path),
+        failed: true,
+        message: failure.message,
       });
     }
     for (const extra of options.extraErrors?.() ?? []) {
@@ -227,6 +260,18 @@ export const createDraft = <T extends object>(
         enum: own.enum ?? fallback.enum,
       };
     },
+    setError: (path, message, label) =>
+      setFieldErrors(previous => {
+        const next = { ...previous };
+        if (message === undefined) delete next[path];
+        else next[path] = { message, label };
+        return next;
+      }),
+    wait: work => {
+      pending.add(work);
+      const done = () => pending.delete(work);
+      work.then(done, done);
+    },
     errorFor: path => validation.errorFor(path),
     unresolved: path => unresolvedValues()[path]?.value,
     readOnly: () => options.readOnly?.() ?? false,
@@ -239,6 +284,7 @@ export const createDraft = <T extends object>(
       setStore(reconcile(copy));
       setSeed(() => structuredClone(next));
       setUnresolvedValues(unresolved);
+      setFieldErrors({});
       setVersion(v => v + 1);
       // A document that already fails its schema opens with its errors on
       // show (the save alone is blocked); a clean one opens quiet.
@@ -247,6 +293,11 @@ export const createDraft = <T extends object>(
     },
     snapshot: () => structuredClone(unwrap(store)) as T,
     isDirty,
+    busy: () => pending.size > 0,
+    settled: async () => {
+      // Work added while waiting is waited for too.
+      while (pending.size > 0) await Promise.allSettled([...pending]);
+    },
     validation,
   };
 };

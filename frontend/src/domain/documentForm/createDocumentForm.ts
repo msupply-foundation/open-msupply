@@ -563,6 +563,12 @@ export const createDocumentForm = <T extends object>(
 
   const save = async () => {
     if (saving() || readingOnly()) return undefined;
+    // A check a field is still running (draft.wait) decides first.
+    if (controller.busy()) {
+      setSaving(true);
+      await controller.settled();
+      setSaving(false);
+    }
     controller.validation.arm();
     const r = registry();
     if (!r || !controller.validation.valid()) return undefined;

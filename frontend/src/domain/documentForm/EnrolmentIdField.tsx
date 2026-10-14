@@ -7,14 +7,7 @@
  * checks for duplicates the same way. From the form library's chunk; plugins
  * reach it through the SDK's lazy wrapper.
  */
-import {
-  createEffect,
-  createSignal,
-  on,
-  onMount,
-  untrack,
-  type JSX,
-} from 'solid-js';
+import { createSignal, onCleanup, onMount, untrack, type JSX } from 'solid-js';
 import { t } from '../../intl';
 import { FormRow } from '../../ui/layout/Form/FormRow';
 import { TextField } from '../../ui/elements/inputs/TextField';
@@ -68,52 +61,42 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
   // whether this open is a new enrolment is read once.
   const openedNew = untrack(() => props.record.documentName === undefined);
 
-  // The box shows the ID the enrolment holds, read live, or what was typed
-  // while the enrolment has not taken it: still being checked, or a flagged
-  // duplicate, which stays on screen while the enrolment keeps the last ID
-  // the field accepted (rules § typing an ID, and duplicates). Read live, not
-  // captured: the field can mount before the form seeds the draft.
-  const [typed, setTyped] = createSignal<string>();
-  const text = () => typed() ?? held();
-  const [duplicate, setDuplicate] = createSignal<string>();
   const [generating, setGenerating] = createSignal(false);
   const [confirming, setConfirming] = createSignal(false);
+  const label = () => props.label ?? t('label.enrolment-patient-id');
 
-  // A change underneath (a generated ID, a check's write, a discard) replaces
-  // whatever was typed.
-  createEffect(
-    on(
-      held,
-      () => {
-        setTyped(undefined);
-        setDuplicate(undefined);
-      },
-      { defer: true }
-    )
-  );
+  // What is typed goes into the enrolment at once, so what is saved is what
+  // the box shows. A typed ID another enrolment holds fails the field, which
+  // blocks the save until the ID is changed (rules § typing an ID, and
+  // duplicates); the save waits for a check still running on what was typed.
+  let release: (() => void) | undefined;
+  const holdSave = () => {
+    if (!release) d().wait(new Promise<void>(r => (release = r)));
+  };
+  const releaseSave = () => {
+    release?.();
+    release = undefined;
+  };
+  onCleanup(releaseSave);
 
-  // Each keystroke, each typed check and each generation outdates any check
-  // still running, so a late answer never writes over newer typing.
+  // Each keystroke and each generation outdates any check still running, so
+  // a late answer never speaks for an ID no longer in the box.
   let checkRun = 0;
 
   const checkTyped = async (typed: string) => {
     const run = ++checkRun;
-    if (typed === '') {
-      d().set('programEnrolmentId', undefined);
-      return;
-    }
     const free = await isEnrolmentIdFree(
       currentStoreId() ?? '',
       typed,
       props.record.documentName
     );
     if (run !== checkRun) return;
-    if (free === false) {
-      setDuplicate(typed);
-      return;
-    }
-    d().set('programEnrolmentId', typed);
-    setTyped(undefined);
+    d().setError(
+      'programEnrolmentId',
+      free === false ? t('error.duplicated-id', { id: typed }) : undefined,
+      label()
+    );
+    releaseSave();
   };
   const check = createDebounced(
     (typed: string) => void checkTyped(typed),
@@ -135,8 +118,8 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
     check.cancel();
     checkRun++;
     d()[write]('programEnrolmentId', id);
-    setTyped(undefined);
-    setDuplicate(undefined);
+    d().setError('programEnrolmentId', undefined);
+    releaseSave();
   };
 
   // A new enrolment opens with its ID already generated (rules § generating).
@@ -147,34 +130,34 @@ export const EnrolmentIdField = <T extends ProgramEnrolment>(
   // Replacing an ID the user can see discards it and spends a number that is
   // never given back, so it asks first; an empty field generates at once.
   const onGenerate = () => {
-    if (text().trim() !== '') setConfirming(true);
+    if (held().trim() !== '') setConfirming(true);
     else void generate('set');
   };
 
-  const error = () => {
-    const id = duplicate();
-    return id === undefined
-      ? d().errorFor('programEnrolmentId')
-      : t('error.duplicated-id', { id });
+  const onInput = (value: string) => {
+    checkRun++;
+    d().set('programEnrolmentId', value || undefined);
+    d().setError('programEnrolmentId', undefined);
+    if (value === '') {
+      check.cancel();
+      releaseSave();
+      return;
+    }
+    holdSave();
+    check(value);
   };
 
   return (
     <>
       <FormRow>
         <TextField
-          label={props.label ?? t('label.enrolment-patient-id')}
-          value={text()}
+          label={label()}
+          value={held()}
           readOnly={props.allowTyping !== true}
           required={d().schemaFor('programEnrolmentId')?.required ?? false}
-          error={error()}
+          error={d().errorFor('programEnrolmentId')}
           disabled={disabled()}
-          onInput={e => {
-            const value = e.currentTarget.value;
-            checkRun++;
-            setTyped(value);
-            setDuplicate(undefined);
-            check(value);
-          }}
+          onInput={e => onInput(e.currentTarget.value)}
           data-testid={testId()}
         />
         <Button

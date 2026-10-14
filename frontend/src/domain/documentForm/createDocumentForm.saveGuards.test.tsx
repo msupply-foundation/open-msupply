@@ -205,6 +205,28 @@ describe('OMS-REG-PAT-04.26 / .27 — a save over a newer version is refused', (
   });
 });
 
+describe('OMS-REG-PAT-04.37 / .51 — a check a field is running decides the save', () => {
+  it('waits for it, then refuses when it fails the field, sending nothing', async () => {
+    const form = await host({
+      kind: 'new',
+      registry,
+      data: { enrolmentDatetime: '2026-10-01T09:00:00Z' },
+    });
+    let finish: (() => void) | undefined;
+    form.draft.wait(new Promise<void>(r => (finish = r)));
+    const saving = form.save();
+    await Promise.resolve();
+    expect(form.saving()).toBe(true);
+    form.draft.setError('programEnrolmentId', 'Duplicated ID: GRY-0005');
+    finish?.();
+    expect(await saving).toBeUndefined();
+    expect(graphqlFetch).not.toHaveBeenCalled();
+    expect(form.validation.errorFor('programEnrolmentId')).toBe(
+      'Duplicated ID: GRY-0005'
+    );
+  });
+});
+
 describe('OMS-REG-PAT-04.20 / .21 — refusals', () => {
   const NEW: DocumentFormSource = {
     kind: 'new',

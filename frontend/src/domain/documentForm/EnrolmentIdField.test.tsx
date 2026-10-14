@@ -288,7 +288,7 @@ describe('OMS-REG-PAT-04.33 / .34 — typing an ID', () => {
   });
 });
 
-describe('OMS-REG-PAT-04.36 / .37 — a typed ID another enrolment holds', () => {
+describe('OMS-REG-PAT-04.36 / .37 / .51 — a typed ID another enrolment holds', () => {
   it('is flagged at the field once typing pauses (.36)', async () => {
     held.add('HELD-1');
     mount({
@@ -304,7 +304,7 @@ describe('OMS-REG-PAT-04.36 / .37 — a typed ID another enrolment holds', () =>
     expect(shown.text?.value).toBe('HELD-1');
   });
 
-  it('is not taken: the enrolment keeps its last accepted ID (.37)', async () => {
+  it('blocks the save while flagged; what is saved is what is shown (.37)', async () => {
     held.add('HELD-1');
     const { controller } = mount({
       data: { ...NEW, programEnrolmentId: 'GRY-0042' },
@@ -312,8 +312,45 @@ describe('OMS-REG-PAT-04.36 / .37 — a typed ID another enrolment holds', () =>
       allowTyping: true,
     });
     type('HELD-1');
+    expect(controller.draft.get('programEnrolmentId')).toBe('HELD-1');
     await vi.waitFor(() => expect(shown.text?.error).toBeDefined());
-    expect(controller.draft.get('programEnrolmentId')).toBe('GRY-0042');
+    expect(controller.validation.valid()).toBe(false);
+    // Fixing it lifts the block.
+    type('FREE-1');
+    await controller.settled();
+    expect(controller.validation.valid()).toBe(true);
+    expect(controller.draft.get('programEnrolmentId')).toBe('FREE-1');
+  });
+
+  it('a pause on a free prefix never saves the prefix (.37)', async () => {
+    held.add('GRY-0005');
+    const { controller } = mount({
+      data: { ...NEW, programEnrolmentId: 'GRY-0042' },
+      documentName: 'p/patient/DemoProgramEnrolment',
+      allowTyping: true,
+    });
+    type('GRY-000');
+    await controller.settled(); // the pause: "GRY-000" is checked, and free
+    type('GRY-0005');
+    await controller.settled();
+    expect(controller.draft.get('programEnrolmentId')).toBe('GRY-0005');
+    expect(controller.validation.valid()).toBe(false);
+  });
+
+  it('a save made while the typed ID is still being checked waits for it (.51)', async () => {
+    held.add('HELD-1');
+    const { controller } = mount({
+      data: { ...NEW, programEnrolmentId: 'GRY-0042' },
+      documentName: 'p/patient/DemoProgramEnrolment',
+      allowTyping: true,
+    });
+    type('HELD-1');
+    // Before the pause has passed, nothing is flagged yet, but the form is
+    // busy: a save waits, and then finds the duplicate.
+    expect(controller.validation.valid()).toBe(true);
+    expect(controller.busy()).toBe(true);
+    await controller.settled();
+    expect(controller.validation.valid()).toBe(false);
   });
 
   it('typing again clears the flag', async () => {

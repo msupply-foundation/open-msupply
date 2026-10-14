@@ -385,6 +385,34 @@ describe('createDraft', () => {
     });
   });
 
+  // OMS-REG-PAT-04.37 / .51: a field's own check (a duplicate ID) fails the
+  // field like a schema error, and a save waits for a check still running.
+  it("fails a field from the form's own check, and waits on its work", async () => {
+    await createRoot(async dispose => {
+      const c = draftFor();
+      c.reset({ ...validEncounter } as DemoEncounter);
+      c.draft.setError('extension.demo.vitals.weightKg', 'Taken', 'Weight');
+      expect(c.validation.valid()).toBe(false);
+      expect(c.validation.errorFor('extension.demo.vitals.weightKg')).toBe(
+        'Taken'
+      );
+      expect(c.validation.visible()[0]?.label).toBe('Weight');
+      c.draft.setError('extension.demo.vitals.weightKg', undefined);
+      expect(c.validation.valid()).toBe(true);
+      c.draft.setError('extension.demo.vitals.weightKg', 'Taken');
+      c.reset({ ...validEncounter } as DemoEncounter);
+      expect(c.validation.valid()).toBe(true);
+      let finish: (() => void) | undefined;
+      c.draft.wait(new Promise<void>(r => (finish = r)));
+      expect(c.busy()).toBe(true);
+      const settled = c.settled();
+      finish?.();
+      await settled;
+      expect(c.busy()).toBe(false);
+      dispose();
+    });
+  });
+
   it('keeps a missing value quiet until armed; a bad value shows at once', () => {
     createRoot(dispose => {
       const c = draftFor();
