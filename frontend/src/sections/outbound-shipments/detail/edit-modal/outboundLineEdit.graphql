@@ -52,6 +52,7 @@ query draftStockOutLines(
         name
       }
       program {
+        id
         name
       }
       donor(storeId: $storeId) {
