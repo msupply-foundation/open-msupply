@@ -220,6 +220,41 @@ describe('OMS-REG-DIS-06.14 / OMS-REG-DIS-06.56 — given at another facility', 
   });
 });
 
+describe('OMS-REG-DIS-06.14 — at a facility a record was entered at', () => {
+  // A dose not given, recorded at another store's facility, changed to given
+  // with a past date and that facility kept: not given at this store, so no
+  // switch and no batch — the two always agree.
+  const ctx = ctxFor({
+    vaccination: recorded({
+      given: false,
+      notGivenReason: 'REFUSED',
+      givenStoreId: null,
+      facilityNameId: 'name-other',
+      facilityName: 'Hufflepuff',
+      item: null,
+      stockLine: null,
+      invoice: null,
+    }),
+  });
+  const draft = {
+    ...initialDraft(ctx),
+    given: true,
+    itemId: 'dpt',
+    facility: 'name-other',
+  };
+  it('offers neither the switch nor a batch', () => {
+    expect(isOtherFacility(draft, ctx)).toBe(true);
+    expect(switchLabel(draft, ctx)).toBeNull();
+    expect(showsBatch(draft, ctx)).toBe(false);
+  });
+  it('offers "Revert existing stock transaction" for a record with a prescription moved there', () => {
+    const given = ctxFor({ vaccination: recorded() });
+    expect(
+      switchLabel({ ...initialDraft(given), facility: 'name-other' }, given)
+    ).toBe('label.revert-existing-transaction');
+  });
+});
+
 describe('OMS-REG-DIS-06.15 / OMS-REG-DIS-06.16 / OMS-REG-DIS-06.17 — a past-dated dose', () => {
   const past = newDraft({ given: true, itemId: 'dpt', date: '2026-10-01' });
   it('offers "Record stock transaction for past vaccination", on', () => {
@@ -250,10 +285,12 @@ describe('OMS-REG-DIS-06.15 / OMS-REG-DIS-06.16 / OMS-REG-DIS-06.17 — a past-d
   });
 });
 
-describe('OMS-REG-DIS-06.42 — the switch counts only while it shows', () => {
+// rules § the stock-transaction switch: the switch counts only while it shows.
+// No behaviour id holds this client half; .42 is the server's issue.
+describe('the switch counts only while it shows — a new dose', () => {
   // A past date with the switch turned off, then set back to today: the
   // switch goes away (no label applies) but the draft keeps it off. A batch
-  // ticked now must still issue the dose — the screen shows no switch saying
+  // chosen now must still issue the dose — the screen shows no switch saying
   // otherwise.
   it('a new dose dated today again sends its batch, though the switch was left off', () => {
     const draft = newDraft({
@@ -272,6 +309,9 @@ describe('OMS-REG-DIS-06.42 — the switch counts only while it shows', () => {
       }).stockLineId
     ).toBe('sl-a');
   });
+});
+
+describe('OMS-REG-DIS-06.51 — an edit with no switch showing moves no stock', () => {
   it('an edit no switch applies to touches no stock, whatever the draft holds', () => {
     const ctx = ctxFor({ vaccination: recorded() });
     const draft = {
@@ -284,12 +324,12 @@ describe('OMS-REG-DIS-06.42 — the switch counts only while it shows', () => {
   });
 });
 
-describe('OMS-REG-DIS-06.16 — an edit sends no batch the list does not show', () => {
+describe('OMS-REG-DIS-06.51 — an edit sends no batch the list does not show', () => {
   it('a past-dated record with no batch, the switch turned off again, keeps no batch', () => {
     const ctx = ctxFor({
       vaccination: recorded({ stockLine: null, invoice: null }),
     });
-    // Switch on, a batch ticked, switch off: the list hides the batch.
+    // Switch on, a batch chosen, switch off: the list hides the batch.
     const draft = {
       ...initialDraft(ctx),
       stockLineId: 'sl-a',
@@ -309,6 +349,15 @@ describe('OMS-REG-DIS-06.55 — a recorded dose shows its batch, used up or not'
         b => b.id
       )
     ).toEqual(['sl-b', 'sl-a']);
+  });
+  it("lists the record's batch when it was the item's only stock — the list is not empty", () => {
+    const ctx = ctxFor({ vaccination: recorded() });
+    const none: { id: string }[] = [];
+    expect(
+      batchRows(none, initialDraft(ctx), ctx.vaccination?.stockLine).map(
+        b => b.id
+      )
+    ).toEqual(['sl-a']);
   });
   it('adds nothing when listed, or for another item', () => {
     const ctx = ctxFor({ vaccination: recorded() });
@@ -481,7 +530,7 @@ describe('OMS-REG-DIS-06.21 — a not-given dose given today with a batch', () =
   });
 });
 
-describe('OMS-REG-DIS-06.52 / OMS-REG-DIS-06.53 — a dose given at another store', () => {
+describe('OMS-REG-DIS-06.52 — a dose given at another store', () => {
   const ctx = ctxFor({
     vaccination: recorded({ givenStoreId: 'store-other' }),
   });
@@ -529,6 +578,12 @@ describe('OMS-REG-DIS-06.44 / OMS-REG-DIS-06.46 — the batch list', () => {
     expect(
       batchChoosable(3, { availableNumberOfPacks: 0.5, packSize: 1 })
     ).toBe(true);
+  });
+  it('with zero doses per unit, lets no batch be chosen and presets none', () => {
+    const full = { id: 'full', availableNumberOfPacks: 10, packSize: 1 };
+    expect(batchDoses(0, full)).toBe(0);
+    expect(batchChoosable(0, full)).toBe(false);
+    expect(presetBatch(0, [full])).toBeNull();
   });
   it('presets the only batch holding a dose, and none when several do', () => {
     const tiny = { id: 'tiny', availableNumberOfPacks: 0.5, packSize: 1 };

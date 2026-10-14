@@ -19,7 +19,7 @@ vi.mock('@/api/graphql', async () => ({
   },
 }));
 
-const { saveDose } = await import('./cardApi');
+const { fetchBatches, saveDose } = await import('./cardApi');
 const { initialDraft } = await import('./doseDraft');
 type DraftContext = import('./doseDraft').DraftContext;
 
@@ -134,5 +134,27 @@ describe('OMS-REG-DIS-06.64 — without the document-write permission', () => {
       kind: 'forbidden',
       permissions: ['DocumentMutate'],
     });
+  });
+});
+
+describe('OMS-REG-DIS-06.44 — a vaccine with zero doses per unit', () => {
+  it('reads as configured, never as one dose per unit (rules § zero doses)', async () => {
+    const batch = {
+      id: 'sl-a',
+      batch: 'A',
+      expiryDate: null,
+      availableNumberOfPacks: 10,
+      packSize: 1,
+      onHold: false,
+    };
+    state.next = {
+      kind: 'success',
+      data: {
+        items: { nodes: [{ doses: 0, availableBatches: { nodes: [batch] } }] },
+      },
+    };
+    const read = await fetchBatches({ storeId: 'store-gry', itemId: 'dpt' });
+    expect(read?.dosesPerUnit).toBe(0);
+    expect(read?.batches).toHaveLength(1);
   });
 });

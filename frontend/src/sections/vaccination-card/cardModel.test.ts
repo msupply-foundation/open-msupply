@@ -182,7 +182,9 @@ describe('OMS-REG-DIS-06.26 — the Age column', () => {
   });
 });
 
-describe('OMS-REG-DIS-06.68 / OMS-REG-DIS-06.27 / OMS-FUN-VAC-002.6 — the status words', () => {
+// The words only: which status a dose has (.27, OMS-FUN-VAC-002.6) is the
+// server's.
+describe('OMS-REG-DIS-06.68 — the status words', () => {
   it('reads Pending as "Due" and Late as "Overdue"', () => {
     expect(statusLabel('PENDING')).toBe('label.status-due');
     expect(statusLabel('LATE')).toBe('label.status-late');
@@ -191,7 +193,9 @@ describe('OMS-REG-DIS-06.68 / OMS-REG-DIS-06.27 / OMS-FUN-VAC-002.6 — the stat
   });
 });
 
-describe('OMS-REG-DIS-06.28 / OMS-REG-DIS-06.29 — a dose with no status', () => {
+// The words only: that a patient with no date of birth gets no status (.29)
+// is the server's.
+describe('OMS-REG-DIS-06.28 — a dose with no status', () => {
   it('reads "Not yet due" for a patient with a date of birth', () => {
     expect(noStatusLabel(true)).toBe('label.not-yet-due');
   });

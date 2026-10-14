@@ -1,8 +1,7 @@
 import { Show, type Component } from 'solid-js';
 import { t, tPlural } from '@/intl';
-import { localisedDate } from '@/intl/formatDateTime';
 import { DataTable, type Column } from '@/ui/elements/table/DataTable';
-import { getTextCell } from '@/ui/elements/table/tableHelpers';
+import { getDateCell, getTextCell } from '@/ui/elements/table/tableHelpers';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
@@ -48,29 +47,29 @@ export interface VaccinationCardTableProps {
 /**
  * The card's notices (ui-surface § the card's notices): how many doses are
  * overdue, to give as catch-up, and how many can be given today — each only
- * when there are some.
+ * when there are some. Bare compact alerts, no wrapper: the patient's card
+ * hands them to its header toolbar's alert slot, which lays each one out as a
+ * chip on the field row.
  */
 export const VaccinationCardNotices: Component<{ rows: CardRow[] }> = props => {
   const counts = () => cardCounts(props.rows);
   return (
-    <Show when={counts().overdue > 0 || counts().dueToday > 0}>
-      <Stack gap="sm">
-        <Show when={counts().overdue > 0}>
-          <Alert
-            severity="warning"
-            compact
-            testId="vaccination-card-overdue-notice"
-          >
-            {tPlural('messages.doses-past-age-window', counts().overdue)}
-          </Alert>
-        </Show>
-        <Show when={counts().dueToday > 0}>
-          <Alert severity="info" compact testId="vaccination-card-due-notice">
-            {tPlural('messages.doses-can-be-given-today', counts().dueToday)}
-          </Alert>
-        </Show>
-      </Stack>
-    </Show>
+    <>
+      <Show when={counts().overdue > 0}>
+        <Alert
+          severity="warning"
+          compact
+          testId="vaccination-card-overdue-notice"
+        >
+          {tPlural('messages.doses-past-age-window', counts().overdue)}
+        </Alert>
+      </Show>
+      <Show when={counts().dueToday > 0}>
+        <Alert severity="info" compact testId="vaccination-card-due-notice">
+          {tPlural('messages.doses-can-be-given-today', counts().dueToday)}
+        </Alert>
+      </Show>
+    </>
   );
 };
 
@@ -141,24 +140,19 @@ export const VaccinationCardTable: Component<
       ),
     },
     {
-      c: {
-        accessor: r => (r.suggestedDate ? localisedDate(r.suggestedDate) : ''),
-        id: 'suggestedDate',
-      },
+      c: { accessor: r => r.suggestedDate ?? null, id: 'suggestedDate' },
       header: () => t('label.suggested-date'),
-      ...getTextCell(),
+      ...getDateCell(),
       size: remToPx(8.5),
     },
     {
       c: {
         accessor: r =>
-          r.status === 'GIVEN' && r.vaccinationDate
-            ? localisedDate(r.vaccinationDate)
-            : '',
+          r.status === 'GIVEN' ? (r.vaccinationDate ?? null) : null,
         id: 'dateGiven',
       },
       header: () => t('label.date-given'),
-      ...getTextCell(),
+      ...getDateCell(),
       size: remToPx(8),
     },
     {

@@ -1,4 +1,0 @@
-/* An expired batch's date reads in the danger tone (ui-surface § S3). */
-.expired {
-  color: var(--error-main);
-}

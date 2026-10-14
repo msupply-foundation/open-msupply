@@ -3,16 +3,15 @@ import {
   createMemo,
   createResource,
   createSignal,
-  For,
   Match,
   on,
+  onMount,
   Show,
   Switch,
   untrack,
   type Component,
 } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { A } from '@solidjs/router';
 import { gated } from '@/api/gated';
 import { reportPermissionDenied } from '@/api/graphql';
 import { t } from '@/intl';
@@ -22,6 +21,7 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
+import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { Button } from '@/ui/elements/buttons/Button';
 import {
   CancelButton,
@@ -32,11 +32,15 @@ import { DateField } from '@/ui/elements/inputs/DateField';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { TextArea } from '@/ui/elements/inputs/TextArea';
 import { ToggleSwitch } from '@/ui/elements/inputs/ToggleSwitch';
-import { Checkbox } from '@/ui/elements/inputs/Checkbox';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { Select } from '@/ui/elements/selectors/Select';
 import { Combobox } from '@/ui/elements/selectors/Combobox';
-import { Table } from '@/ui/elements/table/Table';
+import { DataTable, type Column } from '@/ui/elements/table/DataTable';
+import {
+  getExpiryDateCell,
+  getNumberCell,
+} from '@/ui/elements/table/tableHelpers';
+import { RecordLink } from '@/ui/elements/typography/RecordLink';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import { ClinicianSelect, cliniciansResource } from '@/domain/clinician';
@@ -68,7 +72,6 @@ import {
   type DraftContext,
 } from './doseDraft';
 import { fetchBatches, fetchDose, saveDose } from './cardApi';
-import styles from './DoseEditorDialog.module.css';
 
 export interface DoseEditorDialogProps {
   storeId: string;
@@ -91,9 +94,10 @@ export interface DoseEditorDialogProps {
 /*
  * S3 — the dose editor (spec/vaccination-card ui-surface § S3), with the save
  * confirmations (§ S4). Opened from the card inside an immunisation encounter.
- * The dose and its vaccination load on open — an interaction under the
- * encounter screen's boundary — so every read here is gated, and the form
- * mounts once, with the loaded record, inside the already-open dialog.
+ * One dialog from open to close: its body is a spinner while the dose and its
+ * vaccination load — an interaction under the encounter screen's boundary, so
+ * every read here is gated — then the form, mounted once with the loaded
+ * record, or a not-found state when the read settles with nothing.
  */
 export const DoseEditorDialog: Component<DoseEditorDialogProps> = props => {
   const [loaded] = createResource(
@@ -108,6 +112,11 @@ export const DoseEditorDialog: Component<DoseEditorDialogProps> = props => {
   const store = () =>
     authUser()?.stores.nodes.find(s => s.id === props.storeId);
 
+  // The form's handle once it has mounted: the dialog's footer and its
+  // dismissal read it, so the chrome stays one dialog across the load.
+  const [form, setForm] = createSignal<DoseEditorHandle>();
+  const saving = () => form()?.saving() ?? false;
+
   const title = () =>
     data()
       ? t('heading.course-dose', {
@@ -117,57 +126,106 @@ export const DoseEditorDialog: Component<DoseEditorDialogProps> = props => {
       : props.row.label || t('label.vaccination');
 
   return (
-    <Switch>
-      <Match when={!data()}>
-        {/* The loading dialog hands over to the form's own dialog. Unmounting
-            it fires its native close; only a close while still loading is the
-            user's (Escape, the close button) — the hand-over must not close
-            the editor it is handing to. */}
-        <Dialog
-          open
-          onClose={() => {
-            if (!data()) props.onClose();
-          }}
-          title={title()}
-          width="form"
-          closeButton
-          testId="dose-editor"
-        >
+    <Dialog
+      open
+      onClose={props.onClose}
+      title={title()}
+      description={form()?.description()}
+      width="form"
+      closeButton
+      // A save in flight holds the editor open: closing it there would leave
+      // the dose recorded, stock included, behind a closed editor.
+      dismissable={!saving()}
+      testId="dose-editor"
+      actions={
+        <>
+          <Show when={!saving()}>
+            <CancelButton
+              data-testid="dialog-button-cancel"
+              onClick={props.onClose}
+            />
+          </Show>
+          <Show when={form()?.offersSave() && form()}>
+            {handle => (
+              <Show
+                when={handle().recorded}
+                fallback={
+                  <Button
+                    variant="primary"
+                    confirms="plain"
+                    loading={saving()}
+                    disabled={saving()}
+                    data-testid="dialog-button-record"
+                    onClick={() => handle().save()}
+                  >
+                    {t('button.record-dose')}
+                  </Button>
+                }
+              >
+                <DialogSaveButton
+                  data-testid="dialog-button-save"
+                  loading={saving()}
+                  disabled={saving()}
+                  onClick={() => handle().save()}
+                />
+              </Show>
+            )}
+          </Show>
+        </>
+      }
+    >
+      <Switch>
+        <Match when={data()}>
+          {loadedData => (
+            <DoseEditorForm
+              {...props}
+              dose={loadedData().dose}
+              ctx={{
+                vaccination: loadedData().vaccination,
+                storeId: props.storeId,
+                storeNameId: store()?.nameId ?? '',
+                encounterClinicianId: props.encounterClinicianId,
+                courseItemIds: (
+                  loadedData().dose.vaccineCourse.vaccineCourseItems ?? []
+                ).map(i => i.itemId),
+                today: localTodayIso(),
+              }}
+              storeName={store()?.name ?? ''}
+              onReady={setForm}
+            />
+          )}
+        </Match>
+        <Match when={loaded.loading}>
           <Spinner center />
-        </Dialog>
-      </Match>
-      <Match when={data()}>
-        {loadedData => (
-          <DoseEditorForm
-            {...props}
-            title={title()}
-            dose={loadedData().dose}
-            ctx={{
-              vaccination: loadedData().vaccination,
-              storeId: props.storeId,
-              storeNameId: store()?.nameId ?? '',
-              encounterClinicianId: props.encounterClinicianId,
-              courseItemIds: (
-                loadedData().dose.vaccineCourse.vaccineCourseItems ?? []
-              ).map(i => i.itemId),
-              today: localTodayIso(),
-            }}
-            storeName={store()?.name ?? ''}
-          />
-        )}
-      </Match>
-    </Switch>
+        </Match>
+        {/* The read settled with no dose: say so rather than spin forever. */}
+        <Match when={true}>
+          <EmptyState message={t('messages.record-not-found')} />
+        </Match>
+      </Switch>
+    </Dialog>
   );
 };
+
+/** What the dialog's chrome reads from the form once it has mounted. */
+interface DoseEditorHandle {
+  description: () => string;
+  saving: () => boolean;
+  offersSave: () => boolean;
+  /** The dose has a record: the footer's action is Save, not Record dose. */
+  recorded: boolean;
+  /** Save pressed: check the fields, ask the questions, then save. */
+  save: () => void;
+}
 
 type LoadedDose = NonNullable<Awaited<ReturnType<typeof fetchDose>>>['dose'];
 
 const DoseEditorForm: Component<
   DoseEditorDialogProps & {
-    title: string;
     dose: LoadedDose;
     ctx: DraftContext;
     storeName: string;
+    onReady: (handle: DoseEditorHandle) => void;
   }
 > = props => {
   // Fixed for this open: the record the editor opened with.
@@ -318,48 +376,18 @@ const DoseEditorForm: Component<
 
   const description = createMemo(() => doseEditorDescription(props.row));
 
+  onMount(() =>
+    props.onReady({
+      description,
+      saving,
+      offersSave,
+      recorded: !!ctx.vaccination,
+      save: onSavePressed,
+    })
+  );
+
   return (
-    <Dialog
-      open
-      onClose={props.onClose}
-      title={props.title}
-      description={description()}
-      width="form"
-      closeButton
-      testId="dose-editor"
-      actions={
-        <>
-          <CancelButton
-            data-testid="dialog-button-cancel"
-            onClick={props.onClose}
-          />
-          <Show when={offersSave()}>
-            <Show
-              when={ctx.vaccination}
-              fallback={
-                <Button
-                  variant="primary"
-                  confirms="plain"
-                  loading={saving()}
-                  disabled={saving()}
-                  data-testid="dialog-button-record"
-                  onClick={onSavePressed}
-                >
-                  {t('button.record-dose')}
-                </Button>
-              }
-            >
-              <DialogSaveButton
-                data-testid="dialog-button-save"
-                loading={saving()}
-                disabled={saving()}
-                onClick={onSavePressed}
-              />
-            </Show>
-          </Show>
-        </>
-      }
-    >
+    <>
       <Stack gap="md">
         <Show
           when={ctx.vaccination?.given}
@@ -381,12 +409,12 @@ const DoseEditorForm: Component<
               }
             >
               {invoice => (
-                <A
+                <RecordLink
                   href={`/${props.storeId}/dispensary/dispensing/${invoice().id}`}
-                  data-testid="dose-editor-prescription-link"
+                  testId="dose-editor-prescription-link"
                 >
                   {t('button.view-prescription')}
-                </A>
+                </RecordLink>
               )}
             </Show>
           </Alert>
@@ -429,14 +457,9 @@ const DoseEditorForm: Component<
             }
             onChange={choose}
             disabled={locked()}
+            error={fieldError('given')}
+            errorTestId="dose-editor-given-error"
           />
-          <Show when={fieldError('given')}>
-            {message => (
-              <Alert severity="error" compact testId="dose-editor-given-error">
-                {message()}
-              </Alert>
-            )}
-          </Show>
           <Show when={skipping() && draft.given === true}>
             <Alert severity="warning" compact>
               {t('messages.skip-dose-warning')}
@@ -526,80 +549,44 @@ const DoseEditorForm: Component<
         </Show>
 
         <Show when={!locked() && showsBatch(draft, draftContext())}>
-          <Show when={batches()} fallback={<Spinner />}>
-            {loadedBatches => (
-              <Show
-                when={loadedBatches().batches.length > 0}
-                fallback={
-                  <Alert severity="info" compact>
-                    {t('messages.no-stock-available')}
-                  </Alert>
-                }
-              >
-                <Table label={t('label.batch')}>
-                  <thead>
-                    <tr>
-                      <th>{t('label.batch')}</th>
-                      <th>{t('label.expiry-date')}</th>
-                      <th data-numeric>{t('label.doses')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <For
-                      each={batchRows(
-                        loadedBatches().batches,
-                        draft,
-                        ctx.vaccination?.stockLine
-                      )}
-                    >
-                      {batch => {
-                        const doses = () =>
-                          batchDoses(loadedBatches().dosesPerUnit, batch);
-                        const choosable = () =>
-                          batchChoosable(loadedBatches().dosesPerUnit, batch);
-                        const expired = () =>
-                          !!batch.expiryDate && batch.expiryDate < ctx.today;
-                        return (
-                          <tr data-testid="dose-editor-batch-row">
-                            <td
-                              data-check
-                              data-muted={choosable() ? undefined : ''}
-                            >
-                              <Checkbox
-                                label={batch.batch ?? ''}
-                                checked={draft.stockLineId === batch.id}
-                                disabled={!choosable()}
-                                onChange={picked =>
-                                  setDraft(
-                                    'stockLineId',
-                                    picked ? batch.id : null
-                                  )
-                                }
-                              />
-                            </td>
-                            <td data-muted={choosable() ? undefined : ''}>
-                              <span
-                                class={expired() ? styles.expired : undefined}
-                              >
-                                {batch.expiryDate
-                                  ? localisedDate(batch.expiryDate)
-                                  : ''}
-                              </span>
-                            </td>
-                            <td
-                              data-numeric
-                              data-muted={choosable() ? undefined : ''}
-                            >
-                              {choosable() ? Math.floor(doses()) : '<1'}
-                            </td>
-                          </tr>
-                        );
-                      }}
-                    </For>
-                  </tbody>
-                </Table>
+          <Show
+            when={batches()}
+            fallback={
+              // Spinner while the item's batches load; a read that settles
+              // with nothing is an error, not an empty store.
+              <Show when={batchData.loading} fallback={<BatchReadFailed />}>
+                <Spinner />
               </Show>
-            )}
+            }
+          >
+            {loadedBatches => {
+              // The listed batches, with the record's own batch kept on the
+              // list when it has run out (OMS-REG-DIS-06.55) — so "no stock"
+              // means nothing to show, recorded batch included.
+              const rows = () =>
+                batchRows(
+                  loadedBatches().batches,
+                  draft,
+                  ctx.vaccination?.stockLine
+                );
+              return (
+                <Show
+                  when={rows().length > 0}
+                  fallback={
+                    <Alert severity="info" compact>
+                      {t('messages.no-stock-available')}
+                    </Alert>
+                  }
+                >
+                  <BatchTable
+                    rows={rows()}
+                    dosesPerUnit={loadedBatches().dosesPerUnit}
+                    chosen={draft.stockLineId}
+                    onChoose={id => setDraft('stockLineId', id)}
+                  />
+                </Show>
+              );
+            }}
           </Show>
         </Show>
 
@@ -652,6 +639,72 @@ const DoseEditorForm: Component<
         onConfirm={confirmOne}
         onClose={cancelAsking}
       />
-    </Dialog>
+    </>
+  );
+};
+
+type Batch = NonNullable<
+  Awaited<ReturnType<typeof fetchBatches>>
+>['batches'][number];
+
+/** The item's batches read failed: the list cannot say what stock there is. */
+const BatchReadFailed: Component = () => (
+  <Alert severity="error" compact>
+    {t('error.something-wrong')}
+  </Alert>
+);
+
+/*
+ * The batch list: a batch is chosen by selecting its row, and selecting the
+ * chosen row again clears it. A batch under one dose cannot be chosen, unless
+ * it is the chosen one — a recorded batch that has run down stays chosen and
+ * can still be cleared (rules § zero doses; ui-surface § S3).
+ */
+const BatchTable: Component<{
+  rows: Batch[];
+  dosesPerUnit: number;
+  chosen: string | null;
+  onChoose: (id: string | null) => void;
+}> = props => {
+  const choosable = (batch: Batch) => batchChoosable(props.dosesPerUnit, batch);
+  const selectable = (batch: Batch) =>
+    batch.id === props.chosen || choosable(batch);
+
+  const columns: Column<Batch, never>[] = [
+    { c: { key: 'batch' }, header: () => t('label.batch') },
+    {
+      c: { key: 'expiryDate' },
+      header: () => t('label.expiry-date'),
+      ...getExpiryDateCell(),
+    },
+    {
+      // Whole doses; "<1" below one.
+      c: {
+        accessor: batch =>
+          choosable(batch)
+            ? Math.floor(batchDoses(props.dosesPerUnit, batch))
+            : '<1',
+        id: 'doses',
+      },
+      header: () => t('label.doses'),
+      ...getNumberCell(),
+    },
+  ];
+
+  return (
+    <div data-testid="dose-editor-batches">
+      <DataTable
+        columns={columns}
+        rows={props.rows}
+        rowKey={batch => batch.id}
+        selectedIds={props.chosen ? [props.chosen] : []}
+        onRowClick={batch =>
+          props.onChoose(batch.id === props.chosen ? null : batch.id)
+        }
+        rowClickable={selectable}
+        rowState={batch => (selectable(batch) ? undefined : 'disabled')}
+        showFullScreen={false}
+      />
+    </div>
   );
 };

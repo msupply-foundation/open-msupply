@@ -160,21 +160,23 @@ export const switchLabel = (
 ): LocaleKey | null => {
   if (givenAtOtherStore(ctx)) return null;
   const v = ctx.vaccination;
-  const free = draft.facility === OTHER_FACILITY;
+  // Another facility — named in free text, or one a record was entered at —
+  // is never given at this store, so it never moves stock here.
+  const elsewhere = isOtherFacility(draft, ctx);
   if (
     isPastDated(draft, ctx) &&
     !v?.stockLine &&
     draft.given === true &&
-    !free &&
+    !elsewhere &&
     draft.itemId !== null
   )
     return 'label.record-stock-transaction';
-  if (v?.invoice && (free || draft.given === false || !draft.stockLineId))
+  if (v?.invoice && (elsewhere || draft.given === false || !draft.stockLineId))
     return 'label.revert-existing-transaction';
   if (
     v &&
     draft.itemId !== null &&
-    !free &&
+    !elsewhere &&
     draft.given === true &&
     draft.stockLineId !== (v.stockLine?.id ?? null)
   )

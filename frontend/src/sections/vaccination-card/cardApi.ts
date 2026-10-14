@@ -116,8 +116,9 @@ export const fetchBatches = async (args: {
   const item = result.data.items.nodes[0];
   return {
     itemId: args.itemId,
-    // A vaccine with no configured doses per unit counts as one.
-    dosesPerUnit: item?.doses || 1,
+    // Taken as configured: a vaccine with zero doses per unit has no batch
+    // holding a dose, so none can be chosen (rules § zero doses).
+    dosesPerUnit: item?.doses ?? 0,
     batches: item?.availableBatches.nodes ?? [],
   };
 };

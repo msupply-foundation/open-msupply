@@ -50,8 +50,13 @@ const VaccinationCardView: Component = () => {
   const patient = () => gated(patientData)?.patient ?? undefined;
   const dateOfBirth = () => patient()?.dateOfBirth ?? null;
 
-  // The program's name is the page heading; an unknown enrolment has none,
-  // so the trail ends at "Vaccination card" rather than an empty crumb.
+  // Every crumb but the leaf navigates (ui-surface § S1): the patient's name
+  // to their Details, "Vaccination card" to their Vaccinations tab — the list
+  // of their cards. The program's name is the page heading; an unknown
+  // enrolment has none, so the trail ends at "Vaccination card" rather than an
+  // empty crumb (the leaf, which never navigates).
+  const patientPath = () =>
+    `/${params.storeId}/dispensary/patients/${params.patientId}`;
   const crumbs = () =>
     [
       {
@@ -60,12 +65,12 @@ const VaccinationCardView: Component = () => {
       },
       {
         label: patient()?.name ?? '',
-        onClick: () =>
-          navigate(
-            `/${params.storeId}/dispensary/patients/${params.patientId}?tab=vaccinations`
-          ),
+        onClick: () => navigate(patientPath()),
       },
-      { label: t('label.vaccination-card') },
+      {
+        label: t('label.vaccination-card'),
+        onClick: () => navigate(`${patientPath()}?tab=vaccinations`),
+      },
       { label: card()?.programName ?? '' },
     ].filter(crumb => crumb.label !== '');
 
