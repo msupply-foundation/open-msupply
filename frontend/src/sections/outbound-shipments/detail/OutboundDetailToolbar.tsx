@@ -111,7 +111,7 @@ export const OutboundDetailToolbar: Component<
           label={t('label.campaign-only')}
           size="small"
           inputTestId="outbound-campaign-input"
-          value={props.node.campaign?.id}
+          value={props.node.campaign}
           placeholder={t('label.none')}
           disabled={props.disabled}
           onChange={campaign => props.onChangeCampaign(campaign?.id ?? null)}

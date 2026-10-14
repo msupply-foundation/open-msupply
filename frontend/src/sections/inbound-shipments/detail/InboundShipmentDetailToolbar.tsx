@@ -167,7 +167,7 @@ export const InboundShipmentDetailToolbar: Component<
         label={t('label.campaign-only')}
         size="small"
         inputTestId="inbound-campaign-input"
-        value={props.node.campaign?.id}
+        value={props.node.campaign}
         placeholder={t('label.none')}
         disabled={props.disabled}
         onChange={campaign =>

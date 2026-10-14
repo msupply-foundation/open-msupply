@@ -3,15 +3,23 @@ import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { campaignsResource, type Campaign } from './campaignsResource';
 
 export interface CampaignSelectProps {
-  /** Selected campaign id (undefined/null = none). */
-  value?: string | null;
+  /**
+   * The record's saved campaign (undefined/null = none). The whole node, not
+   * just the id, so a campaign deleted from the register since it was tagged
+   * still shows its name (spec/campaigns › Deleting a campaign) — the register
+   * no longer lists it, so the id alone couldn't be labelled.
+   */
+  value?: Campaign | null;
   onChange: (campaign: Campaign | null) => void;
   label: string;
   hideLabel?: boolean;
   size?: 'default' | 'small';
   disabled?: boolean;
   placeholder?: string;
-  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  /**
+   * `data-testid` for the text input (locale-stable test hook,
+   * e2e/TESTIDS.md).
+   */
   inputTestId?: string;
 }
 
@@ -29,7 +37,8 @@ export const CampaignSelect = (props: CampaignSelectProps): JSX.Element => (
     loading={campaignsResource.loading()}
     itemToString={c => c.name}
     itemToValue={c => c.id}
-    value={props.value ?? undefined}
+    value={props.value?.id}
+    selectedItem={props.value ?? undefined}
     disabled={props.disabled}
     placeholder={props.placeholder}
     inputTestId={props.inputTestId}

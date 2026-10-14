@@ -118,7 +118,7 @@ export interface InboundShipmentLineEditModalProps {
    * with it, and the user can change or clear it per batch. Existing lines
    * keep their own.
    */
-  campaignId: string | null;
+  campaign: { id: string; name: string } | null;
   /**
    * The shipment's linked internal order. Presence alone gates the
    * internal-order banner (spec S4); undefined where there is no such link, or
@@ -193,6 +193,9 @@ type DraftBatch = {
   manufacturerId: string | null;
   manufacturerName: string | null;
   campaignId: string | null;
+  // Kept beside the id so a campaign deleted from the register still labels
+  // the picker (spec/campaigns › Deleting a campaign).
+  campaignName: string | null;
   programId: string | null;
   /**
    * Whether the user has hand-edited the cost / sell price
@@ -249,6 +252,7 @@ const emptyBatch = (): DraftBatch => ({
   manufacturerId: null,
   manufacturerName: null,
   campaignId: null,
+  campaignName: null,
   programId: null,
   costOverridden: false,
   sellOverridden: false,
@@ -277,6 +281,7 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   manufacturerId: line.manufacturer?.id ?? null,
   manufacturerName: line.manufacturer?.name ?? null,
   campaignId: line.campaign?.id ?? null,
+  campaignName: line.campaign?.name ?? null,
   programId: line.program?.id ?? null,
   // Existing lines aren't subject to the prefill-clear (OMS-REG-REPL-09.10/.11
   // is about adding); mark both overridden so a pack-size edit never wipes a
@@ -503,7 +508,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // A blank batch carrying the shipment's default campaign (issue #996).
   const newBatch = (): DraftBatch => ({
     ...emptyBatch(),
-    campaignId: props.campaignId,
+    campaignId: props.campaign?.id ?? null,
+    campaignName: props.campaign?.name ?? null,
   });
 
   // A fresh batch for `chosen`, price-prefilled per OMS-REG-REPL-09.10/.11:
@@ -1474,9 +1480,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             storeId={props.storeId}
             itemId={item()?.id ?? ''}
             campaignId={b.campaignId ?? undefined}
+            campaignName={b.campaignName}
             programId={b.programId ?? undefined}
             onChange={choice => {
               updateBatch(b.id, 'campaignId', choice?.campaign?.id ?? null);
+              updateBatch(b.id, 'campaignName', choice?.campaign?.name ?? null);
               updateBatch(b.id, 'programId', choice?.program?.id ?? null);
             }}
           />
