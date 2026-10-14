@@ -1900,6 +1900,7 @@
   "label.received-at-port": "Received at port",
   "label.received-date": "Received date",
   "label.received-pack-size": "Received pack size",
+  "label.received-units": "Received units",
   "label.record-stock-transaction": "Record stock transaction for past vaccination",
   "label.recorded-contact-differs": "Recorded Contact: {{recordedName}}",
   "label.records-to-push_one": "There is {{count}} record to push",
