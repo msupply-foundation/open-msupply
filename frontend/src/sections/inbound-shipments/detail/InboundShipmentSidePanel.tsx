@@ -470,6 +470,7 @@ export const InboundShipmentSidePanel: Component<
             invoiceId={props.node.id}
             isExternal={isExternal()}
             number={() => props.node.invoiceNumber}
+            status={() => props.node.status}
             removesStock={() =>
               deleteRemovesStock(props.node.status) && props.hasLines
             }

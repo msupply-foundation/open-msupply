@@ -20,13 +20,28 @@ export type CurrencyInfo = {
 /** How the symbol renders: "$" / "US$" / "USD". */
 export type CurrencyDisplay = 'narrowSymbol' | 'symbol' | 'code';
 
+/**
+ * Currencies always labelled by their ISO code, whatever display is asked
+ * for. CLDR's symbols for these are unfamiliar or wrong where they're used
+ * ("F CFA" for XOF and "FCFA" for XAF, where deployments write the code; "£"
+ * for SSP reads as sterling). Old OMS showed the code for the same set, and
+ * users compare the two UIs side by side.
+ */
+const CODE_LABELLED = new Set(['XOF', 'XAF', 'DJF', 'CDF', 'SSP', 'HTG']);
+
+const resolveDisplay = (
+  code: string,
+  display: CurrencyDisplay
+): CurrencyDisplay => (CODE_LABELLED.has(code) ? 'code' : display);
+
 const infoCache = new Map<string, CurrencyInfo>();
 
 export const getCurrencyInfo = (
   code: string,
   locale: SupportedLocale,
-  display: CurrencyDisplay = 'narrowSymbol'
+  requestedDisplay: CurrencyDisplay = 'narrowSymbol'
 ): CurrencyInfo => {
+  const display = resolveDisplay(code, requestedDisplay);
   const key = `${LOCALE_META[locale].numberLocale}|${code}|${display}`;
   const cached = infoCache.get(key);
   if (cached) return cached;
@@ -81,17 +96,25 @@ export const setHomeCurrency = (code: string | null | undefined): void => {
 
 /**
  * A money figure in the given currency (ISO 4217) at that currency's minor
- * units, with its narrow symbol in the active locale. No code: the store's
- * home currency.
+ * units, with its narrow symbol in the active locale (or its code, for the
+ * CODE_LABELLED currencies). No code: the store's home currency.
+ *
+ * `maxDecimals` widens the precision for a figure stored finer than the
+ * currency's minor units (a unit price): it keeps the minor units and shows
+ * further decimals only as far as the figure needs — "$3.40", "$0.034".
  */
-export const formatCurrency = (value: number, code?: string | null): string => {
+export const formatCurrency = (
+  value: number,
+  code?: string | null,
+  maxDecimals?: number
+): string => {
   const currency = code ?? homeCurrency();
   const { decimals } = getCurrencyInfo(currency, locale());
   return formatNumber(value, {
     style: 'currency',
     currency,
-    currencyDisplay: 'narrowSymbol',
+    currencyDisplay: resolveDisplay(currency, 'narrowSymbol'),
     minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    maximumFractionDigits: Math.max(decimals, maxDecimals ?? decimals),
   });
 };

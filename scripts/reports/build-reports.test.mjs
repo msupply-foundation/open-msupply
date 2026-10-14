@@ -7,10 +7,10 @@
 // checked on the Rust side - see standard_reports.rs.
 
 import assert from 'node:assert';
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildDir, buildReport, findReports, parseArgs, readManifest } from './build-reports.mjs';
+import { buildDir, buildEach, buildReport, bundleFileName, findReports, parseArgs, readManifest } from './build-reports.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -164,6 +164,43 @@ try {
   eq('reports found', findReports(tree).map(d => d.slice(tree.length + 1)), ['a/2_6', 'a/latest', 'b']);
 
   const out = buildDir(tree, 'reports.json', { convertData: noConvertData, warn: () => {} });
+
+  // Each folder as a bundle of its own, carrying on past one that fails.
+  const clients = join(scratch, 'clients');
+  report(join(clients, 'Nigeria UNICEF', 'stock', 'latest'), {}, { 'template.html': 't' });
+  report(join(clients, 'Nigeria UNICEF', 'stock', '2_10'), { version: '2.10.0' }, { 'template.html': 't' });
+  report(join(clients, 'Broken', 'r', 'latest'), {}, { 'nope.html': 't' });
+  mkdirSync(join(clients, 'Empty', 'notes'), { recursive: true });
+  const bundles = join(scratch, 'bundles');
+  const quiet = console.error;
+  console.error = () => {};
+  let results;
+  try {
+    results = buildEach(clients, bundles, { convertData: noConvertData, warn: () => {} });
+  } finally {
+    console.error = quiet;
+  }
+  eq('each client, with its real name; one with no reports is left out', results.map(r => [r.client, r.file ?? 'failed']), [
+    ['Broken', 'failed'],
+    ['Nigeria UNICEF', 'Nigeria-UNICEF.json'],
+  ]);
+  eq('the failure says why', /Template file does not exist/.test(results[0].error), true);
+  eq('a bundle holds every version in the folder', JSON.parse(readFileSync(join(bundles, 'Nigeria-UNICEF.json'), 'utf8')).reports.map(r => r.version), ['2.10.0', '2.3.0']);
+  eq('clients.json is written beside them', JSON.parse(readFileSync(join(bundles, 'clients.json'), 'utf8')), results);
+  eq('nothing else is written', readdirSync(bundles).sort(), ['Nigeria-UNICEF.json', 'clients.json']);
+  eq('a file name keeps only safe characters', bundleFileName('São Tomé/x'), 'S-o-Tom--x.json');
+
+  // A client called `clients` would overwrite clients.json: it fails instead.
+  const named = join(scratch, 'named');
+  report(join(named, 'clients', 'r', 'latest'), {}, { 'template.html': 't' });
+  console.error = () => {};
+  let clash;
+  try {
+    clash = buildEach(named, join(scratch, 'named-out'), { convertData: noConvertData, warn: () => {} });
+  } finally {
+    console.error = quiet;
+  }
+  eq('a client may not be written as clients.json', /is already taken/.test(clash[0].error ?? ''), true);
   eq('a dir builds into generated/', out, join(tree, 'generated', 'reports.json'));
 } finally {
   rmSync(scratch, { recursive: true, force: true });
@@ -173,9 +210,12 @@ try {
 // Command line
 // ---------------------------------------------------------------------------
 
-eq('no arguments: the standard reports', parseArgs([]), { paths: null, report: null, output: null, definition: false });
+eq('no arguments: the standard reports', parseArgs([]), { paths: null, report: null, output: null, definition: false, each: null, out: null });
 eq('--path takes several', parseArgs(['--path', 'a', 'b', '--path', 'c']).paths, ['a', 'b', 'c']);
-eq('one report', parseArgs(['--report', 'r', '--output', 'o.json']), { paths: null, report: 'r', output: 'o.json', definition: false });
+eq('one report', parseArgs(['--report', 'r', '--output', 'o.json']), { paths: null, report: 'r', output: 'o.json', definition: false, each: null, out: null });
+eq('each folder', [parseArgs(['--each', 'clients', '--out', 'b']).each, parseArgs(['--each', 'clients', '--out', 'b']).out], ['clients', 'b']);
+throws('--each without --out', () => parseArgs(['--each', 'clients']), /go together/);
+throws('--each with --path', () => parseArgs(['--each', 'c', '--out', 'b', '--path', 'x']), /goes with nothing but --out/);
 eq('its definition only', parseArgs(['--report', 'r', '--definition', '--output', 'o.json']).definition, true);
 throws('--definition without --report', () => parseArgs(['--definition']), /goes with --report/);
 throws('--report without --output', () => parseArgs(['--report', 'r']), /go together/);

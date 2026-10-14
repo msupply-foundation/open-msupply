@@ -23,35 +23,41 @@
 # saving is - rustc is the expensive part, and it never runs emulated.
 #
 # The runtime stages DO take the target platform, so every RUN in them is
-# emulated on a cross build: faketime-builder's make, base's apt-get, and
-# postgres's postgresql-17 install. That needs binfmt_misc registered on the
-# HOST kernel - neither this file nor the workflow can arrange it, and a build
-# without it fails at the first foreign-arch RUN with "exec format error". See
-# docs/content/github-actions/self-hosted-runners for the host setup.
+# emulated on a cross build: faketime-builder's make, runtime's apt-get, and
+# postgres-runtime's postgresql-17 install. That needs binfmt_misc registered on
+# the HOST kernel, and a build without it fails at the first foreign-arch RUN
+# with "exec format error". docker-image.yaml checks for it before an arm64
+# build; see docs/content/github-actions/self-hosted-runners for the host setup.
 #
 #   [build host arch]     [build host arch]      [target arch]
 #     rust:<ver>            node:<ver>            debian:<ver>-slim
-#         |                     |                    |          |
-#         v                     v                    v          |
-#    server-base          frontend-build      faketime-builder  |
-#     .---'---.                 |                    |          |
-#     v       v                 '---------.----------'          |
-#  build-   build-                        v                     |
-#  sqlite  postgres                     base <------------------'
-#     |       |                        .--'--.
-#     |       |                        v     v
-#     '-------|-------------------> sqlite   |
-#             '------------------------------> postgres
-#                                       |         |
-#                                       v         v
-#                                      dev   postgres-dev
+#         |                     |                    |
+#         v                     v                    v
+#    server-base          frontend-build      faketime-builder
+#     .---'---.                 |                    |
+#     v       v                 |                    v
+#  build-   build-              |                 runtime ---------.
+#  sqlite  postgres             |                    |             v
+#     |       |                 '--------------->  base     postgres-runtime
+#     |       |                                    .-'-.           |
+#     |       |                                    v    '------.   |
+#     '-------|-------------------------------> sqlite         v   v
+#             '------------------------------------|------> postgres
+#                                                  v           v
+#                                                 dev     postgres-dev
 #
-#   base            <- both frontends, libfaketime, configuration, server/data
-#   sqlite/postgres <- base + that flavour's binaries    (sqlite = default target)
-#   dev variants    <- + node, yarn, client source; postgres also adds
-#                      postgresql-17 and gosu
+#   runtime          <- OS packages, libfaketime, Chromium   (no commit files)
+#   postgres-runtime <- runtime + postgresql-17 and gosu     (no commit files)
+#   base             <- runtime + both frontends, configuration, server/data
+#   sqlite           <- base + its binaries                  (default target)
+#   postgres         <- postgres-runtime + base's files + its binaries
+#   dev variants     <- + node, yarn, client source
 #
-# Everything above `base` is discarded; only the runtime stages are shipped.
+# The commit's files come last so that every OS layer stays cached between
+# builds; the postgres flavour copies them across from `base` rather than
+# installing its packages on top of them.
+#
+# Everything above the runtime stages is discarded; only those are shipped.
 #
 # The two server-build stages are deliberately separate rather than one stage
 # with an ARG: a build arg could disagree with --target and silently ship the
@@ -254,7 +260,6 @@ FROM --platform=$BUILDPLATFORM node:${NODE_VERSION} AS frontend-build
 WORKDIR /src
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY client client
-COPY frontend frontend
 RUN corepack enable
 # Old UI, served under /old-ui/ - the PUBLIC_PATH is what rewrites asset URLs
 # and the router base, so it cannot be relocated after the fact.
@@ -262,6 +267,11 @@ RUN --mount=type=cache,id=yarn,target=/root/.yarn/berry/cache,sharing=locked \
     yarn install --immutable \
     && cd client \
     && NODE_OPTIONS="--max_old_space_size=4096" yarn build:old-ui
+# The new FE's source is copied only now, after the old UI build: it is not a
+# yarn workspace and build:old-ui never reads it, but copied above that build
+# it made every frontend/-only merge redo ~4 minutes of yarn install and
+# build:old-ui - the critical path of a deploy build.
+COPY frontend frontend
 # New FE, served at /
 # The displayed interface version (vite.config.ts § appVersion) comes from
 # RELEASE_VERSION or else `git describe` - and .git is not in the build
@@ -276,7 +286,7 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store,sharing=lock
 # Build stage for libfaketime
 FROM debian:${DEBIAN_VERSION}-slim AS faketime-builder
 # ca-certificates is required for the HTTPS clone below and is NOT in
-# debian-slim - the same omission that `base` already accounts for. Missing it
+# debian-slim - the same omission that `runtime` already accounts for. Missing it
 # fails as "Problem with the SSL CA cert", which reads like a proxy or network
 # fault rather than a missing package.
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -287,7 +297,9 @@ RUN git clone https://github.com/wolfcw/libfaketime.git
 WORKDIR /usr/src/libfaketime/src
 RUN make install
 
-# Common runtime stage (no binaries yet).
+# Common runtime OS (no binaries, nothing from this commit). Kept free of
+# per-commit files so every layer here - and in postgres-runtime below - stays
+# cached from one build to the next.
 #
 # Plain Debian, not rust:<ver>-slim. The runtime shipped a full Rust toolchain
 # it never used - roughly 700MB of compiler in every production image. What the
@@ -299,7 +311,7 @@ RUN make install
 # trust anchors are compiled into the binary - but anything else that reaches
 # the network from inside the image would fail confusingly without it, and it
 # costs a few hundred KB. tzdata IS already present.
-FROM debian:${DEBIAN_VERSION}-slim AS base
+FROM debian:${DEBIAN_VERSION}-slim AS runtime
 # curl is here for the container healthcheck, which runs *inside* the image -
 # debian-slim ships neither curl nor wget, so without it the probe cannot
 # execute and the container reports unhealthy however well the server is
@@ -333,6 +345,27 @@ RUN apt-get update && \
 ENV CHROME=/usr/bin/chromium-headless-shell
 ENV OMS_HEADLESS_CHROME_NO_SANDBOX=true
 
+RUN mkdir -p /database
+
+# The postgres flavour's OS packages, on the same commit-independent footing as
+# `runtime`. They used to be installed in `postgres` on top of `base`, whose
+# frontend and server/data layers change with every commit - so ~20s of
+# apt-get reran on every build to install the same packages.
+FROM runtime AS postgres-runtime
+RUN apt-get update && apt-get install -y postgresql-17 libpq5 gosu && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+# dbus (pulled in by postgresql-17) bakes a machine-id into the image at build
+# time. The machine_uid crate reads /var/lib/dbus/machine-id before
+# /etc/machine-id, so symlink them and truncate so entry.sh's runtime UUID
+# (or an operator's bind-mounted /etc/machine-id) is what gets read.
+RUN ln -sf /etc/machine-id /var/lib/dbus/machine-id && \
+    truncate -s 0 /etc/machine-id
+ENV PATH="/usr/lib/postgresql/17/bin:$PATH"
+RUN chown -R postgres:postgres /var/lib/postgresql
+
+# This commit's files, everything shipped bar the binaries. All of it lives
+# under /usr/src/omsupply, which is what lets `postgres` take it in one COPY.
+FROM runtime AS base
 WORKDIR /usr/src/omsupply/server
 COPY --chmod=755 docker/entry.sh .
 COPY server/data data
@@ -346,8 +379,6 @@ WORKDIR /usr/src/omsupply/server/configuration
 COPY server/configuration/base.yaml .
 COPY docker/local.yaml .
 
-RUN mkdir -p /database
-
 WORKDIR /usr/src/omsupply/server
 
 ENTRYPOINT ["/usr/src/omsupply/server/entry.sh"]
@@ -359,21 +390,14 @@ COPY --from=server-build-sqlite --chmod=755 /out/remote_server .
 COPY --from=server-build-sqlite --chmod=755 /out/remote_server_cli .
 
 # Postgres target
-FROM base AS postgres
+FROM postgres-runtime AS postgres
+COPY --from=base /usr/src/omsupply /usr/src/omsupply
+WORKDIR /usr/src/omsupply/server
+EXPOSE 8000
 COPY --from=server-build-postgres --chmod=755 /out/remote_server .
 COPY --from=server-build-postgres --chmod=755 /out/remote_server_cli .
-RUN apt-get update && apt-get install -y postgresql-17 libpq5 gosu && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-# dbus (pulled in by postgresql-17) bakes a machine-id into the image at build
-# time. The machine_uid crate reads /var/lib/dbus/machine-id before
-# /etc/machine-id, so symlink them and truncate so entry.sh's runtime UUID
-# (or an operator's bind-mounted /etc/machine-id) is what gets read.
-RUN ln -sf /etc/machine-id /var/lib/dbus/machine-id && \
-    truncate -s 0 /etc/machine-id
-ENV PATH="/usr/lib/postgresql/17/bin:$PATH"
 COPY docker/local.postgres.yaml /usr/src/omsupply/server/configuration/local.yaml
 COPY --chmod=755 docker/entry-postgres.sh /usr/src/omsupply/server/entry-postgres.sh
-RUN chown -R postgres:postgres /var/lib/postgresql
 ENTRYPOINT ["/usr/src/omsupply/server/entry-postgres.sh"]
 
 FROM sqlite AS dev
@@ -400,18 +424,20 @@ EXPOSE 3003
 FROM postgres AS postgres-dev
 WORKDIR /usr/src/omsupply
 COPY client/.nvmrc .nvmrc
-COPY client client
 
 RUN apt-get update && apt-get install -y curl rsync git && \
     NODE_MAJOR=$(sed 's/^v//' .nvmrc | cut -d. -f1) && \
     curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
     apt-get install -y nodejs && \
-    npm install -g yarn && \
+    corepack enable && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-COPY package.json .
 
-WORKDIR /usr/src/omsupply/client
-RUN yarn && yarn cache clean
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY client client
+COPY standard_reports standard_reports
+COPY standard_forms standard_forms
+
+RUN yarn install --immutable && yarn cache clean
 
 RUN echo 'export NODE_OPTIONS="--max-old-space-size=8192"' >> ~/.bashrc
 
