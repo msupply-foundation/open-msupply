@@ -114,6 +114,12 @@ export interface InboundShipmentLineEditModalProps {
    */
   purchaseOrderId?: string;
   /**
+   * The donor a new batch starts with — the shipment's default donor, else the
+   * linked purchase order's (spec rules → default donor, OMS-REG-REPL-09.26).
+   * The user may still change or clear it before saving.
+   */
+  defaultDonor?: { id: string; name: string };
+  /**
    * The shipment's linked internal order. Presence alone gates the
    * internal-order banner (spec S4); undefined where there is no such link, or
    * where ./internalOrderContext rules the context out.
@@ -494,13 +500,21 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setLoadingLines(false);
   };
 
+  // Every new batch starts with the inherited donor (OMS-REG-REPL-09.13/.26),
+  // shown before save rather than only once the server has applied it.
+  const newBatch = (): DraftBatch => ({
+    ...emptyBatch(),
+    donorId: props.defaultDonor?.id ?? null,
+    donorName: props.defaultDonor?.name ?? null,
+  });
+
   // A fresh batch for `chosen`, price-prefilled per OMS-REG-REPL-09.10/.11:
   // starts at the item's default pack size, with cost AND sell price seeded
   // from the store default sell price — but only when cost is editable (a
   // manual shipment); on a PO/transfer shipment cost derives from the source,
   // so leave prices at zero.
   const prefillFromItem = (chosen: ChosenItem): DraftBatch => {
-    const base = emptyBatch();
+    const base = newBatch();
     const packSize = chosen.defaultPackSize > 0 ? chosen.defaultPackSize : 1;
     if (props.costLocked) return { ...base, packSize };
     const price = chosen.defaultSellPricePerPack;
@@ -638,7 +652,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       defaultPackSize: line.requestedPackSize || 1,
       defaultSellPricePerPack: 0,
     });
-    const batch = { ...emptyBatch(), packSize: line.requestedPackSize || 1 };
+    const batch = { ...newBatch(), packSize: line.requestedPackSize || 1 };
     setBatches([batch]);
     batchFields.focus(batch.id);
   };
@@ -659,7 +673,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // like the first one.
   const addBatch = () => {
     const chosen = item();
-    const batch = chosen ? prefillFromItem(chosen) : emptyBatch();
+    const batch = chosen ? prefillFromItem(chosen) : newBatch();
     setBatches(produce(d => d.push(batch)));
     batchFields.focus(batch.id);
   };

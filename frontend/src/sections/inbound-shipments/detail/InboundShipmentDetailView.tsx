@@ -1425,6 +1425,11 @@ const InboundShipmentDetailView: Component = () => {
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
+                defaultDonor={
+                  node().defaultDonor ??
+                  node().purchaseOrder?.donor ??
+                  undefined
+                }
                 // Gates the editor's internal-order banner, on the same rule as
                 // the Units requested column so the two can't disagree.
                 requisitionId={

@@ -71,6 +71,10 @@ fragment InboundInfo on InvoiceNode {
     number
     reference
     orderTotalAfterDiscount
+    donor {
+      id
+      name
+    }
     currency {
       id
       code
