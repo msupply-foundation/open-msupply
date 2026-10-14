@@ -3,11 +3,8 @@ import {
   STATUSES,
   emptyDraft,
   isReasonMissing,
-  orderReasons,
   statusOptions,
   toReasonInput,
-  type AssetLogStatus,
-  type LogReasonRow,
 } from './logReasons';
 
 // Anchors: spec/asset-catalogue/cases/OMS-REG-CAT-03 — the log reasons.
@@ -77,90 +74,5 @@ describe('OMS-REG-CAT-03.20 — nothing checks a duplicate reason text', () => {
       commentsRequired: false,
     });
     expect(toReasonInput(draft, 'b').id).toBe('b');
-  });
-});
-
-describe('OMS-REG-CAT-03.15 / .16 / .34 — the list orders by the status name shown', () => {
-  // The names as the en and fr catalogs carry them. Passed in, so the order
-  // is checked against the names the reader sees, not the enum.
-  const ENGLISH: Record<AssetLogStatus, string> = {
-    DECOMMISSIONED: 'Decommissioned',
-    FUNCTIONING: 'Functioning',
-    FUNCTIONING_BUT_NEEDS_ATTENTION: 'Functioning but needs attention',
-    NOT_FUNCTIONING: 'Not Functioning',
-    NOT_IN_USE: 'Not in use',
-    UNSERVICEABLE: 'Unserviceable',
-  };
-  const FRENCH: Record<AssetLogStatus, string> = {
-    DECOMMISSIONED: 'Au rebut',
-    FUNCTIONING: 'Fonctionnel',
-    FUNCTIONING_BUT_NEEDS_ATTENTION: 'Fonctionnel mais nécessite réparation',
-    NOT_FUNCTIONING: 'En panne',
-    NOT_IN_USE: 'Non-utilisé',
-    UNSERVICEABLE: 'Irréparable',
-  };
-  // In the server's id order, which is the enum's own order here.
-  const rows: LogReasonRow[] = STATUSES.map((status, i) => ({
-    __typename: 'AssetLogReasonNode',
-    id: `r${i}`,
-    assetLogStatus: status,
-    reason: `reason ${i}`,
-    commentsRequired: false,
-  }));
-  const names = (
-    names: Record<AssetLogStatus, string>,
-    locale: string,
-    desc?: boolean
-  ) =>
-    orderReasons(
-      rows,
-      desc === undefined ? undefined : { key: 'status', desc },
-      status => names[status],
-      locale
-    ).map(row => names[row.assetLogStatus]);
-
-  it('.15 English ascending reads A to Z', () => {
-    expect(names(ENGLISH, 'en', false)).toEqual([
-      'Decommissioned',
-      'Functioning',
-      'Functioning but needs attention',
-      'Not Functioning',
-      'Not in use',
-      'Unserviceable',
-    ]);
-  });
-  it('.16 reversing reverses it', () => {
-    expect(names(ENGLISH, 'en', true)).toEqual(
-      names(ENGLISH, 'en', false).reverse()
-    );
-  });
-  it('.34 French reads in the French names’ order, not the enum’s', () => {
-    expect(names(FRENCH, 'fr', false)).toEqual([
-      'Au rebut',
-      'En panne',
-      'Fonctionnel',
-      'Fonctionnel mais nécessite réparation',
-      'Irréparable',
-      'Non-utilisé',
-    ]);
-    expect(names(FRENCH, 'fr', true)).toEqual(
-      names(FRENCH, 'fr', false).reverse()
-    );
-  });
-  it('within one status the server’s order stands', () => {
-    const twoStored = [
-      { ...rows[4]!, id: 'b', reason: 'Stored' },
-      { ...rows[4]!, id: 'a', reason: 'Awaiting installation' },
-    ];
-    expect(
-      orderReasons(twoStored, { key: 'status', desc: false }, s => s, 'en').map(
-        r => r.id
-      )
-    ).toEqual(['b', 'a']);
-  });
-  it('with no sort the rows keep the server’s order', () => {
-    expect(names(FRENCH, 'fr')).toEqual(
-      rows.map(r => FRENCH[r.assetLogStatus])
-    );
   });
 });

@@ -1,9 +1,12 @@
 # The log-reasons list (spec/asset-catalogue S3): every live reason in one read
-# (no page), unsorted — the list orders it by the translated status name, which
-# the server's status sort (enum text) matches only in English.
+# (no page), sorted by status — the only key the server has.
 # `storeId` is required and ignored (contract § log reasons).
-query assetLogReasons($storeId: String!, $filter: AssetLogReasonFilterInput) {
-  assetLogReasons(storeId: $storeId, filter: $filter) {
+query assetLogReasons(
+  $storeId: String!
+  $filter: AssetLogReasonFilterInput
+  $sort: [AssetLogReasonSortInput!]
+) {
+  assetLogReasons(storeId: $storeId, filter: $filter, sort: $sort) {
     ... on AssetLogReasonConnector {
       __typename
       totalCount

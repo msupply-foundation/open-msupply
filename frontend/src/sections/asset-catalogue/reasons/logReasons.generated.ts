@@ -23,6 +23,10 @@ export type AssetLogReasonsVariables = {
     like?: string | null;
   } | null;
   } | null;
+  sort?: Array<{
+    key: "status";
+    desc?: boolean | null;
+  }> | null;
 };
 
 export type AssetLogReasonsResult = {
@@ -40,7 +44,7 @@ export type AssetLogReasonsResult = {
 };
 
 export const AssetLogReasons = {
-  query: "query assetLogReasons($storeId: String!, $filter: AssetLogReasonFilterInput) {\n  assetLogReasons(storeId: $storeId, filter: $filter) {\n    ... on AssetLogReasonConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        assetLogStatus\n        reason\n        commentsRequired\n      }\n    }\n  }\n}",
+  query: "query assetLogReasons($storeId: String!, $filter: AssetLogReasonFilterInput, $sort: [AssetLogReasonSortInput!]) {\n  assetLogReasons(storeId: $storeId, filter: $filter, sort: $sort) {\n    ... on AssetLogReasonConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        assetLogStatus\n        reason\n        commentsRequired\n      }\n    }\n  }\n}",
 } as TypedDocument<AssetLogReasonsResult, AssetLogReasonsVariables>;
 
 export type InsertAssetLogReasonVariables = {

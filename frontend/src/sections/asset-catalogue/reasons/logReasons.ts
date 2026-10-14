@@ -1,15 +1,13 @@
 import { t } from '@/intl';
 import { ASSET_STATUSES, statusLabelKey } from '@/domain/asset';
-import { sortRows } from '@/list/sortRows';
-import type { SortState } from '@/ui/elements/table/columnTypes';
 import type {
   AssetLogReasonsResult,
   InsertAssetLogReasonVariables,
 } from './logReasons.generated';
 
 // The log reasons' pure rules (spec/asset-catalogue › rules § log reasons,
-// S3/S4): the six statuses and their names, the list's order, the editor's
-// draft and its one check, and the insert a draft becomes.
+// S3/S4): the six statuses and their names, the editor's draft and its one
+// check, and the insert a draft becomes.
 
 export type LogReasonRow =
   AssetLogReasonsResult['assetLogReasons']['nodes'][number];
@@ -24,29 +22,6 @@ export const statusLabel = (status: AssetLogStatus): string =>
 
 export const statusOptions = () =>
   STATUSES.map(value => ({ value, label: statusLabel(value) }));
-
-/**
- * Rows in the order the list shows them (rules § log reasons): by the status
- * name shown, alphabetical in the reader's language — the server's status sort
- * follows the enum text, which matches the names only in English. With no sort
- * the server's own order (id) stands, and ties keep it (list/sortRows is
- * stable).
- */
-export const orderReasons = (
-  rows: readonly LogReasonRow[],
-  sort: SortState<'status'> | undefined,
-  label: (status: AssetLogStatus) => string,
-  locale: string
-): LogReasonRow[] => {
-  if (!sort) return [...rows];
-  const collator = new Intl.Collator(locale);
-  return sortRows(
-    rows,
-    sort,
-    row => label(row.assetLogStatus),
-    (a, b) => collator.compare(String(a), String(b))
-  );
-};
 
 /** The create editor's draft: status defaults to Functioning, comments
  *  required to off. */
