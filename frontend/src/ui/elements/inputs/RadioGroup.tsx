@@ -1,4 +1,5 @@
 import { createUniqueId, For, Show, type JSX } from 'solid-js';
+import { AlertTriangleIcon } from '../../icons';
 import styles from './RadioGroup.module.css';
 
 export interface RadioOption {
@@ -41,6 +42,18 @@ export interface RadioGroupProps {
   onChange?: (value: string) => void;
   /** Disable the whole group (every option). */
   disabled?: boolean;
+  /**
+   * Error message — presence switches the group to the error state (the
+   * unchosen rims go red, each radio `aria-invalid`) and shows the message as
+   * icon + text below the options, joined to the group's description. As
+   * <Checkbox>: nothing is conveyed by colour alone.
+   */
+  error?: string;
+  /**
+   * `data-testid` for the error message (locale-stable test hook,
+   * e2e/TESTIDS.md). As <MultiSelect>'s errorTestId.
+   */
+  errorTestId?: string;
   /** Lay the options out in a row instead of the default column. */
   orientation?: 'vertical' | 'horizontal';
   /**
@@ -86,6 +99,7 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
   // together.
   const name = createUniqueId();
   const labelId = `${name}-label`;
+  const errorId = `${name}-error`;
   const appearance = () => props.appearance ?? 'plain';
   const showLabel = () => Boolean(props.label) && !props.hideLabel;
   return (
@@ -96,6 +110,8 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
       // whose accessible name would otherwise be concatenated into this one.
       aria-labelledby={showLabel() ? labelId : undefined}
       aria-label={props.hideLabel ? props.label : undefined}
+      aria-describedby={props.error ? errorId : undefined}
+      data-error={props.error ? '' : undefined}
       style={
         props.indentRem
           ? { 'padding-inline-start': `${props.indentRem}rem` }
@@ -141,6 +157,7 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
                 value={option.value}
                 checked={props.value === option.value}
                 disabled={props.disabled || option.disabled}
+                aria-invalid={props.error ? 'true' : undefined}
                 onChange={() => props.onChange?.(option.value)}
               />
               <div class={styles.text}>
@@ -153,6 +170,17 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
           )}
         </For>
       </div>
+      <Show when={props.error}>
+        <p
+          id={errorId}
+          class={styles.error}
+          data-field-message="error"
+          data-testid={props.errorTestId}
+        >
+          <AlertTriangleIcon class={styles.errorIcon} />
+          {props.error}
+        </p>
+      </Show>
     </fieldset>
   );
 };

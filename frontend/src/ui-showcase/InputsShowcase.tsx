@@ -940,6 +940,18 @@ export const InputsShowcase = () => {
                 ]}
               />
             </div>
+            {/* The error state: nothing chosen yet on a form whose save
+                needs a choice. The message sits under the options, joined to
+                the group's description, and the unchosen rims go red. */}
+            <RadioGroup
+              label="Vaccination (error)"
+              orientation="horizontal"
+              options={[
+                { value: 'given', label: 'Vaccine given' },
+                { value: 'notGiven', label: 'Vaccine not given' },
+              ]}
+              error="This field is required"
+            />
           </FormPreview>
         </DashboardCard>
 
