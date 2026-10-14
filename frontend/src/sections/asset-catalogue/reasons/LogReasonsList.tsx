@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
-import { t, tPlural } from '@/intl';
+import { locale, t, tPlural } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
@@ -33,6 +33,7 @@ import {
   type AssetLogReasonsVariables,
 } from './logReasons.generated';
 import {
+  orderReasons,
   statusLabel,
   statusOptions,
   type AssetLogStatus,
@@ -44,15 +45,16 @@ import { DeleteSelectedAction, outcomeOf } from '@/domain/selection';
 
 // Catalogue › Assets › Log reasons (spec/asset-catalogue S3): every live
 // reason in one read (a short configuration list — no pagination footer),
-// ordered by status, the only order the server offers. Create and Delete on
-// the central server only.
+// ordered here by the status name shown — the server's status sort follows
+// the enum text, which matches the names only in English (rules § log
+// reasons). Create and Delete on the central server only.
 
 type ReasonFilter = NonNullable<AssetLogReasonsVariables['filter']>;
-type SortKey = NonNullable<AssetLogReasonsVariables['sort']>[number]['key'];
+type SortKey = 'status';
 
 type ReasonsState = {
   filter: ReasonFilter;
-  sort?: AssetLogReasonsVariables['sort'];
+  sort?: { key: SortKey; desc?: boolean }[];
 };
 
 const DEFAULT_STATE: ReasonsState = {
@@ -98,7 +100,6 @@ const LogReasonsList: Component = () => {
   const variables = createMemo<AssetLogReasonsVariables>(() => ({
     storeId: params.storeId,
     filter: stripEmpty(query().filter),
-    sort: query().sort,
   }));
   const [data, { refetch }] = createResource(
     () => JSON.stringify(variables()),
@@ -111,12 +112,13 @@ const LogReasonsList: Component = () => {
       return result.data.assetLogReasons;
     }
   );
-  const rows = () => gated(data)?.nodes ?? [];
-
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
+  const rows = createMemo(() =>
+    orderReasons(gated(data)?.nodes ?? [], currentSort(), statusLabel, locale())
+  );
 
   const openCreate = () => {
     if (guardWrite(REASON_WRITE)) setCreateOpen(true);
