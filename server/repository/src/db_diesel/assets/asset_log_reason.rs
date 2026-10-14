@@ -1,5 +1,9 @@
 use super::asset_log_reason_row::{AssetLogReasonRow, asset_log_reason};
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{IntoBoxed, sql},
+    prelude::*,
+    sql_types::Text,
+};
 
 use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
@@ -88,7 +92,13 @@ impl<'a> AssetLogReasonRepository<'a> {
                     apply_sort_no_case!(query, sort, asset_log_reason::reason);
                 }
                 AssetLogReasonSortField::AssetLogStatus => {
-                    apply_sort!(query, sort, asset_log_reason::asset_log_status);
+                    // By the status text, as SQLite does. Postgres would order
+                    // its enum by declaration order, which reads as random.
+                    apply_sort!(
+                        query,
+                        sort,
+                        sql::<Text>("CAST(asset_log_reason.asset_log_status AS TEXT)")
+                    );
                 }
             }
         } else {
@@ -138,7 +148,9 @@ fn create_filtered_query(filter: Option<AssetLogReasonFilter>) -> BoxedAssetLogR
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{mock::MockDataInserts, test_db};
+    use crate::{
+        asset_log_reason_row::AssetLogReasonRowRepository, mock::MockDataInserts, test_db,
+    };
 
     // Every sort key, both directions. Postgres rejects a collation on a
     // non-text column (enum, timestamp) when planning, so this needs no rows.
@@ -160,5 +172,65 @@ mod tests {
                 repo.query(Pagination::all(), None, Some(sort)).unwrap();
             }
         }
+    }
+
+    // Status sorts by its text on both databases, not by the Postgres enum's
+    // declaration order (NOT_IN_USE, FUNCTIONING, ...).
+    #[actix_rt::test]
+    async fn test_asset_log_reason_status_sort_order() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_asset_log_reason_status_sort_order",
+            MockDataInserts::none(),
+        )
+        .await;
+        let row_repo = AssetLogReasonRowRepository::new(&connection);
+        for (id, status) in [
+            ("a", AssetLogStatus::NotInUse),
+            ("b", AssetLogStatus::Functioning),
+            ("c", AssetLogStatus::FunctioningButNeedsAttention),
+            ("d", AssetLogStatus::NotFunctioning),
+            ("e", AssetLogStatus::Decommissioned),
+            ("f", AssetLogStatus::Unserviceable),
+        ] {
+            row_repo
+                .upsert_one(&AssetLogReasonRow {
+                    id: id.to_string(),
+                    asset_log_status: status,
+                    reason: id.to_string(),
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        // The status groups in order (migrations also seed reasons, so a
+        // status can repeat).
+        let statuses = |desc| {
+            let sort = Sort {
+                key: AssetLogReasonSortField::AssetLogStatus,
+                desc: Some(desc),
+            };
+            let mut statuses = AssetLogReasonRepository::new(&connection)
+                .query(Pagination::all(), None, Some(sort))
+                .unwrap()
+                .into_iter()
+                .map(|row| row.asset_log_status)
+                .collect::<Vec<_>>();
+            statuses.dedup();
+            statuses
+        };
+
+        let ascending = vec![
+            AssetLogStatus::Decommissioned,
+            AssetLogStatus::Functioning,
+            AssetLogStatus::FunctioningButNeedsAttention,
+            AssetLogStatus::NotFunctioning,
+            AssetLogStatus::NotInUse,
+            AssetLogStatus::Unserviceable,
+        ];
+        assert_eq!(statuses(false), ascending);
+        assert_eq!(
+            statuses(true),
+            ascending.into_iter().rev().collect::<Vec<_>>()
+        );
     }
 }
