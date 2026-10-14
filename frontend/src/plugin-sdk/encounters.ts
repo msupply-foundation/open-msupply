@@ -64,7 +64,9 @@ export const currentData = (
 
 /**
  * The patient's previous encounter of a type, read reactively: the latest one
- * of that type, in any status but deleted, that started before `before`.
+ * of that type recorded as Visited that started before `before`. A planned
+ * visit that never happened (still Pending) or a cancelled one holds nothing
+ * to show or start from, so it does not hide the visit before it.
  * Refetched when the input changes (the visit date edited in the toolbar),
  * paused while it is `undefined`, and never suspending. `data()` is undefined
  * while loading, paused, or when there is no previous encounter; a form tells
@@ -98,6 +100,7 @@ export const usePreviousEncounter = <T extends Encounter>(
       filter: {
         patientId: { equalTo: input.patientId },
         type: { equalTo: input.documentType },
+        status: { equalTo: 'VISITED' },
         // The filter is inclusive; a millisecond earlier leaves out an
         // encounter starting at the same moment, this one among them.
         startDatetime: {

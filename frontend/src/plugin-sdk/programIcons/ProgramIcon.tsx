@@ -34,12 +34,24 @@ type IconModule = typeof import('./ProgramIconSvg');
 
 let loaded: IconModule | undefined;
 let loading: Promise<IconModule> | undefined;
+// A failed load is forgotten, so the next icon to render tries again (back
+// online, or after the stale-bundle reload); until then icons stay blank.
 const load = () =>
-  (loading ??= import('./ProgramIconSvg').then(m => (loaded = m)));
+  (loading ??= import('./ProgramIconSvg').then(
+    m => (loaded = m),
+    (error: unknown) => {
+      loading = undefined;
+      throw error;
+    }
+  ));
 
 export const ProgramIcon = (props: ProgramIconProps): JSX.Element => {
   const [module, setModule] = createSignal(loaded);
-  if (!loaded) void load().then(m => setModule(() => m));
+  if (!loaded)
+    load().then(
+      m => setModule(() => m),
+      () => {}
+    );
   return (
     <Show
       when={module()}

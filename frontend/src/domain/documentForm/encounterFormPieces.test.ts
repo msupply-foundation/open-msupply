@@ -34,9 +34,9 @@ describe('categoryErrorCount', () => {
     expect(
       categoryErrorCount(['extension.historyNotes'], ['extension.history'])
     ).toBe(0);
-    expect(categoryErrorCount(['extension.history'], ['extension.history'])).toBe(
-      1
-    );
+    expect(
+      categoryErrorCount(['extension.history'], ['extension.history'])
+    ).toBe(1);
   });
 });
 
@@ -73,18 +73,18 @@ describe('previousValueText', () => {
     data: {
       extension: {
         history: { observations: 'Cycle régulier.\nRAS.' },
-        generalExamination: { weight: 61.5 },
+        generalExamination: { weight: 1234.5 },
       },
     },
   };
 
-  it('reads the text or number the previous encounter holds', () => {
+  it('reads the text the previous encounter holds, and a number in the local format', () => {
     expect(previousValueText(previous, 'extension.history.observations')).toBe(
       'Cycle régulier.\nRAS.'
     );
     expect(
       previousValueText(previous, 'extension.generalExamination.weight')
-    ).toBe('61.5');
+    ).toBe('1,234.5');
   });
 
   it('is empty where it holds nothing, or there is no previous encounter', () => {
