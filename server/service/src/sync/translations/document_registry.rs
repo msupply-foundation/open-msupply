@@ -82,8 +82,9 @@ impl SyncTranslation for DocumentRegistryTranslation {
         // took the type over, under the same id, and sends it again whenever it changes
         // there. Applying that copy would put the type back on legacy's schema and rules
         // and drop its owner, so it is not applied. Open mSupply central saves its own
-        // copy again instead, so the plugin's entry goes back out to every site. On a
-        // site too old to read it yet, that copy replaces legacy's in the sync buffer.
+        // copy again instead, so the plugin's entry goes back out to every site. A site
+        // too old to read it keeps it waiting beside legacy's copy, under a record id of
+        // its own (see `document_registry_om::sync_record_id`).
         if let Some(owned) = DocumentRegistryRowRepository::new(connection)
             .find_one_by_id(&id)?
             .filter(|row| row.plugin_code.is_some())

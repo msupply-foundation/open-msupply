@@ -89,9 +89,9 @@ impl SyncTranslation for OmDocumentRegistryTranslation {
         };
 
         // Open mSupply central also holds every entry legacy central sent it, and
-        // legacy central sends those to the sites itself. A second copy under the same
-        // id would do harm on a site before 3.4: its sync buffer keeps one row per id,
-        // so this copy, which it cannot read, would replace legacy's.
+        // legacy central sends those to the sites itself. Its copy here only follows
+        // legacy's, so sending it as well would give a site a second copy that may be
+        // older, and this one integrates last.
         if row.plugin_code.is_none() {
             return Ok(PushTranslateResult::Ignored(format!(
                 "Entry {} has no form plugin owner, so legacy central sends it",
@@ -99,14 +99,29 @@ impl SyncTranslation for OmDocumentRegistryTranslation {
             )));
         }
 
-        Ok(PushTranslateResult::upsert(
+        Ok(PushTranslateResult::upsert_with_record_id(
             changelog,
             self.table_name(),
+            sync_record_id(&row.id),
             serde_json::to_value(row)?,
         ))
     }
 
     // There is no delete: nothing removes a registry entry yet.
+}
+
+/// The record id an entry is sent under, which is not the entry's own id.
+///
+/// A taken-over type keeps its entry's id, and legacy central sends its copy under
+/// that id. A site before 3.0 keeps one sync buffer row per record id, so under the
+/// same record id this copy, which it cannot read, would replace legacy's before the
+/// site integrated it: a site set up there after a take-over would get no entry for
+/// the type, and its old client could not open those forms. Under a record id of its
+/// own, this copy waits beside legacy's until the site reaches 3.4. The translator
+/// reads the entry's id from the record's data, and only a delete would read the
+/// record id, so nothing else changes.
+fn sync_record_id(entry_id: &str) -> String {
+    format!("{entry_id}_oms_central")
 }
 
 #[cfg(test)]
@@ -153,8 +168,8 @@ mod tests {
     }
 
     /// An entry a form plugin install writes on open mSupply central is picked
-    /// up by a v6 site's pull, sent with its owner, and reads back as the same
-    /// row on the site.
+    /// up by a v6 site's pull, sent with its owner under a record id of its own, and
+    /// reads back as the same row, with the entry's id, on the site.
     #[actix_rt::test]
     async fn an_entry_written_on_central_reaches_a_v6_site_whole() {
         let connection = central("an_entry_written_on_central_reaches_a_v6_site_whole").await;
@@ -178,6 +193,7 @@ mod tests {
         assert_eq!(sent.len(), 1);
         let sent = &sent[0].record;
         assert_eq!(sent.table_name, "document_registry");
+        assert_eq!(sent.record_id, "demo_program_DemoEncounter_oms_central");
 
         let received = SyncBufferRow {
             table_name: sent.table_name.clone(),
@@ -195,9 +211,7 @@ mod tests {
     }
 
     /// An entry open mSupply central got from legacy central has no owner, and legacy
-    /// central sends it to the sites itself, so the v6 pull leaves it out. A site
-    /// before 3.4 keeps one sync buffer row per id, and a second copy there would
-    /// replace legacy's with one the site cannot read.
+    /// central sends it to the sites itself, so the v6 pull leaves it out.
     #[actix_rt::test]
     async fn an_entry_central_got_from_legacy_is_not_sent_again() {
         let connection = central("an_entry_central_got_from_legacy_is_not_sent_again").await;
@@ -218,7 +232,7 @@ mod tests {
 
     /// Legacy central sends its old copy of an entry a plugin took over. Open mSupply
     /// central keeps the plugin's entry and puts it on the v6 pull again, owner and
-    /// all, so it replaces legacy's copy on the sites.
+    /// all, so a site that can read it ends with the plugin's entry.
     #[actix_rt::test]
     async fn legacy_copy_of_a_plugin_owned_entry_sends_central_copy_out_again() {
         CentralServerConfig::set_is_central_server_on_startup();

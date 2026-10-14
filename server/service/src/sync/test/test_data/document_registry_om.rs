@@ -47,7 +47,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
 pub(crate) fn test_v6_central_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
-        record_id: DOCUMENT_REGISTRY.0.to_string(),
+        // Sent under a record id of its own, not the entry's id
+        // (`document_registry_om::sync_record_id`).
+        record_id: format!("{}_oms_central", DOCUMENT_REGISTRY.0),
         push_data: json!(document_registry()),
     }]
 }
